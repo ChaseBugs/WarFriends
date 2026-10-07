@@ -94,10 +94,13 @@ public static class SelfHostedBattleAudit
             await first.Reload();
             Require(first.State.Players[0].LastCommandId == 3,
                 "Unity command sequence continues after fresh Worker admission");
-            var state = await second.ForfeitAsync(ct.Token);
-            Require(state.Snapshot.WinnerPlayerId == a.PlayerId && !state.Snapshot.RewardEligible, "unscored terminal");
-            await first.Refresh();
-            Require(first.State.Phase == BattlePhase.Ended && updates >= 5, "adapter receives terminal snapshot");
+            await first.ForfeitWithRecovery();
+            Require(first.State.Phase == BattlePhase.Ended &&
+                first.State.WinnerPlayerId == b.PlayerId && !first.State.RewardEligible,
+                "local forfeit is confirmed by an unscored Worker terminal snapshot");
+            var state = await second.PollAsync(ct.Token);
+            Require(state.Snapshot.Phase == BattlePhase.Ended && updates >= 5,
+                "both participants observe the authoritative forfeit");
         }
         }
         finally { UnityEngine.Object.DestroyImmediate(owner); }

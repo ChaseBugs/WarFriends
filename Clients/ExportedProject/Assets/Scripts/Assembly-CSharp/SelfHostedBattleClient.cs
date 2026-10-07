@@ -466,6 +466,33 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
     public Task MoveCover(int direction) { return Execute(c => c.MoveCoverAsync(direction, lifetime.Token)); }
     public Task Forfeit() { return Execute(c => c.ForfeitAsync(lifetime.Token)); }
+    public async Task ForfeitWithRecovery()
+    {
+        if (!OwnsMatch) throw new InvalidOperationException("There is no self-hosted match to forfeit.");
+        Exception lastFailure = null;
+        for (int attempt = 0; attempt < 3 && !destroyed; attempt++)
+        {
+            if (State != null && (State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted)) return;
+            try
+            {
+                if (!IsConnected) await ReconnectWithRecoveredSession();
+                await Forfeit();
+                return; // Apply publishes the Worker's terminal snapshot.
+            }
+            catch (Exception failure)
+            {
+                lastFailure = failure;
+                if (failure is TimeoutException)
+                {
+                    IsConnected = false;
+                    if (reconnectRequestId == null) reconnectRequestId = Guid.NewGuid().ToString("N");
+                }
+                if (reconnectFailureReported || destroyed) break;
+                await Task.Delay(500);
+            }
+        }
+        throw new InvalidOperationException("The Worker did not confirm the forfeit.", lastFailure);
+    }
     public Task RetryPending() { return Execute(c => c.RetryPendingAsync(lifetime.Token)); }
     public Task Refresh() { return Execute(c => c.PollAsync(lifetime.Token)); }
     public Task DeployArmy(int optionIndex) { return Execute(c => c.DeployArmyAsync(optionIndex, lifetime.Token)); }

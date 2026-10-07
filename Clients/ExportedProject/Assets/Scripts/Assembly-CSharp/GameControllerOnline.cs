@@ -38,6 +38,7 @@ public abstract class GameControllerOnline : IGameController
 	private SelfHostedBattleClient mSelfHostedClient;
 	private bool mSelfHostedReconnectDialog;
 	private ReconnectState mSelfHostedReconnectCause;
+	private bool mSelfHostedForfeitPending;
 
 	protected bool mMapIdSet;
 
@@ -1353,8 +1354,27 @@ public abstract class GameControllerOnline : IGameController
 
 	public override void Forfeit()
 	{
+		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+		if (selfHosted != null && selfHosted.OwnsMatch)
+		{
+			if (!mSelfHostedForfeitPending) ForfeitSelfHosted(selfHosted);
+			return;
+		}
 		mMainController.gameEndReason = GameController.GameEndReason.Forfeit;
 		FinishGame();
+	}
+
+	private async void ForfeitSelfHosted(SelfHostedBattleClient client)
+	{
+		mSelfHostedForfeitPending = true;
+		try { await client.ForfeitWithRecovery(); }
+		catch (Exception failure)
+		{
+			// No local result is authoritative. The dialog stays open so the
+			// player can retry while the Worker still owns the running match.
+			Debug.LogError("Self-hosted forfeit was not confirmed: " + failure);
+		}
+		finally { mSelfHostedForfeitPending = false; }
 	}
 
 	public override void PauseGame(bool focusLost)

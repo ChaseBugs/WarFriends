@@ -80,6 +80,9 @@ public class ReconnectDialog : GuiElementSingle<ReconnectDialog>, IGuiDialog
 			if (b)
 			{
 				Singleton<GameController>.instance.mainController.Forfeit();
+				SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+				if (selfHosted != null && selfHosted.OwnsMatch)
+					return; // The Worker terminal snapshot closes this dialog.
 				GuiScreenSingle<BattlePreparationScreen>.instance.previousScreen = GuiScreenSingle<MainScreen>.instance;
 				GuiScreenSingle<MainScreen>.instance.previousScreen = null;
 				HideDialog();
