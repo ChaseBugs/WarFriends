@@ -5092,6 +5092,52 @@ internal static class CombatContentTests
                   {Health: var gunnerAfterMine}&&
               Math.Abs(gunnerAfterMine-(helicopterGunnerBefore-10f))<.001f,
             "triggered Land Mine blast damages the Helicopter gunner once at source strength");
+        var helicopterContactParts=flameHelicopterMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(row=>row.EntityId==flameHelicopterTarget.EntityKey).ToArray();
+        var helicopterBodyParts=helicopterContactParts.Where(row=>row.HelicopterBody)
+            .Select(row=>row.Hitbox).ToArray();
+        Vector3? helicopterGunnerOnlyContact=null;
+        foreach(var part in helicopterContactParts.Where(row=>row.HelicopterGunner))
+        {
+            foreach(float lift in new[]{0f,.1f,.2f,.3f,.4f,.5f})
+            {
+                var candidate=part.Hitbox.Center+Vector3.UnitY*lift;
+                if(!LandMineExplosion.Triggered(candidate,content.LandMines.Prefab,
+                       new[]{part.Hitbox})||
+                   LandMineExplosion.Triggered(candidate,content.LandMines.Prefab,
+                       helicopterBodyParts))continue;
+                helicopterGunnerOnlyContact=candidate;
+                break;
+            }
+            if(helicopterGunnerOnlyContact.HasValue)break;
+        }
+        Check(helicopterGunnerOnlyContact.HasValue,
+            "current Helicopter gunner has mine contact outside the aircraft body");
+        Check(flameHelicopterMatch.TryRegisterLandMine(new string('7',32),soldierOwner,
+                  helicopterGunnerOnlyContact!.Value,10f),
+            "host-only mine placement binds the separate Helicopter gunner pose");
+        ulong gunnerTriggerMineId=flameHelicopterMatch.Snapshot().LandMines.Single().EntityId;
+        flameHelicopterMatch.Advance(77);
+        Check(flameHelicopterMatch.Snapshot().LandMines.Count==0&&
+              flameHelicopterMatch.EventBatch(soldierOwner,helicopterTriggerCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==gunnerTriggerMineId&&
+                  row.Reason=="helicopter-gunner-trigger:"+flameHelicopterTarget.EntityKey),
+            "opposing Helicopter gunner-only contact triggers the mine on a normal tick");
+        var alliedGunnerPart=flameHelicopterMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(row=>row.EntityId==flameHelicopterTarget.EntityKey&&row.HelicopterGunner);
+        Check(flameHelicopterMatch.TryRegisterLandMine(new string('8',32),helicopterOwner,
+                  alliedGunnerPart.Hitbox.Center,10f),
+            "host-only allied mine placement overlaps the Helicopter gunner");
+        ulong alliedGunnerMineId=flameHelicopterMatch.Snapshot().LandMines.Single().EntityId;
+        flameHelicopterMatch.Advance(78);
+        var movedAlliedGunner=flameHelicopterMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(row=>row.EntityId==flameHelicopterTarget.EntityKey&&row.HelicopterGunner);
+        Check(LandMineExplosion.Triggered(alliedGunnerPart.Hitbox.Center,
+                  content.LandMines.Prefab,new[]{movedAlliedGunner.Hitbox})&&
+              flameHelicopterMatch.Snapshot().LandMines.Any(mine=>
+                  mine.EntityId==alliedGunnerMineId),
+            "same-faction Helicopter gunner contact leaves the mine armed");
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};

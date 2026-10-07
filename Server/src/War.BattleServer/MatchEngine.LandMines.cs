@@ -102,8 +102,13 @@ public sealed partial class MatchEngine
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
                passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null)
                 aircraftTrigger=FindLandMineAircraftTrigger(mine);
+            BattleArmyEntityState? gunnerTrigger=null;
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
                passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null&&aircraftTrigger==null)
+                gunnerTrigger=FindLandMineHelicopterGunnerTrigger(mine);
+            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+               passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null&&
+               aircraftTrigger==null&&gunnerTrigger==null)
                 continue;
             if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
                 throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
@@ -141,10 +146,15 @@ public sealed partial class MatchEngine
                 target=turretTrigger.OwnerPlayerId;
                 reason="heavy-turret-trigger:"+turretTrigger.EntityId;
             }
+            else if(aircraftTrigger!=null)
+            {
+                target=aircraftTrigger.OwnerPlayerId;
+                reason="air-trigger:"+aircraftTrigger.EntityKey;
+            }
             else
             {
-                target=aircraftTrigger!.OwnerPlayerId;
-                reason="air-trigger:"+aircraftTrigger.EntityKey;
+                target=gunnerTrigger!.OwnerPlayerId;
+                reason="helicopter-gunner-trigger:"+gunnerTrigger.EntityKey;
             }
             Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
                 mine.EntityId,mine.Position,mine.Damage,reason);
@@ -337,6 +347,29 @@ public sealed partial class MatchEngine
             if(!LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
                    new[]{collider.Hitbox}))continue;
             return aircraft;
+        }
+        return null;
+    }
+
+    private BattleArmyEntityState? FindLandMineHelicopterGunnerTrigger(LandMineMatchEntity mine)
+    {
+        var owner=Find(mine.OwnerPlayerId)??
+            throw new InvalidDataException("Land Mine gunner trigger owner disappeared.");
+        if(landMineSource==null)
+            throw new InvalidDataException("Land Mine gunner trigger lacks source geometry.");
+
+        // The Helicopter spawns an ordinary non-metal soldier at its turret.
+        // Its animated body parts own damage separately from the aircraft.
+        foreach(var collider in GroundVehicleShotTargets(owner.Definition.PlayerId)
+            .Where(row=>row.HelicopterGunner)
+            .OrderBy(row=>row.EntityId).ThenBy(row=>row.Hitbox.SourcePath,StringComparer.Ordinal))
+        {
+            if(!activeArmyEntities.TryGetValue(collider.EntityId,out var helicopter)||
+               helicopter.UnitId!="ID_UNIT-HELICOPTER")
+                throw new InvalidDataException("Land Mine gunner trigger lost its helicopter.");
+            if(LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
+                   new[]{collider.Hitbox}))
+                return helicopter;
         }
         return null;
     }
