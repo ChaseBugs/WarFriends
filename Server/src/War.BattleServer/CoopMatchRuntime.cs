@@ -169,11 +169,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (selectedIndex < 0 || selectedIndex >= candidates.Count)
             throw new InvalidDataException("Co-op spawn choice is outside the source collection.");
         CoopSpawnPoint point = candidates[selectedIndex];
-        // The Client's co-op controller scales an ordinary enemy's selected
-        // normal upgrade row with ArmyUpgrades.COOPHP. Card units take the
-        // separate CARDS_MIN/MAX interpolation path, not a normal-level HP.
-        float maximumHealth = cardUnit ? 0f :
-            combat.OrdinaryStats(behaviour, level).Health;
+        // The Client's co-op controller scales both paths with COOPHP, but
+        // card units first interpolate their named card rows (or row zero when
+        // that particular sheet has no card labels).
+        float cardProgress = cardUnit ? Math.Clamp(level / 25f, 0f, 1f) : 0f;
+        float maximumHealth = cardUnit
+            ? combat.CardStats(behaviour, cardProgress).Health
+            : combat.OrdinaryStats(behaviour, level).Health;
         return new BattleCoopEnemySpawn
         {
             EntityId = nextEnemyId++,
@@ -186,7 +188,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             SpawnTick = tick,
             TimedEvent = timedEvent,
             CardUnit = cardUnit,
-            CardProgress = cardUnit ? Math.Clamp(level / 25f, 0f, 1f) : 0f,
+            CardProgress = cardProgress,
             MaxHealth = maximumHealth,
             Health = maximumHealth
         };

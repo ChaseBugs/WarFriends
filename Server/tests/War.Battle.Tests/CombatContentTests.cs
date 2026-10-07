@@ -13,7 +13,7 @@ using War.Protocol.Transport;
 internal static class CombatContentTests
 {
     private static int VerifyMissionCatalog(
-        string directory, ArmyDeploymentCatalog army)
+        string directory, ArmyDeploymentCatalog army, string contentRevision)
     {
         string path = Path.Combine(directory, "recovered-mission-catalog.json");
         MissionCatalog catalog = MissionCatalog.Load(path);
@@ -31,7 +31,8 @@ internal static class CombatContentTests
         int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
         int eventAssertions = VerifyMissionTimedEvents(catalog);
         int coopAssertions = VerifyCoopMissionEngine(catalog);
-        int allocationAssertions = VerifyCoopAllocation(directory, catalog, army);
+        int allocationAssertions = VerifyCoopAllocation(
+            directory, catalog, army, contentRevision);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
@@ -317,11 +318,47 @@ internal static class CombatContentTests
     }
 
     private static int VerifyCoopAllocation(
-        string directory, MissionCatalog catalog, ArmyDeploymentCatalog army)
+        string directory, MissionCatalog catalog, ArmyDeploymentCatalog army,
+        string contentRevision)
     {
         CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-spawn-points.json"), catalog);
-        var enemyCombat = new CoopEnemyCombatCatalog(catalog, army);
+        CoopCardRowCatalog cardRows = CoopCardRowCatalog.Load(
+            Path.Combine(directory, "recovered-coop-card-rows.json"),
+            catalog, army, contentRevision);
+        string alteredCardPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-cards-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode altered = JsonNode.Parse(File.ReadAllText(
+                Path.Combine(directory, "recovered-coop-card-rows.json")))!;
+            altered["rows"]![0]!["minimumIndex"] = 0;
+            File.WriteAllText(alteredCardPath, altered.ToJsonString());
+            try
+            {
+                _ = CoopCardRowCatalog.Load(
+                    alteredCardPath, catalog, army, contentRevision);
+                throw new Exception("Altered card row indexes bypassed source revision pinning.");
+            }
+            catch (InvalidDataException)
+            {
+            }
+        }
+        finally
+        {
+            File.Delete(alteredCardPath);
+        }
+        var enemyCombat = new CoopEnemyCombatCatalog(catalog, army, cardRows);
+        ArmyBaseCombatStats sniperStart = enemyCombat.CardStats("Sniper", 0);
+        ArmyBaseCombatStats sniperEnd = enemyCombat.CardStats("Sniper", 1);
+        ArmyBaseCombatStats grenadeStart = enemyCombat.CardStats("Grenadier", 0);
+        ArmyBaseCombatStats grenadeEnd = enemyCombat.CardStats("Grenadier", 1);
+        ArmyBaseCombatStats grenadeMid = enemyCombat.CardStats("Grenadier", .5f);
+        if (sniperStart != sniperEnd ||
+            MathF.Abs(grenadeMid.Health -
+                (grenadeStart.Health + grenadeEnd.Health) / 2f) > .001f ||
+            grenadeStart.Health == grenadeEnd.Health)
+            throw new Exception("Card sheets must preserve interpolation and row-zero fallback.");
         ArmyBaseCombatStats ordinary = enemyCombat.OrdinaryStats("Assaulter", 0);
         ArmyBaseCombatStats heroic = enemyCombat.OrdinaryStats("Assaulter", 0, heroic: true);
         if (MathF.Abs(ordinary.Health - 140f * 2.34f) > .0001f ||
@@ -481,7 +518,8 @@ internal static class CombatContentTests
         BattleCoopEnemySpawn cardEnemy = cardRuntime.Snapshot().Coop.EnemySpawns.Single();
         if (!cardEnemy.TimedEvent || !cardEnemy.CardUnit ||
             cardEnemy.Behaviour != "Sniper" || cardEnemy.Level != 6 ||
-            cardEnemy.MaxHealth != 0 || cardEnemy.Health != 0 ||
+            cardEnemy.MaxHealth != enemyCombat.CardStats("Sniper", 6f / 25f).Health ||
+            cardEnemy.Health != cardEnemy.MaxHealth ||
             MathF.Abs(cardEnemy.CardProgress - 6f / 25f) > .000001f)
             throw new Exception("A source card event must preserve its card upgrade progress.");
 
@@ -519,7 +557,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 20;
+        return 22;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
@@ -578,7 +616,8 @@ internal static class CombatContentTests
     {
         int count=0;
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
-        count += VerifyMissionCatalog(directory, content.Army);
+        count += VerifyMissionCatalog(directory, content.Army,
+            content.Stats.Revision);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
         void Reject(Action action) { try { action(); } catch (InvalidDataException) { count++;return; } throw new Exception("Invalid combat allocation accepted."); }
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),

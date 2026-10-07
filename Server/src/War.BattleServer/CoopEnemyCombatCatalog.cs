@@ -2,8 +2,7 @@ namespace War.BattleServer;
 
 /// <summary>
 /// Binds Mission.behavioursDictionary names to the recovered unit upgrade rows.
-/// Only ordinary mission enemies use these stats. Card events interpolate
-/// CARDS_MIN/MAX rows, which are a separate rule.
+/// Ordinary and card mission enemies use different source upgrade rows.
 /// </summary>
 public sealed class CoopEnemyCombatCatalog
 {
@@ -37,12 +36,15 @@ public sealed class CoopEnemyCombatCatalog
         };
 
     private readonly ArmyDeploymentCatalog army;
+    private readonly CoopCardRowCatalog cards;
     private readonly IReadOnlyDictionary<string, string> unitIds;
 
-    public CoopEnemyCombatCatalog(MissionCatalog missions, ArmyDeploymentCatalog army)
+    public CoopEnemyCombatCatalog(MissionCatalog missions,
+        ArmyDeploymentCatalog army, CoopCardRowCatalog cards)
     {
         ArgumentNullException.ThrowIfNull(missions);
         this.army = army ?? throw new ArgumentNullException(nameof(army));
+        this.cards = cards ?? throw new ArgumentNullException(nameof(cards));
         var families = army.Families.ToDictionary(
             family => family.BehaviorType, family => family.UnitId,
             StringComparer.Ordinal);
@@ -66,6 +68,9 @@ public sealed class CoopEnemyCombatCatalog
                 if (!timedEvent.IsCardUnit)
                     _ = army.CoopStats(
                         mapped[timedEvent.Behaviour], timedEvent.Level, false);
+                else
+                    _ = cards.Stats(mapped[timedEvent.Behaviour],
+                        Math.Clamp(timedEvent.Level / 25f, 0f, 1f));
             }
         }
         unitIds = mapped;
@@ -77,6 +82,14 @@ public sealed class CoopEnemyCombatCatalog
         if (!unitIds.TryGetValue(behaviour, out string? unitId))
             throw new InvalidDataException($"Unknown co-op behavior {behaviour}.");
         return army.CoopStats(unitId, normalUpgradeIndex, heroic);
+    }
+
+    public ArmyBaseCombatStats CardStats(
+        string behaviour, float progress, bool heroic = false)
+    {
+        if (!unitIds.TryGetValue(behaviour, out string? unitId))
+            throw new InvalidDataException($"Unknown co-op behavior {behaviour}.");
+        return cards.Stats(unitId, progress, heroic);
     }
 
     private static void RequireKnown(

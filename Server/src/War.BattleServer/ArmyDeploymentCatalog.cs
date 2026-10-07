@@ -97,6 +97,36 @@ public sealed class ArmyDeploymentCatalog
         return new ArmyBaseCombatStats(health, damage);
     }
 
+    /// <summary>
+    /// UpgradeSlots.LoadDataForCard interpolates two named source rows before
+    /// the co-op controller applies its enemy HP/damage multipliers.
+    /// </summary>
+    public ArmyBaseCombatStats CoopCardStats(
+        string unitId, int minimumIndex, int maximumIndex,
+        float progress, bool heroic)
+    {
+        if (baseStats == null || !baseStats.TryGetValue(unitId, out var stages) ||
+            coopCombatScales == null ||
+            !coopCombatScales.TryGetValue(unitId, out ArmyCoopCombatScale? scale) ||
+            minimumIndex < 0 || maximumIndex < minimumIndex ||
+            maximumIndex >= stages.Count ||
+            !float.IsFinite(progress) || progress < 0 || progress > 1)
+            throw new InvalidDataException("Invalid co-op card combat selection.");
+
+        ArmyBaseCombatStats minimum = stages[minimumIndex];
+        ArmyBaseCombatStats maximum = stages[maximumIndex];
+        if (minimum.Health <= 0 || maximum.Health <= 0)
+            throw new InvalidDataException("Co-op card row is an unplayable source sentinel.");
+        float health = (minimum.Health + (maximum.Health - minimum.Health) * progress) *
+            (heroic ? scale.HeroicHealth : scale.Health);
+        float damage = (minimum.Damage + (maximum.Damage - minimum.Damage) * progress) *
+            (heroic ? scale.HeroicDamage : scale.Damage);
+        if (!float.IsFinite(health) || health <= 0 || health > 10_000_000 ||
+            !float.IsFinite(damage) || damage < 0 || damage > 10_000_000)
+            throw new InvalidDataException("Co-op card combat stats exceed source bounds.");
+        return new ArmyBaseCombatStats(health, damage);
+    }
+
     /// <summary>UpgradeSlotsHelicopter adds Seats across selected lanes; GetSoldierHpInMechanic reads only the normal row.</summary>
     public ArmyHelicopterCrewStats ComposeHelicopterCrew(int normalIndex,int? specialIndex,int? eliteIndex)
     {

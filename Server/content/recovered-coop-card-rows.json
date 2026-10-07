@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "armySha256": "2b3a2801011d71caffe27cb9c24d9675c5196af4af675c7be4e53fa25084a941",
+  "contentSha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "rows": [
+    {
+      "unitId": "ID_UNIT-ASSAULT",
+      "sheetRow": "Google2u.DBUpgradeSlotsAssaulter",
+      "minimumIndex": 133,
+      "maximumIndex": 134,
+      "hasCardRows": true
+    },
+    {
+      "unitId": "ID_UNIT-SNIPER",
+      "sheetRow": "Google2u.DBUpgradeSlotsSniper",
+      "minimumIndex": 0,
+      "maximumIndex": 0,
+      "hasCardRows": false
+    },
+    {
+      "unitId": "ID_UNIT-ROCKETSOLDIER",
+      "sheetRow": "Google2u.DBUpgradeSlotsBazooka",
+      "minimumIndex": 117,
+      "maximumIndex": 118,
+      "hasCardRows": true
+    },
+    {
+      "unitId": "ID_UNIT-DRONE",
+      "sheetRow": "Google2u.DBUpgradeSlotsDrone",
+      "minimumIndex": 117,
+      "maximumIndex": 118,
+      "hasCardRows": true
+    },
+    {
+      "unitId": "ID_UNIT-GRENADIER",
+      "sheetRow": "Google2u.DBUpgradeSlotsGrennader",
+      "minimumIndex": 133,
+      "maximumIndex": 134,
+      "hasCardRows": true
+    },
+    {
+      "unitId": "ID_UNIT-PARATROOPER",
+      "sheetRow": "Google2u.DBUpgradeSlotsParachuter",
+      "minimumIndex": 123,
+      "maximumIndex": 124,
+      "hasCardRows": true
+    },
+    {
+      "unitId": "ID_UNIT-SWAT",
+      "sheetRow": "Google2u.DBUpgradeSlotsSwat",
+      "minimumIndex": 102,
+      "maximumIndex": 103,
+      "hasCardRows": true
+    },
+    {
+      "unitId": "ID_UNIT-MINIGUNNER",
+      "sheetRow": "Google2u.DBUpgradeSlotsMinigunner",
+      "minimumIndex": 57,
+      "maximumIndex": 58,
+      "hasCardRows": true
+    }
+  ]
+}
