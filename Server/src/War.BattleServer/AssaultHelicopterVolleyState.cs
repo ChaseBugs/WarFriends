@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace War.BattleServer;
 
 /// <summary>
@@ -12,8 +14,36 @@ internal sealed class AssaultHelicopterVolleyState
         IReadOnlyList<bool>? SecondGunRealShots,
         ulong SelectionTick,
         float SecondGunDueTime);
+    internal sealed record RoundIntent(int GunIndex, int RoundIndex,
+        bool IsReal, Vector3 Muzzle, float Time);
+
+    private sealed class GunClock
+    {
+        private IReadOnlyList<bool>? realShots;
+        private int nextRoundIndex;
+        private float lastShotTime;
+
+        internal void Replace(IReadOnlyList<bool> shots)
+        {
+            realShots = shots;
+            nextRoundIndex = 0;
+        }
+
+        internal (int Index, bool IsReal)? TakeDueRound(float time)
+        {
+            if (realShots == null || nextRoundIndex >= realShots.Count ||
+                time <= lastShotTime + AssaultHelicopterVolleyPlanner.GunCadenceSeconds)
+                return null;
+
+            int index = nextRoundIndex++;
+            lastShotTime = time;
+            return (index, realShots[index]);
+        }
+    }
 
     private readonly Queue<PreparedVolley> waitingForSecondGun = new();
+    private readonly GunClock firstGun = new();
+    private readonly GunClock secondGun = new();
     internal PreparedVolley? Latest { get; private set; }
 
     internal void PrepareFirstGun(float time, ulong tick, ArmyVehicleShotStats shot,
@@ -31,6 +61,7 @@ internal sealed class AssaultHelicopterVolleyState
 
         var prepared = new PreparedVolley(plan, firstGunShots, null, tick, dueTime);
         waitingForSecondGun.Enqueue(prepared);
+        firstGun.Replace(firstGunShots);
         Latest = prepared;
     }
 
@@ -46,8 +77,31 @@ internal sealed class AssaultHelicopterVolleyState
             var pending = waitingForSecondGun.Dequeue();
             var secondGunShots = AssaultHelicopterVolleyPlanner.SampleRealShots(
                 pending.Plan.SecondGunCount, shot.ProbabilityOfRealShot, nextRandom);
+            secondGun.Replace(secondGunShots);
             if (ReferenceEquals(Latest, pending))
                 Latest = pending with { SecondGunRealShots = secondGunShots };
         }
+    }
+
+    internal IReadOnlyList<RoundIntent> DueRoundIntents(float time, Vector3 rootPosition,
+        Quaternion rootRotation, AssaultHelicopterWeaponCatalog weapons)
+    {
+        if (!float.IsFinite(time) || time < 0 || weapons == null)
+            throw new InvalidDataException("Invalid Assault Helicopter gun clock authority.");
+
+        var rounds = new List<RoundIntent>(2);
+        AddDueRound(rounds, firstGun, 0, time, rootPosition, rootRotation, weapons);
+        AddDueRound(rounds, secondGun, 1, time, rootPosition, rootRotation, weapons);
+        return rounds.AsReadOnly();
+    }
+
+    private static void AddDueRound(List<RoundIntent> rounds, GunClock gun, int gunIndex,
+        float time, Vector3 rootPosition, Quaternion rootRotation,
+        AssaultHelicopterWeaponCatalog weapons)
+    {
+        Vector3 muzzle = weapons.Muzzle(gunIndex, rootPosition, rootRotation);
+        var due = gun.TakeDueRound(time);
+        if (due.HasValue)
+            rounds.Add(new(gunIndex, due.Value.Index, due.Value.IsReal, muzzle, time));
     }
 }

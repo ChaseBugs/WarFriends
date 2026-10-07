@@ -17,6 +17,20 @@ internal static class CombatContentTests
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
+        var firstAssaultMuzzle = content.AssaultHelicopterWeapons.Muzzle(
+            0, Vector3.Zero, Quaternion.Identity);
+        var secondAssaultMuzzle = content.AssaultHelicopterWeapons.Muzzle(
+            1, Vector3.Zero, Quaternion.Identity);
+        Check(firstAssaultMuzzle == new Vector3(.3287352f, -.24099445f, .04579982f) &&
+              secondAssaultMuzzle == new Vector3(-.31855813f, -.24099472f, .045799464f),
+            "pinned Assault Helicopter prefab binds two distinct source gun muzzles");
+        var turnedAssaultMuzzle = content.AssaultHelicopterWeapons.Muzzle(0,
+            new Vector3(1, 2, 3), Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI));
+        Check(Vector3.Distance(turnedAssaultMuzzle,
+                  new Vector3(1 - .3287352f, 2 - .24099445f, 3 - .04579982f)) < .000001f,
+            "Assault Helicopter gun muzzle follows the host root rotation");
+        Reject(() => content.AssaultHelicopterWeapons.Muzzle(2,
+            Vector3.Zero, Quaternion.Identity));
         var heliBoxes=content.HelicopterBodyColliders.Place(Vector3.Zero,Quaternion.Identity);
         using(var geometryReference=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
             "recovered-air-unit-unity-geometry.json"))))
@@ -1064,6 +1078,20 @@ internal static class CombatContentTests
               overlappingVolleys.Latest.SecondGunRealShots?.SequenceEqual([true, true]) == true &&
               sampledAssaultRounds == 8,
             "overlapping Assault Helicopter callbacks preserve both second-gun masks in order");
+        var firstGunRound = overlappingVolleys.DueRoundIntents(2.18f,
+            Vector3.Zero, Quaternion.Identity, content.AssaultHelicopterWeapons);
+        var noEarlyRound = overlappingVolleys.DueRoundIntents(2.44f,
+            Vector3.Zero, Quaternion.Identity, content.AssaultHelicopterWeapons);
+        var nextGunRounds = overlappingVolleys.DueRoundIntents(2.45f,
+            Vector3.Zero, Quaternion.Identity, content.AssaultHelicopterWeapons);
+        Check(firstGunRound.Count == 2 &&
+              firstGunRound.Select(round => round.GunIndex).SequenceEqual([0, 1]) &&
+              firstGunRound.All(round => round.IsReal) &&
+              firstGunRound[0].Muzzle == firstAssaultMuzzle &&
+              firstGunRound[1].Muzzle == secondAssaultMuzzle &&
+              noEarlyRound.Count == 0 && nextGunRounds.Count == 2 &&
+              nextGunRounds.All(round => round.RoundIndex == 1),
+            "two Assault Helicopter guns keep independent strict cadence and pinned muzzle positions");
         Reject(() => AssaultHelicopterVolleyPlanner.Plan(
             new ArmyVehicleShotStats(5, .75f, 4, 7, 2, 4, 0), _ => 3));
         Reject(()=>content.Army.ComposeHelicopterShot(0,null,null,float.NaN));
@@ -3405,6 +3433,12 @@ internal static class CombatContentTests
               preparedAssaultVolley.FirstGunRealShots.Count ==
                   preparedAssaultVolley.Plan.FirstGunCount,
             "live Assault Helicopter selection prepares the source-split first gun before cooldown sampling");
+        var firstLiveAssaultRound = assaultHelicopterMatch.AssaultHelicopterRoundIntents(
+            assaultHelicopterSpawn.EntityKey);
+        Check(firstLiveAssaultRound.Count == 1 &&
+              firstLiveAssaultRound[0].GunIndex == 0 &&
+              firstLiveAssaultRound[0].RoundIndex == 0,
+            "normal Assault Helicopter tick schedules its first source gun round");
         for (ulong routeTick = 123; routeTick <= 126; routeTick++)
             assaultHelicopterMatch.Advance(routeTick);
         var secondAssaultVolley = assaultHelicopterMatch.AssaultHelicopterVolley(
@@ -3413,6 +3447,12 @@ internal static class CombatContentTests
                   secondAssaultVolley?.Plan.SecondGunCount &&
               secondAssaultVolley?.SelectionTick == 122,
             "normal Assault Helicopter ticks prepare the second gun after half-cadence delay");
+        var secondLiveAssaultRound = assaultHelicopterMatch.AssaultHelicopterRoundIntents(
+            assaultHelicopterSpawn.EntityKey);
+        Check(secondLiveAssaultRound.Count == 1 &&
+              secondLiveAssaultRound[0].GunIndex == 1 &&
+              secondLiveAssaultRound[0].RoundIndex == 0,
+            "normal Assault Helicopter tick schedules its delayed second source gun round");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});

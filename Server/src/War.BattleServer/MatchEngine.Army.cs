@@ -39,6 +39,9 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyAssaultHelicopterShots=[];
     private readonly Dictionary<ulong,AssaultHelicopterTargetState> armyAssaultHelicopterTargets=[];
     private readonly Dictionary<ulong,AssaultHelicopterVolleyState> armyAssaultHelicopterVolleys=[];
+    private readonly Dictionary<ulong,IReadOnlyList<AssaultHelicopterVolleyState.RoundIntent>>
+        armyAssaultHelicopterRoundIntents=[];
+    private AssaultHelicopterWeaponCatalog? assaultHelicopterWeapons;
     internal Quaternion? AssaultHelicopterRotation(ulong entityId)
         => armyAssaultHelicopterPaths.TryGetValue(entityId, out var path) ? path.Rotation : null;
     internal ArmyVehicleShotStats? AssaultHelicopterShot(ulong entityId)
@@ -49,6 +52,8 @@ public sealed partial class MatchEngine
         => armyAssaultHelicopterTargets.GetValueOrDefault(entityId)?.TargetPlayerId;
     internal AssaultHelicopterVolleyState.PreparedVolley? AssaultHelicopterVolley(ulong entityId)
         => armyAssaultHelicopterVolleys.GetValueOrDefault(entityId)?.Latest;
+    internal IReadOnlyList<AssaultHelicopterVolleyState.RoundIntent> AssaultHelicopterRoundIntents(
+        ulong entityId) => armyAssaultHelicopterRoundIntents.GetValueOrDefault(entityId) ?? [];
     private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
@@ -276,6 +281,10 @@ public sealed partial class MatchEngine
             unit.Y = path.Position.Y;
             unit.Z = path.Position.Z;
             unit.PositionTick = tick;
+            armyAssaultHelicopterRoundIntents[entityId] = volleyState.DueRoundIntents(
+                time, path.Position, path.Rotation,
+                assaultHelicopterWeapons ??
+                    throw new InvalidDataException("Assault Helicopter gun source disappeared."));
         }
     }
 
@@ -3315,6 +3324,7 @@ public sealed partial class MatchEngine
         armyAssaultHelicopterShots.Remove(entityKey);
         armyAssaultHelicopterTargets.Remove(entityKey);
         armyAssaultHelicopterVolleys.Remove(entityKey);
+        armyAssaultHelicopterRoundIntents.Remove(entityKey);
         armyHelicopterOrientations.Remove(entityKey);
         armyHelicopterCrew.Remove(entityKey);
         armyHelicopterCrewMembers.Remove(entityKey);

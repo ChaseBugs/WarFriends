@@ -51,6 +51,7 @@ public sealed class BattleCombatContent
     public DroneWeaponCatalog DroneWeapon { get; }
     public DroneColliderCatalog DroneColliders { get; }
     internal HelicopterBodyColliderCatalog HelicopterBodyColliders { get; }
+    internal AssaultHelicopterWeaponCatalog AssaultHelicopterWeapons { get; private init; }=null!;
     internal AirShotTargetCatalog AirShotTargets { get; }
     public HelicopterCrewPointCatalog HelicopterCrewPoints { get; }
     internal HelicopterGunnerExplosionCatalog HelicopterGunnerExplosions { get; private init; }=null!;
@@ -112,6 +113,8 @@ public sealed class BattleCombatContent
         if(manifest.AirGeometryRevision!=DroneColliderCatalog.VerifiedInventoryRevision)throw new InvalidDataException("Unverified air geometry revision.");
         var droneColliders=DroneColliderCatalog.Load(Path.Combine(directory,"recovered-air-unit-geometry.json"));
         var helicopterBodyColliders=HelicopterBodyColliderCatalog.Load(Path.Combine(directory,
+            "recovered-air-unit-geometry.json"));
+        var assaultHelicopterWeapons=AssaultHelicopterWeaponCatalog.Load(Path.Combine(directory,
             "recovered-air-unit-geometry.json"));
         var airShotTargets=AirShotTargetCatalog.Load(Path.Combine(directory,
             "recovered-air-unit-geometry.json"));
@@ -201,6 +204,7 @@ public sealed class BattleCombatContent
             (bazookas==null?"":"\n"+bazookas.PackageRevision)))) : null;
         return new BattleCombatContent(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,decoys,landMines,heavyTurrets,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity,airWaypoints,droneWeapon,droneColliders,helicopterBodyColliders,airShotTargets,helicopterCrewPoints,droneProjectile,enemyShotTargets)
         {HelicopterGunnerExplosions=helicopterGunnerExplosions,
+            AssaultHelicopterWeapons=assaultHelicopterWeapons,
             GrenadeShotTargets=grenadeShotTargets};
     }
     public void ValidateAllocation(MatchManifest manifest)
