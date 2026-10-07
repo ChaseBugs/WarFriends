@@ -1021,9 +1021,15 @@ internal static class CombatContentTests
         catch(ArgumentOutOfRangeException){count++;}
         var humveeShot=content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null);
         var helicopterShot=content.Army.ComposeHelicopterShot(0,null,null);
+        var assaultHelicopterShot=content.Army.ComposeAssaultHelicopterShot(0,null,null);
         Check(helicopterShot==new ArmyVehicleShotStats(12f,.75f,4,5,2f,4f,0),
               "Helicopter turret binds selected source shot stages apart from attached crew count");
+        Check(assaultHelicopterShot.MinShootTime>0&&
+              assaultHelicopterShot.MaxShootTime>=assaultHelicopterShot.MinShootTime&&
+              assaultHelicopterShot.FireBatchSizeMax>0,
+              "Assault Helicopter firing cadence comes from its selected source upgrade row");
         Reject(()=>content.Army.ComposeHelicopterShot(0,null,null,float.NaN));
+        Reject(()=>content.Army.ComposeAssaultHelicopterShot(0,null,null,float.NaN));
         var tankShot=content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null);
         var buggyShot=content.Army.ComposeVehicleShot("ID_UNIT-BUGGY",0,null,null);
         var transporterShot=content.Army.ComposeVehicleShot("ID_UNIT-TRANSPORTER",0,null,null);
@@ -3302,6 +3308,9 @@ internal static class CombatContentTests
         assaultHelicopterMatch.Advance(61);
         var assaultHelicopterSpawn = assaultHelicopterMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.Single(entity => entity.UnitId == "ID_UNIT-ASSAULTHELI");
+        Check(assaultHelicopterMatch.AssaultHelicopterShot(assaultHelicopterSpawn.EntityKey) ==
+              assaultHelicopterShot,
+            "normal Assault Helicopter deployment binds selected source firing stats to its entity");
         Vector3 assaultSpawnPosition = new(assaultHelicopterSpawn.X,
             assaultHelicopterSpawn.Y, assaultHelicopterSpawn.Z);
         for (ulong routeTick = 62; routeTick <= 100; routeTick++)

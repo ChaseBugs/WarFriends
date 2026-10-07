@@ -36,8 +36,11 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
     private readonly Dictionary<ulong,AssaultHelicopterWaypointState> armyAssaultHelicopterPaths=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyAssaultHelicopterShots=[];
     internal Quaternion? AssaultHelicopterRotation(ulong entityId)
         => armyAssaultHelicopterPaths.TryGetValue(entityId, out var path) ? path.Rotation : null;
+    internal ArmyVehicleShotStats? AssaultHelicopterShot(ulong entityId)
+        => armyAssaultHelicopterShots.GetValueOrDefault(entityId);
     private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
@@ -1436,6 +1439,10 @@ public sealed partial class MatchEngine
                 armyHelicopterShots[entityKey],NextArmyFloat));
             armyHelicopterWeapons.Add(entityKey,new HelicopterTurretWeaponState(NextArmyFloat));
         }
+        if(family.BehaviorType=="AssaultHelicopterBehaviour")
+            armyAssaultHelicopterShots.Add(entityKey,armyCatalog!.ComposeAssaultHelicopterShot(
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyShotSpeedCoefficients?[index]??1f));
         if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
             armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
@@ -3276,6 +3283,7 @@ public sealed partial class MatchEngine
         armyDronePaths.Remove(entityKey);
         armyHelicopterPaths.Remove(entityKey);
         armyAssaultHelicopterPaths.Remove(entityKey);
+        armyAssaultHelicopterShots.Remove(entityKey);
         armyHelicopterOrientations.Remove(entityKey);
         armyHelicopterCrew.Remove(entityKey);
         armyHelicopterCrewMembers.Remove(entityKey);

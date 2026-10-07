@@ -268,6 +268,9 @@ public sealed class BattleCombatContent
                         var family=Army.Families.Single(f=>f.UnitId==p.EquippedArmyUnitIds[i]);
                         if(family.BehaviorType=="DroneBehaviour")
                             _=Army.ComposeDroneShot(p.ArmyNormalUpgradeIndexes[i],special,elite,p.ArmyShotSpeedCoefficients?[i]??1);
+                        else if(family.BehaviorType=="AssaultHelicopterBehaviour")
+                            _=Army.ComposeAssaultHelicopterShot(p.ArmyNormalUpgradeIndexes[i],special,elite,
+                                p.ArmyShotSpeedCoefficients?[i]??1);
                         else if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
                             _=Army.ComposeVehicleShot(family.UnitId,p.ArmyNormalUpgradeIndexes[i],special,elite,
                                 p.ArmyAccuracyCoefficients?[i]??1,p.ArmyShotSpeedCoefficients?[i]??1);

@@ -208,22 +208,28 @@ public sealed class ArmyDeploymentCatalog
     public ArmyVehicleShotStats ComposeVehicleShot(string unitId,int normalIndex,int? specialIndex,
         int? eliteIndex,float accuracyCoefficient=1f,float shotSpeedCoefficient=1f)
         =>ComposeVehicleShotCore(unitId,normalIndex,specialIndex,eliteIndex,
-            accuracyCoefficient,shotSpeedCoefficient,false);
+            accuracyCoefficient,shotSpeedCoefficient,null);
 
     /// <summary>Helicopter.UpgradesLoaded copies the same VehicleBehaviourDefinititon shot fields to its turret.</summary>
     public ArmyVehicleShotStats ComposeHelicopterShot(int normalIndex,int? specialIndex,
         int? eliteIndex,float shotSpeedCoefficient=1f)
         =>ComposeVehicleShotCore("ID_UNIT-HELICOPTER",normalIndex,specialIndex,eliteIndex,
-            1f,shotSpeedCoefficient,true);
+            1f,shotSpeedCoefficient,"HelicopterBehaviour");
+
+    /// <summary>AssaultHelicopter.UpgradesLoaded takes firing cadence from its selected drone upgrade rows.</summary>
+    public ArmyVehicleShotStats ComposeAssaultHelicopterShot(int normalIndex,int? specialIndex,
+        int? eliteIndex,float shotSpeedCoefficient=1f)
+        =>ComposeVehicleShotCore("ID_UNIT-ASSAULTHELI",normalIndex,specialIndex,eliteIndex,
+            1f,shotSpeedCoefficient,"AssaultHelicopterBehaviour");
 
     private ArmyVehicleShotStats ComposeVehicleShotCore(string unitId,int normalIndex,int? specialIndex,
-        int? eliteIndex,float accuracyCoefficient,float shotSpeedCoefficient,bool helicopter)
+        int? eliteIndex,float accuracyCoefficient,float shotSpeedCoefficient,string? requiredAirBehavior)
     {
         var family=Families.SingleOrDefault(f=>f.UnitId==unitId)??
             throw new ArgumentOutOfRangeException(nameof(unitId));
         if(family.VehicleShot==null||family.IsSoldier||
-           (helicopter?family.BehaviorType!="HelicopterBehaviour":family.IsAir))
-            throw new InvalidDataException("Army family has no ground-vehicle shot contract.");
+           (requiredAirBehavior==null?family.IsAir:family.BehaviorType!=requiredAirBehavior))
+            throw new InvalidDataException("Army family has no matching vehicle shot contract.");
         _=BaseStats(unitId,normalIndex);
         if(upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
             throw new InvalidDataException("Vehicle shot upgrade authority is unavailable.");
