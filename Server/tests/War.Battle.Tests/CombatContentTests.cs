@@ -5195,6 +5195,34 @@ internal static class CombatContentTests
                   expectedTurretFlame)<.001f&&
               flameTurretMatch.HeavyTurretHealth(alliedTurret.EntityId)==alliedTurretBefore,
             "one Flame pulse applies one source-part hit to an opposing Heavy Turret only");
+        var mineTurretPart=flameTurretMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(row=>row.HeavyTurret&&row.EntityId==opposingTurret.EntityId);
+        float turretHealthBeforeMine=flameTurretMatch.HeavyTurretHealth(opposingTurret.EntityId)!.Value;
+        ulong turretTriggerCursor=flameTurretMatch.EventBatch(soldierOwner,0).LatestEventId;
+        Check(flameTurretMatch.TryRegisterLandMine(new string('c',32),soldierOwner,
+                  mineTurretPart.Hitbox.Center,10f),
+            "host-only mine placement binds a current opposing Heavy Turret child part");
+        ulong turretTriggerMineId=flameTurretMatch.Snapshot().LandMines.Single().EntityId;
+        flameTurretMatch.Advance(76);
+        Check(flameTurretMatch.Snapshot().LandMines.Count==0&&
+              flameTurretMatch.EventBatch(soldierOwner,turretTriggerCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==turretTriggerMineId&&
+                  row.Reason=="heavy-turret-trigger:"+opposingTurret.EntityId)&&
+              flameTurretMatch.HeavyTurretHealth(opposingTurret.EntityId)<turretHealthBeforeMine,
+            "a non-metal Heavy Turret child part triggers a mine and takes host blast damage");
+        var friendlyTurretPart=flameTurretMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(row=>row.HeavyTurret&&row.EntityId==opposingTurret.EntityId);
+        Check(flameTurretMatch.TryRegisterLandMine(new string('d',32),helicopterOwner,
+                  friendlyTurretPart.Hitbox.Center,10f),
+            "host-only allied mine placement uses the same Heavy Turret child part");
+        ulong friendlyTurretMineId=flameTurretMatch.Snapshot().LandMines.Single().EntityId;
+        flameTurretMatch.Advance(77);
+        Check(flameTurretMatch.Snapshot().LandMines.Any(row=>row.EntityId==friendlyTurretMineId)&&
+              !flameTurretMatch.EventBatch(helicopterOwner,turretTriggerCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==friendlyTurretMineId),
+            "allied Heavy Turret child contact leaves its faction's Land Mine active");
         deathMatch.Admit(soldierOwner);deathMatch.Admit(helicopterOwner);
         deathMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=deathMatch.ManifestHash}});

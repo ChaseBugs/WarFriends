@@ -94,8 +94,12 @@ public sealed partial class MatchEngine
             DecoyMatchEntity? decoyTrigger=null;
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&passengerTrigger==null)
                 decoyTrigger=FindLandMineDecoyTrigger(mine);
+            HeavyTurretMatchEntity? turretTrigger=null;
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
                passengerTrigger==null&&decoyTrigger==null)
+                turretTrigger=FindLandMineHeavyTurretTrigger(mine);
+            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+               passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null)
                 continue;
             if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
                 throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
@@ -123,10 +127,15 @@ public sealed partial class MatchEngine
                 reason="vehicle-passenger-trigger:"+passengerTrigger.Vehicle.EntityId+":"+
                     passengerTrigger.Role;
             }
+            else if(decoyTrigger!=null)
+            {
+                target=decoyTrigger.OwnerPlayerId;
+                reason="decoy-trigger:"+decoyTrigger.EntityId;
+            }
             else
             {
-                target=decoyTrigger!.OwnerPlayerId;
-                reason="decoy-trigger:"+decoyTrigger.EntityId;
+                target=turretTrigger!.OwnerPlayerId;
+                reason="heavy-turret-trigger:"+turretTrigger.EntityId;
             }
             Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
                 mine.EntityId,mine.Position,mine.Damage,reason);
@@ -262,6 +271,28 @@ public sealed partial class MatchEngine
             if(!LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
                    new[]{collider.Hitbox}))continue;
             return decoys.Snapshot().Single(row=>row.EntityId==collider.EntityId);
+        }
+        return null;
+    }
+
+    private HeavyTurretMatchEntity? FindLandMineHeavyTurretTrigger(LandMineMatchEntity mine)
+    {
+        if(heavyTurrets.Snapshot().Count==0)return null;
+        if(heavyTurretSource==null||landMineSource==null)
+            throw new InvalidDataException("Land Mine Heavy Turret trigger lacks source geometry.");
+        var owner=Find(mine.OwnerPlayerId)??
+            throw new InvalidDataException("Land Mine Heavy Turret trigger owner disappeared.");
+
+        foreach(var collider in HeavyTurretShotTargets(owner).OrderBy(row=>row.EntityId)
+            .ThenBy(row=>row.PartComponentFileId))
+        {
+            if(!collider.HeavyTurret)
+                throw new InvalidDataException("Land Mine Heavy Turret trigger changed collision kind.");
+            // TurretBase marks the root metal. These source child parts each
+            // retain non-metal DestroyableObjectpart on the collider itself.
+            if(!LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
+                   new[]{collider.Hitbox}))continue;
+            return heavyTurrets.Snapshot().Single(row=>row.EntityId==collider.EntityId);
         }
         return null;
     }
