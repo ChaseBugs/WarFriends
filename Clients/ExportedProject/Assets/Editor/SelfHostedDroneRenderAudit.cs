@@ -18,6 +18,7 @@ public static class SelfHostedDroneRenderAudit
             var presenter=owner.AddComponent<SelfHostedDronePresenter>();presenter.Configure(source);
             var expectedRotation=Quaternion.Euler(12,35,-7);
             var row=new BattleArmyEntityState{EntityKey=4294967297,UnitId="ID_UNIT-DRONE",X=2,Y=3,Z=4,
+                SpawnTick=60,PositionTick=60,
                 DroneRotation=new BattleJointRotation{X=expectedRotation.x,Y=expectedRotation.y,Z=expectedRotation.z,W=expectedRotation.w}};
             var rows=new List<BattleArmyEntityState>{row};presenter.Apply(rows);
             var visual=GameObject.Find("SelfHostedDrone_4294967297");
@@ -38,9 +39,28 @@ public static class SelfHostedDroneRenderAudit
             Require(targets.All(x=>x.sharedMaterial==source.transparentMaterial),"transparent material");
             row.DroneTransparent=false;presenter.Apply(rows);
             Require(targets.All(x=>x.sharedMaterial==source.visuals.mainRenderer.sharedMaterial),"normal restoration");
+            var nextRotation=Quaternion.Euler(12,75,-7);
+            row.PositionTick=66;
+            row.X=6;
+            row.DroneRotation=new BattleJointRotation{X=nextRotation.x,Y=nextRotation.y,
+                Z=nextRotation.z,W=nextRotation.w};
+            row.DroneTransparent=true;
+            presenter.Apply(rows);
+            Require(Mathf.Abs(visual.transform.position.x-2)<.0001f&&
+                targets.All(x=>x.sharedMaterial==source.transparentMaterial),
+                "new pose waits while host transparency applies immediately");
+            presenter.RenderAt(Time.realtimeSinceStartup+.12f,.016f);
+            Require(Mathf.Abs(visual.transform.position.x-3.6f)<.1f&&
+                Quaternion.Angle(visual.transform.rotation,expectedRotation)>1f&&
+                Quaternion.Angle(visual.transform.rotation,nextRotation)>1f,
+                "host-tick Drone position and rotation interpolate");
+            presenter.RenderAt(Time.realtimeSinceStartup+1.4f,.016f);
+            Require(Vector3.Distance(visual.transform.position,new Vector3(6,3,4))<.01f&&
+                Quaternion.Angle(visual.transform.rotation,nextRotation)<.1f,
+                "remote Drone visual settles on the host pose");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedDrone_4294967297")==null,"roster removal");
-            Debug.Log("UNITY_DRONE_RENDER_PASSED materialTargets="+targets.Length);
+            Debug.Log("UNITY_DRONE_RENDER_PASSED interpolation=True materialTargets="+targets.Length);
             EditorApplication.Exit(0);
         }
         catch(Exception e){Debug.LogError(e);EditorApplication.Exit(1);}
