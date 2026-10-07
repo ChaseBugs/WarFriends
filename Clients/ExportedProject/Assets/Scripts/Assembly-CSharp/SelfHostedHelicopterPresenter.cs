@@ -10,6 +10,7 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
     private sealed class Visual
     {
         public GameObject Root;
+        public SelfHostedRemoteTransformBuffer Transform;
         public Transform Horizontal;
         public Transform Vertical;
         public Rotor[] Rotors;
@@ -44,6 +45,8 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
             if(row.HelicopterRotation==null||row.HelicopterTurretHorizontalLocal==null||
                 row.HelicopterTurretVerticalWorld==null)
                 throw new InvalidOperationException("Authoritative Helicopter pose is incomplete.");
+            if(row.PositionTick<row.SpawnTick)
+                throw new InvalidOperationException("Helicopter visual tick predates spawn.");
             present.Add(row.EntityKey);
             Visual visual;
             if(!active.TryGetValue(row.EntityKey,out visual))
@@ -51,8 +54,14 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
                 visual=Create(row.EntityKey);
                 active.Add(row.EntityKey,visual);
             }
-            visual.Root.transform.position=new Vector3(row.X,row.Y,row.Z);
-            visual.Root.transform.rotation=Rotation(row.HelicopterRotation);
+            var position=new Vector3(row.X,row.Y,row.Z);
+            var rotation=Rotation(row.HelicopterRotation);
+            visual.Transform.Add(row.PositionTick,position,rotation,Time.realtimeSinceStartup);
+            if(visual.Transform.Count==1)
+            {
+                visual.Root.transform.position=position;
+                visual.Root.transform.rotation=rotation;
+            }
             visual.Horizontal.localRotation=Rotation(row.HelicopterTurretHorizontalLocal);
             visual.Vertical.rotation=Rotation(row.HelicopterTurretVerticalWorld);
             if(row.HelicopterGunnerMaxHealth>0)
@@ -66,8 +75,6 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
                 }
             }
             else if(visual.Gunner!=null)visual.Gunner.SetActive(false);
-            if(row.PositionTick<row.SpawnTick)
-                throw new InvalidOperationException("Helicopter visual tick predates spawn.");
             visual.RotorSeconds=(row.PositionTick-row.SpawnTick)/30f;
             visual.SampledAt=Time.unscaledTime;
             SampleRotors(visual,visual.RotorSeconds);
@@ -99,7 +106,8 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
         }
         if(rotors.Count!=3)
             throw new InvalidOperationException("Recovered Helicopter requires three rotor tweens.");
-        return new Visual{Root=root,Horizontal=map[source.turret.jontHorizontal],
+        return new Visual{Root=root,Transform=new SelfHostedRemoteTransformBuffer(),
+            Horizontal=map[source.turret.jontHorizontal],
             Vertical=map[source.turret.jointVertical],Rotors=rotors.ToArray()};
     }
 
@@ -182,6 +190,7 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
 
     private void Update()
     {
+        RenderAt(Time.realtimeSinceStartup,Time.deltaTime);
         foreach(var visual in active.Values)
         {
             SampleRotors(visual,visual.RotorSeconds+
@@ -189,6 +198,12 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
             SampleGunner(visual,visual.GunnerSeconds+
                 Mathf.Max(0f,Time.unscaledTime-visual.SampledAt));
         }
+    }
+
+    public void RenderAt(float realtime,float frameSeconds)
+    {
+        foreach(var visual in active.Values)
+            visual.Transform.Render(visual.Root.transform,realtime,frameSeconds);
     }
 
     private static Quaternion Rotation(BattleJointRotation value)

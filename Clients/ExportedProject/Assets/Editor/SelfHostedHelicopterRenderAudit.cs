@@ -69,6 +69,10 @@ public static class SelfHostedHelicopterRenderAudit
                 .Single(x=>x.name==sourceMuzzle.name);
             Require(Vector3.Distance(sourceMuzzle.position,visualMuzzle.position)<.0002f,
                 "recovered turret joints place the visual muzzle");
+            presenter.Apply(new List<BattleArmyEntityState>());
+            row.PositionTick=60;
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            visual=GameObject.Find("SelfHostedHelicopter_4294967297");
             row.HelicopterGunnerMaxHealth=621;
             row.HelicopterGunnerHealth=621;
             row.HelicopterGunnerSpawnTick=60;
@@ -83,10 +87,10 @@ public static class SelfHostedHelicopterRenderAudit
                 gunner.GetComponentsInChildren<Collider>(true).Length==0&&
                 gunner.GetComponentsInChildren<Rigidbody>(true).Length==0,
                 "gunner visual has no gameplay or collision components");
-            var halfPose=bodySkin.bones.Select(x=>x.localRotation).ToArray();
-            row.PositionTick=60;
-            presenter.Apply(new List<BattleArmyEntityState>{row});
             var startPose=bodySkin.bones.Select(x=>x.localRotation).ToArray();
+            row.PositionTick=75;
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            var halfPose=bodySkin.bones.Select(x=>x.localRotation).ToArray();
             Require(startPose.Where((x,i)=>Quaternion.Angle(x,halfPose[i])>.01f).Any(),
                 "source gunner idle clip changes the copied skeleton");
             row.PositionTick=75;
@@ -105,7 +109,31 @@ public static class SelfHostedHelicopterRenderAudit
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedHelicopter_4294967297")==null,
                 "roster absence removes the visual");
-            Debug.Log("UNITY_HELICOPTER_RENDER_PASSED meshes="+
+            row.PositionTick=60;
+            row.SpawnTick=60;
+            row.X=2;
+            row.HelicopterRotation=Q(body);
+            row.HelicopterGunnerMaxHealth=0;
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            visual=GameObject.Find("SelfHostedHelicopter_4294967297");
+            var nextBody=Quaternion.Euler(8,75,-6);
+            row.PositionTick=66;
+            row.X=6;
+            row.HelicopterRotation=Q(nextBody);
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            Require(Mathf.Abs(visual.transform.position.x-2)<.0001f,
+                "a new host pose waits in the remote visual buffer");
+            presenter.RenderAt(Time.realtimeSinceStartup+.12f,.016f);
+            Require(Mathf.Abs(visual.transform.position.x-3.6f)<.1f&&
+                Quaternion.Angle(visual.transform.rotation,body)>1f&&
+                Quaternion.Angle(visual.transform.rotation,nextBody)>1f,
+                "host-tick flight position and rotation interpolate");
+            presenter.RenderAt(Time.realtimeSinceStartup+1.4f,.016f);
+            Require(Vector3.Distance(visual.transform.position,new Vector3(6,3,4))<.01f&&
+                Quaternion.Angle(visual.transform.rotation,nextBody)<.1f,
+                "remote flight visual settles on the host pose");
+            presenter.Apply(new List<BattleArmyEntityState>());
+            Debug.Log("UNITY_HELICOPTER_RENDER_PASSED interpolation=True meshes="+
                 prefab.GetComponentsInChildren<MeshFilter>(true).Length+
                 " turret=True rotors="+rotorChecks+" gunner=True removal=True");
             EditorApplication.Exit(0);
