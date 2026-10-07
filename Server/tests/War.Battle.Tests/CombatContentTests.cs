@@ -35,6 +35,7 @@ internal static class CombatContentTests
             directory, catalog, army, contentRevision);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
+        int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -53,7 +54,7 @@ internal static class CombatContentTests
                 "An event beyond the source mission timer was accepted.");
             return 4 + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
-                allocationAssertions + mapAssertions + navMeshAssertions;
+                allocationAssertions + mapAssertions + navMeshAssertions + routeAssertions;
         }
         finally
         {
@@ -632,6 +633,53 @@ internal static class CombatContentTests
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
         return 29;
+    }
+
+    private static int VerifyCoopNavMeshRoutes(string directory, MissionCatalog missions)
+    {
+        CoopSpawnPointCatalog spawns = CoopSpawnPointCatalog.Load(Path.Combine(
+            directory, "recovered-coop-spawn-points.json"), missions);
+        CoopNavMeshSourceCatalog navigation = CoopNavMeshSourceCatalog.Load(
+            Path.Combine(directory, "recovered-coop-navmesh-sources.json"), missions);
+        string path = Path.Combine(directory, "recovered-coop-navmesh-paths.json");
+        CoopNavMeshPathCatalog routes = CoopNavMeshPathCatalog.Load(
+            path, missions, spawns, navigation);
+        if (routes.Maps.Count != 5 ||
+            routes.Maps.Sum(map => map.Routes.Count) != 60 ||
+            routes.MapForMission(missions, 0).Between(1, 0).To != 0 ||
+            routes.MapForMission(missions, 74).Between(2, 3).From != 2 ||
+            routes.Maps[2].Routes.All(route => route.Corners.Count != 3))
+            throw new Exception("Co-op defend routes differ from Unity's source paths.");
+
+        string temporaryDirectory = Path.Combine(Path.GetTempPath(),
+            $"war-coop-routes-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(temporaryDirectory);
+        try
+        {
+            foreach (string filename in new[] { "recovered-coop-spawn-points.json",
+                         "recovered-coop-navmesh-sources.json" })
+                File.Copy(Path.Combine(directory, filename),
+                    Path.Combine(temporaryDirectory, filename));
+            JsonNode damaged = JsonNode.Parse(File.ReadAllText(path))!;
+            damaged["maps"]![0]!["routes"]![0]!["corners"]![0]![0] = 9000;
+            string damagedPath = Path.Combine(temporaryDirectory,
+                Path.GetFileName(path));
+            File.WriteAllText(damagedPath, damaged.ToJsonString());
+            try
+            {
+                _ = CoopNavMeshPathCatalog.Load(damagedPath,
+                    missions, spawns, navigation);
+                throw new Exception("A route detached from its source shield was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return 5;
+            }
+        }
+        finally
+        {
+            Directory.Delete(temporaryDirectory, recursive: true);
+        }
     }
 
     private static int VerifyCoopNavMeshSources(string directory, MissionCatalog missions)
