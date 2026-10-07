@@ -9,9 +9,43 @@ using War.Protocol;
 
 internal static class CombatContentTests
 {
+    private static int VerifyMissionCatalog(string directory)
+    {
+        string path = Path.Combine(directory, "recovered-mission-catalog.json");
+        MissionCatalog catalog = MissionCatalog.Load(path);
+        if (catalog.Missions.Count != 75 ||
+            catalog.Get(0).MissionType != "KillXEnemies" ||
+            catalog.Get(0).Objective != 10 ||
+            catalog.Get(74).MissionType != "KillOpponent")
+            throw new Exception("Recovered mission rules did not load in source order.");
+
+        string temporaryPath = Path.Combine(Path.GetTempPath(),
+            $"war-mission-catalog-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode document = JsonNode.Parse(File.ReadAllText(path))!;
+            document["missions"]![0]!["rewardGold"] = -1;
+            File.WriteAllText(temporaryPath, document.ToJsonString());
+            try
+            {
+                _ = MissionCatalog.Load(temporaryPath);
+                throw new Exception("A corrupt mission reward was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return 2;
+            }
+        }
+        finally
+        {
+            File.Delete(temporaryPath);
+        }
+    }
+
     internal static int Run(string directory)
     {
         int count=0;
+        count += VerifyMissionCatalog(directory);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
         void Reject(Action action) { try { action(); } catch (InvalidDataException) { count++;return; } throw new Exception("Invalid combat allocation accepted."); }
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),
