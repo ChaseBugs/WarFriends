@@ -2738,23 +2738,45 @@ internal static class CombatContentTests
             Check(arenaBattle.TryGetSettlement("99999999999999999999999999999999",out var firstArenaWin)&&!firstArenaWin,
                   "War Arena retains the first settlement outcome for deterministic replay");
             Reject(()=>new WarArenaBattleState(0));
+            const string coopFirst="11111111111111111111111111111111";
+            const string coopSecond="22222222222222222222222222222222";
             var coop=new CoopMissionState(2);
-            Check(coop.AdvanceWave("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",true)&&coop.Wave==2&&
+            Check(!coop.AdvanceWave("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",true)&&coop.Wave==1&&
+                  coop.Admit(coopFirst)&&coop.Admit(coopSecond)&&
+                  coop.MarkReady(coopFirst)&&coop.MarkReady(coopSecond)&&coop.Started&&
+                  coop.AdvanceWave("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",true)&&coop.Wave==2&&
                   !coop.AdvanceWave("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",true)&&
                   coop.AdvanceWave("cccccccccccccccccccccccccccccccc",true)&&coop.Completed,
-                  "co-op mission waves advance once per event and complete after the authoritative final wave");
+                  "co-op waves require both ready participants and advance once per event");
             var coopLeave=new CoopMissionState(3);
-            Check(coopLeave.Admit("11111111111111111111111111111111")&&coopLeave.Admit("22222222222222222222222222222222")&&
-                  coopLeave.MarkReady("11111111111111111111111111111111")&&coopLeave.MarkReady("22222222222222222222222222222222")&&
-                  coopLeave.Started&&coopLeave.Leave("11111111111111111111111111111111")&&coopLeave.Failed,
+            Check(coopLeave.Admit(coopFirst)&&coopLeave.Admit(coopSecond)&&
+                  coopLeave.MarkReady(coopFirst)&&coopLeave.MarkReady(coopSecond)&&
+                  coopLeave.Started&&coopLeave.Leave(coopFirst)&&coopLeave.Failed&&
+                  !coopLeave.AdvanceWave("dddddddddddddddddddddddddddddddd",true),
                   "co-op participant departure fails a started mission authoritatively");
+            coopLeave.Validate();
+            var canonicalCoop=new CoopMissionState(1);
+            Check(canonicalCoop.Admit("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")&&
+                  !canonicalCoop.Admit("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")&&
+                  canonicalCoop.Admit(coopSecond)&&
+                  canonicalCoop.MarkReady("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")&&
+                  canonicalCoop.MarkReady(coopSecond)&&
+                  !canonicalCoop.AdvanceWave("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",true)&&
+                  canonicalCoop.AdvanceWave("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",true),
+                  "co-op identity and wave receipts require canonical lowercase GUIDs");
+            canonicalCoop.Validate();
             var failedCoop=new CoopMissionState(2);
-            Check(failedCoop.AdvanceWave("dddddddddddddddddddddddddddddddd",false)&&failedCoop.Failed&&
+            Check(failedCoop.Admit(coopFirst)&&failedCoop.Admit(coopSecond)&&
+                  failedCoop.MarkReady(coopFirst)&&failedCoop.MarkReady(coopSecond)&&
+                  failedCoop.AdvanceWave("dddddddddddddddddddddddddddddddd",false)&&failedCoop.Failed&&
                   !failedCoop.AdvanceWave("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",true),
                   "co-op mission failure closes later progression");
             var timedCoop=new CoopMissionState(3,100);
-            Check(!timedCoop.AdvanceClock(99)&&timedCoop.AdvanceClock(100)&&timedCoop.Failed,
-                  "co-op mission deadline produces a server-owned terminal timeout");
+            Check(!timedCoop.AdvanceClock(100)&&timedCoop.Admit(coopFirst)&&
+                  timedCoop.Admit(coopSecond)&&timedCoop.MarkReady(coopFirst)&&
+                  timedCoop.MarkReady(coopSecond)&&!timedCoop.AdvanceClock(99)&&
+                  timedCoop.AdvanceClock(100)&&timedCoop.Failed,
+                  "co-op deadline starts only after both participants are ready");
             Check(CoopMissionModifiersValidator.Validate(new CoopMissionModifiers(true,true,true)).Heroic,
                   "co-op heroic modifiers accept only a coherent server-defined combination");
             Reject(()=>CoopMissionModifiersValidator.Validate(new CoopMissionModifiers(false,true,false)));
