@@ -54,6 +54,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private int reconnectAttempts;
     private float nextReconnectAttempt;
     private bool reconnectFailureReported;
+    private bool forfeitCommandPending;
     private bool cardsSelectedByBothRaised;
     private readonly SemaphoreSlim eventDelivery = new SemaphoreSlim(1, 1);
     private readonly Dictionary<string, SelfHostedRiflePoseRenderer> rifleViews = new Dictionary<string, SelfHostedRiflePoseRenderer>(StringComparer.Ordinal);
@@ -472,21 +473,27 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         Exception lastFailure = null;
         for (int attempt = 0; attempt < 3 && !destroyed; attempt++)
         {
-            if (State != null && (State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted)) return;
+            if (State != null && (State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted))
+            { forfeitCommandPending = false; return; }
             try
             {
                 if (!IsConnected) await ReconnectWithRecoveredSession();
-                await Forfeit();
+                if (forfeitCommandPending)
+                    await RetryPending(); // Same command ID if the terminal reply was lost.
+                else
+                {
+                    forfeitCommandPending = true;
+                    await Forfeit();
+                }
+                forfeitCommandPending = false;
                 return; // Apply publishes the Worker's terminal snapshot.
             }
             catch (Exception failure)
             {
                 lastFailure = failure;
-                if (failure is TimeoutException)
-                {
-                    IsConnected = false;
-                    if (reconnectRequestId == null) reconnectRequestId = Guid.NewGuid().ToString("N");
-                }
+                // A consumed Forfeit makes the match terminal; the Worker will
+                // not issue another reconnect grant. Retry its original receipt
+                // on this session before considering any transport replacement.
                 if (reconnectFailureReported || destroyed) break;
                 await Task.Delay(500);
             }
@@ -760,6 +767,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (matchmaking != null) matchmaking.Cancel();
         reconnectRequestId = null;
         reconnectAttempts = 0;
+        forfeitCommandPending = false;
         if (armyManager != null) { armyManager.UnbindSelfHosted(this); armyManager = null; }
         if (lifetime != null) { lifetime.Cancel(); lifetime.Dispose(); lifetime = null; }
         if (roomLifecycle != null)

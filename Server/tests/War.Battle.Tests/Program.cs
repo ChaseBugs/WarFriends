@@ -2191,15 +2191,19 @@ if (args.Length == 3 && args[0] == "--unity")
     string grantsFile = Path.Combine(Path.GetTempPath(), "war-grants-" + Guid.NewGuid().ToString("N") + ".jsonl");
     string reconnectFile = Path.Combine(Path.GetTempPath(), "war-reconnect-" + Guid.NewGuid().ToString("N") + ".json");
     string dropPollFile = Path.Combine(Path.GetTempPath(), "war-drop-poll-" + Guid.NewGuid().ToString("N"));
+    string dropForfeitFile = Path.Combine(Path.GetTempPath(), "war-drop-forfeit-" + Guid.NewGuid().ToString("N"));
     string unityLog = Path.GetFullPath("Server/.local/unity-battle-sdk.log");
     Directory.CreateDirectory(Path.GetDirectoryName(unityLog)!);
     using var unityProxy = new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
     using var unityProxyStop = new CancellationTokenSource();
     int unityProxyPort = ((IPEndPoint)unityProxy.Client.LocalEndPoint!).Port;
+    const ulong initialUnitySession = 201;
+    int droppedForfeitReplies = 0;
     var unityWorkerEndpoint = new IPEndPoint(IPAddress.Loopback,port);
     Task unityRelay = Task.Run(async () =>
     {
         IPEndPoint? unityClient = null;
+        DateTime? dropForfeitUntil = null;
         try
         {
             while (!unityProxyStop.IsCancellationRequested)
@@ -2208,7 +2212,17 @@ if (args.Length == 3 && args[0] == "--unity")
                 if (datagram.RemoteEndPoint.Equals(unityWorkerEndpoint))
                 {
                     var packet = PacketCodec.ReadUntrusted(datagram.Buffer);
-                    if (File.Exists(dropPollFile) && packet?.MatchReply?.Code == "state") continue;
+                    if (File.Exists(dropPollFile) && packet?.SessionId == initialUnitySession &&
+                        packet.MatchReply?.Code == "state") continue;
+                    if (File.Exists(dropForfeitFile) && packet?.MatchReply?.Code == "forfeited")
+                    {
+                        if (dropForfeitUntil == null) dropForfeitUntil = DateTime.UtcNow.AddMilliseconds(3300);
+                        if (DateTime.UtcNow < dropForfeitUntil.Value)
+                        {
+                            Interlocked.Increment(ref droppedForfeitReplies);
+                            continue;
+                        }
+                    }
                     if (unityClient != null)
                         await unityProxy.SendAsync(datagram.Buffer,unityClient,unityProxyStop.Token);
                 }
@@ -2229,7 +2243,7 @@ if (args.Length == 3 && args[0] == "--unity")
         claims.ExpiresUnixSeconds = claims.IssuedUnixSeconds + 120;
         return Grant(claims, port);
     }
-    var unityFirstGrant = UnityGrant(a,201);
+    var unityFirstGrant = UnityGrant(a,initialUnitySession);
     unityFirstGrant.Port = (uint)unityProxyPort;
     await File.WriteAllLinesAsync(grantsFile,
         [JsonFormatter.Default.Format(unityFirstGrant),JsonFormatter.Default.Format(UnityGrant(b,202))]);
@@ -2268,8 +2282,10 @@ if (args.Length == 3 && args[0] == "--unity")
                 if (result.Code == "reconnect-issued")
                 {
                     string pendingFile = reconnectFile + ".tmp";
+                    var replacementGrant = result.Grants!.Single().Clone();
+                    replacementGrant.Port = (uint)unityProxyPort;
                     await File.WriteAllTextAsync(pendingFile,
-                        JsonFormatter.Default.Format(result.Grants!.Single()));
+                        JsonFormatter.Default.Format(replacementGrant));
                     File.Move(pendingFile, reconnectFile);
                     return;
                 }
@@ -2288,11 +2304,14 @@ if (args.Length == 3 && args[0] == "--unity")
         start.Environment["WAR_BATTLE_RECONNECT_FILE"] = reconnectFile;
         start.Environment["WAR_BATTLE_AUTO_BACKEND"] = auditBackend.Urls.Single() + "/";
         start.Environment["WAR_BATTLE_DROP_POLL_FILE"] = dropPollFile;
+        start.Environment["WAR_BATTLE_DROP_FORFEIT_FILE"] = dropForfeitFile;
         editor = System.Diagnostics.Process.Start(start) ?? throw new Exception("Unity did not start.");
         using var unityTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(110));
         await editor.WaitForExitAsync(unityTimeout.Token);
         await deliverReconnect;
-        Check(editor.ExitCode == 0 && (await File.ReadAllTextAsync(unityLog)).Contains("UNITY_BATTLE_SDK_PASSED"), "actual Unity Mono SDK audit");
+        Check(editor.ExitCode == 0 && (await File.ReadAllTextAsync(unityLog)).Contains("UNITY_BATTLE_SDK_PASSED") &&
+            Volatile.Read(ref droppedForfeitReplies) > 0,
+            "actual Unity Mono SDK recovers dropped terminal Forfeit replies");
         Console.WriteLine("PASS: actual Unity Mono battle SDK; log " + unityLog);
     }
     finally
@@ -2303,7 +2322,7 @@ if (args.Length == 3 && args[0] == "--unity")
         unityProxyStop.Cancel(); await unityRelay;
         await unityWorker.StopAsync(CancellationToken.None);
         File.Delete(grantsFile); File.Delete(reconnectFile);
-        File.Delete(reconnectFile + ".tmp"); File.Delete(dropPollFile); File.Delete(manifestFile);
+        File.Delete(reconnectFile + ".tmp"); File.Delete(dropPollFile); File.Delete(dropForfeitFile); File.Delete(manifestFile);
         Directory.Delete(unityOutboxPath,true);
     }
 }

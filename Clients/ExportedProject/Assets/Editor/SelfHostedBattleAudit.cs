@@ -20,9 +20,11 @@ public static class SelfHostedBattleAudit
         string reconnectPath = Environment.GetEnvironmentVariable("WAR_BATTLE_RECONNECT_FILE");
         string backendUrl = Environment.GetEnvironmentVariable("WAR_BATTLE_AUTO_BACKEND");
         string dropPollPath = Environment.GetEnvironmentVariable("WAR_BATTLE_DROP_POLL_FILE");
+        string dropForfeitPath = Environment.GetEnvironmentVariable("WAR_BATTLE_DROP_FORFEIT_FILE");
         if (string.IsNullOrEmpty(path)) throw new InvalidOperationException("Set WAR_BATTLE_GRANTS_FILE.");
         if (string.IsNullOrEmpty(reconnectPath)) throw new InvalidOperationException("Set WAR_BATTLE_RECONNECT_FILE.");
-        if (string.IsNullOrEmpty(backendUrl) || string.IsNullOrEmpty(dropPollPath))
+        if (string.IsNullOrEmpty(backendUrl) || string.IsNullOrEmpty(dropPollPath) ||
+            string.IsNullOrEmpty(dropForfeitPath))
             throw new InvalidOperationException("Set automatic reconnect audit endpoints.");
         string[] lines = File.ReadAllLines(path);
         if (lines.Length != 2) throw new InvalidOperationException("Expected two protobuf-JSON grants.");
@@ -33,11 +35,11 @@ public static class SelfHostedBattleAudit
         CheckEventSnapshotBoundary();
         CheckAnimationAliases();
         deadline = EditorApplication.timeSinceStartup + 50;
-        audit = Check(a, b, reconnectPath, backendUrl, dropPollPath);
+        audit = Check(a, b, reconnectPath, backendUrl, dropPollPath, dropForfeitPath);
         EditorApplication.update += Update;
     }
     private static async Task Check(MatchConnectionGrant a, MatchConnectionGrant b,
-        string reconnectPath, string backendUrl, string dropPollPath)
+        string reconnectPath, string backendUrl, string dropPollPath, string dropForfeitPath)
     {
         var owner = new GameObject("SelfHostedBattleAudit");
         var first = owner.AddComponent<SelfHostedBattleClient>();
@@ -94,10 +96,12 @@ public static class SelfHostedBattleAudit
             await first.Reload();
             Require(first.State.Players[0].LastCommandId == 3,
                 "Unity command sequence continues after fresh Worker admission");
+            File.WriteAllText(dropForfeitPath, "drop");
             await first.ForfeitWithRecovery();
             Require(first.State.Phase == BattlePhase.Ended &&
-                first.State.WinnerPlayerId == b.PlayerId && !first.State.RewardEligible,
-                "local forfeit is confirmed by an unscored Worker terminal snapshot");
+                first.State.WinnerPlayerId == b.PlayerId && !first.State.RewardEligible &&
+                first.State.Players[0].LastCommandId == 4,
+                "lost Forfeit reply replays one command and confirms the Worker terminal snapshot");
             var state = await second.PollAsync(ct.Token);
             Require(state.Snapshot.Phase == BattlePhase.Ended && updates >= 5,
                 "both participants observe the authoritative forfeit");
