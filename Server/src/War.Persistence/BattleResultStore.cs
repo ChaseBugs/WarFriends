@@ -1,6 +1,7 @@
 using MongoDB.Driver;
 using War.BattleServer;
 using War.Shared;
+using War.Protocol;
 
 namespace War.Persistence;
 
@@ -137,6 +138,8 @@ public sealed class BattleResultStore
         var row = await Get(matchId!, ct);
         if (row == null) return "missing";
         if (!string.Equals(row.Digest, digest, StringComparison.Ordinal)) return "conflict";
+        if (TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId,row.Digest).Phase!=BattlePhase.Ended)
+            throw new InvalidDataException("An aborted battle cannot be marked scored.");
         if (row.Scored) return "already-scored";
         var update = Builders<BattleResultDocument>.Update.Set(x => x.Scored, true).Set(x => x.ScoredUtc, DateTime.UtcNow);
         var result = await results.UpdateOneAsync(Exact(row), update, cancellationToken: ct);
@@ -166,6 +169,8 @@ public sealed class BattleResultStore
                 scored<row.AcceptedUtc || scored>now : row.ScoredUtc!=null) ||
             TerminalResultDigest.Compute(row.Snapshot)!=row.Digest)
             throw new InvalidDataException("Invalid persisted battle result.");
-        TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId!,row.Digest!);
+        var terminal=TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId!,row.Digest!);
+        if(row.Scored && terminal.Phase!=BattlePhase.Ended)
+            throw new InvalidDataException("An aborted battle has a scored marker.");
     }
 }

@@ -165,10 +165,24 @@ internal static class BattleManifestSnapshotTests
             if(await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null)
                 throw new Exception("Invalid direct result-store payload was persisted.");
             await resultStore.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None);
+            try {await resultStore.ReconcileScored(rematch.MatchId!,rematchDigest,CancellationToken.None);
+                throw new Exception("Aborted result was marked scored.");}
+            catch(InvalidDataException){}
+            if((await resultStore.Get(rematch.MatchId!,CancellationToken.None))?.Scored!=false)
+                throw new Exception("Rejected abort scoring changed its durable marker.");
             try {await resultStore.GetOutcomeStats(rematch.MatchId!,CancellationToken.None);
                 throw new Exception("Aborted terminal result projected a Client win or loss.");}
             catch(InvalidDataException){}
             var resultRows=mongo.GetDatabase(database).GetCollection<BattleResultDocument>("battle_results");
+            await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Scored,true)
+                    .Set(x=>x.ScoredUtc,DateTime.UtcNow));
+            try {await resultStore.Get(rematch.MatchId!,CancellationToken.None);
+                throw new Exception("Forged scored abort was returned as durable authority.");}
+            catch(InvalidDataException){}
+            await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Scored,false)
+                    .Set(x=>x.ScoredUtc,(DateTime?)null));
             await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
                 Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,new byte[]{1,2,3}));
             try {await resumedAcceptance.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None);
@@ -270,13 +284,24 @@ internal static class BattleManifestSnapshotTests
             try {await queue.Join(changing,"policy-third.fixture",expiryNow,CancellationToken.None);
                 throw new Exception("Active queue ticket accepted a different server compatibility key.");}
             catch(InvalidDataException){}
+            var scoringTerminal=rematchTerminal.Clone();
+            scoringTerminal.MatchId="score-race-"+Guid.NewGuid().ToString("N");
+            scoringTerminal.Phase=BattlePhase.Ended;
+            scoringTerminal.TerminalReason="forfeit";
+            scoringTerminal.WinnerPlayerId=players[0];
+            (byte[] scoringPayload,string scoringDigest)=Evidence(scoringTerminal);
+            if(await resultStore.Accept(scoringTerminal.MatchId,scoringDigest,scoringPayload,
+                CancellationToken.None)!="accepted")
+                throw new Exception("Completed scoring fixture was not persisted.");
             var scoring=await Task.WhenAll(Enumerable.Range(0,8).Select(_=>
-                new BattleResultStore(uri,database).ReconcileScored(rematch.MatchId!,rematchDigest,CancellationToken.None)));
+                new BattleResultStore(uri,database).ReconcileScored(scoringTerminal.MatchId,
+                    scoringDigest,CancellationToken.None)));
             if(scoring.Count(x=>x=="scored")!=1 || scoring.Count(x=>x=="already-scored")!=7)
                 throw new Exception("Concurrent result scoring did not retain one durable winner.");
-            if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=2 ||
+            if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=3 ||
                await resultStore.Get(match,CancellationToken.None)!=null ||
-               await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null)
+               await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null ||
+               await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None)!=null)
                 throw new Exception("Validated result archival did not remove the exact due rows.");
             Console.WriteLine("PASS: Mongo queue authority and exact-result scoring/archival survive concurrent stores and restart");
         }
