@@ -1742,6 +1742,8 @@ int proxyPort = ((IPEndPoint)proxy.Client.LocalEndPoint!).Port;
 bool dropped = false;
 int reorderPoll=0;
 byte[]? delayedPollReply=null;
+bool injectUnconsumedReply=false;
+bool injectedUnconsumedReply=false;
 Task relay = Task.Run(async () =>
 {
     IPEndPoint? client = null;
@@ -1754,6 +1756,20 @@ Task relay = Task.Run(async () =>
             {
                 var packet = PacketCodec.ReadUntrusted(datagram.Buffer);
                 if (!dropped && packet?.MatchReply?.Code == "shot-accepted") { dropped = true; continue; }
+                if(injectUnconsumedReply && !injectedUnconsumedReply &&
+                   packet?.MatchReply?.CommandId==3 && packet.MatchReply.Snapshot!=null)
+                {
+                    // Keep the server's signed reply ID but make its local
+                    // snapshot show that command 3 was not consumed.
+                    var forged=packet.Clone();
+                    var localRow=forged.MatchReply.Snapshot.Players.Single(player=>player.PlayerId==a);
+                    localRow.LastCommandId=2;
+                    injectedUnconsumedReply=true;
+                    if(client!=null)
+                        await proxy.SendAsync(PacketCodec.Encode(forged,tokens.SessionKey(claimsA)),
+                            client,proxyStop.Token);
+                    continue;
+                }
                 if(reorderPoll==1 && packet?.MatchReply?.Code=="state")
                 {delayedPollReply=datagram.Buffer;reorderPoll=2;continue;}
                 if(reorderPoll==2 && packet?.MatchReply?.Code=="state" && delayedPollReply!=null)
@@ -1801,6 +1817,17 @@ try
         "loss proxy delivered the newer poll reply before its delayed predecessor");
     Check((await sdkA.PollAsync(CancellationToken.None)).Snapshot.Players[0].ShotsFired == 1,
         "SDK ignores a reordered stale poll response on the next request");
+    injectUnconsumedReply=true;
+    bool rejectedUnconsumed=false;
+    try { await sdkA.ReloadAsync(CancellationToken.None); }
+    catch(InvalidOperationException error) when(error.Message.Contains("did not consume"))
+    { rejectedUnconsumed=true; }
+    Check(injectedUnconsumedReply&&rejectedUnconsumed,
+        "SDK rejects a signed reply whose local snapshot did not consume the command");
+    var recoveredReload=await sdkA.RetryPendingAsync(CancellationToken.None);
+    Check(recoveredReload.CommandId==3&&
+          recoveredReload.Snapshot.Players.Single(player=>player.PlayerId==a).LastCommandId==3,
+        "SDK retries the same command ID and accepts the server's original receipt");
     Check((await sdkB.ForfeitAsync(CancellationToken.None)).Snapshot.WinnerPlayerId == a, "SDK terminal projection");
 }
 finally
