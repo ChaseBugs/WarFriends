@@ -7,7 +7,13 @@ using War.Protocol;
 // collision and health; copied objects have no gameplay scripts or colliders.
 public sealed class SelfHostedGroundVehiclePresenter : MonoBehaviour
 {
-    private readonly Dictionary<ulong,GameObject> active=new Dictionary<ulong,GameObject>();
+    private sealed class Visual
+    {
+        public GameObject Root;
+        public SelfHostedRemoteTransformBuffer Transform;
+    }
+
+    private readonly Dictionary<ulong,Visual> active=new Dictionary<ulong,Visual>();
     private readonly Dictionary<string,Transform> prefabs=new Dictionary<string,Transform>();
 
     public void Configure(ObjectPoolDatabase pool)
@@ -41,23 +47,44 @@ public sealed class SelfHostedGroundVehiclePresenter : MonoBehaviour
                 throw new InvalidOperationException("Authoritative vehicle facing is invalid.");
 
             present.Add(vehicle.EntityId);
-            GameObject visual;
+            Visual visual;
             if(!active.TryGetValue(vehicle.EntityId,out visual))
             {
-                visual=Create(prefab,vehicle.EntityId);
+                visual=new Visual
+                {
+                    Root=Create(prefab,vehicle.EntityId),
+                    Transform=new SelfHostedRemoteTransformBuffer()
+                };
                 active.Add(vehicle.EntityId,visual);
             }
-            visual.transform.position=new Vector3(vehicle.X,vehicle.Y,vehicle.Z);
-            visual.transform.rotation=Quaternion.LookRotation(facing,Vector3.up);
+            Vector3 position=new Vector3(vehicle.X,vehicle.Y,vehicle.Z);
+            Quaternion rotation=Quaternion.LookRotation(facing,Vector3.up);
+            visual.Transform.Add(snapshot.ServerTick,position,rotation,Time.realtimeSinceStartup);
+            if(visual.Transform.Count==1)
+            {
+                visual.Root.transform.position=position;
+                visual.Root.transform.rotation=rotation;
+            }
         }
 
         var removed=new List<ulong>();
         foreach(var pair in active)if(!present.Contains(pair.Key))removed.Add(pair.Key);
         foreach(ulong id in removed)
         {
-            DestroyVisual(active[id]);
+            DestroyVisual(active[id].Root);
             active.Remove(id);
         }
+    }
+
+    private void Update()
+    {
+        RenderAt(Time.realtimeSinceStartup,Time.deltaTime);
+    }
+
+    public void RenderAt(float realtime,float frameSeconds)
+    {
+        foreach(Visual visual in active.Values)
+            visual.Transform.Render(visual.Root.transform,realtime,frameSeconds);
     }
 
     private static GameObject Create(Transform prefab,ulong entityId)
@@ -100,7 +127,7 @@ public sealed class SelfHostedGroundVehiclePresenter : MonoBehaviour
 
     private void OnDestroy()
     {
-        foreach(GameObject visual in active.Values)DestroyVisual(visual);
+        foreach(Visual visual in active.Values)DestroyVisual(visual.Root);
         active.Clear();
     }
 

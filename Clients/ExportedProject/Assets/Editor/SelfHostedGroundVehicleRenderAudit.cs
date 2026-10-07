@@ -18,7 +18,7 @@ public static class SelfHostedGroundVehicleRenderAudit
             var presenter=owner.AddComponent<SelfHostedGroundVehiclePresenter>();
             presenter.Configure(humvee,tank,buggy,transporter);
 
-            var snapshot=new MatchSnapshot();
+            var snapshot=new MatchSnapshot{ServerTick=60};
             Add(snapshot,41,"ID_UNIT-HUMVEE",1,0,0);
             Add(snapshot,42,"ID_UNIT-TANK",2,0,0);
             Add(snapshot,43,"ID_UNIT-BUGGY",3,0,0);
@@ -31,11 +31,37 @@ public static class SelfHostedGroundVehicleRenderAudit
             CheckVisual(42,tank,new Vector3(2,0,0),Vector3.right);
             CheckVisual(43,buggy,new Vector3(3,0,0),Vector3.forward);
             CheckVisual(44,transporter,new Vector3(4,0,0),Vector3.forward);
+            snapshot.ServerTick=66;
+            for(int index=0;index<snapshot.Vehicles.Count;index++)
+                snapshot.Vehicles[index].X+=4;
+            snapshot.Vehicles[1].FacingX=0;
+            snapshot.Vehicles[1].FacingZ=1;
+            presenter.Apply(snapshot);
+            var moving=GameObject.Find("SelfHostedVehicle_42");
+            for(int index=0;index<snapshot.Vehicles.Count;index++)
+                Require(Mathf.Abs(GameObject.Find("SelfHostedVehicle_"+(ulong)(41+index))
+                    .transform.position.x-(index+1))<.0001f,
+                    "new vehicle pose waits in the remote visual buffer: "+index);
+            presenter.RenderAt(Time.realtimeSinceStartup+.12f,.016f);
+            for(int index=0;index<snapshot.Vehicles.Count;index++)
+                Require(Mathf.Abs(GameObject.Find("SelfHostedVehicle_"+(ulong)(41+index))
+                    .transform.position.x-(index+2.6f))<.1f,
+                    "host-tick vehicle position interpolates: "+index);
+            Require(Vector3.Dot(moving.transform.forward,Vector3.right)<.999f&&
+                Vector3.Dot(moving.transform.forward,Vector3.forward)<.999f,
+                "host-tick Tank facing interpolates");
+            presenter.RenderAt(Time.realtimeSinceStartup+1.4f,.016f);
+            for(int index=0;index<snapshot.Vehicles.Count;index++)
+                Require(Mathf.Abs(GameObject.Find("SelfHostedVehicle_"+(ulong)(41+index))
+                    .transform.position.x-(index+5))<.01f,
+                    "remote vehicle visual settles on the host pose: "+index);
+            Require(Vector3.Dot(moving.transform.forward,Vector3.forward)>.999f,
+                "Tank facing settles on the host pose");
             presenter.Apply(new MatchSnapshot());
             for(ulong id=41;id<=44;id++)
                 Require(GameObject.Find("SelfHostedVehicle_"+id)==null,"snapshot removal "+id);
 
-            Debug.Log("UNITY_GROUND_VEHICLE_RENDER_PASSED families=4 meshIdentity=True scriptFree=True facing=True removal=True");
+            Debug.Log("UNITY_GROUND_VEHICLE_RENDER_PASSED families=4 meshIdentity=True scriptFree=True facing=True interpolation=True removal=True");
             EditorApplication.Exit(0);
         }
         catch(Exception exception)
