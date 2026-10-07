@@ -25,6 +25,7 @@ internal static class CombatContentTests
         int objectiveAssertions = VerifyMissionObjectives(catalog);
         int scoreAssertions = VerifyMissionScoring(catalog);
         int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
+        int eventAssertions = VerifyMissionTimedEvents(catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -41,7 +42,8 @@ internal static class CombatContentTests
                 firstMission["timeSeconds"]!.GetValue<int>() + 1;
             RejectMissionCatalog(temporaryPath, document,
                 "An event beyond the source mission timer was accepted.");
-            return 4 + objectiveAssertions + scoreAssertions + spawnAssertions;
+            return 4 + objectiveAssertions + scoreAssertions +
+                spawnAssertions + eventAssertions;
         }
         finally
         {
@@ -138,23 +140,76 @@ internal static class CombatContentTests
     {
         MissionRule firstMission = catalog.Get(0);
         var spawns = catalog.CreateAutomaticSpawnState(firstMission.Index);
-        if (spawns.EligibleBehaviourIndexes().Count != 2 ||
-            !spawns.ConfirmSpawn(0, 101) ||
-            !spawns.ConfirmSpawn(0, 102) ||
-            !spawns.ConfirmSpawn(0, 103) ||
-            spawns.ConfirmSpawn(0, 104))
+        if (spawns.EligibleBehaviourIndexes(100).Count != 0 ||
+            !spawns.Start(100) || spawns.Start(100) ||
+            spawns.EligibleBehaviourIndexes(100).Count != 2 ||
+            !spawns.ConfirmSpawn(0, 101, 100) ||
+            !spawns.ConfirmSpawn(0, 102, 100) ||
+            !spawns.ConfirmSpawn(0, 103, 100) ||
+            spawns.ConfirmSpawn(0, 104, 100))
             throw new Exception("The source mission limit counts all generated units.");
 
-        if (!spawns.ConfirmSpawn(1, 201) || !spawns.ConfirmSpawn(1, 202) ||
+        if (!spawns.ConfirmSpawn(1, 201, 100) || !spawns.ConfirmSpawn(1, 202, 100) ||
             spawns.LiveCount != firstMission.MaxUnitsAtOnce ||
-            spawns.ConfirmSpawn(1, 203))
+            spawns.ConfirmSpawn(1, 203, 100))
             throw new Exception("The source scene and global limits cap living AI.");
 
         if (!spawns.ConfirmDeath(201) || spawns.ConfirmDeath(201) ||
-            !spawns.ConfirmSpawn(1, 203) || spawns.ConfirmSpawn(1, 204) ||
-            spawns.ConfirmSpawn(0, 101))
+            !spawns.ConfirmSpawn(1, 203, 100) || spawns.ConfirmSpawn(1, 204, 100) ||
+            spawns.ConfirmSpawn(0, 101, 100))
             throw new Exception("Confirmed deaths reopen scene capacity without resetting mission totals.");
         return 3;
+    }
+
+    private static int VerifyMissionTimedEvents(MissionCatalog catalog)
+    {
+        MissionRule firstMission = catalog.Get(0);
+        var events = catalog.CreateAutomaticSpawnState(firstMission.Index);
+        events.Start(100);
+        ulong firstEventTick = 100 + (ulong)firstMission.Events[0].TimeSeconds *
+            MatchManifest.TickRate;
+        if (events.DueTimedEvents(firstEventTick - 1).Contains(0) ||
+            !events.DueTimedEvents(firstEventTick).Contains(0) ||
+            events.DueTimedEvents(firstEventTick).Count != 0)
+            throw new Exception("A timed event is offered once in its source second.");
+        if (!events.DueTimedEvents(firstEventTick + MatchManifest.TickRate).Contains(0) ||
+            !events.ConfirmTimedEventSpawn(0, 301, firstEventTick + MatchManifest.TickRate) ||
+            events.ConfirmTimedEventSpawn(0, 302, firstEventTick + MatchManifest.TickRate) || events.LiveCount != 0)
+            throw new Exception("A failed event retries; an unmatched event does not use wave capacity.");
+        if (events.DueTimedEvents(firstEventTick + 2 * MatchManifest.TickRate).Contains(0) ||
+            !events.ConfirmDeath(301) || events.ConfirmDeath(301))
+            throw new Exception("A completed timed event is not replayed or killed twice.");
+
+        MissionRule matchedMission = catalog.Missions.First(mission =>
+            mission.Events.Any(timedEvent => mission.Behaviours.Any(behavior =>
+                string.Equals(behavior.Name, timedEvent.Behaviour,
+                    StringComparison.OrdinalIgnoreCase))));
+        int matchedIndex = matchedMission.Events.ToList().FindIndex(timedEvent =>
+            matchedMission.Behaviours.Any(behavior =>
+                string.Equals(behavior.Name, timedEvent.Behaviour,
+                    StringComparison.OrdinalIgnoreCase)));
+        var matchedEvents = catalog.CreateAutomaticSpawnState(matchedMission.Index);
+        matchedEvents.Start(0);
+        ulong matchedTick = (ulong)matchedMission.Events[matchedIndex].TimeSeconds *
+            MatchManifest.TickRate;
+        if (!matchedEvents.DueTimedEvents(matchedTick).Contains(matchedIndex) ||
+            !matchedEvents.ConfirmTimedEventSpawn(matchedIndex, 401, matchedTick) ||
+            matchedEvents.LiveCount != 1 || !matchedEvents.ConfirmDeath(401) ||
+            matchedEvents.LiveCount != 0)
+            throw new Exception("A matching timed event contributes to source wave accounting.");
+        matchedEvents.Finish();
+        if (matchedEvents.DueTimedEvents(matchedTick + MatchManifest.TickRate).Count != 0)
+            throw new Exception("A finished mission cannot issue later timed events.");
+
+        var expiredEvents = catalog.CreateAutomaticSpawnState(firstMission.Index);
+        expiredEvents.Start(0);
+        ulong sourceDeadline = (ulong)firstMission.TimeSeconds * MatchManifest.TickRate;
+        expiredEvents.DueTimedEvents((ulong)firstMission.Events[0].TimeSeconds *
+            MatchManifest.TickRate);
+        if (expiredEvents.ConfirmTimedEventSpawn(0, 501, sourceDeadline) ||
+            expiredEvents.ConfirmSpawn(0, 502, sourceDeadline))
+            throw new Exception("A mission cannot confirm a spawn after its source deadline.");
+        return 5;
     }
 
     internal static int Run(string directory)
