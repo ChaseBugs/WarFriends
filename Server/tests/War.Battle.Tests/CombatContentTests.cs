@@ -3273,6 +3273,46 @@ internal static class CombatContentTests
             armyManifest.Players[0] with {EquippedArmyUnitIds=["ID_UNIT-DRONE"],
                 ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[96],ArmyEliteUpgradeIndexes=[-1],ArmyShotSpeedCoefficients=[2]},
             armyManifest.Players[1] with {ArmyShotSpeedCoefficients=[1]}]};
+        var assaultHelicopterManifest = armyManifest with
+        {
+            MatchId = "deployed-assault-helicopter-route",
+            Players = [armyManifest.Players[0] with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-ASSAULTHELI"],
+                ArmyNormalUpgradeIndexes = [0],
+                ArmySpecialUpgradeIndexes = [-1],
+                ArmyEliteUpgradeIndexes = [-1],
+                ArmySpeedCoefficients = [1]
+            }, armyManifest.Players[1]]
+        };
+        content.ValidateAllocation(assaultHelicopterManifest);
+        var assaultHelicopterMatch = new MatchEngine(assaultHelicopterManifest,
+            content: content, armyChoice: _ => 0, combatRandom: () => 0.5f);
+        assaultHelicopterMatch.Admit(decoyPlayer);
+        assaultHelicopterMatch.Admit(decoyOpponent);
+        assaultHelicopterMatch.Command(decoyPlayer, new() { CommandId = 1,
+            Ready = new() { ManifestHash = assaultHelicopterMatch.ManifestHash } });
+        assaultHelicopterMatch.Command(decoyOpponent, new() { CommandId = 1,
+            Ready = new() { ManifestHash = assaultHelicopterMatch.ManifestHash } });
+        assaultHelicopterMatch.Advance(60);
+        int assaultHelicopterOption = assaultHelicopterMatch.ArmyBatch(decoyPlayer).OptionIndexes[0];
+        Check(assaultHelicopterMatch.Command(decoyPlayer, new() { CommandId = 2,
+            DeployArmy = new() { OptionIndex = assaultHelicopterOption } }).Code == "army-deploying",
+            "normal Assault Helicopter deployment accepts its trusted source route");
+        assaultHelicopterMatch.Advance(61);
+        var assaultHelicopterSpawn = assaultHelicopterMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(entity => entity.UnitId == "ID_UNIT-ASSAULTHELI");
+        Vector3 assaultSpawnPosition = new(assaultHelicopterSpawn.X,
+            assaultHelicopterSpawn.Y, assaultHelicopterSpawn.Z);
+        for (ulong routeTick = 62; routeTick <= 100; routeTick++)
+            assaultHelicopterMatch.Advance(routeTick);
+        var movingAssaultHelicopter = assaultHelicopterMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(entity => entity.EntityKey == assaultHelicopterSpawn.EntityKey);
+        Vector3 assaultRoutePosition = new(movingAssaultHelicopter.X,
+            movingAssaultHelicopter.Y, movingAssaultHelicopter.Z);
+        Check(Vector3.Distance(assaultSpawnPosition, assaultRoutePosition) > 0.1f &&
+              movingAssaultHelicopter.PositionTick == 100 && !assaultHelicopterMatch.Terminal,
+            "deployed Assault Helicopter follows its reserved route on normal host ticks");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});

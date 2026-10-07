@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Numerics;
 using System.Text.Json.Nodes;
 using War.BattleServer;
 internal static class AirWaypointCatalogTests
@@ -30,6 +31,24 @@ internal static class AirWaypointCatalogTests
                     throw new Exception("Helicopter stop target lost its source route binding.");
                 count++;
             }
+        var sourceRoute = new AirWaypointRoute(1, 2, 0, -1, 0.1f,
+            [new DroneWaypoint(3, new Vector3(1, 0, 0), 0),
+             new DroneWaypoint(4, new Vector3(2, 0, 0), 0)]);
+        var movingAssaultHelicopter = new AssaultHelicopterWaypointState(
+            sourceRoute, Vector3.Zero, 0.87f, () => 0.5f);
+        movingAssaultHelicopter.Advance(2, 1f / 30);
+        if (Math.Abs(movingAssaultHelicopter.Position.X - 0.04f) > 0.00001f ||
+            Math.Abs(movingAssaultHelicopter.Velocity.X - 0.02f) > 0.00001f)
+            throw new Exception("Assault Helicopter lost its clamped speed or double root movement.");
+        count++;
+
+        var reversingAssaultHelicopter = new AssaultHelicopterWaypointState(
+            sourceRoute with { Radius = 0.2f }, new Vector3(1, 0, 0), 0.6f, () => 0);
+        reversingAssaultHelicopter.Advance(2, 1f / 30);
+        if (reversingAssaultHelicopter.UsingWaypoints ||
+            reversingAssaultHelicopter.Position != new Vector3(1, 0, 0))
+            throw new Exception("Assault Helicopter did not stop after reversing at the first waypoint.");
+        count++;
         string temporary=Path.GetTempFileName();
         try
         {

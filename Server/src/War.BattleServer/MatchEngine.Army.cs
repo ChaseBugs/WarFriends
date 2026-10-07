@@ -35,6 +35,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
+    private readonly Dictionary<ulong,AssaultHelicopterWaypointState> armyAssaultHelicopterPaths=[];
     private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
@@ -216,6 +217,33 @@ public sealed partial class MatchEngine
         var route=airWaypoints!.ForSpawn(map!,spawn.ComponentFileId);
         armyDronePaths.Add(key,new DroneWaypointState(route.Waypoints,route.JoinIndex,
             spawn.Position,route.Radius,speed,true,true,NextArmyFloat));
+    }
+    private void InitializeAssaultHelicopterPath(ulong entityId, ArmyDeploymentFamily family,
+        ArmySpawnPoint spawn)
+    {
+        if (family.BehaviorType != "AssaultHelicopterBehaviour") return;
+        if (!armySpeed.TryGetValue(entityId, out float sourceSpeed)) return;
+
+        var route = airWaypoints!.ForSpawn(map!, spawn.ComponentFileId);
+        armyAssaultHelicopterPaths.Add(entityId,
+            new AssaultHelicopterWaypointState(route, spawn.Position, sourceSpeed, NextArmyFloat));
+    }
+
+    private void AdvanceAssaultHelicopterPaths()
+    {
+        float time = (float)((double)tick / MatchManifest.TickRate);
+        foreach (var (entityId, path) in armyAssaultHelicopterPaths.OrderBy(entry => entry.Key))
+        {
+            if (!activeArmyEntities.TryGetValue(entityId, out var unit) ||
+                unit.UnitId != "ID_UNIT-ASSAULTHELI")
+                throw new InvalidDataException("Assault Helicopter path lost its host entity.");
+
+            path.Advance(time, 1f / MatchManifest.TickRate);
+            unit.X = path.Position.X;
+            unit.Y = path.Position.Y;
+            unit.Z = path.Position.Z;
+            unit.PositionTick = tick;
+        }
     }
     private void AdvanceDronePaths()
     {
@@ -3245,6 +3273,7 @@ public sealed partial class MatchEngine
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);
         armyHelicopterPaths.Remove(entityKey);
+        armyAssaultHelicopterPaths.Remove(entityKey);
         armyHelicopterOrientations.Remove(entityKey);
         armyHelicopterCrew.Remove(entityKey);
         armyHelicopterCrewMembers.Remove(entityKey);

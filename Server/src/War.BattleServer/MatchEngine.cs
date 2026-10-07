@@ -1070,6 +1070,7 @@ public sealed partial class MatchEngine
                         InitializeStationaryArmyCombat(entityKey,spawned.UnitId);
                         InitializeGroundVehicle(entityKey,family,point);
                         InitializeDronePath(entityKey,family,point);
+                        InitializeAssaultHelicopterPath(entityKey,family,point);
                         InitializeHelicopterPath(entityKey,family,point);
                         RegisterDroneArmyTarget(entityKey,family);
                         p.ArmyStats.RecordSpawn(spawned.OptionIndex,spawned.UnitId);
@@ -1110,6 +1111,15 @@ public sealed partial class MatchEngine
         {
             try{AdvanceHelicopterPaths();}
             catch(InvalidDataException){End("invalid-helicopter-route-authority","",false);return;}
+        }
+        if(advanced&&phase==BattlePhase.Running&&armyAssaultHelicopterPaths.Count>0)
+        {
+            try { AdvanceAssaultHelicopterPaths(); }
+            catch(InvalidDataException)
+            {
+                End("invalid-assault-helicopter-route-authority","",false);
+                return;
+            }
         }
         if(advanced&&phase==BattlePhase.Running&&vehicleRouteMotions.Count>0)
         {
