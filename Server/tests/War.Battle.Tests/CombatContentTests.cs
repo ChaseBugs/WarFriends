@@ -3535,6 +3535,15 @@ internal static class CombatContentTests
         forgedGlass.AssaultGlassHealth = forgedGlass.AssaultGlassMaxHealth + 1f;
         Check(!War.Client.MatchConnection.ValidAssaultGlass(forgedGlass),
             "replacement SDK rejects glass health greater than its host maximum");
+        var missingGlass = assaultHelicopterSpawn.Clone();
+        missingGlass.AssaultGlassMaxHealth = 0;
+        missingGlass.AssaultGlassHealth = 0;
+        Check(!War.Client.MatchConnection.ValidAssaultGlass(missingGlass),
+            "replacement SDK rejects an Assault Helicopter without glass authority");
+        var missingRotation = assaultHelicopterSpawn.Clone();
+        missingRotation.AssaultRotation = null;
+        Check(!War.Client.MatchConnection.ValidAssaultRotation(missingRotation),
+            "replacement SDK rejects an Assault Helicopter without a host root pose");
         Check(assaultHelicopterMatch.AssaultHelicopterShot(assaultHelicopterSpawn.EntityKey) ==
               assaultHelicopterShot,
             "normal Assault Helicopter deployment binds selected source firing stats to its entity");

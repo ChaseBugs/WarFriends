@@ -213,7 +213,7 @@ namespace War.Client
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
                            entity.HelicopterRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-ASSAULTHELI"?
-                           entity.AssaultRotation!=null&&!ValidUnitRotation(entity.AssaultRotation):
+                           !ValidAssaultRotation(entity):
                            entity.AssaultRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?
                            !ValidHelicopterTurretPose(entity):
@@ -269,13 +269,14 @@ namespace War.Client
         }
         internal static bool ValidAssaultGlass(BattleArmyEntityState entity)
         {
-            if(entity.AssaultGlassMaxHealth==0)return entity.AssaultGlassHealth==0;
             return Positive(entity.AssaultGlassMaxHealth)&&
                    !float.IsNaN(entity.AssaultGlassHealth)&&
                    !float.IsInfinity(entity.AssaultGlassHealth)&&
                    entity.AssaultGlassHealth>=0&&
                    entity.AssaultGlassHealth<=entity.AssaultGlassMaxHealth;
         }
+        internal static bool ValidAssaultRotation(BattleArmyEntityState entity)
+            => ValidUnitRotation(entity.AssaultRotation);
         internal static bool ValidHelicopterTurretPose(BattleArmyEntityState entity)
             =>ValidUnitRotation(entity.HelicopterTurretHorizontalLocal)&&
               ValidUnitRotation(entity.HelicopterTurretVerticalWorld);
