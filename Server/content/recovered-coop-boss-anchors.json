@@ -1,0 +1,806 @@
+{
+  "version": 1,
+  "missionSourceSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "maps": [
+    {
+      "stage": 1,
+      "scene": "Desert_Multiplayer",
+      "sceneSha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "mapDefinitionFileId": 2553,
+      "playerPositions": [
+        {
+          "index": 0,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 2555,
+          "gameObjectFileId": 197,
+          "transformFileId": 1092,
+          "worldPosition": [
+            -28.594892160531515,
+            -2.4930000059661066,
+            -6.257765690913173
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558673477793,
+            0.0,
+            0.7192457420335808
+          ]
+        },
+        {
+          "index": 1,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 2249,
+          "gameObjectFileId": 133,
+          "transformFileId": 867,
+          "worldPosition": [
+            -28.647181528300166,
+            -2.443000000994351,
+            -7.766860212625578
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 2,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 2790,
+          "gameObjectFileId": 86,
+          "transformFileId": 1307,
+          "worldPosition": [
+            -28.709811186727634,
+            -2.433,
+            -9.285602450589266
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 3,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 2665,
+          "gameObjectFileId": 70,
+          "transformFileId": 1216,
+          "worldPosition": [
+            -28.76210055449629,
+            -2.3629999930395416,
+            -10.794696972301672
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 4,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 2395,
+          "gameObjectFileId": 176,
+          "transformFileId": 953,
+          "worldPosition": [
+            -19.4976842,
+            -2.4059999999999997,
+            -10.708124149999998
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 5,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 2758,
+          "gameObjectFileId": 151,
+          "transformFileId": 1268,
+          "worldPosition": [
+            -19.4976842,
+            -2.399,
+            -9.19312415
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 6,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 2388,
+          "gameObjectFileId": 45,
+          "transformFileId": 944,
+          "worldPosition": [
+            -19.4976842,
+            -2.405,
+            -7.686124149999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 7,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 2844,
+          "gameObjectFileId": 29,
+          "transformFileId": 1383,
+          "worldPosition": [
+            -19.4976842,
+            -2.4059999999999997,
+            -6.166124149999998
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "scene": "Snow_Multiplayer",
+      "sceneSha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "mapDefinitionFileId": 2756,
+      "playerPositions": [
+        {
+          "index": 0,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 3129,
+          "gameObjectFileId": 17,
+          "transformFileId": 1518,
+          "worldPosition": [
+            -4.530189571587671,
+            0.09000008725876332,
+            2.2544670781388776
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558673477793,
+            0.0,
+            0.7192457420335808
+          ]
+        },
+        {
+          "index": 1,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 3107,
+          "gameObjectFileId": 71,
+          "transformFileId": 1495,
+          "worldPosition": [
+            -4.550498128300167,
+            0.07100008536949612,
+            0.744264437374421
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 2,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 3124,
+          "gameObjectFileId": 33,
+          "transformFileId": 1517,
+          "worldPosition": [
+            -4.56115896876138,
+            0.09400008765650379,
+            -0.7762784940488497
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 3,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 2612,
+          "gameObjectFileId": 278,
+          "transformFileId": 1063,
+          "worldPosition": [
+            -4.568475320982312,
+            0.08700008696045798,
+            -2.2869313081782012
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 4,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 3061,
+          "gameObjectFileId": 114,
+          "transformFileId": 1416,
+          "worldPosition": [
+            4.5829992000000015,
+            0.21000007999999978,
+            -2.196999499999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 5,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 2621,
+          "gameObjectFileId": 246,
+          "transformFileId": 1076,
+          "worldPosition": [
+            4.5989992000000015,
+            0.19500007999999977,
+            -0.6819994999999992
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 6,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 3113,
+          "gameObjectFileId": 55,
+          "transformFileId": 1501,
+          "worldPosition": [
+            4.5989992000000015,
+            0.2140000799999998,
+            0.8250005000000008
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 7,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 2991,
+          "gameObjectFileId": 164,
+          "transformFileId": 1313,
+          "worldPosition": [
+            4.5989992000000015,
+            0.23700007999999978,
+            2.3450005000000007
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "scene": "City_Multiplayer",
+      "sceneSha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "mapDefinitionFileId": 3249,
+      "playerPositions": [
+        {
+          "index": 0,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 2993,
+          "gameObjectFileId": 100,
+          "transformFileId": 1350,
+          "worldPosition": [
+            -4.493892160531515,
+            -0.004999997016946225,
+            2.4722343090868275
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558673477793,
+            0.0,
+            0.7192457420335808
+          ]
+        },
+        {
+          "index": 1,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 2982,
+          "gameObjectFileId": 364,
+          "transformFileId": 1318,
+          "worldPosition": [
+            -4.546181528300168,
+            0.004000003877969824,
+            0.9631397873744222
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 2,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 3002,
+          "gameObjectFileId": 28,
+          "transformFileId": 1360,
+          "worldPosition": [
+            -4.608811186727635,
+            0.003000003778534703,
+            -0.5556024505892659
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 3,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 3132,
+          "gameObjectFileId": 82,
+          "transformFileId": 1492,
+          "worldPosition": [
+            -4.661100554496288,
+            3.4802293616409408e-09,
+            -2.064696972301671
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 4,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 3303,
+          "gameObjectFileId": 138,
+          "transformFileId": 1704,
+          "worldPosition": [
+            4.572315800000001,
+            0.004000000000000217,
+            -1.978124149999998
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 5,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 3333,
+          "gameObjectFileId": 117,
+          "transformFileId": 1755,
+          "worldPosition": [
+            4.585315800000001,
+            0.014000000000000217,
+            -0.46612414999999807
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 6,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 2927,
+          "gameObjectFileId": 389,
+          "transformFileId": 1231,
+          "worldPosition": [
+            4.603315800000001,
+            0.010100000000000216,
+            1.0438758500000018
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 7,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 3334,
+          "gameObjectFileId": 51,
+          "transformFileId": 1758,
+          "worldPosition": [
+            4.603315800000001,
+            0.004000000000000217,
+            2.563875850000002
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "scene": "Aztec_Multiplayer",
+      "sceneSha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "mapDefinitionFileId": 2666,
+      "playerPositions": [
+        {
+          "index": 0,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 2682,
+          "gameObjectFileId": 50,
+          "transformFileId": 1313,
+          "worldPosition": [
+            -4.608237041121097,
+            -0.011000072741236572,
+            2.333680182661047
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558673477793,
+            0.0,
+            0.7192457420335808
+          ]
+        },
+        {
+          "index": 1,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 2440,
+          "gameObjectFileId": 137,
+          "transformFileId": 1126,
+          "worldPosition": [
+            -4.593497328300168,
+            -0.030000074630503776,
+            0.82426433737442
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 2,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 2263,
+          "gameObjectFileId": 240,
+          "transformFileId": 923,
+          "worldPosition": [
+            -4.656126986727635,
+            -0.007000072343496103,
+            -0.6944779005892682
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 3,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 2686,
+          "gameObjectFileId": 27,
+          "transformFileId": 1326,
+          "worldPosition": [
+            -4.708416354496288,
+            -0.00800007244293123,
+            -2.203572422301673
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 4,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 2431,
+          "gameObjectFileId": 157,
+          "transformFileId": 1112,
+          "worldPosition": [
+            4.556000000000001,
+            -0.012000080000000107,
+            -2.1169996
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 5,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 2222,
+          "gameObjectFileId": 283,
+          "transformFileId": 851,
+          "worldPosition": [
+            4.556000000000001,
+            -0.02700008000000012,
+            -0.6019996000000003
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 6,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 2199,
+          "gameObjectFileId": 307,
+          "transformFileId": 813,
+          "worldPosition": [
+            4.556000000000001,
+            -0.008000080000000104,
+            0.9050003999999997
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 7,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 2452,
+          "gameObjectFileId": 111,
+          "transformFileId": 1140,
+          "worldPosition": [
+            4.556000000000001,
+            0.014999919999999889,
+            2.4250003999999996
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "scene": "Park_Multiplayer",
+      "sceneSha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "mapDefinitionFileId": 3572,
+      "playerPositions": [
+        {
+          "index": 0,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 3505,
+          "gameObjectFileId": 161,
+          "transformFileId": 1559,
+          "worldPosition": [
+            -4.5198915902439785,
+            -0.04299995298870028,
+            2.3292348881960745
+          ],
+          "worldRotation": [
+            -0.0006087763141599807,
+            -0.6945274575087707,
+            -7.40775799961588e-05,
+            0.7194660797213673
+          ]
+        },
+        {
+          "index": 1,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 3570,
+          "gameObjectFileId": 75,
+          "transformFileId": 1702,
+          "worldPosition": [
+            -4.572180128300169,
+            -0.03299997199435111,
+            0.8201397373744209
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 2,
+          "fraction": 1,
+          "main": true,
+          "componentFileId": 3526,
+          "gameObjectFileId": 119,
+          "transformFileId": 1598,
+          "worldPosition": [
+            -4.6348097867276365,
+            -0.022999970999999952,
+            -0.6986025005892672
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 3,
+          "fraction": 1,
+          "main": false,
+          "componentFileId": 3582,
+          "gameObjectFileId": 58,
+          "transformFileId": 1715,
+          "worldPosition": [
+            -4.687099154496289,
+            0.04700003596045817,
+            -2.207697022301672
+          ],
+          "worldRotation": [
+            0.0,
+            -0.6947558356205805,
+            0.0,
+            0.7192458414990821
+          ]
+        },
+        {
+          "index": 4,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 3315,
+          "gameObjectFileId": 272,
+          "transformFileId": 1276,
+          "worldPosition": [
+            4.579317199999999,
+            0.027000028999999964,
+            -2.1211241999999992
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 5,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 3415,
+          "gameObjectFileId": 224,
+          "transformFileId": 1382,
+          "worldPosition": [
+            4.5773171999999995,
+            0.011000028999999963,
+            -0.6061241999999993
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 6,
+          "fraction": 2,
+          "main": true,
+          "componentFileId": 3508,
+          "gameObjectFileId": 143,
+          "transformFileId": 1566,
+          "worldPosition": [
+            4.5773171999999995,
+            0.005000028999999962,
+            0.9008758000000007
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "index": 7,
+          "fraction": 2,
+          "main": false,
+          "componentFileId": 3209,
+          "gameObjectFileId": 308,
+          "transformFileId": 1222,
+          "worldPosition": [
+            4.5773171999999995,
+            0.004000028999999962,
+            2.4208758000000006
+          ],
+          "worldRotation": [
+            0.0,
+            0.7071068,
+            0.0,
+            0.7071068
+          ]
+        }
+      ]
+    }
+  ]
+}

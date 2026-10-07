@@ -784,9 +784,26 @@ internal static class CombatContentTests
             health.ForMission(74).BaseHealth != 2185f ||
             health.Bosses.Count(row => row.MaximumHealth == 0) != 6)
             throw new Exception("Decoded boss health differs from the Client balance table.");
+        string anchorPath = Path.Combine(directory,
+            "recovered-coop-boss-anchors.json");
+        CoopBossAnchorCatalog anchors = CoopBossAnchorCatalog.Load(
+            anchorPath, missions);
+        CoopBossMapAnchors desertBoss = anchors.MapForMission(missions, 4);
+        if (anchors.Maps.Count != 5 ||
+            anchors.Maps.Any(map => map.PlayerPositions.Count != 8 ||
+                map.BossStart.Fraction != 1 || map.BossStart.Index != 1 ||
+                map.AlliedStarts.Count != 2) ||
+            desertBoss.Scene != "Desert_Multiplayer" ||
+            MathF.Abs(desertBoss.BossStart.Position.X - (-28.64718f)) > 0.0001f ||
+            Enumerable.Range(0, 15).Any(index =>
+                anchors.MapForMission(missions, index * 5 + 4).Stage !=
+                    missions.Get(index * 5 + 4).MapStage))
+            throw new Exception("Boss anchors differ from the multiplayer source maps.");
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-bots-{Guid.NewGuid():N}.json");
+        string changedAnchorPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-boss-anchors-{Guid.NewGuid():N}.json");
         try
         {
             JsonNode altered = JsonNode.Parse(File.ReadAllText(path))!;
@@ -799,12 +816,24 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 10;
+            }
+            JsonNode changedAnchors = JsonNode.Parse(File.ReadAllText(anchorPath))!;
+            changedAnchors["maps"]![0]!["playerPositions"]![1]!["worldPosition"]![0] = 999;
+            File.WriteAllText(changedAnchorPath, changedAnchors.ToJsonString());
+            try
+            {
+                _ = CoopBossAnchorCatalog.Load(changedAnchorPath, missions);
+                throw new Exception("Altered boss placement was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return 15;
             }
         }
         finally
         {
             File.Delete(temporaryPath);
+            File.Delete(changedAnchorPath);
         }
     }
 
