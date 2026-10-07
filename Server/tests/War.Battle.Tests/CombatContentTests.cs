@@ -2987,6 +2987,19 @@ internal static class CombatContentTests
             Reject(()=>duplicateChunk.Add(1,new[]{new SnapshotEntity(1,new(1,0,0),9)}));
             var badChunk=new SnapshotChunkAssembler(8,1);
             Reject(()=>badChunk.Add(0,new[]{new SnapshotEntity(1,Vector3.Zero,7)}));
+            var mutableRows=new List<SnapshotEntity>{new(3,Vector3.Zero,11)};
+            var ownedChunk=new SnapshotChunkAssembler(11,1);
+            ownedChunk.Add(0,mutableRows);
+            mutableRows[0]=new SnapshotEntity(0,new Vector3(float.NaN,0,0),11);
+            Check(ownedChunk.Complete().Single().EntityId==3,
+                  "assembler owns a validated copy of each received chunk");
+            var invertedChunks=new SnapshotChunkAssembler(12,2);
+            invertedChunks.Add(1,new[]{new SnapshotEntity(1,Vector3.Zero,12)});
+            invertedChunks.Add(0,new[]{new SnapshotEntity(2,Vector3.One,12)});
+            var untouchedBaseline=new SnapshotBaseline();
+            Reject(()=>invertedChunks.ApplyTo(untouchedBaseline));
+            Check(untouchedBaseline.Revision==0&&untouchedBaseline.Entities.Count==0,
+                  "cross-chunk entity inversion fails before baseline publication");
             ReconnectCursorValidator.Validate(new ReconnectCursor(4,10),5,8);
             ReconnectCursorValidator.Validate(new ReconnectCursor(4,10),20,5,8,12);
             Check(true,"reconnect cursor accepts retained snapshot and event authority");

@@ -29,24 +29,34 @@ public sealed class SnapshotChunkAssembler
         if (index < 0 || index >= expectedCount || rows is null || rows.Count == 0 || rows.Count > 512)
             throw new InvalidDataException("Invalid snapshot chunk.");
         if (chunks.ContainsKey(index)) throw new InvalidDataException("Duplicate snapshot chunk.");
-        if (entityCount + rows.Count > maxEntities) throw new InvalidDataException("Snapshot entity limit exceeded.");
+        var ownedRows = rows.ToArray();
+        if (ownedRows.Length != rows.Count || entityCount + ownedRows.Length > maxEntities)
+            throw new InvalidDataException("Snapshot entity limit exceeded.");
         ulong previous = 0;
-        foreach (var row in rows)
+        foreach (var row in ownedRows)
         {
             if (row.EntityId == 0 || row.Revision != revision || !PlayerHitbox.Finite(row.Position) ||
                 (previous != 0 && row.EntityId <= previous) || entityIds.Contains(row.EntityId))
                 throw new InvalidDataException("Invalid snapshot chunk entity.");
             previous = row.EntityId;
         }
-        chunks.Add(index, rows);
-        foreach (var row in rows) entityIds.Add(row.EntityId);
-        entityCount += rows.Count;
+        chunks.Add(index, Array.AsReadOnly(ownedRows));
+        foreach (var row in ownedRows) entityIds.Add(row.EntityId);
+        entityCount += ownedRows.Length;
     }
 
     public IReadOnlyList<SnapshotEntity> Complete()
     {
         if (!IsComplete) throw new InvalidDataException("Snapshot is incomplete.");
-        return chunks.OrderBy(x => x.Key).SelectMany(x => x.Value).ToArray();
+        var orderedRows = chunks.SelectMany(chunk => chunk.Value).ToArray();
+        ulong previousId = 0;
+        foreach (var row in orderedRows)
+        {
+            if (row.EntityId <= previousId)
+                throw new InvalidDataException("Snapshot chunks are out of entity order.");
+            previousId = row.EntityId;
+        }
+        return Array.AsReadOnly(orderedRows);
     }
 
     public IReadOnlyList<SnapshotEntity> ApplyTo(SnapshotBaseline baseline)
