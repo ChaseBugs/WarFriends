@@ -455,6 +455,17 @@ internal static class CombatContentTests
             snow.EnemySpawnPoints.Any(point => point.Fraction != 1))
             throw new Exception("Allied source spawns must not become enemy AI anchors.");
 
+        foreach (MissionRule mission in missions.Missions)
+            _ = new CoopAiSpawnSelector(missions, spawns, mission.Index);
+        CoopAiSpawnSelector desertSelector = new(missions, spawns, 0);
+        if (desertSelector.Candidates("Drone").Any(point =>
+                point.Collection != "spawnPointsCollectionDrones" || point.Fraction != 1) ||
+            desertSelector.Candidates("Tank").Any(point =>
+                point.Collection != "spawnPointsCollectionCars" || point.Fraction != 1) ||
+            desertSelector.Candidates("DeployHeli").Any(point =>
+                point.Collection != "spawnPointsCollectionHelicopters" || point.Fraction != 1))
+            throw new Exception("Co-op AI must use its source enemy spawn collection.");
+
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-spawns-{Guid.NewGuid():N}.json");
         try
@@ -469,7 +480,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 3;
+                return 79;
             }
         }
         finally
