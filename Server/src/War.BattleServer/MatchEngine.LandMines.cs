@@ -123,6 +123,8 @@ public sealed partial class MatchEngine
             ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
+            ApplyLandMineAssaultHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
+            ApplyLandMineAssaultHelicopterGlassExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineRepairDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
@@ -416,6 +418,86 @@ public sealed partial class MatchEngine
             hits++;
             if(helicopter.OwnerFraction!=attacker.Definition.Fraction)
                 attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMineAssaultHelicopterBodyExplosion(string ownerId,
+        Vector3 position,float damage)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||
+           assaultHelicopterBoxCollider==null||assaultHelicopterMeshColliders==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Land Mine Assault Helicopter blast lacks trusted source authority.");
+
+        var attacker=Find(ownerId)??
+            throw new InvalidDataException("Land Mine Assault Helicopter owner disappeared.");
+        int hits=0;
+        foreach(var aircraft in activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray())
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path))
+                throw new InvalidDataException("Land Mine Assault Helicopter lost its host route.");
+
+            var root=new Vector3(aircraft.X,aircraft.Y,aircraft.Z);
+            var bodyParts=new List<PlayerHitbox>
+            {
+                assaultHelicopterBoxCollider.Place(root,path.Rotation)
+            };
+            bodyParts.AddRange(assaultHelicopterMeshColliders.Place(root,path.Rotation)
+                .Select(part=>part.Hitbox));
+            bool bodyOverlaps=bodyParts.Any(part=>part.Enabled&&part.Active&&
+                part.OverlapsSphere(position,landMineSource.HurtRadius));
+            if(!bodyOverlaps)continue;
+
+            // MissileExplode groups all body parts by their shared destroyable
+            // owner. The glass has another owner and is not a body damage part.
+            bool friendly=aircraft.OwnerFraction==attacker.Definition.Fraction;
+            float amount=damage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Land Mine Assault Helicopter damage exceeded host bounds.");
+            if(!ApplyArmyHostDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMineAssaultHelicopterGlassExplosion(string ownerId,
+        Vector3 position,float damage)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||
+           assaultHelicopterMeshColliders==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Land Mine Assault Helicopter glass blast lacks trusted source authority.");
+
+        var attacker=Find(ownerId)??
+            throw new InvalidDataException("Land Mine Assault Helicopter owner disappeared.");
+        int hits=0;
+        foreach(var aircraft in activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray())
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
+               !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
+                throw new InvalidDataException("Land Mine Assault Helicopter glass lost host authority.");
+            if(glass.Current<=0)continue;
+
+            var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new(aircraft.X,aircraft.Y,aircraft.Z),path.Rotation);
+            if(!front.Hitbox.Enabled||!front.Hitbox.Active||
+               !front.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
+
+            bool friendly=aircraft.OwnerFraction==attacker.Definition.Fraction;
+            float amount=damage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Land Mine Assault Helicopter glass damage exceeded host bounds.");
+            if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
         }
         return hits;
     }

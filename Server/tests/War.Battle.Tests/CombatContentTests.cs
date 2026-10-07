@@ -3818,6 +3818,74 @@ internal static class CombatContentTests
                   row.Kind == MatchEventKind.AssaultHelicopterFired &&
                   row.AssaultHelicopterShot?.GunIndex == 1),
             "second Assault Helicopter gun publishes its own muzzle identity");
+        var mineTarget = assaultHelicopterMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(entity => entity.EntityKey == assaultHelicopterSpawn.EntityKey);
+        var mineRotation = mineTarget.AssaultRotation!;
+        var mineBody = content.AssaultHelicopterBoxCollider.Place(
+            new Vector3(mineTarget.X, mineTarget.Y, mineTarget.Z),
+            new Quaternion(mineRotation.X, mineRotation.Y, mineRotation.Z, mineRotation.W));
+        float bodyBeforeMine = assaultHelicopterMatch.ArmyHealth(mineTarget.EntityKey)!.Value;
+        float glassBeforeMine = assaultHelicopterMatch.AssaultGlassHealth(mineTarget.EntityKey)!.Value;
+        Check(assaultHelicopterMatch.ApplyLandMineAssaultHelicopterBodyExplosion(
+                  decoyOpponent, mineBody.Center, 10f) == 1 &&
+              Math.Abs(assaultHelicopterMatch.ArmyHealth(mineTarget.EntityKey)!.Value -
+                  (bodyBeforeMine - 10f)) < .001f &&
+              assaultHelicopterMatch.AssaultGlassHealth(mineTarget.EntityKey) == glassBeforeMine,
+            "opposing Land Mine damages one Assault Helicopter body owner without using glass health");
+        float bodyBeforeFriendlyMine = assaultHelicopterMatch.ArmyHealth(mineTarget.EntityKey)!.Value;
+        Check(assaultHelicopterMatch.ApplyLandMineAssaultHelicopterBodyExplosion(
+                  decoyPlayer, mineBody.Center, 10f) == 1 &&
+              Math.Abs(assaultHelicopterMatch.ArmyHealth(mineTarget.EntityKey)!.Value -
+                  (bodyBeforeFriendlyMine - 5f)) < .001f,
+            "friendly Land Mine applies the source half-damage coefficient to the aircraft body");
+        Reject(() => assaultHelicopterMatch.ApplyLandMineAssaultHelicopterBodyExplosion(
+            decoyOpponent, mineBody.Center, float.NaN));
+
+        var mineGlassManifest = assaultHelicopterManifest with
+        {
+            MatchId = "assault-helicopter-mine-glass"
+        };
+        var mineGlassMatch = new MatchEngine(mineGlassManifest, content: content,
+            armyChoice: _ => 0);
+        mineGlassMatch.Admit(decoyPlayer);
+        mineGlassMatch.Admit(decoyOpponent);
+        mineGlassMatch.Command(decoyPlayer, new() { CommandId = 1,
+            Ready = new() { ManifestHash = mineGlassMatch.ManifestHash } });
+        mineGlassMatch.Command(decoyOpponent, new() { CommandId = 1,
+            Ready = new() { ManifestHash = mineGlassMatch.ManifestHash } });
+        mineGlassMatch.Advance(60);
+        int mineGlassOption = mineGlassMatch.ArmyBatch(decoyPlayer).OptionIndexes[0];
+        Check(mineGlassMatch.Command(decoyPlayer, new() { CommandId = 2,
+            DeployArmy = new() { OptionIndex = mineGlassOption } }).Code == "army-deploying",
+            "separate Assault Helicopter mine fixture uses its trusted deployment option");
+        mineGlassMatch.Advance(61);
+        var mineGlassAircraft = mineGlassMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(row => row.UnitId == "ID_UNIT-ASSAULTHELI");
+        var glassRotation = mineGlassAircraft.AssaultRotation!;
+        var glassCollider = content.AssaultHelicopterMeshColliders.PlaceFrontGlass(
+            new(mineGlassAircraft.X, mineGlassAircraft.Y, mineGlassAircraft.Z),
+            new(glassRotation.X, glassRotation.Y, glassRotation.Z, glassRotation.W));
+        float mineGlassBodyHealth = mineGlassMatch.ArmyHealth(mineGlassAircraft.EntityKey)!.Value;
+        float mineGlassHealth = mineGlassAircraft.AssaultGlassHealth;
+        Check(mineGlassMatch.ApplyLandMineAssaultHelicopterGlassExplosion(
+                  decoyOpponent, glassCollider.Hitbox.Center, 10f) == 1 &&
+              Math.Abs(mineGlassMatch.AssaultGlassHealth(mineGlassAircraft.EntityKey)!.Value -
+                  (mineGlassHealth - 10f)) < .001f &&
+              mineGlassMatch.ArmyHealth(mineGlassAircraft.EntityKey) == mineGlassBodyHealth,
+            "opposing Land Mine blast damages the front glass owner without using body health");
+        Check(mineGlassMatch.ApplyLandMineAssaultHelicopterGlassExplosion(
+                  decoyPlayer, glassCollider.Hitbox.Center, 10f) == 1 &&
+              Math.Abs(mineGlassMatch.AssaultGlassHealth(mineGlassAircraft.EntityKey)!.Value -
+                  (mineGlassHealth - 15f)) < .001f,
+            "friendly Land Mine blast applies the source half-damage coefficient to glass");
+        Check(mineGlassMatch.ApplyLandMineAssaultHelicopterGlassExplosion(
+                  decoyOpponent, glassCollider.Hitbox.Center, 10_000f) == 1 &&
+              mineGlassMatch.ApplyLandMineAssaultHelicopterGlassExplosion(
+                  decoyOpponent, glassCollider.Hitbox.Center, 10f) == 0 &&
+              mineGlassMatch.AssaultGlassHealth(mineGlassAircraft.EntityKey) == 0,
+            "broken Assault Helicopter glass cannot be damaged again by a Land Mine");
+        Reject(() => mineGlassMatch.ApplyLandMineAssaultHelicopterGlassExplosion(
+            decoyOpponent, glassCollider.Hitbox.Center, float.NaN));
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});
