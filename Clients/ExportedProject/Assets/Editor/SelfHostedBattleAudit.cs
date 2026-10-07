@@ -97,7 +97,13 @@ public static class SelfHostedBattleAudit
             Require(first.State.Players[0].LastCommandId == 3,
                 "Unity command sequence continues after fresh Worker admission");
             File.WriteAllText(dropForfeitPath, "drop");
-            await first.ForfeitWithRecovery();
+            Task forfeit = first.ForfeitWithRecovery();
+            while (!forfeit.IsCompleted)
+            {
+                update.Invoke(first, null); // Normal frames must not replace this pending session.
+                await Task.Delay(100, ct.Token);
+            }
+            await forfeit;
             Require(first.State.Phase == BattlePhase.Ended &&
                 first.State.WinnerPlayerId == b.PlayerId && !first.State.RewardEligible &&
                 first.State.Players[0].LastCommandId == 4,
