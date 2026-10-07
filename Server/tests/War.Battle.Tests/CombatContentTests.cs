@@ -325,6 +325,11 @@ internal static class CombatContentTests
     {
         CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-spawn-points.json"), catalog);
+        CoopNavMeshSourceCatalog navMeshSources = CoopNavMeshSourceCatalog.Load(
+            Path.Combine(directory, "recovered-coop-navmesh-sources.json"), catalog);
+        CoopNavMeshPathCatalog routes = CoopNavMeshPathCatalog.Load(
+            Path.Combine(directory, "recovered-coop-navmesh-paths.json"),
+            catalog, spawnPoints, navMeshSources);
         CoopCardRowCatalog cardRows = CoopCardRowCatalog.Load(
             Path.Combine(directory, "recovered-coop-card-rows.json"),
             catalog, army, contentRevision);
@@ -409,14 +414,14 @@ internal static class CombatContentTests
         try
         {
             _ = new CoopMatchRuntime(coop with { MapId = duel.MapId },
-                catalog, spawnPoints, enemyCombat);
+                catalog, spawnPoints, routes, enemyCombat);
             throw new Exception("A PvP map was accepted for a source co-op mission.");
         }
         catch (InvalidDataException)
         {
         }
 
-        var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat,
+        var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         string firstPlayer = coop.Players[0].PlayerId;
         string secondPlayer = coop.Players[1].PlayerId;
@@ -460,6 +465,51 @@ internal static class CombatContentTests
         if (runtime.Snapshot().Coop.ParticipantStarts[0].X != mainAnchors[0].Position.X)
             throw new Exception("A client snapshot must not mutate an allied start anchor.");
 
+        var movementRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => 0);
+        movementRuntime.Admit(firstPlayer);
+        movementRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            movementRuntime.Command(playerId, new MatchCommand { CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = movementRuntime.ManifestHash } });
+        var moveRight = new MatchCommand { CommandId = 2,
+            MoveCover = new MoveCoverCommand { Direction = 1 } };
+        if (movementRuntime.Command(firstPlayer, moveRight).Code != "moving" ||
+            movementRuntime.Command(firstPlayer, moveRight).Code != "moving" ||
+            movementRuntime.Command(secondPlayer, moveRight).Code != "cover-unavailable")
+            throw new Exception("Co-op shield selection must skip occupied and reserved points.");
+        BattlePlayerState movingPlayer = movementRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == firstPlayer);
+        if (!movingPlayer.Moving || movingPlayer.CoverIndex != 1 ||
+            movingPlayer.MoveEndTick <= 1 ||
+            movingPlayer.PositionZ != mainAnchors[0].Position.Z)
+            throw new Exception("Co-op movement must begin at the signed source shield.");
+        movementRuntime.Advance(2);
+        BattlePlayerState underway = movementRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == firstPlayer);
+        if (!underway.Moving || underway.PositionZ <= movingPlayer.PositionZ ||
+            movementRuntime.Snapshot().Players.Single(
+                player => player.PlayerId == secondPlayer).PositionZ !=
+                mainAnchors[1].Position.Z)
+            throw new Exception("Only the accepted co-op player may advance on host ticks.");
+        movementRuntime.Advance(movingPlayer.MoveEndTick);
+        BattlePlayerState arrived = movementRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == firstPlayer);
+        if (arrived.Moving || arrived.CoverIndex != 3 ||
+            new Vector3(arrived.PositionX, arrived.PositionY, arrived.PositionZ) !=
+                sourceMapSpawns.PlayerPositions[3].Position)
+            throw new Exception("Co-op movement must finish at the source defend position.");
+        if (movementRuntime.Command(secondPlayer, new MatchCommand { CommandId = 3,
+                MoveCover = new MoveCoverCommand { Direction = -1 } }).Code != "moving" ||
+            movementRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == secondPlayer).MoveEndTick <= movingPlayer.MoveEndTick)
+            throw new Exception("The second ally must acquire a shield after it is released.");
+        if (movementRuntime.Command(firstPlayer, new MatchCommand { CommandId = 3,
+                Forfeit = new ForfeitCommand() }).Code != "forfeit" ||
+            movementRuntime.Snapshot().Players.Any(player => player.Moving))
+            throw new Exception("A terminal co-op mission must stop in-flight movement.");
+
         var unsupported = new MatchCommand
         {
             CommandId = 2,
@@ -479,7 +529,7 @@ internal static class CombatContentTests
                 point.Position == new Vector3(firstEnemy.X, firstEnemy.Y, firstEnemy.Z)))
             throw new Exception("A due co-op AI must be created at an enemy source anchor.");
 
-        var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat,
+        var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         damagedRuntime.Admit(firstPlayer);
         damagedRuntime.Admit(secondPlayer);
@@ -547,7 +597,7 @@ internal static class CombatContentTests
                 point.ComponentFileId == timedEnemy.SpawnComponentFileId))
             throw new Exception("A source-timed co-op event must create a distinct host enemy.");
 
-        var steppedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat,
+        var steppedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         steppedRuntime.Admit(firstPlayer);
         steppedRuntime.Admit(secondPlayer);
@@ -579,7 +629,7 @@ internal static class CombatContentTests
             DurationSeconds = cardMission.TimeSeconds
         };
         var cardRuntime = new CoopMatchRuntime(cardAllocation, catalog,
-            spawnPoints, enemyCombat,
+            spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         cardRuntime.Admit(firstPlayer);
         cardRuntime.Admit(secondPlayer);
@@ -599,7 +649,7 @@ internal static class CombatContentTests
             throw new Exception("A source card event must preserve its card upgrade progress.");
 
         string signingKey = Convert.ToBase64String(new byte[32]);
-        var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat);
+        var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat);
         var udpEndpoint = new MatchEndpoint(coop, signingKey, udpRuntime, 0);
         var tokens = new MatchTokens(signingKey);
         var claims = new MatchAdmission
@@ -625,14 +675,14 @@ internal static class CombatContentTests
             !udpRuntime.Snapshot().Players[0].Admitted)
             throw new Exception("A signed co-op hello must reach its isolated runtime.");
 
-        var earlyForfeit = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat);
+        var earlyForfeit = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat);
         earlyForfeit.Admit(firstPlayer);
         earlyForfeit.Command(firstPlayer, new MatchCommand
             { CommandId = 1, Forfeit = new ForfeitCommand() });
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 29;
+        return 41;
     }
 
     private static int VerifyCoopNavMeshRoutes(string directory, MissionCatalog missions)

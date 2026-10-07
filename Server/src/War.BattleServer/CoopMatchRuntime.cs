@@ -1,4 +1,5 @@
 using Google.Protobuf;
+using System.Numerics;
 using War.Protocol;
 using War.Shared;
 
@@ -17,6 +18,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public bool Admitted;
         public bool Ready;
         public ulong LastCommandId;
+        public int CoverIndex;
+        public int DestinationIndex = -1;
+        public Vector3 Position;
+        public CoopDefendRoute? Route;
+        public ulong MoveStartTick;
+        public ulong MoveEndTick;
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
     }
 
@@ -29,6 +36,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
     private readonly IReadOnlyDictionary<string, CoopPlayerAnchor> playerStarts;
+    private readonly CoopMapSpawnPoints sourceMap;
+    private readonly CoopMapRoutes sourceRoutes;
     private ulong nextEnemyId = 1;
     private BattlePhase phase = BattlePhase.Waiting;
     private ulong tick;
@@ -40,19 +49,20 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     public bool Terminal => phase is BattlePhase.Ended or BattlePhase.Aborted;
 
     internal CoopMatchRuntime(MatchManifest allocation, MissionCatalog catalog,
-        CoopSpawnPointCatalog spawnPoints, CoopEnemyCombatCatalog combat,
+        CoopSpawnPointCatalog spawnPoints, CoopNavMeshPathCatalog paths,
+        CoopEnemyCombatCatalog combat,
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
-        MissionMapRule? sourceMap = manifest.MissionIndex is int selectedMission
+        MissionMapRule? missionMap = manifest.MissionIndex is int selectedMission
             ? catalog.MapForMission(selectedMission) : null;
         if (manifest.Mode != MatchManifest.CoopMissionMode ||
             manifest.MissionIndex is not int missionIndex ||
             catalog.SourceSha256 != manifest.CatalogRevision ||
-            sourceMap == null || manifest.MapId != sourceMap.Scene ||
-            manifest.MapRevision != sourceMap.SceneSha256 ||
+            missionMap == null || manifest.MapId != missionMap.Scene ||
+            manifest.MapRevision != missionMap.SceneSha256 ||
             manifest.DurationSeconds != catalog.Get(missionIndex).TimeSeconds)
             throw new InvalidDataException("Co-op allocation differs from source mission authority.");
 
@@ -60,6 +70,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         missionRule = catalog.Get(missionIndex);
         ArgumentNullException.ThrowIfNull(spawnPoints);
         CoopMapSpawnPoints map = spawnPoints.MapForMission(catalog, missionIndex);
+        sourceMap = map;
+        sourceRoutes = (paths ?? throw new ArgumentNullException(nameof(paths)))
+            .MapForMission(catalog, missionIndex);
         CoopPlayerAnchor[] mainPositions = map.PlayerPositions
             .Where(position => position.Main)
             .OrderBy(position => position.Index)
@@ -78,6 +91,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         mission = new CoopMissionEngine(catalog, missionIndex, chooseBehaviour);
         participants = manifest.Players.ToDictionary(player => player.PlayerId,
             player => new Participant(player.PlayerId), StringComparer.Ordinal);
+        foreach (Participant participant in participants.Values)
+        {
+            CoopPlayerAnchor start = playerStarts[participant.PlayerId];
+            participant.CoverIndex = start.Index;
+            participant.Position = start.Position;
+        }
     }
 
     public bool HasPlayer(string playerId) => participants.ContainsKey(playerId);
@@ -138,6 +157,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         while (tick < nextTick && phase == BattlePhase.Running)
         {
             tick++;
+            foreach (Participant participant in participants.Values)
+                AdvancePlayerMovement(participant);
             if (mission.AdvanceTick(tick))
             {
                 End(BattlePhase.Ended, mission.Outcome == MissionOutcome.Succeeded
@@ -302,7 +323,85 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             End(BattlePhase.Ended, "forfeit");
             return "forfeit";
         }
+        if (command.IntentCase == MatchCommand.IntentOneofCase.MoveCover)
+            return StartPlayerMovement(participant, command.MoveCover.Direction);
         return "coop-command-unavailable";
+    }
+
+    private string StartPlayerMovement(Participant participant, int direction)
+    {
+        if (phase != BattlePhase.Running || !participant.Ready)
+            return "match-not-running";
+        if (direction is not (-1 or 1))
+            return "invalid-direction";
+        if (participant.Route != null)
+            return "already-moving";
+
+        // PlayerController.GoLeft/GoRight scans availablePoints in source
+        // order, skips the other fraction and shields occupied by a player.
+        // The host also reserves an in-flight destination so simultaneous
+        // requests cannot both acquire the same shield.
+        int target = participant.CoverIndex + direction;
+        while (target >= 0 && target < sourceMap.PlayerPositions.Count)
+        {
+            if (!participants.Values.Any(other => other != participant &&
+                    (other.CoverIndex == target || other.DestinationIndex == target)))
+                break;
+            target += direction;
+        }
+        if (target < 0 || target >= sourceMap.PlayerPositions.Count)
+            return "cover-unavailable";
+
+        CoopDefendRoute route = sourceRoutes.Between(participant.CoverIndex, target);
+        double length = 0;
+        for (int index = 1; index < route.Corners.Count; index++)
+            length += Vector3.Distance(route.Corners[index - 1], route.Corners[index]);
+        if (!double.IsFinite(length) || length <= 0 || length > 100)
+            throw new InvalidDataException("Co-op route has an invalid travel length.");
+
+        participant.Route = route;
+        participant.DestinationIndex = target;
+        // PlayerController.GoTo defers NavMeshAgent.SetDestination by 0.02s.
+        // At 30 Hz this is the next host tick.
+        participant.MoveStartTick = tick + 1;
+        participant.MoveEndTick = participant.MoveStartTick +
+            (ulong)Math.Max(1, Math.Ceiling(length * MatchManifest.TickRate));
+        return "moving";
+    }
+
+    private void AdvancePlayerMovement(Participant participant)
+    {
+        CoopDefendRoute? route = participant.Route;
+        if (route == null || tick <= participant.MoveStartTick)
+            return;
+        if (tick >= participant.MoveEndTick)
+        {
+            participant.CoverIndex = participant.DestinationIndex;
+            participant.Position = sourceMap.PlayerPositions[participant.CoverIndex].Position;
+            participant.DestinationIndex = -1;
+            participant.Route = null;
+            stateRevision++;
+            return;
+        }
+
+        double remaining = (double)(tick - participant.MoveStartTick) /
+            MatchManifest.TickRate; // PlayerPrefab NavMeshAgent speed is 1 unit/s.
+        for (int index = 1; index < route.Corners.Count; index++)
+        {
+            Vector3 start = route.Corners[index - 1];
+            Vector3 end = route.Corners[index];
+            float segmentLength = Vector3.Distance(start, end);
+            if (remaining <= segmentLength)
+            {
+                participant.Position = Vector3.Lerp(start, end,
+                    (float)(remaining / segmentLength));
+                stateRevision++;
+                return;
+            }
+            remaining -= segmentLength;
+        }
+        participant.Position = route.Corners[^1];
+        stateRevision++;
     }
 
     public MatchReply Reply(ulong commandId, string code)
@@ -359,7 +458,6 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         foreach (Participant participant in participants.Values)
         {
-            CoopPlayerAnchor anchor = playerStarts[participant.PlayerId];
             snapshot.Players.Add(new BattlePlayerState
             {
                 PlayerId = participant.PlayerId,
@@ -367,9 +465,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 Ready = participant.Ready,
                 LastCommandId = participant.LastCommandId,
                 CombatEnabled = false,
-                PositionX = anchor.Position.X,
-                PositionY = anchor.Position.Y,
-                PositionZ = anchor.Position.Z
+                CoverIndex = participant.CoverIndex,
+                Moving = participant.Route != null,
+                MoveEndTick = participant.MoveEndTick,
+                PositionX = participant.Position.X,
+                PositionY = participant.Position.Y,
+                PositionZ = participant.Position.Z
             });
         }
         return snapshot;
@@ -437,6 +538,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         if (Terminal)
             return;
+        foreach (Participant participant in participants.Values)
+        {
+            participant.Route = null;
+            participant.DestinationIndex = -1;
+            participant.MoveEndTick = 0;
+        }
         phase = finalPhase;
         terminalReason = reason;
         stateRevision++;
