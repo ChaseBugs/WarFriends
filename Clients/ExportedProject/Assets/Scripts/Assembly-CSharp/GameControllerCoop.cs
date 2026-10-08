@@ -191,17 +191,32 @@ public class GameControllerCoop : GameControllerOnline
 		{
 			Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<GameStartScreen>.instance);
 			yield return StartCoroutine(Singleton<GameCamera>.instance.StartBeginAnimation());
-			mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
-			StartCameraAnimationFinishedRPC(PlayerController.currentPlayer.playerNetworkId);
+			SignalStartCameraAnimationFinished();
 			yield return new WaitForSeconds(0.2f);
 		}
 		else
 		{
 			yield return StartCoroutine(Singleton<GameCamera>.instance.SingleCameraAnimation(2f));
-			mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
-			StartCameraAnimationFinishedRPC(PlayerController.currentPlayer.playerNetworkId);
+			SignalStartCameraAnimationFinished();
 			yield return new WaitForSeconds(0.8f);
 		}
+	}
+
+	private void SignalStartCameraAnimationFinished()
+	{
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			if (client == null)
+				throw new System.InvalidOperationException("Self-hosted co-op adapter is missing.");
+			client.DispatchRpc("StartCameraAnimationFinishedRPC");
+		}
+		else
+		{
+			mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others,
+				PlayerController.currentPlayer.playerNetworkId);
+		}
+		StartCameraAnimationFinishedRPC(PlayerController.currentPlayer.playerNetworkId);
 	}
 
 	private void OtherPlayerInstanceOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo damageInfo)
