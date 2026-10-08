@@ -4569,6 +4569,13 @@ internal static class CombatContentTests
                 mainAnchors[0].Position.Z ||
             firstView.Players.Single(player => player.PlayerId == secondPlayer).Moving)
             throw new Exception("Both UDP allies must observe the same host-owned movement.");
+        RiflePoseState? sharedMovingPose = firstView.Players.Single(player =>
+            player.PlayerId == firstPlayer).RiflePose;
+        if (sharedMovingPose?.Layers.Count != 1 ||
+            sharedMovingPose.Layers[0].Clip != RiflePoseClip.Run ||
+            !RiflePoseProjection.ValidWire(sharedMovingPose, 2))
+            throw new Exception(
+                "Authenticated co-op peers lost the moving ally's run pose.");
 
         BattlePlayerState stationaryAlly = secondView.Players.Single(player =>
             player.PlayerId == secondPlayer);
