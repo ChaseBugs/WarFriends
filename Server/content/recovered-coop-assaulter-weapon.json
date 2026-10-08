@@ -10,11 +10,32 @@
   "weaponComponentFileId": 11470521,
   "weaponType": 0,
   "muzzleTransformFileId": 455190,
+  "muzzle": {
+    "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
+    "position": [
+      -1.4861874301316751e-08,
+      0.044999993348439744,
+      0.17000000665155962
+    ],
+    "rotation": [
+      -7.071067418107332e-08,
+      -4.3711384535882286e-08,
+      -1.6292069606646132e-07,
+      0.9999999999999831
+    ]
+  },
   "bulletPrefabGuid": "855689762fa6e774aaee190652b08c6f",
   "bulletComponentFileId": 11409266,
+  "bulletPrefabSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+  "bulletSetupComponentFileId": 11496012,
+  "realBulletSpeed": 5.0,
+  "fakeBulletSpeed": 7.5,
+  "collisionCheckDistance": 0.35,
   "cadenceSeconds": 0.35,
   "infiniteAmmo": true,
   "reloadableWeapon": false,
   "soldierSourceSha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39",
-  "gunSourceSha256": "2a3c8d6f42707bb8253e6b9f5e5e6ff50068a872b2d33b387520fb2d83efe281"
+  "gunSourceSha256": "2a3c8d6f42707bb8253e6b9f5e5e6ff50068a872b2d33b387520fb2d83efe281",
+  "bulletBaseSourceSha256": "5c8cb92b8d53b577b4b765dc486d5b94d49cb2f8515dff72e4a8f7fbee5e7b6b",
+  "bulletSetupSourceSha256": "89aae8dce8b79a4defda00618b9db3fccb27dc369d3b438f57c0435d92d4870a"
 }

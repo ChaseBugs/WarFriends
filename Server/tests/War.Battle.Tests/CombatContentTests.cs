@@ -596,6 +596,13 @@ internal static class CombatContentTests
             rifle.BulletPrefabGuid !=
                 "855689762fa6e774aaee190652b08c6f" ||
             rifle.MuzzleTransformFileId != 455190 ||
+            Vector3.Distance(rifle.MuzzleRestPosition,
+                new Vector3(0, 0.045f, 0.17f)) > 0.0001f ||
+            rifle.RealBulletSpeed != 5f ||
+            rifle.FakeBulletSpeed != 7.5f ||
+            rifle.CollisionCheckDistance != 0.35f ||
+            rifle.RealBulletFlight() !=
+                new BulletFlightDefinition(5f, 0.35f, false) ||
             rifle.CadenceSeconds != 0.35f ||
             rifle.NextRoundEligibleTick(100) != 111)
             throw new Exception("Co-op Assaulter rifle lost its source cadence or binding.");

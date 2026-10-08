@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -10,20 +11,30 @@ namespace War.BattleServer;
 internal sealed class CoopAssaulterWeaponCatalog
 {
     private const string ArtifactSha256 =
-        "a46c788867d3f0c2bae1fbf33aba4f1d73c73da100dbace0dfcef53976037b09";
+        "9d150780500ccfe888e3e4dd9188a7da4e3916c46833928456b3fa5e5f58b8b2";
 
     internal string WeaponPrefabGuid { get; }
     internal string BulletPrefabGuid { get; }
     internal int MuzzleTransformFileId { get; }
+    internal Vector3 MuzzleRestPosition { get; }
+    internal float RealBulletSpeed { get; }
+    internal float FakeBulletSpeed { get; }
+    internal float CollisionCheckDistance { get; }
     internal float CadenceSeconds { get; }
 
     private CoopAssaulterWeaponCatalog(string weaponPrefabGuid,
         string bulletPrefabGuid, int muzzleTransformFileId,
+        Vector3 muzzleRestPosition, float realBulletSpeed,
+        float fakeBulletSpeed, float collisionCheckDistance,
         float cadenceSeconds)
     {
         WeaponPrefabGuid = weaponPrefabGuid;
         BulletPrefabGuid = bulletPrefabGuid;
         MuzzleTransformFileId = muzzleTransformFileId;
+        MuzzleRestPosition = muzzleRestPosition;
+        RealBulletSpeed = realBulletSpeed;
+        FakeBulletSpeed = fakeBulletSpeed;
+        CollisionCheckDistance = collisionCheckDistance;
         CadenceSeconds = cadenceSeconds;
     }
 
@@ -31,7 +42,7 @@ internal sealed class CoopAssaulterWeaponCatalog
         string expectedSceneSha256)
     {
         byte[] source = File.ReadAllBytes(path);
-        if (source.Length is < 500 or > 4_000 ||
+        if (source.Length is < 500 or > 5_000 ||
             Convert.ToHexStringLower(SHA256.HashData(source)) !=
                 ArtifactSha256)
             throw new InvalidDataException(
@@ -44,9 +55,13 @@ internal sealed class CoopAssaulterWeaponCatalog
             "version", "unitId", "sceneSha256", "behaviourComponentFileId",
             "inventoryComponentFileId", "weaponPrefab", "weaponPrefabSha256",
             "weaponPrefabGuid", "weaponComponentFileId", "weaponType",
-            "muzzleTransformFileId", "bulletPrefabGuid",
-            "bulletComponentFileId", "cadenceSeconds", "infiniteAmmo",
-            "reloadableWeapon", "soldierSourceSha256", "gunSourceSha256"
+            "muzzleTransformFileId", "muzzle", "bulletPrefabGuid",
+            "bulletComponentFileId", "bulletPrefabSha256",
+            "bulletSetupComponentFileId", "realBulletSpeed",
+            "fakeBulletSpeed", "collisionCheckDistance",
+            "cadenceSeconds", "infiniteAmmo", "reloadableWeapon",
+            "soldierSourceSha256", "gunSourceSha256",
+            "bulletBaseSourceSha256", "bulletSetupSourceSha256"
         ];
         if (row.ValueKind != JsonValueKind.Object ||
             row.EnumerateObject().Count() != fields.Length ||
@@ -69,20 +84,60 @@ internal sealed class CoopAssaulterWeaponCatalog
             row.GetProperty("bulletPrefabGuid").GetString() !=
                 "855689762fa6e774aaee190652b08c6f" ||
             row.GetProperty("bulletComponentFileId").GetInt32() != 11409266 ||
+            row.GetProperty("bulletPrefabSha256").GetString() !=
+                "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae" ||
+            row.GetProperty("bulletSetupComponentFileId").GetInt32() !=
+                11496012 ||
+            row.GetProperty("realBulletSpeed").GetSingle() != 5f ||
+            row.GetProperty("fakeBulletSpeed").GetSingle() != 7.5f ||
+            row.GetProperty("collisionCheckDistance").GetSingle() != 0.35f ||
             row.GetProperty("cadenceSeconds").GetSingle() != 0.35f ||
             row.GetProperty("infiniteAmmo").ValueKind != JsonValueKind.True ||
             row.GetProperty("reloadableWeapon").ValueKind != JsonValueKind.False ||
             row.GetProperty("soldierSourceSha256").GetString() !=
                 "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39" ||
             row.GetProperty("gunSourceSha256").GetString() !=
-                "2a3c8d6f42707bb8253e6b9f5e5e6ff50068a872b2d33b387520fb2d83efe281")
+                "2a3c8d6f42707bb8253e6b9f5e5e6ff50068a872b2d33b387520fb2d83efe281" ||
+            row.GetProperty("bulletBaseSourceSha256").GetString() !=
+                "5c8cb92b8d53b577b4b765dc486d5b94d49cb2f8515dff72e4a8f7fbee5e7b6b" ||
+            row.GetProperty("bulletSetupSourceSha256").GetString() !=
+                "89aae8dce8b79a4defda00618b9db3fccb27dc369d3b438f57c0435d92d4870a")
             throw new InvalidDataException(
                 "Co-op Assaulter rifle lost its source binding.");
+
+        JsonElement muzzle = row.GetProperty("muzzle");
+        if (muzzle.ValueKind != JsonValueKind.Object ||
+            muzzle.EnumerateObject().Count() != 3 ||
+            muzzle.GetProperty("path").GetString() !=
+                "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash")
+            throw new InvalidDataException("Co-op Assaulter muzzle lost its path.");
+        JsonElement position = muzzle.GetProperty("position");
+        JsonElement rotation = muzzle.GetProperty("rotation");
+        if (position.ValueKind != JsonValueKind.Array ||
+            position.GetArrayLength() != 3 ||
+            rotation.ValueKind != JsonValueKind.Array ||
+            rotation.GetArrayLength() != 4)
+            throw new InvalidDataException("Co-op Assaulter muzzle has invalid geometry.");
+        var muzzlePosition = new Vector3(position[0].GetSingle(),
+            position[1].GetSingle(), position[2].GetSingle());
+        var muzzleRotation = new Quaternion(rotation[0].GetSingle(),
+            rotation[1].GetSingle(), rotation[2].GetSingle(),
+            rotation[3].GetSingle());
+        if (!PlayerHitbox.Finite(muzzlePosition) ||
+            Vector3.Distance(muzzlePosition,
+                new Vector3(0, 0.045f, 0.17f)) > 0.0001f ||
+            !float.IsFinite(muzzleRotation.LengthSquared()) ||
+            MathF.Abs(muzzleRotation.LengthSquared() - 1f) > 0.0001f)
+            throw new InvalidDataException("Co-op Assaulter muzzle differs from source.");
 
         return new CoopAssaulterWeaponCatalog(
             row.GetProperty("weaponPrefabGuid").GetString()!,
             row.GetProperty("bulletPrefabGuid").GetString()!,
             row.GetProperty("muzzleTransformFileId").GetInt32(),
+            muzzlePosition,
+            row.GetProperty("realBulletSpeed").GetSingle(),
+            row.GetProperty("fakeBulletSpeed").GetSingle(),
+            row.GetProperty("collisionCheckDistance").GetSingle(),
             row.GetProperty("cadenceSeconds").GetSingle());
     }
 
@@ -94,4 +149,7 @@ internal sealed class CoopAssaulterWeaponCatalog
             CadenceSeconds * MatchManifest.TickRate) + 1;
         return checked(lastRoundTick + spacing);
     }
+
+    internal BulletFlightDefinition RealBulletFlight() =>
+        new(RealBulletSpeed, CollisionCheckDistance, Fast: false);
 }
