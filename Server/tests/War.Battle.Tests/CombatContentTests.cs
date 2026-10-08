@@ -3193,6 +3193,29 @@ internal static class CombatContentTests
         MatchSnapshot completedKill = damagedRuntime.TerminalEvidenceSnapshot();
         CoopTerminalScoreValidator.ValidateSuccess(
             completedKill, coop, catalog);
+        MatchSnapshot duplicatedEnemy = completedKill.Clone();
+        duplicatedEnemy.Coop.EnemySpawns.Add(
+            duplicatedEnemy.Coop.EnemySpawns[0].Clone());
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                duplicatedEnemy, coop, catalog);
+            throw new Exception("A duplicated enemy death counted twice.");
+        }
+        catch (InvalidDataException)
+        {
+        }
+        MatchSnapshot nonfiniteEnemy = completedKill.Clone();
+        nonfiniteEnemy.Coop.EnemySpawns[0].Health = float.NaN;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                nonfiniteEnemy, coop, catalog);
+            throw new Exception("A nonfinite enemy health reached success evidence.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         MatchSnapshot forgedKillCount = completedKill.Clone();
         forgedKillCount.Coop.EnemyKills--;
         try

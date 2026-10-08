@@ -51,6 +51,7 @@ internal static class CoopTerminalScoreValidator
                     .Order(StringComparer.Ordinal)))
             throw new InvalidDataException("Co-op success differs from source mission.");
 
+        ValidateEnemyLedger(snapshot);
         ValidateObjective(snapshot, rule);
 
         if (rule.MissionType == "Score")
@@ -147,6 +148,21 @@ internal static class CoopTerminalScoreValidator
                 break;
             default:
                 throw new InvalidDataException("Unknown co-op mission objective.");
+        }
+    }
+
+    private static void ValidateEnemyLedger(MatchSnapshot snapshot)
+    {
+        var seenEntityIds = new HashSet<ulong>();
+        foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
+        {
+            if (enemy.EntityId == 0 || !seenEntityIds.Add(enemy.EntityId) ||
+                !float.IsFinite(enemy.MaxHealth) || enemy.MaxHealth <= 0 ||
+                !float.IsFinite(enemy.Health) || enemy.Health < 0 ||
+                enemy.Health > enemy.MaxHealth ||
+                enemy.SpawnTick > snapshot.EndTick)
+                throw new InvalidDataException(
+                    "Co-op success has an invalid enemy spawn ledger.");
         }
     }
 }
