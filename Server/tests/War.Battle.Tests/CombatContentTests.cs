@@ -1970,6 +1970,12 @@ internal static class CombatContentTests
             arrivalRuntime.CreateDiagnosticAssaulterFlight(
                 arrivalEnemy.EntityId, 1, alliedShotWorld) != null)
             throw new Exception("Real co-op Assaulter round lacks a host-owned slow bullet.");
+        if (!arrivalRuntime.TrackDiagnosticAssaulterFlight(
+                arrivalEnemy.EntityId, 0, alliedShotWorld) ||
+            arrivalRuntime.TrackDiagnosticAssaulterFlight(
+                arrivalEnemy.EntityId, 0, alliedShotWorld) ||
+            arrivalRuntime.ActiveDiagnosticFlightIds().Count != 1)
+            throw new Exception("Co-op diagnostic flight was not tracked once.");
         var enemyIdentityProbe = new BulletFlight(99,
             arrivalEnemy.EntityId, rifle.RealBulletFlight(),
             Vector3.Zero, new Vector3(0, 0, 4), 0,
@@ -1991,8 +1997,8 @@ internal static class CombatContentTests
             !enemyImpact.Hit.Static)
             throw new Exception("Enemy bullet impact lost its host entity identity.");
 
-        CoopMatchRuntime ReadyFakeRuntime(Func<float> distance,
-            Func<float> sideRoll)
+        CoopMatchRuntime ReadyShotRuntime(Func<float> distance,
+            Func<float> sideRoll, float realShotRoll = 0.999f)
         {
             var destinations = new CoopEnemyDestinationState(
                 enemyMap, enemyPointMasks, enemyCombat,
@@ -2009,7 +2015,7 @@ internal static class CombatContentTests
                 chooseInfantryShieldRoll: () => 0.5f,
                 chooseInfantryBatchSize: (min, max) =>
                     max > min ? max - 1 : min,
-                chooseInfantryRealShotRoll: () => 0.999f,
+                chooseInfantryRealShotRoll: () => realShotRoll,
                 chooseInfantryFakeDistance: distance,
                 chooseInfantryFakeSideRoll: sideRoll);
             runtime.Admit(firstPlayer);
@@ -2025,7 +2031,7 @@ internal static class CombatContentTests
                 });
             return runtime;
         }
-        var fakeRuntime = ReadyFakeRuntime(() => 0.75f, () => 0.25f);
+        var fakeRuntime = ReadyShotRuntime(() => 0.75f, () => 0.25f);
         fakeRuntime.Advance(expectedCrawlCallback + 1);
         BattleCoopEnemySpawn fakeEnemy = fakeRuntime.Snapshot().Coop
             .EnemySpawns.Single(enemy =>
@@ -2041,6 +2047,9 @@ internal static class CombatContentTests
         if (fakeRuntime.CreateDiagnosticAssaulterFlight(
                 fakeEnemy.EntityId, 0, alliedShotWorld) != null)
             throw new Exception("A fake co-op round created a damaging bullet.");
+        if (fakeRuntime.TrackDiagnosticAssaulterFlight(
+                fakeEnemy.EntityId, 0, alliedShotWorld))
+            throw new Exception("A fake co-op round entered the flight loop.");
         Vector3 fakeEnemyPosition = new(fakeEnemy.CurrentX,
             fakeEnemy.CurrentY, fakeEnemy.CurrentZ);
         Vector3 fakeSideways = Vector3.Normalize(Vector3.Cross(
@@ -2053,13 +2062,31 @@ internal static class CombatContentTests
             fakeRound.ObservedWorldLaunchOrigin is not Vector3 fakeOrigin ||
             Vector3.Distance(fakeOrigin, expectedLaunchOrigin) > 0.00001f)
             throw new Exception("Co-op fake round lost its source sideways/upward aim.");
+        var poseLossRuntime = ReadyShotRuntime(() => 0.75f,
+            () => 0.25f, realShotRoll: 0f);
+        poseLossRuntime.Advance(expectedCrawlCallback + 1);
+        if (!poseLossRuntime.TrackDiagnosticAssaulterFlight(
+                arrivalEnemy.EntityId, 0, alliedShotWorld) ||
+            poseLossRuntime.Command(firstPlayer, new MatchCommand
+            {
+                CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = 1 }
+            }).Code != "moving")
+            throw new Exception("Co-op pose-loss flight setup was rejected.");
+        poseLossRuntime.Advance(expectedCrawlCallback + 2);
+        CoopDiagnosticFlightResult? cancelledFlight = poseLossRuntime
+            .DiagnosticFlightResults().SingleOrDefault();
+        if (cancelledFlight?.Outcome != "pose-unavailable" ||
+            cancelledFlight.EnemyEntityId != arrivalEnemy.EntityId ||
+            poseLossRuntime.ActiveDiagnosticFlightIds().Count != 0)
+            throw new Exception("A moving ally left a stale diagnostic flight active.");
         foreach ((Func<float> distance, Func<float> sideRoll) in new[]
             {
                 ((Func<float>)(() => float.NaN), (Func<float>)(() => 0.25f)),
                 ((Func<float>)(() => 0.75f), (Func<float>)(() => -0.1f))
             })
         {
-            CoopMatchRuntime invalid = ReadyFakeRuntime(distance, sideRoll);
+            CoopMatchRuntime invalid = ReadyShotRuntime(distance, sideRoll);
             try
             {
                 invalid.Advance(expectedCrawlCallback + 1);
@@ -2071,6 +2098,19 @@ internal static class CombatContentTests
         }
         ulong secondRoundTick = rifle.NextRoundEligibleTick(firstRound[0].Tick);
         arrivalRuntime.Advance(secondRoundTick - 1);
+        Vector3? flightPosition = arrivalRuntime.DiagnosticFlightPosition(
+            enemyFlight!.Id);
+        IReadOnlyList<CoopDiagnosticFlightResult> flightResults =
+            arrivalRuntime.DiagnosticFlightResults();
+        if ((flightPosition == null || flightPosition == origin) &&
+            !flightResults.Any(result =>
+                result.ProjectileId == enemyFlight.Id &&
+                result.EnemyEntityId == arrivalEnemy.EntityId &&
+                result.Outcome is "impact" or "miss"))
+            throw new Exception("Co-op diagnostic bullet did not advance on host ticks.");
+        if (arrivalRuntime.Snapshot().Players.Any(player =>
+                player.Health != player.MaxHealth))
+            throw new Exception("Diagnostic enemy flight changed player health.");
         if (arrivalRuntime.InfantryRoundIntents(
                 arrivalEnemy.EntityId).Count != 1)
             throw new Exception("Co-op rifle scheduled a round before its cadence.");

@@ -65,6 +65,10 @@ internal sealed record CoopInfantryRoundIntent(
     Vector3 AimPosition, CoopQueuedMuzzleSample? ObservedLocalMuzzle,
     Vector3? ObservedWorldLaunchOrigin);
 
+internal sealed record CoopDiagnosticFlightResult(
+    ulong ProjectileId, ulong EnemyEntityId, ulong Tick,
+    string Outcome, BulletImpact? Impact);
+
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
     string SourcePath, Vector3 Position, ulong Tick);
@@ -116,6 +120,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryShotWindups = [];
     private readonly Dictionary<ulong, List<CoopInfantryRoundIntent>>
         infantryRoundIntents = [];
+    private readonly Dictionary<ulong, BulletFlight> diagnosticFlights = [];
+    private readonly List<CoopDiagnosticFlightResult> diagnosticFlightResults = [];
     private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
     private readonly Dictionary<ulong, ulong> nextObstacleRepositionTicks = [];
@@ -709,6 +715,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 if (participant.Weapons?.Advance(tick) == true)
                     stateRevision++;
             }
+            AdvanceDiagnosticFlights();
             if (alliedShields != null && alliedShields.Advance(tick,
                 participants.Values
                     .Where(participant => !participant.Dead &&
@@ -1891,6 +1898,57 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             });
     }
 
+    internal IReadOnlyList<CoopDiagnosticFlightResult>
+        DiagnosticFlightResults() => diagnosticFlightResults.ToArray();
+
+    internal IReadOnlyList<ulong> ActiveDiagnosticFlightIds() =>
+        diagnosticFlights.Keys.Order().ToArray();
+
+    internal Vector3? DiagnosticFlightPosition(ulong projectileId) =>
+        diagnosticFlights.TryGetValue(projectileId,
+            out BulletFlight? flight) ? flight.Position : null;
+
+    internal bool TrackDiagnosticAssaulterFlight(ulong enemyEntityId,
+        int roundIndex, CoopPlayerShotCollisionWorld world)
+    {
+        BulletFlight? flight = CreateDiagnosticAssaulterFlight(
+            enemyEntityId, roundIndex, world);
+        if (flight == null)
+            return false;
+        if (diagnosticFlights.Count >= 64)
+            throw new InvalidOperationException(
+                "Too many diagnostic co-op bullets are active.");
+        return diagnosticFlights.TryAdd(flight.Id, flight);
+    }
+
+    private void AdvanceDiagnosticFlights()
+    {
+        foreach ((ulong id, BulletFlight flight) in diagnosticFlights.ToArray())
+        {
+            if (PlaceIdleAlliedCollisionPoses() == null)
+            {
+                FinishDiagnosticFlight(id, flight, "pose-unavailable", null);
+                continue;
+            }
+
+            BulletImpact? impact = flight.Advance(tick);
+            if (impact != null)
+                FinishDiagnosticFlight(id, flight, "impact", impact);
+            else if (flight.Finished)
+                FinishDiagnosticFlight(id, flight, "miss", null);
+        }
+    }
+
+    private void FinishDiagnosticFlight(ulong id, BulletFlight flight,
+        string outcome, BulletImpact? impact)
+    {
+        diagnosticFlights.Remove(id);
+        if (diagnosticFlightResults.Count == 64)
+            diagnosticFlightResults.RemoveAt(0);
+        diagnosticFlightResults.Add(new CoopDiagnosticFlightResult(id,
+            flight.EnemyEntityId!.Value, tick, outcome, impact));
+    }
+
     /// <summary>
     /// Applies damage already established by host hit simulation. No client
     /// packet routes here: player fire, impact, and ownership still need their
@@ -2612,6 +2670,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts.Clear();
         infantryShotWindups.Clear();
         infantryRoundIntents.Clear();
+        diagnosticFlights.Clear();
+        diagnosticFlightResults.Clear();
         nextCornerChangeTicks.Clear();
         obstacleRepositionStartedTicks.Clear();
         nextObstacleRepositionTicks.Clear();
