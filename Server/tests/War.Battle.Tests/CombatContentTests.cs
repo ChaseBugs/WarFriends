@@ -4705,6 +4705,32 @@ internal static class CombatContentTests
             throw new Exception("Survive mission must succeed at the source deadline.");
         CoopTerminalScoreValidator.ValidateSuccess(
             survived, surviveAllocation, catalog, enemyCombat);
+        MatchSnapshot repeatedTimedTick = survived.Clone();
+        BattleCoopEnemySpawn[] grenadierEvents = repeatedTimedTick.Coop
+            .EnemySpawns.Where(enemy => enemy.TimedEvent &&
+                enemy.Behaviour == "Grenadier").Take(2).ToArray();
+        if (grenadierEvents.Length != 2 ||
+            grenadierEvents[0].SpawnTick == grenadierEvents[1].SpawnTick)
+            throw new Exception(
+                "Survive fixture needs two separate Grenadier event passes.");
+        grenadierEvents[1].SpawnTick = grenadierEvents[0].SpawnTick;
+        BattleCoopEnemySpawn[] sortedEvents = repeatedTimedTick.Coop
+            .EnemySpawns.OrderBy(enemy => enemy.SpawnTick)
+            .ThenByDescending(enemy => enemy.TimedEvent).ToArray();
+        repeatedTimedTick.Coop.EnemySpawns.Clear();
+        for (int index = 0; index < sortedEvents.Length; index++)
+        {
+            sortedEvents[index].EntityId = (ulong)index + 1;
+            repeatedTimedTick.Coop.EnemySpawns.Add(sortedEvents[index]);
+        }
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                repeatedTimedTick, surviveAllocation, catalog, enemyCombat);
+            throw new Exception(
+                "One co-op event spawned twice on its whole-second pass.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot overCapacity = survived.Clone();
         ulong lastSpawnTick = overCapacity.Coop.EnemySpawns[^1].SpawnTick;
         ulong elapsedSinceStart = lastSpawnTick - overCapacity.StartTick;

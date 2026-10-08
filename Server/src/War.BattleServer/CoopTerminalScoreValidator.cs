@@ -157,7 +157,10 @@ internal static class CoopTerminalScoreValidator
     {
         ulong expectedEntityId = 1;
         var timedEventCounts = new int[rule.Events.Count];
+        var lastEventSpawnTicks = new ulong?[rule.Events.Count];
         var earlierSpawns = new List<BattleCoopEnemySpawn>();
+        ulong? lastTimedTick = null;
+        int lastTimedEventIndex = -1;
         foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
         {
             if (enemy.EntityId != expectedEntityId ||
@@ -188,8 +191,15 @@ internal static class CoopTerminalScoreValidator
                     elapsedTicks % MatchManifest.TickRate != 0)
                     throw new InvalidDataException(
                         "Co-op timed spawn missed its event clock.");
-                ValidateTimedSpawn(enemy, snapshot.StartTick, rule,
-                    timedEventCounts);
+                int eventIndex = ValidateTimedSpawn(enemy,
+                    snapshot.StartTick, rule, timedEventCounts,
+                    lastEventSpawnTicks);
+                if (lastTimedTick == enemy.SpawnTick &&
+                    eventIndex < lastTimedEventIndex)
+                    throw new InvalidDataException(
+                        "Co-op timed events differ from source order.");
+                lastTimedTick = enemy.SpawnTick;
+                lastTimedEventIndex = eventIndex;
             }
             else if (enemy.CardUnit || !rule.Behaviours.Any(behaviour =>
                          behaviour.Name == enemy.Behaviour &&
@@ -271,8 +281,9 @@ internal static class CoopTerminalScoreValidator
         }
     }
 
-    private static void ValidateTimedSpawn(BattleCoopEnemySpawn enemy,
-        ulong startTick, MissionRule rule, int[] eventCounts)
+    private static int ValidateTimedSpawn(BattleCoopEnemySpawn enemy,
+        ulong startTick, MissionRule rule, int[] eventCounts,
+        ulong?[] lastEventSpawnTicks)
     {
         ulong elapsedSecond = (enemy.SpawnTick - startTick) /
             MatchManifest.TickRate;
@@ -287,8 +298,14 @@ internal static class CoopTerminalScoreValidator
                 eventCounts[index] >= maximum)
                 continue;
 
+            // Mission.UpdateMission visits an event once per whole-second pass.
+            // Its Count allows retries on later seconds, not a batch at once.
+            if (lastEventSpawnTicks[index] == enemy.SpawnTick)
+                throw new InvalidDataException(
+                    "Co-op timed event spawned twice in one second.");
             eventCounts[index]++;
-            return;
+            lastEventSpawnTicks[index] = enemy.SpawnTick;
+            return index;
         }
         throw new InvalidDataException(
             "Co-op timed spawn has no due source event capacity.");
