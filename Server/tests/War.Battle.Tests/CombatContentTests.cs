@@ -1613,6 +1613,68 @@ internal static class CombatContentTests
                 stoppedEnemy.EntityId).Count != 0)
             throw new Exception("Dead infantry kept moving after its host-confirmed death.");
 
+        var arrivalDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var arrivalRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => 0,
+            enemyDestinations: arrivalDestinations,
+            infantryNavigation: infantryNavigation,
+            playerWeaponContent: content);
+        arrivalRuntime.Admit(firstPlayer);
+        arrivalRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            arrivalRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = arrivalRuntime.ManifestHash
+                }
+            });
+        arrivalRuntime.Advance(8);
+        BattleCoopEnemySpawn arrivalEnemy = arrivalRuntime.Snapshot()
+            .Coop.EnemySpawns.Single();
+        CoopAssignedEnemyDestination arrivalPoint = arrivalRuntime
+            .EnemyDestination(arrivalEnemy.EntityId)!;
+        ArmyNavMeshCorridor arrivalCorridor = infantryNavigation
+            .PlanSourceSpawnCorridor(catalog, 0,
+                arrivalEnemy.SpawnComponentFileId,
+                arrivalPoint.PointComponentFileId,
+                new Vector3(arrivalEnemy.CurrentX, arrivalEnemy.CurrentY,
+                    arrivalEnemy.CurrentZ), arrivalPoint.Position)!;
+        var arrivalClock = new CoopInfantryPathState(arrivalCorridor,
+            enemyCombat.MovementSpeed("Assaulter"), firstTick: 8);
+        ulong expectedArrival = Enumerable.Range(9, 300).Select(value =>
+            (ulong)value).First(candidate =>
+            Vector2.Distance(new Vector2(arrivalClock.PositionAt(candidate).X,
+                    arrivalClock.PositionAt(candidate).Z),
+                new Vector2(arrivalPoint.Position.X,
+                    arrivalPoint.Position.Z)) < 0.04f);
+        arrivalRuntime.Advance(expectedArrival - 1);
+        if (arrivalRuntime.InfantryPointReachedTick(arrivalEnemy.EntityId) != null)
+            throw new Exception("Co-op Assaulter reached its point too early.");
+        arrivalRuntime.Advance(expectedArrival);
+        if (arrivalRuntime.InfantryPointReachedTick(arrivalEnemy.EntityId) !=
+                expectedArrival)
+            throw new Exception("Co-op Assaulter missed the source point-arrival check.");
+        BattleCoopEnemySpawn reachedEnemy = arrivalRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy =>
+                enemy.EntityId == arrivalEnemy.EntityId);
+        arrivalRuntime.Advance(expectedArrival + 1);
+        BattleCoopEnemySpawn heldEnemy = arrivalRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy =>
+                enemy.EntityId == arrivalEnemy.EntityId);
+        if (heldEnemy.CurrentX != reachedEnemy.CurrentX ||
+            heldEnemy.CurrentZ != reachedEnemy.CurrentZ ||
+            heldEnemy.PoseTick != expectedArrival)
+            throw new Exception("Co-op Assaulter walked beyond its reached point.");
+        if (!arrivalRuntime.ApplyHostEnemyDamage(arrivalEnemy.EntityId,
+                heldEnemy.Health, expectedArrival + 1) ||
+            arrivalRuntime.InfantryPointReachedTick(arrivalEnemy.EntityId) != null)
+            throw new Exception("Dead co-op infantry retained a point-arrival marker.");
+
         MissionRule rusherRule = catalog.Get(2);
         MissionMapRule rusherMissionMap = catalog.MapForMission(2);
         MatchManifest rusherAllocation = coop with

@@ -62,6 +62,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopEnemyDestinationState? enemyDestinations;
     private readonly CoopNavMeshConnectivity? infantryNavigation;
     private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
+    private readonly Dictionary<ulong, ulong> infantryPointReachedTicks = [];
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -293,6 +294,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     internal CoopAssignedEnemyDestination? EnemyDestination(ulong entityId) =>
         enemyDestinations?.ForEnemy(entityId);
+
+    internal ulong? InfantryPointReachedTick(ulong entityId) =>
+        infantryPointReachedTicks.TryGetValue(entityId, out ulong reachedTick)
+            ? reachedTick : null;
 
     /// <summary>
     /// A future host AI state may request this after reaching or abandoning
@@ -762,6 +767,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopAssignedEnemyDestination destination, Vector3 start)
     {
         infantryPaths.Remove(enemy.EntityId);
+        infantryPointReachedTicks.Remove(enemy.EntityId);
         // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
         // branch. Rusher, Warp, Parachute, and specialist state machines need
         // separate source rules before their movement can be simulated.
@@ -808,7 +814,19 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.CurrentZ = position.Z;
             enemy.PoseTick = tick;
             stateRevision++;
-            if (path.HasArrived(tick))
+            CoopAssignedEnemyDestination? destination =
+                enemyDestinations?.ForEnemy(entityId);
+            if (destination != null &&
+                Vector2.Distance(new Vector2(position.X, position.Z),
+                    new Vector2(destination.Position.X,
+                        destination.Position.Z)) < 0.04f)
+            {
+                // EnemyPoint.IsEnemyPointReached is the Client's walking
+                // transition. Shooting is still closed in this runtime.
+                infantryPointReachedTicks[entityId] = tick;
+                arrived.Add(entityId);
+            }
+            else if (path.HasArrived(tick))
                 arrived.Add(entityId);
         }
         foreach (ulong entityId in arrived)
@@ -1153,6 +1171,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.DeathTick = impactTick;
             enemyDestinations?.Release(entityId);
             infantryPaths.Remove(entityId);
+            infantryPointReachedTicks.Remove(entityId);
             if (enemy.Behaviour == "Drone")
             {
                 airPathReservations?.Release(entityId);
@@ -1781,6 +1800,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return;
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
+        infantryPointReachedTicks.Clear();
         foreach (Participant participant in participants.Values)
         {
             participant.Route = null;
