@@ -118,6 +118,8 @@ public sealed class ArmyNavMeshConnectivity
         private readonly IReadOnlyDictionary<int,int[]> componentTriangles;
         private readonly Vector3[] centroids;
         private readonly List<Neighbor>[] neighbors;
+        private readonly float visibleOffsetLimit;
+        private readonly int visibleNodeLimit;
         public int ComponentCount { get; }
         public Graph(ArmyNavMeshTriangulation mesh)
             : this(mesh.Vertices, mesh.Indices)
@@ -125,8 +127,17 @@ public sealed class ArmyNavMeshConnectivity
         }
 
         public Graph(IReadOnlyList<Vector3> sourceVertices,
-            IReadOnlyList<int> sourceIndices)
+            IReadOnlyList<int> sourceIndices,
+            float visibleOffsetLimit = .75f,
+            int visibleNodeLimit = 48)
         {
+            if (!float.IsFinite(visibleOffsetLimit) ||
+                visibleOffsetLimit <= 0 || visibleOffsetLimit > 5 ||
+                visibleNodeLimit is < 1 or > 256)
+                throw new ArgumentOutOfRangeException(
+                    nameof(visibleOffsetLimit));
+            this.visibleOffsetLimit = visibleOffsetLimit;
+            this.visibleNodeLimit = visibleNodeLimit;
             vertices=sourceVertices;indices=sourceIndices;
             int count=indices.Count/3;
             var parent=Enumerable.Range(0,count).ToArray();
@@ -259,9 +270,10 @@ public sealed class ArmyNavMeshConnectivity
                 float t=Vector2.Dot(offset,axis)/squared;
                 if(t<=.001f || t>=.999f)continue;
                 float distance=Vector2.Distance(offset,axis*t);
-                if(distance<=.75f)nearby.Add((point,t,distance));
+                if(distance<=visibleOffsetLimit)nearby.Add((point,t,distance));
             }
-            var nodes=nearby.OrderBy(x=>x.Offset).ThenBy(x=>x.T).Take(48)
+            var nodes=nearby.OrderBy(x=>x.Offset).ThenBy(x=>x.T)
+                .Take(visibleNodeLimit)
                 .OrderBy(x=>x.T).Select(x=>x.Point).ToList();
             nodes.Insert(0,start);nodes.Add(end);
             var cost=Enumerable.Repeat(float.PositiveInfinity,nodes.Count).ToArray();

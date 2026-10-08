@@ -1538,7 +1538,8 @@ internal static class CombatContentTests
             parachuterCandidates[0].ComponentType != "SpawnPointParachute")
             throw new Exception("Co-op soldier spawn eligibility differs from Client.");
         var walkingDestinations = new CoopEnemyDestinationState(
-            enemyMap, enemyPointMasks, enemyCombat);
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
         var walkingRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0,
@@ -2949,6 +2950,8 @@ internal static class CombatContentTests
             !infantryMovement.HasArrived(arrivalTick) ||
             infantryMovement.PositionAt(arrivalTick + 100) != routeEnd)
             throw new Exception("Co-op infantry route clock is inconsistent.");
+        VerifyCoopAssaulterMotionReference(directory, missions,
+            connectivity, infantrySpawn, infantryTarget);
 
         string temporaryDirectory = Path.Combine(Path.GetTempPath(),
             $"war-coop-navigation-{Guid.NewGuid():N}");
@@ -3009,6 +3012,121 @@ internal static class CombatContentTests
         {
             Directory.Delete(temporaryDirectory, recursive: true);
         }
+    }
+
+    private static void VerifyCoopAssaulterMotionReference(string directory,
+        MissionCatalog missions, CoopNavMeshConnectivity navigation,
+        CoopSpawnPoint spawn, CoopEnemyPoint? target)
+    {
+        string path = Path.Combine(directory,
+            "coop-assaulter-motion-reference.json");
+        byte[] source = File.ReadAllBytes(path);
+        if (Convert.ToHexStringLower(SHA256.HashData(source)) !=
+            "3e964938407869320d9998880a17024a0e8f2535384dd1de4aee6a51a9d3a9bd")
+            throw new Exception("Co-op Unity motion trace changed.");
+        using JsonDocument document = JsonDocument.Parse(source);
+        JsonElement root = document.RootElement;
+        if (target?.ComponentFileId != 1859 ||
+            spawn.ComponentFileId != 1646 ||
+            root.GetProperty("asset").GetString() !=
+                "Assets/NavMeshData/NavMesh_7.asset" ||
+            root.GetProperty("status").GetString() != "Arrived" ||
+            root.GetProperty("pathStatus").GetString() != "PathComplete" ||
+            root.GetProperty("speed").GetSingle() != 0.9f)
+            throw new Exception("Unity motion trace does not bind the source case.");
+
+        static Vector3 ReadVector(JsonElement value) => new(
+            value.GetProperty("x").GetSingle(),
+            value.GetProperty("y").GetSingle(),
+            value.GetProperty("z").GetSingle());
+        Vector3 requestedEnd = CoopEnemyPointSelection.GeneratePosition(
+            target, 0.5f);
+        using JsonDocument inputDocument = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "coop-assaulter-motion-input.json")));
+        JsonElement input = inputDocument.RootElement;
+        if (input.GetProperty("asset").GetString() !=
+                "Assets/NavMeshData/NavMesh_7.asset" ||
+            input.GetProperty("speed").GetSingle() != 0.9f ||
+            Vector3.Distance(ReadVector(input.GetProperty("start")),
+                spawn.Position) > 0.001f ||
+            Vector3.Distance(ReadVector(input.GetProperty("end")),
+                requestedEnd) > 0.001f)
+            throw new Exception("Unity motion input differs from source anchors.");
+        Vector3 traceStart = ReadVector(root.GetProperty("requestedStart"));
+        Vector3 traceEnd = ReadVector(root.GetProperty("requestedEnd"));
+        if (Vector3.Distance(traceStart, spawn.Position) > 0.001f ||
+            Vector3.Distance(traceEnd, requestedEnd) > 0.001f)
+            throw new Exception("Unity motion trace endpoints changed.");
+
+        Vector3? start = navigation.SampleNearest(missions, 0,
+            spawn.Position, 3f);
+        Vector3? end = navigation.SampleNearest(missions, 0,
+            requestedEnd, 3f);
+        ArmyNavMeshCorridor? corridor = start.HasValue && end.HasValue ?
+            navigation.PlanCorridor(missions, 0, start.Value, end.Value) : null;
+        if (corridor is not { PlanarCovered: true })
+            throw new Exception("Unity motion trace lacks a host corridor.");
+        var host = new CoopInfantryPathState(corridor, 0.9f, 0);
+        JsonElement unityCorners = root.GetProperty("corners");
+        if (unityCorners.GetArrayLength() != 9 ||
+            corridor.SmoothedPoints.Count != unityCorners.GetArrayLength())
+            throw new Exception("Co-op host path has different Unity corners.");
+        for (int index = 0; index < unityCorners.GetArrayLength(); index++)
+        {
+            Vector3 unityCorner = ReadVector(unityCorners[index]);
+            if (Vector3.Distance(unityCorner,
+                    corridor.SmoothedPoints[index]) > 0.05f)
+                throw new Exception("Co-op host corner differs from Unity's path.");
+        }
+        JsonElement samples = root.GetProperty("samples");
+        if (samples.GetArrayLength() != 254)
+            throw new Exception("Unity co-op motion trace is incomplete.");
+        var errors = new List<float>();
+        var facingErrors = new List<float>();
+        float previousTime = -1;
+        int previousFrame = -1;
+        foreach (JsonElement sample in samples.EnumerateArray())
+        {
+            int frame = sample.GetProperty("frame").GetInt32();
+            float seconds = sample.GetProperty("seconds").GetSingle();
+            Vector3 unity = ReadVector(sample.GetProperty("position"));
+            if (frame <= previousFrame || seconds < previousTime ||
+                !PlayerHitbox.Finite(unity))
+                throw new Exception("Unity co-op motion samples are not ordered.");
+            previousFrame = frame;
+            previousTime = seconds;
+            ulong tick = (ulong)Math.Round(seconds * MatchManifest.TickRate);
+            Vector3 predicted = host.PositionAt(tick);
+            Vector2 delta = new(predicted.X - unity.X,
+                predicted.Z - unity.Z);
+            errors.Add(delta.Length());
+            Vector3 velocity = ReadVector(sample.GetProperty("velocity"));
+            if (velocity.Length() > 0.1f)
+            {
+                JsonElement sourceRotation = sample.GetProperty("rotation");
+                var rotation = new Quaternion(
+                    sourceRotation.GetProperty("x").GetSingle(),
+                    sourceRotation.GetProperty("y").GetSingle(),
+                    sourceRotation.GetProperty("z").GetSingle(),
+                    sourceRotation.GetProperty("w").GetSingle());
+                Vector3 unityFacing = Vector3.Transform(Vector3.UnitZ,
+                    rotation);
+                Vector3 hostFacing = host.PlanarDirectionAt(tick);
+                float cosine = Math.Clamp(Vector3.Dot(unityFacing,
+                    hostFacing), -1f, 1f);
+                facingErrors.Add(MathF.Acos(cosine) * 180f / MathF.PI);
+            }
+        }
+        errors.Sort();
+        facingErrors.Sort();
+        if (errors[(int)(errors.Count * 0.95)] > 0.25f ||
+            errors[^1] > 0.30f || previousTime is < 8f or > 9f ||
+            facingErrors.Count < 200)
+            throw new Exception("Co-op host motion differs from Unity reference.");
+        Console.WriteLine($"Co-op Assaulter Unity motion: host median={errors[errors.Count / 2]:F3}, " +
+            $"p95={errors[(int)(errors.Count * 0.95)]:F3}, max={errors[^1]:F3}, " +
+            $"facing p95={facingErrors[(int)(facingErrors.Count * 0.95)]:F1} degrees, " +
+            $"Unity duration={previousTime:F2}s, host duration={corridor.SmoothedLength / 0.9f:F2}s.");
     }
 
     private static int VerifyCoopSceneColliders(

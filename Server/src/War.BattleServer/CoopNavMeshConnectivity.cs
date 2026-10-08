@@ -34,7 +34,9 @@ public sealed class CoopNavMeshConnectivity
                 throw new InvalidDataException(
                     "Co-op navigation map order changed.");
             graphs[index] = new ArmyNavMeshConnectivity.Graph(
-                map.Vertices, map.Indices);
+                map.Vertices, map.Indices,
+                visibleOffsetLimit: 2.5f,
+                visibleNodeLimit: 128);
         }
         return new CoopNavMeshConnectivity(geometry, graphs);
     }
