@@ -784,6 +784,51 @@ ParticipantManifest WithSlots(ParticipantManifest player)=>player with
     WeaponSlots=[new WeaponSlotManifest(0,0,player.Weapon,0),new WeaponSlotManifest(2,1,alternateWeapon,1)]
 };
 var slottedDefinition=definition with {Players=[WithSlots(definition.Players[0]),WithSlots(definition.Players[1])]};
+var ammoBoxMatch = new MatchEngine(slottedDefinition with { MatchId = "ammo-box-source-slots" });
+ammoBoxMatch.ConfigureCardSelection(["CardAmmoBox"]);
+ammoBoxMatch.ConfigureCardInventory([(a, "CardAmmoBox", 1)]);
+Check(ammoBoxMatch.Admit(a) && ammoBoxMatch.Admit(b), "Ammo Box fixture admits both players");
+var selectedAmmoBox = new SelectCardsCommand();
+selectedAmmoBox.CardIds.Add("CardAmmoBox");
+Check(ammoBoxMatch.Command(a, new MatchCommand { CommandId = 1,
+    SelectCards = selectedAmmoBox }).Code == "cards-selected",
+    "owner selects an allocated Ammo Box");
+ammoBoxMatch.Command(a, Ready(2, ammoBoxMatch.ManifestHash));
+ammoBoxMatch.Command(b, Ready(1, ammoBoxMatch.ManifestHash));
+ammoBoxMatch.Advance(60);
+var ammoBoxCommand = new MatchCommand { CommandId = 3,
+    UseAmmoBox = new UseAmmoBoxCommand { RequestId = "96969696969696969696969696969696" } };
+int firstStartingReserve = slottedDefinition.Players[0].Weapon.ReserveAmmo;
+Check(ammoBoxMatch.Command(a, ammoBoxCommand).Code == "ammo-box-applied" &&
+      ammoBoxMatch.Snapshot().Players[0].ReserveAmmo ==
+          firstStartingReserve + (int)Math.Ceiling((float)firstStartingReserve * 0.25f),
+    "Ammo Box adds the recovered ceiling grant to the active weapon reserve");
+var alternateAmmo = ammoBoxMatch.Command(a, new MatchCommand { CommandId = 4,
+    SwitchWeapon = new SwitchWeaponCommand { Slot = 2 } });
+Check(alternateAmmo.Code == "weapon-selected" && alternateAmmo.Snapshot.Players[0].ReserveAmmo ==
+      alternateWeapon.ReserveAmmo + (int)Math.Ceiling((float)alternateWeapon.ReserveAmmo * 0.25f),
+    "Ammo Box also grants the inactive used weapon without a client slot assertion");
+Check(ammoBoxMatch.Command(a, ammoBoxCommand).Code == "ammo-box-applied" &&
+      ammoBoxMatch.Command(a, new MatchCommand { CommandId = 5,
+          UseAmmoBox = new UseAmmoBoxCommand { RequestId = "97979797979797979797979797979797" } }).Code == "ammo-box-unavailable",
+    "Ammo Box retry does not grant again and spent inventory cannot be reused");
+var excessiveAmmo = definition.Players[0].Weapon with { ReserveAmmo = int.MaxValue };
+var excessiveAmmoManifest = definition with { MatchId = "ammo-box-overflow",
+    Players = [definition.Players[0] with { Weapon = excessiveAmmo }, definition.Players[1]] };
+var excessiveAmmoMatch = new MatchEngine(excessiveAmmoManifest);
+excessiveAmmoMatch.ConfigureCardSelection(["CardAmmoBox"]);
+excessiveAmmoMatch.ConfigureCardInventory([(a, "CardAmmoBox", 1)]);
+excessiveAmmoMatch.Admit(a);
+excessiveAmmoMatch.Admit(b);
+excessiveAmmoMatch.Command(a, new MatchCommand { CommandId = 1,
+    SelectCards = selectedAmmoBox });
+excessiveAmmoMatch.Command(a, Ready(2, excessiveAmmoMatch.ManifestHash));
+excessiveAmmoMatch.Command(b, Ready(1, excessiveAmmoMatch.ManifestHash));
+excessiveAmmoMatch.Advance(60);
+Check(excessiveAmmoMatch.Command(a, ammoBoxCommand).Code == "ammo-box-authority-unavailable" &&
+      excessiveAmmoMatch.Snapshot().CardActivations == 0 &&
+      excessiveAmmoMatch.Snapshot().Players[0].ReserveAmmo == int.MaxValue,
+    "an overflowing source grant rejects before spending the card or changing ammo");
 var slotMatch=new MatchEngine(slottedDefinition);
 Check(slotMatch.Admit(a)&&slotMatch.Admit(b),"multi-weapon match admission");
 slotMatch.Command(a,Ready(1,slotMatch.ManifestHash));slotMatch.Command(b,Ready(1,slotMatch.ManifestHash));slotMatch.Advance(60);

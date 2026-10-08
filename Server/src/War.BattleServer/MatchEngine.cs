@@ -295,6 +295,40 @@ public sealed partial class MatchEngine : IMatchRuntime
             ? "shield-generator-active" : "shield-generator-unavailable";
     }
 
+    private string UseAmmoBox(Player owner, string requestId)
+    {
+        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardAmmoBox", StringComparer.Ordinal))
+            return "ammo-box-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
+            return "invalid-ammo-box-request";
+        if (cardReservations == null || owner.Weapons.Count == 0)
+            return "ammo-box-authority-unavailable";
+        if (events.Count >= MaximumRetainedEvents || stateRevision > ulong.MaxValue - 2)
+            return "event-backpressure";
+
+        var grants = new List<(WeaponRuntime Weapon, int Amount)>();
+        foreach (var weapon in owner.Weapons.OrderBy(slot => slot.Key).Select(slot => slot.Value))
+        {
+            int startingAmmo = weapon.Definition.Weapon.ReserveAmmo;
+            double sourceGrant = Math.Ceiling((float)startingAmmo * 0.25f);
+            if (startingAmmo < 0 || weapon.Reserve < 0 ||
+                !double.IsFinite(sourceGrant) || sourceGrant > int.MaxValue ||
+                sourceGrant > int.MaxValue - weapon.Reserve)
+                return "ammo-box-authority-unavailable";
+            grants.Add((weapon, (int)sourceGrant));
+        }
+
+        // CardAmmoBox adds ceil(startingAmmmoCount * AmmoBoxCoef) to every
+        // used weapon's reserve. The packet supplies neither slots nor amounts.
+        var effect = new WarCardEffectRequest("CardAmmoBox", Vector3.Zero, 0, 0);
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect))
+            return "ammo-box-unavailable";
+        foreach (var grant in grants)
+            grant.Weapon.Reserve += grant.Amount;
+        stateRevision++;
+        return "ammo-box-applied";
+    }
+
     internal bool TryResolveCardStatus(string ownerPlayerId, string effectId, string targetPlayerId)
     {
         var target = Find(targetPlayerId);
@@ -1717,6 +1751,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseShieldsUp(p,c.UseShieldsUp.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldGenerator)
             return UseShieldGenerator(p,c.UseShieldGenerator.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoBox)
+            return UseAmmoBox(p,c.UseAmmoBox.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
