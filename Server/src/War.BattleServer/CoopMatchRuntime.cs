@@ -65,6 +65,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopShieldStateCatalog? shieldStates;
     private readonly ShieldSourceCatalog? shieldPolicy;
     private CoopShieldMatchSimulation? alliedShields;
+    private CoopShieldMatchSimulation? enemyShields;
     internal CoopBossLoadout? BossLoadout { get; }
     private readonly Func<float>? chooseAttackFraction;
     private CoopBossCombatState? boss;
@@ -258,6 +259,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                         participant.Route == null)
                     .Select(participant => participant.CoverIndex).ToArray()))
                 stateRevision++;
+            if (enemyShields != null && enemyShields.Advance(tick,
+                boss?.DeathTick == null ? [bossAnchors!.BossStart.Index] : []))
+                stateRevision++;
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
             {
@@ -441,6 +445,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 if (shieldStates != null)
                     alliedShields = new CoopShieldMatchSimulation(manifest,
                         shieldStates, shieldPolicy!, alliedFirstCover, tick);
+                if (boss != null)
+                    enemyShields = new CoopShieldMatchSimulation(1,
+                        bossHealth!.Level,
+                        shieldStates!.ForMission(mission.MissionIndex).Bot,
+                        shieldPolicy!, firstCover: 0, startingTick: tick);
                 phase = BattlePhase.Running;
             }
             return "ready";
@@ -574,6 +583,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return mutation;
     }
 
+    internal ShieldMutation? ApplyHostEnemyShieldShot(
+        int coverIndex, string weaponId, float damage)
+    {
+        if (phase != BattlePhase.Running || enemyShields == null)
+            return null;
+        ShieldMutation? mutation = enemyShields.ApplyHostShot(
+            coverIndex, weaponId, damage, tick);
+        if (mutation != null)
+            stateRevision++;
+        return mutation;
+    }
+
     public MatchReply Reply(ulong commandId, string code)
     {
         return new MatchReply
@@ -614,17 +635,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
         snapshot.Coop.EnemySpawns.AddRange(
             enemySpawns.Select(enemy => enemy.Clone()));
-        if (alliedShields != null)
-            snapshot.Shields.AddRange(alliedShields.Snapshot().Select(shield =>
-                new BattleShieldState
-                {
-                    CoverIndex = shield.CoverIndex,
-                    OwnerFraction = shield.OwnerFraction,
-                    Health = shield.Health,
-                    MaxHealth = shield.MaxHealth,
-                    Destroyed = shield.Destroyed,
-                    Revision = shield.Revision
-                }));
+        AddShields(snapshot, alliedShields);
+        AddShields(snapshot, enemyShields);
         if (boss != null)
         {
             snapshot.Coop.Boss = new BattleCoopBossState
@@ -689,6 +701,23 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             });
         }
         return snapshot;
+    }
+
+    private static void AddShields(MatchSnapshot snapshot,
+        CoopShieldMatchSimulation? simulation)
+    {
+        if (simulation == null)
+            return;
+        snapshot.Shields.AddRange(simulation.Snapshot().Select(shield =>
+            new BattleShieldState
+            {
+                CoverIndex = shield.CoverIndex,
+                OwnerFraction = shield.OwnerFraction,
+                Health = shield.Health,
+                MaxHealth = shield.MaxHealth,
+                Destroyed = shield.Destroyed,
+                Revision = shield.Revision
+            }));
     }
 
     public MatchSnapshot TerminalEvidenceSnapshot() => Snapshot();

@@ -390,6 +390,8 @@ internal static class CombatContentTests
         MissionMapRule sourceMap = catalog.MapForMission(0);
         CoopShieldStateCatalog shieldStates = CoopShieldStateCatalog.Load(
             Path.Combine(directory, "recovered-coop-shield-states.json"), catalog);
+        CoopBotRuleCatalog bossRules = CoopBotRuleCatalog.Load(Path.Combine(
+            directory, "recovered-coop-bot-rules.json"), catalog);
         if (shieldStates.ForMission(4).Player.Count != 0 ||
             shieldStates.ForMission(14).Player.Count != 4 ||
             shieldStates.ForMission(14).Player[0].MaxHealthRatio != 0.8f ||
@@ -451,6 +453,17 @@ internal static class CombatContentTests
         if (missionShields.Snapshot().Single(shield =>
                 shield.CoverIndex == 5).Health != expectedMaximum - 10f)
             throw new Exception("Mission-disabled shield regeneration ran for an occupied cover.");
+        var botMissionShields = new CoopShieldMatchSimulation(1,
+            bossRules.ForMission(14).Level,
+            shieldStates.ForMission(14).Bot, content.Shields, 0, 0);
+        float botShieldMaximum = content.Shields.Health(
+            bossRules.ForMission(14).Level) * 0.6f;
+        if (botMissionShields.Snapshot().Count != 4 ||
+            botMissionShields.Snapshot().Any(shield =>
+                shield.OwnerFraction != 1 ||
+                shield.MaxHealth != botShieldMaximum ||
+                shield.Health != botShieldMaximum))
+            throw new Exception("Boss enemy shields lost their source bot level or overrides.");
         try
         {
             _ = CoopShieldRankResolver.AlliedRank(coop);
@@ -518,8 +531,6 @@ internal static class CombatContentTests
         CoopBossPathCatalog bossPaths = CoopBossPathCatalog.Load(Path.Combine(
             directory, "recovered-coop-boss-paths.json"), catalog,
             bossAnchors, content.ArmyNavMeshes);
-        CoopBotRuleCatalog bossRules = CoopBotRuleCatalog.Load(Path.Combine(
-            directory, "recovered-coop-bot-rules.json"), catalog);
         CoopBotHealthCatalog bossHealth = CoopBotHealthCatalog.Load(Path.Combine(
             directory, "recovered-coop-bot-health.json"), catalog, bossRules);
         CoopBossAttackTimingCatalog bossAttackTimings =
@@ -562,11 +573,20 @@ internal static class CombatContentTests
         int transmittedShields = MatchSnapshot.Parser
             .ParseFrom(bossStart.ToByteArray()).Shields.Count;
         if (bossStart.Phase != BattlePhase.Running ||
-            bossStart.Shields.Count != 4 ||
-            transmittedShields != 4 ||
-            bossStart.Shields.Any(shield => shield.OwnerFraction != 2 ||
+            bossStart.Shields.Count != 8 ||
+            transmittedShields != 8 ||
+            bossStart.Shields.Where(shield => shield.OwnerFraction == 2)
+                .Count() != 4 ||
+            bossStart.Shields.Where(shield => shield.OwnerFraction == 1)
+                .Count() != 4 ||
+            bossStart.Shields.Where(shield => shield.OwnerFraction == 2)
+                .Any(shield =>
                 shield.Health != content.Shields.Health(3) ||
                 shield.MaxHealth != content.Shields.Health(3)) ||
+            bossStart.Shields.Where(shield => shield.OwnerFraction == 1)
+                .Any(shield =>
+                    shield.Health != content.Shields.Health(
+                        bossRules.ForMission(4).Level)) ||
             bossStart.Coop.Boss?.EntityId != CoopMissionEngine.BossEntityId ||
             transmittedBoss?.EntityId != CoopMissionEngine.BossEntityId ||
             transmittedBoss.MaxHealth != bossStart.Coop.Boss.MaxHealth ||
@@ -592,7 +612,10 @@ internal static class CombatContentTests
             5, "Google2u.AssaultRifle_AK47", 100_000f);
         if (destroyedAllyCover?.Destroyed != true ||
             bossRuntime.Snapshot().Shields.Single(shield =>
-                shield.CoverIndex == 5).Health != 0)
+                shield.OwnerFraction == 2 && shield.CoverIndex == 5).Health != 0 ||
+            bossRuntime.ApplyHostEnemyShieldShot(1,
+                "Google2u.AssaultRifle_AK47", 10f)?.Health !=
+                    content.Shields.Health(bossRules.ForMission(4).Level) - 10f)
             throw new Exception("Host shield impact did not destroy the allied cover.");
         MatchReply bossMove = bossRuntime.Command(bossFirstPlayer, new MatchCommand
         {
@@ -621,7 +644,7 @@ internal static class CombatContentTests
         if (bossRuntime.BossAttackCadence?.WindowCount != 2 ||
             bossRuntime.BossAttackCadence.WindowOpen != true ||
             bossRuntime.Snapshot().Shields.Single(shield =>
-                shield.CoverIndex == 5).Destroyed)
+                shield.OwnerFraction == 2 && shield.CoverIndex == 5).Destroyed)
             throw new Exception("Boss attack windows lost source shooting timing.");
         BattlePlayerState movedBossAlly = bossRuntime.Snapshot().Players.Single(
             player => player.PlayerId == bossFirstPlayer);

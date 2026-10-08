@@ -1,18 +1,20 @@
 namespace War.BattleServer;
 
 /// <summary>
-/// Four allied co-op covers. A host-owned collision resolver may apply damage;
-/// player UDP commands cannot reach this simulation.
+/// Four same-fraction co-op covers. A host-owned collision resolver may apply
+/// damage; player UDP commands cannot reach this simulation.
 /// </summary>
 internal sealed class CoopShieldMatchSimulation
 {
-    private sealed class Cover(int index, ShieldLifecycle lifecycle)
+    private sealed class Cover(int index, int ownerFraction,
+        ShieldLifecycle lifecycle)
     {
         internal int Index { get; } = index;
+        internal int OwnerFraction { get; } = ownerFraction;
         internal ShieldLifecycle Lifecycle { get; } = lifecycle;
         internal ulong Revision;
 
-        internal ShieldMutation Snapshot() => new(Index, 2, Lifecycle.Health,
+        internal ShieldMutation Snapshot() => new(Index, OwnerFraction, Lifecycle.Health,
             Lifecycle.MaxHealth, Lifecycle.Destroyed, Revision);
     }
 
@@ -22,20 +24,30 @@ internal sealed class CoopShieldMatchSimulation
     internal CoopShieldMatchSimulation(MatchManifest manifest,
         CoopShieldStateCatalog missions, ShieldSourceCatalog policy,
         int firstCover, ulong startingTick)
+        : this(2, CoopShieldRankResolver.AlliedRank(manifest),
+            missions.ForMission(manifest.MissionIndex ??
+                throw new InvalidDataException("Co-op shield mission is absent.")).Player,
+            policy, firstCover, startingTick)
     {
-        if (startingTick > 10_000_000 || firstCover is not (0 or 4) ||
-            !manifest.MissionIndex.HasValue)
+    }
+
+    internal CoopShieldMatchSimulation(int ownerFraction, int provenRank,
+        IReadOnlyList<CoopShieldStart> starts, ShieldSourceCatalog policy,
+        int firstCover, ulong startingTick)
+    {
+        bool alliedCovers = ownerFraction == 2 && (firstCover == 0 || firstCover == 4);
+        bool bossCovers = ownerFraction == 1 && firstCover == 0;
+        if (startingTick > 10_000_000 ||
+            (!alliedCovers && !bossCovers) ||
+            starts == null || starts.Count > 4)
             throw new InvalidDataException("Invalid co-op shield start.");
-        int masterRank = CoopShieldRankResolver.AlliedRank(manifest);
         lastTick = startingTick;
-        IReadOnlyList<CoopShieldStart> starts =
-            missions.ForMission(manifest.MissionIndex.Value).Player;
         covers = new Cover[4];
         for (int index = 0; index < covers.Length; index++)
         {
-            var lifecycle = new ShieldLifecycle(policy, masterRank, startingTick);
+            var lifecycle = new ShieldLifecycle(policy, provenRank, startingTick);
             lifecycle.ApplyMissionStart(index < starts.Count ? starts[index] : null);
-            covers[index] = new Cover(firstCover + index, lifecycle);
+            covers[index] = new Cover(firstCover + index, ownerFraction, lifecycle);
         }
     }
 
