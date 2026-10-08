@@ -606,6 +606,35 @@ internal static class CombatContentTests
             rifle.CadenceSeconds != 0.35f ||
             rifle.NextRoundEligibleTick(100) != 111)
             throw new Exception("Co-op Assaulter rifle lost its source cadence or binding.");
+        CoopEnemyMuzzleCatalog muzzles = content.CoopEnemyMuzzles;
+        CoopMuzzlePose shotStart = muzzles.Place("rifle_shot",
+            Vector3.Zero, Quaternion.Identity, 0);
+        Vector3 expectedStart = new(-0.138744667f, 0.1866135f, 0.180271789f);
+        if (Vector3.Distance(shotStart.Position, expectedStart) > 0.00001f)
+            throw new Exception("Co-op Assaulter muzzle lost its Unity shot pose.");
+        Vector3 placement = new(4, 2, -3);
+        Quaternion facing = Quaternion.CreateFromAxisAngle(Vector3.UnitY,
+            MathF.PI / 2);
+        CoopMuzzlePose worldMuzzle = muzzles.Place("rifle_shot",
+            placement, facing, 0);
+        Vector3 expectedWorld = placement + Vector3.Transform(expectedStart, facing);
+        if (Vector3.Distance(worldMuzzle.Position, expectedWorld) > 0.00001f ||
+            Math.Abs(worldMuzzle.Rotation.LengthSquared() - 1) > 0.0002f)
+            throw new Exception("Co-op Assaulter muzzle placement changed.");
+        try
+        {
+            muzzles.Place("rifle_shot", Vector3.Zero,
+                Quaternion.Identity, float.NaN);
+            throw new Exception("Invalid muzzle time was accepted.");
+        }
+        catch (InvalidDataException) { }
+        try
+        {
+            muzzles.Place("rifle_shot", Vector3.Zero,
+                Quaternion.Zero, 0);
+            throw new Exception("Invalid muzzle rotation was accepted.");
+        }
+        catch (InvalidDataException) { }
         string contentRevision = content.Stats.Revision;
         CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-spawn-points.json"), catalog);
