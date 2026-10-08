@@ -1935,29 +1935,36 @@ internal static class CombatContentTests
             rejectedMap, enemyPointMasks, enemyCombat,
             chooseObstacleFraction: () => 0.5f,
             chooseNextPoint: _ => 0);
-        var rejectedRuntime = new CoopMatchRuntime(coop, catalog,
-            spawnPoints, routes, enemyCombat,
-            chooseBehaviour: _ => 0,
-            choosePoint: count => count > cornerSpawnIndex
-                ? cornerSpawnIndex : 0,
-            enemyDestinations: rejectedDestinations,
-            infantryNavigation: infantryNavigation,
-            playerWeaponContent: content,
-            chooseInfantryShotFraction: () => 0.5f,
-            chooseInfantryPlayer: _ => 0,
-            chooseInfantryShieldRoll: () => 0.5f,
-            chooseCornerChangeSeconds: () => 10);
-        rejectedRuntime.Admit(firstPlayer);
-        rejectedRuntime.Admit(secondPlayer);
-        foreach (string playerId in new[] { firstPlayer, secondPlayer })
-            rejectedRuntime.Command(playerId, new MatchCommand
-            {
-                CommandId = 1,
-                Ready = new ReadyCommand
+        CoopMatchRuntime CreateReadyCornerRuntime(
+            CoopEnemyDestinationState destinations)
+        {
+            var result = new CoopMatchRuntime(coop, catalog,
+                spawnPoints, routes, enemyCombat,
+                chooseBehaviour: _ => 0,
+                choosePoint: count => count > cornerSpawnIndex
+                    ? cornerSpawnIndex : 0,
+                enemyDestinations: destinations,
+                infantryNavigation: infantryNavigation,
+                playerWeaponContent: content,
+                chooseInfantryShotFraction: () => 0.5f,
+                chooseInfantryPlayer: _ => 0,
+                chooseInfantryShieldRoll: () => 0.5f,
+                chooseCornerChangeSeconds: () => 10);
+            result.Admit(firstPlayer);
+            result.Admit(secondPlayer);
+            foreach (string playerId in new[] { firstPlayer, secondPlayer })
+                result.Command(playerId, new MatchCommand
                 {
-                    ManifestHash = rejectedRuntime.ManifestHash
-                }
-            });
+                    CommandId = 1,
+                    Ready = new ReadyCommand
+                    {
+                        ManifestHash = result.ManifestHash
+                    }
+                });
+            return result;
+        }
+        CoopMatchRuntime rejectedRuntime =
+            CreateReadyCornerRuntime(rejectedDestinations);
         rejectedRuntime.Advance(8);
         ulong rejectedEntityId = rejectedRuntime.Snapshot()
             .Coop.EnemySpawns.Single().EntityId;
@@ -2000,6 +2007,42 @@ internal static class CombatContentTests
             rejectedRuntime.InfantryPointArrival(rejectedEntityId) != null ||
             rejectedRuntime.NextCornerChangeTick(rejectedEntityId) != null)
             throw new Exception("Co-op corner did not reserve a new walking point.");
+
+        // A one-point test map leaves no different candidate. The first
+        // failed change keeps the same reservation and extends the original
+        // threshold by ten seconds; it must not retry on every frame.
+        CoopMapEnemyPoints loneCornerMap = rejectedMap with
+        {
+            Points = [rejectedMap.Points.Single(point =>
+                point.ComponentFileId == sourceCorner.ComponentFileId)]
+        };
+        var loneCornerDestinations = new CoopEnemyDestinationState(
+            loneCornerMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f,
+            chooseNextPoint: _ => 0);
+        CoopMatchRuntime loneCornerRuntime =
+            CreateReadyCornerRuntime(loneCornerDestinations);
+        loneCornerRuntime.Advance(8);
+        ulong loneCornerEnemyId = loneCornerRuntime.Snapshot()
+            .Coop.EnemySpawns.Single().EntityId;
+        loneCornerRuntime.Advance(expectedChange);
+        ulong secondChange = expectedChange +
+            10UL * MatchManifest.TickRate;
+        if (loneCornerRuntime.NextCornerChangeTick(loneCornerEnemyId) !=
+                secondChange ||
+            loneCornerDestinations.ForEnemy(loneCornerEnemyId)?
+                .PointComponentFileId != sourceCorner.ComponentFileId)
+            throw new Exception("Co-op corner lost its point when none was free.");
+        loneCornerRuntime.Advance(secondChange - 1);
+        if (loneCornerRuntime.NextCornerChangeTick(loneCornerEnemyId) !=
+            secondChange)
+            throw new Exception("Co-op corner retried its change too early.");
+        loneCornerRuntime.Advance(secondChange);
+        if (loneCornerRuntime.NextCornerChangeTick(loneCornerEnemyId) !=
+                secondChange + 10UL * MatchManifest.TickRate ||
+            loneCornerDestinations.ForEnemy(loneCornerEnemyId)?
+                .PointComponentFileId != sourceCorner.ComponentFileId)
+            throw new Exception("Co-op corner did not defer its next change.");
 
         MissionRule rusherRule = catalog.Get(2);
         MissionMapRule rusherMissionMap = catalog.MapForMission(2);
