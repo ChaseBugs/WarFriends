@@ -169,6 +169,8 @@ Those six independently exported meshes match the earlier `recovered-air-unit-un
 
 `CoopMatchRuntime.PlaceNewDroneColliders` likewise reuses the existing verified Drone box and sphere at a mission-30 source-timed spawn. It preserves their distinct serialized layers and root ownership, and refuses a stale tick. Drone flight pose, visibility, projectile contact, and damage still need host simulation before the Client's Drone actions can open.
 
+`CoopMatchRuntime.PlaceNewGroundVehicleTargets` uses the recovered mission behavior-to-unit binding and the existing four-family vehicle body catalog to place Humvee, Buggy, Tank, or Transporter targets at the exact spawn tick. `WaveManager` assigns `Fractions.Enemies` (value 1), which `TagsAndLayers` maps to enemy layer 27 for the car families and 23 for Tank; the method preserves each body-part component ID. A mission-36 Buggy test checks the source-timed spawn, complete body count, enemy layer, and stale-pose refusal. It does not substitute for vehicle route motion, turret pose, wheel physics, projectile contact, or co-op damage settlement.
+
 `CoopTerminalScoreValidator` now treats source mission types separately: Kill requires its exact confirmed enemy-death target, Survive succeeds exactly at the deadline, Score remains before its deadline with conserved allied points, and a boss success requires a dead host boss. Focused tests use actual isolated Kill, Survive, and boss results plus forged terminal variants. This validates terminal presentation evidence, not a trusted live battle or Backend reward settlement.
 
 

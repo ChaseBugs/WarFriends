@@ -1648,6 +1648,44 @@ internal static class CombatContentTests
         droneRuntime.Advance(2);
         if (droneRuntime.PlaceNewDroneColliders(drone.EntityId).Count != 0)
             throw new Exception("A stale Drone pose cannot authorize co-op hits.");
+
+        const int buggyMissionIndex = 36;
+        MissionMapRule buggyMap = catalog.MapForMission(buggyMissionIndex);
+        MatchManifest buggyAllocation = coop with
+        {
+            MissionIndex = buggyMissionIndex,
+            MapId = buggyMap.Scene,
+            MapRevision = buggyMap.SceneSha256,
+            DurationSeconds = catalog.Get(buggyMissionIndex).TimeSeconds
+        };
+        var buggyRuntime = new CoopMatchRuntime(buggyAllocation,
+            catalog, spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            playerWeaponContent: content);
+        buggyRuntime.Admit(firstPlayer);
+        buggyRuntime.Admit(secondPlayer);
+        var buggyReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = buggyRuntime.ManifestHash } };
+        buggyRuntime.Command(firstPlayer, buggyReady);
+        buggyRuntime.Command(secondPlayer, buggyReady);
+        buggyRuntime.Advance(1);
+        BattleCoopEnemySpawn buggy = buggyRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Buggy");
+        IReadOnlyList<DynamicShotTarget> buggyBodies = buggyRuntime
+            .PlaceNewGroundVehicleTargets(buggy.EntityId);
+        int expectedBuggyBodies = content.GroundVehicleWeapons
+            .For("ID_UNIT-BUGGY").BodyParts.Sum(part => part.Colliders.Count);
+        if (buggy.SpawnTick != 1 || buggyBodies.Count != expectedBuggyBodies ||
+            buggyBodies.Any(body => body.EntityId != buggy.EntityId ||
+                body.Layer != 27 || !body.GroundVehicleBody ||
+                !body.Hitbox.SourcePath.StartsWith(
+                    "Assets/GameObject/Buggy.prefab#",
+                    StringComparison.Ordinal)) ||
+            buggyRuntime.PlaceNewGroundVehicleTargets(999).Count != 0)
+            throw new Exception("Co-op Buggy needs source-owned enemy body targets.");
+        buggyRuntime.Advance(2);
+        if (buggyRuntime.PlaceNewGroundVehicleTargets(buggy.EntityId).Count != 0)
+            throw new Exception("A stale ground-vehicle pose cannot authorize hits.");
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);

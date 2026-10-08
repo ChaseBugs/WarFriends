@@ -63,6 +63,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
     private readonly AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshes;
     private readonly DroneColliderCatalog? droneColliders;
+    private readonly GroundVehicleWeaponCatalog? groundVehicleBodies;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
@@ -143,6 +144,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
         assaultHelicopterMeshes = playerWeaponContent?.AssaultHelicopterMeshColliders;
         droneColliders = playerWeaponContent?.DroneColliders;
+        groundVehicleBodies = playerWeaponContent?.GroundVehicleWeapons;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
@@ -468,6 +470,38 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.SourceRotation.Y, enemy.SourceRotation.Z,
             enemy.SourceRotation.W);
         return droneColliders.Place(position, rotation);
+    }
+
+    /// <summary>
+    /// Places source-owned Humvee, Buggy, Tank, or Transporter body parts when
+    /// a co-op enemy spawns. The recovered rotation provides initial facing;
+    /// later ticks require host vehicle motion before these shapes are valid.
+    /// </summary>
+    internal IReadOnlyList<DynamicShotTarget> PlaceNewGroundVehicleTargets(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || groundVehicleBodies == null)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId &&
+            (spawn.Behaviour is "Humvee" or "Buggy" or "Tank" or
+                "Transporter") &&
+            spawn.SpawnTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.SourceRotation != null);
+        if (enemy == null)
+            return [];
+
+        var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
+        var rotation = new Quaternion(enemy.SourceRotation.X,
+            enemy.SourceRotation.Y, enemy.SourceRotation.Z,
+            enemy.SourceRotation.W);
+        Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);
+        string unitId = combat.UnitIdFor(enemy.Behaviour);
+        // WaveManager assigns Fractions.Enemies (value 1) before pool
+        // re-instantiation. TagsAndLayers maps it to enemy body layers 23
+        // for Tank and 27 for the other ground vehicles.
+        return groundVehicleBodies.PlaceBody(unitId, entityId,
+            position, forward, ownerFraction: 1);
     }
 
     /// <summary>

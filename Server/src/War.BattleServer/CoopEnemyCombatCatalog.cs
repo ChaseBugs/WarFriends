@@ -93,6 +93,14 @@ public sealed class CoopEnemyCombatCatalog
         return infantryIdleClips.GetValueOrDefault(behaviour);
     }
 
+    internal string UnitIdFor(string behaviour)
+    {
+        return unitIds.TryGetValue(behaviour, out string? unitId)
+            ? unitId
+            : throw new InvalidDataException(
+                $"Unknown co-op behavior {behaviour}.");
+    }
+
     public ArmyBaseCombatStats OrdinaryStats(
         string behaviour, int normalUpgradeIndex, bool heroic = false)
     {
