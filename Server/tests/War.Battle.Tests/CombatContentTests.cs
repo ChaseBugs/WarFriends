@@ -883,6 +883,37 @@ internal static class CombatContentTests
                             "Host queued corner collider differs from Unity.");
                 }
             }
+            float idleSeconds = samples[30].GetProperty("states")[0]
+                .GetProperty("time").GetSingle();
+            IReadOnlyList<PlayerHitbox> queuedAtOneSecond = queue.Place(
+                coverClip, 30, rootPosition, rootRotation);
+            IReadOnlyList<PlayerHitbox> loopingIdle = poses.Place(
+                "idle_1", rootPosition, rootRotation, idleSeconds);
+            for (int index = 0; index < queuedAtOneSecond.Count; index++)
+            {
+                if (Vector3.Distance(queuedAtOneSecond[index].Center,
+                        loopingIdle[index].Center) > 0.0002f ||
+                    1 - Math.Abs(Quaternion.Dot(
+                        queuedAtOneSecond[index].Rotation,
+                        loopingIdle[index].Rotation)) > 0.00002f)
+                    throw new Exception(
+                        "Unity corner queue does not join the looping idle rig.");
+            }
+            IReadOnlyList<PlayerHitbox> continuedIdle = queue.Place(
+                coverClip, 31, rootPosition, rootRotation);
+            IReadOnlyList<PlayerHitbox> expectedNextIdle = poses.Place(
+                "idle_1", rootPosition, rootRotation,
+                idleSeconds + 1f / MatchManifest.TickRate);
+            for (int index = 0; index < continuedIdle.Count; index++)
+            {
+                if (Vector3.Distance(continuedIdle[index].Center,
+                        expectedNextIdle[index].Center) > 0.0002f ||
+                    1 - Math.Abs(Quaternion.Dot(
+                        continuedIdle[index].Rotation,
+                        expectedNextIdle[index].Rotation)) > 0.00002f)
+                    throw new Exception(
+                        "Co-op corner looping idle lost its queue clock.");
+            }
             JsonElement[] blended = samples[firstBlendedTicks[side]]
                 .GetProperty("states").EnumerateArray().ToArray();
             JsonElement[] idle = samples[firstIdleTicks[side]]
@@ -3377,6 +3408,21 @@ internal static class CombatContentTests
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
                     "Co-op corner lost its captured queued idle pose.");
+            cornerRuntime.Advance(coverReturnTick + 31);
+            if (cornerRuntime.PlaceCornerQueuedIdleHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception(
+                    "Co-op corner lost its continued diagnostic idle.");
+            ulong nextCornerShot = cornerRuntime.InfantryShotWindup(
+                    cornerEnemy.EntityId)?.NextEligibleTick ??
+                throw new Exception("Co-op corner lost its next shot clock.");
+            cornerRuntime.Advance(nextCornerShot);
+            if (cornerRuntime.PlaceCornerQueuedIdleHitboxes(
+                    cornerEnemy.EntityId).Count != 0)
+                throw new Exception(
+                    "Co-op corner reused idle past its next shot deadline.");
         }
 
         // Flip only the test point's exposed side when needed so this

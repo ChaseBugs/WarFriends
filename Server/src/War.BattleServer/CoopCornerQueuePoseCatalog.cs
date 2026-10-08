@@ -15,11 +15,17 @@ internal sealed class CoopCornerQueuePoseCatalog
     private static readonly string[] CoverClips =
         ["player_right_coverBack3", "player_left_coverBack3"];
     private readonly Dictionary<string, PlayerHitbox[][]> frames;
+    private readonly Dictionary<string, float> idleSecondsAtLastFrame;
+    private readonly EnemyPoseCatalog enemyPoses;
 
     private CoopCornerQueuePoseCatalog(
-        Dictionary<string, PlayerHitbox[][]> frames)
+        Dictionary<string, PlayerHitbox[][]> frames,
+        Dictionary<string, float> idleSecondsAtLastFrame,
+        EnemyPoseCatalog enemyPoses)
     {
         this.frames = frames;
+        this.idleSecondsAtLastFrame = idleSecondsAtLastFrame;
+        this.enemyPoses = enemyPoses;
     }
 
     internal static CoopCornerQueuePoseCatalog Load(string path,
@@ -53,6 +59,8 @@ internal sealed class CoopCornerQueuePoseCatalog
                 throw new InvalidDataException(
                     "Co-op corner queue lost a cover side.");
             var accepted = new Dictionary<string, PlayerHitbox[][]>(
+                StringComparer.Ordinal);
+            var idleTimes = new Dictionary<string, float>(
                 StringComparer.Ordinal);
             for (int side = 0; side < CoverClips.Length; side++)
             {
@@ -113,9 +121,23 @@ internal sealed class CoopCornerQueuePoseCatalog
                 if (previousIdleWeight != 1)
                     throw new InvalidDataException(
                         "Co-op corner queue never reached idle.");
+                JsonElement finalStates = samples[30].GetProperty("states");
+                if (finalStates.GetArrayLength() != 1 ||
+                    finalStates[0].GetProperty("name").GetString() !=
+                        "idle_1 - Queued Clone")
+                    throw new InvalidDataException(
+                        "Co-op corner queue has no pure idle handoff.");
+                float idleSeconds = finalStates[0].GetProperty("time")
+                    .GetSingle();
+                if (!float.IsFinite(idleSeconds) ||
+                    idleSeconds is < 0 or > 1)
+                    throw new InvalidDataException(
+                        "Co-op corner queue idle clock is invalid.");
                 accepted.Add(coverClip, localFrames);
+                idleTimes.Add(coverClip, idleSeconds);
             }
-            return new CoopCornerQueuePoseCatalog(accepted);
+            return new CoopCornerQueuePoseCatalog(accepted, idleTimes,
+                enemyPoses);
         }
         catch (Exception error) when (error is JsonException or
             KeyNotFoundException or FormatException or IndexOutOfRangeException)
@@ -130,13 +152,22 @@ internal sealed class CoopCornerQueuePoseCatalog
     {
         if (!frames.TryGetValue(coverClip,
                 out PlayerHitbox[][]? samples) ||
-            tick < 0 || tick >= samples.Length ||
+            tick < 0 || tick > 1_000_000 ||
             !PlayerHitbox.Finite(rootPosition) ||
             !float.IsFinite(rootRotation.LengthSquared()) ||
             MathF.Abs(rootRotation.LengthSquared() - 1) > 0.0002f ||
             prefix.Length > 128 || prefix.Any(char.IsControl))
             throw new InvalidDataException(
                 "Invalid co-op corner queue placement.");
+        if (tick >= samples.Length)
+        {
+            // The last Unity queue frame is pure idle and matches the
+            // recovered looping idle clip at this exact animation time.
+            float idleSeconds = idleSecondsAtLastFrame[coverClip] +
+                (tick - 30) / (float)MatchManifest.TickRate;
+            return enemyPoses.Place("idle_1", rootPosition, rootRotation,
+                idleSeconds, prefix);
+        }
         Quaternion facing = Quaternion.Normalize(rootRotation);
         return samples[tick].Select(part => new PlayerHitbox(
             prefix + part.SourcePath, part.Kind, part.Weight,

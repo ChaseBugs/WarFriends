@@ -1932,7 +1932,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return [];
         ulong coverStartTick = CornerCoverBackStartTick(entityId, windup);
         if (tick < coverStartTick + 4 ||
-            tick > coverStartTick + 30)
+            tick - coverStartTick > 1_000_000)
             return [];
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
