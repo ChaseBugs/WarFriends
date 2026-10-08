@@ -24,7 +24,7 @@ public sealed partial class PlayerPoseCatalog
         "player_look_right_shotgun", "player_fire_right_shotgun", "player_right_coverBack_shotgun",
         "player_look_left_pistol", "player_fire_left_pistol", "player_left_coverBack_pistol",
         "player_look_right_pistol", "player_fire_right_pistol", "player_right_coverBack_pistol",
-        "qbz_run", "qbz2_run", "qbz_idle", "qbz2_idle", "shotgunner_run", "pistol_run", "shootAdditive",
+        "qbz_run", "qbz2_run", "qbz_idle", "qbz2_idle", "shotgunner_idle", "pistol_idle", "shotgunner_run", "pistol_run", "shootAdditive",
         "player_look_left_minigun", "player_fire_left_minigun", "player_left_coverBack_minigun",
         "player_look_right_minigun", "player_fire_right_minigun", "player_right_coverBack_minigun",
         "minigun_run", "minigun_idle",
@@ -92,7 +92,8 @@ public sealed partial class PlayerPoseCatalog
     public static PlayerPoseCatalog Load(string path, string expectedMainSceneHash, RifleBindingCatalog? bindings = null)
     {
         using var stream = File.OpenRead(path);
-        if (stream.Length is < 2 or > 96*1024*1024) throw new InvalidDataException("Pose artifact exceeds bound.");
+        // The 65 reviewed clips include every frame's player rig and muzzles.
+        if (stream.Length is < 2 or > 48*1024*1024) throw new InvalidDataException("Pose artifact exceeds bound.");
         string revision = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(stream));
         stream.Position = 0;
         using var json = JsonDocument.Parse(stream, new JsonDocumentOptions { MaxDepth = 24 });

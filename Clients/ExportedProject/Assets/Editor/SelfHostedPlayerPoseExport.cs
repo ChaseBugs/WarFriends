@@ -55,7 +55,7 @@ public static class SelfHostedPlayerPoseExport
                 "player_look_right_shotgun", "player_fire_right_shotgun", "player_right_coverBack_shotgun",
                 "player_look_left_pistol", "player_fire_left_pistol", "player_left_coverBack_pistol",
                 "player_look_right_pistol", "player_fire_right_pistol", "player_right_coverBack_pistol",
-                "qbz_run", "qbz2_run", "qbz_idle", "qbz2_idle", "shotgunner_run", "pistol_run", "shootAdditive",
+                "qbz_run", "qbz2_run", "qbz_idle", "qbz2_idle", "shotgunner_idle", "pistol_idle", "shotgunner_run", "pistol_run", "shootAdditive",
                 "player_look_left_minigun", "player_fire_left_minigun", "player_left_coverBack_minigun",
                 "player_look_right_minigun", "player_fire_right_minigun", "player_right_coverBack_minigun",
                 "minigun_run", "minigun_idle",
@@ -141,7 +141,7 @@ public static class SelfHostedPlayerPoseExport
             File.WriteAllText(output, JsonConvert.SerializeObject(new { client = "1.4.0", source = source, sha256 = Hash(source),
                 pose = "initialized-single-clip-samples", sampleRate = 30, playerPath = PathOf(player.transform),
                 position = V(player.transform.position), rotation = Q(player.transform.rotation),
-                rigNodes=rigNodes.Select((t,i)=>new { path=PathOf(t), parent=i==0 ? -1 : rigIndices[t.parent] }).ToArray(), clips = clips }, Formatting.Indented));
+                rigNodes=rigNodes.Select((t,i)=>new { path=PathOf(t), parent=i==0 ? -1 : rigIndices[t.parent] }).ToArray(), clips = clips }, Formatting.None));
             Debug.Log("PLAYER_POSE_EXPORT_PASSED clips=" + clips.Count);
         }
         finally

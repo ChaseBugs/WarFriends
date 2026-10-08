@@ -29,7 +29,7 @@ internal static class RiflePoseProjection
         "player_look_left_grenadelauncher","player_fire_left_grenadelauncher","player_left_coverBack_grenadelauncher",
         "player_look_right_grenadelauncher","player_fire_right_grenadelauncher","player_right_coverBack_grenadelauncher",
         "run_grenadelauncher","grenadelauncher_idle",
-        "qbz_idle","qbz2_idle"];
+        "qbz_idle","qbz2_idle","shotgunner_idle","pistol_idle"];
     internal static bool ValidWire(RiflePoseState pose,ulong serverTick)
     {
         if(pose.SampledTick>serverTick || pose.Layers.Count is <1 or >4 ||

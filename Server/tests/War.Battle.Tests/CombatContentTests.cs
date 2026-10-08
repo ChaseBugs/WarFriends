@@ -910,6 +910,8 @@ internal static class CombatContentTests
             Path.Combine(directory, "combat-content-manifest.json"),
             minigunManifestPath: Path.Combine(directory,
                 "minigun-content-manifest.json"),
+            pistolManifestPath: Path.Combine(directory,
+                "pistol-content-manifest.json"),
             sniperManifestPath: Path.Combine(directory,
                 "sniper-content-manifest.json"),
             bazookaManifestPath: Path.Combine(directory,
@@ -918,7 +920,8 @@ internal static class CombatContentTests
         [
             ("Google2u.SniperRifle_MSR", "sniper_idle"),
             ("Google2u.LMG_Minigun", "minigun_idle"),
-            ("Google2u.Bazooka_RPG7", "bazooka_idle")
+            ("Google2u.Bazooka_RPG7", "bazooka_idle"),
+            ("Google2u.Pistol_Berreta", "pistol_idle")
         ];
         foreach ((string weaponId, string idleClip) in specialIdleWeapons)
         {

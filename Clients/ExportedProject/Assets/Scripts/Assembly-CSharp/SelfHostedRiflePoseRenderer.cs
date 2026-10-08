@@ -29,7 +29,7 @@ public sealed class SelfHostedRiflePoseRenderer
         "player_look_left_grenadelauncher", "player_fire_left_grenadelauncher", "player_left_coverBack_grenadelauncher",
         "player_look_right_grenadelauncher", "player_fire_right_grenadelauncher", "player_right_coverBack_grenadelauncher",
         "run_grenadelauncher", "grenadelauncher_idle",
-        "qbz_idle", "qbz2_idle" };
+        "qbz_idle", "qbz2_idle", "shotgunner_idle", "pistol_idle" };
     private readonly Transform root;
     private readonly SoldierAnimationController controller;
     private readonly Animation animation;

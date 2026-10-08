@@ -27,7 +27,7 @@ internal sealed class RifleCoverTimeline
         bazooka=animationFamily==2;
         suffix=animationFamily switch {0=>"3",2=>"",4=>"_minigun",5=>"_pistol",7 or 15=>"_shotgun",9=>"_qbz",10=>"_sniper",13=>"_qbz2",_=>throw new InvalidDataException("Unsupported weapon animation family.")};
         RunClip=animationFamily switch {0=>"run",2=>"bazooka_run",4=>"minigun_run",5=>"pistol_run",7 or 15=>"shotgunner_run",9=>"qbz_run",10=>"sniper_run",13=>"qbz2_run",_=>throw new InvalidDataException("Unsupported weapon run family.")};
-        idleClip=animationFamily switch {2=>"bazooka_idle",4=>"minigun_idle",9=>"qbz_idle",10=>"sniper_idle",13=>"qbz2_idle",_=>"idle"};
+        idleClip=animationFamily switch {2=>"bazooka_idle",4=>"minigun_idle",5=>"pistol_idle",9=>"qbz_idle",10=>"sniper_idle",13=>"qbz2_idle",_=>"idle"};
         _=poses.Duration(RunClip);
         foreach(string name in bazooka?new[]{"bazooka_uncover_right","bazooka_uncover_left","bazooka_shoot_right","bazooka_shoot_left"}:
             new[] {"player_look_right"+suffix,"player_look_left"+suffix,"player_fire_right"+suffix,"player_fire_left"+suffix,"player_right_coverBack"+suffix,"player_left_coverBack"+suffix})
