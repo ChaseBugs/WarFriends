@@ -1906,6 +1906,27 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal IReadOnlyList<CoopDiagnosticFlightResult>
         DiagnosticFlightResults() => diagnosticFlightResults.ToArray();
 
+    /// <summary>
+    /// Inspects a completed diagnostic hit without changing shield health.
+    /// Collision coverage must be completed before this can become authority.
+    /// </summary>
+    internal CoopAssaulterShieldImpactPlan? PlanDiagnosticShieldImpact(
+        ulong projectileId)
+    {
+        if (diagnosticWorld == null || shieldPolicy == null)
+            return null;
+        CoopDiagnosticFlightResult? result = diagnosticFlightResults
+            .SingleOrDefault(row => row.ProjectileId == projectileId);
+        if (result == null)
+            return null;
+        BattleCoopEnemySpawn? enemy = enemySpawns.SingleOrDefault(
+            spawn => spawn.EntityId == result.EnemyEntityId);
+        if (enemy == null)
+            return null;
+        return CoopAssaulterShieldImpactPlanner.FromDiagnostic(result,
+            enemy, diagnosticWorld, combat, shieldPolicy);
+    }
+
     internal void AttachDiagnosticWorld(CoopPlayerShotCollisionWorld world)
     {
         ArgumentNullException.ThrowIfNull(world);

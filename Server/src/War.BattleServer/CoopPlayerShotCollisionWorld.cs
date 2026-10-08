@@ -31,6 +31,10 @@ internal sealed class CoopPlayerShotCollisionWorld
     internal string Scene { get; }
     internal string SceneSha256 { get; }
 
+    internal int? CoverForShieldCollider(int componentFileId) =>
+        shieldCoverByCollider.TryGetValue(componentFileId, out int coverIndex)
+            ? coverIndex : null;
+
     internal CoopPlayerShotCollisionWorld(CoopSceneColliders source,
         CoopMapSpawnPoints spawns, CoopMeshGeometryCatalog geometry)
     {

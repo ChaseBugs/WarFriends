@@ -1926,6 +1926,32 @@ internal static class CombatContentTests
             throw new Exception("Co-op runtime used a different enemy ray mask or allied pose.");
         BattleCoopEnemySpawn arrivalEnemy = arrivalRuntime.Snapshot()
             .Coop.EnemySpawns.Single();
+        if (alliedShotWorld.CoverForShieldCollider(1531) != 1 ||
+            alliedShotWorld.CoverForShieldCollider(-1) != null ||
+            arrivalRuntime.PlanDiagnosticShieldImpact(12345) != null)
+            throw new Exception("Diagnostic shield planning accepted an unknown hit.");
+        var sourceShieldImpact = new BulletImpact(12345, string.Empty,
+            covered.ToBulletCollision(), 1, arrivalEnemy.EntityId);
+        var sourceShieldResult = new CoopDiagnosticFlightResult(12345,
+            arrivalEnemy.EntityId, 1, "impact", sourceShieldImpact);
+        CoopAssaulterShieldImpactPlan? shieldPlan =
+            CoopAssaulterShieldImpactPlanner.FromDiagnostic(
+                sourceShieldResult, arrivalEnemy, alliedShotWorld,
+                enemyCombat, content.Shields);
+        float expectedSourceDamage = enemyCombat.OrdinaryStats(
+            "Assaulter", arrivalEnemy.Level).Damage;
+        if (shieldPlan?.CoverIndex != 1 ||
+            shieldPlan.ColliderComponentId != 1531 ||
+            shieldPlan.SourceDamage != expectedSourceDamage ||
+            shieldPlan.ShieldDamage != expectedSourceDamage *
+                content.Shields.UnitToShieldCoefficient ||
+            CoopAssaulterShieldImpactPlanner.FromDiagnostic(
+                sourceShieldResult with { Outcome = "miss" }, arrivalEnemy,
+                alliedShotWorld, enemyCombat, content.Shields) != null ||
+            CoopAssaulterShieldImpactPlanner.FromDiagnostic(
+                sourceShieldResult with { EnemyEntityId = 999 }, arrivalEnemy,
+                alliedShotWorld, enemyCombat, content.Shields) != null)
+            throw new Exception("Diagnostic shield impact lost source ownership.");
         CoopAssignedEnemyDestination arrivalPoint = arrivalRuntime
             .EnemyDestination(arrivalEnemy.EntityId)!;
         ArmyNavMeshCorridor arrivalCorridor = infantryNavigation
