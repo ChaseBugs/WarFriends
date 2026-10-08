@@ -2215,6 +2215,56 @@ internal static class CombatContentTests
             movementRuntime.PlaceMovingPlayerPose(secondPlayer) != null)
             throw new Exception(
                 "Co-op moving run rig lost its source target or host route pose.");
+        movementRuntime.Advance(7);
+        BattlePlayerState beforeAimStep = movementRuntime.Snapshot()
+            .Players.Single(player => player.PlayerId == firstPlayer);
+        movementRuntime.Advance(8);
+        BattlePlayerState afterAimStep = movementRuntime.Snapshot()
+            .Players.Single(player => player.PlayerId == firstPlayer);
+        PlayerAimPose? aimStepRig = movementRuntime.PlaceMovingPlayerPose(
+            firstPlayer);
+        BattleCoopEnemySpawn? movingAimEnemy = movementRuntime.Snapshot()
+            .Coop.EnemySpawns.FirstOrDefault(enemy =>
+                enemy.Behaviour == "Assaulter");
+        if (movingAimEnemy == null || aimStepRig?.MovingTarget == null ||
+            !afterAimStep.Moving)
+            throw new Exception("Co-op moving aim fixture lacks an Assaulter.");
+        Vector3 observedMuzzle = new(movingAimEnemy.CurrentX,
+            movingAimEnemy.CurrentY, movingAimEnemy.CurrentZ);
+        CoopMovingPlayerAimPlan? movingAim = movementRuntime
+            .PlanDiagnosticMovingPlayerAim(movingAimEnemy.EntityId,
+                firstPlayer, observedMuzzle);
+        Vector3 expectedVelocity = new(afterAimStep.PositionX -
+            beforeAimStep.PositionX, afterAimStep.PositionY -
+            beforeAimStep.PositionY, afterAimStep.PositionZ -
+            beforeAimStep.PositionZ);
+        expectedVelocity *= MatchManifest.TickRate;
+        Vector3 expectedLead = aimStepRig.MovingTarget.Position +
+            (Vector3.Distance(observedMuzzle,
+                aimStepRig.MovingTarget.Position) / 5f + 0.2f) *
+            expectedVelocity;
+        if (movingAim?.TransformFileId !=
+                movingSourceTarget.TransformFileId ||
+            movingAim.Tick != 8 ||
+            Vector3.Distance(movingAim.PlayerVelocity,
+                expectedVelocity) > 0.00001f ||
+            Vector3.Distance(movingAim.PredictedAimPosition,
+                expectedLead) > 0.00001f ||
+            movementRuntime.PlanDiagnosticMovingPlayerAim(
+                movingAimEnemy.EntityId, secondPlayer,
+                observedMuzzle) != null)
+            throw new Exception(
+                "Co-op moving aim missed the recovered Gun and AimingHelper lead.");
+        Vector3 callbackAim = CoopAssaulterMovingAim.AtShotStart(
+            observedMuzzle, movingAim.PredictedAimPosition,
+            expectedVelocity, 5f);
+        Vector3 expectedCallbackAim = expectedLead +
+            (Vector3.Distance(observedMuzzle, expectedLead) / 5f + 0.4f) *
+            expectedVelocity;
+        if (Vector3.Distance(callbackAim,
+                expectedCallbackAim) > 0.00001f)
+            throw new Exception(
+                "Assaulter shot callback lost its second source lead step.");
         try
         {
             _ = movementRuntime.PlayerAimForward(firstPlayer);

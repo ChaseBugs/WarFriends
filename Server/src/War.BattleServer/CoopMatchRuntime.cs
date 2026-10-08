@@ -78,6 +78,11 @@ internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
     string SourcePath, Vector3 Position, ulong Tick);
 
+internal sealed record CoopMovingPlayerAimPlan(
+    ulong EnemyEntityId, string PlayerId, int TransformFileId,
+    Vector3 MovingTargetPosition, Vector3 PlayerVelocity,
+    Vector3 PredictedAimPosition, ulong Tick);
+
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
 /// cannot accept combat commands until host AI and player controls are wired.
@@ -103,6 +108,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public ulong MoveStartTick;
         public ulong MoveEndTick;
         public Quaternion MovementFacing = Quaternion.Identity;
+        public Vector3 MovementVelocity;
         public float Health = definition.Combat!.MaxHealth;
         public bool Dead;
         public bool HasMoved;
@@ -2966,6 +2972,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         participant.MoveStartTick = tick + 1;
         participant.MoveEndTick = participant.MoveStartTick +
             (ulong)Math.Max(1, Math.Ceiling(length * MatchManifest.TickRate));
+        participant.MovementVelocity = Vector3.Zero;
         participant.MovementFacing = playerPositions[participant.CoverIndex]
             .SourceRotation ?? throw new InvalidDataException(
                 "Co-op moving player lost its source cover rotation.");
@@ -2981,6 +2988,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             participant.CoverIndex = participant.DestinationIndex;
             participant.Position = playerPositions[participant.CoverIndex].Position;
+            participant.MovementVelocity = Vector3.Zero;
             participant.DestinationIndex = -1;
             participant.Route = null;
             stateRevision++;
@@ -3011,13 +3019,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Vector3 position)
     {
         Vector3 displacement = position - player.Position;
-        displacement.Y = 0;
-        if (displacement.LengthSquared() > 0.0000000001f)
+        Vector3 planarStep = new(displacement.X, 0, displacement.Z);
+        if (planarStep.LengthSquared() > 0.0000000001f)
         {
-            float yaw = MathF.Atan2(displacement.X, displacement.Z);
+            float yaw = MathF.Atan2(planarStep.X, planarStep.Z);
             player.MovementFacing = Quaternion.CreateFromAxisAngle(
                 Vector3.UnitY, yaw);
         }
+        player.MovementVelocity = displacement * MatchManifest.TickRate;
         player.Position = position;
     }
 
@@ -3355,6 +3364,39 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         return participants.TryGetValue(playerId, out Participant? player)
             ? SampleMovingWeaponPose(player)?.Pose : null;
+    }
+
+    /// <summary>
+    /// Plans the recovered walking Body target from a host-observed muzzle.
+    /// This does not select the shield branch or authorize a projectile.
+    /// </summary>
+    internal CoopMovingPlayerAimPlan? PlanDiagnosticMovingPlayerAim(
+        ulong enemyId, string playerId, Vector3 currentWeaponMuzzle)
+    {
+        if (phase != BattlePhase.Running ||
+            playerShotTargets == null || assaulterWeapon == null ||
+            !participants.TryGetValue(playerId, out Participant? player))
+            return null;
+        MovingWeaponPose? moving = SampleMovingWeaponPose(player);
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == enemyId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0);
+        if (moving == null || enemy == null)
+            return null;
+
+        Vector3 enemyPosition = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        PlayerShotTarget selected = playerShotTargets.Nearest(0x10,
+            enemyPosition, target => moving.Pose.BodyTarget(
+                target.TransformFileId).Position);
+        Vector3 movingTarget = moving.Pose.BodyTarget(
+            selected.TransformFileId).Position;
+        Vector3 predicted = CoopAssaulterMovingAim.AtTargetSelection(
+            currentWeaponMuzzle, movingTarget, player.MovementVelocity,
+            assaulterWeapon.RealBulletFlight().Speed);
+        return new CoopMovingPlayerAimPlan(enemyId, playerId,
+            selected.TransformFileId, movingTarget,
+            player.MovementVelocity, predicted, tick);
     }
 
     private MovingWeaponPose? SampleMovingWeaponPose(Participant player)
