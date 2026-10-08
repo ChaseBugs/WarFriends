@@ -769,16 +769,22 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return;
 
         int missionIndex = manifest.MissionIndex!.Value;
-        Vector3? surfaceStart = infantryNavigation.SampleNearest(
-            missionCatalog, missionIndex, start, 3f);
-        Vector3? surfaceEnd = infantryNavigation.SampleNearest(
-            missionCatalog, missionIndex, destination.Position, 3f);
-        if (surfaceStart == null || surfaceEnd == null)
-            return;
-
-        ArmyNavMeshCorridor? corridor = infantryNavigation.PlanCorridor(
-            missionCatalog, missionIndex, surfaceStart.Value,
-            surfaceEnd.Value);
+        ArmyNavMeshCorridor? corridor = infantryNavigation
+            .PlanSourceSpawnCorridor(missionCatalog, missionIndex,
+                enemy.SpawnComponentFileId,
+                destination.PointComponentFileId, start,
+                destination.Position);
+        if (corridor == null)
+        {
+            Vector3? surfaceStart = infantryNavigation.SampleNearest(
+                missionCatalog, missionIndex, start, 3f);
+            Vector3? surfaceEnd = infantryNavigation.SampleNearest(
+                missionCatalog, missionIndex, destination.Position, 3f);
+            if (surfaceStart == null || surfaceEnd == null)
+                return;
+            corridor = infantryNavigation.PlanCorridor(missionCatalog,
+                missionIndex, surfaceStart.Value, surfaceEnd.Value);
+        }
         if (corridor == null || !corridor.PlanarCovered)
             return;
 

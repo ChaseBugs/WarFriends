@@ -1524,8 +1524,11 @@ internal static class CombatContentTests
             CoopNavMeshTriangulationCatalog.Load(Path.Combine(directory,
                 "recovered-coop-navmesh-triangulation.json"), catalog,
                 navSources);
+        CoopInfantryPathFixtureCatalog infantrySourcePaths =
+            CoopInfantryPathFixtureCatalog.Load(directory, catalog,
+                navSources, spawnPoints, enemyPointCatalog);
         CoopNavMeshConnectivity infantryNavigation =
-            CoopNavMeshConnectivity.Build(navTriangles);
+            CoopNavMeshConnectivity.Build(navTriangles, infantrySourcePaths);
         IReadOnlyList<CoopSpawnPoint> assaultCandidates =
             new CoopAiSpawnSelector(catalog, spawnPoints, 0)
                 .Candidates("Assaulter");
@@ -1560,9 +1563,32 @@ internal static class CombatContentTests
         walkingRuntime.Advance(8);
         BattleCoopEnemySpawn walkingStart = walkingRuntime.Snapshot()
             .Coop.EnemySpawns.Single();
+        CoopAssignedEnemyDestination? walkingDestination =
+            walkingRuntime.EnemyDestination(walkingStart.EntityId);
+        CoopInfantryPathFixture? walkingSourcePath = walkingDestination == null
+            ? null : infantrySourcePaths.ForExactSpawn(1,
+                walkingStart.SpawnComponentFileId,
+                walkingDestination.PointComponentFileId,
+                new Vector3(walkingStart.CurrentX, walkingStart.CurrentY,
+                    walkingStart.CurrentZ), walkingDestination.Position);
+        if (walkingSourcePath == null)
+            throw new Exception("The walking Assaulter did not select a pinned source route.");
         walkingRuntime.Advance(9);
         BattleCoopEnemySpawn walkingStep = walkingRuntime.Snapshot()
             .Coop.EnemySpawns.Single();
+        ArmyNavMeshCorridor? walkingCorridor = infantryNavigation
+            .PlanSourceSpawnCorridor(catalog, 0,
+                walkingStart.SpawnComponentFileId,
+                walkingDestination!.PointComponentFileId,
+                new Vector3(walkingStart.CurrentX, walkingStart.CurrentY,
+                    walkingStart.CurrentZ), walkingDestination.Position);
+        Vector3 expectedWalkingPosition = new CoopInfantryPathState(
+            walkingCorridor!, enemyCombat.MovementSpeed("Assaulter"),
+            firstTick: 8).PositionAt(9);
+        if (Vector3.Distance(expectedWalkingPosition,
+                new Vector3(walkingStep.CurrentX, walkingStep.CurrentY,
+                    walkingStep.CurrentZ)) > 0.001f)
+            throw new Exception("Walking Assaulter did not use Unity's pinned corners.");
         IReadOnlyList<PlayerHitbox> walkingParts =
             walkingRuntime.PlaceWalkingAssaulterHitboxes(walkingStep.EntityId);
         if (walkingStep.PoseTick != 9 ||
@@ -2906,6 +2932,30 @@ internal static class CombatContentTests
         CoopEnemyPointCatalog enemyPoints = CoopEnemyPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-enemy-points.json"),
             missions, spawnPoints);
+        CoopInfantryPathFixtureCatalog sourcePaths =
+            CoopInfantryPathFixtureCatalog.Load(directory, missions,
+                navigation, spawnPoints, enemyPoints);
+        CoopNavMeshConnectivity sourceNavigation =
+            CoopNavMeshConnectivity.Build(triangles, sourcePaths);
+        foreach (CoopInfantryPathFixture sourcePath in sourcePaths.Cases)
+        {
+            ArmyNavMeshCorridor? exactPath = sourceNavigation
+                .PlanSourceSpawnCorridor(missions, sourcePath.MissionIndex,
+                    sourcePath.SpawnComponentFileId,
+                    sourcePath.PointComponentFileId,
+                    sourcePath.RequestedStart, sourcePath.RequestedEnd);
+            if (exactPath == null || !exactPath.PlanarCovered ||
+                !exactPath.SmoothedPoints.SequenceEqual(sourcePath.Corners) ||
+                sourceNavigation.PlanSourceSpawnCorridor(missions,
+                    sourcePath.MissionIndex,
+                    sourcePath.SpawnComponentFileId,
+                    sourcePath.PointComponentFileId,
+                    sourcePath.RequestedStart,
+                    sourcePath.RequestedEnd + new Vector3(0.01f, 0, 0)) != null)
+                throw new Exception("Co-op source route must match only its exact spawn and point.");
+        }
+        if (sourcePaths.Cases.Count != 36)
+            throw new Exception("Co-op source route inventory is incomplete.");
         CoopSpawnPoint infantrySpawn = desertSpawns.EnemySpawnPoints.First(
             point => point.ComponentType == "SpawnPoint");
         CoopEnemyPoint? infantryTarget =
@@ -3289,6 +3339,8 @@ internal static class CombatContentTests
         float worstSampleDistance = 0;
         int differentCornerCounts = 0;
         int differingRoutes = 0;
+        int coveredUnityPaths = 0;
+        float largestUnityVerticalDeviation = 0;
         for (int index = 0; index < 36; index++)
         {
             JsonElement input = inputs[index];
@@ -3349,6 +3401,18 @@ internal static class CombatContentTests
                 navigation.PlanCorridor(missions, missionIndex,
                     start.Value, end.Value) : null;
             JsonElement corners = reference.GetProperty("corners");
+            Vector3[] unityPoints = corners.EnumerateArray()
+                .Select(ReadVector).ToArray();
+            ArmyNavMeshPolylineAudit unityPathAudit =
+                navigation.InspectPolyline(missions, missionIndex,
+                    unityPoints);
+            if (unityPathAudit.PlanarCovered)
+            {
+                coveredUnityPaths++;
+                largestUnityVerticalDeviation = Math.Max(
+                    largestUnityVerticalDeviation,
+                    unityPathAudit.MaxVerticalDeviation);
+            }
             float startDifference = corridor == null ? float.PositiveInfinity :
                 Vector3.Distance(ReadVector(reference.GetProperty(
                     "sampledStart")), corridor.SmoothedPoints[0]);
@@ -3391,7 +3455,9 @@ internal static class CombatContentTests
         Console.WriteLine($"Co-op 36 source paths: maximum host/Unity length {worstLengthRatio:F3}, " +
             $"different routes {differingRoutes} (corner counts {differentCornerCounts}), " +
             $"maximum paired-corner distance {worstCornerDistance:F3}, " +
-            $"maximum sampled endpoint distance {worstSampleDistance:F3}.");
+            $"maximum sampled endpoint distance {worstSampleDistance:F3}, " +
+            $"Unity paths covered by host mesh {coveredUnityPaths}/36, " +
+            $"vertical deviation {largestUnityVerticalDeviation:F3}.");
     }
 
     private static int VerifyCoopSceneColliders(
