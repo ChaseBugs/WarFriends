@@ -1570,6 +1570,31 @@ internal static class CombatContentTests
             throw new Exception("A stale spawn pose must not authorize later co-op hits.");
 
         CoopMapEnemyPoints enemyMap = enemyPointCatalog.MapForMission(catalog, 0);
+        Vector3 rotationOrigin = Vector3.Zero;
+        Quaternion obstacleFacing = CoopAssaulterShotRotation.Obstacle(
+            rotationOrigin, new Vector3(3, 0, 4));
+        CoopEnemyPoint rotationCorner = enemyMap.Points.First(point =>
+            point.ComponentType == "EnemyPointCorner");
+        Quaternion rightFacing = CoopAssaulterShotRotation.Corner(
+            rotationCorner, rotationOrigin, new Vector3(0, 0, 4));
+        Quaternion leftFacing = CoopAssaulterShotRotation.Corner(
+            rotationCorner with { CornerRightSide = false },
+            rotationOrigin, new Vector3(0, 0, -4));
+        if (Math.Abs(Quaternion.Dot(obstacleFacing,
+                new Quaternion(0, 0.316227823f, 0, 0.9486833f))) <
+                0.99999f ||
+            Math.Abs(Quaternion.Dot(rightFacing,
+                new Quaternion(0, -1, 0, 0))) < 0.99999f ||
+            Math.Abs(Quaternion.Dot(leftFacing,
+                Quaternion.Identity)) < 0.99999f)
+            throw new Exception("Co-op Assaulter final shot rotation differs from Unity.");
+        try
+        {
+            CoopAssaulterShotRotation.Corner(rotationCorner,
+                rotationOrigin, new Vector3(0, 0, -4));
+            throw new Exception("A hidden-side corner aimed a shot.");
+        }
+        catch (InvalidDataException) { }
         var destinationState = new CoopEnemyDestinationState(
             enemyMap, enemyPointMasks, enemyCombat,
             chooseObstacleFraction: () => 0.5f);
@@ -1853,6 +1878,11 @@ internal static class CombatContentTests
         if (crawlWindup?.AnimationClip != "stand_up_begin" ||
             crawlWindup.QueuedFireClip != "rifle_shot_loop" ||
             crawlWindup.PreparedAimPosition != placedTarget.Position ||
+            Math.Abs(Quaternion.Dot(crawlWindup.FinalRootRotation,
+                CoopAssaulterShotRotation.Obstacle(
+                    new Vector3(reachedEnemy.CurrentX,
+                        reachedEnemy.CurrentY, reachedEnemy.CurrentZ),
+                    placedTarget.Position))) < 0.99999f ||
             crawlWindup.PlayerId != firstPlayer ||
             crawlWindup.TargetTransformFileId != placedTarget.TransformFileId ||
             crawlWindup.Batch.Count != expectedBatchCount ||
@@ -1883,6 +1913,14 @@ internal static class CombatContentTests
             firstRound[0].AimPosition != placedTarget.Position ||
             firstRound[0].ObservedLocalMuzzle != obstacleSample)
             throw new Exception($"Co-op rifle missed its first host round intent: {firstRound.FirstOrDefault()}, expected observation {obstacleSample}.");
+        Vector3 expectedLaunchOrigin =
+            new Vector3(reachedEnemy.CurrentX, reachedEnemy.CurrentY,
+                reachedEnemy.CurrentZ) +
+            Vector3.Transform(obstacleSample.LocalPosition,
+                crawlWindup.FinalRootRotation);
+        if (firstRound[0].ObservedWorldLaunchOrigin is not Vector3 origin ||
+            Vector3.Distance(origin, expectedLaunchOrigin) > 0.00001f)
+            throw new Exception("Co-op measured muzzle missed its host root placement.");
 
         CoopMatchRuntime ReadyFakeRuntime(Func<float> distance,
             Func<float> sideRoll)
@@ -1939,7 +1977,9 @@ internal static class CombatContentTests
         Vector3 expectedFakeAim = fakeWindup.PreparedAimPosition +
             fakeSideways + new Vector3(0, 0.5f, 0);
         if (Vector3.Distance(fakeRound.AimPosition, expectedFakeAim) >
-            0.00001f || fakeRound.ObservedLocalMuzzle != obstacleSample)
+            0.00001f || fakeRound.ObservedLocalMuzzle != obstacleSample ||
+            fakeRound.ObservedWorldLaunchOrigin is not Vector3 fakeOrigin ||
+            Vector3.Distance(fakeOrigin, expectedLaunchOrigin) > 0.00001f)
             throw new Exception("Co-op fake round lost its source sideways/upward aim.");
         foreach ((Func<float> distance, Func<float> sideRoll) in new[]
             {

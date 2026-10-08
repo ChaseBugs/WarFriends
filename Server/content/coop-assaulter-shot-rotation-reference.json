@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "enemyControllerSha256": "175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0",
+  "geometryToolsSha256": "3baa2f957850df91febe40a7dccc6f1451dd08c15ce276727c5ae8f2f9a47260",
+  "cases": [
+    {
+      "name": "obstacle",
+      "enemy": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "target": [
+        3.0,
+        0.0,
+        4.0
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "signedAngle": 0.0,
+      "rotation": [
+        0.0,
+        0.316227823,
+        0.0,
+        0.9486833
+      ],
+      "tweenSeconds": 0.2
+    },
+    {
+      "name": "corner-right",
+      "enemy": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "target": [
+        0.0,
+        0.0,
+        4.0
+      ],
+      "direction": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "signedAngle": 90.0,
+      "rotation": [
+        0.0,
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "tweenSeconds": 0.3
+    },
+    {
+      "name": "corner-left",
+      "enemy": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "target": [
+        0.0,
+        0.0,
+        -4.0
+      ],
+      "direction": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "signedAngle": -90.0,
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "tweenSeconds": 0.3
+    }
+  ]
+}

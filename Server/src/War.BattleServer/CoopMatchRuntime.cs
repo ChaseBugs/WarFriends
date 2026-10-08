@@ -54,7 +54,7 @@ internal sealed record CoopInfantryShotBatch(
 
 internal sealed record CoopInfantryShotWindup(
     ulong EnemyEntityId, string PlayerId, int TargetTransformFileId,
-    Vector3 PreparedAimPosition,
+    Vector3 PreparedAimPosition, Quaternion FinalRootRotation,
     string AnimationClip, string QueuedFireClip,
     ulong StartTick, ulong CallbackTick,
     ulong? CallbackStartedTick, CoopInfantryShotBatch Batch,
@@ -62,7 +62,8 @@ internal sealed record CoopInfantryShotWindup(
 
 internal sealed record CoopInfantryRoundIntent(
     ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real,
-    Vector3 AimPosition, CoopQueuedMuzzleSample? ObservedLocalMuzzle);
+    Vector3 AimPosition, CoopQueuedMuzzleSample? ObservedLocalMuzzle,
+    Vector3? ObservedWorldLaunchOrigin);
 
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
@@ -1356,14 +1357,21 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopInfantryPlayerShotTarget target,
         CoopInfantryShotBatch batch)
     {
+        BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
+            spawn.EntityId == target.EnemyEntityId && spawn.DeathTick == 0);
+        Vector3 enemyPosition = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
         string clipName;
         string queuedFireClip;
         float callbackClipLength;
+        Quaternion finalRootRotation;
         if (arrival.State == CoopInfantryPointState.ObstacleHiding)
         {
             clipName = "stand_up_begin";
             queuedFireClip = "rifle_shot_loop";
             callbackClipLength = enemyPoses!.Clip(clipName).Length;
+            finalRootRotation = CoopAssaulterShotRotation.Obstacle(
+                enemyPosition, target.Position);
         }
         else
         {
@@ -1384,6 +1392,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             // even for a left-side shot in the recovered Client.
             callbackClipLength = enemyPoses!.Clip(
                 "player_look_right3").Length;
+            finalRootRotation = CoopAssaulterShotRotation.Corner(
+                corner, enemyPosition, target.Position);
         }
         enemyPoses.Clip(queuedFireClip);
         // EnemyController.Shoot invokes its start callback after the source
@@ -1393,7 +1403,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             (callbackClipLength + 0.05f) * MatchManifest.TickRate);
         ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
         return new CoopInfantryShotWindup(target.EnemyEntityId,
-            target.PlayerId, target.TransformFileId, target.Position, clipName,
+            target.PlayerId, target.TransformFileId, target.Position,
+            finalRootRotation, clipName,
             queuedFireClip, tick,
             callbackTick, null, batch,
             assaulterWeapon!.WeaponPrefabGuid,
@@ -1455,8 +1466,23 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             CoopQueuedMuzzleSample? observedMuzzle = assaulterQueue?.Sample(
                 windup.AnimationClip, windup.QueuedFireClip,
                 tick - windup.StartTick);
+            Vector3? observedWorldOrigin = null;
+            if (observedMuzzle != null)
+            {
+                BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
+                    spawn.EntityId == entityId && spawn.DeathTick == 0);
+                Vector3 rootPosition = new(enemy.CurrentX, enemy.CurrentY,
+                    enemy.CurrentZ);
+                observedWorldOrigin = rootPosition + Vector3.Transform(
+                    observedMuzzle.LocalPosition,
+                    windup.FinalRootRotation) + assaulterWeapon.ShotOffset;
+                if (!PlayerHitbox.Finite(observedWorldOrigin.Value))
+                    throw new InvalidDataException(
+                        "Observed co-op launch origin is not finite.");
+            }
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
-                tick, real, aimPosition, observedMuzzle));
+                tick, real, aimPosition, observedMuzzle,
+                observedWorldOrigin));
             stateRevision++;
         }
     }
