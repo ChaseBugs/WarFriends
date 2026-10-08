@@ -3535,6 +3535,21 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Uses the host's cover-arrival clock for the first target-selection
+    /// muzzle. A later volley has a different idle clock and is not accepted
+    /// through this entry point.
+    /// </summary>
+    internal CoopMovingPlayerAimPlan? PlanDiagnosticWalkingTargetAtCover(
+        ulong enemyId, string playerId)
+    {
+        CoopMuzzlePose? muzzle = ObserveIdleAssaulterMuzzle(enemyId);
+        if (muzzle == null)
+            return null;
+        return PlanDiagnosticWalkingPlayerTarget(enemyId, playerId,
+            muzzle.Position);
+    }
+
+    /// <summary>
     /// Applies the Assaulter's second prediction to the prepared target.
     /// ShootJustStarted reads the player's velocity again; it does not reuse
     /// the velocity captured by PickPlayerOpponent. A caller must supply an

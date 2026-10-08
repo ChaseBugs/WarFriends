@@ -2828,6 +2828,56 @@ internal static class CombatContentTests
                     arrivalClock.PositionAt(candidate).Z),
                 new Vector2(arrivalPoint.Position.X,
                     arrivalPoint.Position.Z)) < 0.04f);
+        var movingCoverDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var movingCoverRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => 0,
+            enemyDestinations: movingCoverDestinations,
+            infantryNavigation: infantryNavigation,
+            playerWeaponContent: content,
+            chooseInfantryShotFraction: () => 0f,
+            chooseInfantryShieldRoll: () => 0f);
+        movingCoverRuntime.Admit(firstPlayer);
+        movingCoverRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            movingCoverRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = movingCoverRuntime.ManifestHash
+                }
+            });
+        movingCoverRuntime.Advance(expectedArrival);
+        BattleCoopEnemySpawn movingCoverEnemy = movingCoverRuntime
+            .Snapshot().Coop.EnemySpawns.Single(enemy =>
+                enemy.EntityId == arrivalEnemy.EntityId);
+        if (movingCoverRuntime.Command(firstPlayer, new MatchCommand
+            {
+                CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = 1 }
+            }).Code != "moving")
+            throw new Exception("Co-op cover target fixture did not start walking.");
+        movingCoverRuntime.Advance(expectedArrival + 2);
+        CoopMuzzlePose? movingCoverMuzzle = movingCoverRuntime
+            .ObserveIdleAssaulterMuzzle(movingCoverEnemy.EntityId);
+        CoopMovingPlayerAimPlan? ownedMovingTarget = movingCoverRuntime
+            .PlanDiagnosticWalkingTargetAtCover(movingCoverEnemy.EntityId,
+                firstPlayer);
+        CoopMovingPlayerAimPlan? suppliedMovingTarget = movingCoverMuzzle ==
+            null ? null : movingCoverRuntime.PlanDiagnosticWalkingPlayerTarget(
+                movingCoverEnemy.EntityId, firstPlayer,
+                movingCoverMuzzle.Position);
+        if (ownedMovingTarget == null || suppliedMovingTarget == null ||
+            ownedMovingTarget.TransformFileId !=
+                suppliedMovingTarget.TransformFileId ||
+            ownedMovingTarget.PredictedAimPosition !=
+                suppliedMovingTarget.PredictedAimPosition ||
+            ownedMovingTarget.Tick != expectedArrival + 2)
+            throw new Exception(
+                "Walking target did not use the host-owned cover muzzle.");
         arrivalRuntime.Advance(expectedArrival - 1);
         if (arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null)
             throw new Exception("Co-op Assaulter reached its point too early.");
@@ -2929,7 +2979,9 @@ internal static class CombatContentTests
         CoopInfantryShotWindup? crawlWindup = arrivalRuntime
             .InfantryShotWindup(arrivalEnemy.EntityId);
         if (arrivalRuntime.ObserveIdleAssaulterMuzzle(
-                arrivalEnemy.EntityId) != null)
+                arrivalEnemy.EntityId) != null ||
+            arrivalRuntime.PlanDiagnosticWalkingTargetAtCover(
+                arrivalEnemy.EntityId, firstPlayer) != null)
             throw new Exception("Co-op idle muzzle survived the shot windup.");
         ArmyBaseShotStats sourceBatch = content.Army.ComposeShot(
             "ID_UNIT-ASSAULT", arrivalEnemy.Level, null, null);
