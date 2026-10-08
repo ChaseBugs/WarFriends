@@ -990,6 +990,10 @@ internal static class CombatContentTests
                 shotTarget, 0) ||
             switchingRuntime.ConfirmHostPlayerShot(partner, 1,
                 shotTarget, 0) ||
+            switchingRuntime.ConfirmHostPlayerShot(switcher, 1,
+                new Vector3(float.MaxValue, 0, 0), 0) ||
+            switchingRuntime.ConfirmHostPlayerShot(switcher, 1,
+                shotOrigin, 0) ||
             !switchingRuntime.ConfirmHostPlayerShot(switcher, 1,
                 shotTarget, 0) ||
             switchingRuntime.ConfirmHostPlayerShot(switcher, 1,

@@ -2198,7 +2198,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
         Vector3 direction = target - player.Position;
         direction.Y = 0;
-        if (direction.LengthSquared() < 0.0000001f ||
+        float distanceSquared = direction.LengthSquared();
+        if (!PlayerHitbox.Finite(direction) ||
+            !float.IsFinite(distanceSquared) ||
+            distanceSquared < 0.0000001f ||
             playerPositions[player.CoverIndex].SourceRotation is not
                 Quaternion coverRotation)
             return false;
@@ -2207,6 +2210,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             .Single(weapon => weapon.Slot == slot);
         int family = playerWeaponBindings.Get(
             selected.Weapon.SourceId).AnimationFamily;
+        if (family is not (0 or 2 or 4 or 5 or 7 or 9 or 10 or 13 or 15))
+            return false;
         RifleCoverTimeline timeline = player.ShotTimeline != null &&
             player.ShotAnimationFamily == family
                 ? player.ShotTimeline
