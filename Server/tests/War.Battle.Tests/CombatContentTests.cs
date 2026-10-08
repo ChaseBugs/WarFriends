@@ -2951,11 +2951,28 @@ internal static class CombatContentTests
                     sourcePath.SpawnComponentFileId,
                     sourcePath.PointComponentFileId,
                     sourcePath.RequestedStart,
-                    sourcePath.RequestedEnd + new Vector3(0.01f, 0, 0)) != null)
+                    sourcePath.RequestedEnd + new Vector3(0.0001f, 0, 0)) != null)
                 throw new Exception("Co-op source route must match only its exact spawn and point.");
         }
         if (sourcePaths.Cases.Count != 36)
             throw new Exception("Co-op source route inventory is incomplete.");
+        CoopInfantryPathFixture midpoint = sourcePaths.Cases.First(path =>
+            path.PointFraction == 0.5f);
+        Vector3 nearbyDestination = midpoint.RequestedEnd +
+            new Vector3(0.0001f, 0, 0);
+        Vector3? nearbyStart = sourceNavigation.SampleNearest(missions,
+            midpoint.MissionIndex, midpoint.RequestedStart, 3f);
+        Vector3? nearbyEnd = sourceNavigation.SampleNearest(missions,
+            midpoint.MissionIndex, nearbyDestination, 3f);
+        ArmyNavMeshCorridor? nearbyRoute = nearbyStart.HasValue &&
+            nearbyEnd.HasValue ? sourceNavigation.PlanCorridor(missions,
+                midpoint.MissionIndex, nearbyStart.Value, nearbyEnd.Value) : null;
+        if (sourceNavigation.PlanSourceSpawnCorridor(missions,
+                midpoint.MissionIndex, midpoint.SpawnComponentFileId,
+                midpoint.PointComponentFileId, midpoint.RequestedStart,
+                nearbyDestination) != null ||
+            nearbyRoute is not { PlanarCovered: true })
+            throw new Exception("Nearby randomized co-op positions need the general route planner.");
         CoopSpawnPoint infantrySpawn = desertSpawns.EnemySpawnPoints.First(
             point => point.ComponentType == "SpawnPoint");
         CoopEnemyPoint? infantryTarget =

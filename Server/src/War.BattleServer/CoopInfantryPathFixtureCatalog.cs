@@ -38,8 +38,8 @@ public sealed class CoopInfantryPathFixtureCatalog
         return Cases.FirstOrDefault(path => path.Stage == stage &&
             path.SpawnComponentFileId == spawnComponentFileId &&
             path.PointComponentFileId == pointComponentFileId &&
-            Vector3.Distance(path.RequestedStart, requestedStart) <= 0.001f &&
-            Vector3.Distance(path.RequestedEnd, requestedEnd) <= 0.001f);
+            path.RequestedStart == requestedStart &&
+            path.RequestedEnd == requestedEnd);
     }
 
     public static CoopInfantryPathFixtureCatalog Load(string directory,
