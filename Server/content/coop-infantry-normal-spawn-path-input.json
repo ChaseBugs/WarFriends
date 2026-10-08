@@ -1,0 +1,725 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1646,
+      "pointComponentFileId": 1859,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -23.0333575,
+        "y": -2.27217933,
+        "z": -17.381344
+      },
+      "end": {
+        "x": -23.46806090454974,
+        "y": -2.4911138795721386,
+        "z": -11.467686392187582
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1646,
+      "pointComponentFileId": 1859,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -23.0333575,
+        "y": -2.27217933,
+        "z": -17.381344
+      },
+      "end": {
+        "x": -23.449509083722248,
+        "y": -2.5034582397860694,
+        "z": -11.598534319004123
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1646,
+      "pointComponentFileId": 1859,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -23.0333575,
+        "y": -2.27217933,
+        "z": -17.381344
+      },
+      "end": {
+        "x": -23.430957262894754,
+        "y": -2.5158025999999998,
+        "z": -11.729382245820664
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1896,
+      "pointComponentFileId": 1695,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -21.8740977,
+        "y": -2.1549708499999998,
+        "z": -0.9727075000000003
+      },
+      "end": {
+        "x": -21.5790582096952,
+        "y": -2.2777554626055383,
+        "z": -5.526588430202453
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1896,
+      "pointComponentFileId": 1695,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -21.8740977,
+        "y": -2.1549708499999998,
+        "z": -0.9727075000000003
+      },
+      "end": {
+        "x": -21.603649330466123,
+        "y": -2.2842554760087252,
+        "z": -5.733468238472544
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1896,
+      "pointComponentFileId": 1695,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -21.8740977,
+        "y": -2.1549708499999998,
+        "z": -0.9727075000000003
+      },
+      "end": {
+        "x": -21.628240451237044,
+        "y": -2.290755489411912,
+        "z": -5.940348046742636
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1694,
+      "pointComponentFileId": 1698,
+      "pointPositionKind": "fixed",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -34.283083,
+        "y": -2.1312331799999997,
+        "z": -13.991791
+      },
+      "end": {
+        "x": -27.842968,
+        "y": -2.2887646999999998,
+        "z": -12.8744666
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1712,
+      "pointComponentFileId": 1698,
+      "pointPositionKind": "fixed",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -28.260473,
+        "y": -2.13123294,
+        "z": -14.168272
+      },
+      "end": {
+        "x": -27.842968,
+        "y": -2.2887646999999998,
+        "z": -12.8744666
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1814,
+      "pointComponentFileId": 1804,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -29.304645,
+        "y": -2.12814018,
+        "z": -2.8262255000000005
+      },
+      "end": {
+        "x": -26.127398730105334,
+        "y": -2.4419608025479027,
+        "z": -5.5608382242834935
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1814,
+      "pointComponentFileId": 1804,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -29.304645,
+        "y": -2.12814018,
+        "z": -2.8262255000000005
+      },
+      "end": {
+        "x": -26.153547825782624,
+        "y": -2.443954101273951,
+        "z": -5.694433378833082
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1814,
+      "pointComponentFileId": 1804,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -29.304645,
+        "y": -2.12814018,
+        "z": -2.8262255000000005
+      },
+      "end": {
+        "x": -26.17969692145991,
+        "y": -2.4459473999999997,
+        "z": -5.828028533382671
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1648,
+      "pointComponentFileId": 1804,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -29.608083,
+        "y": -2.12813994,
+        "z": -3.5677910000000006
+      },
+      "end": {
+        "x": -26.127398730105334,
+        "y": -2.4419608025479027,
+        "z": -5.5608382242834935
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1648,
+      "pointComponentFileId": 1804,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -29.608083,
+        "y": -2.12813994,
+        "z": -3.5677910000000006
+      },
+      "end": {
+        "x": -26.153547825782624,
+        "y": -2.443954101273951,
+        "z": -5.694433378833082
+      }
+    },
+    {
+      "stage": 1,
+      "missionIndex": 0,
+      "scene": "Desert_New",
+      "asset": "Assets/NavMeshData/NavMesh_7.asset",
+      "spawnComponentFileId": 1648,
+      "pointComponentFileId": 1804,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -29.608083,
+        "y": -2.12813994,
+        "z": -3.5677910000000006
+      },
+      "end": {
+        "x": -26.17969692145991,
+        "y": -2.4459473999999997,
+        "z": -5.828028533382671
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 2007,
+      "pointComponentFileId": 1980,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -3.8859399999999997,
+        "y": 0.2834156,
+        "z": -6.425190600000001
+      },
+      "end": {
+        "x": -1.351314404549741,
+        "y": 0.139454670427861,
+        "z": -4.6286608921875825
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 2007,
+      "pointComponentFileId": 1980,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -3.8859399999999997,
+        "y": 0.2834156,
+        "z": -6.425190600000001
+      },
+      "end": {
+        "x": -1.3976191155697442,
+        "y": 0.1271103102139305,
+        "z": -4.765994753556146
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 2007,
+      "pointComponentFileId": 1980,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -3.8859399999999997,
+        "y": 0.2834156,
+        "z": -6.425190600000001
+      },
+      "end": {
+        "x": -1.4439238265897472,
+        "y": 0.11476595,
+        "z": -4.9033286149247095
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 1899,
+      "pointComponentFileId": 1946,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -7.898894,
+        "y": 0.2322689,
+        "z": 6.252927999999999
+      },
+      "end": {
+        "x": -1.5173088290400112,
+        "y": 0.2642274570690886,
+        "z": 4.709012449203388
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 1899,
+      "pointComponentFileId": 1946,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -7.898894,
+        "y": 0.2322689,
+        "z": 6.252927999999999
+      },
+      "end": {
+        "x": -1.5170627870493294,
+        "y": 0.26223415853454435,
+        "z": 4.601751989588087
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 1899,
+      "pointComponentFileId": 1946,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -7.898894,
+        "y": 0.2322689,
+        "z": 6.252927999999999
+      },
+      "end": {
+        "x": -1.5168167450586476,
+        "y": 0.26024086,
+        "z": 4.494491529972787
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 1892,
+      "pointComponentFileId": 1946,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -1.5636419999999998,
+        "y": 0.45107396,
+        "z": 9.748309999999998
+      },
+      "end": {
+        "x": -1.5173088290400112,
+        "y": 0.2642274570690886,
+        "z": 4.709012449203388
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 1892,
+      "pointComponentFileId": 1946,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -1.5636419999999998,
+        "y": 0.45107396,
+        "z": 9.748309999999998
+      },
+      "end": {
+        "x": -1.5170627870493294,
+        "y": 0.26223415853454435,
+        "z": 4.601751989588087
+      }
+    },
+    {
+      "stage": 2,
+      "missionIndex": 15,
+      "scene": "Snow_Single",
+      "asset": "Assets/NavMeshData/NavMesh_1.asset",
+      "spawnComponentFileId": 1892,
+      "pointComponentFileId": 1946,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -1.5636419999999998,
+        "y": 0.45107396,
+        "z": 9.748309999999998
+      },
+      "end": {
+        "x": -1.5168167450586476,
+        "y": 0.26024086,
+        "z": 4.494491529972787
+      }
+    },
+    {
+      "stage": 3,
+      "missionIndex": 46,
+      "scene": "City_Single",
+      "asset": "Assets/NavMeshData/NavMesh.asset",
+      "spawnComponentFileId": 2467,
+      "pointComponentFileId": 2705,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -3.237083000000002,
+        "y": 0.39887790000000023,
+        "z": -9.627791
+      },
+      "end": {
+        "x": -2.9724694165649965,
+        "y": 0.18356662042786123,
+        "z": -2.5780688934358222
+      }
+    },
+    {
+      "stage": 3,
+      "missionIndex": 46,
+      "scene": "City_Single",
+      "asset": "Assets/NavMeshData/NavMesh.asset",
+      "spawnComponentFileId": 2467,
+      "pointComponentFileId": 2705,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -3.237083000000002,
+        "y": 0.39887790000000023,
+        "z": -9.627791
+      },
+      "end": {
+        "x": -2.9672327951149304,
+        "y": 0.17122226021393072,
+        "z": -2.673476857318076
+      }
+    },
+    {
+      "stage": 3,
+      "missionIndex": 46,
+      "scene": "City_Single",
+      "asset": "Assets/NavMeshData/NavMesh.asset",
+      "spawnComponentFileId": 2467,
+      "pointComponentFileId": 2705,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -3.237083000000002,
+        "y": 0.39887790000000023,
+        "z": -9.627791
+      },
+      "end": {
+        "x": -2.961996173664865,
+        "y": 0.15887790000000024,
+        "z": -2.76888482120033
+      }
+    },
+    {
+      "stage": 3,
+      "missionIndex": 46,
+      "scene": "City_Single",
+      "asset": "Assets/NavMeshData/NavMesh.asset",
+      "spawnComponentFileId": 2483,
+      "pointComponentFileId": 2707,
+      "pointPositionKind": "fixed",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -1.5170830000000013,
+        "y": 0.21887790000000024,
+        "z": 8.397209
+      },
+      "end": {
+        "x": -1.3410830000000011,
+        "y": 0.14487790000000023,
+        "z": 3.9322090000000003
+      }
+    },
+    {
+      "stage": 4,
+      "missionIndex": 31,
+      "scene": "Aztec_Single",
+      "asset": "Assets/NavMeshData/NavMesh_0.asset",
+      "spawnComponentFileId": 1883,
+      "pointComponentFileId": 1742,
+      "pointPositionKind": "fixed",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -3.8859399999999997,
+        "y": 0.34726070000000003,
+        "z": -8.414618
+      },
+      "end": {
+        "x": -3.8802070000000004,
+        "y": 0.11791894000000003,
+        "z": -3.477954600000001
+      }
+    },
+    {
+      "stage": 4,
+      "missionIndex": 31,
+      "scene": "Aztec_Single",
+      "asset": "Assets/NavMeshData/NavMesh_0.asset",
+      "spawnComponentFileId": 1894,
+      "pointComponentFileId": 1890,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -8.123109999999999,
+        "y": 0.31168268000000005,
+        "z": 8.514354999999998
+      },
+      "end": {
+        "x": -3.112828671689216,
+        "y": 0.10606239279980603,
+        "z": 3.841142039467411
+      }
+    },
+    {
+      "stage": 4,
+      "missionIndex": 31,
+      "scene": "Aztec_Single",
+      "asset": "Assets/NavMeshData/NavMesh_0.asset",
+      "spawnComponentFileId": 1894,
+      "pointComponentFileId": 1890,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -8.123109999999999,
+        "y": 0.31168268000000005,
+        "z": 8.514354999999998
+      },
+      "end": {
+        "x": -3.1193346294121693,
+        "y": 0.12050448093760013,
+        "z": 3.6625870012500608
+      }
+    },
+    {
+      "stage": 4,
+      "missionIndex": 31,
+      "scene": "Aztec_Single",
+      "asset": "Assets/NavMeshData/NavMesh_0.asset",
+      "spawnComponentFileId": 1894,
+      "pointComponentFileId": 1890,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -8.123109999999999,
+        "y": 0.31168268000000005,
+        "z": 8.514354999999998
+      },
+      "end": {
+        "x": -3.1258405871351225,
+        "y": 0.13494656907539423,
+        "z": 3.4840319630327103
+      }
+    },
+    {
+      "stage": 4,
+      "missionIndex": 31,
+      "scene": "Aztec_Single",
+      "asset": "Assets/NavMeshData/NavMesh_0.asset",
+      "spawnComponentFileId": 1831,
+      "pointComponentFileId": 1868,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -1.7526209999999995,
+        "y": 0.76576636,
+        "z": 9.748309999999998
+      },
+      "end": {
+        "x": -0.3689154743068119,
+        "y": 0.23516056142206895,
+        "z": 4.035392617864065
+      }
+    },
+    {
+      "stage": 4,
+      "missionIndex": 31,
+      "scene": "Aztec_Single",
+      "asset": "Assets/NavMeshData/NavMesh_0.asset",
+      "spawnComponentFileId": 1831,
+      "pointComponentFileId": 1868,
+      "pointPositionKind": "segment",
+      "pointFraction": 0.5,
+      "start": {
+        "x": -1.7526209999999995,
+        "y": 0.76576636,
+        "z": 9.748309999999998
+      },
+      "end": {
+        "x": -0.42647649832481277,
+        "y": 0.22281620071103447,
+        "z": 3.903128679079318
+      }
+    },
+    {
+      "stage": 4,
+      "missionIndex": 31,
+      "scene": "Aztec_Single",
+      "asset": "Assets/NavMeshData/NavMesh_0.asset",
+      "spawnComponentFileId": 1831,
+      "pointComponentFileId": 1868,
+      "pointPositionKind": "segment",
+      "pointFraction": 1.0,
+      "start": {
+        "x": -1.7526209999999995,
+        "y": 0.76576636,
+        "z": 9.748309999999998
+      },
+      "end": {
+        "x": -0.48403752234281366,
+        "y": 0.21047184000000002,
+        "z": 3.7708647402945714
+      }
+    },
+    {
+      "stage": 5,
+      "missionIndex": 61,
+      "scene": "Park_Single",
+      "asset": "Assets/NavMeshData/NavMesh_3.asset",
+      "spawnComponentFileId": 2456,
+      "pointComponentFileId": 2625,
+      "pointPositionKind": "fixed",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -3.9460815500000024,
+        "y": 0.22087792899999997,
+        "z": -6.270791070000001
+      },
+      "end": {
+        "x": -3.8070815500000013,
+        "y": 0.07745312900000001,
+        "z": -5.079791070000001
+      }
+    },
+    {
+      "stage": 5,
+      "missionIndex": 61,
+      "scene": "Park_Single",
+      "asset": "Assets/NavMeshData/NavMesh_3.asset",
+      "spawnComponentFileId": 2617,
+      "pointComponentFileId": 2656,
+      "pointPositionKind": "fixed",
+      "pointFraction": 0.0,
+      "start": {
+        "x": -6.9060815500000015,
+        "y": 0.28185984899999994,
+        "z": 6.235208929999999
+      },
+      "end": {
+        "x": -3.7780815500000013,
+        "y": 0.03987792899999998,
+        "z": 5.340208929999999
+      }
+    }
+  ]
+}

@@ -61,18 +61,28 @@ public static class UnityCoopInfantryPathSetExport
 
         Input input = UnityEngine.JsonUtility.FromJson<Input>(
             File.ReadAllText(arguments[inputFlag + 1]));
-        if (input == null || input.version != 1 || input.cases == null ||
-            input.cases.Length != 5)
-            throw new InvalidOperationException("Expected five co-op map cases.");
-        var output = new Output { version = 1, cases = new PathResult[5] };
+        if (input == null || input.cases == null ||
+            !(input.version == 1 && input.cases.Length == 5 ||
+              input.version == 2 && input.cases.Length == 36))
+            throw new InvalidOperationException(
+                "Expected five map cases or 36 normal-spawn cases.");
+        var output = new Output
+        {
+            version = input.version,
+            cases = new PathResult[input.cases.Length]
+        };
 
+        int previousStage = 0;
         for (int index = 0; index < input.cases.Length; index++)
         {
             Case source = input.cases[index];
-            if (source.stage != index + 1 ||
+            if (source.stage < 1 || source.stage > 5 ||
+                source.stage < previousStage ||
+                (input.version == 1 && source.stage != index + 1) ||
                 !source.asset.StartsWith("Assets/NavMeshData/",
                     StringComparison.Ordinal))
                 throw new InvalidOperationException("Co-op path map order changed.");
+            previousStage = source.stage;
             NavMeshData mesh = AssetDatabase.LoadAssetAtPath<NavMeshData>(
                 source.asset);
             if (mesh == null)
@@ -123,6 +133,7 @@ public static class UnityCoopInfantryPathSetExport
 
         File.WriteAllText(arguments[outputFlag + 1],
             UnityEngine.JsonUtility.ToJson(output, true));
-        Debug.Log("COOP_INFANTRY_PATH_SET exported five source map cases");
+        Debug.Log("COOP_INFANTRY_PATH_SET exported " +
+            output.cases.Length + " source path cases");
     }
 }

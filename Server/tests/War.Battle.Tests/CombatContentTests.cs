@@ -2954,6 +2954,8 @@ internal static class CombatContentTests
             connectivity, infantrySpawn, infantryTarget);
         VerifyCoopFiveMapPathReference(directory, missions, navigation,
             spawnPoints, enemyPoints, connectivity);
+        VerifyCoopNormalSpawnPaths(directory, missions, navigation,
+            spawnPoints, enemyPoints, connectivity);
 
         string temporaryDirectory = Path.Combine(Path.GetTempPath(),
             $"war-coop-navigation-{Guid.NewGuid():N}");
@@ -3251,6 +3253,145 @@ internal static class CombatContentTests
             if (corridor.SmoothedLength > unityLength * 1.1f + 0.05f)
                 throw new Exception("Host co-op route detours beyond Unity's path.");
         }
+    }
+
+    private static void VerifyCoopNormalSpawnPaths(string directory,
+        MissionCatalog missions, CoopNavMeshSourceCatalog navSources,
+        CoopSpawnPointCatalog spawns, CoopEnemyPointCatalog enemyPoints,
+        CoopNavMeshConnectivity navigation)
+    {
+        string referencePath = Path.Combine(directory,
+            "coop-infantry-normal-spawn-path-reference.json");
+        byte[] referenceBytes = File.ReadAllBytes(referencePath);
+        if (Convert.ToHexStringLower(SHA256.HashData(referenceBytes)) !=
+            "42cc88552404158815a64d71f2c597752d2b8c10accf1b058bbc555abc0c92f7")
+            throw new Exception("Co-op normal-spawn Unity paths changed.");
+        using JsonDocument inputDocument = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "coop-infantry-normal-spawn-path-input.json")));
+        using JsonDocument referenceDocument = JsonDocument.Parse(referenceBytes);
+        JsonElement inputs = inputDocument.RootElement.GetProperty("cases");
+        JsonElement references = referenceDocument.RootElement
+            .GetProperty("cases");
+        if (inputDocument.RootElement.GetProperty("version").GetInt32() != 2 ||
+            referenceDocument.RootElement.GetProperty("version").GetInt32() != 2 ||
+            inputs.GetArrayLength() != 36 ||
+            references.GetArrayLength() != 36)
+            throw new Exception("Co-op normal-spawn path inventory is incomplete.");
+
+        static Vector3 ReadVector(JsonElement value) => new(
+            value.GetProperty("x").GetSingle(),
+            value.GetProperty("y").GetSingle(),
+            value.GetProperty("z").GetSingle());
+
+        var stageCounts = new int[5];
+        float worstLengthRatio = 0;
+        float worstCornerDistance = 0;
+        float worstSampleDistance = 0;
+        int differentCornerCounts = 0;
+        int differingRoutes = 0;
+        for (int index = 0; index < 36; index++)
+        {
+            JsonElement input = inputs[index];
+            JsonElement reference = references[index];
+            int missionIndex = input.GetProperty("missionIndex").GetInt32();
+            MissionMapRule missionMap = missions.MapForMission(missionIndex);
+            CoopNavMeshSource sourceMap = navSources.MapForMission(
+                missions, missionIndex);
+            CoopMapSpawnPoints mapSpawns = spawns.MapForMission(
+                missions, missionIndex);
+            CoopMapEnemyPoints mapPoints = enemyPoints.MapForMission(
+                missions, missionIndex);
+            int stage = input.GetProperty("stage").GetInt32();
+            int spawnId = input.GetProperty("spawnComponentFileId").GetInt32();
+            int pointId = input.GetProperty("pointComponentFileId").GetInt32();
+            CoopSpawnPoint spawn = mapSpawns.EnemySpawnPoints.Single(point =>
+                point.ComponentFileId == spawnId);
+            CoopEnemyPoint? selected = CoopEnemyPointSelection.SelectOrdinary(
+                mapPoints, 14, spawn.Position, new HashSet<int>());
+            float fraction = input.GetProperty("pointFraction").GetSingle();
+            Vector3 destination = selected == null ? Vector3.Zero :
+                CoopEnemyPointSelection.GeneratePosition(selected, fraction);
+            if (stage is < 1 or > 5 || stage != missionMap.Stage ||
+                sourceMap.Scene != missionMap.Scene ||
+                spawn.ComponentType != "SpawnPoint" || spawn.Fraction != 1 ||
+                selected?.ComponentFileId != pointId ||
+                input.GetProperty("scene").GetString() != missionMap.Scene ||
+                input.GetProperty("asset").GetString() != sourceMap.SourceAsset ||
+                input.GetProperty("pointPositionKind").GetString() !=
+                    (selected?.ComponentType == "EnemyPointObstacle" ?
+                        "segment" : "fixed") ||
+                (selected?.ComponentType == "EnemyPointObstacle" ?
+                    fraction is not (0f or 0.5f or 1f) : fraction != 0f) ||
+                Vector3.Distance(ReadVector(input.GetProperty("start")),
+                    spawn.Position) > 0.001f ||
+                Vector3.Distance(ReadVector(input.GetProperty("end")),
+                    destination) > 0.001f)
+                throw new Exception("Co-op normal-spawn case differs from Client.");
+            stageCounts[stage - 1]++;
+
+            if (reference.GetProperty("stage").GetInt32() != stage ||
+                reference.GetProperty("scene").GetString() != missionMap.Scene ||
+                reference.GetProperty("asset").GetString() != sourceMap.SourceAsset ||
+                reference.GetProperty("spawnComponentFileId").GetInt32() !=
+                    spawnId ||
+                reference.GetProperty("pointComponentFileId").GetInt32() !=
+                    pointId ||
+                !reference.GetProperty("startSampled").GetBoolean() ||
+                !reference.GetProperty("endSampled").GetBoolean() ||
+                reference.GetProperty("status").GetString() != "PathComplete")
+                throw new Exception("Co-op Unity path result differs from its case.");
+
+            Vector3? start = navigation.SampleNearest(missions,
+                missionIndex, spawn.Position, 3f);
+            Vector3? end = navigation.SampleNearest(missions,
+                missionIndex, destination, 3f);
+            ArmyNavMeshCorridor? corridor = start.HasValue && end.HasValue ?
+                navigation.PlanCorridor(missions, missionIndex,
+                    start.Value, end.Value) : null;
+            JsonElement corners = reference.GetProperty("corners");
+            float startDifference = corridor == null ? float.PositiveInfinity :
+                Vector3.Distance(ReadVector(reference.GetProperty(
+                    "sampledStart")), corridor.SmoothedPoints[0]);
+            float endDifference = corridor == null ? float.PositiveInfinity :
+                Vector3.Distance(ReadVector(reference.GetProperty(
+                    "sampledEnd")), corridor.SmoothedPoints[^1]);
+            if (corridor is not { PlanarCovered: true } ||
+                corners.GetArrayLength() < 2 ||
+                startDifference > 0.25f || endDifference > 0.25f)
+                throw new Exception($"Host lacks a covered co-op source route: case {index}, scene {missionMap.Scene}, spawn {spawnId}, point {pointId}, fraction {fraction}, start {start}, end {end}, Unity start {ReadVector(reference.GetProperty("sampledStart"))}, Unity end {ReadVector(reference.GetProperty("sampledEnd"))}, corridor {corridor?.PlanarCovered}, Unity corners {corners.GetArrayLength()}.");
+            worstSampleDistance = Math.Max(worstSampleDistance,
+                Math.Max(startDifference, endDifference));
+            float unityLength = 0;
+            for (int corner = 1; corner < corners.GetArrayLength(); corner++)
+                unityLength += Vector3.Distance(ReadVector(corners[corner - 1]),
+                    ReadVector(corners[corner]));
+            float lengthRatio = corridor.SmoothedLength / unityLength;
+            worstLengthRatio = Math.Max(worstLengthRatio, lengthRatio);
+            float caseCornerDistance = 0;
+            if (corners.GetArrayLength() != corridor.SmoothedPoints.Count)
+                differentCornerCounts++;
+            else
+            {
+                for (int corner = 0; corner < corners.GetArrayLength(); corner++)
+                    caseCornerDistance = Math.Max(caseCornerDistance,
+                        Vector3.Distance(ReadVector(corners[corner]),
+                            corridor.SmoothedPoints[corner]));
+                worstCornerDistance = Math.Max(worstCornerDistance,
+                    caseCornerDistance);
+            }
+            if (corners.GetArrayLength() != corridor.SmoothedPoints.Count ||
+                caseCornerDistance > 0.05f)
+                differingRoutes++;
+        }
+        if (!stageCounts.SequenceEqual([14, 9, 4, 7, 2]))
+            throw new Exception("Co-op normal-spawn case counts changed.");
+        if (worstLengthRatio > 1.09f || differentCornerCounts > 4 ||
+            differingRoutes > 11 || worstSampleDistance > 0.09f)
+            throw new Exception("Co-op path planner regressed against Unity.");
+        Console.WriteLine($"Co-op 36 source paths: maximum host/Unity length {worstLengthRatio:F3}, " +
+            $"different routes {differingRoutes} (corner counts {differentCornerCounts}), " +
+            $"maximum paired-corner distance {worstCornerDistance:F3}, " +
+            $"maximum sampled endpoint distance {worstSampleDistance:F3}.");
     }
 
     private static int VerifyCoopSceneColliders(
