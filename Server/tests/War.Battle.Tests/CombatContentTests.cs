@@ -597,7 +597,7 @@ internal static class CombatContentTests
         byte[] source = File.ReadAllBytes(path);
         string digest = Convert.ToHexStringLower(SHA256.HashData(source));
         if (digest !=
-            "ba75e00e0c11909cf4c46542b1db1bf5ce350dce39f0f0a2e100745cc2c2a133")
+            "ed2c1a6d76bc92d13c2102f52122d5f6f7f2145f805e221020f999595e24dafd")
             throw new Exception("Unity corner pose reference changed.");
 
         using JsonDocument document = JsonDocument.Parse(source);
@@ -677,7 +677,8 @@ internal static class CombatContentTests
             "uncoverSamples").EnumerateArray())
         {
             int sampleTick = sample.GetProperty("tick").GetInt32();
-            Quaternion rootFacing = Rotation(turnSamples[sampleTick]
+            Quaternion rootFacing = Rotation(turnSamples[Math.Min(
+                sampleTick, 9)]
                 .GetProperty("rotation"));
             IReadOnlyList<PlayerHitbox> placed = content.EnemyPoses.Place(
                 lookClip, position, rootFacing,
@@ -3101,6 +3102,13 @@ internal static class CombatContentTests
                 !cornerRuntime.CurrentEnemyCollisionFrame()
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception("Co-op corner turn crossed its diagnostic gate.");
+            cornerRuntime.Advance(coverWindup.StartTick + 12);
+            if (cornerRuntime.PlaceCornerUncoverHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception(
+                    "Co-op corner lost the late diagnostic uncover pose.");
         }
 
         // Flip only the test point's exposed side when needed so this

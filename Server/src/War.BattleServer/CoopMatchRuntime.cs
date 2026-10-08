@@ -1778,20 +1778,24 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 out CoopInfantryShotWindup? windup) ||
             windup.AnimationClip is not
                 ("player_look_right3" or "player_look_left3") ||
-            tick <= windup.StartTick || tick > windup.StartTick + 9)
+            tick <= windup.StartTick)
+            return [];
+        float seconds = (tick - windup.StartTick) /
+            (float)MatchManifest.TickRate;
+        if (seconds > enemyPoses.Clip(windup.AnimationClip).Length)
             return [];
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
             spawn.Health > 0 && spawn.DeathTick == 0 &&
-            spawn.PoseTick == tick && spawn.CurrentRotation != null);
+            spawn.PoseTick == windup.StartTick +
+                Math.Min(tick - windup.StartTick, 9UL) &&
+            spawn.CurrentRotation != null);
         if (enemy == null)
             return [];
         BattleJointRotation facing = enemy.CurrentRotation!;
         Quaternion rotation = new(facing.X, facing.Y, facing.Z, facing.W);
         Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
             enemy.CurrentZ);
-        float seconds = (tick - windup.StartTick) /
-            (float)MatchManifest.TickRate;
         return enemyPoses.Place(windup.AnimationClip, position,
             rotation, seconds, $"coop/{entityId}/");
     }

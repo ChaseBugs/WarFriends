@@ -112,13 +112,14 @@ public static class UnityCoopCornerPoseAudit
             if (animation[lookClip] == null)
                 throw new InvalidOperationException("Missing source look clip.");
             var uncoverSamples = new List<object>();
-            foreach (int uncoverTick in new[] { 1, 4, 8, 9 })
+            foreach (int uncoverTick in new[] { 1, 4, 8, 9, 12, 15 })
             {
                 float seconds = uncoverTick / 30f;
                 Sample(animation, "T_pose", 1f);
                 Sample(animation, lookClip, seconds /
                     animation[lookClip].length);
-                turn.Sample(uncoverTick / 9f, uncoverTick == 9);
+                turn.Sample(Mathf.Min(uncoverTick / 9f, 1f),
+                    uncoverTick >= 9);
                 Physics.SyncTransforms();
                 uncoverSamples.Add(new
                 {
