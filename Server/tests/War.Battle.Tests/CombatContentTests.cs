@@ -2179,6 +2179,12 @@ internal static class CombatContentTests
         if (spawns.Maps.Count != 5 ||
             spawns.Maps.Sum(map => map.SpawnPoints.Count) != 59 ||
             spawns.Maps.Sum(map => map.PlayerPositions.Count) != 20 ||
+            spawns.Maps.SelectMany(map => map.PlayerPositions).Any(anchor =>
+                anchor.SourceRotation is null ||
+                Math.Abs(anchor.SourceRotation.Value.LengthSquared() - 1) > 0.0002f) ||
+            spawns.Maps.SelectMany(map => map.SpawnPoints).Any(point =>
+                point.SourceRotation is null ||
+                Math.Abs(point.SourceRotation.Value.LengthSquared() - 1) > 0.0002f) ||
             desert.Scene != "Desert_New" || desert.EnemySpawnPoints.Count != 13 ||
             desert.SpawnPoints.Any(point =>
                 point.Collection == "spawnPointsCollectionAssaultHelis"))

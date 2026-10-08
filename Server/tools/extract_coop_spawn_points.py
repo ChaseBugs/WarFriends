@@ -2,12 +2,13 @@
 
 import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path
 
 from extract_army_spawn_points import COLLECTION_GUID, COLLECTIONS, MAP_GUID
-from extract_army_spawn_points import field, ref, transform_chain
+from extract_army_spawn_points import field, mul, ref, transform_chain
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -18,6 +19,16 @@ OUTPUT = ROOT / "Server/content/recovered-coop-spawn-points.json"
 PLAYER_POINT_GUID = "8e9e336d4e9d43c6305ae38d9233296d"
 
 
+def world_rotation(chain):
+    rotation = [0.0, 0.0, 0.0, 1.0]
+    for transform in reversed(chain):
+        rotation = mul(rotation, transform["rotation"])
+    length = math.sqrt(sum(value * value for value in rotation))
+    if not math.isfinite(length) or length < 0.5 or length > 2:
+        raise ValueError("invalid co-op source rotation")
+    return [value / length for value in rotation]
+
+
 def game_object_transform(blocks, component):
     game_object_id = ref(component, "m_GameObject")
     game_object = blocks[game_object_id][1]
@@ -25,8 +36,8 @@ def game_object_transform(blocks, component):
     if not match:
         raise ValueError("spawn point has no Transform")
     transform_id = int(match.group(1))
-    _, world_position = transform_chain(blocks, transform_id)
-    return game_object_id, transform_id, world_position
+    chain, world_position = transform_chain(blocks, transform_id)
+    return game_object_id, transform_id, world_position, world_rotation(chain)
 
 
 def player_positions(blocks, definition):
@@ -47,7 +58,8 @@ def player_positions(blocks, definition):
         component = blocks[int(component_id)][1]
         if PLAYER_POINT_GUID not in component or int(fraction) != 2:
             raise ValueError("co-op defend point is not an allied PlayerPoint")
-        game_object_id, transform_id, position = game_object_transform(blocks, component)
+        game_object_id, transform_id, position, rotation = game_object_transform(
+            blocks, component)
         result.append({
             "index": index,
             "componentFileId": int(component_id),
@@ -55,6 +67,7 @@ def player_positions(blocks, definition):
             "transformFileId": transform_id,
             "main": bool(int(main)),
             "worldPosition": position,
+            "worldRotation": rotation,
         })
     return result
 
@@ -85,7 +98,7 @@ def spawn_points(blocks, definition, script_types):
             fraction = int(field(component, "mFraction"))
             if fraction not in (1, 2):
                 raise ValueError("invalid source spawn fraction")
-            game_object_id, transform_id, position = game_object_transform(
+            game_object_id, transform_id, position, rotation = game_object_transform(
                 blocks, component
             )
             result.append({
@@ -97,6 +110,7 @@ def spawn_points(blocks, definition, script_types):
                 "gameObjectFileId": game_object_id,
                 "transformFileId": transform_id,
                 "worldPosition": position,
+                "worldRotation": rotation,
             })
     if len({row["componentFileId"] for row in result}) != len(result):
         raise ValueError("duplicate co-op spawn component")
@@ -145,7 +159,7 @@ def main():
         if match:
             script_types[match.group(1)] = meta.name.removesuffix(".cs.meta")
     maps = [extract_map(entry, script_types) for entry in catalog["maps"]]
-    serialized = json.dumps({"version": 1, "maps": maps}, indent=2) + "\n"
+    serialized = json.dumps({"version": 2, "maps": maps}, indent=2) + "\n"
     if sys.argv[1:] == ["--check"]:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != serialized:
             raise ValueError("co-op spawn artifact differs from source scenes")

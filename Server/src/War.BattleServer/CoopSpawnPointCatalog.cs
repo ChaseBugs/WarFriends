@@ -1,16 +1,23 @@
 using System.Collections.ObjectModel;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace War.BattleServer;
 
 public sealed record CoopPlayerAnchor(
     int Index, int ComponentFileId, int GameObjectFileId,
-    int TransformFileId, bool Main, Vector3 Position);
+    int TransformFileId, bool Main, Vector3 Position)
+{
+    public Quaternion? SourceRotation { get; init; }
+}
 
 public sealed record CoopSpawnPoint(
     string Collection, int Order, int ComponentFileId, string ComponentType,
-    int Fraction, int GameObjectFileId, int TransformFileId, Vector3 Position);
+    int Fraction, int GameObjectFileId, int TransformFileId, Vector3 Position)
+{
+    public Quaternion? SourceRotation { get; init; }
+}
 
 public sealed class CoopMapSpawnPoints
 {
@@ -39,6 +46,7 @@ public sealed class CoopMapSpawnPoints
 /// <summary>Source scene anchors for future co-op AI placement and allied starts.</summary>
 public sealed class CoopSpawnPointCatalog
 {
+    private const string SourceSha256 = "aeed31ebccefbfb9b12d83c071f4face92c6cec241000b18929e7222f09d4402";
     private static readonly int[] ExpectedSpawnCounts = [13, 13, 9, 14, 10];
     private static readonly HashSet<string> Collections = new(StringComparer.Ordinal)
     {
@@ -66,10 +74,13 @@ public sealed class CoopSpawnPointCatalog
     public static CoopSpawnPointCatalog Load(string path, MissionCatalog missions)
     {
         ArgumentNullException.ThrowIfNull(missions);
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        byte[] source = File.ReadAllBytes(path);
+        if (Convert.ToHexStringLower(SHA256.HashData(source)) != SourceSha256)
+            throw new InvalidDataException("Co-op spawn artifact differs from the recovered source.");
+        using var document = JsonDocument.Parse(source);
         JsonElement root = document.RootElement;
         RequireFields(root, "version", "maps");
-        if (root.GetProperty("version").GetInt32() != 1)
+        if (root.GetProperty("version").GetInt32() != 2)
             throw new InvalidDataException("Unknown co-op spawn artifact version.");
         JsonElement entries = root.GetProperty("maps");
         if (entries.ValueKind != JsonValueKind.Array || entries.GetArrayLength() != 5)
@@ -111,7 +122,7 @@ public sealed class CoopSpawnPointCatalog
         {
             JsonElement entry = entries[index];
             RequireFields(entry, "index", "componentFileId", "gameObjectFileId",
-                "transformFileId", "main", "worldPosition");
+                "transformFileId", "main", "worldPosition", "worldRotation");
             int componentId = PositiveId(entry, "componentFileId");
             if (entry.GetProperty("index").GetInt32() != index || !ids.Add(componentId))
                 throw new InvalidDataException("Co-op defend positions are duplicated or unordered.");
@@ -119,7 +130,10 @@ public sealed class CoopSpawnPointCatalog
                 PositiveId(entry, "gameObjectFileId"),
                 PositiveId(entry, "transformFileId"),
                 entry.GetProperty("main").GetBoolean(),
-                ReadPosition(entry.GetProperty("worldPosition")));
+                ReadPosition(entry.GetProperty("worldPosition")))
+            {
+                SourceRotation = ReadRotation(entry.GetProperty("worldRotation"))
+            };
         }
         if (players.Count(player => player.Main) != 2)
             throw new InvalidDataException("Co-op map needs two main allied starts.");
@@ -140,7 +154,7 @@ public sealed class CoopSpawnPointCatalog
             JsonElement entry = entries[index];
             RequireFields(entry, "collection", "order", "componentFileId",
                 "componentType", "fraction", "gameObjectFileId",
-                "transformFileId", "worldPosition");
+                "transformFileId", "worldPosition", "worldRotation");
             string collection = entry.GetProperty("collection").GetString() ?? "";
             string type = entry.GetProperty("componentType").GetString() ?? "";
             int order = entry.GetProperty("order").GetInt32();
@@ -155,7 +169,10 @@ public sealed class CoopSpawnPointCatalog
             points[index] = new CoopSpawnPoint(collection, order, componentId,
                 type, fraction, PositiveId(entry, "gameObjectFileId"),
                 PositiveId(entry, "transformFileId"),
-                ReadPosition(entry.GetProperty("worldPosition")));
+                ReadPosition(entry.GetProperty("worldPosition")))
+            {
+                SourceRotation = ReadRotation(entry.GetProperty("worldRotation"))
+            };
         }
         if (!nextOrder.ContainsKey("spawnPointsCollection") ||
             !nextOrder.ContainsKey("spawnPointsCollectionDrones") ||
@@ -185,6 +202,19 @@ public sealed class CoopSpawnPointCatalog
             Math.Abs(position.Z) >= 10_000)
             throw new InvalidDataException("Co-op spawn position is outside the scene.");
         return position;
+    }
+
+    private static Quaternion ReadRotation(JsonElement entry)
+    {
+        if (entry.ValueKind != JsonValueKind.Array || entry.GetArrayLength() != 4)
+            throw new InvalidDataException("Co-op spawn rotation needs four coordinates.");
+        var rotation = new Quaternion(entry[0].GetSingle(), entry[1].GetSingle(),
+            entry[2].GetSingle(), entry[3].GetSingle());
+        if (!float.IsFinite(rotation.X) || !float.IsFinite(rotation.Y) ||
+            !float.IsFinite(rotation.Z) || !float.IsFinite(rotation.W) ||
+            Math.Abs(rotation.LengthSquared() - 1) > 0.0002f)
+            throw new InvalidDataException("Co-op spawn rotation must be a unit quaternion.");
+        return rotation;
     }
 
     private static void RequireFields(JsonElement entry, params string[] names)
