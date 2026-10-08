@@ -2931,15 +2931,37 @@ internal static class CombatContentTests
         CoopEnemyPoint[] equalDistance =
         [
             obstacle with { Order = 0, ComponentFileId = 1,
-                TransformPosition = new Vector3(-1, 0, 0) },
+                TransformPosition = new Vector3(-1, 0, 0),
+                Position = new Vector3(-1, 0, 0) },
             obstacle with { Order = 1, ComponentFileId = 2,
-                TransformPosition = new Vector3(1, 0, 0) }
+                TransformPosition = new Vector3(1, 0, 0),
+                Position = new Vector3(1, 0, 0) }
         ];
         CoopMapEnemyPoints tiedMap = desert with { Points = equalDistance };
         CoopEnemyPoint? first = CoopEnemyPointSelection.SelectOrdinary(
             tiedMap, 2, Vector3.Zero, new HashSet<int>());
         if (first?.ComponentFileId != 1)
             throw new Exception("Equal-distance enemy points lost source order.");
+
+        CoopEnemyPointReservations reservations = new(desert);
+        if (!reservations.TryReserve(100, nearest) ||
+            reservations.TryReserve(101, nearest) ||
+            !reservations.OccupiedPointIds.Contains(nearest.ComponentFileId))
+            throw new Exception("Two enemies claimed one co-op destination.");
+        if (next != null &&
+            (!reservations.TryReserve(100, next) ||
+             reservations.OccupiedPointIds.Contains(nearest.ComponentFileId) ||
+             !reservations.OccupiedPointIds.Contains(next.ComponentFileId)))
+            throw new Exception("Retargeting did not release the previous point.");
+        if (!reservations.Release(100) || reservations.Release(100) ||
+            reservations.OccupiedPointIds.Count != 0)
+            throw new Exception("Enemy death did not free its destination once.");
+
+        CoopEnemyPoint? tooClose = CoopEnemyPointSelection.SelectOrdinary(
+            tiedMap, 2, Vector3.Zero, new HashSet<int>(),
+            new Vector3(-1, 0, 0), 0.5f);
+        if (tooClose?.ComponentFileId != 2)
+            throw new Exception("Sniper minimum distance did not filter a point.");
 
         string damagedMaskPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-point-masks-{Guid.NewGuid():N}.json");
@@ -2985,7 +3007,7 @@ internal static class CombatContentTests
         {
             File.Delete(damagedPath);
         }
-        return 15;
+        return 20;
     }
 
     private static int PointBit(CoopEnemyPoint point) => point.ComponentType switch
