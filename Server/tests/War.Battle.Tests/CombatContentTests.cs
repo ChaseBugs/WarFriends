@@ -1377,11 +1377,22 @@ internal static class CombatContentTests
         {
         }
 
+        CoopSceneColliderCatalog shotScenes = CoopSceneColliderCatalog.Load(
+            Path.Combine(directory, "recovered-coop-scene-colliders.json"),
+            catalog);
+        CoopMeshGeometryCatalog shotMeshes = CoopMeshGeometryCatalog.Load(
+            Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
+            shotScenes);
+        var alliedShotWorld = new CoopPlayerShotCollisionWorld(
+            shotScenes.MapForMission(catalog, 0),
+            spawnPoints.MapForMission(catalog, 0), shotMeshes);
+
         var ordinaryShieldRuntime = new CoopMatchRuntime(shieldAllocation,
             catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0,
             shieldSources: new CoopShieldRuntimeSources(
-                shieldStates, content.Shields));
+                shieldStates, content.Shields),
+            playerWeaponContent: content);
         foreach (ParticipantManifest player in shieldAllocation.Players)
         {
             if (!ordinaryShieldRuntime.Admit(player.PlayerId) ||
@@ -1406,6 +1417,58 @@ internal static class CombatContentTests
                 "Google2u.AssaultRifle_AK47", 10f)?.Health !=
             content.Shields.Health(3) - 10f)
             throw new Exception("Ordinary co-op shield rejected a host impact.");
+        // The Unity ray-reference artifact hits Desert's cover-1 collider
+        // 1531 from this point. Use the runtime's own shield snapshots.
+        using JsonDocument shieldRays = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "recovered-coop-scene-ray-reference.json")));
+        JsonElement sourceShieldRays = shieldRays.RootElement
+            .GetProperty("maps")[0].GetProperty("rays");
+        (Vector3 Start, Vector3 Direction, CoopPlayerShotHit? Hit)[]
+            candidateShieldRays = sourceShieldRays.EnumerateArray()
+            .Where(ray => ray.GetProperty("componentFileId").GetInt32() ==
+                1531 && ray.GetProperty("hit").GetBoolean())
+            .Select(ray =>
+            {
+                Vector3 start = ReadRayVector(ray.GetProperty("origin"));
+                Vector3 direction = ReadRayVector(
+                    ray.GetProperty("direction"));
+                CoopPlayerShotHit? hit = ordinaryShieldRuntime
+                    .TraceIdleAlliedEnemyRay(alliedShotWorld, start,
+                        direction, ray.GetProperty("maxDistance").GetSingle());
+                return (start, direction, hit);
+            }).ToArray();
+        var selectedShieldRay = candidateShieldRays.FirstOrDefault(
+            candidate => candidate.Hit?.SceneColliderFileId == 1531);
+        if (selectedShieldRay.Hit == null)
+            throw new Exception("No source shield ray reached cover under the full enemy mask: " +
+                string.Join(",", candidateShieldRays.Select(candidate =>
+                    candidate.Hit?.SceneColliderFileId.ToString() ?? "none")));
+        Vector3 coverRayStart = selectedShieldRay.Start;
+        Vector3 coverRayDirection = selectedShieldRay.Direction;
+        CoopPlayerShotHit covered = selectedShieldRay.Hit;
+        ShieldMutation? brokenCover = ordinaryShieldRuntime
+            .ApplyHostShieldShot(1, "Google2u.AssaultRifle_AK47",
+                1_000_000f);
+        CoopPlayerShotHit? exposed = ordinaryShieldRuntime
+            .TraceIdleAlliedEnemyRay(alliedShotWorld, coverRayStart,
+                coverRayDirection, 4);
+        if (covered?.SceneColliderFileId != 1531 ||
+            brokenCover?.Destroyed != true ||
+            exposed?.SceneColliderFileId == 1531)
+            throw new Exception("Host shield destruction did not update the co-op ray: " +
+                $"covered={covered?.SceneColliderFileId}, " +
+                $"broken={brokenCover?.Destroyed}, " +
+                $"exposed={exposed?.SceneColliderFileId}");
+        ulong repairTick = (ulong)MathF.Ceiling(
+            content.Shields.RepairSeconds * MatchManifest.TickRate);
+        ordinaryShieldRuntime.Advance(repairTick);
+        CoopPlayerShotHit? repaired = ordinaryShieldRuntime
+            .TraceIdleAlliedEnemyRay(alliedShotWorld, coverRayStart,
+                coverRayDirection, 4);
+        if (repaired?.SceneColliderFileId != 1531 ||
+            ordinaryShieldRuntime.Snapshot().Players.Any(player =>
+                player.Health != player.MaxHealth))
+            throw new Exception("Host shield repair did not restore cover collision.");
 
         var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0,
@@ -1795,15 +1858,6 @@ internal static class CombatContentTests
             Vector3.Distance(idleAllies[0].Pose.RootPosition,
                 mainAnchors[0].Position) > 0.001f)
             throw new Exception("Co-op runtime did not place both untouched allies.");
-        CoopSceneColliderCatalog shotScenes = CoopSceneColliderCatalog.Load(
-            Path.Combine(directory, "recovered-coop-scene-colliders.json"),
-            catalog);
-        CoopMeshGeometryCatalog shotMeshes = CoopMeshGeometryCatalog.Load(
-            Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
-            shotScenes);
-        var alliedShotWorld = new CoopPlayerShotCollisionWorld(
-            shotScenes.MapForMission(catalog, 0),
-            spawnPoints.MapForMission(catalog, 0), shotMeshes);
         try
         {
             arrivalRuntime.AttachDiagnosticWorld(alliedShotWorld);
