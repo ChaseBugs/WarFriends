@@ -57,52 +57,91 @@ public sealed class MatchRouter
     }
     public MatchRegistrationResult Register(MatchManifest source,long? unixNow=null)
     {
-        var manifest=MatchManifest.Validate(source);
+        MatchManifest manifest = MatchManifest.Validate(source);
         if (manifest.Mode == MatchManifest.CoopMissionMode)
             return new("mode-unavailable", "");
-        long now=unixNow??DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        if(now is <0 or >MatchTokens.MaximumUnixSecond)throw new InvalidDataException("Invalid match grant time.");
-        if(manifest.ServerId!=serverId)return new("wrong-host","");
-        if(matches.TryGetValue(manifest.MatchId,out var prior))
+        long now = unixNow ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (now is < 0 or > MatchTokens.MaximumUnixSecond)
+            throw new InvalidDataException("Invalid match grant time.");
+        if (manifest.ServerId != serverId)
+            return new("wrong-host", "");
+
+        if (matches.TryGetValue(manifest.MatchId,
+                out MatchEndpoint? existingMatch))
         {
-            if(prior.ManifestHash!=manifest.Digest())return new("duplicate-match","");
-            if(prior.TerminalSnapshot!=null)return new("match-terminal",prior.ManifestHash);
-            if(issued[manifest.MatchId].Any(grant=>grant.ExpiresUnixSeconds<=now))
-                return new("admission-expired",prior.ManifestHash);
-            return new("existing-match",prior.ManifestHash,CloneGrants(issued[manifest.MatchId]));
+            if (existingMatch.ManifestHash != manifest.Digest())
+                return new("duplicate-match", "");
+            if (existingMatch.TerminalSnapshot != null)
+                return new("match-terminal", existingMatch.ManifestHash);
+            MatchConnectionGrant[] existingGrants = issued[manifest.MatchId];
+            if (existingGrants.Any(grant =>
+                    grant.ExpiresUnixSeconds <= now))
+                return new("admission-expired", existingMatch.ManifestHash);
+            return new("existing-match", existingMatch.ManifestHash,
+                CloneGrants(existingGrants));
         }
-        if(matches.Count>=maxMatches)return new("match-capacity","");
-        if(now>MatchTokens.MaximumUnixSecond-MatchTokens.GrantLifetimeSeconds)
-            throw new InvalidDataException("Match grant expiration exceeds supported time.");
-        var map=maps?.SingleOrDefault(x=>Path.GetFileNameWithoutExtension(x.Source)==manifest.MapId);
-        var endpoint=new MatchEndpoint(manifest,signingKey,map,content,currentTick);
+
+        if (matches.Count >= maxMatches)
+            return new("match-capacity", "");
+        if (now > MatchTokens.MaximumUnixSecond -
+                MatchTokens.GrantLifetimeSeconds)
+            throw new InvalidDataException(
+                "Match grant expiration exceeds supported time.");
+
+        RecoveredBattleMap? map = maps?.SingleOrDefault(candidate =>
+            Path.GetFileNameWithoutExtension(candidate.Source) ==
+                manifest.MapId);
+        var endpoint = new MatchEndpoint(manifest, signingKey, map,
+            content, currentTick);
         if (manifest.Allocations is { } allocations)
             endpoint.ConfigureBattleAllocations(allocations);
-        var grants=new MatchConnectionGrant[2];
-        var reservedSessions=new List<ulong>(2);
+
+        var grants = new MatchConnectionGrant[2];
+        var reservedSessions = new List<ulong>(2);
         try
         {
-            for(int i=0;i<2;i++)
+            for (int playerIndex = 0; playerIndex < grants.Length;
+                playerIndex++)
             {
                 ulong session;
-                do {session=BitConverter.ToUInt64(RandomNumberGenerator.GetBytes(8));}
-                while(session==0 || !issuedSessions.Add(session));
+                do
+                {
+                    session = BitConverter.ToUInt64(
+                        RandomNumberGenerator.GetBytes(8));
+                }
+                while (session == 0 || !issuedSessions.Add(session));
                 reservedSessions.Add(session);
-                var claims=new MatchAdmission {MatchId=manifest.MatchId,
-                    PlayerId=manifest.Players[i].PlayerId,ServerId=serverId,
-                    ManifestHash=endpoint.ManifestHash,SessionId=session,
-                    IssuedUnixSeconds=now,ExpiresUnixSeconds=now+MatchTokens.GrantLifetimeSeconds};
-                grants[i]=new MatchConnectionGrant {Host=publicHost,Port=publicPort,
-                    Ticket=tokens.Sign(claims),SessionKey=ByteString.CopyFrom(tokens.SessionKey(claims)),
-                    SessionId=session,MatchId=manifest.MatchId,PlayerId=claims.PlayerId,
-                    ManifestHash=endpoint.ManifestHash,ExpiresUnixSeconds=claims.ExpiresUnixSeconds};
+                var claims = new MatchAdmission
+                {
+                    MatchId = manifest.MatchId,
+                    PlayerId = manifest.Players[playerIndex].PlayerId,
+                    ServerId = serverId,
+                    ManifestHash = endpoint.ManifestHash,
+                    SessionId = session,
+                    IssuedUnixSeconds = now,
+                    ExpiresUnixSeconds = now +
+                        MatchTokens.GrantLifetimeSeconds
+                };
+                grants[playerIndex] = new MatchConnectionGrant
+                {
+                    Host = publicHost,
+                    Port = publicPort,
+                    Ticket = tokens.Sign(claims),
+                    SessionKey = ByteString.CopyFrom(
+                        tokens.SessionKey(claims)),
+                    SessionId = session,
+                    MatchId = manifest.MatchId,
+                    PlayerId = claims.PlayerId,
+                    ManifestHash = endpoint.ManifestHash,
+                    ExpiresUnixSeconds = claims.ExpiresUnixSeconds
+                };
             }
             endpoint.Advance(currentTick);
-            matches.Add(manifest.MatchId,endpoint);
-            issued.Add(manifest.MatchId,grants);
-            issuedGenerations.Add(manifest.MatchId,new ulong[2]);
-            reservedByMatch.Add(manifest.MatchId,reservedSessions);
-            reconnectRequestsByMatch.Add(manifest.MatchId,[]);
+            matches.Add(manifest.MatchId, endpoint);
+            issued.Add(manifest.MatchId, grants);
+            issuedGenerations.Add(manifest.MatchId, new ulong[2]);
+            reservedByMatch.Add(manifest.MatchId, reservedSessions);
+            reconnectRequestsByMatch.Add(manifest.MatchId, []);
         }
         catch
         {
@@ -111,10 +150,11 @@ public sealed class MatchRouter
             issuedGenerations.Remove(manifest.MatchId);
             reservedByMatch.Remove(manifest.MatchId);
             reconnectRequestsByMatch.Remove(manifest.MatchId);
-            foreach(var session in reservedSessions)issuedSessions.Remove(session);
+            foreach (ulong session in reservedSessions)
+                issuedSessions.Remove(session);
             throw;
         }
-        return new("registered",endpoint.ManifestHash,CloneGrants(grants));
+        return new("registered", endpoint.ManifestHash, CloneGrants(grants));
     }
     private static IReadOnlyList<MatchConnectionGrant> CloneGrants(MatchConnectionGrant[] source)
         =>Array.AsReadOnly(source.Select(grant=>grant.Clone()).ToArray());
