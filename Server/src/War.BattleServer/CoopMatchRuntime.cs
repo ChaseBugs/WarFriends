@@ -156,6 +156,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<float> chooseInfantryFakeSideRoll;
     private readonly Func<int> chooseCornerChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
+    private readonly CoopCornerQueuePoseCatalog? cornerQueuePoses;
     private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
     private readonly CoopAssaulterQueueCatalog? assaulterQueue;
     private readonly PlayerPoseCatalog? playerPoses;
@@ -329,6 +330,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (playerWeaponContent != null)
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
+        cornerQueuePoses = playerWeaponContent?.CoopCornerQueuePoses;
         assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;
         assaulterQueue = playerWeaponContent?.CoopAssaulterQueue;
         playerPoses = playerWeaponContent?.Poses;
@@ -1912,6 +1914,44 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             seconds, $"coop/{entityId}/");
     }
 
+    /// <summary>
+    /// Places Unity Play Mode samples while cover-back blends into idle.
+    /// A later target attempt or path change closes this diagnostic window.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceCornerQueuedIdleHitboxes(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || cornerQueuePoses == null ||
+            !infantryShotWindups.TryGetValue(entityId,
+                out CoopInfantryShotWindup? windup) ||
+            windup.AnimationClip is not
+                ("player_look_right3" or "player_look_left3") ||
+            infantryPaths.ContainsKey(entityId) ||
+            (windup.NextEligibleTick is ulong nextEligible &&
+                tick >= nextEligible))
+            return [];
+        ulong coverStartTick = CornerCoverBackStartTick(entityId, windup);
+        if (tick < coverStartTick + 4 ||
+            tick > coverStartTick + 30)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0 &&
+            spawn.PoseTick == windup.StartTick + 9 &&
+            spawn.CurrentRotation != null);
+        if (enemy == null)
+            return [];
+        string coverClip = windup.AnimationClip == "player_look_right3"
+            ? "player_right_coverBack3" : "player_left_coverBack3";
+        BattleJointRotation facing = enemy.CurrentRotation!;
+        Quaternion rotation = new(facing.X, facing.Y, facing.Z, facing.W);
+        Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        int queueTick = checked((int)(tick - coverStartTick));
+        return cornerQueuePoses.Place(coverClip, queueTick,
+            position, rotation, $"coop/{entityId}/");
+    }
+
     private ulong CornerCoverBackStartTick(ulong entityId,
         CoopInfantryShotWindup windup)
     {
@@ -2110,6 +2150,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             parts = PlaceCornerFireHitboxes(enemy.EntityId);
         if (parts.Count == 0)
             parts = PlaceCornerCoverBackHitboxes(enemy.EntityId);
+        if (parts.Count == 0)
+            parts = PlaceCornerQueuedIdleHitboxes(enemy.EntityId);
         return parts.Select(part => new DynamicShotTarget(enemy.EntityId,
             0, 23, part, ArmyInfantry: true)).ToArray();
     }

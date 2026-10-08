@@ -45,6 +45,7 @@ public sealed class BattleCombatContent
     internal CoopAssaulterWeaponCatalog CoopAssaulterWeapon { get; private init; } = null!;
     internal CoopEnemyMuzzleCatalog CoopEnemyMuzzles { get; private init; } = null!;
     internal CoopAssaulterQueueCatalog CoopAssaulterQueue { get; private init; } = null!;
+    internal CoopCornerQueuePoseCatalog CoopCornerQueuePoses { get; private init; } = null!;
     internal EnemyShotTargetCatalog EnemyShotTargets { get; }
     public DecoySourceCatalog Decoys { get; }
     public LandMineSourceCatalog LandMines { get; }
@@ -112,6 +113,9 @@ public sealed class BattleCombatContent
             enemyPoses);
         var coopAssaulterQueue=CoopAssaulterQueueCatalog.Load(
             Path.Combine(directory,"coop-assaulter-animation-queue-reference.json"),
+            enemyPoses);
+        var coopCornerQueuePoses=CoopCornerQueuePoseCatalog.Load(
+            Path.Combine(directory,"coop-corner-queue-unity-reference.json"),
             enemyPoses);
         if(manifest.EnemyShotTargetsRevision!=EnemyShotTargetCatalog.VerifiedRevision)throw new InvalidDataException("Unverified enemy aim revision.");
         var enemyShotTargets=EnemyShotTargetCatalog.Load(Path.Combine(directory,"recovered-enemy-target-poses.json"),enemyPoses);
@@ -229,7 +233,8 @@ public sealed class BattleCombatContent
             GrenadeShotTargets=grenadeShotTargets,
             CoopAssaulterWeapon=coopAssaulterWeapon,
             CoopEnemyMuzzles=coopEnemyMuzzles,
-            CoopAssaulterQueue=coopAssaulterQueue};
+            CoopAssaulterQueue=coopAssaulterQueue,
+            CoopCornerQueuePoses=coopCornerQueuePoses};
     }
     public void ValidateAllocation(MatchManifest manifest)
     {

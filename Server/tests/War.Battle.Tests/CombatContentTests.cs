@@ -777,7 +777,7 @@ internal static class CombatContentTests
     }
 
     private static void VerifyCoopCornerQueue(string directory,
-        EnemyPoseCatalog poses)
+        EnemyPoseCatalog poses, CoopCornerQueuePoseCatalog queue)
     {
         string path = Path.Combine(directory,
             "coop-corner-queue-unity-reference.json");
@@ -847,6 +847,42 @@ internal static class CombatContentTests
                             "Unity corner queue contains invalid collider data.");
                 }
             }
+            Vector3 rootPosition = new(2, 3, -4);
+            Quaternion rootRotation = Quaternion.CreateFromAxisAngle(
+                Vector3.UnitY, 0.75f);
+            foreach (int frame in new[] { 0, 4, 6, 14, 30 })
+            {
+                IReadOnlyList<PlayerHitbox> placed = queue.Place(
+                    coverClip, frame, rootPosition, rootRotation,
+                    "coop/audit/");
+                JsonElement[] sourceParts = samples[frame]
+                    .GetProperty("parts").EnumerateArray().ToArray();
+                for (int index = 0; index < sourceParts.Length; index++)
+                {
+                    JsonElement center = sourceParts[index]
+                        .GetProperty("center");
+                    JsonElement rotation = sourceParts[index]
+                        .GetProperty("rotation");
+                    Vector3 localCenter = new(center[0].GetSingle(),
+                        center[1].GetSingle(), center[2].GetSingle());
+                    Quaternion localRotation = new(
+                        rotation[0].GetSingle(), rotation[1].GetSingle(),
+                        rotation[2].GetSingle(), rotation[3].GetSingle());
+                    Vector3 expectedCenter = rootPosition +
+                        Vector3.Transform(localCenter, rootRotation);
+                    Quaternion expectedRotation = Quaternion.Normalize(
+                        rootRotation * localRotation);
+                    if (placed[index].SourcePath != "coop/audit/" +
+                            sourceParts[index].GetProperty("path")
+                                .GetString() ||
+                        Vector3.Distance(placed[index].Center,
+                            expectedCenter) > 0.0002f ||
+                        1 - Math.Abs(Quaternion.Dot(placed[index].Rotation,
+                            expectedRotation)) > 0.00002f)
+                        throw new Exception(
+                            "Host queued corner collider differs from Unity.");
+                }
+            }
             JsonElement[] blended = samples[firstBlendedTicks[side]]
                 .GetProperty("states").EnumerateArray().ToArray();
             JsonElement[] idle = samples[firstIdleTicks[side]]
@@ -863,7 +899,8 @@ internal static class CombatContentTests
         string directory, MissionCatalog catalog, BattleCombatContent content)
     {
         VerifyCoopCornerUnityPose(directory, catalog, content);
-        VerifyCoopCornerQueue(directory, content.EnemyPoses);
+        VerifyCoopCornerQueue(directory, content.EnemyPoses,
+            content.CoopCornerQueuePoses);
         ArmyDeploymentCatalog army = content.Army;
         CoopAssaulterWeaponCatalog rifle = content.CoopAssaulterWeapon;
         if (rifle.WeaponPrefabGuid !=
@@ -3325,10 +3362,21 @@ internal static class CombatContentTests
             cornerRuntime.Advance(coverReturnTick + 4);
             if (cornerRuntime.PlaceCornerCoverBackHitboxes(
                     cornerEnemy.EntityId).Count != 0 ||
+                cornerRuntime.PlaceCornerQueuedIdleHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                cornerRuntime.CurrentEnemyCollisionFrame().Targets.Count(
+                    target => target.EntityId == cornerEnemy.EntityId) != 3 ||
                 !cornerRuntime.CurrentEnemyCollisionFrame()
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
-                    "Co-op corner published an unverified queued blend.");
+                    "Co-op corner queued blend escaped its diagnostic gate.");
+            cornerRuntime.Advance(coverReturnTick + 14);
+            if (cornerRuntime.PlaceCornerQueuedIdleHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception(
+                    "Co-op corner lost its captured queued idle pose.");
         }
 
         // Flip only the test point's exposed side when needed so this
