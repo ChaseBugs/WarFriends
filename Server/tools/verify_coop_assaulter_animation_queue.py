@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "Clients/ExportedProject/Assets"
 TRACE = ROOT / "Server/content/coop-assaulter-animation-queue-reference.json"
 SCENARIOS = (
-    ("stand_up_begin", "rifle_shot_loop", 0.05, 7, 9),
+    ("stand_up_begin", "rifle_shot_loop", 0.05, 7, 11),
     ("player_look_right3", "player_fire_right3", 0.02, 15, 18),
     ("player_look_left3", "player_fire_left3", 0.02, 15, 18),
 )

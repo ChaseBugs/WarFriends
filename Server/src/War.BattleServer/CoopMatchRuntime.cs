@@ -60,7 +60,8 @@ internal sealed record CoopInfantryShotWindup(
     string WeaponPrefabGuid, float WeaponCadenceSeconds);
 
 internal sealed record CoopInfantryRoundIntent(
-    ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real);
+    ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real,
+    CoopQueuedMuzzleSample? ObservedLocalMuzzle);
 
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
@@ -126,6 +127,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<int> chooseCornerChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
+    private readonly CoopAssaulterQueueCatalog? assaulterQueue;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly PlayerShotTargetCatalog? playerShotTargets;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -285,6 +287,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
         assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;
+        assaulterQueue = playerWeaponContent?.CoopAssaulterQueue;
         playerPoses = playerWeaponContent?.Poses;
         playerShotTargets = playerWeaponContent?.PlayerShotTargets;
         assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
@@ -1432,8 +1435,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 continue;
             int index = rounds.Count;
             bool real = (windup.Batch.RealShotMask & (1 << index)) != 0;
+            // This is an isolated Unity 2018 observation at the elapsed
+            // host tick, not a live animation state or projectile origin.
+            CoopQueuedMuzzleSample? observedMuzzle = assaulterQueue?.Sample(
+                windup.AnimationClip, windup.QueuedFireClip,
+                tick - windup.StartTick);
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
-                tick, real));
+                tick, real, observedMuzzle));
             stateRevision++;
         }
     }

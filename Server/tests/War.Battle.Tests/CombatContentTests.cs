@@ -628,6 +628,23 @@ internal static class CombatContentTests
             throw new Exception("Invalid muzzle time was accepted.");
         }
         catch (InvalidDataException) { }
+        CoopAssaulterQueueCatalog queue = content.CoopAssaulterQueue;
+        CoopQueuedMuzzleSample? obstacleSample = queue.Sample(
+            "stand_up_begin", "rifle_shot_loop", 11);
+        CoopQueuedMuzzleSample? rightSample = queue.Sample(
+            "player_look_right3", "player_fire_right3", 18);
+        CoopQueuedMuzzleSample? leftSample = queue.Sample(
+            "player_look_left3", "player_fire_left3", 18);
+        if (obstacleSample == null || rightSample == null ||
+            leftSample == null ||
+            Math.Abs(obstacleSample.FireClipSeconds - 4f / 30) > 0.00001f ||
+            Math.Abs(rightSample.FireClipSeconds - 3f / 30) > 0.00001f ||
+            Math.Abs(leftSample.FireClipSeconds - 3f / 30) > 0.00001f ||
+            Vector3.Distance(obstacleSample.LocalPosition,
+                new Vector3(0.0866239f, 0.28705934f, 0.15951629f)) >
+                0.00001f ||
+            queue.Sample("stand_up_begin", "rifle_shot_loop", 40) != null)
+            throw new Exception("Co-op queued muzzle observation changed.");
         try
         {
             muzzles.Place("rifle_shot", Vector3.Zero,
@@ -1860,8 +1877,9 @@ internal static class CombatContentTests
             .InfantryRoundIntents(arrivalEnemy.EntityId);
         if (firstRound.Count != 1 || firstRound[0].RoundIndex != 0 ||
             firstRound[0].Tick != expectedCrawlCallback + 1 ||
-            firstRound[0].Real != ((expectedRealMask & 1) != 0))
-            throw new Exception("Co-op rifle missed its first host round intent.");
+            firstRound[0].Real != ((expectedRealMask & 1) != 0) ||
+            firstRound[0].ObservedLocalMuzzle != obstacleSample)
+            throw new Exception($"Co-op rifle missed its first host round intent: {firstRound.FirstOrDefault()}, expected observation {obstacleSample}.");
         ulong secondRoundTick = rifle.NextRoundEligibleTick(firstRound[0].Tick);
         arrivalRuntime.Advance(secondRoundTick - 1);
         if (arrivalRuntime.InfantryRoundIntents(
