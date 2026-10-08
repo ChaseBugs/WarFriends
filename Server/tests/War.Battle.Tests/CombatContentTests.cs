@@ -2866,6 +2866,21 @@ internal static class CombatContentTests
             navigation.Maps.Count(map => map.Format == "unity-yaml-navmesh-tiles") != 1)
             throw new Exception("Co-op NavMesh package does not match the source scenes.");
 
+        var infantryMovement = new CoopInfantryPathState(
+            infantryCorridor, movementSpeed: 2f, firstTick: 10);
+        Vector3 routeStart = infantryCorridor.SmoothedPoints[0];
+        Vector3 routeEnd = infantryCorridor.SmoothedPoints[^1];
+        ulong arrivalTick = 10 + (ulong)Math.Ceiling(
+            infantryCorridor.SmoothedLength / 2f * MatchManifest.TickRate);
+        if (infantryMovement.PositionAt(10) != routeStart ||
+            infantryMovement.HasArrived(10) ||
+            infantryMovement.PositionAt(11) == routeStart ||
+            infantryMovement.HasArrived(11) ||
+            infantryMovement.PositionAt(arrivalTick) != routeEnd ||
+            !infantryMovement.HasArrived(arrivalTick) ||
+            infantryMovement.PositionAt(arrivalTick + 100) != routeEnd)
+            throw new Exception("Co-op infantry route clock is inconsistent.");
+
         string temporaryDirectory = Path.Combine(Path.GetTempPath(),
             $"war-coop-navigation-{Guid.NewGuid():N}");
         string temporaryAssets = Path.Combine(temporaryDirectory, "coop-navmesh");
