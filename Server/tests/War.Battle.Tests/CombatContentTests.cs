@@ -1529,33 +1529,19 @@ internal static class CombatContentTests
         IReadOnlyList<CoopSpawnPoint> assaultCandidates =
             new CoopAiSpawnSelector(catalog, spawnPoints, 0)
                 .Candidates("Assaulter");
-        int walkSpawnIndex = -1;
-        for (int index = 0; index < assaultCandidates.Count; index++)
-        {
-            CoopSpawnPoint candidate = assaultCandidates[index];
-            CoopEnemyPoint? target = CoopEnemyPointSelection.SelectOrdinary(
-                enemyMap, 14, candidate.Position, new HashSet<int>());
-            Vector3? candidateStart = infantryNavigation.SampleNearest(
-                catalog, 0, candidate.Position, 3f);
-            Vector3? candidateEnd = target == null ? null :
-                infantryNavigation.SampleNearest(catalog, 0,
-                    target.Position, 3f);
-            if (candidateStart.HasValue && candidateEnd.HasValue &&
-                infantryNavigation.PlanCorridor(catalog, 0,
-                    candidateStart.Value, candidateEnd.Value) is
-                    { PlanarCovered: true })
-            {
-                walkSpawnIndex = index;
-                break;
-            }
-        }
-        if (walkSpawnIndex < 0)
-            throw new Exception("No source Assaulter spawn has a covered route.");
+        IReadOnlyList<CoopSpawnPoint> parachuterCandidates =
+            new CoopAiSpawnSelector(catalog, spawnPoints, 0)
+                .Candidates("Parachuter");
+        if (assaultCandidates.Count != 6 ||
+            assaultCandidates.Any(point => point.ComponentType != "SpawnPoint") ||
+            parachuterCandidates.Count != 1 ||
+            parachuterCandidates[0].ComponentType != "SpawnPointParachute")
+            throw new Exception("Co-op soldier spawn eligibility differs from Client.");
         var walkingDestinations = new CoopEnemyDestinationState(
             enemyMap, enemyPointMasks, enemyCombat);
         var walkingRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
-            choosePoint: _ => walkSpawnIndex,
+            choosePoint: _ => 0,
             enemyDestinations: walkingDestinations,
             infantryNavigation: infantryNavigation);
         walkingRuntime.Admit(firstPlayer);

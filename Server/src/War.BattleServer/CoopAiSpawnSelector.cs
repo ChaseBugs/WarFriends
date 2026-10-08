@@ -2,7 +2,7 @@ namespace War.BattleServer;
 
 /// <summary>
 /// Resolves a recovered mission unit to enemy spawn anchors in its source scene.
-/// The Client chooses a random accepted point; the host must make that choice
+/// The Client chooses an accepted point; the host must make that choice
 /// when it creates an AI entity so a client cannot place enemies on allied points.
 /// </summary>
 public sealed class CoopAiSpawnSelector
@@ -28,11 +28,24 @@ public sealed class CoopAiSpawnSelector
     public IReadOnlyList<CoopSpawnPoint> Candidates(string behaviour)
     {
         string collection = CollectionFor(behaviour);
-        return map.EnemySpawnPoints
-            .Where(point => point.Collection == collection &&
-                (collection != "spawnPointsCollection" ||
-                    point.ComponentType == "SpawnPoint" ||
-                    point.ComponentType == "SpawnPointParachute"))
+        CoopSpawnPoint[] matching = map.EnemySpawnPoints
+            .Where(point => point.Collection == collection)
+            .ToArray();
+        if (collection != "spawnPointsCollection")
+            return matching;
+
+        // MainScene sets canUseParachute only for Parachuter. Its recovered
+        // PickSpawnPoint returns the first accepted parachute anchor before
+        // considering a random normal point. Other mission soldiers cannot
+        // use the elevated parachute anchors, even if they share this list.
+        if (behaviour == "Parachuter")
+        {
+            CoopSpawnPoint? parachute = matching.FirstOrDefault(point =>
+                point.ComponentType == "SpawnPointParachute");
+            if (parachute != null)
+                return [parachute];
+        }
+        return matching.Where(point => point.ComponentType == "SpawnPoint")
             .ToArray();
     }
 
