@@ -32,7 +32,8 @@ internal enum CoopInfantryPointState
 }
 
 internal sealed record CoopInfantryPointArrival(
-    ulong Tick, int PointComponentFileId, CoopInfantryPointState State);
+    ulong Tick, int PointComponentFileId, CoopInfantryPointState State,
+    ulong? FirstShootEligibleTick);
 
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
@@ -72,6 +73,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopNavMeshConnectivity? infantryNavigation;
     private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
     private readonly Dictionary<ulong, CoopInfantryPointArrival> infantryPointArrivals = [];
+    private readonly Func<float> chooseInfantryShotFraction;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -138,7 +140,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseAirDirection = null,
         CoopEnemyDestinationState? enemyDestinations = null,
         Func<int, int>? chooseRusherPlayer = null,
-        CoopNavMeshConnectivity? infantryNavigation = null)
+        CoopNavMeshConnectivity? infantryNavigation = null,
+        Func<float>? chooseInfantryShotFraction = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
@@ -148,7 +151,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             chooseAirDirection: chooseAirDirection,
             enemyDestinations: enemyDestinations,
             chooseRusherPlayer: chooseRusherPlayer,
-            infantryNavigation: infantryNavigation)
+            infantryNavigation: infantryNavigation,
+            chooseInfantryShotFraction: chooseInfantryShotFraction)
     {
     }
 
@@ -164,7 +168,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseAirDirection = null,
         CoopEnemyDestinationState? enemyDestinations = null,
         Func<int, int>? chooseRusherPlayer = null,
-        CoopNavMeshConnectivity? infantryNavigation = null)
+        CoopNavMeshConnectivity? infantryNavigation = null,
+        Func<float>? chooseInfantryShotFraction = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         missionCatalog = catalog;
@@ -190,6 +195,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             throw new InvalidDataException(
                 "Co-op infantry navigation needs host-owned enemy destinations.");
         this.infantryNavigation = infantryNavigation;
+        this.chooseInfantryShotFraction = chooseInfantryShotFraction ??
+            Random.Shared.NextSingle;
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
@@ -839,8 +846,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     _ => throw new InvalidDataException(
                         "Assaulter reached an unsupported source point state.")
                 };
+                ulong? firstShootEligibleTick = enemy.CardUnit ? null :
+                    FirstInfantryShotEligibleTick(enemy, tick);
                 infantryPointArrivals[entityId] = new(
-                    tick, destination.PointComponentFileId, pointState);
+                    tick, destination.PointComponentFileId, pointState,
+                    firstShootEligibleTick);
                 arrived.Add(entityId);
             }
             else if (path.HasArrived(tick))
@@ -848,6 +858,25 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         foreach (ulong entityId in arrived)
             infantryPaths.Remove(entityId);
+    }
+
+    private ulong FirstInfantryShotEligibleTick(
+        BattleCoopEnemySpawn enemy, ulong reachedTick)
+    {
+        ArmyBaseShotStats shot = combat.OrdinaryShot(
+            enemy.Behaviour, enemy.Level);
+        float fraction = chooseInfantryShotFraction();
+        if (!float.IsFinite(fraction) || fraction is < 0 or >= 1)
+            throw new InvalidDataException(
+                "Co-op infantry shot choice must be in [0, 1).");
+
+        float delaySeconds = shot.MinShootTime +
+            (shot.MaxShootTime - shot.MinShootTime) * fraction;
+        // EnemyController checks mTime > mNextShootTime. At fixed 30 Hz,
+        // eligibility starts on the first tick strictly after the delay.
+        ulong delayTicks = (ulong)Math.Floor(
+            delaySeconds * MatchManifest.TickRate) + 1;
+        return checked(reachedTick + delayTicks);
     }
 
     /// <summary>

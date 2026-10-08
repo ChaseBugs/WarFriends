@@ -1621,7 +1621,8 @@ internal static class CombatContentTests
             choosePoint: _ => 0,
             enemyDestinations: arrivalDestinations,
             infantryNavigation: infantryNavigation,
-            playerWeaponContent: content);
+            playerWeaponContent: content,
+            chooseInfantryShotFraction: () => 0f);
         arrivalRuntime.Admit(firstPlayer);
         arrivalRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1661,7 +1662,11 @@ internal static class CombatContentTests
         if (obstacleArrival?.Tick != expectedArrival ||
             obstacleArrival.PointComponentFileId !=
                 arrivalPoint.PointComponentFileId ||
-            obstacleArrival.State != CoopInfantryPointState.ObstacleHiding)
+            obstacleArrival.State != CoopInfantryPointState.ObstacleHiding ||
+            obstacleArrival.FirstShootEligibleTick != expectedArrival +
+                (ulong)Math.Floor(content.Army.ComposeShot(
+                    "ID_UNIT-ASSAULT", arrivalEnemy.Level, null, null)
+                    .MinShootTime * MatchManifest.TickRate) + 1)
             throw new Exception("Co-op Assaulter missed the source point-arrival check.");
         BattleCoopEnemySpawn reachedEnemy = arrivalRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy =>
@@ -1693,7 +1698,8 @@ internal static class CombatContentTests
                 cornerSpawnIndex : 0,
             enemyDestinations: cornerDestinations,
             infantryNavigation: infantryNavigation,
-            playerWeaponContent: content);
+            playerWeaponContent: content,
+            chooseInfantryShotFraction: () => 0.5f);
         cornerRuntime.Admit(firstPlayer);
         cornerRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1715,9 +1721,15 @@ internal static class CombatContentTests
         cornerRuntime.Advance(300);
         CoopInfantryPointArrival? cornerArrival = cornerRuntime
             .InfantryPointArrival(cornerEnemy.EntityId);
+        ArmyBaseShotStats cornerShot = content.Army.ComposeShot(
+            "ID_UNIT-ASSAULT", cornerEnemy.Level, null, null);
+        float cornerDelay = cornerShot.MinShootTime +
+            (cornerShot.MaxShootTime - cornerShot.MinShootTime) * 0.5f;
         if (cornerArrival?.State != CoopInfantryPointState.CornerHiding ||
             cornerArrival.PointComponentFileId != 1698 ||
-            cornerArrival.Tick is <= 8 or > 300)
+            cornerArrival.Tick is <= 8 or > 300 ||
+            cornerArrival.FirstShootEligibleTick != cornerArrival.Tick +
+                (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1)
             throw new Exception("Co-op corner arrival missed its source state.");
 
         MissionRule rusherRule = catalog.Get(2);

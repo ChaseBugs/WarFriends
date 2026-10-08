@@ -108,6 +108,13 @@ public sealed class CoopEnemyCombatCatalog
         return army.EffectiveSpeed(UnitIdFor(behaviour), 1f);
     }
 
+    internal ArmyBaseShotStats OrdinaryShot(string behaviour,
+        int normalUpgradeIndex)
+    {
+        return army.ComposeShot(UnitIdFor(behaviour),
+            normalUpgradeIndex, null, null);
+    }
+
     internal ArmyHelicopterCrewStats TransportCrew(int normalUpgradeIndex)
     {
         return army.CoopHelicopterCrew(normalUpgradeIndex);
