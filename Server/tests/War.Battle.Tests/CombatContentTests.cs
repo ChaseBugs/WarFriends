@@ -676,11 +676,56 @@ internal static class CombatContentTests
         var weaponRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat,
             playerWeaponContent: content);
+        CoopPlayerWeapon firstSourceWeapon = playerWeapons.ForPlayer(
+            coop.Players[0].PlayerId).Single();
+        var weaponState = new CoopPlayerWeaponState([firstSourceWeapon], 0);
+        CoopWeaponReadiness initialAmmo = weaponState.Readiness(firstSourceWeapon.Slot);
+        ulong cadenceTicks = (ulong)Math.Ceiling(
+            firstSourceWeapon.Weapon.CadenceSeconds * MatchManifest.TickRate);
+        ulong reloadTicks = (ulong)Math.Ceiling(
+            firstSourceWeapon.Weapon.ReloadSeconds * MatchManifest.TickRate);
+        if (initialAmmo.Clip != firstSourceWeapon.Weapon.ClipSize ||
+            initialAmmo.Reserve != firstSourceWeapon.Weapon.ReserveAmmo ||
+            !weaponState.ConfirmHostShot(firstSourceWeapon.Slot, 0) ||
+            weaponState.ConfirmHostShot(firstSourceWeapon.Slot, 0) ||
+            weaponState.Readiness(firstSourceWeapon.Slot).NextFireTick != cadenceTicks ||
+            !weaponState.TryStartReload(firstSourceWeapon.Slot, 0) ||
+            weaponState.Readiness(firstSourceWeapon.Slot).ReloadEndTick != reloadTicks)
+            throw new Exception("Co-op weapon shot/cadence/reload changed source ammo.");
+        weaponState.Advance(reloadTicks - 1);
+        if (weaponState.Readiness(firstSourceWeapon.Slot).Clip !=
+                firstSourceWeapon.Weapon.ClipSize - 1 ||
+            !weaponState.Advance(reloadTicks) ||
+            weaponState.Readiness(firstSourceWeapon.Slot).Clip !=
+                firstSourceWeapon.Weapon.ClipSize ||
+            weaponState.Readiness(firstSourceWeapon.Slot).Reserve !=
+                firstSourceWeapon.Weapon.ReserveAmmo - 1)
+            throw new Exception("Co-op reload must transfer one round at its deadline.");
+        var emptyClip = new CoopPlayerWeaponState([firstSourceWeapon], 0);
+        for (int shot = 0; shot < firstSourceWeapon.Weapon.ClipSize; shot++)
+        {
+            ulong shotTick = (ulong)shot * cadenceTicks;
+            emptyClip.Advance(shotTick);
+            if (!emptyClip.ConfirmHostShot(firstSourceWeapon.Slot, shotTick))
+                throw new Exception("Source co-op rifle rejected an in-cadence host shot.");
+        }
+        ulong lastShotTick =
+            (ulong)(firstSourceWeapon.Weapon.ClipSize - 1) * cadenceTicks;
+        CoopWeaponReadiness exhausted = emptyClip.Readiness(firstSourceWeapon.Slot);
+        if (exhausted.Clip != 0 ||
+            exhausted.ReloadEndTick != lastShotTick + reloadTicks ||
+            emptyClip.ConfirmHostShot(firstSourceWeapon.Slot, lastShotTick))
+            throw new Exception("An empty co-op clip must start one automatic reload.");
+        BattlePlayerState initialWeaponView = weaponRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == coop.Players[0].PlayerId);
         if (playerWeapons.ForPlayer(coop.Players[0].PlayerId).Single().Weapon !=
                 coop.Players[0].Weapon ||
             playerWeapons.ForPlayer(coop.Players[1].PlayerId).Single().UpgradeIndex != 0 ||
             weaponRuntime.PlayerWeapons?.ForPlayer(
-                coop.Players[0].PlayerId).Single().Weapon != coop.Players[0].Weapon)
+                coop.Players[0].PlayerId).Single().Weapon != coop.Players[0].Weapon ||
+            initialWeaponView.ClipAmmo != coop.Players[0].Weapon.ClipSize ||
+            initialWeaponView.ReserveAmmo != coop.Players[0].Weapon.ReserveAmmo ||
+            initialWeaponView.CombatEnabled || initialWeaponView.ShotsFired != 0)
             throw new Exception("Co-op weapons did not bind the signed source stages.");
         try
         {
@@ -1495,7 +1540,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 56 + allocationBindingAssertions;
+        return 60 + allocationBindingAssertions;
     }
 
     private static int VerifyCoopBossAiSpawns(MissionCatalog missions,

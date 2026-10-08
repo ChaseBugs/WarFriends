@@ -48,6 +48,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public float Health = definition.Combat!.MaxHealth;
         public bool Dead;
         public ulong DamageRevision;
+        public CoopPlayerWeaponState? Weapons;
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
     }
 
@@ -207,6 +208,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             player => new Participant(player), StringComparer.Ordinal);
         foreach (Participant participant in participants.Values)
         {
+            if (PlayerWeapons != null)
+                participant.Weapons = new CoopPlayerWeaponState(
+                    PlayerWeapons.ForPlayer(participant.PlayerId), tick);
             CoopPlayerAnchor start = playerStarts[participant.PlayerId];
             participant.CoverIndex = start.Index;
             participant.Position = start.Position;
@@ -272,7 +276,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             tick++;
             foreach (Participant participant in participants.Values)
+            {
                 AdvancePlayerMovement(participant);
+                if (participant.Weapons?.Advance(tick) == true)
+                    stateRevision++;
+            }
             if (alliedShields != null && alliedShields.Advance(tick,
                 participants.Values
                     .Where(participant => !participant.Dead &&
@@ -867,12 +875,20 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         foreach (Participant participant in participants.Values)
         {
+            CoopWeaponReadiness? weapon = participant.Weapons?.Readiness(
+                participant.Weapons.ActiveSlot);
             snapshot.Players.Add(new BattlePlayerState
             {
                 PlayerId = participant.PlayerId,
                 Admitted = participant.Admitted,
                 Ready = participant.Ready,
                 LastCommandId = participant.LastCommandId,
+                ActiveWeaponSlot = weapon?.Slot ?? 0,
+                ClipAmmo = weapon?.Clip ?? 0,
+                ReserveAmmo = weapon?.Reserve ?? 0,
+                ReloadEndTick = weapon?.ReloadEndTick ?? 0,
+                NextFireTick = weapon?.NextFireTick ?? 0,
+                ShotsFired = weapon?.ShotsFired ?? 0,
                 CombatEnabled = false,
                 Health = participant.Health,
                 MaxHealth = participant.Definition.Combat!.MaxHealth,
