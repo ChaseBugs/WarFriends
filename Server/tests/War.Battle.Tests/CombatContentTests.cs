@@ -3,8 +3,10 @@ using System.Text.Json.Nodes;
 using System.Security.Cryptography;
 using System.Numerics;
 using System.Net;
+using System.Net.Sockets;
 using Google.Protobuf;
 using War.BattleServer;
+using War.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using War.Protocol;
@@ -3617,6 +3619,9 @@ internal static class CombatContentTests
             firstView.Players.Single(player => player.PlayerId == secondPlayer).Moving)
             throw new Exception("Both UDP allies must observe the same host-owned movement.");
 
+        VerifyCoopSdkCoverMove(coop, catalog, spawnPoints, routes,
+            enemyCombat, firstPlayer, secondPlayer).GetAwaiter().GetResult();
+
         var earlyForfeit = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat);
         earlyForfeit.Admit(firstPlayer);
         earlyForfeit.Command(firstPlayer, new MatchCommand
@@ -3624,7 +3629,95 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 69 + allocationBindingAssertions;
+        return 75 + allocationBindingAssertions;
+    }
+
+    private static async Task VerifyCoopSdkCoverMove(MatchManifest manifest,
+        MissionCatalog missions, CoopSpawnPointCatalog spawnPoints,
+        CoopNavMeshPathCatalog routes, CoopEnemyCombatCatalog enemyCombat,
+        string firstPlayer, string secondPlayer)
+    {
+        string signingKey = Convert.ToBase64String(new byte[32]);
+        var runtime = new CoopMatchRuntime(manifest, missions, spawnPoints,
+            routes, enemyCombat);
+        var endpoint = new MatchEndpoint(manifest, signingKey, runtime, 0);
+        var tokens = new MatchTokens(signingKey);
+        using var socket = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        int port = ((IPEndPoint)socket.Client.LocalEndPoint!).Port;
+        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        MatchConnectionGrant Grant(string playerId, ulong sessionId)
+        {
+            var admission = new MatchAdmission
+            {
+                MatchId = manifest.MatchId,
+                PlayerId = playerId,
+                ServerId = manifest.ServerId,
+                ManifestHash = runtime.ManifestHash,
+                SessionId = sessionId,
+                IssuedUnixSeconds = now,
+                ExpiresUnixSeconds = now + MatchTokens.GrantLifetimeSeconds
+            };
+            return new MatchConnectionGrant
+            {
+                Host = "127.0.0.1",
+                Port = (uint)port,
+                Ticket = tokens.Sign(admission),
+                SessionKey = ByteString.CopyFrom(tokens.SessionKey(admission)),
+                SessionId = sessionId,
+                MatchId = manifest.MatchId,
+                PlayerId = playerId,
+                ManifestHash = runtime.ManifestHash,
+                ExpiresUnixSeconds = admission.ExpiresUnixSeconds
+            };
+        }
+
+        async Task Serve()
+        {
+            try
+            {
+                while (!timeout.IsCancellationRequested)
+                {
+                    UdpReceiveResult datagram = await socket.ReceiveAsync(timeout.Token);
+                    Packet? packet = PacketCodec.ReadUntrusted(datagram.Buffer);
+                    if (packet == null) continue;
+                    byte[]? reply = endpoint.Handle(packet, datagram.Buffer,
+                        datagram.RemoteEndPoint, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                    if (reply != null)
+                        await socket.SendAsync(reply, datagram.RemoteEndPoint,
+                            timeout.Token);
+                }
+            }
+            catch (OperationCanceledException) when (timeout.IsCancellationRequested) { }
+        }
+
+        Task server = Serve();
+        try
+        {
+            using var first = new MatchConnection(Grant(firstPlayer, 1901));
+            using var second = new MatchConnection(Grant(secondPlayer, 1902));
+            if ((await first.ConnectAsync(timeout.Token)).Code != "admitted" ||
+                (await second.ConnectAsync(timeout.Token)).Code != "admitted" ||
+                (await first.ReadyAsync(timeout.Token)).Code != "ready" ||
+                (await second.ReadyAsync(timeout.Token)).Code != "ready")
+                throw new Exception("Portable SDK peers did not start the co-op match.");
+
+            MatchReply rejected = await first.MoveCoopCoverAsync(1, 2,
+                timeout.Token);
+            MatchReply accepted = await first.MoveCoopCoverAsync(1, 3,
+                timeout.Token);
+            if (rejected.Code != "cover-target-mismatch" ||
+                accepted.Code != "moving" ||
+                !accepted.Snapshot.Players.Single(player =>
+                    player.PlayerId == firstPlayer).Moving)
+                throw new Exception("Portable SDK lost the requested co-op shield identity.");
+        }
+        finally
+        {
+            timeout.Cancel();
+            await server;
+        }
     }
 
     private static int VerifyCoopBossAiSpawns(MissionCatalog missions,
