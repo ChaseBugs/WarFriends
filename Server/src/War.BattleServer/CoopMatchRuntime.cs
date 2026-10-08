@@ -1806,10 +1806,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             PlayerWeapons == null || playerWeaponBindings == null ||
             !player.Admitted || !player.Ready || player.Dead ||
             player.Route != null || player.Weapons == null ||
-            (player.Weapons.HasFiredAnyShot &&
-                (player.ShotTimeline == null ||
-                 player.ShotTimeline.Phase != RifleCoverPhase.Idle ||
-                 tick < player.ShotPoseReadyTick)) ||
+            !ShotPoseIsSettled(player) ||
             (player.HasMoved &&
                 (tick < player.MoveEndTick ||
                  tick - player.MoveEndTick < MatchManifest.TickRate)))
@@ -1841,6 +1838,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             idleClip, 0, true, idleClip, 0, true, 0,
             Quaternion.Identity).Place(cover.Position, rotation);
         return new SettledWeaponPose(idlePose, weaponId);
+    }
+
+    private bool ShotPoseIsSettled(Participant player)
+    {
+        if (player.Weapons?.HasFiredAnyShot != true)
+            return true;
+
+        // A previously fired ally can re-enter the diagnostic idle collision
+        // window only after the source cover-shot animation has finished.
+        return player.ShotTimeline?.Phase == RifleCoverPhase.Idle &&
+            tick >= player.ShotPoseReadyTick;
     }
 
     internal RifleMuzzlePose? PlaceIdlePlayerMuzzle(string playerId)

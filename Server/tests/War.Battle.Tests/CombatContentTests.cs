@@ -999,6 +999,7 @@ internal static class CombatContentTests
             switchingRuntime.ConfirmHostPlayerShot(switcher, 1,
                 shotTarget, 0) ||
             switchingRuntime.PlaceIdlePlayerMuzzle(switcher) != null ||
+            switchingRuntime.PlaceIdleAlliedCollisionPoses() != null ||
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == switcher).ClipAmmo != alternateWeapon.ClipSize - 1)
             throw new Exception("Only a host-created co-op shot may consume ammo.");
@@ -1022,9 +1023,14 @@ internal static class CombatContentTests
                 twoWeapons.Players[1].Weapon.ReserveAmmo)
             throw new Exception("Co-op reload changed the wrong slot or ally.");
         switchingRuntime.Advance(Math.Max(alternateReloadTicks + 1, 120));
-        if (switchingRuntime.PlaceIdlePlayerMuzzle(switcher) == null)
+        IReadOnlyList<CollisionPlayer>? postShotAllies =
+            switchingRuntime.PlaceIdleAlliedCollisionPoses();
+        if (switchingRuntime.PlaceIdlePlayerMuzzle(switcher) == null ||
+            postShotAllies?.Count != 2 ||
+            postShotAllies[0].PlayerId != switcher ||
+            postShotAllies[1].PlayerId != partner)
             throw new Exception(
-                "A host-confirmed co-op shot never returned to a settled source idle pose.");
+                "A host-confirmed co-op shot never restored both source collision poses.");
         MatchManifest skippedSlot = twoWeapons with
         {
             Players = twoWeapons.Players.Select((player, index) => index == 0
