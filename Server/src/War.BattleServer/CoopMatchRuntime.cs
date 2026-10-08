@@ -61,6 +61,7 @@ internal sealed record CoopInfantryShotWindup(
     string WeaponPrefabGuid, float WeaponCadenceSeconds)
 {
     internal ulong? CompletedTick { get; init; }
+    internal ulong? NextEligibleTick { get; init; }
 }
 
 internal sealed record CoopInfantryRoundIntent(
@@ -1603,10 +1604,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             if (rounds.Count == windup.Batch.Count)
             {
                 // SoldierBehaviour.Shooting calls EndShooting after its
-                // final round, in the same update as that round.
+                // final round, in the same update as that round. Its
+                // ReturnToPreviousStateFromShot draws a fresh delay.
+                BattleCoopEnemySpawn shootingEnemy = enemySpawns.Single(
+                    spawn => spawn.EntityId == entityId &&
+                        spawn.DeathTick == 0);
                 infantryShotWindups[entityId] = windup with
                 {
-                    CompletedTick = tick
+                    CompletedTick = tick,
+                    NextEligibleTick = FirstInfantryShotEligibleTick(
+                        shootingEnemy, tick)
                 };
             }
             if (real && diagnosticWorld != null)

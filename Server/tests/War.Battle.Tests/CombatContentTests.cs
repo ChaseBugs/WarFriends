@@ -2813,8 +2813,13 @@ internal static class CombatContentTests
                 throw new Exception("Co-op rifle lost a prepared batch round.");
         }
         ulong afterBatch = rifle.NextRoundEligibleTick(lastRoundTick);
-        if (arrivalRuntime.InfantryShotWindup(
-                arrivalEnemy.EntityId)?.CompletedTick != lastRoundTick)
+        CoopInfantryShotWindup? completedBatch = arrivalRuntime
+            .InfantryShotWindup(arrivalEnemy.EntityId);
+        ulong expectedNextShot = lastRoundTick +
+            (ulong)Math.Floor(sourceBatch.MinShootTime *
+                MatchManifest.TickRate) + 1;
+        if (completedBatch?.CompletedTick != lastRoundTick ||
+            completedBatch.NextEligibleTick != expectedNextShot)
             throw new Exception("Co-op rifle missed its source batch end.");
         arrivalRuntime.Advance(afterBatch);
         if (arrivalRuntime.InfantryRoundIntents(
