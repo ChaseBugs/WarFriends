@@ -2352,7 +2352,9 @@ internal static class CombatContentTests
                 enemy.EntityId == arrivalEnemy.EntityId);
         if (heldEnemy.CurrentX != reachedEnemy.CurrentX ||
             heldEnemy.CurrentZ != reachedEnemy.CurrentZ ||
-            heldEnemy.PoseTick != expectedArrival)
+            heldEnemy.PoseTick != expectedArrival ||
+            !arrivalRuntime.CurrentEnemyCollisionFrame()
+                .UnplacedEnemyIds.Contains(arrivalEnemy.EntityId))
             throw new Exception("Co-op Assaulter walked beyond its reached point.");
         ulong firstShootTick = obstacleArrival.FirstShootEligibleTick;
         arrivalRuntime.Advance(firstShootTick - 1);

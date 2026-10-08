@@ -19,4 +19,16 @@ This first reviewed slice covers the battle lifecycle entry points. A mapping me
 | `FreezeRPC(bool freeze)` | `EnemyController` unit status | Host-owned status application/expiry; snapshots render it | Absent; client Boolean cannot authorize a status |
 | `SyncWarperRPC(Vector3 position, Quaternion rotation)` | `EnemyController` warper relocation | Host-owned legal relocation and entity event | Absent; client position cannot be accepted as authority |
 
+The recovered `AIObject` and `AICarBase` RPCs form one entity lifecycle slice. `AIObject.ReSync` sends a live object's fraction, position, rotation, upgrades, card flag/progress/ID; an inactive object sends `ReSyncDisabledRPC`. The receiving `ReSyncRPC` recreates a pooled object only when needed, applies the card state before upgrades, and then loads its visual layers. `AICarBase` additionally feeds the received transform to Photon interpolation. These fields describe a host-owned entity and its presentation, not permission for a player to choose a fraction, upgrade, card progress, or position.
+
+| Recovered method | Required replacement | Current evidence and gap |
+|---|---|---|
+| `SyncUpgradesRPC(byte fr, UnitUpgrades upgrades)` | Immutable allocator-proven unit lane and fraction in spawn/snapshot state | Worker binds signed normal/special/elite upgrades; normal Client `AIObject.UpgradesLoaded` presentation is not migrated for every unit |
+| `StartEnemyBehaviourNetwork(byte newFraction)` | Host spawn/activation event after the entity and faction are committed | Entity spawn events and snapshots exist for supported units; all behavior callbacks and pooled activation are incomplete |
+| `SetPower(byte power)` | Host-selected ability/power state if a source caller proves one | No literal caller was found in this inventory slice; keep the mutation closed rather than trusting an arbitrary byte |
+| `SpawnByCardRPC(float progress, string cardId)` | Backend-proven card selection and host-derived level/progress attached to the spawn | Card-aware unit stage and co-op HP sources exist; full card effect/ownership and normal Client presentation remain open |
+| `ReSyncRPC(fr, position, rotation, upgrades, spawnedByCard, progress, cardId)` | Validated full active-entity snapshot plus source identity and allocator state | Paged `BattleArmyEntityState` and reconnect snapshots carry supported entity pose/health, but do not yet reproduce every card/upgrades/behavior field or pooled recreation callback |
+| `ReSyncDisabledRPC()` | Host despawn/tombstone event and absence from the active entity roster | Spawn/despawn event kinds and paged active roster exist; normal Client pooled teardown/reconnect proof remains incomplete |
+| `AICarBase.ReSyncRPC(...)` override | Same entity snapshot plus ordered vehicle transform samples for interpolation | Host vehicle position/rotation projection covers reviewed families; the original `mPhotonTransform.AddNewState` renderer path is not migrated |
+
 Next review must classify every remaining inventory RPC, dynamic/cached RPC call, stream, room/player property, offline room, and attached PhotonView as a validated command, host event, snapshot field, or local presentation behavior. Each row then needs a replacement test and a normal Client consumption proof. Until that review and integration pass, B01, B31, and B33 remain incomplete.

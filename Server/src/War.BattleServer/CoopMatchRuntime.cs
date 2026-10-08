@@ -1775,6 +1775,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 "DeployHeli" => PlaceTransportHelicopterTargets(enemy.EntityId),
                 "Humvee" or "Buggy" or "Tank" or "Transporter" =>
                     PlaceNewGroundVehicleTargets(enemy.EntityId),
+                // EnemyController starts a Crawl state at obstacle points and
+                // a 0.5-second position/rotation tween at corner points.
+                // The spawn idle sample is no longer a current hitbox then.
                 _ => PlaceNewInfantryHitboxes(enemy.EntityId)
                     .Select(hitbox => new DynamicShotTarget(enemy.EntityId,
                         0, 23, hitbox, ArmyInfantry: true))
