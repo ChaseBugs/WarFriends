@@ -38,8 +38,22 @@ public sealed class MatchEndpoint
     private ulong? terminalTick;
     public MatchEndpoint(MatchManifest manifest, string signingKey, RecoveredBattleMap? map = null,
         BattleCombatContent? content=null,ulong originTick=0)
-        : this(manifest, signingKey, new MatchEngine(manifest, map, content), originTick)
+        : this(manifest, signingKey,
+            CreatePublicRuntime(manifest, map, content), originTick)
     {
+    }
+
+    private static IMatchRuntime CreatePublicRuntime(MatchManifest manifest,
+        RecoveredBattleMap? map, BattleCombatContent? content)
+    {
+        MatchManifest.Validate(manifest);
+        // MatchEngine's generic co-op objective path is a protocol prototype.
+        // Real co-op missions need the separately validated source runtime;
+        // callers may only supply that through the internal constructor.
+        if (manifest.Mode == MatchManifest.CoopMissionMode)
+            throw new InvalidDataException(
+                "Co-op missions need an explicit source-backed runtime.");
+        return new MatchEngine(manifest, map, content);
     }
 
     internal MatchEndpoint(MatchManifest manifest, string signingKey,

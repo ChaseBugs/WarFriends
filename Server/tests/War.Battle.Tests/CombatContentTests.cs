@@ -2068,6 +2068,14 @@ internal static class CombatContentTests
             playerWeaponContent: content);
         string firstPlayer = coop.Players[0].PlayerId;
         string secondPlayer = coop.Players[1].PlayerId;
+        try
+        {
+            _ = new MatchEndpoint(coop,
+                Convert.ToBase64String(new byte[32]));
+            throw new Exception(
+                "Public endpoint admitted the generic co-op prototype.");
+        }
+        catch (InvalidDataException) { }
         if (!runtime.Admit(firstPlayer) || !runtime.Admit(secondPlayer))
             throw new Exception("Co-op runtime rejected its signed allied roster.");
         var endpoint = new MatchEndpoint(coop,
