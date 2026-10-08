@@ -2131,6 +2131,30 @@ internal static class CombatContentTests
                     { Hit = covered.ToBulletCollision() } },
                 arrivalEnemy, enemyCombat) != null)
             throw new Exception("Diagnostic player impact lost source ownership.");
+        ResolvedPlayerDamage plannedDamage =
+            CoopAssaulterPlayerDamagePolicy.FromImpact(playerPlan);
+        PlayerDamageResult expectedHit = PlayerDamage.Resolve(
+            new PlayerCombatManifest(1000), 1000, plannedDamage,
+            sameFraction: false, self: false, randomRoll: 1f);
+        float sourceShotDamage = expectedSourceDamage * bodyHit.PartWeight;
+        PlayerDamageResult avoidedHit = PlayerDamage.Resolve(
+            new PlayerCombatManifest(1000, NoDamageChance: 1), 1000,
+            plannedDamage, sameFraction: false, self: false, randomRoll: 0f);
+        if (plannedDamage.Type != CombatDamageType.Shot ||
+            !plannedDamage.HasWeapon ||
+            plannedDamage.PartWeight != bodyHit.PartWeight ||
+            expectedHit.Damage != sourceShotDamage ||
+            expectedHit.Health != 1000 - sourceShotDamage ||
+            avoidedHit.Health != 1000 ||
+            MathF.Abs(avoidedHit.Damage) > 0.0001f)
+            throw new Exception("Co-op unit shot lost the Client's part damage coefficient.");
+        try
+        {
+            CoopAssaulterPlayerDamagePolicy.FromImpact(playerPlan with
+                { SourceDamage = float.NaN });
+            throw new Exception("Invalid co-op unit damage was accepted.");
+        }
+        catch (InvalidDataException) { }
         CoopAssignedEnemyDestination arrivalPoint = arrivalRuntime
             .EnemyDestination(arrivalEnemy.EntityId)!;
         ArmyNavMeshCorridor arrivalCorridor = infantryNavigation

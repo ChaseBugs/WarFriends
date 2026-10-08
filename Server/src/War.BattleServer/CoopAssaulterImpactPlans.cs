@@ -20,6 +20,31 @@ internal sealed record CoopAssaulterPlayerImpactPlan(
     string PlayerId, string PartPath, float PartWeight,
     float SourceDamage);
 
+internal static class CoopAssaulterPlayerDamagePolicy
+{
+    internal static ResolvedPlayerDamage FromImpact(
+        CoopAssaulterPlayerImpactPlan impact)
+    {
+        ArgumentNullException.ThrowIfNull(impact);
+        if (impact.ProjectileId == 0 || impact.EnemyEntityId == 0 ||
+            !Guid.TryParseExact(impact.PlayerId, "N", out _) ||
+            impact.PlayerId != impact.PlayerId.ToLowerInvariant() ||
+            string.IsNullOrWhiteSpace(impact.PartPath) ||
+            !float.IsFinite(impact.PartWeight) ||
+            impact.PartWeight is <= 0 or > 1000 ||
+            !float.IsFinite(impact.SourceDamage) ||
+            impact.SourceDamage <= 0)
+            throw new InvalidDataException("Invalid co-op Assaulter player impact.");
+
+        // Ammo.DoDamage calls DestroyableObject.Shoot with the unit's weapon.
+        // Shoot applies the hit part's shot coefficient before OnDamage.
+        // PlayerDamage applies that coefficient through PartWeight and then
+        // applies the player's no-damage chance from its signed definition.
+        return new ResolvedPlayerDamage(impact.SourceDamage,
+            CombatDamageType.Shot, PartWeight: impact.PartWeight);
+    }
+}
+
 internal static class CoopAssaulterShieldImpactPlanner
 {
     internal static CoopAssaulterShieldImpactPlan? FromDiagnostic(
