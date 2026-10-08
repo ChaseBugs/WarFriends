@@ -468,18 +468,22 @@ internal static class CombatContentTests
         CoopBossLoadoutCatalog bossLoadouts = CoopBossLoadoutCatalog.Load(
             Path.Combine(directory, "recovered-coop-boss-loadouts.json"),
             catalog, bossRules, bossAttackTimings, content.AllWeaponBindings);
+        BattleCombatContent bossWeaponContent = LoadCoopBossWeaponContent(directory);
         RecoveredBattleMap bossScene = content.Maps.Single(map =>
             map.Source == "Assets/Scenes/" + bossMap.Scene + ".unity");
-        var bossRuntime = new CoopMatchRuntime(bossAllocation, catalog,
-            spawnPoints, routes, enemyCombat, bossAnchors, bossPaths,
+        var bossSources = new CoopBossRuntimeSources(bossAnchors, bossPaths,
             content.ArmySpawnPoints, bossScene, bossHealth, bossAttackTimings,
-            bossLoadouts, _ => 0, _ => 0, () => 0f);
+            bossLoadouts, bossWeaponContent);
+        var bossRuntime = new CoopMatchRuntime(bossAllocation, catalog,
+            spawnPoints, routes, enemyCombat, bossSources,
+            _ => 0, _ => 0, () => 0f);
         string bossFirstPlayer = bossAllocation.Players[0].PlayerId;
         string bossSecondPlayer = bossAllocation.Players[1].PlayerId;
         if (!bossRuntime.Admit(bossFirstPlayer) ||
             !bossRuntime.Admit(bossSecondPlayer) ||
             bossRuntime.Snapshot().Coop.Boss != null ||
             bossRuntime.BossAttackCadence != null ||
+            bossRuntime.BossArsenal != null ||
             bossRuntime.ApplyHostBossDamage(1, 0))
             throw new Exception("Boss runtime rejected the signed allied roster.");
         foreach (string playerId in new[] { bossFirstPlayer, bossSecondPlayer })
@@ -504,6 +508,8 @@ internal static class CombatContentTests
                 .SequenceEqual([1, 3, 6, 13]) == false ||
             transmittedBoss.Weapons.Select(weapon => weapon.InventoryIndex)
                 .SequenceEqual([11, 2, 5, 12]) == false ||
+            bossRuntime.BossArsenal?.Definition(CoopBossWeaponSlotKind.Primary)
+                .SourceId != bossLoadouts.ForMission(4).Slots[0].SheetName ||
             bossStart.Coop.Boss.DefendComponentFileId !=
                 bossAnchors.Maps[0].BossStart.ComponentFileId ||
             bossStart.Coop.Boss.MaxHealth != bossHealth.ForMission(4).MaximumHealth ||
@@ -939,6 +945,8 @@ internal static class CombatContentTests
                 .SequenceEqual([31, 32, 42, 0]) == false ||
             loadouts.Weapons[0].SheetName != "Google2u.AssaultRifle_M16")
             throw new Exception("Boss weapons differ from the original OBB order.");
+        int arsenalAssertions = VerifyCoopBossArsenal(
+            directory, loadouts, attacks.ForMission(4));
         if (attacks.Missions.Count != 15 ||
             attacks.ForMission(4).ConfigIndex != 1 ||
             attacks.ForMission(4).PrimaryCategory != "AssaultRifle " ||
@@ -1088,7 +1096,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 41 + combatAssertions;
+                return 41 + combatAssertions + arsenalAssertions;
             }
         }
         finally
@@ -1098,6 +1106,74 @@ internal static class CombatContentTests
             File.Delete(changedAttackPath);
             File.Delete(changedLoadoutPath);
         }
+    }
+
+    private static int VerifyCoopBossArsenal(string directory,
+        CoopBossLoadoutCatalog loadouts, CoopBossAttackTiming timing)
+    {
+        BattleCombatContent content = LoadCoopBossWeaponContent(directory);
+        foreach (CoopBossLoadout missionLoadout in loadouts.Missions)
+        {
+            var missionArsenal = new CoopBossArsenal(missionLoadout, content, 0);
+            for (int slot = 0; slot < 4; slot++)
+            {
+                WeaponManifest selected = missionArsenal.Definition(
+                    (CoopBossWeaponSlotKind)slot);
+                if (selected.SourceId != missionLoadout.Slots[slot].SheetName ||
+                    selected.ClipSize <= 0)
+                    throw new Exception("A boss weapon lacks source stage-zero stats.");
+            }
+        }
+        CoopBossLoadout loadout = loadouts.ForMission(4);
+        var arsenal = new CoopBossArsenal(loadout, content, 0);
+        WeaponManifest rifle = arsenal.Definition(CoopBossWeaponSlotKind.Primary);
+        WeaponManifest explosive = arsenal.Definition(CoopBossWeaponSlotKind.Explosive);
+        if (rifle.SourceId != loadout.Slots[0].SheetName ||
+            rifle.ClipSize < 2 || rifle.ReserveAmmo <= 0 ||
+            explosive.SourceId != loadout.Slots[2].SheetName ||
+            explosive.ReserveAmmo != 0)
+            throw new Exception("Boss arsenal lost its source stage-zero ammunition.");
+
+        CoopBossWeaponSlotKind choice = CoopBossWeaponChoice.ForOrdinaryPlayerTarget(
+            timing, false,
+            arsenal.Readiness(CoopBossWeaponSlotKind.Primary, 0),
+            arsenal.Readiness(CoopBossWeaponSlotKind.Secondary, 0),
+            arsenal.Readiness(CoopBossWeaponSlotKind.Explosive, 0),
+            0.01f, 0f);
+        if (choice != CoopBossWeaponSlotKind.Explosive)
+            throw new Exception("Boss weapon choice ignored host-owned ammunition.");
+
+        ulong cadence = (ulong)Math.Ceiling(
+            rifle.CadenceSeconds * MatchManifest.TickRate);
+        for (int shot = 0; shot < rifle.ClipSize; shot++)
+        {
+            ulong shotTick = (ulong)shot * cadence;
+            if (!arsenal.ConfirmShot(CoopBossWeaponSlotKind.Primary, shotTick) ||
+                arsenal.ConfirmShot(CoopBossWeaponSlotKind.Primary, shotTick))
+                throw new Exception("Boss rifle ammunition or cadence was bypassed.");
+        }
+        ulong lastShotTick = (ulong)(rifle.ClipSize - 1) * cadence;
+        CoopBossWeaponReadiness reloading = arsenal.Readiness(
+            CoopBossWeaponSlotKind.Primary, lastShotTick);
+        if (!reloading.Reloading || reloading.WillShoot || reloading.OutOfAmmo)
+            throw new Exception("Boss rifle did not start its source reload.");
+        ulong reloadEnd = lastShotTick + (ulong)Math.Ceiling(
+            rifle.ReloadSeconds * MatchManifest.TickRate);
+        arsenal.Advance(reloadEnd);
+        if (!arsenal.Readiness(CoopBossWeaponSlotKind.Primary, reloadEnd).WillShoot)
+            throw new Exception("Boss rifle did not receive reserve ammunition.");
+        return 20;
+    }
+
+    private static BattleCombatContent LoadCoopBossWeaponContent(string directory)
+    {
+        return BattleCombatContent.Load(
+            Path.Combine(directory, "combat-content-manifest.json"),
+            Path.Combine(directory, "shotgun-content-manifest.json"),
+            pistolManifestPath: Path.Combine(directory, "pistol-content-manifest.json"),
+            sniperManifestPath: Path.Combine(directory, "sniper-content-manifest.json"),
+            bazookaManifestPath: Path.Combine(directory, "bazooka-content-manifest.json"),
+            grenadeManifestPath: Path.Combine(directory, "grenade-content-manifest.json"));
     }
 
     private static int VerifyCoopBossCombat(MissionCatalog missions,
