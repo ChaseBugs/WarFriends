@@ -38,7 +38,8 @@ internal static class PlayerDamage
         Validate(definition);
         if (!float.IsFinite(health) || health <= 0 || health > definition.MaxHealth ||
             !Enum.IsDefined(hit.Type) || !float.IsFinite(hit.Amount) || Math.Abs(hit.Amount) > 100000000 ||
-            (hit.Amount < 0 && (hit.HasWeapon || hit.Type is not (CombatDamageType.Heal or CombatDamageType.Shiver))) ||
+            (hit.Amount < 0 && (hit.HasWeapon || hit.Type is not
+                (CombatDamageType.Basic or CombatDamageType.Heal or CombatDamageType.Shiver))) ||
             !Coefficient(hit.PartWeight) || !Coefficient(hit.FriendlyCoefficient) ||
             !Coefficient(hit.PlayerCoefficient) || !Coefficient(hit.PlayerOvertimeCoefficient) ||
             !Coefficient(hit.ExplosiveCoefficient) || !Coefficient(hit.ExplosiveOvertimeCoefficient) ||

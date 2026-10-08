@@ -87,6 +87,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     private readonly AirEntityRegistry airEntities = new();
     private readonly DeployableRegistry deployables = new();
     private readonly WarCardEffectRuntime cardEffects = new();
+    private readonly HashSet<string> resolvedMedkits = new(StringComparer.Ordinal);
     private BattleCardSelectionState? cardSelections;
     private BattleBuddySelectionState? buddySelections;
     private IReadOnlySet<string>? cardCatalog;
@@ -199,15 +200,28 @@ public sealed partial class MatchEngine : IMatchRuntime
             new ResolvedPlayerDamage(trustedDamage, CombatDamageType.Explosion, HasWeapon: false), 1, false);
     }
 
-    internal PlayerDamageResult? TryResolveCardHeal(string ownerPlayerId, string effectId,
-        string targetPlayerId, float trustedAmount)
+    internal PlayerDamageResult? TryResolveMedkit(string ownerPlayerId,
+        string effectId)
     {
-        if (Find(ownerPlayerId)?.Admitted != true || Find(targetPlayerId)?.Admitted != true ||
+        var owner = Find(ownerPlayerId);
+        if (owner?.Admitted != true || owner.Dead ||
             !cardEffects.TryGet(effectId, out var effect) || effect == null || effect.OwnerPlayerId != ownerPlayerId ||
-            effect.Definition.Kind != WarCardEffectKind.Heal || phase != BattlePhase.Running ||
-            !float.IsFinite(trustedAmount) || trustedAmount <= 0 || trustedAmount > 10_000_000) return null;
-        return ApplyResolvedPlayerDamage(ownerPlayerId, targetPlayerId,
-            new ResolvedPlayerDamage(trustedAmount, CombatDamageType.Heal, HasWeapon: false), 1, false);
+            effect.Definition.CardId != "CardHealMeNow" ||
+            effect.StartedTick != tick || effect.Lease.ExpiresTick != tick ||
+            resolvedMedkits.Contains(effectId) || phase != BattlePhase.Running ||
+            owner.Definition.Combat == null)
+            return null;
+
+        // CardHealMeNow heals its own PlayerController. The recovered 1.4.0
+        // MedKitCoef source row is 0.2; neither target nor amount comes from
+        // a player packet. Healing is negative damage in DestroyableObject.
+        float amount = owner.Definition.Combat.MaxHealth * 0.2f;
+        PlayerDamageResult? result = ApplyResolvedPlayerDamage(ownerPlayerId,
+            ownerPlayerId, new ResolvedPlayerDamage(-amount,
+                CombatDamageType.Basic, HasWeapon: false), combatRandom(), false);
+        if (result?.Applied == true)
+            resolvedMedkits.Add(effectId);
+        return result;
     }
 
     internal bool TryResolveCardStatus(string ownerPlayerId, string effectId, string targetPlayerId)
@@ -2051,8 +2065,10 @@ public sealed partial class MatchEngine : IMatchRuntime
         var victim = Find(victimId);
         if (attacker == null || victim == null || !attacker.Admitted || !victim.Admitted ||
             attacker.Dead || victim.Dead || victim.Definition.Combat == null) return null;
+        bool selfDamage = attacker == victim && hit.Amount > 0;
         var result = PlayerDamage.Resolve(victim.Definition.Combat, victim.Health, hit,
-            attacker.Definition.Fraction == victim.Definition.Fraction, attacker == victim, randomRoll);
+            attacker.Definition.Fraction == victim.Definition.Fraction,
+            selfDamage, randomRoll);
         if (!result.Applied) return result;
         if (confirmedProjectileImpact && attacker != victim && attacker.Definition.Fraction != victim.Definition.Fraction)
         {

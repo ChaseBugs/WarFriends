@@ -47,6 +47,11 @@ internal static class PlayerDamageTests
         Check(PlayerDamage.Resolve(body with { TutorialProtection = true }, 100, lethal with { Amount = 80 }, false, false, 1).Health == 20, "tutorial threshold is below twenty percent");
         var heal = new ResolvedPlayerDamage(-50, CombatDamageType.Heal, HasWeapon: false);
         Check(PlayerDamage.Resolve(body, 90, heal, false, false, 1).Health == 100, "healing upper clamp");
+        var sourceMedkitHeal = new ResolvedPlayerDamage(-20,
+            CombatDamageType.Basic, HasWeapon: false);
+        Check(PlayerDamage.Resolve(body, 60, sourceMedkitHeal,
+                  sameFraction: true, self: false, randomRoll: 1).Health == 80,
+            "recovered medkit heals through a negative Basic damage amount");
         Reject(() => Hit(shot with { Amount = float.NaN }));
         Reject(() => Hit(shot with { Amount = -1 }));
         Reject(() => Hit(shot with { Amount = -1, Type = CombatDamageType.Shiver }));
@@ -95,6 +100,46 @@ internal static class PlayerDamageTests
               noDamageState.Players[0].ConfirmedPlayerBulletHits == 1 &&
               noDamageState.Players[0].ConfirmedEnemyHits == 1,
             "source-backed opposing player bullet contact counts despite a complete damage refund");
+
+        var medkitMatch = new MatchEngine(manifest with
+        {
+            MatchId = "source-medkit-owner-healing"
+        });
+        medkitMatch.Admit(a);
+        medkitMatch.Admit(b);
+        foreach (string playerId in new[] { a, b })
+            medkitMatch.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = medkitMatch.ManifestHash }
+            });
+        medkitMatch.Advance(60);
+        medkitMatch.ApplyResolvedPlayerDamage(b, a,
+            new ResolvedPlayerDamage(40, CombatDamageType.Basic,
+                HasWeapon: false), 1);
+        Check(medkitMatch.Snapshot().Players[0].Health == 60,
+            "medkit fixture begins with a server-injured owner");
+        const string medkitEffectId = "81818181818181818181818181818181";
+        Check(medkitMatch.TryApplyCardEffect(medkitEffectId, a,
+            new WarCardEffectRequest("CardHealMeNow", System.Numerics.Vector3.Zero,
+                0, 1, "MEDKIT")),
+            "the recovered MEDKIT identity creates an instant owner effect");
+        Check(medkitMatch.TryResolveMedkit(b, medkitEffectId) == null,
+            "another player cannot resolve the owner's medkit");
+        PlayerDamageResult? medkitResult = medkitMatch.TryResolveMedkit(
+            a, medkitEffectId);
+        Check(medkitResult is { Applied: true, Health: 80 } &&
+              medkitMatch.Snapshot().Players[0].Health == 80,
+            "MEDKIT heals exactly twenty percent of source maximum health");
+        Check(medkitMatch.TryResolveMedkit(a, medkitEffectId) == null &&
+              medkitMatch.Snapshot().Players[0].Health == 80,
+            "one medkit effect cannot heal twice on the same host tick");
+        const string healingStormEffectId = "82828282828282828282828282828282";
+        Check(medkitMatch.TryApplyCardEffect(healingStormEffectId, a,
+            new WarCardEffectRequest("CardHealingStorm",
+                System.Numerics.Vector3.One, 0, 1, "HEALINGSTORM")) &&
+              medkitMatch.TryResolveMedkit(a, healingStormEffectId) == null,
+            "Healing Storm's allied-unit effect cannot be spent as a player medkit");
         return checks;
     }
 }
