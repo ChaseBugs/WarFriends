@@ -16,6 +16,9 @@ internal sealed record CoopBossRuntimeSources(
     BattleCombatContent WeaponContent,
     CoopShieldStateCatalog ShieldStates);
 
+internal sealed record CoopShieldRuntimeSources(
+    CoopShieldStateCatalog States, ShieldSourceCatalog Policy);
+
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
 /// cannot accept combat commands until host AI and player controls are wired.
@@ -60,6 +63,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopBossAttackTiming? bossAttackTiming;
     private readonly BattleCombatContent? bossWeaponContent;
     private readonly CoopShieldStateCatalog? shieldStates;
+    private readonly ShieldSourceCatalog? shieldPolicy;
     private CoopShieldMatchSimulation? alliedShields;
     internal CoopBossLoadout? BossLoadout { get; }
     private readonly Func<float>? chooseAttackFraction;
@@ -80,9 +84,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopSpawnPointCatalog spawnPoints, CoopNavMeshPathCatalog paths,
         CoopEnemyCombatCatalog combat,
         Func<int, int>? chooseBehaviour = null,
-        Func<int, int>? choosePoint = null)
+        Func<int, int>? choosePoint = null,
+        CoopShieldRuntimeSources? shieldSources = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
-            (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint)
+            (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
+            chooseAttackFraction: null, shieldSources: shieldSources)
     {
     }
 
@@ -90,7 +96,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopSpawnPointCatalog spawnPoints, CoopNavMeshPathCatalog paths,
         CoopEnemyCombatCatalog combat, CoopBossRuntimeSources? bossSources,
         Func<int, int>? chooseBehaviour, Func<int, int>? choosePoint,
-        Func<float>? chooseAttackFraction = null)
+        Func<float>? chooseAttackFraction = null,
+        CoopShieldRuntimeSources? shieldSources = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -108,6 +115,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         missionRule = catalog.Get(missionIndex);
         ArgumentNullException.ThrowIfNull(spawnPoints);
         ArgumentNullException.ThrowIfNull(paths);
+        if (bossSources != null && shieldSources != null)
+            throw new InvalidDataException("Co-op shield sources were supplied twice.");
         if (missionRule.MissionType == "KillOpponent")
         {
             if (bossSources == null)
@@ -120,6 +129,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             BossLoadout = bossSources.Loadouts.ForMission(missionIndex);
             bossWeaponContent = bossSources.WeaponContent;
             shieldStates = bossSources.ShieldStates;
+            shieldPolicy = bossSources.WeaponContent.Shields;
             _ = CoopShieldRankResolver.AlliedRank(manifest);
             this.chooseAttackFraction = chooseAttackFraction;
             var selector = new CoopBossAiSpawnSelector(catalog,
@@ -141,6 +151,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             if (bossSources != null)
                 throw new InvalidDataException("Non-boss mission received boss sources.");
+            if (shieldSources != null)
+            {
+                shieldStates = shieldSources.States;
+                shieldPolicy = shieldSources.Policy;
+                _ = CoopShieldRankResolver.AlliedRank(manifest);
+            }
             CoopMapSpawnPoints map = spawnPoints.MapForMission(catalog, missionIndex);
             CoopMapRoutes routes = paths.MapForMission(catalog, missionIndex);
             var selector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
@@ -421,10 +437,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                         bossAttackTiming!, tick, chooseAttackFraction);
                     BossArsenal = new CoopBossArsenal(
                         BossLoadout!, bossWeaponContent!, tick);
-                    alliedShields = new CoopShieldMatchSimulation(manifest,
-                        shieldStates!, bossWeaponContent!.Shields,
-                        alliedFirstCover, tick);
                 }
+                if (shieldStates != null)
+                    alliedShields = new CoopShieldMatchSimulation(manifest,
+                        shieldStates, shieldPolicy!, alliedFirstCover, tick);
                 phase = BattlePhase.Running;
             }
             return "ready";

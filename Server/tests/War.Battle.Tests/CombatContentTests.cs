@@ -666,6 +666,36 @@ internal static class CombatContentTests
             bossRuntime.ApplyHostBossDamage(1000, 200))
             throw new Exception("Boss damage must be host-owned and settle only once.");
 
+        var ordinaryShieldRuntime = new CoopMatchRuntime(shieldAllocation,
+            catalog, spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            shieldSources: new CoopShieldRuntimeSources(
+                shieldStates, content.Shields));
+        foreach (ParticipantManifest player in shieldAllocation.Players)
+        {
+            if (!ordinaryShieldRuntime.Admit(player.PlayerId) ||
+                ordinaryShieldRuntime.Command(player.PlayerId, new MatchCommand
+                {
+                    CommandId = 1,
+                    Ready = new ReadyCommand
+                    {
+                        ManifestHash = ordinaryShieldRuntime.ManifestHash
+                    }
+                }).Code != "ready")
+                throw new Exception("Ordinary co-op allies could not start shields.");
+        }
+        MatchSnapshot ordinaryShieldStart = ordinaryShieldRuntime.Snapshot();
+        if (ordinaryShieldStart.Shields.Count != 4 ||
+            ordinaryShieldStart.Shields.Any(shield =>
+                shield.CoverIndex is < 0 or > 3 ||
+                shield.OwnerFraction != 2 ||
+                shield.Health != content.Shields.Health(3)))
+            throw new Exception("Ordinary co-op covers did not use the master rank.");
+        if (ordinaryShieldRuntime.ApplyHostShieldShot(0,
+                "Google2u.AssaultRifle_AK47", 10f)?.Health !=
+            content.Shields.Health(3) - 10f)
+            throw new Exception("Ordinary co-op shield rejected a host impact.");
+
         var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         string firstPlayer = coop.Players[0].PlayerId;
