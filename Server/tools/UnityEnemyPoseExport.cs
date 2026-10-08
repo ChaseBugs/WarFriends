@@ -15,6 +15,7 @@ public static class UnityEnemyPoseExport
         string output=Environment.GetEnvironmentVariable("WAR_ENEMY_POSE_OUTPUT");
         string targetOutput=Environment.GetEnvironmentVariable("WAR_ENEMY_TARGET_OUTPUT");
         string gunOutput=Environment.GetEnvironmentVariable("WAR_ENEMY_GUN_OUTPUT");
+        string muzzleOutput=Environment.GetEnvironmentVariable("WAR_ENEMY_MUZZLE_OUTPUT");
         if(string.IsNullOrEmpty(output))throw new InvalidOperationException("Set WAR_ENEMY_POSE_OUTPUT.");
         var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(Source);
         if(prefab==null)throw new InvalidOperationException("Missing recovered enemy prefab.");
@@ -41,11 +42,22 @@ public static class UnityEnemyPoseExport
             var clips=new List<object>();
             var targetClips=new List<object>();
             var gunClips=new List<object>();
+            var muzzleClips=new List<object>();
             var shootable=enemy.GetComponentsInChildren<GameShootableEntity>(true).Single();
             var soldierParts=enemy.GetComponentInChildren<SoldierParts>(true);
             if(soldierParts==null||soldierParts.gunSnapPointNotScaled==null)
                 throw new InvalidOperationException("Enemy gun attachment is missing.");
             var gunSnap=soldierParts.gunSnapPointNotScaled;
+            var riflePrefab=AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/GameObject/AssaultRifleEnemy.prefab");
+            if(riflePrefab==null)throw new InvalidOperationException("Missing Assaulter rifle prefab.");
+            var rifle=(GameObject)PrefabUtility.InstantiatePrefab(riflePrefab);
+            rifle.transform.SetParent(gunSnap,false);
+            rifle.transform.localPosition=Vector3.zero;
+            rifle.transform.localRotation=riflePrefab.transform.localRotation;
+            rifle.transform.localScale=Vector3.one;
+            var muzzle=rifle.transform.Find("HK416/MachinegunMuzzleFlash");
+            if(muzzle==null)throw new InvalidOperationException("Missing rifle muzzle.");
             if(shootable.targets.Count!=3||shootable.targets.Any(x=>x.transform==null)||
                 !shootable.targets.Select(x=>(int)x.type).SequenceEqual(new[]{8,1,4}))
                 throw new InvalidOperationException("Enemy shot-target inventory differs from source.");
@@ -58,6 +70,7 @@ public static class UnityEnemyPoseExport
                 int last=Mathf.CeilToInt(state.length*30);var frames=new List<object>(last+1);
                 var targetFrames=new List<object>(last+1);
                 var gunFrames=new List<object>(last+1);
+                var muzzleFrames=new List<object>(last+1);
                 for(int i=0;i<=last;i++)
                 {
                     Sample(animation,"T_pose",1f);
@@ -70,6 +83,9 @@ public static class UnityEnemyPoseExport
                     gunFrames.Add(new{seconds=seconds,
                         position=V(enemy.transform.InverseTransformPoint(gunSnap.position)),
                         rotation=Q(Quaternion.Inverse(enemy.transform.rotation)*gunSnap.rotation)});
+                    muzzleFrames.Add(new{seconds=seconds,
+                        position=V(enemy.transform.InverseTransformPoint(muzzle.position)),
+                        rotation=Q(Quaternion.Inverse(enemy.transform.rotation)*muzzle.rotation)});
                 }
                 clips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
                     length=state.length,wrap=state.wrapMode.ToString(),frames=frames});
@@ -77,6 +93,8 @@ public static class UnityEnemyPoseExport
                     length=state.length,wrap=state.wrapMode.ToString(),frames=targetFrames});
                 gunClips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
                     length=state.length,wrap=state.wrapMode.ToString(),frames=gunFrames});
+                muzzleClips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
+                    length=state.length,wrap=state.wrapMode.ToString(),frames=muzzleFrames});
             }
             File.WriteAllText(output,JsonConvert.SerializeObject(new{version=2,client="1.4.0",source=Source,
                 sha256=Hash(Source),sampleRate=30,clips=clips},Formatting.Indented));
@@ -93,6 +111,16 @@ public static class UnityEnemyPoseExport
                     source=Source,sha256=Hash(Source),sampleRate=30,
                     attachmentPath=PathOf(gunSnap),clips=gunClips},Formatting.Indented));
                 Debug.Log("ENEMY_GUN_EXPORT_PASSED clips="+gunClips.Count);
+            }
+            if(!string.IsNullOrEmpty(muzzleOutput))
+            {
+                File.WriteAllText(muzzleOutput,JsonConvert.SerializeObject(new{version=1,client="1.4.0",
+                    source=Source,sha256=Hash(Source),sampleRate=30,
+                    attachmentPath=PathOf(gunSnap),
+                    weapon="Assets/GameObject/AssaultRifleEnemy.prefab",
+                    weaponSha256=Hash("Assets/GameObject/AssaultRifleEnemy.prefab"),
+                    muzzlePath=PathOf(muzzle),clips=muzzleClips},Formatting.Indented));
+                Debug.Log("ENEMY_MUZZLE_EXPORT_PASSED clips="+muzzleClips.Count);
             }
         }
         finally { UnityEngine.Object.DestroyImmediate(enemy); }
