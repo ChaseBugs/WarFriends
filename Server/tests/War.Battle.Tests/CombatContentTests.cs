@@ -388,6 +388,14 @@ internal static class CombatContentTests
         MatchManifest duel = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
         MissionMapRule sourceMap = catalog.MapForMission(0);
+        CoopShieldStateCatalog shieldStates = CoopShieldStateCatalog.Load(
+            Path.Combine(directory, "recovered-coop-shield-states.json"), catalog);
+        if (shieldStates.ForMission(4).Player.Count != 0 ||
+            shieldStates.ForMission(14).Player.Count != 4 ||
+            shieldStates.ForMission(14).Player[0].MaxHealthRatio != 0.8f ||
+            shieldStates.ForMission(14).Player[0].Regenerate ||
+            shieldStates.ForMission(14).Bot[0].MaxHealthRatio != 0.6f)
+            throw new Exception("Boss mission shield overrides differ from MainScene.");
         MatchManifest coop = duel with
         {
             Mode = MatchManifest.CoopMissionMode,

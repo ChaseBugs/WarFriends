@@ -1,0 +1,856 @@
+{
+  "version": 1,
+  "sourceSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "missions": [
+    {
+      "missionIndex": 0,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 1,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 2,
+      "player": [
+        {
+          "healthRatio": 0.0,
+          "maxHealthRatio": 0.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 0.0,
+          "maxHealthRatio": 0.0,
+          "regenerate": false,
+          "autoRepair": false
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 3,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 4,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 5,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 6,
+      "player": [
+        {
+          "healthRatio": 0.0,
+          "maxHealthRatio": 0.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 0.0,
+          "maxHealthRatio": 0.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 0.0,
+          "maxHealthRatio": 0.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 0.0,
+          "maxHealthRatio": 0.0,
+          "regenerate": false,
+          "autoRepair": false
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 7,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": false
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 8,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 9,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 10,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.2,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.2,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.2,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.2,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 11,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 12,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.3,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.3,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": false
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 13,
+      "player": [
+        {
+          "healthRatio": 0.6,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 0.6,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 0.6,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 0.6,
+          "maxHealthRatio": 1.0,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 14,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ]
+    },
+    {
+      "missionIndex": 15,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 16,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 17,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 18,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 19,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 20,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": false
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 21,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 2.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 2.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 22,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.8,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 23,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 24,
+      "player": [],
+      "bot": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.5,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.5,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.5,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.5,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ]
+    },
+    {
+      "missionIndex": 25,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 26,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 5.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 5.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 5.0,
+          "regenerate": false,
+          "autoRepair": false
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 5.0,
+          "regenerate": false,
+          "autoRepair": false
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 27,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 28,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 3.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 3.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 3.0,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 3.0,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 29,
+      "player": [],
+      "bot": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.6,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ]
+    },
+    {
+      "missionIndex": 30,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 31,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 32,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 33,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 34,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 35,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 36,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 37,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 38,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 39,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 40,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 41,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 42,
+      "player": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 1.5,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ],
+      "bot": []
+    },
+    {
+      "missionIndex": 43,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 44,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 45,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 46,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 47,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 48,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 49,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 50,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 51,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 52,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 53,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 54,
+      "player": [],
+      "bot": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ]
+    },
+    {
+      "missionIndex": 55,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 56,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 57,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 58,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 59,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 60,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 61,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 62,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 63,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 64,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 65,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 66,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 67,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 68,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 69,
+      "player": [],
+      "bot": [
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        },
+        {
+          "healthRatio": 1.0,
+          "maxHealthRatio": 0.8,
+          "regenerate": false,
+          "autoRepair": true
+        }
+      ]
+    },
+    {
+      "missionIndex": 70,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 71,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 72,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 73,
+      "player": [],
+      "bot": []
+    },
+    {
+      "missionIndex": 74,
+      "player": [],
+      "bot": []
+    }
+  ]
+}
