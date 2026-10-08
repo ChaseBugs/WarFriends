@@ -816,7 +816,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     /// <summary>
     /// Collects the enemy colliders valid at this host tick. An enemy without
     /// a complete current pose is reported, not silently omitted from a ray.
-    /// The transport gunner is a separate live target and is not placed yet.
+    /// The transport gunner and rope crew are separate live targets and are
+    /// not placed yet.
     /// </summary>
     internal CoopEnemyCollisionFrame CurrentEnemyCollisionFrame()
     {
@@ -837,7 +838,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 _ => []
             };
             targets.AddRange(placed);
-            if (placed.Count == 0 ||
+            // The attached/descending rope crew are separate live soldiers.
+            // Their world hitboxes remain unplaced even when the turret gunner
+            // is dead, so the helicopter body alone is never a complete world.
+            bool hasUnplacedCrew = enemy.Behaviour == "DeployHeli" &&
+                transportHelicopterCrew.TryGetValue(enemy.EntityId,
+                    out HelicopterCrewState? crew) &&
+                crew.Snapshot().Count > 0;
+            if (placed.Count == 0 || hasUnplacedCrew ||
                 (enemy.Behaviour == "DeployHeli" && enemy.GunnerHealth > 0))
                 unplaced.Add(enemy.EntityId);
         }

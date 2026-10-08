@@ -1849,8 +1849,13 @@ internal static class CombatContentTests
             throw new Exception("Co-op transport gunner accepted invalid damage or rejected a host hit.");
         BattleCoopEnemySpawn gunnerDown = transportRuntime.Snapshot().Coop.EnemySpawns
             .Single(enemy => enemy.EntityId == transport.EntityId);
+        CoopEnemyCollisionFrame crewFrame =
+            transportRuntime.CurrentEnemyCollisionFrame();
         ulong gunnerDue = afterFlight + (ulong)gunnerRespawnTicks;
         if (gunnerDown.GunnerHealth != 0 ||
+            crewFrame.Targets.Count(body =>
+                body.EntityId == transport.EntityId) != 11 ||
+            !crewFrame.UnplacedEnemyIds.Contains(transport.EntityId) ||
             gunnerDown.GunnerRespawnTick != gunnerDue ||
             gunnerDown.Health != transport.MaxHealth ||
             transportRuntime.PlaceTransportGunner(transport.EntityId) != null ||
