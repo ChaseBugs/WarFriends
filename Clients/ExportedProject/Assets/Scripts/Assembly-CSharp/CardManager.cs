@@ -522,6 +522,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				(card is CardDecoy || card is CardLandmine || card is CardHeavyTurret ||
 				card is CardHealingStorm || card is CardShieldsUp || card is CardShieldGenerator ||
 				card is CardAmmoBox || card is CardAmmoThief || card is CardBrokenLegs ||
+				card is CardHealthForSoldiers || card is CardHealthForMachines ||
 				card.GetType() == typeof(CardHealMeNow)))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
@@ -556,6 +557,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardAmmoBox) reply = await client.UseAmmoBoxResult();
 			else if (card is CardAmmoThief) reply = await client.UseAmmoThiefResult();
 			else if (card is CardBrokenLegs) reply = await client.UseBrokenLegsResult();
+			else if (card is CardHealthForSoldiers) reply = await client.UseSuperSoldiersResult();
+			else if (card is CardHealthForMachines) reply = await client.UseVehicleHealthResult();
 			else if (card is CardLandmine) reply = await client.UseLandMineResult();
 			else if (card is CardHeavyTurret) reply = await client.UseHeavyTurretResult();
 			else if (card is CardDecoy) reply = await client.UseDecoyResult();
@@ -588,6 +591,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		if (card is CardAmmoBox) return code == "ammo-box-applied";
 		if (card is CardAmmoThief) return code == "ammo-thief-applied";
 		if (card is CardBrokenLegs) return code == "broken-legs-active";
+		if (card is CardHealthForSoldiers || card is CardHealthForMachines)
+			return code == "army-health-card-active";
 		if (card is CardLandmine) return code == "land-mine-spawned" || code == "land-mine-replayed";
 		if (card is CardHeavyTurret) return code == "heavy-turret-spawned" || code == "heavy-turret-replayed";
 		if (card is CardDecoy) return code == "decoy-spawned" || code == "decoy-replayed";

@@ -1288,6 +1288,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                             MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0,
                             AssaultGlassMaxHealth=AssaultGlassMaximum(entityKey)??0,
                             AssaultGlassHealth=AssaultGlassHealth(entityKey)??0});
+                        ApplyActiveArmyHealthBuffs(entityKey);
                         var vitality=armyVitality.GetValueOrDefault(entityKey);
                         if(vitality!=null)
                         {
@@ -1395,6 +1396,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             var expiredEffects = cardEffects.ExpireAndReturn(tick);
             foreach (var effect in expiredEffects)
             {
+                RemoveArmyHealthBuff(effect);
                 stateRevision++;
                 Emit(MatchEventKind.CardEffectExpired, effect.OwnerPlayerId,
                     effect.Definition.CardId, 0, effect.Target, 0, effect.EffectId);
@@ -1633,6 +1635,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             Emit(MatchEventKind.HeavyTurretDestroyed,ownerPlayerId,"",turret.EntityId,
                 turret.Position,0,"owner-disconnected");
         }
+        foreach (var effect in cardEffects.ActiveForOwner(ownerPlayerId))
+            RemoveArmyHealthBuff(effect);
         if (cardEffects.RemoveOwner(ownerPlayerId) > 0) stateRevision++;
         foreach (var air in airEntities.Snapshot().Where(x => x.AttackerPlayerId == ownerPlayerId))
         {
@@ -1831,6 +1835,10 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseAmmoThief(p,c.UseAmmoThief.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseBrokenLegs)
             return UseBrokenLegs(p,c.UseBrokenLegs.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseSuperSoldiers)
+            return UseArmyHealthBuff(p,c.UseSuperSoldiers.RequestId,"CardHealthForSoldiers");
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseVehicleHealth)
+            return UseArmyHealthBuff(p,c.UseVehicleHealth.RequestId,"CardHealthForMachines");
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;

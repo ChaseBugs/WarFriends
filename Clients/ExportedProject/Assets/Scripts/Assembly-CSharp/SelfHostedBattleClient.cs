@@ -608,6 +608,22 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         Apply(reply);
         return reply.Clone();
     }
+    public async Task<MatchReply> UseSuperSoldiersResult()
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        MatchReply reply = await connection.UseSuperSoldiersAsync(Guid.NewGuid().ToString("N"), lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
+    public async Task<MatchReply> UseVehicleHealthResult()
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        MatchReply reply = await connection.UseVehicleHealthAsync(Guid.NewGuid().ToString("N"), lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
     public Task SelectCards(IEnumerable<string> cards, IEnumerable<int> normal, IEnumerable<int> special,
         IEnumerable<int> elite, IEnumerable<string> buddies)
     {

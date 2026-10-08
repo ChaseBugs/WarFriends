@@ -12301,6 +12301,53 @@ internal static class CombatContentTests
               stormMatch.Command(soldierOwner, new() { CommandId = 5,
                   UseHealingStorm = new() { RequestId = "92929292929292929292929292929292" } }).Code == "healing-storm-unavailable",
             "storm retries cannot heal twice and allocated inventory is consumed once");
+        var healthCardMatch = new MatchEngine(flameManifest with
+        {
+            MatchId = "allied-soldier-health-card"
+        }, content: content, armyChoice: _ => 0);
+        healthCardMatch.ConfigureBattleAllocations([
+            new(soldierOwner, ["CardHealthForSoldiers"], [], [0], [-1], [-1]),
+            new(helicopterOwner, [], [], [0], [-1], [-1])
+        ]);
+        healthCardMatch.Admit(soldierOwner);
+        healthCardMatch.Admit(helicopterOwner);
+        var healthCards = new SelectCardsCommand();
+        healthCards.CardIds.Add("CardHealthForSoldiers");
+        healthCards.NormalUpgradeIndexes.Add(0);
+        healthCards.SpecialUpgradeIndexes.Add(-1);
+        healthCards.EliteUpgradeIndexes.Add(-1);
+        Check(healthCardMatch.Command(soldierOwner, new() { CommandId = 1,
+                  SelectCards = healthCards }).Code == "cards-selected" &&
+              healthCardMatch.Command(helicopterOwner, new() { CommandId = 1,
+                  SelectCards = noStormCards }).Code == "cards-selected",
+            "the health card must be selected from trusted inventory");
+        foreach (var playerId in new[] { soldierOwner, helicopterOwner })
+            healthCardMatch.Command(playerId, new() { CommandId = 2,
+                Ready = new() { ManifestHash = healthCardMatch.ManifestHash } });
+        healthCardMatch.Advance(60);
+        int healthOption = healthCardMatch.ArmyBatch(soldierOwner).OptionIndexes[0];
+        Check(healthCardMatch.Command(soldierOwner, new() { CommandId = 3,
+                  DeployArmy = new() { OptionIndex = healthOption } }).Code == "army-deploying",
+            "the owner deploys a soldier before applying the health card");
+        for (ulong healthTick = 61; healthTick <= 75; healthTick++) healthCardMatch.Advance(healthTick);
+        var healthSoldier = healthCardMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities
+            .First(row => row.OwnerPlayerId == soldierOwner);
+        float healthMaximum = healthSoldier.MaxHealth;
+        Check(healthCardMatch.ApplyArmyHostDamage(healthSoldier.EntityKey, healthMaximum * 0.4f),
+            "trusted damage injures the soldier before the card");
+        var healthCommand = new MatchCommand { CommandId = 4,
+            UseSuperSoldiers = new() { RequestId = "93939393939393939393939393939393" } };
+        string healthCardResult = healthCardMatch.Command(soldierOwner, healthCommand).Code;
+        var buffedSoldier = healthCardMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities
+            .First(row => row.EntityKey == healthSoldier.EntityKey);
+        Check(healthCardResult == "army-health-card-active" &&
+              Math.Abs(buffedSoldier.MaxHealth - healthMaximum * 1.2f) < 0.001f &&
+              Math.Abs(buffedSoldier.Health - healthMaximum * 0.8f) < 0.001f,
+            "Super Soldiers increases maximum and heals by 20% of old maximum");
+        Check(healthCardMatch.Command(soldierOwner, healthCommand).Code == "army-health-card-active" &&
+              healthCardMatch.Command(soldierOwner, new() { CommandId = 5,
+                  UseSuperSoldiers = new() { RequestId = "94949494949494949494949494949494" } }).Code == "army-health-card-unavailable",
+            "health card replay does not stack or consume another reservation");
         var flameInfantryMatch=new MatchEngine(flameManifest,content:content,armyChoice:_=>0);
         flameInfantryMatch.Admit(soldierOwner);flameInfantryMatch.Admit(helicopterOwner);
         flameInfantryMatch.Command(soldierOwner,new(){CommandId=1,Ready=new(){ManifestHash=flameInfantryMatch.ManifestHash}});

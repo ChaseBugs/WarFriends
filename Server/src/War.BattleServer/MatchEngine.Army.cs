@@ -13,7 +13,7 @@ public sealed partial class MatchEngine
         Vector3 TargetPosition,bool IsReal,int BatchIndex,int BatchSize);
     private sealed class ArmyVitality(float maximum,float kevlarMaximum=0)
     {
-        public float Maximum { get; }=maximum;
+        public float Maximum=maximum;
         public float Current=maximum;
         public float KevlarMaximum { get; }=kevlarMaximum;
         public float Kevlar=kevlarMaximum;

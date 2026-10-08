@@ -125,6 +125,8 @@ message UseShieldGeneratorCommand { string request_id = 1; }
 message UseAmmoBoxCommand { string request_id = 1; }
 message UseAmmoThiefCommand { string request_id = 1; }
 message UseBrokenLegsCommand { string request_id = 1; }
+message UseSuperSoldiersCommand { string request_id = 1; }
+message UseVehicleHealthCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -150,6 +152,8 @@ message MatchCommand {
     UseAmmoBoxCommand use_ammo_box = 31;
     UseAmmoThiefCommand use_ammo_thief = 32;
     UseBrokenLegsCommand use_broken_legs = 33;
+    UseSuperSoldiersCommand use_super_soldiers = 34;
+    UseVehicleHealthCommand use_vehicle_health = 35;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
