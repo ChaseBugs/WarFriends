@@ -601,6 +601,22 @@ internal static class CombatContentTests
         CoopCardRowCatalog cardRows = CoopCardRowCatalog.Load(
             Path.Combine(directory, "recovered-coop-card-rows.json"),
             catalog, army, contentRevision);
+        ArmyBaseShotStats cardMinimum = cardRows.Shot("ID_UNIT-ASSAULT", 0);
+        ArmyBaseShotStats cardMidpoint = cardRows.Shot("ID_UNIT-ASSAULT", 0.5f);
+        ArmyBaseShotStats cardMaximum = cardRows.Shot("ID_UNIT-ASSAULT", 1);
+        ArmyBaseShotStats missionCard = cardRows.Shot(
+            "ID_UNIT-ASSAULT", 14f / 25f);
+        if (cardMinimum.MinShootTime != 3f ||
+            cardMinimum.MaxShootTime != 5f ||
+            cardMaximum.MinShootTime != 2f ||
+            cardMaximum.MaxShootTime != 4f ||
+            cardMidpoint.MinShootTime != 2.5f ||
+            cardMidpoint.MaxShootTime != 4.5f ||
+            cardMidpoint.FireBatchSizeMin != 2 ||
+            cardMidpoint.FireBatchSizeMax != 3 ||
+            MathF.Abs(missionCard.MinShootTime - 2.44f) > 0.00001f ||
+            MathF.Abs(missionCard.MaxShootTime - 4.44f) > 0.00001f)
+            throw new Exception("Co-op card Assaulter shot timing differs from CARDS_MIN/MAX.");
         string alteredCardPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-cards-{Guid.NewGuid():N}.json");
         try

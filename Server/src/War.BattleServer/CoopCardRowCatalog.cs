@@ -42,6 +42,14 @@ public sealed class CoopCardRowCatalog
             cardRows.MaximumIndex, progress, heroic);
     }
 
+    public ArmyBaseShotStats Shot(string unitId, float progress)
+    {
+        if (!rows.TryGetValue(unitId, out CoopCardRows? cardRows))
+            throw new InvalidDataException("Unit has no recovered co-op card row rule.");
+        return army.ComposeCardShot(unitId, cardRows.MinimumIndex,
+            cardRows.MaximumIndex, progress);
+    }
+
     public static CoopCardRowCatalog Load(string path, MissionCatalog missions,
         ArmyDeploymentCatalog army, string contentRevision)
     {
@@ -83,6 +91,11 @@ public sealed class CoopCardRowCatalog
                 throw new InvalidDataException("Invalid co-op card row identity.");
             _ = army.CoopCardStats(unitId, minimum, maximum, 0, false);
             _ = army.CoopCardStats(unitId, minimum, maximum, 1, true);
+            if (family.IsSoldier)
+            {
+                _ = army.ComposeCardShot(unitId, minimum, maximum, 0);
+                _ = army.ComposeCardShot(unitId, minimum, maximum, 1);
+            }
             mapped.Add(unitId, new CoopCardRows(
                 unitId, sheetRow, minimum, maximum, hasNamedRows));
         }

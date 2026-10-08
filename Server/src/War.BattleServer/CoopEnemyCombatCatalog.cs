@@ -115,6 +115,11 @@ public sealed class CoopEnemyCombatCatalog
             normalUpgradeIndex, null, null);
     }
 
+    internal ArmyBaseShotStats CardShot(string behaviour, float progress)
+    {
+        return cards.Shot(UnitIdFor(behaviour), progress);
+    }
+
     internal ArmyHelicopterCrewStats TransportCrew(int normalUpgradeIndex)
     {
         return army.CoopHelicopterCrew(normalUpgradeIndex);

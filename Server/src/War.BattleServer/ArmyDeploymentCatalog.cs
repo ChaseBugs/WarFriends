@@ -255,6 +255,46 @@ public sealed class ArmyDeploymentCatalog
         return new(probability,minimum,maximum,minTime,maxTime);
     }
 
+    /// <summary>
+    /// UpgradeSlots.LoadDataForCard loads CARDS_MIN and CARDS_MAX separately,
+    /// then SoldierBehaviourDefinititon.Interpolate blends their shot fields.
+    /// The Client truncates interpolated batch sizes toward zero.
+    /// </summary>
+    public ArmyBaseShotStats ComposeCardShot(string unitId,
+        int minimumIndex, int maximumIndex, float progress)
+    {
+        if (upgradeShots == null ||
+            !upgradeShots.TryGetValue(unitId, out var stages) ||
+            baseStats == null || !baseStats.TryGetValue(unitId, out var combatStages) ||
+            minimumIndex < 0 || maximumIndex < minimumIndex ||
+            maximumIndex >= stages.Count || maximumIndex >= combatStages.Count ||
+            !float.IsFinite(progress) || progress is < 0 or > 1 ||
+            combatStages[minimumIndex].Health <= 0 ||
+            combatStages[maximumIndex].Health <= 0)
+            throw new InvalidDataException("Invalid co-op card shot selection.");
+
+        ArmyUpgradeShotStats minimum = stages[minimumIndex];
+        ArmyUpgradeShotStats maximum = stages[maximumIndex];
+        float probability = minimum.ProbabilityOfRealShot +
+            (maximum.ProbabilityOfRealShot - minimum.ProbabilityOfRealShot) * progress;
+        int batchMinimum = (int)(minimum.FireBatchSizeMin +
+            (maximum.FireBatchSizeMin - minimum.FireBatchSizeMin) * progress);
+        int batchMaximum = (int)(minimum.FireBatchSizeMax +
+            (maximum.FireBatchSizeMax - minimum.FireBatchSizeMax) * progress);
+        float timeMinimum = minimum.MinShootTime +
+            (maximum.MinShootTime - minimum.MinShootTime) * progress;
+        float timeMaximum = minimum.MaxShootTime +
+            (maximum.MaxShootTime - minimum.MaxShootTime) * progress;
+        if (!float.IsFinite(probability) || probability is < 0 or > 40 ||
+            batchMinimum < 1 || batchMaximum < batchMinimum ||
+            batchMaximum > 64 || !float.IsFinite(timeMinimum) ||
+            !float.IsFinite(timeMaximum) || timeMinimum < 0 ||
+            timeMaximum < timeMinimum || timeMaximum > 180)
+            throw new InvalidDataException("Co-op card shot stats are outside source bounds.");
+        return new ArmyBaseShotStats(probability, batchMinimum,
+            batchMaximum, timeMinimum, timeMaximum);
+    }
+
     public ArmyVehicleShotStats ComposeDroneShot(int normalIndex,int? specialIndex,int? eliteIndex,
         float shotSpeedCoefficient=1)
     {

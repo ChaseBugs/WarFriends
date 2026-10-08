@@ -33,7 +33,7 @@ internal enum CoopInfantryPointState
 
 internal sealed record CoopInfantryPointArrival(
     ulong Tick, int PointComponentFileId, CoopInfantryPointState State,
-    ulong? FirstShootEligibleTick);
+    ulong FirstShootEligibleTick);
 
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
@@ -846,7 +846,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     _ => throw new InvalidDataException(
                         "Assaulter reached an unsupported source point state.")
                 };
-                ulong? firstShootEligibleTick = enemy.CardUnit ? null :
+                ulong firstShootEligibleTick =
                     FirstInfantryShotEligibleTick(enemy, tick);
                 infantryPointArrivals[entityId] = new(
                     tick, destination.PointComponentFileId, pointState,
@@ -863,8 +863,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private ulong FirstInfantryShotEligibleTick(
         BattleCoopEnemySpawn enemy, ulong reachedTick)
     {
-        ArmyBaseShotStats shot = combat.OrdinaryShot(
-            enemy.Behaviour, enemy.Level);
+        ArmyBaseShotStats shot = enemy.CardUnit
+            ? combat.CardShot(enemy.Behaviour, enemy.CardProgress)
+            : combat.OrdinaryShot(enemy.Behaviour, enemy.Level);
         float fraction = chooseInfantryShotFraction();
         if (!float.IsFinite(fraction) || fraction is < 0 or >= 1)
             throw new InvalidDataException(
