@@ -44,11 +44,21 @@ public sealed class ReliableEventPayloadStore
     public void Append(ClientBattleEvent value)
     {
         ClientBattleEventValidator.Validate(value);
-        if (events.Count > 0 && value.Sequence <= events[^1].Sequence)
-            throw new InvalidDataException("Event sequence is not monotonic.");
-        events.Add(value);
-        while (events.Count > capacity) events.RemoveAt(0);
-        Persist();
+        if (events.Count > 0 &&
+            (events[^1].Sequence == ulong.MaxValue ||
+             value.Sequence != events[^1].Sequence + 1))
+            throw new InvalidDataException("Event sequence must follow the last saved event.");
+
+        var nextEvents = new List<ClientBattleEvent>(events);
+        nextEvents.Add(value);
+        if (nextEvents.Count > capacity)
+            nextEvents.RemoveAt(0);
+
+        // Publish the new replay window in memory only after the replacement
+        // file succeeds. A failed disk write must not acknowledge an event.
+        Persist(nextEvents);
+        events.Clear();
+        events.AddRange(nextEvents);
     }
 
     private void LoadExisting()
@@ -65,19 +75,28 @@ public sealed class ReliableEventPayloadStore
             if (row is null) throw new InvalidDataException("Invalid reliable event payload row.");
             var value = new ClientBattleEvent(row.Sequence, row.Kind, row.EntityId, new Vector3(row.X, row.Y, row.Z));
             ClientBattleEventValidator.Validate(value);
-            if (previous != 0 && value.Sequence <= previous) throw new InvalidDataException("Event payload sequence is not monotonic.");
+            if (previous != 0 && value.Sequence != previous + 1)
+                throw new InvalidDataException("Event payload log has a missing or duplicate sequence.");
             previous = value.Sequence; events.Add(value);
         }
     }
 
-    private void Persist()
+    private void Persist(IReadOnlyList<ClientBattleEvent> nextEvents)
     {
-        var rows = events.Select(x => new EventDocument(x.Sequence, x.Kind, x.EntityId,
+        var rows = nextEvents.Select(x => new EventDocument(x.Sequence, x.Kind, x.EntityId,
             x.Position.X, x.Position.Y, x.Position.Z)).ToArray();
-        var directory = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-        var temporary = path + ".tmp";
-        File.WriteAllText(temporary, JsonSerializer.Serialize(rows));
-        File.Move(temporary, path, true);
+        try
+        {
+            var directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+            var temporary = path + ".tmp";
+            File.WriteAllText(temporary, JsonSerializer.Serialize(rows));
+            File.Move(temporary, path, true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new InvalidDataException("Reliable event payload log could not be saved.", ex);
+        }
     }
 }

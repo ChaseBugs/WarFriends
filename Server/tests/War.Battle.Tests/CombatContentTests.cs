@@ -10187,6 +10187,16 @@ internal static class CombatContentTests
                   "an empty event log accepts only the initial replay cursor");
             Reject(()=>payloadStore.ReplayAfter(1));
             payloadStore.Append(new ClientBattleEvent(1,"spawn:player",1,Vector3.Zero));
+            Reject(()=>payloadStore.Append(new ClientBattleEvent(3,"impact",1,Vector3.Zero)));
+            Check(payloadStore.LastRetainedSequence==1,
+                  "a skipped event ID cannot enter the durable replay window");
+
+            string blockedTemporaryPath=payloadPath+".tmp";
+            Directory.CreateDirectory(blockedTemporaryPath);
+            Reject(()=>payloadStore.Append(new ClientBattleEvent(2,"impact",1,new(1,0,0))));
+            Check(payloadStore.LastRetainedSequence==1,
+                  "a failed disk write cannot advance the in-memory replay cursor");
+            Directory.Delete(blockedTemporaryPath);
             payloadStore.Append(new ClientBattleEvent(2,"impact",1,new(1,0,0)));
             payloadStore.Append(new ClientBattleEvent(3,"death",1,new(2,0,0)));
             var loadedPayload=new ReliableEventPayloadStore(payloadPath,2);
@@ -10209,6 +10219,14 @@ internal static class CombatContentTests
             var durableFull=ReconnectRecoveryCoordinator.Build(new ReconnectSnapshotCursor(4,1,200),5,loadedPayload,200);
             Check(durableFull.RequiresFullSnapshot,"durable replay expiry selects a full snapshot");
             Reject(()=>loadedPayload.Append(new ClientBattleEvent(3,"impact",1,Vector3.Zero)));
+            Reject(()=>loadedPayload.Append(new ClientBattleEvent(5,"impact",1,Vector3.Zero)));
+            string gapPath=Path.Combine(Path.GetDirectoryName(payloadPath)!,"gap.json");
+            var gapRows=new[] {
+                new {Sequence=1UL,Kind="spawn:player",EntityId=1UL,X=0f,Y=0f,Z=0f},
+                new {Sequence=3UL,Kind="impact",EntityId=1UL,X=0f,Y=0f,Z=0f}
+            };
+            File.WriteAllText(gapPath,System.Text.Json.JsonSerializer.Serialize(gapRows));
+            Reject(()=>new ReliableEventPayloadStore(gapPath,2));
             try { Directory.Delete(Path.GetDirectoryName(payloadPath)!,true); } catch { }
             var consumer=new War.Client.MatchEventConsumer();int received=0;consumer.EventReceived+=_=>received++;
             var page=new MatchEventBatch{Code="events",LatestEventId=2};
