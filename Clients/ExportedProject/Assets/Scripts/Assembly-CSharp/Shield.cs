@@ -5,6 +5,11 @@ using UnityEngine;
 
 public class Shield : DestroyableObject
 {
+	public new void ApplySelfHostedState(float authoritativeHealth, float authoritativeMaxHealth, bool dead)
+	{
+		base.ApplySelfHostedState(authoritativeHealth, authoritativeMaxHealth, dead);
+		CheckIfShieldIsDestroyed();
+	}
 	public enum LockResult
 	{
 		None,
@@ -196,7 +201,7 @@ public class Shield : DestroyableObject
 
 	private void OnGameStarted()
 	{
-		if (PhotonNetwork.isMasterClient && !mIsDestroyed)
+		if (!PhotonConnectionManager.IsSelfHostedActive && PhotonNetwork.isMasterClient && !mIsDestroyed)
 		{
 			PlayerController playerController = PlayerController.GetPlayer(fraction);
 			if (playerController != null)
@@ -249,7 +254,7 @@ public class Shield : DestroyableObject
 			float num = (TimeManager.realTimeWithoutPauses - mDestroyTime) / mRepairTime;
 			if (autoRepair)
 			{
-				if (num >= 1f && mPhotonView.isMine && Singleton<PhotonConnectionManager>.instance.isMasterClient)
+				if (!PhotonConnectionManager.IsSelfHostedActive && num >= 1f && mPhotonView.isMine && Singleton<PhotonConnectionManager>.instance.isMasterClient)
 				{
 					Repair();
 				}
@@ -295,7 +300,7 @@ public class Shield : DestroyableObject
 			SwitchModel(mModelNumber + 1);
 		}
 		CheckIfShieldIsDestroyed();
-		if (!mIsDestroyed && healthRatio < 1f && mPhotonView.isMine)
+		if (!PhotonConnectionManager.IsSelfHostedActive && !mIsDestroyed && healthRatio < 1f && mPhotonView.isMine)
 		{
 			if (mCanRegenerate && player != null && mAutoRepair)
 			{

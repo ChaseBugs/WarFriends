@@ -33,6 +33,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private SelfHostedAssaultHelicopterPresenter assaultHelicopterPresenter;
 	private SelfHostedGroundVehiclePresenter groundVehiclePresenter;
 	private SelfHostedRepairDronePresenter repairDronePresenter;
+	private SelfHostedShieldPresenter shieldPresenter;
 	private ulong projectileEventId;
 	private ulong decoyEventId;
 	private ulong landMineEventId;
@@ -273,6 +274,16 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 				if (player == local) ApplySniperScope(state.SniperScopeVisible);
 				if (player == local) ApplyBazookaTarget(state.BazookaTargeting);
 			}
+		}
+		if (snapshot.Shields.Count > 0)
+		{
+			if (shieldPresenter == null)
+			{
+				MapManager mapManager = Singleton<MapManager>.instance;
+				shieldPresenter = new SelfHostedShieldPresenter(
+					mapManager == null ? null : mapManager.currentMapDef);
+			}
+			shieldPresenter.Apply(snapshot);
 		}
 		if (projectilePresenter != null) projectilePresenter.Apply(snapshot);
 		if (decoyPresenter != null) decoyPresenter.Apply(snapshot);
