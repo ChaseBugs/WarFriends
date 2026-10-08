@@ -743,6 +743,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             SettleCornerInfantryRoots();
             AdvanceObstacleRepositions();
             ChooseFirstInfantryTargets();
+            CompleteCornerShotTurns();
             AdvanceInfantryShotWindups();
             AdvanceInfantryRoundIntents();
             AdvanceCornerRetargets();
@@ -1480,6 +1481,35 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             callbackTick, null, batch,
             assaulterWeapon!.WeaponPrefabGuid,
             assaulterWeapon.CadenceSeconds);
+    }
+
+    private void CompleteCornerShotTurns()
+    {
+        foreach ((ulong entityId, CoopInfantryShotWindup windup)
+            in infantryShotWindups)
+        {
+            if (windup.AnimationClip is not
+                    ("player_look_right3" or "player_look_left3") ||
+                tick != windup.StartTick + 9)
+                continue;
+            BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+                spawn.EntityId == entityId && spawn.Health > 0 &&
+                spawn.DeathTick == 0);
+            if (enemy == null)
+                continue;
+
+            // PrepareToShoot starts TweenRotation for 0.3 seconds. We know
+            // its final facing, but have not verified the intervening
+            // animation and collider frames against Unity.
+            Quaternion rotation = windup.FinalRootRotation;
+            enemy.CurrentRotation = new BattleJointRotation
+            {
+                X = rotation.X, Y = rotation.Y,
+                Z = rotation.Z, W = rotation.W
+            };
+            enemy.PoseTick = tick;
+            stateRevision++;
+        }
     }
 
     private void AdvanceInfantryShotWindups()

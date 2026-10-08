@@ -3005,6 +3005,29 @@ internal static class CombatContentTests
         if (cornerRuntime.CornerFirstShotAttempt(cornerEnemy.EntityId)
             != cornerAttempt)
             throw new Exception("Co-op corner retried without a new shot clock.");
+        if (coverWindup != null)
+        {
+            cornerRuntime.Advance(coverWindup.StartTick + 8);
+            BattleCoopEnemySpawn beforeTurn = cornerRuntime.Snapshot()
+                .Coop.EnemySpawns.Single(enemy =>
+                    enemy.EntityId == cornerEnemy.EntityId);
+            if (beforeTurn.PoseTick != cornerArrival.Tick + 15)
+                throw new Exception("Co-op corner turn completed too early.");
+            cornerRuntime.Advance(coverWindup.StartTick + 9);
+            BattleCoopEnemySpawn afterTurn = cornerRuntime.Snapshot()
+                .Coop.EnemySpawns.Single(enemy =>
+                    enemy.EntityId == cornerEnemy.EntityId);
+            BattleJointRotation actual = afterTurn.CurrentRotation ??
+                throw new Exception("Co-op corner turn lost its facing.");
+            Quaternion actualRotation = new(actual.X, actual.Y,
+                actual.Z, actual.W);
+            if (afterTurn.PoseTick != coverWindup.StartTick + 9 ||
+                1 - Math.Abs(Quaternion.Dot(actualRotation,
+                    coverWindup.FinalRootRotation)) > 0.00002f ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception("Co-op corner turn crossed its diagnostic gate.");
+        }
 
         // Flip only the test point's exposed side when needed so this
         // otherwise identical fixture exercises CornerHidingUpdate's
