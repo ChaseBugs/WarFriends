@@ -47,12 +47,15 @@ internal sealed record CoopInfantryPlayerTargetPlan(
 
 internal sealed record CoopCornerShotAttempt(
     ulong Tick, string PlayerId, Vector3 TargetPosition, bool Exposed,
-    ulong? NextEligibleTick);
+    ulong? NextEligibleTick, CoopInfantryShotBatch Batch);
+
+internal sealed record CoopInfantryShotBatch(
+    int Count, int RealShotMask);
 
 internal sealed record CoopInfantryShotWindup(
     ulong EnemyEntityId, string PlayerId, int TargetTransformFileId,
     string AnimationClip, ulong StartTick, ulong CallbackTick,
-    ulong? CallbackStartedTick);
+    ulong? CallbackStartedTick, CoopInfantryShotBatch Batch);
 
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
@@ -111,6 +114,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<float> chooseInfantryRepositionFraction;
     private readonly Func<int, int> chooseInfantryPlayer;
     private readonly Func<float> chooseInfantryShieldRoll;
+    private readonly Func<int, int, int> chooseInfantryBatchSize;
+    private readonly Func<float> chooseInfantryRealShotRoll;
     private readonly Func<int> chooseCornerChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
@@ -184,7 +189,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
         Func<float>? chooseInfantryShieldRoll = null,
-        Func<int>? chooseCornerChangeSeconds = null)
+        Func<int>? chooseCornerChangeSeconds = null,
+        Func<int, int, int>? chooseInfantryBatchSize = null,
+        Func<float>? chooseInfantryRealShotRoll = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
@@ -199,7 +206,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             chooseInfantryRepositionFraction: chooseInfantryRepositionFraction,
             chooseInfantryPlayer: chooseInfantryPlayer,
             chooseInfantryShieldRoll: chooseInfantryShieldRoll,
-            chooseCornerChangeSeconds: chooseCornerChangeSeconds)
+            chooseCornerChangeSeconds: chooseCornerChangeSeconds,
+            chooseInfantryBatchSize: chooseInfantryBatchSize,
+            chooseInfantryRealShotRoll: chooseInfantryRealShotRoll)
     {
     }
 
@@ -220,7 +229,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
         Func<float>? chooseInfantryShieldRoll = null,
-        Func<int>? chooseCornerChangeSeconds = null)
+        Func<int>? chooseCornerChangeSeconds = null,
+        Func<int, int, int>? chooseInfantryBatchSize = null,
+        Func<float>? chooseInfantryRealShotRoll = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         missionCatalog = catalog;
@@ -255,6 +266,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             Random.Shared.NextSingle;
         this.chooseCornerChangeSeconds = chooseCornerChangeSeconds ??
             (() => Random.Shared.Next(10, 20));
+        this.chooseInfantryBatchSize = chooseInfantryBatchSize ??
+            Random.Shared.Next;
+        this.chooseInfantryRealShotRoll = chooseInfantryRealShotRoll ??
+            Random.Shared.NextSingle;
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
@@ -1235,10 +1250,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 continue;
             CoopInfantryPlayerShotTarget? placedTarget =
                 PlaceAssaulterPlayerTarget(plan);
+            CoopInfantryShotBatch? batch = placedTarget == null ? null :
+                CreateInfantryShotBatch(entityId);
             if (cornerShot)
             {
                 CoopEnemyPoint? corner = enemyDestinations?.PointFor(entityId);
-                if (corner == null || placedTarget == null)
+                if (corner == null || placedTarget == null || batch == null)
                     continue;
                 BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
                     spawn.EntityId == entityId);
@@ -1252,7 +1269,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 ulong? retryTick = exposed ? null :
                     FirstInfantryShotEligibleTick(enemy, tick);
                 var attempt = new CoopCornerShotAttempt(tick,
-                    plan.PlayerId, placedTarget.Position, exposed, retryTick);
+                    plan.PlayerId, placedTarget.Position, exposed, retryTick,
+                    batch);
                 cornerFirstShotAttempts.TryAdd(entityId, attempt);
                 cornerLatestShotAttempts[entityId] = attempt;
                 stateRevision++;
@@ -1260,16 +1278,51 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     continue;
             }
             infantryFirstTargets.Add(entityId, plan);
-            if (placedTarget != null && enemyPoses != null)
+            if (placedTarget != null && batch != null && enemyPoses != null)
                 infantryShotWindups.Add(entityId,
-                    CreateInfantryShotWindup(arrival, placedTarget));
+                    CreateInfantryShotWindup(arrival, placedTarget, batch));
             stateRevision++;
         }
     }
 
+    private CoopInfantryShotBatch CreateInfantryShotBatch(ulong entityId)
+    {
+        BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
+            spawn.EntityId == entityId);
+        ArmyBaseShotStats shot = enemy.CardUnit
+            ? combat.CardShot(enemy.Behaviour, enemy.CardProgress)
+            : combat.OrdinaryShot(enemy.Behaviour, enemy.Level);
+
+        // SoldierBehaviour.StartShooting draws an exclusive-upper-bound
+        // integer, clamps it to fourteen rounds, then draws one real/fake
+        // flag per round. The host owns every draw before any shot callback.
+        int chosenCount = chooseInfantryBatchSize(
+            shot.FireBatchSizeMin, shot.FireBatchSizeMax);
+        bool validDraw = shot.FireBatchSizeMin == shot.FireBatchSizeMax
+            ? chosenCount == shot.FireBatchSizeMin
+            : chosenCount >= shot.FireBatchSizeMin &&
+              chosenCount < shot.FireBatchSizeMax;
+        if (!validDraw)
+            throw new InvalidDataException(
+                "Co-op infantry batch draw is outside its source range.");
+        int count = Math.Clamp(chosenCount, 0, 14);
+        int realShotMask = 0;
+        for (int index = 0; index < count; index++)
+        {
+            float roll = chooseInfantryRealShotRoll();
+            if (!float.IsFinite(roll) || roll is < 0 or >= 1)
+                throw new InvalidDataException(
+                    "Co-op infantry real-shot draw must be in [0, 1).");
+            if (roll < shot.ProbabilityOfRealShot)
+                realShotMask |= 1 << index;
+        }
+        return new CoopInfantryShotBatch(count, realShotMask);
+    }
+
     private CoopInfantryShotWindup CreateInfantryShotWindup(
         CoopInfantryPointArrival arrival,
-        CoopInfantryPlayerShotTarget target)
+        CoopInfantryPlayerShotTarget target,
+        CoopInfantryShotBatch batch)
     {
         string clipName = arrival.State == CoopInfantryPointState.ObstacleHiding
             ? "stand_up_begin" : "player_look_right3";
@@ -1282,7 +1335,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
         return new CoopInfantryShotWindup(target.EnemyEntityId,
             target.PlayerId, target.TransformFileId, clipName, tick,
-            callbackTick, null);
+            callbackTick, null, batch);
     }
 
     private void AdvanceInfantryShotWindups()

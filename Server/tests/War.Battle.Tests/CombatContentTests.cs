@@ -1671,7 +1671,9 @@ internal static class CombatContentTests
             chooseInfantryShotFraction: () => 0f,
             chooseInfantryRepositionFraction: () => 0.999f,
             chooseInfantryPlayer: _ => 0,
-            chooseInfantryShieldRoll: () => 0.5f);
+            chooseInfantryShieldRoll: () => 0.5f,
+            chooseInfantryBatchSize: (min, _) => min,
+            chooseInfantryRealShotRoll: () => 0f);
         arrivalRuntime.Admit(firstPlayer);
         arrivalRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1777,9 +1779,17 @@ internal static class CombatContentTests
                 .Length + 0.05f) * MatchManifest.TickRate);
         CoopInfantryShotWindup? crawlWindup = arrivalRuntime
             .InfantryShotWindup(arrivalEnemy.EntityId);
+        ArmyBaseShotStats sourceBatch = content.Army.ComposeShot(
+            "ID_UNIT-ASSAULT", arrivalEnemy.Level, null, null);
+        int expectedBatchCount = Math.Clamp(
+            sourceBatch.FireBatchSizeMin, 0, 14);
+        int expectedRealMask = sourceBatch.ProbabilityOfRealShot > 0
+            ? (1 << expectedBatchCount) - 1 : 0;
         if (crawlWindup?.AnimationClip != "stand_up_begin" ||
             crawlWindup.PlayerId != firstPlayer ||
             crawlWindup.TargetTransformFileId != placedTarget.TransformFileId ||
+            crawlWindup.Batch.Count != expectedBatchCount ||
+            crawlWindup.Batch.RealShotMask != expectedRealMask ||
             crawlWindup.StartTick != firstShootTick ||
             crawlWindup.CallbackTick != expectedCrawlCallback ||
             crawlWindup.CallbackStartedTick != null)
@@ -1920,7 +1930,9 @@ internal static class CombatContentTests
             playerWeaponContent: content,
             chooseInfantryShotFraction: () => 0.5f,
             chooseInfantryPlayer: _ => 0,
-            chooseInfantryShieldRoll: () => 0.5f);
+            chooseInfantryShieldRoll: () => 0.5f,
+            chooseInfantryBatchSize: (min, _) => min,
+            chooseInfantryRealShotRoll: () => 0f);
         cornerRuntime.Admit(firstPlayer);
         cornerRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1969,6 +1981,8 @@ internal static class CombatContentTests
         if (cornerAttempt?.Tick != cornerArrival.FirstShootEligibleTick ||
             cornerAttempt.PlayerId != firstPlayer ||
             cornerAttempt.Exposed != expectedExposure ||
+            cornerAttempt.Batch.Count != Math.Clamp(
+                cornerShot.FireBatchSizeMin, 0, 14) ||
             (cornerRuntime.InfantryFirstPlayerTarget(cornerEnemy.EntityId)
                 != null) != expectedExposure)
             throw new Exception($"Co-op first corner target escaped its source angle gate: eligible={cornerArrival.FirstShootEligibleTick}, attempt={cornerAttempt}, expected={expectedExposure}, plan={cornerRuntime.InfantryFirstPlayerTarget(cornerEnemy.EntityId)}.");
@@ -2024,7 +2038,9 @@ internal static class CombatContentTests
                 chooseInfantryShotFraction: () => 0.5f,
                 chooseInfantryPlayer: _ => 0,
                 chooseInfantryShieldRoll: () => 0.5f,
-                chooseCornerChangeSeconds: () => 10);
+                chooseCornerChangeSeconds: () => 10,
+                chooseInfantryBatchSize: (min, _) => min,
+                chooseInfantryRealShotRoll: () => 0.999f);
             result.Admit(firstPlayer);
             result.Admit(secondPlayer);
             foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -2050,6 +2066,11 @@ internal static class CombatContentTests
             (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1;
         if (rejectedFirst?.Exposed != false ||
             rejectedFirst.NextEligibleTick != expectedRetry ||
+            rejectedFirst.Batch.Count != Math.Clamp(
+                cornerShot.FireBatchSizeMin, 0, 14) ||
+            rejectedFirst.Batch.RealShotMask !=
+                (0.999f < cornerShot.ProbabilityOfRealShot
+                    ? (1 << rejectedFirst.Batch.Count) - 1 : 0) ||
             rejectedRuntime.InfantryFirstPlayerTarget(rejectedEntityId) != null)
             throw new Exception("Rejected co-op corner angle did not schedule a retry.");
         rejectedRuntime.Advance(expectedRetry - 1);
