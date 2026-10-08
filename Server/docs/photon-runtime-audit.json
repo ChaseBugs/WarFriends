@@ -4,17 +4,17 @@
   "forbiddenRuntimeCalls": [
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 250,
+      "line": 257,
       "text": "PhotonNetwork.LeaveRoom();"
     },
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 251,
+      "line": 263,
       "text": "if (!PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName))"
     },
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 267,
+      "line": 284,
       "text": "PhotonNetwork.Disconnect();"
     }
   ],

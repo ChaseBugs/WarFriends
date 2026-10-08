@@ -759,6 +759,13 @@ public abstract class GameControllerOnline : IGameController
 	protected void OnJoinedRoom()
 	{
 		Singleton<GameController>.instance.battleId = PhotonConnectionManager.GetBattleId();
+		if (PhotonConnectionManager.IsLocalSoloRoom)
+		{
+			// The recovered offline room has one local player. It cannot enter
+			// this controller's two-player connection path.
+			Debug.Log("Joined local solo room");
+			return;
+		}
 		Debug.Log($"Joined room: {PhotonNetwork.room.name}, name: {PhotonNetwork.player.name},  userId: {PhotonNetwork.player.ID}, allConnected: {mBothPlayersConnected}");
 		PhotonPlayer[] playerList = PhotonNetwork.playerList;
 		foreach (PhotonPlayer photonPlayer in playerList)

@@ -10,6 +10,11 @@ using UnityEngine;
 public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 {
 	private static readonly LocalOfflineRoom mLocalOfflineRoom = new LocalOfflineRoom();
+	private static bool mCreatingLocalSoloRoom;
+
+	public static bool IsLocalSoloRoom =>
+		!IsSelfHostedActive &&
+		(mCreatingLocalSoloRoom || mLocalOfflineRoom.IsInRoom);
 
 	private static SelfHostedBattleClient GetActiveSelfHostedClient()
 	{
@@ -48,6 +53,8 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
 		if (selfHosted != null && selfHosted.State != null)
 			return selfHosted.State.MatchId;
+		if (IsLocalSoloRoom)
+			return string.Empty;
 		if (PhotonNetwork.room == null || PhotonNetwork.room.customProperties == null)
 			return string.Empty;
 		object value;
@@ -248,8 +255,18 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		if (!PhotonNetwork.offlineMode)
 			throw new InvalidOperationException("Local solo room could not enter offline mode.");
 		PhotonNetwork.LeaveRoom();
-		if (!PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName))
-			throw new InvalidOperationException("Local solo room could not be created.");
+		// EnterOfflineRoom sends OnJoinedRoom synchronously, before CreateRoom
+		// returns and before the portable room model records the completed join.
+		mCreatingLocalSoloRoom = true;
+		try
+		{
+			if (!PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName))
+				throw new InvalidOperationException("Local solo room could not be created.");
+		}
+		finally
+		{
+			mCreatingLocalSoloRoom = false;
+		}
 		mLocalOfflineRoom.JoinSoloRoom();
 	}
 
