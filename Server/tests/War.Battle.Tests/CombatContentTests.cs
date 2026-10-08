@@ -2884,7 +2884,7 @@ internal static class CombatContentTests
             .ToArray();
         CoopEnemyPoint obstacle = desert.Points.First(point =>
             point.ComponentType == "EnemyPointObstacle");
-        CoopEnemyPoint engineer = all.First(point =>
+        CoopEnemyPoint engineer = desert.Points.First(point =>
             point.ComponentType == "EnemyPointEngineerTurret");
         Vector3 expectedEngineer = engineer.TransformPosition -
             Vector3.Transform(Vector3.UnitZ, engineer.Rotation) * 0.2f;
@@ -2910,6 +2910,18 @@ internal static class CombatContentTests
         if (masks.Soldiers.Count != 16 ||
             assaulter.UnitId != "ID_UNIT-ASSAULT" || assaulter.Mask != 14)
             throw new Exception("Co-op soldier point masks differ from MainScene.");
+        CoopSoldierPointMask engineerMask = masks.Soldiers.Single(soldier =>
+            soldier.BehaviorType == "SoldierBehaviourEngineer");
+        CoopSoldierPointMask parachuterMask = masks.Soldiers.Single(soldier =>
+            soldier.BehaviorType == "SoldierBehaviourParachuter");
+        CoopSoldierPointMask swatMask = masks.Soldiers.Single(soldier =>
+            soldier.BehaviorType == "SoldierBehaviourSwat");
+        if (CoopEnemyPointSelection.InitialMask(engineerMask, false) != 256 ||
+            CoopEnemyPointSelection.InitialMask(parachuterMask, false) != 1 ||
+            CoopEnemyPointSelection.InitialMask(parachuterMask, true) != 6 ||
+            CoopEnemyPointSelection.InitialMask(swatMask, false) != 33 ||
+            CoopEnemyPointSelection.InitialMask(swatMask, true) != 32)
+            throw new Exception("Special soldier point acceptance differs from Client.");
 
         CoopEnemyPoint? nearest = CoopEnemyPointSelection.SelectOrdinary(
             desert, assaulter.Mask, obstacle.TransformPosition,
@@ -2956,6 +2968,26 @@ internal static class CombatContentTests
         if (!reservations.Release(100) || reservations.Release(100) ||
             reservations.OccupiedPointIds.Count != 0)
             throw new Exception("Enemy death did not free its destination once.");
+        reservations.SetEngineerTurret(engineer, true);
+        if (reservations.TryReserve(102, engineer) ||
+            !reservations.OccupiedPointIds.Contains(engineer.ComponentFileId))
+            throw new Exception("Live engineer turret left its point free.");
+        reservations.SetEngineerTurret(engineer, false);
+        if (!reservations.TryReserve(102, engineer) ||
+            !reservations.Release(102))
+            throw new Exception("Destroyed engineer turret did not free its point.");
+
+        Vector3 obstacleStart = CoopEnemyPointSelection.GeneratePosition(
+            obstacle, 0);
+        Vector3 obstacleEnd = CoopEnemyPointSelection.GeneratePosition(
+            obstacle, 1);
+        if (Vector3.Distance(obstacleStart, obstacle.SegmentStart!.Value) >
+                0.00001f ||
+            Vector3.Distance(obstacleEnd, obstacle.SegmentEnd!.Value) >
+                0.00001f ||
+            CoopEnemyPointSelection.GeneratePosition(engineer, 0.5f) !=
+                engineer.Position)
+            throw new Exception("Point destination generation differs from Client.");
 
         CoopEnemyPoint? tooClose = CoopEnemyPointSelection.SelectOrdinary(
             tiedMap, 2, Vector3.Zero, new HashSet<int>(),
@@ -3007,7 +3039,7 @@ internal static class CombatContentTests
         {
             File.Delete(damagedPath);
         }
-        return 20;
+        return 27;
     }
 
     private static int PointBit(CoopEnemyPoint point) => point.ComponentType switch

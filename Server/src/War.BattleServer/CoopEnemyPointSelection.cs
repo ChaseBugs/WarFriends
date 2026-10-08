@@ -78,6 +78,27 @@ public sealed class CoopEnemyPointMaskCatalog
 /// </summary>
 public static class CoopEnemyPointSelection
 {
+    /// <summary>
+    /// Some soldiers override AcceptsPoint or change their mask before their
+    /// initial GetPoint call. Rusher descendants use a separate shield-linked
+    /// point list and must not enter this ordinary selection path.
+    /// </summary>
+    public static int InitialMask(CoopSoldierPointMask soldier, bool spawnedByCard)
+    {
+        ArgumentNullException.ThrowIfNull(soldier);
+        return soldier.BehaviorType switch
+        {
+            "SoldierBehaviourEngineer" => 256,
+            "SoldierBehaviourParachuter" => spawnedByCard ? 6 : 1,
+            "SoldierBehaviourSwat" => spawnedByCard ? 32 : soldier.Mask,
+            "SoldierBehaviourCommando" or "SoldierBehaviourFlamethrower" or
+            "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper" =>
+                throw new NotSupportedException(
+                    "Rusher initial points require the active player shield."),
+            _ => soldier.Mask
+        };
+    }
+
     public static CoopEnemyPoint? SelectOrdinary(
         CoopMapEnemyPoints map, int currentMask, Vector3 soldierPosition,
         IReadOnlySet<int> occupiedComponentIds,
@@ -137,6 +158,26 @@ public static class CoopEnemyPointSelection
         "EnemyPointMech" => 8192,
         _ => throw new InvalidDataException("Unknown co-op enemy point type.")
     };
+
+    /// <summary>
+    /// EnemyPoint.GeneratePosition runs after SetFinalTarget reserves the
+    /// point. Only obstacle points randomize; other subclasses use their
+    /// validated fixed/effective position.
+    /// </summary>
+    public static Vector3 GeneratePosition(CoopEnemyPoint point,
+        float obstacleFraction)
+    {
+        ArgumentNullException.ThrowIfNull(point);
+        if (!float.IsFinite(obstacleFraction) ||
+            obstacleFraction < 0 || obstacleFraction > 1)
+            throw new ArgumentOutOfRangeException(nameof(obstacleFraction));
+        if (point.ComponentType != "EnemyPointObstacle")
+            return point.Position;
+        if (point.SegmentStart is not Vector3 start ||
+            point.SegmentEnd is not Vector3 end)
+            throw new InvalidDataException("Obstacle destination lacks its segment.");
+        return Vector3.Lerp(start, end, obstacleFraction);
+    }
 }
 
 /// <summary>
@@ -148,8 +189,10 @@ public sealed class CoopEnemyPointReservations
     private readonly HashSet<int> knownPointIds;
     private readonly Dictionary<ulong, int> pointByEnemy = [];
     private readonly Dictionary<int, ulong> enemyByPoint = [];
+    private readonly HashSet<int> blockedByTurret = [];
 
-    public IReadOnlySet<int> OccupiedPointIds => enemyByPoint.Keys.ToHashSet();
+    public IReadOnlySet<int> OccupiedPointIds => enemyByPoint.Keys
+        .Concat(blockedByTurret).ToHashSet();
 
     public CoopEnemyPointReservations(CoopMapEnemyPoints map)
     {
@@ -166,7 +209,8 @@ public sealed class CoopEnemyPointReservations
         if (enemyId == 0 || !knownPointIds.Contains(target.ComponentFileId))
             throw new ArgumentOutOfRangeException(nameof(enemyId));
         int pointId = target.ComponentFileId;
-        if (enemyByPoint.TryGetValue(pointId, out ulong owner) &&
+        if (blockedByTurret.Contains(pointId) ||
+            enemyByPoint.TryGetValue(pointId, out ulong owner) &&
             owner != enemyId)
             return false;
         if (pointByEnemy.TryGetValue(enemyId, out int previousPoint))
@@ -186,5 +230,18 @@ public sealed class CoopEnemyPointReservations
             return false;
         enemyByPoint.Remove(pointId);
         return true;
+    }
+
+    public void SetEngineerTurret(CoopEnemyPoint point, bool present)
+    {
+        ArgumentNullException.ThrowIfNull(point);
+        if (point.ComponentType != "EnemyPointEngineerTurret" ||
+            !knownPointIds.Contains(point.ComponentFileId))
+            throw new ArgumentException(
+                "Point is not a turret destination on this map.", nameof(point));
+        if (present)
+            blockedByTurret.Add(point.ComponentFileId);
+        else
+            blockedByTurret.Remove(point.ComponentFileId);
     }
 }
