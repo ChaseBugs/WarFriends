@@ -23,6 +23,13 @@ Mongo is the only required data service. Battle matchmaking now publishes a pair
 
 ## Windows: verified smoke test
 
+For a repeatable source/build/test checkpoint on Windows or Linux, run
+`python Server/scripts/verify_battle_checkpoint.py` from the repository root.
+Add `--native-smoke` to run the platform's isolated MongoDB, Backend, and UDP
+smoke after those checks; on Windows, `--mongo-executable PATH` selects mongod.
+`--list` prints the exact stages. This checkpoint does not replace Unity Play
+Mode, Android, two real Clients, or production Linux-host release validation.
+
 Install .NET 10 SDK and native MongoDB. From the repository root:
 
 ```powershell
@@ -31,7 +38,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Server/scripts/Smoke.ps1 -Mo
 
 Supply your installed mongod path, or omit the parameter if it is on PATH. This launches and initiates an isolated single-node Mongo replica set on 27028, backend on 18080, and UDP host on 30080. It uses generated development secrets, checks two independent clients, stops only processes it started, restores the calling environment, and retains test data/logs under ignored `Server/.local/`. No existing database is modified.
 
-Verified on Windows: build with zero warnings/errors, **1,029 protocol/admission/replay checks** including 1,000 malformed-packet fuzz checks, **more than 49,100 BattleServer assertions**, and **74 live MongoDB/HTTP/protobuf/UDP checks**. The live run includes malformed probe rejection, a two-peer match that pauses and resumes through a rotated UDP grant, idempotent reconnect-request retry, old-session revocation, and authenticated fetch/ack of unscored terminal evidence across two BattleServer process restarts. The durable terminal snapshot is checked byte-for-byte against the UDP result. These are console test executables; invoke them with `dotnet run`, not `dotnet test`.
+Verified on Windows on 2026-10-09: build with zero warnings/errors, **1,034 protocol/admission/replay checks** including 1,000 malformed-packet fuzz checks, **138,509 BattleServer assertions**, and **74 live MongoDB/HTTP/protobuf/UDP checks**. The live run includes malformed probe rejection, a two-peer match that pauses and resumes through a rotated UDP grant, idempotent reconnect-request retry, old-session revocation, and authenticated fetch/ack of unscored terminal evidence across two BattleServer process restarts. The durable terminal snapshot is checked byte-for-byte against the UDP result. These are console test executables; invoke them with `dotnet run`, not `dotnet test`.
 
 ## Manual development
 
