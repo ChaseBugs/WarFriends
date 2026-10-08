@@ -2806,6 +2806,39 @@ internal static class CombatContentTests
             cornerDestinations.PointTypeFor(cornerEnemy.EntityId) !=
                 "EnemyPointCorner")
             throw new Exception("Co-op corner fixture selected a different point.");
+        CoopAssignedEnemyDestination cornerDestination =
+            cornerRuntime.EnemyDestination(cornerEnemy.EntityId) ??
+            throw new Exception("Corner Assaulter lacks a destination.");
+        ArmyNavMeshCorridor cornerCorridor = infantryNavigation
+            .PlanSourceSpawnCorridor(catalog, 0,
+                cornerEnemy.SpawnComponentFileId,
+                cornerDestination.PointComponentFileId,
+                new Vector3(cornerEnemy.CurrentX, cornerEnemy.CurrentY,
+                    cornerEnemy.CurrentZ), cornerDestination.Position) ??
+            throw new Exception("Corner Assaulter lacks a host path.");
+        var cornerPath = new CoopInfantryPathState(cornerCorridor,
+            enemyCombat.MovementSpeed("Assaulter"), firstTick: 8);
+        ulong cornerArrivalTick = Enumerable.Range(9, 291)
+            .Select(value => (ulong)value).First(candidate =>
+                Vector2.Distance(new Vector2(
+                    cornerPath.PositionAt(candidate).X,
+                    cornerPath.PositionAt(candidate).Z),
+                    new Vector2(cornerDestination.Position.X,
+                        cornerDestination.Position.Z)) < 0.04f);
+        cornerRuntime.Advance(cornerArrivalTick + 14);
+        if (cornerRuntime.PlaceSettledCornerAssaulterHitboxes(
+                cornerEnemy.EntityId).Count != 0)
+            throw new Exception("Corner hitboxes appeared during the source tween.");
+        cornerRuntime.Advance(cornerArrivalTick + 15);
+        IReadOnlyList<PlayerHitbox> settledCorner = cornerRuntime
+            .PlaceSettledCornerAssaulterHitboxes(cornerEnemy.EntityId);
+        CoopEnemyCollisionFrame cornerFrame = cornerRuntime
+            .CurrentEnemyCollisionFrame();
+        if (settledCorner.Count != 3 ||
+            cornerFrame.Targets.Count(target =>
+                target.EntityId == cornerEnemy.EntityId) != 3 ||
+            !cornerFrame.UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+            throw new Exception("Settled corner pose lost its diagnostic-only gate.");
         cornerRuntime.Advance(300);
         CoopInfantryPointArrival? cornerArrival = cornerRuntime
             .InfantryPointArrival(cornerEnemy.EntityId);

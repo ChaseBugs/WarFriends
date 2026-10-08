@@ -1627,6 +1627,56 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Samples the source idle rig after EnemyController's corner position
+    /// and rotation tween has finished. The sample remains diagnostic until
+    /// the Unity corner transition and following shot pose are verified.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceSettledCornerAssaulterHitboxes(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || enemyPoses == null ||
+            enemyDestinations == null ||
+            !infantryPointArrivals.TryGetValue(entityId,
+                out CoopInfantryPointArrival? arrival) ||
+            arrival.State != CoopInfantryPointState.CornerHiding ||
+            tick < arrival.Tick + 15 ||
+            tick >= arrival.FirstShootEligibleTick ||
+            (arrival.FirstCornerChangeTick.HasValue &&
+                tick >= arrival.FirstCornerChangeTick.Value) ||
+            infantryPaths.ContainsKey(entityId) ||
+            infantryFirstTargets.ContainsKey(entityId) ||
+            infantryShotWindups.ContainsKey(entityId))
+            return [];
+
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0 &&
+            spawn.PoseTick == arrival.Tick);
+        CoopEnemyPoint? corner = enemyDestinations.PointFor(entityId);
+        if (enemy == null || corner == null ||
+            corner.ComponentFileId != arrival.PointComponentFileId ||
+            corner.ComponentType != "EnemyPointCorner" ||
+            corner.CornerDirection is not Vector3 direction ||
+            !PlayerHitbox.Finite(direction) ||
+            MathF.Abs(direction.Y) > 0.0001f ||
+            Vector2.Distance(new Vector2(enemy.CurrentX, enemy.CurrentZ),
+                new Vector2(corner.Position.X, corner.Position.Z)) >= 0.05f)
+            return [];
+
+        Vector3 facing = -direction;
+        float heading = MathF.Atan2(facing.X, facing.Z);
+        Quaternion rotation = Quaternion.CreateFromAxisAngle(
+            Vector3.UnitY, heading);
+        Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        string clip = combat.InfantryIdleClip(enemy.Behaviour)!;
+        float seconds = (tick - arrival.Tick) /
+            (float)MatchManifest.TickRate;
+        return enemyPoses.Place(clip, position, rotation,
+            seconds, $"coop/{entityId}/");
+    }
+
+    /// <summary>
     /// Places the recovered Assault Helicopter body and front glass at its
     /// current host pose. The five body meshes, body box, and front glass
     /// retain distinct damage-part identities.
@@ -1775,13 +1825,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 "DeployHeli" => PlaceTransportHelicopterTargets(enemy.EntityId),
                 "Humvee" or "Buggy" or "Tank" or "Transporter" =>
                     PlaceNewGroundVehicleTargets(enemy.EntityId),
-                // EnemyController starts a Crawl state at obstacle points and
-                // a 0.5-second position/rotation tween at corner points.
-                // The spawn idle sample is no longer a current hitbox then.
-                _ => PlaceNewInfantryHitboxes(enemy.EntityId)
-                    .Select(hitbox => new DynamicShotTarget(enemy.EntityId,
-                        0, 23, hitbox, ArmyInfantry: true))
-                    .ToArray()
+                _ => PlaceInfantryDiagnosticTargets(enemy)
             };
             targets.AddRange(placed);
             // The attached/descending rope crew are separate live soldiers.
@@ -1791,12 +1835,25 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 transportHelicopterCrew.TryGetValue(enemy.EntityId,
                     out HelicopterCrewState? crew) &&
                 crew.Snapshot().Count > 0;
-            if (placed.Count == 0 || hasUnplacedCrew ||
+            bool unverifiedCorner = enemy.Behaviour == "Assaulter" &&
+                enemy.SpawnTick != tick && placed.Count != 0;
+            if (placed.Count == 0 || unverifiedCorner || hasUnplacedCrew ||
                 (enemy.Behaviour == "DeployHeli" && enemy.GunnerHealth > 0))
                 unplaced.Add(enemy.EntityId);
         }
         return new CoopEnemyCollisionFrame(targets.ToArray(),
             unplaced.ToArray(), BossUnplaced: boss?.Health > 0);
+    }
+
+    private IReadOnlyList<DynamicShotTarget> PlaceInfantryDiagnosticTargets(
+        BattleCoopEnemySpawn enemy)
+    {
+        IReadOnlyList<PlayerHitbox> parts = PlaceNewInfantryHitboxes(
+            enemy.EntityId);
+        if (parts.Count == 0)
+            parts = PlaceSettledCornerAssaulterHitboxes(enemy.EntityId);
+        return parts.Select(part => new DynamicShotTarget(enemy.EntityId,
+            0, 23, part, ArmyInfantry: true)).ToArray();
     }
 
     /// <summary>
