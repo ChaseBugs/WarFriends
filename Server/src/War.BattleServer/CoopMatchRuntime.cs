@@ -54,11 +54,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     private readonly MatchManifest manifest;
+    private readonly MissionCatalog missionCatalog;
     private readonly CoopMissionEngine mission;
     private readonly MissionRule missionRule;
     private readonly Func<string, IReadOnlyList<CoopSpawnPoint>> spawnCandidates;
     private readonly CoopEnemyCombatCatalog combat;
     private readonly CoopEnemyDestinationState? enemyDestinations;
+    private readonly CoopNavMeshConnectivity? infantryNavigation;
+    private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -124,7 +127,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopAirWaypointCatalog? coopAirWaypoints = null,
         Func<float>? chooseAirDirection = null,
         CoopEnemyDestinationState? enemyDestinations = null,
-        Func<int, int>? chooseRusherPlayer = null)
+        Func<int, int>? chooseRusherPlayer = null,
+        CoopNavMeshConnectivity? infantryNavigation = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
@@ -133,7 +137,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             coopAirWaypoints: coopAirWaypoints,
             chooseAirDirection: chooseAirDirection,
             enemyDestinations: enemyDestinations,
-            chooseRusherPlayer: chooseRusherPlayer)
+            chooseRusherPlayer: chooseRusherPlayer,
+            infantryNavigation: infantryNavigation)
     {
     }
 
@@ -148,9 +153,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopAirWaypointCatalog? coopAirWaypoints = null,
         Func<float>? chooseAirDirection = null,
         CoopEnemyDestinationState? enemyDestinations = null,
-        Func<int, int>? chooseRusherPlayer = null)
+        Func<int, int>? chooseRusherPlayer = null,
+        CoopNavMeshConnectivity? infantryNavigation = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        missionCatalog = catalog;
         manifest = MatchManifest.Validate(allocation);
         MissionMapRule? missionMap = manifest.MissionIndex is int selectedMission
             ? catalog.MapForMission(selectedMission) : null;
@@ -169,6 +176,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             throw new InvalidDataException(
                 "Co-op enemy destinations differ from the signed mission map.");
         this.enemyDestinations = enemyDestinations;
+        if (infantryNavigation != null && enemyDestinations == null)
+            throw new InvalidDataException(
+                "Co-op infantry navigation needs host-owned enemy destinations.");
+        this.infantryNavigation = infantryNavigation;
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
@@ -310,7 +321,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemyDestinations.TryRetarget(entityId, enemy.Behaviour,
                 enemy.CardUnit, position, sniperOpponent);
         if (destination != null)
+        {
+            PlanInfantryPath(enemy, destination, position);
             stateRevision++;
+        }
         return destination;
     }
 
@@ -447,6 +461,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceDroneFlights();
             AdvanceAssaultHelicopterFlights();
             AdvanceTransportHelicopterFlights();
+            AdvanceInfantryPaths();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
             {
@@ -677,8 +692,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             if (sourceHost.Admitted && sourceHost.Ready && !sourceHost.Dead)
                 sniperOpponent = sourceHost.Position;
         }
-        enemyDestinations?.TryAssignInitial(enemy.EntityId, behaviour,
-            cardUnit, point.Position, rusherTarget, sniperOpponent);
+        CoopAssignedEnemyDestination? destination =
+            enemyDestinations?.TryAssignInitial(enemy.EntityId, behaviour,
+                cardUnit, point.Position, rusherTarget, sniperOpponent);
+        if (destination != null)
+            PlanInfantryPath(enemy, destination, point.Position);
         if (point.SourceRotation is Quaternion rotation)
         {
             enemy.SourceRotation = new BattleJointRotation
@@ -738,6 +756,57 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             }
         }
         return enemy;
+    }
+
+    private void PlanInfantryPath(BattleCoopEnemySpawn enemy,
+        CoopAssignedEnemyDestination destination, Vector3 start)
+    {
+        infantryPaths.Remove(enemy.EntityId);
+        // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
+        // branch. Rusher, Warp, Parachute, and specialist state machines need
+        // separate source rules before their movement can be simulated.
+        if (infantryNavigation == null || enemy.Behaviour != "Assaulter")
+            return;
+
+        int missionIndex = manifest.MissionIndex!.Value;
+        Vector3? surfaceStart = infantryNavigation.SampleNearest(
+            missionCatalog, missionIndex, start, 3f);
+        Vector3? surfaceEnd = infantryNavigation.SampleNearest(
+            missionCatalog, missionIndex, destination.Position, 3f);
+        if (surfaceStart == null || surfaceEnd == null)
+            return;
+
+        ArmyNavMeshCorridor? corridor = infantryNavigation.PlanCorridor(
+            missionCatalog, missionIndex, surfaceStart.Value,
+            surfaceEnd.Value);
+        if (corridor == null || !corridor.PlanarCovered)
+            return;
+
+        infantryPaths[enemy.EntityId] = new CoopInfantryPathState(
+            corridor, combat.MovementSpeed(enemy.Behaviour), tick);
+    }
+
+    private void AdvanceInfantryPaths()
+    {
+        var arrived = new List<ulong>();
+        foreach ((ulong entityId, CoopInfantryPathState path) in infantryPaths)
+        {
+            BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
+                spawn.EntityId == entityId);
+            if (enemy.DeathTick != 0)
+                continue;
+
+            Vector3 position = path.PositionAt(tick);
+            enemy.CurrentX = position.X;
+            enemy.CurrentY = position.Y;
+            enemy.CurrentZ = position.Z;
+            enemy.PoseTick = tick;
+            stateRevision++;
+            if (path.HasArrived(tick))
+                arrived.Add(entityId);
+        }
+        foreach (ulong entityId in arrived)
+            infantryPaths.Remove(entityId);
     }
 
     /// <summary>
@@ -1043,6 +1112,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             enemy.DeathTick = impactTick;
             enemyDestinations?.Release(entityId);
+            infantryPaths.Remove(entityId);
             if (enemy.Behaviour == "Drone")
             {
                 airPathReservations?.Release(entityId);
@@ -1670,6 +1740,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (Terminal)
             return;
         enemyDestinations?.ReleaseAll();
+        infantryPaths.Clear();
         foreach (Participant participant in participants.Values)
         {
             participant.Route = null;

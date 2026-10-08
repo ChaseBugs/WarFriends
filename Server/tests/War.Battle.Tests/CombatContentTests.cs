@@ -1517,6 +1517,82 @@ internal static class CombatContentTests
             destinationRuntime.TryHostRetargetEnemy(destinationEnemy.EntityId) != null)
             throw new Exception("Co-op enemy death retained its point claim.");
 
+        CoopNavMeshSourceCatalog navSources = CoopNavMeshSourceCatalog.Load(
+            Path.Combine(directory, "recovered-coop-navmesh-sources.json"),
+            catalog);
+        CoopNavMeshTriangulationCatalog navTriangles =
+            CoopNavMeshTriangulationCatalog.Load(Path.Combine(directory,
+                "recovered-coop-navmesh-triangulation.json"), catalog,
+                navSources);
+        CoopNavMeshConnectivity infantryNavigation =
+            CoopNavMeshConnectivity.Build(navTriangles);
+        IReadOnlyList<CoopSpawnPoint> assaultCandidates =
+            new CoopAiSpawnSelector(catalog, spawnPoints, 0)
+                .Candidates("Assaulter");
+        int walkSpawnIndex = -1;
+        for (int index = 0; index < assaultCandidates.Count; index++)
+        {
+            CoopSpawnPoint candidate = assaultCandidates[index];
+            CoopEnemyPoint? target = CoopEnemyPointSelection.SelectOrdinary(
+                enemyMap, 14, candidate.Position, new HashSet<int>());
+            Vector3? candidateStart = infantryNavigation.SampleNearest(
+                catalog, 0, candidate.Position, 3f);
+            Vector3? candidateEnd = target == null ? null :
+                infantryNavigation.SampleNearest(catalog, 0,
+                    target.Position, 3f);
+            if (candidateStart.HasValue && candidateEnd.HasValue &&
+                infantryNavigation.PlanCorridor(catalog, 0,
+                    candidateStart.Value, candidateEnd.Value) is
+                    { PlanarCovered: true })
+            {
+                walkSpawnIndex = index;
+                break;
+            }
+        }
+        if (walkSpawnIndex < 0)
+            throw new Exception("No source Assaulter spawn has a covered route.");
+        var walkingDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat);
+        var walkingRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => walkSpawnIndex,
+            enemyDestinations: walkingDestinations,
+            infantryNavigation: infantryNavigation);
+        walkingRuntime.Admit(firstPlayer);
+        walkingRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            walkingRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = walkingRuntime.ManifestHash
+                }
+            });
+        walkingRuntime.Advance(8);
+        BattleCoopEnemySpawn walkingStart = walkingRuntime.Snapshot()
+            .Coop.EnemySpawns.Single();
+        walkingRuntime.Advance(9);
+        BattleCoopEnemySpawn walkingStep = walkingRuntime.Snapshot()
+            .Coop.EnemySpawns.Single();
+        if (walkingStep.PoseTick != 9 ||
+            new Vector3(walkingStep.CurrentX, walkingStep.CurrentY,
+                walkingStep.CurrentZ) == new Vector3(walkingStart.CurrentX,
+                walkingStart.CurrentY, walkingStart.CurrentZ) ||
+            !walkingRuntime.CurrentEnemyCollisionFrame().UnplacedEnemyIds
+                .Contains(walkingStep.EntityId))
+            throw new Exception("Host Assaulter did not advance its covered path safely.");
+        if (!walkingRuntime.ApplyHostEnemyDamage(walkingStep.EntityId,
+                walkingStep.Health, 9))
+            throw new Exception("Host could not stop a dead walking enemy.");
+        walkingRuntime.Advance(10);
+        BattleCoopEnemySpawn stoppedEnemy = walkingRuntime.Snapshot()
+            .Coop.EnemySpawns.Single();
+        if (stoppedEnemy.CurrentX != walkingStep.CurrentX ||
+            stoppedEnemy.CurrentZ != walkingStep.CurrentZ ||
+            stoppedEnemy.PoseTick != 9)
+            throw new Exception("Dead infantry kept moving after its host-confirmed death.");
+
         MissionRule rusherRule = catalog.Get(2);
         MissionMapRule rusherMissionMap = catalog.MapForMission(2);
         MatchManifest rusherAllocation = coop with
