@@ -3638,7 +3638,8 @@ internal static class CombatContentTests
             throw new Exception("A source card event must preserve its card upgrade progress.");
 
         string signingKey = Convert.ToBase64String(new byte[32]);
-        var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat);
+        var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes,
+            enemyCombat, playerWeaponContent: content);
         var udpEndpoint = new MatchEndpoint(coop, signingKey, udpRuntime, 0);
         var tokens = new MatchTokens(signingKey);
         var claims = new MatchAdmission
@@ -3725,6 +3726,34 @@ internal static class CombatContentTests
                 mainAnchors[0].Position.Z ||
             firstView.Players.Single(player => player.PlayerId == secondPlayer).Moving)
             throw new Exception("Both UDP allies must observe the same host-owned movement.");
+
+        BattlePlayerState stationaryAlly = secondView.Players.Single(player =>
+            player.PlayerId == secondPlayer);
+        CoopPlayerAnchor stationaryCover = spawnPoints.MapForMission(catalog,
+            coop.MissionIndex!.Value).PlayerPositions.Single(anchor =>
+                anchor.Index == stationaryAlly.CoverIndex);
+        Vector3 stationaryOrigin = new(stationaryAlly.PositionX,
+            stationaryAlly.PositionY, stationaryAlly.PositionZ);
+        Vector3 stationaryTarget = stationaryOrigin + Vector3.Transform(
+            Vector3.UnitZ, stationaryCover.SourceRotation!.Value) * 3;
+        if (!udpRuntime.ConfirmHostPlayerShot(secondPlayer,
+                stationaryAlly.ActiveWeaponSlot, stationaryTarget, 2))
+            throw new Exception("The host could not confirm a stationary co-op shot.");
+        udpEndpoint.Advance(3);
+        MatchSnapshot firstShotView = Send(claims, firstKey, peer, 6, poll)
+            .MatchReply.Snapshot;
+        MatchSnapshot secondShotView = Send(secondClaims, secondKey,
+            secondPeer, 5, poll).MatchReply.Snapshot;
+        RiflePoseState? remoteShotPose = firstShotView.Players.Single(player =>
+            player.PlayerId == secondPlayer).RiflePose;
+        if (!firstShotView.ToByteArray().AsSpan().SequenceEqual(
+                secondShotView.ToByteArray()) ||
+            remoteShotPose == null ||
+            !RiflePoseProjection.ValidWire(remoteShotPose, 3) ||
+            remoteShotPose.Layers.Count != 1 ||
+            (int)remoteShotPose.Layers[0].Clip is not (2 or 5))
+            throw new Exception(
+                "Authenticated co-op peers did not receive the host shot pose.");
 
         VerifyCoopSdkCoverMove(coop, catalog, spawnPoints, routes,
             enemyCombat, firstPlayer, secondPlayer).GetAwaiter().GetResult();
