@@ -107,7 +107,7 @@ public sealed class ArmyNavMeshConnectivity
         public static EdgeKey Make(VertexKey a,VertexKey b)
             =>a.CompareTo(b)<=0 ? new(a,b) : new(b,a);
     }
-    private sealed class Graph
+    internal sealed class Graph
     {
         private readonly record struct Neighbor(int Triangle,Vector3 A,Vector3 B)
         { public Vector3 Portal => (A+B)/2f; }
@@ -120,8 +120,14 @@ public sealed class ArmyNavMeshConnectivity
         private readonly List<Neighbor>[] neighbors;
         public int ComponentCount { get; }
         public Graph(ArmyNavMeshTriangulation mesh)
+            : this(mesh.Vertices, mesh.Indices)
         {
-            vertices=mesh.Vertices;indices=mesh.Indices;
+        }
+
+        public Graph(IReadOnlyList<Vector3> sourceVertices,
+            IReadOnlyList<int> sourceIndices)
+        {
+            vertices=sourceVertices;indices=sourceIndices;
             int count=indices.Count/3;
             var parent=Enumerable.Range(0,count).ToArray();
             centroids=new Vector3[count];

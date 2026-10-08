@@ -2812,7 +2812,54 @@ internal static class CombatContentTests
             "recovered-coop-navmesh-sources.json");
         CoopNavMeshSourceCatalog navigation =
             CoopNavMeshSourceCatalog.Load(manifestPath, missions);
+        string triangleManifest = Path.Combine(directory,
+            "recovered-coop-navmesh-triangulation.json");
+        CoopNavMeshTriangulationCatalog triangles =
+            CoopNavMeshTriangulationCatalog.Load(triangleManifest,
+                missions, navigation);
+        CoopNavMeshConnectivity connectivity =
+            CoopNavMeshConnectivity.Build(triangles);
+        CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
+            Path.Combine(directory, "recovered-coop-spawn-points.json"),
+            missions);
+        CoopMapSpawnPoints desertSpawns = spawnPoints.MapForMission(
+            missions, 0);
+        Vector3? firstSurface = connectivity.SampleNearest(missions, 0,
+            desertSpawns.PlayerPositions[1].Position, 3f);
+        Vector3? secondSurface = connectivity.SampleNearest(missions, 0,
+            desertSpawns.PlayerPositions[2].Position, 3f);
+        ArmyNavMeshCorridor? defendCorridor =
+            firstSurface.HasValue && secondSurface.HasValue
+                ? connectivity.PlanCorridor(missions, 0,
+                    firstSurface.Value, secondSurface.Value)
+                : null;
+        CoopEnemyPointCatalog enemyPoints = CoopEnemyPointCatalog.Load(
+            Path.Combine(directory, "recovered-coop-enemy-points.json"),
+            missions, spawnPoints);
+        CoopSpawnPoint infantrySpawn = desertSpawns.EnemySpawnPoints.First(
+            point => point.ComponentType == "SpawnPoint");
+        CoopEnemyPoint? infantryTarget =
+            CoopEnemyPointSelection.SelectOrdinary(
+                enemyPoints.MapForMission(missions, 0), 14,
+                infantrySpawn.Position, new HashSet<int>());
+        Vector3? infantryStart = connectivity.SampleNearest(missions, 0,
+            infantrySpawn.Position, 3f);
+        Vector3? infantryEnd = infantryTarget == null ? null :
+            connectivity.SampleNearest(missions, 0,
+                infantryTarget.Position, 3f);
+        ArmyNavMeshCorridor? infantryCorridor =
+            infantryStart.HasValue && infantryEnd.HasValue
+                ? connectivity.PlanCorridor(missions, 0,
+                    infantryStart.Value, infantryEnd.Value)
+                : null;
         if (navigation.Maps.Count != 5 ||
+            triangles.Maps.Count != 5 ||
+            triangles.Maps.Sum(map => map.Vertices.Count) != 21_068 ||
+            triangles.Maps.Sum(map => map.Indices.Count / 3) != 9_682 ||
+            triangles.MapForMission(missions, 0).Scene != "Desert_New" ||
+            connectivity.ComponentCount(missions, 0) <= 0 ||
+            defendCorridor == null || !defendCorridor.PlanarCovered ||
+            infantryCorridor == null || !infantryCorridor.PlanarCovered ||
             navigation.MapForMission(missions, 0).Scene != "Desert_New" ||
             navigation.MapForMission(missions, 70).Scene != "Park_Single" ||
             navigation.Maps.Count(map => map.Format == "unity-binary-2018") != 4 ||
@@ -2822,11 +2869,37 @@ internal static class CombatContentTests
         string temporaryDirectory = Path.Combine(Path.GetTempPath(),
             $"war-coop-navigation-{Guid.NewGuid():N}");
         string temporaryAssets = Path.Combine(temporaryDirectory, "coop-navmesh");
+        string temporaryTriangles = Path.Combine(temporaryDirectory,
+            "coop-navmesh-triangulation");
         Directory.CreateDirectory(temporaryAssets);
+        Directory.CreateDirectory(temporaryTriangles);
         try
         {
             File.Copy(manifestPath, Path.Combine(temporaryDirectory,
                 Path.GetFileName(manifestPath)));
+            File.Copy(triangleManifest, Path.Combine(temporaryDirectory,
+                Path.GetFileName(triangleManifest)));
+            foreach (string mesh in Directory.GetFiles(Path.Combine(directory,
+                         "coop-navmesh-triangulation"), "*.json"))
+                File.Copy(mesh, Path.Combine(temporaryTriangles,
+                    Path.GetFileName(mesh)));
+            string damagedMesh = Path.Combine(temporaryTriangles,
+                "NavMesh_7.json");
+            byte[] meshBytes = File.ReadAllBytes(damagedMesh);
+            meshBytes[^1] ^= 1;
+            File.WriteAllBytes(damagedMesh, meshBytes);
+            try
+            {
+                _ = CoopNavMeshTriangulationCatalog.Load(
+                    Path.Combine(temporaryDirectory,
+                        Path.GetFileName(triangleManifest)),
+                    missions, navigation);
+                throw new Exception("A damaged co-op triangle mesh was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                // A packaged mesh must match Unity's pinned export bytes.
+            }
             foreach (CoopNavMeshSource map in navigation.Maps)
             {
                 File.Copy(Path.Combine(directory, "coop-navmesh", map.PackagedAsset),
@@ -2845,7 +2918,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 5;
+                return 8;
             }
         }
         finally

@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "navigationSourceSha256": "8a3e7b87defcdd70d5ba5b89b2c2b26cb25e052698db9016033fdc0a4703977f",
+  "maps": [
+    {
+      "stage": 1,
+      "scene": "Desert_New",
+      "sceneSha256": "e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5",
+      "navMeshSha256": "1dbb45220c0177624d46ba646b4c65af9ecd24b9d4684aab983bd9062913544d",
+      "file": "NavMesh_7.json",
+      "sha256": "3129e0f9a721d32f728acaaf06e05b0fef52daeca9b5e29f0ad05913f3f461ab",
+      "vertices": 2397,
+      "triangles": 1123
+    },
+    {
+      "stage": 2,
+      "scene": "Snow_Single",
+      "sceneSha256": "a797c945ccc4e4307ad55611e16db086d3ace63f31a535388f7e5bbb461daf27",
+      "navMeshSha256": "4415c4a08f1811bb8a6515c29d863a6c174a7796c09edc4bfa7fcc36c93c3a8b",
+      "file": "NavMesh_1.json",
+      "sha256": "5357049bf547199d8af3137242d27d26d85eed1d59980aa185d2b1d7a2230b0b",
+      "vertices": 4994,
+      "triangles": 2294
+    },
+    {
+      "stage": 3,
+      "scene": "City_Single",
+      "sceneSha256": "99a24a690a023c8f9c2f1195b727ecdcc22740a6f0479f6148909a22db3f5127",
+      "navMeshSha256": "0ab907c62296712ad3d62d504d37fd64a132f1f161c1887c7673e705329a634a",
+      "file": "NavMesh.json",
+      "sha256": "4b9bd82d87987281b579b00f570f10d1dba580109b848f0e3100f8315e23f7e1",
+      "vertices": 3761,
+      "triangles": 1721
+    },
+    {
+      "stage": 4,
+      "scene": "Aztec_Single",
+      "sceneSha256": "5fbfe89a6ff35e0769d4fcdbd9a80e6c31baec653a3bd78c53b81211cd8b9e17",
+      "navMeshSha256": "28ad9bd4d67b5a7f3dfe2ae1d07d7eafb3d9eb43d62ce1b11cd550cc2efbcecc",
+      "file": "NavMesh_0.json",
+      "sha256": "4ec46d92a0241eb39dc9f1d774cbb5a30e59cba270802bf9b4c86f3aae821641",
+      "vertices": 5637,
+      "triangles": 2575
+    },
+    {
+      "stage": 5,
+      "scene": "Park_Single",
+      "sceneSha256": "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83",
+      "navMeshSha256": "5a638bfc7566c5b76f985ef482520f32a7024d372e144b4399ee60557b9ab4f7",
+      "file": "NavMesh_3.json",
+      "sha256": "ea04f1e014926ceed54d346c81f0cdf4d72eebfc5e6643f7cad9f70f2885030a",
+      "vertices": 4279,
+      "triangles": 1969
+    }
+  ]
+}
