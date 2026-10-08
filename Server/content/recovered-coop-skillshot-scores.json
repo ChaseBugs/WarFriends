@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "battleContentSha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "sheetCodeSha256": "ca0bacbf176b3cd2f59748c0e28e3d612354c6bd37911b89180e27731c61e2aa",
+  "skillCodeSha256": "ec696c62cedcbfba0b7dbd9c109b976280d7c565cc80ebb3a5201ecd1844f720",
+  "rows": [
+    {
+      "flag": 1,
+      "name": "HeadShot",
+      "dictionaryId": "ID_SKILL_HEADSHOT",
+      "missionPoints": 5
+    },
+    {
+      "flag": 2,
+      "name": "Runner",
+      "dictionaryId": "ID_SKILL_RUNNER",
+      "missionPoints": 1
+    },
+    {
+      "flag": 4,
+      "name": "LongShot",
+      "dictionaryId": "ID_SKILL_LONGSHOT",
+      "missionPoints": 2
+    },
+    {
+      "flag": 8,
+      "name": "Covered",
+      "dictionaryId": "ID_SKILL_COVERED",
+      "missionPoints": 1
+    },
+    {
+      "flag": 16,
+      "name": "OneHitKill",
+      "dictionaryId": "ID_SKILL_ONEHITKILL",
+      "missionPoints": 3
+    },
+    {
+      "flag": 32,
+      "name": "DoubleKill",
+      "dictionaryId": "ID_SKILL_DOUBLEKILL",
+      "missionPoints": 5
+    },
+    {
+      "flag": 64,
+      "name": "TrippleKill",
+      "dictionaryId": "ID_SKILL_TRIPLEKILL",
+      "missionPoints": 10
+    },
+    {
+      "flag": 128,
+      "name": "MultiKill",
+      "dictionaryId": "ID_SKILL_MULTIKILL",
+      "missionPoints": 25
+    },
+    {
+      "flag": 256,
+      "name": "SlowMotionKill",
+      "dictionaryId": "ID_SKILL_SLOWMOTION",
+      "missionPoints": 1
+    },
+    {
+      "flag": 512,
+      "name": "VehicleDestroyed",
+      "dictionaryId": "ID_SKILL_VEHICLEKILL",
+      "missionPoints": 10
+    },
+    {
+      "flag": 2048,
+      "name": "RevengeKill",
+      "dictionaryId": "ID_SKILL_REVENGEKILL",
+      "missionPoints": 5
+    },
+    {
+      "flag": 4096,
+      "name": "Kill",
+      "dictionaryId": "ID_SKILL_KILL",
+      "missionPoints": 10
+    },
+    {
+      "flag": 65536,
+      "name": "EnemyPlayerHit",
+      "dictionaryId": "ID_SKILL_PLAYERHIT",
+      "missionPoints": 3
+    },
+    {
+      "flag": 131072,
+      "name": "OnTheMove",
+      "dictionaryId": "ID_SKILL_ONMOVE",
+      "missionPoints": 2
+    },
+    {
+      "flag": 8192,
+      "name": "ExplosiveKill",
+      "dictionaryId": "ID_SKILL_EXPLOSIVE",
+      "missionPoints": 2
+    },
+    {
+      "flag": 262144,
+      "name": "EnviromentalKill",
+      "dictionaryId": "ID_SKILL_ENVIRONMENT",
+      "missionPoints": 2
+    },
+    {
+      "flag": 32768,
+      "name": "ArmyKill",
+      "dictionaryId": "ID_SKILL_ARMYKILL",
+      "missionPoints": 5
+    },
+    {
+      "flag": 16384,
+      "name": "TankDestroyed",
+      "dictionaryId": "ID_SKILL_TANKKILL",
+      "missionPoints": 30
+    },
+    {
+      "flag": 524288,
+      "name": "ArmyPlayerHit",
+      "dictionaryId": "ID_SKILL_ARMYPLAYERHIT",
+      "missionPoints": 1
+    }
+  ]
+}

@@ -12,6 +12,30 @@ using War.Protocol.Transport;
 
 internal static class CombatContentTests
 {
+    private static int VerifyCoopSkillShotScores(string directory, BattleCombatContent content)
+    {
+        string path = Path.Combine(directory, "recovered-coop-skillshot-scores.json");
+        CoopSkillShotScoreCatalog scores = CoopSkillShotScoreCatalog.Load(path,
+            content.Stats.SceneRevision, content.Stats.Revision);
+        if (scores.Rows.Count != 19 || scores.Rows[0].Name != "HeadShot" ||
+            scores.PointsForFlags(0) != 0 ||
+            scores.PointsForFlags(1) != 5 ||
+            scores.PointsForFlags(1 | 2) != 6)
+            throw new Exception("Recovered co-op skill-shot points differ from Client.");
+
+        try
+        {
+            scores.PointsForFlags(1 << 20);
+            throw new Exception("An unknown skill-shot flag was accepted.");
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // The host must establish every flag before it can add Score points.
+        }
+
+        return 6;
+    }
+
     private static int VerifyMissionCatalog(
         string directory, BattleCombatContent content)
     {
@@ -36,6 +60,7 @@ internal static class CombatContentTests
         int coopAssertions = VerifyCoopMissionEngine(catalog);
         int allocationAssertions = VerifyCoopAllocation(
             directory, catalog, content);
+        int skillShotAssertions = VerifyCoopSkillShotScores(directory, content);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
@@ -63,7 +88,7 @@ internal static class CombatContentTests
             document["bossMaps"]![0]!["sceneSha256"] = new string('0', 64);
             RejectMissionCatalog(temporaryPath, document,
                 "A changed boss scene hash was accepted.");
-            return 5 + objectiveAssertions + scoreAssertions +
+            return 5 + skillShotAssertions + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
                 allocationAssertions + mapAssertions + navMeshAssertions +
                 routeAssertions + botAssertions + bossSpawnAssertions;
