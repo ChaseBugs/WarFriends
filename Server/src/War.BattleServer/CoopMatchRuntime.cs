@@ -62,6 +62,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
     private readonly AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshes;
+    private readonly DroneColliderCatalog? droneColliders;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
@@ -141,6 +142,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         playerPoses = playerWeaponContent?.Poses;
         assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
         assaultHelicopterMeshes = playerWeaponContent?.AssaultHelicopterMeshColliders;
+        droneColliders = playerWeaponContent?.DroneColliders;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
@@ -443,6 +445,29 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         hitboxes.Add(assaultHelicopterMeshes.PlaceFrontGlass(
             position, rotation).Hitbox);
         return hitboxes.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Places the source Drone box and sphere at its host-owned spawn tick.
+    /// The returned layer and root ownership distinguish damageable body from
+    /// child detection geometry. Later ticks need host flight simulation.
+    /// </summary>
+    internal IReadOnlyList<DroneCollider> PlaceNewDroneColliders(ulong entityId)
+    {
+        if (phase != BattlePhase.Running || droneColliders == null)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Drone" &&
+            spawn.SpawnTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.SourceRotation != null);
+        if (enemy == null)
+            return [];
+
+        var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
+        var rotation = new Quaternion(enemy.SourceRotation.X,
+            enemy.SourceRotation.Y, enemy.SourceRotation.Z,
+            enemy.SourceRotation.W);
+        return droneColliders.Place(position, rotation);
     }
 
     /// <summary>

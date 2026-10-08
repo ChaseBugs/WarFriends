@@ -167,6 +167,8 @@ A disposable Unity 2018.3 Editor export supplies all 147 referenced Mesh assets:
 
 Those six independently exported meshes match the earlier `recovered-air-unit-unity-geometry.json` vertices and triangle indexes exactly. The existing `AssaultHelicopterBoxColliderCatalog` and `AssaultHelicopterMeshColliderCatalog` already bind the same prefab's body parts and front glass to their damage owners for PvP. `CoopMatchRuntime.PlaceNewAssaultHelicopterHitboxes` now reuses those seven hitboxes for a source-timed co-op Helicopter spawn at its exact host tick and source rotation, and refuses later ticks. A mission-23 Score runtime test proves the placement and stale-pose refusal. This does not establish moving helicopter poses, co-op projectile impacts, or damage authority.
 
+`CoopMatchRuntime.PlaceNewDroneColliders` likewise reuses the existing verified Drone box and sphere at a mission-30 source-timed spawn. It preserves their distinct serialized layers and root ownership, and refuses a stale tick. Drone flight pose, visibility, projectile contact, and damage still need host simulation before the Client's Drone actions can open.
+
 `CoopTerminalScoreValidator` now treats source mission types separately: Kill requires its exact confirmed enemy-death target, Survive succeeds exactly at the deadline, Score remains before its deadline with conserved allied points, and a boss success requires a dead host boss. Focused tests use actual isolated Kill, Survive, and boss results plus forged terminal variants. This validates terminal presentation evidence, not a trusted live battle or Backend reward settlement.
 
 

@@ -1608,6 +1608,46 @@ internal static class CombatContentTests
         if (helicopterRuntime.PlaceNewAssaultHelicopterHitboxes(
                 helicopter.EntityId).Count != 0)
             throw new Exception("A stale Helicopter pose cannot authorize co-op hits.");
+
+        const int droneMissionIndex = 30;
+        MissionMapRule droneMap = catalog.MapForMission(droneMissionIndex);
+        MatchManifest droneAllocation = coop with
+        {
+            MissionIndex = droneMissionIndex,
+            MapId = droneMap.Scene,
+            MapRevision = droneMap.SceneSha256,
+            DurationSeconds = catalog.Get(droneMissionIndex).TimeSeconds
+        };
+        var droneRuntime = new CoopMatchRuntime(droneAllocation,
+            catalog, spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            playerWeaponContent: content);
+        droneRuntime.Admit(firstPlayer);
+        droneRuntime.Admit(secondPlayer);
+        var droneReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = droneRuntime.ManifestHash } };
+        droneRuntime.Command(firstPlayer, droneReady);
+        droneRuntime.Command(secondPlayer, droneReady);
+        droneRuntime.Advance(1);
+        BattleCoopEnemySpawn drone = droneRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Drone");
+        IReadOnlyList<DroneCollider> droneShapes = droneRuntime
+            .PlaceNewDroneColliders(drone.EntityId);
+        Vector3 droneStart = new(drone.X, drone.Y, drone.Z);
+        if (drone.SpawnTick != 1 || droneShapes.Count != 2 ||
+            droneShapes.Count(shape => shape.RootOwned &&
+                shape.Hitbox.Kind == PlayerHitboxKind.Box &&
+                shape.SerializedLayer == 0) != 1 ||
+            droneShapes.Count(shape => !shape.RootOwned &&
+                shape.Hitbox.Kind == PlayerHitboxKind.Sphere &&
+                shape.SerializedLayer == 8) != 1 ||
+            droneShapes.Any(shape =>
+                shape.Hitbox.TransformPosition != droneStart) ||
+            droneRuntime.PlaceNewDroneColliders(999).Count != 0)
+            throw new Exception("Co-op Drone needs its two source-owned spawn colliders.");
+        droneRuntime.Advance(2);
+        if (droneRuntime.PlaceNewDroneColliders(drone.EntityId).Count != 0)
+            throw new Exception("A stale Drone pose cannot authorize co-op hits.");
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);
