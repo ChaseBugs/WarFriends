@@ -1772,10 +1772,34 @@ internal static class CombatContentTests
         if (arrivalRuntime.InfantryFirstPlayerTarget(
                 arrivalEnemy.EntityId) != targetPlan)
             throw new Exception("Co-op Assaulter first target was chosen more than once.");
+        ulong expectedCrawlCallback = firstShootTick +
+            (ulong)Math.Ceiling((content.EnemyPoses.Clip("stand_up_begin")
+                .Length + 0.05f) * MatchManifest.TickRate);
+        CoopInfantryShotWindup? crawlWindup = arrivalRuntime
+            .InfantryShotWindup(arrivalEnemy.EntityId);
+        if (crawlWindup?.AnimationClip != "stand_up_begin" ||
+            crawlWindup.PlayerId != firstPlayer ||
+            crawlWindup.TargetTransformFileId != placedTarget.TransformFileId ||
+            crawlWindup.StartTick != firstShootTick ||
+            crawlWindup.CallbackTick != expectedCrawlCallback ||
+            crawlWindup.CallbackStartedTick != null)
+            throw new Exception("Co-op crawl shot lost its source animation delay.");
+        arrivalRuntime.Advance(expectedCrawlCallback - 1);
+        if (arrivalRuntime.InfantryShotWindup(
+                arrivalEnemy.EntityId)?.CallbackStartedTick != null)
+            throw new Exception("Co-op crawl callback started before its host tick.");
+        arrivalRuntime.Advance(expectedCrawlCallback);
+        if (arrivalRuntime.InfantryShotWindup(
+                arrivalEnemy.EntityId)?.CallbackStartedTick !=
+            expectedCrawlCallback)
+            throw new Exception("Co-op crawl callback missed its host tick.");
+        arrivalRuntime.Advance(expectedCrawlCallback + 1);
         if (!arrivalRuntime.ApplyHostEnemyDamage(arrivalEnemy.EntityId,
-                heldEnemy.Health, firstShootTick + 1) ||
+                heldEnemy.Health, expectedCrawlCallback + 1) ||
             arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null ||
             arrivalRuntime.InfantryFirstPlayerTarget(
+                arrivalEnemy.EntityId) != null ||
+            arrivalRuntime.InfantryShotWindup(
                 arrivalEnemy.EntityId) != null ||
             arrivalRuntime.PlaceFirstAssaulterPlayerTarget(
                 arrivalEnemy.EntityId) != null)
@@ -1948,6 +1972,22 @@ internal static class CombatContentTests
             (cornerRuntime.InfantryFirstPlayerTarget(cornerEnemy.EntityId)
                 != null) != expectedExposure)
             throw new Exception($"Co-op first corner target escaped its source angle gate: eligible={cornerArrival.FirstShootEligibleTick}, attempt={cornerAttempt}, expected={expectedExposure}, plan={cornerRuntime.InfantryFirstPlayerTarget(cornerEnemy.EntityId)}.");
+        CoopInfantryShotWindup? coverWindup = cornerRuntime
+            .InfantryShotWindup(cornerEnemy.EntityId);
+        if (expectedExposure)
+        {
+            ulong expectedCoverCallback = cornerArrival.FirstShootEligibleTick +
+                (ulong)Math.Ceiling((content.EnemyPoses.Clip(
+                    "player_look_right3").Length + 0.05f) *
+                    MatchManifest.TickRate);
+            if (coverWindup?.AnimationClip != "player_look_right3" ||
+                coverWindup.PlayerId != firstPlayer ||
+                coverWindup.CallbackTick != expectedCoverCallback ||
+                coverWindup.CallbackStartedTick != null)
+                throw new Exception("Co-op cover shot lost its source uncover delay.");
+        }
+        else if (coverWindup != null)
+            throw new Exception("Rejected co-op corner started a shot windup.");
         cornerRuntime.Advance(cornerArrival.FirstShootEligibleTick + 2);
         if (cornerRuntime.CornerFirstShotAttempt(cornerEnemy.EntityId)
             != cornerAttempt)

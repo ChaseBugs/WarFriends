@@ -49,6 +49,11 @@ internal sealed record CoopCornerShotAttempt(
     ulong Tick, string PlayerId, Vector3 TargetPosition, bool Exposed,
     ulong? NextEligibleTick);
 
+internal sealed record CoopInfantryShotWindup(
+    ulong EnemyEntityId, string PlayerId, int TargetTransformFileId,
+    string AnimationClip, ulong StartTick, ulong CallbackTick,
+    ulong? CallbackStartedTick);
+
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
     string SourcePath, Vector3 Position, ulong Tick);
@@ -96,6 +101,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerFirstShotAttempts = [];
     private readonly Dictionary<ulong, CoopCornerShotAttempt>
         cornerLatestShotAttempts = [];
+    private readonly Dictionary<ulong, CoopInfantryShotWindup>
+        infantryShotWindups = [];
     private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
     private readonly Dictionary<ulong, ulong> nextObstacleRepositionTicks = [];
@@ -400,6 +407,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopCornerShotAttempt? CornerLatestShotAttempt(
         ulong entityId) => cornerLatestShotAttempts.GetValueOrDefault(entityId);
 
+    internal CoopInfantryShotWindup? InfantryShotWindup(ulong entityId) =>
+        infantryShotWindups.GetValueOrDefault(entityId);
+
     internal ulong? NextCornerChangeTick(ulong entityId) =>
         nextCornerChangeTicks.TryGetValue(entityId, out ulong next)
             ? next : null;
@@ -666,6 +676,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceInfantryPaths();
             AdvanceObstacleRepositions();
             ChooseFirstInfantryTargets();
+            AdvanceInfantryShotWindups();
             AdvanceCornerRetargets();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
@@ -971,6 +982,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryFirstTargets.Remove(enemy.EntityId);
         cornerFirstShotAttempts.Remove(enemy.EntityId);
         cornerLatestShotAttempts.Remove(enemy.EntityId);
+        infantryShotWindups.Remove(enemy.EntityId);
         nextCornerChangeTicks.Remove(enemy.EntityId);
         obstacleRepositionStartedTicks.Remove(enemy.EntityId);
         nextObstacleRepositionTicks.Remove(enemy.EntityId);
@@ -1221,12 +1233,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     eligiblePlayers[selectedIndex].PlayerId);
             if (plan == null)
                 continue;
+            CoopInfantryPlayerShotTarget? placedTarget =
+                PlaceAssaulterPlayerTarget(plan);
             if (cornerShot)
             {
                 CoopEnemyPoint? corner = enemyDestinations?.PointFor(entityId);
-                CoopInfantryPlayerShotTarget? target =
-                    PlaceAssaulterPlayerTarget(plan);
-                if (corner == null || target == null)
+                if (corner == null || placedTarget == null)
                     continue;
                 BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
                     spawn.EntityId == entityId);
@@ -1236,11 +1248,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 // angle. CornerHidingUpdate then calls GenerateNextShootTime
                 // on rejection; the accepted branch awaits shot animation.
                 bool exposed = CoopCornerShotPolicy.CanExpose(corner,
-                    enemyPosition, target.Position);
+                    enemyPosition, placedTarget.Position);
                 ulong? retryTick = exposed ? null :
                     FirstInfantryShotEligibleTick(enemy, tick);
                 var attempt = new CoopCornerShotAttempt(tick,
-                    plan.PlayerId, target.Position, exposed, retryTick);
+                    plan.PlayerId, placedTarget.Position, exposed, retryTick);
                 cornerFirstShotAttempts.TryAdd(entityId, attempt);
                 cornerLatestShotAttempts[entityId] = attempt;
                 stateRevision++;
@@ -1248,6 +1260,46 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     continue;
             }
             infantryFirstTargets.Add(entityId, plan);
+            if (placedTarget != null && enemyPoses != null)
+                infantryShotWindups.Add(entityId,
+                    CreateInfantryShotWindup(arrival, placedTarget));
+            stateRevision++;
+        }
+    }
+
+    private CoopInfantryShotWindup CreateInfantryShotWindup(
+        CoopInfantryPointArrival arrival,
+        CoopInfantryPlayerShotTarget target)
+    {
+        string clipName = arrival.State == CoopInfantryPointState.ObstacleHiding
+            ? "stand_up_begin" : "player_look_right3";
+        float clipLength = enemyPoses!.Clip(clipName).Length;
+        // EnemyController.Shoot invokes its start callback after the source
+        // animation length plus 0.05 seconds. The host observes that callback
+        // on the first fixed tick at or after the continuous-time deadline.
+        ulong delayTicks = (ulong)Math.Ceiling(
+            (clipLength + 0.05f) * MatchManifest.TickRate);
+        ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
+        return new CoopInfantryShotWindup(target.EnemyEntityId,
+            target.PlayerId, target.TransformFileId, clipName, tick,
+            callbackTick, null);
+    }
+
+    private void AdvanceInfantryShotWindups()
+    {
+        foreach ((ulong entityId, CoopInfantryShotWindup windup)
+            in infantryShotWindups.ToArray())
+        {
+            if (windup.CallbackStartedTick != null ||
+                tick < windup.CallbackTick)
+                continue;
+            // This is the recovered Shoot callback's state boundary.
+            // SoldierBehaviour.Shooting, batch events, projectiles, and
+            // damage require separate host authority.
+            infantryShotWindups[entityId] = windup with
+            {
+                CallbackStartedTick = tick
+            };
             stateRevision++;
         }
     }
@@ -1616,6 +1668,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryFirstTargets.Remove(entityId);
             cornerFirstShotAttempts.Remove(entityId);
             cornerLatestShotAttempts.Remove(entityId);
+            infantryShotWindups.Remove(entityId);
             nextCornerChangeTicks.Remove(entityId);
             obstacleRepositionStartedTicks.Remove(entityId);
             nextObstacleRepositionTicks.Remove(entityId);
@@ -2252,6 +2305,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryFirstTargets.Clear();
         cornerFirstShotAttempts.Clear();
         cornerLatestShotAttempts.Clear();
+        infantryShotWindups.Clear();
         nextCornerChangeTicks.Clear();
         obstacleRepositionStartedTicks.Clear();
         nextObstacleRepositionTicks.Clear();
