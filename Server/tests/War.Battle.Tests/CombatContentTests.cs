@@ -1679,6 +1679,14 @@ internal static class CombatContentTests
             Math.Abs(Quaternion.Dot(
                 settledAllies[0].Pose.RootRotation, arrivedRotation)) < 0.9999f)
             throw new Exception("Settled co-op ally missed the new source cover pose.");
+        RifleMuzzlePose? settledMuzzle = movementRuntime
+            .PlaceIdlePlayerMuzzle(firstPlayer);
+        if (settledMuzzle == null ||
+            settledMuzzle.RootPosition !=
+                sourceMapSpawns.PlayerPositions[3].Position ||
+            Math.Abs(Quaternion.Dot(settledMuzzle.RootRotation,
+                arrivedRotation)) < 0.9999f)
+            throw new Exception("Settled co-op rifle muzzle used the old cover.");
         if (movementRuntime.Command(secondPlayer, new MatchCommand { CommandId = 3,
                 MoveCover = new MoveCoverCommand { Direction = -1 } }).Code != "moving" ||
             movementRuntime.Snapshot().Players.Single(player =>

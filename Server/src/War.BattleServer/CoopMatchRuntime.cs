@@ -101,6 +101,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
     }
 
+    private sealed record SettledRiflePose(PlayerAimPose Pose,
+        string WeaponId);
+
     private readonly MatchManifest manifest;
     private readonly MissionCatalog missionCatalog;
     private readonly CoopMissionEngine mission;
@@ -489,36 +492,21 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopInfantryPlayerTargetPlan plan)
     {
         ulong entityId = plan.EnemyEntityId;
-        if (phase != BattlePhase.Running || playerPoses == null ||
-            playerShotTargets == null || PlayerWeapons == null ||
+        if (playerShotTargets == null ||
             !participants.TryGetValue(plan.PlayerId, out Participant? player) ||
-            !player.Admitted || !player.Ready || player.Dead ||
-            player.HasMoved || player.Route != null || player.Weapons == null ||
-            player.Weapons.HasFiredAnyShot)
+            PlaceSettledRiflePose(player) is not SettledRiflePose settled)
             return null;
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.DeathTick == 0 &&
             spawn.Behaviour == "Assaulter");
         if (enemy == null)
             return null;
-        CoopPlayerAnchor cover = playerStarts[plan.PlayerId];
-        if (cover.SourceRotation is not Quaternion rotation)
-            return null;
-        CoopPlayerWeapon activeWeapon = PlayerWeapons.ForPlayer(plan.PlayerId)
-            .Single(weapon => weapon.Slot == player.Weapons.ActiveSlot);
-        if (!activeWeapon.Weapon.SourceId.StartsWith(
-                "Google2u.AssaultRifle_", StringComparison.Ordinal))
-            return null;
-
-        PlayerAimPose idlePose = playerPoses.SampleBlended(
-            "idle", 0, true, "idle", 0, true, 0,
-            Quaternion.Identity).Place(cover.Position, rotation);
         Vector3 enemyPosition = new(enemy.CurrentX, enemy.CurrentY,
             enemy.CurrentZ);
         PlayerShotTarget selected = playerShotTargets.Nearest(
             plan.ShotTargetMask, enemyPosition,
-            target => idlePose.BodyTarget(target.TransformFileId).Position);
-        Vector3 targetPosition = idlePose.BodyTarget(
+            target => settled.Pose.BodyTarget(target.TransformFileId).Position);
+        Vector3 targetPosition = settled.Pose.BodyTarget(
             selected.TransformFileId).Position;
         return new CoopInfantryPlayerShotTarget(entityId, plan.PlayerId,
             selected.TransformFileId, selected.Path, targetPosition,
@@ -534,7 +522,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             tick < arrival.FirstShootEligibleTick ||
             !participants.TryGetValue(playerId, out Participant? player) ||
             !player.Admitted || !player.Ready || player.Dead ||
-            player.Route != null)
+            PlaceSettledRiflePose(player) == null)
             return null;
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.DeathTick == 0 &&
@@ -1293,12 +1281,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 continue;
             CoopInfantryPlayerShotTarget? placedTarget =
                 PlaceAssaulterPlayerTarget(plan);
-            CoopInfantryShotBatch? batch = placedTarget == null ? null :
-                CreateInfantryShotBatch(entityId);
+            if (placedTarget == null)
+                continue;
+            CoopInfantryShotBatch batch = CreateInfantryShotBatch(entityId);
             if (cornerShot)
             {
                 CoopEnemyPoint? corner = enemyDestinations?.PointFor(entityId);
-                if (corner == null || placedTarget == null || batch == null)
+                if (corner == null)
                     continue;
                 BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
                     spawn.EntityId == entityId);
@@ -1321,7 +1310,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     continue;
             }
             infantryFirstTargets.Add(entityId, plan);
-            if (placedTarget != null && batch != null && enemyPoses != null)
+            if (enemyPoses != null)
                 infantryShotWindups.Add(entityId,
                     CreateInfantryShotWindup(arrival, placedTarget, batch));
             stateRevision++;
@@ -1786,34 +1775,46 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
-    /// Recovers an untouched ally's idle rifle muzzle from the source rig and
-    /// defend-position transform. Moving, firing, or using another weapon
-    /// requires a live pose and cannot reuse this starting geometry.
+    /// Recovers a settled ally's source rifle idle pose at its current cover.
+    /// PlayerController finishes its position and rotation tweens and calls
+    /// SoldierAnimationController.Idle after arriving. The extra 30 ticks
+    /// leave those transitions out of this diagnostic collision window.
     /// </summary>
-    internal RifleMuzzlePose? PlaceIdlePlayerMuzzle(string playerId)
+    private SettledRiflePose? PlaceSettledRiflePose(Participant player)
     {
         if (phase != BattlePhase.Running || playerPoses == null ||
             PlayerWeapons == null ||
-            !participants.TryGetValue(playerId, out Participant? player) ||
             !player.Admitted || !player.Ready || player.Dead ||
-            player.HasMoved || player.Route != null || player.Weapons == null ||
-            player.Weapons.HasFiredAnyShot)
+            player.Route != null || player.Weapons == null ||
+            player.Weapons.HasFiredAnyShot ||
+            (player.HasMoved &&
+                (tick < player.MoveEndTick ||
+                 tick - player.MoveEndTick < MatchManifest.TickRate)))
             return null;
 
-        CoopPlayerAnchor start = playerStarts[playerId];
-        if (start.SourceRotation is not Quaternion rotation)
-            return null;
         int slot = player.Weapons.ActiveSlot;
-        CoopPlayerWeapon weapon = PlayerWeapons.ForPlayer(playerId)
+        CoopPlayerWeapon weapon = PlayerWeapons.ForPlayer(player.PlayerId)
             .Single(candidate => candidate.Slot == slot);
         if (!weapon.Weapon.SourceId.StartsWith(
                 "Google2u.AssaultRifle_", StringComparison.Ordinal))
             return null;
 
+        CoopPlayerAnchor cover = playerPositions[player.CoverIndex];
+        if (cover.SourceRotation is not Quaternion rotation)
+            return null;
         PlayerAimPose idlePose = playerPoses.SampleBlended(
             "idle", 0, true, "idle", 0, true, 0,
-            Quaternion.Identity).Place(start.Position, rotation);
-        return idlePose.Muzzle(weapon.Weapon.SourceId);
+            Quaternion.Identity).Place(cover.Position, rotation);
+        return new SettledRiflePose(idlePose,
+            weapon.Weapon.SourceId);
+    }
+
+    internal RifleMuzzlePose? PlaceIdlePlayerMuzzle(string playerId)
+    {
+        if (!participants.TryGetValue(playerId, out Participant? player))
+            return null;
+        SettledRiflePose? settled = PlaceSettledRiflePose(player);
+        return settled?.Pose.Muzzle(settled.WeaponId);
     }
 
     /// <summary>
@@ -1833,30 +1834,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         foreach (Participant player in manifest.Players.Select(
             definition => participants[definition.PlayerId]))
         {
-            if (!player.Admitted || !player.Ready || player.Dead ||
-                player.Route != null || player.Weapons == null ||
-                player.Weapons.HasFiredAnyShot ||
-                (player.HasMoved &&
-                    (tick < player.MoveEndTick ||
-                     tick - player.MoveEndTick < MatchManifest.TickRate)))
+            SettledRiflePose? settled = PlaceSettledRiflePose(player);
+            if (settled == null)
                 return null;
-
-            int activeSlot = player.Weapons.ActiveSlot;
-            CoopPlayerWeapon weapon = PlayerWeapons!.ForPlayer(player.PlayerId)
-                .Single(candidate => candidate.Slot == activeSlot);
-            if (!weapon.Weapon.SourceId.StartsWith(
-                    "Google2u.AssaultRifle_", StringComparison.Ordinal))
-                return null;
-
-            CoopPlayerAnchor cover = playerPositions[player.CoverIndex];
-            if (cover.SourceRotation is not Quaternion rotation)
-                return null;
-
-            PlayerCollisionModel pose = playerPoses.SampleBlended(
-                "idle", 0, true, "idle", 0, true, 0,
-                Quaternion.Identity).Place(cover.Position, rotation).Collision;
             // TagsAndLayers.GetFractionBulletLayer(Allies, false) is 22.
-            poses.Add(new CollisionPlayer(player.PlayerId, pose, 22, 2));
+            poses.Add(new CollisionPlayer(player.PlayerId,
+                settled.Pose.Collision, 22, 2));
         }
         return poses;
     }
