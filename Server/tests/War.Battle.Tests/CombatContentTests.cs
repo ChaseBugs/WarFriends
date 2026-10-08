@@ -1833,6 +1833,7 @@ internal static class CombatContentTests
         int expectedRealMask = sourceBatch.ProbabilityOfRealShot > 0
             ? (1 << expectedBatchCount) - 1 : 0;
         if (crawlWindup?.AnimationClip != "stand_up_begin" ||
+            crawlWindup.QueuedFireClip != "rifle_shot_loop" ||
             crawlWindup.PlayerId != firstPlayer ||
             crawlWindup.TargetTransformFileId != placedTarget.TransformFileId ||
             crawlWindup.Batch.Count != expectedBatchCount ||
@@ -2086,7 +2087,12 @@ internal static class CombatContentTests
                 (ulong)Math.Ceiling((content.EnemyPoses.Clip(
                     "player_look_right3").Length + 0.05f) *
                     MatchManifest.TickRate);
-            if (coverWindup?.AnimationClip != "player_look_right3" ||
+            string expectedLook = sourceCorner.CornerRightSide == true
+                ? "player_look_right3" : "player_look_left3";
+            string expectedFire = sourceCorner.CornerRightSide == true
+                ? "player_fire_right3" : "player_fire_left3";
+            if (coverWindup?.AnimationClip != expectedLook ||
+                coverWindup.QueuedFireClip != expectedFire ||
                 coverWindup.PlayerId != firstPlayer ||
                 coverWindup.CallbackTick != expectedCoverCallback ||
                 coverWindup.CallbackStartedTick != null)

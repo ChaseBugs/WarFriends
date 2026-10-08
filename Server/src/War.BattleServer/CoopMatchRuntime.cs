@@ -54,7 +54,8 @@ internal sealed record CoopInfantryShotBatch(
 
 internal sealed record CoopInfantryShotWindup(
     ulong EnemyEntityId, string PlayerId, int TargetTransformFileId,
-    string AnimationClip, ulong StartTick, ulong CallbackTick,
+    string AnimationClip, string QueuedFireClip,
+    ulong StartTick, ulong CallbackTick,
     ulong? CallbackStartedTick, CoopInfantryShotBatch Batch,
     string WeaponPrefabGuid, float WeaponCadenceSeconds);
 
@@ -1339,17 +1340,45 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopInfantryPlayerShotTarget target,
         CoopInfantryShotBatch batch)
     {
-        string clipName = arrival.State == CoopInfantryPointState.ObstacleHiding
-            ? "stand_up_begin" : "player_look_right3";
-        float clipLength = enemyPoses!.Clip(clipName).Length;
+        string clipName;
+        string queuedFireClip;
+        float callbackClipLength;
+        if (arrival.State == CoopInfantryPointState.ObstacleHiding)
+        {
+            clipName = "stand_up_begin";
+            queuedFireClip = "rifle_shot_loop";
+            callbackClipLength = enemyPoses!.Clip(clipName).Length;
+        }
+        else
+        {
+            CoopEnemyPoint corner = enemyDestinations?.PointFor(
+                target.EnemyEntityId) ?? throw new InvalidDataException(
+                    "Co-op corner shot has no reserved point.");
+            bool rightSide = corner.CornerRightSide ??
+                throw new InvalidDataException(
+                    "Co-op corner shot has no source-facing side.");
+            // EnemyController passes !mCoverShotRight to ShotFromCover.
+            // SoldierAnimationController maps that argument back to the
+            // exposed side, then queues the corresponding fire clip.
+            clipName = rightSide ? "player_look_right3" :
+                "player_look_left3";
+            queuedFireClip = rightSide ? "player_fire_right3" :
+                "player_fire_left3";
+            // uncoverLength is always sourced from player_look_right3,
+            // even for a left-side shot in the recovered Client.
+            callbackClipLength = enemyPoses!.Clip(
+                "player_look_right3").Length;
+        }
+        enemyPoses.Clip(queuedFireClip);
         // EnemyController.Shoot invokes its start callback after the source
         // animation length plus 0.05 seconds. The host observes that callback
         // on the first fixed tick at or after the continuous-time deadline.
         ulong delayTicks = (ulong)Math.Ceiling(
-            (clipLength + 0.05f) * MatchManifest.TickRate);
+            (callbackClipLength + 0.05f) * MatchManifest.TickRate);
         ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
         return new CoopInfantryShotWindup(target.EnemyEntityId,
-            target.PlayerId, target.TransformFileId, clipName, tick,
+            target.PlayerId, target.TransformFileId, clipName,
+            queuedFireClip, tick,
             callbackTick, null, batch,
             assaulterWeapon!.WeaponPrefabGuid,
             assaulterWeapon.CadenceSeconds);
