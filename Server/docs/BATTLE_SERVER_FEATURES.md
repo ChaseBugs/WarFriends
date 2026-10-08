@@ -171,6 +171,8 @@ Those six independently exported meshes match the earlier `recovered-air-unit-un
 
 `CoopMatchRuntime.PlaceNewGroundVehicleTargets` uses the recovered mission behavior-to-unit binding and the existing four-family vehicle body catalog to place Humvee, Buggy, Tank, or Transporter targets at the exact spawn tick. `WaveManager` assigns `Fractions.Enemies` (value 1), which `TagsAndLayers` maps to enemy layer 27 for the car families and 23 for Tank; the method preserves each body-part component ID. A mission-36 Buggy test checks the source-timed spawn, complete body count, enemy layer, and stale-pose refusal. It does not substitute for vehicle route motion, turret pose, wheel physics, projectile contact, or co-op damage settlement.
 
+The source `DeployHeli` behavior maps to the transport `Helicopter.prefab`, which has eleven verified body boxes. `CoopMatchRuntime.PlaceNewTransportHelicopterTargets` places them at the mission-46 timed spawn, binds enemy flying layer 27 and each collider ID, and refuses a later tick. Host flight, rope-descent crew, projectiles, and damage authority are still separate work.
+
 `CoopTerminalScoreValidator` now treats source mission types separately: Kill requires its exact confirmed enemy-death target, Survive succeeds exactly at the deadline, Score remains before its deadline with conserved allied points, and a boss success requires a dead host boss. Focused tests use actual isolated Kill, Survive, and boss results plus forged terminal variants. This validates terminal presentation evidence, not a trusted live battle or Backend reward settlement.
 
 

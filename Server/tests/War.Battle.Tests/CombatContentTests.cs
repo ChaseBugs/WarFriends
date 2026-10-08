@@ -1686,6 +1686,46 @@ internal static class CombatContentTests
         buggyRuntime.Advance(2);
         if (buggyRuntime.PlaceNewGroundVehicleTargets(buggy.EntityId).Count != 0)
             throw new Exception("A stale ground-vehicle pose cannot authorize hits.");
+
+        const int transportMissionIndex = 46;
+        MissionMapRule transportMap = catalog.MapForMission(transportMissionIndex);
+        MatchManifest transportAllocation = coop with
+        {
+            MissionIndex = transportMissionIndex,
+            MapId = transportMap.Scene,
+            MapRevision = transportMap.SceneSha256,
+            DurationSeconds = catalog.Get(transportMissionIndex).TimeSeconds
+        };
+        var transportRuntime = new CoopMatchRuntime(transportAllocation,
+            catalog, spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            playerWeaponContent: content);
+        transportRuntime.Admit(firstPlayer);
+        transportRuntime.Admit(secondPlayer);
+        var transportReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand
+                { ManifestHash = transportRuntime.ManifestHash } };
+        transportRuntime.Command(firstPlayer, transportReady);
+        transportRuntime.Command(secondPlayer, transportReady);
+        ulong transportTick = 10 * MatchManifest.TickRate;
+        transportRuntime.Advance(transportTick);
+        BattleCoopEnemySpawn transport = transportRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "DeployHeli");
+        IReadOnlyList<DynamicShotTarget> transportBodies = transportRuntime
+            .PlaceNewTransportHelicopterTargets(transport.EntityId);
+        if (transport.SpawnTick != transportTick ||
+            transportBodies.Count != 11 ||
+            transportBodies.Any(body => body.EntityId != transport.EntityId ||
+                body.Layer != 27 || !body.HelicopterBody ||
+                !body.Hitbox.SourcePath.StartsWith(
+                    "Assets/GameObject/Helicopter.prefab#",
+                    StringComparison.Ordinal)) ||
+            transportRuntime.PlaceNewTransportHelicopterTargets(999).Count != 0)
+            throw new Exception("Co-op transport Helicopter needs eleven enemy body boxes.");
+        transportRuntime.Advance(transportTick + 1);
+        if (transportRuntime.PlaceNewTransportHelicopterTargets(
+                transport.EntityId).Count != 0)
+            throw new Exception("A stale transport Helicopter pose cannot authorize hits.");
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);

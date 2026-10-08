@@ -64,6 +64,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshes;
     private readonly DroneColliderCatalog? droneColliders;
     private readonly GroundVehicleWeaponCatalog? groundVehicleBodies;
+    private readonly HelicopterBodyColliderCatalog? transportHelicopterBodies;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
@@ -145,6 +146,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         assaultHelicopterMeshes = playerWeaponContent?.AssaultHelicopterMeshColliders;
         droneColliders = playerWeaponContent?.DroneColliders;
         groundVehicleBodies = playerWeaponContent?.GroundVehicleWeapons;
+        transportHelicopterBodies = playerWeaponContent?.HelicopterBodyColliders;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
@@ -502,6 +504,35 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         // for Tank and 27 for the other ground vehicles.
         return groundVehicleBodies.PlaceBody(unitId, entityId,
             position, forward, ownerFraction: 1);
+    }
+
+    /// <summary>
+    /// Places the eleven recovered transport Helicopter body boxes at spawn.
+    /// Its source behavior is DeployHeli; the enemy flying layer is 27 after
+    /// DestroyableObjectMultipleParts.ChangeLayer. Later flight poses require
+    /// a host movement simulation.
+    /// </summary>
+    internal IReadOnlyList<DynamicShotTarget> PlaceNewTransportHelicopterTargets(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || transportHelicopterBodies == null)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "DeployHeli" &&
+            spawn.SpawnTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.SourceRotation != null);
+        if (enemy == null)
+            return [];
+
+        var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
+        var rotation = new Quaternion(enemy.SourceRotation.X,
+            enemy.SourceRotation.Y, enemy.SourceRotation.Z,
+            enemy.SourceRotation.W);
+        return transportHelicopterBodies.Place(position, rotation)
+            .Select(collider => new DynamicShotTarget(entityId,
+                collider.ColliderFileId, 27, collider.Hitbox,
+                HelicopterBody: true))
+            .ToArray();
     }
 
     /// <summary>
