@@ -71,7 +71,7 @@ public class GameControllerCoop : GameControllerOnline
 		}
 		if (Singleton<GameController>.instance.isCoopBot)
 		{
-			if (!PhotonNetwork.isMasterClient)
+			if (!Singleton<PhotonConnectionManager>.instance.isMasterClient)
 			{
 				FinishChoosingCards();
 			}
@@ -84,13 +84,16 @@ public class GameControllerCoop : GameControllerOnline
 
 	protected override void LoadLevelAndStartGame()
 	{
-		if (Singleton<PhotonConnectionManager>.instance.isMasterClient)
+		if (!PhotonConnectionManager.IsSelfHostedActive)
 		{
-			Singleton<BeanstalkServerManager>.instance.GameCoopStartedMaster();
-		}
-		else
-		{
-			Singleton<BeanstalkServerManager>.instance.GameCoopStartedClient();
+			if (Singleton<PhotonConnectionManager>.instance.isMasterClient)
+			{
+				Singleton<BeanstalkServerManager>.instance.GameCoopStartedMaster();
+			}
+			else
+			{
+				Singleton<BeanstalkServerManager>.instance.GameCoopStartedClient();
+			}
 		}
 		base.LoadLevelAndStartGame();
 	}
@@ -247,7 +250,10 @@ public class GameControllerCoop : GameControllerOnline
 			Singleton<MatchManager>.instance.SetHitBy(arg3);
 			base.mMainController.gameEndReason = GameController.GameEndReason.Kia;
 			PlayerController.currentPlayer.networkStatus.matchState = PlayerNetworkStatus.MatchState.GameFinished;
-			mPhotonView.RPC("FinishGameCoopClient", PhotonTargets.Others, (byte)Singleton<GameController>.instance.gameEndReason, PhotonNetwork.player.ID);
+			if (!PhotonConnectionManager.IsSelfHostedActive)
+			{
+				mPhotonView.RPC("FinishGameCoopClient", PhotonTargets.Others, (byte)Singleton<GameController>.instance.gameEndReason, PhotonNetwork.player.ID);
+			}
 			Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<GameOverScreen>.instance);
 			StartCoroutine(StartSpectate());
 		}
@@ -556,7 +562,10 @@ public class GameControllerCoop : GameControllerOnline
 			Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<CantPauseDialog>.instance, 0f);
 		}
 		mPausesCount++;
-		PhotonNetwork.SendOutgoingCommands();
+		if (!PhotonConnectionManager.IsSelfHostedActive)
+		{
+			PhotonNetwork.SendOutgoingCommands();
+		}
 	}
 
 	protected override Dictionary<string, UnitUpgradeDefinition> GetUpgradesDictionary(Fractions fraction)
