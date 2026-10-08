@@ -740,6 +740,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceAssaultHelicopterFlights();
             AdvanceTransportHelicopterFlights();
             AdvanceInfantryPaths();
+            SettleCornerInfantryRoots();
             AdvanceObstacleRepositions();
             ChooseFirstInfantryTargets();
             AdvanceInfantryShotWindups();
@@ -1158,6 +1159,55 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         foreach (ulong entityId in arrived)
             infantryPaths.Remove(entityId);
+    }
+
+    private void SettleCornerInfantryRoots()
+    {
+        foreach ((ulong entityId, CoopInfantryPointArrival arrival)
+            in infantryPointArrivals)
+        {
+            if (arrival.State != CoopInfantryPointState.CornerHiding ||
+                tick != arrival.Tick + 15 ||
+                infantryPaths.ContainsKey(entityId))
+                continue;
+            BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+                spawn.EntityId == entityId && spawn.Health > 0 &&
+                spawn.DeathTick == 0);
+            if (enemy == null)
+                continue;
+            CoopEnemyPoint? point = enemyDestinations?.PointFor(entityId);
+            if (point == null ||
+                point.ComponentFileId != arrival.PointComponentFileId ||
+                point.ComponentType != "EnemyPointCorner")
+                throw new InvalidDataException(
+                    "Co-op corner arrival lost its source point.");
+
+            // EnemyController's 0.5-second TweenPosition changes X/Z to the
+            // corner point but deliberately preserves the soldier's Y.
+            enemy.CurrentX = point.Position.X;
+            enemy.CurrentZ = point.Position.Z;
+            Quaternion rotation = CornerFacing(point);
+            enemy.CurrentRotation = new BattleJointRotation
+            {
+                X = rotation.X, Y = rotation.Y,
+                Z = rotation.Z, W = rotation.W
+            };
+            enemy.PoseTick = tick;
+            stateRevision++;
+        }
+    }
+
+    private static Quaternion CornerFacing(CoopEnemyPoint point)
+    {
+        if (point.CornerDirection is not Vector3 direction ||
+            !PlayerHitbox.Finite(direction) ||
+            MathF.Abs(direction.Y) > 0.0001f ||
+            direction.LengthSquared() < 0.0001f)
+            throw new InvalidDataException(
+                "Co-op corner has no planar source direction.");
+        Vector3 facing = -direction;
+        return Quaternion.CreateFromAxisAngle(Vector3.UnitY,
+            MathF.Atan2(facing.X, facing.Z));
     }
 
     private void AdvanceObstacleRepositions()
@@ -1651,22 +1701,23 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
             spawn.Health > 0 && spawn.DeathTick == 0 &&
-            spawn.PoseTick == arrival.Tick);
+            spawn.PoseTick == arrival.Tick + 15 &&
+            spawn.CurrentRotation != null);
         CoopEnemyPoint? corner = enemyDestinations.PointFor(entityId);
         if (enemy == null || corner == null ||
             corner.ComponentFileId != arrival.PointComponentFileId ||
             corner.ComponentType != "EnemyPointCorner" ||
-            corner.CornerDirection is not Vector3 direction ||
-            !PlayerHitbox.Finite(direction) ||
-            MathF.Abs(direction.Y) > 0.0001f ||
             Vector2.Distance(new Vector2(enemy.CurrentX, enemy.CurrentZ),
-                new Vector2(corner.Position.X, corner.Position.Z)) >= 0.05f)
+                new Vector2(corner.Position.X, corner.Position.Z)) >= 0.0001f)
             return [];
 
-        Vector3 facing = -direction;
-        float heading = MathF.Atan2(facing.X, facing.Z);
-        Quaternion rotation = Quaternion.CreateFromAxisAngle(
-            Vector3.UnitY, heading);
+        Quaternion rotation = CornerFacing(corner);
+        Quaternion currentRotation = new(enemy.CurrentRotation.X,
+            enemy.CurrentRotation.Y, enemy.CurrentRotation.Z,
+            enemy.CurrentRotation.W);
+        if (1 - MathF.Abs(Quaternion.Dot(rotation,
+                currentRotation)) > 0.00001f)
+            return [];
         Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
             enemy.CurrentZ);
         string clip = combat.InfantryIdleClip(enemy.Behaviour)!;

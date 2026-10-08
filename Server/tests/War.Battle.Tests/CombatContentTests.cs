@@ -588,9 +588,75 @@ internal static class CombatContentTests
         return 9;
     }
 
+    private static void VerifyCoopCornerUnityPose(
+        string directory, MissionCatalog missions,
+        BattleCombatContent content)
+    {
+        string path = Path.Combine(directory,
+            "coop-corner-idle-unity-reference.json");
+        byte[] source = File.ReadAllBytes(path);
+        string digest = Convert.ToHexStringLower(SHA256.HashData(source));
+        if (digest !=
+            "67beafcf35d85cedd7345ee88c808ddf75d63ed160bd561bbc96d18714d3f610")
+            throw new Exception("Unity corner pose reference changed.");
+
+        using JsonDocument document = JsonDocument.Parse(source);
+        JsonElement reference = document.RootElement;
+        if (reference.GetProperty("version").GetInt32() != 1 ||
+            reference.GetProperty("client").GetString() != "1.4.0" ||
+            reference.GetProperty("prefab").GetString() !=
+                "Assets/GameObject/enemy.prefab" ||
+            reference.GetProperty("prefabSha256").GetString() !=
+                "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54" ||
+            reference.GetProperty("scene").GetString() !=
+                missions.MapForMission(0).Scene ||
+            reference.GetProperty("sceneSha256").GetString() !=
+                missions.MapForMission(0).SceneSha256 ||
+            reference.GetProperty("pointComponentFileId").GetInt32() != 1698)
+            throw new Exception("Unity corner pose lost source identity.");
+
+        static Vector3 Vector(JsonElement values) => new(
+            values[0].GetSingle(), values[1].GetSingle(),
+            values[2].GetSingle());
+        static Quaternion Rotation(JsonElement values) => new(
+            values[0].GetSingle(), values[1].GetSingle(),
+            values[2].GetSingle(), values[3].GetSingle());
+        Vector3 position = Vector(reference.GetProperty("position"));
+        Quaternion rotation = Rotation(reference.GetProperty("rotation"));
+        foreach (JsonElement sample in reference.GetProperty("samples")
+            .EnumerateArray())
+        {
+            int afterArrivalTicks = sample.GetProperty(
+                "afterArrivalTicks").GetInt32();
+            IReadOnlyList<PlayerHitbox> placed = content.EnemyPoses.Place(
+                "idle_1", position, rotation,
+                afterArrivalTicks / (float)MatchManifest.TickRate);
+            JsonElement[] expectedParts = sample.GetProperty("parts")
+                .EnumerateArray().ToArray();
+            if (placed.Count != expectedParts.Length)
+                throw new Exception("Unity corner part count changed.");
+            for (int index = 0; index < expectedParts.Length; index++)
+            {
+                JsonElement expected = expectedParts[index];
+                string pathOfPart = expected.GetProperty("path").GetString()!;
+                PlayerHitbox part = placed[index];
+                Vector3 expectedCenter = Vector(expected.GetProperty("center"));
+                Quaternion expectedRotation = Rotation(
+                    expected.GetProperty("rotation"));
+                if (part.SourcePath != pathOfPart ||
+                    Vector3.Distance(part.Center, expectedCenter) > 0.0002f ||
+                    1 - Math.Abs(Quaternion.Dot(part.Rotation,
+                        expectedRotation)) > 0.00002f)
+                    throw new Exception(
+                        "Host corner idle collider differs from Unity placement.");
+            }
+        }
+    }
+
     private static int VerifyCoopAllocation(
         string directory, MissionCatalog catalog, BattleCombatContent content)
     {
+        VerifyCoopCornerUnityPose(directory, catalog, content);
         ArmyDeploymentCatalog army = content.Army;
         CoopAssaulterWeaponCatalog rifle = content.CoopAssaulterWeapon;
         if (rifle.WeaponPrefabGuid !=
@@ -2832,13 +2898,53 @@ internal static class CombatContentTests
         cornerRuntime.Advance(cornerArrivalTick + 15);
         IReadOnlyList<PlayerHitbox> settledCorner = cornerRuntime
             .PlaceSettledCornerAssaulterHitboxes(cornerEnemy.EntityId);
+        BattleCoopEnemySpawn settledCornerEnemy = cornerRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy =>
+                enemy.EntityId == cornerEnemy.EntityId);
+        CoopEnemyPoint cornerPoint = cornerDestinations.PointFor(
+            cornerEnemy.EntityId) ??
+            throw new Exception("Settled corner lost its source point.");
         CoopEnemyCollisionFrame cornerFrame = cornerRuntime
             .CurrentEnemyCollisionFrame();
         if (settledCorner.Count != 3 ||
+            settledCornerEnemy.CurrentX != cornerPoint.Position.X ||
+            settledCornerEnemy.CurrentZ != cornerPoint.Position.Z ||
+            settledCornerEnemy.PoseTick != cornerArrivalTick + 15 ||
             cornerFrame.Targets.Count(target =>
                 target.EntityId == cornerEnemy.EntityId) != 3 ||
             !cornerFrame.UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
             throw new Exception("Settled corner pose lost its diagnostic-only gate.");
+        using (JsonDocument cornerAudit = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(directory, "coop-corner-idle-unity-reference.json"))))
+        {
+            float fixtureRootY = cornerAudit.RootElement
+                .GetProperty("position")[1].GetSingle();
+            JsonElement[] unityParts = cornerAudit.RootElement
+                .GetProperty("samples")[0].GetProperty("parts")
+                .EnumerateArray().ToArray();
+            for (int index = 0; index < unityParts.Length; index++)
+            {
+                JsonElement center = unityParts[index].GetProperty("center");
+                Vector3 unityCenter = new(center[0].GetSingle(),
+                    center[1].GetSingle(), center[2].GetSingle());
+                // EnemyController keeps the agent's Y when its corner
+                // TweenPosition moves X/Z to the source point.
+                unityCenter.Y += settledCornerEnemy.CurrentY - fixtureRootY;
+                JsonElement rotationValues = unityParts[index]
+                    .GetProperty("rotation");
+                Quaternion unityRotation = new(rotationValues[0].GetSingle(),
+                    rotationValues[1].GetSingle(),
+                    rotationValues[2].GetSingle(),
+                    rotationValues[3].GetSingle());
+                if (Vector3.Distance(settledCorner[index].Center,
+                        unityCenter) > 0.0002f ||
+                    1 - Math.Abs(Quaternion.Dot(
+                        settledCorner[index].Rotation,
+                        unityRotation)) > 0.00002f)
+                    throw new Exception($"Runtime corner center differs from Unity: " +
+                        $"{settledCorner[index].Center} versus {unityCenter}.");
+            }
+        }
         cornerRuntime.Advance(300);
         CoopInfantryPointArrival? cornerArrival = cornerRuntime
             .InfantryPointArrival(cornerEnemy.EntityId);

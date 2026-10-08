@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "prefab": "Assets/GameObject/enemy.prefab",
+  "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "scene": "Desert_New",
+  "sceneSha256": "e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5",
+  "pointComponentFileId": 1698,
+  "position": [
+    -27.842968,
+    -2.28876472,
+    -12.8744669
+  ],
+  "rotation": [
+    0.0,
+    -0.7071068,
+    0.0,
+    0.7071068
+  ],
+  "samples": [
+    {
+      "afterArrivalTicks": 15,
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.83805,
+            -2.11382365,
+            -12.8777313
+          ],
+          "rotation": [
+            -0.7264433,
+            0.6851185,
+            0.0454008877,
+            -0.0288378
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.8397026,
+            -2.19924021,
+            -12.8820353
+          ],
+          "rotation": [
+            -0.7264433,
+            0.6851185,
+            0.0454008877,
+            -0.0288378
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "center": [
+            -27.8703041,
+            -1.87993312,
+            -12.87951
+          ],
+          "rotation": [
+            -0.7447657,
+            0.667039633,
+            0.0194523335,
+            -0.0020750165
+          ]
+        }
+      ]
+    },
+    {
+      "afterArrivalTicks": 21,
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.8380585,
+            -2.11442018,
+            -12.87773
+          ],
+          "rotation": [
+            -0.7264433,
+            0.6851185,
+            0.0454008877,
+            -0.0288378
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.83971,
+            -2.19983673,
+            -12.8820343
+          ],
+          "rotation": [
+            -0.7264433,
+            0.6851185,
+            0.0454008877,
+            -0.0288378
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "center": [
+            -27.87084,
+            -1.88059,
+            -12.8794956
+          ],
+          "rotation": [
+            -0.7445341,
+            0.6672977,
+            0.0194596052,
+            -0.00204789639
+          ]
+        }
+      ]
+    },
+    {
+      "afterArrivalTicks": 30,
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.8380642,
+            -2.11491275,
+            -12.8777294
+          ],
+          "rotation": [
+            -0.7264433,
+            0.6851185,
+            0.0454008877,
+            -0.0288378
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.839716,
+            -2.20032954,
+            -12.8820343
+          ],
+          "rotation": [
+            -0.7264433,
+            0.6851185,
+            0.0454008877,
+            -0.0288378
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "center": [
+            -27.8711777,
+            -1.88111842,
+            -12.8792019
+          ],
+          "rotation": [
+            -0.743404746,
+            0.668545961,
+            0.019844234,
+            -0.0015322566
+          ]
+        }
+      ]
+    }
+  ]
+}
