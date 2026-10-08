@@ -78,50 +78,117 @@ internal sealed class GrenadeMatchSimulation
     }
     internal IReadOnlyList<ScheduledGrenadeLaunch> Advance(ulong tick,Func<string,RifleActorLocation>? locate=null)
     {
-        if(lastTick.HasValue&&tick!=lastTick.Value+1)throw new InvalidDataException("Grenade animation requires consecutive ticks.");lastTick=tick;
-        var due=new List<ScheduledGrenadeLaunch>();
-        foreach(var actor in actors)
+        if (lastTick.HasValue && tick != lastTick.Value + 1)
+            throw new InvalidDataException(
+                "Grenade animation requires consecutive ticks.");
+        lastTick = tick;
+
+        var dueLaunches = new List<ScheduledGrenadeLaunch>();
+        foreach (Actor actor in actors)
         {
-            if(locate!=null)
+            if (locate != null)
+                UpdateActorLocation(actor,
+                    locate(actor.Definition.PlayerId), tick);
+
+            bool loop = Loops(actor.Clip);
+            double seconds = (tick - actor.ClipStarted) /
+                (double)MatchManifest.TickRate;
+            actor.Pose = Place(catalog.Poses.Sample(actor.Clip,
+                seconds, loop), actor.Position, actor.Rotation);
+
+            // Sample the windup before changing to the M320 fire clip. The
+            // launch muzzle comes from that exact source animation frame.
+            if (actor.Pending is { } pending && pending.LaunchTick <= tick)
             {
-                var state=locate(actor.Definition.PlayerId);
-                if(!PlayerHitbox.Finite(state.Position)||state.CoverIndex<0||state.CoverIndex>=map.Covers.Count||
-                   map.Covers[state.CoverIndex].Fraction!=actor.Definition.Fraction||state.Moving&&actor.Pending!=null)
-                    throw new InvalidDataException("Invalid moving grenade player authority.");
-                if(state.Moving)
+                dueLaunches.Add(pending);
+                actor.Pending = null;
+                if (!actor.Binding.Swipe)
                 {
-                    var direction=state.Position-actor.Position;direction.Y=0;
-                    if(direction.LengthSquared()>1e-10f)
-                        actor.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.Atan2(direction.X,direction.Z));
-                    if(!actor.Moving)
-                    {actor.Clip=actor.Binding.Swipe?"grenade_run":"run_grenadelauncher";actor.ClipStarted=tick;}
+                    actor.Clip = pending.Right
+                        ? "player_fire_left_grenadelauncher"
+                        : "player_fire_right_grenadelauncher";
+                    actor.ClipStarted = tick;
                 }
-                else if(actor.Moving)
-                {actor.Clip=actor.Binding.Swipe?"grenade_idle":"grenadelauncher_idle";actor.ClipStarted=tick;
-                 actor.Rotation=map.Covers[state.CoverIndex].Rotation;}
-                else if(actor.Pending==null&&Loops(actor.Clip))
-                    actor.Rotation=map.Covers[state.CoverIndex].Rotation;
-                actor.Moving=state.Moving;actor.Position=state.Position;
             }
-            bool loop=Loops(actor.Clip);double seconds=(tick-actor.ClipStarted)/(double)MatchManifest.TickRate;
-            actor.Pose=Place(catalog.Poses.Sample(actor.Clip,seconds,loop),actor.Position,actor.Rotation);
-            if(actor.Pending is { } pending&&pending.LaunchTick<=tick)
+            else if (actor.Pending == null && !loop &&
+                seconds >= catalog.Poses.Duration(actor.Clip))
             {
-                due.Add(pending);actor.Pending=null;
-                if(!actor.Binding.Swipe){actor.Clip=pending.Right?"player_fire_left_grenadelauncher":"player_fire_right_grenadelauncher";actor.ClipStarted=tick;}
+                actor.Clip = actor.Binding.Swipe
+                    ? "grenade_idle" : "grenadelauncher_idle";
+                actor.ClipStarted = tick;
+                actor.Pose = Place(catalog.Poses.Sample(actor.Clip, 0,
+                    true), actor.Position, actor.Rotation);
             }
-            else if(actor.Pending==null&&!loop&&seconds>=catalog.Poses.Duration(actor.Clip))
-            {actor.Clip=actor.Binding.Swipe?"grenade_idle":"grenadelauncher_idle";actor.ClipStarted=tick;actor.Pose=Place(catalog.Poses.Sample(actor.Clip,0,true),actor.Position,actor.Rotation);}
         }
-        return due;
+        return dueLaunches;
+    }
+
+    private void UpdateActorLocation(Actor actor,
+        RifleActorLocation location, ulong tick)
+    {
+        if (!PlayerHitbox.Finite(location.Position) ||
+            location.CoverIndex < 0 ||
+            location.CoverIndex >= map.Covers.Count ||
+            map.Covers[location.CoverIndex].Fraction !=
+                actor.Definition.Fraction ||
+            (location.Moving && actor.Pending != null))
+            throw new InvalidDataException(
+                "Invalid moving grenade player authority.");
+
+        if (location.Moving)
+        {
+            Vector3 direction = location.Position - actor.Position;
+            direction.Y = 0;
+            if (direction.LengthSquared() > 1e-10f)
+                actor.Rotation = Quaternion.CreateFromAxisAngle(
+                    Vector3.UnitY, MathF.Atan2(direction.X, direction.Z));
+            if (!actor.Moving)
+            {
+                actor.Clip = actor.Binding.Swipe
+                    ? "grenade_run" : "run_grenadelauncher";
+                actor.ClipStarted = tick;
+            }
+        }
+        else if (actor.Moving)
+        {
+            actor.Clip = actor.Binding.Swipe
+                ? "grenade_idle" : "grenadelauncher_idle";
+            actor.ClipStarted = tick;
+            actor.Rotation = map.Covers[location.CoverIndex].Rotation;
+        }
+        else if (actor.Pending == null && Loops(actor.Clip))
+        {
+            actor.Rotation = map.Covers[location.CoverIndex].Rotation;
+        }
+
+        actor.Moving = location.Moving;
+        actor.Position = location.Position;
     }
     internal Vector3 Muzzle(ScheduledGrenadeLaunch launch)
     {
-        var actor=ActorOf(launch.Owner);return launch.Right&&actor.Binding.Swipe?actor.Pose.Left.Position:actor.Pose.Right[launch.WeaponSourceId].Position;
+        ArgumentNullException.ThrowIfNull(launch);
+        Actor actor = ActorOf(launch.Owner);
+        if (launch.WeaponSourceId != actor.Binding.SourceId ||
+            launch.Upgrade != actor.Definition.WeaponUpgrade)
+            throw new InvalidDataException(
+                "Grenade launch differs from the host weapon binding.");
+
+        // The recovered swipe throw's right-side branch uses the shared
+        // left-hand origin. All other branches use the equipped weapon muzzle.
+        return launch.Right && actor.Binding.Swipe
+            ? actor.Pose.Left.Position
+            : actor.Pose.Right[launch.WeaponSourceId].Position;
     }
     internal ShotCollision? Trace(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
-    {var world=new ShotCollisionWorld(map,actors.Select(x=>new CollisionPlayer(x.Definition.PlayerId,x.Pose.Collision,
-        x.Definition.Fraction==1?23:22)),dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);return world.Raycast(owner,origin,direction,range,mask);}
+    {
+        var players = actors.Select(actor => new CollisionPlayer(
+            actor.Definition.PlayerId, actor.Pose.Collision,
+            actor.Definition.Fraction == 1 ? 23 : 22));
+        var world = new ShotCollisionWorld(map, players,
+            dynamicColliderEnabled, indexedColliderEnabled,
+            runtimeLayer, dynamicTargets);
+        return world.Raycast(owner, origin, direction, range, mask);
+    }
     internal bool HelicopterCanSee(HelicopterSightRay ray)
     {
         if(!PlayerHitbox.Finite(ray.Origin)||!PlayerHitbox.Finite(ray.Direction)||

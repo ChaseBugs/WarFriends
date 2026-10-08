@@ -347,6 +347,11 @@ internal static class GrenadeCatalogTests
         IReadOnlyList<ScheduledGrenadeLaunch> due=[];for(ulong t=61;t<=79;t++)due=simulation.Advance(t);
         Check(due.Count==1&&!simulation.Busy(one)&&PlayerHitbox.Finite(simulation.Muzzle(due[0])),
             "grenade pose clock releases one finite animated hand origin");
+        Reject(() => simulation.Muzzle(due[0] with
+            { WeaponSourceId = "Google2u.Grenade_M84" }),
+            "scheduled grenade cannot borrow another weapon's muzzle");
+        Reject(() => simulation.Muzzle(due[0] with { Upgrade = 1 }),
+            "scheduled grenade cannot change its signed upgrade");
         Reject(()=>new GrenadeMatchSimulation(allocation,map,catalog).Begin(one,new GrenadeThrowCommand{Swipe=true,TargetX=1,
             SwipeStartX=start.X,SwipeStartY=start.Y,SwipeStartZ=start.Z,SwipeEndX=start.X+1,SwipeEndY=start.Y,SwipeEndZ=start.Z,HeldSeconds=.2f},60),
             "swipe command accepted a competing client target");
