@@ -912,6 +912,8 @@ internal static class CombatContentTests
                 "minigun-content-manifest.json"),
             pistolManifestPath: Path.Combine(directory,
                 "pistol-content-manifest.json"),
+            shotgunManifestPath: Path.Combine(directory,
+                "shotgun-content-manifest.json"),
             sniperManifestPath: Path.Combine(directory,
                 "sniper-content-manifest.json"),
             bazookaManifestPath: Path.Combine(directory,
@@ -921,7 +923,9 @@ internal static class CombatContentTests
             ("Google2u.SniperRifle_MSR", "sniper_idle"),
             ("Google2u.LMG_Minigun", "minigun_idle"),
             ("Google2u.Bazooka_RPG7", "bazooka_idle"),
-            ("Google2u.Pistol_Berreta", "pistol_idle")
+            ("Google2u.Pistol_Berreta", "pistol_idle"),
+            ("Google2u.Shotgun_Benelli", "shotgunner_idle"),
+            ("Google2u.AssaultRifle_AKS47U", "shotgunner_idle")
         ];
         foreach ((string weaponId, string idleClip) in specialIdleWeapons)
         {
@@ -971,7 +975,9 @@ internal static class CombatContentTests
                     coverAnchor.SourceRotation!.Value).Collision;
             if (allies[0].Pose.Parts[0].Center !=
                     expectedPose.Parts[0].Center ||
-                poseRuntime.PlaceIdlePlayerMuzzle(switcher) != null)
+                (poseRuntime.PlaceIdlePlayerMuzzle(switcher) != null) !=
+                    weaponId.StartsWith("Google2u.AssaultRifle_",
+                        StringComparison.Ordinal))
                 throw new Exception($"Co-op {weaponId} reused rifle idle.");
         }
         if (switchingRuntime.Command(switcher, new MatchCommand { CommandId = 3,

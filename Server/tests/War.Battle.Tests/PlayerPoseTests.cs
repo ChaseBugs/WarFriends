@@ -23,8 +23,10 @@ internal static class PlayerPoseTests
             "QBZ2 rifle starts from its recovered idle clip");
         Check(new RifleCoverTimeline(catalog, 5).Selection.Name == "pistol_idle",
             "Pistol starts from its recovered idle clip");
-        Check(catalog.Duration("shotgunner_idle") > 0,
-            "Shotgunner idle is exported without assigning an unproven weapon family");
+        Check(new RifleCoverTimeline(catalog, 7).Selection.Name == "shotgunner_idle",
+            "Shotgun starts from its recovered idle clip");
+        Check(new RifleCoverTimeline(catalog, 15).Selection.Name == "shotgunner_idle",
+            "Machinegun starts from its recovered idle clip");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var rigNodes=doc.RootElement.GetProperty("rigNodes").EnumerateArray().ToArray();
         var rigParents=rigNodes.Select(n=>n.GetProperty("parent").GetInt32()).ToArray();
