@@ -1859,7 +1859,9 @@ internal static class CombatContentTests
             enemyDestinations: cornerDestinations,
             infantryNavigation: infantryNavigation,
             playerWeaponContent: content,
-            chooseInfantryShotFraction: () => 0.5f);
+            chooseInfantryShotFraction: () => 0.5f,
+            chooseInfantryPlayer: _ => 0,
+            chooseInfantryShieldRoll: () => 0.5f);
         cornerRuntime.Admit(firstPlayer);
         cornerRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1893,6 +1895,28 @@ internal static class CombatContentTests
             cornerArrival.FirstShootEligibleTick != cornerArrival.Tick +
                 (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1)
             throw new Exception("Co-op corner arrival missed its source state.");
+        cornerRuntime.Advance(cornerArrival.FirstShootEligibleTick);
+        CoopCornerFirstShotAttempt? cornerAttempt = cornerRuntime
+            .CornerFirstShotAttempt(cornerEnemy.EntityId);
+        BattleCoopEnemySpawn cornerAtShot = cornerRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy =>
+                enemy.EntityId == cornerEnemy.EntityId);
+        CoopEnemyPoint sourceCorner = enemyMap.Points.Single(point =>
+            point.ComponentFileId == cornerArrival.PointComponentFileId);
+        bool expectedExposure = cornerAttempt != null &&
+            CoopCornerShotPolicy.CanExpose(sourceCorner,
+                new Vector3(cornerAtShot.CurrentX, cornerAtShot.CurrentY,
+                    cornerAtShot.CurrentZ), cornerAttempt.TargetPosition);
+        if (cornerAttempt?.Tick != cornerArrival.FirstShootEligibleTick ||
+            cornerAttempt.PlayerId != firstPlayer ||
+            cornerAttempt.Exposed != expectedExposure ||
+            (cornerRuntime.InfantryFirstPlayerTarget(cornerEnemy.EntityId)
+                != null) != expectedExposure)
+            throw new Exception($"Co-op first corner target escaped its source angle gate: eligible={cornerArrival.FirstShootEligibleTick}, attempt={cornerAttempt}, expected={expectedExposure}, plan={cornerRuntime.InfantryFirstPlayerTarget(cornerEnemy.EntityId)}.");
+        cornerRuntime.Advance(cornerArrival.FirstShootEligibleTick + 2);
+        if (cornerRuntime.CornerFirstShotAttempt(cornerEnemy.EntityId)
+            != cornerAttempt)
+            throw new Exception("Co-op corner retried without a new shot clock.");
 
         MissionRule rusherRule = catalog.Get(2);
         MissionMapRule rusherMissionMap = catalog.MapForMission(2);

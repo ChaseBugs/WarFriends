@@ -54,12 +54,14 @@ public sealed class CoopEnemyDestinationState
 
     internal string? PointTypeFor(ulong entityId)
     {
+        return PointFor(entityId)?.ComponentType;
+    }
+
+    internal CoopEnemyPoint? PointFor(ulong entityId)
+    {
         CoopAssignedEnemyDestination? destination = ForEnemy(entityId);
-        if (destination == null)
-            return null;
-        return map.Points.Single(point =>
-            point.ComponentFileId == destination.PointComponentFileId)
-            .ComponentType;
+        return destination == null ? null : map.Points.Single(point =>
+            point.ComponentFileId == destination.PointComponentFileId);
     }
 
     internal CoopAssignedEnemyDestination? RegenerateObstaclePosition(
