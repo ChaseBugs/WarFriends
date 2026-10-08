@@ -4453,6 +4453,46 @@ internal static class CombatContentTests
         var emptySpace = new CoopShotCollisionWorld(
             new CoopNativeSceneRaycaster(colliders.Maps[0], geometry));
         Vector3 distantOrigin = new(1000, 1000, 1000);
+        const string firstAlly = "00000000000000000000000000000001";
+        const string secondAlly = "00000000000000000000000000000002";
+        PlayerCollisionModel AllyPose(string path, Vector3 center)
+        {
+            var body = new PlayerHitbox(path + "/body",
+                PlayerHitboxKind.Box, 1, center,
+                new Vector3(1, 1, 1), Quaternion.Identity, 0,
+                Vector3.Zero, 0);
+            var head = new PlayerHitbox(path + "/head",
+                PlayerHitboxKind.Sphere, 2,
+                center + Vector3.UnitY, Vector3.Zero,
+                Quaternion.Identity, 0.3f, Vector3.Zero, 0);
+            return PlayerCollisionModel.InitializedFrame("test", path,
+                center, Quaternion.Identity, [body, head]);
+        }
+        var alliedPoses = new CollisionPlayer[]
+        {
+            new(firstAlly, AllyPose("ally/one",
+                distantOrigin + new Vector3(0, 0, 5)), 22, 2),
+            new(secondAlly, AllyPose("ally/two",
+                distantOrigin + new Vector3(3, 0, 5)), 22, 2)
+        };
+        var playerWorld = new CoopPlayerShotCollisionWorld(
+            new CoopNativeSceneRaycaster(colliders.Maps[0], geometry));
+        uint recoveredEnemyMask = unchecked((uint)-143121921);
+        CoopPlayerShotHit? allyHit = playerWorld.Trace(distantOrigin,
+            Vector3.UnitZ, 10, recoveredEnemyMask, alliedPoses);
+        if (allyHit?.PlayerId != firstAlly ||
+            allyHit.PlayerPartPath != "ally/one/body" ||
+            Math.Abs(allyHit.Distance - 4.5f) > 0.001f ||
+            playerWorld.Trace(distantOrigin, Vector3.UnitZ, 10,
+                recoveredEnemyMask & ~(1u << 22), alliedPoses) != null)
+            throw new Exception("Co-op enemy ray lost allied pose or source mask.");
+        try
+        {
+            playerWorld.Trace(distantOrigin, Vector3.UnitZ, 10,
+                recoveredEnemyMask, [alliedPoses[0], alliedPoses[0]]);
+            throw new Exception("A duplicate co-op ally was accepted.");
+        }
+        catch (InvalidDataException) { }
         var hitbox = new PlayerHitbox("host/drone", PlayerHitboxKind.Sphere,
             1, distantOrigin + new Vector3(0, 0, 5), Vector3.Zero,
             Quaternion.Identity, 1, Vector3.Zero, 0);

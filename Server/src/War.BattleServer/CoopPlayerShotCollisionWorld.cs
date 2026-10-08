@@ -1,0 +1,62 @@
+using System.Numerics;
+
+namespace War.BattleServer;
+
+internal sealed record CoopPlayerShotHit(
+    float Distance, Vector3 Position, int? SceneColliderFileId,
+    string? PlayerId, string? PlayerPartPath, float PartWeight);
+
+/// <summary>
+/// Traces an enemy round against the recovered co-op scene and two host-owned
+/// allied poses. This is diagnostic until moving poses, live cover, and the
+/// Unity 5.2 collision differences are resolved.
+/// </summary>
+internal sealed class CoopPlayerShotCollisionWorld
+{
+    private readonly CoopNativeSceneRaycaster scene;
+
+    internal CoopPlayerShotCollisionWorld(CoopNativeSceneRaycaster scene)
+    {
+        this.scene = scene ?? throw new ArgumentNullException(nameof(scene));
+    }
+
+    internal CoopPlayerShotHit? Trace(Vector3 origin, Vector3 direction,
+        float maximumDistance, uint enemyBulletMask,
+        IReadOnlyList<CollisionPlayer> players)
+    {
+        ArgumentNullException.ThrowIfNull(players);
+        if (players.Count != 2 || players.Any(player =>
+                player == null ||
+                !Guid.TryParseExact(player.PlayerId, "N", out _) ||
+                player.PlayerId != player.PlayerId.ToLowerInvariant() ||
+                player.Pose == null ||
+                player.Pose.Role != "gameplay" ||
+                player.Pose.PoseKind == "serialized-reference-only" ||
+                player.Layer is < 0 or > 31) ||
+            players[0].PlayerId == players[1].PlayerId)
+            throw new InvalidDataException(
+                "Co-op enemy ray needs two current allied poses.");
+
+        CoopNativeRayHit? sceneHit = scene.Raycast(origin, direction,
+            maximumDistance, enemyBulletMask);
+        CoopPlayerShotHit? nearest = sceneHit == null ? null : new(
+            sceneHit.Distance, sceneHit.Position,
+            sceneHit.ComponentFileId, null, null, 0);
+        Vector3 ray = Vector3.Normalize(direction);
+
+        foreach (CollisionPlayer player in players)
+        {
+            if ((enemyBulletMask & (1u << player.Layer)) == 0)
+                continue;
+            PlayerHit? hit = player.Pose.Raycast(origin, ray,
+                maximumDistance);
+            // A wall at the same distance wins over the player pose.
+            if (hit == null ||
+                (nearest != null && hit.Distance >= nearest.Distance))
+                continue;
+            nearest = new(hit.Distance, hit.Position, null,
+                player.PlayerId, hit.PartPath, hit.Weight);
+        }
+        return nearest;
+    }
+}
