@@ -52,6 +52,16 @@ public sealed class CoopEnemyDestinationState
     public CoopAssignedEnemyDestination? ForEnemy(ulong entityId) =>
         assigned.GetValueOrDefault(entityId);
 
+    internal string? PointTypeFor(ulong entityId)
+    {
+        CoopAssignedEnemyDestination? destination = ForEnemy(entityId);
+        if (destination == null)
+            return null;
+        return map.Points.Single(point =>
+            point.ComponentFileId == destination.PointComponentFileId)
+            .ComponentType;
+    }
+
     internal void BindToMatch()
     {
         if (boundToMatch)

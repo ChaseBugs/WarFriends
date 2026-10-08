@@ -25,6 +25,15 @@ internal sealed record CoopBossPreferredShotPlan(
 internal sealed record CoopHostEnemyHitCredit(
     string PlayerId, CoopEnemyKillCredit KillCredit);
 
+internal enum CoopInfantryPointState
+{
+    ObstacleHiding,
+    CornerHiding
+}
+
+internal sealed record CoopInfantryPointArrival(
+    ulong Tick, int PointComponentFileId, CoopInfantryPointState State);
+
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
 /// cannot accept combat commands until host AI and player controls are wired.
@@ -62,7 +71,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopEnemyDestinationState? enemyDestinations;
     private readonly CoopNavMeshConnectivity? infantryNavigation;
     private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
-    private readonly Dictionary<ulong, ulong> infantryPointReachedTicks = [];
+    private readonly Dictionary<ulong, CoopInfantryPointArrival> infantryPointArrivals = [];
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -295,9 +304,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopAssignedEnemyDestination? EnemyDestination(ulong entityId) =>
         enemyDestinations?.ForEnemy(entityId);
 
-    internal ulong? InfantryPointReachedTick(ulong entityId) =>
-        infantryPointReachedTicks.TryGetValue(entityId, out ulong reachedTick)
-            ? reachedTick : null;
+    internal CoopInfantryPointArrival? InfantryPointArrival(ulong entityId) =>
+        infantryPointArrivals.GetValueOrDefault(entityId);
 
     /// <summary>
     /// A future host AI state may request this after reaching or abandoning
@@ -767,7 +775,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopAssignedEnemyDestination destination, Vector3 start)
     {
         infantryPaths.Remove(enemy.EntityId);
-        infantryPointReachedTicks.Remove(enemy.EntityId);
+        infantryPointArrivals.Remove(enemy.EntityId);
         // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
         // branch. Rusher, Warp, Parachute, and specialist state machines need
         // separate source rules before their movement can be simulated.
@@ -823,7 +831,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             {
                 // EnemyPoint.IsEnemyPointReached is the Client's walking
                 // transition. Shooting is still closed in this runtime.
-                infantryPointReachedTicks[entityId] = tick;
+                string? pointType = enemyDestinations!.PointTypeFor(entityId);
+                CoopInfantryPointState pointState = pointType switch
+                {
+                    "EnemyPointObstacle" => CoopInfantryPointState.ObstacleHiding,
+                    "EnemyPointCorner" => CoopInfantryPointState.CornerHiding,
+                    _ => throw new InvalidDataException(
+                        "Assaulter reached an unsupported source point state.")
+                };
+                infantryPointArrivals[entityId] = new(
+                    tick, destination.PointComponentFileId, pointState);
                 arrived.Add(entityId);
             }
             else if (path.HasArrived(tick))
@@ -1171,7 +1188,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.DeathTick = impactTick;
             enemyDestinations?.Release(entityId);
             infantryPaths.Remove(entityId);
-            infantryPointReachedTicks.Remove(entityId);
+            infantryPointArrivals.Remove(entityId);
             if (enemy.Behaviour == "Drone")
             {
                 airPathReservations?.Release(entityId);
@@ -1800,7 +1817,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return;
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
-        infantryPointReachedTicks.Clear();
+        infantryPointArrivals.Clear();
         foreach (Participant participant in participants.Values)
         {
             participant.Route = null;

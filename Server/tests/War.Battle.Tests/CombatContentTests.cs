@@ -1653,11 +1653,15 @@ internal static class CombatContentTests
                 new Vector2(arrivalPoint.Position.X,
                     arrivalPoint.Position.Z)) < 0.04f);
         arrivalRuntime.Advance(expectedArrival - 1);
-        if (arrivalRuntime.InfantryPointReachedTick(arrivalEnemy.EntityId) != null)
+        if (arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null)
             throw new Exception("Co-op Assaulter reached its point too early.");
         arrivalRuntime.Advance(expectedArrival);
-        if (arrivalRuntime.InfantryPointReachedTick(arrivalEnemy.EntityId) !=
-                expectedArrival)
+        CoopInfantryPointArrival? obstacleArrival = arrivalRuntime
+            .InfantryPointArrival(arrivalEnemy.EntityId);
+        if (obstacleArrival?.Tick != expectedArrival ||
+            obstacleArrival.PointComponentFileId !=
+                arrivalPoint.PointComponentFileId ||
+            obstacleArrival.State != CoopInfantryPointState.ObstacleHiding)
             throw new Exception("Co-op Assaulter missed the source point-arrival check.");
         BattleCoopEnemySpawn reachedEnemy = arrivalRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy =>
@@ -1672,8 +1676,49 @@ internal static class CombatContentTests
             throw new Exception("Co-op Assaulter walked beyond its reached point.");
         if (!arrivalRuntime.ApplyHostEnemyDamage(arrivalEnemy.EntityId,
                 heldEnemy.Health, expectedArrival + 1) ||
-            arrivalRuntime.InfantryPointReachedTick(arrivalEnemy.EntityId) != null)
+            arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null)
             throw new Exception("Dead co-op infantry retained a point-arrival marker.");
+
+        int cornerSpawnIndex = assaultCandidates.ToList().FindIndex(point =>
+            point.ComponentFileId == 1694);
+        if (cornerSpawnIndex < 0)
+            throw new Exception("Recovered Desert corner spawn is absent.");
+        var cornerDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var cornerRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0,
+            choosePoint: count => count > cornerSpawnIndex ?
+                cornerSpawnIndex : 0,
+            enemyDestinations: cornerDestinations,
+            infantryNavigation: infantryNavigation,
+            playerWeaponContent: content);
+        cornerRuntime.Admit(firstPlayer);
+        cornerRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            cornerRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = cornerRuntime.ManifestHash
+                }
+            });
+        cornerRuntime.Advance(8);
+        BattleCoopEnemySpawn cornerEnemy = cornerRuntime.Snapshot()
+            .Coop.EnemySpawns.Single();
+        if (cornerEnemy.SpawnComponentFileId != 1694 ||
+            cornerDestinations.PointTypeFor(cornerEnemy.EntityId) !=
+                "EnemyPointCorner")
+            throw new Exception("Co-op corner fixture selected a different point.");
+        cornerRuntime.Advance(300);
+        CoopInfantryPointArrival? cornerArrival = cornerRuntime
+            .InfantryPointArrival(cornerEnemy.EntityId);
+        if (cornerArrival?.State != CoopInfantryPointState.CornerHiding ||
+            cornerArrival.PointComponentFileId != 1698 ||
+            cornerArrival.Tick is <= 8 or > 300)
+            throw new Exception("Co-op corner arrival missed its source state.");
 
         MissionRule rusherRule = catalog.Get(2);
         MissionMapRule rusherMissionMap = catalog.MapForMission(2);
