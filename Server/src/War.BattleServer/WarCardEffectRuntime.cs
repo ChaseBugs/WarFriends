@@ -11,7 +11,7 @@ public sealed class WarCardEffectRuntime
 {
     private readonly int capacity;
     private readonly Dictionary<string, ActiveWarCardEffect> active = new(StringComparer.Ordinal);
-    private readonly WarCardEffectStack stack = new();
+    private readonly Dictionary<string, WarCardEffectStack> ownerStacks = new(StringComparer.Ordinal);
     public WarCardEffectRuntime(int capacity = 128)
     {
         if (capacity is < 1 or > 2048) throw new ArgumentOutOfRangeException(nameof(capacity));
@@ -31,7 +31,12 @@ public sealed class WarCardEffectRuntime
             !Guid.TryParseExact(ownerPlayerId, "N", out _) || active.Count >= capacity || tick > 10_000_000)
             return false;
         var definition = WarCardEffectRequestValidator.Validate(request);
-        if (!stack.TryApply(definition.CardId, stackable: definition.Kind is WarCardEffectKind.Status or WarCardEffectKind.Modifier)) return false;
+        bool existingOwner = ownerStacks.TryGetValue(ownerPlayerId, out var existingStack);
+        WarCardEffectStack stack = existingStack ?? new WarCardEffectStack();
+        if (!stack.TryApply(definition.CardId,
+                stackable: definition.Kind is WarCardEffectKind.Status or WarCardEffectKind.Modifier))
+            return false;
+        if (!existingOwner) ownerStacks.Add(ownerPlayerId, stack);
         active.Add(effectId, new ActiveWarCardEffect(effectId, ownerPlayerId, definition,
             request.Target, tick, new WarCardEffectLease(tick, request.DurationSeconds)));
         return true;
@@ -40,21 +45,42 @@ public sealed class WarCardEffectRuntime
     public int Expire(ulong tick)
     {
         var expired = active.Values.Where(x => !x.Lease.ActiveAt(tick)).Select(x => x.EffectId).ToArray();
-        foreach (var id in expired) active.Remove(id);
+        foreach (var id in expired)
+        {
+            ReleaseStack(active[id]);
+            active.Remove(id);
+        }
         return expired.Length;
     }
 
     public IReadOnlyList<ActiveWarCardEffect> ExpireAndReturn(ulong tick)
     {
         var expired = active.Values.Where(x => !x.Lease.ActiveAt(tick)).OrderBy(x => x.EffectId).ToArray();
-        foreach (var effect in expired) active.Remove(effect.EffectId);
+        foreach (var effect in expired)
+        {
+            ReleaseStack(effect);
+            active.Remove(effect.EffectId);
+        }
         return expired;
     }
 
     public int RemoveOwner(string ownerPlayerId)
     {
         var ids = active.Values.Where(x => x.OwnerPlayerId == ownerPlayerId).Select(x => x.EffectId).ToArray();
-        foreach (var id in ids) active.Remove(id);
+        foreach (var id in ids)
+        {
+            ReleaseStack(active[id]);
+            active.Remove(id);
+        }
         return ids.Length;
+    }
+
+    private void ReleaseStack(ActiveWarCardEffect effect)
+    {
+        var stack = ownerStacks[effect.OwnerPlayerId];
+        stack.Release(effect.Definition.CardId);
+        if (!active.Values.Any(row => row.EffectId != effect.EffectId &&
+                                  row.OwnerPlayerId == effect.OwnerPlayerId))
+            ownerStacks.Remove(effect.OwnerPlayerId);
     }
 }

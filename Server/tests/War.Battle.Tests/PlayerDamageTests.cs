@@ -139,7 +139,7 @@ internal static class PlayerDamageTests
             MatchId = "live-medkit-owner-healing"
         });
         liveMatch.ConfigureCardSelection(["CardHealMeNow"]);
-        liveMatch.ConfigureCardInventory([(a, "CardHealMeNow", 1)]);
+        liveMatch.ConfigureCardInventory([(a, "CardHealMeNow", 2)]);
         liveMatch.Admit(a);
         liveMatch.Admit(b);
         var medkitSelection = new SelectCardsCommand();
@@ -170,10 +170,19 @@ internal static class PlayerDamageTests
         Check(liveMatch.Command(a, liveMedkit).Code == "medkit-healed" &&
               liveMatch.Snapshot().Players[0].Health == 80,
             "transport retry replays the original medkit result without another heal");
+        liveMatch.Advance(61);
+        liveMatch.ApplyResolvedPlayerDamage(b, a,
+            new ResolvedPlayerDamage(20, CombatDamageType.Basic, HasWeapon: false), 1);
         Check(liveMatch.Command(a, new MatchCommand
         {
             CommandId = 4,
             UseMedkit = new UseMedkitCommand { RequestId = "84848484848484848484848484848484" }
+        }).Code == "medkit-healed" && liveMatch.Snapshot().Players[0].Health == 80,
+            "an expired medkit releases its effect slot for another owned card");
+        Check(liveMatch.Command(a, new MatchCommand
+        {
+            CommandId = 5,
+            UseMedkit = new UseMedkitCommand { RequestId = "85858585858585858585858585858585" }
         }).Code == "medkit-unavailable", "exhausted inventory cannot heal again");
         const string healingStormEffectId = "82828282828282828282828282828282";
         Check(medkitMatch.TryApplyCardEffect(healingStormEffectId, a,

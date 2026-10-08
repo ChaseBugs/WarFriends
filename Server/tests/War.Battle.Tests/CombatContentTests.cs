@@ -9740,6 +9740,10 @@ internal static class CombatContentTests
                       new WarCardEffectRequest("CardSlowdown",new(1,0,1),1,0),10)&&
                   effects.Count==1&&effects.Expire(10+MatchManifest.TickRate)==1&&effects.Count==0,
                   "War Card effects create idempotent server leases and expire on authoritative ticks");
+            Check(effects.TryApply("fx-2", "44444444444444444444444444444444",
+                      new WarCardEffectRequest("CardSlowdown", new(1, 0, 1), 1, 0),
+                      10 + MatchManifest.TickRate),
+                  "an expired effect releases its owner's active card slot");
             var objectiveState=new BattleObjectiveState(new Dictionary<BattleObjectiveKind,int>
                 {{BattleObjectiveKind.DestroyCrates,2}});
             var interactables=new BattleInteractableRegistry(1);
@@ -10038,6 +10042,20 @@ internal static class CombatContentTests
             Check(stacks.TryApply("CardShieldsUp",false)&&!stacks.TryApply("CardShieldsUp",false)&&
                   stacks.TryApply("CardSlowdown",true)&&stacks.TryApply("CardSlowdown",true)&&stacks.Count("CardSlowdown")==2,
                   "War Card effects enforce explicit nonstacking and bounded stacking policy");
+            stacks.Release("CardShieldsUp");
+            stacks.Release("CardSlowdown");
+            Check(stacks.TryApply("CardShieldsUp", false) && stacks.Count("CardShieldsUp") == 1 &&
+                  stacks.Count("CardSlowdown") == 1,
+                  "retiring an effect frees one stack slot without clearing other active effects");
+            var ownerEffects = new WarCardEffectRuntime();
+            var ownerEffect = new WarCardEffectRequest("CardHealMeNow", Vector3.Zero, 0, 1);
+            const string effectOwner = "44444444444444444444444444444444";
+            Check(ownerEffects.TryApply("first-medkit", effectOwner, ownerEffect, 10) &&
+                  ownerEffects.TryApply("opponent-medkit", "55555555555555555555555555555555", ownerEffect, 10) &&
+                  ownerEffects.RemoveOwner(effectOwner) == 1 &&
+                  ownerEffects.TryApply("second-medkit", effectOwner, ownerEffect, 10) &&
+                  ownerEffects.Count == 2,
+                  "each player owns independent effect slots and removal frees only that player's slot");
             ClientBattleEventValidator.Validate(new ClientBattleEvent(1,"spawn",1,Vector3.Zero));
             Check(true,"Client battle event projection validates bounded sequence, entity, kind, and position");
             Reject(()=>ClientBattleEventValidator.Validate(new ClientBattleEvent(0,"spawn",1,Vector3.Zero)));
