@@ -18,6 +18,7 @@ GUN = ASSETS / "Scripts/Assembly-CSharp/Gun.cs"
 BULLET = ASSETS / "GameObject/BulletSlow.prefab"
 BASE_BULLET = ASSETS / "Scripts/Assembly-CSharp/BulletBase.cs"
 BULLET_SETUP = ASSETS / "Scripts/Assembly-CSharp/BulletSetup.cs"
+AMMO = ASSETS / "Scripts/Assembly-CSharp/Ammo.cs"
 OUTPUT = ROOT / "Server/content/recovered-coop-assaulter-weapon.json"
 
 
@@ -92,8 +93,16 @@ def main():
     real_speed = setup_number("speed")
     check_distance = setup_number("checkDistance")
     fake_factor = setup_number("fakeSpeedFactor")
+    def setup_crypto_number(name):
+        return float(require(
+            rf"^  {name}:\n(?:    .*\n)*?    fakeValue: ([0-9.]+)$",
+            setup, name).group(1))
+    critical_probability = setup_crypto_number("criticalProbability")
+    critical_amount = setup_crypto_number("criticalAmount")
     if (real_speed, check_distance, fake_factor) != (5.0, 0.35, 1.5):
         raise ValueError("Assaulter BulletSetup flight values changed")
+    if (critical_probability, critical_amount) != (0.0, 2.0):
+        raise ValueError("Assaulter BulletSetup critical values changed")
     bullet_meta = BULLET.with_suffix(BULLET.suffix + ".meta").read_text()
     if "guid: " + bullet.group(2) not in bullet_meta:
         raise ValueError("Assaulter bullet GUID no longer resolves")
@@ -116,6 +125,11 @@ def main():
     if ("public float fakeSpeed => speed * fakeSpeedFactor;" not in
             BULLET_SETUP.read_text(encoding="utf-8-sig")):
         raise ValueError("BulletSetup fake-speed rule changed")
+    ammo_source = AMMO.read_text(encoding="utf-8-sig")
+    if ("UnityEngine.Random.value < (float)setup.criticalProbability" not in
+            ammo_source or "ammoDamageAmount = setup.damageAmount;" not in
+            ammo_source):
+        raise ValueError("Ammo critical/damage setup changed")
 
     artifact = {
         "version": 1,
@@ -138,6 +152,8 @@ def main():
         "realBulletSpeed": real_speed,
         "fakeBulletSpeed": real_speed * fake_factor,
         "collisionCheckDistance": check_distance,
+        "criticalProbability": critical_probability,
+        "criticalAmount": critical_amount,
         "cadenceSeconds": cadence,
         "infiniteAmmo": True,
         "reloadableWeapon": False,
@@ -145,6 +161,7 @@ def main():
         "gunSourceSha256": digest(GUN),
         "bulletBaseSourceSha256": digest(BASE_BULLET),
         "bulletSetupSourceSha256": digest(BULLET_SETUP),
+        "ammoSourceSha256": digest(AMMO),
     }
     content = json.dumps(artifact, indent=2) + "\n"
     if sys.argv[1:] == ["--check"]:

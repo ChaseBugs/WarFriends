@@ -602,6 +602,8 @@ internal static class CombatContentTests
             rifle.RealBulletSpeed != 5f ||
             rifle.FakeBulletSpeed != 7.5f ||
             rifle.CollisionCheckDistance != 0.35f ||
+            rifle.CriticalProbability != 0f ||
+            rifle.CriticalAmount != 2f ||
             rifle.RealBulletFlight() !=
                 new BulletFlightDefinition(5f, 0.35f, false) ||
             rifle.CadenceSeconds != 0.35f ||
@@ -1417,6 +1419,18 @@ internal static class CombatContentTests
                 "Google2u.AssaultRifle_AK47", 10f)?.Health !=
             content.Shields.Health(3) - 10f)
             throw new Exception("Ordinary co-op shield rejected a host impact.");
+        var unitShieldProbe = new CoopShieldMatchSimulation(
+            shieldAllocation, shieldStates, content.Shields,
+            firstCover: 0, startingTick: 0);
+        float assaulterDamage = enemyCombat.OrdinaryStats(
+            "Assaulter", normalUpgradeIndex: 0).Damage;
+        ShieldMutation? unitShieldHit = unitShieldProbe.ApplyHostUnitShot(
+            1, assaulterDamage, 0);
+        float expectedShieldHealth = content.Shields.Health(3) -
+            assaulterDamage * content.Shields.UnitToShieldCoefficient;
+        if (unitShieldHit == null ||
+            Math.Abs(unitShieldHit.Health - expectedShieldHealth) > 0.0001f)
+            throw new Exception("Co-op Assaulter shot lost its unit-to-shield rule.");
         // The Unity ray-reference artifact hits Desert's cover-1 collider
         // 1531 from this point. Use the runtime's own shield snapshots.
         using JsonDocument shieldRays = JsonDocument.Parse(File.ReadAllBytes(

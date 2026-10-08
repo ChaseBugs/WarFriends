@@ -81,6 +81,30 @@ internal sealed class CoopShieldMatchSimulation
         return cover.Snapshot();
     }
 
+    /// <summary>
+    /// Shield.DoDamage uses UnitToShieldCoef for a soldier's shot.
+    /// Only a future verified host projectile impact may call this path.
+    /// </summary>
+    internal ShieldMutation? ApplyHostUnitShot(
+        int coverIndex, float sourceDamage, ulong tick)
+    {
+        if (tick != lastTick)
+            throw new InvalidDataException(
+                "Co-op unit shield impact used a different host tick.");
+        Cover? cover = covers.SingleOrDefault(row =>
+            row.Index == coverIndex);
+        if (cover == null)
+            return null;
+
+        float previousHealth = cover.Lifecycle.Health;
+        cover.Lifecycle.ApplyUnitShot(sourceDamage, tick);
+        if (cover.Lifecycle.Health == previousHealth)
+            return null;
+
+        cover.Revision++;
+        return cover.Snapshot();
+    }
+
     internal bool Advance(ulong tick, IReadOnlyCollection<int> occupiedCovers)
     {
         if (tick != lastTick + 1)

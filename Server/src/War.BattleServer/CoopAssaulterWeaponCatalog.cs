@@ -11,7 +11,7 @@ namespace War.BattleServer;
 internal sealed class CoopAssaulterWeaponCatalog
 {
     private const string ArtifactSha256 =
-        "72c7ff7191faaeb9eed2e310979b502adab852abc1adf7e05c0f19aee72ca30e";
+        "e96e82fb348a1f74c08b19ae0f153173aea14115c0a008302e921ad4b8570f8a";
 
     internal string WeaponPrefabGuid { get; }
     internal string BulletPrefabGuid { get; }
@@ -21,6 +21,8 @@ internal sealed class CoopAssaulterWeaponCatalog
     internal float RealBulletSpeed { get; }
     internal float FakeBulletSpeed { get; }
     internal float CollisionCheckDistance { get; }
+    internal float CriticalProbability { get; }
+    internal float CriticalAmount { get; }
     internal float CadenceSeconds { get; }
 
     private CoopAssaulterWeaponCatalog(string weaponPrefabGuid,
@@ -28,6 +30,7 @@ internal sealed class CoopAssaulterWeaponCatalog
         Vector3 muzzleRestPosition, Vector3 shotOffset,
         float realBulletSpeed,
         float fakeBulletSpeed, float collisionCheckDistance,
+        float criticalProbability, float criticalAmount,
         float cadenceSeconds)
     {
         WeaponPrefabGuid = weaponPrefabGuid;
@@ -38,6 +41,8 @@ internal sealed class CoopAssaulterWeaponCatalog
         RealBulletSpeed = realBulletSpeed;
         FakeBulletSpeed = fakeBulletSpeed;
         CollisionCheckDistance = collisionCheckDistance;
+        CriticalProbability = criticalProbability;
+        CriticalAmount = criticalAmount;
         CadenceSeconds = cadenceSeconds;
     }
 
@@ -63,9 +68,11 @@ internal sealed class CoopAssaulterWeaponCatalog
             "bulletComponentFileId", "bulletPrefabSha256",
             "bulletSetupComponentFileId", "realBulletSpeed",
             "fakeBulletSpeed", "collisionCheckDistance",
+            "criticalProbability", "criticalAmount",
             "cadenceSeconds", "infiniteAmmo", "reloadableWeapon",
             "soldierSourceSha256", "gunSourceSha256",
-            "bulletBaseSourceSha256", "bulletSetupSourceSha256"
+            "bulletBaseSourceSha256", "bulletSetupSourceSha256",
+            "ammoSourceSha256"
         ];
         if (row.ValueKind != JsonValueKind.Object ||
             row.EnumerateObject().Count() != fields.Length ||
@@ -95,6 +102,8 @@ internal sealed class CoopAssaulterWeaponCatalog
             row.GetProperty("realBulletSpeed").GetSingle() != 5f ||
             row.GetProperty("fakeBulletSpeed").GetSingle() != 7.5f ||
             row.GetProperty("collisionCheckDistance").GetSingle() != 0.35f ||
+            row.GetProperty("criticalProbability").GetSingle() != 0f ||
+            row.GetProperty("criticalAmount").GetSingle() != 2f ||
             row.GetProperty("cadenceSeconds").GetSingle() != 0.35f ||
             row.GetProperty("infiniteAmmo").ValueKind != JsonValueKind.True ||
             row.GetProperty("reloadableWeapon").ValueKind != JsonValueKind.False ||
@@ -105,7 +114,9 @@ internal sealed class CoopAssaulterWeaponCatalog
             row.GetProperty("bulletBaseSourceSha256").GetString() !=
                 "5c8cb92b8d53b577b4b765dc486d5b94d49cb2f8515dff72e4a8f7fbee5e7b6b" ||
             row.GetProperty("bulletSetupSourceSha256").GetString() !=
-                "89aae8dce8b79a4defda00618b9db3fccb27dc369d3b438f57c0435d92d4870a")
+                "89aae8dce8b79a4defda00618b9db3fccb27dc369d3b438f57c0435d92d4870a" ||
+            row.GetProperty("ammoSourceSha256").GetString() !=
+                "02b91228de5bed10a1dc56cf3ede2f542ce9e23e67678a1d1150ae84cdab6a40")
             throw new InvalidDataException(
                 "Co-op Assaulter rifle lost its source binding.");
 
@@ -151,6 +162,8 @@ internal sealed class CoopAssaulterWeaponCatalog
             row.GetProperty("realBulletSpeed").GetSingle(),
             row.GetProperty("fakeBulletSpeed").GetSingle(),
             row.GetProperty("collisionCheckDistance").GetSingle(),
+            row.GetProperty("criticalProbability").GetSingle(),
+            row.GetProperty("criticalAmount").GetSingle(),
             row.GetProperty("cadenceSeconds").GetSingle());
     }
 

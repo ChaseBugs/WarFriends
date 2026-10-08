@@ -36,11 +36,14 @@
   "realBulletSpeed": 5.0,
   "fakeBulletSpeed": 7.5,
   "collisionCheckDistance": 0.35,
+  "criticalProbability": 0.0,
+  "criticalAmount": 2.0,
   "cadenceSeconds": 0.35,
   "infiniteAmmo": true,
   "reloadableWeapon": false,
   "soldierSourceSha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39",
   "gunSourceSha256": "2a3c8d6f42707bb8253e6b9f5e5e6ff50068a872b2d33b387520fb2d83efe281",
   "bulletBaseSourceSha256": "5c8cb92b8d53b577b4b765dc486d5b94d49cb2f8515dff72e4a8f7fbee5e7b6b",
-  "bulletSetupSourceSha256": "89aae8dce8b79a4defda00618b9db3fccb27dc369d3b438f57c0435d92d4870a"
+  "bulletSetupSourceSha256": "89aae8dce8b79a4defda00618b9db3fccb27dc369d3b438f57c0435d92d4870a",
+  "ammoSourceSha256": "02b91228de5bed10a1dc56cf3ede2f542ce9e23e67678a1d1150ae84cdab6a40"
 }
