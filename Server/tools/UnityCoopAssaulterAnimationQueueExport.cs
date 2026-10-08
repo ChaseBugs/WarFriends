@@ -15,6 +15,7 @@ using UnityEngine;
 public static class UnityCoopAssaulterAnimationQueueExport
 {
     private const string Active = "WarFriends.CoopAssaulterAnimationQueue";
+    private const string Primed = "WarFriends.CoopAssaulterQueuePrimed";
     private const string EnemyPath = "Assets/GameObject/enemy.prefab";
     private const string WeaponPath =
         "Assets/GameObject/AssaultRifleEnemy.prefab";
@@ -24,6 +25,9 @@ public static class UnityCoopAssaulterAnimationQueueExport
     private static readonly string[] FireClips =
         { "rifle_shot_loop", "player_fire_right3", "player_fire_left3" };
     private static readonly float[] FadeSeconds = { 0.05f, 0.02f, 0.02f };
+    private static readonly string[] PriorClips =
+        { "stand_up_crawl", "idle_1", "idle_1" };
+    private static readonly float[] PriorNormalizedTimes = { 1f, 0.5f, 0.5f };
     private static readonly List<object>[] Frames =
         { new List<object>(), new List<object>(), new List<object>() };
 
@@ -40,10 +44,21 @@ public static class UnityCoopAssaulterAnimationQueueExport
 
     public static void Run()
     {
+        Begin(false);
+    }
+
+    public static void RunPrimed()
+    {
+        Begin(true);
+    }
+
+    private static void Begin(bool primed)
+    {
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(
-                "WAR_COOP_ASSAULTER_QUEUE_OUTPUT")))
+                primed ? "WAR_COOP_ASSAULTER_PRIMED_OUTPUT" :
+                    "WAR_COOP_ASSAULTER_QUEUE_OUTPUT")))
             throw new InvalidOperationException(
-                "Set WAR_COOP_ASSAULTER_QUEUE_OUTPUT.");
+                "Set the co-op Assaulter queue output path.");
 
         var enemyPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(EnemyPath);
         var weaponPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(WeaponPath);
@@ -90,6 +105,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
                         .Select(script => script.GetType().Name).ToArray()));
         }
         SessionState.SetBool(Active, true);
+        SessionState.SetBool(Primed, primed);
         EditorApplication.isPlaying = true;
     }
 
@@ -131,7 +147,9 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 return;
 
             string output = Environment.GetEnvironmentVariable(
-                "WAR_COOP_ASSAULTER_QUEUE_OUTPUT");
+                SessionState.GetBool(Primed, false)
+                    ? "WAR_COOP_ASSAULTER_PRIMED_OUTPUT"
+                    : "WAR_COOP_ASSAULTER_QUEUE_OUTPUT");
             var scenarios = Enumerable.Range(0, 3).Select(i => new
             {
                 startClip = StartClips[i],
@@ -141,16 +159,43 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 fadeSeconds = FadeSeconds[i],
                 frames = Frames[i]
             }).ToArray();
-            File.WriteAllText(output, JsonConvert.SerializeObject(new
+            if (SessionState.GetBool(Primed, false))
             {
-                version = 1,
-                unity = Application.unityVersion,
-                enemySha256 = Hash(EnemyPath),
-                weaponSha256 = Hash(WeaponPath),
-                captureRate = 30,
-                scenarios
-            }, Formatting.Indented));
+                var primedScenarios = Enumerable.Range(0, 3).Select(i => new
+                {
+                    priorClip = PriorClips[i],
+                    priorClipSha256 = Hash("Assets/AnimationClip/" +
+                        PriorClips[i] + ".anim"),
+                    priorNormalizedTime = PriorNormalizedTimes[i],
+                    startClip = StartClips[i],
+                    fireClip = FireClips[i],
+                    fadeSeconds = FadeSeconds[i],
+                    frames = Frames[i]
+                }).ToArray();
+                File.WriteAllText(output, JsonConvert.SerializeObject(new
+                {
+                    version = 1,
+                    unity = Application.unityVersion,
+                    enemySha256 = Hash(EnemyPath),
+                    weaponSha256 = Hash(WeaponPath),
+                    captureRate = 30,
+                    scenarios = primedScenarios
+                }, Formatting.Indented));
+            }
+            else
+            {
+                File.WriteAllText(output, JsonConvert.SerializeObject(new
+                {
+                    version = 1,
+                    unity = Application.unityVersion,
+                    enemySha256 = Hash(EnemyPath),
+                    weaponSha256 = Hash(WeaponPath),
+                    captureRate = 30,
+                    scenarios
+                }, Formatting.Indented));
+            }
             SessionState.SetBool(Active, false);
+            SessionState.SetBool(Primed, false);
             EditorApplication.update -= Update;
             Debug.Log("COOP_ASSAULTER_QUEUE_EXPORT_PASSED frames=" +
                 Frames.Sum(rows => rows.Count));
@@ -159,6 +204,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
         catch (Exception error)
         {
             SessionState.SetBool(Active, false);
+            SessionState.SetBool(Primed, false);
             EditorApplication.update -= Update;
             Debug.LogException(error);
             EditorApplication.Exit(1);
@@ -186,6 +232,16 @@ public static class UnityCoopAssaulterAnimationQueueExport
             Animation animation = animations[i];
             animation.cullingType = AnimationCullingType.AlwaysAnimate;
             animation.Stop();
+            if (SessionState.GetBool(Primed, false))
+            {
+                AnimationState prior = animation[PriorClips[i]];
+                if (prior == null)
+                    throw new InvalidOperationException("Missing recovered prior cover pose.");
+                animation.Play(PriorClips[i]);
+                prior.normalizedTime = PriorNormalizedTimes[i];
+                prior.speed = 0;
+                animation.Sample();
+            }
             animation[StartClips[i]].normalizedTime = 0;
             animation.CrossFade(StartClips[i], FadeSeconds[i]);
             animation[FireClips[i]].wrapMode = WrapMode.ClampForever;
