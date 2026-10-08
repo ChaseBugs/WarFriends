@@ -160,6 +160,7 @@ internal static class CoopTerminalScoreValidator
                 !float.IsFinite(enemy.MaxHealth) || enemy.MaxHealth <= 0 ||
                 !float.IsFinite(enemy.Health) || enemy.Health < 0 ||
                 enemy.Health > enemy.MaxHealth ||
+                (enemy.Health == 0) != (enemy.DeathTick != 0) ||
                 enemy.SpawnTick > snapshot.EndTick)
                 throw new InvalidDataException(
                     "Co-op success has an invalid enemy spawn ledger.");

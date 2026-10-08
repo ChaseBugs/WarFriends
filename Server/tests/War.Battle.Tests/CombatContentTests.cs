@@ -1816,7 +1816,9 @@ internal static class CombatContentTests
         PlayerDamageResult? lethalHit = bossRuntime.ApplyHostPlayerDamage(
             504, bossSecondPlayer, new ResolvedPlayerDamage(secondMaximum,
                 CombatDamageType.Basic, HasWeapon: false), 1f, 200);
-        if (lethalHit?.Dead != true ||
+        // DestroyableObject clamps health only at the maximum. A lethal hit
+        // can leave a negative value, which terminal evidence must preserve.
+        if (lethalHit?.Dead != true || lethalHit.Health >= 0 ||
             !bossRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == bossSecondPlayer).Dead ||
             bossRuntime.Snapshot().Phase != BattlePhase.Running ||
@@ -1861,6 +1863,24 @@ internal static class CombatContentTests
             throw new Exception("Boss success score did not use frozen host outcome.");
         CoopTerminalScoreValidator.ValidateSuccess(
             completedBoss, bossAllocation, catalog);
+        MatchSnapshot undeclaredEnemyDeath = completedBoss.Clone();
+        undeclaredEnemyDeath.Coop.EnemySpawns.Add(
+            new BattleCoopEnemySpawn
+            {
+                EntityId = 999,
+                MaxHealth = 1,
+                Health = 0,
+                SpawnTick = 1,
+                DeathTick = 0
+            });
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                undeclaredEnemyDeath, bossAllocation, catalog);
+            throw new Exception(
+                "A zero-health enemy without a death tick passed co-op proof.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot forgedBossDeath = completedBoss.Clone();
         forgedBossDeath.Coop.Boss.DeathTick = 0;
         try
