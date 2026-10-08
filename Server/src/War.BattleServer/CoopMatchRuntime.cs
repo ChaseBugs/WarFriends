@@ -63,6 +63,8 @@ internal sealed record CoopInfantryShotWindup(
 {
     internal ulong? CompletedTick { get; init; }
     internal ulong? NextEligibleTick { get; init; }
+    internal bool TargetWasWalking { get; init; }
+    internal bool CallbackAimReady { get; init; }
 }
 
 internal sealed record CoopInfantryRoundIntent(
@@ -146,6 +148,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
     private readonly Dictionary<ulong, CoopInfantryPointArrival> infantryPointArrivals = [];
     private readonly Dictionary<ulong, CoopInfantryPlayerTargetPlan> infantryFirstTargets = [];
+    private readonly Dictionary<ulong, CoopInfantryPlayerShotTarget>
+        infantryFirstPlacedTargets = [];
     private readonly Dictionary<ulong, CoopCornerShotAttempt>
         cornerFirstShotAttempts = [];
     private readonly Dictionary<ulong, CoopCornerShotAttempt>
@@ -161,7 +165,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private sealed record PlayerDamageReceipt(string PlayerId,
         ResolvedPlayerDamage Hit, float RandomRoll, ulong Tick,
         PlayerDamageResult Result);
-    private sealed record StationaryPlayerTarget(
+    private sealed record ChosenPlayerTarget(
         CoopInfantryPlayerTargetPlan Plan,
         CoopInfantryPlayerShotTarget Placed);
     private readonly Dictionary<ulong, PlayerDamageReceipt> playerDamageReceipts = [];
@@ -540,12 +544,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             ? next : null;
 
     internal CoopInfantryPlayerShotTarget? PlaceFirstAssaulterPlayerTarget(
-        ulong entityId)
-    {
-        return infantryFirstTargets.TryGetValue(entityId,
-            out CoopInfantryPlayerTargetPlan? plan)
-            ? PlaceAssaulterPlayerTarget(plan) : null;
-    }
+        ulong entityId) => infantryFirstPlacedTargets.GetValueOrDefault(
+            entityId);
 
     private CoopInfantryPlayerShotTarget? PlaceAssaulterPlayerTarget(
         CoopInfantryPlayerTargetPlan plan)
@@ -1096,6 +1096,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryPaths.Remove(enemy.EntityId);
         infantryPointArrivals.Remove(enemy.EntityId);
         infantryFirstTargets.Remove(enemy.EntityId);
+        infantryFirstPlacedTargets.Remove(enemy.EntityId);
         cornerFirstShotAttempts.Remove(enemy.EntityId);
         cornerLatestShotAttempts.Remove(enemy.EntityId);
         cornerNoTargetRetryTicks.Remove(enemy.EntityId);
@@ -1382,7 +1383,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 tick < arrival.FirstShootEligibleTick ||
                 (obstacleShot && infantryFirstTargets.ContainsKey(entityId)))
                 continue;
-            StationaryPlayerTarget? chosen = ChooseStationaryPlayerTarget(
+            ChosenPlayerTarget? chosen = ChoosePlayerTarget(
                 entityId, cornerShot);
             if (chosen == null)
                 continue;
@@ -1416,6 +1417,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     continue;
             }
             infantryFirstTargets.TryAdd(entityId, plan);
+            infantryFirstPlacedTargets.TryAdd(entityId, placedTarget);
             if (enemyPoses != null)
             {
                 // A new cover volley starts its own round sequence. Its
@@ -1428,13 +1430,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
     }
 
-    private StationaryPlayerTarget? ChooseStationaryPlayerTarget(
+    private ChosenPlayerTarget? ChoosePlayerTarget(
         ulong enemyId, bool cornerShot)
     {
         Participant[] eligiblePlayers = manifest.Players
             .Select(entry => participants[entry.PlayerId])
             .Where(player => player.Admitted && player.Ready &&
-                !player.Dead && player.Route == null)
+                !player.Dead)
             .ToArray();
         if (eligiblePlayers.Length > 0)
         {
@@ -1443,14 +1445,35 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 throw new InvalidDataException(
                     "Co-op infantry player choice is outside the living roster.");
             string playerId = eligiblePlayers[selectedIndex].PlayerId;
-            CoopInfantryPlayerTargetPlan? plan =
-                PlanHostAssaulterPlayerTarget(enemyId, playerId);
-            if (plan != null)
+            if (eligiblePlayers[selectedIndex].Route != null)
             {
-                CoopInfantryPlayerShotTarget? placed =
-                    PlaceAssaulterPlayerTarget(plan);
-                if (placed != null)
-                    return new StationaryPlayerTarget(plan, placed);
+                CoopMovingPlayerAimPlan? moving =
+                    PlanDiagnosticWalkingTargetAtCover(enemyId, playerId);
+                if (moving != null)
+                {
+                    PlayerShotTarget source = playerShotTargets!.Gameplay
+                        .Single(target => target.TransformFileId ==
+                            moving.TransformFileId);
+                    var movingPlan = new CoopInfantryPlayerTargetPlan(
+                        enemyId, playerId, moving.TargetMask, tick);
+                    var placedMoving = new CoopInfantryPlayerShotTarget(
+                        enemyId, playerId, moving.TransformFileId,
+                        source.Path, moving.PredictedAimPosition, tick);
+                    return new ChosenPlayerTarget(movingPlan,
+                        placedMoving);
+                }
+            }
+            else
+            {
+                CoopInfantryPlayerTargetPlan? plan =
+                    PlanHostAssaulterPlayerTarget(enemyId, playerId);
+                if (plan != null)
+                {
+                    CoopInfantryPlayerShotTarget? placed =
+                        PlaceAssaulterPlayerTarget(plan);
+                    if (placed != null)
+                        return new ChosenPlayerTarget(plan, placed);
+                }
             }
         }
 
@@ -1584,7 +1607,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             queuedFireClip, tick,
             callbackTick, null, batch,
             assaulterWeapon!.WeaponPrefabGuid,
-            assaulterWeapon.CadenceSeconds);
+            assaulterWeapon.CadenceSeconds)
+        {
+            TargetWasWalking = participants[target.PlayerId].Route != null
+        };
     }
 
     private void AdvanceCornerShotTurns()
@@ -1640,6 +1666,26 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             {
                 CallbackStartedTick = tick
             };
+            if (windup.TargetWasWalking && assaulterWeapon != null &&
+                participants.TryGetValue(windup.PlayerId,
+                    out Participant? player))
+            {
+                CoopMuzzlePose? muzzle =
+                    ObserveShotStartAssaulterMuzzle(entityId);
+                if (muzzle != null)
+                {
+                    Vector3 updatedAim = CoopAssaulterMovingAim.AtShotStart(
+                        muzzle.Position, windup.PreparedAimPosition,
+                        player.MovementVelocity,
+                        assaulterWeapon.RealBulletFlight().Speed);
+                    infantryShotWindups[entityId] = windup with
+                    {
+                        CallbackStartedTick = tick,
+                        PreparedAimPosition = updatedAim,
+                        CallbackAimReady = true
+                    };
+                }
+            }
             stateRevision++;
         }
     }
@@ -1652,7 +1698,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             in infantryShotWindups)
         {
             if (windup.CallbackStartedTick is not ulong callbackTick ||
-                windup.Batch.Count == 0)
+                windup.Batch.Count == 0 ||
+                (windup.TargetWasWalking && !windup.CallbackAimReady))
                 continue;
             if (!infantryRoundIntents.TryGetValue(entityId,
                     out List<CoopInfantryRoundIntent>? rounds))
@@ -2662,6 +2709,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryPaths.Remove(entityId);
             infantryPointArrivals.Remove(entityId);
             infantryFirstTargets.Remove(entityId);
+            infantryFirstPlacedTargets.Remove(entityId);
             cornerFirstShotAttempts.Remove(entityId);
             cornerLatestShotAttempts.Remove(entityId);
             cornerNoTargetRetryTicks.Remove(entityId);
@@ -3738,6 +3786,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryPaths.Clear();
         infantryPointArrivals.Clear();
         infantryFirstTargets.Clear();
+        infantryFirstPlacedTargets.Clear();
         cornerFirstShotAttempts.Clear();
         cornerLatestShotAttempts.Clear();
         cornerNoTargetRetryTicks.Clear();

@@ -2838,6 +2838,7 @@ internal static class CombatContentTests
             infantryNavigation: infantryNavigation,
             playerWeaponContent: content,
             chooseInfantryShotFraction: () => 0f,
+            chooseInfantryRepositionFraction: () => 0.999f,
             chooseInfantryShieldRoll: () => 0f);
         movingCoverRuntime.Admit(firstPlayer);
         movingCoverRuntime.Admit(secondPlayer);
@@ -2878,6 +2879,95 @@ internal static class CombatContentTests
             ownedMovingTarget.Tick != expectedArrival + 2)
             throw new Exception(
                 "Walking target did not use the host-owned cover muzzle.");
+        ulong movingShootTick = movingCoverRuntime.InfantryPointArrival(
+            movingCoverEnemy.EntityId)!.FirstShootEligibleTick;
+        var movingVolleyDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var movingVolleyRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => 0,
+            enemyDestinations: movingVolleyDestinations,
+            infantryNavigation: infantryNavigation,
+            playerWeaponContent: content,
+            chooseInfantryShotFraction: () => 0f,
+            chooseInfantryRepositionFraction: () => 0.999f,
+            chooseInfantryPlayer: _ => 0,
+            chooseInfantryShieldRoll: () => 0f,
+            chooseInfantryBatchSize: (min, max) =>
+                max > min ? max - 1 : min,
+            chooseInfantryRealShotRoll: () => 0f);
+        movingVolleyRuntime.Admit(firstPlayer);
+        movingVolleyRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            movingVolleyRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = movingVolleyRuntime.ManifestHash
+                }
+            });
+        movingVolleyRuntime.Advance(movingShootTick - 3);
+        if (movingVolleyRuntime.Command(firstPlayer, new MatchCommand
+            {
+                CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = 1 }
+            }).Code != "moving")
+            throw new Exception("Moving volley fixture did not lock a cover.");
+        movingVolleyRuntime.Advance(movingShootTick);
+        CoopInfantryShotWindup? walkingWindup = movingVolleyRuntime
+            .InfantryShotWindup(movingCoverEnemy.EntityId);
+        CoopInfantryPlayerShotTarget? selectedWalkingTarget =
+            movingVolleyRuntime.PlaceFirstAssaulterPlayerTarget(
+                movingCoverEnemy.EntityId);
+        if (walkingWindup is not { TargetWasWalking: true } ||
+            selectedWalkingTarget == null ||
+            walkingWindup.PlayerId != firstPlayer ||
+            walkingWindup.PreparedAimPosition !=
+                selectedWalkingTarget.Position)
+            throw new Exception(
+                "Cover volley did not select the moving source target.");
+        movingVolleyRuntime.Advance(walkingWindup.CallbackTick - 1);
+        if (movingVolleyRuntime.PlaceFirstAssaulterPlayerTarget(
+                movingCoverEnemy.EntityId) != selectedWalkingTarget)
+            throw new Exception(
+                "Moving volley changed its selected target during windup.");
+        BattlePlayerState beforeWalkingCallback = movingVolleyRuntime
+            .Snapshot().Players.Single(player => player.PlayerId ==
+                firstPlayer);
+        movingVolleyRuntime.Advance(walkingWindup.CallbackTick);
+        BattlePlayerState afterWalkingCallback = movingVolleyRuntime
+            .Snapshot().Players.Single(player => player.PlayerId ==
+                firstPlayer);
+        Vector3 walkingCallbackVelocity = new(
+            afterWalkingCallback.PositionX - beforeWalkingCallback.PositionX,
+            afterWalkingCallback.PositionY - beforeWalkingCallback.PositionY,
+            afterWalkingCallback.PositionZ - beforeWalkingCallback.PositionZ);
+        walkingCallbackVelocity *= MatchManifest.TickRate;
+        CoopMuzzlePose? walkingCallbackMuzzle = movingVolleyRuntime
+            .ObserveShotStartAssaulterMuzzle(movingCoverEnemy.EntityId);
+        CoopInfantryShotWindup? walkingCallbackWindup = movingVolleyRuntime
+            .InfantryShotWindup(movingCoverEnemy.EntityId);
+        Vector3 expectedWalkingAim = walkingCallbackMuzzle == null
+            ? Vector3.Zero : CoopAssaulterMovingAim.AtShotStart(
+                walkingCallbackMuzzle.Position,
+                walkingWindup.PreparedAimPosition,
+                walkingCallbackVelocity, 5f);
+        if (walkingCallbackMuzzle == null ||
+            walkingCallbackWindup?.CallbackAimReady != true ||
+            Vector3.Distance(walkingCallbackWindup.PreparedAimPosition,
+                expectedWalkingAim) > 0.00001f)
+            throw new Exception(
+                "Moving cover volley missed the shot-start lead.");
+        movingVolleyRuntime.Advance(walkingWindup.CallbackTick + 1);
+        IReadOnlyList<CoopInfantryRoundIntent> walkingRounds =
+            movingVolleyRuntime.InfantryRoundIntents(
+                movingCoverEnemy.EntityId);
+        if (walkingRounds.Count != 1 || !walkingRounds[0].Real ||
+            walkingRounds[0].AimPosition != expectedWalkingAim)
+            throw new Exception(
+                "Moving cover volley did not retain its callback aim.");
         arrivalRuntime.Advance(expectedArrival - 1);
         if (arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null)
             throw new Exception("Co-op Assaulter reached its point too early.");
