@@ -14,6 +14,7 @@ public static class UnityEnemyPoseExport
     {
         string output=Environment.GetEnvironmentVariable("WAR_ENEMY_POSE_OUTPUT");
         string targetOutput=Environment.GetEnvironmentVariable("WAR_ENEMY_TARGET_OUTPUT");
+        string gunOutput=Environment.GetEnvironmentVariable("WAR_ENEMY_GUN_OUTPUT");
         if(string.IsNullOrEmpty(output))throw new InvalidOperationException("Set WAR_ENEMY_POSE_OUTPUT.");
         var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(Source);
         if(prefab==null)throw new InvalidOperationException("Missing recovered enemy prefab.");
@@ -39,7 +40,12 @@ public static class UnityEnemyPoseExport
                 new Part("head",headSphere,1.5f)};
             var clips=new List<object>();
             var targetClips=new List<object>();
+            var gunClips=new List<object>();
             var shootable=enemy.GetComponentsInChildren<GameShootableEntity>(true).Single();
+            var soldierParts=enemy.GetComponentInChildren<SoldierParts>(true);
+            if(soldierParts==null||soldierParts.gunSnapPointNotScaled==null)
+                throw new InvalidOperationException("Enemy gun attachment is missing.");
+            var gunSnap=soldierParts.gunSnapPointNotScaled;
             if(shootable.targets.Count!=3||shootable.targets.Any(x=>x.transform==null)||
                 !shootable.targets.Select(x=>(int)x.type).SequenceEqual(new[]{8,1,4}))
                 throw new InvalidOperationException("Enemy shot-target inventory differs from source.");
@@ -51,6 +57,7 @@ public static class UnityEnemyPoseExport
                     throw new InvalidOperationException("Missing clip identity "+state.name);
                 int last=Mathf.CeilToInt(state.length*30);var frames=new List<object>(last+1);
                 var targetFrames=new List<object>(last+1);
+                var gunFrames=new List<object>(last+1);
                 for(int i=0;i<=last;i++)
                 {
                     Sample(animation,"T_pose",1f);
@@ -60,11 +67,16 @@ public static class UnityEnemyPoseExport
                     targetFrames.Add(new{seconds=seconds,targets=shootable.targets.Select(x=>new{
                         path=PathOf(x.transform),type=(int)x.type,
                         position=V(enemy.transform.InverseTransformPoint(x.transform.position))}).ToArray()});
+                    gunFrames.Add(new{seconds=seconds,
+                        position=V(enemy.transform.InverseTransformPoint(gunSnap.position)),
+                        rotation=Q(Quaternion.Inverse(enemy.transform.rotation)*gunSnap.rotation)});
                 }
                 clips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
                     length=state.length,wrap=state.wrapMode.ToString(),frames=frames});
                 targetClips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
                     length=state.length,wrap=state.wrapMode.ToString(),frames=targetFrames});
+                gunClips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
+                    length=state.length,wrap=state.wrapMode.ToString(),frames=gunFrames});
             }
             File.WriteAllText(output,JsonConvert.SerializeObject(new{version=2,client="1.4.0",source=Source,
                 sha256=Hash(Source),sampleRate=30,clips=clips},Formatting.Indented));
@@ -74,6 +86,13 @@ public static class UnityEnemyPoseExport
                 File.WriteAllText(targetOutput,JsonConvert.SerializeObject(new{version=1,client="1.4.0",source=Source,
                     sha256=Hash(Source),sampleRate=30,clips=targetClips},Formatting.Indented));
                 Debug.Log("ENEMY_TARGET_EXPORT_PASSED clips="+targetClips.Count);
+            }
+            if(!string.IsNullOrEmpty(gunOutput))
+            {
+                File.WriteAllText(gunOutput,JsonConvert.SerializeObject(new{version=1,client="1.4.0",
+                    source=Source,sha256=Hash(Source),sampleRate=30,
+                    attachmentPath=PathOf(gunSnap),clips=gunClips},Formatting.Indented));
+                Debug.Log("ENEMY_GUN_EXPORT_PASSED clips="+gunClips.Count);
             }
         }
         finally { UnityEngine.Object.DestroyImmediate(enemy); }
