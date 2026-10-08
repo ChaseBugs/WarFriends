@@ -2881,6 +2881,20 @@ internal static class CombatContentTests
                 arrivalEnemy.EntityId)?.CallbackStartedTick != null)
             throw new Exception("Co-op crawl callback started before its host tick.");
         arrivalRuntime.Advance(expectedCrawlCallback);
+        CoopQueuedMuzzleSample? callbackSample = content.CoopAssaulterQueue
+            .Sample(crawlWindup!.AnimationClip, crawlWindup.QueuedFireClip,
+                expectedCrawlCallback - crawlWindup.StartTick);
+        CoopMuzzlePose? callbackMuzzle = arrivalRuntime
+            .ObserveShotStartAssaulterMuzzle(arrivalEnemy.EntityId);
+        Vector3 expectedCallbackPosition = new(reachedEnemy.CurrentX,
+            reachedEnemy.CurrentY, reachedEnemy.CurrentZ);
+        if (callbackSample != null)
+            expectedCallbackPosition += Vector3.Transform(
+                callbackSample.LocalPosition, crawlWindup.FinalRootRotation);
+        if (callbackSample == null || callbackMuzzle == null ||
+            Vector3.Distance(callbackMuzzle.Position,
+                expectedCallbackPosition) > 0.00001f)
+            throw new Exception("Co-op shot callback lost its queued muzzle.");
         if (arrivalRuntime.InfantryShotWindup(
                 arrivalEnemy.EntityId)?.CallbackStartedTick !=
                 expectedCrawlCallback ||
@@ -2888,6 +2902,9 @@ internal static class CombatContentTests
                 arrivalEnemy.EntityId).Count != 0)
             throw new Exception("Co-op crawl callback missed its host tick.");
         arrivalRuntime.Advance(expectedCrawlCallback + 1);
+        if (arrivalRuntime.ObserveShotStartAssaulterMuzzle(
+                arrivalEnemy.EntityId) != null)
+            throw new Exception("Co-op callback muzzle survived its tick.");
         IReadOnlyList<CoopInfantryRoundIntent> firstRound = arrivalRuntime
             .InfantryRoundIntents(arrivalEnemy.EntityId);
         if (firstRound.Count != 1 || firstRound[0].RoundIndex != 0 ||

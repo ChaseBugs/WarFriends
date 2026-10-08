@@ -3400,6 +3400,45 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Observes the queued firing muzzle on the exact ShootJustStarted tick.
+    /// This geometry came from Unity 2018 and remains diagnostic until the
+    /// original Unity 5.2 transition has been checked.
+    /// </summary>
+    internal CoopMuzzlePose? ObserveShotStartAssaulterMuzzle(ulong enemyId)
+    {
+        if (phase != BattlePhase.Running || assaulterQueue == null ||
+            !infantryShotWindups.TryGetValue(enemyId,
+                out CoopInfantryShotWindup? windup) ||
+            windup.CallbackStartedTick != tick ||
+            !infantryPointArrivals.TryGetValue(enemyId,
+                out CoopInfantryPointArrival? arrival))
+            return null;
+
+        ulong elapsedTicks = tick - windup.StartTick;
+        if (!CoopAssaulterShotRotation.FinalRotationReached(
+                arrival.State, elapsedTicks))
+            return null;
+        CoopQueuedMuzzleSample? sample = assaulterQueue.Sample(
+            windup.AnimationClip, windup.QueuedFireClip, elapsedTicks);
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == enemyId && spawn.Health > 0 &&
+            spawn.DeathTick == 0);
+        if (sample == null || enemy == null)
+            return null;
+
+        Vector3 root = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        Quaternion rotation = windup.FinalRootRotation;
+        Vector3 position = root + Vector3.Transform(
+            sample.LocalPosition, rotation);
+        if (!PlayerHitbox.Finite(position))
+            throw new InvalidDataException(
+                "Observed co-op callback muzzle is not finite.");
+        return new CoopMuzzlePose(position,
+            Quaternion.Normalize(rotation * sample.LocalRotation));
+    }
+
+    /// <summary>
     /// Plans the recovered walking Body target from a host-observed muzzle.
     /// This does not select the shield branch or authorize a projectile.
     /// </summary>
