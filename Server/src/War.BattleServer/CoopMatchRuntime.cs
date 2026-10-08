@@ -85,6 +85,7 @@ internal sealed record CoopInfantryPlayerShotTarget(
 internal sealed class CoopMatchRuntime : IMatchRuntime
 {
     private const float CornerHideAfterSeconds = 0.7f;
+    private const float CornerHideAfterRoundSeconds = 0.5f;
     private sealed class Participant(ParticipantManifest definition)
     {
         public ParticipantManifest Definition { get; } = definition;
@@ -1833,8 +1834,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             windup.AnimationClip is not
                 ("player_look_right3" or "player_look_left3") ||
             tick <= windup.StartTick ||
-            tick >= FirstTickAfterDelay(windup.StartTick,
-                CornerHideAfterSeconds))
+            tick >= CornerCoverBackStartTick(entityId, windup))
             return [];
         float lookTicks = enemyPoses.Clip(windup.AnimationClip).Length *
             MatchManifest.TickRate;
@@ -1847,11 +1847,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return [];
         // Both source look clips exceed fifteen ticks by less than a
         // microsecond. The exported rig has one frame per fixed tick.
-        float fireSeconds = (elapsedTicks - (ulong)lookEndTick) /
+        ulong fireStartTick = windup.StartTick + (ulong)lookEndTick;
+        if (infantryRoundIntents.TryGetValue(entityId,
+                out List<CoopInfantryRoundIntent>? rounds) &&
+            rounds.Count > 0)
+            fireStartTick = rounds[^1].Tick;
+        float fireSeconds = (tick - fireStartTick) /
             (float)MatchManifest.TickRate;
-        if (fireSeconds <= 0 ||
-            fireSeconds > enemyPoses.Clip(windup.QueuedFireClip).Length)
-            return [];
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
             spawn.Health > 0 && spawn.DeathTick == 0 &&
@@ -1880,8 +1882,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             windup.AnimationClip is not
                 ("player_look_right3" or "player_look_left3"))
             return [];
-        ulong coverStartTick = FirstTickAfterDelay(windup.StartTick,
-            CornerHideAfterSeconds);
+        ulong coverStartTick = CornerCoverBackStartTick(entityId, windup);
         if (tick < coverStartTick)
             return [];
         string coverClip = windup.AnimationClip == "player_look_right3"
@@ -1903,6 +1904,22 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.CurrentZ);
         return enemyPoses.Place(coverClip, position, rotation,
             seconds, $"coop/{entityId}/");
+    }
+
+    private ulong CornerCoverBackStartTick(ulong entityId,
+        CoopInfantryShotWindup windup)
+    {
+        if (infantryRoundIntents.TryGetValue(entityId,
+                out List<CoopInfantryRoundIntent>? rounds) &&
+            rounds.Count > 0)
+        {
+            // Each OnShot restarts ShotFromCover and replaces its hide
+            // deadline. The latest round owns the live cover return.
+            return FirstTickAfterDelay(rounds[^1].Tick,
+                CornerHideAfterRoundSeconds);
+        }
+        return FirstTickAfterDelay(windup.StartTick,
+            CornerHideAfterSeconds);
     }
 
     /// <summary>

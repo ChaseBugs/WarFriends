@@ -3206,19 +3206,39 @@ internal static class CombatContentTests
                 throw new Exception("Co-op corner fire ended before cover return.");
             cornerRuntime.Advance(coverWindup.StartTick + 22);
             if (cornerRuntime.PlaceCornerFireHitboxes(
-                    cornerEnemy.EntityId).Count != 0 ||
-                cornerRuntime.PlaceCornerCoverBackHitboxes(
                     cornerEnemy.EntityId).Count != 3 ||
+                cornerRuntime.PlaceCornerCoverBackHitboxes(
+                    cornerEnemy.EntityId).Count != 0 ||
                 !cornerRuntime.CurrentEnemyCollisionFrame()
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
-                throw new Exception("Co-op corner fire continued into cover return.");
-            cornerRuntime.Advance(coverWindup.StartTick + 35);
+                throw new Exception("Co-op corner returned to cover before its round timer.");
+            ulong finalCornerRound = coverWindup.CallbackTick + 1;
+            for (int index = 1; index < coverWindup.Batch.Count; index++)
+                finalCornerRound = rifle.NextRoundEligibleTick(
+                    finalCornerRound);
+            if (finalCornerRound > coverWindup.StartTick + 22)
+                cornerRuntime.Advance(finalCornerRound);
+            if (cornerRuntime.InfantryShotWindup(
+                    cornerEnemy.EntityId)?.CompletedTick != finalCornerRound)
+                throw new Exception("Co-op corner batch missed its final round.");
+            ulong coverReturnTick = finalCornerRound + 16;
+            cornerRuntime.Advance(coverReturnTick - 1);
+            if (cornerRuntime.PlaceCornerFireHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                cornerRuntime.PlaceCornerCoverBackHitboxes(
+                    cornerEnemy.EntityId).Count != 0)
+                throw new Exception("Co-op corner cover return started too early.");
+            cornerRuntime.Advance(coverReturnTick);
             if (cornerRuntime.PlaceCornerCoverBackHitboxes(
                     cornerEnemy.EntityId).Count != 3 ||
                 !cornerRuntime.CurrentEnemyCollisionFrame()
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception("Co-op corner missed the round-owned cover return.");
+            cornerRuntime.Advance(coverReturnTick + 13);
+            if (cornerRuntime.PlaceCornerCoverBackHitboxes(
+                    cornerEnemy.EntityId).Count != 3)
                 throw new Exception("Co-op corner cover return ended too early.");
-            cornerRuntime.Advance(coverWindup.StartTick + 36);
+            cornerRuntime.Advance(coverReturnTick + 14);
             if (cornerRuntime.PlaceCornerCoverBackHitboxes(
                     cornerEnemy.EntityId).Count != 0)
                 throw new Exception("Co-op corner cover return outlived its clip.");
