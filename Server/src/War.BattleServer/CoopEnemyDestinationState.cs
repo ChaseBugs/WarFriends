@@ -59,7 +59,8 @@ public sealed class CoopEnemyDestinationState
 
     public CoopAssignedEnemyDestination? TryAssignInitial(
         ulong entityId, string behaviour, bool spawnedByCard,
-        Vector3 spawnPosition, int? targetPlayerPositionIndex = null)
+        Vector3 spawnPosition, int? targetPlayerPositionIndex = null,
+        Vector3? sniperOpponentPosition = null)
     {
         if (entityId == 0 || !PlayerHitbox.Finite(spawnPosition))
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -69,7 +70,10 @@ public sealed class CoopEnemyDestinationState
         string unitId = combat.UnitIdFor(behaviour);
         CoopSoldierPointMask? soldier = masks.Soldiers.FirstOrDefault(row =>
             row.UnitId == unitId);
-        if (soldier == null || soldier.BehaviorType == "SoldierBehaviourSniper")
+        if (soldier == null)
+            return null;
+        if (soldier.BehaviorType == "SoldierBehaviourSniper" &&
+            sniperOpponentPosition == null)
             return null;
         if (IsShieldLinkedRusher(soldier, spawnedByCard))
             return AssignRusher(entityId, spawnPosition,
@@ -77,7 +81,8 @@ public sealed class CoopEnemyDestinationState
 
         int mask = CoopEnemyPointSelection.InitialMask(soldier, spawnedByCard);
         CoopEnemyPoint? point = CoopEnemyPointSelection.SelectOrdinary(
-            map, mask, spawnPosition, reservations.OccupiedPointIds);
+            map, mask, spawnPosition, reservations.OccupiedPointIds,
+            sniperOpponentPosition, soldier.MinimumPlayerDistance ?? 0);
         if (point == null)
             return null;
         if (!reservations.TryReserve(entityId, point))
@@ -136,6 +141,14 @@ public sealed class CoopEnemyDestinationState
             row.UnitId == unitId);
         return rusherPoints != null && soldier != null &&
             IsShieldLinkedRusher(soldier, spawnedByCard);
+    }
+
+    public bool RequiresSniperTarget(string behaviour)
+    {
+        string unitId = combat.UnitIdFor(behaviour);
+        return masks.Soldiers.Any(soldier =>
+            soldier.UnitId == unitId &&
+            soldier.BehaviorType == "SoldierBehaviourSniper");
     }
 
     private CoopAssignedEnemyDestination? AssignRusher(

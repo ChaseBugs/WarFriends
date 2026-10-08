@@ -5,13 +5,14 @@ using System.Text.Json;
 namespace War.BattleServer;
 
 public sealed record CoopSoldierPointMask(
-    int BehaviorFileId, string BehaviorType, string UnitId, int Mask);
+    int BehaviorFileId, string BehaviorType, string UnitId, int Mask,
+    float? MinimumPlayerDistance);
 
 /// <summary>Serialized starting masks from MainScene, bound to the army catalog.</summary>
 public sealed class CoopEnemyPointMaskCatalog
 {
     private const string ArtifactSha256 =
-        "3b15abe0ddc40669154bd6ba5cc7b3a0011f60ed6f5758fbfd2b132ac09d0caf";
+        "af006a1b961d38addc05ca60e90aa63b881467145c7e88fe35e9afb481eb853b";
 
     public IReadOnlyList<CoopSoldierPointMask> Soldiers { get; }
 
@@ -48,16 +49,25 @@ public sealed class CoopEnemyPointMaskCatalog
         {
             JsonElement row = rows[index];
             ArmyDeploymentFamily family = soldierFamilies[index];
-            RequireFields(row, "behaviorFileId", "behaviorType", "unitId",
-                "enemyPointMask");
+            bool sniper = family.BehaviorType == "SoldierBehaviourSniper";
+            if (sniper)
+                RequireFields(row, "behaviorFileId", "behaviorType", "unitId",
+                    "enemyPointMask", "minimumPlayerDistance");
+            else
+                RequireFields(row, "behaviorFileId", "behaviorType", "unitId",
+                    "enemyPointMask");
             int mask = row.GetProperty("enemyPointMask").GetInt32();
+            float? minimumDistance = sniper
+                ? row.GetProperty("minimumPlayerDistance").GetSingle() : null;
             if (row.GetProperty("behaviorFileId").GetInt32() != family.BehaviorFileId ||
                 row.GetProperty("behaviorType").GetString() != family.BehaviorType ||
                 row.GetProperty("unitId").GetString() != family.UnitId ||
-                mask is <= 0 or > 0x3FFF)
+                mask is <= 0 or > 0x3FFF ||
+                (sniper && minimumDistance != 6f))
                 throw new InvalidDataException("Co-op soldier mask is not bound to its unit.");
             soldiers[index] = new CoopSoldierPointMask(family.BehaviorFileId,
-                family.BehaviorType, family.UnitId, mask);
+                family.BehaviorType, family.UnitId, mask,
+                minimumDistance);
         }
         return new CoopEnemyPointMaskCatalog(soldiers);
     }

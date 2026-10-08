@@ -636,8 +636,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 rusherTarget = activeAllies[chosenIndex].CoverIndex;
             }
         }
+        Vector3? sniperOpponent = null;
+        if (enemyDestinations?.RequiresSniperTarget(behaviour) == true)
+        {
+            // The recovered Photon master uses its local currentPlayer in
+            // PlayerController.GetEnemyOf. Signed roster order owns that
+            // master role in this self-hosted co-op runtime.
+            Participant sourceHost = participants[manifest.Players[0].PlayerId];
+            if (sourceHost.Admitted && sourceHost.Ready && !sourceHost.Dead)
+                sniperOpponent = sourceHost.Position;
+        }
         enemyDestinations?.TryAssignInitial(enemy.EntityId, behaviour,
-            cardUnit, point.Position, rusherTarget);
+            cardUnit, point.Position, rusherTarget, sniperOpponent);
         if (point.SourceRotation is Quaternion rotation)
         {
             enemy.SourceRotation = new BattleJointRotation

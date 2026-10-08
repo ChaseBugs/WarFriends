@@ -39,12 +39,19 @@ def main():
         mask = int(match.group(1))
         if mask <= 0 or mask > 0x3FFF:
             raise ValueError("invalid source enemy-point mask")
-        rows.append({
+        row = {
             "behaviorFileId": component_id,
             "behaviorType": family["behaviorType"],
             "unitId": family["unitId"],
             "enemyPointMask": mask,
-        })
+        }
+        if family["behaviorType"] == "SoldierBehaviourSniper":
+            distance = re.search(r"^    minSniperDistance: ([0-9.]+)$",
+                                 blocks[component_id], re.M)
+            if not distance or float(distance.group(1)) != 6:
+                raise ValueError("Sniper minimum distance changed in MainScene")
+            row["minimumPlayerDistance"] = float(distance.group(1))
+        rows.append(row)
     if len(rows) != 16:
         raise ValueError("source soldier mask inventory changed")
     content = json.dumps({"version": 1, "sceneSha256": digest,

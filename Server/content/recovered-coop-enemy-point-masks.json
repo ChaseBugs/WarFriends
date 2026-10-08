@@ -12,7 +12,8 @@
       "behaviorFileId": 43123,
       "behaviorType": "SoldierBehaviourSniper",
       "unitId": "ID_UNIT-SNIPER",
-      "enemyPointMask": 6
+      "enemyPointMask": 6,
+      "minimumPlayerDistance": 6.0
     },
     {
       "behaviorFileId": 42012,

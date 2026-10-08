@@ -1580,6 +1580,68 @@ internal static class CombatContentTests
                 throw new Exception("Rusher destination was not released.");
         }
 
+        MissionRule sniperRule = catalog.Get(15);
+        MissionMapRule sniperMissionMap = catalog.MapForMission(15);
+        MatchManifest sniperAllocation = coop with
+        {
+            MissionIndex = 15,
+            MapId = sniperMissionMap.Scene,
+            MapRevision = sniperMissionMap.SceneSha256,
+            DurationSeconds = sniperRule.TimeSeconds
+        };
+        CoopMapEnemyPoints sniperMap = enemyPointCatalog.MapForMission(
+            catalog, 15);
+        var sniperDestinations = new CoopEnemyDestinationState(sniperMap,
+            enemyPointMasks, enemyCombat);
+        var sniperRuntime = new CoopMatchRuntime(sniperAllocation, catalog,
+            spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 1, choosePoint: _ => 0,
+            enemyDestinations: sniperDestinations);
+        sniperRuntime.Admit(firstPlayer);
+        sniperRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            sniperRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = sniperRuntime.ManifestHash
+                }
+            });
+        sniperRuntime.Advance(8);
+        BattleCoopEnemySpawn sniperEnemy = sniperRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Sniper");
+        CoopAssignedEnemyDestination? sniperDestination =
+            sniperRuntime.EnemyDestination(sniperEnemy.EntityId);
+        BattlePlayerState sourceHostPlayer = sniperRuntime.Snapshot()
+            .Players.Single(player => player.PlayerId == firstPlayer);
+        Vector3 sourceHostPosition = new(sourceHostPlayer.PositionX,
+            sourceHostPlayer.PositionY, sourceHostPlayer.PositionZ);
+        CoopEnemyPoint? sniperSourcePoint = sniperDestination == null
+            ? null : sniperMap.Points.Single(point =>
+                point.ComponentFileId ==
+                    sniperDestination.PointComponentFileId);
+        HashSet<int> earlierClaims = sniperRuntime.Snapshot().Coop.EnemySpawns
+            .Where(enemy => enemy.EntityId != sniperEnemy.EntityId)
+            .Select(enemy => sniperRuntime.EnemyDestination(enemy.EntityId))
+            .Where(destination => destination != null)
+            .Select(destination => destination!.PointComponentFileId)
+            .ToHashSet();
+        CoopEnemyPoint? expectedSniperPoint =
+            CoopEnemyPointSelection.SelectOrdinary(sniperMap, 6,
+                new Vector3(sniperEnemy.X, sniperEnemy.Y, sniperEnemy.Z),
+                earlierClaims, sourceHostPosition, 6f);
+        if (sniperEnemy.Behaviour != "Sniper" ||
+            sniperSourcePoint == null ||
+            sniperSourcePoint.ComponentFileId !=
+                expectedSniperPoint?.ComponentFileId ||
+            Vector3.Distance(sniperSourcePoint.Position,
+                sourceHostPosition) <= 6f ||
+            !sniperRuntime.ApplyHostEnemyDamage(sniperEnemy.EntityId,
+                sniperEnemy.Health, 8) ||
+            sniperRuntime.EnemyDestination(sniperEnemy.EntityId) != null)
+            throw new Exception("Host Sniper did not respect its source minimum distance.");
+
         var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         damagedRuntime.Admit(firstPlayer);
@@ -3079,9 +3141,12 @@ internal static class CombatContentTests
             soldier.BehaviorType == "SoldierBehaviourParachuter");
         CoopSoldierPointMask swatMask = masks.Soldiers.Single(soldier =>
             soldier.BehaviorType == "SoldierBehaviourSwat");
+        CoopSoldierPointMask sniperMask = masks.Soldiers.Single(soldier =>
+            soldier.BehaviorType == "SoldierBehaviourSniper");
         if (CoopEnemyPointSelection.InitialMask(engineerMask, false) != 256 ||
             CoopEnemyPointSelection.InitialMask(parachuterMask, true) != 6 ||
-            CoopEnemyPointSelection.InitialMask(swatMask, true) != 32)
+            CoopEnemyPointSelection.InitialMask(swatMask, true) != 32 ||
+            sniperMask.MinimumPlayerDistance != 6f)
             throw new Exception("Special soldier point acceptance differs from Client.");
         try
         {
