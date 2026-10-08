@@ -2795,6 +2795,9 @@ internal static class CombatContentTests
             secondRound[1].Tick != secondRoundTick ||
             secondRound[1].Real != ((expectedRealMask & 2) != 0))
             throw new Exception("Co-op rifle lost its second batch round.");
+        if (expectedBatchCount > 2 && arrivalRuntime.InfantryShotWindup(
+                arrivalEnemy.EntityId)?.CompletedTick != null)
+            throw new Exception("Co-op rifle ended before its final round.");
         ulong lastRoundTick = secondRoundTick;
         for (int index = 2; index < expectedBatchCount; index++)
         {
@@ -2810,6 +2813,9 @@ internal static class CombatContentTests
                 throw new Exception("Co-op rifle lost a prepared batch round.");
         }
         ulong afterBatch = rifle.NextRoundEligibleTick(lastRoundTick);
+        if (arrivalRuntime.InfantryShotWindup(
+                arrivalEnemy.EntityId)?.CompletedTick != lastRoundTick)
+            throw new Exception("Co-op rifle missed its source batch end.");
         arrivalRuntime.Advance(afterBatch);
         if (arrivalRuntime.InfantryRoundIntents(
                 arrivalEnemy.EntityId).Count != expectedBatchCount)

@@ -58,7 +58,10 @@ internal sealed record CoopInfantryShotWindup(
     string AnimationClip, string QueuedFireClip,
     ulong StartTick, ulong CallbackTick,
     ulong? CallbackStartedTick, CoopInfantryShotBatch Batch,
-    string WeaponPrefabGuid, float WeaponCadenceSeconds);
+    string WeaponPrefabGuid, float WeaponCadenceSeconds)
+{
+    internal ulong? CompletedTick { get; init; }
+}
 
 internal sealed record CoopInfantryRoundIntent(
     ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real,
@@ -1597,6 +1600,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
                 tick, real, aimPosition, observedMuzzle,
                 observedWorldOrigin));
+            if (rounds.Count == windup.Batch.Count)
+            {
+                // SoldierBehaviour.Shooting calls EndShooting after its
+                // final round, in the same update as that round.
+                infantryShotWindups[entityId] = windup with
+                {
+                    CompletedTick = tick
+                };
+            }
             if (real && diagnosticWorld != null)
                 TrackDiagnosticAssaulterFlight(entityId, index,
                     diagnosticWorld);
