@@ -10,7 +10,8 @@ internal static class CoopTerminalScoreValidator
 {
     internal static void ValidateSuccess(
         MatchSnapshot snapshot, MatchManifest allocation,
-        MissionCatalog missions, CoopEnemyCombatCatalog combat)
+        MissionCatalog missions, CoopEnemyCombatCatalog combat,
+        CoopBossRuntimeSources? bossSources = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(missions);
@@ -53,6 +54,7 @@ internal static class CoopTerminalScoreValidator
             throw new InvalidDataException("Co-op success differs from source mission.");
 
         ValidateEnemyLedger(snapshot, rule, combat);
+        ValidateBossState(snapshot, rule, missions, bossSources);
         ValidateObjective(snapshot, rule);
 
         if (rule.MissionType == "Score")
@@ -108,6 +110,49 @@ internal static class CoopTerminalScoreValidator
         if (expectedScores.Count == 0 ||
             snapshot.Coop.SuccessScores.Count != expectedScores.Count)
             throw new InvalidDataException("Co-op success has an invalid score roster.");
+    }
+
+    private static void ValidateBossState(MatchSnapshot snapshot,
+        MissionRule rule, MissionCatalog missions,
+        CoopBossRuntimeSources? sources)
+    {
+        if (rule.MissionType != "KillOpponent")
+            return;
+        if (sources == null || snapshot.Coop.Boss == null)
+            throw new InvalidDataException(
+                "Co-op boss success needs its reviewed source catalogs.");
+
+        BattleCoopBossState boss = snapshot.Coop.Boss;
+        CoopBotHealth health = sources.Health.ForMission(rule.Index);
+        CoopBossAnchor anchor = sources.Anchors
+            .MapForMission(missions, rule.Index).BossStart;
+        CoopBossLoadout loadout = sources.Loadouts.ForMission(rule.Index);
+        if (boss.EntityId != CoopMissionEngine.BossEntityId ||
+            boss.DefendComponentFileId != anchor.ComponentFileId ||
+            boss.X != anchor.Position.X ||
+            boss.Y != anchor.Position.Y ||
+            boss.Z != anchor.Position.Z ||
+            boss.RotationX != anchor.Rotation.X ||
+            boss.RotationY != anchor.Rotation.Y ||
+            boss.RotationZ != anchor.Rotation.Z ||
+            boss.RotationW != anchor.Rotation.W ||
+            boss.MaxHealth != health.MaximumHealth ||
+            boss.SpawnTick != snapshot.StartTick ||
+            boss.Weapons.Count != loadout.Slots.Count)
+            throw new InvalidDataException(
+                "Co-op boss differs from source vitality, anchor, or loadout.");
+
+        for (int slot = 0; slot < loadout.Slots.Count; slot++)
+        {
+            CoopBossWeaponSlot expected = loadout.Slots[slot];
+            BattleCoopBossWeaponSlot actual = boss.Weapons[slot];
+            if (actual.Slot != slot ||
+                actual.LevelManagerIndex != expected.LevelManagerIndex ||
+                actual.InventoryIndex != expected.InventoryIndex ||
+                actual.SourceId != expected.SheetName)
+                throw new InvalidDataException(
+                    "Co-op boss weapon differs from its source slot.");
+        }
     }
 
     private static void ValidateObjective(MatchSnapshot snapshot, MissionRule rule)

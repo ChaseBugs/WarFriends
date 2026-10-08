@@ -1862,7 +1862,37 @@ internal static class CombatContentTests
             wireScores[0].Stars != survivingScore.Stars)
             throw new Exception("Boss success score did not use frozen host outcome.");
         CoopTerminalScoreValidator.ValidateSuccess(
-            completedBoss, bossAllocation, catalog, enemyCombat);
+            completedBoss, bossAllocation, catalog, enemyCombat, bossSources);
+        MatchSnapshot forgedBossHealth = completedBoss.Clone();
+        forgedBossHealth.Coop.Boss.MaxHealth++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedBossHealth, bossAllocation, catalog, enemyCombat,
+                bossSources);
+            throw new Exception("Forged boss maximum health passed terminal proof.");
+        }
+        catch (InvalidDataException) { }
+        MatchSnapshot forgedBossAnchor = completedBoss.Clone();
+        forgedBossAnchor.Coop.Boss.DefendComponentFileId++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedBossAnchor, bossAllocation, catalog, enemyCombat,
+                bossSources);
+            throw new Exception("Forged boss anchor passed terminal proof.");
+        }
+        catch (InvalidDataException) { }
+        MatchSnapshot forgedBossWeapon = completedBoss.Clone();
+        forgedBossWeapon.Coop.Boss.Weapons[0].InventoryIndex++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedBossWeapon, bossAllocation, catalog, enemyCombat,
+                bossSources);
+            throw new Exception("Forged boss weapon passed terminal proof.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot undeclaredEnemyDeath = completedBoss.Clone();
         undeclaredEnemyDeath.Coop.EnemySpawns.Add(
             new BattleCoopEnemySpawn
@@ -1879,7 +1909,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                undeclaredEnemyDeath, bossAllocation, catalog, enemyCombat);
+                undeclaredEnemyDeath, bossAllocation, catalog, enemyCombat, bossSources);
             throw new Exception(
                 "A zero-health enemy without a death tick passed co-op proof.");
         }
@@ -1889,7 +1919,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossDeath, bossAllocation, catalog, enemyCombat);
+                forgedBossDeath, bossAllocation, catalog, enemyCombat, bossSources);
             throw new Exception("A boss success without a host death was accepted.");
         }
         catch (InvalidDataException)
@@ -1900,7 +1930,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossScore, bossAllocation, catalog, enemyCombat);
+                forgedBossScore, bossAllocation, catalog, enemyCombat, bossSources);
             throw new Exception("Forged co-op score passed terminal validation.");
         }
         catch (InvalidDataException)
@@ -1911,7 +1941,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossObjective, bossAllocation, catalog, enemyCombat);
+                forgedBossObjective, bossAllocation, catalog, enemyCombat, bossSources);
             throw new Exception("A boss mission accepted forged Score objective progress.");
         }
         catch (InvalidDataException)
@@ -1926,7 +1956,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossLedger, bossAllocation, catalog, enemyCombat);
+                forgedBossLedger, bossAllocation, catalog, enemyCombat, bossSources);
             throw new Exception("A boss mission accepted a forged allied score row.");
         }
         catch (InvalidDataException)
@@ -1937,7 +1967,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossDeadline, bossAllocation, catalog, enemyCombat);
+                forgedBossDeadline, bossAllocation, catalog, enemyCombat, bossSources);
             throw new Exception("Forged co-op deadline passed terminal validation.");
         }
         catch (InvalidDataException)
