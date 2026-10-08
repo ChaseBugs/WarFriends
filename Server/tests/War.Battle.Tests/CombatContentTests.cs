@@ -1588,24 +1588,29 @@ internal static class CombatContentTests
         helicopterRuntime.Advance(1);
         BattleCoopEnemySpawn helicopter = helicopterRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Helicopter");
-        IReadOnlyList<PlayerHitbox> helicopterHitboxes = helicopterRuntime
-            .PlaceNewAssaultHelicopterHitboxes(helicopter.EntityId);
+        IReadOnlyList<DynamicShotTarget> helicopterTargets = helicopterRuntime
+            .PlaceNewAssaultHelicopterTargets(helicopter.EntityId);
         Vector3 helicopterStart = new(helicopter.X, helicopter.Y,
             helicopter.Z);
-        if (helicopter.SpawnTick != 1 || helicopterHitboxes.Count != 7 ||
-            helicopterHitboxes.Count(hitbox =>
-                hitbox.Kind == PlayerHitboxKind.Mesh) != 6 ||
-            helicopterHitboxes.Count(hitbox =>
-                hitbox.Kind == PlayerHitboxKind.Box) != 1 ||
-            helicopterHitboxes.Any(hitbox =>
-                hitbox.TransformPosition != helicopterStart ||
-                !hitbox.SourcePath.StartsWith(
+        if (helicopter.SpawnTick != 1 || helicopterTargets.Count != 7 ||
+            helicopterTargets.Count(target =>
+                target.Hitbox.Kind == PlayerHitboxKind.Mesh) != 6 ||
+            helicopterTargets.Count(target =>
+                target.Hitbox.Kind == PlayerHitboxKind.Box) != 1 ||
+            helicopterTargets.Count(target => target.HelicopterBody &&
+                target.Layer == 27) != 6 ||
+            helicopterTargets.Count(target => target.AssaultGlass &&
+                target.Layer == 8) != 1 ||
+            helicopterTargets.Any(target =>
+                target.EntityId != helicopter.EntityId ||
+                target.Hitbox.TransformPosition != helicopterStart ||
+                !target.Hitbox.SourcePath.StartsWith(
                     "Assets/GameObject/assaultHelicopter.prefab#",
                     StringComparison.Ordinal)) ||
-            helicopterRuntime.PlaceNewAssaultHelicopterHitboxes(999).Count != 0)
+            helicopterRuntime.PlaceNewAssaultHelicopterTargets(999).Count != 0)
             throw new Exception("Co-op Helicopter needs seven source-owned spawn hitboxes.");
         helicopterRuntime.Advance(2);
-        if (helicopterRuntime.PlaceNewAssaultHelicopterHitboxes(
+        if (helicopterRuntime.PlaceNewAssaultHelicopterTargets(
                 helicopter.EntityId).Count != 0)
             throw new Exception("A stale Helicopter pose cannot authorize co-op hits.");
 
@@ -1631,22 +1636,23 @@ internal static class CombatContentTests
         droneRuntime.Advance(1);
         BattleCoopEnemySpawn drone = droneRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Drone");
-        IReadOnlyList<DroneCollider> droneShapes = droneRuntime
-            .PlaceNewDroneColliders(drone.EntityId);
+        IReadOnlyList<DynamicShotTarget> droneShapes = droneRuntime
+            .PlaceNewDroneTargets(drone.EntityId);
         Vector3 droneStart = new(drone.X, drone.Y, drone.Z);
         if (drone.SpawnTick != 1 || droneShapes.Count != 2 ||
-            droneShapes.Count(shape => shape.RootOwned &&
+            droneShapes.Count(shape => shape.DroneRoot &&
                 shape.Hitbox.Kind == PlayerHitboxKind.Box &&
-                shape.SerializedLayer == 0) != 1 ||
-            droneShapes.Count(shape => !shape.RootOwned &&
+                shape.Layer == 27) != 1 ||
+            droneShapes.Count(shape => !shape.DroneRoot &&
                 shape.Hitbox.Kind == PlayerHitboxKind.Sphere &&
-                shape.SerializedLayer == 8) != 1 ||
+                shape.Layer == 8) != 1 ||
             droneShapes.Any(shape =>
+                shape.EntityId != drone.EntityId ||
                 shape.Hitbox.TransformPosition != droneStart) ||
-            droneRuntime.PlaceNewDroneColliders(999).Count != 0)
+            droneRuntime.PlaceNewDroneTargets(999).Count != 0)
             throw new Exception("Co-op Drone needs its two source-owned spawn colliders.");
         droneRuntime.Advance(2);
-        if (droneRuntime.PlaceNewDroneColliders(drone.EntityId).Count != 0)
+        if (droneRuntime.PlaceNewDroneTargets(drone.EntityId).Count != 0)
             throw new Exception("A stale Drone pose cannot authorize co-op hits.");
 
         const int buggyMissionIndex = 36;

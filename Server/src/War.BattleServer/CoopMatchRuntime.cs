@@ -423,7 +423,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     /// existing source-backed catalog. No later pose is valid without host
     /// helicopter movement and rotation, so this method refuses stale ticks.
     /// </summary>
-    internal IReadOnlyList<PlayerHitbox> PlaceNewAssaultHelicopterHitboxes(
+    internal IReadOnlyList<DynamicShotTarget> PlaceNewAssaultHelicopterTargets(
         ulong entityId)
     {
         if (phase != BattlePhase.Running || assaultHelicopterBody == null ||
@@ -440,15 +440,21 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         var rotation = new Quaternion(enemy.SourceRotation.X,
             enemy.SourceRotation.Y, enemy.SourceRotation.Z,
             enemy.SourceRotation.W);
-        var hitboxes = new List<PlayerHitbox>
+        var targets = new List<DynamicShotTarget>
         {
-            assaultHelicopterBody.Place(position, rotation)
+            new(entityId, AssaultHelicopterBoxColliderCatalog.ColliderFileId,
+                27, assaultHelicopterBody.Place(position, rotation),
+                HelicopterBody: true)
         };
-        hitboxes.AddRange(assaultHelicopterMeshes.Place(position, rotation)
-            .Select(part => part.Hitbox));
-        hitboxes.Add(assaultHelicopterMeshes.PlaceFrontGlass(
-            position, rotation).Hitbox);
-        return hitboxes.AsReadOnly();
+        targets.AddRange(assaultHelicopterMeshes.Place(position, rotation)
+            .Select(part => new DynamicShotTarget(entityId,
+                part.ColliderFileId, 27, part.Hitbox,
+                HelicopterBody: true)));
+        AssaultHelicopterGlassMesh glass = assaultHelicopterMeshes
+            .PlaceFrontGlass(position, rotation);
+        targets.Add(new DynamicShotTarget(entityId, glass.ColliderFileId,
+            8, glass.Hitbox, AssaultGlass: true));
+        return targets.AsReadOnly();
     }
 
     /// <summary>
@@ -456,7 +462,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     /// The returned layer and root ownership distinguish damageable body from
     /// child detection geometry. Later ticks need host flight simulation.
     /// </summary>
-    internal IReadOnlyList<DroneCollider> PlaceNewDroneColliders(ulong entityId)
+    internal IReadOnlyList<DynamicShotTarget> PlaceNewDroneTargets(ulong entityId)
     {
         if (phase != BattlePhase.Running || droneColliders == null)
             return [];
@@ -471,7 +477,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         var rotation = new Quaternion(enemy.SourceRotation.X,
             enemy.SourceRotation.Y, enemy.SourceRotation.Z,
             enemy.SourceRotation.W);
-        return droneColliders.Place(position, rotation);
+        return droneColliders.Place(position, rotation)
+            .Select(collider => new DynamicShotTarget(entityId,
+                collider.ComponentFileId,
+                collider.RootOwned ? 27 : collider.SerializedLayer,
+                collider.Hitbox, DroneRoot: collider.RootOwned))
+            .ToArray();
     }
 
     /// <summary>
