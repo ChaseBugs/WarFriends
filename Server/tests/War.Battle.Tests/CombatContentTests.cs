@@ -2933,7 +2933,12 @@ internal static class CombatContentTests
             "recovered-coop-enemy-points.json");
         CoopEnemyPointCatalog catalog = CoopEnemyPointCatalog.Load(path,
             missions, spawns);
+        string rusherPath = Path.Combine(directory,
+            "recovered-coop-rusher-points.json");
+        CoopRusherPointCatalog rushers = CoopRusherPointCatalog.Load(
+            rusherPath, missions, spawns);
         CoopMapEnemyPoints desert = catalog.MapForMission(missions, 0);
+        CoopMapRusherPoints desertRushers = rushers.MapForMission(missions, 0);
         CoopEnemyPoint[] all = catalog.Maps.SelectMany(map => map.Points)
             .ToArray();
         CoopEnemyPoint obstacle = desert.Points.First(point =>
@@ -2943,6 +2948,9 @@ internal static class CombatContentTests
         Vector3 expectedEngineer = engineer.TransformPosition -
             Vector3.Transform(Vector3.UnitZ, engineer.Rotation) * 0.2f;
         if (catalog.Maps.Count != 5 || all.Length != 130 ||
+            rushers.Maps.Sum(map => map.PlayerPoints.Sum(player =>
+                player.Points.Count)) != 80 ||
+            desertRushers.PlayerPoints.Count != 4 ||
             desert.Points.Count != 26 ||
             catalog.MapForMission(missions, 0).Scene !=
                 missions.MapForMission(0).Scene ||
@@ -2955,6 +2963,32 @@ internal static class CombatContentTests
                  obstacle.SegmentEnd.Value) * 0.5f) > 0.0001f ||
             Vector3.Distance(engineer.Position, expectedEngineer) > 0.0001f)
             throw new Exception("Co-op enemy destinations differ from the source scenes.");
+
+        CoopPlayerRusherPoints sourceShield = desertRushers.PlayerPoints[0];
+        CoopRusherPoint[] orderedRushers = sourceShield.Points.ToArray();
+        CoopPlayerRusherPoints priorityShield = sourceShield with
+        {
+            Points =
+            [
+                orderedRushers[0] with { Position = new Vector3(2, 0, 0) },
+                orderedRushers[1] with { Position = new Vector3(3, 0, 0) },
+                orderedRushers[2] with { Position = Vector3.Zero },
+                orderedRushers[3] with { Position = new Vector3(0.1f, 0, 0) }
+            ]
+        };
+        CoopRusherPoint? preferred = CoopRusherPointCatalog.ChooseInitial(
+            priorityShield, Vector3.Zero, new HashSet<int>(), 0);
+        CoopRusherPoint? fallback = CoopRusherPointCatalog.ChooseInitial(
+            priorityShield, Vector3.Zero,
+            new HashSet<int>
+            {
+                orderedRushers[0].ComponentFileId,
+                orderedRushers[1].ComponentFileId
+            }, 0);
+        if (preferred?.SourceIndex != 0 || fallback?.SourceIndex != 2 ||
+            CoopRusherPointCatalog.ChooseInitial(priorityShield,
+                Vector3.Zero, new HashSet<int>(), 4) != null)
+            throw new Exception("Shield-linked Rusher point priority differs from Client.");
 
         string maskPath = Path.Combine(directory,
             "recovered-coop-enemy-point-masks.json");
@@ -3109,7 +3143,7 @@ internal static class CombatContentTests
         {
             File.Delete(damagedPath);
         }
-        return 27;
+        return 30;
     }
 
     private static int PointBit(CoopEnemyPoint point) => point.ComponentType switch
