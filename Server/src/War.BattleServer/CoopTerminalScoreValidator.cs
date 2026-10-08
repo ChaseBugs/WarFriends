@@ -56,6 +56,7 @@ internal static class CoopTerminalScoreValidator
                 StringComparer.Ordinal)))
             throw new InvalidDataException(
                 "Co-op non-success has invalid participant identities.");
+        ValidateParticipantScores(snapshot, manifest, rule);
 
         if (snapshot.Coop.Started)
         {
@@ -179,27 +180,7 @@ internal static class CoopTerminalScoreValidator
             SourceSpawnOrigins(rule, missions, bossSources, spawnPoints);
         ValidateEnemyLedger(snapshot, rule, combat, origins);
         ValidateObjective(snapshot, rule);
-
-        if (rule.MissionType == "Score")
-        {
-            if (snapshot.Coop.ParticipantScores.Count != manifest.Players.Length)
-                throw new InvalidDataException("Score mission has an incomplete allied ledger.");
-            long total = 0;
-            for (int index = 0; index < manifest.Players.Length; index++)
-            {
-                BattleCoopParticipantScore row = snapshot.Coop.ParticipantScores[index];
-                if (row.PlayerId != manifest.Players[index].PlayerId ||
-                    row.Score < 0 || row.Score > 1_000_000_000)
-                    throw new InvalidDataException("Invalid Score mission participant row.");
-                total += row.Score;
-            }
-            if (total != snapshot.Coop.ObjectiveScore)
-                throw new InvalidDataException("Allied scores do not conserve mission progress.");
-        }
-        else if (snapshot.Coop.ParticipantScores.Count != 0)
-        {
-            throw new InvalidDataException("Non-Score mission has allied score rows.");
-        }
+        ValidateParticipantScores(snapshot, manifest, rule);
 
         float remainingTimeRatio =
             (float)(snapshot.Coop.DeadlineTick - snapshot.EndTick) /
@@ -233,6 +214,36 @@ internal static class CoopTerminalScoreValidator
         if (expectedScores.Count == 0 ||
             snapshot.Coop.SuccessScores.Count != expectedScores.Count)
             throw new InvalidDataException("Co-op success has an invalid score roster.");
+    }
+
+    private static void ValidateParticipantScores(MatchSnapshot snapshot,
+        MatchManifest manifest, MissionRule rule)
+    {
+        if (rule.MissionType != "Score")
+        {
+            if (snapshot.Coop.ParticipantScores.Count != 0)
+                throw new InvalidDataException(
+                    "Non-Score mission has allied score rows.");
+            return;
+        }
+
+        if (snapshot.Coop.ParticipantScores.Count != manifest.Players.Length)
+            throw new InvalidDataException(
+                "Score mission has an incomplete allied ledger.");
+        long total = 0;
+        for (int index = 0; index < manifest.Players.Length; index++)
+        {
+            BattleCoopParticipantScore row =
+                snapshot.Coop.ParticipantScores[index];
+            if (row.PlayerId != manifest.Players[index].PlayerId ||
+                row.Score < 0 || row.Score > 1_000_000_000)
+                throw new InvalidDataException(
+                    "Invalid Score mission participant row.");
+            total += row.Score;
+        }
+        if (total != snapshot.Coop.ObjectiveScore)
+            throw new InvalidDataException(
+                "Allied scores do not conserve mission progress.");
     }
 
     private readonly record struct SpawnOrigin(int ComponentFileId,

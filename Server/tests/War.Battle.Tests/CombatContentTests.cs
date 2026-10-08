@@ -5238,6 +5238,20 @@ internal static class CombatContentTests
             scoreRuntime.Snapshot().Coop.ParticipantScores[0].Score != 10 ||
             scoreRuntime.Snapshot().Coop.ParticipantScores[1].Score != 5)
             throw new Exception("The second ally's army kill must add its source score.");
+        if (!scoreRuntime.AbortForHostShutdown())
+            throw new Exception("The Score fixture could not close as a host abort.");
+        MatchSnapshot abortedScore = scoreRuntime.TerminalEvidenceSnapshot();
+        MatchSnapshot forgedAbortedScore = abortedScore.Clone();
+        forgedAbortedScore.Coop.ParticipantScores[1].Score++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateNonSuccess(
+                forgedAbortedScore, scoreAllocation, catalog, enemyCombat,
+                spawnPoints: spawnPoints);
+            throw new Exception(
+                "An aborted Score mission published unconserved allied points.");
+        }
+        catch (InvalidDataException) { }
         runtime.Advance(9);
         if (runtime.Snapshot().Coop.EnemySpawns.Count != 1)
             throw new Exception("Co-op AI cadence must not spawn on the next tick.");
