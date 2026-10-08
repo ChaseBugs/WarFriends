@@ -22,13 +22,24 @@ public sealed class ReliableEventPayloadStore
     public IReadOnlyList<ClientBattleEvent> ReplayAfter(ulong sequence, int maxEvents = 256)
     {
         if (maxEvents is < 1 or > 4096) throw new InvalidDataException("Invalid event replay bound.");
-        if (!CanReplayAfter(sequence)) throw new InvalidDataException("Event cursor has expired; full snapshot required.");
+        if (!CanReplayAfter(sequence))
+            throw new InvalidDataException("Event cursor is outside the retained history; full snapshot required.");
         return events.Where(x => x.Sequence > sequence).Take(maxEvents).ToArray();
     }
 
     public ulong FirstRetainedSequence => events.Count == 0 ? 0 : events[0].Sequence;
     public ulong LastRetainedSequence => events.Count == 0 ? 0 : events[^1].Sequence;
-    public bool CanReplayAfter(ulong sequence) => events.Count == 0 || sequence + 1 >= FirstRetainedSequence;
+    public bool CanReplayAfter(ulong sequence)
+    {
+        if (events.Count == 0)
+            return sequence == 0;
+
+        // The client may have consumed the event immediately before this
+        // bounded log. Anything older is lost; anything newer is untrusted.
+        ulong oldestValidCursor = FirstRetainedSequence - 1;
+        return sequence >= oldestValidCursor &&
+            sequence <= LastRetainedSequence;
+    }
 
     public void Append(ClientBattleEvent value)
     {

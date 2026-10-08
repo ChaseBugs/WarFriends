@@ -10183,6 +10183,9 @@ internal static class CombatContentTests
             try { Directory.Delete(Path.GetDirectoryName(cursorPath)!,true); } catch { }
             var payloadPath=Path.Combine(Path.GetTempPath(),"warfriends-event-payload-"+Guid.NewGuid().ToString("N"),"events.json");
             var payloadStore=new ReliableEventPayloadStore(payloadPath,2);
+            Check(payloadStore.CanReplayAfter(0)&&!payloadStore.CanReplayAfter(1),
+                  "an empty event log accepts only the initial replay cursor");
+            Reject(()=>payloadStore.ReplayAfter(1));
             payloadStore.Append(new ClientBattleEvent(1,"spawn:player",1,Vector3.Zero));
             payloadStore.Append(new ClientBattleEvent(2,"impact",1,new(1,0,0)));
             payloadStore.Append(new ClientBattleEvent(3,"death",1,new(2,0,0)));
@@ -10191,8 +10194,15 @@ internal static class CombatContentTests
                   "reliable event payloads persist with bounded replay after restart");
             Reject(()=>loadedPayload.ReplayAfter(0));
             Check(loadedPayload.FirstRetainedSequence==2&&loadedPayload.LastRetainedSequence==3&&
-                  !loadedPayload.CanReplayAfter(0)&&loadedPayload.CanReplayAfter(1),
+                  !loadedPayload.CanReplayAfter(0)&&loadedPayload.CanReplayAfter(1)&&
+                  loadedPayload.CanReplayAfter(3)&&
+                  !loadedPayload.CanReplayAfter(4)&&
+                  !loadedPayload.CanReplayAfter(ulong.MaxValue),
                   "reliable event payload retention exposes the cursor boundary for snapshot fallback");
+            Check(loadedPayload.ReplayAfter(3).Count==0,
+                  "a client at the latest event needs no replay");
+            Reject(()=>loadedPayload.ReplayAfter(4));
+            Reject(()=>loadedPayload.ReplayAfter(ulong.MaxValue));
             var durablePlan=ReconnectRecoveryCoordinator.Build(new ReconnectSnapshotCursor(4,2,200),5,loadedPayload,200);
             Check(!durablePlan.RequiresFullSnapshot&&durablePlan.ReplayFromEvent==3,
                   "reconnect planning derives event bounds from durable payload authority");
