@@ -59,29 +59,22 @@ internal sealed class GrenadeMatchSimulation
     }
     internal ScheduledGrenadeLaunch? Begin(string id,GrenadeThrowCommand command,ulong tick)
     {
-        var actor=ActorOf(id);if(actor.Pending!=null)return null;Vector3 target;bool right;double delay;
-        if(actor.Binding.Swipe)
-        {
-            if(!command.Swipe||!Zero(command.TargetX)||!Zero(command.TargetY)||!Zero(command.TargetZ))throw new InvalidDataException("Swipe grenade requires canonical input.");
-            var plan=GrenadeThrowPlanner.Plan(actor.Binding,actor.Position,actor.Rotation,
-                new(command.SwipeStartX,command.SwipeStartY,command.SwipeStartZ),new(command.SwipeEndX,command.SwipeEndY,command.SwipeEndZ),command.HeldSeconds);
-            target=plan.Target;right=plan.Right;delay=actor.Binding.FirstShotWaitSeconds;
-            actor.Clip=right?"throw_grenade_left":"throw_grenade_right";
-        }
-        else
-        {
-            if(command.Swipe||!Zero(command.SwipeStartX)||!Zero(command.SwipeStartY)||!Zero(command.SwipeStartZ)||
-               !Zero(command.SwipeEndX)||!Zero(command.SwipeEndY)||!Zero(command.SwipeEndZ)||!Zero(command.HeldSeconds))
-                throw new InvalidDataException("Launcher requires canonical target input.");
-            target=new(command.TargetX,command.TargetY,command.TargetZ);if(!PlayerHitbox.Finite(target)||Vector3.DistanceSquared(actor.Position,target)<1e-10f)throw new InvalidDataException("Invalid launcher target.");
-            var planar=target-actor.Position;planar.Y=0;if(planar.LengthSquared()<1e-10f)throw new InvalidDataException("Invalid launcher direction.");
-            var forward=Vector3.Transform(Vector3.UnitZ,actor.Rotation);right=Vector3.Dot(Vector3.UnitY,Vector3.Cross(forward,planar))>0;
-            actor.Clip=right?"player_look_left_grenadelauncher":"player_look_right_grenadelauncher";
-            delay=catalog.Poses.Duration(actor.Clip)*.25;
-        }
-        ulong launchTick=checked(tick+Math.Max(1,(ulong)Math.Ceiling(delay*MatchManifest.TickRate)));
-        actor.ClipStarted=tick;actor.Pending=new(id,target,right,launchTick,actor.Definition.Weapon.SourceId,actor.Definition.WeaponUpgrade!.Value);
-        actor.Pose=Place(catalog.Poses.Sample(actor.Clip,0,false),actor.Position,actor.Rotation);return actor.Pending;
+        Actor actor = ActorOf(id);
+        if (actor.Pending != null)
+            return null;
+
+        GrenadeGesturePlan gesture = GrenadeGesturePlanner.Plan(
+            actor.Binding, catalog.Poses, actor.Position, actor.Rotation,
+            command, tick);
+        actor.Clip = gesture.WindupClip;
+        actor.ClipStarted = tick;
+        actor.Pending = new ScheduledGrenadeLaunch(id, gesture.Target,
+            gesture.Right, gesture.LaunchTick,
+            actor.Definition.Weapon.SourceId,
+            actor.Definition.WeaponUpgrade!.Value);
+        actor.Pose = Place(catalog.Poses.Sample(actor.Clip, 0, false),
+            actor.Position, actor.Rotation);
+        return actor.Pending;
     }
     internal IReadOnlyList<ScheduledGrenadeLaunch> Advance(ulong tick,Func<string,RifleActorLocation>? locate=null)
     {
@@ -153,7 +146,6 @@ internal sealed class GrenadeMatchSimulation
     }
     private Actor ActorOf(string id)=>actors.Single(x=>x.Definition.PlayerId==id);
     private static bool Loops(string clip)=>clip is "grenade_idle" or "grenade_run" or "grenadelauncher_idle" or "run_grenadelauncher";
-    private static bool Zero(float value)=>BitConverter.SingleToInt32Bits(value)==0;
     private static GrenadePoseFrame Place(GrenadePoseFrame frame,Vector3 position,Quaternion rotation)=>new(frame.Seconds,
         frame.Collision.Place(position,rotation),frame.Left.Place(position,rotation),
         frame.Right.ToDictionary(x=>x.Key,x=>x.Value.Place(position,rotation),StringComparer.Ordinal));

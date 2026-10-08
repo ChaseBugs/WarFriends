@@ -273,6 +273,27 @@ internal static class GrenadeCatalogTests
         var slow=GrenadeThrowPlanner.Plan(fragBinding,Vector3.Zero,Quaternion.Identity,Vector3.Zero,new(1,0,0),1);
         Check(slow.Target==new Vector3(1,0,0)&&slow.Right&&slow.ClampedHoldSeconds==1,
             "slow swipe clamps to recovered one-unit minimum throw");
+        var swipeCommand = new GrenadeThrowCommand
+        {
+            Swipe = true, SwipeEndX = 1, HeldSeconds = 1
+        };
+        GrenadeGesturePlan swipeGesture = GrenadeGesturePlanner.Plan(
+            fragBinding, catalog.Poses, Vector3.Zero,
+            Quaternion.Identity, swipeCommand, 60);
+        Check(swipeGesture.Target == slow.Target &&
+            swipeGesture.WindupClip == "throw_grenade_left" &&
+            swipeGesture.LaunchTick == 79,
+            "shared grenade gesture preserves source swipe aim and windup");
+        var launcherCommand = new GrenadeThrowCommand { TargetX = 1 };
+        GrenadeGesturePlan launcherGesture = GrenadeGesturePlanner.Plan(
+            catalog.Binding("Google2u.GrenadeLauncher_M320"),
+            catalog.Poses, Vector3.Zero, Quaternion.Identity,
+            launcherCommand, 60);
+        Check(launcherGesture.Target == Vector3.UnitX &&
+            launcherGesture.WindupClip ==
+                "player_look_left_grenadelauncher" &&
+            launcherGesture.LaunchTick > 60,
+            "shared launcher gesture preserves source look and launch clock");
         Reject(()=>GrenadeThrowPlanner.Plan(fragBinding,Vector3.Zero,Quaternion.Identity,Vector3.Zero,new(.5f,0,0),.2f),
             "source-equal grenade swipe threshold accepted");
         var velocity=GrenadeFlight.BallisticVelocity(new(0,1,0),new(0,1,10),45);
