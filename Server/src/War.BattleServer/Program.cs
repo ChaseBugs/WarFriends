@@ -63,7 +63,7 @@ app.MapPost("/internal/matches",async (HttpContext context,NetworkWorker worker)
         "registered" or "existing-match"=>Results.Json(new {code=result.Code,matchId=manifest.MatchId,
             manifestHash=result.ManifestHash,grants},statusCode:result.Code=="registered"?201:200),
         "duplicate-match" or "admission-expired" or "terminal-match-id" or "match-terminal"=>Results.Conflict(new {code=result.Code}),
-        "match-capacity" or "control-capacity" or "control-unavailable"=>Results.Json(new {code=result.Code},statusCode:503),
+        "match-capacity" or "control-capacity" or "control-unavailable" or "allocation-unavailable"=>Results.Json(new {code=result.Code},statusCode:503),
         _=>Results.BadRequest(new {code=result.Code})
     };
 });

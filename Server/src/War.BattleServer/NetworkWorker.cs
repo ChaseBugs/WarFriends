@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Text.Json;
 using System.Threading.Channels;
 using War.Infrastructure;
 using War.Protocol;
@@ -43,6 +44,7 @@ public sealed class NetworkWorker : BackgroundService
         Interlocked.Read(ref tickBacklogs));
     private readonly Channel<Registration> registrations=Channel.CreateBounded<Registration>(new BoundedChannelOptions(32)
         {SingleReader=true,SingleWriter=false,FullMode=BoundedChannelFullMode.Wait});
+    private readonly SemaphoreSlim allocationReads = new(32, 32);
     private readonly object controlGate=new();
     private readonly Dictionary<ulong, Session> sessions = [];
     private readonly Dictionary<ulong, long> closed = [];
@@ -64,10 +66,59 @@ public sealed class NetworkWorker : BackgroundService
     private sealed record Registration(MatchManifest? Manifest,string? MatchId,string? PlayerId,string? RequestId,bool Cancel,CancellationToken Cancellation,
         TaskCompletionSource<MatchRegistrationResult> Completion);
 
-    public Task<MatchRegistrationResult> RegisterMatch(MatchManifest manifest,CancellationToken ct)
+    public async Task<MatchRegistrationResult> RegisterMatch(
+        MatchManifest manifest, CancellationToken ct)
     {
+        if (!IsReady)
+            return new MatchRegistrationResult("control-unavailable", "");
+
+        MatchManifest checkedManifest;
+        try { checkedManifest = MatchManifest.Validate(manifest); }
+        catch (Exception error) when
+            (error is InvalidDataException or ArgumentException or OverflowException)
+        {
+            return new MatchRegistrationResult("invalid-manifest", "");
+        }
+
+        if (checkedManifest.Allocations == null &&
+            allocationClient != null && allocationEndpoint != null)
+        {
+            if (!allocationReads.Wait(0))
+                return new MatchRegistrationResult("control-capacity", "");
+            try
+            {
+                var playerIds = checkedManifest.Players.Select(
+                    player => player.PlayerId);
+                var allocations = await allocationClient.ReadAsync(
+                    allocationEndpoint, playerIds, ct);
+                checkedManifest = checkedManifest with
+                {
+                    Allocations = allocations
+                };
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                return new MatchRegistrationResult("allocation-unavailable", "");
+            }
+            catch (HttpRequestException)
+            {
+                return new MatchRegistrationResult("allocation-unavailable", "");
+            }
+            catch (JsonException)
+            {
+                return new MatchRegistrationResult("invalid-manifest", "");
+            }
+            catch (Exception error) when
+                (error is InvalidDataException or ArgumentException or OverflowException)
+            {
+                return new MatchRegistrationResult("invalid-manifest", "");
+            }
+            finally { allocationReads.Release(); }
+        }
+
         var completion=new TaskCompletionSource<MatchRegistrationResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-        return EnqueueRegistration(new Registration(manifest,null,null,null,false,ct,completion));
+        return await EnqueueRegistration(new Registration(
+            checkedManifest, null, null, null, false, ct, completion));
     }
     public Task<MatchRegistrationResult> RegisterReconnect(string matchId,string playerId,string requestId,CancellationToken ct)
     {
@@ -238,9 +289,6 @@ public sealed class NetworkWorker : BackgroundService
                         MatchManifest? effectiveManifest=registration.Manifest;
                         try
                         {
-                            if(effectiveManifest!=null && effectiveManifest.Allocations==null && allocationClient!=null && allocationEndpoint!=null)
-                                effectiveManifest=effectiveManifest with {Allocations=await allocationClient.ReadAsync(allocationEndpoint,
-                                    effectiveManifest.Players.Select(x=>x.PlayerId),registration.Cancellation)};
                             issued=registration.Manifest!=null
                                 ? terminalOutbox.HasIdentity(effectiveManifest!.MatchId)
                                     ? new MatchRegistrationResult("terminal-match-id","")

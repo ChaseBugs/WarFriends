@@ -1609,6 +1609,10 @@ var slowRequestStarted = new TaskCompletionSource<bool>(
     TaskCreationOptions.RunContinuationsAsynchronously);
 var releaseSlowResponse = new TaskCompletionSource<bool>(
     TaskCreationOptions.RunContinuationsAsynchronously);
+var allocationRequestStarted = new TaskCompletionSource<bool>(
+    TaskCreationOptions.RunContinuationsAsynchronously);
+var releaseAllocationResponse = new TaskCompletionSource<bool>(
+    TaskCreationOptions.RunContinuationsAsynchronously);
 var slowBackendBuilder = WebApplication.CreateBuilder();
 slowBackendBuilder.WebHost.UseUrls("http://127.0.0.1:0");
 slowBackendBuilder.Logging.ClearProviders();
@@ -1619,12 +1623,20 @@ slowBackend.MapPost("/accept", async (HttpContext context) =>
     await releaseSlowResponse.Task.WaitAsync(context.RequestAborted);
     return Results.Ok(new { code = "accepted" });
 });
+slowBackend.MapPost("/allocations", async (HttpContext context) =>
+{
+    allocationRequestStarted.TrySetResult(true);
+    await releaseAllocationResponse.Task.WaitAsync(context.RequestAborted);
+    return Results.StatusCode(503);
+});
 await slowBackend.StartAsync();
 var slowConfig = new ConfigurationBuilder().AddConfiguration(multiConfig)
     .AddInMemoryCollection(new Dictionary<string, string?>
     {
         ["Battle:ResultOutboxPath"] = slowOutboxPath,
         ["Battle:BackendResultEndpoint"] = slowBackend.Urls.Single() + "/accept",
+        ["Battle:BackendAllocationEndpoint"] =
+            slowBackend.Urls.Single() + "/allocations",
         ["Battle:ControlKey"] = Convert.ToBase64String(
             Enumerable.Repeat((byte)8, 32).ToArray())
     }).Build();
@@ -1667,7 +1679,9 @@ using (var slowWorker = new NetworkWorker(slowConfig,
                 Ping = new Ping { ClientTime = sequence }
             };
             await probePeer.SendAsync(PacketCodec.Encode(ping, probeKey), probeTarget);
-            var received = await probePeer.ReceiveAsync(probeDeadline.Token);
+            using var replyDeadline = new CancellationTokenSource(
+                TimeSpan.FromSeconds(3));
+            var received = await probePeer.ReceiveAsync(replyDeadline.Token);
             return PacketCodec.ReadUntrusted(received.Buffer)?.Pong?.ServerTick ?? 0;
         }
 
@@ -1677,10 +1691,24 @@ using (var slowWorker = new NetworkWorker(slowConfig,
         Check(!releaseSlowResponse.Task.IsCompleted &&
               afterSlowWait >= beforeSlowWait + 4,
             "a pending Backend HTTP result cannot pause the 30 Hz battle clock");
+
+        Task<MatchRegistrationResult> waitingRegistration =
+            slowWorker.RegisterMatch(definition, CancellationToken.None);
+        await allocationRequestStarted.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        ulong beforeAllocationWait = await ReadProbeTick(4);
+        await Task.Delay(250);
+        ulong afterAllocationWait = await ReadProbeTick(5);
+        Check(!releaseAllocationResponse.Task.IsCompleted &&
+              afterAllocationWait >= beforeAllocationWait + 4,
+            "a pending Backend allocation read cannot pause active UDP matches");
+        releaseAllocationResponse.TrySetResult(true);
+        Check((await waitingRegistration).Code == "allocation-unavailable",
+            "Backend allocation failure is retryable without stopping the Worker");
     }
     finally
     {
         releaseSlowResponse.TrySetResult(true);
+        releaseAllocationResponse.TrySetResult(true);
         await slowWorker.StopAsync(CancellationToken.None);
         await slowBackend.StopAsync();
         await slowBackend.DisposeAsync();
