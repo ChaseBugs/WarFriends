@@ -1543,7 +1543,8 @@ internal static class CombatContentTests
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0,
             enemyDestinations: walkingDestinations,
-            infantryNavigation: infantryNavigation);
+            infantryNavigation: infantryNavigation,
+            playerWeaponContent: content);
         walkingRuntime.Admit(firstPlayer);
         walkingRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1561,10 +1562,14 @@ internal static class CombatContentTests
         walkingRuntime.Advance(9);
         BattleCoopEnemySpawn walkingStep = walkingRuntime.Snapshot()
             .Coop.EnemySpawns.Single();
+        IReadOnlyList<PlayerHitbox> walkingParts =
+            walkingRuntime.PlaceWalkingAssaulterHitboxes(walkingStep.EntityId);
         if (walkingStep.PoseTick != 9 ||
             new Vector3(walkingStep.CurrentX, walkingStep.CurrentY,
                 walkingStep.CurrentZ) == new Vector3(walkingStart.CurrentX,
                 walkingStart.CurrentY, walkingStart.CurrentZ) ||
+            walkingParts.Count != 3 || walkingParts.Any(part =>
+                !part.SourcePath.StartsWith("coop/1/", StringComparison.Ordinal)) ||
             !walkingRuntime.CurrentEnemyCollisionFrame().UnplacedEnemyIds
                 .Contains(walkingStep.EntityId))
             throw new Exception("Host Assaulter did not advance its covered path safely.");
@@ -1576,7 +1581,9 @@ internal static class CombatContentTests
             .Coop.EnemySpawns.Single();
         if (stoppedEnemy.CurrentX != walkingStep.CurrentX ||
             stoppedEnemy.CurrentZ != walkingStep.CurrentZ ||
-            stoppedEnemy.PoseTick != 9)
+            stoppedEnemy.PoseTick != 9 ||
+            walkingRuntime.PlaceWalkingAssaulterHitboxes(
+                stoppedEnemy.EntityId).Count != 0)
             throw new Exception("Dead infantry kept moving after its host-confirmed death.");
 
         MissionRule rusherRule = catalog.Get(2);

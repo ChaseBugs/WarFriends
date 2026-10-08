@@ -836,6 +836,40 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Samples the recovered run animation at the host route clock. This is
+    /// diagnostic geometry: Unity NavMeshAgent turning, acceleration, and
+    /// avoidance are not yet reproduced, so the shot collision frame does
+    /// not admit these moving hitboxes.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceWalkingAssaulterHitboxes(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || enemyPoses == null ||
+            !infantryPaths.TryGetValue(entityId,
+                out CoopInfantryPathState? path))
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
+            spawn.PoseTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0);
+        if (enemy == null)
+            return [];
+
+        Vector3 direction = path.PlanarDirectionAt(tick);
+        if (direction == Vector3.Zero)
+            return [];
+        float heading = MathF.Atan2(direction.X, direction.Z);
+        Quaternion rotation = Quaternion.CreateFromAxisAngle(
+            Vector3.UnitY, heading);
+        Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        string clip = ArmyInfantryPosePolicy.For(
+            combat.UnitIdFor(enemy.Behaviour)).Walk;
+        return enemyPoses.Place(clip, position, rotation,
+            path.SecondsSinceStart(tick), $"coop/{entityId}/");
+    }
+
+    /// <summary>
     /// Places the recovered Assault Helicopter body and front glass at its
     /// current host pose. The five body meshes, body box, and front glass
     /// retain distinct damage-part identities.

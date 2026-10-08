@@ -73,6 +73,29 @@ public sealed class CoopInfantryPathState
         return distance >= routeLength;
     }
 
+    public float SecondsSinceStart(ulong tick) =>
+        tick <= startTick ? 0 :
+        (float)((double)(tick - startTick) / MatchManifest.TickRate);
+
+    public Vector3 PlanarDirectionAt(ulong tick)
+    {
+        double distance = tick <= startTick ? 0 :
+            (double)(tick - startTick) * speed / MatchManifest.TickRate;
+        Vector3 lastDirection = Vector3.Zero;
+        for (int index = 1; index < points.Count; index++)
+        {
+            Vector3 segment = points[index] - points[index - 1];
+            float length = segment.Length();
+            var planar = new Vector3(segment.X, 0, segment.Z);
+            if (planar.LengthSquared() > 0.000001f)
+                lastDirection = Vector3.Normalize(planar);
+            if (distance <= length && lastDirection != Vector3.Zero)
+                return lastDirection;
+            distance -= length;
+        }
+        return lastDirection;
+    }
+
     private static double PathLength(IReadOnlyList<Vector3> route)
     {
         double total = 0;
