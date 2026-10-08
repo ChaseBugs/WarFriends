@@ -52,7 +52,7 @@ internal static class CoopTerminalScoreValidator
                     .Order(StringComparer.Ordinal)))
             throw new InvalidDataException("Co-op success differs from source mission.");
 
-        ValidateEnemyLedger(snapshot, combat);
+        ValidateEnemyLedger(snapshot, rule, combat);
         ValidateObjective(snapshot, rule);
 
         if (rule.MissionType == "Score")
@@ -153,19 +153,34 @@ internal static class CoopTerminalScoreValidator
     }
 
     private static void ValidateEnemyLedger(MatchSnapshot snapshot,
-        CoopEnemyCombatCatalog combat)
+        MissionRule rule, CoopEnemyCombatCatalog combat)
     {
         ulong expectedEntityId = 1;
+        var timedEventCounts = new int[rule.Events.Count];
         foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
         {
+            if (enemy.EntityId != expectedEntityId ||
+                enemy.SpawnTick < snapshot.StartTick ||
+                enemy.SpawnTick >= snapshot.Coop.DeadlineTick)
+                throw new InvalidDataException(
+                    "Co-op enemy spawn has invalid identity or time.");
+
+            if (enemy.TimedEvent)
+                ValidateTimedSpawn(enemy, snapshot.StartTick, rule,
+                    timedEventCounts);
+            else if (enemy.CardUnit || !rule.Behaviours.Any(behaviour =>
+                         behaviour.Name == enemy.Behaviour &&
+                         behaviour.Level == enemy.Level))
+                throw new InvalidDataException(
+                    "Co-op automatic spawn differs from the mission rule.");
+
             float expectedProgress = enemy.CardUnit
                 ? Math.Clamp(enemy.Level / 25f, 0f, 1f) : 0f;
             float expectedMaximum = enemy.CardUnit
                 ? combat.CardStats(enemy.Behaviour, expectedProgress).Health
                 : combat.OrdinaryStats(enemy.Behaviour,
                     enemy.Level).Health;
-            if (enemy.EntityId != expectedEntityId ||
-                !float.IsFinite(enemy.MaxHealth) ||
+            if (!float.IsFinite(enemy.MaxHealth) ||
                 enemy.MaxHealth != expectedMaximum ||
                 enemy.CardProgress != expectedProgress ||
                 !float.IsFinite(enemy.Health) || enemy.Health < 0 ||
@@ -176,5 +191,28 @@ internal static class CoopTerminalScoreValidator
                     "Co-op success has an invalid enemy spawn ledger.");
             expectedEntityId++;
         }
+    }
+
+    private static void ValidateTimedSpawn(BattleCoopEnemySpawn enemy,
+        ulong startTick, MissionRule rule, int[] eventCounts)
+    {
+        ulong elapsedSecond = (enemy.SpawnTick - startTick) /
+            MatchManifest.TickRate;
+        for (int index = 0; index < rule.Events.Count; index++)
+        {
+            MissionTimedEvent source = rule.Events[index];
+            int maximum = source.Count == 0 ? 1 : source.Count;
+            if (source.Behaviour != enemy.Behaviour ||
+                source.Level != enemy.Level ||
+                source.IsCardUnit != enemy.CardUnit ||
+                elapsedSecond < source.TimeSeconds ||
+                eventCounts[index] >= maximum)
+                continue;
+
+            eventCounts[index]++;
+            return;
+        }
+        throw new InvalidDataException(
+            "Co-op timed spawn has no due source event capacity.");
     }
 }

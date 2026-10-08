@@ -4616,6 +4616,33 @@ internal static class CombatContentTests
                 "A fabricated enemy maximum health entered co-op evidence.");
         }
         catch (InvalidDataException) { }
+        MatchSnapshot wrongAutomaticBehaviour = completedKill.Clone();
+        BattleCoopEnemySpawn automaticRow =
+            wrongAutomaticBehaviour.Coop.EnemySpawns[0];
+        automaticRow.Behaviour = "Shotgunner";
+        automaticRow.Level = 0;
+        automaticRow.MaxHealth = enemyCombat.OrdinaryStats(
+            "Shotgunner", 0).Health;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                wrongAutomaticBehaviour, coop, catalog, enemyCombat);
+            throw new Exception(
+                "A timed-only behavior passed as an automatic spawn.");
+        }
+        catch (InvalidDataException) { }
+        MatchSnapshot earlyTimedEvent = wrongAutomaticBehaviour.Clone();
+        BattleCoopEnemySpawn earlyRow = earlyTimedEvent.Coop.EnemySpawns[0];
+        earlyRow.TimedEvent = true;
+        earlyRow.SpawnTick = earlyTimedEvent.StartTick + 1;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                earlyTimedEvent, coop, catalog, enemyCombat);
+            throw new Exception(
+                "A co-op timed event spawned before its source deadline.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot forgedKillCount = completedKill.Clone();
         forgedKillCount.Coop.EnemyKills--;
         try
