@@ -810,6 +810,7 @@ internal static class CombatContentTests
             switchingRuntime.ConfirmHostPlayerShot(partner, 1, 0) ||
             !switchingRuntime.ConfirmHostPlayerShot(switcher, 1, 0) ||
             switchingRuntime.ConfirmHostPlayerShot(switcher, 1, 0) ||
+            switchingRuntime.PlaceIdlePlayerMuzzle(switcher) != null ||
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == switcher).ClipAmmo != alternateWeapon.ClipSize - 1)
             throw new Exception("Only a host-created co-op shot may consume ammo.");
@@ -1336,13 +1337,21 @@ internal static class CombatContentTests
                 !mainAnchors.Any(anchor => anchor.Position == new Vector3(
                     player.PositionX, player.PositionY, player.PositionZ))))
             throw new Exception("Signed co-op roster order must bind both source allied starts.");
+        RifleMuzzlePose? sourceMuzzle = runtime.PlaceIdlePlayerMuzzle(firstPlayer);
+        if (sourceMuzzle == null ||
+            sourceMuzzle.RootPosition != mainAnchors[0].Position ||
+            mainAnchors[0].SourceRotation is not Quaternion startRotation ||
+            Quaternion.Dot(sourceMuzzle.RootRotation, startRotation) < 0.9999f ||
+            !PlayerHitbox.Finite(sourceMuzzle.Position) ||
+            runtime.PlaceIdlePlayerMuzzle("not-an-ally") != null)
+            throw new Exception("An untouched co-op rifle needs its source idle muzzle.");
         startingState.Coop.ParticipantStarts[0].X = 999;
         if (runtime.Snapshot().Coop.ParticipantStarts[0].X != mainAnchors[0].Position.X)
             throw new Exception("A client snapshot must not mutate an allied start anchor.");
 
         var movementRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
-            choosePoint: _ => 0);
+            choosePoint: _ => 0, playerWeaponContent: content);
         movementRuntime.Admit(firstPlayer);
         movementRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1352,7 +1361,8 @@ internal static class CombatContentTests
             MoveCover = new MoveCoverCommand { Direction = 1 } };
         if (movementRuntime.Command(firstPlayer, moveRight).Code != "moving" ||
             movementRuntime.Command(firstPlayer, moveRight).Code != "moving" ||
-            movementRuntime.Command(secondPlayer, moveRight).Code != "cover-unavailable")
+            movementRuntime.Command(secondPlayer, moveRight).Code != "cover-unavailable" ||
+            movementRuntime.PlaceIdlePlayerMuzzle(firstPlayer) != null)
             throw new Exception("Co-op shield selection must skip occupied and reserved points.");
         BattlePlayerState movingPlayer = movementRuntime.Snapshot().Players.Single(
             player => player.PlayerId == firstPlayer);

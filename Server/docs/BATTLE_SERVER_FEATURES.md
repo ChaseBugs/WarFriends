@@ -157,6 +157,8 @@ Ordinary co-op enemy spawn snapshots now carry the source orientation alongside 
 
 The isolated runtime now binds a spawned soldier's mission behavior to the recovered infantry idle clip and places its three sampled `enemy.prefab` hitboxes at the source position and rotation on the exact spawn tick. It refuses stale-tick placement and excludes tanks, cars, and air units, whose collider families differ. This establishes a narrow, testable starting pose; AI movement, animation updates, player muzzle creation, and collision-to-damage authority remain open.
 
+The isolated runtime can now place an untouched ally's validated rifle muzzle from the sampled idle player rig at its source defend-position transform. The seam rejects unknown, dead, moving, previously moved, or already firing players and unsupported weapon families; boss anchors remain closed because their transform rotation has not been bound here. The shared PvP collision artifact contains only multiplayer scenes, so this muzzle cannot yet authorize a shot through a single-player co-op map. Those maps need source collision geometry plus updated player/enemy poses before Fire can open.
+
 `CoopTerminalScoreValidator` now treats source mission types separately: Kill requires its exact confirmed enemy-death target, Survive succeeds exactly at the deadline, Score remains before its deadline with conserved allied points, and a boss success requires a dead host boss. Focused tests use actual isolated Kill, Survive, and boss results plus forged terminal variants. This validates terminal presentation evidence, not a trusted live battle or Backend reward settlement.
 
 

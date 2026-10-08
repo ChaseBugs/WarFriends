@@ -47,6 +47,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public ulong MoveEndTick;
         public float Health = definition.Combat!.MaxHealth;
         public bool Dead;
+        public bool HasMoved;
         public ulong DamageRevision;
         public CoopPlayerWeaponState? Weapons;
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
@@ -58,6 +59,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<string, IReadOnlyList<CoopSpawnPoint>> spawnCandidates;
     private readonly CoopEnemyCombatCatalog combat;
     private readonly EnemyPoseCatalog? enemyPoses;
+    private readonly PlayerPoseCatalog? playerPoses;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
@@ -134,6 +136,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (playerWeaponContent != null)
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
+        playerPoses = playerWeaponContent?.Poses;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
@@ -404,6 +407,37 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Recovers an untouched ally's idle rifle muzzle from the source rig and
+    /// defend-position transform. Moving, firing, or using another weapon
+    /// requires a live pose and cannot reuse this starting geometry.
+    /// </summary>
+    internal RifleMuzzlePose? PlaceIdlePlayerMuzzle(string playerId)
+    {
+        if (phase != BattlePhase.Running || playerPoses == null ||
+            PlayerWeapons == null ||
+            !participants.TryGetValue(playerId, out Participant? player) ||
+            !player.Admitted || !player.Ready || player.Dead ||
+            player.HasMoved || player.Route != null || player.Weapons == null)
+            return null;
+
+        CoopPlayerAnchor start = playerStarts[playerId];
+        if (start.SourceRotation is not Quaternion rotation)
+            return null;
+        int slot = player.Weapons.ActiveSlot;
+        if (player.Weapons.Readiness(slot).ShotsFired != 0)
+            return null;
+        CoopPlayerWeapon weapon = PlayerWeapons.ForPlayer(playerId)[slot];
+        if (!weapon.Weapon.SourceId.StartsWith(
+                "Google2u.AssaultRifle_", StringComparison.Ordinal))
+            return null;
+
+        PlayerAimPose idlePose = playerPoses.SampleBlended(
+            "idle", 0, true, "idle", 0, true, 0,
+            Quaternion.Identity).Place(start.Position, rotation);
+        return idlePose.Muzzle(weapon.Weapon.SourceId);
+    }
+
+    /// <summary>
     /// Applies damage already established by host hit simulation. No client
     /// packet routes here: player fire, impact, and ownership still need their
     /// co-op validators before this can become live combat authority.
@@ -663,6 +697,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return "cover-unavailable";
 
         CoopDefendRoute route = routeBetween(participant.CoverIndex, target);
+        participant.HasMoved = true;
         double length = 0;
         for (int index = 1; index < route.Corners.Count; index++)
             length += Vector3.Distance(route.Corners[index - 1], route.Corners[index]);
