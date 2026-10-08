@@ -86,6 +86,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 {
     private const float CornerHideAfterSeconds = 0.7f;
     private const float CornerHideAfterRoundSeconds = 0.5f;
+    private const float QueuedIdleFadeSeconds = 0.3f;
+    private const float AnimationBoundaryToleranceSeconds = 0.000001f;
     private sealed class Participant(ParticipantManifest definition)
     {
         public ParticipantManifest Definition { get; } = definition;
@@ -1889,7 +1891,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             ? "player_right_coverBack3" : "player_left_coverBack3";
         float seconds = (tick - coverStartTick) /
             (float)MatchManifest.TickRate;
-        if (seconds > enemyPoses.Clip(coverClip).Length)
+        // Animation.CrossFadeQueued(idle) begins blending before the
+        // cover-back clip ends. Single-clip geometry is no longer valid.
+        if (seconds >= enemyPoses.Clip(coverClip).Length -
+                QueuedIdleFadeSeconds -
+                AnimationBoundaryToleranceSeconds)
             return [];
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&

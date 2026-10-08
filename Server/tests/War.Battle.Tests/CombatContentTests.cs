@@ -3234,14 +3234,17 @@ internal static class CombatContentTests
                 !cornerRuntime.CurrentEnemyCollisionFrame()
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception("Co-op corner missed the round-owned cover return.");
-            cornerRuntime.Advance(coverReturnTick + 13);
+            cornerRuntime.Advance(coverReturnTick + 3);
             if (cornerRuntime.PlaceCornerCoverBackHitboxes(
                     cornerEnemy.EntityId).Count != 3)
                 throw new Exception("Co-op corner cover return ended too early.");
-            cornerRuntime.Advance(coverReturnTick + 14);
+            cornerRuntime.Advance(coverReturnTick + 4);
             if (cornerRuntime.PlaceCornerCoverBackHitboxes(
-                    cornerEnemy.EntityId).Count != 0)
-                throw new Exception("Co-op corner cover return outlived its clip.");
+                    cornerEnemy.EntityId).Count != 0 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception(
+                    "Co-op corner published an unverified queued blend.");
         }
 
         // Flip only the test point's exposed side when needed so this
