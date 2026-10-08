@@ -629,7 +629,10 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 				Singleton<ShotTrailRenderer>.instance.PlayShot(from, info.hitPosition, time);
 				return;
 			}
-			mPhotonView.RPC("PlayTrailRPC", PhotonTargets.Others, from, info.hitPosition, time);
+			if (!PhotonConnectionManager.IsSelfHostedActive)
+			{
+				mPhotonView.RPC("PlayTrailRPC", PhotonTargets.Others, from, info.hitPosition, time);
+			}
 		}
 	}
 
@@ -1001,7 +1004,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 				break;
 			}
 		}
-		if (mPhotonView.isMine)
+		if (mPhotonView.isMine &&
+			!PhotonConnectionManager.IsSelfHostedActive)
 		{
 			mPhotonView.RPC("PlayShotAnimationNetwork", PhotonTargets.Others, (byte)weapon, right);
 		}
@@ -1045,7 +1049,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 	[PunRPC]
 	public void Uncover(bool right, bool hideBack)
 	{
-		if (mPhotonView.isMine)
+		if (mPhotonView.isMine &&
+			!PhotonConnectionManager.IsSelfHostedActive)
 		{
 			mPhotonView.RPC("Uncover", PhotonTargets.Others, right, hideBack);
 		}
