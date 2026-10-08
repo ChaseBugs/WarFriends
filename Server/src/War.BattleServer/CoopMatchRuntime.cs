@@ -172,6 +172,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<float> chooseInfantryFakeSideRoll;
     private readonly Func<int> chooseCornerChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
+    private readonly CoopEnemyMuzzleCatalog? enemyMuzzles;
     private readonly CoopCornerQueuePoseCatalog? cornerQueuePoses;
     private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
     private readonly CoopAssaulterQueueCatalog? assaulterQueue;
@@ -346,6 +347,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (playerWeaponContent != null)
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
+        enemyMuzzles = playerWeaponContent?.CoopEnemyMuzzles;
         cornerQueuePoses = playerWeaponContent?.CoopCornerQueuePoses;
         assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;
         assaulterQueue = playerWeaponContent?.CoopAssaulterQueue;
@@ -3364,6 +3366,37 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         return participants.TryGetValue(playerId, out Participant? player)
             ? SampleMovingWeaponPose(player)?.Pose : null;
+    }
+
+    /// <summary>
+    /// Samples the Assaulter's idle muzzle from its host-owned arrival clock.
+    /// The recovered Client restarts Idle when entering cover. Unity's
+    /// crossfade has not been verified here, so this is diagnostic geometry.
+    /// </summary>
+    internal CoopMuzzlePose? ObserveIdleAssaulterMuzzle(ulong enemyId)
+    {
+        if (phase != BattlePhase.Running || enemyMuzzles == null ||
+            !infantryPointArrivals.TryGetValue(enemyId,
+                out CoopInfantryPointArrival? arrival) ||
+            infantryShotWindups.ContainsKey(enemyId) ||
+            tick < arrival.Tick)
+            return null;
+
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == enemyId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0 &&
+            spawn.CurrentRotation != null);
+        if (enemy == null)
+            return null;
+
+        Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        BattleJointRotation facing = enemy.CurrentRotation!;
+        Quaternion rotation = new(facing.X, facing.Y, facing.Z, facing.W);
+        float idleSeconds = (tick - arrival.Tick) /
+            (float)MatchManifest.TickRate;
+        return enemyMuzzles.Place("idle_1", position, rotation,
+            idleSeconds);
     }
 
     /// <summary>

@@ -2772,7 +2772,30 @@ internal static class CombatContentTests
         BattleCoopEnemySpawn reachedEnemy = arrivalRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy =>
                 enemy.EntityId == arrivalEnemy.EntityId);
+        CoopMuzzlePose? arrivalMuzzle = arrivalRuntime
+            .ObserveIdleAssaulterMuzzle(arrivalEnemy.EntityId);
+        Quaternion arrivalFacing = new(reachedEnemy.CurrentRotation!.X,
+            reachedEnemy.CurrentRotation.Y, reachedEnemy.CurrentRotation.Z,
+            reachedEnemy.CurrentRotation.W);
+        CoopMuzzlePose expectedArrivalMuzzle = content.CoopEnemyMuzzles.Place(
+            "idle_1", new Vector3(reachedEnemy.CurrentX,
+                reachedEnemy.CurrentY, reachedEnemy.CurrentZ),
+            arrivalFacing, 0);
+        if (arrivalMuzzle == null ||
+            Vector3.Distance(arrivalMuzzle.Position,
+                expectedArrivalMuzzle.Position) > 0.00001f)
+            throw new Exception("Co-op arrival lost its idle muzzle clock.");
         arrivalRuntime.Advance(expectedArrival + 1);
+        CoopMuzzlePose? nextIdleMuzzle = arrivalRuntime
+            .ObserveIdleAssaulterMuzzle(arrivalEnemy.EntityId);
+        CoopMuzzlePose expectedNextIdleMuzzle = content.CoopEnemyMuzzles.Place(
+            "idle_1", new Vector3(reachedEnemy.CurrentX,
+                reachedEnemy.CurrentY, reachedEnemy.CurrentZ),
+            arrivalFacing, 1f / MatchManifest.TickRate);
+        if (nextIdleMuzzle == null ||
+            Vector3.Distance(nextIdleMuzzle.Position,
+                expectedNextIdleMuzzle.Position) > 0.00001f)
+            throw new Exception("Co-op idle muzzle missed its next host tick.");
         BattleCoopEnemySpawn heldEnemy = arrivalRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy =>
                 enemy.EntityId == arrivalEnemy.EntityId);
@@ -2824,6 +2847,9 @@ internal static class CombatContentTests
                 .Length + 0.05f) * MatchManifest.TickRate);
         CoopInfantryShotWindup? crawlWindup = arrivalRuntime
             .InfantryShotWindup(arrivalEnemy.EntityId);
+        if (arrivalRuntime.ObserveIdleAssaulterMuzzle(
+                arrivalEnemy.EntityId) != null)
+            throw new Exception("Co-op idle muzzle survived the shot windup.");
         ArmyBaseShotStats sourceBatch = content.Army.ComposeShot(
             "ID_UNIT-ASSAULT", arrivalEnemy.Level, null, null);
         int expectedBatchCount = Math.Clamp(
