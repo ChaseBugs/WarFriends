@@ -1852,6 +1852,46 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Builds a real Assaulter's source slow-bullet flight for inspection.
+    /// Every collision query rechecks the current allied pose; a later move
+    /// invalidates the diagnostic instead of turning a stale pose into a hit.
+    /// No impact from this flight is applied to player health.
+    /// </summary>
+    internal BulletFlight? CreateDiagnosticAssaulterFlight(
+        ulong enemyEntityId, int roundIndex,
+        CoopPlayerShotCollisionWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        if (phase != BattlePhase.Running || assaulterWeapon == null ||
+            enemyBulletMask is not uint mask ||
+            !infantryRoundIntents.TryGetValue(enemyEntityId,
+                out List<CoopInfantryRoundIntent>? rounds) ||
+            roundIndex < 0 || roundIndex >= rounds.Count)
+            return null;
+
+        CoopInfantryRoundIntent round = rounds[roundIndex];
+        if (!round.Real || round.Tick != tick ||
+            round.ObservedWorldLaunchOrigin is not Vector3 origin ||
+            PlaceIdleAlliedCollisionPoses() == null)
+            return null;
+
+        ulong projectileId = checked(enemyEntityId * 16 +
+            (ulong)roundIndex + 1);
+        return new BulletFlight(projectileId, enemyEntityId,
+            assaulterWeapon.RealBulletFlight(), origin,
+            round.AimPosition, tick, (from, direction, range) =>
+            {
+                IReadOnlyList<CollisionPlayer>? currentPoses =
+                    PlaceIdleAlliedCollisionPoses();
+                if (currentPoses == null)
+                    throw new InvalidOperationException(
+                        "Co-op bullet lost its current allied poses.");
+                return world.Trace(from, direction, range, mask,
+                    currentPoses)?.ToBulletCollision();
+            });
+    }
+
+    /// <summary>
     /// Applies damage already established by host hit simulation. No client
     /// packet routes here: player fire, impact, and ownership still need their
     /// co-op validators before this can become live combat authority.

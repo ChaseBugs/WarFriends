@@ -4,7 +4,20 @@ namespace War.BattleServer;
 
 internal sealed record CoopPlayerShotHit(
     float Distance, Vector3 Position, int? SceneColliderFileId,
-    string? PlayerId, string? PlayerPartPath, float PartWeight);
+    string? PlayerId, string? PlayerPartPath, float PartWeight,
+    int? SceneLayer = null)
+{
+    internal ShotCollision ToBulletCollision()
+    {
+        bool sceneHit = SceneColliderFileId.HasValue;
+        return new ShotCollision(Distance, Position,
+            sceneHit ? $"scene/{SceneColliderFileId}" : PlayerPartPath!,
+            PlayerId, PartWeight,
+            Static: SceneLayer is 13 or 30,
+            ColliderIndex: SceneColliderFileId,
+            ColliderLayer: SceneLayer ?? 22);
+    }
+}
 
 /// <summary>
 /// Traces an enemy round against the recovered co-op scene and two host-owned
@@ -32,7 +45,7 @@ internal sealed class CoopPlayerShotCollisionWorld
                 player.Pose == null ||
                 player.Pose.Role != "gameplay" ||
                 player.Pose.PoseKind == "serialized-reference-only" ||
-                player.Layer is < 0 or > 31) ||
+                player.Layer != 22 || player.Fraction != 2) ||
             players[0].PlayerId == players[1].PlayerId)
             throw new InvalidDataException(
                 "Co-op enemy ray needs two current allied poses.");
@@ -41,7 +54,7 @@ internal sealed class CoopPlayerShotCollisionWorld
             maximumDistance, enemyBulletMask);
         CoopPlayerShotHit? nearest = sceneHit == null ? null : new(
             sceneHit.Distance, sceneHit.Position,
-            sceneHit.ComponentFileId, null, null, 0);
+            sceneHit.ComponentFileId, null, null, 0, sceneHit.Layer);
         Vector3 ray = Vector3.Normalize(direction);
 
         foreach (CollisionPlayer player in players)

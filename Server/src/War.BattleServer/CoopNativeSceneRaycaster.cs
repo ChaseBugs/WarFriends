@@ -3,7 +3,7 @@ using System.Numerics;
 namespace War.BattleServer;
 
 public sealed record CoopNativeRayHit(
-    int ComponentFileId, string ComponentType,
+    int ComponentFileId, string ComponentType, int Layer,
     float Distance, Vector3 Position);
 
 /// <summary>
@@ -88,7 +88,7 @@ public sealed class CoopNativeSceneRaycaster
             hitDistance > maxDistance)
             return null;
         return new CoopNativeRayHit(collider.Source.ComponentFileId,
-            collider.Source.ComponentType, hitDistance,
+            collider.Source.ComponentType, collider.Source.Layer, hitDistance,
             origin + ray * hitDistance);
     }
 

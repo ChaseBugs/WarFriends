@@ -3,7 +3,8 @@ using System.Numerics;
 namespace War.BattleServer;
 
 internal sealed record BulletFlightDefinition(float Speed, float CheckDistance, bool Fast);
-internal sealed record BulletImpact(ulong ProjectileId, string OwnerId, ShotCollision Hit, ulong Tick);
+internal sealed record BulletImpact(ulong ProjectileId, string OwnerId,
+    ShotCollision Hit, ulong Tick, ulong? EnemyEntityId = null);
 internal sealed class ProjectileTargetException : Exception { }
 
 // Port of real BulletSlow/BulletBase at normal simulation time scale. Fake
@@ -16,6 +17,7 @@ internal sealed class BulletFlight
     private readonly Func<Vector3, Vector3, float, ShotCollision?> trace;
     private readonly ulong id;
     private readonly string owner;
+    private readonly ulong? enemyEntityId;
     private Stage stage;
     private Vector3 direction;
     private Vector3 segmentFrom;
@@ -30,18 +32,38 @@ internal sealed class BulletFlight
     public bool Finished => stage == Stage.Done;
     internal ulong Id => id;
     internal string OwnerId => owner;
+    internal ulong? EnemyEntityId => enemyEntityId;
 
     internal BulletFlight(ulong id, string owner, BulletFlightDefinition definition, Vector3 from, Vector3 to, ulong tick,
         Func<Vector3, Vector3, float, ShotCollision?> trace, Func<string, Vector3>? targetVelocity = null)
+        : this(id, owner, null, definition, from, to, tick, trace,
+            targetVelocity) { }
+
+    internal BulletFlight(ulong id, ulong enemyEntityId,
+        BulletFlightDefinition definition, Vector3 from, Vector3 to,
+        ulong tick, Func<Vector3, Vector3, float, ShotCollision?> trace)
+        : this(id, string.Empty, enemyEntityId, definition, from, to,
+            tick, trace, null) { }
+
+    private BulletFlight(ulong id, string owner, ulong? enemyEntityId,
+        BulletFlightDefinition definition, Vector3 from, Vector3 to,
+        ulong tick, Func<Vector3, Vector3, float, ShotCollision?> trace,
+        Func<string, Vector3>? targetVelocity)
     {
         if (!PlayerHitbox.Finite(to) || (PlayerHitbox.Finite(from) && Vector3.DistanceSquared(from,to)<1e-10f))
             throw new ProjectileTargetException();
-        if (id == 0 || !Guid.TryParseExact(owner, "N", out _) || owner != owner.ToLowerInvariant() || tick > 10000000 ||
+        bool validOwner = enemyEntityId is ulong enemyId
+            ? enemyId != 0 && owner.Length == 0
+            : Guid.TryParseExact(owner, "N", out _) &&
+              owner == owner.ToLowerInvariant();
+        if (id == 0 || !validOwner || tick > 10000000 ||
             !PlayerHitbox.Finite(from) ||
             !float.IsFinite(definition.Speed) || definition.Speed is < 0.01f or > 10000 ||
             !float.IsFinite(definition.CheckDistance) || definition.CheckDistance is < 0 or > 50)
             throw new InvalidDataException("Invalid server bullet definition/launch.");
-        this.id = id; this.owner = owner; this.definition = definition; this.trace = trace;
+        this.id = id; this.owner = owner;
+        this.enemyEntityId = enemyEntityId;
+        this.definition = definition; this.trace = trace;
         this.tick = tick; Position = from;
         direction = to-from;
         var normalized = Vector3.Normalize(direction);
@@ -99,7 +121,7 @@ internal sealed class BulletFlight
     private BulletImpact? Finish(ShotCollision? hit)
     {
         stage = Stage.Done;
-        return hit == null ? null : new(id,owner,hit,tick);
+        return hit == null ? null : new(id,owner,hit,tick,enemyEntityId);
     }
     private ShotCollision? CheckSegment(Vector3 previous)
     {

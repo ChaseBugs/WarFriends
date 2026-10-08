@@ -1960,6 +1960,36 @@ internal static class CombatContentTests
         if (firstRound[0].ObservedWorldLaunchOrigin is not Vector3 origin ||
             Vector3.Distance(origin, expectedLaunchOrigin) > 0.00001f)
             throw new Exception("Co-op measured muzzle missed its host root placement.");
+        BulletFlight? enemyFlight = arrivalRuntime
+            .CreateDiagnosticAssaulterFlight(arrivalEnemy.EntityId, 0,
+                alliedShotWorld);
+        if (enemyFlight?.EnemyEntityId != arrivalEnemy.EntityId ||
+            enemyFlight.OwnerId != string.Empty ||
+            enemyFlight.Position != origin ||
+            enemyFlight.Finished ||
+            arrivalRuntime.CreateDiagnosticAssaulterFlight(
+                arrivalEnemy.EntityId, 1, alliedShotWorld) != null)
+            throw new Exception("Real co-op Assaulter round lacks a host-owned slow bullet.");
+        var enemyIdentityProbe = new BulletFlight(99,
+            arrivalEnemy.EntityId, rifle.RealBulletFlight(),
+            Vector3.Zero, new Vector3(0, 0, 4), 0,
+            (from, direction, range) =>
+            {
+                float distance = 2 - from.Z;
+                return distance > 0 && distance <= range
+                    ? new ShotCollision(distance,
+                        from + direction * distance,
+                        "diagnostic/wall", null, 0, Static: true)
+                    : null;
+            });
+        BulletImpact? enemyImpact = null;
+        for (ulong flightTick = 1; flightTick <= 30 &&
+             enemyImpact == null; flightTick++)
+            enemyImpact = enemyIdentityProbe.Advance(flightTick);
+        if (enemyImpact?.EnemyEntityId != arrivalEnemy.EntityId ||
+            enemyImpact.OwnerId != string.Empty ||
+            !enemyImpact.Hit.Static)
+            throw new Exception("Enemy bullet impact lost its host entity identity.");
 
         CoopMatchRuntime ReadyFakeRuntime(Func<float> distance,
             Func<float> sideRoll)
@@ -2008,6 +2038,9 @@ internal static class CombatContentTests
             fakeRound.Tick != expectedCrawlCallback + 1 ||
             fakeWindup.PreparedAimPosition != placedTarget.Position)
             throw new Exception("Co-op fake rifle round was not host-owned.");
+        if (fakeRuntime.CreateDiagnosticAssaulterFlight(
+                fakeEnemy.EntityId, 0, alliedShotWorld) != null)
+            throw new Exception("A fake co-op round created a damaging bullet.");
         Vector3 fakeEnemyPosition = new(fakeEnemy.CurrentX,
             fakeEnemy.CurrentY, fakeEnemy.CurrentZ);
         Vector3 fakeSideways = Vector3.Normalize(Vector3.Cross(
@@ -4521,6 +4554,14 @@ internal static class CombatContentTests
             playerWorld.Trace(distantOrigin, Vector3.UnitZ, 10,
                 recoveredEnemyMask, [alliedPoses[0], alliedPoses[0]]);
             throw new Exception("A duplicate co-op ally was accepted.");
+        }
+        catch (InvalidDataException) { }
+        try
+        {
+            playerWorld.Trace(distantOrigin, Vector3.UnitZ, 10,
+                recoveredEnemyMask,
+                [alliedPoses[0] with { Fraction = 1 }, alliedPoses[1]]);
+            throw new Exception("A non-allied co-op pose was accepted.");
         }
         catch (InvalidDataException) { }
         var hitbox = new PlayerHitbox("host/drone", PlayerHitboxKind.Sphere,
