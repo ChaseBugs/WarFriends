@@ -2407,13 +2407,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     // Only a later host projectile or AI hit resolver may call this method.
-    // The signed Client cannot report its own health or request this damage.
+    // Its impact must belong to this live mission tick, after both allies
+    // have entered the match. The signed Client cannot request this damage.
     internal PlayerDamageResult? ApplyHostPlayerDamage(
-        string playerId, ResolvedPlayerDamage hit, float randomRoll)
+        string playerId, ResolvedPlayerDamage hit, float randomRoll,
+        ulong impactTick)
     {
-        if (phase != BattlePhase.Running ||
+        if (phase != BattlePhase.Running || impactTick != tick ||
+            impactTick >= mission.DeadlineTick ||
             !participants.TryGetValue(playerId, out Participant? participant) ||
-            !participant.Admitted || participant.Dead)
+            !participant.Admitted || !participant.Ready || participant.Dead ||
+            participant.Definition.Combat == null)
             return null;
 
         PlayerDamageResult result = PlayerDamage.Resolve(
