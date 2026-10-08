@@ -120,7 +120,39 @@ internal sealed class BulletFlight
             hit.DynamicEntityId == 0)
             throw new InvalidDataException(
                 "Collision resolver returned invalid impact identity.");
+        ValidateHitOwner(hit);
         return hit;
+    }
+
+    private static void ValidateHitOwner(ShotCollision hit)
+    {
+        bool playerHit = hit.PlayerId != null;
+        bool dynamicEntityHit = hit.DynamicEntityId != null;
+        bool sceneHit = !playerHit && !dynamicEntityHit;
+
+        if ((playerHit &&
+             (hit.PartWeight <= 0 || hit.Static || dynamicEntityHit ||
+              hit.ColliderIndex != null || hit.DynamicOwner != null)) ||
+            (dynamicEntityHit &&
+             (hit.Static || hit.DynamicOwner != null ||
+              hit.ColliderIndex != null)) ||
+            (sceneHit && HasDynamicPartIdentity(hit)) ||
+            (hit.DynamicPartId is <= 0) ||
+            (hit.DynamicRepairDronePathIndex is < 0 or > 1) ||
+            (hit.DynamicPassengerRole != null &&
+             (hit.DynamicPassengerRole.Length is < 1 or > 32 ||
+              hit.DynamicPassengerRole.Any(char.IsControl))))
+            throw new InvalidDataException(
+                "Collision resolver returned conflicting hit owners.");
+    }
+
+    private static bool HasDynamicPartIdentity(ShotCollision hit)
+    {
+        return hit.DynamicPartId != null ||
+            hit.DynamicPassengerRole != null ||
+            hit.DynamicRepairDronePathIndex != null ||
+            hit.DynamicArmyInfantry || hit.DynamicDecoy ||
+            hit.DynamicHeavyTurret || hit.DynamicHelicopterGunner;
     }
 
     private void Animate(Vector3 from, Vector3 to, bool check)

@@ -67,6 +67,22 @@ internal static class BulletFlightTests
             Vector3.One,0,(origin,direction,_) =>
                 new(1,origin+direction,"fixture/body",null,1,
                     DynamicEntityId:0)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",b,1,
+                    Static:true)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",b,1,
+                    DynamicEntityId:7)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",null,1,
+                    DynamicDecoy:true)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",null,1,
+                    DynamicEntityId:7,DynamicPartId:-1)));
         var step = new BulletFlight(7,a,slow,Vector3.Zero,Vector3.One,0,(o,d,r)=>null);
         Reject(() => step.Advance(2));
 
