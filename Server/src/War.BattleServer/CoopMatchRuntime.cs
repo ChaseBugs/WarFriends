@@ -33,7 +33,13 @@ internal enum CoopInfantryPointState
 
 internal sealed record CoopInfantryPointArrival(
     ulong Tick, int PointComponentFileId, CoopInfantryPointState State,
-    ulong FirstShootEligibleTick);
+    ulong FirstShootEligibleTick, ulong? FirstRepositionTick)
+{
+    internal bool HasUnchangedObstaclePointForFirstShot =>
+        State == CoopInfantryPointState.ObstacleHiding &&
+        FirstRepositionTick.HasValue &&
+        FirstShootEligibleTick <= FirstRepositionTick.Value;
+}
 
 internal sealed record CoopInfantryPlayerTargetPlan(
     ulong EnemyEntityId, string PlayerId, int ShotTargetMask, ulong Tick);
@@ -82,6 +88,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Dictionary<ulong, CoopInfantryPointArrival> infantryPointArrivals = [];
     private readonly Dictionary<ulong, CoopInfantryPlayerTargetPlan> infantryFirstTargets = [];
     private readonly Func<float> chooseInfantryShotFraction;
+    private readonly Func<float> chooseInfantryRepositionFraction;
     private readonly Func<int, int> chooseInfantryPlayer;
     private readonly Func<float> chooseInfantryShieldRoll;
     private readonly EnemyPoseCatalog? enemyPoses;
@@ -153,6 +160,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? chooseRusherPlayer = null,
         CoopNavMeshConnectivity? infantryNavigation = null,
         Func<float>? chooseInfantryShotFraction = null,
+        Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
         Func<float>? chooseInfantryShieldRoll = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
@@ -166,6 +174,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             chooseRusherPlayer: chooseRusherPlayer,
             infantryNavigation: infantryNavigation,
             chooseInfantryShotFraction: chooseInfantryShotFraction,
+            chooseInfantryRepositionFraction: chooseInfantryRepositionFraction,
             chooseInfantryPlayer: chooseInfantryPlayer,
             chooseInfantryShieldRoll: chooseInfantryShieldRoll)
     {
@@ -185,6 +194,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? chooseRusherPlayer = null,
         CoopNavMeshConnectivity? infantryNavigation = null,
         Func<float>? chooseInfantryShotFraction = null,
+        Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
         Func<float>? chooseInfantryShieldRoll = null)
     {
@@ -214,6 +224,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         this.infantryNavigation = infantryNavigation;
         this.chooseInfantryShotFraction = chooseInfantryShotFraction ??
             Random.Shared.NextSingle;
+        this.chooseInfantryRepositionFraction =
+            chooseInfantryRepositionFraction ?? Random.Shared.NextSingle;
         this.chooseInfantryPlayer = chooseInfantryPlayer ?? Random.Shared.Next;
         this.chooseInfantryShieldRoll = chooseInfantryShieldRoll ??
             Random.Shared.NextSingle;
@@ -976,9 +988,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 };
                 ulong firstShootEligibleTick =
                     FirstInfantryShotEligibleTick(enemy, tick);
+                ulong? firstRepositionTick = pointState ==
+                    CoopInfantryPointState.ObstacleHiding
+                    ? FirstInfantryRepositionTick(tick) : null;
                 infantryPointArrivals[entityId] = new(
                     tick, destination.PointComponentFileId, pointState,
-                    firstShootEligibleTick);
+                    firstShootEligibleTick, firstRepositionTick);
                 arrived.Add(entityId);
             }
             else if (path.HasArrived(tick))
@@ -1003,9 +1018,26 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             (shot.MaxShootTime - shot.MinShootTime) * fraction;
         // EnemyController checks mTime > mNextShootTime. At fixed 30 Hz,
         // eligibility starts on the first tick strictly after the delay.
+        return FirstTickAfterDelay(reachedTick, delaySeconds);
+    }
+
+    private ulong FirstInfantryRepositionTick(ulong reachedTick)
+    {
+        float fraction = chooseInfantryRepositionFraction();
+        if (!float.IsFinite(fraction) || fraction is < 0 or >= 1)
+            throw new InvalidDataException(
+                "Co-op infantry reposition choice must be in [0, 1).");
+        // EnemyController.SwitchState(ObstacleHiding) schedules its first
+        // SetFinalTarget(enemyPoint) after a separate 2–4 second draw.
+        return FirstTickAfterDelay(reachedTick, 2f + 2f * fraction);
+    }
+
+    private static ulong FirstTickAfterDelay(ulong startTick,
+        float delaySeconds)
+    {
         ulong delayTicks = (ulong)Math.Floor(
             delaySeconds * MatchManifest.TickRate) + 1;
-        return checked(reachedTick + delayTicks);
+        return checked(startTick + delayTicks);
     }
 
     private void ChooseFirstInfantryTargets()
@@ -1013,7 +1045,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         foreach ((ulong entityId, CoopInfantryPointArrival arrival)
             in infantryPointArrivals)
         {
-            if (tick < arrival.FirstShootEligibleTick ||
+            if (!arrival.HasUnchangedObstaclePointForFirstShot ||
+                tick < arrival.FirstShootEligibleTick ||
                 infantryFirstTargets.ContainsKey(entityId))
                 continue;
             Participant[] eligiblePlayers = manifest.Players

@@ -1669,6 +1669,7 @@ internal static class CombatContentTests
             infantryNavigation: infantryNavigation,
             playerWeaponContent: content,
             chooseInfantryShotFraction: () => 0f,
+            chooseInfantryRepositionFraction: () => 0.999f,
             chooseInfantryPlayer: _ => 0,
             chooseInfantryShieldRoll: () => 0.5f);
         arrivalRuntime.Admit(firstPlayer);
@@ -1714,7 +1715,14 @@ internal static class CombatContentTests
             obstacleArrival.FirstShootEligibleTick != expectedArrival +
                 (ulong)Math.Floor(content.Army.ComposeShot(
                     "ID_UNIT-ASSAULT", arrivalEnemy.Level, null, null)
-                    .MinShootTime * MatchManifest.TickRate) + 1)
+                    .MinShootTime * MatchManifest.TickRate) + 1 ||
+            obstacleArrival.FirstRepositionTick <=
+                obstacleArrival.FirstShootEligibleTick ||
+            !obstacleArrival.HasUnchangedObstaclePointForFirstShot ||
+            (obstacleArrival with
+            {
+                FirstRepositionTick = obstacleArrival.Tick + 61
+            }).HasUnchangedObstaclePointForFirstShot)
             throw new Exception("Co-op Assaulter missed the source point-arrival check.");
         BattleCoopEnemySpawn reachedEnemy = arrivalRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy =>
@@ -1773,6 +1781,41 @@ internal static class CombatContentTests
                 arrivalEnemy.EntityId) != null)
             throw new Exception("Dead co-op infantry retained a point-arrival marker.");
 
+        var earlyRepositionDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var earlyRepositionRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => 0,
+            enemyDestinations: earlyRepositionDestinations,
+            infantryNavigation: infantryNavigation,
+            playerWeaponContent: content,
+            chooseInfantryShotFraction: () => 0f,
+            chooseInfantryRepositionFraction: () => 0f,
+            chooseInfantryPlayer: _ => 0);
+        earlyRepositionRuntime.Admit(firstPlayer);
+        earlyRepositionRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            earlyRepositionRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = earlyRepositionRuntime.ManifestHash
+                }
+            });
+        earlyRepositionRuntime.Advance(firstShootTick);
+        BattleCoopEnemySpawn earlyRepositionEnemy = earlyRepositionRuntime
+            .Snapshot().Coop.EnemySpawns.First();
+        CoopInfantryPointArrival? earlyReposition = earlyRepositionRuntime
+            .InfantryPointArrival(earlyRepositionEnemy.EntityId);
+        if (earlyReposition is not { FirstRepositionTick: not null } ||
+            earlyReposition.FirstRepositionTick >=
+                earlyReposition.FirstShootEligibleTick ||
+            earlyRepositionRuntime.InfantryFirstPlayerTarget(
+                earlyRepositionEnemy.EntityId) != null)
+            throw new Exception("Unmodeled obstacle reposition authorized a shot target.");
+
         int cornerSpawnIndex = assaultCandidates.ToList().FindIndex(point =>
             point.ComponentFileId == 1694);
         if (cornerSpawnIndex < 0)
@@ -1817,6 +1860,8 @@ internal static class CombatContentTests
         if (cornerArrival?.State != CoopInfantryPointState.CornerHiding ||
             cornerArrival.PointComponentFileId != 1698 ||
             cornerArrival.Tick is <= 8 or > 300 ||
+            cornerArrival.FirstRepositionTick != null ||
+            cornerArrival.HasUnchangedObstaclePointForFirstShot ||
             cornerArrival.FirstShootEligibleTick != cornerArrival.Tick +
                 (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1)
             throw new Exception("Co-op corner arrival missed its source state.");
