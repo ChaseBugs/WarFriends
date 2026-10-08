@@ -58,20 +58,8 @@ internal sealed class CoopShotCollisionWorld
             (ulong EntityId, string Path, PlayerHitboxKind Kind)>();
         foreach (DynamicShotTarget target in enemyTargets)
         {
-            if (target == null || target.EntityId == 0 ||
-                target.Layer is < 0 or > 31 || target.Hitbox == null ||
-                (target.ArmyInfantry && target.PartComponentFileId != 0) ||
-                (target.PartComponentFileId <= 0 &&
-                    !(target.ArmyInfantry && target.PartComponentFileId == 0 &&
-                      target.Layer == 23)))
-                throw new InvalidDataException("Invalid co-op enemy hitbox identity.");
-            bool newIdentity = target.PartComponentFileId > 0
-                ? sourceParts.Add((target.EntityId,
-                    target.PartComponentFileId))
-                : infantryParts.Add((target.EntityId,
-                    target.Hitbox.SourcePath, target.Hitbox.Kind));
-            if (!newIdentity)
-                throw new InvalidDataException("Duplicate co-op enemy hitbox identity.");
+            ValidateTargetIdentity(target);
+            RegisterUniqueTarget(target, sourceParts, infantryParts);
             if ((layerMask & (1u << target.Layer)) == 0)
                 continue;
 
@@ -90,5 +78,32 @@ internal sealed class CoopShotCollisionWorld
                 target.Hitbox.SourcePath, target.Hitbox.Weight);
         }
         return nearest;
+    }
+
+    private static void ValidateTargetIdentity(DynamicShotTarget target)
+    {
+        if (target == null || target.EntityId == 0 ||
+            target.Layer is < 0 or > 31 || target.Hitbox == null)
+            throw new InvalidDataException("Invalid co-op enemy hitbox identity.");
+
+        // Infantry parts come from the recovered animated rig. Other enemies
+        // must retain their serialized collider component IDs.
+        bool validPart = target.ArmyInfantry
+            ? target.PartComponentFileId == 0 && target.Layer == 23
+            : target.PartComponentFileId > 0;
+        if (!validPart)
+            throw new InvalidDataException("Invalid co-op enemy hitbox identity.");
+    }
+
+    private static void RegisterUniqueTarget(DynamicShotTarget target,
+        HashSet<(ulong EntityId, int PartFileId)> sourceParts,
+        HashSet<(ulong EntityId, string Path, PlayerHitboxKind Kind)> infantryParts)
+    {
+        bool added = target.ArmyInfantry
+            ? infantryParts.Add((target.EntityId,
+                target.Hitbox.SourcePath, target.Hitbox.Kind))
+            : sourceParts.Add((target.EntityId, target.PartComponentFileId));
+        if (!added)
+            throw new InvalidDataException("Duplicate co-op enemy hitbox identity.");
     }
 }
