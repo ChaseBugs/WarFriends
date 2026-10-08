@@ -54,6 +54,7 @@ internal sealed record CoopInfantryShotBatch(
 
 internal sealed record CoopInfantryShotWindup(
     ulong EnemyEntityId, string PlayerId, int TargetTransformFileId,
+    Vector3 PreparedAimPosition,
     string AnimationClip, string QueuedFireClip,
     ulong StartTick, ulong CallbackTick,
     ulong? CallbackStartedTick, CoopInfantryShotBatch Batch,
@@ -61,7 +62,7 @@ internal sealed record CoopInfantryShotWindup(
 
 internal sealed record CoopInfantryRoundIntent(
     ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real,
-    CoopQueuedMuzzleSample? ObservedLocalMuzzle);
+    Vector3 AimPosition, CoopQueuedMuzzleSample? ObservedLocalMuzzle);
 
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
@@ -124,6 +125,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<float> chooseInfantryShieldRoll;
     private readonly Func<int, int, int> chooseInfantryBatchSize;
     private readonly Func<float> chooseInfantryRealShotRoll;
+    private readonly Func<float> chooseInfantryFakeDistance;
+    private readonly Func<float> chooseInfantryFakeSideRoll;
     private readonly Func<int> chooseCornerChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
@@ -201,7 +204,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryShieldRoll = null,
         Func<int>? chooseCornerChangeSeconds = null,
         Func<int, int, int>? chooseInfantryBatchSize = null,
-        Func<float>? chooseInfantryRealShotRoll = null)
+        Func<float>? chooseInfantryRealShotRoll = null,
+        Func<float>? chooseInfantryFakeDistance = null,
+        Func<float>? chooseInfantryFakeSideRoll = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
@@ -218,7 +223,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             chooseInfantryShieldRoll: chooseInfantryShieldRoll,
             chooseCornerChangeSeconds: chooseCornerChangeSeconds,
             chooseInfantryBatchSize: chooseInfantryBatchSize,
-            chooseInfantryRealShotRoll: chooseInfantryRealShotRoll)
+            chooseInfantryRealShotRoll: chooseInfantryRealShotRoll,
+            chooseInfantryFakeDistance: chooseInfantryFakeDistance,
+            chooseInfantryFakeSideRoll: chooseInfantryFakeSideRoll)
     {
     }
 
@@ -241,7 +248,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryShieldRoll = null,
         Func<int>? chooseCornerChangeSeconds = null,
         Func<int, int, int>? chooseInfantryBatchSize = null,
-        Func<float>? chooseInfantryRealShotRoll = null)
+        Func<float>? chooseInfantryRealShotRoll = null,
+        Func<float>? chooseInfantryFakeDistance = null,
+        Func<float>? chooseInfantryFakeSideRoll = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         missionCatalog = catalog;
@@ -279,6 +288,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         this.chooseInfantryBatchSize = chooseInfantryBatchSize ??
             Random.Shared.Next;
         this.chooseInfantryRealShotRoll = chooseInfantryRealShotRoll ??
+            Random.Shared.NextSingle;
+        this.chooseInfantryFakeDistance = chooseInfantryFakeDistance ??
+            (() => 0.5f + 0.5f * Random.Shared.NextSingle());
+        this.chooseInfantryFakeSideRoll = chooseInfantryFakeSideRoll ??
             Random.Shared.NextSingle;
 
         ManifestHash = manifest.Digest();
@@ -1380,7 +1393,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             (callbackClipLength + 0.05f) * MatchManifest.TickRate);
         ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
         return new CoopInfantryShotWindup(target.EnemyEntityId,
-            target.PlayerId, target.TransformFileId, clipName,
+            target.PlayerId, target.TransformFileId, target.Position, clipName,
             queuedFireClip, tick,
             callbackTick, null, batch,
             assaulterWeapon!.WeaponPrefabGuid,
@@ -1435,15 +1448,46 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 continue;
             int index = rounds.Count;
             bool real = (windup.Batch.RealShotMask & (1 << index)) != 0;
+            Vector3 aimPosition = real ? windup.PreparedAimPosition :
+                FakeInfantryAimPosition(entityId, windup.PreparedAimPosition);
             // This is an isolated Unity 2018 observation at the elapsed
             // host tick, not a live animation state or projectile origin.
             CoopQueuedMuzzleSample? observedMuzzle = assaulterQueue?.Sample(
                 windup.AnimationClip, windup.QueuedFireClip,
                 tick - windup.StartTick);
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
-                tick, real, observedMuzzle));
+                tick, real, aimPosition, observedMuzzle));
             stateRevision++;
         }
+    }
+
+    private Vector3 FakeInfantryAimPosition(ulong entityId,
+        Vector3 preparedTarget)
+    {
+        BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
+            spawn.EntityId == entityId && spawn.DeathTick == 0);
+        Vector3 enemyPosition = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        float distance = chooseInfantryFakeDistance();
+        float sideRoll = chooseInfantryFakeSideRoll();
+        if (!float.IsFinite(distance) || distance is < 0.5f or > 1f ||
+            !float.IsFinite(sideRoll) || sideRoll is < 0f or > 1f)
+            throw new InvalidDataException(
+                "Co-op fake round offset draw is outside the source range.");
+
+        // SoldierBehaviour.Shooting uses the enemy-to-target cross product.
+        // A degenerate horizontal direction contributes zero sideways offset.
+        Vector3 sideways = Vector3.Cross(
+            enemyPosition - preparedTarget, Vector3.UnitY);
+        if (sideways.LengthSquared() > 0)
+            sideways = Vector3.Normalize(sideways) * distance;
+        if (sideRoll < 0.5f)
+            sideways = -sideways;
+        Vector3 aim = preparedTarget + sideways +
+            new Vector3(0, 0.5f, 0);
+        if (!PlayerHitbox.Finite(aim))
+            throw new InvalidDataException("Co-op fake round aim is not finite.");
+        return aim;
     }
 
     private void AdvanceCornerRetargets()

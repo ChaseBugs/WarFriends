@@ -1851,6 +1851,7 @@ internal static class CombatContentTests
             ? (1 << expectedBatchCount) - 1 : 0;
         if (crawlWindup?.AnimationClip != "stand_up_begin" ||
             crawlWindup.QueuedFireClip != "rifle_shot_loop" ||
+            crawlWindup.PreparedAimPosition != placedTarget.Position ||
             crawlWindup.PlayerId != firstPlayer ||
             crawlWindup.TargetTransformFileId != placedTarget.TransformFileId ||
             crawlWindup.Batch.Count != expectedBatchCount ||
@@ -1878,8 +1879,83 @@ internal static class CombatContentTests
         if (firstRound.Count != 1 || firstRound[0].RoundIndex != 0 ||
             firstRound[0].Tick != expectedCrawlCallback + 1 ||
             firstRound[0].Real != ((expectedRealMask & 1) != 0) ||
+            firstRound[0].AimPosition != placedTarget.Position ||
             firstRound[0].ObservedLocalMuzzle != obstacleSample)
             throw new Exception($"Co-op rifle missed its first host round intent: {firstRound.FirstOrDefault()}, expected observation {obstacleSample}.");
+
+        CoopMatchRuntime ReadyFakeRuntime(Func<float> distance,
+            Func<float> sideRoll)
+        {
+            var destinations = new CoopEnemyDestinationState(
+                enemyMap, enemyPointMasks, enemyCombat,
+                chooseObstacleFraction: () => 0.5f);
+            var runtime = new CoopMatchRuntime(coop, catalog,
+                spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+                choosePoint: _ => 0,
+                enemyDestinations: destinations,
+                infantryNavigation: infantryNavigation,
+                playerWeaponContent: content,
+                chooseInfantryShotFraction: () => 0f,
+                chooseInfantryRepositionFraction: () => 0.999f,
+                chooseInfantryPlayer: _ => 0,
+                chooseInfantryShieldRoll: () => 0.5f,
+                chooseInfantryBatchSize: (min, max) =>
+                    max > min ? max - 1 : min,
+                chooseInfantryRealShotRoll: () => 0.999f,
+                chooseInfantryFakeDistance: distance,
+                chooseInfantryFakeSideRoll: sideRoll);
+            runtime.Admit(firstPlayer);
+            runtime.Admit(secondPlayer);
+            foreach (string playerId in new[] { firstPlayer, secondPlayer })
+                runtime.Command(playerId, new MatchCommand
+                {
+                    CommandId = 1,
+                    Ready = new ReadyCommand
+                    {
+                        ManifestHash = runtime.ManifestHash
+                    }
+                });
+            return runtime;
+        }
+        var fakeRuntime = ReadyFakeRuntime(() => 0.75f, () => 0.25f);
+        fakeRuntime.Advance(expectedCrawlCallback + 1);
+        BattleCoopEnemySpawn fakeEnemy = fakeRuntime.Snapshot().Coop
+            .EnemySpawns.Single(enemy =>
+                enemy.EntityId == arrivalEnemy.EntityId);
+        CoopInfantryShotWindup? fakeWindup = fakeRuntime
+            .InfantryShotWindup(fakeEnemy.EntityId);
+        CoopInfantryRoundIntent? fakeRound = fakeRuntime
+            .InfantryRoundIntents(fakeEnemy.EntityId).SingleOrDefault();
+        if (fakeWindup == null || fakeRound == null || fakeRound.Real ||
+            fakeRound.Tick != expectedCrawlCallback + 1 ||
+            fakeWindup.PreparedAimPosition != placedTarget.Position)
+            throw new Exception("Co-op fake rifle round was not host-owned.");
+        Vector3 fakeEnemyPosition = new(fakeEnemy.CurrentX,
+            fakeEnemy.CurrentY, fakeEnemy.CurrentZ);
+        Vector3 fakeSideways = Vector3.Normalize(Vector3.Cross(
+            fakeEnemyPosition - fakeWindup.PreparedAimPosition,
+            Vector3.UnitY)) * -0.75f;
+        Vector3 expectedFakeAim = fakeWindup.PreparedAimPosition +
+            fakeSideways + new Vector3(0, 0.5f, 0);
+        if (Vector3.Distance(fakeRound.AimPosition, expectedFakeAim) >
+            0.00001f || fakeRound.ObservedLocalMuzzle != obstacleSample)
+            throw new Exception("Co-op fake round lost its source sideways/upward aim.");
+        foreach ((Func<float> distance, Func<float> sideRoll) in new[]
+            {
+                ((Func<float>)(() => float.NaN), (Func<float>)(() => 0.25f)),
+                ((Func<float>)(() => 0.75f), (Func<float>)(() => -0.1f))
+            })
+        {
+            CoopMatchRuntime invalid = ReadyFakeRuntime(distance, sideRoll);
+            try
+            {
+                invalid.Advance(expectedCrawlCallback + 1);
+                throw new Exception("Invalid fake-round draw was accepted.");
+            }
+            catch (InvalidDataException) { }
+            if (invalid.InfantryRoundIntents(arrivalEnemy.EntityId).Count != 0)
+                throw new Exception("Invalid fake-round draw published an intent.");
+        }
         ulong secondRoundTick = rifle.NextRoundEligibleTick(firstRound[0].Tick);
         arrivalRuntime.Advance(secondRoundTick - 1);
         if (arrivalRuntime.InfantryRoundIntents(
