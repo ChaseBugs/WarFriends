@@ -44,7 +44,8 @@ public sealed class CoopNativeSceneRaycaster
 
     public CoopNativeRayHit? Raycast(
         Vector3 origin, Vector3 direction, float maxDistance,
-        uint layerMask = uint.MaxValue)
+        uint layerMask = uint.MaxValue,
+        Func<int, bool>? colliderEnabled = null)
     {
         ValidateRay(origin, direction, maxDistance);
         Vector3 ray = Vector3.Normalize(direction);
@@ -52,6 +53,9 @@ public sealed class CoopNativeSceneRaycaster
         foreach (PlacedCollider collider in colliders)
         {
             if ((layerMask & (1u << collider.Source.Layer)) == 0)
+                continue;
+            if (colliderEnabled != null &&
+                !colliderEnabled(collider.Source.ComponentFileId))
                 continue;
             CoopNativeRayHit? hit = Trace(collider, origin, ray,
                 nearest?.Distance ?? maxDistance);

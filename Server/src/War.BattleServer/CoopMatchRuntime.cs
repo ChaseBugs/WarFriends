@@ -1859,7 +1859,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (poses == null || enemyBulletMask is not uint mask)
             return null;
         return world.Trace(origin, direction, maximumDistance,
-            mask, poses);
+            mask, poses, alliedShields?.Snapshot());
     }
 
     /// <summary>
@@ -1898,7 +1898,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     throw new InvalidOperationException(
                         "Co-op bullet lost its current allied poses.");
                 return world.Trace(from, direction, range, mask,
-                    currentPoses)?.ToBulletCollision();
+                    currentPoses, alliedShields?.Snapshot())
+                    ?.ToBulletCollision();
             });
     }
 

@@ -1802,7 +1802,8 @@ internal static class CombatContentTests
             Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
             shotScenes);
         var alliedShotWorld = new CoopPlayerShotCollisionWorld(
-            shotScenes.MapForMission(catalog, 0), shotMeshes);
+            shotScenes.MapForMission(catalog, 0),
+            spawnPoints.MapForMission(catalog, 0), shotMeshes);
         try
         {
             arrivalRuntime.AttachDiagnosticWorld(alliedShotWorld);
@@ -2076,6 +2077,8 @@ internal static class CombatContentTests
             poseLossRuntime.AttachDiagnosticWorld(
                 new CoopPlayerShotCollisionWorld(
                     shotScenes.Maps.First(map =>
+                        map.Scene != coop.MapId),
+                    spawnPoints.Maps.First(map =>
                         map.Scene != coop.MapId), shotMeshes));
             throw new Exception("Co-op diagnostic ray used another mission scene.");
         }
@@ -4509,6 +4512,16 @@ internal static class CombatContentTests
         CoopMeshGeometryCatalog geometry = CoopMeshGeometryCatalog.Load(
             Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
             colliders);
+        CoopSpawnPointCatalog playerAnchors = CoopSpawnPointCatalog.Load(
+            Path.Combine(directory, "recovered-coop-spawn-points.json"),
+            missions);
+        foreach (CoopSceneColliders sourceMap in colliders.Maps)
+        {
+            CoopMapSpawnPoints sourceAnchors = playerAnchors.Maps.Single(
+                map => map.Scene == sourceMap.Scene);
+            _ = new CoopPlayerShotCollisionWorld(sourceMap,
+                sourceAnchors, geometry);
+        }
         using JsonDocument document = JsonDocument.Parse(bytes);
         JsonElement maps = document.RootElement.GetProperty("maps");
         int checkedRays = 0;
@@ -4599,7 +4612,49 @@ internal static class CombatContentTests
                 distantOrigin + new Vector3(3, 0, 5)), 22, 2)
         };
         var playerWorld = new CoopPlayerShotCollisionWorld(
-            colliders.Maps[0], geometry);
+            colliders.Maps[0], playerAnchors.MapForMission(missions, 0),
+            geometry);
+        ShieldMutation[] intactShields = Enumerable.Range(0, 4)
+            .Select(index => new ShieldMutation(index, 2, 100, 100,
+                false, 0)).ToArray();
+        JsonElement shieldRay = maps[0].GetProperty("rays")
+            .EnumerateArray().First(ray =>
+                ray.GetProperty("componentFileId").GetInt32() == 1531 &&
+                ray.GetProperty("direction")[0].GetSingle() == 1);
+        Vector3 shieldRayStart = ReadRayVector(
+            shieldRay.GetProperty("origin"));
+        Vector3 shieldRayDirection = ReadRayVector(
+            shieldRay.GetProperty("direction"));
+        uint shieldLayer = 1u << 24;
+        CoopPlayerShotHit? intactShieldHit = playerWorld.Trace(
+            shieldRayStart, shieldRayDirection, 4, shieldLayer,
+            alliedPoses, intactShields);
+        ShieldMutation[] destroyedShields = intactShields.ToArray();
+        destroyedShields[1] = destroyedShields[1] with
+        {
+            Health = 0,
+            Destroyed = true
+        };
+        CoopPlayerShotHit? destroyedShieldHit = playerWorld.Trace(
+            shieldRayStart, shieldRayDirection, 4, shieldLayer,
+            alliedPoses, destroyedShields);
+        ShieldMutation[] zeroStartShields = intactShields.ToArray();
+        zeroStartShields[0] = zeroStartShields[0] with
+        {
+            Health = 0,
+            MaxHealth = 0
+        };
+        if (intactShieldHit?.SceneColliderFileId != 1531 ||
+            destroyedShieldHit != null ||
+            playerWorld.Trace(shieldRayStart, shieldRayDirection, 4,
+                shieldLayer, alliedPoses, intactShields)
+                ?.SceneColliderFileId != 1531 ||
+            playerWorld.Trace(shieldRayStart, shieldRayDirection, 4,
+                shieldLayer, alliedPoses, zeroStartShields)
+                ?.SceneColliderFileId != 1531)
+            throw new Exception("Co-op shield collision did not follow live cover state: " +
+                $"intact={intactShieldHit?.SceneColliderFileId}, " +
+                $"destroyed={destroyedShieldHit?.SceneColliderFileId}");
         uint recoveredEnemyMask = unchecked((uint)-143121921);
         CoopPlayerShotHit? allyHit = playerWorld.Trace(distantOrigin,
             Vector3.UnitZ, 10, recoveredEnemyMask, alliedPoses);
