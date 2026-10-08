@@ -1116,6 +1116,7 @@ internal static class CombatContentTests
         MatchSnapshot bossAfterSpawn = bossRuntime.Snapshot();
         if (bossAfterSpawn.Coop.EnemySpawns.Count == 0 ||
             bossRuntime.BossAttackCadence?.WindowCount != 0 ||
+            bossAfterSpawn.Coop.EnemySpawns.Any(enemy => enemy.SourceRotation != null) ||
             bossAfterSpawn.Coop.EnemySpawns.Any(enemy =>
             !content.ArmySpawnPoints.ForMap(bossScene).Any(point =>
                 point.Fraction == 1 &&
@@ -1385,7 +1386,12 @@ internal static class CombatContentTests
             firstEnemy.Health != ordinary.Health ||
             !sourceMapSpawns.EnemySpawnPoints.Any(point =>
                 point.ComponentFileId == firstEnemy.SpawnComponentFileId &&
-                point.Position == new Vector3(firstEnemy.X, firstEnemy.Y, firstEnemy.Z)))
+                point.Position == new Vector3(firstEnemy.X, firstEnemy.Y, firstEnemy.Z) &&
+                point.SourceRotation is Quaternion rotation &&
+                firstEnemy.SourceRotation != null &&
+                new Quaternion(firstEnemy.SourceRotation.X,
+                    firstEnemy.SourceRotation.Y, firstEnemy.SourceRotation.Z,
+                    firstEnemy.SourceRotation.W) == rotation))
             throw new Exception("A due co-op AI must be created at an enemy source anchor.");
 
         var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,

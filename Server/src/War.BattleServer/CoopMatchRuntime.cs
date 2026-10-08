@@ -346,7 +346,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         float maximumHealth = cardUnit
             ? combat.CardStats(behaviour, cardProgress).Health
             : combat.OrdinaryStats(behaviour, level).Health;
-        return new BattleCoopEnemySpawn
+        var enemy = new BattleCoopEnemySpawn
         {
             EntityId = nextEnemyId++,
             Behaviour = behaviour,
@@ -362,6 +362,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             MaxHealth = maximumHealth,
             Health = maximumHealth
         };
+        if (point.SourceRotation is Quaternion rotation)
+        {
+            enemy.SourceRotation = new BattleJointRotation
+            {
+                X = rotation.X,
+                Y = rotation.Y,
+                Z = rotation.Z,
+                W = rotation.W
+            };
+        }
+        return enemy;
     }
 
     /// <summary>

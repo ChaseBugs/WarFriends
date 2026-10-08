@@ -502,6 +502,9 @@ message BattleCoopEnemySpawn {
   float max_health = 12; float health = 13;
   // Set only after the host confirms lethal damage; zero otherwise.
   uint64 death_tick = 14;
+  // Serialized scene orientation at spawn. Movement and pose updates remain
+  // separate host authority; absent for maps without recovered rotation.
+  BattleJointRotation source_rotation = 15;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;
