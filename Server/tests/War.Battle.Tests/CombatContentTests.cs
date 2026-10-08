@@ -640,6 +640,8 @@ internal static class CombatContentTests
             File.Delete(alteredCardPath);
         }
         var enemyCombat = new CoopEnemyCombatCatalog(catalog, army, cardRows);
+        if (enemyCombat.ShieldHitProbability("Assaulter") != 0f)
+            throw new Exception("Assaulter shield preference differs from ArmyUpgrades.");
         CoopEnemyPointCatalog enemyPointCatalog = CoopEnemyPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-enemy-points.json"),
             catalog, spawnPoints);
@@ -1664,7 +1666,9 @@ internal static class CombatContentTests
             enemyDestinations: arrivalDestinations,
             infantryNavigation: infantryNavigation,
             playerWeaponContent: content,
-            chooseInfantryShotFraction: () => 0f);
+            chooseInfantryShotFraction: () => 0f,
+            chooseInfantryPlayer: _ => 0,
+            chooseInfantryShieldRoll: () => 0.5f);
         arrivalRuntime.Admit(firstPlayer);
         arrivalRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1721,9 +1725,34 @@ internal static class CombatContentTests
             heldEnemy.CurrentZ != reachedEnemy.CurrentZ ||
             heldEnemy.PoseTick != expectedArrival)
             throw new Exception("Co-op Assaulter walked beyond its reached point.");
+        ulong firstShootTick = obstacleArrival.FirstShootEligibleTick;
+        arrivalRuntime.Advance(firstShootTick - 1);
+        if (arrivalRuntime.InfantryFirstPlayerTarget(
+                arrivalEnemy.EntityId) != null)
+            throw new Exception("Assaulter selected a player before its shot window.");
+        arrivalRuntime.Advance(firstShootTick);
+        Vector3 towardAssaulter = new(
+            reachedEnemy.CurrentX - mainAnchors[0].Position.X,
+            reachedEnemy.CurrentY - mainAnchors[0].Position.Y,
+            reachedEnemy.CurrentZ - mainAnchors[0].Position.Z);
+        int expectedTargetMask = MatchEngine.HeavyTurretStationaryTargetMask(
+            arrivalRuntime.PlayerAimForward(firstPlayer), towardAssaulter,
+            shieldProbability: 0f, () => 0.5f);
+        CoopInfantryPlayerTargetPlan? targetPlan = arrivalRuntime
+            .InfantryFirstPlayerTarget(arrivalEnemy.EntityId);
+        if (targetPlan?.ShotTargetMask != expectedTargetMask ||
+            targetPlan.PlayerId != firstPlayer ||
+            targetPlan.Tick != firstShootTick)
+            throw new Exception("Co-op Assaulter target mask lacks host player authority.");
+        arrivalRuntime.Advance(firstShootTick + 1);
+        if (arrivalRuntime.InfantryFirstPlayerTarget(
+                arrivalEnemy.EntityId) != targetPlan)
+            throw new Exception("Co-op Assaulter first target was chosen more than once.");
         if (!arrivalRuntime.ApplyHostEnemyDamage(arrivalEnemy.EntityId,
-                heldEnemy.Health, expectedArrival + 1) ||
-            arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null)
+                heldEnemy.Health, firstShootTick + 1) ||
+            arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null ||
+            arrivalRuntime.InfantryFirstPlayerTarget(
+                arrivalEnemy.EntityId) != null)
             throw new Exception("Dead co-op infantry retained a point-arrival marker.");
 
         int cornerSpawnIndex = assaultCandidates.ToList().FindIndex(point =>

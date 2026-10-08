@@ -35,6 +35,9 @@ internal sealed record CoopInfantryPointArrival(
     ulong Tick, int PointComponentFileId, CoopInfantryPointState State,
     ulong FirstShootEligibleTick);
 
+internal sealed record CoopInfantryPlayerTargetPlan(
+    ulong EnemyEntityId, string PlayerId, int ShotTargetMask, ulong Tick);
+
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
 /// cannot accept combat commands until host AI and player controls are wired.
@@ -73,7 +76,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopNavMeshConnectivity? infantryNavigation;
     private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
     private readonly Dictionary<ulong, CoopInfantryPointArrival> infantryPointArrivals = [];
+    private readonly Dictionary<ulong, CoopInfantryPlayerTargetPlan> infantryFirstTargets = [];
     private readonly Func<float> chooseInfantryShotFraction;
+    private readonly Func<int, int> chooseInfantryPlayer;
+    private readonly Func<float> chooseInfantryShieldRoll;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -141,7 +147,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopEnemyDestinationState? enemyDestinations = null,
         Func<int, int>? chooseRusherPlayer = null,
         CoopNavMeshConnectivity? infantryNavigation = null,
-        Func<float>? chooseInfantryShotFraction = null)
+        Func<float>? chooseInfantryShotFraction = null,
+        Func<int, int>? chooseInfantryPlayer = null,
+        Func<float>? chooseInfantryShieldRoll = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
@@ -152,7 +160,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemyDestinations: enemyDestinations,
             chooseRusherPlayer: chooseRusherPlayer,
             infantryNavigation: infantryNavigation,
-            chooseInfantryShotFraction: chooseInfantryShotFraction)
+            chooseInfantryShotFraction: chooseInfantryShotFraction,
+            chooseInfantryPlayer: chooseInfantryPlayer,
+            chooseInfantryShieldRoll: chooseInfantryShieldRoll)
     {
     }
 
@@ -169,7 +179,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopEnemyDestinationState? enemyDestinations = null,
         Func<int, int>? chooseRusherPlayer = null,
         CoopNavMeshConnectivity? infantryNavigation = null,
-        Func<float>? chooseInfantryShotFraction = null)
+        Func<float>? chooseInfantryShotFraction = null,
+        Func<int, int>? chooseInfantryPlayer = null,
+        Func<float>? chooseInfantryShieldRoll = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         missionCatalog = catalog;
@@ -196,6 +208,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 "Co-op infantry navigation needs host-owned enemy destinations.");
         this.infantryNavigation = infantryNavigation;
         this.chooseInfantryShotFraction = chooseInfantryShotFraction ??
+            Random.Shared.NextSingle;
+        this.chooseInfantryPlayer = chooseInfantryPlayer ?? Random.Shared.Next;
+        this.chooseInfantryShieldRoll = chooseInfantryShieldRoll ??
             Random.Shared.NextSingle;
 
         ManifestHash = manifest.Digest();
@@ -338,6 +353,45 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     internal CoopInfantryPointArrival? InfantryPointArrival(ulong entityId) =>
         infantryPointArrivals.GetValueOrDefault(entityId);
+
+    internal CoopInfantryPlayerTargetPlan? InfantryFirstPlayerTarget(
+        ulong entityId) => infantryFirstTargets.GetValueOrDefault(entityId);
+
+    private CoopInfantryPlayerTargetPlan? PlanHostAssaulterPlayerTarget(
+        ulong entityId, string playerId)
+    {
+        if (phase != BattlePhase.Running ||
+            !infantryPointArrivals.TryGetValue(entityId,
+                out CoopInfantryPointArrival? arrival) ||
+            tick < arrival.FirstShootEligibleTick ||
+            !participants.TryGetValue(playerId, out Participant? player) ||
+            !player.Admitted || !player.Ready || player.Dead ||
+            player.Route != null)
+            return null;
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.DeathTick == 0 &&
+            spawn.Behaviour == "Assaulter");
+        if (enemy == null)
+            return null;
+
+        float shieldProbability = combat.ShieldHitProbability(enemy.Behaviour);
+        if (shieldProbability < 0)
+            return null; // PickPlayerOpponent returns without a target.
+        Vector3 towardEnemy = new(enemy.CurrentX - player.Position.X,
+            enemy.CurrentY - player.Position.Y,
+            enemy.CurrentZ - player.Position.Z);
+        if (towardEnemy.LengthSquared() == 0)
+            return null;
+
+        // The same Client rule is used by stationary Heavy Turret targeting:
+        // >50 degrees or a successful HITSHIELDPROB roll chooses Shield (2);
+        // otherwise the stationary WholeBody targets use mask 9.
+        int targetMask = MatchEngine.HeavyTurretStationaryTargetMask(
+            PlayerAimForward(playerId), towardEnemy,
+            shieldProbability, chooseInfantryShieldRoll);
+        return new CoopInfantryPlayerTargetPlan(
+            entityId, playerId, targetMask, tick);
+    }
 
     /// <summary>
     /// A future host AI state may request this after reaching or abandoning
@@ -507,6 +561,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceAssaultHelicopterFlights();
             AdvanceTransportHelicopterFlights();
             AdvanceInfantryPaths();
+            ChooseFirstInfantryTargets();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
             {
@@ -808,6 +863,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         infantryPaths.Remove(enemy.EntityId);
         infantryPointArrivals.Remove(enemy.EntityId);
+        infantryFirstTargets.Remove(enemy.EntityId);
         // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
         // branch. Rusher, Warp, Parachute, and specialist state machines need
         // separate source rules before their movement can be simulated.
@@ -903,6 +959,35 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ulong delayTicks = (ulong)Math.Floor(
             delaySeconds * MatchManifest.TickRate) + 1;
         return checked(reachedTick + delayTicks);
+    }
+
+    private void ChooseFirstInfantryTargets()
+    {
+        foreach ((ulong entityId, CoopInfantryPointArrival arrival)
+            in infantryPointArrivals)
+        {
+            if (tick < arrival.FirstShootEligibleTick ||
+                infantryFirstTargets.ContainsKey(entityId))
+                continue;
+            Participant[] eligiblePlayers = manifest.Players
+                .Select(entry => participants[entry.PlayerId])
+                .Where(player => player.Admitted && player.Ready &&
+                    !player.Dead && player.Route == null)
+                .ToArray();
+            if (eligiblePlayers.Length == 0)
+                continue;
+            int selectedIndex = chooseInfantryPlayer(eligiblePlayers.Length);
+            if (selectedIndex < 0 || selectedIndex >= eligiblePlayers.Length)
+                throw new InvalidDataException(
+                    "Co-op infantry player choice is outside the living roster.");
+            CoopInfantryPlayerTargetPlan? plan =
+                PlanHostAssaulterPlayerTarget(entityId,
+                    eligiblePlayers[selectedIndex].PlayerId);
+            if (plan == null)
+                continue;
+            infantryFirstTargets.Add(entityId, plan);
+            stateRevision++;
+        }
     }
 
     /// <summary>
@@ -1244,6 +1329,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemyDestinations?.Release(entityId);
             infantryPaths.Remove(entityId);
             infantryPointArrivals.Remove(entityId);
+            infantryFirstTargets.Remove(entityId);
             if (enemy.Behaviour == "Drone")
             {
                 airPathReservations?.Release(entityId);
@@ -1873,6 +1959,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
         infantryPointArrivals.Clear();
+        infantryFirstTargets.Clear();
         foreach (Participant participant in participants.Values)
         {
             participant.Route = null;

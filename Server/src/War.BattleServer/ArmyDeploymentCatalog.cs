@@ -52,6 +52,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>? vehicleCannonStages;
     private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
     private IReadOnlyDictionary<string,ArmyCoopCombatScale>? coopCombatScales;
+    private IReadOnlyDictionary<string,float>? shieldHitProbabilities;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
     private float? droneBulletSpeed;
@@ -64,6 +65,14 @@ public sealed class ArmyDeploymentCatalog
 
     public ArmyDeploymentOption Option(int index)
         =>options.TryGetValue(index,out var value) ? value : throw new ArgumentOutOfRangeException(nameof(index));
+
+    public float ShieldHitProbability(string unitId)
+    {
+        if (shieldHitProbabilities == null ||
+            !shieldHitProbabilities.TryGetValue(unitId, out float probability))
+            throw new InvalidDataException("Army shield-target probability is unavailable.");
+        return probability;
+    }
 
     /// <summary>Unscaled recovered normal-upgrade row. Stage ownership and perk scales are separate authority.</summary>
     public ArmyBaseCombatStats BaseStats(string unitId,int normalUpgradeIndex)
@@ -553,6 +562,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedPassengerRespawn=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
         var acceptedCoopScales=new Dictionary<string,ArmyCoopCombatScale>(StringComparer.Ordinal);
+        var acceptedShieldProbabilities=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedVehicleCannons=new Dictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>(StringComparer.Ordinal);
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
@@ -575,6 +585,10 @@ public sealed class ArmyDeploymentCatalog
             float coopDamage=row.GetProperty("COOPDAMAGE").GetSingle();
             float heroicCoopHealth=row.GetProperty("HEROICCOOPHP").GetSingle();
             float heroicCoopDamage=row.GetProperty("HEROICCOOPDAMAGE").GetSingle();
+            float shieldProbability=row.GetProperty("HITSHIELDPROB").GetSingle();
+            if(!float.IsFinite(shieldProbability)||shieldProbability is < -1 or > 1)
+                throw new InvalidDataException("Invalid ArmyUpgrades shield-target probability.");
+            acceptedShieldProbabilities.Add(family.UnitId,shieldProbability);
             if (!ValidCoopScale(coopHealth) || !ValidCoopScale(coopDamage) ||
                 !ValidCoopScale(heroicCoopHealth) ||
                 !ValidCoopScale(heroicCoopDamage))
@@ -727,6 +741,7 @@ public sealed class ArmyDeploymentCatalog
             throw new InvalidDataException("Assault Helicopter glass health authority is absent.");
         playerDamagePolicies=acceptedPlayerDamage;
         coopCombatScales=acceptedCoopScales;
+        shieldHitProbabilities=acceptedShieldProbabilities;
         vehiclePassengerHealth=acceptedPassengerHealth;
         vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;
         normalLaneEnds=acceptedLaneEnds;

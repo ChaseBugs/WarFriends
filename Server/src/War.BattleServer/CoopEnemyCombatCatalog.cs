@@ -120,6 +120,11 @@ public sealed class CoopEnemyCombatCatalog
         return cards.Shot(UnitIdFor(behaviour), progress);
     }
 
+    internal float ShieldHitProbability(string behaviour)
+    {
+        return army.ShieldHitProbability(UnitIdFor(behaviour));
+    }
+
     internal ArmyHelicopterCrewStats TransportCrew(int normalUpgradeIndex)
     {
         return army.CoopHelicopterCrew(normalUpgradeIndex);
