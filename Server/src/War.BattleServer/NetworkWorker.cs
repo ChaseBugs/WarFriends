@@ -164,7 +164,7 @@ public sealed class NetworkWorker : BackgroundService
             byte[] key=Convert.FromBase64String(resultKeyText);
             allocationEndpoint=parsed; allocationClient=new BackendAllocationClient(new HttpClient {Timeout=TimeSpan.FromSeconds(5)},key,serverId);
         }
-        activeJournal=new ActiveMatchJournal(Path.Combine(outboxPath,"active"));
+        activeJournal=new ActiveMatchJournal(Path.Combine(outboxPath,"active"), maxMatches);
         terminalOutbox=new TerminalOutbox(outboxPath,activeJournal.ActiveMatchIds());
         terminalOutbox.PruneAcknowledged(DateTimeOffset.UtcNow);
         if(match.MatchIds.Any(terminalOutbox.HasIdentity))

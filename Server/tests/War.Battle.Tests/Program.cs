@@ -1390,6 +1390,34 @@ try
         "startup refuses to reuse an abandoned runtime match identity");
 }
 finally {Directory.Delete(crashRoot,true);}
+string largeJournalRoot = Path.Combine(Path.GetTempPath(),
+    "war-large-journal-" + Guid.NewGuid().ToString("N"));
+try
+{
+    var largeJournal = new ActiveMatchJournal(largeJournalRoot, 40);
+    for (int index = 0; index < 34; index++)
+    {
+        MatchManifest allocation = definition with
+        {
+            MatchId = $"large-allocation-{index:D2}"
+        };
+        largeJournal.Begin(allocation, allocation.Digest());
+    }
+
+    Check(new ActiveMatchJournal(largeJournalRoot, 40)
+            .ActiveMatchIds().Count == 34,
+        "a 40-match journal reopens all 34 durable allocations");
+    Reject(() => new ActiveMatchJournal(largeJournalRoot, 32),
+        "a smaller capacity rejects the complete durable roster");
+    var recoveredJournal = new ActiveMatchJournal(largeJournalRoot, 40);
+    var recoveryOutbox = new TerminalOutbox(
+        Path.Combine(largeJournalRoot, "outbox"),
+        recoveredJournal.ActiveMatchIds());
+    Check(recoveredJournal.Recover(recoveryOutbox) == 34 &&
+          recoveredJournal.ActiveMatchIds().Count == 0,
+        "crash recovery preserves every allocation above the old 32-match limit");
+}
+finally {Directory.Delete(largeJournalRoot, true);}
 string partialRoot=Path.Combine(Path.GetTempPath(),"war-partial-terminal-"+Guid.NewGuid().ToString("N"));
 try
 {

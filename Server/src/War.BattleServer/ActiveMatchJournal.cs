@@ -11,10 +11,14 @@ public sealed class ActiveMatchJournal
 {
     private static readonly byte[] Magic="WFA1"u8.ToArray();
     private readonly string directory;
+    private readonly int maxMatches;
     private sealed record Allocation(string MatchId,string ManifestHash,string[] PlayerIds);
 
-    public ActiveMatchJournal(string path)
+    public ActiveMatchJournal(string path, int maxMatches = 32)
     {
+        if (maxMatches is < 1 or > 1024)
+            throw new InvalidDataException("Invalid match capacity.");
+        this.maxMatches = maxMatches;
         directory=Path.GetFullPath(path);
         Directory.CreateDirectory(directory);
         foreach(var temp in Directory.EnumerateFiles(directory,"*.tmp"))
@@ -24,13 +28,22 @@ public sealed class ActiveMatchJournal
             Read(temp);
             File.Delete(temp);
         }
-        var files=Directory.EnumerateFiles(directory,"*.active").Take(33).ToArray();
-        if(files.Length>32)throw new InvalidDataException("Active match journal capacity exceeded.");
+        var files=Directory.EnumerateFiles(directory,"*.active")
+            .Take(maxMatches + 1).ToArray();
+        if(files.Length>maxMatches)
+            throw new InvalidDataException("Active match journal capacity exceeded.");
         foreach(var file in files)Read(file);
     }
 
-    internal IReadOnlySet<string> ActiveMatchIds()=>Directory.EnumerateFiles(directory,"*.active")
-        .Take(33).Select(file=>Read(file).MatchId).ToHashSet(StringComparer.Ordinal);
+    internal IReadOnlySet<string> ActiveMatchIds()
+    {
+        string[] files = Directory.EnumerateFiles(directory, "*.active")
+            .Take(maxMatches + 1).ToArray();
+        if (files.Length > maxMatches)
+            throw new InvalidDataException("Active match journal capacity exceeded.");
+        return files.Select(file => Read(file).MatchId)
+            .ToHashSet(StringComparer.Ordinal);
+    }
 
     public void Begin(MatchManifest manifest,string manifestHash)
     {
@@ -48,7 +61,8 @@ public sealed class ActiveMatchJournal
                 throw new InvalidDataException("Conflicting active match allocation.");
             return;
         }
-        if(Directory.EnumerateFiles(directory,"*.active").Take(33).Count()>=32)
+        if(Directory.EnumerateFiles(directory,"*.active")
+            .Take(maxMatches).Count() >= maxMatches)
             throw new InvalidDataException("Active match journal capacity exceeded.");
         string temp=Path.Combine(directory,allocation.MatchId+"."+Guid.NewGuid().ToString("N")+".tmp");
         try
@@ -63,9 +77,13 @@ public sealed class ActiveMatchJournal
 
     public int Recover(TerminalOutbox outbox,Func<string,bool>? currentlyAllocated=null)
     {
-        var rows=Directory.EnumerateFiles(directory,"*.active").Order(StringComparer.Ordinal)
-            .Select(file=>(File:file,Allocation:Read(file))).ToArray();
-        if(rows.Length>32 || rows.Any(row=>currentlyAllocated?.Invoke(row.Allocation.MatchId)==true))
+        string[] files = Directory.EnumerateFiles(directory, "*.active")
+            .Take(maxMatches + 1).ToArray();
+        if (files.Length > maxMatches)
+            throw new InvalidDataException("Active match journal capacity exceeded.");
+        var rows = files.Order(StringComparer.Ordinal)
+            .Select(file => (File: file, Allocation: Read(file))).ToArray();
+        if(rows.Any(row=>currentlyAllocated?.Invoke(row.Allocation.MatchId)==true))
             throw new InvalidDataException("Recovered runtime allocation conflicts with current host roster.");
         bool[] existing=rows.Select(row=>outbox.Contains(row.Allocation.MatchId,
             row.Allocation.ManifestHash,row.Allocation.PlayerIds)).ToArray();
