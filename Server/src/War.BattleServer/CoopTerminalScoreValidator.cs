@@ -52,6 +52,27 @@ internal static class CoopTerminalScoreValidator
                     .Order(StringComparer.Ordinal)))
             throw new InvalidDataException("Co-op success differs from source mission.");
 
+        if (rule.MissionType == "Score")
+        {
+            if (snapshot.Coop.ParticipantScores.Count != manifest.Players.Length)
+                throw new InvalidDataException("Score mission has an incomplete allied ledger.");
+            long total = 0;
+            for (int index = 0; index < manifest.Players.Length; index++)
+            {
+                BattleCoopParticipantScore row = snapshot.Coop.ParticipantScores[index];
+                if (row.PlayerId != manifest.Players[index].PlayerId ||
+                    row.Score < 0 || row.Score > 1_000_000_000)
+                    throw new InvalidDataException("Invalid Score mission participant row.");
+                total += row.Score;
+            }
+            if (total != snapshot.Coop.ObjectiveScore)
+                throw new InvalidDataException("Allied scores do not conserve mission progress.");
+        }
+        else if (snapshot.Coop.ParticipantScores.Count != 0)
+        {
+            throw new InvalidDataException("Non-Score mission has allied score rows.");
+        }
+
         float remainingTimeRatio =
             (float)(snapshot.Coop.DeadlineTick - snapshot.EndTick) /
             durationTicks;

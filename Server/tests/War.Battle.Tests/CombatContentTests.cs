@@ -360,7 +360,8 @@ internal static class CombatContentTests
                 CoopEnemyKillCredit.Player, skillShots, 8) ||
             scored.ConfirmAttributedAiDeath(801, firstPlayer,
                 CoopEnemyKillCredit.Player, skillShots, 8) ||
-            scored.Score != 10)
+            scored.Score != 10 || scored.ScoreFor(firstPlayer) != 10 ||
+            scored.ScoreFor(secondPlayer) != 0)
             throw new Exception("One host-credited player kill must award one source Kill score.");
 
         int? secondScoreBehaviour = scored.SelectAutomaticBehaviour(16);
@@ -368,7 +369,8 @@ internal static class CombatContentTests
             !scored.ConfirmAutomaticSpawn(secondScoreBehaviour.Value, 802, 16) ||
             !scored.ConfirmAttributedAiDeath(802, secondPlayer,
                 CoopEnemyKillCredit.AlliedArmy, skillShots, 16) ||
-            scored.Score != 15 || scored.Outcome != MissionOutcome.InProgress)
+            scored.Score != 15 || scored.ScoreFor(secondPlayer) != 5 ||
+            scored.Outcome != MissionOutcome.InProgress)
             throw new Exception("Both allies' host-credited kills must share the Score objective.");
 
         int? uncreditedBehaviour = scored.SelectAutomaticBehaviour(24);
@@ -844,6 +846,21 @@ internal static class CombatContentTests
         catch (InvalidDataException)
         {
         }
+        MatchSnapshot forgedBossLedger = completedBoss.Clone();
+        forgedBossLedger.Coop.ParticipantScores.Add(new BattleCoopParticipantScore
+        {
+            PlayerId = bossFirstPlayer,
+            Score = 10
+        });
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedBossLedger, bossAllocation, catalog);
+            throw new Exception("A boss mission accepted a forged allied score row.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         MatchSnapshot forgedBossDeadline = completedBoss.Clone();
         forgedBossDeadline.Coop.DeadlineTick++;
         try
@@ -1074,6 +1091,9 @@ internal static class CombatContentTests
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);
+        if (scoreRuntime.Snapshot().Coop.ParticipantScores.Count != 2 ||
+            scoreRuntime.Snapshot().Coop.ParticipantScores.Any(row => row.Score != 0))
+            throw new Exception("Score mission pre-admission snapshot must start at zero.");
         scoreRuntime.Admit(firstPlayer);
         scoreRuntime.Admit(secondPlayer);
         var scoreReady = new MatchCommand { CommandId = 1,
@@ -1095,6 +1115,9 @@ internal static class CombatContentTests
             scoreRuntime.ApplyHostCreditedEnemyDamage(scoreEnemy.EntityId,
                 scoreEnemy.Health, 8, firstCredit) ||
             scoreRuntime.Snapshot().Coop.ObjectiveScore != 10 ||
+            scoreRuntime.Snapshot().Coop.ParticipantScores.Count != 2 ||
+            scoreRuntime.Snapshot().Coop.ParticipantScores[0].Score != 10 ||
+            scoreRuntime.Snapshot().Coop.ParticipantScores[1].Score != 0 ||
             scoreRuntime.Snapshot().Coop.EnemySpawns[0].DeathTick != 8 ||
             scoreRuntime.Snapshot().RewardEligible)
             throw new Exception("Only one valid host-credited death adds Score mission points.");
@@ -1105,7 +1128,9 @@ internal static class CombatContentTests
                 secondScoreEnemy.Health, 16,
                 new CoopHostEnemyHitCredit(secondPlayer,
                     CoopEnemyKillCredit.AlliedArmy)) ||
-            scoreRuntime.Snapshot().Coop.ObjectiveScore != 15)
+            scoreRuntime.Snapshot().Coop.ObjectiveScore != 15 ||
+            scoreRuntime.Snapshot().Coop.ParticipantScores[0].Score != 10 ||
+            scoreRuntime.Snapshot().Coop.ParticipantScores[1].Score != 5)
             throw new Exception("The second ally's army kill must add its source score.");
         runtime.Advance(9);
         if (runtime.Snapshot().Coop.EnemySpawns.Count != 1)
@@ -1256,7 +1281,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 51;
+        return 52;
     }
 
     private static int VerifyCoopBossAiSpawns(MissionCatalog missions,

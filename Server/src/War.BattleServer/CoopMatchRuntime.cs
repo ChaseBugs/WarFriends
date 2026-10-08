@@ -744,6 +744,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         };
         snapshot.Coop.ParticipantIds.AddRange(
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
+        if (mission.MissionType == "Score")
+        {
+            foreach (ParticipantManifest player in manifest.Players)
+            {
+                snapshot.Coop.ParticipantScores.Add(new BattleCoopParticipantScore
+                {
+                    PlayerId = player.PlayerId,
+                    Score = mission.ScoreFor(player.PlayerId)
+                });
+            }
+        }
         if (Terminal && mission.Outcome == MissionOutcome.Succeeded)
         {
             foreach (ParticipantManifest rosterPlayer in manifest.Players)

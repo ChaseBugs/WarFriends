@@ -11,6 +11,7 @@ public sealed class CoopMissionEngine
 {
     private readonly HashSet<string> participants = new(StringComparer.Ordinal);
     private readonly HashSet<string> ready = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> participantScores = new(StringComparer.Ordinal);
     private readonly MissionObjectiveState objective;
     private readonly MissionAutomaticSpawnState spawns;
     private readonly string missionType;
@@ -32,6 +33,8 @@ public sealed class CoopMissionEngine
     public IReadOnlyCollection<string> Participants => participants.ToArray();
     public int EnemyKills => objective.EnemyKills;
     public int Score => objective.Score;
+    internal int ScoreFor(string playerId) =>
+        participantScores.TryGetValue(playerId, out int score) ? score : 0;
 
     public CoopMissionEngine(
         MissionCatalog catalog, int missionIndex, Func<int, int>? chooseBehaviour = null)
@@ -49,7 +52,10 @@ public sealed class CoopMissionEngine
     {
         if (Started || participants.Count >= 2 || !IsCanonicalId(playerId))
             return false;
-        return participants.Add(playerId);
+        if (!participants.Add(playerId))
+            return false;
+        participantScores.Add(playerId, 0);
+        return true;
     }
 
     public bool MarkReady(string playerId, ulong tick)
@@ -153,6 +159,8 @@ public sealed class CoopMissionEngine
         string eventId = KillEventId(MissionIndex, entityId);
         if (!objective.RecordScore(eventId, earnedPoints, tick))
             throw new InvalidDataException("Confirmed skill-shot failed mission objective replay.");
+        participantScores[creditedPlayerId] =
+            checked(participantScores[creditedPlayerId] + earnedPoints);
         if (Outcome != MissionOutcome.InProgress)
             spawns.Finish();
         return true;
