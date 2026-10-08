@@ -898,6 +898,12 @@ internal static class CombatContentTests
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == switcher).ClipAmmo != alternateWeapon.ClipSize ||
             switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).RiflePose is not
+                    RiflePoseState initialIdlePose ||
+            !RiflePoseProjection.ValidWire(initialIdlePose, 0) ||
+            initialIdlePose.Layers.Count != 1 ||
+            initialIdlePose.Layers[0].Clip != RiflePoseClip.Idle ||
+            switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == partner).ActiveWeaponSlot != 0)
             throw new Exception("Only the signed ally switched to the second source rifle.");
         BattleCombatContent specialPoseContent = BattleCombatContent.Load(

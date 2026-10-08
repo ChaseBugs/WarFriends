@@ -1817,17 +1817,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             .Single(candidate => candidate.Slot == slot);
         string weaponId = weapon.Weapon.SourceId;
         int family = playerWeaponBindings.Get(weaponId).AnimationFamily;
-        string? idleClip = family switch
-        {
-            0 when weaponId.StartsWith("Google2u.AssaultRifle_",
-                StringComparison.Ordinal) => "idle",
-            2 when weaponId.StartsWith("Google2u.Bazooka_",
-                StringComparison.Ordinal) => "bazooka_idle",
-            4 when weaponId == "Google2u.LMG_Minigun" => "minigun_idle",
-            10 when weaponId.StartsWith("Google2u.SniperRifle_",
-                StringComparison.Ordinal) => "sniper_idle",
-            _ => null
-        };
+        string? idleClip = SupportedIdleClip(family, weaponId);
         if (idleClip == null)
             return null;
 
@@ -1838,6 +1828,21 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             idleClip, 0, true, idleClip, 0, true, 0,
             Quaternion.Identity).Place(cover.Position, rotation);
         return new SettledWeaponPose(idlePose, weaponId);
+    }
+
+    private static string? SupportedIdleClip(int family, string weaponId)
+    {
+        return family switch
+        {
+            0 when weaponId.StartsWith("Google2u.AssaultRifle_",
+                StringComparison.Ordinal) => "idle",
+            2 when weaponId.StartsWith("Google2u.Bazooka_",
+                StringComparison.Ordinal) => "bazooka_idle",
+            4 when weaponId == "Google2u.LMG_Minigun" => "minigun_idle",
+            10 when weaponId.StartsWith("Google2u.SniperRifle_",
+                StringComparison.Ordinal) => "sniper_idle",
+            _ => null
+        };
     }
 
     private bool ShotPoseIsSettled(Participant player)
@@ -2776,18 +2781,39 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 PositionY = participant.Position.Y,
                 PositionZ = participant.Position.Z
             };
-            if (participant.Route == null &&
-                participant.ShotTimeline != null &&
-                playerPositions[participant.CoverIndex].SourceRotation is
-                    Quaternion coverRotation)
-            {
-                playerState.RiflePose = RiflePoseProjection.Create(
-                    tick, participant.ShotTimeline.Layers,
-                    coverRotation, Quaternion.Identity, null);
-            }
+            playerState.RiflePose = StationaryPlayerPose(participant);
             snapshot.Players.Add(playerState);
         }
         return snapshot;
+    }
+
+    private RiflePoseState? StationaryPlayerPose(Participant player)
+    {
+        if (!player.Admitted || !player.Ready || player.Dead ||
+            player.Route != null || player.Weapons == null ||
+            playerPositions[player.CoverIndex].SourceRotation is not
+                Quaternion coverRotation)
+            return null;
+
+        if (player.ShotTimeline != null)
+            return RiflePoseProjection.Create(tick,
+                player.ShotTimeline.Layers, coverRotation,
+                Quaternion.Identity, null);
+
+        if (PlayerWeapons == null || playerWeaponBindings == null)
+            return null;
+        CoopPlayerWeapon selected = PlayerWeapons.ForPlayer(player.PlayerId)
+            .Single(weapon => weapon.Slot == player.Weapons.ActiveSlot);
+        string? idleClip = SupportedIdleClip(
+            playerWeaponBindings.Get(selected.Weapon.SourceId).AnimationFamily,
+            selected.Weapon.SourceId);
+        if (idleClip == null)
+            return null;
+
+        return RiflePoseProjection.Create(tick,
+            [new RifleClipLayer(new RifleClipSelection(
+                idleClip, 0, 1, true), 1)],
+            coverRotation, Quaternion.Identity, null);
     }
 
     private static void AddShields(MatchSnapshot snapshot,
