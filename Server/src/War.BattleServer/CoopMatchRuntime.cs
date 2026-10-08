@@ -1817,9 +1817,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
-    /// Places both allies at their untouched source idle poses for an
-    /// isolated enemy-ray diagnostic. A moved, firing, or dead ally needs a
-    /// different current animation pose before any hit can be trusted.
+    /// Places both allies in a source rifle idle pose for an isolated ray.
+    /// After a cover move, PlayerController finishes a 0.3-second position
+    /// tween, a 0.5-second rotation tween, and SoldierAnimationController
+    /// crossfades to idle. Wait a full second after the host route ends.
+    /// Moving, firing, dead, or non-rifle poses remain unavailable.
     /// </summary>
     internal IReadOnlyList<CollisionPlayer>? PlaceIdleAlliedCollisionPoses()
     {
@@ -1832,17 +1834,27 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             definition => participants[definition.PlayerId]))
         {
             if (!player.Admitted || !player.Ready || player.Dead ||
-                player.HasMoved || player.Route != null ||
-                player.Weapons == null || player.Weapons.HasFiredAnyShot)
+                player.Route != null || player.Weapons == null ||
+                player.Weapons.HasFiredAnyShot ||
+                (player.HasMoved &&
+                    (tick < player.MoveEndTick ||
+                     tick - player.MoveEndTick < MatchManifest.TickRate)))
                 return null;
 
-            CoopPlayerAnchor start = playerStarts[player.PlayerId];
-            if (start.SourceRotation is not Quaternion rotation)
+            int activeSlot = player.Weapons.ActiveSlot;
+            CoopPlayerWeapon weapon = PlayerWeapons!.ForPlayer(player.PlayerId)
+                .Single(candidate => candidate.Slot == activeSlot);
+            if (!weapon.Weapon.SourceId.StartsWith(
+                    "Google2u.AssaultRifle_", StringComparison.Ordinal))
+                return null;
+
+            CoopPlayerAnchor cover = playerPositions[player.CoverIndex];
+            if (cover.SourceRotation is not Quaternion rotation)
                 return null;
 
             PlayerCollisionModel pose = playerPoses.SampleBlended(
                 "idle", 0, true, "idle", 0, true, 0,
-                Quaternion.Identity).Place(start.Position, rotation).Collision;
+                Quaternion.Identity).Place(cover.Position, rotation).Collision;
             // TagsAndLayers.GetFractionBulletLayer(Allies, false) is 22.
             poses.Add(new CollisionPlayer(player.PlayerId, pose, 22, 2));
         }

@@ -898,6 +898,41 @@ internal static class CombatContentTests
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == partner).ActiveWeaponSlot != 0)
             throw new Exception("Only the signed ally switched to the second source rifle.");
+        const string sniperId = "Google2u.SniperRifle_MSR";
+        BattleCombatContent sniperContent =
+            LoadCoopBossWeaponContent(directory);
+        WeaponManifest sniperWeapon = sniperContent.CreateCoopWeaponManifest(
+            sniperId, 0);
+        int sniperIndex = sniperContent.AllWeaponBindings.Get(
+            sniperId).InventoryIndex;
+        MatchManifest sniperSlots = twoWeapons with
+        {
+            Players = twoWeapons.Players.Select((player, index) => index == 0
+                ? player with
+                {
+                    WeaponSlots =
+                    [
+                        player.WeaponSlots![0],
+                        new WeaponSlotManifest(1, sniperIndex,
+                            sniperWeapon, 0)
+                    ]
+                }
+                : player).ToArray()
+        };
+        var sniperPoseRuntime = new CoopMatchRuntime(sniperSlots, catalog,
+            spawnPoints, routes, enemyCombat,
+            playerWeaponContent: sniperContent);
+        sniperPoseRuntime.Admit(switcher);
+        sniperPoseRuntime.Admit(partner);
+        var sniperReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = sniperPoseRuntime.ManifestHash } };
+        sniperPoseRuntime.Command(switcher, sniperReady);
+        sniperPoseRuntime.Command(partner, sniperReady);
+        if (sniperPoseRuntime.PlaceIdleAlliedCollisionPoses() == null ||
+            sniperPoseRuntime.Command(switcher, selectSecond).Code !=
+                "weapon-selected" ||
+            sniperPoseRuntime.PlaceIdleAlliedCollisionPoses() != null)
+            throw new Exception("A switched sniper reused the rifle hitbox pose.");
         if (switchingRuntime.Command(switcher, new MatchCommand { CommandId = 3,
                 SwitchWeapon = new SwitchWeaponCommand { Slot = 7 } }).Code !=
             "weapon-slot-unavailable" ||
@@ -1630,6 +1665,20 @@ internal static class CombatContentTests
         if (Vector3.Distance(movementRuntime.PlayerAimForward(firstPlayer),
                 expectedArrivedAim) > 0.00001f)
             throw new Exception("Co-op ally aim did not follow the accepted cover move.");
+        movementRuntime.Advance(movingPlayer.MoveEndTick +
+            MatchManifest.TickRate - 1);
+        if (movementRuntime.PlaceIdleAlliedCollisionPoses() != null)
+            throw new Exception("Co-op cover tween reused an unfinished idle pose.");
+        movementRuntime.Advance(movingPlayer.MoveEndTick +
+            MatchManifest.TickRate);
+        IReadOnlyList<CollisionPlayer>? settledAllies =
+            movementRuntime.PlaceIdleAlliedCollisionPoses();
+        if (settledAllies?.Count != 2 ||
+            settledAllies[0].Pose.RootPosition !=
+                sourceMapSpawns.PlayerPositions[3].Position ||
+            Math.Abs(Quaternion.Dot(
+                settledAllies[0].Pose.RootRotation, arrivedRotation)) < 0.9999f)
+            throw new Exception("Settled co-op ally missed the new source cover pose.");
         if (movementRuntime.Command(secondPlayer, new MatchCommand { CommandId = 3,
                 MoveCover = new MoveCoverCommand { Direction = -1 } }).Code != "moving" ||
             movementRuntime.Snapshot().Players.Single(player =>
