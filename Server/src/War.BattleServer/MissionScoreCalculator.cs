@@ -4,20 +4,20 @@ public readonly record struct MissionScoreResult(int Score, int Stars);
 
 /// <summary>
 /// Source Mission.computedGainedSuccesScore and GetStars, using only host-confirmed
-/// health and time. This calculates a result; it does not grant a reward.
+/// health and elapsed match time. This calculates a result; it does not grant a reward.
 /// </summary>
 public static class MissionScoreCalculator
 {
     public static MissionScoreResult Calculate(
-        MissionRule rule, float playerHealthFraction, float timeRemainingFraction)
+        MissionRule rule, float playerHealthFraction, float elapsedTimeFraction)
     {
         ArgumentNullException.ThrowIfNull(rule);
         ValidateFraction(playerHealthFraction, nameof(playerHealthFraction));
-        ValidateFraction(timeRemainingFraction, nameof(timeRemainingFraction));
+        ValidateFraction(elapsedTimeFraction, nameof(elapsedTimeFraction));
 
         int score = rule.MissionType is "KillXEnemies" or "SurviveXSeconds"
             ? ScoreFromHealth(rule, playerHealthFraction)
-            : ScoreFromHealthAndTime(rule, playerHealthFraction, timeRemainingFraction);
+            : ScoreFromHealthAndTime(rule, playerHealthFraction, elapsedTimeFraction);
         int stars = StarsForScore(rule, score);
         return new MissionScoreResult(score, stars);
     }

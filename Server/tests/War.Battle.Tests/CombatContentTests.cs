@@ -178,7 +178,10 @@ internal static class CombatContentTests
         MissionRule bossRule = catalog.Missions.First(mission => mission.MissionType == "KillOpponent");
         MissionScoreResult targetBoss = MissionScoreCalculator.Calculate(
             bossRule, bossRule.HealthTargetFraction, bossRule.TimeTargetFraction);
-        if (targetBoss.Score != bossRule.ScoreThreeStars || targetBoss.Stars != 3)
+        MissionScoreResult earlyBoss = MissionScoreCalculator.Calculate(
+            bossRule, bossRule.HealthTargetFraction, 0);
+        if (targetBoss.Score != bossRule.ScoreThreeStars || targetBoss.Stars != 3 ||
+            earlyBoss.Score != bossRule.ScoreTwoStars || earlyBoss.Stars != 2)
             throw new Exception("Boss mission score must combine source health and time targets.");
 
         try
@@ -1417,6 +1420,8 @@ internal static class CombatContentTests
         };
         damagedRuntime.Command(firstPlayer, damageReady);
         damagedRuntime.Command(secondPlayer, damageReady);
+        if (damagedRuntime.WinningScoreFor(firstPlayer) != null)
+            throw new Exception("Unfinished co-op missions cannot publish success scores.");
         damagedRuntime.Advance(8);
         BattleCoopEnemySpawn undamaged = damagedRuntime.Snapshot().Coop.EnemySpawns.Single();
         undamaged.Health = 0;
@@ -1461,6 +1466,12 @@ internal static class CombatContentTests
             damagedRuntime.Snapshot().Coop.EnemyKills != catalog.Get(0).Objective ||
             damagedRuntime.Snapshot().RewardEligible)
             throw new Exception("Ten confirmed source enemy deaths must finish mission zero.");
+        if (damagedRuntime.WinningScoreFor(firstPlayer) is not
+                { Score: 117, Stars: 3 } ||
+            damagedRuntime.WinningScoreFor(secondPlayer) is not
+                { Score: 117, Stars: 3 } ||
+            damagedRuntime.WinningScoreFor("not-an-ally") != null)
+            throw new Exception("Successful co-op scores need host health and a signed ally.");
 
         const int scoreMissionIndex = 3;
         MissionMapRule scoreMap = catalog.MapForMission(scoreMissionIndex);
