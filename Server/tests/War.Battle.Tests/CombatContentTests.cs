@@ -555,6 +555,32 @@ internal static class CombatContentTests
                 movedBossAlly.PositionY, movedBossAlly.PositionZ),
                 bossAnchors.Maps[0].PlayerPositions[7].Position) > 0.0001f)
             throw new Exception("Boss ally did not reach the skipped multiplayer shield.");
+        float secondMaximum = bossAllocation.Players[1].Combat!.MaxHealth;
+        PlayerDamageResult? nonlethalHit = bossRuntime.ApplyHostPlayerDamage(
+            bossSecondPlayer, new ResolvedPlayerDamage(5, CombatDamageType.Basic,
+                HasWeapon: false), 1f);
+        BattlePlayerState woundedAlly = bossRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == bossSecondPlayer);
+        if (nonlethalHit?.Applied != true || nonlethalHit.Dead ||
+            woundedAlly.Health != secondMaximum - 5 ||
+            woundedAlly.MaxHealth != secondMaximum ||
+            woundedAlly.DamageRevision != 1)
+            throw new Exception("Co-op host damage did not update player vitality.");
+        PlayerDamageResult? lethalHit = bossRuntime.ApplyHostPlayerDamage(
+            bossSecondPlayer, new ResolvedPlayerDamage(secondMaximum,
+                CombatDamageType.Basic, HasWeapon: false), 1f);
+        if (lethalHit?.Dead != true ||
+            !bossRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == bossSecondPlayer).Dead ||
+            bossRuntime.Snapshot().Phase != BattlePhase.Running ||
+            bossRuntime.ApplyHostPlayerDamage(bossSecondPlayer,
+                new ResolvedPlayerDamage(1, CombatDamageType.Basic), 1f) != null ||
+            bossRuntime.Command(bossSecondPlayer, new MatchCommand
+            {
+                CommandId = 3,
+                MoveCover = new MoveCoverCommand { Direction = -1 }
+            }).Code != "match-not-running")
+            throw new Exception("A dead co-op ally must spectate while the mission continues.");
         if (!bossRuntime.ApplyHostBossDamage(100, 200) ||
             bossRuntime.Snapshot().Coop.Boss?.Health !=
                 bossHealth.ForMission(4).MaximumHealth - 100 ||

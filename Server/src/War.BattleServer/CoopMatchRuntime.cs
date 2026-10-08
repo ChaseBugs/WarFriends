@@ -22,9 +22,10 @@ internal sealed record CoopBossRuntimeSources(
 /// </summary>
 internal sealed class CoopMatchRuntime : IMatchRuntime
 {
-    private sealed class Participant(string playerId)
+    private sealed class Participant(ParticipantManifest definition)
     {
-        public string PlayerId { get; } = playerId;
+        public ParticipantManifest Definition { get; } = definition;
+        public string PlayerId => Definition.PlayerId;
         public bool Admitted;
         public bool Ready;
         public ulong LastCommandId;
@@ -34,6 +35,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public CoopDefendRoute? Route;
         public ulong MoveStartTick;
         public ulong MoveEndTick;
+        public float Health = definition.Combat!.MaxHealth;
+        public bool Dead;
+        public ulong DamageRevision;
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
     }
 
@@ -158,7 +162,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         chooseSpawnPoint = choosePoint ?? Random.Shared.Next;
         mission = new CoopMissionEngine(catalog, missionIndex, chooseBehaviour);
         participants = manifest.Players.ToDictionary(player => player.PlayerId,
-            player => new Participant(player.PlayerId), StringComparer.Ordinal);
+            player => new Participant(player), StringComparer.Ordinal);
         foreach (Participant participant in participants.Values)
         {
             CoopPlayerAnchor start = playerStarts[participant.PlayerId];
@@ -424,7 +428,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     private string StartPlayerMovement(Participant participant, int direction)
     {
-        if (phase != BattlePhase.Running || !participant.Ready)
+        if (phase != BattlePhase.Running || !participant.Ready || participant.Dead)
             return "match-not-running";
         if (direction is not (-1 or 1))
             return "invalid-direction";
@@ -496,6 +500,36 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         participant.Position = route.Corners[^1];
         stateRevision++;
+    }
+
+    // Only a later host projectile or AI hit resolver may call this method.
+    // The signed Client cannot report its own health or request this damage.
+    internal PlayerDamageResult? ApplyHostPlayerDamage(
+        string playerId, ResolvedPlayerDamage hit, float randomRoll)
+    {
+        if (phase != BattlePhase.Running ||
+            !participants.TryGetValue(playerId, out Participant? participant) ||
+            !participant.Admitted || participant.Dead)
+            return null;
+
+        PlayerDamageResult result = PlayerDamage.Resolve(
+            participant.Definition.Combat!, participant.Health, hit,
+            sameFraction: false, self: false, randomRoll);
+        if (!result.Applied)
+            return result;
+
+        participant.Health = result.Health;
+        participant.Dead = result.Dead;
+        participant.DamageRevision++;
+        stateRevision++;
+        if (result.Dead)
+        {
+            // GameControllerCoop.OnPlayerControllerKilled enters spectator
+            // presentation. The surviving ally can still finish the mission.
+            participant.Route = null;
+            participant.DestinationIndex = -1;
+        }
+        return result;
     }
 
     public MatchReply Reply(ulong commandId, string code)
@@ -589,6 +623,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 Ready = participant.Ready,
                 LastCommandId = participant.LastCommandId,
                 CombatEnabled = false,
+                Health = participant.Health,
+                MaxHealth = participant.Definition.Combat!.MaxHealth,
+                Dead = participant.Dead,
+                DamageRevision = participant.DamageRevision,
                 CoverIndex = participant.CoverIndex,
                 Moving = participant.Route != null,
                 MoveEndTick = participant.MoveEndTick,
