@@ -113,6 +113,11 @@ public sealed class CoopEnemyCombatCatalog
         return army.CoopHelicopterCrew(normalUpgradeIndex);
     }
 
+    internal int TransportGunnerRespawnTicks()
+    {
+        return army.VehiclePassengerRespawnTicks(UnitIdFor("DeployHeli"));
+    }
+
     public ArmyBaseCombatStats OrdinaryStats(
         string behaviour, int normalUpgradeIndex, bool heroic = false)
     {

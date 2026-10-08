@@ -1764,8 +1764,10 @@ internal static class CombatContentTests
             transportRuntime.TransportCrewMembers(transport.EntityId);
         IReadOnlyList<HelicopterCrewPose> attachedCrewPoses =
             transportRuntime.AttachedTransportCrewPoses(transport.EntityId);
+        int gunnerRespawnTicks = enemyCombat.TransportGunnerRespawnTicks();
         if (transport.SpawnTick != transportTick || transport.Level != 8 ||
             expectedTransportCrew.Seats != 2 ||
+            gunnerRespawnTicks != 375 ||
             MathF.Abs(expectedTransportCrew.SoldierHealth - 1468.125f) > .001f ||
             transportBodies.Count != 11 ||
             transport.CrewCount != expectedTransportCrew.Seats ||
@@ -1776,6 +1778,14 @@ internal static class CombatContentTests
             attachedCrew.Any(member => member.Maximum !=
                 expectedTransportCrew.SoldierHealth ||
                 member.Health != member.Maximum || member.DropStartTick != 0) ||
+            transport.GunnerPointComponentFileId !=
+                content.HelicopterCrewPoints.TurretPointComponentFileId ||
+            transport.GunnerMaxHealth != expectedTransportCrew.SoldierHealth ||
+            transport.GunnerHealth != transport.GunnerMaxHealth ||
+            transport.GunnerSpawnTick != transportTick ||
+            transport.GunnerRespawnTick != 0 ||
+            transportRuntime.PlaceTransportGunner(transport.EntityId) is not
+                { PointComponentFileId: > 0 } ||
             transportBodies.Any(body => body.EntityId != transport.EntityId ||
                 body.Layer != 27 || !body.HelicopterBody ||
                 !body.Hitbox.SourcePath.StartsWith(
@@ -1809,13 +1819,46 @@ internal static class CombatContentTests
             transportRuntime.AttachedTransportCrewPoses(transport.EntityId).Count +
                 descents.Count != expectedTransportCrew.Seats ||
             transportPosition == transportStart || flownBodies.Count != 11 ||
+            transportRuntime.PlaceTransportGunner(transport.EntityId) is not
+                { PointComponentFileId: > 0 } ||
             flownBodies.Any(body => body.Hitbox.TransformPosition != transportPosition))
             throw new Exception("Co-op transport Helicopter lost its flight, stop, or body pose.");
+        if (transportRuntime.ApplyHostTransportGunnerDamage(transport.EntityId,
+                float.NaN, afterFlight) ||
+            !transportRuntime.ApplyHostTransportGunnerDamage(transport.EntityId,
+                expectedTransportCrew.SoldierHealth, afterFlight))
+            throw new Exception("Co-op transport gunner accepted invalid damage or rejected a host hit.");
+        BattleCoopEnemySpawn gunnerDown = transportRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == transport.EntityId);
+        ulong gunnerDue = afterFlight + (ulong)gunnerRespawnTicks;
+        if (gunnerDown.GunnerHealth != 0 ||
+            gunnerDown.GunnerRespawnTick != gunnerDue ||
+            gunnerDown.Health != transport.MaxHealth ||
+            transportRuntime.PlaceTransportGunner(transport.EntityId) != null ||
+            transportRuntime.ApplyHostTransportGunnerDamage(transport.EntityId,
+                1, afterFlight))
+            throw new Exception("Gunner death changed transport body health or left its turret active.");
+        transportRuntime.Advance(gunnerDue - 1);
+        if (transportRuntime.TransportGunner(transport.EntityId) is not
+                { Health: 0, RespawnTick: > 0 })
+            throw new Exception("Co-op gunner respawned before its source delay.");
+        transportRuntime.Advance(gunnerDue);
+        BattleCoopEnemySpawn gunnerRestored = transportRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.EntityId == transport.EntityId);
+        if (gunnerRestored.GunnerHealth != expectedTransportCrew.SoldierHealth ||
+            gunnerRestored.GunnerSpawnTick != gunnerDue ||
+            gunnerRestored.GunnerRespawnTick != 0 ||
+            transportRuntime.PlaceTransportGunner(transport.EntityId) == null)
+            throw new Exception("Co-op gunner did not return at the source respawn tick.");
         if (!transportRuntime.ApplyHostEnemyDamage(transport.EntityId,
-                transport.MaxHealth, afterFlight) ||
+                transport.MaxHealth, gunnerDue) ||
             transportRuntime.ReservedAirPath(transport.EntityId) != null ||
             transportRuntime.PlaceTransportHelicopterTargets(transport.EntityId).Count != 0 ||
-            transportRuntime.TransportCrewMembers(transport.EntityId).Count != 0)
+            transportRuntime.TransportCrewMembers(transport.EntityId).Count != 0 ||
+            transportRuntime.TransportGunner(transport.EntityId) != null ||
+            transportRuntime.PlaceTransportGunner(transport.EntityId) != null ||
+            transportRuntime.Snapshot().Coop.EnemySpawns.Single(enemy =>
+                enemy.EntityId == transport.EntityId).GunnerHealth != 0)
             throw new Exception("Co-op transport Helicopter death retained its path or hitboxes.");
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,

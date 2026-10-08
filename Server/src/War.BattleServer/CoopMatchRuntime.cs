@@ -77,6 +77,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Dictionary<ulong, HelicopterOrientationState> transportHelicopterOrientations = [];
     private readonly Dictionary<ulong, HelicopterCrewState> transportHelicopterCrew = [];
     private readonly Dictionary<ulong, HelicopterCrewSchedule> transportCrewSchedules = [];
+    private readonly Dictionary<ulong, HelicopterGunnerState> transportGunners = [];
     private readonly Func<float> chooseAirDirection;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
@@ -271,6 +272,30 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         return transportHelicopterCrew.TryGetValue(entityId, out HelicopterCrewState? crew)
             ? crew.DescentSnapshot(tick) : [];
+    }
+
+    internal HelicopterGunnerSnapshot? TransportGunner(ulong entityId)
+    {
+        return transportGunners.TryGetValue(entityId, out HelicopterGunnerState? gunner)
+            ? gunner.Snapshot() : null;
+    }
+
+    internal HelicopterTurretRestPose? PlaceTransportGunner(ulong entityId)
+    {
+        if (phase != BattlePhase.Running || transportCrewPoints == null ||
+            TransportGunner(entityId) is not { TurretEnabled: true })
+            return null;
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "DeployHeli" &&
+            spawn.PoseTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.CurrentRotation != null);
+        if (enemy == null)
+            return null;
+        var position = new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ);
+        var rotation = new Quaternion(enemy.CurrentRotation.X,
+            enemy.CurrentRotation.Y, enemy.CurrentRotation.Z,
+            enemy.CurrentRotation.W);
+        return transportCrewPoints.PlaceTurret(position, rotation);
     }
 
     internal IReadOnlyList<HelicopterCrewPose> AttachedTransportCrewPoses(ulong entityId)
@@ -478,6 +503,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 crew.Advance(schedule, tick);
                 enemy.CrewDropMask = schedule.DueMask(tick);
             }
+            if (transportGunners.TryGetValue(entityId, out HelicopterGunnerState? gunner))
+            {
+                gunner.Advance(tick);
+                PublishTransportGunner(enemy, gunner.Snapshot());
+            }
             HelicopterOrientationState orientation =
                 transportHelicopterOrientations[entityId];
             orientation.Advance(flight.Position, flight.Velocity, flight.Steering,
@@ -493,6 +523,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             };
             stateRevision++;
         }
+    }
+
+    private static void PublishTransportGunner(BattleCoopEnemySpawn enemy,
+        HelicopterGunnerSnapshot gunner)
+    {
+        enemy.GunnerPointComponentFileId = gunner.PointComponentFileId;
+        enemy.GunnerMaxHealth = gunner.MaximumHealth;
+        enemy.GunnerHealth = gunner.Health;
+        enemy.GunnerSpawnTick = gunner.SpawnTick;
+        enemy.GunnerRespawnTick = gunner.RespawnTick;
     }
 
     private BattleCoopEnemySpawn? CreateEnemy(
@@ -610,6 +650,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 transportHelicopterCrew.Add(enemy.EntityId,
                     new HelicopterCrewState(crew, transportCrewPoints, tick));
                 enemy.CrewCount = (uint)crew.Seats;
+                var gunner = new HelicopterGunnerState(
+                    transportCrewPoints.TurretPointComponentFileId,
+                    crew.SoldierHealth, combat.TransportGunnerRespawnTicks(), tick);
+                transportGunners.Add(enemy.EntityId, gunner);
+                PublishTransportGunner(enemy, gunner.Snapshot());
             }
         }
         return enemy;
@@ -810,6 +855,27 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// A verified host hit can damage the transport turret soldier without
+    /// changing the Helicopter's separate body health. No packet routes here.
+    /// </summary>
+    internal bool ApplyHostTransportGunnerDamage(ulong entityId, float damage,
+        ulong impactTick)
+    {
+        if (phase != BattlePhase.Running || impactTick != tick ||
+            impactTick >= mission.DeadlineTick ||
+            !transportGunners.TryGetValue(entityId, out HelicopterGunnerState? gunner))
+            return false;
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "DeployHeli" &&
+            spawn.Health > 0 && spawn.DeathTick == 0);
+        if (enemy == null || !gunner.Damage(damage, impactTick))
+            return false;
+        PublishTransportGunner(enemy, gunner.Snapshot());
+        stateRevision++;
+        return true;
+    }
+
+    /// <summary>
     /// This is a host-only seam. A future hit simulator must establish the
     /// player and damage origin; no client command may supply this credit.
     /// </summary>
@@ -870,6 +936,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 transportHelicopterOrientations.Remove(entityId);
                 transportHelicopterCrew.Remove(entityId);
                 transportCrewSchedules.Remove(entityId);
+                transportGunners.Remove(entityId);
+                // DestroyPooled also destroys its attached turret soldier.
+                enemy.GunnerHealth = 0;
+                enemy.GunnerRespawnTick = 0;
             }
             if (mission.Outcome == MissionOutcome.Succeeded)
                 End(BattlePhase.Ended, "mission-success");

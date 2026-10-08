@@ -513,6 +513,11 @@ message BattleCoopEnemySpawn {
   // Transport Helicopter seats exist at spawn; bits mark source-timed rope
   // descent starts, not a proven NavMesh landing or combat-ready soldier.
   uint32 crew_count = 22; uint32 crew_drop_mask = 23;
+  // Attached transport turret gunner. Health zero disables the turret until
+  // respawn_tick; the parent Helicopter retains independent body health.
+  float gunner_max_health = 24; float gunner_health = 25;
+  uint64 gunner_spawn_tick = 26; uint64 gunner_respawn_tick = 27;
+  int32 gunner_point_component_file_id = 28;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;
