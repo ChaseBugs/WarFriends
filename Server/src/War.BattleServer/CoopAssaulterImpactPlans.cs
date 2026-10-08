@@ -11,6 +11,15 @@ internal sealed record CoopAssaulterShieldImpactPlan(
     int ColliderComponentId, int CoverIndex,
     float SourceDamage, float ShieldDamage);
 
+/// <summary>
+/// A player hit reported by the host's diagnostic ray. The hitbox weight is
+/// evidence for a later damage resolver, not a health mutation.
+/// </summary>
+internal sealed record CoopAssaulterPlayerImpactPlan(
+    ulong ProjectileId, ulong EnemyEntityId, ulong Tick,
+    string PlayerId, string PartPath, float PartWeight,
+    float SourceDamage);
+
 internal static class CoopAssaulterShieldImpactPlanner
 {
     internal static CoopAssaulterShieldImpactPlan? FromDiagnostic(
@@ -56,5 +65,47 @@ internal static class CoopAssaulterShieldImpactPlanner
         return new CoopAssaulterShieldImpactPlan(result.ProjectileId,
             result.EnemyEntityId, result.Tick, colliderId,
             coverIndex.Value, sourceDamage, shieldDamage);
+    }
+}
+
+internal static class CoopAssaulterPlayerImpactPlanner
+{
+    internal static CoopAssaulterPlayerImpactPlan? FromDiagnostic(
+        CoopDiagnosticFlightResult result,
+        BattleCoopEnemySpawn enemy,
+        CoopEnemyCombatCatalog combat)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(enemy);
+        ArgumentNullException.ThrowIfNull(combat);
+
+        BulletImpact? impact = result.Impact;
+        if (result.Outcome != "impact" || impact == null ||
+            result.ProjectileId == 0 ||
+            impact.ProjectileId != result.ProjectileId ||
+            impact.EnemyEntityId != result.EnemyEntityId ||
+            enemy.EntityId != result.EnemyEntityId ||
+            enemy.Behaviour != "Assaulter" ||
+            impact.Tick != result.Tick ||
+            impact.Hit.ColliderLayer != 22 ||
+            impact.Hit.ColliderIndex != null ||
+            impact.Hit.PlayerId is not string playerId ||
+            !Guid.TryParseExact(playerId, "N", out _) ||
+            playerId != playerId.ToLowerInvariant() ||
+            string.IsNullOrWhiteSpace(impact.Hit.SourcePath) ||
+            !float.IsFinite(impact.Hit.PartWeight) ||
+            impact.Hit.PartWeight is <= 0 or > 1000)
+            return null;
+
+        float sourceDamage = enemy.CardUnit
+            ? combat.CardStats(enemy.Behaviour, enemy.CardProgress).Damage
+            : combat.OrdinaryStats(enemy.Behaviour, enemy.Level).Damage;
+        if (!float.IsFinite(sourceDamage) || sourceDamage <= 0)
+            throw new InvalidDataException(
+                "Co-op player impact has invalid source damage.");
+
+        return new CoopAssaulterPlayerImpactPlan(result.ProjectileId,
+            result.EnemyEntityId, result.Tick, playerId,
+            impact.Hit.SourcePath, impact.Hit.PartWeight, sourceDamage);
     }
 }

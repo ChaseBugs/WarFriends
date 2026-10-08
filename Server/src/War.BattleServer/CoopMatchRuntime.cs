@@ -1874,6 +1874,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         ArgumentNullException.ThrowIfNull(world);
         if (phase != BattlePhase.Running || assaulterWeapon == null ||
+            world.Scene != manifest.MapId ||
+            world.SceneSha256 != manifest.MapRevision ||
+            (diagnosticWorld != null &&
+                !ReferenceEquals(world, diagnosticWorld)) ||
             enemyBulletMask is not uint mask ||
             !infantryRoundIntents.TryGetValue(enemyEntityId,
                 out List<CoopInfantryRoundIntent>? rounds) ||
@@ -1925,6 +1929,34 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return null;
         return CoopAssaulterShieldImpactPlanner.FromDiagnostic(result,
             enemy, diagnosticWorld, combat, shieldPolicy);
+    }
+
+    /// <summary>
+    /// Keeps a diagnostic player hit tied to the admitted target. Damage and
+    /// no-damage rolls remain closed until collision is fully authoritative.
+    /// </summary>
+    internal CoopAssaulterPlayerImpactPlan? PlanDiagnosticPlayerImpact(
+        ulong projectileId)
+    {
+        if (diagnosticWorld == null)
+            return null;
+        CoopDiagnosticFlightResult? result = diagnosticFlightResults
+            .SingleOrDefault(row => row.ProjectileId == projectileId);
+        if (result == null)
+            return null;
+        BattleCoopEnemySpawn? enemy = enemySpawns.SingleOrDefault(
+            spawn => spawn.EntityId == result.EnemyEntityId);
+        if (enemy == null)
+            return null;
+        CoopAssaulterPlayerImpactPlan? plan =
+            CoopAssaulterPlayerImpactPlanner.FromDiagnostic(result,
+                enemy, combat);
+        if (plan == null ||
+            !participants.TryGetValue(plan.PlayerId,
+                out Participant? player) ||
+            !player.Admitted || !player.Ready || player.Dead)
+            return null;
+        return plan;
     }
 
     internal void AttachDiagnosticWorld(CoopPlayerShotCollisionWorld world)

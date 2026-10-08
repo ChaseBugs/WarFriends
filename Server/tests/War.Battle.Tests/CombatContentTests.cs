@@ -1952,6 +1952,31 @@ internal static class CombatContentTests
                 sourceShieldResult with { EnemyEntityId = 999 }, arrivalEnemy,
                 alliedShotWorld, enemyCombat, content.Shields) != null)
             throw new Exception("Diagnostic shield impact lost source ownership.");
+        CoopPlayerShotHit? bodyHit = alliedShotWorld.Trace(
+            diagnosticRayStart, Vector3.UnitZ, 4, 1u << 22,
+            idleAllies);
+        if (bodyHit?.PlayerId == null)
+            throw new Exception("Source allied idle pose has no diagnostic hit.");
+        var playerImpact = new BulletImpact(12346, string.Empty,
+            bodyHit.ToBulletCollision(), 1, arrivalEnemy.EntityId);
+        var playerResult = new CoopDiagnosticFlightResult(12346,
+            arrivalEnemy.EntityId, 1, "impact", playerImpact);
+        CoopAssaulterPlayerImpactPlan? playerPlan =
+            CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
+                playerResult, arrivalEnemy, enemyCombat);
+        if (playerPlan?.PlayerId != bodyHit.PlayerId ||
+            playerPlan.PartPath != bodyHit.PlayerPartPath ||
+            playerPlan.PartWeight != bodyHit.PartWeight ||
+            playerPlan.SourceDamage != expectedSourceDamage ||
+            arrivalRuntime.PlanDiagnosticPlayerImpact(12346) != null ||
+            CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
+                playerResult with { EnemyEntityId = 999 },
+                arrivalEnemy, enemyCombat) != null ||
+            CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
+                playerResult with { Impact = playerImpact with
+                    { Hit = covered.ToBulletCollision() } },
+                arrivalEnemy, enemyCombat) != null)
+            throw new Exception("Diagnostic player impact lost source ownership.");
         CoopAssignedEnemyDestination arrivalPoint = arrivalRuntime
             .EnemyDestination(arrivalEnemy.EntityId)!;
         ArmyNavMeshCorridor arrivalCorridor = infantryNavigation
@@ -2100,10 +2125,16 @@ internal static class CombatContentTests
         BulletFlight? enemyFlight = arrivalRuntime
             .CreateDiagnosticAssaulterFlight(arrivalEnemy.EntityId, 0,
                 alliedShotWorld);
+        var anotherSceneWorld = new CoopPlayerShotCollisionWorld(
+            shotScenes.Maps.First(map => map.Scene != coop.MapId),
+            spawnPoints.Maps.First(map => map.Scene != coop.MapId),
+            shotMeshes);
         if (enemyFlight?.EnemyEntityId != arrivalEnemy.EntityId ||
             enemyFlight.OwnerId != string.Empty ||
             enemyFlight.Position != origin ||
             enemyFlight.Finished ||
+            arrivalRuntime.CreateDiagnosticAssaulterFlight(
+                arrivalEnemy.EntityId, 0, anotherSceneWorld) != null ||
             arrivalRuntime.CreateDiagnosticAssaulterFlight(
                 arrivalEnemy.EntityId, 1, alliedShotWorld) != null)
             throw new Exception("Real co-op Assaulter round lacks a host-owned slow bullet.");
