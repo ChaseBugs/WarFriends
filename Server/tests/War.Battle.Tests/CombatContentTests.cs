@@ -1010,6 +1010,27 @@ internal static class CombatContentTests
         catch (InvalidDataException)
         {
         }
+        CoopBossPriorityCandidate[] priorityCandidates =
+        [
+            new("player", 0f, 1f, false, false),
+            new("low-danger", 2f, 1f, true, true),
+            new("wounded", 2f, 0.25f, true, true),
+            new("same-priority", 4f, 0.5f, true, true)
+        ];
+        string[] priorityOrder = CoopBossPriorityOrder.Sort(priorityCandidates)
+            .Select(candidate => candidate.EntityId).ToArray();
+        if (!priorityOrder.SequenceEqual(
+                ["wounded", "same-priority", "low-danger", "player"]))
+            throw new Exception("Boss priority order differs from Client danger/health sorting.");
+        try
+        {
+            _ = CoopBossPriorityOrder.Sort(
+                [priorityCandidates[1] with { HealthRatio = float.NaN }]);
+            throw new Exception("Invalid boss target health became priority authority.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         var firstAttackClock = new CoopBossAttackCadence(
             attacks.ForMission(4), 0, () => 0f);
         if (firstAttackClock.Advance(60) || firstAttackClock.WindowOpen ||
