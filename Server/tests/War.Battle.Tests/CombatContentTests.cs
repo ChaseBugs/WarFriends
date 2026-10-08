@@ -3359,6 +3359,63 @@ internal static class CombatContentTests
                 });
             return runtime;
         }
+        var movingShieldDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var movingShieldRuntime = new CoopMatchRuntime(shieldAllocation,
+            catalog, spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            enemyDestinations: movingShieldDestinations,
+            infantryNavigation: infantryNavigation,
+            shieldSources: new CoopShieldRuntimeSources(shieldStates,
+                content.Shields), playerWeaponContent: content,
+            chooseInfantryShotFraction: () => 0f,
+            chooseInfantryRepositionFraction: () => 0.999f,
+            chooseInfantryPlayer: _ => 0,
+            chooseInfantryShieldRoll: () => 0f,
+            chooseInfantryBatchSize: (min, max) =>
+                max > min ? max - 1 : min,
+            chooseInfantryRealShotRoll: () => 0f);
+        movingShieldRuntime.AttachDiagnosticWorld(alliedShotWorld);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+        {
+            if (!movingShieldRuntime.Admit(playerId) ||
+                movingShieldRuntime.Command(playerId, new MatchCommand
+                {
+                    CommandId = 1,
+                    Ready = new ReadyCommand
+                    {
+                        ManifestHash = movingShieldRuntime.ManifestHash
+                    }
+                }).Code != "ready")
+                throw new Exception(
+                    "Co-op shield flight fixture could not start its roster.");
+        }
+        movingShieldRuntime.Advance(movingShootTick - 3);
+        if (movingShieldRuntime.Command(firstPlayer, new MatchCommand
+            {
+                CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = 1 }
+            }).Code != "moving")
+            throw new Exception(
+                "Co-op shield flight fixture could not start the ally walk.");
+        movingShieldRuntime.Advance(walkingWindup.CallbackTick + 100);
+        CoopDiagnosticFlightResult[] barrierImpacts = movingShieldRuntime
+            .DiagnosticFlightResults().Where(result =>
+                result.Outcome == "impact" &&
+                result.Impact?.Hit.ColliderIndex == 1527).ToArray();
+        if (barrierImpacts.Length == 0 ||
+            !movingShieldRuntime.InfantryRoundIntents(
+                movingCoverEnemy.EntityId).Any(round =>
+                    round.Real && round.ShieldTarget) ||
+            barrierImpacts.Any(result =>
+                result.Impact?.Hit.ColliderLayer != 13 ||
+                movingShieldRuntime.PlanDiagnosticShieldImpact(
+                    result.ProjectileId) != null) ||
+            movingShieldRuntime.Snapshot().Shields.Any(shield =>
+                shield.Health != shield.MaxHealth))
+            throw new Exception(
+                "Static co-op barrier was mistaken for an allied shield hit.");
         var fakeRuntime = ReadyShotRuntime(() => 0.75f, () => 0.25f);
         fakeRuntime.AttachDiagnosticWorld(alliedShotWorld);
         fakeRuntime.Advance(expectedCrawlCallback + 1);
