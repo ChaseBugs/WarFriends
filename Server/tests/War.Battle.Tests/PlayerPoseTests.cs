@@ -16,7 +16,9 @@ internal static class PlayerPoseTests
         }
         var catalog = PlayerPoseCatalog.Load(path,sourceHash);
         count += RifleCoverTests.Run(catalog);
-        Check(catalog.ClipNames.Count == 65, "complete rifle, QBZ, shotgun, pistol-family, minigun, sniper and bazooka cover/run/idle clip set");
+        Check(catalog.ClipNames.Count == 67, "complete recovered cover, run, and idle clip set");
+        Check(catalog.Duration("grenade_idle") > 0 && catalog.Duration("grenadelauncher_idle") > 0,
+            "grenade and launcher idle clips have source durations");
         Check(new RifleCoverTimeline(catalog, 9).Selection.Name == "qbz_idle",
             "QBZ rifle starts from its recovered idle clip");
         Check(new RifleCoverTimeline(catalog, 13).Selection.Name == "qbz2_idle",

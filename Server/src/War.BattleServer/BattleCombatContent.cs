@@ -370,6 +370,10 @@ public sealed class BattleCombatContent
         if (id.StartsWith("Google2u.Bazooka_", StringComparison.Ordinal))
             return Bazookas?.CreateManifest(id, upgrade) ??
                 throw new InvalidDataException("Bazooka content is not configured.");
+        if (id.StartsWith("Google2u.Grenade_", StringComparison.Ordinal) ||
+            id.StartsWith("Google2u.GrenadeLauncher_", StringComparison.Ordinal))
+            return Grenades?.CreateManifest(id, upgrade) ??
+                throw new InvalidDataException("Grenade content is not configured.");
         if (id.StartsWith("Google2u.LMG_", StringComparison.Ordinal))
             return Lmgs?.CreateManifest(id, upgrade) ??
                 throw new InvalidDataException("LMG content is not configured.");

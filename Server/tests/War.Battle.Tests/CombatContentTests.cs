@@ -917,7 +917,9 @@ internal static class CombatContentTests
             sniperManifestPath: Path.Combine(directory,
                 "sniper-content-manifest.json"),
             bazookaManifestPath: Path.Combine(directory,
-                "bazooka-content-manifest.json"));
+                "bazooka-content-manifest.json"),
+            grenadeManifestPath: Path.Combine(directory,
+                "grenade-content-manifest.json"));
         (string WeaponId, string IdleClip)[] specialIdleWeapons =
         [
             ("Google2u.SniperRifle_MSR", "sniper_idle"),
@@ -925,7 +927,9 @@ internal static class CombatContentTests
             ("Google2u.Bazooka_RPG7", "bazooka_idle"),
             ("Google2u.Pistol_Berreta", "pistol_idle"),
             ("Google2u.Shotgun_Benelli", "shotgunner_idle"),
-            ("Google2u.AssaultRifle_AKS47U", "shotgunner_idle")
+            ("Google2u.AssaultRifle_AKS47U", "shotgunner_idle"),
+            ("Google2u.Grenade_FRAG", "grenade_idle"),
+            ("Google2u.GrenadeLauncher_M320", "grenadelauncher_idle")
         ];
         foreach ((string weaponId, string idleClip) in specialIdleWeapons)
         {
@@ -979,6 +983,19 @@ internal static class CombatContentTests
                     weaponId.StartsWith("Google2u.AssaultRifle_",
                         StringComparison.Ordinal))
                 throw new Exception($"Co-op {weaponId} reused rifle idle.");
+            if (weaponId is "Google2u.Grenade_FRAG" or
+                "Google2u.GrenadeLauncher_M320")
+            {
+                RiflePoseClip expectedWireClip = weaponId ==
+                    "Google2u.Grenade_FRAG"
+                    ? RiflePoseClip.GrenadeIdle
+                    : RiflePoseClip.GrenadeLauncherIdle;
+                RiflePoseState? wirePose = poseRuntime.Snapshot().Players
+                    .Single(player => player.PlayerId == switcher).RiflePose;
+                if (wirePose?.Layers.Count != 1 ||
+                    wirePose.Layers[0].Clip != expectedWireClip)
+                    throw new Exception($"Co-op {weaponId} lost its idle wire pose.");
+            }
         }
         if (switchingRuntime.Command(switcher, new MatchCommand { CommandId = 3,
                 SwitchWeapon = new SwitchWeaponCommand { Slot = 7 } }).Code !=

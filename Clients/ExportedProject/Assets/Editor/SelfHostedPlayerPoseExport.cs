@@ -63,7 +63,7 @@ public static class SelfHostedPlayerPoseExport
                 "player_look_right_sniper", "player_fire_right_sniper", "player_right_coverBack_sniper",
                 "sniper_run", "sniper_idle",
                 "bazooka_uncover_left", "bazooka_shoot_left", "bazooka_uncover_right", "bazooka_shoot_right",
-                "bazooka_run", "bazooka_idle" };
+                "bazooka_run", "bazooka_idle", "grenade_idle", "grenadelauncher_idle" };
             var clips = new List<object>();
             foreach (string name in names)
             {

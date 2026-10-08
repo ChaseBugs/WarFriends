@@ -32,7 +32,7 @@ public sealed partial class PlayerPoseCatalog
         "player_look_right_sniper", "player_fire_right_sniper", "player_right_coverBack_sniper",
         "sniper_run", "sniper_idle",
         "bazooka_uncover_left", "bazooka_shoot_left", "bazooka_uncover_right", "bazooka_shoot_right",
-        "bazooka_run", "bazooka_idle"];
+        "bazooka_run", "bazooka_idle", "grenade_idle", "grenadelauncher_idle"];
     private static readonly string[] ExpectedRifles = new[] { "AK47", "AK47Elite", "AKS47U", "Famas", "FamasElite", "G36", "G36Elite", "M16", "QBZ95", "QBZ95Elite", "SteyrAUG" }
         .Select(x=>"Google2u.AssaultRifle_"+x).ToArray();
     private PlayerPoseCatalog(string hash, string revision, Dictionary<string, Clip> clips)
@@ -92,7 +92,7 @@ public sealed partial class PlayerPoseCatalog
     public static PlayerPoseCatalog Load(string path, string expectedMainSceneHash, RifleBindingCatalog? bindings = null)
     {
         using var stream = File.OpenRead(path);
-        // The 65 reviewed clips include every frame's player rig and muzzles.
+        // The reviewed clips include every frame's player rig and muzzles.
         if (stream.Length is < 2 or > 48*1024*1024) throw new InvalidDataException("Pose artifact exceeds bound.");
         string revision = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(stream));
         stream.Position = 0;
