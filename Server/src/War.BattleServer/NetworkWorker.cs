@@ -139,9 +139,8 @@ public sealed class NetworkWorker : BackgroundService
             string.IsNullOrEmpty(sniperPath)?null:sniperPath,
             string.IsNullOrEmpty(bazookaPath)?null:bazookaPath,
             string.IsNullOrEmpty(grenadePath)?null:grenadePath);
-        if (!string.IsNullOrEmpty(manifestPath) && !string.IsNullOrEmpty(manifestDirectory)) throw new InvalidDataException("Choose a single manifest or a manifest directory.");
-        var files = !string.IsNullOrEmpty(manifestPath) ? new[] { manifestPath } :
-            !string.IsNullOrEmpty(manifestDirectory) ? Directory.EnumerateFiles(manifestDirectory, "*.json").Take(33).Order(StringComparer.Ordinal).ToArray() : [];
+        string[] files = StartupManifestFiles.ReadPaths(
+            manifestPath, manifestDirectory, maxMatches);
         var maps = string.IsNullOrEmpty(config["Battle:ContentPath"]) ? null : RecoveredBattleMap.Load(config["Battle:ContentPath"]!);
         match = new MatchRouter(files.Select(MatchManifest.Read), serverId, config["Battle:SigningKey"]!, maps,combat,
             config["Battle:PublicHost"] ?? "127.0.0.1",(uint)port,maxMatches);

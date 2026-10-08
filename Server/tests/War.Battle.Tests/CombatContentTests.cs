@@ -10459,6 +10459,28 @@ internal static class CombatContentTests
                 }).Build();
             Reject(() => BattleRuntimeConfigValidator.FromConfiguration(
                 malformedMtuSettings));
+            string manifestTestDirectory = Path.Combine(Path.GetTempPath(),
+                "war-battle-manifest-test-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(manifestTestDirectory);
+            try
+            {
+                for (int index = 0; index < 34; index++)
+                    File.WriteAllText(Path.Combine(manifestTestDirectory,
+                        $"match-{index:D2}.json"), "{}");
+
+                string[] startupFiles = StartupManifestFiles.ReadPaths(
+                    null, manifestTestDirectory, 40);
+                Check(startupFiles.Length == 34 &&
+                    Path.GetFileName(startupFiles[0]) == "match-00.json" &&
+                    Path.GetFileName(startupFiles[^1]) == "match-33.json",
+                    "startup loads every manifest within configured capacity");
+                Reject(() => StartupManifestFiles.ReadPaths(
+                    null, manifestTestDirectory, 32));
+            }
+            finally
+            {
+                Directory.Delete(manifestTestDirectory, recursive: true);
+            }
             Check(PacketMtuPolicy.Accept(600,1200)&&!PacketMtuPolicy.Accept(1401,1200)&&
                   !PacketMtuPolicy.Accept(600,500),"packet MTU policy is shared by transport ingress and adapters");
             TransportSecurityPolicy.ValidateSigningKey(Enumerable.Repeat((byte)1,32).ToArray());
