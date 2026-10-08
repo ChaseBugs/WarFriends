@@ -4,38 +4,57 @@ using System.Text.Json;
 
 namespace War.BattleServer;
 
-public sealed record PlayerShotTarget(int TransformFileId,int Type,string Path,Vector3 ReferencePosition,
-    string ParentPath,Vector3 LocalPosition,Quaternion LocalRotation);
+public sealed record PlayerShotTarget(
+    int TransformFileId, int Type, string Path, Vector3 ReferencePosition,
+    string ParentPath, Vector3 LocalPosition, Quaternion LocalRotation);
 
 /// <summary>Serialized gameplay target identities; reference positions are not animated hit authority.</summary>
 public sealed class PlayerShotTargetCatalog
 {
     private readonly IReadOnlyList<PlayerShotTarget> gameplay;
     public IReadOnlyList<PlayerShotTarget> Gameplay => gameplay;
-    private PlayerShotTargetCatalog(PlayerShotTarget[] rows)=>gameplay=Array.AsReadOnly(rows);
+    private PlayerShotTargetCatalog(PlayerShotTarget[] rows)
+    {
+        gameplay = Array.AsReadOnly(rows);
+    }
 
-    public PlayerShotTarget ReferenceNearest(int typeMask,Vector3 origin)
-        =>Nearest(typeMask,origin,row=>row.ReferencePosition);
+    public PlayerShotTarget ReferenceNearest(int typeMask, Vector3 origin) =>
+        Nearest(typeMask, origin, row => row.ReferencePosition);
 
     // Caller supplies positions from the host's current animated player pose.
     // The serialized target order breaks equal-distance ties as in the Client.
-    public PlayerShotTarget Nearest(int typeMask,Vector3 origin,Func<PlayerShotTarget,Vector3> position)
+    public PlayerShotTarget Nearest(int typeMask, Vector3 origin,
+        Func<PlayerShotTarget, Vector3> position)
     {
-        if(typeMask is <1 or >0xFFFFFF || !Finite(origin))throw new ArgumentOutOfRangeException(nameof(typeMask));
+        if (typeMask is < 1 or > 0xFFFFFF)
+            throw new ArgumentOutOfRangeException(nameof(typeMask));
+        if (!Finite(origin))
+            throw new ArgumentOutOfRangeException(nameof(origin));
         ArgumentNullException.ThrowIfNull(position);
-        PlayerShotTarget? nearest=null;
-        float distance=float.MaxValue;
-        foreach(var row in gameplay)
+        PlayerShotTarget? nearest = null;
+        float nearestDistance = float.MaxValue;
+        foreach (PlayerShotTarget target in gameplay)
         {
             // GameShootableEntity.GetShotTargets includes a target when all of its
             // own bits occur in the requested mask, preserving serialized order.
-            if((row.Type&typeMask)!=row.Type)continue;
-            var targetPosition=position(row);
-            if(!Finite(targetPosition))throw new InvalidDataException("Invalid posed player shot target.");
-            float candidate=Vector3.Distance(origin,targetPosition);
-            if(candidate<distance){nearest=row;distance=candidate;}
+            if ((target.Type & typeMask) != target.Type)
+                continue;
+
+            Vector3 targetPosition = position(target);
+            if (!Finite(targetPosition))
+                throw new InvalidDataException(
+                    "Invalid posed player shot target.");
+
+            float candidateDistance = Vector3.Distance(origin,
+                targetPosition);
+            if (candidateDistance < nearestDistance)
+            {
+                nearest = target;
+                nearestDistance = candidateDistance;
+            }
         }
-        return nearest??throw new InvalidDataException("No source target for requested type.");
+        return nearest ?? throw new InvalidDataException(
+            "No source target for requested type.");
     }
 
     public static PlayerShotTargetCatalog Load(string path,string expectedRevision,string sceneRevision)
