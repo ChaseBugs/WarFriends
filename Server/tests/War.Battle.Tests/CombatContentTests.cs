@@ -4573,6 +4573,20 @@ internal static class CombatContentTests
         MatchSnapshot completedKill = damagedRuntime.TerminalEvidenceSnapshot();
         CoopTerminalScoreValidator.ValidateSuccess(
             completedKill, coop, catalog, enemyCombat);
+        MatchSnapshot duplicateAutomaticTick = completedKill.Clone();
+        BattleCoopEnemySpawn[] automaticRows = duplicateAutomaticTick.Coop
+            .EnemySpawns.Where(enemy => !enemy.TimedEvent).Take(2).ToArray();
+        if (automaticRows.Length != 2)
+            throw new Exception("Kill fixture needs two automatic spawns.");
+        automaticRows[1].SpawnTick = automaticRows[0].SpawnTick;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                duplicateAutomaticTick, coop, catalog, enemyCombat);
+            throw new Exception(
+                "Two co-op automatic spawns shared one scheduler tick.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot duplicatedEnemy = completedKill.Clone();
         duplicatedEnemy.Coop.EnemySpawns.Add(
             duplicatedEnemy.Coop.EnemySpawns[0].Clone());

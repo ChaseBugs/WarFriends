@@ -170,6 +170,14 @@ internal static class CoopTerminalScoreValidator
                 throw new InvalidDataException(
                     "Co-op enemy spawn has invalid identity or time.");
 
+            // WaveManager makes only one automatic choice per scheduler tick.
+            // Timed events can share that tick, but must precede its choice.
+            if (!enemy.TimedEvent && earlierSpawns.Count > 0 &&
+                earlierSpawns[^1].SpawnTick == enemy.SpawnTick &&
+                !earlierSpawns[^1].TimedEvent)
+                throw new InvalidDataException(
+                    "Co-op mission spawned twice on one automatic tick.");
+
             ValidateSpawnCapacity(enemy, earlierSpawns, rule);
             ulong elapsedTicks = enemy.SpawnTick - snapshot.StartTick;
             if (enemy.TimedEvent)
