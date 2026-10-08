@@ -2274,16 +2274,22 @@ internal static class CombatContentTests
             "recovered-coop-scene-colliders.json");
         CoopSceneColliderCatalog catalog =
             CoopSceneColliderCatalog.Load(path, missions);
+        CoopMeshGeometryCatalog geometry = CoopMeshGeometryCatalog.Load(
+            Path.Combine(directory, "recovered-coop-mesh-geometry.json"), catalog);
         CoopSceneColliders desert = catalog.MapForMission(missions, 0);
         CoopSceneCollider[] all = catalog.Maps
             .SelectMany(map => map.Colliders).ToArray();
         if (catalog.Maps.Count != 5 || all.Length != 795 ||
+            geometry.Count != 147 || geometry.VertexCount != 14_885 ||
+            geometry.TriangleCount != 13_781 ||
             all.Count(row => row.ComponentType == "MeshCollider") != 654 ||
             all.Count(row => row.ComponentType == "BoxCollider") != 139 ||
             all.Count(row => row.ComponentType == "CapsuleCollider") != 2 ||
             all.Count(row => row.ComponentType == "MeshCollider" &&
                 row.Shape.MeshFileId == 0) != 54 ||
             desert.Scene != "Desert_New" || desert.Colliders.Count != 106 ||
+            all.Where(row => row.Shape.MeshFileId != 0).Any(row =>
+                geometry.Get(row.Shape.MeshGuid).Triangles.Count == 0) ||
             all.Any(row => row.TransformChain[0].FileId != row.TransformFileId))
             throw new Exception("Co-op scene collider source identities are incomplete.");
 
