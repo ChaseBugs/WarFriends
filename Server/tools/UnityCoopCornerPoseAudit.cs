@@ -164,6 +164,33 @@ public static class UnityCoopCornerPoseAudit
                     }).ToArray()
                 });
             }
+            string coverBackClip = (bool)corner["cornerRightSide"]
+                ? "player_right_coverBack3" : "player_left_coverBack3";
+            if (animation[coverBackClip] == null)
+                throw new InvalidOperationException("Missing source cover-back clip.");
+            var coverBackSamples = new List<object>();
+            foreach (int coverTick in new[] { 22, 23, 28, 35 })
+            {
+                float coverSeconds = (coverTick - 22) / 30f;
+                Sample(animation, "T_pose", 1f);
+                Sample(animation, coverBackClip, coverSeconds /
+                    animation[coverBackClip].length);
+                turn.Sample(1f, true);
+                Physics.SyncTransforms();
+                coverBackSamples.Add(new
+                {
+                    tick = coverTick,
+                    parts = colliders.Select(collider => new
+                    {
+                        path = PathOf(collider.transform),
+                        center = Values(collider.transform.TransformPoint(
+                            collider is BoxCollider box
+                                ? box.center
+                                : ((SphereCollider)collider).center)),
+                        rotation = Values(collider.transform.rotation)
+                    }).ToArray()
+                });
+            }
             File.WriteAllText(outputPath, JsonConvert.SerializeObject(new
             {
                 version = 1,
@@ -181,7 +208,9 @@ public static class UnityCoopCornerPoseAudit
                 lookClip,
                 uncoverSamples,
                 fireClip,
-                fireSamples
+                fireSamples,
+                coverBackClip,
+                coverBackSamples
             }, Formatting.Indented));
             Debug.Log("COOP_CORNER_POSE_AUDIT_PASSED samples=" +
                 samples.Count);

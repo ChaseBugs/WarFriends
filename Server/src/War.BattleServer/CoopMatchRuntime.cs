@@ -1868,6 +1868,44 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Samples the Client's cover-back clip after its strict 0.7-second
+    /// hide timer. This is visual evidence, not a verified hit target.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceCornerCoverBackHitboxes(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || enemyPoses == null ||
+            !infantryShotWindups.TryGetValue(entityId,
+                out CoopInfantryShotWindup? windup) ||
+            windup.AnimationClip is not
+                ("player_look_right3" or "player_look_left3"))
+            return [];
+        ulong coverStartTick = FirstTickAfterDelay(windup.StartTick,
+            CornerHideAfterSeconds);
+        if (tick < coverStartTick)
+            return [];
+        string coverClip = windup.AnimationClip == "player_look_right3"
+            ? "player_right_coverBack3" : "player_left_coverBack3";
+        float seconds = (tick - coverStartTick) /
+            (float)MatchManifest.TickRate;
+        if (seconds > enemyPoses.Clip(coverClip).Length)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0 &&
+            spawn.PoseTick == windup.StartTick + 9 &&
+            spawn.CurrentRotation != null);
+        if (enemy == null)
+            return [];
+        BattleJointRotation facing = enemy.CurrentRotation!;
+        Quaternion rotation = new(facing.X, facing.Y, facing.Z, facing.W);
+        Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        return enemyPoses.Place(coverClip, position, rotation,
+            seconds, $"coop/{entityId}/");
+    }
+
+    /// <summary>
     /// Places the recovered Assault Helicopter body and front glass at its
     /// current host pose. The five body meshes, body box, and front glass
     /// retain distinct damage-part identities.
@@ -2047,6 +2085,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             parts = PlaceCornerUncoverHitboxes(enemy.EntityId);
         if (parts.Count == 0)
             parts = PlaceCornerFireHitboxes(enemy.EntityId);
+        if (parts.Count == 0)
+            parts = PlaceCornerCoverBackHitboxes(enemy.EntityId);
         return parts.Select(part => new DynamicShotTarget(enemy.EntityId,
             0, 23, part, ArmyInfantry: true)).ToArray();
     }

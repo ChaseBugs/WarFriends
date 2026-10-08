@@ -597,7 +597,7 @@ internal static class CombatContentTests
         byte[] source = File.ReadAllBytes(path);
         string digest = Convert.ToHexStringLower(SHA256.HashData(source));
         if (digest !=
-            "c32d7fa3f1fc2e8a8c1b906cc8a3d7783e528aa8d43f9ce0641379f78107f230")
+            "3fe549e9239407aef66c72652d8722505555101d9084192db5c096794056a4c1")
             throw new Exception("Unity corner pose reference changed.");
 
         using JsonDocument document = JsonDocument.Parse(source);
@@ -741,6 +741,37 @@ internal static class CombatContentTests
                         $"Host corner fire collider differs from Unity at " +
                         $"tick {sampleTick}, part {index}: " +
                         $"{part.Center} versus {expectedCenter}.");
+            }
+        }
+        string coverBackClip = reference.GetProperty("coverBackClip")
+            .GetString()!;
+        if (coverBackClip != "player_right_coverBack3")
+            throw new Exception("Unity corner cover return lost its source side.");
+        foreach (JsonElement sample in reference.GetProperty(
+            "coverBackSamples").EnumerateArray())
+        {
+            int sampleTick = sample.GetProperty("tick").GetInt32();
+            IReadOnlyList<PlayerHitbox> placed = content.EnemyPoses.Place(
+                coverBackClip, position, turnTarget,
+                (sampleTick - 22) / (float)MatchManifest.TickRate);
+            JsonElement[] parts = sample.GetProperty("parts")
+                .EnumerateArray().ToArray();
+            if (parts.Length != 3 || placed.Count != parts.Length)
+                throw new Exception("Unity corner cover return lost collider parts.");
+            for (int index = 0; index < parts.Length; index++)
+            {
+                PlayerHitbox part = placed[index];
+                Vector3 expectedCenter = Vector(parts[index].GetProperty(
+                    "center"));
+                Quaternion expectedRotation = Rotation(parts[index]
+                    .GetProperty("rotation"));
+                if (part.SourcePath != parts[index].GetProperty("path")
+                        .GetString() ||
+                    Vector3.Distance(part.Center, expectedCenter) > 0.0002f ||
+                    1 - Math.Abs(Quaternion.Dot(part.Rotation,
+                        expectedRotation)) > 0.00002f)
+                    throw new Exception(
+                        "Host corner cover-back collider differs from Unity.");
             }
         }
     }
@@ -3176,9 +3207,21 @@ internal static class CombatContentTests
             cornerRuntime.Advance(coverWindup.StartTick + 22);
             if (cornerRuntime.PlaceCornerFireHitboxes(
                     cornerEnemy.EntityId).Count != 0 ||
+                cornerRuntime.PlaceCornerCoverBackHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
                 !cornerRuntime.CurrentEnemyCollisionFrame()
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception("Co-op corner fire continued into cover return.");
+            cornerRuntime.Advance(coverWindup.StartTick + 35);
+            if (cornerRuntime.PlaceCornerCoverBackHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception("Co-op corner cover return ended too early.");
+            cornerRuntime.Advance(coverWindup.StartTick + 36);
+            if (cornerRuntime.PlaceCornerCoverBackHitboxes(
+                    cornerEnemy.EntityId).Count != 0)
+                throw new Exception("Co-op corner cover return outlived its clip.");
         }
 
         // Flip only the test point's exposed side when needed so this
