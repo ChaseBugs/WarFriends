@@ -407,6 +407,48 @@ internal static class CombatContentTests
             Players = duel.Players.Select(player => player with { Fraction = 2 }).ToArray()
         };
         MatchManifest.Validate(coop);
+        MatchManifest shieldAllocation = coop with
+        {
+            SceneMasterPlayerId = coop.Players[1].PlayerId,
+            Players = coop.Players.Select((player, index) => player with
+            {
+                ShieldLevel = index + 2,
+                PlayerLevel = index + 2
+            }).ToArray()
+        };
+        MatchManifest.Validate(shieldAllocation);
+        if (CoopShieldRankResolver.AlliedRank(shieldAllocation) != 3 ||
+            CoopShieldRankResolver.AlliedRank(shieldAllocation with
+            {
+                SceneMasterPlayerId = coop.Players[0].PlayerId
+            }) != 2)
+            throw new Exception("Co-op allied shields lost the scene master's rank.");
+        MatchManifest shieldBossAllocation = shieldAllocation with
+        {
+            MissionIndex = 14,
+            MapId = catalog.MapForMission(14).Scene,
+            MapRevision = catalog.MapForMission(14).SceneSha256,
+            DurationSeconds = catalog.Get(14).TimeSeconds
+        };
+        MatchManifest.Validate(shieldBossAllocation);
+        IReadOnlyList<ShieldMutation> initialShields =
+            CoopShieldRankResolver.InitialAlliedShields(
+                shieldBossAllocation, shieldStates, content.Shields, 4);
+        float expectedMaximum = content.Shields.Health(3) * 0.8f;
+        if (initialShields.Count != 4 ||
+            initialShields.Any(shield => shield.OwnerFraction != 2 ||
+                shield.CoverIndex is < 4 or > 7 ||
+                shield.MaxHealth != expectedMaximum ||
+                shield.Health != expectedMaximum || shield.Destroyed))
+            throw new Exception("Boss shield starts differ from ordered mission overrides.");
+        try
+        {
+            _ = CoopShieldRankResolver.AlliedRank(coop);
+            throw new Exception("Co-op shields accepted an unknown scene master.");
+        }
+        catch (InvalidDataException)
+        {
+        }
 
         var router = new MatchRouter([], coop.ServerId,
             Convert.ToBase64String(new byte[32]));
