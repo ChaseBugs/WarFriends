@@ -101,7 +101,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
     }
 
-    private sealed record SettledRiflePose(PlayerAimPose Pose,
+    private sealed record SettledWeaponPose(PlayerAimPose Pose,
         string WeaponId);
 
     private readonly MatchManifest manifest;
@@ -143,6 +143,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
     private readonly CoopAssaulterQueueCatalog? assaulterQueue;
     private readonly PlayerPoseCatalog? playerPoses;
+    private readonly WeaponBindingGraphCatalog? playerWeaponBindings;
     private readonly uint? enemyBulletMask;
     private readonly PlayerShotTargetCatalog? playerShotTargets;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -314,6 +315,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;
         assaulterQueue = playerWeaponContent?.CoopAssaulterQueue;
         playerPoses = playerWeaponContent?.Poses;
+        playerWeaponBindings = playerWeaponContent?.AllWeaponBindings;
         enemyBulletMask = playerWeaponContent?.Bindings.BulletMask(1);
         playerShotTargets = playerWeaponContent?.PlayerShotTargets;
         assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
@@ -494,7 +496,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ulong entityId = plan.EnemyEntityId;
         if (playerShotTargets == null ||
             !participants.TryGetValue(plan.PlayerId, out Participant? player) ||
-            PlaceSettledRiflePose(player) is not SettledRiflePose settled)
+            PlaceSettledWeaponPose(player) is not SettledWeaponPose settled)
             return null;
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.DeathTick == 0 &&
@@ -522,7 +524,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             tick < arrival.FirstShootEligibleTick ||
             !participants.TryGetValue(playerId, out Participant? player) ||
             !player.Admitted || !player.Ready || player.Dead ||
-            PlaceSettledRiflePose(player) == null)
+            PlaceSettledWeaponPose(player) == null)
             return null;
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.DeathTick == 0 &&
@@ -1775,15 +1777,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
-    /// Recovers a settled ally's source rifle idle pose at its current cover.
+    /// Recovers a settled ally's source idle pose at its current cover.
     /// PlayerController finishes its position and rotation tweens and calls
     /// SoldierAnimationController.Idle after arriving. The extra 30 ticks
     /// leave those transitions out of this diagnostic collision window.
     /// </summary>
-    private SettledRiflePose? PlaceSettledRiflePose(Participant player)
+    private SettledWeaponPose? PlaceSettledWeaponPose(Participant player)
     {
         if (phase != BattlePhase.Running || playerPoses == null ||
-            PlayerWeapons == null ||
+            PlayerWeapons == null || playerWeaponBindings == null ||
             !player.Admitted || !player.Ready || player.Dead ||
             player.Route != null || player.Weapons == null ||
             player.Weapons.HasFiredAnyShot ||
@@ -1795,34 +1797,48 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         int slot = player.Weapons.ActiveSlot;
         CoopPlayerWeapon weapon = PlayerWeapons.ForPlayer(player.PlayerId)
             .Single(candidate => candidate.Slot == slot);
-        if (!weapon.Weapon.SourceId.StartsWith(
-                "Google2u.AssaultRifle_", StringComparison.Ordinal))
+        string weaponId = weapon.Weapon.SourceId;
+        int family = playerWeaponBindings.Get(weaponId).AnimationFamily;
+        string? idleClip = family switch
+        {
+            0 when weaponId.StartsWith("Google2u.AssaultRifle_",
+                StringComparison.Ordinal) => "idle",
+            2 when weaponId.StartsWith("Google2u.Bazooka_",
+                StringComparison.Ordinal) => "bazooka_idle",
+            4 when weaponId == "Google2u.LMG_Minigun" => "minigun_idle",
+            10 when weaponId.StartsWith("Google2u.SniperRifle_",
+                StringComparison.Ordinal) => "sniper_idle",
+            _ => null
+        };
+        if (idleClip == null)
             return null;
 
         CoopPlayerAnchor cover = playerPositions[player.CoverIndex];
         if (cover.SourceRotation is not Quaternion rotation)
             return null;
         PlayerAimPose idlePose = playerPoses.SampleBlended(
-            "idle", 0, true, "idle", 0, true, 0,
+            idleClip, 0, true, idleClip, 0, true, 0,
             Quaternion.Identity).Place(cover.Position, rotation);
-        return new SettledRiflePose(idlePose,
-            weapon.Weapon.SourceId);
+        return new SettledWeaponPose(idlePose, weaponId);
     }
 
     internal RifleMuzzlePose? PlaceIdlePlayerMuzzle(string playerId)
     {
         if (!participants.TryGetValue(playerId, out Participant? player))
             return null;
-        SettledRiflePose? settled = PlaceSettledRiflePose(player);
-        return settled?.Pose.Muzzle(settled.WeaponId);
+        SettledWeaponPose? settled = PlaceSettledWeaponPose(player);
+        if (settled == null || !settled.WeaponId.StartsWith(
+                "Google2u.AssaultRifle_", StringComparison.Ordinal))
+            return null;
+        return settled.Pose.Muzzle(settled.WeaponId);
     }
 
     /// <summary>
-    /// Places both allies in a source rifle idle pose for an isolated ray.
+    /// Places both allies in source-backed idle poses for an isolated ray.
     /// After a cover move, PlayerController finishes a 0.3-second position
     /// tween, a 0.5-second rotation tween, and SoldierAnimationController
     /// crossfades to idle. Wait a full second after the host route ends.
-    /// Moving, firing, dead, or non-rifle poses remain unavailable.
+    /// Moving, firing, dead, or unsampled weapon poses remain unavailable.
     /// </summary>
     internal IReadOnlyList<CollisionPlayer>? PlaceIdleAlliedCollisionPoses()
     {
@@ -1834,7 +1850,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         foreach (Participant player in manifest.Players.Select(
             definition => participants[definition.PlayerId]))
         {
-            SettledRiflePose? settled = PlaceSettledRiflePose(player);
+            SettledWeaponPose? settled = PlaceSettledWeaponPose(player);
             if (settled == null)
                 return null;
             // TagsAndLayers.GetFractionBulletLayer(Allies, false) is 22.

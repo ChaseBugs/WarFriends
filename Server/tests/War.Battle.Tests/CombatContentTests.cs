@@ -898,41 +898,71 @@ internal static class CombatContentTests
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == partner).ActiveWeaponSlot != 0)
             throw new Exception("Only the signed ally switched to the second source rifle.");
-        const string sniperId = "Google2u.SniperRifle_MSR";
-        BattleCombatContent sniperContent =
-            LoadCoopBossWeaponContent(directory);
-        WeaponManifest sniperWeapon = sniperContent.CreateCoopWeaponManifest(
-            sniperId, 0);
-        int sniperIndex = sniperContent.AllWeaponBindings.Get(
-            sniperId).InventoryIndex;
-        MatchManifest sniperSlots = twoWeapons with
+        BattleCombatContent specialPoseContent = BattleCombatContent.Load(
+            Path.Combine(directory, "combat-content-manifest.json"),
+            minigunManifestPath: Path.Combine(directory,
+                "minigun-content-manifest.json"),
+            sniperManifestPath: Path.Combine(directory,
+                "sniper-content-manifest.json"),
+            bazookaManifestPath: Path.Combine(directory,
+                "bazooka-content-manifest.json"));
+        (string WeaponId, string IdleClip)[] specialIdleWeapons =
+        [
+            ("Google2u.SniperRifle_MSR", "sniper_idle"),
+            ("Google2u.LMG_Minigun", "minigun_idle"),
+            ("Google2u.Bazooka_RPG7", "bazooka_idle")
+        ];
+        foreach ((string weaponId, string idleClip) in specialIdleWeapons)
         {
-            Players = twoWeapons.Players.Select((player, index) => index == 0
-                ? player with
-                {
-                    WeaponSlots =
-                    [
-                        player.WeaponSlots![0],
-                        new WeaponSlotManifest(1, sniperIndex,
-                            sniperWeapon, 0)
-                    ]
-                }
-                : player).ToArray()
-        };
-        var sniperPoseRuntime = new CoopMatchRuntime(sniperSlots, catalog,
-            spawnPoints, routes, enemyCombat,
-            playerWeaponContent: sniperContent);
-        sniperPoseRuntime.Admit(switcher);
-        sniperPoseRuntime.Admit(partner);
-        var sniperReady = new MatchCommand { CommandId = 1,
-            Ready = new ReadyCommand { ManifestHash = sniperPoseRuntime.ManifestHash } };
-        sniperPoseRuntime.Command(switcher, sniperReady);
-        sniperPoseRuntime.Command(partner, sniperReady);
-        if (sniperPoseRuntime.PlaceIdleAlliedCollisionPoses() == null ||
-            sniperPoseRuntime.Command(switcher, selectSecond).Code !=
-                "weapon-selected" ||
-            sniperPoseRuntime.PlaceIdleAlliedCollisionPoses() != null)
-            throw new Exception("A switched sniper reused the rifle hitbox pose.");
+            WeaponManifest specialWeapon = specialPoseContent
+                .CreateCoopWeaponManifest(weaponId, 0);
+            int inventoryIndex = specialPoseContent.AllWeaponBindings
+                .Get(weaponId).InventoryIndex;
+            MatchManifest specialSlots = twoWeapons with
+            {
+                Players = twoWeapons.Players.Select((player, index) =>
+                    index == 0 ? player with
+                    {
+                        WeaponSlots =
+                        [
+                            player.WeaponSlots![0],
+                            new WeaponSlotManifest(1, inventoryIndex,
+                                specialWeapon, 0)
+                        ]
+                    } : player).ToArray()
+            };
+            var poseRuntime = new CoopMatchRuntime(specialSlots, catalog,
+                spawnPoints, routes, enemyCombat,
+                playerWeaponContent: specialPoseContent);
+            poseRuntime.Admit(switcher);
+            poseRuntime.Admit(partner);
+            var ready = new MatchCommand { CommandId = 1,
+                Ready = new ReadyCommand
+                { ManifestHash = poseRuntime.ManifestHash } };
+            poseRuntime.Command(switcher, ready);
+            poseRuntime.Command(partner, ready);
+            if (poseRuntime.PlaceIdleAlliedCollisionPoses() == null ||
+                poseRuntime.Command(switcher, selectSecond).Code !=
+                    "weapon-selected")
+                throw new Exception($"Co-op {weaponId} switch was rejected.");
+
+            IReadOnlyList<CollisionPlayer>? allies =
+                poseRuntime.PlaceIdleAlliedCollisionPoses();
+            if (allies?.Count != 2)
+                throw new Exception($"Co-op {weaponId} lacks an idle pose.");
+            CoopPlayerAnchor coverAnchor = spawnPoints
+                .MapForMission(catalog, 0).PlayerPositions.Single(anchor =>
+                    anchor.Position == allies[0].Pose.RootPosition);
+            PlayerCollisionModel expectedPose = specialPoseContent.Poses
+                .SampleBlended(idleClip, 0, true,
+                    idleClip, 0, true, 0, Quaternion.Identity)
+                .Place(coverAnchor.Position,
+                    coverAnchor.SourceRotation!.Value).Collision;
+            if (allies[0].Pose.Parts[0].Center !=
+                    expectedPose.Parts[0].Center ||
+                poseRuntime.PlaceIdlePlayerMuzzle(switcher) != null)
+                throw new Exception($"Co-op {weaponId} reused rifle idle.");
+        }
         if (switchingRuntime.Command(switcher, new MatchCommand { CommandId = 3,
                 SwitchWeapon = new SwitchWeaponCommand { Slot = 7 } }).Code !=
             "weapon-slot-unavailable" ||
