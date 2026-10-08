@@ -1520,6 +1520,66 @@ string multiOutboxPath=Path.Combine(Path.GetTempPath(),"war-multi-udp-"+Guid.New
 var multiConfig=new ConfigurationBuilder().AddConfiguration(config)
     .AddInMemoryCollection(new Dictionary<string,string?>{
         ["Battle:MatchManifestPath"]="",["Battle:ResultOutboxPath"]=multiOutboxPath}).Build();
+string churnOutboxPath = Path.Combine(Path.GetTempPath(),
+    "war-endpoint-churn-" + Guid.NewGuid().ToString("N"));
+var churnConfig = new ConfigurationBuilder().AddConfiguration(multiConfig)
+    .AddInMemoryCollection(new Dictionary<string, string?>
+    {
+        ["Battle:ResultOutboxPath"] = churnOutboxPath
+    }).Build();
+using (var churnWorker = new NetworkWorker(churnConfig,
+    BattleRuntimeConfigValidator.FromConfiguration(churnConfig),
+    logs.CreateLogger<NetworkWorker>(),
+    new SenderEndpointRegistry(capacity: 2, idleTicks: 60)))
+{
+    await churnWorker.StartAsync(CancellationToken.None);
+    try
+    {
+        for (int attempt = 0; attempt < 100 && !churnWorker.IsReady; attempt++)
+            await Task.Delay(10);
+        Check(churnWorker.IsReady,
+            "endpoint churn probe starts a real UDP Worker");
+
+        using var firstPeer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        using var secondPeer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        using var thirdPeer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        byte[] churnProbe = PacketCodec.Encode(new Packet
+        {
+            Version = 1, SessionId = 9001, Sequence = 1,
+            Ping = new Ping { ClientTime = 1 }
+        }, Enumerable.Repeat((byte)7, 32).ToArray());
+        var churnEndpoint = new IPEndPoint(IPAddress.Loopback, port);
+
+        await firstPeer.SendAsync(churnProbe, churnEndpoint);
+        await secondPeer.SendAsync(churnProbe, churnEndpoint);
+        for (int attempt = 0; attempt < 100 &&
+            churnWorker.Metrics.Handled < 2; attempt++)
+            await Task.Delay(10);
+        Check(churnWorker.Metrics.Handled >= 2,
+            "two distinct UDP senders occupy the live rate registry");
+
+        await thirdPeer.SendAsync(churnProbe, churnEndpoint);
+        for (int attempt = 0; attempt < 100 &&
+            churnWorker.Metrics.EndpointLimitDrops == 0; attempt++)
+            await Task.Delay(10);
+        Check(churnWorker.Metrics.EndpointLimitDrops == 1,
+            "a third live sender is rejected while the registry is full");
+
+        await Task.Delay(2200);
+        await thirdPeer.SendAsync(churnProbe, churnEndpoint);
+        for (int attempt = 0; attempt < 100 &&
+            churnWorker.Metrics.Handled < 3; attempt++)
+            await Task.Delay(10);
+        Check(churnWorker.Metrics.Handled >= 3 &&
+              churnWorker.Metrics.EndpointLimitDrops == 1,
+            "a new live UDP sender enters after idle entries expire");
+    }
+    finally
+    {
+        await churnWorker.StopAsync(CancellationToken.None);
+    }
+}
+Directory.Delete(churnOutboxPath, recursive: true);
 using(var multiWorker=new NetworkWorker(multiConfig,logs.CreateLogger<NetworkWorker>()))
 {
     var multiPeers=new List<UdpClient>();

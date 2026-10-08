@@ -31,7 +31,7 @@ public sealed class NetworkWorker : BackgroundService
     private readonly Channel<Datagram> incoming = Channel.CreateBounded<Datagram>(new BoundedChannelOptions(512) { SingleReader = true, SingleWriter = true, FullMode = BoundedChannelFullMode.Wait });
     private readonly object incomingGate = new();
     private readonly Dictionary<IPEndPoint,int> pendingByEndpoint = [];
-    private readonly SenderEndpointRegistry senderEndpoints = new();
+    private readonly SenderEndpointRegistry senderEndpoints;
     private Dictionary<ulong,IPEndPoint> activeMatchEndpoints = [];
     private long receivedDatagrams,handledDatagrams,malformedDrops,unownedDrops,
         endpointLimitDrops,queueFullDrops,tickBacklogs;
@@ -105,9 +105,16 @@ public sealed class NetworkWorker : BackgroundService
     public NetworkWorker(IConfiguration config, ILogger<NetworkWorker> logger)
         : this(config, ResolveRuntime(config), logger) { }
 
-    public NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime, ILogger<NetworkWorker> logger)
+    public NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
+        ILogger<NetworkWorker> logger)
+        : this(config, runtime, logger, new SenderEndpointRegistry()) { }
+
+    internal NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
+        ILogger<NetworkWorker> logger, SenderEndpointRegistry senderEndpoints)
     {
         this.logger = logger;
+        this.senderEndpoints = senderEndpoints ??
+            throw new ArgumentNullException(nameof(senderEndpoints));
         tickets = new BattleTickets(config["Battle:SigningKey"] ?? throw new InvalidOperationException("Set Battle__SigningKey in BOTH processes."));
         serverId = config["Battle:ServerId"] ?? "local-1";
         runtime=BattleRuntimeConfigValidator.ValidateAndFreeze(runtime);
