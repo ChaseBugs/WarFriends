@@ -99,7 +99,7 @@ public sealed class CoopSceneColliderCatalog
             new ReadOnlyCollection<CoopSceneCollider>(colliders));
     }
 
-    private static CoopSceneCollider ReadCollider(JsonElement row)
+    internal static CoopSceneCollider ReadCollider(JsonElement row)
     {
         RequireFields(row, "componentFileId", "componentType",
             "gameObjectFileId", "transformFileId", "gameObjectName",
@@ -113,7 +113,8 @@ public sealed class CoopSceneColliderCatalog
         string kind = row.GetProperty("componentType").GetString() ?? "";
         if (name.Length is < 1 or > 128 || name.Any(char.IsControl) ||
             layer is < 0 or > 31 || kind is not
-                ("MeshCollider" or "BoxCollider" or "CapsuleCollider"))
+                ("MeshCollider" or "BoxCollider" or "CapsuleCollider" or
+                 "SphereCollider"))
             throw new InvalidDataException("Invalid co-op collider identity.");
 
         JsonElement chainRows = row.GetProperty("transformChain");
@@ -176,12 +177,21 @@ public sealed class CoopSceneColliderCatalog
             return new CoopColliderShape(ReadVector(row.GetProperty("center")),
                 size, 0, 0, 0, 0, "", false);
         }
+        if (kind == "SphereCollider")
+        {
+            RequireFields(row, "radius", "center");
+            float sphereRadius = row.GetProperty("radius").GetSingle();
+            if (!float.IsFinite(sphereRadius) || sphereRadius <= 0)
+                throw new InvalidDataException("Invalid co-op sphere collider.");
+            return new CoopColliderShape(ReadVector(row.GetProperty("center")),
+                default, sphereRadius, 0, 0, 0, "", false);
+        }
         RequireFields(row, "radius", "height", "direction", "center");
         float radius = row.GetProperty("radius").GetSingle();
         float height = row.GetProperty("height").GetSingle();
         int direction = row.GetProperty("direction").GetInt32();
         if (!float.IsFinite(radius) || !float.IsFinite(height) ||
-            radius <= 0 || height < 2 * radius || direction is < 0 or > 2)
+            radius <= 0 || height <= 0 || direction is < 0 or > 2)
             throw new InvalidDataException("Invalid co-op capsule collider.");
         return new CoopColliderShape(ReadVector(row.GetProperty("center")),
             default, radius, height, direction, 0, "", false);

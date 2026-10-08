@@ -71,6 +71,7 @@ internal static class CombatContentTests
         int skillShotAssertions = VerifyCoopSkillShotScores(skillShots);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int colliderAssertions = VerifyCoopSceneColliders(directory, catalog);
+        int prefabColliderAssertions = VerifyCoopPrefabColliders(directory);
         int nativeRayAssertions = VerifyCoopNativeSceneRays(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
@@ -101,6 +102,7 @@ internal static class CombatContentTests
             return 5 + skillShotAssertions + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
                 allocationAssertions + mapAssertions + colliderAssertions +
+                prefabColliderAssertions +
                 nativeRayAssertions + navMeshAssertions +
                 routeAssertions + botAssertions + bossSpawnAssertions;
         }
@@ -2312,6 +2314,55 @@ internal static class CombatContentTests
             catch (InvalidDataException)
             {
                 return 795;
+            }
+        }
+        finally
+        {
+            File.Delete(temporaryPath);
+        }
+    }
+
+    private static int VerifyCoopPrefabColliders(string directory)
+    {
+        string path = Path.Combine(directory,
+            "recovered-coop-prefab-colliders.json");
+        CoopPrefabColliderCatalog catalog = CoopPrefabColliderCatalog.Load(path);
+        CoopSceneCollider[] all = catalog.Prefabs
+            .SelectMany(prefab => prefab.Colliders).ToArray();
+        if (catalog.Prefabs.Count != 32 ||
+            catalog.NetworkEntries.Count != 31 || all.Length != 128 ||
+            all.Count(row => row.ComponentType == "MeshCollider") != 8 ||
+            all.Count(row => row.ComponentType == "BoxCollider") != 78 ||
+            all.Count(row => row.ComponentType == "CapsuleCollider") != 31 ||
+            all.Count(row => row.ComponentType == "SphereCollider") != 11 ||
+            all.Count(row => row.Enabled) != 117 ||
+            all.Count(row => row.Trigger) != 24 ||
+            all.Count(row => row.ActiveInHierarchy) != 128 ||
+            catalog.Prefabs.Sum(prefab => prefab.WheelColliderCount) != 14 ||
+            all.Count(row => row.ComponentType == "MeshCollider" &&
+                row.Shape.MeshFileId == 0) != 2 ||
+            catalog.ForPoolField("enemy").Colliders.Count != 7 ||
+            catalog.ForPoolField("assaultHelicopter").Colliders.Count != 11 ||
+            catalog.ForPoolField("network:MineAmmo").Colliders.Count != 2 ||
+            catalog.ForPoolField("transporter").WheelColliderCount != 6 ||
+            catalog.NetworkEntries[0].PrefabField != "enemy")
+            throw new Exception("Battle prefab collider inventory changed.");
+
+        string temporaryPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-prefabs-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode altered = JsonNode.Parse(File.ReadAllText(path))!;
+            altered["prefabs"]![0]!["colliders"]![0]!["trigger"] = true;
+            File.WriteAllText(temporaryPath, altered.ToJsonString());
+            try
+            {
+                _ = CoopPrefabColliderCatalog.Load(temporaryPath);
+                throw new Exception("A changed battle prefab collider was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return all.Length;
             }
         }
         finally

@@ -133,6 +133,8 @@ public sealed class CoopNativeSceneRaycaster
                 shape.Size * 0.5f, maxDistance),
             "CapsuleCollider" => RaycastCapsule(origin - shape.Center, ray,
                 shape.Radius, shape.Height, shape.Direction, maxDistance),
+            "SphereCollider" => RaycastSphere(origin - shape.Center, ray,
+                shape.Radius, maxDistance),
             _ => throw new InvalidDataException("Unknown co-op collider shape.")
         };
     }
@@ -204,7 +206,9 @@ public sealed class CoopNativeSceneRaycaster
         Vector3 origin, Vector3 ray, float radius, float height,
         int axis, float maxDistance)
     {
-        float segmentHalf = height * 0.5f - radius;
+        // Four recovered Humvee wheel capsules serialize a height slightly
+        // below their diameter. Unity treats those as rounded spheres.
+        float segmentHalf = MathF.Max(height, 2 * radius) * 0.5f - radius;
         float axialOrigin = Axis(origin, axis);
         float axialRay = Axis(ray, axis);
         Vector3 flatOrigin = SetAxis(origin, axis, 0);
@@ -249,6 +253,22 @@ public sealed class CoopNativeSceneRaycaster
                 nearest = distance;
         }
         return nearest;
+    }
+
+    private static float? RaycastSphere(
+        Vector3 origin, Vector3 ray, float radius, float maxDistance)
+    {
+        float radiusSquared = radius * radius;
+        if (origin.LengthSquared() < radiusSquared)
+            return null;
+        float a = ray.LengthSquared();
+        float b = 2 * Vector3.Dot(origin, ray);
+        float c = origin.LengthSquared() - radiusSquared;
+        float discriminant = b * b - 4 * a * c;
+        if (discriminant < 0)
+            return null;
+        float distance = (-b - MathF.Sqrt(discriminant)) / (2 * a);
+        return distance > 0 && distance <= maxDistance ? distance : null;
     }
 
     private static float Axis(Vector3 value, int axis)
