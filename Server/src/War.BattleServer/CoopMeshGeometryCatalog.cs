@@ -21,6 +21,10 @@ public sealed class CoopMeshGeometryCatalog
         "baece6f3eaffd22ad97465205c20c0755771ead83dcc5ae24210e724b911dcb7";
     private const string ColliderSourceSha256 =
         "3f7fb2f2a3d0e90dda9796ecb79f8233964e52cdcd5c5e3350c2a08f92cdb20d";
+    private const string PrefabSourceSha256 =
+        "e0dce5662aaf15d2287a0daa2c308759367d207dd5574cf56070b67abf0b560a";
+    private const string PrefabColliderSourceSha256 =
+        "4ab361718d06ca8c0ecd9d0bb1553ef4b2d3e1e1a22539f7cdcfc35e6d3bda70";
     private readonly IReadOnlyDictionary<string, CoopMeshGeometry> meshes;
 
     public int Count => meshes.Count;
@@ -47,8 +51,41 @@ public sealed class CoopMeshGeometryCatalog
         string path, CoopSceneColliderCatalog colliders)
     {
         ArgumentNullException.ThrowIfNull(colliders);
+        string[] expectedGuids = colliders.Maps
+            .SelectMany(map => map.Colliders)
+            .Where(collider => collider.ComponentType == "MeshCollider" &&
+                collider.Shape.MeshFileId != 0)
+            .Select(collider => collider.Shape.MeshGuid)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        return LoadExpected(path, SourceSha256, ColliderSourceSha256,
+            expectedGuids, 147, 14_885, 13_781);
+    }
+
+    public static CoopMeshGeometryCatalog LoadPrefabs(
+        string path, CoopPrefabColliderCatalog colliders)
+    {
+        ArgumentNullException.ThrowIfNull(colliders);
+        string[] expectedGuids = colliders.Prefabs
+            .SelectMany(prefab => prefab.Colliders)
+            .Where(collider => collider.ComponentType == "MeshCollider" &&
+                collider.Shape.MeshFileId != 0)
+            .Select(collider => collider.Shape.MeshGuid)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        return LoadExpected(path, PrefabSourceSha256,
+            PrefabColliderSourceSha256, expectedGuids, 6, 176, 284);
+    }
+
+    private static CoopMeshGeometryCatalog LoadExpected(
+        string path, string artifactSha256, string colliderSha256,
+        string[] expectedGuids, int expectedMeshes,
+        int expectedVertices, int expectedTriangles)
+    {
         byte[] source = File.ReadAllBytes(path);
-        if (Convert.ToHexStringLower(SHA256.HashData(source)) != SourceSha256)
+        if (Convert.ToHexStringLower(SHA256.HashData(source)) != artifactSha256)
             throw new InvalidDataException("Co-op mesh geometry differs from Unity export.");
         using JsonDocument document = JsonDocument.Parse(source);
         JsonElement root = document.RootElement;
@@ -58,19 +95,11 @@ public sealed class CoopMeshGeometryCatalog
             root.GetProperty("client").GetString() != "1.4.0" ||
             root.GetProperty("unity").GetString() != "2018.3.0f2" ||
             root.GetProperty("colliderSourceSha256").GetString() !=
-                ColliderSourceSha256)
+                colliderSha256)
             throw new InvalidDataException("Co-op mesh source provenance changed.");
-
-        string[] expectedGuids = colliders.Maps
-            .SelectMany(map => map.Colliders)
-            .Where(collider => collider.ComponentType == "MeshCollider" &&
-                collider.Shape.MeshFileId != 0)
-            .Select(collider => collider.Shape.MeshGuid)
-            .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
         JsonElement rows = root.GetProperty("meshes");
-        if (expectedGuids.Length != 147 || rows.ValueKind != JsonValueKind.Array ||
+        if (expectedGuids.Length != expectedMeshes ||
+            rows.ValueKind != JsonValueKind.Array ||
             rows.GetArrayLength() != expectedGuids.Length)
             throw new InvalidDataException("Co-op mesh source set is incomplete.");
 
@@ -86,7 +115,8 @@ public sealed class CoopMeshGeometryCatalog
             vertexCount = checked(vertexCount + mesh.Vertices.Count);
             triangleCount = checked(triangleCount + mesh.Triangles.Count / 3);
         }
-        if (vertexCount != 14_885 || triangleCount != 13_781)
+        if (vertexCount != expectedVertices ||
+            triangleCount != expectedTriangles)
             throw new InvalidDataException("Co-op mesh geometry count changed.");
         return new CoopMeshGeometryCatalog(meshes, vertexCount, triangleCount);
     }

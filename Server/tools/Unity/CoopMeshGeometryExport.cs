@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Read-only export of mesh triangles referenced by the recovered co-op scenes.
+/// Read-only export of mesh triangles referenced by recovered co-op colliders.
 /// Install this file in Assets/Editor of a disposable Unity 2018 project.
 /// No scene, prefab, or mesh asset is saved.
 /// </summary>
@@ -45,6 +45,45 @@ public static class CoopMeshGeometryExport
         if (requested.Count != 147)
             throw new InvalidOperationException("Co-op source mesh set changed.");
 
+        ExportMeshes(manifestPath, outputPath, requested);
+    }
+
+    public static void RunPrefabs()
+    {
+        string manifestPath = Environment.GetEnvironmentVariable(
+            "WAR_COOP_PREFAB_COLLIDER_MANIFEST");
+        string outputPath = Environment.GetEnvironmentVariable(
+            "WAR_COOP_PREFAB_MESH_OUTPUT");
+        if (string.IsNullOrEmpty(manifestPath) ||
+            string.IsNullOrEmpty(outputPath))
+            throw new InvalidOperationException(
+                "Set WAR_COOP_PREFAB_COLLIDER_MANIFEST and WAR_COOP_PREFAB_MESH_OUTPUT.");
+
+        var root = JObject.Parse(File.ReadAllText(manifestPath));
+        if ((int)root["version"] != 1 || root["prefabs"].Count() != 32)
+            throw new InvalidOperationException("Unknown co-op prefab manifest.");
+        var requested = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (JToken prefab in root["prefabs"])
+        foreach (JToken collider in prefab["colliders"])
+        {
+            if ((string)collider["componentType"] != "MeshCollider")
+                continue;
+            JToken shape = collider["shape"];
+            if ((int)shape["meshFileId"] == 0)
+                continue;
+            if ((int)shape["meshFileId"] != 4300000 ||
+                (bool)shape["convex"] != true)
+                throw new InvalidOperationException("Unknown prefab mesh shape.");
+            requested.Add((string)shape["meshGuid"]);
+        }
+        if (requested.Count != 6)
+            throw new InvalidOperationException("Co-op prefab mesh set changed.");
+        ExportMeshes(manifestPath, outputPath, requested);
+    }
+
+    private static void ExportMeshes(string manifestPath, string outputPath,
+        SortedSet<string> requested)
+    {
         var meshes = new List<object>();
         foreach (string guid in requested)
         {

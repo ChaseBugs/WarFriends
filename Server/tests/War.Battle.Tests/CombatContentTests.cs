@@ -2327,10 +2327,15 @@ internal static class CombatContentTests
         string path = Path.Combine(directory,
             "recovered-coop-prefab-colliders.json");
         CoopPrefabColliderCatalog catalog = CoopPrefabColliderCatalog.Load(path);
+        CoopMeshGeometryCatalog meshes = CoopMeshGeometryCatalog.LoadPrefabs(
+            Path.Combine(directory,
+                "recovered-coop-prefab-mesh-geometry.json"), catalog);
         CoopSceneCollider[] all = catalog.Prefabs
             .SelectMany(prefab => prefab.Colliders).ToArray();
         if (catalog.Prefabs.Count != 32 ||
             catalog.NetworkEntries.Count != 31 || all.Length != 128 ||
+            meshes.Count != 6 || meshes.VertexCount != 176 ||
+            meshes.TriangleCount != 284 ||
             all.Count(row => row.ComponentType == "MeshCollider") != 8 ||
             all.Count(row => row.ComponentType == "BoxCollider") != 78 ||
             all.Count(row => row.ComponentType == "CapsuleCollider") != 31 ||
@@ -2341,6 +2346,9 @@ internal static class CombatContentTests
             catalog.Prefabs.Sum(prefab => prefab.WheelColliderCount) != 14 ||
             all.Count(row => row.ComponentType == "MeshCollider" &&
                 row.Shape.MeshFileId == 0) != 2 ||
+            all.Where(row => row.ComponentType == "MeshCollider" &&
+                row.Shape.MeshFileId != 0).Any(row =>
+                    meshes.Get(row.Shape.MeshGuid).Triangles.Count == 0) ||
             catalog.ForPoolField("enemy").Colliders.Count != 7 ||
             catalog.ForPoolField("assaultHelicopter").Colliders.Count != 11 ||
             catalog.ForPoolField("network:MineAmmo").Colliders.Count != 2 ||
