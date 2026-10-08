@@ -135,9 +135,11 @@ public sealed class BattleWorkerSettings
         string key, bool hasControlKey)
     {
         string? value = configuration[key];
-        if (string.IsNullOrWhiteSpace(value))
+        if (value == null || value.Length == 0)
             return null;
-        if (!hasControlKey || !Uri.TryCreate(value, UriKind.Absolute,
+        if (string.IsNullOrWhiteSpace(value) || value != value.Trim() ||
+            !hasControlKey ||
+            !Uri.TryCreate(value, UriKind.Absolute,
                 out Uri? endpoint) || endpoint.Scheme is not ("http" or "https"))
             throw new InvalidDataException(
                 $"{key} requires an HTTP endpoint and a control key.");

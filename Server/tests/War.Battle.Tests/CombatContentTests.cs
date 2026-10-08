@@ -10562,6 +10562,18 @@ internal static class CombatContentTests
                 "http://127.0.0.1:8080/accept";
             Reject(() => BattleWorkerSettings.FromConfiguration(
                 workerSettingsSource, hasControlKey: false));
+            workerSettingsSource["Battle:BackendResultEndpoint"] = "   ";
+            Reject(() => BattleWorkerSettings.FromConfiguration(
+                workerSettingsSource, hasControlKey: true));
+            workerSettingsSource["Battle:BackendResultEndpoint"] =
+                " http://127.0.0.1:8080/accept";
+            Reject(() => BattleWorkerSettings.FromConfiguration(
+                workerSettingsSource, hasControlKey: true));
+            workerSettingsSource["Battle:BackendResultEndpoint"] = null;
+            workerSettingsSource["Battle:BackendAllocationEndpoint"] = "   ";
+            Reject(() => BattleWorkerSettings.FromConfiguration(
+                workerSettingsSource, hasControlKey: true));
+            workerSettingsSource["Battle:BackendAllocationEndpoint"] = null;
             string manifestTestDirectory = Path.Combine(Path.GetTempPath(),
                 "war-battle-manifest-test-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(manifestTestDirectory);
