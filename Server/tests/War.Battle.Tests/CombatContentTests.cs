@@ -1862,13 +1862,16 @@ internal static class CombatContentTests
             wireScores[0].Stars != survivingScore.Stars)
             throw new Exception("Boss success score did not use frozen host outcome.");
         CoopTerminalScoreValidator.ValidateSuccess(
-            completedBoss, bossAllocation, catalog);
+            completedBoss, bossAllocation, catalog, enemyCombat);
         MatchSnapshot undeclaredEnemyDeath = completedBoss.Clone();
         undeclaredEnemyDeath.Coop.EnemySpawns.Add(
             new BattleCoopEnemySpawn
             {
-                EntityId = 999,
-                MaxHealth = 1,
+                EntityId = (ulong)undeclaredEnemyDeath.Coop.EnemySpawns.Count + 1,
+                Behaviour = "Assaulter",
+                Level = 0,
+                MaxHealth = enemyCombat.OrdinaryStats(
+                    "Assaulter", 0).Health,
                 Health = 0,
                 SpawnTick = 1,
                 DeathTick = 0
@@ -1876,7 +1879,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                undeclaredEnemyDeath, bossAllocation, catalog);
+                undeclaredEnemyDeath, bossAllocation, catalog, enemyCombat);
             throw new Exception(
                 "A zero-health enemy without a death tick passed co-op proof.");
         }
@@ -1886,7 +1889,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossDeath, bossAllocation, catalog);
+                forgedBossDeath, bossAllocation, catalog, enemyCombat);
             throw new Exception("A boss success without a host death was accepted.");
         }
         catch (InvalidDataException)
@@ -1897,7 +1900,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossScore, bossAllocation, catalog);
+                forgedBossScore, bossAllocation, catalog, enemyCombat);
             throw new Exception("Forged co-op score passed terminal validation.");
         }
         catch (InvalidDataException)
@@ -1908,7 +1911,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossObjective, bossAllocation, catalog);
+                forgedBossObjective, bossAllocation, catalog, enemyCombat);
             throw new Exception("A boss mission accepted forged Score objective progress.");
         }
         catch (InvalidDataException)
@@ -1923,7 +1926,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossLedger, bossAllocation, catalog);
+                forgedBossLedger, bossAllocation, catalog, enemyCombat);
             throw new Exception("A boss mission accepted a forged allied score row.");
         }
         catch (InvalidDataException)
@@ -1934,7 +1937,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedBossDeadline, bossAllocation, catalog);
+                forgedBossDeadline, bossAllocation, catalog, enemyCombat);
             throw new Exception("Forged co-op deadline passed terminal validation.");
         }
         catch (InvalidDataException)
@@ -4569,36 +4572,56 @@ internal static class CombatContentTests
             throw new Exception("Ten confirmed source enemy deaths must finish mission zero.");
         MatchSnapshot completedKill = damagedRuntime.TerminalEvidenceSnapshot();
         CoopTerminalScoreValidator.ValidateSuccess(
-            completedKill, coop, catalog);
+            completedKill, coop, catalog, enemyCombat);
         MatchSnapshot duplicatedEnemy = completedKill.Clone();
         duplicatedEnemy.Coop.EnemySpawns.Add(
             duplicatedEnemy.Coop.EnemySpawns[0].Clone());
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                duplicatedEnemy, coop, catalog);
+                duplicatedEnemy, coop, catalog, enemyCombat);
             throw new Exception("A duplicated enemy death counted twice.");
         }
         catch (InvalidDataException)
         {
         }
+        MatchSnapshot skippedEnemyId = completedKill.Clone();
+        skippedEnemyId.Coop.EnemySpawns[0].EntityId = 99;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                skippedEnemyId, coop, catalog, enemyCombat);
+            throw new Exception(
+                "A skipped co-op spawn identity passed terminal proof.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot nonfiniteEnemy = completedKill.Clone();
         nonfiniteEnemy.Coop.EnemySpawns[0].Health = float.NaN;
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                nonfiniteEnemy, coop, catalog);
+                nonfiniteEnemy, coop, catalog, enemyCombat);
             throw new Exception("A nonfinite enemy health reached success evidence.");
         }
         catch (InvalidDataException)
         {
         }
+        MatchSnapshot forgedEnemyMaximum = completedKill.Clone();
+        forgedEnemyMaximum.Coop.EnemySpawns[0].MaxHealth++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedEnemyMaximum, coop, catalog, enemyCombat);
+            throw new Exception(
+                "A fabricated enemy maximum health entered co-op evidence.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot forgedKillCount = completedKill.Clone();
         forgedKillCount.Coop.EnemyKills--;
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedKillCount, coop, catalog);
+                forgedKillCount, coop, catalog, enemyCombat);
             throw new Exception("A kill success without its target was accepted.");
         }
         catch (InvalidDataException)
@@ -4630,14 +4653,14 @@ internal static class CombatContentTests
             survived.Coop.SuccessScores.Count != 2)
             throw new Exception("Survive mission must succeed at the source deadline.");
         CoopTerminalScoreValidator.ValidateSuccess(
-            survived, surviveAllocation, catalog);
+            survived, surviveAllocation, catalog, enemyCombat);
         MatchSnapshot earlySurvival = survived.Clone();
         earlySurvival.EndTick--;
         earlySurvival.ServerTick--;
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                earlySurvival, surviveAllocation, catalog);
+                earlySurvival, surviveAllocation, catalog, enemyCombat);
             throw new Exception("A Survive mission accepted an early terminal result.");
         }
         catch (InvalidDataException)

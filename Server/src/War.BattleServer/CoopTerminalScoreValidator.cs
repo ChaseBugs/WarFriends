@@ -10,10 +10,11 @@ internal static class CoopTerminalScoreValidator
 {
     internal static void ValidateSuccess(
         MatchSnapshot snapshot, MatchManifest allocation,
-        MissionCatalog missions)
+        MissionCatalog missions, CoopEnemyCombatCatalog combat)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(missions);
+        ArgumentNullException.ThrowIfNull(combat);
         MatchManifest manifest = MatchManifest.Validate(allocation);
         if (manifest.Mode != MatchManifest.CoopMissionMode ||
             !manifest.MissionIndex.HasValue ||
@@ -51,7 +52,7 @@ internal static class CoopTerminalScoreValidator
                     .Order(StringComparer.Ordinal)))
             throw new InvalidDataException("Co-op success differs from source mission.");
 
-        ValidateEnemyLedger(snapshot);
+        ValidateEnemyLedger(snapshot, combat);
         ValidateObjective(snapshot, rule);
 
         if (rule.MissionType == "Score")
@@ -151,19 +152,29 @@ internal static class CoopTerminalScoreValidator
         }
     }
 
-    private static void ValidateEnemyLedger(MatchSnapshot snapshot)
+    private static void ValidateEnemyLedger(MatchSnapshot snapshot,
+        CoopEnemyCombatCatalog combat)
     {
-        var seenEntityIds = new HashSet<ulong>();
+        ulong expectedEntityId = 1;
         foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
         {
-            if (enemy.EntityId == 0 || !seenEntityIds.Add(enemy.EntityId) ||
-                !float.IsFinite(enemy.MaxHealth) || enemy.MaxHealth <= 0 ||
+            float expectedProgress = enemy.CardUnit
+                ? Math.Clamp(enemy.Level / 25f, 0f, 1f) : 0f;
+            float expectedMaximum = enemy.CardUnit
+                ? combat.CardStats(enemy.Behaviour, expectedProgress).Health
+                : combat.OrdinaryStats(enemy.Behaviour,
+                    enemy.Level).Health;
+            if (enemy.EntityId != expectedEntityId ||
+                !float.IsFinite(enemy.MaxHealth) ||
+                enemy.MaxHealth != expectedMaximum ||
+                enemy.CardProgress != expectedProgress ||
                 !float.IsFinite(enemy.Health) || enemy.Health < 0 ||
                 enemy.Health > enemy.MaxHealth ||
                 (enemy.Health == 0) != (enemy.DeathTick != 0) ||
                 enemy.SpawnTick > snapshot.EndTick)
                 throw new InvalidDataException(
                     "Co-op success has an invalid enemy spawn ledger.");
+            expectedEntityId++;
         }
     }
 }
