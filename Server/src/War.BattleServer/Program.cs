@@ -21,14 +21,19 @@ if (!int.TryParse(controlPortText, NumberStyles.Integer,
 BattleKeyConfig keys = BattleKeyConfig.FromConfiguration(
     builder.Configuration, requireControlKey: true);
 byte[] controlKey = keys.ControlKey!;
+BattleWorkerSettings workerSettings = BattleWorkerSettings.FromConfiguration(
+    builder.Configuration, hasControlKey: true);
 builder.WebHost.ConfigureKestrel(options=>
 {
     options.ListenLocalhost(controlPort);
     options.Limits.MaxRequestBodySize=65536;
 });
-builder.Services.AddSingleton<NetworkWorker>();
 builder.Services.AddSingleton(runtimeConfig);
 builder.Services.AddSingleton(keys);
+builder.Services.AddSingleton(workerSettings);
+builder.Services.AddSingleton<NetworkWorker>(services =>
+    new NetworkWorker(runtimeConfig, keys, workerSettings,
+        services.GetRequiredService<ILogger<NetworkWorker>>()));
 builder.Services.AddHostedService(services=>services.GetRequiredService<NetworkWorker>());
 var app=builder.Build();
 app.MapGet("/health/live",()=>Results.Ok(new {status="alive"}));

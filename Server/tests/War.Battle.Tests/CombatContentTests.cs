@@ -10506,6 +10506,34 @@ internal static class CombatContentTests
                 keySettings, requireControlKey: true));
             keySettings["Battle:SigningKey"] = "not base64";
             Reject(() => BattleKeyConfig.FromConfiguration(keySettings));
+            IConfigurationRoot workerSettingsSource = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Battle:ServerId"] = "local-1",
+                    ["Battle:BindAddress"] = "127.0.0.1",
+                    ["Battle:PublicHost"] = "localhost",
+                    ["Battle:ResultOutboxPath"] = Path.GetTempPath()
+                }).Build();
+            BattleWorkerSettings frozenWorkerSettings =
+                BattleWorkerSettings.FromConfiguration(
+                    workerSettingsSource, hasControlKey: false);
+            workerSettingsSource["Battle:ServerId"] = "changed-server";
+            Check(frozenWorkerSettings.ServerId == "local-1" &&
+                  frozenWorkerSettings.BindAddress.Equals(IPAddress.Loopback) &&
+                  frozenWorkerSettings.PublicHost == "localhost",
+                "Worker endpoint identity is captured before content loading");
+            workerSettingsSource["Battle:BindAddress"] = "invalid-address";
+            Reject(() => BattleWorkerSettings.FromConfiguration(
+                workerSettingsSource, hasControlKey: false));
+            workerSettingsSource["Battle:BindAddress"] = "127.0.0.1";
+            workerSettingsSource["Battle:ShotgunContentManifestPath"] = "shotgun.json";
+            Reject(() => BattleWorkerSettings.FromConfiguration(
+                workerSettingsSource, hasControlKey: false));
+            workerSettingsSource["Battle:ShotgunContentManifestPath"] = null;
+            workerSettingsSource["Battle:BackendResultEndpoint"] =
+                "http://127.0.0.1:8080/accept";
+            Reject(() => BattleWorkerSettings.FromConfiguration(
+                workerSettingsSource, hasControlKey: false));
             string manifestTestDirectory = Path.Combine(Path.GetTempPath(),
                 "war-battle-manifest-test-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(manifestTestDirectory);

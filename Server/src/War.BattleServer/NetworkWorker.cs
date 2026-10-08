@@ -110,9 +110,15 @@ public sealed class NetworkWorker : BackgroundService
         : this(config, runtime, BattleKeyConfig.FromConfiguration(config),
             logger, new SenderEndpointRegistry()) { }
 
-    public NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
+    internal NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
         BattleKeyConfig keys, ILogger<NetworkWorker> logger)
-        : this(config, runtime, keys, logger, new SenderEndpointRegistry()) { }
+        : this(runtime, keys,
+            BattleWorkerSettings.FromConfiguration(config, keys.ControlKey != null),
+            logger, new SenderEndpointRegistry()) { }
+
+    public NetworkWorker(BattleRuntimeConfig runtime, BattleKeyConfig keys,
+        BattleWorkerSettings settings, ILogger<NetworkWorker> logger)
+        : this(runtime, keys, settings, logger, new SenderEndpointRegistry()) { }
 
     internal NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
         ILogger<NetworkWorker> logger, SenderEndpointRegistry senderEndpoints)
@@ -122,67 +128,58 @@ public sealed class NetworkWorker : BackgroundService
     internal NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
         BattleKeyConfig keys, ILogger<NetworkWorker> logger,
         SenderEndpointRegistry senderEndpoints)
+        : this(runtime, keys,
+            BattleWorkerSettings.FromConfiguration(config, keys.ControlKey != null),
+            logger, senderEndpoints) { }
+
+    private NetworkWorker(BattleRuntimeConfig runtime, BattleKeyConfig keys,
+        BattleWorkerSettings settings, ILogger<NetworkWorker> logger,
+        SenderEndpointRegistry senderEndpoints)
     {
         this.logger = logger;
         this.senderEndpoints = senderEndpoints ??
             throw new ArgumentNullException(nameof(senderEndpoints));
         ArgumentNullException.ThrowIfNull(keys);
+        ArgumentNullException.ThrowIfNull(settings);
         tickets = new BattleTickets(keys.SigningKey);
-        serverId = config["Battle:ServerId"] ?? "local-1";
+        serverId = settings.ServerId;
         runtime=BattleRuntimeConfigValidator.ValidateAndFreeze(runtime);
         int port=runtime.Port;
         int maxMatches=runtime.MaxMatches;
         mtuBytes=runtime.MtuBytes;
         mtuBytes=Math.Min(mtuBytes,PacketCodec.MaximumDatagramBytes);
-        if (port is < 1 or > 65535 || !System.Text.RegularExpressions.Regex.IsMatch(serverId, @"\A[a-zA-Z0-9-]{1,64}\z")) throw new InvalidOperationException("Invalid battle endpoint configuration.");
-        bind = new IPEndPoint(IPAddress.Parse(config["Battle:BindAddress"] ?? "127.0.0.1"), port);
-        string? manifestPath = config["Battle:MatchManifestPath"];
-        string? manifestDirectory = config["Battle:MatchManifestDirectory"];
-        string? combatPath=config["Battle:CombatContentManifestPath"];
-        string? shotgunPath=config["Battle:ShotgunContentManifestPath"];
-        string? smgPath=config["Battle:SmgContentManifestPath"];
-        string? pistolPath=config["Battle:PistolContentManifestPath"];
-        string? lmgPath=config["Battle:LmgContentManifestPath"];
-        string? minigunPath=config["Battle:MinigunContentManifestPath"];
-        string? sniperPath=config["Battle:SniperContentManifestPath"];
-        string? bazookaPath=config["Battle:BazookaContentManifestPath"];
-        string? grenadePath=config["Battle:GrenadeContentManifestPath"];
-        if((!string.IsNullOrEmpty(shotgunPath)||!string.IsNullOrEmpty(smgPath)||!string.IsNullOrEmpty(pistolPath)||!string.IsNullOrEmpty(lmgPath)||!string.IsNullOrEmpty(minigunPath)||!string.IsNullOrEmpty(sniperPath)||!string.IsNullOrEmpty(bazookaPath)||!string.IsNullOrEmpty(grenadePath)) && string.IsNullOrEmpty(combatPath))
-            throw new InvalidDataException("Weapon content requires the pinned combat package.");
-        var combat=string.IsNullOrEmpty(combatPath) ? null : BattleCombatContent.Load(combatPath,
-            string.IsNullOrEmpty(shotgunPath)?null:shotgunPath,
-            string.IsNullOrEmpty(smgPath)?null:smgPath,
-            string.IsNullOrEmpty(pistolPath)?null:pistolPath,
-            string.IsNullOrEmpty(lmgPath)?null:lmgPath,
-            string.IsNullOrEmpty(minigunPath)?null:minigunPath,
-            string.IsNullOrEmpty(sniperPath)?null:sniperPath,
-            string.IsNullOrEmpty(bazookaPath)?null:bazookaPath,
-            string.IsNullOrEmpty(grenadePath)?null:grenadePath);
+        bind = new IPEndPoint(settings.BindAddress, port);
+        var combat = settings.CombatContentManifestPath == null
+            ? null
+            : BattleCombatContent.Load(settings.CombatContentManifestPath,
+                settings.ShotgunContentManifestPath,
+                settings.SmgContentManifestPath,
+                settings.PistolContentManifestPath,
+                settings.LmgContentManifestPath,
+                settings.MinigunContentManifestPath,
+                settings.SniperContentManifestPath,
+                settings.BazookaContentManifestPath,
+                settings.GrenadeContentManifestPath);
         string[] files = StartupManifestFiles.ReadPaths(
-            manifestPath, manifestDirectory, maxMatches);
-        var maps = string.IsNullOrEmpty(config["Battle:ContentPath"]) ? null : RecoveredBattleMap.Load(config["Battle:ContentPath"]!);
+            settings.MatchManifestPath, settings.MatchManifestDirectory, maxMatches);
+        var maps = settings.ContentPath == null
+            ? null : RecoveredBattleMap.Load(settings.ContentPath);
         match = new MatchRouter(files.Select(MatchManifest.Read), serverId, keys.SigningKey, maps,combat,
-            config["Battle:PublicHost"] ?? "127.0.0.1",(uint)port,maxMatches);
-        string outboxPath=config["Battle:ResultOutboxPath"]??
-            Path.Combine(AppContext.BaseDirectory,"battle-outbox");
-        string? resultEndpointText=config["Battle:BackendResultEndpoint"];
-        string? allocationEndpointText=config["Battle:BackendAllocationEndpoint"];
+            settings.PublicHost,(uint)port,maxMatches);
         byte[]? controlKey=keys.ControlKey;
         resultEndpoint=null; resultForwarder=null; allocationEndpoint=null; allocationClient=null;
-        if (!string.IsNullOrWhiteSpace(resultEndpointText))
+        if (settings.BackendResultEndpoint != null)
         {
-            if (!Uri.TryCreate(resultEndpointText, UriKind.Absolute, out var parsed) || parsed.Scheme is not ("http" or "https") || controlKey == null)
-                throw new InvalidDataException("Backend result forwarding requires a valid endpoint and control key.");
-            resultEndpoint=parsed; resultForwarder=new BackendResultForwarder(new HttpClient { Timeout=TimeSpan.FromSeconds(5) },controlKey,serverId);
+            resultEndpoint=settings.BackendResultEndpoint;
+            resultForwarder=new BackendResultForwarder(new HttpClient { Timeout=TimeSpan.FromSeconds(5) },controlKey!,serverId);
         }
-        if (!string.IsNullOrWhiteSpace(allocationEndpointText))
+        if (settings.BackendAllocationEndpoint != null)
         {
-            if (!Uri.TryCreate(allocationEndpointText, UriKind.Absolute, out var parsed) || parsed.Scheme is not ("http" or "https") || controlKey == null)
-                throw new InvalidDataException("Backend allocation loading requires a valid endpoint and control key.");
-            allocationEndpoint=parsed; allocationClient=new BackendAllocationClient(new HttpClient {Timeout=TimeSpan.FromSeconds(5)},controlKey,serverId);
+            allocationEndpoint=settings.BackendAllocationEndpoint;
+            allocationClient=new BackendAllocationClient(new HttpClient {Timeout=TimeSpan.FromSeconds(5)},controlKey!,serverId);
         }
-        activeJournal=new ActiveMatchJournal(Path.Combine(outboxPath,"active"), maxMatches);
-        terminalOutbox=new TerminalOutbox(outboxPath,activeJournal.ActiveMatchIds());
+        activeJournal=new ActiveMatchJournal(Path.Combine(settings.ResultOutboxPath,"active"), maxMatches);
+        terminalOutbox=new TerminalOutbox(settings.ResultOutboxPath,activeJournal.ActiveMatchIds());
         terminalOutbox.PruneAcknowledged(DateTimeOffset.UtcNow);
         if(match.MatchIds.Any(terminalOutbox.HasIdentity))
             throw new InvalidDataException("Startup match identity already has a durable terminal result.");
