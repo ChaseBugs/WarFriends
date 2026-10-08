@@ -2327,7 +2327,7 @@ internal static class CombatContentTests
             "recovered-coop-scene-ray-reference.json");
         byte[] bytes = File.ReadAllBytes(path);
         string digest = Convert.ToHexStringLower(SHA256.HashData(bytes));
-        if (digest != "f6fffe0233ca835124f03184b02d401e5053037305a5db36ab0d01a8f391d5f0")
+        if (digest != "eb3c33575e998192684060320ea1e63a1e950a307086156cca30fe921382a39d")
             throw new Exception("Unity co-op ray reference changed.");
 
         CoopSceneColliderCatalog colliders = CoopSceneColliderCatalog.Load(
@@ -2339,7 +2339,8 @@ internal static class CombatContentTests
         using JsonDocument document = JsonDocument.Parse(bytes);
         JsonElement maps = document.RootElement.GetProperty("maps");
         int checkedRays = 0;
-        var differences = new List<string>();
+        var physxDifferences = new List<string>();
+        var rawMeshDifferences = new List<string>();
         foreach (JsonElement map in maps.EnumerateArray())
         {
             string scene = map.GetProperty("scene").GetString()!;
@@ -2357,28 +2358,49 @@ internal static class CombatContentTests
                 bool expectedHit = ray.GetProperty("hit").GetBoolean();
                 string componentType = source.Colliders.Single(c =>
                     c.ComponentFileId == componentId).ComponentType;
-                if (expectedHit != (actual != null))
-                    differences.Add($"hit {scene}/{componentId} {componentType} Unity={expectedHit} host={actual != null}");
-                if (actual != null)
+                bool differentFromPhysx = expectedHit != (actual != null);
+                if (expectedHit && actual != null)
                 {
                     float distance = ray.GetProperty("distance").GetSingle();
-                    if (Math.Abs(actual.Distance - distance) > 0.03f)
-                        differences.Add($"distance {scene}/{componentId} {actual.ComponentType} Unity={distance} host={actual.Distance}");
+                    differentFromPhysx |= Math.Abs(actual.Distance - distance) > 0.03f;
                 }
+                if (differentFromPhysx)
+                    physxDifferences.Add($"{scene}/{componentId} {componentType}");
+
+                JsonElement raw = ray.GetProperty("rawMeshDistance");
+                if (componentType == "MeshCollider")
+                {
+                    bool rawHit = raw.ValueKind != JsonValueKind.Null;
+                    bool differentFromRaw = rawHit != (actual != null);
+                    if (rawHit && actual != null)
+                    {
+                        float rawDistance = raw.GetSingle();
+                        differentFromRaw |= Math.Abs(actual.Distance - rawDistance) > 0.01f;
+                    }
+                    if (differentFromRaw)
+                        rawMeshDifferences.Add($"{scene}/{componentId} " +
+                            $"UnityRaw={raw}, host={actual?.Distance}");
+                }
+                else if (raw.ValueKind != JsonValueKind.Null)
+                    throw new Exception("A primitive has a raw mesh ray result.");
                 checkedRays++;
             }
         }
         if (maps.GetArrayLength() != 5 || checkedRays != 3_876)
             throw new Exception("Unity co-op ray reference is incomplete.");
-        // This raw-triangle raycaster is still exploratory. Unity/PhysX mesh
-        // cooking gives different distances for 88 probes. Keep that gap
-        // visible and keep the raycaster out of authoritative Fire handling.
-        if (differences.Count != 88 || differences.Any(item =>
-            !item.Contains(" MeshCollider ", StringComparison.Ordinal)))
-            throw new Exception($"Co-op ray comparison changed: " +
-                $"{differences.Count}/{checkedRays}: " +
-                string.Join("; ", differences.Take(20)));
-        return checkedRays - differences.Count;
+        // The raw calculation uses Unity's own sharedMesh and transform.
+        // Eight axis-aligned probes graze thin geometry at nearly 90-degree
+        // rotations; small matrix-rounding differences change the first hit.
+        if (rawMeshDifferences.Count != 8)
+            throw new Exception($"Host and Unity raw mesh rays changed: " +
+                $"{rawMeshDifferences.Count}: " +
+                string.Join("; ", rawMeshDifferences.Take(20)));
+        if (physxDifferences.Count != 86 || physxDifferences.Any(item =>
+            !item.EndsWith(" MeshCollider", StringComparison.Ordinal)))
+            throw new Exception($"Co-op PhysX comparison changed: " +
+                $"{physxDifferences.Count}/{checkedRays}: " +
+                string.Join("; ", physxDifferences.Take(20)));
+        return checkedRays - physxDifferences.Count;
     }
 
     private static Vector3 ReadRayVector(JsonElement values)

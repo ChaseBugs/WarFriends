@@ -79,6 +79,10 @@ public static class CoopSceneRayReferenceExport
                         RaycastHit hit;
                         bool foundHit = collider.Raycast(
                             new Ray(origin, direction), out hit, range);
+                        float? rawMeshDistance = collider is MeshCollider
+                            ? RawMeshDistance((MeshCollider)collider,
+                                origin, direction, range)
+                            : null;
                         rows.Add(new
                         {
                             componentFileId = fileId,
@@ -87,7 +91,8 @@ public static class CoopSceneRayReferenceExport
                             maxDistance = range,
                             hit = foundHit,
                             distance = foundHit ? hit.distance : 0f,
-                            point = foundHit ? Vector(hit.point) : null
+                            point = foundHit ? Vector(hit.point) : null,
+                            rawMeshDistance
                         });
                     }
                 }
@@ -128,6 +133,44 @@ public static class CoopSceneRayReferenceExport
     private static Vector3 Vector(JToken value)
     {
         return new Vector3((float)value[0], (float)value[1], (float)value[2]);
+    }
+
+    // Compare Unity's own mesh vertices with PhysX's cooked Collider.Raycast.
+    // This tells us whether a difference comes from placement or mesh cooking.
+    private static float? RawMeshDistance(MeshCollider collider,
+        Vector3 worldOrigin, Vector3 worldDirection, float maximum)
+    {
+        Mesh mesh = collider.sharedMesh;
+        if (mesh == null)
+            return null;
+        Matrix4x4 inverse = collider.transform.worldToLocalMatrix;
+        Vector3 origin = inverse.MultiplyPoint3x4(worldOrigin);
+        Vector3 direction = inverse.MultiplyVector(worldDirection);
+        Vector3[] vertices = mesh.vertices;
+        int[] triangles = mesh.triangles;
+        float? nearest = null;
+        for (int index = 0; index < triangles.Length; index += 3)
+        {
+            Vector3 a = vertices[triangles[index]];
+            Vector3 edgeOne = vertices[triangles[index + 1]] - a;
+            Vector3 edgeTwo = vertices[triangles[index + 2]] - a;
+            Vector3 cross = Vector3.Cross(direction, edgeTwo);
+            float determinant = Vector3.Dot(edgeOne, cross);
+            if (determinant <= 1e-7f)
+                continue;
+            Vector3 fromA = origin - a;
+            float sideOne = Vector3.Dot(fromA, cross);
+            if (sideOne < 0 || sideOne > determinant)
+                continue;
+            Vector3 otherCross = Vector3.Cross(fromA, edgeOne);
+            float sideTwo = Vector3.Dot(direction, otherCross);
+            if (sideTwo < 0 || sideOne + sideTwo > determinant)
+                continue;
+            float distance = Vector3.Dot(edgeTwo, otherCross) / determinant;
+            if (distance > 0 && distance <= (nearest ?? maximum))
+                nearest = distance;
+        }
+        return nearest;
     }
 
     private static bool SameSource(Collider collider, JToken source)
