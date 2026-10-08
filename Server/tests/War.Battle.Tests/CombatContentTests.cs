@@ -1577,7 +1577,9 @@ internal static class CombatContentTests
         var helicopterRuntime = new CoopMatchRuntime(helicopterAllocation,
             catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0,
-            skillShotScores: skillShots, playerWeaponContent: content);
+            skillShotScores: skillShots, playerWeaponContent: content,
+            coopAirWaypoints: CoopAirWaypointCatalog.Load(Path.Combine(directory,
+                "recovered-coop-air-waypoint-routes.json"), spawnPoints));
         helicopterRuntime.Admit(firstPlayer);
         helicopterRuntime.Admit(secondPlayer);
         var helicopterReady = new MatchCommand { CommandId = 1,
@@ -1589,7 +1591,7 @@ internal static class CombatContentTests
         BattleCoopEnemySpawn helicopter = helicopterRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Helicopter");
         IReadOnlyList<DynamicShotTarget> helicopterTargets = helicopterRuntime
-            .PlaceNewAssaultHelicopterTargets(helicopter.EntityId);
+            .PlaceAssaultHelicopterTargets(helicopter.EntityId);
         Vector3 helicopterStart = new(helicopter.X, helicopter.Y,
             helicopter.Z);
         if (helicopter.SpawnTick != 1 || helicopterTargets.Count != 7 ||
@@ -1607,12 +1609,29 @@ internal static class CombatContentTests
                 !target.Hitbox.SourcePath.StartsWith(
                     "Assets/GameObject/assaultHelicopter.prefab#",
                     StringComparison.Ordinal)) ||
-            helicopterRuntime.PlaceNewAssaultHelicopterTargets(999).Count != 0)
+            helicopterRuntime.PlaceAssaultHelicopterTargets(999).Count != 0)
             throw new Exception("Co-op Helicopter needs seven source-owned spawn hitboxes.");
-        helicopterRuntime.Advance(2);
-        if (helicopterRuntime.PlaceNewAssaultHelicopterTargets(
-                helicopter.EntityId).Count != 0)
-            throw new Exception("A stale Helicopter pose cannot authorize co-op hits.");
+        helicopterRuntime.Advance(25);
+        BattleCoopEnemySpawn movedHelicopter = helicopterRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.EntityId == helicopter.EntityId);
+        Vector3 helicopterPosition = new(movedHelicopter.CurrentX,
+            movedHelicopter.CurrentY, movedHelicopter.CurrentZ);
+        IReadOnlyList<DynamicShotTarget> movedHelicopterTargets = helicopterRuntime
+            .PlaceAssaultHelicopterTargets(helicopter.EntityId);
+        if (helicopterRuntime.ReservedAirPath(helicopter.EntityId) is not > 0 ||
+            movedHelicopter.PoseTick != 25 || movedHelicopter.SpawnTick != 1 ||
+            new Vector3(movedHelicopter.X, movedHelicopter.Y,
+                movedHelicopter.Z) != helicopterStart ||
+            Vector3.Distance(helicopterPosition, helicopterStart) <= 0 ||
+            movedHelicopterTargets.Count != 7 ||
+            movedHelicopterTargets.Any(target =>
+                target.Hitbox.TransformPosition != helicopterPosition))
+            throw new Exception("Co-op Assault Helicopter lost its moving host pose or hitboxes.");
+        if (!helicopterRuntime.ApplyHostEnemyDamage(helicopter.EntityId,
+                helicopter.MaxHealth, 25) ||
+            helicopterRuntime.ReservedAirPath(helicopter.EntityId) != null ||
+            helicopterRuntime.PlaceAssaultHelicopterTargets(helicopter.EntityId).Count != 0)
+            throw new Exception("Co-op Assault Helicopter death retained its path or hitboxes.");
 
         const int droneMissionIndex = 30;
         MissionMapRule droneMap = catalog.MapForMission(droneMissionIndex);
@@ -1638,7 +1657,7 @@ internal static class CombatContentTests
         droneRuntime.Advance(1);
         BattleCoopEnemySpawn drone = droneRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Drone");
-        if (droneRuntime.ReservedDronePath(drone.EntityId) is not > 0)
+        if (droneRuntime.ReservedAirPath(drone.EntityId) is not > 0)
             throw new Exception("A live co-op Drone did not reserve its recovered path.");
         IReadOnlyList<DynamicShotTarget> droneShapes = droneRuntime
             .PlaceDroneTargets(drone.EntityId);
@@ -1669,7 +1688,7 @@ internal static class CombatContentTests
                 shape.Hitbox.TransformPosition != movedPosition))
             throw new Exception($"A co-op Drone did not publish its live host flight pose: pose={movedDrone.PoseTick}, spawn={movedDrone.SpawnTick}, distance={Vector3.Distance(movedPosition, droneStart)}, shapes={movedShapes.Count}, center={movedShapes.FirstOrDefault()?.Hitbox.TransformPosition}, position={movedPosition}.");
         if (!droneRuntime.ApplyHostEnemyDamage(drone.EntityId, drone.MaxHealth, 25) ||
-            droneRuntime.ReservedDronePath(drone.EntityId) != null ||
+            droneRuntime.ReservedAirPath(drone.EntityId) != null ||
             droneRuntime.PlaceDroneTargets(drone.EntityId).Count != 0)
             throw new Exception("Lethal co-op Drone damage did not release its path.");
 

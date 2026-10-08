@@ -78,20 +78,20 @@ internal sealed class AssaultHelicopterWaypointState
                 TargetIndex++;
             else if (!Forward && TargetIndex > 0)
                 TargetIndex--;
-            else
+            else if (Forward)
             {
-                // The recovered prefab has loop=false. Reaching either end
-                // stops the path before applying another steering step.
-                UsingWaypoints = false;
-                lastTime = time;
-                return;
+                // The recovered prefab has loop=true: forward at the final
+                // waypoint wraps to the first point.
+                TargetIndex = 0;
             }
+            else
+                TargetIndex = waypoints.Count - 1;
         }
 
         var steering = DroneSteeringStep.Advance(Position, Velocity,
             waypoints[TargetIndex].Position, time, deltaTime, pointReachedTime,
-            cornerDelayTime: 0.1f, speed: speed, mass: 1f,
-            breakDistance: 1f, breakSpeed: speed);
+            cornerDelayTime: 0.5f, speed: speed, mass: 30f,
+            breakDistance: 0.5f, breakSpeed: speed);
         Velocity = steering.Velocity;
         // The Client faces its target after the first transform step, then
         // applies the same velocity to the root a second time.

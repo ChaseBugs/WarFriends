@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Google.Protobuf;
@@ -144,6 +145,12 @@ internal static class LiveAssaultGlassUdpTests
                 await Task.Delay(100, timeout.Token);
                 state = await ownerPeer.PollAsync(timeout.Token);
             } while (state.Snapshot.Phase != BattlePhase.Running);
+            BattlePlayerState shooterStart = state.Snapshot.Players.Single(player =>
+                player.PlayerId == shooter);
+            var shooterPosition = new Vector3(shooterStart.PositionX,
+                shooterStart.PositionY, shooterStart.PositionZ);
+            BazookaBinding? rocket = useBazooka
+                ? content.Bazookas!.Binding("Google2u.Bazooka_RPG7") : null;
 
             var options = await ownerPeer.PollArmyAsync(timeout.Token);
             Check(options.OptionIndexes.All(index => index == 31) &&
@@ -194,6 +201,10 @@ internal static class LiveAssaultGlassUdpTests
 
             BattleArmyEntityState? damaged = null;
             int acceptedShots = 0;
+            MatchEvent? ownerBazookaImpact = null;
+            MatchEvent? shooterBazookaImpact = null;
+            Vector3? previousAircraftPosition = null;
+            ulong previousAircraftTick = 0;
             var fireWatch = System.Diagnostics.Stopwatch.StartNew();
             TimeSpan lastBazookaAim = TimeSpan.FromSeconds(-10);
             TimeSpan fireLimit = TimeSpan.FromSeconds(useBazooka ? 100 : 45);
@@ -203,6 +214,18 @@ internal static class LiveAssaultGlassUdpTests
                     .SingleOrDefault(entity => entity.EntityKey == aircraft.EntityKey);
                 if (current == null) break;
                 var rotation = current.AssaultRotation;
+                var currentAircraftPosition = new Vector3(current.X, current.Y, current.Z);
+                Vector3 observedVelocity = Vector3.Zero;
+                if (previousAircraftPosition.HasValue &&
+                    current.PositionTick > previousAircraftTick)
+                {
+                    float elapsed = (current.PositionTick - previousAircraftTick) /
+                        (float)MatchManifest.TickRate;
+                    observedVelocity = (currentAircraftPosition -
+                        previousAircraftPosition.Value) / elapsed;
+                }
+                previousAircraftPosition = currentAircraftPosition;
+                previousAircraftTick = current.PositionTick;
                 bool canAimBazookaAgain = fireWatch.Elapsed - lastBazookaAim >=
                     TimeSpan.FromSeconds(4);
                 if (rotation != null && (!useBazooka || canAimBazookaAgain))
@@ -210,7 +233,15 @@ internal static class LiveAssaultGlassUdpTests
                     var glass = content.AssaultHelicopterMeshColliders.PlaceFrontGlass(
                         new(current.X, current.Y, current.Z),
                         new(rotation.X, rotation.Y, rotation.Z, rotation.W));
-                    var aim = glass.Hitbox.Center;
+                    Vector3 aim = glass.Hitbox.Center;
+                    if (rocket != null)
+                    {
+                        float flightSeconds = Vector3.Distance(shooterPosition, aim) /
+                            rocket.Speed;
+                        float leadSeconds = Math.Clamp(rocket.HoldSeconds + flightSeconds,
+                            0, 4);
+                        aim += observedVelocity * leadSeconds;
+                    }
                     var reply = useBazooka
                         ? await shooterPeer.BazookaHoldAsync(true, aim.X, aim.Y, aim.Z, timeout.Token)
                         : await shooterPeer.FireAsync(aim.X, aim.Y, aim.Z, timeout.Token);
@@ -225,6 +256,21 @@ internal static class LiveAssaultGlassUdpTests
                 if (current != null && current.AssaultGlassHealth < initialGlass)
                     damaged = current;
                 var shooterState = await shooterPeer.PollAsync(timeout.Token);
+                if (useBazooka)
+                {
+                    var ownerPage = await ownerPeer.PollEventsAsync(
+                        ownerEvents.LastEventId, timeout.Token);
+                    ownerEvents.Consume(ownerPage);
+                    ownerBazookaImpact ??= ownerPage.Events.FirstOrDefault(item =>
+                        item.Kind == MatchEventKind.Impact &&
+                        item.ActorId == shooter && item.Reason == "bazooka");
+                    var shooterPage = await shooterPeer.PollEventsAsync(
+                        shooterEvents.LastEventId, timeout.Token);
+                    shooterEvents.Consume(shooterPage);
+                    shooterBazookaImpact ??= shooterPage.Events.FirstOrDefault(item =>
+                        item.Kind == MatchEventKind.Impact &&
+                        item.ActorId == shooter && item.Reason == "bazooka");
+                }
                 if (!useBazooka && shooterState.Snapshot.Players
                     .Single(player => player.PlayerId == shooter).ClipAmmo == 0)
                     await shooterPeer.ReloadAsync(timeout.Token);
@@ -272,8 +318,10 @@ internal static class LiveAssaultGlassUdpTests
                     return null;
                 }
 
-                var ownerImpact = await ReadBazookaImpact(ownerPeer, ownerEvents);
-                var shooterImpact = await ReadBazookaImpact(shooterPeer, shooterEvents);
+                var ownerImpact = ownerBazookaImpact ??
+                    await ReadBazookaImpact(ownerPeer, ownerEvents);
+                var shooterImpact = shooterBazookaImpact ??
+                    await ReadBazookaImpact(shooterPeer, shooterEvents);
                 Check(ownerImpact is { ProjectileId: > 0 } &&
                       shooterImpact?.EventId == ownerImpact.EventId &&
                       shooterImpact.ProjectileId == ownerImpact.ProjectileId,

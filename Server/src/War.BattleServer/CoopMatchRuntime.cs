@@ -67,11 +67,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly HelicopterBodyColliderCatalog? transportHelicopterBodies;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
-    private readonly CoopDronePathReservations? dronePaths;
+    private readonly CoopAirPathReservations? airPathReservations;
     private readonly CoopAirWaypointCatalog? coopAirRoutes;
-    private readonly CoopMapSpawnPoints? spawnPointsForDrone;
+    private readonly CoopMapSpawnPoints? airSpawnMap;
     private readonly Dictionary<ulong, DroneWaypointState> droneFlights = [];
-    private readonly Func<float> chooseDroneDirection;
+    private readonly Dictionary<ulong, AssaultHelicopterWaypointState> assaultHelicopterFlights = [];
+    private readonly Func<float> chooseAirDirection;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
     private IReadOnlyDictionary<string, BattleAllocationProjection>? battleAllocations;
@@ -113,14 +114,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopSkillShotScoreCatalog? skillShotScores = null,
         BattleCombatContent? playerWeaponContent = null,
         CoopAirWaypointCatalog? coopAirWaypoints = null,
-        Func<float>? chooseDroneDirection = null)
+        Func<float>? chooseAirDirection = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
             skillShotScores: skillShotScores,
             playerWeaponContent: playerWeaponContent,
             coopAirWaypoints: coopAirWaypoints,
-            chooseDroneDirection: chooseDroneDirection)
+            chooseAirDirection: chooseAirDirection)
     {
     }
 
@@ -133,7 +134,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopSkillShotScoreCatalog? skillShotScores = null,
         BattleCombatContent? playerWeaponContent = null,
         CoopAirWaypointCatalog? coopAirWaypoints = null,
-        Func<float>? chooseDroneDirection = null)
+        Func<float>? chooseAirDirection = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -209,8 +210,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             if (coopAirWaypoints != null)
             {
                 coopAirRoutes = coopAirWaypoints;
-                spawnPointsForDrone = map;
-                dronePaths = new CoopDronePathReservations(coopAirWaypoints, map);
+                airSpawnMap = map;
+                airPathReservations = new CoopAirPathReservations(coopAirWaypoints, map);
             }
             CoopMapRoutes routes = paths.MapForMission(catalog, missionIndex);
             var selector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
@@ -235,7 +236,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 StringComparer.Ordinal);
         this.combat = combat ?? throw new ArgumentNullException(nameof(combat));
         chooseSpawnPoint = choosePoint ?? Random.Shared.Next;
-        this.chooseDroneDirection = chooseDroneDirection ?? Random.Shared.NextSingle;
+        this.chooseAirDirection = chooseAirDirection ?? Random.Shared.NextSingle;
         mission = new CoopMissionEngine(catalog, missionIndex, chooseBehaviour);
         participants = manifest.Players.ToDictionary(player => player.PlayerId,
             player => new Participant(player), StringComparer.Ordinal);
@@ -252,7 +253,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     public bool HasPlayer(string playerId) => participants.ContainsKey(playerId);
 
-    internal int? ReservedDronePath(ulong entityId) => dronePaths?.PathFor(entityId);
+    internal int? ReservedAirPath(ulong entityId) => airPathReservations?.PathFor(entityId);
 
     public bool Admit(string playerId)
     {
@@ -326,6 +327,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 boss?.DeathTick == null ? [bossAnchors!.BossStart.Index] : []))
                 stateRevision++;
             AdvanceDroneFlights();
+            AdvanceAssaultHelicopterFlights();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
             {
@@ -391,16 +393,45 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
     }
 
+    private void AdvanceAssaultHelicopterFlights()
+    {
+        float time = (float)((double)tick / MatchManifest.TickRate);
+        foreach ((ulong entityId, AssaultHelicopterWaypointState flight) in
+            assaultHelicopterFlights.OrderBy(pair => pair.Key))
+        {
+            flight.Advance(time, 1f / MatchManifest.TickRate);
+            BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn => spawn.EntityId == entityId);
+            enemy.CurrentX = flight.Position.X;
+            enemy.CurrentY = flight.Position.Y;
+            enemy.CurrentZ = flight.Position.Z;
+            enemy.PoseTick = tick;
+            Quaternion rotation = flight.Rotation;
+            enemy.CurrentRotation = new BattleJointRotation
+            {
+                X = rotation.X, Y = rotation.Y, Z = rotation.Z, W = rotation.W
+            };
+            stateRevision++;
+        }
+    }
+
     private BattleCoopEnemySpawn? CreateEnemy(
         string behaviour, int level, bool timedEvent, bool cardUnit)
     {
         IReadOnlyList<CoopSpawnPoint> candidates = spawnCandidates(behaviour);
         CoopSpawnPoint point;
-        if (behaviour == "Drone" && dronePaths != null)
+        if (behaviour == "Drone" && airPathReservations != null)
         {
             // Drone.Spawn filters on path.usedByEntity before choosing an anchor.
             // An exhausted path set cannot create a host-owned enemy yet.
-            CoopSpawnPoint? freePoint = dronePaths.ChooseAvailable(candidates, chooseSpawnPoint);
+            CoopSpawnPoint? freePoint = airPathReservations.ChooseDrone(candidates, chooseSpawnPoint);
+            if (freePoint == null)
+                return null;
+            point = freePoint;
+        }
+        else if (behaviour == "Helicopter" && airPathReservations != null)
+        {
+            CoopSpawnPoint? freePoint = airPathReservations.ChooseAssaultHelicopter(
+                candidates, chooseSpawnPoint);
             if (freePoint == null)
                 return null;
             point = freePoint;
@@ -452,17 +483,26 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         if (behaviour == "Drone")
         {
-            dronePaths?.Reserve(enemy.EntityId, point);
-            if (dronePaths != null)
+            airPathReservations?.Reserve(enemy.EntityId, point);
+            if (airPathReservations != null)
             {
-                CoopMapSpawnPoints map = spawnPointsForDrone ??
+                CoopMapSpawnPoints map = airSpawnMap ??
                     throw new InvalidDataException("Co-op Drone map is unavailable.");
                 AirWaypointRoute route = coopAirRoutes!.ForSpawn(map, point.ComponentFileId);
                 droneFlights.Add(enemy.EntityId, new DroneWaypointState(
                     route.Waypoints, route.JoinIndex, point.Position, route.Radius,
                     combat.MovementSpeed(behaviour), forward: true, loop: true,
-                    chooseDroneDirection));
+                    chooseAirDirection));
             }
+        }
+        if (behaviour == "Helicopter" && airPathReservations != null)
+        {
+            airPathReservations.Reserve(enemy.EntityId, point);
+            CoopMapSpawnPoints map = airSpawnMap ??
+                throw new InvalidDataException("Co-op Assault Helicopter map is unavailable.");
+            AirWaypointRoute route = coopAirRoutes!.ForSpawn(map, point.ComponentFileId);
+            assaultHelicopterFlights.Add(enemy.EntityId, new AssaultHelicopterWaypointState(
+                route, point.Position, combat.MovementSpeed(behaviour), chooseAirDirection));
         }
         return enemy;
     }
@@ -494,13 +534,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
-    /// Places the recovered Assault Helicopter body and front glass when its
-    /// host-owned spawn is created. The prefab's five body meshes, one body
-    /// box, and front glass have distinct damage-part identities in the
-    /// existing source-backed catalog. No later pose is valid without host
-    /// helicopter movement and rotation, so this method refuses stale ticks.
+    /// Places the recovered Assault Helicopter body and front glass at its
+    /// current host pose. The five body meshes, body box, and front glass
+    /// retain distinct damage-part identities.
     /// </summary>
-    internal IReadOnlyList<DynamicShotTarget> PlaceNewAssaultHelicopterTargets(
+    internal IReadOnlyList<DynamicShotTarget> PlaceAssaultHelicopterTargets(
         ulong entityId)
     {
         if (phase != BattlePhase.Running || assaultHelicopterBody == null ||
@@ -508,15 +546,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return [];
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.Behaviour == "Helicopter" &&
-            spawn.SpawnTick == tick && spawn.Health > 0 &&
-            spawn.DeathTick == 0 && spawn.SourceRotation != null);
+            spawn.PoseTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.CurrentRotation != null);
         if (enemy == null)
             return [];
 
-        var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
-        var rotation = new Quaternion(enemy.SourceRotation.X,
-            enemy.SourceRotation.Y, enemy.SourceRotation.Z,
-            enemy.SourceRotation.W);
+        var position = new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ);
+        var rotation = new Quaternion(enemy.CurrentRotation.X,
+            enemy.CurrentRotation.Y, enemy.CurrentRotation.Z,
+            enemy.CurrentRotation.W);
         var targets = new List<DynamicShotTarget>
         {
             new(entityId, AssaultHelicopterBoxColliderCatalog.ColliderFileId,
@@ -709,8 +747,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.DeathTick = impactTick;
             if (enemy.Behaviour == "Drone")
             {
-                dronePaths?.Release(entityId);
+                airPathReservations?.Release(entityId);
                 droneFlights.Remove(entityId);
+            }
+            if (enemy.Behaviour == "Helicopter")
+            {
+                airPathReservations?.Release(entityId);
+                assaultHelicopterFlights.Remove(entityId);
             }
             if (mission.Outcome == MissionOutcome.Succeeded)
                 End(BattlePhase.Ended, "mission-success");

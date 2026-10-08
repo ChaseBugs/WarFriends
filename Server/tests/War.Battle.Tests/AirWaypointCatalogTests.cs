@@ -37,9 +37,9 @@ internal static class AirWaypointCatalogTests
         var movingAssaultHelicopter = new AssaultHelicopterWaypointState(
             sourceRoute, Vector3.Zero, 0.87f, () => 0.5f);
         movingAssaultHelicopter.Advance(2, 1f / 30);
-        if (Math.Abs(movingAssaultHelicopter.Position.X - 0.04f) > 0.00001f ||
-            Math.Abs(movingAssaultHelicopter.Velocity.X - 0.02f) > 0.00001f)
-            throw new Exception("Assault Helicopter lost its clamped speed or double root movement.");
+        if (Math.Abs(movingAssaultHelicopter.Position.X - 0.0013333334f) > 0.00001f ||
+            Math.Abs(movingAssaultHelicopter.Velocity.X - 0.0006666667f) > 0.00001f)
+            throw new Exception("Assault Helicopter lost its source mass, speed clamp, or double root movement.");
         count++;
         Vector3 firstForward = Vector3.Transform(Vector3.UnitZ,
             movingAssaultHelicopter.Rotation);
@@ -62,9 +62,10 @@ internal static class AirWaypointCatalogTests
         var reversingAssaultHelicopter = new AssaultHelicopterWaypointState(
             sourceRoute with { Radius = 0.2f }, new Vector3(1, 0, 0), 0.6f, () => 0);
         reversingAssaultHelicopter.Advance(2, 1f / 30);
-        if (reversingAssaultHelicopter.UsingWaypoints ||
+        if (!reversingAssaultHelicopter.UsingWaypoints ||
+            reversingAssaultHelicopter.TargetIndex != 1 ||
             reversingAssaultHelicopter.Position != new Vector3(1, 0, 0))
-            throw new Exception("Assault Helicopter did not stop after reversing at the first waypoint.");
+            throw new Exception("Assault Helicopter did not wrap after reversing at the first waypoint.");
         count++;
         string temporary=Path.GetTempFileName();
         try

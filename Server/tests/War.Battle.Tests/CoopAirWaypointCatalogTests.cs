@@ -39,22 +39,37 @@ internal static class CoopAirWaypointCatalogTests
 
         CoopSpawnPoint[] anchors = desert.SpawnPoints.Where(point =>
             point.Collection == "spawnPointsCollectionDrones" && point.Fraction == 1).ToArray();
-        var reservations = new CoopDronePathReservations(routes, desert);
-        CoopSpawnPoint first = reservations.ChooseAvailable(anchors, _ => 0)
+        var reservations = new CoopAirPathReservations(routes, desert);
+        CoopSpawnPoint first = reservations.ChooseDrone(anchors, _ => 0)
             ?? throw new Exception("First Drone path was unavailable.");
         reservations.Reserve(1, first);
-        CoopSpawnPoint second = reservations.ChooseAvailable(anchors, _ => 0)
+        CoopSpawnPoint second = reservations.ChooseDrone(anchors, _ => 0)
             ?? throw new Exception("Second Drone path was unavailable.");
         if (routes.ForSpawn(desert, first.ComponentFileId).PathComponentFileId ==
             routes.ForSpawn(desert, second.ComponentFileId).PathComponentFileId)
             throw new Exception("Two live co-op Drones selected the same path.");
         reservations.Reserve(2, second);
-        if (reservations.ChooseAvailable(anchors, _ => 0) != null)
+        if (reservations.ChooseDrone(anchors, _ => 0) != null)
             throw new Exception("An occupied co-op Drone path was offered again.");
         reservations.Release(1);
-        if (reservations.ChooseAvailable(anchors, _ => 0) == null ||
+        if (reservations.ChooseDrone(anchors, _ => 0) == null ||
             reservations.PathFor(1) != null || reservations.PathFor(2) == null)
             throw new Exception("Co-op Drone death did not free exactly its path.");
-        return checkedRoutes + 5;
+
+        CoopMapSpawnPoints snow = spawns.Maps[1];
+        CoopSpawnPoint[] assaultAnchors = snow.SpawnPoints.Where(point =>
+            point.Collection == "spawnPointsCollectionAssaultHelis" &&
+            point.Fraction == 1).ToArray();
+        var assaultReservations = new CoopAirPathReservations(routes, snow);
+        CoopSpawnPoint assault = assaultReservations.ChooseAssaultHelicopter(
+            assaultAnchors, count => count - 1) ??
+            throw new Exception("Co-op Assault Helicopter route was unavailable.");
+        assaultReservations.Reserve(3, assault);
+        if (assaultReservations.ChooseAssaultHelicopter(assaultAnchors, _ => 0) != null)
+            throw new Exception("An occupied Assault Helicopter route was reused.");
+        assaultReservations.Release(3);
+        if (assaultReservations.ChooseAssaultHelicopter(assaultAnchors, _ => 0) == null)
+            throw new Exception("Assault Helicopter death did not release its route.");
+        return checkedRoutes + 8;
     }
 }
