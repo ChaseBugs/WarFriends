@@ -3176,6 +3176,15 @@ internal static class CombatContentTests
             Vector3.Distance(placedTarget.Position,
                 mainAnchors[0].Position) > 3f)
             throw new Exception("Co-op Assaulter lacks an idle source player target.");
+        Quaternion sourceCoverRotation = mainAnchors[0].SourceRotation ??
+            throw new Exception("Co-op cover has no source rotation.");
+        Vector3 expectedRootTarget = mainAnchors[0].Position +
+            Vector3.Transform(sourceTarget.LocalPosition,
+                sourceCoverRotation);
+        if (Vector3.Distance(placedTarget.Position,
+                expectedRootTarget) > 0.0002f)
+            throw new Exception(
+                "Co-op body target differs from its serialized root transform.");
         arrivalRuntime.Advance(firstShootTick + 1);
         if (arrivalRuntime.InfantryFirstPlayerTarget(
                 arrivalEnemy.EntityId) != targetPlan)
