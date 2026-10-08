@@ -1733,6 +1733,43 @@ using (var slowWorker = new NetworkWorker(slowConfig,
     }
 }
 Directory.Delete(slowOutboxPath, recursive: true);
+string corruptOutboxPath = Path.Combine(Path.GetTempPath(),
+    "war-corrupt-forward-" + Guid.NewGuid().ToString("N"));
+var corruptConfig = new ConfigurationBuilder()
+    .AddConfiguration(multiConfig)
+    .AddInMemoryCollection(new Dictionary<string, string?>
+    {
+        ["Battle:ResultOutboxPath"] = corruptOutboxPath,
+        ["Battle:BackendResultEndpoint"] = "http://127.0.0.1:65534/accept",
+        ["Battle:ControlKey"] = Convert.ToBase64String(
+            Enumerable.Repeat((byte)8, 32).ToArray())
+    }).Build();
+using (var corruptWorker = new NetworkWorker(corruptConfig,
+    logs.CreateLogger<NetworkWorker>()))
+{
+    await corruptWorker.StartAsync(CancellationToken.None);
+    try
+    {
+        await File.WriteAllTextAsync(Path.Combine(corruptOutboxPath,
+            "damaged-result.wfr"), "not a terminal result");
+        bool stoppedOnDamage = false;
+        try
+        {
+            await corruptWorker.ExecuteTask!.WaitAsync(TimeSpan.FromSeconds(4));
+        }
+        catch (InvalidDataException)
+        {
+            stoppedOnDamage = true;
+        }
+        Check(stoppedOnDamage && !corruptWorker.IsReady,
+            "corrupt durable result evidence stops the Worker instead of retrying as an HTTP outage");
+    }
+    finally
+    {
+        await corruptWorker.StopAsync(CancellationToken.None);
+    }
+}
+Directory.Delete(corruptOutboxPath, recursive: true);
 using(var multiWorker=new NetworkWorker(multiConfig,logs.CreateLogger<NetworkWorker>()))
 {
     var multiPeers=new List<UdpClient>();

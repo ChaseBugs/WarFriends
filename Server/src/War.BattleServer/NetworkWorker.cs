@@ -370,7 +370,8 @@ public sealed class NetworkWorker : BackgroundService
                 {
                     break;
                 }
-                catch (Exception error)
+                catch (Exception error) when
+                    (error is HttpRequestException or TaskCanceledException)
                 {
                     logger.LogWarning("Backend result forwarding deferred: {ErrorType}",
                         error.GetType().Name);
