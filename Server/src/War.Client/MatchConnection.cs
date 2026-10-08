@@ -64,6 +64,8 @@ namespace War.Client
             Run(new MatchCommand {UseMedkit=new UseMedkitCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseHealingStormAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseHealingStorm=new UseHealingStormCommand {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseShieldsUpAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseShieldsUp=new UseShieldsUpCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> ReloadAsync(CancellationToken ct) => Run(new MatchCommand { Reload = new ReloadCommand() }, false, false, ct);
         public Task<MatchReply> SwitchWeaponAsync(int slot,CancellationToken ct) => Run(new MatchCommand { SwitchWeapon = new SwitchWeaponCommand { Slot=slot } }, false, false, ct);
         public Task<MatchReply> ForfeitAsync(CancellationToken ct) => Run(new MatchCommand { Forfeit = new ForfeitCommand() }, false, false, ct);

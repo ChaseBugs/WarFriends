@@ -43,6 +43,15 @@ internal sealed class ShieldLifecycle
         AutoRepair = start.AutoRepair;
         missionStartApplied = true;
     }
+    internal void SetMaximumHealth(float newMaximum)
+    {
+        if (!float.IsFinite(newMaximum) || newMaximum < Health || newMaximum <= 0 ||
+            newMaximum > 100_000_000)
+            throw new InvalidDataException("Invalid source card shield maximum.");
+        // DestroyableObject.maxHealth changes only the maximum. It does not
+        // refill a shield that was already damaged.
+        maximum = newMaximum;
+    }
     internal void ApplyShot(string weaponId,float sourceDamage,ulong tick)
     {
         Time(tick);

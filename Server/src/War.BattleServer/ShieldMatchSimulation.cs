@@ -35,6 +35,28 @@ internal sealed class ShieldMatchSimulation
     internal bool ColliderEnabled(string dynamicOwner)=>!byOwner.TryGetValue(dynamicOwner,out var row) || row.Lifecycle.ColliderEnabled;
     internal bool IsLiveShield(string dynamicOwner)=>byOwner.TryGetValue(dynamicOwner,out var row) && !row.Lifecycle.Destroyed;
     internal bool Contains(string dynamicOwner)=>byOwner.ContainsKey(dynamicOwner);
+    internal IReadOnlyList<ShieldMutation> ApplyShieldsUp(int ownerFraction)
+    {
+        if (ownerFraction is not (1 or 2))
+            throw new InvalidDataException("Invalid Shields Up owner fraction.");
+        var alliedShields = entries.Where(entry => entry.Cover.Fraction == ownerFraction).ToArray();
+        if (alliedShields.Length == 0) return [];
+
+        // The Client reads the first allied PlayerPoint's maximum, increases
+        // it by the source ShieldsUpCoef (0.2), then assigns that same maximum
+        // to every allied cover shield. Existing health stays unchanged.
+        float newMaximum = alliedShields[0].Lifecycle.MaxHealth * 1.2f;
+        if (!float.IsFinite(newMaximum) || newMaximum > 100_000_000 ||
+            alliedShields.Any(entry => entry.Lifecycle.Health > newMaximum))
+            throw new InvalidDataException("Shields Up exceeds source shield health bounds.");
+
+        foreach (var entry in alliedShields)
+        {
+            entry.Lifecycle.SetMaximumHealth(newMaximum);
+            entry.Revision++;
+        }
+        return alliedShields.Select(entry => entry.Snapshot()).ToArray();
+    }
     internal bool IsLiveEnemyShield(string dynamicOwner,int shooterFraction)
     {
         if(shooterFraction is not (1 or 2))throw new InvalidDataException("Invalid shield shooter fraction.");

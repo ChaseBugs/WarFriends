@@ -298,6 +298,8 @@ public sealed class MatchEndpoint
                         clean.UseMedkit=new UseMedkitCommand {RequestId=command.UseMedkit.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseHealingStorm:
                         clean.UseHealingStorm=new UseHealingStormCommand {RequestId=command.UseHealingStorm.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseShieldsUp:
+                        clean.UseShieldsUp=new UseShieldsUpCommand {RequestId=command.UseShieldsUp.RequestId};break;
                     case MatchCommand.IntentOneofCase.DeployArmy:
                         clean.DeployArmy=new DeployArmyCommand {OptionIndex=command.DeployArmy.OptionIndex};break;
                     case MatchCommand.IntentOneofCase.VehicleAttack:

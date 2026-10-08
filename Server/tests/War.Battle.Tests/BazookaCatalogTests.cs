@@ -787,6 +787,44 @@ internal static class BazookaCatalogTests
         var shieldAllocation=allocation with {MatchId="bazooka-shield",Players=
             [allocation.Players[0] with {ShieldLevel=0},allocation.Players[1] with {ShieldLevel=0}]};
         var shieldSimulation=new ShieldMatchSimulation(map,content.Shields,shieldAllocation);
+        var originalShields = shieldSimulation.Snapshot();
+        var strongerShields = shieldSimulation.ApplyShieldsUp(1);
+        Check(strongerShields.Count == originalShields.Count(row => row.OwnerFraction == 1) &&
+              strongerShields.All(row => Math.Abs(row.MaxHealth - originalShields.First(x => x.OwnerFraction == 1).MaxHealth * 1.2f) < .001f) &&
+              strongerShields.All(row => row.Health == originalShields.Single(x => x.CoverIndex == row.CoverIndex).Health) &&
+              shieldSimulation.Snapshot().Where(row => row.OwnerFraction == 2)
+                  .All(row => row.MaxHealth == originalShields.Single(x => x.CoverIndex == row.CoverIndex).MaxHealth),
+            "Shields Up changes every allied maximum without refilling health or touching the enemy");
+        var shieldsUpMatch = new MatchEngine(shieldAllocation with
+        { MatchId = "bazooka-shields-up-card" }, content: content);
+        shieldsUpMatch.ConfigureCardSelection(["CardShieldsUp"]);
+        shieldsUpMatch.ConfigureCardInventory([(one, "CardShieldsUp", 1)]);
+        shieldsUpMatch.Admit(one);
+        shieldsUpMatch.Admit(two);
+        var shieldCardSelection = new SelectCardsCommand();
+        shieldCardSelection.CardIds.Add("CardShieldsUp");
+        Check(shieldsUpMatch.Command(one, new() { CommandId = 1,
+                  SelectCards = shieldCardSelection }).Code == "cards-selected",
+            "only the allocated player can select Shields Up");
+        shieldsUpMatch.Command(one, new() { CommandId = 2,
+            Ready = new() { ManifestHash = shieldsUpMatch.ManifestHash } });
+        shieldsUpMatch.Command(two, new() { CommandId = 1,
+            Ready = new() { ManifestHash = shieldsUpMatch.ManifestHash } });
+        shieldsUpMatch.Advance(60);
+        float ownerShieldMaximum = shieldsUpMatch.Snapshot().Shields.First(row => row.OwnerFraction == 1).MaxHealth;
+        float enemyShieldMaximum = shieldsUpMatch.Snapshot().Shields.First(row => row.OwnerFraction == 2).MaxHealth;
+        var shieldCard = new MatchCommand { CommandId = 3,
+            UseShieldsUp = new() { RequestId = "93939393939393939393939393939393" } };
+        Check(shieldsUpMatch.Command(one, shieldCard).Code == "shields-up-applied" &&
+              shieldsUpMatch.Snapshot().Shields.Where(row => row.OwnerFraction == 1)
+                  .All(row => Math.Abs(row.MaxHealth - ownerShieldMaximum * 1.2f) < .001f) &&
+              shieldsUpMatch.Snapshot().Shields.Where(row => row.OwnerFraction == 2)
+                  .All(row => row.MaxHealth == enemyShieldMaximum),
+            "authenticated Shields Up increases only the owner's cover shield maxima");
+        Check(shieldsUpMatch.Command(one, shieldCard).Code == "shields-up-applied" &&
+              shieldsUpMatch.Command(one, new() { CommandId = 4,
+                  UseShieldsUp = new() { RequestId = "94949494949494949494949494949494" } }).Code == "shields-up-unavailable",
+            "Shields Up command replay cannot multiply twice or spend exhausted inventory");
         string enemyShield=covers[1].SourcePath+"/riot_shield";float shieldBefore=shieldSimulation.Snapshot().Single(x=>x.OwnerFraction==2&&x.CoverIndex==covers[1].SourceIndex).Health;
         var shieldMutation=shieldSimulation.ApplyExplosion(enemyShield,1,"Google2u.Bazooka_RPG7",rpg.ExplosionDamage,0);
         Check(shieldMutation!=null&&Math.Abs(shieldBefore-shieldMutation.Health-rpg.ExplosionDamage*2)<.01f,

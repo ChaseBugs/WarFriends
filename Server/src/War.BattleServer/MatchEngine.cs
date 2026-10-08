@@ -246,6 +246,36 @@ public sealed partial class MatchEngine : IMatchRuntime
             ? "medkit-healed" : "medkit-effect-unavailable";
     }
 
+    private string UseShieldsUp(Player owner, string requestId)
+    {
+        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardShieldsUp", StringComparer.Ordinal))
+            return "shields-up-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
+            return "invalid-shields-up-request";
+        if (cardReservations == null || shields == null)
+            return "shields-up-authority-unavailable";
+
+        var alliedShields = shields.Snapshot()
+            .Where(shield => shield.OwnerFraction == owner.Definition.Fraction).ToArray();
+        if (alliedShields.Length == 0)
+            return "shields-up-authority-unavailable";
+        float newMaximum = alliedShields[0].MaxHealth * 1.2f;
+        if (!float.IsFinite(newMaximum) || newMaximum > 100_000_000 ||
+            alliedShields.Any(shield => shield.Health > newMaximum))
+            return "shields-up-authority-unavailable";
+        if (events.Count >= MaximumRetainedEvents ||
+            stateRevision > ulong.MaxValue - 1 - (ulong)alliedShields.Length)
+            return "event-backpressure";
+
+        var effect = new WarCardEffectRequest("CardShieldsUp", Vector3.Zero, 0, 1);
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect))
+            return "shields-up-unavailable";
+
+        shields.ApplyShieldsUp(owner.Definition.Fraction);
+        stateRevision += (ulong)alliedShields.Length;
+        return "shields-up-applied";
+    }
+
     internal bool TryResolveCardStatus(string ownerPlayerId, string effectId, string targetPlayerId)
     {
         var target = Find(targetPlayerId);
@@ -1648,6 +1678,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseMedkit(p,c.UseMedkit.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
+            return UseShieldsUp(p,c.UseShieldsUp.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
