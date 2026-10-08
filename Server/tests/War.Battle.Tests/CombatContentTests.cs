@@ -746,6 +746,30 @@ internal static class CombatContentTests
             wireScores[0].Score != survivingScore.Score ||
             wireScores[0].Stars != survivingScore.Stars)
             throw new Exception("Boss success score did not use frozen host outcome.");
+        CoopTerminalScoreValidator.ValidateSuccess(
+            completedBoss, bossAllocation, catalog);
+        MatchSnapshot forgedBossScore = completedBoss.Clone();
+        forgedBossScore.Coop.SuccessScores[0].Score++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedBossScore, bossAllocation, catalog);
+            throw new Exception("Forged co-op score passed terminal validation.");
+        }
+        catch (InvalidDataException)
+        {
+        }
+        MatchSnapshot forgedBossDeadline = completedBoss.Clone();
+        forgedBossDeadline.Coop.DeadlineTick++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedBossDeadline, bossAllocation, catalog);
+            throw new Exception("Forged co-op deadline passed terminal validation.");
+        }
+        catch (InvalidDataException)
+        {
+        }
 
         var ordinaryShieldRuntime = new CoopMatchRuntime(shieldAllocation,
             catalog, spawnPoints, routes, enemyCombat,
