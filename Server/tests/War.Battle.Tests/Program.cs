@@ -1465,6 +1465,28 @@ var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<str
 }).Build();
 IConfiguration OutboxConfig(string path)=>new ConfigurationBuilder().AddConfiguration(config)
     .AddInMemoryCollection(new Dictionary<string,string?>{{"Battle:ResultOutboxPath",path}}).Build();
+string frozenKeyOutbox = Path.Combine(Path.GetTempPath(),
+    "war-frozen-keys-" + Guid.NewGuid().ToString("N"));
+try
+{
+    BattleKeyConfig frozenKeys = BattleKeyConfig.FromConfiguration(config);
+    var changedKeyConfig = new ConfigurationBuilder().AddConfiguration(config)
+        .AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Battle:SigningKey"] = "changed-after-capture",
+            ["Battle:ResultOutboxPath"] = frozenKeyOutbox
+        }).Build();
+    using var frozenKeyWorker = new NetworkWorker(changedKeyConfig,
+        BattleRuntimeConfigValidator.FromConfiguration(changedKeyConfig),
+        frozenKeys, logs.CreateLogger<NetworkWorker>());
+    Check(frozenKeyWorker != null,
+        "Worker tickets and match routing use the captured startup key");
+}
+finally
+{
+    if (Directory.Exists(frozenKeyOutbox))
+        Directory.Delete(frozenKeyOutbox, recursive: true);
+}
 using var worker = new NetworkWorker(config, logs.CreateLogger<NetworkWorker>());
 Check(!worker.IsReady,"unstarted battle worker is not ready");
 try

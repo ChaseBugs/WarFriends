@@ -107,15 +107,27 @@ public sealed class NetworkWorker : BackgroundService
 
     public NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
         ILogger<NetworkWorker> logger)
-        : this(config, runtime, logger, new SenderEndpointRegistry()) { }
+        : this(config, runtime, BattleKeyConfig.FromConfiguration(config),
+            logger, new SenderEndpointRegistry()) { }
+
+    public NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
+        BattleKeyConfig keys, ILogger<NetworkWorker> logger)
+        : this(config, runtime, keys, logger, new SenderEndpointRegistry()) { }
 
     internal NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
         ILogger<NetworkWorker> logger, SenderEndpointRegistry senderEndpoints)
+        : this(config, runtime, BattleKeyConfig.FromConfiguration(config),
+            logger, senderEndpoints) { }
+
+    internal NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
+        BattleKeyConfig keys, ILogger<NetworkWorker> logger,
+        SenderEndpointRegistry senderEndpoints)
     {
         this.logger = logger;
         this.senderEndpoints = senderEndpoints ??
             throw new ArgumentNullException(nameof(senderEndpoints));
-        tickets = new BattleTickets(config["Battle:SigningKey"] ?? throw new InvalidOperationException("Set Battle__SigningKey in BOTH processes."));
+        ArgumentNullException.ThrowIfNull(keys);
+        tickets = new BattleTickets(keys.SigningKey);
         serverId = config["Battle:ServerId"] ?? "local-1";
         runtime=BattleRuntimeConfigValidator.ValidateAndFreeze(runtime);
         int port=runtime.Port;
@@ -149,27 +161,25 @@ public sealed class NetworkWorker : BackgroundService
         string[] files = StartupManifestFiles.ReadPaths(
             manifestPath, manifestDirectory, maxMatches);
         var maps = string.IsNullOrEmpty(config["Battle:ContentPath"]) ? null : RecoveredBattleMap.Load(config["Battle:ContentPath"]!);
-        match = new MatchRouter(files.Select(MatchManifest.Read), serverId, config["Battle:SigningKey"]!, maps,combat,
+        match = new MatchRouter(files.Select(MatchManifest.Read), serverId, keys.SigningKey, maps,combat,
             config["Battle:PublicHost"] ?? "127.0.0.1",(uint)port,maxMatches);
         string outboxPath=config["Battle:ResultOutboxPath"]??
             Path.Combine(AppContext.BaseDirectory,"battle-outbox");
         string? resultEndpointText=config["Battle:BackendResultEndpoint"];
         string? allocationEndpointText=config["Battle:BackendAllocationEndpoint"];
-        string? resultKeyText=config["Battle:ControlKey"];
+        byte[]? controlKey=keys.ControlKey;
         resultEndpoint=null; resultForwarder=null; allocationEndpoint=null; allocationClient=null;
         if (!string.IsNullOrWhiteSpace(resultEndpointText))
         {
-            if (!Uri.TryCreate(resultEndpointText, UriKind.Absolute, out var parsed) || parsed.Scheme is not ("http" or "https") || string.IsNullOrWhiteSpace(resultKeyText))
+            if (!Uri.TryCreate(resultEndpointText, UriKind.Absolute, out var parsed) || parsed.Scheme is not ("http" or "https") || controlKey == null)
                 throw new InvalidDataException("Backend result forwarding requires a valid endpoint and control key.");
-            byte[] key=Convert.FromBase64String(resultKeyText);
-            resultEndpoint=parsed; resultForwarder=new BackendResultForwarder(new HttpClient { Timeout=TimeSpan.FromSeconds(5) },key,serverId);
+            resultEndpoint=parsed; resultForwarder=new BackendResultForwarder(new HttpClient { Timeout=TimeSpan.FromSeconds(5) },controlKey,serverId);
         }
         if (!string.IsNullOrWhiteSpace(allocationEndpointText))
         {
-            if (!Uri.TryCreate(allocationEndpointText, UriKind.Absolute, out var parsed) || parsed.Scheme is not ("http" or "https") || string.IsNullOrWhiteSpace(resultKeyText))
+            if (!Uri.TryCreate(allocationEndpointText, UriKind.Absolute, out var parsed) || parsed.Scheme is not ("http" or "https") || controlKey == null)
                 throw new InvalidDataException("Backend allocation loading requires a valid endpoint and control key.");
-            byte[] key=Convert.FromBase64String(resultKeyText);
-            allocationEndpoint=parsed; allocationClient=new BackendAllocationClient(new HttpClient {Timeout=TimeSpan.FromSeconds(5)},key,serverId);
+            allocationEndpoint=parsed; allocationClient=new BackendAllocationClient(new HttpClient {Timeout=TimeSpan.FromSeconds(5)},controlKey,serverId);
         }
         activeJournal=new ActiveMatchJournal(Path.Combine(outboxPath,"active"), maxMatches);
         terminalOutbox=new TerminalOutbox(outboxPath,activeJournal.ActiveMatchIds());

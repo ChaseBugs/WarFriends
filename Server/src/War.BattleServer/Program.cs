@@ -18,14 +18,9 @@ if (!int.TryParse(controlPortText, NumberStyles.Integer,
         CultureInfo.InvariantCulture, out int controlPort) ||
     controlPort is < 1 or > 65535 || controlPort == udpPort)
     throw new InvalidOperationException("Invalid battle or control port.");
-byte[] signingKey=Convert.FromBase64String(builder.Configuration["Battle:SigningKey"]??
-    throw new InvalidOperationException("Set Battle__SigningKey."));
-if(signingKey.Length!=32)throw new InvalidOperationException("Battle signing key must be 32 bytes.");
-TransportSecurityPolicy.ValidateSigningKey(signingKey);
-byte[] controlKey=Convert.FromBase64String(builder.Configuration["Battle:ControlKey"]??
-    throw new InvalidOperationException("Set Battle__ControlKey separately from Battle__SigningKey."));
-try {controlKey=BattleControlKeyPolicy.ValidateAndCopy(controlKey,signingKey);}
-catch(InvalidDataException e){throw new InvalidOperationException(e.Message,e);}
+BattleKeyConfig keys = BattleKeyConfig.FromConfiguration(
+    builder.Configuration, requireControlKey: true);
+byte[] controlKey = keys.ControlKey!;
 builder.WebHost.ConfigureKestrel(options=>
 {
     options.ListenLocalhost(controlPort);
@@ -33,6 +28,7 @@ builder.WebHost.ConfigureKestrel(options=>
 });
 builder.Services.AddSingleton<NetworkWorker>();
 builder.Services.AddSingleton(runtimeConfig);
+builder.Services.AddSingleton(keys);
 builder.Services.AddHostedService(services=>services.GetRequiredService<NetworkWorker>());
 var app=builder.Build();
 app.MapGet("/health/live",()=>Results.Ok(new {status="alive"}));

@@ -10481,6 +10481,31 @@ internal static class CombatContentTests
                 }).Build();
             Reject(() => BattleRuntimeConfigValidator.FromConfiguration(
                 malformedMtuSettings));
+            string signingSetting = Convert.ToBase64String(
+                Enumerable.Repeat((byte)1, 32).ToArray());
+            string controlSetting = Convert.ToBase64String(
+                Enumerable.Repeat((byte)2, 32).ToArray());
+            IConfigurationRoot keySettings = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Battle:SigningKey"] = signingSetting,
+                    ["Battle:ControlKey"] = controlSetting
+                }).Build();
+            BattleKeyConfig capturedKeys = BattleKeyConfig.FromConfiguration(
+                keySettings, requireControlKey: true);
+            keySettings["Battle:SigningKey"] = Convert.ToBase64String(
+                Enumerable.Repeat((byte)3, 32).ToArray());
+            byte[] exposedControlKey = capturedKeys.ControlKey!;
+            exposedControlKey[0] = 99;
+            Check(capturedKeys.SigningKey == signingSetting &&
+                  capturedKeys.ControlKey![0] == 2,
+                "Battle startup keys remain frozen and expose defensive copies");
+            keySettings["Battle:SigningKey"] = signingSetting;
+            keySettings["Battle:ControlKey"] = signingSetting;
+            Reject(() => BattleKeyConfig.FromConfiguration(
+                keySettings, requireControlKey: true));
+            keySettings["Battle:SigningKey"] = "not base64";
+            Reject(() => BattleKeyConfig.FromConfiguration(keySettings));
             string manifestTestDirectory = Path.Combine(Path.GetTempPath(),
                 "war-battle-manifest-test-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(manifestTestDirectory);
@@ -14863,7 +14888,7 @@ internal static class CombatContentTests
             File.WriteAllText(temporary,JsonSerializer.Serialize(manifest));
             var config=new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>
             {
-                ["Battle:ServerId"]=manifest.ServerId,["Battle:SigningKey"]=Convert.ToBase64String(new byte[32]),
+                ["Battle:ServerId"]=manifest.ServerId,["Battle:SigningKey"]=Convert.ToBase64String(Enumerable.Repeat((byte)1,32).ToArray()),
                 ["Battle:MatchManifestPath"]=temporary,["Battle:CombatContentManifestPath"]=Path.Combine(directory,"combat-content-manifest.json"),
                 ["Battle:ResultOutboxPath"]=Path.Combine(Path.GetTempPath(),"war-content-outbox-"+Guid.NewGuid().ToString("N"))
             }).Build();
