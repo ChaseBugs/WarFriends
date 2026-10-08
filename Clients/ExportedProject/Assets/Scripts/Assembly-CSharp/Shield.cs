@@ -37,6 +37,8 @@ public class Shield : DestroyableObject
 
 	private int mModelNumber;
 
+	private int mSelfHostedLockRequest;
+
 	public List<float> modelsLimits;
 
 	private PlayerController mPlayer;
@@ -93,7 +95,8 @@ public class Shield : DestroyableObject
 		set
 		{
 			mPlayer = value;
-			if (mPhotonView != null)
+			if (mPhotonView != null &&
+				!PhotonConnectionManager.IsSelfHostedActive)
 			{
 				if (value != null)
 				{
@@ -382,6 +385,15 @@ public class Shield : DestroyableObject
 
 	public void GetLock()
 	{
+		if (PhotonConnectionManager.IsSelfHostedActive &&
+			(Singleton<GameController>.instance.isCoop ||
+			Singleton<GameController>.instance.isCoopBot))
+		{
+			lockResult = LockResult.None;
+			tryGetLock = true;
+			RequestSelfHostedLock(++mSelfHostedLockRequest);
+			return;
+		}
 		if ((Singleton<GameController>.instance.isCoop || Singleton<GameController>.instance.isCoopBot) && PhotonNetwork.room.playerCount == 2)
 		{
 			lockResult = LockResult.None;
@@ -393,6 +405,44 @@ public class Shield : DestroyableObject
 			lockResult = LockResult.Success;
 			tryGetLock = false;
 		}
+	}
+
+	private async void RequestSelfHostedLock(int request)
+	{
+		bool accepted = false;
+		try
+		{
+			SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+			PlayerController localPlayer = PlayerController.currentPlayer;
+			MapDefinition map = Singleton<MapManager>.instance.currentMapDef;
+			MapDefinition.DefendPosition current = localPlayer.currentPlayerPoint;
+			MapDefinition.DefendPosition target = null;
+			foreach (MapDefinition.DefendPosition position in map.availablePoints)
+			{
+				if (position.point != null && position.point.shield == this)
+				{
+					target = position;
+					break;
+				}
+			}
+			if (client == null || current == null || target == null ||
+				current.index == target.index ||
+				current.fraction != target.fraction)
+				throw new System.InvalidOperationException(
+					"The co-op shield has no valid host cover identity.");
+
+			int direction = target.index > current.index ? 1 : -1;
+			accepted = await client.RequestCoopCover(direction, target.index);
+		}
+		catch (System.Exception exception)
+		{
+			Debug.LogWarning("Self-hosted co-op shield lock failed: " +
+				exception.GetType().Name);
+		}
+		if (this == null || request != mSelfHostedLockRequest)
+			return;
+		lockResult = accepted ? LockResult.Success : LockResult.Failure;
+		tryGetLock = false;
 	}
 
 	[PunRPC]

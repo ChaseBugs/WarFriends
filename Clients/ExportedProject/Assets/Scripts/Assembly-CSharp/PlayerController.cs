@@ -921,11 +921,13 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 		{
 			weaponInventory.currentWeapon.MouseUpAndNoUpdate();
 		}
-		if (mPhotonView.isMine)
+		if (mPhotonView.isMine ||
+			(PhotonConnectionManager.IsSelfHostedActive && isCurrentPlayer))
 		{
 			UpdateGoLeftRight();
 		}
-		if (!mPhotonView.isMine)
+		if (!mPhotonView.isMine &&
+			!(PhotonConnectionManager.IsSelfHostedActive && isCurrentPlayer))
 		{
 			soldierAnimator.currentUpperBodyRotation = Mathf.Lerp(soldierAnimator.currentUpperBodyRotation, mWantedUpperBodyRot, Time.deltaTime * 12f);
 			soldierAnimator.SetUpperBodyRot(soldierAnimator.currentUpperBodyRotation);
@@ -1069,7 +1071,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 	[PunRPC]
 	private void Idle()
 	{
-		if (mPhotonView.isMine)
+		if (mPhotonView.isMine &&
+			!PhotonConnectionManager.IsSelfHostedActive)
 		{
 			mPhotonView.RPC("Idle", PhotonTargets.Others);
 		}
@@ -1079,7 +1082,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 	[PunRPC]
 	private void Walk()
 	{
-		if (mPhotonView.isMine)
+		if (mPhotonView.isMine &&
+			!PhotonConnectionManager.IsSelfHostedActive)
 		{
 			mPhotonView.RPC("Walk", PhotonTargets.Others);
 		}
@@ -1271,7 +1275,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 					mGoLeft = true;
 					mGoToPosition = availablePoints[num2];
 					mGoToPosition.point.shield.GetLock();
-					GoTo(mGoToPosition);
+					if (!PhotonConnectionManager.IsSelfHostedActive)
+						GoTo(mGoToPosition);
 					return mGoToPosition;
 				}
 			}
@@ -1307,7 +1312,9 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 		if (mGoToPosition.point.shield.lockResult == Shield.LockResult.Success)
 		{
 			currentPlayerPoint = mGoToPosition;
-			if (mPhotonView.isMine)
+			if (PhotonConnectionManager.IsSelfHostedActive)
+				GoTo(mGoToPosition);
+			else if (mPhotonView.isMine)
 			{
 				mPhotonView.RPC("SetCurrentPoint", PhotonTargets.Others, mCurrentPlayerPoint.index);
 			}
@@ -1324,7 +1331,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 			if (!mGoRight)
 			{
 				mGoToPosition = currentPlayerPoint;
-				GoTo(mGoToPosition);
+				if (!PhotonConnectionManager.IsSelfHostedActive)
+					GoTo(mGoToPosition);
 			}
 		}
 		if (mGoLeft)
@@ -1333,7 +1341,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 			if (!mGoLeft)
 			{
 				mGoToPosition = currentPlayerPoint;
-				GoTo(mGoToPosition);
+				if (!PhotonConnectionManager.IsSelfHostedActive)
+					GoTo(mGoToPosition);
 			}
 		}
 	}
@@ -1374,7 +1383,8 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 					mGoRight = true;
 					mGoToPosition = availablePoints[i];
 					mGoToPosition.point.shield.GetLock();
-					GoTo(mGoToPosition);
+					if (!PhotonConnectionManager.IsSelfHostedActive)
+						GoTo(mGoToPosition);
 					return mGoToPosition;
 				}
 			}

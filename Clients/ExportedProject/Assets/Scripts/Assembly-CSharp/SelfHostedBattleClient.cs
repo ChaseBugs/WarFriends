@@ -467,6 +467,25 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
     }
     public Task MoveCover(int direction) { return Execute(c => c.MoveCoverAsync(direction, lifetime.Token)); }
+    /// <summary>
+    /// Co-op Shield.GetLock asks for a specific defend point. The host may
+    /// choose only that point; the caller waits for its accepted movement.
+    /// </summary>
+    public async Task<bool> RequestCoopCover(int direction, int targetCoverIndex)
+    {
+        if (!IsConnected || connection == null || State == null ||
+            State.Coop == null)
+            throw new InvalidOperationException(
+                "A connected co-op match is required for a shield lock.");
+
+        MatchConnection active = connection;
+        MatchReply reply = await active.MoveCoopCoverAsync(direction,
+            targetCoverIndex, lifetime.Token);
+        if (!IsConnected || active != connection)
+            return false;
+        Apply(reply);
+        return reply.Code == "moving";
+    }
     public Task Forfeit() { return Execute(c => c.ForfeitAsync(lifetime.Token)); }
     public async Task ForfeitWithRecovery()
     {
