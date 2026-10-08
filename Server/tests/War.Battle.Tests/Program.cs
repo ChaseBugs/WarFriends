@@ -1613,6 +1613,7 @@ var allocationRequestStarted = new TaskCompletionSource<bool>(
     TaskCreationOptions.RunContinuationsAsynchronously);
 var releaseAllocationResponse = new TaskCompletionSource<bool>(
     TaskCreationOptions.RunContinuationsAsynchronously);
+int allocationRequestCount = 0;
 var slowBackendBuilder = WebApplication.CreateBuilder();
 slowBackendBuilder.WebHost.UseUrls("http://127.0.0.1:0");
 slowBackendBuilder.Logging.ClearProviders();
@@ -1625,9 +1626,17 @@ slowBackend.MapPost("/accept", async (HttpContext context) =>
 });
 slowBackend.MapPost("/allocations", async (HttpContext context) =>
 {
-    allocationRequestStarted.TrySetResult(true);
-    await releaseAllocationResponse.Task.WaitAsync(context.RequestAborted);
-    return Results.StatusCode(503);
+    if (Interlocked.Increment(ref allocationRequestCount) == 1)
+    {
+        allocationRequestStarted.TrySetResult(true);
+        await releaseAllocationResponse.Task.WaitAsync(context.RequestAborted);
+        return Results.StatusCode(503);
+    }
+    return Results.Json(new[]
+    {
+        new BattleAllocationProjection(a, [], [], [], [], []),
+        new BattleAllocationProjection(b, [], [], [], [], [])
+    });
 });
 await slowBackend.StartAsync();
 var slowConfig = new ConfigurationBuilder().AddConfiguration(multiConfig)
@@ -1704,6 +1713,15 @@ using (var slowWorker = new NetworkWorker(slowConfig,
         releaseAllocationResponse.TrySetResult(true);
         Check((await waitingRegistration).Code == "allocation-unavailable",
             "Backend allocation failure is retryable without stopping the Worker");
+        MatchManifest successfulAllocation = definition with
+        {
+            MatchId = "allocation-prefetch-success"
+        };
+        MatchRegistrationResult allocated = await slowWorker.RegisterMatch(
+            successfulAllocation, CancellationToken.None);
+        Check(allocated.Code == "registered" &&
+              allocated.Grants is { Count: 2 },
+            "validated Backend projections reach the single-writer match registry");
     }
     finally
     {
