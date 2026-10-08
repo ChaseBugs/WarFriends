@@ -42,6 +42,7 @@ public sealed class BattleCombatContent
     public ArmyWeaponBindingCatalog ArmyWeapons { get; }
     public GroundVehicleWeaponCatalog GroundVehicleWeapons { get; }
     internal EnemyPoseCatalog EnemyPoses { get; }
+    internal CoopAssaulterWeaponCatalog CoopAssaulterWeapon { get; private init; } = null!;
     internal EnemyShotTargetCatalog EnemyShotTargets { get; }
     public DecoySourceCatalog Decoys { get; }
     public LandMineSourceCatalog LandMines { get; }
@@ -101,6 +102,9 @@ public sealed class BattleCombatContent
         var groundVehicleWeapons=GroundVehicleWeaponCatalog.Load(Path.Combine(directory,
             "recovered-ground-vehicle-weapons.json"),manifest.GroundVehicleWeaponsRevision);
         var enemyPoses=EnemyPoseCatalog.Load(Path.Combine(directory,"recovered-enemy-poses.json"),manifest.EnemyPosesRevision);
+        var coopAssaulterWeapon=CoopAssaulterWeaponCatalog.Load(
+            Path.Combine(directory,"recovered-coop-assaulter-weapon.json"),
+            manifest.SceneRevision);
         if(manifest.EnemyShotTargetsRevision!=EnemyShotTargetCatalog.VerifiedRevision)throw new InvalidDataException("Unverified enemy aim revision.");
         var enemyShotTargets=EnemyShotTargetCatalog.Load(Path.Combine(directory,"recovered-enemy-target-poses.json"),enemyPoses);
         if(groundVehicleWeapons.PassengerPoses.SourceSha256!=army.InfantryAgent.PrefabSha256)
@@ -214,7 +218,8 @@ public sealed class BattleCombatContent
             AssaultHelicopterWeapons=assaultHelicopterWeapons,
             AssaultHelicopterBoxCollider=assaultHelicopterBoxCollider,
             AssaultHelicopterMeshColliders=assaultHelicopterMeshColliders,
-            GrenadeShotTargets=grenadeShotTargets};
+            GrenadeShotTargets=grenadeShotTargets,
+            CoopAssaulterWeapon=coopAssaulterWeapon};
     }
     public void ValidateAllocation(MatchManifest manifest)
     {

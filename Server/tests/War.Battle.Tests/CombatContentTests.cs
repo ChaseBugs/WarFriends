@@ -590,6 +590,15 @@ internal static class CombatContentTests
         string directory, MissionCatalog catalog, BattleCombatContent content)
     {
         ArmyDeploymentCatalog army = content.Army;
+        CoopAssaulterWeaponCatalog rifle = content.CoopAssaulterWeapon;
+        if (rifle.WeaponPrefabGuid !=
+                "d03f97fa25701ab42ab60f1fa86421ce" ||
+            rifle.BulletPrefabGuid !=
+                "855689762fa6e774aaee190652b08c6f" ||
+            rifle.MuzzleTransformFileId != 455190 ||
+            rifle.CadenceSeconds != 0.35f ||
+            rifle.NextRoundEligibleTick(100) != 111)
+            throw new Exception("Co-op Assaulter rifle lost its source cadence or binding.");
         string contentRevision = content.Stats.Revision;
         CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-spawn-points.json"), catalog);
@@ -1790,6 +1799,8 @@ internal static class CombatContentTests
             crawlWindup.TargetTransformFileId != placedTarget.TransformFileId ||
             crawlWindup.Batch.Count != expectedBatchCount ||
             crawlWindup.Batch.RealShotMask != expectedRealMask ||
+            crawlWindup.WeaponPrefabGuid != rifle.WeaponPrefabGuid ||
+            crawlWindup.WeaponCadenceSeconds != rifle.CadenceSeconds ||
             crawlWindup.StartTick != firstShootTick ||
             crawlWindup.CallbackTick != expectedCrawlCallback ||
             crawlWindup.CallbackStartedTick != null)

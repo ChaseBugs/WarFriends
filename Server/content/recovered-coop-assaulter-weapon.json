@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "unitId": "ID_UNIT-ASSAULT",
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "behaviourComponentFileId": 35664,
+  "inventoryComponentFileId": 42740,
+  "weaponPrefab": "Assets/GameObject/AssaultRifleEnemy.prefab",
+  "weaponPrefabSha256": "a55f77d5fc32e948951805b01e13c9193cf852171ec842a2caa6ad3338239de2",
+  "weaponPrefabGuid": "d03f97fa25701ab42ab60f1fa86421ce",
+  "weaponComponentFileId": 11470521,
+  "weaponType": 0,
+  "muzzleTransformFileId": 455190,
+  "bulletPrefabGuid": "855689762fa6e774aaee190652b08c6f",
+  "bulletComponentFileId": 11409266,
+  "cadenceSeconds": 0.35,
+  "infiniteAmmo": true,
+  "reloadableWeapon": false,
+  "soldierSourceSha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39",
+  "gunSourceSha256": "2a3c8d6f42707bb8253e6b9f5e5e6ff50068a872b2d33b387520fb2d83efe281"
+}

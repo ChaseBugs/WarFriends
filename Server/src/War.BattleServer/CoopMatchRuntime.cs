@@ -55,7 +55,8 @@ internal sealed record CoopInfantryShotBatch(
 internal sealed record CoopInfantryShotWindup(
     ulong EnemyEntityId, string PlayerId, int TargetTransformFileId,
     string AnimationClip, ulong StartTick, ulong CallbackTick,
-    ulong? CallbackStartedTick, CoopInfantryShotBatch Batch);
+    ulong? CallbackStartedTick, CoopInfantryShotBatch Batch,
+    string WeaponPrefabGuid, float WeaponCadenceSeconds);
 
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
@@ -118,6 +119,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<float> chooseInfantryRealShotRoll;
     private readonly Func<int> chooseCornerChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
+    private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly PlayerShotTargetCatalog? playerShotTargets;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -276,6 +278,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (playerWeaponContent != null)
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
+        assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;
         playerPoses = playerWeaponContent?.Poses;
         playerShotTargets = playerWeaponContent?.PlayerShotTargets;
         assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
@@ -1335,7 +1338,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
         return new CoopInfantryShotWindup(target.EnemyEntityId,
             target.PlayerId, target.TransformFileId, clipName, tick,
-            callbackTick, null, batch);
+            callbackTick, null, batch,
+            assaulterWeapon!.WeaponPrefabGuid,
+            assaulterWeapon.CadenceSeconds);
     }
 
     private void AdvanceInfantryShotWindups()
