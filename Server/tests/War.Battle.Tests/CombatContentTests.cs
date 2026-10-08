@@ -3083,6 +3083,7 @@ internal static class CombatContentTests
             throw new Exception("Unity co-op motion trace is incomplete.");
         var errors = new List<float>();
         var facingErrors = new List<float>();
+        var smoothedFacingErrors = new List<float>();
         float previousTime = -1;
         int previousFrame = -1;
         foreach (JsonElement sample in samples.EnumerateArray())
@@ -3115,17 +3116,29 @@ internal static class CombatContentTests
                 float cosine = Math.Clamp(Vector3.Dot(unityFacing,
                     hostFacing), -1f, 1f);
                 facingErrors.Add(MathF.Acos(cosine) * 180f / MathF.PI);
+                Vector3 smoothedFacing = host.SmoothedPlanarDirectionAt(
+                    tick, 0.6f);
+                float smoothedCosine = Math.Clamp(Vector3.Dot(unityFacing,
+                    smoothedFacing), -1f, 1f);
+                smoothedFacingErrors.Add(
+                    MathF.Acos(smoothedCosine) * 180f / MathF.PI);
             }
         }
         errors.Sort();
         facingErrors.Sort();
+        smoothedFacingErrors.Sort();
         if (errors[(int)(errors.Count * 0.95)] > 0.25f ||
             errors[^1] > 0.30f || previousTime is < 8f or > 9f ||
-            facingErrors.Count < 200)
+            facingErrors.Count < 200 ||
+            smoothedFacingErrors[(int)(smoothedFacingErrors.Count * 0.95)] >
+                35f ||
+            smoothedFacingErrors[(int)(smoothedFacingErrors.Count * 0.95)] >=
+                facingErrors[(int)(facingErrors.Count * 0.95)])
             throw new Exception("Co-op host motion differs from Unity reference.");
         Console.WriteLine($"Co-op Assaulter Unity motion: host median={errors[errors.Count / 2]:F3}, " +
             $"p95={errors[(int)(errors.Count * 0.95)]:F3}, max={errors[^1]:F3}, " +
-            $"facing p95={facingErrors[(int)(facingErrors.Count * 0.95)]:F1} degrees, " +
+            $"facing p95={facingErrors[(int)(facingErrors.Count * 0.95)]:F1}/" +
+            $"{smoothedFacingErrors[(int)(smoothedFacingErrors.Count * 0.95)]:F1} degrees, " +
             $"Unity duration={previousTime:F2}s, host duration={corridor.SmoothedLength / 0.9f:F2}s.");
     }
 

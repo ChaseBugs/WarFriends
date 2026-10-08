@@ -855,7 +855,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (enemy == null)
             return [];
 
-        Vector3 direction = path.PlanarDirectionAt(tick);
+        Vector3 direction = path.SmoothedPlanarDirectionAt(tick, 0.6f);
         if (direction == Vector3.Zero)
             return [];
         float heading = MathF.Atan2(direction.X, direction.Z);

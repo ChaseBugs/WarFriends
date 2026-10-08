@@ -49,6 +49,11 @@ public sealed class CoopInfantryPathState
 
         double distance = (double)(tick - startTick) * speed /
             MatchManifest.TickRate;
+        return PositionAtDistance(distance);
+    }
+
+    private Vector3 PositionAtDistance(double distance)
+    {
         for (int index = 1; index < points.Count; index++)
         {
             Vector3 from = points[index - 1];
@@ -94,6 +99,28 @@ public sealed class CoopInfantryPathState
             distance -= length;
         }
         return lastDirection;
+    }
+
+    /// <summary>
+    /// A geometric facing estimate across nearby route corners. Unity's
+    /// NavMeshAgent turns continuously rather than snapping to each segment;
+    /// this remains a diagnostic estimate, not a verified collision rotation.
+    /// </summary>
+    public Vector3 SmoothedPlanarDirectionAt(ulong tick, float lookDistance)
+    {
+        if (!float.IsFinite(lookDistance) || lookDistance <= 0 ||
+            lookDistance > 2f)
+            throw new ArgumentOutOfRangeException(nameof(lookDistance));
+        double distance = tick <= startTick ? 0 :
+            (double)(tick - startTick) * speed / MatchManifest.TickRate;
+        Vector3 before = PositionAtDistance(
+            Math.Max(0, distance - lookDistance));
+        Vector3 after = PositionAtDistance(
+            Math.Min(routeLength, distance + lookDistance));
+        Vector3 planar = new(after.X - before.X, 0,
+            after.Z - before.Z);
+        return planar.LengthSquared() > 0.000001f ?
+            Vector3.Normalize(planar) : PlanarDirectionAt(tick);
     }
 
     private static double PathLength(IReadOnlyList<Vector3> route)
