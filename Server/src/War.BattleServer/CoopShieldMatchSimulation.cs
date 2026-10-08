@@ -6,6 +6,9 @@ namespace War.BattleServer;
 /// </summary>
 internal sealed class CoopShieldMatchSimulation
 {
+    private sealed record UnitShotReceipt(int CoverIndex, float SourceDamage,
+        ulong Tick, ShieldMutation? Result);
+
     private sealed class Cover(int index, int ownerFraction,
         ShieldLifecycle lifecycle)
     {
@@ -19,6 +22,7 @@ internal sealed class CoopShieldMatchSimulation
     }
 
     private readonly Cover[] covers;
+    private readonly Dictionary<ulong, UnitShotReceipt> unitShotReceipts = [];
     private ulong lastTick;
 
     internal CoopShieldMatchSimulation(MatchManifest manifest,
@@ -86,23 +90,46 @@ internal sealed class CoopShieldMatchSimulation
     /// Only a future verified host projectile impact may call this path.
     /// </summary>
     internal ShieldMutation? ApplyHostUnitShot(
-        int coverIndex, float sourceDamage, ulong tick)
+        ulong projectileId, int coverIndex, float sourceDamage, ulong tick)
     {
+        if (projectileId == 0 || !float.IsFinite(sourceDamage) ||
+            sourceDamage is < 0 or > 100_000_000)
+            throw new InvalidDataException(
+                "Co-op unit shield shot has invalid host evidence.");
+        if (unitShotReceipts.TryGetValue(projectileId,
+                out UnitShotReceipt? previous))
+        {
+            if (previous.CoverIndex != coverIndex ||
+                BitConverter.SingleToInt32Bits(previous.SourceDamage) !=
+                    BitConverter.SingleToInt32Bits(sourceDamage) ||
+                previous.Tick != tick)
+                throw new InvalidDataException(
+                    "Co-op unit shield projectile replay conflicts.");
+            return previous.Result;
+        }
         if (tick != lastTick)
             throw new InvalidDataException(
                 "Co-op unit shield impact used a different host tick.");
         Cover? cover = covers.SingleOrDefault(row =>
             row.Index == coverIndex);
         if (cover == null)
-            return null;
+            throw new InvalidDataException(
+                "Co-op unit shield impact has no source cover.");
+        if (unitShotReceipts.Count >= 65_536)
+            throw new InvalidOperationException(
+                "Co-op unit shield impact receipt capacity is exhausted.");
 
         float previousHealth = cover.Lifecycle.Health;
         cover.Lifecycle.ApplyUnitShot(sourceDamage, tick);
-        if (cover.Lifecycle.Health == previousHealth)
-            return null;
-
-        cover.Revision++;
-        return cover.Snapshot();
+        ShieldMutation? result = null;
+        if (cover.Lifecycle.Health != previousHealth)
+        {
+            cover.Revision++;
+            result = cover.Snapshot();
+        }
+        unitShotReceipts.Add(projectileId,
+            new UnitShotReceipt(coverIndex, sourceDamage, tick, result));
+        return result;
     }
 
     internal bool Advance(ulong tick, IReadOnlyCollection<int> occupiedCovers)

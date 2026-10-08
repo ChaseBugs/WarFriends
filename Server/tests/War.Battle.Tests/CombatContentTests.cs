@@ -1425,12 +1425,49 @@ internal static class CombatContentTests
         float assaulterDamage = enemyCombat.OrdinaryStats(
             "Assaulter", normalUpgradeIndex: 0).Damage;
         ShieldMutation? unitShieldHit = unitShieldProbe.ApplyHostUnitShot(
-            1, assaulterDamage, 0);
+            881, 1, assaulterDamage, 0);
         float expectedShieldHealth = content.Shields.Health(3) -
             assaulterDamage * content.Shields.UnitToShieldCoefficient;
         if (unitShieldHit == null ||
             Math.Abs(unitShieldHit.Health - expectedShieldHealth) > 0.0001f)
             throw new Exception("Co-op Assaulter shot lost its unit-to-shield rule.");
+        if (unitShieldProbe.ApplyHostUnitShot(881, 1,
+                assaulterDamage, 0) != unitShieldHit ||
+            unitShieldProbe.Snapshot()[1] != unitShieldHit)
+            throw new Exception("Co-op unit shield shot repeated its damage.");
+        try
+        {
+            unitShieldProbe.ApplyHostUnitShot(881, 2,
+                assaulterDamage, 0);
+            throw new Exception("Co-op unit shield receipt accepted a new cover.");
+        }
+        catch (InvalidDataException) { }
+        try
+        {
+            unitShieldProbe.ApplyHostUnitShot(881, 1,
+                assaulterDamage + 1f, 0);
+            throw new Exception("Co-op unit shield receipt accepted new damage.");
+        }
+        catch (InvalidDataException) { }
+        unitShieldProbe.Advance(1, [1]);
+        if (unitShieldProbe.ApplyHostUnitShot(881, 1,
+                assaulterDamage, 0) != unitShieldHit ||
+            unitShieldProbe.Snapshot()[1] != unitShieldHit)
+            throw new Exception("A later replay changed co-op shield health.");
+        ShieldMutation? destroyedByUnit = unitShieldProbe
+            .ApplyHostUnitShot(882, 1, 1_000_000f, 1);
+        if (destroyedByUnit?.Destroyed != true)
+            throw new Exception("Host unit shot failed to destroy the allied shield.");
+        ulong unitRepairTick = 1 + (ulong)MathF.Ceiling(
+            content.Shields.RepairSeconds * MatchManifest.TickRate);
+        for (ulong hostTick = 2; hostTick <= unitRepairTick; hostTick++)
+            unitShieldProbe.Advance(hostTick, [1]);
+        ShieldMutation repairedUnitShield = unitShieldProbe.Snapshot()[1];
+        if (repairedUnitShield.Destroyed ||
+            unitShieldProbe.ApplyHostUnitShot(882, 1,
+                1_000_000f, 1) != destroyedByUnit ||
+            unitShieldProbe.Snapshot()[1] != repairedUnitShield)
+            throw new Exception("A replay consumed a repaired co-op shield.");
         // The Unity ray-reference artifact hits Desert's cover-1 collider
         // 1531 from this point. Use the runtime's own shield snapshots.
         using JsonDocument shieldRays = JsonDocument.Parse(File.ReadAllBytes(
