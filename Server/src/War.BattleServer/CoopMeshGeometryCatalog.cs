@@ -18,9 +18,9 @@ public sealed record CoopMeshGeometry(
 public sealed class CoopMeshGeometryCatalog
 {
     private const string SourceSha256 =
-        "48bef1533a10a9d7fb2355cdc586a68948b78a517691ca58d465ce830a7c41c9";
+        "baece6f3eaffd22ad97465205c20c0755771ead83dcc5ae24210e724b911dcb7";
     private const string ColliderSourceSha256 =
-        "4f76cd6dff18b707908666053a3b8f68b85c4ac22b3048d287e1dd189b6717c6";
+        "3f7fb2f2a3d0e90dda9796ecb79f8233964e52cdcd5c5e3350c2a08f92cdb20d";
     private readonly IReadOnlyDictionary<string, CoopMeshGeometry> meshes;
 
     public int Count => meshes.Count;

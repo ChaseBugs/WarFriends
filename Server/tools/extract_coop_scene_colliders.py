@@ -84,6 +84,10 @@ def extract_map(source, expected_counts):
                 field(component, "m_Enabled") not in ("0", "1") or \
                 field(game_object, "m_IsActive") not in ("0", "1"):
             raise ValueError("invalid source collider flags")
+        active_in_hierarchy = all(
+            field(blocks[ref(blocks[transform["fileId"]][1],
+                             "m_GameObject")][1], "m_IsActive") == "1"
+            for transform in chain)
         colliders.append({
             "componentFileId": component_id,
             "componentType": KINDS[kind],
@@ -92,6 +96,7 @@ def extract_map(source, expected_counts):
             "gameObjectName": field(game_object, "m_Name"),
             "layer": layer,
             "active": field(game_object, "m_IsActive") == "1",
+            "activeInHierarchy": active_in_hierarchy,
             "enabled": field(component, "m_Enabled") == "1",
             "trigger": field(component, "m_IsTrigger") == "1",
             "transformChain": chain,

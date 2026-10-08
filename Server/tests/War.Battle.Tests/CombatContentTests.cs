@@ -71,6 +71,7 @@ internal static class CombatContentTests
         int skillShotAssertions = VerifyCoopSkillShotScores(skillShots);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int colliderAssertions = VerifyCoopSceneColliders(directory, catalog);
+        int nativeRayAssertions = VerifyCoopNativeSceneRays(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
         int botAssertions = VerifyCoopBotRules(directory, catalog, content);
@@ -99,7 +100,8 @@ internal static class CombatContentTests
                 "A changed boss scene hash was accepted.");
             return 5 + skillShotAssertions + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
-                allocationAssertions + mapAssertions + colliderAssertions + navMeshAssertions +
+                allocationAssertions + mapAssertions + colliderAssertions +
+                nativeRayAssertions + navMeshAssertions +
                 routeAssertions + botAssertions + bossSpawnAssertions;
         }
         finally
@@ -2285,6 +2287,8 @@ internal static class CombatContentTests
             all.Count(row => row.ComponentType == "MeshCollider") != 654 ||
             all.Count(row => row.ComponentType == "BoxCollider") != 139 ||
             all.Count(row => row.ComponentType == "CapsuleCollider") != 2 ||
+            all.Count(row => row.Active) != 775 ||
+            all.Count(row => row.ActiveInHierarchy) != 721 ||
             all.Count(row => row.ComponentType == "MeshCollider" &&
                 row.Shape.MeshFileId == 0) != 54 ||
             desert.Scene != "Desert_New" || desert.Colliders.Count != 106 ||
@@ -2314,6 +2318,73 @@ internal static class CombatContentTests
         {
             File.Delete(temporaryPath);
         }
+    }
+
+    private static int VerifyCoopNativeSceneRays(
+        string directory, MissionCatalog missions)
+    {
+        string path = Path.Combine(directory,
+            "recovered-coop-scene-ray-reference.json");
+        byte[] bytes = File.ReadAllBytes(path);
+        string digest = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        if (digest != "f6fffe0233ca835124f03184b02d401e5053037305a5db36ab0d01a8f391d5f0")
+            throw new Exception("Unity co-op ray reference changed.");
+
+        CoopSceneColliderCatalog colliders = CoopSceneColliderCatalog.Load(
+            Path.Combine(directory, "recovered-coop-scene-colliders.json"),
+            missions);
+        CoopMeshGeometryCatalog geometry = CoopMeshGeometryCatalog.Load(
+            Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
+            colliders);
+        using JsonDocument document = JsonDocument.Parse(bytes);
+        JsonElement maps = document.RootElement.GetProperty("maps");
+        int checkedRays = 0;
+        var differences = new List<string>();
+        foreach (JsonElement map in maps.EnumerateArray())
+        {
+            string scene = map.GetProperty("scene").GetString()!;
+            CoopSceneColliders source = colliders.Maps.Single(item =>
+                item.Scene == scene);
+            var raycaster = new CoopNativeSceneRaycaster(source, geometry);
+            foreach (JsonElement ray in map.GetProperty("rays").EnumerateArray())
+            {
+                int componentId = ray.GetProperty("componentFileId").GetInt32();
+                Vector3 origin = ReadRayVector(ray.GetProperty("origin"));
+                Vector3 direction = ReadRayVector(ray.GetProperty("direction"));
+                float maximum = ray.GetProperty("maxDistance").GetSingle();
+                CoopNativeRayHit? actual = raycaster.RaycastCollider(
+                    componentId, origin, direction, maximum);
+                bool expectedHit = ray.GetProperty("hit").GetBoolean();
+                string componentType = source.Colliders.Single(c =>
+                    c.ComponentFileId == componentId).ComponentType;
+                if (expectedHit != (actual != null))
+                    differences.Add($"hit {scene}/{componentId} {componentType} Unity={expectedHit} host={actual != null}");
+                if (actual != null)
+                {
+                    float distance = ray.GetProperty("distance").GetSingle();
+                    if (Math.Abs(actual.Distance - distance) > 0.03f)
+                        differences.Add($"distance {scene}/{componentId} {actual.ComponentType} Unity={distance} host={actual.Distance}");
+                }
+                checkedRays++;
+            }
+        }
+        if (maps.GetArrayLength() != 5 || checkedRays != 3_876)
+            throw new Exception("Unity co-op ray reference is incomplete.");
+        // This raw-triangle raycaster is still exploratory. Unity/PhysX mesh
+        // cooking gives different distances for 88 probes. Keep that gap
+        // visible and keep the raycaster out of authoritative Fire handling.
+        if (differences.Count != 88 || differences.Any(item =>
+            !item.Contains(" MeshCollider ", StringComparison.Ordinal)))
+            throw new Exception($"Co-op ray comparison changed: " +
+                $"{differences.Count}/{checkedRays}: " +
+                string.Join("; ", differences.Take(20)));
+        return checkedRays - differences.Count;
+    }
+
+    private static Vector3 ReadRayVector(JsonElement values)
+    {
+        return new Vector3(values[0].GetSingle(), values[1].GetSingle(),
+            values[2].GetSingle());
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)

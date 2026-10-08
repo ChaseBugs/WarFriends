@@ -14,6 +14,7 @@
           "gameObjectName": "barrelDesert",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -119,6 +120,7 @@
           "gameObjectName": "barrelDesert",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -224,6 +226,7 @@
           "gameObjectName": "barrelDesert",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -329,6 +332,7 @@
           "gameObjectName": "barrelDesert",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -434,6 +438,7 @@
           "gameObjectName": "barrelDesert",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -539,6 +544,7 @@
           "gameObjectName": "barrelDesert",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -644,6 +650,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -749,6 +756,7 @@
           "gameObjectName": "palm_wind",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -892,6 +900,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1016,6 +1025,7 @@
           "gameObjectName": "barier",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1121,6 +1131,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1245,6 +1256,7 @@
           "gameObjectName": "terrain_desert1",
           "layer": 30,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1331,6 +1343,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1436,6 +1449,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1541,6 +1555,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1646,6 +1661,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1751,6 +1767,7 @@
           "gameObjectName": "building_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1856,6 +1873,7 @@
           "gameObjectName": "building_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -1961,6 +1979,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2066,6 +2085,7 @@
           "gameObjectName": "barier",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2171,6 +2191,7 @@
           "gameObjectName": "Missing Prefab (Dummy)",
           "layer": 0,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2295,6 +2316,7 @@
           "gameObjectName": "tower",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2400,6 +2422,7 @@
           "gameObjectName": "barier",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2505,6 +2528,7 @@
           "gameObjectName": "palm_wind",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2648,6 +2672,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2753,6 +2778,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2858,6 +2884,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -2963,6 +2990,7 @@
           "gameObjectName": "building_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3068,6 +3096,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3192,6 +3221,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3297,6 +3327,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3421,6 +3452,7 @@
           "gameObjectName": "palm_wind",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3564,6 +3596,7 @@
           "gameObjectName": "building_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3669,6 +3702,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3774,6 +3808,7 @@
           "gameObjectName": "rock_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3879,6 +3914,7 @@
           "gameObjectName": "building_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -3984,6 +4020,7 @@
           "gameObjectName": "barier",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4089,6 +4126,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4194,6 +4232,7 @@
           "gameObjectName": "rock_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4299,6 +4338,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4404,6 +4444,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4509,6 +4550,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4633,6 +4675,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4757,6 +4800,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4862,6 +4906,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -4967,6 +5012,7 @@
           "gameObjectName": "cactus",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5091,6 +5137,7 @@
           "gameObjectName": "tower",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5196,6 +5243,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5301,6 +5349,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5406,6 +5455,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5511,6 +5561,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5635,6 +5686,7 @@
           "gameObjectName": "cactus",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5759,6 +5811,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5864,6 +5917,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -5988,6 +6042,7 @@
           "gameObjectName": "palm_wind",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6131,6 +6186,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6236,6 +6292,7 @@
           "gameObjectName": "stone_01_LOD1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6360,6 +6417,7 @@
           "gameObjectName": "cactus",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6484,6 +6542,7 @@
           "gameObjectName": "tower",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6589,6 +6648,7 @@
           "gameObjectName": "stone_01_LOD1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6713,6 +6773,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6818,6 +6879,7 @@
           "gameObjectName": "cactus",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -6942,6 +7004,7 @@
           "gameObjectName": "hangar",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7047,6 +7110,7 @@
           "gameObjectName": "rock_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7152,6 +7216,7 @@
           "gameObjectName": "palm_wind",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7295,6 +7360,7 @@
           "gameObjectName": "terrain_desert1",
           "layer": 30,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7400,6 +7466,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7505,6 +7572,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7610,6 +7678,7 @@
           "gameObjectName": "cactus",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7734,6 +7803,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7839,6 +7909,7 @@
           "gameObjectName": "sandbag",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -7944,6 +8015,7 @@
           "gameObjectName": "palm_wind",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8087,6 +8159,7 @@
           "gameObjectName": "barier",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8192,6 +8265,7 @@
           "gameObjectName": "rock_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8297,6 +8371,7 @@
           "gameObjectName": "well",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8383,6 +8458,7 @@
           "gameObjectName": "hangar",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8488,6 +8564,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8593,6 +8670,7 @@
           "gameObjectName": "barier",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8698,6 +8776,7 @@
           "gameObjectName": "box_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8803,6 +8882,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -8908,6 +8988,7 @@
           "gameObjectName": "barier",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -9013,6 +9094,7 @@
           "gameObjectName": "building_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -9118,6 +9200,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -9287,6 +9370,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -9456,6 +9540,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -9587,6 +9672,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -9756,6 +9842,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -9925,6 +10012,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -10056,6 +10144,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -10225,6 +10314,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -10394,6 +10484,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -10525,6 +10616,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -10694,6 +10786,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -10863,6 +10956,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -10994,6 +11088,7 @@
           "gameObjectName": "fieldArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -11087,6 +11182,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11180,6 +11276,7 @@
           "gameObjectName": "Cube (1)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11273,6 +11370,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11366,6 +11464,7 @@
           "gameObjectName": "Cube (3)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11459,6 +11558,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11552,6 +11652,7 @@
           "gameObjectName": "Missing Prefab (Dummy)",
           "layer": 0,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11664,6 +11765,7 @@
           "gameObjectName": "Cube (4)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11757,6 +11859,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -11850,6 +11953,7 @@
           "gameObjectName": "spawnArea",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -11962,6 +12066,7 @@
           "gameObjectName": "Cube (2)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12055,6 +12160,7 @@
           "gameObjectName": "spawnArea",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -12174,6 +12280,7 @@
           "gameObjectName": "barrelSnow (4)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12260,6 +12367,7 @@
           "gameObjectName": "barrelSnow (5)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12346,6 +12454,7 @@
           "gameObjectName": "barrelSnow (2)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12432,6 +12541,7 @@
           "gameObjectName": "barrelSnow",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12518,6 +12628,7 @@
           "gameObjectName": "barrelSnow (3)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12604,6 +12715,7 @@
           "gameObjectName": "barrelSnow (1)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12690,6 +12802,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12776,6 +12889,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12862,6 +12976,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -12948,6 +13063,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13034,6 +13150,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13120,6 +13237,7 @@
           "gameObjectName": "snow_cover",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13225,6 +13343,7 @@
           "gameObjectName": "stoplights",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13311,6 +13430,7 @@
           "gameObjectName": "snow_cover",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13397,6 +13517,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -13483,6 +13604,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13569,6 +13691,7 @@
           "gameObjectName": "bgr_mountains_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13655,6 +13778,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13741,6 +13865,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13827,6 +13952,7 @@
           "gameObjectName": "tanks_b",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13913,6 +14039,7 @@
           "gameObjectName": "tunnel",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -13999,6 +14126,7 @@
           "gameObjectName": "container_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14085,6 +14213,7 @@
           "gameObjectName": "building_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14171,6 +14300,7 @@
           "gameObjectName": "building_f",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14257,6 +14387,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14343,6 +14474,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14429,6 +14561,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14515,6 +14648,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14601,6 +14735,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14687,6 +14822,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14773,6 +14909,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14859,6 +14996,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -14945,6 +15083,7 @@
           "gameObjectName": "snow_cover",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15050,6 +15189,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15136,6 +15276,7 @@
           "gameObjectName": "light",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15222,6 +15363,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -15308,6 +15450,7 @@
           "gameObjectName": "pipes_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15394,6 +15537,7 @@
           "gameObjectName": "terrain_snow1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15480,6 +15624,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -15566,6 +15711,7 @@
           "gameObjectName": "container_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15652,6 +15798,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15738,6 +15885,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15824,6 +15972,7 @@
           "gameObjectName": "radar_building",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15910,6 +16059,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -15996,6 +16146,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16082,6 +16233,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16168,6 +16320,7 @@
           "gameObjectName": "lamp_controls",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16254,6 +16407,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16340,6 +16494,7 @@
           "gameObjectName": "tank_c",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16426,6 +16581,7 @@
           "gameObjectName": "building_b",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16512,6 +16668,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16598,6 +16755,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16684,6 +16842,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16770,6 +16929,7 @@
           "gameObjectName": "container_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16856,6 +17016,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -16942,6 +17103,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17028,6 +17190,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17114,6 +17277,7 @@
           "gameObjectName": "armybox_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17200,6 +17364,7 @@
           "gameObjectName": "fence_c",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17286,6 +17451,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17372,6 +17538,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17458,6 +17625,7 @@
           "gameObjectName": "container_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17544,6 +17712,7 @@
           "gameObjectName": "lamp_controls",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17630,6 +17799,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17716,6 +17886,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17802,6 +17973,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -17888,6 +18060,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -17974,6 +18147,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18060,6 +18234,7 @@
           "gameObjectName": "building_e",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18146,6 +18321,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18232,6 +18408,7 @@
           "gameObjectName": "snowpile",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18318,6 +18495,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18404,6 +18582,7 @@
           "gameObjectName": "building_c",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18490,6 +18669,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18576,6 +18756,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18662,6 +18843,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18748,6 +18930,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18834,6 +19017,7 @@
           "gameObjectName": "light",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -18920,6 +19104,7 @@
           "gameObjectName": "tanks_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19006,6 +19191,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19092,6 +19278,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19178,6 +19365,7 @@
           "gameObjectName": "tanks_b",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19264,6 +19452,7 @@
           "gameObjectName": "snow_cover",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19369,6 +19558,7 @@
           "gameObjectName": "metal",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19455,6 +19645,7 @@
           "gameObjectName": "stoplights",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19541,6 +19732,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19627,6 +19819,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19713,6 +19906,7 @@
           "gameObjectName": "snowpile",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19799,6 +19993,7 @@
           "gameObjectName": "light",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19885,6 +20080,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -19971,6 +20167,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20057,6 +20254,7 @@
           "gameObjectName": "fence_c",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20143,6 +20341,7 @@
           "gameObjectName": "container_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20229,6 +20428,7 @@
           "gameObjectName": "armybox_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20315,6 +20515,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20401,6 +20602,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20487,6 +20689,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20573,6 +20776,7 @@
           "gameObjectName": "lamp_controls",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20659,6 +20863,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20745,6 +20950,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20831,6 +21037,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -20917,6 +21124,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21003,6 +21211,7 @@
           "gameObjectName": "armybox_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21089,6 +21298,7 @@
           "gameObjectName": "fence_b",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21175,6 +21385,7 @@
           "gameObjectName": "light",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21261,6 +21472,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21347,6 +21559,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21433,6 +21646,7 @@
           "gameObjectName": "snowpile",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21519,6 +21733,7 @@
           "gameObjectName": "pipes_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21605,6 +21820,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -21691,6 +21907,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -21777,6 +21994,7 @@
           "gameObjectName": "building_b",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21863,6 +22081,7 @@
           "gameObjectName": "armybox_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -21949,6 +22168,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -22035,6 +22255,7 @@
           "gameObjectName": "armybox_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22121,6 +22342,7 @@
           "gameObjectName": "stoplights",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22207,6 +22429,7 @@
           "gameObjectName": "armybox_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22293,6 +22516,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22379,6 +22603,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22465,6 +22690,7 @@
           "gameObjectName": "snowpile",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22551,6 +22777,7 @@
           "gameObjectName": "fence_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22637,6 +22864,7 @@
           "gameObjectName": "light",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22723,6 +22951,7 @@
           "gameObjectName": "metal",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22809,6 +23038,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22895,6 +23125,7 @@
           "gameObjectName": "building_f",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -22981,6 +23212,7 @@
           "gameObjectName": "stoplights",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23067,6 +23299,7 @@
           "gameObjectName": "metal",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23153,6 +23386,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23239,6 +23473,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23325,6 +23560,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23411,6 +23647,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23497,6 +23734,7 @@
           "gameObjectName": "container_1",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23583,6 +23821,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23669,6 +23908,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23755,6 +23995,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23841,6 +24082,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -23927,6 +24169,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24013,6 +24256,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24099,6 +24343,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24185,6 +24430,7 @@
           "gameObjectName": "radar",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24271,6 +24517,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24357,6 +24604,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24443,6 +24691,7 @@
           "gameObjectName": "woodplank",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24529,6 +24778,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24615,6 +24865,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24701,6 +24952,7 @@
           "gameObjectName": "metal",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24787,6 +25039,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24873,6 +25126,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -24959,6 +25213,7 @@
           "gameObjectName": "snowpile",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25045,6 +25300,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25131,6 +25387,7 @@
           "gameObjectName": "tube_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25217,6 +25474,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25303,6 +25561,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": false,
           "trigger": false,
           "transformChain": [
@@ -25389,6 +25648,7 @@
           "gameObjectName": "light",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25475,6 +25735,7 @@
           "gameObjectName": "armybox_2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25561,6 +25822,7 @@
           "gameObjectName": "armybox_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25647,6 +25909,7 @@
           "gameObjectName": "lamp_controls",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25733,6 +25996,7 @@
           "gameObjectName": "building_f",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -25819,6 +26083,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -25988,6 +26253,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -26157,6 +26423,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -26288,6 +26555,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -26457,6 +26725,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -26626,6 +26895,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -26757,6 +27027,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -26926,6 +27197,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -27095,6 +27367,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -27226,6 +27499,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -27395,6 +27669,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -27564,6 +27839,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -27695,6 +27971,7 @@
           "gameObjectName": "Cube.429",
           "layer": 14,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -27826,6 +28103,7 @@
           "gameObjectName": "trainBodyTrigger",
           "layer": 18,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -27919,6 +28197,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -27993,6 +28272,7 @@
           "gameObjectName": "Cube.429",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28124,6 +28404,7 @@
           "gameObjectName": "Cube (8)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28198,6 +28479,7 @@
           "gameObjectName": "Cube.408",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28329,6 +28611,7 @@
           "gameObjectName": "Cube.429",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28460,6 +28743,7 @@
           "gameObjectName": "Cube.408",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28591,6 +28875,7 @@
           "gameObjectName": "Cube (6)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28665,6 +28950,7 @@
           "gameObjectName": "Cube.429",
           "layer": 14,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28796,6 +29082,7 @@
           "gameObjectName": "Cube.408",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -28927,6 +29214,7 @@
           "gameObjectName": "Cube.429",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -29058,6 +29346,7 @@
           "gameObjectName": "Cube (5)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -29132,6 +29421,7 @@
           "gameObjectName": "Cube.429",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -29263,6 +29553,7 @@
           "gameObjectName": "Cube.408",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -29394,6 +29685,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -29468,6 +29760,7 @@
           "gameObjectName": "fieldArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -29542,6 +29835,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -29616,6 +29910,7 @@
           "gameObjectName": "Cube.429",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -29747,6 +30042,7 @@
           "gameObjectName": "trainBodyTrigger",
           "layer": 18,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -29840,6 +30136,7 @@
           "gameObjectName": "spawnArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -29933,6 +30230,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -30007,6 +30305,7 @@
           "gameObjectName": "Cube.408",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -30138,6 +30437,7 @@
           "gameObjectName": "spawnArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -30231,6 +30531,7 @@
           "gameObjectName": "frontCOllider",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -30324,6 +30625,7 @@
           "gameObjectName": "Cube.408",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -30455,6 +30757,7 @@
           "gameObjectName": "Cube (7)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -30529,6 +30832,7 @@
           "gameObjectName": "frontCOllider",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -30622,6 +30926,7 @@
           "gameObjectName": "Cube.429",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -30753,6 +31058,7 @@
           "gameObjectName": "tank",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -30863,6 +31169,7 @@
           "gameObjectName": "tank",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -30980,6 +31287,7 @@
           "gameObjectName": "barrelDesert 1",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31085,6 +31393,7 @@
           "gameObjectName": "barrelDesert",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31190,6 +31499,7 @@
           "gameObjectName": "highway",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31295,6 +31605,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31400,6 +31711,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31505,6 +31817,7 @@
           "gameObjectName": "building_j_ad",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31610,6 +31923,7 @@
           "gameObjectName": "sign_3",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31734,6 +32048,7 @@
           "gameObjectName": "vehicle_4_van",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31839,6 +32154,7 @@
           "gameObjectName": "vehicle_9_offroad",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -31944,6 +32260,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32049,6 +32366,7 @@
           "gameObjectName": "vehicle_7_roadster",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32154,6 +32472,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32259,6 +32578,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32364,6 +32684,7 @@
           "gameObjectName": "container 3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32488,6 +32809,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32593,6 +32915,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32698,6 +33021,7 @@
           "gameObjectName": "vehicle_3_classic",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32803,6 +33127,7 @@
           "gameObjectName": "pipe",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -32927,6 +33252,7 @@
           "gameObjectName": "building_b",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33032,6 +33358,7 @@
           "gameObjectName": "sign_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33156,6 +33483,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33280,6 +33608,7 @@
           "gameObjectName": "vehicle_7_roadster",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33385,6 +33714,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33509,6 +33839,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33614,6 +33945,7 @@
           "gameObjectName": "h-beam 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33738,6 +34070,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33862,6 +34195,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -33986,6 +34320,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34091,6 +34426,7 @@
           "gameObjectName": "vehicle_6_hippie",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34215,6 +34551,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34320,6 +34657,7 @@
           "gameObjectName": "vehicle_2_truck",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34425,6 +34763,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34549,6 +34888,7 @@
           "gameObjectName": "vehicle_9_offroad 2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34673,6 +35013,7 @@
           "gameObjectName": "h-beam",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34797,6 +35138,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -34902,6 +35244,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35026,6 +35369,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35150,6 +35494,7 @@
           "gameObjectName": "stand",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35274,6 +35619,7 @@
           "gameObjectName": "vehicle_7_roadster 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35398,6 +35744,7 @@
           "gameObjectName": "vehicle_3_classic",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35503,6 +35850,7 @@
           "gameObjectName": "vehicle_8_family",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35608,6 +35956,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35713,6 +36062,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35837,6 +36187,7 @@
           "gameObjectName": "trashbin 3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -35961,6 +36312,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36085,6 +36437,7 @@
           "gameObjectName": "building_c",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36190,6 +36543,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36295,6 +36649,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36419,6 +36774,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36543,6 +36899,7 @@
           "gameObjectName": "building_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36648,6 +37005,7 @@
           "gameObjectName": "h-beam",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36772,6 +37130,7 @@
           "gameObjectName": "tires",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -36896,6 +37255,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37001,6 +37361,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37125,6 +37486,7 @@
           "gameObjectName": "building_h",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37230,6 +37592,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37335,6 +37698,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37459,6 +37823,7 @@
           "gameObjectName": "container",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37583,6 +37948,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37707,6 +38073,7 @@
           "gameObjectName": "tires",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37831,6 +38198,7 @@
           "gameObjectName": "vehicle_1_icecream",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -37936,6 +38304,7 @@
           "gameObjectName": "vehicle_5_cadillac",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38041,6 +38410,7 @@
           "gameObjectName": "tires",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38165,6 +38535,7 @@
           "gameObjectName": "building_j_ad",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38270,6 +38641,7 @@
           "gameObjectName": "trashbin 9",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38394,6 +38766,7 @@
           "gameObjectName": "trashbin 2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38518,6 +38891,7 @@
           "gameObjectName": "sign_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38642,6 +39016,7 @@
           "gameObjectName": "tires",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38766,6 +39141,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -38890,6 +39266,7 @@
           "gameObjectName": "sign_3",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39014,6 +39391,7 @@
           "gameObjectName": "vehicle_4_van 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39138,6 +39516,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39243,6 +39622,7 @@
           "gameObjectName": "building_h",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39348,6 +39728,7 @@
           "gameObjectName": "vehicle_8_family 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39472,6 +39853,7 @@
           "gameObjectName": "container 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39596,6 +39978,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39720,6 +40103,7 @@
           "gameObjectName": "pipe",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39844,6 +40228,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -39968,6 +40353,7 @@
           "gameObjectName": "crane_head",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40111,6 +40497,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40235,6 +40622,7 @@
           "gameObjectName": "h-beam (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40359,6 +40747,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40483,6 +40872,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40588,6 +40978,7 @@
           "gameObjectName": "h-beam 4",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40712,6 +41103,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40817,6 +41209,7 @@
           "gameObjectName": "building_p",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -40922,6 +41315,7 @@
           "gameObjectName": "trashbin 8",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41046,6 +41440,7 @@
           "gameObjectName": "building_f",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41151,6 +41546,7 @@
           "gameObjectName": "stand",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41275,6 +41671,7 @@
           "gameObjectName": "tires 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41399,6 +41796,7 @@
           "gameObjectName": "trashbin 10",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41523,6 +41921,7 @@
           "gameObjectName": "h-beam 3 (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41647,6 +42046,7 @@
           "gameObjectName": "vehicle_9_offroad 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41752,6 +42152,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41857,6 +42258,7 @@
           "gameObjectName": "trashbin 7",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -41981,6 +42383,7 @@
           "gameObjectName": "trashbin 5",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42105,6 +42508,7 @@
           "gameObjectName": "vehicle_6_hippie",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42229,6 +42633,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42334,6 +42739,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42458,6 +42864,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42582,6 +42989,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42687,6 +43095,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42792,6 +43201,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -42916,6 +43326,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43021,6 +43432,7 @@
           "gameObjectName": "building_j_ad",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43126,6 +43538,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43250,6 +43663,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43355,6 +43769,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43479,6 +43894,7 @@
           "gameObjectName": "building_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43584,6 +44000,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43689,6 +44106,7 @@
           "gameObjectName": "h-beam",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43813,6 +44231,7 @@
           "gameObjectName": "vehicle_4_van 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -43937,6 +44356,7 @@
           "gameObjectName": "ground11",
           "layer": 30,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44023,6 +44443,7 @@
           "gameObjectName": "ad_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44128,6 +44549,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44233,6 +44655,7 @@
           "gameObjectName": "vehicle_9_offroad 2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44357,6 +44780,7 @@
           "gameObjectName": "vehicle_3_classic",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44462,6 +44886,7 @@
           "gameObjectName": "sign_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44586,6 +45011,7 @@
           "gameObjectName": "crane_chassis",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44710,6 +45136,7 @@
           "gameObjectName": "vehicle_4_van",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44815,6 +45242,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -44920,6 +45348,7 @@
           "gameObjectName": "h-beam 2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45044,6 +45473,7 @@
           "gameObjectName": "vehicle_1_icecream",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45149,6 +45579,7 @@
           "gameObjectName": "trashbin 6",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45273,6 +45704,7 @@
           "gameObjectName": "building_d",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45378,6 +45810,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45502,6 +45935,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45607,6 +46041,7 @@
           "gameObjectName": "building_h",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45712,6 +46147,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45836,6 +46272,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -45941,6 +46378,7 @@
           "gameObjectName": "h-beam 3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46065,6 +46503,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46189,6 +46628,7 @@
           "gameObjectName": "tires",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46313,6 +46753,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46437,6 +46878,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46542,6 +46984,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46666,6 +47109,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46790,6 +47234,7 @@
           "gameObjectName": "trashbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -46914,6 +47359,7 @@
           "gameObjectName": "trashbag 2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47038,6 +47484,7 @@
           "gameObjectName": "building_j",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47143,6 +47590,7 @@
           "gameObjectName": "ad_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47248,6 +47696,7 @@
           "gameObjectName": "sign_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47372,6 +47821,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47477,6 +47927,7 @@
           "gameObjectName": "h-beam",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47601,6 +48052,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47725,6 +48177,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47830,6 +48283,7 @@
           "gameObjectName": "crane_arm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -47992,6 +48446,7 @@
           "gameObjectName": "vehicle_8_family 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48116,6 +48571,7 @@
           "gameObjectName": "building_f",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48221,6 +48677,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48345,6 +48802,7 @@
           "gameObjectName": "building_f",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48450,6 +48908,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48555,6 +49014,7 @@
           "gameObjectName": "container",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48679,6 +49139,7 @@
           "gameObjectName": "pipe 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48803,6 +49264,7 @@
           "gameObjectName": "vehicle_7_roadster 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -48927,6 +49389,7 @@
           "gameObjectName": "trashbag 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49051,6 +49514,7 @@
           "gameObjectName": "vehicle_8_family",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49156,6 +49620,7 @@
           "gameObjectName": "vehicle_4_van",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49261,6 +49726,7 @@
           "gameObjectName": "trashbin 1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49385,6 +49851,7 @@
           "gameObjectName": "container 2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49509,6 +49976,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49633,6 +50101,7 @@
           "gameObjectName": "building_g",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49738,6 +50207,7 @@
           "gameObjectName": "building_j_ad",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49843,6 +50313,7 @@
           "gameObjectName": "building_j",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -49948,6 +50419,7 @@
           "gameObjectName": "sign_3",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50072,6 +50544,7 @@
           "gameObjectName": "vehicle_1_icecream",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50177,6 +50650,7 @@
           "gameObjectName": "ground1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50263,6 +50737,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50368,6 +50843,7 @@
           "gameObjectName": "vehicle_1_icecream",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50473,6 +50949,7 @@
           "gameObjectName": "building_a",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50578,6 +51055,7 @@
           "gameObjectName": "pylon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50683,6 +51161,7 @@
           "gameObjectName": "h-beam",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50807,6 +51286,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -50931,6 +51411,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51055,6 +51536,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51179,6 +51661,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51303,6 +51786,7 @@
           "gameObjectName": "fence",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51408,6 +51892,7 @@
           "gameObjectName": "building_p",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51513,6 +51998,7 @@
           "gameObjectName": "building_i",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51618,6 +52104,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51723,6 +52210,7 @@
           "gameObjectName": "roadblock",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51847,6 +52335,7 @@
           "gameObjectName": "building_b",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -51952,6 +52441,7 @@
           "gameObjectName": "vehicle_3_classic",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52057,6 +52547,7 @@
           "gameObjectName": "trashbin 4",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52181,6 +52672,7 @@
           "gameObjectName": "vehicle_5_cadillac",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52286,6 +52778,7 @@
           "gameObjectName": "building_p",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52391,6 +52884,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52496,6 +52990,7 @@
           "gameObjectName": "palm",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52601,6 +53096,7 @@
           "gameObjectName": "tires 2",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52725,6 +53221,7 @@
           "gameObjectName": "building_g",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52830,6 +53327,7 @@
           "gameObjectName": "barrier_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -52954,6 +53452,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -53123,6 +53622,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -53292,6 +53792,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -53423,6 +53924,7 @@
           "gameObjectName": "eventListener",
           "layer": 18,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -53554,6 +54056,7 @@
           "gameObjectName": "beam",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -53666,6 +54169,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -53835,6 +54339,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -54004,6 +54509,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -54135,6 +54641,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -54304,6 +54811,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -54473,6 +54981,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -54604,6 +55113,7 @@
           "gameObjectName": "Collider",
           "layer": 26,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -54735,6 +55245,7 @@
           "gameObjectName": "Collider",
           "layer": 26,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -54866,6 +55377,7 @@
           "gameObjectName": "Collider",
           "layer": 26,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -54997,6 +55509,7 @@
           "gameObjectName": "Collider",
           "layer": 26,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -55128,6 +55641,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -55297,6 +55811,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -55466,6 +55981,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -55597,6 +56113,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -55690,6 +56207,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -55783,6 +56301,7 @@
           "gameObjectName": "container",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -55895,6 +56414,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -55988,6 +56508,7 @@
           "gameObjectName": "eventListener",
           "layer": 18,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -56119,6 +56640,7 @@
           "gameObjectName": "fieldArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -56193,6 +56715,7 @@
           "gameObjectName": "spawnArea",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -56286,6 +56809,7 @@
           "gameObjectName": "spawnArea",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -56379,6 +56903,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -56472,6 +56997,7 @@
           "gameObjectName": "Mesh_Rope_End",
           "layer": 8,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -56610,6 +57136,7 @@
           "gameObjectName": "barrelAztec (2)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -56677,6 +57204,7 @@
           "gameObjectName": "barrelAztec (1)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -56744,6 +57272,7 @@
           "gameObjectName": "barrelAztec",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -56811,6 +57340,7 @@
           "gameObjectName": "palmtree01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -56916,6 +57446,7 @@
           "gameObjectName": "bariera06",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -56983,6 +57514,7 @@
           "gameObjectName": "bariera03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57069,6 +57601,7 @@
           "gameObjectName": "building_04",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57174,6 +57707,7 @@
           "gameObjectName": "bariera01 (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57260,6 +57794,7 @@
           "gameObjectName": "rock04",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57346,6 +57881,7 @@
           "gameObjectName": "building_03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57451,6 +57987,7 @@
           "gameObjectName": "palmtree02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57556,6 +58093,7 @@
           "gameObjectName": "bariera03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57642,6 +58180,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57728,6 +58267,7 @@
           "gameObjectName": "tree02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57814,6 +58354,7 @@
           "gameObjectName": "wall01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57900,6 +58441,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -57986,6 +58528,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58072,6 +58615,7 @@
           "gameObjectName": "bariera03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58158,6 +58702,7 @@
           "gameObjectName": "bariera04",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58244,6 +58789,7 @@
           "gameObjectName": "building_04",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58349,6 +58895,7 @@
           "gameObjectName": "ground",
           "layer": 30,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58435,6 +58982,7 @@
           "gameObjectName": "fatman",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58521,6 +59069,7 @@
           "gameObjectName": "building_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58626,6 +59175,7 @@
           "gameObjectName": "building_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58731,6 +59281,7 @@
           "gameObjectName": "tree03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58817,6 +59368,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -58903,6 +59455,7 @@
           "gameObjectName": "barricade01",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59008,6 +59561,7 @@
           "gameObjectName": "palmtree01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59113,6 +59667,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59199,6 +59754,7 @@
           "gameObjectName": "bariera03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59285,6 +59841,7 @@
           "gameObjectName": "bariera03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59371,6 +59928,7 @@
           "gameObjectName": "palmtree01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59476,6 +60034,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59562,6 +60121,7 @@
           "gameObjectName": "airplane_wing",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59648,6 +60208,7 @@
           "gameObjectName": "building_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59753,6 +60314,7 @@
           "gameObjectName": "barricade02",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59858,6 +60420,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -59944,6 +60507,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60030,6 +60594,7 @@
           "gameObjectName": "barricade01",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60116,6 +60681,7 @@
           "gameObjectName": "bariera01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60202,6 +60768,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60288,6 +60855,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60374,6 +60942,7 @@
           "gameObjectName": "bariera05",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60441,6 +61010,7 @@
           "gameObjectName": "palmtree02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60546,6 +61116,7 @@
           "gameObjectName": "bariera02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60632,6 +61203,7 @@
           "gameObjectName": "bariera05",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60699,6 +61271,7 @@
           "gameObjectName": "airplane_metal",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60785,6 +61358,7 @@
           "gameObjectName": "building_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60890,6 +61464,7 @@
           "gameObjectName": "rock01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -60976,6 +61551,7 @@
           "gameObjectName": "building_03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61081,6 +61657,7 @@
           "gameObjectName": "bariera02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61167,6 +61744,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61253,6 +61831,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61339,6 +61918,7 @@
           "gameObjectName": "wall02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61425,6 +62005,7 @@
           "gameObjectName": "rock01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61511,6 +62092,7 @@
           "gameObjectName": "barricade01",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61616,6 +62198,7 @@
           "gameObjectName": "rock02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61702,6 +62285,7 @@
           "gameObjectName": "rock03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61788,6 +62372,7 @@
           "gameObjectName": "palmtree01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61893,6 +62478,7 @@
           "gameObjectName": "building_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -61998,6 +62584,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62084,6 +62671,7 @@
           "gameObjectName": "demon",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62189,6 +62777,7 @@
           "gameObjectName": "airplane",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62275,6 +62864,7 @@
           "gameObjectName": "bariera02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62361,6 +62951,7 @@
           "gameObjectName": "tree01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62447,6 +63038,7 @@
           "gameObjectName": "wall01",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62533,6 +63125,7 @@
           "gameObjectName": "bariera02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62619,6 +63212,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62705,6 +63299,7 @@
           "gameObjectName": "bariera06",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62772,6 +63367,7 @@
           "gameObjectName": "barricade02",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62877,6 +63473,7 @@
           "gameObjectName": "rock02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -62963,6 +63560,7 @@
           "gameObjectName": "bariera02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63049,6 +63647,7 @@
           "gameObjectName": "building_03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63154,6 +63753,7 @@
           "gameObjectName": "bariera03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63240,6 +63840,7 @@
           "gameObjectName": "sandbag",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63326,6 +63927,7 @@
           "gameObjectName": "bariera06",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63393,6 +63995,7 @@
           "gameObjectName": "wall01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63479,6 +64082,7 @@
           "gameObjectName": "building_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63584,6 +64188,7 @@
           "gameObjectName": "bariera01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63670,6 +64275,7 @@
           "gameObjectName": "tree03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63756,6 +64362,7 @@
           "gameObjectName": "building_04",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63861,6 +64468,7 @@
           "gameObjectName": "bariera04",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -63947,6 +64555,7 @@
           "gameObjectName": "bariera01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -64033,6 +64642,7 @@
           "gameObjectName": "palmtree02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -64138,6 +64748,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -64307,6 +64918,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -64476,6 +65088,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -64607,6 +65220,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -64776,6 +65390,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -64945,6 +65560,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -65076,6 +65692,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -65245,6 +65862,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -65414,6 +66032,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -65545,6 +66164,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -65714,6 +66334,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -65883,6 +66504,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66014,6 +66636,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66107,6 +66730,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66200,6 +66824,7 @@
           "gameObjectName": "spawnArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -66293,6 +66918,7 @@
           "gameObjectName": "Cube (2)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66386,6 +67012,7 @@
           "gameObjectName": "Cube (3)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66479,6 +67106,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66572,6 +67200,7 @@
           "gameObjectName": "Cube (1)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66665,6 +67294,7 @@
           "gameObjectName": "fieldArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -66739,6 +67369,7 @@
           "gameObjectName": "spawnArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -66832,6 +67463,7 @@
           "gameObjectName": "Cube (4)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -66925,6 +67557,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67025,6 +67658,7 @@
           "gameObjectName": "barrelPark (4)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67149,6 +67783,7 @@
           "gameObjectName": "barrelPark (5)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67273,6 +67908,7 @@
           "gameObjectName": "barrelPark",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67397,6 +68033,7 @@
           "gameObjectName": "barrelPark (6)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67521,6 +68158,7 @@
           "gameObjectName": "barrelPark (9)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67645,6 +68283,7 @@
           "gameObjectName": "barrelPark (3)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67769,6 +68408,7 @@
           "gameObjectName": "barrelPark (8)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -67893,6 +68533,7 @@
           "gameObjectName": "barrelPark (2)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68017,6 +68658,7 @@
           "gameObjectName": "barrelPark (1)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68141,6 +68783,7 @@
           "gameObjectName": "barrelPark (7)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68265,6 +68908,7 @@
           "gameObjectName": "lamp (2)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68408,6 +69052,7 @@
           "gameObjectName": "trashbin (8)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68532,6 +69177,7 @@
           "gameObjectName": "tree_1 (19)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68637,6 +69283,7 @@
           "gameObjectName": "stand_05 (2)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68761,6 +69408,7 @@
           "gameObjectName": "barrel (7)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68885,6 +69533,7 @@
           "gameObjectName": "bench (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -68990,6 +69639,7 @@
           "gameObjectName": "trashbin (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69114,6 +69764,7 @@
           "gameObjectName": "stand_05 (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69238,6 +69889,7 @@
           "gameObjectName": "ice-cream",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69343,6 +69995,7 @@
           "gameObjectName": "wheel (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69467,6 +70120,7 @@
           "gameObjectName": "stand_02 (8)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69591,6 +70245,7 @@
           "gameObjectName": "lamp (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69734,6 +70389,7 @@
           "gameObjectName": "car_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69839,6 +70495,7 @@
           "gameObjectName": "tree_1 (9)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -69944,6 +70601,7 @@
           "gameObjectName": "bench (2)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70049,6 +70707,7 @@
           "gameObjectName": "lamp (16)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70192,6 +70851,7 @@
           "gameObjectName": "bed",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70297,6 +70957,7 @@
           "gameObjectName": "stand_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70421,6 +71082,7 @@
           "gameObjectName": "tree_1_small (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70526,6 +71188,7 @@
           "gameObjectName": "tree_1 (25)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70631,6 +71294,7 @@
           "gameObjectName": "log_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70736,6 +71400,7 @@
           "gameObjectName": "stand_01 (6)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70860,6 +71525,7 @@
           "gameObjectName": "pillar (4)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -70984,6 +71650,7 @@
           "gameObjectName": "stand_06",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71108,6 +71775,7 @@
           "gameObjectName": "funride",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71213,6 +71881,7 @@
           "gameObjectName": "tree_1_small (7)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71318,6 +71987,7 @@
           "gameObjectName": "warning",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71442,6 +72112,7 @@
           "gameObjectName": "stand_03 (5)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71566,6 +72237,7 @@
           "gameObjectName": "tree_1 (11)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71671,6 +72343,7 @@
           "gameObjectName": "trashbin",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71795,6 +72468,7 @@
           "gameObjectName": "collider",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -71919,6 +72593,7 @@
           "gameObjectName": "barrel (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72043,6 +72718,7 @@
           "gameObjectName": "tree_1 (22)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72148,6 +72824,7 @@
           "gameObjectName": "tree_1 (42)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72253,6 +72930,7 @@
           "gameObjectName": "collider",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72377,6 +73055,7 @@
           "gameObjectName": "lamp (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72520,6 +73199,7 @@
           "gameObjectName": "tree_1 (48)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72625,6 +73305,7 @@
           "gameObjectName": "barrel",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72749,6 +73430,7 @@
           "gameObjectName": "tree_1 (20)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72854,6 +73536,7 @@
           "gameObjectName": "tree_1 (6)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -72959,6 +73642,7 @@
           "gameObjectName": "tree_1 (23)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73064,6 +73748,7 @@
           "gameObjectName": "stand_04 (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73188,6 +73873,7 @@
           "gameObjectName": "tree_1 (29)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73293,6 +73979,7 @@
           "gameObjectName": "tree_1 (35)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73398,6 +74085,7 @@
           "gameObjectName": "bench",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73503,6 +74191,7 @@
           "gameObjectName": "stand_05 (7)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73627,6 +74316,7 @@
           "gameObjectName": "stand_05",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73751,6 +74441,7 @@
           "gameObjectName": "car_02",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73856,6 +74547,7 @@
           "gameObjectName": "tree_1 (15)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -73961,6 +74653,7 @@
           "gameObjectName": "lamp (18)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74104,6 +74797,7 @@
           "gameObjectName": "lamp (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74247,6 +74941,7 @@
           "gameObjectName": "stand_04",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74371,6 +75066,7 @@
           "gameObjectName": "stand_05 (8)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74495,6 +75191,7 @@
           "gameObjectName": "tree_1_small (2)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74600,6 +75297,7 @@
           "gameObjectName": "tree_1 (8)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74705,6 +75403,7 @@
           "gameObjectName": "tree_1 (50)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74810,6 +75509,7 @@
           "gameObjectName": "haunted_house",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -74934,6 +75634,7 @@
           "gameObjectName": "stand_01",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75058,6 +75759,7 @@
           "gameObjectName": "barrel (8)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75182,6 +75884,7 @@
           "gameObjectName": "ice-cream (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75287,6 +75990,7 @@
           "gameObjectName": "tree_1 (44)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75392,6 +76096,7 @@
           "gameObjectName": "tree_1 (31)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75497,6 +76202,7 @@
           "gameObjectName": "tree_1 (17)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75602,6 +76308,7 @@
           "gameObjectName": "tree_1 (28)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75707,6 +76414,7 @@
           "gameObjectName": "tree_1 (18)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75812,6 +76520,7 @@
           "gameObjectName": "tree_1 (45)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -75917,6 +76626,7 @@
           "gameObjectName": "lamp (19)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76060,6 +76770,7 @@
           "gameObjectName": "boat",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76165,6 +76876,7 @@
           "gameObjectName": "stand_02 (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76289,6 +77001,7 @@
           "gameObjectName": "barrel (4)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76413,6 +77126,7 @@
           "gameObjectName": "barrel (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76537,6 +77251,7 @@
           "gameObjectName": "stand_03",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76661,6 +77376,7 @@
           "gameObjectName": "tree_1 (5)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76766,6 +77482,7 @@
           "gameObjectName": "tree_1 (24)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76871,6 +77588,7 @@
           "gameObjectName": "barrel (5)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -76995,6 +77713,7 @@
           "gameObjectName": "warning (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77119,6 +77838,7 @@
           "gameObjectName": "tree_1 (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77224,6 +77944,7 @@
           "gameObjectName": "tree_1 (16)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77329,6 +78050,7 @@
           "gameObjectName": "seats (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77434,6 +78156,7 @@
           "gameObjectName": "stand_06 (2)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77558,6 +78281,7 @@
           "gameObjectName": "tree_1_small (11)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77663,6 +78387,7 @@
           "gameObjectName": "stand_04 (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77787,6 +78512,7 @@
           "gameObjectName": "ground",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77873,6 +78599,7 @@
           "gameObjectName": "tree_1_small (5)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -77978,6 +78705,7 @@
           "gameObjectName": "lamp (15)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78121,6 +78849,7 @@
           "gameObjectName": "lamp (19)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78264,6 +78993,7 @@
           "gameObjectName": "tree_1 (14)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78369,6 +79099,7 @@
           "gameObjectName": "statue_of_liberty",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78474,6 +79205,7 @@
           "gameObjectName": "stand_02 (6)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78598,6 +79330,7 @@
           "gameObjectName": "stand_03 (4)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78722,6 +79455,7 @@
           "gameObjectName": "tree_1 (2)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78827,6 +79561,7 @@
           "gameObjectName": "lamp (17)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -78970,6 +79705,7 @@
           "gameObjectName": "barrel (2)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79094,6 +79830,7 @@
           "gameObjectName": "tree_1_small (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79199,6 +79936,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79342,6 +80080,7 @@
           "gameObjectName": "pillar",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79466,6 +80205,7 @@
           "gameObjectName": "stand_01 (4)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79590,6 +80330,7 @@
           "gameObjectName": "tree_1 (41)",
           "layer": 13,
           "active": false,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79695,6 +80436,7 @@
           "gameObjectName": "pillar (5)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79819,6 +80561,7 @@
           "gameObjectName": "tree_1_small (4)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -79924,6 +80667,7 @@
           "gameObjectName": "lamp (10)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80067,6 +80811,7 @@
           "gameObjectName": "billboard",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80191,6 +80936,7 @@
           "gameObjectName": "lamp (18)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80334,6 +81080,7 @@
           "gameObjectName": "lamp (14)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80477,6 +81224,7 @@
           "gameObjectName": "lamp (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80620,6 +81368,7 @@
           "gameObjectName": "stand_01 (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80744,6 +81493,7 @@
           "gameObjectName": "stand_03 (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80868,6 +81618,7 @@
           "gameObjectName": "pillar (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -80992,6 +81743,7 @@
           "gameObjectName": "tree_1 (13)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81097,6 +81849,7 @@
           "gameObjectName": "trashbin (6)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81221,6 +81974,7 @@
           "gameObjectName": "bench (4)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81326,6 +82080,7 @@
           "gameObjectName": "lamp (17)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81469,6 +82224,7 @@
           "gameObjectName": "seats",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81574,6 +82330,7 @@
           "gameObjectName": "lamp (16)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81717,6 +82474,7 @@
           "gameObjectName": "bench (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81822,6 +82580,7 @@
           "gameObjectName": "tree_1 (7)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -81927,6 +82686,7 @@
           "gameObjectName": "tree_1 (33)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82032,6 +82792,7 @@
           "gameObjectName": "lamp",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82175,6 +82936,7 @@
           "gameObjectName": "trashbin (3)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82299,6 +83061,7 @@
           "gameObjectName": "tree_1",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82404,6 +83167,7 @@
           "gameObjectName": "tree_1 (12)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82509,6 +83273,7 @@
           "gameObjectName": "stand_05 (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82633,6 +83398,7 @@
           "gameObjectName": "barrel (9)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82757,6 +83523,7 @@
           "gameObjectName": "barrel (6)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82881,6 +83648,7 @@
           "gameObjectName": "tree_1_small (8)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -82986,6 +83754,7 @@
           "gameObjectName": "tree_1 (10)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -83091,6 +83860,7 @@
           "gameObjectName": "tree_1 (1)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -83196,6 +83966,7 @@
           "gameObjectName": "tree_1 (34)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -83301,6 +84072,7 @@
           "gameObjectName": "lamp (9)",
           "layer": 13,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -83444,6 +84216,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -83613,6 +84386,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -83782,6 +84556,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -83913,6 +84688,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -84082,6 +84858,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -84251,6 +85028,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -84382,6 +85160,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -84551,6 +85330,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -84720,6 +85500,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -84851,6 +85632,7 @@
           "gameObjectName": "collider",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -85020,6 +85802,7 @@
           "gameObjectName": "electric effect",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": false,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -85189,6 +85972,7 @@
           "gameObjectName": "riot_shield",
           "layer": 24,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -85320,6 +86104,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -85413,6 +86198,7 @@
           "gameObjectName": "spawnArea",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -85506,6 +86292,7 @@
           "gameObjectName": "Cube (4)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -85599,6 +86386,7 @@
           "gameObjectName": "fieldArea",
           "layer": 16,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -85673,6 +86461,7 @@
           "gameObjectName": "Cube (2)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -85766,6 +86555,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -85859,6 +86649,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -85952,6 +86743,7 @@
           "gameObjectName": "spawnArea",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": true,
           "transformChain": [
@@ -86045,6 +86837,7 @@
           "gameObjectName": "Cube",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -86138,6 +86931,7 @@
           "gameObjectName": "Cube (1)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [
@@ -86231,6 +87025,7 @@
           "gameObjectName": "Cube (3)",
           "layer": 0,
           "active": true,
+          "activeInHierarchy": true,
           "enabled": true,
           "trigger": false,
           "transformChain": [

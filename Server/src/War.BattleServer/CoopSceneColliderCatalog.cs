@@ -16,7 +16,7 @@ public sealed record CoopColliderShape(
 public sealed record CoopSceneCollider(
     int ComponentFileId, string ComponentType, int GameObjectFileId,
     int TransformFileId, string GameObjectName, int Layer,
-    bool Active, bool Enabled, bool Trigger,
+    bool Active, bool ActiveInHierarchy, bool Enabled, bool Trigger,
     IReadOnlyList<CoopColliderTransform> TransformChain,
     Vector3 WorldPosition, Quaternion WorldRotation, CoopColliderShape Shape);
 
@@ -32,7 +32,7 @@ public sealed record CoopSceneColliders(
 public sealed class CoopSceneColliderCatalog
 {
     private const string SourceSha256 =
-        "4f76cd6dff18b707908666053a3b8f68b85c4ac22b3048d287e1dd189b6717c6";
+        "3f7fb2f2a3d0e90dda9796ecb79f8233964e52cdcd5c5e3350c2a08f92cdb20d";
     private static readonly int[] ExpectedCounts = [106, 201, 219, 107, 162];
 
     public IReadOnlyList<CoopSceneColliders> Maps { get; }
@@ -103,7 +103,7 @@ public sealed class CoopSceneColliderCatalog
     {
         RequireFields(row, "componentFileId", "componentType",
             "gameObjectFileId", "transformFileId", "gameObjectName",
-            "layer", "active", "enabled", "trigger", "transformChain",
+            "layer", "active", "activeInHierarchy", "enabled", "trigger", "transformChain",
             "worldPosition", "worldRotation", "shape");
         int componentId = PositiveId(row, "componentFileId");
         int gameObjectId = PositiveId(row, "gameObjectFileId");
@@ -138,10 +138,14 @@ public sealed class CoopSceneColliderCatalog
         }
         if (chain[0].FileId != transformId)
             throw new InvalidDataException("Co-op collider transform root changed.");
+        bool active = row.GetProperty("active").GetBoolean();
+        bool activeInHierarchy = row.GetProperty("activeInHierarchy").GetBoolean();
+        if (activeInHierarchy && !active)
+            throw new InvalidDataException("Inactive co-op object became active in hierarchy.");
 
         return new CoopSceneCollider(componentId, kind, gameObjectId,
             transformId, name, layer,
-            row.GetProperty("active").GetBoolean(),
+            active, activeInHierarchy,
             row.GetProperty("enabled").GetBoolean(),
             row.GetProperty("trigger").GetBoolean(),
             new ReadOnlyCollection<CoopColliderTransform>(chain),
