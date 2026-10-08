@@ -67,6 +67,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly HelicopterBodyColliderCatalog? transportHelicopterBodies;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
+    private readonly CoopDronePathReservations? dronePaths;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
     private IReadOnlyDictionary<string, BattleAllocationProjection>? battleAllocations;
@@ -106,12 +107,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? choosePoint = null,
         CoopShieldRuntimeSources? shieldSources = null,
         CoopSkillShotScoreCatalog? skillShotScores = null,
-        BattleCombatContent? playerWeaponContent = null)
+        BattleCombatContent? playerWeaponContent = null,
+        CoopAirWaypointCatalog? coopAirWaypoints = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
             skillShotScores: skillShotScores,
-            playerWeaponContent: playerWeaponContent)
+            playerWeaponContent: playerWeaponContent,
+            coopAirWaypoints: coopAirWaypoints)
     {
     }
 
@@ -122,7 +125,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseAttackFraction = null,
         CoopShieldRuntimeSources? shieldSources = null,
         CoopSkillShotScoreCatalog? skillShotScores = null,
-        BattleCombatContent? playerWeaponContent = null)
+        BattleCombatContent? playerWeaponContent = null,
+        CoopAirWaypointCatalog? coopAirWaypoints = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -195,6 +199,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 _ = CoopShieldRankResolver.AlliedRank(manifest);
             }
             CoopMapSpawnPoints map = spawnPoints.MapForMission(catalog, missionIndex);
+            if (coopAirWaypoints != null)
+                dronePaths = new CoopDronePathReservations(coopAirWaypoints, map);
             CoopMapRoutes routes = paths.MapForMission(catalog, missionIndex);
             var selector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
             playerPositions = map.PlayerPositions;
@@ -233,6 +239,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     public bool HasPlayer(string playerId) => participants.ContainsKey(playerId);
+
+    internal int? ReservedDronePath(ulong entityId) => dronePaths?.PathFor(entityId);
 
     public bool Admit(string playerId)
     {
@@ -325,9 +333,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         foreach (int eventIndex in mission.DueTimedEvents(tick))
         {
             MissionTimedEvent timedEvent = missionRule.Events[eventIndex];
-            BattleCoopEnemySpawn enemy = CreateEnemy(
+            BattleCoopEnemySpawn? enemy = CreateEnemy(
                 timedEvent.Behaviour, timedEvent.Level, true,
                 timedEvent.IsCardUnit);
+            if (enemy == null)
+                continue;
             if (!mission.ConfirmTimedEventSpawn(eventIndex, enemy.EntityId, tick))
                 throw new InvalidDataException("A due co-op event rejected its host-created enemy.");
             enemySpawns.Add(enemy);
@@ -338,22 +348,37 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (behaviourIndex is not int selectedIndex)
             return;
         MissionSpawnBehaviour behaviour = missionRule.Behaviours[selectedIndex];
-        BattleCoopEnemySpawn automaticEnemy = CreateEnemy(
+        BattleCoopEnemySpawn? automaticEnemy = CreateEnemy(
             behaviour.Name, behaviour.Level, false, false);
+        if (automaticEnemy == null)
+            return;
         if (!mission.ConfirmAutomaticSpawn(selectedIndex, automaticEnemy.EntityId, tick))
             throw new InvalidDataException("A due co-op spawn rejected its host-created enemy.");
         enemySpawns.Add(automaticEnemy);
         stateRevision++;
     }
 
-    private BattleCoopEnemySpawn CreateEnemy(
+    private BattleCoopEnemySpawn? CreateEnemy(
         string behaviour, int level, bool timedEvent, bool cardUnit)
     {
         IReadOnlyList<CoopSpawnPoint> candidates = spawnCandidates(behaviour);
-        int selectedIndex = chooseSpawnPoint(candidates.Count);
-        if (selectedIndex < 0 || selectedIndex >= candidates.Count)
-            throw new InvalidDataException("Co-op spawn choice is outside the source collection.");
-        CoopSpawnPoint point = candidates[selectedIndex];
+        CoopSpawnPoint point;
+        if (behaviour == "Drone" && dronePaths != null)
+        {
+            // Drone.Spawn filters on path.usedByEntity before choosing an anchor.
+            // An exhausted path set cannot create a host-owned enemy yet.
+            CoopSpawnPoint? freePoint = dronePaths.ChooseAvailable(candidates, chooseSpawnPoint);
+            if (freePoint == null)
+                return null;
+            point = freePoint;
+        }
+        else
+        {
+            int selectedIndex = chooseSpawnPoint(candidates.Count);
+            if (selectedIndex < 0 || selectedIndex >= candidates.Count)
+                throw new InvalidDataException("Co-op spawn choice is outside the source collection.");
+            point = candidates[selectedIndex];
+        }
         // The Client's co-op controller scales both paths with COOPHP, but
         // card units first interpolate their named card rows (or row zero when
         // that particular sheet has no card labels).
@@ -387,6 +412,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 W = rotation.W
             };
         }
+        if (behaviour == "Drone")
+            dronePaths?.Reserve(enemy.EntityId, point);
         return enemy;
     }
 
@@ -631,6 +658,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (remaining == 0)
         {
             enemy.DeathTick = impactTick;
+            if (enemy.Behaviour == "Drone")
+                dronePaths?.Release(entityId);
             if (mission.Outcome == MissionOutcome.Succeeded)
                 End(BattlePhase.Ended, "mission-success");
         }

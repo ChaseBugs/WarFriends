@@ -1626,7 +1626,9 @@ internal static class CombatContentTests
         var droneRuntime = new CoopMatchRuntime(droneAllocation,
             catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0,
-            playerWeaponContent: content);
+            playerWeaponContent: content,
+            coopAirWaypoints: CoopAirWaypointCatalog.Load(Path.Combine(directory,
+                "recovered-coop-air-waypoint-routes.json"), spawnPoints));
         droneRuntime.Admit(firstPlayer);
         droneRuntime.Admit(secondPlayer);
         var droneReady = new MatchCommand { CommandId = 1,
@@ -1636,6 +1638,8 @@ internal static class CombatContentTests
         droneRuntime.Advance(1);
         BattleCoopEnemySpawn drone = droneRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Drone");
+        if (droneRuntime.ReservedDronePath(drone.EntityId) is not > 0)
+            throw new Exception("A live co-op Drone did not reserve its recovered path.");
         IReadOnlyList<DynamicShotTarget> droneShapes = droneRuntime
             .PlaceNewDroneTargets(drone.EntityId);
         Vector3 droneStart = new(drone.X, drone.Y, drone.Z);
@@ -1654,6 +1658,9 @@ internal static class CombatContentTests
         droneRuntime.Advance(2);
         if (droneRuntime.PlaceNewDroneTargets(drone.EntityId).Count != 0)
             throw new Exception("A stale Drone pose cannot authorize co-op hits.");
+        if (!droneRuntime.ApplyHostEnemyDamage(drone.EntityId, drone.MaxHealth, 2) ||
+            droneRuntime.ReservedDronePath(drone.EntityId) != null)
+            throw new Exception("Lethal co-op Drone damage did not release its path.");
 
         const int buggyMissionIndex = 36;
         MissionMapRule buggyMap = catalog.MapForMission(buggyMissionIndex);
