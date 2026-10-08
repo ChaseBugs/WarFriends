@@ -1734,6 +1734,58 @@ public sealed partial class MatchEngine
 
     internal float? ArmyHealth(ulong entityKey)
         =>armyVitality.TryGetValue(entityKey,out var row) ? row.Current : null;
+
+    private string UseHealingStorm(Player owner, string requestId)
+    {
+        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardHealingStorm", StringComparer.Ordinal))
+            return "healing-storm-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
+            return "invalid-healing-storm-request";
+        if (cardReservations == null || armyCatalog == null)
+            return "healing-storm-authority-unavailable";
+
+        var soldierIds = armyCatalog.Families.Where(family => family.IsSoldier)
+            .Select(family => family.UnitId).ToHashSet(StringComparer.Ordinal);
+        var allies = activeArmyEntities.Values
+            .Where(army => army.OwnerFraction == owner.Definition.Fraction &&
+                           soldierIds.Contains(army.UnitId))
+            .OrderBy(army => army.EntityKey).ToArray();
+
+        // CardHealingStorm iterates the pooled EnemyController soldiers. It
+        // skips dead and fully healed allies, and heals 50% of maximum health
+        // from its MainScene component. The packet cannot select recipients.
+        foreach (var ally in allies)
+        {
+            if (!armyVitality.TryGetValue(ally.EntityKey, out var vitality) ||
+                !float.IsFinite(vitality.Current) || !float.IsFinite(vitality.Maximum) ||
+                vitality.Maximum <= 0 || vitality.Current < 0 || vitality.Current > vitality.Maximum)
+                return "healing-storm-authority-unavailable";
+        }
+
+        int injuredCount = allies.Count(ally =>
+            armyVitality[ally.EntityKey].Current > 0 &&
+            armyVitality[ally.EntityKey].Current < armyVitality[ally.EntityKey].Maximum);
+        if (events.Count >= MaximumRetainedEvents ||
+            stateRevision > ulong.MaxValue - 1 - (ulong)injuredCount ||
+            armyEntityRevision > ulong.MaxValue - (ulong)injuredCount)
+            return "event-backpressure";
+
+        var effect = new WarCardEffectRequest("CardHealingStorm", Vector3.Zero, 0, 1);
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect))
+            return "healing-storm-unavailable";
+
+        foreach (var ally in allies)
+        {
+            var vitality = armyVitality[ally.EntityKey];
+            if (vitality.Current <= 0 || vitality.Current >= vitality.Maximum) continue;
+            vitality.Current = Math.Min(vitality.Maximum,
+                vitality.Current + vitality.Maximum * 0.5f);
+            ally.Health = vitality.Current;
+            armyEntityRevision++;
+            stateRevision++;
+        }
+        return "healing-storm-applied";
+    }
     internal float? AssaultGlassHealth(ulong entityKey)
         =>armyAssaultGlass.TryGetValue(entityKey,out var row) ? row.Current : null;
     internal float? AssaultGlassMaximum(ulong entityKey)

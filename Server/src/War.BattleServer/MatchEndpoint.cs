@@ -296,6 +296,8 @@ public sealed class MatchEndpoint
                         clean.UseHeavyTurret=new UseHeavyTurretCommand {RequestId=command.UseHeavyTurret.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseMedkit:
                         clean.UseMedkit=new UseMedkitCommand {RequestId=command.UseMedkit.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseHealingStorm:
+                        clean.UseHealingStorm=new UseHealingStormCommand {RequestId=command.UseHealingStorm.RequestId};break;
                     case MatchCommand.IntentOneofCase.DeployArmy:
                         clean.DeployArmy=new DeployArmyCommand {OptionIndex=command.DeployArmy.OptionIndex};break;
                     case MatchCommand.IntentOneofCase.VehicleAttack:

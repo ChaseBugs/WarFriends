@@ -1646,6 +1646,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseHeavyTurret(p,c.UseHeavyTurret.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseMedkit)
             return UseMedkit(p,c.UseMedkit.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
+            return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;

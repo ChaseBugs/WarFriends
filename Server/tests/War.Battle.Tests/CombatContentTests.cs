@@ -12247,6 +12247,60 @@ internal static class CombatContentTests
             ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f],ShieldLevel=0
         }).ToArray()};
         content.ValidateAllocation(flameManifest);
+        var stormMatch = new MatchEngine(flameManifest with
+        {
+            MatchId = "allied-soldier-healing-storm"
+        }, content: content, armyChoice: _ => 0);
+        stormMatch.ConfigureBattleAllocations([
+            new(soldierOwner, ["CardHealingStorm"], [], [0], [-1], [-1]),
+            new(helicopterOwner, [], [], [0], [-1], [-1])
+        ]);
+        stormMatch.Admit(soldierOwner);
+        stormMatch.Admit(helicopterOwner);
+        var stormCards = new SelectCardsCommand();
+        stormCards.CardIds.Add("CardHealingStorm");
+        stormCards.NormalUpgradeIndexes.Add(0);
+        stormCards.SpecialUpgradeIndexes.Add(-1);
+        stormCards.EliteUpgradeIndexes.Add(-1);
+        var noStormCards = new SelectCardsCommand();
+        noStormCards.NormalUpgradeIndexes.Add(0);
+        noStormCards.SpecialUpgradeIndexes.Add(-1);
+        noStormCards.EliteUpgradeIndexes.Add(-1);
+        Check(stormMatch.Command(soldierOwner, new() { CommandId = 1, SelectCards = stormCards }).Code == "cards-selected" &&
+              stormMatch.Command(helicopterOwner, new() { CommandId = 1, SelectCards = noStormCards }).Code == "cards-selected",
+            "trusted Healing Storm ownership is selected before battle");
+        foreach (var playerId in new[] { soldierOwner, helicopterOwner })
+            stormMatch.Command(playerId, new() { CommandId = 2,
+                Ready = new() { ManifestHash = stormMatch.ManifestHash } });
+        stormMatch.Advance(60);
+        int stormOwnerOption = stormMatch.ArmyBatch(soldierOwner).OptionIndexes[0];
+        int stormOpponentOption = stormMatch.ArmyBatch(helicopterOwner).OptionIndexes[0];
+        Check(stormMatch.Command(soldierOwner, new() { CommandId = 3,
+                  DeployArmy = new() { OptionIndex = stormOwnerOption } }).Code == "army-deploying" &&
+              stormMatch.Command(helicopterOwner, new() { CommandId = 3,
+                  DeployArmy = new() { OptionIndex = stormOpponentOption } }).Code == "army-deploying",
+            "both teams deploy source-backed soldiers for healing proof");
+        for (ulong stormTick = 61; stormTick <= 75; stormTick++) stormMatch.Advance(stormTick);
+        var stormSoldiers = stormMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities;
+        var allySoldier = stormSoldiers.First(row => row.OwnerPlayerId == soldierOwner);
+        var opposingSoldier = stormSoldiers.First(row => row.OwnerPlayerId == helicopterOwner);
+        float allyMaximum = allySoldier.MaxHealth;
+        float opponentMaximum = opposingSoldier.MaxHealth;
+        Check(stormMatch.ApplyArmyHostDamage(allySoldier.EntityKey, allyMaximum * 0.4f) &&
+              stormMatch.ApplyArmyHostDamage(opposingSoldier.EntityKey, opponentMaximum * 0.4f),
+            "trusted host hits injure both soldier fixtures");
+        float opponentHealth = stormMatch.ArmyHealth(opposingSoldier.EntityKey)!.Value;
+        var stormCommand = new MatchCommand { CommandId = 4,
+            UseHealingStorm = new UseHealingStormCommand
+            { RequestId = "91919191919191919191919191919191" } };
+        Check(stormMatch.Command(soldierOwner, stormCommand).Code == "healing-storm-applied" &&
+              Math.Abs(stormMatch.ArmyHealth(allySoldier.EntityKey)!.Value - allyMaximum) < 0.001f &&
+              stormMatch.ArmyHealth(opposingSoldier.EntityKey) == opponentHealth,
+            "Healing Storm restores injured allied soldiers by source 50% and excludes enemies");
+        Check(stormMatch.Command(soldierOwner, stormCommand).Code == "healing-storm-applied" &&
+              stormMatch.Command(soldierOwner, new() { CommandId = 5,
+                  UseHealingStorm = new() { RequestId = "92929292929292929292929292929292" } }).Code == "healing-storm-unavailable",
+            "storm retries cannot heal twice and allocated inventory is consumed once");
         var flameInfantryMatch=new MatchEngine(flameManifest,content:content,armyChoice:_=>0);
         flameInfantryMatch.Admit(soldierOwner);flameInfantryMatch.Admit(helicopterOwner);
         flameInfantryMatch.Command(soldierOwner,new(){CommandId=1,Ready=new(){ManifestHash=flameInfantryMatch.ManifestHash}});
