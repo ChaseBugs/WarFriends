@@ -323,3 +323,4 @@ For each feature: inspect its Client caller and serialized data; implement host 
 
 
 
+The five recovered co-op mission scenes contain 23 air spawn-to-waypoint routes: 14 Drone, four Assault Helicopter, and five Transport Helicopter. `recovered-coop-air-waypoint-routes.json` records each scene-bound join/stop point, path, radius, ordered world waypoint, stay time, and transform provenance. `CoopAirWaypointCatalog` verifies the exact artifact digest, all five map hashes, all 23 ordered spawn identities, waypoint bounds, and consistent geometry when multiple anchors share one path. Desert has four Drone anchors but only two distinct paths; recovered `Drone.Spawn` reserves `path.usedByEntity`, so host spawning must reserve by path ID and release on death. These routes are validated content, not yet live co-op flight, collision, or SDK projection.
