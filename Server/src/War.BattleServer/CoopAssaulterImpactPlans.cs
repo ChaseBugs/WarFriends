@@ -27,20 +27,23 @@ internal static class CoopAssaulterRoundProof
         CoopInfantryRoundIntent round)
     {
         BulletImpact? impact = result.Impact;
-        return impact != null && round.Real && round.RoundIndex >= 0 &&
-            round.ProjectileId != 0 &&
-            round.ProjectileId == result.ProjectileId &&
-            round.EnemyEntityId != 0 &&
-            round.EnemyEntityId == result.EnemyEntityId &&
-            round.Tick < result.Tick &&
-            round.ObservedLocalMuzzle != null &&
-            round.ObservedWorldLaunchOrigin is Vector3 origin &&
-            PlayerHitbox.Finite(origin) &&
-            PlayerHitbox.Finite(round.AimPosition) &&
+        if (impact == null || !round.Real || round.RoundIndex < 0 ||
+            round.ProjectileId == 0 || round.EnemyEntityId == 0 ||
+            round.ObservedLocalMuzzle == null ||
+            round.ObservedWorldLaunchOrigin is not Vector3 origin ||
+            !PlayerHitbox.Finite(origin) ||
+            !PlayerHitbox.Finite(round.AimPosition))
+            return false;
+
+        // The launch belongs to this host-issued round, and the collision
+        // happened later in the same projectile flight.
+        return result.ProjectileId == round.ProjectileId &&
+            result.EnemyEntityId == round.EnemyEntityId &&
+            result.Tick > round.Tick &&
             impact.ProjectileId == round.ProjectileId &&
             impact.EnemyEntityId == round.EnemyEntityId &&
-            impact.OwnerId == string.Empty &&
-            impact.Tick == result.Tick;
+            impact.Tick == result.Tick &&
+            impact.OwnerId == string.Empty;
     }
 }
 
