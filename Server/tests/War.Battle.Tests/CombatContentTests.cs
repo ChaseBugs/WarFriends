@@ -2774,7 +2774,37 @@ internal static class CombatContentTests
             throw new Exception($"Co-op PhysX comparison changed: " +
                 $"{physxDifferences.Count}/{checkedRays}: " +
                 string.Join("; ", physxDifferences.Take(20)));
-        return checkedRays - physxDifferences.Count;
+        var emptySpace = new CoopShotCollisionWorld(
+            new CoopNativeSceneRaycaster(colliders.Maps[0], geometry));
+        Vector3 distantOrigin = new(1000, 1000, 1000);
+        var hitbox = new PlayerHitbox("host/drone", PlayerHitboxKind.Sphere,
+            1, distantOrigin + new Vector3(0, 0, 5), Vector3.Zero,
+            Quaternion.Identity, 1, Vector3.Zero, 0);
+        var target = new DynamicShotTarget(7, 42, 27, hitbox,
+            DroneRoot: true);
+        uint enemyLayer = 1u << 27;
+        CoopShotHit? hostHit = emptySpace.Trace(distantOrigin, Vector3.UnitZ,
+            10, enemyLayer, [target]);
+        if (hostHit?.EnemyEntityId != 7 ||
+            hostHit.EnemyPartFileId != 42 ||
+            Math.Abs(hostHit.Distance - 4) > 0.001f ||
+            emptySpace.Trace(distantOrigin, Vector3.UnitZ, 10, 0, [target]) != null ||
+            emptySpace.Trace(distantOrigin, Vector3.UnitZ, 3, enemyLayer,
+                [target]) != null)
+            throw new Exception("Co-op shot tracing lost host enemy geometry or layer/range bounds.");
+        bool rejectedDuplicate = false;
+        try
+        {
+            emptySpace.Trace(distantOrigin, Vector3.UnitZ, 10, enemyLayer,
+                [target, target]);
+        }
+        catch (InvalidDataException)
+        {
+            rejectedDuplicate = true;
+        }
+        if (!rejectedDuplicate)
+            throw new Exception("One co-op collider was supplied twice.");
+        return checkedRays - physxDifferences.Count + 4;
     }
 
     private static Vector3 ReadRayVector(JsonElement values)
