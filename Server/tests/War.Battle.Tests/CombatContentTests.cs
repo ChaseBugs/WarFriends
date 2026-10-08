@@ -1565,6 +1565,49 @@ internal static class CombatContentTests
         CoopSkillShotScoreCatalog skillShots = CoopSkillShotScoreCatalog.Load(
             Path.Combine(directory, "recovered-coop-skillshot-scores.json"),
             content.Stats.SceneRevision, content.Stats.Revision);
+        const int helicopterMissionIndex = 23;
+        MissionMapRule helicopterMap = catalog.MapForMission(helicopterMissionIndex);
+        MatchManifest helicopterAllocation = coop with
+        {
+            MissionIndex = helicopterMissionIndex,
+            MapId = helicopterMap.Scene,
+            MapRevision = helicopterMap.SceneSha256,
+            DurationSeconds = catalog.Get(helicopterMissionIndex).TimeSeconds
+        };
+        var helicopterRuntime = new CoopMatchRuntime(helicopterAllocation,
+            catalog, spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            skillShotScores: skillShots, playerWeaponContent: content);
+        helicopterRuntime.Admit(firstPlayer);
+        helicopterRuntime.Admit(secondPlayer);
+        var helicopterReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand
+                { ManifestHash = helicopterRuntime.ManifestHash } };
+        helicopterRuntime.Command(firstPlayer, helicopterReady);
+        helicopterRuntime.Command(secondPlayer, helicopterReady);
+        helicopterRuntime.Advance(1);
+        BattleCoopEnemySpawn helicopter = helicopterRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Helicopter");
+        IReadOnlyList<PlayerHitbox> helicopterHitboxes = helicopterRuntime
+            .PlaceNewAssaultHelicopterHitboxes(helicopter.EntityId);
+        Vector3 helicopterStart = new(helicopter.X, helicopter.Y,
+            helicopter.Z);
+        if (helicopter.SpawnTick != 1 || helicopterHitboxes.Count != 7 ||
+            helicopterHitboxes.Count(hitbox =>
+                hitbox.Kind == PlayerHitboxKind.Mesh) != 6 ||
+            helicopterHitboxes.Count(hitbox =>
+                hitbox.Kind == PlayerHitboxKind.Box) != 1 ||
+            helicopterHitboxes.Any(hitbox =>
+                hitbox.TransformPosition != helicopterStart ||
+                !hitbox.SourcePath.StartsWith(
+                    "Assets/GameObject/assaultHelicopter.prefab#",
+                    StringComparison.Ordinal)) ||
+            helicopterRuntime.PlaceNewAssaultHelicopterHitboxes(999).Count != 0)
+            throw new Exception("Co-op Helicopter needs seven source-owned spawn hitboxes.");
+        helicopterRuntime.Advance(2);
+        if (helicopterRuntime.PlaceNewAssaultHelicopterHitboxes(
+                helicopter.EntityId).Count != 0)
+            throw new Exception("A stale Helicopter pose cannot authorize co-op hits.");
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);
@@ -2330,6 +2373,22 @@ internal static class CombatContentTests
         CoopMeshGeometryCatalog meshes = CoopMeshGeometryCatalog.LoadPrefabs(
             Path.Combine(directory,
                 "recovered-coop-prefab-mesh-geometry.json"), catalog);
+        using JsonDocument newGeometry = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(directory, "recovered-coop-prefab-mesh-geometry.json")));
+        using JsonDocument earlierGeometry = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(directory, "recovered-air-unit-unity-geometry.json")));
+        foreach (JsonElement mesh in newGeometry.RootElement.GetProperty("meshes")
+            .EnumerateArray())
+        {
+            string key = mesh.GetProperty("guid").GetString() + ":4300000";
+            JsonElement earlier = earlierGeometry.RootElement
+                .GetProperty("meshes").GetProperty(key);
+            if (!JsonElement.DeepEquals(mesh.GetProperty("vertices"),
+                    earlier.GetProperty("vertices")) ||
+                !JsonElement.DeepEquals(mesh.GetProperty("triangles"),
+                    earlier.GetProperty("triangles")))
+                throw new Exception("Independent Assault Helicopter mesh exports differ.");
+        }
         CoopSceneCollider[] all = catalog.Prefabs
             .SelectMany(prefab => prefab.Colliders).ToArray();
         if (catalog.Prefabs.Count != 32 ||

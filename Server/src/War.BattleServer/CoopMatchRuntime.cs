@@ -60,6 +60,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopEnemyCombatCatalog combat;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
+    private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
+    private readonly AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshes;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
@@ -137,6 +139,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
         playerPoses = playerWeaponContent?.Poses;
+        assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
+        assaultHelicopterMeshes = playerWeaponContent?.AssaultHelicopterMeshColliders;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
@@ -404,6 +408,41 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
         return enemyPoses.Place(clip, position, rotation, 0,
             $"coop/{entityId}/");
+    }
+
+    /// <summary>
+    /// Places the recovered Assault Helicopter body and front glass when its
+    /// host-owned spawn is created. The prefab's five body meshes, one body
+    /// box, and front glass have distinct damage-part identities in the
+    /// existing source-backed catalog. No later pose is valid without host
+    /// helicopter movement and rotation, so this method refuses stale ticks.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceNewAssaultHelicopterHitboxes(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || assaultHelicopterBody == null ||
+            assaultHelicopterMeshes == null)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Helicopter" &&
+            spawn.SpawnTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.SourceRotation != null);
+        if (enemy == null)
+            return [];
+
+        var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
+        var rotation = new Quaternion(enemy.SourceRotation.X,
+            enemy.SourceRotation.Y, enemy.SourceRotation.Z,
+            enemy.SourceRotation.W);
+        var hitboxes = new List<PlayerHitbox>
+        {
+            assaultHelicopterBody.Place(position, rotation)
+        };
+        hitboxes.AddRange(assaultHelicopterMeshes.Place(position, rotation)
+            .Select(part => part.Hitbox));
+        hitboxes.Add(assaultHelicopterMeshes.PlaceFrontGlass(
+            position, rotation).Hitbox);
+        return hitboxes.AsReadOnly();
     }
 
     /// <summary>
