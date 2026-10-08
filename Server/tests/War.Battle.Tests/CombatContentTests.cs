@@ -591,6 +591,7 @@ internal static class CombatContentTests
         int transmittedShields = MatchSnapshot.Parser
             .ParseFrom(bossStart.ToByteArray()).Shields.Count;
         if (bossStart.Phase != BattlePhase.Running ||
+            bossStart.Coop.SuccessScores.Count != 0 ||
             bossStart.Shields.Count != 8 ||
             transmittedShields != 8 ||
             bossStart.Shields.Where(shield => shield.OwnerFraction == 2)
@@ -733,9 +734,17 @@ internal static class CombatContentTests
             throw new Exception("Boss damage must be host-owned and settle only once.");
         CoopMissionSuccessScore? survivingScore =
             bossRuntime.HostSuccessScore(bossFirstPlayer);
+        MatchSnapshot completedBoss = bossRuntime.Snapshot();
+        BattleCoopPlayerScore[] wireScores = MatchSnapshot.Parser
+            .ParseFrom(completedBoss.ToByteArray()).Coop.SuccessScores.ToArray();
         if (survivingScore?.Stars != 3 ||
             survivingScore.Score < catalog.Get(4).ScoreThreeStars ||
-            bossRuntime.HostSuccessScore(bossSecondPlayer) != null)
+            bossRuntime.HostSuccessScore(bossSecondPlayer) != null ||
+            completedBoss.RewardEligible ||
+            wireScores.Length != 1 ||
+            wireScores[0].PlayerId != bossFirstPlayer ||
+            wireScores[0].Score != survivingScore.Score ||
+            wireScores[0].Stars != survivingScore.Stars)
             throw new Exception("Boss success score did not use frozen host outcome.");
 
         var ordinaryShieldRuntime = new CoopMatchRuntime(shieldAllocation,

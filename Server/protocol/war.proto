@@ -458,6 +458,12 @@ message BattleCoopState {
   repeated BattleCoopParticipantStart participant_starts = 16;
   // BotMission's source boss is separate from ordinary AI spawn records.
   BattleCoopBossState boss = 17;
+  // Terminal success presentation from host health and remaining mission time.
+  // This is not a wallet or progression settlement receipt.
+  repeated BattleCoopPlayerScore success_scores = 18;
+}
+message BattleCoopPlayerScore {
+  string player_id = 1; int32 score = 2; int32 stars = 3;
 }
 message BattleCoopBossState {
   uint64 entity_id = 1; int32 defend_component_file_id = 2;

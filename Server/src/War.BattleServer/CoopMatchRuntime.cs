@@ -705,6 +705,22 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         };
         snapshot.Coop.ParticipantIds.AddRange(
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
+        if (Terminal && mission.Outcome == MissionOutcome.Succeeded)
+        {
+            foreach (ParticipantManifest rosterPlayer in manifest.Players)
+            {
+                CoopMissionSuccessScore? score =
+                    HostSuccessScore(rosterPlayer.PlayerId);
+                if (score == null)
+                    continue;
+                snapshot.Coop.SuccessScores.Add(new BattleCoopPlayerScore
+                {
+                    PlayerId = rosterPlayer.PlayerId,
+                    Score = score.Score,
+                    Stars = score.Stars
+                });
+            }
+        }
         snapshot.Coop.EnemySpawns.AddRange(
             enemySpawns.Select(enemy => enemy.Clone()));
         AddShields(snapshot, alliedShields);
