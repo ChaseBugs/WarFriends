@@ -1477,7 +1477,8 @@ internal static class CombatContentTests
         if (movementRuntime.Command(firstPlayer, moveRight).Code != "moving" ||
             movementRuntime.Command(firstPlayer, moveRight).Code != "moving" ||
             movementRuntime.Command(secondPlayer, moveRight).Code != "cover-unavailable" ||
-            movementRuntime.PlaceIdlePlayerMuzzle(firstPlayer) != null)
+            movementRuntime.PlaceIdlePlayerMuzzle(firstPlayer) != null ||
+            movementRuntime.PlaceIdleAlliedCollisionPoses() != null)
             throw new Exception("Co-op shield selection must skip occupied and reserved points.");
         BattlePlayerState movingPlayer = movementRuntime.Snapshot().Players.Single(
             player => player.PlayerId == firstPlayer);
@@ -1783,6 +1784,35 @@ internal static class CombatContentTests
                 }
             });
         arrivalRuntime.Advance(8);
+        IReadOnlyList<CollisionPlayer>? idleAllies =
+            arrivalRuntime.PlaceIdleAlliedCollisionPoses();
+        if (idleAllies?.Count != 2 ||
+            idleAllies[0].PlayerId != firstPlayer ||
+            idleAllies[1].PlayerId != secondPlayer ||
+            idleAllies.Any(ally => ally.Layer != 22 ||
+                ally.Fraction != 2 ||
+                ally.Pose.PoseKind == "serialized-reference-only") ||
+            Vector3.Distance(idleAllies[0].Pose.RootPosition,
+                mainAnchors[0].Position) > 0.001f)
+            throw new Exception("Co-op runtime did not place both untouched allies.");
+        CoopSceneColliderCatalog shotScenes = CoopSceneColliderCatalog.Load(
+            Path.Combine(directory, "recovered-coop-scene-colliders.json"),
+            catalog);
+        CoopMeshGeometryCatalog shotMeshes = CoopMeshGeometryCatalog.Load(
+            Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
+            shotScenes);
+        var alliedShotWorld = new CoopPlayerShotCollisionWorld(
+            new CoopNativeSceneRaycaster(
+                shotScenes.MapForMission(catalog, 0), shotMeshes));
+        Vector3 diagnosticRayStart = idleAllies[0].Pose.Parts[0].Center -
+            2 * Vector3.UnitZ;
+        CoopPlayerShotHit? directHit = alliedShotWorld.Trace(
+            diagnosticRayStart, Vector3.UnitZ, 4,
+            content.Bindings.BulletMask(1), idleAllies);
+        CoopPlayerShotHit? runtimeHit = arrivalRuntime.TraceIdleAlliedEnemyRay(
+            alliedShotWorld, diagnosticRayStart, Vector3.UnitZ, 4);
+        if (directHit == null || runtimeHit != directHit)
+            throw new Exception("Co-op runtime used a different enemy ray mask or allied pose.");
         BattleCoopEnemySpawn arrivalEnemy = arrivalRuntime.Snapshot()
             .Coop.EnemySpawns.Single();
         CoopAssignedEnemyDestination arrivalPoint = arrivalRuntime

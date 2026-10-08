@@ -133,6 +133,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
     private readonly CoopAssaulterQueueCatalog? assaulterQueue;
     private readonly PlayerPoseCatalog? playerPoses;
+    private readonly uint? enemyBulletMask;
     private readonly PlayerShotTargetCatalog? playerShotTargets;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
     private readonly AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshes;
@@ -303,6 +304,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;
         assaulterQueue = playerWeaponContent?.CoopAssaulterQueue;
         playerPoses = playerWeaponContent?.Poses;
+        enemyBulletMask = playerWeaponContent?.Bindings.BulletMask(1);
         playerShotTargets = playerWeaponContent?.PlayerShotTargets;
         assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
         assaultHelicopterMeshes = playerWeaponContent?.AssaultHelicopterMeshColliders;
@@ -1801,6 +1803,52 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             "idle", 0, true, "idle", 0, true, 0,
             Quaternion.Identity).Place(start.Position, rotation);
         return idlePose.Muzzle(weapon.Weapon.SourceId);
+    }
+
+    /// <summary>
+    /// Places both allies at their untouched source idle poses for an
+    /// isolated enemy-ray diagnostic. A moved, firing, or dead ally needs a
+    /// different current animation pose before any hit can be trusted.
+    /// </summary>
+    internal IReadOnlyList<CollisionPlayer>? PlaceIdleAlliedCollisionPoses()
+    {
+        if (phase != BattlePhase.Running || playerPoses == null ||
+            participants.Count != 2)
+            return null;
+
+        var poses = new List<CollisionPlayer>(2);
+        foreach (Participant player in manifest.Players.Select(
+            definition => participants[definition.PlayerId]))
+        {
+            if (!player.Admitted || !player.Ready || player.Dead ||
+                player.HasMoved || player.Route != null ||
+                player.Weapons == null || player.Weapons.HasFiredAnyShot)
+                return null;
+
+            CoopPlayerAnchor start = playerStarts[player.PlayerId];
+            if (start.SourceRotation is not Quaternion rotation)
+                return null;
+
+            PlayerCollisionModel pose = playerPoses.SampleBlended(
+                "idle", 0, true, "idle", 0, true, 0,
+                Quaternion.Identity).Place(start.Position, rotation).Collision;
+            // TagsAndLayers.GetFractionBulletLayer(Allies, false) is 22.
+            poses.Add(new CollisionPlayer(player.PlayerId, pose, 22, 2));
+        }
+        return poses;
+    }
+
+    internal CoopPlayerShotHit? TraceIdleAlliedEnemyRay(
+        CoopPlayerShotCollisionWorld world, Vector3 origin,
+        Vector3 direction, float maximumDistance)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        IReadOnlyList<CollisionPlayer>? poses =
+            PlaceIdleAlliedCollisionPoses();
+        if (poses == null || enemyBulletMask is not uint mask)
+            return null;
+        return world.Trace(origin, direction, maximumDistance,
+            mask, poses);
     }
 
     /// <summary>
