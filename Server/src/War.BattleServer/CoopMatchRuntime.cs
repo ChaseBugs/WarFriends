@@ -98,6 +98,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public bool HasMoved;
         public ulong DamageRevision;
         public CoopPlayerWeaponState? Weapons;
+        public RifleCoverTimeline? ShotTimeline;
+        public int ShotAnimationFamily = -1;
+        public ulong ShotPoseReadyTick;
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
     }
 
@@ -710,6 +713,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 AdvancePlayerMovement(participant);
                 if (participant.Weapons?.Advance(tick) == true)
                     stateRevision++;
+                if (participant.ShotTimeline != null)
+                {
+                    RifleCoverPhase prior = participant.ShotTimeline.Phase;
+                    participant.ShotTimeline.Advance(
+                        tick / (double)MatchManifest.TickRate);
+                    if (prior != RifleCoverPhase.Idle &&
+                        participant.ShotTimeline.Phase == RifleCoverPhase.Idle)
+                        participant.ShotPoseReadyTick = checked(
+                            tick + MatchManifest.TickRate);
+                }
             }
             AdvanceDiagnosticFlights();
             if (alliedShields != null && alliedShields.Advance(tick,
@@ -1793,7 +1806,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             PlayerWeapons == null || playerWeaponBindings == null ||
             !player.Admitted || !player.Ready || player.Dead ||
             player.Route != null || player.Weapons == null ||
-            player.Weapons.HasFiredAnyShot ||
+            (player.Weapons.HasFiredAnyShot &&
+                (player.ShotTimeline == null ||
+                 player.ShotTimeline.Phase != RifleCoverPhase.Idle ||
+                 tick < player.ShotPoseReadyTick)) ||
             (player.HasMoved &&
                 (tick < player.MoveEndTick ||
                  tick - player.MoveEndTick < MatchManifest.TickRate)))
@@ -2167,14 +2183,49 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     /// Commit ammo only after a host projectile exists for this signed slot.
     /// The client Fire command cannot call this method.
     /// </summary>
-    internal bool ConfirmHostPlayerShot(string playerId, int slot, ulong shotTick)
+    internal bool ConfirmHostPlayerShot(string playerId, int slot,
+        Vector3 target, ulong shotTick)
     {
         if (phase != BattlePhase.Running || shotTick != tick ||
             !participants.TryGetValue(playerId, out Participant? player) ||
             !player.Admitted || !player.Ready || player.Dead ||
-            player.Weapons == null ||
-            !player.Weapons.ConfirmHostShot(slot, shotTick))
+            player.Route != null || player.Weapons == null ||
+            player.Weapons.CheckShot(slot, shotTick) !=
+                CoopShotAvailability.Ready ||
+            !PlayerHitbox.Finite(target) || playerPoses == null ||
+            playerWeaponBindings == null || PlayerWeapons == null)
             return false;
+
+        Vector3 direction = target - player.Position;
+        direction.Y = 0;
+        if (direction.LengthSquared() < 0.0000001f ||
+            playerPositions[player.CoverIndex].SourceRotation is not
+                Quaternion coverRotation)
+            return false;
+
+        CoopPlayerWeapon selected = PlayerWeapons.ForPlayer(playerId)
+            .Single(weapon => weapon.Slot == slot);
+        int family = playerWeaponBindings.Get(
+            selected.Weapon.SourceId).AnimationFamily;
+        RifleCoverTimeline timeline = player.ShotTimeline != null &&
+            player.ShotAnimationFamily == family
+                ? player.ShotTimeline
+                : new RifleCoverTimeline(playerPoses, family);
+        if (timeline != player.ShotTimeline)
+            timeline.Advance(tick / (double)MatchManifest.TickRate);
+
+        // PlayerClickWeapon compares the defend point's forward direction
+        // against the target from the player's current position.
+        Vector3 forward = Vector3.Transform(Vector3.UnitZ, coverRotation);
+        bool right = Vector3.Dot(Vector3.UnitY,
+            Vector3.Cross(forward, direction)) > 0;
+        timeline.Shot(right);
+        if (!player.Weapons.ConfirmHostShot(slot, shotTick))
+            throw new InvalidOperationException(
+                "Validated co-op shot could not consume its ammunition.");
+        player.ShotTimeline = timeline;
+        player.ShotAnimationFamily = family;
+        player.ShotPoseReadyTick = ulong.MaxValue;
         stateRevision++;
         return true;
     }
@@ -2313,6 +2364,21 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             if (participant.Weapons == null ||
                 !participant.Weapons.TrySelectSlot(command.SwitchWeapon.Slot, tick))
                 return "weapon-slot-unavailable";
+            if (participant.ShotTimeline != null)
+            {
+                CoopPlayerWeapon selected = PlayerWeapons!.ForPlayer(
+                    participant.PlayerId).Single(weapon =>
+                    weapon.Slot == command.SwitchWeapon.Slot);
+                int family = playerWeaponBindings!.Get(
+                    selected.Weapon.SourceId).AnimationFamily;
+                participant.ShotTimeline = new RifleCoverTimeline(
+                    playerPoses!, family);
+                participant.ShotTimeline.Advance(
+                    tick / (double)MatchManifest.TickRate);
+                participant.ShotAnimationFamily = family;
+                participant.ShotPoseReadyTick = checked(
+                    tick + MatchManifest.TickRate);
+            }
             return "weapon-selected";
         }
         if (command.IntentCase == MatchCommand.IntentOneofCase.Reload)
@@ -2368,6 +2434,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
         participant.Route = route;
         participant.DestinationIndex = target;
+        // Walking replaces the cover-shot clip. The existing post-arrival
+        // settling gate will keep collision poses closed during the tween.
+        participant.ShotTimeline?.ResetToIdle();
+        participant.ShotPoseReadyTick = 0;
         // PlayerController.GoTo defers NavMeshAgent.SetDestination by 0.02s.
         // At 30 Hz this is the next host tick.
         participant.MoveStartTick = tick + 1;

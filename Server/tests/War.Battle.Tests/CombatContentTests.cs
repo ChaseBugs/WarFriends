@@ -843,7 +843,7 @@ internal static class CombatContentTests
                     Reload = new ReloadCommand() }).Code != "reload-unavailable")
             throw new Exception("Full co-op clip must not start a reload.");
 
-        const string alternateRifle = "Google2u.AssaultRifle_Famas";
+        const string alternateRifle = "Google2u.AssaultRifle_M16";
         WeaponManifest alternateWeapon = content.CreateCoopWeaponManifest(
             alternateRifle, 0);
         int alternateIndex = content.AllWeaponBindings.Get(
@@ -973,16 +973,27 @@ internal static class CombatContentTests
             throw new Exception("An unallocated co-op weapon slot became active.");
         BattlePlayerState beforeHostShot = switchingRuntime.Snapshot().Players.Single(
             player => player.PlayerId == switcher);
+        CoopPlayerAnchor shotCover = spawnPoints.MapForMission(catalog, 0)
+            .PlayerPositions.Single(position =>
+                position.Index == beforeHostShot.CoverIndex);
+        Vector3 shotOrigin = new(beforeHostShot.PositionX,
+            beforeHostShot.PositionY, beforeHostShot.PositionZ);
+        Vector3 shotTarget = shotOrigin + Vector3.Transform(Vector3.UnitZ,
+            shotCover.SourceRotation!.Value) * 3;
         var unsupportedFire = new MatchCommand { CommandId = 4,
             Fire = new FireCommand { TargetX = 1 } };
         if (switchingRuntime.Command(switcher, unsupportedFire).Code !=
                 "coop-command-unavailable" ||
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == switcher).ClipAmmo != beforeHostShot.ClipAmmo ||
-            switchingRuntime.ConfirmHostPlayerShot("outside", 1, 0) ||
-            switchingRuntime.ConfirmHostPlayerShot(partner, 1, 0) ||
-            !switchingRuntime.ConfirmHostPlayerShot(switcher, 1, 0) ||
-            switchingRuntime.ConfirmHostPlayerShot(switcher, 1, 0) ||
+            switchingRuntime.ConfirmHostPlayerShot("outside", 1,
+                shotTarget, 0) ||
+            switchingRuntime.ConfirmHostPlayerShot(partner, 1,
+                shotTarget, 0) ||
+            !switchingRuntime.ConfirmHostPlayerShot(switcher, 1,
+                shotTarget, 0) ||
+            switchingRuntime.ConfirmHostPlayerShot(switcher, 1,
+                shotTarget, 0) ||
             switchingRuntime.PlaceIdlePlayerMuzzle(switcher) != null ||
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == switcher).ClipAmmo != alternateWeapon.ClipSize - 1)
@@ -1006,6 +1017,10 @@ internal static class CombatContentTests
                 player.PlayerId == partner).ReserveAmmo !=
                 twoWeapons.Players[1].Weapon.ReserveAmmo)
             throw new Exception("Co-op reload changed the wrong slot or ally.");
+        switchingRuntime.Advance(Math.Max(alternateReloadTicks + 1, 120));
+        if (switchingRuntime.PlaceIdlePlayerMuzzle(switcher) == null)
+            throw new Exception(
+                "A host-confirmed co-op shot never returned to a settled source idle pose.");
         MatchManifest skippedSlot = twoWeapons with
         {
             Players = twoWeapons.Players.Select((player, index) => index == 0
