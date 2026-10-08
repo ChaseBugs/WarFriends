@@ -70,6 +70,7 @@ internal static class CombatContentTests
             directory, catalog, content);
         int skillShotAssertions = VerifyCoopSkillShotScores(skillShots);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
+        int enemyPointAssertions = VerifyCoopEnemyPoints(directory, catalog);
         int colliderAssertions = VerifyCoopSceneColliders(directory, catalog);
         int prefabColliderAssertions = VerifyCoopPrefabColliders(directory);
         int nativeRayAssertions = VerifyCoopNativeSceneRays(directory, catalog);
@@ -101,7 +102,8 @@ internal static class CombatContentTests
                 "A changed boss scene hash was accepted.");
             return 5 + skillShotAssertions + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
-                allocationAssertions + mapAssertions + colliderAssertions +
+                allocationAssertions + mapAssertions + enemyPointAssertions +
+                colliderAssertions +
                 prefabColliderAssertions +
                 nativeRayAssertions + navMeshAssertions +
                 routeAssertions + botAssertions + bossSpawnAssertions;
@@ -2864,6 +2866,63 @@ internal static class CombatContentTests
     {
         return new Vector3(values[0].GetSingle(), values[1].GetSingle(),
             values[2].GetSingle());
+    }
+
+    private static int VerifyCoopEnemyPoints(
+        string directory, MissionCatalog missions)
+    {
+        CoopSpawnPointCatalog spawns = CoopSpawnPointCatalog.Load(
+            Path.Combine(directory, "recovered-coop-spawn-points.json"),
+            missions);
+        string path = Path.Combine(directory,
+            "recovered-coop-enemy-points.json");
+        CoopEnemyPointCatalog catalog = CoopEnemyPointCatalog.Load(path,
+            missions, spawns);
+        CoopMapEnemyPoints desert = catalog.MapForMission(missions, 0);
+        CoopEnemyPoint[] all = catalog.Maps.SelectMany(map => map.Points)
+            .ToArray();
+        CoopEnemyPoint obstacle = desert.Points.First(point =>
+            point.ComponentType == "EnemyPointObstacle");
+        CoopEnemyPoint engineer = all.First(point =>
+            point.ComponentType == "EnemyPointEngineerTurret");
+        Vector3 expectedEngineer = engineer.TransformPosition -
+            Vector3.Transform(Vector3.UnitZ, engineer.Rotation) * 0.2f;
+        if (catalog.Maps.Count != 5 || all.Length != 130 ||
+            desert.Points.Count != 26 ||
+            catalog.MapForMission(missions, 0).Scene !=
+                missions.MapForMission(0).Scene ||
+            all.Count(point => point.SegmentStart.HasValue) != 58 ||
+            all.Count(point => point.ComponentType ==
+                "EnemyPointEngineerTurret") != 20 ||
+            obstacle.SegmentStart == null || obstacle.SegmentEnd == null ||
+            Vector3.Distance(obstacle.Position,
+                (obstacle.SegmentStart.Value +
+                 obstacle.SegmentEnd.Value) * 0.5f) > 0.0001f ||
+            Vector3.Distance(engineer.Position, expectedEngineer) > 0.0001f)
+            throw new Exception("Co-op enemy destinations differ from the source scenes.");
+
+        string damagedPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-enemy-points-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode damaged = JsonNode.Parse(File.ReadAllText(path))!;
+            damaged["maps"]![0]!["points"]![0]!["componentFileId"] = 0;
+            File.WriteAllText(damagedPath, damaged.ToJsonString());
+            try
+            {
+                _ = CoopEnemyPointCatalog.Load(damagedPath, missions, spawns);
+                throw new Exception("Changed co-op enemy point authority was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                // Source identities cannot be substituted at Worker startup.
+            }
+        }
+        finally
+        {
+            File.Delete(damagedPath);
+        }
+        return 8;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)

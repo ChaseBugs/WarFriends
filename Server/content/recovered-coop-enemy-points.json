@@ -1,0 +1,3562 @@
+{
+  "version": 1,
+  "maps": [
+    {
+      "stage": 1,
+      "scene": "Desert_New",
+      "sceneSha256": "e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5",
+      "mapDefinitionFileId": 1721,
+      "collectionComponentFileId": 1845,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 1698,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 218,
+          "transformFileId": 681,
+          "fraction": 1,
+          "worldPosition": [
+            -27.842968,
+            -2.2887646999999998,
+            -12.8744666
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 1,
+          "componentFileId": 1719,
+          "componentType": "EnemyPointRusherSpare",
+          "gameObjectFileId": 253,
+          "transformFileId": 718,
+          "fraction": 1,
+          "worldPosition": [
+            -16.9423464,
+            -2.2245268499999997,
+            -7.7582114
+          ],
+          "worldRotation": [
+            0.0,
+            0.9352046875067136,
+            0.0,
+            0.3541076001238468
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 2,
+          "componentFileId": 1900,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 468,
+          "transformFileId": 949,
+          "fraction": 1,
+          "worldPosition": [
+            -19.9588107,
+            -2.32100865,
+            -8.64991258
+          ],
+          "worldRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 874,
+            "endTransformFileId": 815,
+            "start": [
+              -19.998128785000002,
+              -2.29631993,
+              -8.78159879
+            ],
+            "end": [
+              -20.12498082,
+              -2.32100865,
+              -9.14387201
+            ]
+          }
+        },
+        {
+          "order": 3,
+          "componentFileId": 1859,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 423,
+          "transformFileId": 901,
+          "fraction": 1,
+          "worldPosition": [
+            -23.531053,
+            -2.5158025999999998,
+            -11.296451300000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 684,
+            "endTransformFileId": 696,
+            "start": [
+              -23.46806090454974,
+              -2.4911138795721386,
+              -11.467686392187582
+            ],
+            "end": [
+              -23.430957262894754,
+              -2.5158025999999998,
+              -11.729382245820664
+            ]
+          }
+        },
+        {
+          "order": 4,
+          "componentFileId": 1775,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 323,
+          "transformFileId": 791,
+          "fraction": 1,
+          "worldPosition": [
+            -23.762026,
+            -2.5158025999999998,
+            -10.6548841
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 814,
+            "endTransformFileId": 873,
+            "start": [
+              -23.78172700834722,
+              -2.511816002930911,
+              -10.876857527058167
+            ],
+            "end": [
+              -23.62358301327436,
+              -2.5158025999999998,
+              -11.126416928802515
+            ]
+          }
+        },
+        {
+          "order": 5,
+          "componentFileId": 1835,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 390,
+          "transformFileId": 864,
+          "fraction": 1,
+          "worldPosition": [
+            -19.984251,
+            -2.3210083999999997,
+            -7.9074857000000005
+          ],
+          "worldRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 639,
+            "endTransformFileId": 740,
+            "start": [
+              -20.160383200000002,
+              -2.317021803,
+              -8.02346442
+            ],
+            "end": [
+              -20.013740517,
+              -2.3210083999999997,
+              -8.413179600000001
+            ]
+          }
+        },
+        {
+          "order": 6,
+          "componentFileId": 1735,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 265,
+          "transformFileId": 730,
+          "fraction": 1,
+          "worldPosition": [
+            -21.7160624,
+            -2.3594695999999997,
+            -10.7029636
+          ],
+          "worldRotation": [
+            0.03805193549224284,
+            -0.2167273114124695,
+            -0.008454422165004805,
+            0.9754536613489504
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 622,
+            "endTransformFileId": 793,
+            "start": [
+              -21.72737680506148,
+              -2.3397317725400817,
+              -10.904390654099299
+            ],
+            "end": [
+              -21.569190848849598,
+              -2.3249176801414295,
+              -11.145155412706838
+            ]
+          }
+        },
+        {
+          "order": 7,
+          "componentFileId": 1702,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 225,
+          "transformFileId": 687,
+          "fraction": 1,
+          "worldPosition": [
+            -21.564228,
+            -2.3455803,
+            -11.139108400000001
+          ],
+          "worldRotation": [
+            0.03805193549224284,
+            -0.2167273114124695,
+            -0.008454422165004805,
+            0.9754536613489504
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 697,
+            "endTransformFileId": 747,
+            "start": [
+              -21.550758311435576,
+              -2.3106055221088484,
+              -11.269785158241927
+            ],
+            "end": [
+              -21.489763220924697,
+              -2.3123899231067986,
+              -11.563875324183323
+            ]
+          }
+        },
+        {
+          "order": 8,
+          "componentFileId": 1905,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 473,
+          "transformFileId": 955,
+          "fraction": 1,
+          "worldPosition": [
+            -26.280262,
+            -2.456145,
+            -10.644047500000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 707,
+            "endTransformFileId": 572,
+            "start": [
+              -26.28213882904001,
+              -2.452158402930911,
+              -10.909229050796611
+            ],
+            "end": [
+              -26.131509787991654,
+              -2.456145,
+              -11.069208884193687
+            ]
+          }
+        },
+        {
+          "order": 9,
+          "componentFileId": 1730,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 264,
+          "transformFileId": 729,
+          "fraction": 1,
+          "worldPosition": [
+            -26.042648,
+            -2.456145,
+            -11.2088306
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 611,
+            "endTransformFileId": 731,
+            "start": [
+              -26.034034416564996,
+              -2.4314562795721386,
+              -11.342108493435823
+            ],
+            "end": [
+              -26.023561173664863,
+              -2.456145,
+              -11.532924421200331
+            ]
+          }
+        },
+        {
+          "order": 10,
+          "componentFileId": 1874,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 444,
+          "transformFileId": 924,
+          "fraction": 1,
+          "worldPosition": [
+            -26.3925,
+            -2.4459473999999997,
+            -6.2731163
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 739,
+            "endTransformFileId": 783,
+            "start": [
+              -26.403911671689215,
+              -2.4212586772001936,
+              -6.223221960532587
+            ],
+            "end": [
+              -26.570102779432656,
+              -2.4459473999999997,
+              -6.485047570279986
+            ]
+          }
+        },
+        {
+          "order": 11,
+          "componentFileId": 1804,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 357,
+          "transformFileId": 825,
+          "fraction": 1,
+          "worldPosition": [
+            -25.917858000000003,
+            -2.4459473999999997,
+            -5.537041
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 927,
+            "endTransformFileId": 839,
+            "start": [
+              -26.127398730105334,
+              -2.4419608025479027,
+              -5.5608382242834935
+            ],
+            "end": [
+              -26.17969692145991,
+              -2.4459473999999997,
+              -5.828028533382671
+            ]
+          }
+        },
+        {
+          "order": 12,
+          "componentFileId": 1714,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 247,
+          "transformFileId": 710,
+          "fraction": 1,
+          "worldPosition": [
+            -23.573923,
+            -2.4097263499999997,
+            -5.3562858
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 581,
+            "endTransformFileId": 942,
+            "start": [
+              -23.689176445808734,
+              -2.4057397529909412,
+              -5.515847435058806
+            ],
+            "end": [
+              -23.745031244740698,
+              -2.4097263499999997,
+              -5.759841687532793
+            ]
+          }
+        },
+        {
+          "order": 13,
+          "componentFileId": 1832,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 386,
+          "transformFileId": 860,
+          "fraction": 1,
+          "worldPosition": [
+            -23.952217,
+            -2.5154354,
+            -6.1192849
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 911,
+            "endTransformFileId": 713,
+            "start": [
+              -24.032480137674888,
+              -2.490746679943902,
+              -6.210318362534075
+            ],
+            "end": [
+              -24.166488541313395,
+              -2.5154354,
+              -6.4454491512236505
+            ]
+          }
+        },
+        {
+          "order": 14,
+          "componentFileId": 1806,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 361,
+          "transformFileId": 829,
+          "fraction": 1,
+          "worldPosition": [
+            -21.579891,
+            -2.2810422999999997,
+            -5.9332025
+          ],
+          "worldRotation": [
+            -0.010638845468416041,
+            0.21311540935140721,
+            -0.0023207578840402686,
+            0.9769663511845865
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 894,
+            "endTransformFileId": 896,
+            "start": [
+              -21.67166117527261,
+              -2.258666159042425,
+              -6.039641070763073
+            ],
+            "end": [
+              -21.828199196904997,
+              -2.287927476142564,
+              -6.2492982606008
+            ]
+          }
+        },
+        {
+          "order": 15,
+          "componentFileId": 1695,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 216,
+          "transformFileId": 679,
+          "fraction": 1,
+          "worldPosition": [
+            -21.3706263,
+            -2.2810422999999997,
+            -5.494419300000001
+          ],
+          "worldRotation": [
+            -0.010638845468416041,
+            0.21311540935140721,
+            -0.0023207578840402686,
+            0.9769663511845865
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 619,
+            "endTransformFileId": 625,
+            "start": [
+              -21.5790582096952,
+              -2.2777554626055383,
+              -5.526588430202453
+            ],
+            "end": [
+              -21.628240451237044,
+              -2.290755489411912,
+              -5.940348046742636
+            ]
+          }
+        },
+        {
+          "order": 16,
+          "componentFileId": 1664,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 182,
+          "transformFileId": 640,
+          "fraction": 1,
+          "worldPosition": [
+            -20.749315,
+            -2.3053729,
+            -10.7743938
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 17,
+          "componentFileId": 1880,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 450,
+          "transformFileId": 930,
+          "fraction": 1,
+          "worldPosition": [
+            -20.761093,
+            -2.2907349999999997,
+            -6.8002217
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 18,
+          "componentFileId": 1640,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 144,
+          "transformFileId": 600,
+          "fraction": 1,
+          "worldPosition": [
+            -21.517664,
+            -2.28549596,
+            -9.5874746
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 19,
+          "componentFileId": 1678,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 196,
+          "transformFileId": 656,
+          "fraction": 1,
+          "worldPosition": [
+            -20.687954,
+            -2.2907349999999997,
+            -5.7420828
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 20,
+          "componentFileId": 1682,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 203,
+          "transformFileId": 665,
+          "fraction": 1,
+          "worldPosition": [
+            -19.8089293,
+            -2.2245268499999997,
+            -7.3515398
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 21,
+          "componentFileId": 1638,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 142,
+          "transformFileId": 598,
+          "fraction": 1,
+          "worldPosition": [
+            -19.7901266,
+            -2.2245268499999997,
+            -9.7549264
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 22,
+          "componentFileId": 1823,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 378,
+          "transformFileId": 850,
+          "fraction": 1,
+          "worldPosition": [
+            -20.6239203,
+            -2.28148195,
+            -11.4898794
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -20.423920300000002,
+            -2.28148195,
+            -11.4898794
+          ]
+        },
+        {
+          "order": 23,
+          "componentFileId": 1853,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 417,
+          "transformFileId": 895,
+          "fraction": 1,
+          "worldPosition": [
+            -21.059757,
+            -2.28148195,
+            -7.1832096000000005
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -20.859757000000002,
+            -2.28148195,
+            -7.1832096000000005
+          ]
+        },
+        {
+          "order": 24,
+          "componentFileId": 1661,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 177,
+          "transformFileId": 636,
+          "fraction": 1,
+          "worldPosition": [
+            -20.6299857,
+            -2.28148195,
+            -4.965074
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -20.4299857,
+            -2.28148195,
+            -4.965074
+          ]
+        },
+        {
+          "order": 25,
+          "componentFileId": 1776,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 324,
+          "transformFileId": 792,
+          "fraction": 1,
+          "worldPosition": [
+            -21.6841315,
+            -2.28148195,
+            -9.92245744
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -21.4841315,
+            -2.28148195,
+            -9.92245744
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "scene": "Snow_Single",
+      "sceneSha256": "a797c945ccc4e4307ad55611e16db086d3ace63f31a535388f7e5bbb461daf27",
+      "mapDefinitionFileId": 1905,
+      "collectionComponentFileId": 1937,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 1860,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 196,
+          "transformFileId": 696,
+          "fraction": 1,
+          "worldPosition": [
+            -3.406853,
+            0.18385346000000002,
+            -0.256195740000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 890,
+            "endTransformFileId": 688,
+            "start": [
+              -3.4498024743068108,
+              0.20854218142206896,
+              -0.386742722135935
+            ],
+            "end": [
+              -3.5649245223428125,
+              0.18385346000000002,
+              -0.6512705997054283
+            ]
+          }
+        },
+        {
+          "order": 1,
+          "componentFileId": 2020,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 473,
+          "transformFileId": 987,
+          "fraction": 1,
+          "worldPosition": [
+            1.1214240000000002,
+            0.18385346000000002,
+            -3.193514500000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 948,
+            "endTransformFileId": 927,
+            "start": [
+              1.0813391579134535,
+              0.1878400572296278,
+              -3.424381899697167
+            ],
+            "end": [
+              1.363436029335744,
+              0.18385346000000002,
+              -3.7304322015447884
+            ]
+          }
+        },
+        {
+          "order": 2,
+          "componentFileId": 1946,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 350,
+          "transformFileId": 854,
+          "fraction": 1,
+          "worldPosition": [
+            -1.5154320000000006,
+            0.26024086,
+            4.974193999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 978,
+            "endTransformFileId": 852,
+            "start": [
+              -1.5173088290400112,
+              0.2642274570690886,
+              4.709012449203388
+            ],
+            "end": [
+              -1.5168167450586476,
+              0.26024086,
+              4.494491529972787
+            ]
+          }
+        },
+        {
+          "order": 3,
+          "componentFileId": 1993,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 426,
+          "transformFileId": 930,
+          "fraction": 1,
+          "worldPosition": [
+            -1.5047639999999998,
+            0.014564350000000004,
+            -1.903635700000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 884,
+            "endTransformFileId": 981,
+            "start": [
+              -1.4961504165649946,
+              0.039253070427861,
+              -2.0369135934358233
+            ],
+            "end": [
+              -1.4356550411265747,
+              0.014564350000000004,
+              -2.2999837146599753
+            ]
+          }
+        },
+        {
+          "order": 4,
+          "componentFileId": 1893,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 244,
+          "transformFileId": 746,
+          "fraction": 1,
+          "worldPosition": [
+            -1.5483740000000008,
+            0.05757459999999992,
+            4.213102599999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 780,
+            "endTransformFileId": 724,
+            "start": [
+              -1.5597856716892173,
+              0.08226332279980589,
+              4.262996939467412
+            ],
+            "end": [
+              -1.7259767794326593,
+              0.05757459999999992,
+              4.001171329720013
+            ]
+          }
+        },
+        {
+          "order": 5,
+          "componentFileId": 1936,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 327,
+          "transformFileId": 830,
+          "fraction": 1,
+          "worldPosition": [
+            1.1620539999999995,
+            0.08411104999999997,
+            1.797108999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 792,
+            "endTransformFileId": 1040,
+            "start": [
+              1.1521319622248682,
+              0.08809764745209704,
+              1.928480518798594
+            ],
+            "end": [
+              1.0857982026467417,
+              0.08411104999999997,
+              1.622863143737811
+            ]
+          }
+        },
+        {
+          "order": 6,
+          "componentFileId": 1967,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 374,
+          "transformFileId": 877,
+          "fraction": 1,
+          "worldPosition": [
+            -1.512016000000001,
+            0.04975134999999997,
+            2.065758999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 914,
+            "endTransformFileId": 797,
+            "start": [
+              -1.6272694458087344,
+              0.05373794700905832,
+              1.9061973649411936
+            ],
+            "end": [
+              -1.6233612877477215,
+              0.04975134999999997,
+              1.6871045075149727
+            ]
+          }
+        },
+        {
+          "order": 7,
+          "componentFileId": 1968,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 376,
+          "transformFileId": 879,
+          "fraction": 1,
+          "worldPosition": [
+            -1.5058249999999997,
+            0.027252500000000013,
+            1.5156547999999992
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 728,
+            "endTransformFileId": 839,
+            "start": [
+              -1.5860881376748868,
+              0.05194122005609772,
+              1.4246213374659242
+            ],
+            "end": [
+              -1.7200965413133948,
+              0.027252500000000013,
+              1.1894905487763494
+            ]
+          }
+        },
+        {
+          "order": 8,
+          "componentFileId": 1980,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 407,
+          "transformFileId": 910,
+          "fraction": 1,
+          "worldPosition": [
+            -1.4143065000000004,
+            0.11476595,
+            -4.457425800000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 920,
+            "endTransformFileId": 750,
+            "start": [
+              -1.351314404549741,
+              0.139454670427861,
+              -4.6286608921875825
+            ],
+            "end": [
+              -1.4439238265897472,
+              0.11476595,
+              -4.9033286149247095
+            ]
+          }
+        },
+        {
+          "order": 9,
+          "componentFileId": 1902,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 261,
+          "transformFileId": 765,
+          "fraction": 1,
+          "worldPosition": [
+            -1.548630000000001,
+            0.13692695999999993,
+            -4.003105800000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 871,
+            "endTransformFileId": 873,
+            "start": [
+              -1.5683310083472228,
+              0.14091355706908854,
+              -4.225079227058169
+            ],
+            "end": [
+              -1.4101870132743604,
+              0.13692695999999993,
+              -4.4746386288025155
+            ]
+          }
+        },
+        {
+          "order": 10,
+          "componentFileId": 1970,
+          "componentType": "EnemyPointRusherSpare",
+          "gameObjectFileId": 379,
+          "transformFileId": 882,
+          "fraction": 1,
+          "worldPosition": [
+            1.9577999999999998,
+            0.39500005,
+            0.321769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043352709876067,
+            0.0,
+            0.7098674707597289
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 11,
+          "componentFileId": 1960,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 370,
+          "transformFileId": 874,
+          "fraction": 1,
+          "worldPosition": [
+            1.1578,
+            0.11312040000000001,
+            1.029326699999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 12,
+          "componentFileId": 1882,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 234,
+          "transformFileId": 734,
+          "fraction": 1,
+          "worldPosition": [
+            1.0697649999999994,
+            0.10664109999999993,
+            -0.638504696000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 13,
+          "componentFileId": 1913,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 290,
+          "transformFileId": 794,
+          "fraction": 1,
+          "worldPosition": [
+            1.7662620000000002,
+            0.07279092999999992,
+            2.921431399999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 14,
+          "componentFileId": 1977,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 397,
+          "transformFileId": 899,
+          "fraction": 1,
+          "worldPosition": [
+            1.8286743999999997,
+            0.07803019999999994,
+            -3.615959000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 15,
+          "componentFileId": 1856,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 190,
+          "transformFileId": 689,
+          "fraction": 1,
+          "worldPosition": [
+            1.7662620000000002,
+            0.07279092999999992,
+            2.089428699999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 16,
+          "componentFileId": 1984,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 413,
+          "transformFileId": 916,
+          "fraction": 1,
+          "worldPosition": [
+            1.7905274999999996,
+            0.058151799999999976,
+            -2.5259864000000007
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 17,
+          "componentFileId": 1914,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 291,
+          "transformFileId": 795,
+          "fraction": 1,
+          "worldPosition": [
+            -2.6611670000000007,
+            0.20147589999999993,
+            -3.827446700000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.4611670000000005,
+            0.20147589999999993,
+            -3.827446700000001
+          ]
+        },
+        {
+          "order": 18,
+          "componentFileId": 2038,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 504,
+          "transformFileId": 1021,
+          "fraction": 1,
+          "worldPosition": [
+            -2.619453,
+            0.20147589999999993,
+            3.5188289999999993
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.419453,
+            0.20147589999999993,
+            3.5188289999999993
+          ]
+        },
+        {
+          "order": 19,
+          "componentFileId": 2031,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 489,
+          "transformFileId": 1003,
+          "fraction": 1,
+          "worldPosition": [
+            -2.5718379999999996,
+            0.20147589999999993,
+            1.176351399999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.3718379999999994,
+            0.20147589999999993,
+            1.176351399999999
+          ]
+        },
+        {
+          "order": 20,
+          "componentFileId": 1975,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 392,
+          "transformFileId": 894,
+          "fraction": 1,
+          "worldPosition": [
+            -2.5718379999999996,
+            0.20147589999999993,
+            -1.5628964400000012
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.3718379999999994,
+            0.20147589999999993,
+            -1.5628964400000012
+          ]
+        },
+        {
+          "order": 21,
+          "componentFileId": 1979,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 403,
+          "transformFileId": 906,
+          "fraction": 1,
+          "worldPosition": [
+            0.9143486999999997,
+            0.18385299999999993,
+            -1.415359200000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013847002524512028,
+            0.0,
+            -0.999904125664599
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 825,
+            "endTransformFileId": 835,
+            "start": [
+              0.8742636727932191,
+              0.187839597273789,
+              -1.6462265701897147
+            ],
+            "end": [
+              0.9228592915256029,
+              0.18385299999999993,
+              -1.8941037410756385
+            ]
+          }
+        },
+        {
+          "order": 22,
+          "componentFileId": 1889,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 239,
+          "transformFileId": 741,
+          "fraction": 1,
+          "worldPosition": [
+            1.5062714999999995,
+            0.08411104999999997,
+            4.656074299999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246706267579112,
+            0.0,
+            0.9726042693567049
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 720,
+            "endTransformFileId": 1042,
+            "start": [
+              1.4963495480517066,
+              0.0880976472512069,
+              4.787445818623018
+            ],
+            "end": [
+              1.4300155933153167,
+              0.08411104999999997,
+              4.481828502047087
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "scene": "City_Single",
+      "sceneSha256": "99a24a690a023c8f9c2f1195b727ecdcc22740a6f0479f6148909a22db3f5127",
+      "mapDefinitionFileId": 2693,
+      "collectionComponentFileId": 2714,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 2707,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 645,
+          "transformFileId": 1336,
+          "fraction": 1,
+          "worldPosition": [
+            -1.3410830000000011,
+            0.14487790000000023,
+            3.9322090000000003
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 1,
+          "componentFileId": 2675,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 582,
+          "transformFileId": 1250,
+          "fraction": 1,
+          "worldPosition": [
+            -2.9610830000000004,
+            -0.04112209999999983,
+            0.020209000000000088
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1298,
+            "endTransformFileId": 1253,
+            "start": [
+              -3.004032474306811,
+              -0.016433378577930906,
+              -0.11033798213593393
+            ],
+            "end": [
+              -2.9820334743994126,
+              0.14687791082878987,
+              -0.15827932270781891
+            ]
+          }
+        },
+        {
+          "order": 2,
+          "componentFileId": 2658,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 548,
+          "transformFileId": 1212,
+          "fraction": 1,
+          "worldPosition": [
+            -1.5870830000000016,
+            0.28887790000000024,
+            -1.4377909999999998
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1050,
+            "endTransformFileId": 1306,
+            "start": [
+              -1.7663591858137604,
+              0.292864497229628,
+              -1.5488480560257416
+            ],
+            "end": [
+              -1.6305641539168463,
+              0.28887790000000024,
+              -1.9424744363479638
+            ]
+          }
+        },
+        {
+          "order": 3,
+          "componentFileId": 2684,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 589,
+          "transformFileId": 1258,
+          "fraction": 1,
+          "worldPosition": [
+            -3.098083000000001,
+            0.1168779000000002,
+            -1.802791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 969,
+            "endTransformFileId": 1065,
+            "start": [
+              -3.0999598290400114,
+              0.1208644970690888,
+              -2.0679725507966107
+            ],
+            "end": [
+              -3.0414844794254154,
+              0.1168779000000002,
+              -2.268654300874953
+            ]
+          }
+        },
+        {
+          "order": 4,
+          "componentFileId": 2705,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 637,
+          "transformFileId": 1324,
+          "fraction": 1,
+          "worldPosition": [
+            -2.9810830000000017,
+            0.15887790000000024,
+            -2.444791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1280,
+            "endTransformFileId": 989,
+            "start": [
+              -2.9724694165649965,
+              0.18356662042786123,
+              -2.5780688934358222
+            ],
+            "end": [
+              -2.961996173664865,
+              0.15887790000000024,
+              -2.76888482120033
+            ]
+          }
+        },
+        {
+          "order": 5,
+          "componentFileId": 2496,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 447,
+          "transformFileId": 1095,
+          "fraction": 1,
+          "worldPosition": [
+            -2.8820830000000015,
+            0.1188779000000002,
+            1.402209
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1081,
+            "endTransformFileId": 1307,
+            "start": [
+              -3.036091750201826,
+              0.14387790283510665,
+              1.3726571736783082
+            ],
+            "end": [
+              -3.0596857794326597,
+              0.1188779000000002,
+              1.1902777297200147
+            ]
+          }
+        },
+        {
+          "order": 6,
+          "componentFileId": 2573,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 497,
+          "transformFileId": 1154,
+          "fraction": 1,
+          "worldPosition": [
+            -2.7790830000000017,
+            0.1268779000000002,
+            1.930209
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1193,
+            "endTransformFileId": 1335,
+            "start": [
+              -2.9886237301053318,
+              0.13086449745209727,
+              1.906411775716507
+            ],
+            "end": [
+              -3.04092192145991,
+              0.1268779000000002,
+              1.6392214666173295
+            ]
+          }
+        },
+        {
+          "order": 7,
+          "componentFileId": 2474,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 388,
+          "transformFileId": 1018,
+          "fraction": 1,
+          "worldPosition": [
+            -1.3900830000000006,
+            0.10287790000000019,
+            3.262209
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1002,
+            "endTransformFileId": 1022,
+            "start": [
+              -1.5053364458087342,
+              0.10686449700905853,
+              3.1026473649411948
+            ],
+            "end": [
+              -1.5611912447406993,
+              0.10287790000000019,
+              2.8586531124672074
+            ]
+          }
+        },
+        {
+          "order": 8,
+          "componentFileId": 2665,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 557,
+          "transformFileId": 1224,
+          "fraction": 1,
+          "worldPosition": [
+            -1.617083000000001,
+            0.1118779000000002,
+            2.6622090000000003
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1107,
+            "endTransformFileId": 1140,
+            "start": [
+              -1.697346137674888,
+              0.1365666200560979,
+              2.5711755374659253
+            ],
+            "end": [
+              -1.831354541313396,
+              0.1118779000000002,
+              2.3360447487763505
+            ]
+          }
+        },
+        {
+          "order": 9,
+          "componentFileId": 2732,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 685,
+          "transformFileId": 1392,
+          "fraction": 1,
+          "worldPosition": [
+            -1.6500830000000004,
+            0.08487790000000017,
+            -2.0037909999999997
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1072,
+            "endTransformFileId": 1437,
+            "start": [
+              -1.587090904549741,
+              0.10956662042786117,
+              -2.175026092187581
+            ],
+            "end": [
+              -1.5499872628947562,
+              0.08487790000000017,
+              -2.4367219458206626
+            ]
+          }
+        },
+        {
+          "order": 10,
+          "componentFileId": 2488,
+          "componentType": "EnemyPointRusher",
+          "gameObjectFileId": 436,
+          "transformFileId": 1077,
+          "fraction": 1,
+          "worldPosition": [
+            2.1629169999999984,
+            0.16887790000000025,
+            0.20420900000000008
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043352709876067,
+            0.0,
+            0.7098674707597289
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 11,
+          "componentFileId": 2495,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 445,
+          "transformFileId": 1091,
+          "fraction": 1,
+          "worldPosition": [
+            2.0889169999999986,
+            0.1268779000000002,
+            -0.5587909999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 12,
+          "componentFileId": 2670,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 574,
+          "transformFileId": 1242,
+          "fraction": 1,
+          "worldPosition": [
+            2.050916999999999,
+            0.14987790000000023,
+            1.0122090000000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 13,
+          "componentFileId": 2688,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 595,
+          "transformFileId": 1267,
+          "fraction": 1,
+          "worldPosition": [
+            -0.3840830000000004,
+            0.15087790000000023,
+            3.128209
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 14,
+          "componentFileId": 2567,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 483,
+          "transformFileId": 1132,
+          "fraction": 1,
+          "worldPosition": [
+            -0.3190830000000009,
+            0.14287790000000022,
+            -2.674791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 15,
+          "componentFileId": 2728,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 679,
+          "transformFileId": 1381,
+          "fraction": 1,
+          "worldPosition": [
+            -0.26308300000000173,
+            0.1218779000000002,
+            2.3802090000000002
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 16,
+          "componentFileId": 2501,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 459,
+          "transformFileId": 1104,
+          "fraction": 1,
+          "worldPosition": [
+            -0.3890830000000012,
+            0.08587790000000017,
+            -2.142791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 17,
+          "componentFileId": 2672,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 576,
+          "transformFileId": 1244,
+          "fraction": 1,
+          "worldPosition": [
+            -1.4500830000000011,
+            0.1208779000000002,
+            -3.134791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -1.250083000000001,
+            0.1208779000000002,
+            -3.134791
+          ]
+        },
+        {
+          "order": 18,
+          "componentFileId": 2362,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 328,
+          "transformFileId": 953,
+          "fraction": 1,
+          "worldPosition": [
+            -1.7220830000000014,
+            0.1188779000000002,
+            3.739209
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -1.5220830000000012,
+            0.1188779000000002,
+            3.739209
+          ]
+        },
+        {
+          "order": 19,
+          "componentFileId": 2694,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 602,
+          "transformFileId": 1276,
+          "fraction": 1,
+          "worldPosition": [
+            -1.9270830000000014,
+            0.20187790000000022,
+            1.6452090000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -1.7270830000000013,
+            0.20187790000000022,
+            1.6452090000000001
+          ]
+        },
+        {
+          "order": 20,
+          "componentFileId": 2743,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 701,
+          "transformFileId": 1422,
+          "fraction": 1,
+          "worldPosition": [
+            -2.287083000000001,
+            0.16887790000000025,
+            -1.1877909999999998
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.0870830000000007,
+            0.16887790000000025,
+            -1.1877909999999998
+          ]
+        },
+        {
+          "order": 21,
+          "componentFileId": 2589,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 531,
+          "transformFileId": 1188,
+          "fraction": 1,
+          "worldPosition": [
+            1.1369169999999986,
+            0.28887800000000025,
+            -2.495791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1277,
+            "endTransformFileId": 1310,
+            "start": [
+              0.9576408141862397,
+              0.292864597229628,
+              -2.606848056025742
+            ],
+            "end": [
+              1.026964564159075,
+              0.28887800000000025,
+              -2.9259113140491513
+            ]
+          }
+        },
+        {
+          "order": 22,
+          "componentFileId": 2585,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 521,
+          "transformFileId": 1181,
+          "fraction": 1,
+          "worldPosition": [
+            1.0639169999999991,
+            0.08487776000000025,
+            -3.057791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1171,
+            "endTransformFileId": 1130,
+            "start": [
+              1.1269090954502585,
+              0.10956648042786124,
+              -3.2290260921875813
+            ],
+            "end": [
+              1.1640127371052433,
+              0.08487776000000025,
+              -3.490721945820663
+            ]
+          }
+        },
+        {
+          "order": 23,
+          "componentFileId": 2687,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 593,
+          "transformFileId": 1264,
+          "fraction": 1,
+          "worldPosition": [
+            1.459916999999999,
+            0.10287790000000019,
+            2.871209
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1444,
+            "endTransformFileId": 1209,
+            "start": [
+              1.3446635541912655,
+              0.10686449700905853,
+              2.7116473649411947
+            ],
+            "end": [
+              1.2888087552593004,
+              0.10287790000000019,
+              2.4676531124672074
+            ]
+          }
+        },
+        {
+          "order": 24,
+          "componentFileId": 2706,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 640,
+          "transformFileId": 1327,
+          "fraction": 1,
+          "worldPosition": [
+            1.6719169999999988,
+            0.10287790000000019,
+            3.4082090000000003
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1147,
+            "endTransformFileId": 981,
+            "start": [
+              1.5566635541912652,
+              0.10686449700905853,
+              3.248647364941195
+            ],
+            "end": [
+              1.5008087552593001,
+              0.10287790000000019,
+              3.004653112467208
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "scene": "Aztec_Single",
+      "sceneSha256": "5fbfe89a6ff35e0769d4fcdbd9a80e6c31baec653a3bd78c53b81211cd8b9e17",
+      "mapDefinitionFileId": 1876,
+      "collectionComponentFileId": 1798,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 1742,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 276,
+          "transformFileId": 642,
+          "fraction": 1,
+          "worldPosition": [
+            -3.8802070000000004,
+            0.11791894000000003,
+            -3.477954600000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 1,
+          "componentFileId": 1868,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 456,
+          "transformFileId": 931,
+          "fraction": 1,
+          "worldPosition": [
+            -0.3259660000000011,
+            0.21047184000000002,
+            4.165939599999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 915,
+            "endTransformFileId": 741,
+            "start": [
+              -0.3689154743068119,
+              0.23516056142206895,
+              4.035392617864065
+            ],
+            "end": [
+              -0.48403752234281366,
+              0.21047184000000002,
+              3.7708647402945714
+            ]
+          }
+        },
+        {
+          "order": 2,
+          "componentFileId": 1749,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 282,
+          "transformFileId": 653,
+          "fraction": 1,
+          "worldPosition": [
+            -1.8963070000000002,
+            -0.10959459999999999,
+            -1.628840160000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 596,
+            "endTransformFileId": 767,
+            "start": [
+              -1.8523883876925753,
+              -0.10560800277037222,
+              -1.8312451456962568
+            ],
+            "end": [
+              -1.9198379605215343,
+              -0.10959459999999999,
+              -2.1657578904651023
+            ]
+          }
+        },
+        {
+          "order": 3,
+          "componentFileId": 1810,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 362,
+          "transformFileId": 769,
+          "fraction": 1,
+          "worldPosition": [
+            -1.923982500000001,
+            -0.11151053999999994,
+            -0.984225000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 821,
+            "endTransformFileId": 716,
+            "start": [
+              -1.9153689165649959,
+              -0.08682181957213894,
+              -1.1175028934358233
+            ],
+            "end": [
+              -1.854873541126576,
+              -0.11151053999999994,
+              -1.3805730146599755
+            ]
+          }
+        },
+        {
+          "order": 4,
+          "componentFileId": 1890,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 482,
+          "transformFileId": 970,
+          "fraction": 1,
+          "worldPosition": [
+            -3.1014169999999996,
+            0.08137367000000006,
+            3.7912476999999987
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 692,
+            "endTransformFileId": 965,
+            "start": [
+              -3.112828671689216,
+              0.10606239279980603,
+              3.841142039467411
+            ],
+            "end": [
+              -3.1258405871351225,
+              0.13494656907539423,
+              3.4840319630327103
+            ]
+          }
+        },
+        {
+          "order": 5,
+          "componentFileId": 1797,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 349,
+          "transformFileId": 749,
+          "fraction": 1,
+          "worldPosition": [
+            -3.0874369999999995,
+            0.12400434000000005,
+            3.045786199999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 606,
+            "endTransformFileId": 861,
+            "start": [
+              -3.1662467647276555,
+              0.1279909374520971,
+              3.204736548137226
+            ],
+            "end": [
+              -3.2542041353187416,
+              0.12400434000000005,
+              2.8715403333680194
+            ]
+          }
+        },
+        {
+          "order": 6,
+          "componentFileId": 1816,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 372,
+          "transformFileId": 783,
+          "fraction": 1,
+          "worldPosition": [
+            -1.653709000000001,
+            0.08398700000000003,
+            2.316664999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 758,
+            "endTransformFileId": 614,
+            "start": [
+              -1.7689624458087345,
+              0.08797359700905838,
+              2.157103364941194
+            ],
+            "end": [
+              -1.7650542877477216,
+              0.08398700000000003,
+              1.9380105075149727
+            ]
+          }
+        },
+        {
+          "order": 7,
+          "componentFileId": 1734,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 265,
+          "transformFileId": 625,
+          "fraction": 1,
+          "worldPosition": [
+            -1.689903000000001,
+            0.061488100000000045,
+            2.720663799999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312839975786485,
+            0.0,
+            0.9770241988900029
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 899,
+            "endTransformFileId": 910,
+            "start": [
+              -1.770166137674888,
+              0.08617682005609775,
+              2.6296303374659242
+            ],
+            "end": [
+              -1.7724625832557312,
+              0.061488100000000045,
+              2.39449954386077
+            ]
+          }
+        },
+        {
+          "order": 8,
+          "componentFileId": 1767,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 298,
+          "transformFileId": 672,
+          "fraction": 1,
+          "worldPosition": [
+            -3.3931690000000003,
+            -0.06476094999999993,
+            0.5105855999999991
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 805,
+            "endTransformFileId": 817,
+            "start": [
+              -3.3301769045497407,
+              -0.040072229572138934,
+              0.33935050781241766
+            ],
+            "end": [
+              -3.33029516901583,
+              -0.06476094999999993,
+              0.06468323852049374
+            ]
+          }
+        },
+        {
+          "order": 9,
+          "componentFileId": 1867,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 452,
+          "transformFileId": 926,
+          "fraction": 1,
+          "worldPosition": [
+            -0.7079710000000006,
+            -0.04178169999999992,
+            1.254686599999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 671,
+            "endTransformFileId": 868,
+            "start": [
+              -0.6359457028030092,
+              -0.03779510293091131,
+              0.9392564136056787
+            ],
+            "end": [
+              -0.5695280132743599,
+              -0.04178169999999992,
+              0.7831537711974849
+            ]
+          }
+        },
+        {
+          "order": 10,
+          "componentFileId": 1783,
+          "componentType": "EnemyPointRusherSpare",
+          "gameObjectFileId": 324,
+          "transformFileId": 714,
+          "fraction": 1,
+          "worldPosition": [
+            0.9977999999999998,
+            0.21547315000000006,
+            0.24176999999999904
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043352709876067,
+            0.0,
+            0.7098674707597289
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 11,
+          "componentFileId": 1752,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 284,
+          "transformFileId": 655,
+          "fraction": 1,
+          "worldPosition": [
+            0.7575630000000002,
+            -0.06640649999999992,
+            1.029326699999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 12,
+          "componentFileId": 1845,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 422,
+          "transformFileId": 869,
+          "fraction": 1,
+          "worldPosition": [
+            1.0697649999999994,
+            -0.0728858,
+            -0.638504696000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 13,
+          "componentFileId": 1835,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 405,
+          "transformFileId": 835,
+          "fraction": 1,
+          "worldPosition": [
+            -0.1318090000000005,
+            -0.10673597000000001,
+            2.617478699999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 14,
+          "componentFileId": 1723,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 247,
+          "transformFileId": 600,
+          "fraction": 1,
+          "worldPosition": [
+            -0.47845799999999983,
+            -0.1014967,
+            -3.615959000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 15,
+          "componentFileId": 1740,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 273,
+          "transformFileId": 638,
+          "fraction": 1,
+          "worldPosition": [
+            -0.1318090000000005,
+            -0.10673597000000001,
+            1.785475499999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 16,
+          "componentFileId": 1805,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 356,
+          "transformFileId": 761,
+          "fraction": 1,
+          "worldPosition": [
+            -0.5166070000000005,
+            -0.12137509999999996,
+            -2.5259864000000007
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 17,
+          "componentFileId": 1856,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 436,
+          "transformFileId": 898,
+          "fraction": 1,
+          "worldPosition": [
+            -2.3374330000000008,
+            0.021948999999999996,
+            -3.827446700000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.1374330000000006,
+            0.021948999999999996,
+            -3.827446700000001
+          ]
+        },
+        {
+          "order": 18,
+          "componentFileId": 1724,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 248,
+          "transformFileId": 601,
+          "fraction": 1,
+          "worldPosition": [
+            -0.4211729999999996,
+            0.021948999999999996,
+            3.078488999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -0.2211729999999995,
+            0.021948999999999996,
+            3.078488999999999
+          ]
+        },
+        {
+          "order": 19,
+          "componentFileId": 1769,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 305,
+          "transformFileId": 682,
+          "fraction": 1,
+          "worldPosition": [
+            -2.5718379999999996,
+            0.021948999999999996,
+            1.176351399999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.3718379999999994,
+            0.021948999999999996,
+            1.176351399999999
+          ]
+        },
+        {
+          "order": 20,
+          "componentFileId": 1863,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 445,
+          "transformFileId": 914,
+          "fraction": 1,
+          "worldPosition": [
+            -2.5718379999999996,
+            0.021948999999999996,
+            -1.5628964400000012
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.3718379999999994,
+            0.021948999999999996,
+            -1.5628964400000012
+          ]
+        },
+        {
+          "order": 21,
+          "componentFileId": 1827,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 391,
+          "transformFileId": 815,
+          "fraction": 1,
+          "worldPosition": [
+            1.5242689999999994,
+            0.06148790000000004,
+            2.176909699999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 921,
+            "endTransformFileId": 669,
+            "start": [
+              1.4440059226344917,
+              0.0861766213023264,
+              2.08587617612458
+            ],
+            "end": [
+              1.4417096431757068,
+              0.06148790000000004,
+              1.8507453690270421
+            ]
+          }
+        },
+        {
+          "order": 22,
+          "componentFileId": 1747,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 280,
+          "transformFileId": 650,
+          "fraction": 1,
+          "worldPosition": [
+            1.5604629999999995,
+            0.08398700000000003,
+            1.7729103999999989
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 842,
+            "endTransformFileId": 819,
+            "start": [
+              1.4452096611839906,
+              0.08797359721029244,
+              1.6133486754025022
+            ],
+            "end": [
+              1.449117974341399,
+              0.08398700000000003,
+              1.394255809680119
+            ]
+          }
+        },
+        {
+          "order": 23,
+          "componentFileId": 1821,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 379,
+          "transformFileId": 796,
+          "fraction": 1,
+          "worldPosition": [
+            1.3801899999999998,
+            0.06148790000000004,
+            -1.198361100000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 973,
+            "endTransformFileId": 712,
+            "start": [
+              1.299926922634492,
+              0.0861766213023264,
+              -1.2893946238754197
+            ],
+            "end": [
+              1.2976306431757072,
+              0.06148790000000004,
+              -1.524525430972958
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "scene": "Park_Single",
+      "sceneSha256": "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83",
+      "mapDefinitionFileId": 2683,
+      "collectionComponentFileId": 2389,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 2625,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 487,
+          "transformFileId": 1050,
+          "fraction": 1,
+          "worldPosition": [
+            -3.8070815500000013,
+            0.07745312900000001,
+            -5.079791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 1,
+          "componentFileId": 2656,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 550,
+          "transformFileId": 1136,
+          "fraction": 1,
+          "worldPosition": [
+            -3.7780815500000013,
+            0.03987792899999998,
+            5.340208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 2,
+          "componentFileId": 2652,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 542,
+          "transformFileId": 1123,
+          "fraction": 1,
+          "worldPosition": [
+            1.6019184499999986,
+            0.09687792899999992,
+            0.4052089299999989
+          ],
+          "worldRotation": [
+            0.0,
+            -0.013846602601218231,
+            0.0,
+            -0.9999041312027889
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1217,
+            "endTransformFileId": 1056,
+            "start": [
+              1.6703369545381446,
+              0.10922228971103438,
+              0.5845197523483354
+            ],
+            "end": [
+              1.7523344362305895,
+              0.08453356828896545,
+              0.38203494125100257
+            ]
+          }
+        },
+        {
+          "order": 3,
+          "componentFileId": 2524,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 395,
+          "transformFileId": 921,
+          "fraction": 1,
+          "worldPosition": [
+            2.552918449999998,
+            0.08987782899999996,
+            -1.1597910700000011
+          ],
+          "worldRotation": [
+            0.0,
+            0.11718561178196117,
+            0.0,
+            0.9931100303547878
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 959,
+            "endTransformFileId": 1267,
+            "start": [
+              2.3992833328118013,
+              0.09386442655914728,
+              -1.3212116232934499
+            ],
+            "end": [
+              2.2744678332397172,
+              0.08987782899999996,
+              -1.5928745820260937
+            ]
+          }
+        },
+        {
+          "order": 4,
+          "componentFileId": 2607,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 450,
+          "transformFileId": 1001,
+          "fraction": 1,
+          "worldPosition": [
+            -3.235081550000002,
+            0.052871228999999964,
+            -2.314791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1140,
+            "endTransformFileId": 1146,
+            "start": [
+              -3.310397030350554,
+              0.054864646734546337,
+              -2.2348016361786467
+            ],
+            "end": [
+              -3.2421966701538496,
+              0.05087781126545359,
+              -2.4318140401451998
+            ]
+          }
+        },
+        {
+          "order": 5,
+          "componentFileId": 2699,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 637,
+          "transformFileId": 1274,
+          "fraction": 1,
+          "worldPosition": [
+            -3.721081550000001,
+            0.045877928999999984,
+            0.7112089299999989
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 781,
+            "endTransformFileId": 1225,
+            "start": [
+              -3.712467966564996,
+              0.07056664942786098,
+              0.5779310365641767
+            ],
+            "end": [
+              -3.671106020324998,
+              0.045877928999999984,
+              0.4012049786522416
+            ]
+          }
+        },
+        {
+          "order": 6,
+          "componentFileId": 2676,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 579,
+          "transformFileId": 1184,
+          "fraction": 1,
+          "worldPosition": [
+            -1.4780815500000024,
+            0.08387792900000002,
+            1.505208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.23246674681864093,
+            0.0,
+            0.9726043448512648
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1269,
+            "endTransformFileId": 1206,
+            "start": [
+              -1.6876222801053324,
+              0.0878645264520971,
+              1.481411705716506
+            ],
+            "end": [
+              -1.7399204714599106,
+              0.08387792900000002,
+              1.2142213966173283
+            ]
+          }
+        },
+        {
+          "order": 7,
+          "componentFileId": 2392,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 303,
+          "transformFileId": 786,
+          "fraction": 1,
+          "worldPosition": [
+            -1.4130815500000011,
+            0.08587792900000002,
+            -2.280791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.21689192812060742,
+            0.0,
+            0.9761956215411567
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1109,
+            "endTransformFileId": 1188,
+            "start": [
+              -1.3500894545497417,
+              0.11056664942786101,
+              -2.4520261621875825
+            ],
+            "end": [
+              -1.312985812894757,
+              0.08587792900000002,
+              -2.713722015820664
+            ]
+          }
+        },
+        {
+          "order": 8,
+          "componentFileId": 2665,
+          "componentType": "EnemyPointObstacle",
+          "gameObjectFileId": 565,
+          "transformFileId": 1155,
+          "fraction": 1,
+          "worldPosition": [
+            0.6759184499999984,
+            0.08987782899999996,
+            -0.21879107000000106
+          ],
+          "worldRotation": [
+            0.0,
+            -0.022975135546094653,
+            0.0,
+            0.9997360367350167
+          ],
+          "positionKind": "segment",
+          "segment": {
+            "startTransformFileId": 1024,
+            "endTransformFileId": 925,
+            "start": [
+              0.5730470824081851,
+              0.09386442650455715,
+              -0.41647218854384416
+            ],
+            "end": [
+              0.5284238396303094,
+              0.08987782899999996,
+              -0.7120875396962567
+            ]
+          }
+        },
+        {
+          "order": 9,
+          "componentFileId": 2612,
+          "componentType": "EnemyPointRusherSpare",
+          "gameObjectFileId": 464,
+          "transformFileId": 1018,
+          "fraction": 1,
+          "worldPosition": [
+            4.105918449999998,
+            0.18587792899999994,
+            0.8262089299999988
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043352709876067,
+            0.0,
+            0.7098674707597289
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 10,
+          "componentFileId": 2589,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 407,
+          "transformFileId": 939,
+          "fraction": 1,
+          "worldPosition": [
+            1.541918449999998,
+            0.09387792899999992,
+            1.256765629999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 11,
+          "componentFileId": 2624,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 481,
+          "transformFileId": 1044,
+          "fraction": 1,
+          "worldPosition": [
+            1.059176449999998,
+            0.09387792899999992,
+            -1.3837910700000011
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 12,
+          "componentFileId": 2322,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 282,
+          "transformFileId": 756,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8770815500000015,
+            0.07287792900000001,
+            2.485208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 13,
+          "componentFileId": 2641,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 517,
+          "transformFileId": 1083,
+          "fraction": 1,
+          "worldPosition": [
+            -0.7680815500000016,
+            0.11687792899999994,
+            -3.089791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 14,
+          "componentFileId": 2701,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 642,
+          "transformFileId": 1283,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8490815500000011,
+            0.10287792899999992,
+            1.6962089299999987
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 15,
+          "componentFileId": 2412,
+          "componentType": "EnemyPointMinigunner",
+          "gameObjectFileId": 343,
+          "transformFileId": 844,
+          "fraction": 1,
+          "worldPosition": [
+            -0.7460815500000013,
+            0.063877929,
+            -2.298547470000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 16,
+          "componentFileId": 2385,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 293,
+          "transformFileId": 772,
+          "fraction": 1,
+          "worldPosition": [
+            -2.0310815500000015,
+            0.10087792899999992,
+            -3.071791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -1.8310815500000013,
+            0.10087792899999992,
+            -3.071791070000001
+          ]
+        },
+        {
+          "order": 17,
+          "componentFileId": 2595,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 425,
+          "transformFileId": 963,
+          "fraction": 1,
+          "worldPosition": [
+            -1.2630815500000026,
+            0.12687792899999994,
+            2.760208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -1.0630815500000024,
+            0.12687792899999994,
+            2.760208929999999
+          ]
+        },
+        {
+          "order": 18,
+          "componentFileId": 2414,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 345,
+          "transformFileId": 846,
+          "fraction": 1,
+          "worldPosition": [
+            -2.679081550000001,
+            0.09587792899999992,
+            -0.02279107000000108
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.479081550000001,
+            0.09587792899999992,
+            -0.02279107000000108
+          ]
+        },
+        {
+          "order": 19,
+          "componentFileId": 2381,
+          "componentType": "EnemyPointEngineerTurret",
+          "gameObjectFileId": 288,
+          "transformFileId": 765,
+          "fraction": 1,
+          "worldPosition": [
+            -2.452719550000001,
+            0.03987792899999998,
+            -1.3354575100000012
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed",
+          "effectivePosition": [
+            -2.252719550000001,
+            0.03987792899999998,
+            -1.3354575100000012
+          ]
+        },
+        {
+          "order": 20,
+          "componentFileId": 2661,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 556,
+          "transformFileId": 1142,
+          "fraction": 1,
+          "worldPosition": [
+            0.7719184499999985,
+            0.09387802899999997,
+            2.0512089299999987
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 21,
+          "componentFileId": 2387,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 298,
+          "transformFileId": 780,
+          "fraction": 1,
+          "worldPosition": [
+            0.496918449999999,
+            0.09387802899999997,
+            -1.077791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 22,
+          "componentFileId": 2700,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 639,
+          "transformFileId": 1278,
+          "fraction": 1,
+          "worldPosition": [
+            -1.1400815500000014,
+            0.09387802899999997,
+            -1.286791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 23,
+          "componentFileId": 2693,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 622,
+          "transformFileId": 1249,
+          "fraction": 1,
+          "worldPosition": [
+            -3.4920815500000018,
+            0.08687802899999997,
+            -1.7727910700000011
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 24,
+          "componentFileId": 2401,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 325,
+          "transformFileId": 822,
+          "fraction": 1,
+          "worldPosition": [
+            -2.743081550000001,
+            0.08687802899999997,
+            2.9262089299999987
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 25,
+          "componentFileId": 2453,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 374,
+          "transformFileId": 884,
+          "fraction": 1,
+          "worldPosition": [
+            -1.2610815500000019,
+            0.08687802899999997,
+            -0.9157910700000012
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 26,
+          "componentFileId": 2517,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 386,
+          "transformFileId": 905,
+          "fraction": 1,
+          "worldPosition": [
+            -1.724081550000001,
+            0.08687802899999997,
+            0.6682089299999989
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 27,
+          "componentFileId": 2638,
+          "componentType": "EnemyPointMech",
+          "gameObjectFileId": 511,
+          "transformFileId": 1077,
+          "fraction": 1,
+          "worldPosition": [
+            0.00891844999999769,
+            0.07287785899999999,
+            2.229209229999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 28,
+          "componentFileId": 2671,
+          "componentType": "EnemyPointMech",
+          "gameObjectFileId": 570,
+          "transformFileId": 1166,
+          "fraction": 1,
+          "worldPosition": [
+            0.1889184499999974,
+            0.116878029,
+            -2.523791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 29,
+          "componentFileId": 2679,
+          "componentType": "EnemyPointMech",
+          "gameObjectFileId": 588,
+          "transformFileId": 1199,
+          "fraction": 1,
+          "worldPosition": [
+            0.1319184499999988,
+            0.10287782899999998,
+            0.817208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 30,
+          "componentFileId": 2411,
+          "componentType": "EnemyPointMech",
+          "gameObjectFileId": 342,
+          "transformFileId": 843,
+          "fraction": 1,
+          "worldPosition": [
+            -0.16708155000000247,
+            0.06387779900000001,
+            -0.7747910700000011
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ],
+          "positionKind": "fixed"
+        },
+        {
+          "order": 31,
+          "componentFileId": 2397,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 318,
+          "transformFileId": 808,
+          "fraction": 1,
+          "worldPosition": [
+            2.1969184499999983,
+            0.09387802899999997,
+            1.967208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ],
+          "positionKind": "fixed"
+        }
+      ]
+    }
+  ]
+}

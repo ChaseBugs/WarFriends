@@ -73,3 +73,5 @@ dotnet run --project Server/tests/War.Battle.Tests/War.Battle.Tests.csproj -c Re
 ```
 
 Set `Battle__MatchManifestTemplatePath` to this file and configure both Backend and Worker with the pinned shotgun, SMG, pistol, LMG, minigun, sniper, and bazooka content manifests. The bazooka package now changes the mixed revision, so a Worker without it rejects this template before admission. The Backend uses the Worker's pinned catalog library to derive every durable slot, rejecting an unknown source, wrong recovered inventory index, or invalid upgrade before changing the participant manifest. Backend and Worker remain separate processes. These checks do not prove a complete normal Client match.
+
+`recovered-coop-enemy-points.json` records the 130 ordered AI destination components in the five co-op mission scenes. Reproduce it with `python Server/tools/extract_coop_enemy_points.py --check`. `CoopEnemyPointCatalog` pins the artifact and binds it to the mission and spawn-point scene hashes. It is destination input only; the Worker does not yet run source enemy-point selection or NavMesh movement.
