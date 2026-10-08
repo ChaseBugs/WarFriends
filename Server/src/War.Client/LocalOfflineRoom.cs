@@ -28,6 +28,16 @@ namespace War.Client
 
         public event Action<LocalRoomCallback> Callback;
 
+        /// <summary>
+        /// A recovered scene may enable offline mode before it calls
+        /// JoinOfflineGame. The master callback already happened then, so
+        /// adopting that state must not emit it a second time.
+        /// </summary>
+        public void ObserveExistingOfflineMode()
+        {
+            IsOffline = true;
+        }
+
         public void JoinSoloRoom()
         {
             // PhotonNetwork.offlineMode emits this callback only when it changes

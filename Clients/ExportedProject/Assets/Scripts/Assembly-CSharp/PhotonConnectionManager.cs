@@ -251,9 +251,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		}
 		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
 		Singleton<PhotonConnectionManager>.instance.isClient = false;
+		bool offlineModeWasAlreadyEnabled = PhotonNetwork.offlineMode;
 		PhotonNetwork.offlineMode = true;
 		if (!PhotonNetwork.offlineMode)
 			throw new InvalidOperationException("Local solo room could not enter offline mode.");
+		if (offlineModeWasAlreadyEnabled)
+			mLocalOfflineRoom.ObserveExistingOfflineMode();
 		PhotonNetwork.LeaveRoom();
 		// EnterOfflineRoom sends OnJoinedRoom synchronously, before CreateRoom
 		// returns and before the portable room model records the completed join.

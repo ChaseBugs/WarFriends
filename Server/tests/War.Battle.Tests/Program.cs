@@ -595,6 +595,15 @@ localRoom.Disconnect();
 Check(!localRoom.IsOffline && !localRoom.IsInRoom &&
       localRoom.PlayerCount == 0 && localRoom.PlayerId == -1,
       "local solo room disconnect clears ownership");
+localCallbacks.Clear();
+localRoom.ObserveExistingOfflineMode();
+localRoom.JoinSoloRoom();
+Check(localCallbacks.SequenceEqual(new[]
+      {
+          LocalRoomCallback.LeftRoom, LocalRoomCallback.CreatedRoom,
+          LocalRoomCallback.JoinedRoom
+      }), "a scene that already entered offline mode does not reconnect to master");
+localRoom.Disconnect();
 var lifecycleGrant = new MatchConnectionGrant
 {
     Host = "127.0.0.1", Port = 1, SessionId = 1, MatchId = "test-match",

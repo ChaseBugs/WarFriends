@@ -97,6 +97,24 @@ public static class UnityLocalOfflineRoomAudit
                 !localRoom.IsOffline && !localRoom.IsInRoom,
                 "The portable solo room did not clear on disconnect.");
 
+            // GameController.Awake may have enabled offline mode before the
+            // later JoinOfflineGame call. Observe that prior transition.
+            probe.Callbacks.Clear();
+            modelCallbacks.Clear();
+            PhotonNetwork.offlineMode = true;
+            Require(probe.Callbacks.SequenceEqual(new[]
+                { LocalRoomCallback.ConnectedToMaster }),
+                "The scene's earlier offline transition had no callback.");
+            probe.Callbacks.Clear();
+            localRoom.ObserveExistingOfflineMode();
+            PhotonNetwork.LeaveRoom();
+            Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName),
+                "Photon did not create the pre-enabled offline room.");
+            localRoom.JoinSoloRoom();
+            CompareCallbacks(probe, modelCallbacks, "pre-enabled offline mode");
+            PhotonNetwork.Disconnect();
+            localRoom.Disconnect();
+
             Debug.Log("LOCAL_OFFLINE_ROOM_AUDIT_PASSED");
             Finish(0);
         }
