@@ -4602,7 +4602,18 @@ internal static class CombatContentTests
             throw new Exception("Ten confirmed source enemy deaths must finish mission zero.");
         MatchSnapshot completedKill = damagedRuntime.TerminalEvidenceSnapshot();
         CoopTerminalScoreValidator.ValidateSuccess(
-            completedKill, coop, catalog, enemyCombat);
+            completedKill, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
+        MatchSnapshot forgedEnemyAnchor = completedKill.Clone();
+        forgedEnemyAnchor.Coop.EnemySpawns[0].SpawnComponentFileId++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedEnemyAnchor, coop, catalog, enemyCombat,
+                spawnPoints: spawnPoints);
+            throw new Exception(
+                "An invented co-op spawn anchor passed terminal proof.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot duplicateAutomaticTick = completedKill.Clone();
         BattleCoopEnemySpawn[] automaticRows = duplicateAutomaticTick.Coop
             .EnemySpawns.Where(enemy => !enemy.TimedEvent).Take(2).ToArray();
@@ -4612,7 +4623,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                duplicateAutomaticTick, coop, catalog, enemyCombat);
+                duplicateAutomaticTick, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "Two co-op automatic spawns shared one scheduler tick.");
         }
@@ -4623,7 +4634,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                duplicatedEnemy, coop, catalog, enemyCombat);
+                duplicatedEnemy, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception("A duplicated enemy death counted twice.");
         }
         catch (InvalidDataException)
@@ -4634,7 +4645,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                skippedEnemyId, coop, catalog, enemyCombat);
+                skippedEnemyId, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "A skipped co-op spawn identity passed terminal proof.");
         }
@@ -4644,7 +4655,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                offClockAutomatic, coop, catalog, enemyCombat);
+                offClockAutomatic, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "An automatic co-op spawn ignored its host cadence.");
         }
@@ -4654,7 +4665,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                nonfiniteEnemy, coop, catalog, enemyCombat);
+                nonfiniteEnemy, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception("A nonfinite enemy health reached success evidence.");
         }
         catch (InvalidDataException)
@@ -4665,7 +4676,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedEnemyMaximum, coop, catalog, enemyCombat);
+                forgedEnemyMaximum, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "A fabricated enemy maximum health entered co-op evidence.");
         }
@@ -4680,7 +4691,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                wrongAutomaticBehaviour, coop, catalog, enemyCombat);
+                wrongAutomaticBehaviour, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "A timed-only behavior passed as an automatic spawn.");
         }
@@ -4692,7 +4703,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                earlyTimedEvent, coop, catalog, enemyCombat);
+                earlyTimedEvent, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "A co-op timed event spawned before its source deadline.");
         }
@@ -4702,7 +4713,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                forgedKillCount, coop, catalog, enemyCombat);
+                forgedKillCount, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception("A kill success without its target was accepted.");
         }
         catch (InvalidDataException)
@@ -4734,7 +4745,7 @@ internal static class CombatContentTests
             survived.Coop.SuccessScores.Count != 2)
             throw new Exception("Survive mission must succeed at the source deadline.");
         CoopTerminalScoreValidator.ValidateSuccess(
-            survived, surviveAllocation, catalog, enemyCombat);
+            survived, surviveAllocation, catalog, enemyCombat, spawnPoints: spawnPoints);
         MatchSnapshot repeatedTimedTick = survived.Clone();
         BattleCoopEnemySpawn[] grenadierEvents = repeatedTimedTick.Coop
             .EnemySpawns.Where(enemy => enemy.TimedEvent &&
@@ -4756,7 +4767,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                repeatedTimedTick, surviveAllocation, catalog, enemyCombat);
+                repeatedTimedTick, surviveAllocation, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "One co-op event spawned twice on its whole-second pass.");
         }
@@ -4790,7 +4801,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                overCapacity, surviveAllocation, catalog, enemyCombat);
+                overCapacity, surviveAllocation, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "A co-op automatic spawn exceeded the live scene cap.");
         }
@@ -4805,7 +4816,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                offClockTimed, surviveAllocation, catalog, enemyCombat);
+                offClockTimed, surviveAllocation, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception(
                 "A timed co-op spawn ignored its whole-second clock.");
         }
@@ -4816,7 +4827,7 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateSuccess(
-                earlySurvival, surviveAllocation, catalog, enemyCombat);
+                earlySurvival, surviveAllocation, catalog, enemyCombat, spawnPoints: spawnPoints);
             throw new Exception("A Survive mission accepted an early terminal result.");
         }
         catch (InvalidDataException)

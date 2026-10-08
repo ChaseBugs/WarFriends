@@ -11,7 +11,8 @@ internal static class CoopTerminalScoreValidator
     internal static void ValidateSuccess(
         MatchSnapshot snapshot, MatchManifest allocation,
         MissionCatalog missions, CoopEnemyCombatCatalog combat,
-        CoopBossRuntimeSources? bossSources = null)
+        CoopBossRuntimeSources? bossSources = null,
+        CoopSpawnPointCatalog? spawnPoints = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(missions);
@@ -53,8 +54,10 @@ internal static class CoopTerminalScoreValidator
                     .Order(StringComparer.Ordinal)))
             throw new InvalidDataException("Co-op success differs from source mission.");
 
-        ValidateEnemyLedger(snapshot, rule, combat);
         ValidateBossState(snapshot, rule, missions, bossSources);
+        Dictionary<string, HashSet<SpawnOrigin>> origins =
+            SourceSpawnOrigins(rule, missions, bossSources, spawnPoints);
+        ValidateEnemyLedger(snapshot, rule, combat, origins);
         ValidateObjective(snapshot, rule);
 
         if (rule.MissionType == "Score")
@@ -110,6 +113,45 @@ internal static class CoopTerminalScoreValidator
         if (expectedScores.Count == 0 ||
             snapshot.Coop.SuccessScores.Count != expectedScores.Count)
             throw new InvalidDataException("Co-op success has an invalid score roster.");
+    }
+
+    private readonly record struct SpawnOrigin(int ComponentFileId,
+        float X, float Y, float Z);
+
+    private static Dictionary<string, HashSet<SpawnOrigin>> SourceSpawnOrigins(
+        MissionRule rule, MissionCatalog missions,
+        CoopBossRuntimeSources? bossSources,
+        CoopSpawnPointCatalog? spawnPoints)
+    {
+        var origins = new Dictionary<string, HashSet<SpawnOrigin>>(
+            StringComparer.OrdinalIgnoreCase);
+        IEnumerable<string> names = rule.Behaviours.Select(row => row.Name)
+            .Concat(rule.Events.Select(row => row.Behaviour))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        if (rule.MissionType == "KillOpponent")
+        {
+            CoopBossRuntimeSources sources = bossSources ??
+                throw new InvalidDataException("Boss spawn sources are missing.");
+            var selector = new CoopBossAiSpawnSelector(missions,
+                sources.Spawns, sources.Map, rule.Index);
+            foreach (string name in names)
+                origins.Add(name, selector.Candidates(name)
+                    .Select(point => new SpawnOrigin(point.ComponentFileId,
+                        point.Position.X, point.Position.Y, point.Position.Z))
+                    .ToHashSet());
+        }
+        else
+        {
+            CoopSpawnPointCatalog sources = spawnPoints ??
+                throw new InvalidDataException("Co-op spawn sources are missing.");
+            var selector = new CoopAiSpawnSelector(missions, sources, rule.Index);
+            foreach (string name in names)
+                origins.Add(name, selector.Candidates(name)
+                    .Select(point => new SpawnOrigin(point.ComponentFileId,
+                        point.Position.X, point.Position.Y, point.Position.Z))
+                    .ToHashSet());
+        }
+        return origins;
     }
 
     private static void ValidateBossState(MatchSnapshot snapshot,
@@ -198,7 +240,8 @@ internal static class CoopTerminalScoreValidator
     }
 
     private static void ValidateEnemyLedger(MatchSnapshot snapshot,
-        MissionRule rule, CoopEnemyCombatCatalog combat)
+        MissionRule rule, CoopEnemyCombatCatalog combat,
+        IReadOnlyDictionary<string, HashSet<SpawnOrigin>> origins)
     {
         ulong expectedEntityId = 1;
         var timedEventCounts = new int[rule.Events.Count];
@@ -271,6 +314,11 @@ internal static class CoopTerminalScoreValidator
                 enemy.SpawnTick > snapshot.EndTick)
                 throw new InvalidDataException(
                     "Co-op success has an invalid enemy spawn ledger.");
+            if (!origins.TryGetValue(enemy.Behaviour, out HashSet<SpawnOrigin>? candidates) ||
+                !candidates.Contains(new SpawnOrigin(enemy.SpawnComponentFileId,
+                    enemy.X, enemy.Y, enemy.Z)))
+                throw new InvalidDataException(
+                    "Co-op enemy spawn differs from its source scene anchor.");
             capacity.ValidateAndRecord(enemy);
             expectedEntityId++;
             previousSpawn = enemy;
