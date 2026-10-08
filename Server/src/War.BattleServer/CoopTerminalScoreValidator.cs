@@ -38,6 +38,10 @@ internal static class CoopTerminalScoreValidator
             snapshot.Coop.MissionIndex != rule.Index ||
             snapshot.Coop.MissionType != rule.MissionType ||
             snapshot.Coop.ObjectiveTarget != rule.Objective.GetValueOrDefault() ||
+            snapshot.Coop.ObjectiveScore is < 0 or > 1_000_000_000 ||
+            (rule.MissionType == "Score"
+                ? snapshot.Coop.ObjectiveScore < rule.Objective.GetValueOrDefault()
+                : snapshot.Coop.ObjectiveScore != 0) ||
             snapshot.Coop.DeadlineTick != snapshot.StartTick + durationTicks ||
             snapshot.EndTick < snapshot.StartTick ||
             snapshot.EndTick >= snapshot.Coop.DeadlineTick ||

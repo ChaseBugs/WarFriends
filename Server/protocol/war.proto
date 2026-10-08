@@ -461,6 +461,8 @@ message BattleCoopState {
   // Terminal success presentation from host health and remaining mission time.
   // This is not a wallet or progression settlement receipt.
   repeated BattleCoopPlayerScore success_scores = 18;
+  // Shared, host-confirmed skill-shot points for a Score mission.
+  int32 objective_score = 19;
 }
 message BattleCoopPlayerScore {
   string player_id = 1; int32 score = 2; int32 stars = 3;

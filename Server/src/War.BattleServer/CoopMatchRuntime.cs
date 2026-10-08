@@ -22,6 +22,9 @@ internal sealed record CoopShieldRuntimeSources(
 internal sealed record CoopBossPreferredShotPlan(
     string PlayerId, CoopBossWeaponSlotKind Slot, string WeaponSourceId);
 
+internal sealed record CoopHostEnemyHitCredit(
+    string PlayerId, CoopEnemyKillCredit KillCredit);
+
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
 /// cannot accept combat commands until host AI and player controls are wired.
@@ -53,6 +56,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly MissionRule missionRule;
     private readonly Func<string, IReadOnlyList<CoopSpawnPoint>> spawnCandidates;
     private readonly CoopEnemyCombatCatalog combat;
+    private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
@@ -89,10 +93,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopEnemyCombatCatalog combat,
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null,
-        CoopShieldRuntimeSources? shieldSources = null)
+        CoopShieldRuntimeSources? shieldSources = null,
+        CoopSkillShotScoreCatalog? skillShotScores = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
-            chooseAttackFraction: null, shieldSources: shieldSources)
+            chooseAttackFraction: null, shieldSources: shieldSources,
+            skillShotScores: skillShotScores)
     {
     }
 
@@ -101,7 +107,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopEnemyCombatCatalog combat, CoopBossRuntimeSources? bossSources,
         Func<int, int>? chooseBehaviour, Func<int, int>? choosePoint,
         Func<float>? chooseAttackFraction = null,
-        CoopShieldRuntimeSources? shieldSources = null)
+        CoopShieldRuntimeSources? shieldSources = null,
+        CoopSkillShotScoreCatalog? skillShotScores = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -117,6 +124,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
+        if (missionRule.MissionType == "Score" && skillShotScores == null)
+            throw new InvalidDataException("Score mission needs recovered skill-shot points.");
+        this.skillShotScores = skillShotScores;
         ArgumentNullException.ThrowIfNull(spawnPoints);
         ArgumentNullException.ThrowIfNull(paths);
         if (bossSources != null && shieldSources != null)
@@ -346,6 +356,27 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     /// </summary>
     internal bool ApplyHostEnemyDamage(ulong entityId, float damage, ulong impactTick)
     {
+        return ApplyHostEnemyDamage(entityId, damage, impactTick, null);
+    }
+
+    /// <summary>
+    /// This is a host-only seam. A future hit simulator must establish the
+    /// player and damage origin; no client command may supply this credit.
+    /// </summary>
+    internal bool ApplyHostCreditedEnemyDamage(ulong entityId, float damage,
+        ulong impactTick, CoopHostEnemyHitCredit credit)
+    {
+        if (mission.MissionType != "Score" || credit == null ||
+            !participants.TryGetValue(credit.PlayerId, out Participant? player) ||
+            !player.Admitted || !player.Ready ||
+            !Enum.IsDefined(credit.KillCredit))
+            return false;
+        return ApplyHostEnemyDamage(entityId, damage, impactTick, credit);
+    }
+
+    private bool ApplyHostEnemyDamage(ulong entityId, float damage,
+        ulong impactTick, CoopHostEnemyHitCredit? credit)
+    {
         if (phase != BattlePhase.Running || impactTick != tick ||
             impactTick >= mission.DeadlineTick ||
             !float.IsFinite(damage) || damage <= 0 || damage > 10_000_000)
@@ -358,8 +389,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return false;
 
         float remaining = MathF.Max(0, enemy.Health - damage);
-        if (remaining == 0 && !mission.ConfirmAiDeath(entityId, impactTick))
-            return false;
+        if (remaining == 0)
+        {
+            bool confirmed = credit == null
+                ? mission.ConfirmAiDeath(entityId, impactTick)
+                : mission.ConfirmAttributedAiDeath(entityId, credit.PlayerId,
+                    credit.KillCredit, skillShotScores!, impactTick);
+            if (!confirmed)
+                return false;
+        }
 
         enemy.Health = remaining;
         if (remaining == 0)
@@ -696,6 +734,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 MissionType = mission.MissionType,
                 ObjectiveTarget = mission.ObjectiveTarget,
                 EnemyKills = mission.EnemyKills,
+                ObjectiveScore = mission.Score,
                 DeadlineTick = mission.DeadlineTick,
                 Started = mission.Started,
                 Failed = mission.Outcome == MissionOutcome.Failed ||
