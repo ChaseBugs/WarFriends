@@ -1784,15 +1784,19 @@ internal static class CombatContentTests
         int obstaclePositionDraws = 0;
         var earlyRepositionDestinations = new CoopEnemyDestinationState(
             enemyMap, enemyPointMasks, enemyCombat,
-            chooseObstacleFraction: () =>
-                obstaclePositionDraws++ == 0 ? 0.5f : 1f);
+            chooseObstacleFraction: () => obstaclePositionDraws++ switch
+            {
+                0 => 0.5f,
+                1 => 1f,
+                _ => 0f
+            });
         var earlyRepositionRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0,
             enemyDestinations: earlyRepositionDestinations,
             infantryNavigation: infantryNavigation,
             playerWeaponContent: content,
-            chooseInfantryShotFraction: () => 0f,
+            chooseInfantryShotFraction: () => 0.999f,
             chooseInfantryRepositionFraction: () => 0f,
             chooseInfantryPlayer: _ => 0);
         earlyRepositionRuntime.Admit(firstPlayer);
@@ -1833,6 +1837,7 @@ internal static class CombatContentTests
             earlyRepositionRuntime.PlaceWalkingAssaulterHitboxes(
                 earlyRepositionEnemy.EntityId).Count != 0)
             throw new Exception("Co-op obstacle did not regenerate its reserved segment position.");
+        int drawsAfterFirstReposition = obstaclePositionDraws;
         earlyRepositionRuntime.Advance(firstShootTick);
         BattleCoopEnemySpawn movingObstacle = earlyRepositionRuntime
             .Snapshot().Coop.EnemySpawns.First(enemy =>
@@ -1843,6 +1848,36 @@ internal static class CombatContentTests
             earlyRepositionRuntime.InfantryFirstPlayerTarget(
                 earlyRepositionEnemy.EntityId) != null)
             throw new Exception("Obstacle reposition neither moved nor closed the old target.");
+        ulong secondReposition = earlyReposition.FirstRepositionTick.Value +
+            2UL * MatchManifest.TickRate + 1;
+        if (earlyRepositionRuntime.NextObstacleRepositionTick(
+                earlyRepositionEnemy.EntityId) != secondReposition ||
+            secondReposition >= earlyReposition.FirstShootEligibleTick)
+            throw new Exception("Obstacle did not schedule its later 2–6 second draw.");
+        earlyRepositionRuntime.Advance(secondReposition - 1);
+        if (earlyRepositionRuntime.EnemyDestination(
+                earlyRepositionEnemy.EntityId)?.Position !=
+            regeneratedObstacle.Position)
+            throw new Exception("Obstacle repositioned before its second gate.");
+        earlyRepositionRuntime.Advance(secondReposition);
+        CoopAssignedEnemyDestination? secondObstacle =
+            earlyRepositionRuntime.EnemyDestination(
+                earlyRepositionEnemy.EntityId);
+        if (secondObstacle?.PointComponentFileId !=
+                originalObstacle.PointComponentFileId ||
+            obstaclePositionDraws <= drawsAfterFirstReposition)
+            throw new Exception("Obstacle did not regenerate its reserved point again.");
+        ulong? thirdReposition = earlyRepositionRuntime
+            .NextObstacleRepositionTick(earlyRepositionEnemy.EntityId);
+        if (thirdReposition == null ||
+            thirdReposition <= earlyReposition.FirstShootEligibleTick)
+            throw new Exception("Obstacle fixture lacks a shot-before-move gate.");
+        earlyRepositionRuntime.Advance(thirdReposition.Value);
+        if (earlyRepositionRuntime.NextObstacleRepositionTick(
+                earlyRepositionEnemy.EntityId) != null ||
+            earlyRepositionRuntime.EnemyDestination(
+                earlyRepositionEnemy.EntityId) != secondObstacle)
+            throw new Exception("Obstacle moved through its unmodeled shot state.");
 
         int cornerSpawnIndex = assaultCandidates.ToList().FindIndex(point =>
             point.ComponentFileId == 1694);

@@ -98,6 +98,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts = [];
     private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
+    private readonly Dictionary<ulong, ulong> nextObstacleRepositionTicks = [];
     private readonly HashSet<ulong> movingObstacleRepositions = [];
     private readonly Func<float> chooseInfantryShotFraction;
     private readonly Func<float> chooseInfantryRepositionFraction;
@@ -407,6 +408,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         obstacleRepositionStartedTicks.TryGetValue(entityId, out ulong start)
             ? start : null;
 
+    internal ulong? NextObstacleRepositionTick(ulong entityId) =>
+        nextObstacleRepositionTicks.TryGetValue(entityId, out ulong next)
+            ? next : null;
+
     internal CoopInfantryPlayerShotTarget? PlaceFirstAssaulterPlayerTarget(
         ulong entityId)
     {
@@ -659,7 +664,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceAssaultHelicopterFlights();
             AdvanceTransportHelicopterFlights();
             AdvanceInfantryPaths();
-            AdvanceFirstObstacleRepositions();
+            AdvanceObstacleRepositions();
             ChooseFirstInfantryTargets();
             AdvanceCornerRetargets();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
@@ -968,6 +973,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts.Remove(enemy.EntityId);
         nextCornerChangeTicks.Remove(enemy.EntityId);
         obstacleRepositionStartedTicks.Remove(enemy.EntityId);
+        nextObstacleRepositionTicks.Remove(enemy.EntityId);
         movingObstacleRepositions.Remove(enemy.EntityId);
         // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
         // branch. Rusher, Warp, Parachute, and specialist state machines need
@@ -1062,6 +1068,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 if (firstCornerChangeTick.HasValue)
                     nextCornerChangeTicks[entityId] =
                         firstCornerChangeTick.Value;
+                if (firstRepositionTick.HasValue)
+                    nextObstacleRepositionTicks[entityId] =
+                        firstRepositionTick.Value;
                 arrived.Add(entityId);
             }
             else if (path.HasArrived(tick))
@@ -1071,28 +1080,38 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryPaths.Remove(entityId);
     }
 
-    private void AdvanceFirstObstacleRepositions()
+    private void AdvanceObstacleRepositions()
     {
         if (enemyDestinations == null || infantryNavigation == null)
             return;
-        foreach ((ulong entityId, CoopInfantryPointArrival arrival)
-            in infantryPointArrivals)
+        foreach ((ulong entityId, ulong repositionTick)
+            in nextObstacleRepositionTicks.ToArray())
         {
-            if (arrival.FirstRepositionTick != tick ||
-                arrival.HasUnchangedObstaclePointForFirstShot ||
-                obstacleRepositionStartedTicks.ContainsKey(entityId))
+            if (tick != repositionTick ||
+                !infantryPointArrivals.TryGetValue(entityId,
+                    out CoopInfantryPointArrival? arrival))
                 continue;
+            if (tick >= arrival.FirstShootEligibleTick ||
+                infantryFirstTargets.ContainsKey(entityId))
+            {
+                // ObstacleHidingUpdate checks the shot first. Its later
+                // position draws need the firing/animation state machine.
+                nextObstacleRepositionTicks.Remove(entityId);
+                continue;
+            }
             BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
                 spawn.EntityId == entityId && spawn.DeathTick == 0);
             if (enemy == null)
                 continue;
 
-            obstacleRepositionStartedTicks.Add(entityId, tick);
+            obstacleRepositionStartedTicks.TryAdd(entityId, tick);
             CoopAssignedEnemyDestination? destination =
                 enemyDestinations.RegenerateObstaclePosition(entityId);
             if (destination == null)
                 throw new InvalidDataException(
                     "Co-op obstacle reposition lost its reserved point.");
+            nextObstacleRepositionTicks[entityId] =
+                NextObstacleRepositionTickAfter(tick);
             Vector3 start = new(enemy.CurrentX, enemy.CurrentY,
                 enemy.CurrentZ);
             int missionIndex = manifest.MissionIndex!.Value;
@@ -1112,6 +1131,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             movingObstacleRepositions.Add(entityId);
             stateRevision++;
         }
+    }
+
+    private ulong NextObstacleRepositionTickAfter(ulong startTick)
+    {
+        float fraction = chooseInfantryRepositionFraction();
+        if (!float.IsFinite(fraction) || fraction is < 0 or >= 1)
+            throw new InvalidDataException(
+                "Co-op infantry reposition choice must be in [0, 1).");
+        // ObstacleHidingUpdate draws 2–6 seconds after SetFinalTarget.
+        return FirstTickAfterDelay(startTick, 2f + 4f * fraction);
     }
 
     private ulong FirstInfantryShotEligibleTick(
@@ -1589,6 +1618,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             cornerLatestShotAttempts.Remove(entityId);
             nextCornerChangeTicks.Remove(entityId);
             obstacleRepositionStartedTicks.Remove(entityId);
+            nextObstacleRepositionTicks.Remove(entityId);
             movingObstacleRepositions.Remove(entityId);
             if (enemy.Behaviour == "Drone")
             {
@@ -2224,6 +2254,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts.Clear();
         nextCornerChangeTicks.Clear();
         obstacleRepositionStartedTicks.Clear();
+        nextObstacleRepositionTicks.Clear();
         movingObstacleRepositions.Clear();
         foreach (Participant participant in participants.Values)
         {
