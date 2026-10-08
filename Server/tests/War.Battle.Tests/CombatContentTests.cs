@@ -1001,6 +1001,10 @@ internal static class CombatContentTests
             switchingRuntime.PlaceIdlePlayerMuzzle(switcher) != null ||
             switchingRuntime.PlaceIdleAlliedCollisionPoses() != null ||
             switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).RiflePose is not
+                    RiflePoseState shotPose ||
+            !RiflePoseProjection.ValidWire(shotPose, 0) ||
+            switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == switcher).ClipAmmo != alternateWeapon.ClipSize - 1)
             throw new Exception("Only a host-created co-op shot may consume ammo.");
         var reloadSecond = new MatchCommand { CommandId = 5,
@@ -1028,9 +1032,30 @@ internal static class CombatContentTests
         if (switchingRuntime.PlaceIdlePlayerMuzzle(switcher) == null ||
             postShotAllies?.Count != 2 ||
             postShotAllies[0].PlayerId != switcher ||
-            postShotAllies[1].PlayerId != partner)
+            postShotAllies[1].PlayerId != partner ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).RiflePose is not
+                    RiflePoseState settledPose ||
+            !RiflePoseProjection.ValidWire(settledPose,
+                switchingRuntime.Snapshot().ServerTick) ||
+            settledPose.Layers[0].Clip != RiflePoseClip.Idle)
             throw new Exception(
                 "A host-confirmed co-op shot never restored both source collision poses.");
+        ulong repeatedShotTick = switchingRuntime.Snapshot().ServerTick;
+        if (!switchingRuntime.ConfirmHostPlayerShot(switcher, 1,
+                shotTarget, repeatedShotTick))
+            throw new Exception("A settled co-op ally could not fire again.");
+        switchingRuntime.Advance(repeatedShotTick + 1);
+        RiflePoseState? activeShotPose = switchingRuntime.Snapshot()
+            .Players.Single(player => player.PlayerId == switcher).RiflePose;
+        if (activeShotPose == null ||
+            !RiflePoseProjection.ValidWire(activeShotPose,
+                repeatedShotTick + 1) ||
+            activeShotPose.Layers.Count != 1 ||
+            (int)activeShotPose.Layers[0].Clip is not (2 or 5) ||
+            switchingRuntime.PlaceIdleAlliedCollisionPoses() != null)
+            throw new Exception(
+                "A second co-op shot did not publish its host-owned uncover pose.");
         MatchManifest skippedSlot = twoWeapons with
         {
             Players = twoWeapons.Players.Select((player, index) => index == 0

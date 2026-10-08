@@ -2752,7 +2752,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             CoopWeaponReadiness? weapon = participant.Weapons?.Readiness(
                 participant.Weapons.ActiveSlot);
-            snapshot.Players.Add(new BattlePlayerState
+            var playerState = new BattlePlayerState
             {
                 PlayerId = participant.PlayerId,
                 Admitted = participant.Admitted,
@@ -2775,7 +2775,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 PositionX = participant.Position.X,
                 PositionY = participant.Position.Y,
                 PositionZ = participant.Position.Z
-            });
+            };
+            if (participant.Route == null &&
+                participant.ShotTimeline != null &&
+                playerPositions[participant.CoverIndex].SourceRotation is
+                    Quaternion coverRotation)
+            {
+                playerState.RiflePose = RiflePoseProjection.Create(
+                    tick, participant.ShotTimeline.Layers,
+                    coverRotation, Quaternion.Identity, null);
+            }
+            snapshot.Players.Add(playerState);
         }
         return snapshot;
     }
