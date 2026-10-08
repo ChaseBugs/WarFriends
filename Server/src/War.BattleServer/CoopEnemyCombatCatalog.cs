@@ -38,6 +38,7 @@ public sealed class CoopEnemyCombatCatalog
     private readonly ArmyDeploymentCatalog army;
     private readonly CoopCardRowCatalog cards;
     private readonly IReadOnlyDictionary<string, string> unitIds;
+    private readonly IReadOnlyDictionary<string, string> infantryIdleClips;
 
     public CoopEnemyCombatCatalog(MissionCatalog missions,
         ArmyDeploymentCatalog army, CoopCardRowCatalog cards)
@@ -74,6 +75,22 @@ public sealed class CoopEnemyCombatCatalog
             }
         }
         unitIds = mapped;
+        var infantry = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var familiesById = army.Families.ToDictionary(family => family.UnitId,
+            StringComparer.Ordinal);
+        foreach ((string behaviour, string unitId) in mapped)
+        {
+            if (familiesById[unitId].IsSoldier)
+                infantry.Add(behaviour, ArmyInfantryPosePolicy.For(unitId).Idle);
+        }
+        infantryIdleClips = infantry;
+    }
+
+    internal string? InfantryIdleClip(string behaviour)
+    {
+        if (!unitIds.ContainsKey(behaviour))
+            throw new InvalidDataException($"Unknown co-op behavior {behaviour}.");
+        return infantryIdleClips.GetValueOrDefault(behaviour);
     }
 
     public ArmyBaseCombatStats OrdinaryStats(

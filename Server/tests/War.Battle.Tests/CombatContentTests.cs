@@ -1282,7 +1282,8 @@ internal static class CombatContentTests
             throw new Exception("Ordinary co-op shield rejected a host impact.");
 
         var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
-            chooseBehaviour: _ => 0, choosePoint: _ => 0);
+            chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            playerWeaponContent: content);
         string firstPlayer = coop.Players[0].PlayerId;
         string secondPlayer = coop.Players[1].PlayerId;
         if (!runtime.Admit(firstPlayer) || !runtime.Admit(secondPlayer))
@@ -1393,6 +1394,17 @@ internal static class CombatContentTests
                     firstEnemy.SourceRotation.Y, firstEnemy.SourceRotation.Z,
                     firstEnemy.SourceRotation.W) == rotation))
             throw new Exception("A due co-op AI must be created at an enemy source anchor.");
+        IReadOnlyList<PlayerHitbox> spawnedInfantry =
+            runtime.PlaceNewInfantryHitboxes(firstEnemy.EntityId);
+        if (spawnedInfantry.Count != 3 || spawnedInfantry.Any(part =>
+                !part.SourcePath.StartsWith("coop/1/", StringComparison.Ordinal)) ||
+            enemyCombat.InfantryIdleClip("Assaulter") != "idle_1" ||
+            enemyCombat.InfantryIdleClip("Tank") != null ||
+            runtime.PlaceNewInfantryHitboxes(999).Count != 0)
+            throw new Exception("Co-op infantry needs its recovered spawn-time colliders.");
+        runtime.Advance(9);
+        if (runtime.PlaceNewInfantryHitboxes(firstEnemy.EntityId).Count != 0)
+            throw new Exception("A stale spawn pose must not authorize later co-op hits.");
 
         var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);

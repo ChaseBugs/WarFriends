@@ -57,6 +57,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly MissionRule missionRule;
     private readonly Func<string, IReadOnlyList<CoopSpawnPoint>> spawnCandidates;
     private readonly CoopEnemyCombatCatalog combat;
+    private readonly EnemyPoseCatalog? enemyPoses;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
@@ -132,6 +133,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         missionRule = catalog.Get(missionIndex);
         if (playerWeaponContent != null)
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
+        enemyPoses = playerWeaponContent?.EnemyPoses;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
@@ -373,6 +375,32 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             };
         }
         return enemy;
+    }
+
+    /// <summary>
+    /// Places the recovered infantry idle colliders at the exact spawn tick.
+    /// A later tick needs host-owned AI movement and animation before these
+    /// colliders can be used for a shot; this method therefore refuses it.
+    /// Vehicles and air units have separate source collider families.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceNewInfantryHitboxes(ulong entityId)
+    {
+        if (phase != BattlePhase.Running || enemyPoses == null)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.SpawnTick == tick &&
+            spawn.Health > 0 && spawn.DeathTick == 0);
+        if (enemy?.SourceRotation == null)
+            return [];
+        string? clip = combat.InfantryIdleClip(enemy.Behaviour);
+        if (clip == null)
+            return [];
+        var rotation = new Quaternion(enemy.SourceRotation.X,
+            enemy.SourceRotation.Y, enemy.SourceRotation.Z,
+            enemy.SourceRotation.W);
+        var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
+        return enemyPoses.Place(clip, position, rotation, 0,
+            $"coop/{entityId}/");
     }
 
     /// <summary>
