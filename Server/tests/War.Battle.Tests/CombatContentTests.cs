@@ -388,6 +388,24 @@ internal static class CombatContentTests
         MatchManifest duel = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
         MissionMapRule sourceMap = catalog.MapForMission(0);
+        if (CoopMissionScorePolicy.Calculate(catalog.Get(0), 1f, 0f) !=
+                new CoopMissionSuccessScore(117, 3) ||
+            CoopMissionScorePolicy.Calculate(catalog.Get(1), 1f, 0f) !=
+                new CoopMissionSuccessScore(117, 3) ||
+            CoopMissionScorePolicy.Calculate(catalog.Get(3), 0.5f, 1f) !=
+                new CoopMissionSuccessScore(263, 2) ||
+            CoopMissionScorePolicy.Calculate(catalog.Get(4), 1f, 1f) !=
+                new CoopMissionSuccessScore(250, 3))
+            throw new Exception("Recovered mission success score or stars changed.");
+        try
+        {
+            _ = CoopMissionScorePolicy.Calculate(catalog.Get(4),
+                float.NaN, 1f);
+            throw new Exception("Invalid co-op player health entered score authority.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         CoopShieldStateCatalog shieldStates = CoopShieldStateCatalog.Load(
             Path.Combine(directory, "recovered-coop-shield-states.json"), catalog);
         CoopBotRuleCatalog bossRules = CoopBotRuleCatalog.Load(Path.Combine(
@@ -713,6 +731,12 @@ internal static class CombatContentTests
             !bossRuntime.Snapshot().Coop.Completed ||
             bossRuntime.ApplyHostBossDamage(1000, 200))
             throw new Exception("Boss damage must be host-owned and settle only once.");
+        CoopMissionSuccessScore? survivingScore =
+            bossRuntime.HostSuccessScore(bossFirstPlayer);
+        if (survivingScore?.Stars != 3 ||
+            survivingScore.Score < catalog.Get(4).ScoreThreeStars ||
+            bossRuntime.HostSuccessScore(bossSecondPlayer) != null)
+            throw new Exception("Boss success score did not use frozen host outcome.");
 
         var ordinaryShieldRuntime = new CoopMatchRuntime(shieldAllocation,
             catalog, spawnPoints, routes, enemyCombat,

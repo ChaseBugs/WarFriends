@@ -650,6 +650,23 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             BossArsenal.Definition(slot).SourceId);
     }
 
+    // Per-player success presentation from frozen host vitality and clock.
+    // Backend reward settlement must still verify the terminal evidence.
+    internal CoopMissionSuccessScore? HostSuccessScore(string playerId)
+    {
+        if (!Terminal || mission.Outcome != MissionOutcome.Succeeded ||
+            !participants.TryGetValue(playerId, out Participant? player) ||
+            !player.Admitted || player.Dead)
+            return null;
+        float healthRatio = Math.Clamp(player.Health /
+            player.Definition.Combat!.MaxHealth, 0f, 1f);
+        ulong remainingTicks = mission.DeadlineTick - tick;
+        float remainingTimeRatio = (float)remainingTicks /
+            (missionRule.TimeSeconds * MatchManifest.TickRate);
+        return CoopMissionScorePolicy.Calculate(missionRule,
+            healthRatio, remainingTimeRatio);
+    }
+
     public MatchReply Reply(ulong commandId, string code)
     {
         return new MatchReply
