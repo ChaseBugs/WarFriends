@@ -9455,6 +9455,56 @@ internal static class CombatContentTests
                   selectedLandMines.Select(x=>x.ComponentFileId).Distinct().Count()==3&&
                   Math.Abs(landMines.Damage(22,44)-57.625f)<.001f,
                   "Land Mine source pins 89 opposing hiding slots, three distinct placements, prefab geometry and level-scaled damage");
+            foreach (var sourceMap in content.Maps)
+            foreach (int ownerFraction in new[] { 1, 2 })
+            foreach (int pair in new[] { 0, 1, 2 })
+            {
+                Vector3 sampledMidpoint = Vector3.Zero;
+                var placement = MineYourStepSourcePolicy.Select(sourceMap, ownerFraction,
+                    _ => pair, point => { sampledMidpoint = point; return point; }, 1000f);
+                var enemyCovers = sourceMap.Covers.Where(cover => cover.Fraction != ownerFraction).ToArray();
+                Check(placement != null && placement.Position == sampledMidpoint &&
+                      placement.FirstEnemyCover == enemyCovers[pair].SourceIndex &&
+                      placement.SecondEnemyCover == enemyCovers[pair + 1].SourceIndex &&
+                      Math.Abs(placement.ExplosionDamage - 200f) < 0.001f &&
+                      Math.Abs(placement.OuterDamage - 20f) < 0.001f,
+                    "Mine Your Step chooses one of three adjacent enemy-cover midpoints and uses opponent maximum health");
+            }
+            var mineMap = content.Maps[0];
+            Check(MineYourStepSourcePolicy.Select(mineMap, 1, _ => 0, _ => null, 1000f) == null,
+                "Mine Your Step does not invent a placement when NavMesh sampling fails");
+            Reject(() => MineYourStepSourcePolicy.Select(mineMap, 1, _ => 3,
+                point => point, 1000f));
+            Reject(() => MineYourStepSourcePolicy.Select(mineMap, 1, _ => 0,
+                point => point + new Vector3(11, 0, 0), 1000f));
+            var timedMinePlacement = MineYourStepSourcePolicy.Select(mineMap, 1,
+                _ => 0, point => point, 1000f)!;
+            var timedMines = new TimedMineMatchRegistry(capacity: 1);
+            const string timedMineRequest = "95959595959595959595959595959595";
+            const string timedMineOwner = "96969696969696969696969696969696";
+            Check(timedMines.TrySpawn(timedMineRequest, timedMineOwner, 1,
+                  timedMinePlacement, 75, out var timedMine) && timedMine != null &&
+                  timedMine.ExpiresTick == 75 + 15 * MatchManifest.TickRate &&
+                  timedMines.Due(timedMine.ExpiresTick - 1).Count == 0 &&
+                  timedMines.Due(timedMine.ExpiresTick).Single() == timedMine,
+                "Mine Your Step owns one 15-second entity with an exact host-tick deadline");
+            Check(timedMines.TryReplay(timedMineRequest, timedMineOwner) &&
+                  !timedMines.TryReplay(timedMineRequest, "97979797979797979797979797979797") &&
+                  timedMines.TryRemove(timedMine!.EntityId, out _) &&
+                  timedMines.TryReplay(timedMineRequest, timedMineOwner) &&
+                  !timedMines.TrySpawn(timedMineRequest, timedMineOwner, 1,
+                      timedMinePlacement, 75, out _),
+                "Mine Your Step retains its owner-bound receipt after detonation");
+            Check(timedMines.RemoveOwner(timedMineOwner).Count == 0 &&
+                  timedMines.TryReplay(timedMineRequest, timedMineOwner),
+                "owner removal does not erase a consumed timed-mine receipt");
+            Check(MineYourStepFalloff.Damage(20, 200, 1.1f, 1.8f, 0.5f, 0.5f) == 200 &&
+                  Math.Abs(MineYourStepFalloff.Damage(20, 200, 1.1f, 1.8f,
+                      1.45f, 1.45f) - 65f) < 0.001f &&
+                  MineYourStepFalloff.Damage(20, 200, 1.1f, 1.8f, 2f, 2f) == 0,
+                "Mine Your Step preserves full inner damage and squared outer falloff");
+            Reject(() => MineYourStepFalloff.Damage(float.NaN, 200,
+                1.1f, 1.8f, 1.45f, 1.45f));
             const string minePosePath="MineTriggerPlayer";
             PlayerCollisionModel MinePose(Vector3 root)=>PlayerCollisionModel.InitializedFrame("mine-pose",minePosePath,root,Quaternion.Identity,
             [
