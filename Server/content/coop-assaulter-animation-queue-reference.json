@@ -1,0 +1,4014 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "enemySha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "weaponSha256": "a55f77d5fc32e948951805b01e13c9193cf852171ec842a2caa6ad3338239de2",
+  "captureRate": 30,
+  "scenarios": [
+    {
+      "startClip": "stand_up_begin",
+      "startClipSha256": "0a4e37ccbb678a4f5fe6253d31ba2e7ea4b1108abadf390364d32054ef0d3d6c",
+      "fireClip": "rifle_shot_loop",
+      "fireClipSha256": "760fe9311ce35c5d57069a1c70547af1f6d29a869c1ad9361126db022a769776",
+      "fadeSeconds": 0.05,
+      "frames": [
+        {
+          "frame": 2,
+          "seconds": 0.0,
+          "position": [
+            0.402014256,
+            0.158568054,
+            0.0300083477
+          ],
+          "rotation": [
+            -0.5347743,
+            -0.457768351,
+            -0.379890084,
+            -0.6001235
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 3,
+          "seconds": 0.0333333351,
+          "position": [
+            0.07756129,
+            0.277398825,
+            0.206053227
+          ],
+          "rotation": [
+            0.135624617,
+            0.0699863657,
+            0.09293373,
+            -0.983906269
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0333333351,
+              "weight": 0.6666667,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 4,
+          "seconds": 0.06666668,
+          "position": [
+            0.0514231771,
+            0.277833223,
+            0.213663951
+          ],
+          "rotation": [
+            0.111410558,
+            0.115769833,
+            0.08308408,
+            -0.9835051
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.06666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 5,
+          "seconds": 0.100000009,
+          "position": [
+            0.0230713077,
+            0.272574544,
+            0.220680162
+          ],
+          "rotation": [
+            0.0777379,
+            0.161281362,
+            0.07150486,
+            -0.98124063
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.100000009,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 6,
+          "seconds": 0.13333334,
+          "position": [
+            -0.00344766281,
+            0.265677959,
+            0.224841222
+          ],
+          "rotation": [
+            0.04282275,
+            0.198510289,
+            0.0540630221,
+            -0.9776697
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.13333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 7,
+          "seconds": 0.166666672,
+          "position": [
+            -0.0204516053,
+            0.259740978,
+            0.2275036
+          ],
+          "rotation": [
+            0.0142587125,
+            0.2157195,
+            0.0331084356,
+            -0.9757902
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.166666672,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 8,
+          "seconds": 0.200000018,
+          "position": [
+            -0.0331949219,
+            0.2569115,
+            0.2263358
+          ],
+          "rotation": [
+            -0.0036983788,
+            0.227250889,
+            0.011377275,
+            -0.9737629
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.200000018,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 9,
+          "seconds": 0.233333334,
+          "position": [
+            0.0662599653,
+            0.263940573,
+            0.222458318
+          ],
+          "rotation": [
+            -0.0333583951,
+            0.0273930114,
+            0.0418755338,
+            -0.9981902
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.0,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 10,
+          "seconds": 0.266666681,
+          "position": [
+            0.07772784,
+            0.277760267,
+            0.2097804
+          ],
+          "rotation": [
+            0.00532797,
+            0.0161271729,
+            0.0548041,
+            -0.998352647
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.0333333351,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 11,
+          "seconds": 0.3,
+          "position": [
+            0.08621365,
+            0.297038764,
+            0.17902109
+          ],
+          "rotation": [
+            0.0613175035,
+            0.0121295787,
+            0.0392204151,
+            -0.997274041
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.06666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 12,
+          "seconds": 0.333333343,
+          "position": [
+            0.08399805,
+            0.298181832,
+            0.161423221
+          ],
+          "rotation": [
+            0.07104045,
+            0.0211540088,
+            0.0280594788,
+            -0.9968545
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.100000009,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 13,
+          "seconds": 0.366666675,
+          "position": [
+            0.0866239,
+            0.287059337,
+            0.15951629
+          ],
+          "rotation": [
+            0.0514995158,
+            0.0190024264,
+            0.0428377576,
+            -0.9975731
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.13333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 14,
+          "seconds": 0.4,
+          "position": [
+            0.08750411,
+            0.278309047,
+            0.1614222
+          ],
+          "rotation": [
+            0.0384825468,
+            0.01698339,
+            0.0527777635,
+            -0.997720242
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.166666672,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 15,
+          "seconds": 0.433333337,
+          "position": [
+            0.08380497,
+            0.2732057,
+            0.168000877
+          ],
+          "rotation": [
+            0.0312654078,
+            0.0175353959,
+            0.05425507,
+            -0.9978836
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.200000018,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 16,
+          "seconds": 0.466666669,
+          "position": [
+            0.0777652,
+            0.269158423,
+            0.1776812
+          ],
+          "rotation": [
+            0.0244139433,
+            0.0201026015,
+            0.0500699133,
+            -0.99824506
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.233333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 17,
+          "seconds": 0.50000006,
+          "position": [
+            0.07262493,
+            0.263500035,
+            0.190725967
+          ],
+          "rotation": [
+            0.01343742,
+            0.0234435089,
+            0.0447851345,
+            -0.998631239
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.266666681,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 18,
+          "seconds": 0.533333361,
+          "position": [
+            0.07031919,
+            0.255582154,
+            0.2052258
+          ],
+          "rotation": [
+            -0.00143817067,
+            0.0269224662,
+            0.0443661436,
+            -0.998651564
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 19,
+          "seconds": 0.5666667,
+          "position": [
+            0.07073304,
+            0.245422721,
+            0.217675135
+          ],
+          "rotation": [
+            -0.021676898,
+            0.0272028223,
+            0.0444291644,
+            -0.998407
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 20,
+          "seconds": 0.6,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 21,
+          "seconds": 0.6333334,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.400000036,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 22,
+          "seconds": 0.666666746,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.433333367,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 23,
+          "seconds": 0.700000048,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 24,
+          "seconds": 0.7333334,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 25,
+          "seconds": 0.7666667,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.533333361,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 26,
+          "seconds": 0.8000001,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.5666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 27,
+          "seconds": 0.8333334,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.6,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 28,
+          "seconds": 0.866666734,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.6333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 29,
+          "seconds": 0.9000001,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.6666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 30,
+          "seconds": 0.9333334,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.700000048,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 31,
+          "seconds": 0.966666758,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.733333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 32,
+          "seconds": 1.00000012,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.7666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 33,
+          "seconds": 1.03333342,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.8000001,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 34,
+          "seconds": 1.06666672,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.8333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 35,
+          "seconds": 1.1,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.866666734,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 36,
+          "seconds": 1.13333344,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.900000036,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 37,
+          "seconds": 1.16666675,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.9333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 38,
+          "seconds": 1.2,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 0.9666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 39,
+          "seconds": 1.23333347,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 1.0,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 40,
+          "seconds": 1.26666677,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 1.03333342,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 41,
+          "seconds": 1.30000007,
+          "position": [
+            0.0713121444,
+            0.238835171,
+            0.223169312
+          ],
+          "rotation": [
+            -0.0364158154,
+            0.0274841841,
+            0.04470202,
+            -0.9979581
+          ],
+          "states": [
+            {
+              "name": "stand_up_begin",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "rifle_shot_loop - Queued Clone",
+              "time": 1.06666672,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "rifle_shot_loop",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startClip": "player_look_right3",
+      "startClipSha256": "8e436ded13866414bf59a5595ce64f1a9ecb879d1bdb44eb51770d9a532246f7",
+      "fireClip": "player_fire_right3",
+      "fireClipSha256": "38141f384200d0ca1a51ac3ef3f09795e312ce4158bf0d062a168eb5f39261c7",
+      "fadeSeconds": 0.02,
+      "frames": [
+        {
+          "frame": 2,
+          "seconds": 0.0,
+          "position": [
+            0.402014256,
+            0.158568054,
+            0.0300083477
+          ],
+          "rotation": [
+            -0.5347743,
+            -0.457768351,
+            -0.379890084,
+            -0.6001235
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 3,
+          "seconds": 0.0333333351,
+          "position": [
+            -0.0718897358,
+            0.1563833,
+            0.232611492
+          ],
+          "rotation": [
+            -0.270615637,
+            0.3658847,
+            0.0706675351,
+            -0.887638748
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0333333351,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 4,
+          "seconds": 0.06666668,
+          "position": [
+            -0.0187525637,
+            0.152978152,
+            0.251874864
+          ],
+          "rotation": [
+            -0.253433079,
+            0.276394,
+            0.08791589,
+            -0.922848463
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.06666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 5,
+          "seconds": 0.100000009,
+          "position": [
+            -0.0605077147,
+            0.171856567,
+            0.22996746
+          ],
+          "rotation": [
+            -0.240729034,
+            0.401489973,
+            0.0574550033,
+            -0.88179034
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.100000009,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 6,
+          "seconds": 0.13333334,
+          "position": [
+            0.00102773646,
+            0.194398373,
+            0.236784339
+          ],
+          "rotation": [
+            -0.19938159,
+            0.359951556,
+            0.05227396,
+            -0.9099174
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.13333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 7,
+          "seconds": 0.166666672,
+          "position": [
+            0.107942633,
+            0.208209574,
+            0.248640731
+          ],
+          "rotation": [
+            -0.201194376,
+            0.208052233,
+            0.0938844,
+            -0.952586532
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.166666672,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 8,
+          "seconds": 0.200000018,
+          "position": [
+            0.246887743,
+            0.2284472,
+            0.216369957
+          ],
+          "rotation": [
+            -0.178999484,
+            -0.0173541587,
+            0.164601922,
+            -0.9698272
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.200000018,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 9,
+          "seconds": 0.233333334,
+          "position": [
+            0.367044747,
+            0.253104627,
+            0.09782261
+          ],
+          "rotation": [
+            -0.08567473,
+            -0.321072519,
+            0.229132116,
+            -0.914916
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.233333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 10,
+          "seconds": 0.266666681,
+          "position": [
+            0.400305927,
+            0.224855408,
+            -0.0382741354
+          ],
+          "rotation": [
+            -0.0137378573,
+            -0.614541233,
+            0.250041485,
+            -0.7480841
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.266666681,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 11,
+          "seconds": 0.3,
+          "position": [
+            0.372814953,
+            0.209746629,
+            -0.118661165
+          ],
+          "rotation": [
+            0.0241570473,
+            -0.8205396,
+            0.22365886,
+            -0.525459647
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 12,
+          "seconds": 0.333333343,
+          "position": [
+            0.295474559,
+            0.201025665,
+            -0.141969219
+          ],
+          "rotation": [
+            0.0488985777,
+            -0.9573825,
+            0.167636514,
+            -0.230056733
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 13,
+          "seconds": 0.366666675,
+          "position": [
+            0.259755135,
+            0.211570337,
+            -0.132355928
+          ],
+          "rotation": [
+            0.052291885,
+            -0.989943266,
+            0.108184367,
+            -0.07466111
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 14,
+          "seconds": 0.4,
+          "position": [
+            0.25774923,
+            0.234887719,
+            -0.1313232
+          ],
+          "rotation": [
+            0.0549413934,
+            -0.9956299,
+            0.0513134,
+            -0.0554055125
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.400000036,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 15,
+          "seconds": 0.433333337,
+          "position": [
+            0.249000922,
+            0.245313689,
+            -0.129871309
+          ],
+          "rotation": [
+            0.0605803356,
+            -0.997324765,
+            0.025665313,
+            -0.0318617
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.433333367,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 16,
+          "seconds": 0.466666669,
+          "position": [
+            0.247853547,
+            0.249088854,
+            -0.130445063
+          ],
+          "rotation": [
+            0.0646283,
+            -0.9971928,
+            0.0220212638,
+            -0.03073976
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 17,
+          "seconds": 0.50000006,
+          "position": [
+            0.24852021,
+            0.247576118,
+            -0.13006109
+          ],
+          "rotation": [
+            0.06343935,
+            -0.997078657,
+            0.0275938213,
+            -0.03238484
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.0,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 18,
+          "seconds": 0.533333361,
+          "position": [
+            0.248388931,
+            0.249721482,
+            -0.082663
+          ],
+          "rotation": [
+            0.06770414,
+            -0.9968802,
+            0.0260288715,
+            -0.03112568
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.0333333351,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 19,
+          "seconds": 0.5666667,
+          "position": [
+            0.242635742,
+            0.245268166,
+            -0.08179128
+          ],
+          "rotation": [
+            0.0722923949,
+            -0.9968289,
+            0.0290522575,
+            -0.0161872916
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.06666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 20,
+          "seconds": 0.6,
+          "position": [
+            0.238468453,
+            0.2436567,
+            -0.0850968361
+          ],
+          "rotation": [
+            0.07166177,
+            -0.9970422,
+            0.0275251865,
+            -0.003710394
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.100000009,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 21,
+          "seconds": 0.6333334,
+          "position": [
+            0.23875539,
+            0.248137921,
+            -0.0906135142
+          ],
+          "rotation": [
+            0.07004925,
+            -0.9973452,
+            0.01907748,
+            -0.00566539
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.13333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 22,
+          "seconds": 0.666666746,
+          "position": [
+            0.239033714,
+            0.24821943,
+            -0.09710884
+          ],
+          "rotation": [
+            0.0688542,
+            -0.9974204,
+            0.0191223323,
+            -0.00681065861
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.166666672,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 23,
+          "seconds": 0.700000048,
+          "position": [
+            0.24077782,
+            0.248027861,
+            -0.107905343
+          ],
+          "rotation": [
+            0.0683476254,
+            -0.9973654,
+            0.0209682584,
+            -0.0123060029
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.200000018,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 24,
+          "seconds": 0.7333334,
+          "position": [
+            0.246114224,
+            0.248368889,
+            -0.123937428
+          ],
+          "rotation": [
+            0.06168578,
+            -0.9974486,
+            0.02510503,
+            -0.0257194415
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.233333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 25,
+          "seconds": 0.7666667,
+          "position": [
+            0.248025581,
+            0.24792774,
+            -0.1313788
+          ],
+          "rotation": [
+            0.0614870377,
+            -0.997246742,
+            0.0272162557,
+            -0.0312731
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.266666681,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 26,
+          "seconds": 0.8000001,
+          "position": [
+            0.248457864,
+            0.247163713,
+            -0.131217688
+          ],
+          "rotation": [
+            0.06318988,
+            -0.997081935,
+            0.02867043,
+            -0.0318291932
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 27,
+          "seconds": 0.8333334,
+          "position": [
+            0.248439953,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 28,
+          "seconds": 0.866666734,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 29,
+          "seconds": 0.9000001,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.400000036,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 30,
+          "seconds": 0.9333334,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.433333367,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 31,
+          "seconds": 0.966666758,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 32,
+          "seconds": 1.00000012,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 33,
+          "seconds": 1.03333342,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.533333361,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 34,
+          "seconds": 1.06666672,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.5666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 35,
+          "seconds": 1.1,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.6,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 36,
+          "seconds": 1.13333344,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.6333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 37,
+          "seconds": 1.16666675,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.6666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 38,
+          "seconds": 1.2,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.700000048,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 39,
+          "seconds": 1.23333347,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.733333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 40,
+          "seconds": 1.26666677,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.7666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 41,
+          "seconds": 1.30000007,
+          "position": [
+            0.2484399,
+            0.247154668,
+            -0.131221011
+          ],
+          "rotation": [
+            0.06317811,
+            -0.9970834,
+            0.0286833942,
+            -0.0317944139
+          ],
+          "states": [
+            {
+              "name": "player_look_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_right3 - Queued Clone",
+              "time": 0.8000001,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_right3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "startClip": "player_look_left3",
+      "startClipSha256": "a7a6a25eda2068ca8d3031f6afb94a0460855e4675336690e9c95d1e228e4804",
+      "fireClip": "player_fire_left3",
+      "fireClipSha256": "a628bcbfb8eb228980ca5056f6c0c17178c6917d6871cfbb82a9d8dcdf7d6fe8",
+      "fadeSeconds": 0.02,
+      "frames": [
+        {
+          "frame": 2,
+          "seconds": 0.0,
+          "position": [
+            0.402014256,
+            0.158568054,
+            0.0300083477
+          ],
+          "rotation": [
+            -0.5347743,
+            -0.457768351,
+            -0.379890084,
+            -0.6001235
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 3,
+          "seconds": 0.0333333351,
+          "position": [
+            -0.070646286,
+            0.170543924,
+            0.22973673
+          ],
+          "rotation": [
+            -0.249036074,
+            0.344741255,
+            0.0687076449,
+            -0.9024489
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0333333351,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 4,
+          "seconds": 0.06666668,
+          "position": [
+            -0.01985803,
+            0.153396517,
+            0.2501522
+          ],
+          "rotation": [
+            -0.263430178,
+            0.230180845,
+            0.105738342,
+            -0.9308282
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.06666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 5,
+          "seconds": 0.100000009,
+          "position": [
+            -0.115307137,
+            0.1518793,
+            0.230595022
+          ],
+          "rotation": [
+            -0.300463766,
+            0.42021513,
+            0.09011002,
+            -0.851481736
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.100000009,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 6,
+          "seconds": 0.13333334,
+          "position": [
+            -0.220320821,
+            0.140774712,
+            0.194914386
+          ],
+          "rotation": [
+            -0.336428046,
+            0.548744142,
+            0.0399163663,
+            -0.7642667
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.13333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 7,
+          "seconds": 0.166666672,
+          "position": [
+            -0.288238466,
+            0.169339716,
+            0.135907874
+          ],
+          "rotation": [
+            -0.311132342,
+            0.663711131,
+            -0.06367642,
+            -0.677222431
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.166666672,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 8,
+          "seconds": 0.200000018,
+          "position": [
+            -0.329271585,
+            0.186850369,
+            0.0620350353
+          ],
+          "rotation": [
+            -0.3334933,
+            0.7415897,
+            -0.133125991,
+            -0.566661
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.200000018,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 9,
+          "seconds": 0.233333334,
+          "position": [
+            -0.348940462,
+            0.2269309,
+            -0.0349989347
+          ],
+          "rotation": [
+            -0.2503309,
+            0.84576124,
+            -0.207705945,
+            -0.4229434
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.233333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 10,
+          "seconds": 0.266666681,
+          "position": [
+            -0.315243453,
+            0.21179156,
+            -0.127186969
+          ],
+          "rotation": [
+            -0.183369368,
+            0.9340152,
+            -0.2490553,
+            -0.178783342
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.266666681,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 11,
+          "seconds": 0.3,
+          "position": [
+            -0.3008752,
+            0.209805325,
+            -0.152352691
+          ],
+          "rotation": [
+            -0.140777469,
+            0.9535713,
+            -0.2623587,
+            -0.0452960767
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 12,
+          "seconds": 0.333333343,
+          "position": [
+            -0.3083594,
+            0.238178611,
+            -0.160915688
+          ],
+          "rotation": [
+            -0.0869633555,
+            0.984559655,
+            -0.151144922,
+            0.0153335724
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 13,
+          "seconds": 0.366666675,
+          "position": [
+            -0.315122932,
+            0.260870636,
+            -0.162871182
+          ],
+          "rotation": [
+            -0.0844135,
+            0.9950631,
+            -0.03283325,
+            0.0405722149
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 14,
+          "seconds": 0.4,
+          "position": [
+            -0.326502919,
+            0.264183819,
+            -0.1652585
+          ],
+          "rotation": [
+            -0.053504847,
+            0.9985475,
+            -0.00228852034,
+            -0.00593634
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.400000036,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 15,
+          "seconds": 0.433333337,
+          "position": [
+            -0.318148673,
+            0.24944897,
+            -0.169221759
+          ],
+          "rotation": [
+            -0.06678116,
+            0.9976633,
+            -0.014045,
+            -0.003350106
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.433333367,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 16,
+          "seconds": 0.466666669,
+          "position": [
+            -0.319163144,
+            0.250717342,
+            -0.168865144
+          ],
+          "rotation": [
+            -0.06686789,
+            0.997636437,
+            -0.0155825019,
+            -0.00284674973
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 17,
+          "seconds": 0.50000006,
+          "position": [
+            -0.322405338,
+            0.254418,
+            -0.16737169
+          ],
+          "rotation": [
+            -0.06537256,
+            0.99778223,
+            -0.0110850632,
+            -0.0059319
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.0,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 18,
+          "seconds": 0.533333361,
+          "position": [
+            -0.3218965,
+            0.255685478,
+            -0.112532109
+          ],
+          "rotation": [
+            -0.0619605556,
+            0.997996867,
+            -0.0113025308,
+            -0.00599161442
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.0333333351,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 19,
+          "seconds": 0.5666667,
+          "position": [
+            -0.330828458,
+            0.2538232,
+            -0.101139188
+          ],
+          "rotation": [
+            -0.0774477,
+            0.996856,
+            -0.00570383668,
+            -0.0157316271
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.06666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 20,
+          "seconds": 0.6,
+          "position": [
+            -0.327202827,
+            0.25328964,
+            -0.114930391
+          ],
+          "rotation": [
+            -0.0851638541,
+            0.996356368,
+            -0.0001463294,
+            -0.004666218
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.100000009,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 21,
+          "seconds": 0.6333334,
+          "position": [
+            -0.326658547,
+            0.253333628,
+            -0.1381017
+          ],
+          "rotation": [
+            -0.08570433,
+            0.996313453,
+            0.000579178333,
+            -0.00379863149
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.13333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 22,
+          "seconds": 0.666666746,
+          "position": [
+            -0.328938961,
+            0.25436753,
+            -0.1416671
+          ],
+          "rotation": [
+            -0.08452798,
+            0.9963823,
+            0.00186008215,
+            -0.008619397
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.166666672,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 23,
+          "seconds": 0.700000048,
+          "position": [
+            -0.328700751,
+            0.254705966,
+            -0.151980788
+          ],
+          "rotation": [
+            -0.07582256,
+            0.997047,
+            -0.00241243839,
+            -0.0119640492
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.200000018,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 24,
+          "seconds": 0.7333334,
+          "position": [
+            -0.325020164,
+            0.254024327,
+            -0.162603915
+          ],
+          "rotation": [
+            -0.06848459,
+            0.997562,
+            -0.009368718,
+            -0.009635935
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.233333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 25,
+          "seconds": 0.7666667,
+          "position": [
+            -0.322575063,
+            0.252828777,
+            -0.167403281
+          ],
+          "rotation": [
+            -0.0671711341,
+            0.9976218,
+            -0.0139580667,
+            -0.006647669
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.266666681,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 26,
+          "seconds": 0.8000001,
+          "position": [
+            -0.323022783,
+            0.2532654,
+            -0.167672783
+          ],
+          "rotation": [
+            -0.06611164,
+            0.997701943,
+            -0.0131009221,
+            -0.006975375
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 27,
+          "seconds": 0.8333334,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 28,
+          "seconds": 0.866666734,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 29,
+          "seconds": 0.9000001,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.400000036,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 30,
+          "seconds": 0.9333334,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.433333367,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 31,
+          "seconds": 0.966666758,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 32,
+          "seconds": 1.00000012,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 33,
+          "seconds": 1.03333342,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.533333361,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 34,
+          "seconds": 1.06666672,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.5666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 35,
+          "seconds": 1.1,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.6,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 36,
+          "seconds": 1.13333344,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.6333334,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 37,
+          "seconds": 1.16666675,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.6666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 38,
+          "seconds": 1.2,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.700000048,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 39,
+          "seconds": 1.23333347,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.733333349,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 40,
+          "seconds": 1.26666677,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.7666667,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        },
+        {
+          "frame": 41,
+          "seconds": 1.30000007,
+          "position": [
+            -0.3224054,
+            0.254417956,
+            -0.167371452
+          ],
+          "rotation": [
+            -0.06537244,
+            0.997781754,
+            -0.0110851228,
+            -0.005931999
+          ],
+          "states": [
+            {
+              "name": "player_look_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            },
+            {
+              "name": "player_fire_left3 - Queued Clone",
+              "time": 0.8000001,
+              "weight": 1.0,
+              "enabled": true
+            },
+            {
+              "name": "player_fire_left3",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
