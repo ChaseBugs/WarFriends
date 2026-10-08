@@ -1681,7 +1681,7 @@ internal static class CombatContentTests
             chooseInfantryRepositionFraction: () => 0.999f,
             chooseInfantryPlayer: _ => 0,
             chooseInfantryShieldRoll: () => 0.5f,
-            chooseInfantryBatchSize: (min, _) => min,
+            chooseInfantryBatchSize: (min, max) => max > min ? max - 1 : min,
             chooseInfantryRealShotRoll: () => 0f);
         arrivalRuntime.Admit(firstPlayer);
         arrivalRuntime.Admit(secondPlayer);
@@ -1791,7 +1791,9 @@ internal static class CombatContentTests
         ArmyBaseShotStats sourceBatch = content.Army.ComposeShot(
             "ID_UNIT-ASSAULT", arrivalEnemy.Level, null, null);
         int expectedBatchCount = Math.Clamp(
-            sourceBatch.FireBatchSizeMin, 0, 14);
+            sourceBatch.FireBatchSizeMax > sourceBatch.FireBatchSizeMin
+                ? sourceBatch.FireBatchSizeMax - 1
+                : sourceBatch.FireBatchSizeMin, 0, 14);
         int expectedRealMask = sourceBatch.ProbabilityOfRealShot > 0
             ? (1 << expectedBatchCount) - 1 : 0;
         if (crawlWindup?.AnimationClip != "stand_up_begin" ||
@@ -1812,16 +1814,59 @@ internal static class CombatContentTests
         arrivalRuntime.Advance(expectedCrawlCallback);
         if (arrivalRuntime.InfantryShotWindup(
                 arrivalEnemy.EntityId)?.CallbackStartedTick !=
-            expectedCrawlCallback)
+                expectedCrawlCallback ||
+            arrivalRuntime.InfantryRoundIntents(
+                arrivalEnemy.EntityId).Count != 0)
             throw new Exception("Co-op crawl callback missed its host tick.");
         arrivalRuntime.Advance(expectedCrawlCallback + 1);
+        IReadOnlyList<CoopInfantryRoundIntent> firstRound = arrivalRuntime
+            .InfantryRoundIntents(arrivalEnemy.EntityId);
+        if (firstRound.Count != 1 || firstRound[0].RoundIndex != 0 ||
+            firstRound[0].Tick != expectedCrawlCallback + 1 ||
+            firstRound[0].Real != ((expectedRealMask & 1) != 0))
+            throw new Exception("Co-op rifle missed its first host round intent.");
+        ulong secondRoundTick = rifle.NextRoundEligibleTick(firstRound[0].Tick);
+        arrivalRuntime.Advance(secondRoundTick - 1);
+        if (arrivalRuntime.InfantryRoundIntents(
+                arrivalEnemy.EntityId).Count != 1)
+            throw new Exception("Co-op rifle scheduled a round before its cadence.");
+        arrivalRuntime.Advance(secondRoundTick);
+        IReadOnlyList<CoopInfantryRoundIntent> secondRound = arrivalRuntime
+            .InfantryRoundIntents(arrivalEnemy.EntityId);
+        if (expectedBatchCount < 2 || secondRound.Count != 2 ||
+            secondRound[1].RoundIndex != 1 ||
+            secondRound[1].Tick != secondRoundTick ||
+            secondRound[1].Real != ((expectedRealMask & 2) != 0))
+            throw new Exception("Co-op rifle lost its second batch round.");
+        ulong lastRoundTick = secondRoundTick;
+        for (int index = 2; index < expectedBatchCount; index++)
+        {
+            lastRoundTick = rifle.NextRoundEligibleTick(lastRoundTick);
+            arrivalRuntime.Advance(lastRoundTick);
+            IReadOnlyList<CoopInfantryRoundIntent> rounds = arrivalRuntime
+                .InfantryRoundIntents(arrivalEnemy.EntityId);
+            if (rounds.Count != index + 1 ||
+                rounds[index].RoundIndex != index ||
+                rounds[index].Tick != lastRoundTick ||
+                rounds[index].Real !=
+                    ((expectedRealMask & (1 << index)) != 0))
+                throw new Exception("Co-op rifle lost a prepared batch round.");
+        }
+        ulong afterBatch = rifle.NextRoundEligibleTick(lastRoundTick);
+        arrivalRuntime.Advance(afterBatch);
+        if (arrivalRuntime.InfantryRoundIntents(
+                arrivalEnemy.EntityId).Count != expectedBatchCount)
+            throw new Exception("Co-op rifle exceeded its source batch size.");
+        arrivalRuntime.Advance(afterBatch + 1);
         if (!arrivalRuntime.ApplyHostEnemyDamage(arrivalEnemy.EntityId,
-                heldEnemy.Health, expectedCrawlCallback + 1) ||
+                heldEnemy.Health, afterBatch + 1) ||
             arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null ||
             arrivalRuntime.InfantryFirstPlayerTarget(
                 arrivalEnemy.EntityId) != null ||
             arrivalRuntime.InfantryShotWindup(
                 arrivalEnemy.EntityId) != null ||
+            arrivalRuntime.InfantryRoundIntents(
+                arrivalEnemy.EntityId).Count != 0 ||
             arrivalRuntime.PlaceFirstAssaulterPlayerTarget(
                 arrivalEnemy.EntityId) != null)
             throw new Exception("Dead co-op infantry retained a point-arrival marker.");

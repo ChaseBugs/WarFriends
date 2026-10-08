@@ -58,6 +58,9 @@ internal sealed record CoopInfantryShotWindup(
     ulong? CallbackStartedTick, CoopInfantryShotBatch Batch,
     string WeaponPrefabGuid, float WeaponCadenceSeconds);
 
+internal sealed record CoopInfantryRoundIntent(
+    ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real);
+
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
     string SourcePath, Vector3 Position, ulong Tick);
@@ -107,6 +110,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts = [];
     private readonly Dictionary<ulong, CoopInfantryShotWindup>
         infantryShotWindups = [];
+    private readonly Dictionary<ulong, List<CoopInfantryRoundIntent>>
+        infantryRoundIntents = [];
     private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
     private readonly Dictionary<ulong, ulong> nextObstacleRepositionTicks = [];
@@ -428,6 +433,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopInfantryShotWindup? InfantryShotWindup(ulong entityId) =>
         infantryShotWindups.GetValueOrDefault(entityId);
 
+    internal IReadOnlyList<CoopInfantryRoundIntent> InfantryRoundIntents(
+        ulong entityId) => infantryRoundIntents.TryGetValue(entityId,
+            out List<CoopInfantryRoundIntent>? rounds)
+            ? rounds.ToArray() : [];
+
     internal ulong? NextCornerChangeTick(ulong entityId) =>
         nextCornerChangeTicks.TryGetValue(entityId, out ulong next)
             ? next : null;
@@ -695,6 +705,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceObstacleRepositions();
             ChooseFirstInfantryTargets();
             AdvanceInfantryShotWindups();
+            AdvanceInfantryRoundIntents();
             AdvanceCornerRetargets();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
@@ -1001,6 +1012,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerFirstShotAttempts.Remove(enemy.EntityId);
         cornerLatestShotAttempts.Remove(enemy.EntityId);
         infantryShotWindups.Remove(enemy.EntityId);
+        infantryRoundIntents.Remove(enemy.EntityId);
         nextCornerChangeTicks.Remove(enemy.EntityId);
         obstacleRepositionStartedTicks.Remove(enemy.EntityId);
         nextObstacleRepositionTicks.Remove(enemy.EntityId);
@@ -1358,6 +1370,41 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             {
                 CallbackStartedTick = tick
             };
+            stateRevision++;
+        }
+    }
+
+    private void AdvanceInfantryRoundIntents()
+    {
+        if (assaulterWeapon == null)
+            return;
+        foreach ((ulong entityId, CoopInfantryShotWindup windup)
+            in infantryShotWindups)
+        {
+            if (windup.CallbackStartedTick is not ulong callbackTick ||
+                windup.Batch.Count == 0)
+                continue;
+            if (!infantryRoundIntents.TryGetValue(entityId,
+                    out List<CoopInfantryRoundIntent>? rounds))
+            {
+                rounds = [];
+                infantryRoundIntents.Add(entityId, rounds);
+            }
+            if (rounds.Count >= windup.Batch.Count)
+                continue;
+
+            // WaitForSeconds resumes after EnemyController.Update. The next
+            // update first polls ShootingFromWeapon; subsequent Gun.willShoot
+            // checks require strictly more than the source rifle cadence.
+            ulong nextTick = rounds.Count == 0
+                ? checked(callbackTick + 1)
+                : assaulterWeapon.NextRoundEligibleTick(rounds[^1].Tick);
+            if (tick < nextTick)
+                continue;
+            int index = rounds.Count;
+            bool real = (windup.Batch.RealShotMask & (1 << index)) != 0;
+            rounds.Add(new CoopInfantryRoundIntent(entityId, index,
+                tick, real));
             stateRevision++;
         }
     }
@@ -1727,6 +1774,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             cornerFirstShotAttempts.Remove(entityId);
             cornerLatestShotAttempts.Remove(entityId);
             infantryShotWindups.Remove(entityId);
+            infantryRoundIntents.Remove(entityId);
             nextCornerChangeTicks.Remove(entityId);
             obstacleRepositionStartedTicks.Remove(entityId);
             nextObstacleRepositionTicks.Remove(entityId);
@@ -2364,6 +2412,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerFirstShotAttempts.Clear();
         cornerLatestShotAttempts.Clear();
         infantryShotWindups.Clear();
+        infantryRoundIntents.Clear();
         nextCornerChangeTicks.Clear();
         obstacleRepositionStartedTicks.Clear();
         nextObstacleRepositionTicks.Clear();
