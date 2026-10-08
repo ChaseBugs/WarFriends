@@ -441,6 +441,16 @@ internal static class CombatContentTests
                 shield.MaxHealth != expectedMaximum ||
                 shield.Health != expectedMaximum || shield.Destroyed))
             throw new Exception("Boss shield starts differ from ordered mission overrides.");
+        var missionShields = new CoopShieldMatchSimulation(
+            shieldBossAllocation, shieldStates, content.Shields, 4, 0);
+        if (!missionShields.Snapshot().SequenceEqual(initialShields) ||
+            missionShields.ApplyHostShot(5, "Google2u.AssaultRifle_AK47",
+                10f, 0)?.Health != expectedMaximum - 10f)
+            throw new Exception("Mission shield initialization or host damage changed.");
+        missionShields.Advance(1, [5]);
+        if (missionShields.Snapshot().Single(shield =>
+                shield.CoverIndex == 5).Health != expectedMaximum - 10f)
+            throw new Exception("Mission-disabled shield regeneration ran for an occupied cover.");
         try
         {
             _ = CoopShieldRankResolver.AlliedRank(coop);
@@ -485,7 +495,7 @@ internal static class CombatContentTests
         }
 
         MissionMapRule bossMap = catalog.MapForMission(4);
-        MatchManifest bossAllocation = coop with
+        MatchManifest bossAllocation = shieldAllocation with
         {
             MissionIndex = 4,
             MapId = bossMap.Scene,
@@ -523,7 +533,7 @@ internal static class CombatContentTests
             map.Source == "Assets/Scenes/" + bossMap.Scene + ".unity");
         var bossSources = new CoopBossRuntimeSources(bossAnchors, bossPaths,
             content.ArmySpawnPoints, bossScene, bossHealth, bossAttackTimings,
-            bossLoadouts, bossWeaponContent);
+            bossLoadouts, bossWeaponContent, shieldStates);
         var bossRuntime = new CoopMatchRuntime(bossAllocation, catalog,
             spawnPoints, routes, enemyCombat, bossSources,
             _ => 0, _ => 0, () => 0f);
@@ -549,7 +559,14 @@ internal static class CombatContentTests
         MatchSnapshot bossStart = bossRuntime.Snapshot();
         BattleCoopBossState? transmittedBoss = MatchSnapshot.Parser
             .ParseFrom(bossStart.ToByteArray()).Coop.Boss;
+        int transmittedShields = MatchSnapshot.Parser
+            .ParseFrom(bossStart.ToByteArray()).Shields.Count;
         if (bossStart.Phase != BattlePhase.Running ||
+            bossStart.Shields.Count != 4 ||
+            transmittedShields != 4 ||
+            bossStart.Shields.Any(shield => shield.OwnerFraction != 2 ||
+                shield.Health != content.Shields.Health(3) ||
+                shield.MaxHealth != content.Shields.Health(3)) ||
             bossStart.Coop.Boss?.EntityId != CoopMissionEngine.BossEntityId ||
             transmittedBoss?.EntityId != CoopMissionEngine.BossEntityId ||
             transmittedBoss.MaxHealth != bossStart.Coop.Boss.MaxHealth ||
@@ -571,6 +588,12 @@ internal static class CombatContentTests
             bossStart.Players.Single(player => player.PlayerId == bossFirstPlayer)
                 .CoverIndex != 5)
             throw new Exception("Boss allies started outside multiplayer fraction two.");
+        ShieldMutation? destroyedAllyCover = bossRuntime.ApplyHostShieldShot(
+            5, "Google2u.AssaultRifle_AK47", 100_000f);
+        if (destroyedAllyCover?.Destroyed != true ||
+            bossRuntime.Snapshot().Shields.Single(shield =>
+                shield.CoverIndex == 5).Health != 0)
+            throw new Exception("Host shield impact did not destroy the allied cover.");
         MatchReply bossMove = bossRuntime.Command(bossFirstPlayer, new MatchCommand
         {
             CommandId = 2,
@@ -596,7 +619,9 @@ internal static class CombatContentTests
             throw new Exception("Boss mission spawned an AI outside enemy fraction one.");
         bossRuntime.Advance(200);
         if (bossRuntime.BossAttackCadence?.WindowCount != 2 ||
-            bossRuntime.BossAttackCadence.WindowOpen != true)
+            bossRuntime.BossAttackCadence.WindowOpen != true ||
+            bossRuntime.Snapshot().Shields.Single(shield =>
+                shield.CoverIndex == 5).Destroyed)
             throw new Exception("Boss attack windows lost source shooting timing.");
         BattlePlayerState movedBossAlly = bossRuntime.Snapshot().Players.Single(
             player => player.PlayerId == bossFirstPlayer);

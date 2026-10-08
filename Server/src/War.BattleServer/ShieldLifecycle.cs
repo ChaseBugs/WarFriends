@@ -5,9 +5,10 @@ namespace War.BattleServer;
 internal sealed class ShieldLifecycle
 {
     private readonly ShieldSourceCatalog policy;
-    private readonly float maximum;
+    private float maximum;
     private ulong lastTick;
     private ulong destroyedTick;
+    private bool missionStartApplied;
     internal float Health {get;private set;}
     internal float MaxHealth=>maximum;
     internal bool Destroyed {get;private set;}
@@ -21,6 +22,26 @@ internal sealed class ShieldLifecycle
         this.policy=policy??throw new ArgumentNullException(nameof(policy));
         if(startingTick>10000000)throw new InvalidDataException("Invalid shield starting tick.");
         maximum=policy.Health(provenZeroBasedLevel);Health=maximum;lastTick=startingTick;
+    }
+    internal void ApplyMissionStart(CoopShieldStart? start)
+    {
+        if (start == null)
+            return;
+        if (missionStartApplied || destroyedTick != 0 || Destroyed || Health != maximum ||
+            !float.IsFinite(start.HealthRatio) || start.HealthRatio is < 0 or > 10 ||
+            !float.IsFinite(start.MaxHealthRatio) || start.MaxHealthRatio is < 0 or > 10)
+            throw new InvalidDataException("Invalid mission shield initialization.");
+        float baseHealth = maximum;
+        // Mission.OnAfterGameStarted computes current health before maximum.
+        float initialHealth = start.HealthRatio * start.MaxHealthRatio * baseHealth;
+        float initialMaximum = start.MaxHealthRatio * baseHealth;
+        if (!float.IsFinite(initialHealth) || !float.IsFinite(initialMaximum))
+            throw new InvalidDataException("Mission shield health overflow.");
+        Health = initialHealth;
+        maximum = initialMaximum;
+        CanRegenerate = start.Regenerate;
+        AutoRepair = start.AutoRepair;
+        missionStartApplied = true;
     }
     internal void ApplyShot(string weaponId,float sourceDamage,ulong tick)
     {

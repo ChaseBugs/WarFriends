@@ -13,7 +13,8 @@ internal sealed record CoopBossRuntimeSources(
     CoopBotHealthCatalog Health,
     CoopBossAttackTimingCatalog AttackTimings,
     CoopBossLoadoutCatalog Loadouts,
-    BattleCombatContent WeaponContent);
+    BattleCombatContent WeaponContent,
+    CoopShieldStateCatalog ShieldStates);
 
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
@@ -58,6 +59,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopBotHealth? bossHealth;
     private readonly CoopBossAttackTiming? bossAttackTiming;
     private readonly BattleCombatContent? bossWeaponContent;
+    private readonly CoopShieldStateCatalog? shieldStates;
+    private CoopShieldMatchSimulation? alliedShields;
     internal CoopBossLoadout? BossLoadout { get; }
     private readonly Func<float>? chooseAttackFraction;
     private CoopBossCombatState? boss;
@@ -116,6 +119,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             bossAttackTiming = bossSources.AttackTimings.ForMission(missionIndex);
             BossLoadout = bossSources.Loadouts.ForMission(missionIndex);
             bossWeaponContent = bossSources.WeaponContent;
+            shieldStates = bossSources.ShieldStates;
+            _ = CoopShieldRankResolver.AlliedRank(manifest);
             this.chooseAttackFraction = chooseAttackFraction;
             var selector = new CoopBossAiSpawnSelector(catalog,
                 bossSources.Spawns, bossSources.Map, missionIndex);
@@ -231,6 +236,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             tick++;
             foreach (Participant participant in participants.Values)
                 AdvancePlayerMovement(participant);
+            if (alliedShields != null && alliedShields.Advance(tick,
+                participants.Values
+                    .Where(participant => !participant.Dead &&
+                        participant.Route == null)
+                    .Select(participant => participant.CoverIndex).ToArray()))
+                stateRevision++;
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
             {
@@ -410,6 +421,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                         bossAttackTiming!, tick, chooseAttackFraction);
                     BossArsenal = new CoopBossArsenal(
                         BossLoadout!, bossWeaponContent!, tick);
+                    alliedShields = new CoopShieldMatchSimulation(manifest,
+                        shieldStates!, bossWeaponContent!.Shields,
+                        alliedFirstCover, tick);
                 }
                 phase = BattlePhase.Running;
             }
@@ -532,6 +546,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return result;
     }
 
+    internal ShieldMutation? ApplyHostShieldShot(
+        int coverIndex, string weaponId, float damage)
+    {
+        if (phase != BattlePhase.Running || alliedShields == null)
+            return null;
+        ShieldMutation? mutation = alliedShields.ApplyHostShot(
+            coverIndex, weaponId, damage, tick);
+        if (mutation != null)
+            stateRevision++;
+        return mutation;
+    }
+
     public MatchReply Reply(ulong commandId, string code)
     {
         return new MatchReply
@@ -572,6 +598,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
         snapshot.Coop.EnemySpawns.AddRange(
             enemySpawns.Select(enemy => enemy.Clone()));
+        if (alliedShields != null)
+            snapshot.Shields.AddRange(alliedShields.Snapshot().Select(shield =>
+                new BattleShieldState
+                {
+                    CoverIndex = shield.CoverIndex,
+                    OwnerFraction = shield.OwnerFraction,
+                    Health = shield.Health,
+                    MaxHealth = shield.MaxHealth,
+                    Destroyed = shield.Destroyed,
+                    Revision = shield.Revision
+                }));
         if (boss != null)
         {
             snapshot.Coop.Boss = new BattleCoopBossState
