@@ -492,24 +492,6 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return true;
     }
 
-    /// <summary>
-    /// A successful objective earns a source mission score for each ally from
-    /// that ally's host health and elapsed match time. This does not grant a
-    /// currency reward or accept the Client's reported score.
-    /// </summary>
-    internal MissionScoreResult? WinningScoreFor(string playerId)
-    {
-        if (mission.Outcome != MissionOutcome.Succeeded ||
-            !participants.TryGetValue(playerId, out Participant? player) ||
-            tick < mission.StartTick)
-            return null;
-        float healthRatio = player.Health / player.Definition.Combat!.MaxHealth;
-        float elapsedFraction = (tick - mission.StartTick) /
-            (float)(missionRule.TimeSeconds * MatchManifest.TickRate);
-        return MissionScoreCalculator.Calculate(
-            missionRule, healthRatio, elapsedFraction);
-    }
-
     public void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations)
     {
         ArgumentNullException.ThrowIfNull(allocations);

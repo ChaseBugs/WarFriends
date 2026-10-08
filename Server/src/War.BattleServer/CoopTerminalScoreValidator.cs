@@ -44,13 +44,14 @@ internal static class CoopTerminalScoreValidator
                 : snapshot.Coop.ObjectiveScore != 0) ||
             snapshot.Coop.DeadlineTick != snapshot.StartTick + durationTicks ||
             snapshot.EndTick < snapshot.StartTick ||
-            snapshot.EndTick >= snapshot.Coop.DeadlineTick ||
             snapshot.Players.Count != 2 ||
             snapshot.Coop.ParticipantIds.Count != 2 ||
             !snapshot.Coop.ParticipantIds.SequenceEqual(
                 manifest.Players.Select(player => player.PlayerId)
                     .Order(StringComparer.Ordinal)))
             throw new InvalidDataException("Co-op success differs from source mission.");
+
+        ValidateObjective(snapshot, rule);
 
         if (rule.MissionType == "Score")
         {
@@ -105,5 +106,47 @@ internal static class CoopTerminalScoreValidator
         if (expectedScores.Count == 0 ||
             snapshot.Coop.SuccessScores.Count != expectedScores.Count)
             throw new InvalidDataException("Co-op success has an invalid score roster.");
+    }
+
+    private static void ValidateObjective(MatchSnapshot snapshot, MissionRule rule)
+    {
+        BattleCoopState state = snapshot.Coop;
+        int confirmedDeaths = state.EnemySpawns.Count(enemy =>
+            enemy.DeathTick != 0 && enemy.Health == 0 &&
+            enemy.DeathTick >= enemy.SpawnTick &&
+            enemy.DeathTick <= snapshot.EndTick);
+        if (state.EnemySpawns.Any(enemy => enemy.DeathTick != 0 &&
+                (enemy.Health != 0 || enemy.DeathTick < enemy.SpawnTick ||
+                 enemy.DeathTick > snapshot.EndTick)))
+            throw new InvalidDataException("Co-op enemy death ledger is inconsistent.");
+
+        switch (rule.MissionType)
+        {
+            case "KillXEnemies":
+                if (snapshot.EndTick >= state.DeadlineTick ||
+                    state.EnemyKills != rule.Objective ||
+                    confirmedDeaths != state.EnemyKills || state.Boss != null)
+                    throw new InvalidDataException("Kill mission lacks its source target.");
+                break;
+            case "SurviveXSeconds":
+                if (snapshot.EndTick != state.DeadlineTick ||
+                    state.EnemyKills != 0 || state.Boss != null)
+                    throw new InvalidDataException("Survive mission ended before its deadline.");
+                break;
+            case "Score":
+                if (snapshot.EndTick >= state.DeadlineTick ||
+                    state.EnemyKills != 0 || state.Boss != null)
+                    throw new InvalidDataException("Score mission exceeded its deadline.");
+                break;
+            case "KillOpponent":
+                if (snapshot.EndTick >= state.DeadlineTick || state.EnemyKills != 0 ||
+                    state.Boss?.EntityId != CoopMissionEngine.BossEntityId ||
+                    state.Boss.Health != 0 ||
+                    state.Boss.DeathTick != snapshot.EndTick)
+                    throw new InvalidDataException("Boss mission lacks a host death.");
+                break;
+            default:
+                throw new InvalidDataException("Unknown co-op mission objective.");
+        }
     }
 }

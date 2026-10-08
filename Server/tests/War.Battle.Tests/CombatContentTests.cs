@@ -1205,6 +1205,17 @@ internal static class CombatContentTests
             throw new Exception("Boss success score did not use frozen host outcome.");
         CoopTerminalScoreValidator.ValidateSuccess(
             completedBoss, bossAllocation, catalog);
+        MatchSnapshot forgedBossDeath = completedBoss.Clone();
+        forgedBossDeath.Coop.Boss.DeathTick = 0;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedBossDeath, bossAllocation, catalog);
+            throw new Exception("A boss success without a host death was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         MatchSnapshot forgedBossScore = completedBoss.Clone();
         forgedBossScore.Coop.SuccessScores[0].Score++;
         try
@@ -1420,8 +1431,6 @@ internal static class CombatContentTests
         };
         damagedRuntime.Command(firstPlayer, damageReady);
         damagedRuntime.Command(secondPlayer, damageReady);
-        if (damagedRuntime.WinningScoreFor(firstPlayer) != null)
-            throw new Exception("Unfinished co-op missions cannot publish success scores.");
         damagedRuntime.Advance(8);
         BattleCoopEnemySpawn undamaged = damagedRuntime.Snapshot().Coop.EnemySpawns.Single();
         undamaged.Health = 0;
@@ -1466,12 +1475,59 @@ internal static class CombatContentTests
             damagedRuntime.Snapshot().Coop.EnemyKills != catalog.Get(0).Objective ||
             damagedRuntime.Snapshot().RewardEligible)
             throw new Exception("Ten confirmed source enemy deaths must finish mission zero.");
-        if (damagedRuntime.WinningScoreFor(firstPlayer) is not
-                { Score: 117, Stars: 3 } ||
-            damagedRuntime.WinningScoreFor(secondPlayer) is not
-                { Score: 117, Stars: 3 } ||
-            damagedRuntime.WinningScoreFor("not-an-ally") != null)
-            throw new Exception("Successful co-op scores need host health and a signed ally.");
+        MatchSnapshot completedKill = damagedRuntime.TerminalEvidenceSnapshot();
+        CoopTerminalScoreValidator.ValidateSuccess(
+            completedKill, coop, catalog);
+        MatchSnapshot forgedKillCount = completedKill.Clone();
+        forgedKillCount.Coop.EnemyKills--;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedKillCount, coop, catalog);
+            throw new Exception("A kill success without its target was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+        }
+
+        MissionRule surviveRule = catalog.Get(1);
+        MissionMapRule surviveMap = catalog.MapForMission(1);
+        MatchManifest surviveAllocation = coop with
+        {
+            MissionIndex = 1,
+            MapId = surviveMap.Scene,
+            MapRevision = surviveMap.SceneSha256,
+            DurationSeconds = surviveRule.TimeSeconds
+        };
+        var surviveRuntime = new CoopMatchRuntime(surviveAllocation,
+            catalog, spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0);
+        surviveRuntime.Admit(firstPlayer);
+        surviveRuntime.Admit(secondPlayer);
+        var surviveReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = surviveRuntime.ManifestHash } };
+        surviveRuntime.Command(firstPlayer, surviveReady);
+        surviveRuntime.Command(secondPlayer, surviveReady);
+        surviveRuntime.Advance((ulong)surviveRule.TimeSeconds * MatchManifest.TickRate);
+        MatchSnapshot survived = surviveRuntime.TerminalEvidenceSnapshot();
+        if (!surviveRuntime.Terminal || !survived.Coop.Completed ||
+            survived.EndTick != survived.Coop.DeadlineTick ||
+            survived.Coop.SuccessScores.Count != 2)
+            throw new Exception("Survive mission must succeed at the source deadline.");
+        CoopTerminalScoreValidator.ValidateSuccess(
+            survived, surviveAllocation, catalog);
+        MatchSnapshot earlySurvival = survived.Clone();
+        earlySurvival.EndTick--;
+        earlySurvival.ServerTick--;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                earlySurvival, surviveAllocation, catalog);
+            throw new Exception("A Survive mission accepted an early terminal result.");
+        }
+        catch (InvalidDataException)
+        {
+        }
 
         const int scoreMissionIndex = 3;
         MissionMapRule scoreMap = catalog.MapForMission(scoreMissionIndex);
