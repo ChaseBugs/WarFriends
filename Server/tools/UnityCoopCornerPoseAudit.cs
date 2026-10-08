@@ -107,6 +107,33 @@ public static class UnityCoopCornerPoseAudit
                     rotation = Values(enemy.transform.rotation)
                 });
             }
+            string lookClip = (bool)corner["cornerRightSide"]
+                ? "player_look_right3" : "player_look_left3";
+            if (animation[lookClip] == null)
+                throw new InvalidOperationException("Missing source look clip.");
+            var uncoverSamples = new List<object>();
+            foreach (int uncoverTick in new[] { 1, 4, 8, 9 })
+            {
+                float seconds = uncoverTick / 30f;
+                Sample(animation, "T_pose", 1f);
+                Sample(animation, lookClip, seconds /
+                    animation[lookClip].length);
+                turn.Sample(uncoverTick / 9f, uncoverTick == 9);
+                Physics.SyncTransforms();
+                uncoverSamples.Add(new
+                {
+                    tick = uncoverTick,
+                    parts = colliders.Select(collider => new
+                    {
+                        path = PathOf(collider.transform),
+                        center = Values(collider.transform.TransformPoint(
+                            collider is BoxCollider box
+                                ? box.center
+                                : ((SphereCollider)collider).center)),
+                        rotation = Values(collider.transform.rotation)
+                    }).ToArray()
+                });
+            }
             File.WriteAllText(outputPath, JsonConvert.SerializeObject(new
             {
                 version = 1,
@@ -120,7 +147,9 @@ public static class UnityCoopCornerPoseAudit
                 rotation = Values(rotation),
                 samples,
                 turnTarget = Values(turnTarget),
-                turnSamples
+                turnSamples,
+                lookClip,
+                uncoverSamples
             }, Formatting.Indented));
             Debug.Log("COOP_CORNER_POSE_AUDIT_PASSED samples=" +
                 samples.Count);

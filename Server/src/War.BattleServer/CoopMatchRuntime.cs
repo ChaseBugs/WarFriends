@@ -1767,6 +1767,36 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Samples the corner uncover while the source root turn is in progress.
+    /// These colliders are diagnostic until the full shot lifecycle is proven.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceCornerUncoverHitboxes(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || enemyPoses == null ||
+            !infantryShotWindups.TryGetValue(entityId,
+                out CoopInfantryShotWindup? windup) ||
+            windup.AnimationClip is not
+                ("player_look_right3" or "player_look_left3") ||
+            tick <= windup.StartTick || tick > windup.StartTick + 9)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0 &&
+            spawn.PoseTick == tick && spawn.CurrentRotation != null);
+        if (enemy == null)
+            return [];
+        BattleJointRotation facing = enemy.CurrentRotation!;
+        Quaternion rotation = new(facing.X, facing.Y, facing.Z, facing.W);
+        Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        float seconds = (tick - windup.StartTick) /
+            (float)MatchManifest.TickRate;
+        return enemyPoses.Place(windup.AnimationClip, position,
+            rotation, seconds, $"coop/{entityId}/");
+    }
+
+    /// <summary>
     /// Places the recovered Assault Helicopter body and front glass at its
     /// current host pose. The five body meshes, body box, and front glass
     /// retain distinct damage-part identities.
@@ -1942,6 +1972,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.EntityId);
         if (parts.Count == 0)
             parts = PlaceSettledCornerAssaulterHitboxes(enemy.EntityId);
+        if (parts.Count == 0)
+            parts = PlaceCornerUncoverHitboxes(enemy.EntityId);
         return parts.Select(part => new DynamicShotTarget(enemy.EntityId,
             0, 23, part, ArmyInfantry: true)).ToArray();
     }

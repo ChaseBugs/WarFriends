@@ -597,7 +597,7 @@ internal static class CombatContentTests
         byte[] source = File.ReadAllBytes(path);
         string digest = Convert.ToHexStringLower(SHA256.HashData(source));
         if (digest !=
-            "94588c7674250869368a60a209276099b1d95896f4f41496ec879411ae30a9ed")
+            "ba75e00e0c11909cf4c46542b1db1bf5ce350dce39f0f0a2e100745cc2c2a133")
             throw new Exception("Unity corner pose reference changed.");
 
         using JsonDocument document = JsonDocument.Parse(source);
@@ -669,6 +669,38 @@ internal static class CombatContentTests
             if (sample.GetProperty("tick").GetInt32() != turnTick ||
                 1 - Math.Abs(Quaternion.Dot(expected, actual)) > 0.00002f)
                 throw new Exception("Host corner turn differs from Unity NGUI.");
+        }
+        string lookClip = reference.GetProperty("lookClip").GetString()!;
+        if (lookClip != "player_look_right3")
+            throw new Exception("Unity corner look clip lost its source side.");
+        foreach (JsonElement sample in reference.GetProperty(
+            "uncoverSamples").EnumerateArray())
+        {
+            int sampleTick = sample.GetProperty("tick").GetInt32();
+            Quaternion rootFacing = Rotation(turnSamples[sampleTick]
+                .GetProperty("rotation"));
+            IReadOnlyList<PlayerHitbox> placed = content.EnemyPoses.Place(
+                lookClip, position, rootFacing,
+                sampleTick / (float)MatchManifest.TickRate);
+            JsonElement[] parts = sample.GetProperty("parts")
+                .EnumerateArray().ToArray();
+            if (parts.Length != 3 || placed.Count != parts.Length)
+                throw new Exception("Unity corner uncover lost collider parts.");
+            for (int index = 0; index < parts.Length; index++)
+            {
+                PlayerHitbox part = placed[index];
+                Vector3 expectedCenter = Vector(parts[index].GetProperty(
+                    "center"));
+                Quaternion expectedRotation = Rotation(parts[index]
+                    .GetProperty("rotation"));
+                if (part.SourcePath != parts[index].GetProperty("path")
+                        .GetString() ||
+                    Vector3.Distance(part.Center, expectedCenter) > 0.0002f ||
+                    1 - Math.Abs(Quaternion.Dot(part.Rotation,
+                        expectedRotation)) > 0.00002f)
+                    throw new Exception(
+                        "Host corner uncover collider differs from Unity.");
+            }
         }
     }
 
@@ -3047,6 +3079,14 @@ internal static class CombatContentTests
                 1 - Math.Abs(Quaternion.Dot(actualIntermediate,
                     expectedIntermediate)) > 0.00002f)
                 throw new Exception("Co-op corner turn missed its eased frame.");
+            if (cornerRuntime.PlaceCornerUncoverHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                cornerRuntime.CurrentEnemyCollisionFrame().Targets.Count(
+                    target => target.EntityId == cornerEnemy.EntityId) != 3 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception(
+                    "Co-op corner uncover escaped its diagnostic gate.");
             cornerRuntime.Advance(coverWindup.StartTick + 9);
             BattleCoopEnemySpawn afterTurn = cornerRuntime.Snapshot()
                 .Coop.EnemySpawns.Single(enemy =>
