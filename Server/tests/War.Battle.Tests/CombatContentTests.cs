@@ -3478,7 +3478,8 @@ internal static class CombatContentTests
             chooseObstacleFraction: () => 0.5f,
             chooseNextPoint: _ => 0);
         CoopMatchRuntime CreateReadyCornerRuntime(
-            CoopEnemyDestinationState destinations)
+            CoopEnemyDestinationState destinations,
+            Func<int, int>? choosePlayer = null)
         {
             var result = new CoopMatchRuntime(coop, catalog,
                 spawnPoints, routes, enemyCombat,
@@ -3489,7 +3490,7 @@ internal static class CombatContentTests
                 infantryNavigation: infantryNavigation,
                 playerWeaponContent: content,
                 chooseInfantryShotFraction: () => 0.5f,
-                chooseInfantryPlayer: _ => 0,
+                chooseInfantryPlayer: choosePlayer ?? (_ => 0),
                 chooseInfantryShieldRoll: () => 0.5f,
                 chooseCornerChangeSeconds: () => 10,
                 chooseInfantryBatchSize: (min, _) => min,
@@ -3507,6 +3508,95 @@ internal static class CombatContentTests
                 });
             return result;
         }
+        int cornerTargetChoices = 0;
+        var changingTargetDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        CoopMatchRuntime changingTargetRuntime = CreateReadyCornerRuntime(
+            changingTargetDestinations,
+            _ => cornerTargetChoices++ == 0 ? 0 : 1);
+        changingTargetRuntime.Advance(8);
+        ulong changingTargetEnemyId = changingTargetRuntime.Snapshot()
+            .Coop.EnemySpawns.Single().EntityId;
+        changingTargetRuntime.Advance(cornerArrival.FirstShootEligibleTick);
+        CoopInfantryShotWindup firstChangingWindup =
+            changingTargetRuntime.InfantryShotWindup(
+                changingTargetEnemyId) ??
+            throw new Exception("Co-op changing-target corner did not start.");
+        ulong changingFinalRound = firstChangingWindup.CallbackTick + 1;
+        for (int index = 1; index < firstChangingWindup.Batch.Count; index++)
+            changingFinalRound = rifle.NextRoundEligibleTick(
+                changingFinalRound);
+        changingTargetRuntime.Advance(changingFinalRound);
+        ulong changingNextShot = changingTargetRuntime.InfantryShotWindup(
+                changingTargetEnemyId)?.NextEligibleTick ??
+            throw new Exception("Co-op changing-target corner lost cooldown.");
+        changingTargetRuntime.Advance(changingNextShot);
+        CoopCornerShotAttempt? changedTargetAttempt = changingTargetRuntime
+            .CornerLatestShotAttempt(changingTargetEnemyId);
+        if (cornerTargetChoices != 2 ||
+            changedTargetAttempt?.Tick != changingNextShot ||
+            changedTargetAttempt.PlayerId != secondPlayer ||
+            changingTargetRuntime.CornerFirstShotAttempt(
+                changingTargetEnemyId)?.PlayerId != firstPlayer ||
+            changingTargetRuntime.InfantryFirstPlayerTarget(
+                changingTargetEnemyId)?.PlayerId != firstPlayer)
+            throw new Exception(
+                "Co-op corner reused its first player instead of selecting a new target.");
+        CoopInfantryShotWindup? changedTargetWindup = changingTargetRuntime
+            .InfantryShotWindup(changingTargetEnemyId);
+        if (changedTargetAttempt.Exposed &&
+            (changedTargetWindup?.PlayerId != secondPlayer ||
+             changedTargetWindup.StartTick != changingNextShot))
+            throw new Exception(
+                "Co-op corner did not wind up for its newly selected target.");
+        if (!changedTargetAttempt.Exposed &&
+            (changedTargetWindup?.StartTick == changingNextShot ||
+             changedTargetAttempt.NextEligibleTick <= changingNextShot))
+            throw new Exception(
+                "Co-op corner ignored the newly selected target's angle rejection.");
+
+        var noTargetDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        CoopMatchRuntime noTargetRuntime = CreateReadyCornerRuntime(
+            noTargetDestinations);
+        noTargetRuntime.Advance(8);
+        ulong noTargetEnemyId = noTargetRuntime.Snapshot()
+            .Coop.EnemySpawns.Single().EntityId;
+        ulong noTargetShotTick = cornerArrival.FirstShootEligibleTick;
+        noTargetRuntime.Advance(noTargetShotTick - 1);
+        foreach ((string playerId, ulong hitId) in new[]
+            { (firstPlayer, 1UL), (secondPlayer, 2UL) })
+        {
+            PlayerDamageResult? hit = noTargetRuntime.ApplyHostPlayerDamage(
+                hitId, playerId, new ResolvedPlayerDamage(1_000_000,
+                    CombatDamageType.Basic, HasWeapon: false), 1f,
+                noTargetShotTick - 1);
+            if (hit?.Dead != true)
+                throw new Exception("Co-op no-target fixture failed to remove a player.");
+        }
+        noTargetRuntime.Advance(noTargetShotTick);
+        ulong noTargetRetry = noTargetRuntime.CornerNoTargetRetryTick(
+                noTargetEnemyId) ??
+            throw new Exception("Co-op corner did not delay after no target.");
+        ulong expectedNoTargetRetry = noTargetShotTick +
+            (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1;
+        if (noTargetRetry != expectedNoTargetRetry ||
+            noTargetRuntime.CornerLatestShotAttempt(noTargetEnemyId) != null)
+            throw new Exception(
+                "Co-op corner treated missing target as an angle attempt.");
+        noTargetRuntime.Advance(noTargetRetry - 1);
+        if (noTargetRuntime.CornerNoTargetRetryTick(noTargetEnemyId) !=
+            noTargetRetry)
+            throw new Exception("Co-op corner retried an absent target early.");
+        noTargetRuntime.Advance(noTargetRetry);
+        if (noTargetRuntime.CornerNoTargetRetryTick(noTargetEnemyId) !=
+            noTargetRetry +
+                (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1)
+            throw new Exception(
+                "Co-op corner did not renew the absent-target delay.");
+
         CoopMatchRuntime rejectedRuntime =
             CreateReadyCornerRuntime(rejectedDestinations);
         rejectedRuntime.Advance(8);

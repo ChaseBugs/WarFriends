@@ -131,6 +131,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerFirstShotAttempts = [];
     private readonly Dictionary<ulong, CoopCornerShotAttempt>
         cornerLatestShotAttempts = [];
+    private readonly Dictionary<ulong, ulong> cornerNoTargetRetryTicks = [];
     private readonly Dictionary<ulong, CoopInfantryShotWindup>
         infantryShotWindups = [];
     private readonly Dictionary<ulong, List<CoopInfantryRoundIntent>>
@@ -484,6 +485,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopCornerShotAttempt? CornerLatestShotAttempt(
         ulong entityId) => cornerLatestShotAttempts.GetValueOrDefault(entityId);
 
+    internal ulong? CornerNoTargetRetryTick(ulong entityId) =>
+        cornerNoTargetRetryTicks.TryGetValue(entityId, out ulong retryTick)
+            ? retryTick : null;
+
     internal CoopInfantryShotWindup? InfantryShotWindup(ulong entityId) =>
         infantryShotWindups.GetValueOrDefault(entityId);
 
@@ -754,7 +759,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceInfantryPaths();
             SettleCornerInfantryRoots();
             AdvanceObstacleRepositions();
-            ChooseFirstInfantryTargets();
+            ChooseInfantryTargets();
             AdvanceCornerShotTurns();
             AdvanceInfantryShotWindups();
             AdvanceInfantryRoundIntents();
@@ -1063,6 +1068,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryFirstTargets.Remove(enemy.EntityId);
         cornerFirstShotAttempts.Remove(enemy.EntityId);
         cornerLatestShotAttempts.Remove(enemy.EntityId);
+        cornerNoTargetRetryTicks.Remove(enemy.EntityId);
         infantryShotWindups.Remove(enemy.EntityId);
         infantryRoundIntents.Remove(enemy.EntityId);
         nextCornerChangeTicks.Remove(enemy.EntityId);
@@ -1333,7 +1339,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return checked(startTick + delayTicks);
     }
 
-    private void ChooseFirstInfantryTargets()
+    private void ChooseInfantryTargets()
     {
         foreach ((ulong entityId, CoopInfantryPointArrival arrival)
             in infantryPointArrivals)
@@ -1352,7 +1358,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     !player.Dead && player.Route == null)
                 .ToArray();
             if (eligiblePlayers.Length == 0)
+            {
+                if (cornerShot)
+                    ScheduleCornerNoTargetRetry(entityId);
                 continue;
+            }
             int selectedIndex = chooseInfantryPlayer(eligiblePlayers.Length);
             if (selectedIndex < 0 || selectedIndex >= eligiblePlayers.Length)
                 throw new InvalidDataException(
@@ -1361,11 +1371,20 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 PlanHostAssaulterPlayerTarget(entityId,
                     eligiblePlayers[selectedIndex].PlayerId);
             if (plan == null)
+            {
+                if (cornerShot)
+                    ScheduleCornerNoTargetRetry(entityId);
                 continue;
+            }
             CoopInfantryPlayerShotTarget? placedTarget =
                 PlaceAssaulterPlayerTarget(plan);
             if (placedTarget == null)
+            {
+                if (cornerShot)
+                    ScheduleCornerNoTargetRetry(entityId);
                 continue;
+            }
+            cornerNoTargetRetryTicks.Remove(entityId);
             CoopInfantryShotBatch batch = CreateInfantryShotBatch(entityId);
             if (cornerShot)
             {
@@ -1395,8 +1414,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryFirstTargets.TryAdd(entityId, plan);
             if (enemyPoses != null)
             {
-                // A new cover volley starts its own round sequence. The
-                // previous project's projectile IDs remain match-unique.
+                // A new cover volley starts its own round sequence. Its
+                // projectile IDs remain unique across the whole match.
                 infantryRoundIntents.Remove(entityId);
                 infantryShotWindups[entityId] =
                     CreateInfantryShotWindup(arrival, placedTarget, batch);
@@ -1407,6 +1426,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     private bool CornerReadyToShoot(ulong entityId)
     {
+        if (cornerNoTargetRetryTicks.TryGetValue(entityId,
+                out ulong noTargetRetryTick) && tick < noTargetRetryTick)
+            return false;
         if (infantryShotWindups.TryGetValue(entityId,
                 out CoopInfantryShotWindup? windup) &&
             (windup.CompletedTick == null ||
@@ -1421,6 +1443,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (attempt != null)
             return false;
         return true;
+    }
+
+    private void ScheduleCornerNoTargetRetry(ulong entityId)
+    {
+        BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
+            spawn.EntityId == entityId && spawn.DeathTick == 0);
+        // PrepareToShoot draws when StartShooting has no target. The caller
+        // then draws again on the false return; the second deadline wins.
+        FirstInfantryShotEligibleTick(enemy, tick);
+        cornerNoTargetRetryTicks[entityId] =
+            FirstInfantryShotEligibleTick(enemy, tick);
+        stateRevision++;
     }
 
     private CoopInfantryShotBatch CreateInfantryShotBatch(ulong entityId)
@@ -2595,6 +2629,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryFirstTargets.Remove(entityId);
             cornerFirstShotAttempts.Remove(entityId);
             cornerLatestShotAttempts.Remove(entityId);
+            cornerNoTargetRetryTicks.Remove(entityId);
             infantryShotWindups.Remove(entityId);
             infantryRoundIntents.Remove(entityId);
             nextCornerChangeTicks.Remove(entityId);
@@ -3359,6 +3394,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryFirstTargets.Clear();
         cornerFirstShotAttempts.Clear();
         cornerLatestShotAttempts.Clear();
+        cornerNoTargetRetryTicks.Clear();
         infantryShotWindups.Clear();
         infantryRoundIntents.Clear();
         diagnosticFlights.Clear();
