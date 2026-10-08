@@ -84,6 +84,7 @@ internal sealed record CoopInfantryPlayerShotTarget(
 /// </summary>
 internal sealed class CoopMatchRuntime : IMatchRuntime
 {
+    private const float CornerHideAfterSeconds = 0.7f;
     private sealed class Participant(ParticipantManifest definition)
     {
         public ParticipantManifest Definition { get; } = definition;
@@ -1831,7 +1832,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 out CoopInfantryShotWindup? windup) ||
             windup.AnimationClip is not
                 ("player_look_right3" or "player_look_left3") ||
-            tick <= windup.StartTick)
+            tick <= windup.StartTick ||
+            tick >= FirstTickAfterDelay(windup.StartTick,
+                CornerHideAfterSeconds))
             return [];
         float lookTicks = enemyPoses.Clip(windup.AnimationClip).Length *
             MatchManifest.TickRate;

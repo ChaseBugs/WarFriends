@@ -597,7 +597,7 @@ internal static class CombatContentTests
         byte[] source = File.ReadAllBytes(path);
         string digest = Convert.ToHexStringLower(SHA256.HashData(source));
         if (digest !=
-            "ae5a2919bc3f86d517a227d8394152c280a01c05b1be97292b7fb40faed8d64d")
+            "c32d7fa3f1fc2e8a8c1b906cc8a3d7783e528aa8d43f9ce0641379f78107f230")
             throw new Exception("Unity corner pose reference changed.");
 
         using JsonDocument document = JsonDocument.Parse(source);
@@ -3169,6 +3169,16 @@ internal static class CombatContentTests
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
                     "Co-op corner fire escaped its diagnostic gate.");
+            cornerRuntime.Advance(coverWindup.StartTick + 21);
+            if (cornerRuntime.PlaceCornerFireHitboxes(
+                    cornerEnemy.EntityId).Count != 3)
+                throw new Exception("Co-op corner fire ended before cover return.");
+            cornerRuntime.Advance(coverWindup.StartTick + 22);
+            if (cornerRuntime.PlaceCornerFireHitboxes(
+                    cornerEnemy.EntityId).Count != 0 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception("Co-op corner fire continued into cover return.");
         }
 
         // Flip only the test point's exposed side when needed so this

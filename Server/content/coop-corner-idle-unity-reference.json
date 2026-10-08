@@ -690,49 +690,49 @@
       ]
     },
     {
-      "tick": 25,
-      "fireSeconds": 0.333332866,
+      "tick": 21,
+      "fireSeconds": 0.199999526,
       "parts": [
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
           "center": [
-            -27.69618,
-            -2.11082315,
-            -12.59692
+            -27.698761,
+            -2.11079025,
+            -12.5943737
           ],
           "rotation": [
-            -0.182549521,
-            0.219795361,
-            -0.660562456,
-            0.694278657
+            -0.1824667,
+            0.2199355,
+            -0.660259366,
+            0.6945444
           ]
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
           "center": [
-            -27.6868229,
-            -2.195594,
-            -12.60352
+            -27.6893444,
+            -2.1955514,
+            -12.60102
           ],
           "rotation": [
-            -0.182549521,
-            0.219795361,
-            -0.660562456,
-            0.694278657
+            -0.1824667,
+            0.2199355,
+            -0.660259366,
+            0.6945444
           ]
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
           "center": [
-            -27.6894226,
-            -1.87789106,
-            -12.6139736
+            -27.7051163,
+            -1.8797915,
+            -12.6014872
           ],
           "rotation": [
-            -0.324420333,
-            0.202466369,
-            -0.7045619,
-            0.59778893
+            -0.343110025,
+            0.207358673,
+            -0.695452869,
+            0.5963416
           ]
         }
       ]

@@ -140,7 +140,7 @@ public static class UnityCoopCornerPoseAudit
             if (animation[fireClip] == null)
                 throw new InvalidOperationException("Missing source fire clip.");
             var fireSamples = new List<object>();
-            foreach (int shotTick in new[] { 16, 17, 20, 25 })
+            foreach (int shotTick in new[] { 16, 17, 20, 21 })
             {
                 float fireSeconds = shotTick / 30f -
                     animation[lookClip].length;
