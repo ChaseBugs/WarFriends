@@ -283,6 +283,37 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopAssignedEnemyDestination? EnemyDestination(ulong entityId) =>
         enemyDestinations?.ForEnemy(entityId);
 
+    /// <summary>
+    /// A future host AI state may request this after reaching or abandoning
+    /// its current point. Clients cannot name or reserve an enemy destination.
+    /// </summary>
+    internal CoopAssignedEnemyDestination? TryHostRetargetEnemy(ulong entityId)
+    {
+        if (phase != BattlePhase.Running || enemyDestinations == null)
+            return null;
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.DeathTick == 0);
+        if (enemy == null)
+            return null;
+
+        Vector3? sniperOpponent = null;
+        if (enemyDestinations.RequiresSniperTarget(enemy.Behaviour))
+        {
+            Participant sourceHost = participants[manifest.Players[0].PlayerId];
+            if (!sourceHost.Admitted || !sourceHost.Ready || sourceHost.Dead)
+                return null;
+            sniperOpponent = sourceHost.Position;
+        }
+        var position = new Vector3(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        CoopAssignedEnemyDestination? destination =
+            enemyDestinations.TryRetarget(entityId, enemy.Behaviour,
+                enemy.CardUnit, position, sniperOpponent);
+        if (destination != null)
+            stateRevision++;
+        return destination;
+    }
+
     internal IReadOnlyList<HelicopterCrewMemberSnapshot> TransportCrewMembers(ulong entityId)
     {
         return transportHelicopterCrew.TryGetValue(entityId, out HelicopterCrewState? crew)

@@ -89,6 +89,94 @@ public sealed class CoopEnemyPointMaskCatalog
 public static class CoopEnemyPointSelection
 {
     /// <summary>
+    /// GetNextFreeEnemyPoint and the Sniper/SciFi overrides choose a random
+    /// eligible point in source list order. SciFi first prefers points more
+    /// than 1.8 units from its current position, then falls back to all.
+    /// </summary>
+    public static CoopEnemyPoint? SelectNext(
+        CoopMapEnemyPoints map, int currentMask, int currentPointId,
+        IReadOnlySet<int> occupiedComponentIds, Func<int, int> chooseIndex,
+        Vector3? sniperOpponentPosition = null,
+        float minimumPlayerDistance = 0,
+        Vector3? sciFiPosition = null)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(occupiedComponentIds);
+        ArgumentNullException.ThrowIfNull(chooseIndex);
+        if (currentMask is <= 0 or > 0x3FFF || currentPointId <= 0 ||
+            !float.IsFinite(minimumPlayerDistance) ||
+            minimumPlayerDistance < 0 ||
+            (minimumPlayerDistance > 0 && sniperOpponentPosition == null) ||
+            (sniperOpponentPosition.HasValue &&
+             !PlayerHitbox.Finite(sniperOpponentPosition.Value)) ||
+            (sciFiPosition.HasValue &&
+             !PlayerHitbox.Finite(sciFiPosition.Value)))
+            throw new ArgumentOutOfRangeException(nameof(currentMask));
+
+        var candidates = new List<CoopEnemyPoint>();
+        foreach (CoopEnemyPoint point in map.Points)
+        {
+            int pointType = PointType(point.ComponentType);
+            if (point.ComponentFileId == currentPointId ||
+                (currentMask & pointType) != pointType ||
+                occupiedComponentIds.Contains(point.ComponentFileId))
+                continue;
+            if (sniperOpponentPosition.HasValue &&
+                Vector3.Distance(point.Position,
+                    sniperOpponentPosition.Value) <= minimumPlayerDistance)
+                continue;
+            candidates.Add(point);
+        }
+        if (candidates.Count == 0)
+            return null;
+        if (sciFiPosition.HasValue)
+        {
+            List<CoopEnemyPoint> distant = candidates.Where(point =>
+                Vector3.Distance(point.Position,
+                    sciFiPosition.Value) > 1.8f).ToList();
+            if (distant.Count > 0)
+                candidates = distant;
+        }
+        int selectedIndex = chooseIndex(candidates.Count);
+        if (selectedIndex < 0 || selectedIndex >= candidates.Count)
+            throw new InvalidDataException(
+                "Host co-op enemy point draw is outside the source list.");
+        return candidates[selectedIndex];
+    }
+
+    /// <summary>
+    /// SoldierBehaviourSciFi.GetInitPoint calls GetNearestFreePoint with the
+    /// map floorTransform. Unlike GetPoint, this compares effective positions.
+    /// </summary>
+    public static CoopEnemyPoint? SelectNearestToFloor(
+        CoopMapEnemyPoints map, int currentMask,
+        IReadOnlySet<int> occupiedComponentIds)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(occupiedComponentIds);
+        if (currentMask is <= 0 or > 0x3FFF)
+            throw new ArgumentOutOfRangeException(nameof(currentMask));
+
+        CoopEnemyPoint? selected = null;
+        float nearestDistance = float.MaxValue;
+        foreach (CoopEnemyPoint point in map.Points)
+        {
+            int pointType = PointType(point.ComponentType);
+            if ((currentMask & pointType) != pointType ||
+                occupiedComponentIds.Contains(point.ComponentFileId))
+                continue;
+            float distance = Vector3.Distance(point.Position,
+                map.FloorPosition);
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                selected = point;
+            }
+        }
+        return selected;
+    }
+
+    /// <summary>
     /// Some soldiers override AcceptsPoint or change their mask before their
     /// initial GetPoint call. Rusher descendants use a separate shield-linked
     /// point list and must not enter this ordinary selection path.

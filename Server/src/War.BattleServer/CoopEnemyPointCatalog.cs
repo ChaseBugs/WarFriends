@@ -13,7 +13,8 @@ public sealed record CoopEnemyPoint(
 
 public sealed record CoopMapEnemyPoints(
     int Stage, string Scene, string SceneSha256,
-    int MapDefinitionFileId, int CollectionComponentFileId,
+    int MapDefinitionFileId, int FloorTransformFileId,
+    Vector3 FloorPosition, int CollectionComponentFileId,
     IReadOnlyList<CoopEnemyPoint> Points);
 
 /// <summary>
@@ -24,7 +25,7 @@ public sealed record CoopMapEnemyPoints(
 public sealed class CoopEnemyPointCatalog
 {
     private const string ArtifactSha256 =
-        "9d2d91148c7de8fd4ab5fbe4236f37b0a460b5eb4900f07b182a3a18ab7cd730";
+        "813d039cbdd340f0d28d71aaaca1d2b4a484c5dce0cdf106d64ab6c87ab71699";
     private static readonly int[] ExpectedMapCounts = [26, 23, 25, 24, 32];
     private static readonly IReadOnlyDictionary<string, int> ExpectedTypes =
         new Dictionary<string, int>(StringComparer.Ordinal)
@@ -106,11 +107,14 @@ public sealed class CoopEnemyPointCatalog
         int expectedCount)
     {
         RequireFields(entry, "stage", "scene", "sceneSha256",
-            "mapDefinitionFileId", "collectionComponentFileId", "points");
+            "mapDefinitionFileId", "floorTransformFileId",
+            "floorWorldPosition", "collectionComponentFileId", "points");
         int stage = entry.GetProperty("stage").GetInt32();
         string scene = entry.GetProperty("scene").GetString() ?? "";
         string hash = entry.GetProperty("sceneSha256").GetString() ?? "";
         int definitionId = PositiveId(entry, "mapDefinitionFileId");
+        int floorTransformId = PositiveId(entry, "floorTransformFileId");
+        Vector3 floorPosition = Vector(entry.GetProperty("floorWorldPosition"));
         int collectionId = PositiveId(entry, "collectionComponentFileId");
         if (stage != mission.Stage || stage != spawns.Stage ||
             scene != mission.Scene || scene != spawns.Scene ||
@@ -136,7 +140,8 @@ public sealed class CoopEnemyPointCatalog
                     "Duplicate co-op enemy destination identity.");
         }
         return new CoopMapEnemyPoints(stage, scene, hash, definitionId,
-            collectionId, new ReadOnlyCollection<CoopEnemyPoint>(points));
+            floorTransformId, floorPosition, collectionId,
+            new ReadOnlyCollection<CoopEnemyPoint>(points));
     }
 
     private static CoopEnemyPoint ReadPoint(JsonElement row, int order)

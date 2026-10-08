@@ -20,6 +20,7 @@ public sealed class CoopEnemyDestinationState
     private readonly HashSet<int> occupiedRusherPoints = [];
     private readonly Dictionary<ulong, int> rusherPointByEnemy = [];
     private readonly Func<float> chooseObstacleFraction;
+    private readonly Func<int, int> chooseNextPoint;
     private readonly Dictionary<ulong, CoopAssignedEnemyDestination> assigned = [];
     private bool boundToMatch;
 
@@ -31,7 +32,8 @@ public sealed class CoopEnemyDestinationState
     public CoopEnemyDestinationState(CoopMapEnemyPoints map,
         CoopEnemyPointMaskCatalog masks, CoopEnemyCombatCatalog combat,
         Func<float>? chooseObstacleFraction = null,
-        CoopMapRusherPoints? rusherPoints = null)
+        CoopMapRusherPoints? rusherPoints = null,
+        Func<int, int>? chooseNextPoint = null)
     {
         this.map = map ?? throw new ArgumentNullException(nameof(map));
         this.masks = masks ?? throw new ArgumentNullException(nameof(masks));
@@ -44,6 +46,7 @@ public sealed class CoopEnemyDestinationState
                 "Shield-linked Rusher points differ from the enemy map.");
         this.rusherPoints = rusherPoints;
         this.chooseObstacleFraction = chooseObstacleFraction ?? Random.Shared.NextSingle;
+        this.chooseNextPoint = chooseNextPoint ?? Random.Shared.Next;
     }
 
     public CoopAssignedEnemyDestination? ForEnemy(ulong entityId) =>
@@ -80,9 +83,13 @@ public sealed class CoopEnemyDestinationState
                 targetPlayerPositionIndex);
 
         int mask = CoopEnemyPointSelection.InitialMask(soldier, spawnedByCard);
-        CoopEnemyPoint? point = CoopEnemyPointSelection.SelectOrdinary(
-            map, mask, spawnPosition, reservations.OccupiedPointIds,
-            sniperOpponentPosition, soldier.MinimumPlayerDistance ?? 0);
+        CoopEnemyPoint? point = soldier.BehaviorType ==
+            "SoldierBehaviourSciFi"
+            ? CoopEnemyPointSelection.SelectNearestToFloor(
+                map, mask, reservations.OccupiedPointIds)
+            : CoopEnemyPointSelection.SelectOrdinary(
+                map, mask, spawnPosition, reservations.OccupiedPointIds,
+                sniperOpponentPosition, soldier.MinimumPlayerDistance ?? 0);
         if (point == null)
             return null;
         if (!reservations.TryReserve(entityId, point))
@@ -115,6 +122,48 @@ public sealed class CoopEnemyDestinationState
         if (rusherPointByEnemy.Remove(entityId, out int rusherPointId))
             occupiedRusherPoints.Remove(rusherPointId);
         return true;
+    }
+
+    /// <summary>
+    /// Host AI calls this when the recovered behavior asks for a new point.
+    /// It does not advance a soldier or decide when that behavior runs.
+    /// </summary>
+    public CoopAssignedEnemyDestination? TryRetarget(
+        ulong entityId, string behaviour, bool spawnedByCard,
+        Vector3 currentPosition, Vector3? sniperOpponentPosition = null)
+    {
+        if (!PlayerHitbox.Finite(currentPosition))
+            throw new ArgumentOutOfRangeException(nameof(currentPosition));
+        if (!assigned.TryGetValue(entityId, out CoopAssignedEnemyDestination? old))
+            return null;
+        string unitId = combat.UnitIdFor(behaviour);
+        CoopSoldierPointMask? soldier = masks.Soldiers.FirstOrDefault(row =>
+            row.UnitId == unitId);
+        if (soldier == null || IsShieldLinkedRusher(soldier, spawnedByCard) ||
+            (soldier.BehaviorType == "SoldierBehaviourSniper" &&
+             sniperOpponentPosition == null))
+            return null;
+
+        int mask = CoopEnemyPointSelection.InitialMask(soldier, spawnedByCard);
+        Vector3? sciFiPosition = soldier.BehaviorType ==
+            "SoldierBehaviourSciFi" ? currentPosition : null;
+        CoopEnemyPoint? next = CoopEnemyPointSelection.SelectNext(map, mask,
+            old.PointComponentFileId, reservations.OccupiedPointIds,
+            chooseNextPoint, sniperOpponentPosition,
+            soldier.MinimumPlayerDistance ?? 0, sciFiPosition);
+        if (next == null)
+            return null;
+
+        float fraction = next.ComponentType == "EnemyPointObstacle"
+            ? chooseObstacleFraction() : 0f;
+        Vector3 position = CoopEnemyPointSelection.GeneratePosition(next,
+            fraction);
+        if (!reservations.TryReserve(entityId, next))
+            throw new InvalidOperationException("Selected co-op point became occupied.");
+        var replacement = new CoopAssignedEnemyDestination(
+            next.ComponentFileId, position);
+        assigned[entityId] = replacement;
+        return replacement;
     }
 
     public void ReleaseAll()

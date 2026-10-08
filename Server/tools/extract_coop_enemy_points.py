@@ -82,6 +82,8 @@ def extract_map(map_entry, script_types):
     if len(definitions) != 1:
         raise ValueError("expected one source MapDefinition")
     definition_id, definition = definitions[0]
+    floor_transform_id = ref(definition, "floorTransform")
+    floor_position = transform_position(blocks, floor_transform_id)
     collection_id = ref(definition, "enemyPointsCollection")
     collection = blocks[collection_id][1]
     if f"guid: {COLLECTION_GUID}" not in collection:
@@ -131,6 +133,8 @@ def extract_map(map_entry, script_types):
         "scene": map_entry["scene"],
         "sceneSha256": digest,
         "mapDefinitionFileId": definition_id,
+        "floorTransformFileId": floor_transform_id,
+        "floorWorldPosition": floor_position,
         "collectionComponentFileId": collection_id,
         "points": points,
     }

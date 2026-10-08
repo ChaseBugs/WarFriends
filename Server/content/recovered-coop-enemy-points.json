@@ -6,6 +6,12 @@
       "scene": "Desert_New",
       "sceneSha256": "e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5",
       "mapDefinitionFileId": 1721,
+      "floorTransformFileId": 689,
+      "floorWorldPosition": [
+        -24.03,
+        -2.486,
+        -8.609
+      ],
       "collectionComponentFileId": 1845,
       "points": [
         {
@@ -751,6 +757,12 @@
       "scene": "Snow_Single",
       "sceneSha256": "a797c945ccc4e4307ad55611e16db086d3ace63f31a535388f7e5bbb461daf27",
       "mapDefinitionFileId": 1905,
+      "floorTransformFileId": 950,
+      "floorWorldPosition": [
+        -0.026270000000000238,
+        0.008165599999999884,
+        -0.3318089999999998
+      ],
       "collectionComponentFileId": 1937,
       "points": [
         {
@@ -1408,6 +1420,12 @@
       "scene": "City_Single",
       "sceneSha256": "99a24a690a023c8f9c2f1195b727ecdcc22740a6f0479f6148909a22db3f5127",
       "mapDefinitionFileId": 2693,
+      "floorTransformFileId": 1114,
+      "floorWorldPosition": [
+        0.08599999999999852,
+        -0.18100000000000005,
+        0.1349999999999998
+      ],
       "collectionComponentFileId": 2714,
       "points": [
         {
@@ -2119,6 +2137,12 @@
       "scene": "Aztec_Single",
       "sceneSha256": "5fbfe89a6ff35e0769d4fcdbd9a80e6c31baec653a3bd78c53b81211cd8b9e17",
       "mapDefinitionFileId": 1876,
+      "floorTransformFileId": 641,
+      "floorWorldPosition": [
+        -0.026270000000000238,
+        -0.17136130000000005,
+        -0.3318089999999998
+      ],
       "collectionComponentFileId": 1798,
       "points": [
         {
@@ -2796,6 +2820,12 @@
       "scene": "Park_Single",
       "sceneSha256": "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83",
       "mapDefinitionFileId": 2683,
+      "floorTransformFileId": 811,
+      "floorWorldPosition": [
+        0.0600014499999979,
+        -0.1689999710000003,
+        -0.008000070000001358
+      ],
       "collectionComponentFileId": 2389,
       "points": [
         {

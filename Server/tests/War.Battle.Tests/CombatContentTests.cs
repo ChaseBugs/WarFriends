@@ -1503,9 +1503,18 @@ internal static class CombatContentTests
             destinationEnemy.CurrentX != destinationEnemy.X ||
             destinationEnemy.CurrentZ != destinationEnemy.Z)
             throw new Exception("Co-op spawn did not reserve its source initial point.");
+        CoopAssignedEnemyDestination? retargeted =
+            destinationRuntime.TryHostRetargetEnemy(destinationEnemy.EntityId);
+        if (retargeted == null ||
+            retargeted.PointComponentFileId ==
+                assignedDestination.PointComponentFileId ||
+            destinationRuntime.EnemyDestination(destinationEnemy.EntityId) !=
+                retargeted)
+            throw new Exception("Host co-op retarget did not replace its point claim.");
         if (!destinationRuntime.ApplyHostEnemyDamage(destinationEnemy.EntityId,
                 destinationEnemy.Health, 8) ||
-            destinationRuntime.EnemyDestination(destinationEnemy.EntityId) != null)
+            destinationRuntime.EnemyDestination(destinationEnemy.EntityId) != null ||
+            destinationRuntime.TryHostRetargetEnemy(destinationEnemy.EntityId) != null)
             throw new Exception("Co-op enemy death retained its point claim.");
 
         MissionRule rusherRule = catalog.Get(2);
@@ -1636,11 +1645,63 @@ internal static class CombatContentTests
             sniperSourcePoint.ComponentFileId !=
                 expectedSniperPoint?.ComponentFileId ||
             Vector3.Distance(sniperSourcePoint.Position,
+                sourceHostPosition) <= 6f)
+            throw new Exception("Host Sniper initial point ignored source distance.");
+        CoopAssignedEnemyDestination? sniperNext =
+            sniperRuntime.TryHostRetargetEnemy(sniperEnemy.EntityId);
+        CoopEnemyPoint? sniperNextPoint = sniperNext == null ? null :
+            sniperMap.Points.Single(point => point.ComponentFileId ==
+                sniperNext.PointComponentFileId);
+        if (sniperNextPoint == null ||
+            sniperNextPoint.ComponentFileId ==
+                sniperSourcePoint.ComponentFileId ||
+            Vector3.Distance(sniperNextPoint.Position,
                 sourceHostPosition) <= 6f ||
             !sniperRuntime.ApplyHostEnemyDamage(sniperEnemy.EntityId,
                 sniperEnemy.Health, 8) ||
             sniperRuntime.EnemyDestination(sniperEnemy.EntityId) != null)
-            throw new Exception("Host Sniper did not respect its source minimum distance.");
+            throw new Exception("Host Sniper retarget ignored its source minimum distance.");
+
+        MissionRule sciFiRule = catalog.Get(56);
+        MissionMapRule sciFiMissionMap = catalog.MapForMission(56);
+        MatchManifest sciFiAllocation = coop with
+        {
+            MissionIndex = 56,
+            MapId = sciFiMissionMap.Scene,
+            MapRevision = sciFiMissionMap.SceneSha256,
+            DurationSeconds = sciFiRule.TimeSeconds
+        };
+        CoopMapEnemyPoints sciFiMap = enemyPointCatalog.MapForMission(
+            catalog, 56);
+        var sciFiDestinations = new CoopEnemyDestinationState(sciFiMap,
+            enemyPointMasks, enemyCombat);
+        var sciFiRuntime = new CoopMatchRuntime(sciFiAllocation, catalog,
+            spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 2, choosePoint: _ => 0,
+            enemyDestinations: sciFiDestinations);
+        sciFiRuntime.Admit(firstPlayer);
+        sciFiRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            sciFiRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = sciFiRuntime.ManifestHash
+                }
+            });
+        sciFiRuntime.Advance(8);
+        BattleCoopEnemySpawn sciFiEnemy = sciFiRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "SciFi");
+        CoopAssignedEnemyDestination? sciFiDestination =
+            sciFiRuntime.EnemyDestination(sciFiEnemy.EntityId);
+        CoopEnemyPoint? expectedSciFiPoint =
+            CoopEnemyPointSelection.SelectNearestToFloor(sciFiMap, 2,
+                new HashSet<int>());
+        if (sciFiDestination == null || expectedSciFiPoint == null ||
+            sciFiDestination.PointComponentFileId !=
+                expectedSciFiPoint.ComponentFileId)
+            throw new Exception("SciFi infantry did not select the floor-nearest point.");
 
         var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
@@ -3082,6 +3143,9 @@ internal static class CombatContentTests
             point.ComponentType == "EnemyPointObstacle");
         CoopEnemyPoint engineer = desert.Points.First(point =>
             point.ComponentType == "EnemyPointEngineerTurret");
+        CoopEnemyPoint? sciFiInitial =
+            CoopEnemyPointSelection.SelectNearestToFloor(desert, 2,
+                new HashSet<int>());
         Vector3 expectedEngineer = engineer.TransformPosition -
             Vector3.Transform(Vector3.UnitZ, engineer.Rotation) * 0.2f;
         if (catalog.Maps.Count != 5 || all.Length != 130 ||
@@ -3089,6 +3153,8 @@ internal static class CombatContentTests
                 player.Points.Count)) != 80 ||
             desertRushers.PlayerPoints.Count != 4 ||
             desert.Points.Count != 26 ||
+            desert.FloorTransformFileId != 689 ||
+            sciFiInitial?.ComponentFileId != 1832 ||
             catalog.MapForMission(missions, 0).Scene !=
                 missions.MapForMission(0).Scene ||
             all.Count(point => point.SegmentStart.HasValue) != 58 ||
@@ -3198,6 +3264,24 @@ internal static class CombatContentTests
             tiedMap, 2, Vector3.Zero, new HashSet<int>());
         if (first?.ComponentFileId != 1)
             throw new Exception("Equal-distance enemy points lost source order.");
+        CoopMapEnemyPoints nextMap = tiedMap with
+        {
+            Points =
+            [
+                equalDistance[0], equalDistance[1],
+                equalDistance[1] with
+                {
+                    Order = 2, ComponentFileId = 3,
+                    Position = new Vector3(3, 0, 0),
+                    TransformPosition = new Vector3(3, 0, 0)
+                }
+            ]
+        };
+        CoopEnemyPoint? distantSciFi = CoopEnemyPointSelection.SelectNext(
+            nextMap, 2, 1, new HashSet<int> { 1 }, _ => 0,
+            sciFiPosition: Vector3.Zero);
+        if (distantSciFi?.ComponentFileId != 3)
+            throw new Exception("SciFi retarget did not prefer a distant free point.");
 
         CoopEnemyPointReservations reservations = new(desert);
         if (!reservations.TryReserve(100, nearest) ||
