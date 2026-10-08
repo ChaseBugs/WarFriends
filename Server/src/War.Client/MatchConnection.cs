@@ -60,6 +60,8 @@ namespace War.Client
             Run(new MatchCommand {UseLandMine=new UseLandMineCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseHeavyTurretAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseHeavyTurret=new UseHeavyTurretCommand {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseMedkitAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseMedkit=new UseMedkitCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> ReloadAsync(CancellationToken ct) => Run(new MatchCommand { Reload = new ReloadCommand() }, false, false, ct);
         public Task<MatchReply> SwitchWeaponAsync(int slot,CancellationToken ct) => Run(new MatchCommand { SwitchWeapon = new SwitchWeaponCommand { Slot=slot } }, false, false, ct);
         public Task<MatchReply> ForfeitAsync(CancellationToken ct) => Run(new MatchCommand { Forfeit = new ForfeitCommand() }, false, false, ct);

@@ -118,6 +118,7 @@ message GrenadeThrowCommand {
 message UseDecoyCommand { string request_id = 1; }
 message UseLandMineCommand { string request_id = 1; }
 message UseHeavyTurretCommand { string request_id = 1; }
+message UseMedkitCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -136,6 +137,7 @@ message MatchCommand {
     UseDecoyCommand use_decoy = 24;
     UseLandMineCommand use_land_mine = 25;
     UseHeavyTurretCommand use_heavy_turret = 26;
+    UseMedkitCommand use_medkit = 27;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.

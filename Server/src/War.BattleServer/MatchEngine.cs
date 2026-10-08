@@ -224,6 +224,28 @@ public sealed partial class MatchEngine : IMatchRuntime
         return result;
     }
 
+    private string UseMedkit(Player owner, string requestId)
+    {
+        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardHealMeNow", StringComparer.Ordinal))
+            return "medkit-not-selected";
+        if (owner.Dead || owner.Definition.Combat == null)
+            return "medkit-owner-unavailable";
+        if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
+            return "invalid-medkit-request";
+        if (cardReservations == null)
+            return "card-inventory-disabled";
+        if (events.Count >= MaximumRetainedEvents || stateRevision > ulong.MaxValue - 2)
+            return "event-backpressure";
+
+        // The card belongs to this player. Its recovered 0.2 coefficient is
+        // resolved by the host; the packet contains no healing amount or target.
+        var request = new WarCardEffectRequest("CardHealMeNow", Vector3.Zero, 0, 1);
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, request))
+            return "medkit-unavailable";
+        return TryResolveMedkit(owner.Definition.PlayerId, requestId)?.Applied == true
+            ? "medkit-healed" : "medkit-effect-unavailable";
+    }
+
     internal bool TryResolveCardStatus(string ownerPlayerId, string effectId, string targetPlayerId)
     {
         var target = Find(targetPlayerId);
@@ -1622,6 +1644,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseLandMine(p,c.UseLandMine.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHeavyTurret)
             return UseHeavyTurret(p,c.UseHeavyTurret.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseMedkit)
+            return UseMedkit(p,c.UseMedkit.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;

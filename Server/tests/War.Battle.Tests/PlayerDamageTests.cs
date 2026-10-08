@@ -134,6 +134,47 @@ internal static class PlayerDamageTests
         Check(medkitMatch.TryResolveMedkit(a, medkitEffectId) == null &&
               medkitMatch.Snapshot().Players[0].Health == 80,
             "one medkit effect cannot heal twice on the same host tick");
+        var liveMatch = new MatchEngine(manifest with
+        {
+            MatchId = "live-medkit-owner-healing"
+        });
+        liveMatch.ConfigureCardSelection(["CardHealMeNow"]);
+        liveMatch.ConfigureCardInventory([(a, "CardHealMeNow", 1)]);
+        liveMatch.Admit(a);
+        liveMatch.Admit(b);
+        var medkitSelection = new SelectCardsCommand();
+        medkitSelection.CardIds.Add("CardHealMeNow");
+        Check(liveMatch.Command(a, new MatchCommand
+        {
+            CommandId = 1, SelectCards = medkitSelection
+        }).Code == "cards-selected", "owner selects the trusted medkit");
+        foreach (string playerId in new[] { a, b })
+            liveMatch.Command(playerId, new MatchCommand
+            {
+                CommandId = playerId == a ? 2UL : 1UL,
+                Ready = new ReadyCommand { ManifestHash = liveMatch.ManifestHash }
+            });
+        liveMatch.Advance(60);
+        liveMatch.ApplyResolvedPlayerDamage(b, a,
+            new ResolvedPlayerDamage(40, CombatDamageType.Basic, HasWeapon: false), 1);
+        const string liveMedkitId = "83838383838383838383838383838383";
+        var liveMedkit = new MatchCommand
+        {
+            CommandId = 3,
+            UseMedkit = new UseMedkitCommand { RequestId = liveMedkitId }
+        };
+        var liveMedkitReply = liveMatch.Command(a, liveMedkit);
+        Check(liveMedkitReply.Code == "medkit-healed" &&
+              liveMatch.Snapshot().Players[0].Health == 80,
+            "authenticated medkit command heals its owner using the host coefficient: " + liveMedkitReply.Code);
+        Check(liveMatch.Command(a, liveMedkit).Code == "medkit-healed" &&
+              liveMatch.Snapshot().Players[0].Health == 80,
+            "transport retry replays the original medkit result without another heal");
+        Check(liveMatch.Command(a, new MatchCommand
+        {
+            CommandId = 4,
+            UseMedkit = new UseMedkitCommand { RequestId = "84848484848484848484848484848484" }
+        }).Code == "medkit-unavailable", "exhausted inventory cannot heal again");
         const string healingStormEffectId = "82828282828282828282828282828282";
         Check(medkitMatch.TryApplyCardEffect(healingStormEffectId, a,
             new WarCardEffectRequest("CardHealingStorm",
