@@ -100,11 +100,7 @@ public sealed class NetworkWorker : BackgroundService
         public ulong Outgoing { get; set; }
     }
     private static BattleRuntimeConfig ResolveRuntime(IConfiguration config) =>
-        BattleRuntimeConfigValidator.ValidateAndFreeze(new BattleRuntimeConfig(
-            int.Parse(config["Battle:Port"] ?? "30000", System.Globalization.CultureInfo.InvariantCulture),
-            int.Parse(config["Battle:MaxMatches"]??"32",System.Globalization.CultureInfo.InvariantCulture),
-            TickRate,
-            int.Parse(config["Battle:MtuBytes"]??"1200",System.Globalization.CultureInfo.InvariantCulture)));
+        BattleRuntimeConfigValidator.FromConfiguration(config);
 
     public NetworkWorker(IConfiguration config, ILogger<NetworkWorker> logger)
         : this(config, ResolveRuntime(config), logger) { }

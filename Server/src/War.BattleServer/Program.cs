@@ -8,17 +8,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using War.BattleServer;
 
-var builder=WebApplication.CreateBuilder(args);
-int udpPort=int.Parse(builder.Configuration["Battle:Port"]??"30000",CultureInfo.InvariantCulture);
-int controlPort=int.Parse(builder.Configuration["Battle:ControlPort"]??
-    (udpPort+1).ToString(CultureInfo.InvariantCulture),CultureInfo.InvariantCulture);
-int maxMatches=int.Parse(builder.Configuration["Battle:MaxMatches"]??"32",CultureInfo.InvariantCulture);
-int tickRate=int.Parse(builder.Configuration["Battle:TickRate"]??"30",CultureInfo.InvariantCulture);
-int mtuBytes=int.Parse(builder.Configuration["Battle:MtuBytes"]??"1200",CultureInfo.InvariantCulture);
-if(udpPort is <1 or >65534 || controlPort is <1 or >65535 || controlPort==udpPort)
+var builder = WebApplication.CreateBuilder(args);
+BattleRuntimeConfig runtimeConfig =
+    BattleRuntimeConfigValidator.FromConfiguration(builder.Configuration);
+int udpPort = runtimeConfig.Port;
+string controlPortText = builder.Configuration["Battle:ControlPort"] ??
+    (udpPort + 1).ToString(CultureInfo.InvariantCulture);
+if (!int.TryParse(controlPortText, NumberStyles.Integer,
+        CultureInfo.InvariantCulture, out int controlPort) ||
+    controlPort is < 1 or > 65535 || controlPort == udpPort)
     throw new InvalidOperationException("Invalid battle or control port.");
-var runtimeConfig=BattleRuntimeConfigValidator.ValidateAndFreeze(new BattleRuntimeConfig(udpPort,maxMatches,tickRate,mtuBytes));
-if(tickRate!=30)throw new InvalidOperationException("Battle TickRate must match the fixed simulation rate of 30.");
 byte[] signingKey=Convert.FromBase64String(builder.Configuration["Battle:SigningKey"]??
     throw new InvalidOperationException("Set Battle__SigningKey."));
 if(signingKey.Length!=32)throw new InvalidOperationException("Battle signing key must be 32 bytes.");

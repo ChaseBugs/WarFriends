@@ -10433,6 +10433,32 @@ internal static class CombatContentTests
                   "BattleServer startup freezes validated runtime configuration values");
             Reject(()=>BattleRuntimeConfigValidator.Validate(new BattleRuntimeConfig(80,32,30,1200)));
             Reject(()=>BattleRuntimeConfigValidator.Validate(new BattleRuntimeConfig(8080,32,29,1200)));
+            IConfiguration validRuntimeSettings = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Battle:Port"] = "8080",
+                    ["Battle:MaxMatches"] = "32",
+                    ["Battle:TickRate"] = "30",
+                    ["Battle:MtuBytes"] = "1200"
+                }).Build();
+            BattleRuntimeConfig parsedRuntime =
+                BattleRuntimeConfigValidator.FromConfiguration(validRuntimeSettings);
+            Check(parsedRuntime == frozenConfig,
+                "Worker and HTTP startup parse the same frozen runtime settings");
+            IConfiguration invalidTickSettings = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Battle:TickRate"] = "29"
+                }).Build();
+            Reject(() => BattleRuntimeConfigValidator.FromConfiguration(
+                invalidTickSettings));
+            IConfiguration malformedMtuSettings = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Battle:MtuBytes"] = "large"
+                }).Build();
+            Reject(() => BattleRuntimeConfigValidator.FromConfiguration(
+                malformedMtuSettings));
             Check(PacketMtuPolicy.Accept(600,1200)&&!PacketMtuPolicy.Accept(1401,1200)&&
                   !PacketMtuPolicy.Accept(600,500),"packet MTU policy is shared by transport ingress and adapters");
             TransportSecurityPolicy.ValidateSigningKey(Enumerable.Repeat((byte)1,32).ToArray());
