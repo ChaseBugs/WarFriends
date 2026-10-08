@@ -630,6 +630,9 @@ internal static class CombatContentTests
         CoopEnemyPointMaskCatalog enemyPointMasks = CoopEnemyPointMaskCatalog.Load(
             Path.Combine(directory, "recovered-coop-enemy-point-masks.json"),
             army);
+        CoopRusherPointCatalog rusherPointCatalog = CoopRusherPointCatalog.Load(
+            Path.Combine(directory, "recovered-coop-rusher-points.json"),
+            catalog, spawnPoints);
         ArmyBaseCombatStats sniperStart = enemyCombat.CardStats("Sniper", 0);
         ArmyBaseCombatStats sniperEnd = enemyCombat.CardStats("Sniper", 1);
         ArmyBaseCombatStats grenadeStart = enemyCombat.CardStats("Grenadier", 0);
@@ -1504,6 +1507,78 @@ internal static class CombatContentTests
                 destinationEnemy.Health, 8) ||
             destinationRuntime.EnemyDestination(destinationEnemy.EntityId) != null)
             throw new Exception("Co-op enemy death retained its point claim.");
+
+        MissionRule rusherRule = catalog.Get(2);
+        MissionMapRule rusherMissionMap = catalog.MapForMission(2);
+        MatchManifest rusherAllocation = coop with
+        {
+            MissionIndex = 2,
+            MapId = rusherMissionMap.Scene,
+            MapRevision = rusherMissionMap.SceneSha256,
+            DurationSeconds = rusherRule.TimeSeconds
+        };
+        CoopMapRusherPoints rusherMap = rusherPointCatalog.MapForMission(
+            catalog, 2);
+        var rusherDestinations = new CoopEnemyDestinationState(enemyMap,
+            enemyPointMasks, enemyCombat, rusherPoints: rusherMap);
+        var rusherRuntime = new CoopMatchRuntime(rusherAllocation, catalog,
+            spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 3, choosePoint: _ => 0,
+            enemyDestinations: rusherDestinations,
+            chooseRusherPlayer: _ => 1);
+        rusherRuntime.Admit(firstPlayer);
+        rusherRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            rusherRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = rusherRuntime.ManifestHash
+                }
+            });
+        rusherRuntime.Advance(8);
+        BattleCoopEnemySpawn rusherEnemy = rusherRuntime.Snapshot()
+            .Coop.EnemySpawns.Single();
+        CoopAssignedEnemyDestination? rusherDestination =
+            rusherRuntime.EnemyDestination(rusherEnemy.EntityId);
+        int secondAllyCover = rusherRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == secondPlayer).CoverIndex;
+        if (rusherEnemy.Behaviour != "Shotgunner" ||
+            rusherDestination == null ||
+            !rusherMap.PlayerPoints[secondAllyCover].Points.Any(point =>
+                point.ComponentFileId ==
+                    rusherDestination.PointComponentFileId) ||
+            !rusherRuntime.ApplyHostEnemyDamage(rusherEnemy.EntityId,
+                rusherEnemy.Health, 8) ||
+            rusherRuntime.EnemyDestination(rusherEnemy.EntityId) != null)
+            throw new Exception("Host Rusher did not reserve and release the selected allied shield point.");
+        var claimedRusherIds = new HashSet<int>();
+        for (ulong entityId = 100; entityId < 104; entityId++)
+        {
+            CoopAssignedEnemyDestination? claim =
+                rusherDestinations.TryAssignInitial(entityId, "Shotgunner",
+                    false, new Vector3(rusherEnemy.X, rusherEnemy.Y,
+                        rusherEnemy.Z), secondAllyCover);
+            if (claim == null ||
+                !rusherMap.PlayerPoints[secondAllyCover].Points.Any(point =>
+                    point.ComponentFileId == claim.PointComponentFileId) ||
+                !claimedRusherIds.Add(claim.PointComponentFileId))
+                throw new Exception("Four Rushers did not claim distinct shield points.");
+        }
+        CoopAssignedEnemyDestination? spareRusher =
+            rusherDestinations.TryAssignInitial(104, "Shotgunner", false,
+                new Vector3(rusherEnemy.X, rusherEnemy.Y, rusherEnemy.Z),
+                secondAllyCover);
+        if (spareRusher == null || !enemyMap.Points.Any(point =>
+                point.ComponentFileId == spareRusher.PointComponentFileId &&
+                point.ComponentType == "EnemyPointRusherSpare"))
+            throw new Exception("Fifth Rusher did not use the source spare point.");
+        for (ulong entityId = 100; entityId <= 104; entityId++)
+        {
+            if (!rusherDestinations.Release(entityId))
+                throw new Exception("Rusher destination was not released.");
+        }
 
         var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);

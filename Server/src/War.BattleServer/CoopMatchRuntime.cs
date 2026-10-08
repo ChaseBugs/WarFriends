@@ -80,6 +80,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Dictionary<ulong, HelicopterCrewSchedule> transportCrewSchedules = [];
     private readonly Dictionary<ulong, HelicopterGunnerState> transportGunners = [];
     private readonly Func<float> chooseAirDirection;
+    private readonly Func<int, int> chooseRusherPlayer;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
     private IReadOnlyDictionary<string, BattleAllocationProjection>? battleAllocations;
@@ -122,7 +123,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         BattleCombatContent? playerWeaponContent = null,
         CoopAirWaypointCatalog? coopAirWaypoints = null,
         Func<float>? chooseAirDirection = null,
-        CoopEnemyDestinationState? enemyDestinations = null)
+        CoopEnemyDestinationState? enemyDestinations = null,
+        Func<int, int>? chooseRusherPlayer = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
@@ -130,7 +132,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             playerWeaponContent: playerWeaponContent,
             coopAirWaypoints: coopAirWaypoints,
             chooseAirDirection: chooseAirDirection,
-            enemyDestinations: enemyDestinations)
+            enemyDestinations: enemyDestinations,
+            chooseRusherPlayer: chooseRusherPlayer)
     {
     }
 
@@ -144,7 +147,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         BattleCombatContent? playerWeaponContent = null,
         CoopAirWaypointCatalog? coopAirWaypoints = null,
         Func<float>? chooseAirDirection = null,
-        CoopEnemyDestinationState? enemyDestinations = null)
+        CoopEnemyDestinationState? enemyDestinations = null,
+        Func<int, int>? chooseRusherPlayer = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -256,6 +260,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         this.combat = combat ?? throw new ArgumentNullException(nameof(combat));
         chooseSpawnPoint = choosePoint ?? Random.Shared.Next;
         this.chooseAirDirection = chooseAirDirection ?? Random.Shared.NextSingle;
+        this.chooseRusherPlayer = chooseRusherPlayer ?? Random.Shared.Next;
         mission = new CoopMissionEngine(catalog, missionIndex, chooseBehaviour);
         participants = manifest.Players.ToDictionary(player => player.PlayerId,
             player => new Participant(player), StringComparer.Ordinal);
@@ -615,8 +620,24 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         enemy.CurrentY = point.Position.Y;
         enemy.CurrentZ = point.Position.Z;
         enemy.PoseTick = tick;
+        int? rusherTarget = null;
+        if (enemyDestinations?.RequiresShieldTarget(behaviour, cardUnit) == true)
+        {
+            Participant[] activeAllies = manifest.Players
+                .Select(player => participants[player.PlayerId])
+                .Where(player => player.Admitted && player.Ready && !player.Dead)
+                .ToArray();
+            if (activeAllies.Length > 0)
+            {
+                int chosenIndex = chooseRusherPlayer(activeAllies.Length);
+                if (chosenIndex < 0 || chosenIndex >= activeAllies.Length)
+                    throw new InvalidDataException(
+                        "Host Rusher target choice is outside the allied roster.");
+                rusherTarget = activeAllies[chosenIndex].CoverIndex;
+            }
+        }
         enemyDestinations?.TryAssignInitial(enemy.EntityId, behaviour,
-            cardUnit, point.Position);
+            cardUnit, point.Position, rusherTarget);
         if (point.SourceRotation is Quaternion rotation)
         {
             enemy.SourceRotation = new BattleJointRotation
