@@ -87,6 +87,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
     private readonly Dictionary<ulong, CoopInfantryPointArrival> infantryPointArrivals = [];
     private readonly Dictionary<ulong, CoopInfantryPlayerTargetPlan> infantryFirstTargets = [];
+    private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
+    private readonly HashSet<ulong> movingObstacleRepositions = [];
     private readonly Func<float> chooseInfantryShotFraction;
     private readonly Func<float> chooseInfantryRepositionFraction;
     private readonly Func<int, int> chooseInfantryPlayer;
@@ -375,6 +377,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopInfantryPlayerTargetPlan? InfantryFirstPlayerTarget(
         ulong entityId) => infantryFirstTargets.GetValueOrDefault(entityId);
 
+    internal ulong? ObstacleRepositionStartedTick(ulong entityId) =>
+        obstacleRepositionStartedTicks.TryGetValue(entityId, out ulong start)
+            ? start : null;
+
     internal CoopInfantryPlayerShotTarget? PlaceFirstAssaulterPlayerTarget(
         ulong entityId)
     {
@@ -620,6 +626,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceAssaultHelicopterFlights();
             AdvanceTransportHelicopterFlights();
             AdvanceInfantryPaths();
+            AdvanceFirstObstacleRepositions();
             ChooseFirstInfantryTargets();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
@@ -923,6 +930,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryPaths.Remove(enemy.EntityId);
         infantryPointArrivals.Remove(enemy.EntityId);
         infantryFirstTargets.Remove(enemy.EntityId);
+        obstacleRepositionStartedTicks.Remove(enemy.EntityId);
+        movingObstacleRepositions.Remove(enemy.EntityId);
         // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
         // branch. Rusher, Warp, Parachute, and specialist state machines need
         // separate source rules before their movement can be simulated.
@@ -971,6 +980,19 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             stateRevision++;
             CoopAssignedEnemyDestination? destination =
                 enemyDestinations?.ForEnemy(entityId);
+            if (movingObstacleRepositions.Contains(entityId))
+            {
+                bool reachedNewPoint = destination != null &&
+                    Vector2.Distance(new Vector2(position.X, position.Z),
+                        new Vector2(destination.Position.X,
+                            destination.Position.Z)) < 0.04f;
+                if (reachedNewPoint || path.HasArrived(tick))
+                {
+                    movingObstacleRepositions.Remove(entityId);
+                    arrived.Add(entityId);
+                }
+                continue;
+            }
             if (destination != null &&
                 Vector2.Distance(new Vector2(position.X, position.Z),
                     new Vector2(destination.Position.X,
@@ -1001,6 +1023,49 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         foreach (ulong entityId in arrived)
             infantryPaths.Remove(entityId);
+    }
+
+    private void AdvanceFirstObstacleRepositions()
+    {
+        if (enemyDestinations == null || infantryNavigation == null)
+            return;
+        foreach ((ulong entityId, CoopInfantryPointArrival arrival)
+            in infantryPointArrivals)
+        {
+            if (arrival.FirstRepositionTick != tick ||
+                arrival.HasUnchangedObstaclePointForFirstShot ||
+                obstacleRepositionStartedTicks.ContainsKey(entityId))
+                continue;
+            BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+                spawn.EntityId == entityId && spawn.DeathTick == 0);
+            if (enemy == null)
+                continue;
+
+            obstacleRepositionStartedTicks.Add(entityId, tick);
+            CoopAssignedEnemyDestination? destination =
+                enemyDestinations.RegenerateObstaclePosition(entityId);
+            if (destination == null)
+                throw new InvalidDataException(
+                    "Co-op obstacle reposition lost its reserved point.");
+            Vector3 start = new(enemy.CurrentX, enemy.CurrentY,
+                enemy.CurrentZ);
+            int missionIndex = manifest.MissionIndex!.Value;
+            Vector3? surfaceStart = infantryNavigation.SampleNearest(
+                missionCatalog, missionIndex, start, 3f);
+            Vector3? surfaceEnd = infantryNavigation.SampleNearest(
+                missionCatalog, missionIndex, destination.Position, 3f);
+            ArmyNavMeshCorridor? corridor = surfaceStart.HasValue &&
+                surfaceEnd.HasValue ? infantryNavigation.PlanCorridor(
+                    missionCatalog, missionIndex, surfaceStart.Value,
+                    surfaceEnd.Value) : null;
+            if (corridor is not { PlanarCovered: true } ||
+                corridor.SmoothedLength <= 0)
+                continue;
+            infantryPaths[entityId] = new CoopInfantryPathState(corridor,
+                combat.MovementSpeed(enemy.Behaviour), tick);
+            movingObstacleRepositions.Add(entityId);
+            stateRevision++;
+        }
     }
 
     private ulong FirstInfantryShotEligibleTick(
@@ -1106,6 +1171,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ulong entityId)
     {
         if (phase != BattlePhase.Running || enemyPoses == null ||
+            movingObstacleRepositions.Contains(entityId) ||
             !infantryPaths.TryGetValue(entityId,
                 out CoopInfantryPathState? path))
             return [];
@@ -1410,6 +1476,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryPaths.Remove(entityId);
             infantryPointArrivals.Remove(entityId);
             infantryFirstTargets.Remove(entityId);
+            obstacleRepositionStartedTicks.Remove(entityId);
+            movingObstacleRepositions.Remove(entityId);
             if (enemy.Behaviour == "Drone")
             {
                 airPathReservations?.Release(entityId);
@@ -2040,6 +2108,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryPaths.Clear();
         infantryPointArrivals.Clear();
         infantryFirstTargets.Clear();
+        obstacleRepositionStartedTicks.Clear();
+        movingObstacleRepositions.Clear();
         foreach (Participant participant in participants.Values)
         {
             participant.Route = null;

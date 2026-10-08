@@ -1781,9 +1781,11 @@ internal static class CombatContentTests
                 arrivalEnemy.EntityId) != null)
             throw new Exception("Dead co-op infantry retained a point-arrival marker.");
 
+        int obstaclePositionDraws = 0;
         var earlyRepositionDestinations = new CoopEnemyDestinationState(
             enemyMap, enemyPointMasks, enemyCombat,
-            chooseObstacleFraction: () => 0.5f);
+            chooseObstacleFraction: () =>
+                obstaclePositionDraws++ == 0 ? 0.5f : 1f);
         var earlyRepositionRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0,
@@ -1804,17 +1806,43 @@ internal static class CombatContentTests
                     ManifestHash = earlyRepositionRuntime.ManifestHash
                 }
             });
-        earlyRepositionRuntime.Advance(firstShootTick);
+        earlyRepositionRuntime.Advance(expectedArrival);
         BattleCoopEnemySpawn earlyRepositionEnemy = earlyRepositionRuntime
             .Snapshot().Coop.EnemySpawns.First();
         CoopInfantryPointArrival? earlyReposition = earlyRepositionRuntime
             .InfantryPointArrival(earlyRepositionEnemy.EntityId);
+        CoopAssignedEnemyDestination? originalObstacle =
+            earlyRepositionRuntime.EnemyDestination(
+                earlyRepositionEnemy.EntityId);
         if (earlyReposition is not { FirstRepositionTick: not null } ||
             earlyReposition.FirstRepositionTick >=
-                earlyReposition.FirstShootEligibleTick ||
+                earlyReposition.FirstShootEligibleTick)
+            throw new Exception("Co-op obstacle did not schedule reposition first.");
+        earlyRepositionRuntime.Advance(
+            earlyReposition.FirstRepositionTick.Value);
+        CoopAssignedEnemyDestination? regeneratedObstacle =
+            earlyRepositionRuntime.EnemyDestination(
+                earlyRepositionEnemy.EntityId);
+        if (originalObstacle == null || regeneratedObstacle == null ||
+            regeneratedObstacle.PointComponentFileId !=
+                originalObstacle.PointComponentFileId ||
+            regeneratedObstacle.Position == originalObstacle.Position ||
+            earlyRepositionRuntime.ObstacleRepositionStartedTick(
+                earlyRepositionEnemy.EntityId) !=
+                earlyReposition.FirstRepositionTick ||
+            earlyRepositionRuntime.PlaceWalkingAssaulterHitboxes(
+                earlyRepositionEnemy.EntityId).Count != 0)
+            throw new Exception("Co-op obstacle did not regenerate its reserved segment position.");
+        earlyRepositionRuntime.Advance(firstShootTick);
+        BattleCoopEnemySpawn movingObstacle = earlyRepositionRuntime
+            .Snapshot().Coop.EnemySpawns.First(enemy =>
+                enemy.EntityId == earlyRepositionEnemy.EntityId);
+        if (Vector3.Distance(
+                new Vector3(movingObstacle.CurrentX, movingObstacle.CurrentY,
+                    movingObstacle.CurrentZ), originalObstacle.Position) < 0.01f ||
             earlyRepositionRuntime.InfantryFirstPlayerTarget(
                 earlyRepositionEnemy.EntityId) != null)
-            throw new Exception("Unmodeled obstacle reposition authorized a shot target.");
+            throw new Exception("Obstacle reposition neither moved nor closed the old target.");
 
         int cornerSpawnIndex = assaultCandidates.ToList().FindIndex(point =>
             point.ComponentFileId == 1694);

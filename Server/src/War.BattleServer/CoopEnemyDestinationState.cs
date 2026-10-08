@@ -62,6 +62,26 @@ public sealed class CoopEnemyDestinationState
             .ComponentType;
     }
 
+    internal CoopAssignedEnemyDestination? RegenerateObstaclePosition(
+        ulong entityId)
+    {
+        if (!assigned.TryGetValue(entityId,
+                out CoopAssignedEnemyDestination? current))
+            return null;
+        CoopEnemyPoint point = map.Points.Single(candidate =>
+            candidate.ComponentFileId == current.PointComponentFileId);
+        if (point.ComponentType != "EnemyPointObstacle")
+            return null;
+
+        // EnemyController.SetFinalTarget calls GeneratePosition again while
+        // keeping enemyAtPoint on this same obstacle component.
+        Vector3 newPosition = CoopEnemyPointSelection.GeneratePosition(
+            point, chooseObstacleFraction());
+        var replacement = current with { Position = newPosition };
+        assigned[entityId] = replacement;
+        return replacement;
+    }
+
     internal void BindToMatch()
     {
         if (boundToMatch)
