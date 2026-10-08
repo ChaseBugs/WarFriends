@@ -1588,6 +1588,15 @@ internal static class CombatContentTests
             Math.Abs(Quaternion.Dot(leftFacing,
                 Quaternion.Identity)) < 0.99999f)
             throw new Exception("Co-op Assaulter final shot rotation differs from Unity.");
+        if (CoopAssaulterShotRotation.FinalRotationReached(
+                CoopInfantryPointState.ObstacleHiding, 5) ||
+            !CoopAssaulterShotRotation.FinalRotationReached(
+                CoopInfantryPointState.ObstacleHiding, 6) ||
+            CoopAssaulterShotRotation.FinalRotationReached(
+                CoopInfantryPointState.CornerHiding, 8) ||
+            !CoopAssaulterShotRotation.FinalRotationReached(
+                CoopInfantryPointState.CornerHiding, 9))
+            throw new Exception("Co-op Assaulter projected a pose before its root tween ended.");
         try
         {
             CoopAssaulterShotRotation.Corner(rotationCorner,

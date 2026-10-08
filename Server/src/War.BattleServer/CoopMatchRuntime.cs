@@ -1467,7 +1467,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 windup.AnimationClip, windup.QueuedFireClip,
                 tick - windup.StartTick);
             Vector3? observedWorldOrigin = null;
-            if (observedMuzzle != null)
+            CoopInfantryPointState pointState =
+                infantryPointArrivals[entityId].State;
+            if (observedMuzzle != null &&
+                CoopAssaulterShotRotation.FinalRotationReached(
+                    pointState, tick - windup.StartTick))
             {
                 BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn =>
                     spawn.EntityId == entityId && spawn.DeathTick == 0);

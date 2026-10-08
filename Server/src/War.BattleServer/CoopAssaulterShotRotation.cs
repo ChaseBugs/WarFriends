@@ -8,6 +8,22 @@ namespace War.BattleServer;
 /// </summary>
 internal static class CoopAssaulterShotRotation
 {
+    // EnemyController.PrepareToShoot starts a 0.2-second obstacle tween or
+    // 0.3-second corner tween. The final rotation is only a valid observed
+    // pose after that duration has elapsed at the host's 30 Hz tick rate.
+    internal static bool FinalRotationReached(
+        CoopInfantryPointState state, ulong elapsedTicks)
+    {
+        ulong requiredTicks = state switch
+        {
+            CoopInfantryPointState.ObstacleHiding => 6,
+            CoopInfantryPointState.CornerHiding => 9,
+            _ => throw new InvalidDataException(
+                "Co-op shot has no supported stationary point state.")
+        };
+        return elapsedTicks >= requiredTicks;
+    }
+
     internal static Quaternion Obstacle(Vector3 enemyPosition,
         Vector3 targetPosition)
     {
