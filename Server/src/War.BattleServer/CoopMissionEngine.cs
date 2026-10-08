@@ -31,6 +31,7 @@ public sealed class CoopMissionEngine
     public MissionOutcome Outcome => objective.Outcome;
     public IReadOnlyCollection<string> Participants => participants.ToArray();
     public int EnemyKills => objective.EnemyKills;
+    public int Score => objective.Score;
 
     public CoopMissionEngine(
         MissionCatalog catalog, int missionIndex, Func<int, int>? chooseBehaviour = null)
@@ -128,6 +129,32 @@ public sealed class CoopMissionEngine
             if (Outcome != MissionOutcome.InProgress)
                 spawns.Finish();
         }
+        return true;
+    }
+
+    /// <summary>
+    /// Records a Score-mission death only after host combat has established the
+    /// killer and the source damage branch. No client score or flag is accepted.
+    /// </summary>
+    internal bool ConfirmAttributedAiDeath(ulong entityId, string creditedPlayerId,
+        CoopEnemyKillCredit credit, CoopSkillShotScoreCatalog scores, ulong tick)
+    {
+        if (missionType != "Score" || !participants.Contains(creditedPlayerId) ||
+            !Started || Outcome != MissionOutcome.InProgress ||
+            tick < StartTick || tick >= DeadlineTick)
+            return false;
+
+        ArgumentNullException.ThrowIfNull(scores);
+        int earnedPoints = scores.PointsForConfirmedEnemyKill(credit);
+        if (earnedPoints <= 0 || objective.Score > 1_000_000_000 - earnedPoints ||
+            !spawns.ConfirmDeath(entityId))
+            return false;
+
+        string eventId = KillEventId(MissionIndex, entityId);
+        if (!objective.RecordScore(eventId, earnedPoints, tick))
+            throw new InvalidDataException("Confirmed skill-shot failed mission objective replay.");
+        if (Outcome != MissionOutcome.InProgress)
+            spawns.Finish();
         return true;
     }
 

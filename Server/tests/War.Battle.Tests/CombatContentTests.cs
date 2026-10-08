@@ -12,11 +12,8 @@ using War.Protocol.Transport;
 
 internal static class CombatContentTests
 {
-    private static int VerifyCoopSkillShotScores(string directory, BattleCombatContent content)
+    private static int VerifyCoopSkillShotScores(CoopSkillShotScoreCatalog scores)
     {
-        string path = Path.Combine(directory, "recovered-coop-skillshot-scores.json");
-        CoopSkillShotScoreCatalog scores = CoopSkillShotScoreCatalog.Load(path,
-            content.Stats.SceneRevision, content.Stats.Revision);
         if (scores.Rows.Count != 19 || scores.Rows[0].Name != "HeadShot" ||
             scores.PointsForFlags(0) != 0 ||
             scores.PointsForFlags(1) != 5 ||
@@ -61,10 +58,13 @@ internal static class CombatContentTests
         int scoreAssertions = VerifyMissionScoring(catalog);
         int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
         int eventAssertions = VerifyMissionTimedEvents(catalog);
-        int coopAssertions = VerifyCoopMissionEngine(catalog);
+        CoopSkillShotScoreCatalog skillShots = CoopSkillShotScoreCatalog.Load(
+            Path.Combine(directory, "recovered-coop-skillshot-scores.json"),
+            content.Stats.SceneRevision, content.Stats.Revision);
+        int coopAssertions = VerifyCoopMissionEngine(catalog, skillShots);
         int allocationAssertions = VerifyCoopAllocation(
             directory, catalog, content);
-        int skillShotAssertions = VerifyCoopSkillShotScores(directory, content);
+        int skillShotAssertions = VerifyCoopSkillShotScores(skillShots);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
@@ -290,7 +290,8 @@ internal static class CombatContentTests
         return 5;
     }
 
-    private static int VerifyCoopMissionEngine(MissionCatalog catalog)
+    private static int VerifyCoopMissionEngine(MissionCatalog catalog,
+        CoopSkillShotScoreCatalog skillShots)
     {
         const string firstPlayer = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         const string secondPlayer = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -332,6 +333,50 @@ internal static class CombatContentTests
             mission.ConfirmAiDeath(103, 800))
             throw new Exception("The source kill target ends the shared mission exactly once.");
 
+        MissionRule scoreRule = catalog.Missions.First(rule =>
+            rule.MissionType == "Score");
+        var scored = new CoopMissionEngine(catalog, scoreRule.Index, _ => 0);
+        scored.Admit(firstPlayer);
+        scored.Admit(secondPlayer);
+        scored.MarkReady(firstPlayer, 0);
+        scored.MarkReady(secondPlayer, 0);
+        int? firstScoreBehaviour = scored.SelectAutomaticBehaviour(8);
+        if (firstScoreBehaviour == null ||
+            !scored.ConfirmAutomaticSpawn(firstScoreBehaviour.Value, 801, 8))
+            throw new Exception("Score mission did not spawn its first source enemy.");
+        try
+        {
+            scored.ConfirmAttributedAiDeath(801, firstPlayer,
+                (CoopEnemyKillCredit)99, skillShots, 8);
+            throw new Exception("Unknown host kill credit was accepted.");
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // A malformed credit cannot consume the entity's one death receipt.
+        }
+        if (scored.ConfirmAttributedAiDeath(801, "unknown", CoopEnemyKillCredit.Player,
+                skillShots, 8) ||
+            !scored.ConfirmAttributedAiDeath(801, firstPlayer,
+                CoopEnemyKillCredit.Player, skillShots, 8) ||
+            scored.ConfirmAttributedAiDeath(801, firstPlayer,
+                CoopEnemyKillCredit.Player, skillShots, 8) ||
+            scored.Score != 10)
+            throw new Exception("One host-credited player kill must award one source Kill score.");
+
+        int? secondScoreBehaviour = scored.SelectAutomaticBehaviour(16);
+        if (secondScoreBehaviour == null ||
+            !scored.ConfirmAutomaticSpawn(secondScoreBehaviour.Value, 802, 16) ||
+            !scored.ConfirmAttributedAiDeath(802, secondPlayer,
+                CoopEnemyKillCredit.AlliedArmy, skillShots, 16) ||
+            scored.Score != 15 || scored.Outcome != MissionOutcome.InProgress)
+            throw new Exception("Both allies' host-credited kills must share the Score objective.");
+
+        int? uncreditedBehaviour = scored.SelectAutomaticBehaviour(24);
+        if (uncreditedBehaviour == null ||
+            !scored.ConfirmAutomaticSpawn(uncreditedBehaviour.Value, 803, 24) ||
+            !scored.ConfirmAiDeath(803, 24) || scored.Score != 15)
+            throw new Exception("An unattributed AI death must not award mission score.");
+
         MissionRule survivalRule = catalog.Missions.First(rule =>
             rule.MissionType == "SurviveXSeconds");
         var survival = new CoopMissionEngine(catalog, survivalRule.Index);
@@ -357,7 +402,7 @@ internal static class CombatContentTests
             abandoned.Outcome != MissionOutcome.Failed ||
             abandoned.SelectAutomaticBehaviour(8) != null)
             throw new Exception("A participant departure fails and closes an active mission.");
-        return 6;
+        return 9;
     }
 
     private static int VerifyCoopAllocation(
