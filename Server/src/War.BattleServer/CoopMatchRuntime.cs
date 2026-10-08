@@ -35,6 +35,7 @@ internal sealed record CoopInfantryPointArrival(
     ulong Tick, int PointComponentFileId, CoopInfantryPointState State,
     ulong FirstShootEligibleTick, ulong? FirstRepositionTick)
 {
+    internal ulong? FirstCornerChangeTick { get; init; }
     internal bool HasUnchangedObstaclePointForFirstShot =>
         State == CoopInfantryPointState.ObstacleHiding &&
         FirstRepositionTick.HasValue &&
@@ -95,12 +96,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerFirstShotAttempts = [];
     private readonly Dictionary<ulong, CoopCornerShotAttempt>
         cornerLatestShotAttempts = [];
+    private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
     private readonly HashSet<ulong> movingObstacleRepositions = [];
     private readonly Func<float> chooseInfantryShotFraction;
     private readonly Func<float> chooseInfantryRepositionFraction;
     private readonly Func<int, int> chooseInfantryPlayer;
     private readonly Func<float> chooseInfantryShieldRoll;
+    private readonly Func<int> chooseCornerChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly PlayerShotTargetCatalog? playerShotTargets;
@@ -172,7 +175,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryShotFraction = null,
         Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
-        Func<float>? chooseInfantryShieldRoll = null)
+        Func<float>? chooseInfantryShieldRoll = null,
+        Func<int>? chooseCornerChangeSeconds = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
@@ -186,7 +190,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             chooseInfantryShotFraction: chooseInfantryShotFraction,
             chooseInfantryRepositionFraction: chooseInfantryRepositionFraction,
             chooseInfantryPlayer: chooseInfantryPlayer,
-            chooseInfantryShieldRoll: chooseInfantryShieldRoll)
+            chooseInfantryShieldRoll: chooseInfantryShieldRoll,
+            chooseCornerChangeSeconds: chooseCornerChangeSeconds)
     {
     }
 
@@ -206,7 +211,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryShotFraction = null,
         Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
-        Func<float>? chooseInfantryShieldRoll = null)
+        Func<float>? chooseInfantryShieldRoll = null,
+        Func<int>? chooseCornerChangeSeconds = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         missionCatalog = catalog;
@@ -239,6 +245,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         this.chooseInfantryPlayer = chooseInfantryPlayer ?? Random.Shared.Next;
         this.chooseInfantryShieldRoll = chooseInfantryShieldRoll ??
             Random.Shared.NextSingle;
+        this.chooseCornerChangeSeconds = chooseCornerChangeSeconds ??
+            (() => Random.Shared.Next(10, 20));
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
@@ -390,6 +398,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     internal CoopCornerShotAttempt? CornerLatestShotAttempt(
         ulong entityId) => cornerLatestShotAttempts.GetValueOrDefault(entityId);
+
+    internal ulong? NextCornerChangeTick(ulong entityId) =>
+        nextCornerChangeTicks.TryGetValue(entityId, out ulong next)
+            ? next : null;
 
     internal ulong? ObstacleRepositionStartedTick(ulong entityId) =>
         obstacleRepositionStartedTicks.TryGetValue(entityId, out ulong start)
@@ -649,6 +661,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AdvanceInfantryPaths();
             AdvanceFirstObstacleRepositions();
             ChooseFirstInfantryTargets();
+            AdvanceCornerRetargets();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
             {
@@ -953,6 +966,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryFirstTargets.Remove(enemy.EntityId);
         cornerFirstShotAttempts.Remove(enemy.EntityId);
         cornerLatestShotAttempts.Remove(enemy.EntityId);
+        nextCornerChangeTicks.Remove(enemy.EntityId);
         obstacleRepositionStartedTicks.Remove(enemy.EntityId);
         movingObstacleRepositions.Remove(enemy.EntityId);
         // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
@@ -1036,9 +1050,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 ulong? firstRepositionTick = pointState ==
                     CoopInfantryPointState.ObstacleHiding
                     ? FirstInfantryRepositionTick(tick) : null;
+                ulong? firstCornerChangeTick = pointState ==
+                    CoopInfantryPointState.CornerHiding
+                    ? FirstCornerChangeTick(tick) : null;
                 infantryPointArrivals[entityId] = new(
                     tick, destination.PointComponentFileId, pointState,
-                    firstShootEligibleTick, firstRepositionTick);
+                    firstShootEligibleTick, firstRepositionTick)
+                {
+                    FirstCornerChangeTick = firstCornerChangeTick
+                };
+                if (firstCornerChangeTick.HasValue)
+                    nextCornerChangeTicks[entityId] =
+                        firstCornerChangeTick.Value;
                 arrived.Add(entityId);
             }
             else if (path.HasArrived(tick))
@@ -1120,6 +1143,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return FirstTickAfterDelay(reachedTick, 2f + 2f * fraction);
     }
 
+    private ulong FirstCornerChangeTick(ulong reachedTick)
+    {
+        int seconds = chooseCornerChangeSeconds();
+        if (seconds is < 10 or >= 20)
+            throw new InvalidDataException(
+                "Co-op corner change draw must be a 10–19 second integer.");
+        // UnityEngine.Random.Range(10, 20) uses an exclusive upper bound.
+        return FirstTickAfterDelay(reachedTick, seconds);
+    }
+
     private static ulong FirstTickAfterDelay(ulong startTick,
         float delaySeconds)
     {
@@ -1187,6 +1220,27 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             }
             infantryFirstTargets.Add(entityId, plan);
             stateRevision++;
+        }
+    }
+
+    private void AdvanceCornerRetargets()
+    {
+        foreach ((ulong entityId, ulong changeTick)
+            in nextCornerChangeTicks.ToArray())
+        {
+            if (tick < changeTick ||
+                infantryFirstTargets.ContainsKey(entityId))
+                continue;
+            // CornerHidingUpdate checks its shot first, then its change
+            // timer. A successful target exits hiding; a rejected target
+            // can still seek another free point on the same tick.
+            if (TryHostRetargetEnemy(entityId) != null)
+                continue;
+
+            // With no different free point, the Client adds ten seconds to
+            // its original threshold instead of drawing a new interval.
+            nextCornerChangeTicks[entityId] = checked(changeTick +
+                10UL * MatchManifest.TickRate);
         }
     }
 
@@ -1533,6 +1587,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryFirstTargets.Remove(entityId);
             cornerFirstShotAttempts.Remove(entityId);
             cornerLatestShotAttempts.Remove(entityId);
+            nextCornerChangeTicks.Remove(entityId);
             obstacleRepositionStartedTicks.Remove(entityId);
             movingObstacleRepositions.Remove(entityId);
             if (enemy.Behaviour == "Drone")
@@ -2167,6 +2222,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryFirstTargets.Clear();
         cornerFirstShotAttempts.Clear();
         cornerLatestShotAttempts.Clear();
+        nextCornerChangeTicks.Clear();
         obstacleRepositionStartedTicks.Clear();
         movingObstacleRepositions.Clear();
         foreach (Participant participant in participants.Values)

@@ -1933,7 +1933,8 @@ internal static class CombatContentTests
         };
         var rejectedDestinations = new CoopEnemyDestinationState(
             rejectedMap, enemyPointMasks, enemyCombat,
-            chooseObstacleFraction: () => 0.5f);
+            chooseObstacleFraction: () => 0.5f,
+            chooseNextPoint: _ => 0);
         var rejectedRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0,
@@ -1944,7 +1945,8 @@ internal static class CombatContentTests
             playerWeaponContent: content,
             chooseInfantryShotFraction: () => 0.5f,
             chooseInfantryPlayer: _ => 0,
-            chooseInfantryShieldRoll: () => 0.5f);
+            chooseInfantryShieldRoll: () => 0.5f,
+            chooseCornerChangeSeconds: () => 10);
         rejectedRuntime.Admit(firstPlayer);
         rejectedRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -1981,6 +1983,23 @@ internal static class CombatContentTests
             rejectedRuntime.CornerFirstShotAttempt(rejectedEntityId) !=
                 rejectedFirst)
             throw new Exception("Co-op corner did not retry its rejected target.");
+        ulong expectedChange = cornerArrival.Tick +
+            10UL * MatchManifest.TickRate + 1;
+        if (rejectedRuntime.NextCornerChangeTick(rejectedEntityId) !=
+            expectedChange)
+            throw new Exception("Co-op corner change clock missed the source draw.");
+        rejectedRuntime.Advance(expectedChange - 1);
+        if (rejectedDestinations.ForEnemy(rejectedEntityId)?
+            .PointComponentFileId != sourceCorner.ComponentFileId)
+            throw new Exception("Co-op corner released its point before change time.");
+        rejectedRuntime.Advance(expectedChange);
+        CoopAssignedEnemyDestination? changedPoint =
+            rejectedDestinations.ForEnemy(rejectedEntityId);
+        if (changedPoint == null ||
+            changedPoint.PointComponentFileId == sourceCorner.ComponentFileId ||
+            rejectedRuntime.InfantryPointArrival(rejectedEntityId) != null ||
+            rejectedRuntime.NextCornerChangeTick(rejectedEntityId) != null)
+            throw new Exception("Co-op corner did not reserve a new walking point.");
 
         MissionRule rusherRule = catalog.Get(2);
         MissionMapRule rusherMissionMap = catalog.MapForMission(2);
