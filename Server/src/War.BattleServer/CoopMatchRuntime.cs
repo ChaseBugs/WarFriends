@@ -142,6 +142,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private sealed record PlayerDamageReceipt(string PlayerId,
         ResolvedPlayerDamage Hit, float RandomRoll, ulong Tick,
         PlayerDamageResult Result);
+    private sealed record StationaryPlayerTarget(
+        CoopInfantryPlayerTargetPlan Plan,
+        CoopInfantryPlayerShotTarget Placed);
     private readonly Dictionary<ulong, PlayerDamageReceipt> playerDamageReceipts = [];
     private const int MaximumPlayerDamageReceipts = 65_536;
     private CoopPlayerShotCollisionWorld? diagnosticWorld;
@@ -1352,38 +1355,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 tick < arrival.FirstShootEligibleTick ||
                 (obstacleShot && infantryFirstTargets.ContainsKey(entityId)))
                 continue;
-            Participant[] eligiblePlayers = manifest.Players
-                .Select(entry => participants[entry.PlayerId])
-                .Where(player => player.Admitted && player.Ready &&
-                    !player.Dead && player.Route == null)
-                .ToArray();
-            if (eligiblePlayers.Length == 0)
-            {
-                if (cornerShot)
-                    ScheduleCornerNoTargetRetry(entityId);
+            StationaryPlayerTarget? chosen = ChooseStationaryPlayerTarget(
+                entityId, cornerShot);
+            if (chosen == null)
                 continue;
-            }
-            int selectedIndex = chooseInfantryPlayer(eligiblePlayers.Length);
-            if (selectedIndex < 0 || selectedIndex >= eligiblePlayers.Length)
-                throw new InvalidDataException(
-                    "Co-op infantry player choice is outside the living roster.");
-            CoopInfantryPlayerTargetPlan? plan =
-                PlanHostAssaulterPlayerTarget(entityId,
-                    eligiblePlayers[selectedIndex].PlayerId);
-            if (plan == null)
-            {
-                if (cornerShot)
-                    ScheduleCornerNoTargetRetry(entityId);
-                continue;
-            }
-            CoopInfantryPlayerShotTarget? placedTarget =
-                PlaceAssaulterPlayerTarget(plan);
-            if (placedTarget == null)
-            {
-                if (cornerShot)
-                    ScheduleCornerNoTargetRetry(entityId);
-                continue;
-            }
+            CoopInfantryPlayerTargetPlan plan = chosen.Plan;
+            CoopInfantryPlayerShotTarget placedTarget = chosen.Placed;
             cornerNoTargetRetryTicks.Remove(entityId);
             CoopInfantryShotBatch batch = CreateInfantryShotBatch(entityId);
             if (cornerShot)
@@ -1422,6 +1399,37 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             }
             stateRevision++;
         }
+    }
+
+    private StationaryPlayerTarget? ChooseStationaryPlayerTarget(
+        ulong enemyId, bool cornerShot)
+    {
+        Participant[] eligiblePlayers = manifest.Players
+            .Select(entry => participants[entry.PlayerId])
+            .Where(player => player.Admitted && player.Ready &&
+                !player.Dead && player.Route == null)
+            .ToArray();
+        if (eligiblePlayers.Length > 0)
+        {
+            int selectedIndex = chooseInfantryPlayer(eligiblePlayers.Length);
+            if (selectedIndex < 0 || selectedIndex >= eligiblePlayers.Length)
+                throw new InvalidDataException(
+                    "Co-op infantry player choice is outside the living roster.");
+            string playerId = eligiblePlayers[selectedIndex].PlayerId;
+            CoopInfantryPlayerTargetPlan? plan =
+                PlanHostAssaulterPlayerTarget(enemyId, playerId);
+            if (plan != null)
+            {
+                CoopInfantryPlayerShotTarget? placed =
+                    PlaceAssaulterPlayerTarget(plan);
+                if (placed != null)
+                    return new StationaryPlayerTarget(plan, placed);
+            }
+        }
+
+        if (cornerShot)
+            ScheduleCornerNoTargetRetry(enemyId);
+        return null;
     }
 
     private bool CornerReadyToShoot(ulong entityId)
