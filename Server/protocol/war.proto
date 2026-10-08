@@ -451,7 +451,7 @@ message BattleCoopState {
   int32 mission_index = 11; string mission_type = 12;
   int32 objective_target = 13; int32 enemy_kills = 14;
   // Host-created enemy identity, source-scene placement, vitality, and
-  // current Drone flight pose. Other AI movement and player-hit routing remain open.
+  // current Drone/Helicopter flight pose. Other AI movement and player-hit routing remain open.
   repeated BattleCoopEnemySpawn enemy_spawns = 15;
   // The signed roster's first player takes the source master position;
   // the second takes the other main allied defend position.
@@ -508,6 +508,8 @@ message BattleCoopEnemySpawn {
   // pose_tick starts at spawn_tick and advances only with host motion.
   float current_x = 16; float current_y = 17; float current_z = 18;
   BattleJointRotation current_rotation = 19; uint64 pose_tick = 20;
+  // Transport Helicopter only: first source stop-point arrival, zero before.
+  uint64 stop_tick = 21;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

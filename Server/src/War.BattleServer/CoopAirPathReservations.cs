@@ -50,14 +50,27 @@ internal sealed class CoopAirPathReservations
     internal CoopSpawnPoint? ChooseAssaultHelicopter(
         IReadOnlyList<CoopSpawnPoint> anchors, Func<int, int> chooseIndex)
     {
+        return ChooseRandomAir(anchors, chooseIndex,
+            "spawnPointsCollectionAssaultHelis");
+    }
+
+    internal CoopSpawnPoint? ChooseTransportHelicopter(
+        IReadOnlyList<CoopSpawnPoint> anchors, Func<int, int> chooseIndex)
+    {
+        return ChooseRandomAir(anchors, chooseIndex,
+            "spawnPointsCollectionHelicopters");
+    }
+
+    private CoopSpawnPoint? ChooseRandomAir(IReadOnlyList<CoopSpawnPoint> anchors,
+        Func<int, int> chooseIndex, string collection)
+    {
         ArgumentNullException.ThrowIfNull(anchors);
         ArgumentNullException.ThrowIfNull(chooseIndex);
         var available = new List<CoopSpawnPoint>();
         foreach (CoopSpawnPoint anchor in anchors)
         {
-            if (anchor.Collection != "spawnPointsCollectionAssaultHelis" ||
-                anchor.Fraction != 1)
-                throw new InvalidDataException("Co-op Assault Helicopter candidate has the wrong identity.");
+            if (anchor.Collection != collection || anchor.Fraction != 1)
+                throw new InvalidDataException("Co-op air candidate has the wrong identity.");
             int pathId = routes.ForSpawn(map, anchor.ComponentFileId).PathComponentFileId;
             if (!ownersByPath.ContainsKey(pathId))
                 available.Add(anchor);
@@ -65,10 +78,10 @@ internal sealed class CoopAirPathReservations
         if (available.Count == 0)
             return null;
 
-        // AssaultHelicopter.Spawn samples the entire available list.
+        // AssaultHelicopter.Spawn and Helicopter.Spawn sample the entire list.
         int selected = chooseIndex(available.Count);
         if (selected < 0 || selected >= available.Count)
-            throw new InvalidDataException("Co-op Assault Helicopter choice is outside its source candidates.");
+            throw new InvalidDataException("Co-op air choice is outside its source candidates.");
         return available[selected];
     }
 

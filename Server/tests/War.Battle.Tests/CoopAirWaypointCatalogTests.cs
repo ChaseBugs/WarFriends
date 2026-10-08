@@ -70,6 +70,19 @@ internal static class CoopAirWaypointCatalogTests
         assaultReservations.Release(3);
         if (assaultReservations.ChooseAssaultHelicopter(assaultAnchors, _ => 0) == null)
             throw new Exception("Assault Helicopter death did not release its route.");
-        return checkedRoutes + 8;
+
+        CoopSpawnPoint[] transportAnchors = snow.SpawnPoints.Where(point =>
+            point.Collection == "spawnPointsCollectionHelicopters" &&
+            point.Fraction == 1).ToArray();
+        CoopSpawnPoint transport = assaultReservations.ChooseTransportHelicopter(
+            transportAnchors, _ => 0) ??
+            throw new Exception("Co-op Transport Helicopter route was unavailable.");
+        assaultReservations.Reserve(4, transport);
+        if (assaultReservations.ChooseTransportHelicopter(transportAnchors, _ => 0) != null)
+            throw new Exception("An occupied Transport Helicopter route was reused.");
+        assaultReservations.Release(4);
+        if (assaultReservations.ChooseTransportHelicopter(transportAnchors, _ => 0) == null)
+            throw new Exception("Transport Helicopter death did not release its route.");
+        return checkedRoutes + 11;
     }
 }

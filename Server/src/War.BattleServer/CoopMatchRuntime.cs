@@ -72,6 +72,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopMapSpawnPoints? airSpawnMap;
     private readonly Dictionary<ulong, DroneWaypointState> droneFlights = [];
     private readonly Dictionary<ulong, AssaultHelicopterWaypointState> assaultHelicopterFlights = [];
+    private readonly Dictionary<ulong, HelicopterWaypointState> transportHelicopterFlights = [];
+    private readonly Dictionary<ulong, HelicopterOrientationState> transportHelicopterOrientations = [];
     private readonly Func<float> chooseAirDirection;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
@@ -328,6 +330,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 stateRevision++;
             AdvanceDroneFlights();
             AdvanceAssaultHelicopterFlights();
+            AdvanceTransportHelicopterFlights();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
             {
@@ -414,6 +417,33 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
     }
 
+    private void AdvanceTransportHelicopterFlights()
+    {
+        float time = (float)((double)tick / MatchManifest.TickRate);
+        foreach ((ulong entityId, HelicopterWaypointState flight) in
+            transportHelicopterFlights.OrderBy(pair => pair.Key))
+        {
+            bool arrived = flight.Advance(time);
+            BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn => spawn.EntityId == entityId);
+            if (arrived)
+                enemy.StopTick = tick;
+            HelicopterOrientationState orientation =
+                transportHelicopterOrientations[entityId];
+            orientation.Advance(flight.Position, flight.Velocity, flight.Steering,
+                flight.TargetPosition, flight.Breaking, 1f / MatchManifest.TickRate);
+            enemy.CurrentX = flight.Position.X;
+            enemy.CurrentY = flight.Position.Y;
+            enemy.CurrentZ = flight.Position.Z;
+            enemy.PoseTick = tick;
+            Quaternion rotation = orientation.Rotation;
+            enemy.CurrentRotation = new BattleJointRotation
+            {
+                X = rotation.X, Y = rotation.Y, Z = rotation.Z, W = rotation.W
+            };
+            stateRevision++;
+        }
+    }
+
     private BattleCoopEnemySpawn? CreateEnemy(
         string behaviour, int level, bool timedEvent, bool cardUnit)
     {
@@ -431,6 +461,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         else if (behaviour == "Helicopter" && airPathReservations != null)
         {
             CoopSpawnPoint? freePoint = airPathReservations.ChooseAssaultHelicopter(
+                candidates, chooseSpawnPoint);
+            if (freePoint == null)
+                return null;
+            point = freePoint;
+        }
+        else if (behaviour == "DeployHeli" && airPathReservations != null)
+        {
+            CoopSpawnPoint? freePoint = airPathReservations.ChooseTransportHelicopter(
                 candidates, chooseSpawnPoint);
             if (freePoint == null)
                 return null;
@@ -503,6 +541,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             AirWaypointRoute route = coopAirRoutes!.ForSpawn(map, point.ComponentFileId);
             assaultHelicopterFlights.Add(enemy.EntityId, new AssaultHelicopterWaypointState(
                 route, point.Position, combat.MovementSpeed(behaviour), chooseAirDirection));
+        }
+        if (behaviour == "DeployHeli" && airPathReservations != null)
+        {
+            airPathReservations.Reserve(enemy.EntityId, point);
+            CoopMapSpawnPoints map = airSpawnMap ??
+                throw new InvalidDataException("Co-op Transport Helicopter map is unavailable.");
+            AirWaypointRoute route = coopAirRoutes!.ForSpawn(map, point.ComponentFileId);
+            transportHelicopterFlights.Add(enemy.EntityId,
+                new HelicopterWaypointState(route, point.Position,
+                    combat.MovementSpeed(behaviour)));
+            transportHelicopterOrientations.Add(enemy.EntityId,
+                new HelicopterOrientationState());
         }
         return enemy;
     }
@@ -632,27 +682,27 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
-    /// Places the eleven recovered transport Helicopter body boxes at spawn.
+    /// Places the eleven recovered transport Helicopter body boxes at the
+    /// current host pose.
     /// Its source behavior is DeployHeli; the enemy flying layer is 27 after
-    /// DestroyableObjectMultipleParts.ChangeLayer. Later flight poses require
-    /// a host movement simulation.
+    /// DestroyableObjectMultipleParts.ChangeLayer.
     /// </summary>
-    internal IReadOnlyList<DynamicShotTarget> PlaceNewTransportHelicopterTargets(
+    internal IReadOnlyList<DynamicShotTarget> PlaceTransportHelicopterTargets(
         ulong entityId)
     {
         if (phase != BattlePhase.Running || transportHelicopterBodies == null)
             return [];
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == entityId && spawn.Behaviour == "DeployHeli" &&
-            spawn.SpawnTick == tick && spawn.Health > 0 &&
-            spawn.DeathTick == 0 && spawn.SourceRotation != null);
+            spawn.PoseTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.CurrentRotation != null);
         if (enemy == null)
             return [];
 
-        var position = new Vector3(enemy.X, enemy.Y, enemy.Z);
-        var rotation = new Quaternion(enemy.SourceRotation.X,
-            enemy.SourceRotation.Y, enemy.SourceRotation.Z,
-            enemy.SourceRotation.W);
+        var position = new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ);
+        var rotation = new Quaternion(enemy.CurrentRotation.X,
+            enemy.CurrentRotation.Y, enemy.CurrentRotation.Z,
+            enemy.CurrentRotation.W);
         return transportHelicopterBodies.Place(position, rotation)
             .Select(collider => new DynamicShotTarget(entityId,
                 collider.ColliderFileId, 27, collider.Hitbox,
@@ -754,6 +804,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             {
                 airPathReservations?.Release(entityId);
                 assaultHelicopterFlights.Remove(entityId);
+            }
+            if (enemy.Behaviour == "DeployHeli")
+            {
+                airPathReservations?.Release(entityId);
+                transportHelicopterFlights.Remove(entityId);
+                transportHelicopterOrientations.Remove(entityId);
             }
             if (mission.Outcome == MissionOutcome.Succeeded)
                 End(BattlePhase.Ended, "mission-success");

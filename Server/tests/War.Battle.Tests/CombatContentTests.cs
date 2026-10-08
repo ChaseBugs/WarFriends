@@ -1742,7 +1742,9 @@ internal static class CombatContentTests
         var transportRuntime = new CoopMatchRuntime(transportAllocation,
             catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0,
-            playerWeaponContent: content);
+            playerWeaponContent: content,
+            coopAirWaypoints: CoopAirWaypointCatalog.Load(Path.Combine(directory,
+                "recovered-coop-air-waypoint-routes.json"), spawnPoints));
         transportRuntime.Admit(firstPlayer);
         transportRuntime.Admit(secondPlayer);
         var transportReady = new MatchCommand { CommandId = 1,
@@ -1755,7 +1757,7 @@ internal static class CombatContentTests
         BattleCoopEnemySpawn transport = transportRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "DeployHeli");
         IReadOnlyList<DynamicShotTarget> transportBodies = transportRuntime
-            .PlaceNewTransportHelicopterTargets(transport.EntityId);
+            .PlaceTransportHelicopterTargets(transport.EntityId);
         if (transport.SpawnTick != transportTick ||
             transportBodies.Count != 11 ||
             transportBodies.Any(body => body.EntityId != transport.EntityId ||
@@ -1763,12 +1765,29 @@ internal static class CombatContentTests
                 !body.Hitbox.SourcePath.StartsWith(
                     "Assets/GameObject/Helicopter.prefab#",
                     StringComparison.Ordinal)) ||
-            transportRuntime.PlaceNewTransportHelicopterTargets(999).Count != 0)
+            transportRuntime.PlaceTransportHelicopterTargets(999).Count != 0)
             throw new Exception("Co-op transport Helicopter needs eleven enemy body boxes.");
-        transportRuntime.Advance(transportTick + 1);
-        if (transportRuntime.PlaceNewTransportHelicopterTargets(
-                transport.EntityId).Count != 0)
-            throw new Exception("A stale transport Helicopter pose cannot authorize hits.");
+        ulong afterFlight = transportTick + 15 * MatchManifest.TickRate;
+        transportRuntime.Advance(afterFlight);
+        BattleCoopEnemySpawn flownTransport = transportRuntime.Snapshot()
+            .Coop.EnemySpawns.Single(enemy => enemy.EntityId == transport.EntityId);
+        Vector3 transportStart = new(transport.X, transport.Y, transport.Z);
+        Vector3 transportPosition = new(flownTransport.CurrentX,
+            flownTransport.CurrentY, flownTransport.CurrentZ);
+        IReadOnlyList<DynamicShotTarget> flownBodies = transportRuntime
+            .PlaceTransportHelicopterTargets(transport.EntityId);
+        if (transportRuntime.ReservedAirPath(transport.EntityId) is not > 0 ||
+            flownTransport.PoseTick != afterFlight ||
+            flownTransport.SpawnTick != transportTick ||
+            flownTransport.StopTick == 0 || flownTransport.StopTick > afterFlight ||
+            transportPosition == transportStart || flownBodies.Count != 11 ||
+            flownBodies.Any(body => body.Hitbox.TransformPosition != transportPosition))
+            throw new Exception("Co-op transport Helicopter lost its flight, stop, or body pose.");
+        if (!transportRuntime.ApplyHostEnemyDamage(transport.EntityId,
+                transport.MaxHealth, afterFlight) ||
+            transportRuntime.ReservedAirPath(transport.EntityId) != null ||
+            transportRuntime.PlaceTransportHelicopterTargets(transport.EntityId).Count != 0)
+            throw new Exception("Co-op transport Helicopter death retained its path or hitboxes.");
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);
