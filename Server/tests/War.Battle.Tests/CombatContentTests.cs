@@ -2261,14 +2261,18 @@ internal static class CombatContentTests
         if (movingAimEnemy == null || aimStepRig?.MovingTarget == null ||
             !afterAimStep.Moving)
             throw new Exception("Co-op moving aim fixture lacks an Assaulter.");
+        var movingImpactRound = new CoopInfantryRoundIntent(
+            movingAimEnemy.EntityId, 0, 8, true, Vector3.UnitZ,
+            obstacleSample, Vector3.Zero, 90123);
         var movingImpact = new BulletImpact(90123, string.Empty,
-            movingWorldHit.ToBulletCollision(), 2,
+            movingWorldHit.ToBulletCollision(), 9,
             movingAimEnemy.EntityId);
         var movingFlightResult = new CoopDiagnosticFlightResult(90123,
-            movingAimEnemy.EntityId, 2, "impact", movingImpact);
+            movingAimEnemy.EntityId, 9, "impact", movingImpact);
         CoopAssaulterPlayerImpactPlan? movingImpactPlan =
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
-                movingFlightResult, movingAimEnemy, enemyCombat,
+                movingFlightResult, movingImpactRound,
+                movingAimEnemy, enemyCombat,
                 content.Poses);
         if (movingImpactPlan?.PlayerId != firstPlayer ||
             movingImpactPlan.PartPath != movingWorldHit.PlayerPartPath ||
@@ -2786,13 +2790,17 @@ internal static class CombatContentTests
             alliedShotWorld.CoverForShieldCollider(-1) != null ||
             arrivalRuntime.PlanDiagnosticShieldImpact(12345) != null)
             throw new Exception("Diagnostic shield planning accepted an unknown hit.");
+        var sourceShieldRound = new CoopInfantryRoundIntent(
+            arrivalEnemy.EntityId, 0, 1, true, Vector3.UnitZ,
+            obstacleSample, Vector3.Zero, 12345);
         var sourceShieldImpact = new BulletImpact(12345, string.Empty,
-            covered.ToBulletCollision(), 1, arrivalEnemy.EntityId);
+            covered.ToBulletCollision(), 2, arrivalEnemy.EntityId);
         var sourceShieldResult = new CoopDiagnosticFlightResult(12345,
-            arrivalEnemy.EntityId, 1, "impact", sourceShieldImpact);
+            arrivalEnemy.EntityId, 2, "impact", sourceShieldImpact);
         CoopAssaulterShieldImpactPlan? shieldPlan =
             CoopAssaulterShieldImpactPlanner.FromDiagnostic(
-                sourceShieldResult, arrivalEnemy, alliedShotWorld,
+                sourceShieldResult, sourceShieldRound,
+                arrivalEnemy, alliedShotWorld,
                 enemyCombat, content.Shields);
         float expectedSourceDamage = enemyCombat.OrdinaryStats(
             "Assaulter", arrivalEnemy.Level).Damage;
@@ -2802,10 +2810,16 @@ internal static class CombatContentTests
             shieldPlan.ShieldDamage != expectedSourceDamage *
                 content.Shields.UnitToShieldCoefficient ||
             CoopAssaulterShieldImpactPlanner.FromDiagnostic(
-                sourceShieldResult with { Outcome = "miss" }, arrivalEnemy,
+                sourceShieldResult with { Outcome = "miss" },
+                sourceShieldRound, arrivalEnemy,
                 alliedShotWorld, enemyCombat, content.Shields) != null ||
             CoopAssaulterShieldImpactPlanner.FromDiagnostic(
-                sourceShieldResult with { EnemyEntityId = 999 }, arrivalEnemy,
+                sourceShieldResult with { EnemyEntityId = 999 },
+                sourceShieldRound, arrivalEnemy, alliedShotWorld,
+                enemyCombat, content.Shields) != null ||
+            CoopAssaulterShieldImpactPlanner.FromDiagnostic(
+                sourceShieldResult,
+                sourceShieldRound with { Real = false }, arrivalEnemy,
                 alliedShotWorld, enemyCombat, content.Shields) != null)
             throw new Exception("Diagnostic shield impact lost source ownership.");
         CoopPlayerShotHit? bodyHit = alliedShotWorld.Trace(
@@ -2813,13 +2827,18 @@ internal static class CombatContentTests
             idleAllies);
         if (bodyHit?.PlayerId == null)
             throw new Exception("Source allied idle pose has no diagnostic hit.");
+        var sourcePlayerRound = sourceShieldRound with
+        {
+            ProjectileId = 12346
+        };
         var playerImpact = new BulletImpact(12346, string.Empty,
-            bodyHit.ToBulletCollision(), 1, arrivalEnemy.EntityId);
+            bodyHit.ToBulletCollision(), 2, arrivalEnemy.EntityId);
         var playerResult = new CoopDiagnosticFlightResult(12346,
-            arrivalEnemy.EntityId, 1, "impact", playerImpact);
+            arrivalEnemy.EntityId, 2, "impact", playerImpact);
         CoopAssaulterPlayerImpactPlan? playerPlan =
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
-                playerResult, arrivalEnemy, enemyCombat, content.Poses);
+                playerResult, sourcePlayerRound,
+                arrivalEnemy, enemyCombat, content.Poses);
         if (playerPlan?.PlayerId != bodyHit.PlayerId ||
             playerPlan.PartPath != bodyHit.PlayerPartPath ||
             playerPlan.PartWeight != bodyHit.PartWeight ||
@@ -2827,11 +2846,13 @@ internal static class CombatContentTests
             arrivalRuntime.PlanDiagnosticPlayerImpact(12346) != null ||
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
                 playerResult with { EnemyEntityId = 999 },
-                arrivalEnemy, enemyCombat, content.Poses) != null ||
+                sourcePlayerRound, arrivalEnemy, enemyCombat,
+                content.Poses) != null ||
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
                 playerResult with { Impact = playerImpact with
                     { Hit = covered.ToBulletCollision() } },
-                arrivalEnemy, enemyCombat, content.Poses) != null ||
+                sourcePlayerRound, arrivalEnemy, enemyCombat,
+                content.Poses) != null ||
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
                 playerResult with { Impact = playerImpact with
                 {
@@ -2839,7 +2860,8 @@ internal static class CombatContentTests
                     {
                         SourcePath = "player/forged-part"
                     }
-                } }, arrivalEnemy, enemyCombat, content.Poses) != null ||
+                } }, sourcePlayerRound, arrivalEnemy, enemyCombat,
+                content.Poses) != null ||
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
                 playerResult with { Impact = playerImpact with
                 {
@@ -2847,7 +2869,16 @@ internal static class CombatContentTests
                     {
                         PartWeight = bodyHit.PartWeight + 1f
                     }
-                } }, arrivalEnemy, enemyCombat, content.Poses) != null)
+                } }, sourcePlayerRound, arrivalEnemy, enemyCombat,
+                content.Poses) != null ||
+            CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
+                playerResult,
+                sourcePlayerRound with { ProjectileId = 999 },
+                arrivalEnemy, enemyCombat, content.Poses) != null ||
+            CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
+                playerResult,
+                sourcePlayerRound with { Tick = 2 },
+                arrivalEnemy, enemyCombat, content.Poses) != null)
             throw new Exception("Diagnostic player impact lost source ownership.");
         ResolvedPlayerDamage plannedDamage =
             CoopAssaulterPlayerDamagePolicy.FromImpact(playerPlan);

@@ -2565,6 +2565,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal IReadOnlyList<CoopDiagnosticFlightResult>
         DiagnosticFlightResults() => diagnosticFlightResults.ToArray();
 
+    private CoopInfantryRoundIntent? FindDiagnosticRound(
+        CoopDiagnosticFlightResult result)
+    {
+        return infantryRoundIntents.TryGetValue(result.EnemyEntityId,
+            out List<CoopInfantryRoundIntent>? rounds)
+            ? rounds.SingleOrDefault(round =>
+                round.ProjectileId == result.ProjectileId)
+            : null;
+    }
+
     /// <summary>
     /// Inspects a completed diagnostic hit without changing shield health.
     /// Collision coverage must be completed before this can become authority.
@@ -2578,12 +2588,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             .SingleOrDefault(row => row.ProjectileId == projectileId);
         if (result == null)
             return null;
+        CoopInfantryRoundIntent? round = FindDiagnosticRound(result);
+        if (round == null)
+            return null;
         BattleCoopEnemySpawn? enemy = enemySpawns.SingleOrDefault(
             spawn => spawn.EntityId == result.EnemyEntityId);
         if (enemy == null)
             return null;
         return CoopAssaulterShieldImpactPlanner.FromDiagnostic(result,
-            enemy, diagnosticWorld, combat, shieldPolicy);
+            round, enemy, diagnosticWorld, combat, shieldPolicy);
     }
 
     /// <summary>
@@ -2599,13 +2612,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             .SingleOrDefault(row => row.ProjectileId == projectileId);
         if (result == null)
             return null;
+        CoopInfantryRoundIntent? round = FindDiagnosticRound(result);
+        if (round == null)
+            return null;
         BattleCoopEnemySpawn? enemy = enemySpawns.SingleOrDefault(
             spawn => spawn.EntityId == result.EnemyEntityId);
         if (enemy == null)
             return null;
         CoopAssaulterPlayerImpactPlan? plan =
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(result,
-                enemy, combat, playerPoses);
+                round, enemy, combat, playerPoses);
         if (plan == null ||
             !participants.TryGetValue(plan.PlayerId,
                 out Participant? player) ||

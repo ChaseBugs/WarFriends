@@ -1,3 +1,4 @@
+using System.Numerics;
 using War.Protocol;
 
 namespace War.BattleServer;
@@ -19,6 +20,29 @@ internal sealed record CoopAssaulterPlayerImpactPlan(
     ulong ProjectileId, ulong EnemyEntityId, ulong Tick,
     string PlayerId, string PartPath, float PartWeight,
     float SourceDamage);
+
+internal static class CoopAssaulterRoundProof
+{
+    internal static bool Matches(CoopDiagnosticFlightResult result,
+        CoopInfantryRoundIntent round)
+    {
+        BulletImpact? impact = result.Impact;
+        return impact != null && round.Real && round.RoundIndex >= 0 &&
+            round.ProjectileId != 0 &&
+            round.ProjectileId == result.ProjectileId &&
+            round.EnemyEntityId != 0 &&
+            round.EnemyEntityId == result.EnemyEntityId &&
+            round.Tick < result.Tick &&
+            round.ObservedLocalMuzzle != null &&
+            round.ObservedWorldLaunchOrigin is Vector3 origin &&
+            PlayerHitbox.Finite(origin) &&
+            PlayerHitbox.Finite(round.AimPosition) &&
+            impact.ProjectileId == round.ProjectileId &&
+            impact.EnemyEntityId == round.EnemyEntityId &&
+            impact.OwnerId == string.Empty &&
+            impact.Tick == result.Tick;
+    }
+}
 
 internal static class CoopAssaulterPlayerDamagePolicy
 {
@@ -49,12 +73,14 @@ internal static class CoopAssaulterShieldImpactPlanner
 {
     internal static CoopAssaulterShieldImpactPlan? FromDiagnostic(
         CoopDiagnosticFlightResult result,
+        CoopInfantryRoundIntent round,
         BattleCoopEnemySpawn enemy,
         CoopPlayerShotCollisionWorld world,
         CoopEnemyCombatCatalog combat,
         ShieldSourceCatalog shieldPolicy)
     {
         ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(round);
         ArgumentNullException.ThrowIfNull(enemy);
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(combat);
@@ -62,6 +88,7 @@ internal static class CoopAssaulterShieldImpactPlanner
 
         BulletImpact? impact = result.Impact;
         if (result.Outcome != "impact" || impact == null ||
+            !CoopAssaulterRoundProof.Matches(result, round) ||
             result.ProjectileId == 0 ||
             impact.ProjectileId != result.ProjectileId ||
             impact.EnemyEntityId != result.EnemyEntityId ||
@@ -97,17 +124,20 @@ internal static class CoopAssaulterPlayerImpactPlanner
 {
     internal static CoopAssaulterPlayerImpactPlan? FromDiagnostic(
         CoopDiagnosticFlightResult result,
+        CoopInfantryRoundIntent round,
         BattleCoopEnemySpawn enemy,
         CoopEnemyCombatCatalog combat,
         PlayerPoseCatalog playerPoses)
     {
         ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(round);
         ArgumentNullException.ThrowIfNull(enemy);
         ArgumentNullException.ThrowIfNull(combat);
         ArgumentNullException.ThrowIfNull(playerPoses);
 
         BulletImpact? impact = result.Impact;
         if (result.Outcome != "impact" || impact == null ||
+            !CoopAssaulterRoundProof.Matches(result, round) ||
             result.ProjectileId == 0 ||
             impact.ProjectileId != result.ProjectileId ||
             impact.EnemyEntityId != result.EnemyEntityId ||
