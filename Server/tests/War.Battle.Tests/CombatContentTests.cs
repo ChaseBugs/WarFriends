@@ -3079,6 +3079,8 @@ internal static class CombatContentTests
                         walkingWindup.TargetTransformFileId).Type == 2))
             throw new Exception(
                 "Moving cover volley did not retain its callback aim.");
+        if (!walkingRounds[0].ShieldTarget)
+            throw new Exception("Moving cover fixture selected a body target.");
         BattlePlayerState movingRoundPlayer = movingVolleyRuntime.Snapshot()
             .Players.Single(player => player.PlayerId == firstPlayer);
         BulletFlight? movingRoundFlight = movingVolleyRuntime
@@ -3268,6 +3270,7 @@ internal static class CombatContentTests
             firstRound[0].TargetTransformFileId !=
                 placedTarget.TransformFileId ||
             firstRound[0].ShieldTarget != (sourceTarget.Type == 2) ||
+            firstRound[0].ShieldTarget ||
             firstRound[0].ObservedLocalMuzzle != obstacleSample)
             throw new Exception($"Co-op rifle missed its first host round intent: {firstRound.FirstOrDefault()}, expected observation {obstacleSample}.");
         Vector3 expectedLaunchOrigin =
