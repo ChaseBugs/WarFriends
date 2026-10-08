@@ -34,6 +34,8 @@ public sealed class CoopPlayerWeaponState
     private readonly Dictionary<int, SlotState> slots;
     public int ActiveSlot { get; private set; }
     public ulong CurrentTick { get; private set; }
+    public bool HasFiredAnyShot => slots.Values.Any(slot =>
+        slot.ShotsFired != 0);
 
     public CoopPlayerWeaponState(
         IReadOnlyList<CoopPlayerWeapon> weapons, ulong startingTick)

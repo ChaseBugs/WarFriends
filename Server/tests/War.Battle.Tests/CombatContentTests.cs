@@ -799,13 +799,15 @@ internal static class CombatContentTests
             CoopPlayerWeaponCatalog.Bind(twoWeapons, content);
         var selectedAmmo = new CoopPlayerWeaponState(
             twoWeaponCatalog.ForPlayer(twoWeapons.Players[0].PlayerId), 0);
-        if (selectedAmmo.CheckShot(0, 0) != CoopShotAvailability.Ready ||
+        if (selectedAmmo.HasFiredAnyShot ||
+            selectedAmmo.CheckShot(0, 0) != CoopShotAvailability.Ready ||
             selectedAmmo.CheckShot(1, 0) != CoopShotAvailability.WrongSlot ||
             selectedAmmo.CheckShot(0, 1) != CoopShotAvailability.WrongTick ||
             !selectedAmmo.TrySelectSlot(1, 0) ||
             !selectedAmmo.ConfirmHostShot(1, 0) ||
             selectedAmmo.CheckShot(1, 0) != CoopShotAvailability.Cooldown ||
             !selectedAmmo.TrySelectSlot(0, 0) ||
+            !selectedAmmo.HasFiredAnyShot ||
             selectedAmmo.Readiness(0).Clip != coop.Players[0].Weapon.ClipSize ||
             !selectedAmmo.TrySelectSlot(1, 0) ||
             selectedAmmo.Readiness(1).Clip != alternateWeapon.ClipSize - 1)
@@ -1744,6 +1746,20 @@ internal static class CombatContentTests
             targetPlan.PlayerId != firstPlayer ||
             targetPlan.Tick != firstShootTick)
             throw new Exception("Co-op Assaulter target mask lacks host player authority.");
+        CoopInfantryPlayerShotTarget? placedTarget = arrivalRuntime
+            .PlaceFirstAssaulterPlayerTarget(arrivalEnemy.EntityId);
+        PlayerShotTarget? sourceTarget = placedTarget == null ? null :
+            content.PlayerShotTargets.Gameplay.Single(target =>
+                target.TransformFileId == placedTarget.TransformFileId);
+        if (placedTarget?.PlayerId != firstPlayer ||
+            placedTarget.Tick != firstShootTick ||
+            sourceTarget == null ||
+            (sourceTarget.Type & expectedTargetMask) != sourceTarget.Type ||
+            placedTarget.SourcePath != sourceTarget.Path ||
+            !PlayerHitbox.Finite(placedTarget.Position) ||
+            Vector3.Distance(placedTarget.Position,
+                mainAnchors[0].Position) > 3f)
+            throw new Exception("Co-op Assaulter lacks an idle source player target.");
         arrivalRuntime.Advance(firstShootTick + 1);
         if (arrivalRuntime.InfantryFirstPlayerTarget(
                 arrivalEnemy.EntityId) != targetPlan)
@@ -1752,6 +1768,8 @@ internal static class CombatContentTests
                 heldEnemy.Health, firstShootTick + 1) ||
             arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null ||
             arrivalRuntime.InfantryFirstPlayerTarget(
+                arrivalEnemy.EntityId) != null ||
+            arrivalRuntime.PlaceFirstAssaulterPlayerTarget(
                 arrivalEnemy.EntityId) != null)
             throw new Exception("Dead co-op infantry retained a point-arrival marker.");
 
