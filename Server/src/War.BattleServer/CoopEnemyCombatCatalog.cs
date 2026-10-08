@@ -101,6 +101,13 @@ public sealed class CoopEnemyCombatCatalog
                 $"Unknown co-op behavior {behaviour}.");
     }
 
+    internal float MovementSpeed(string behaviour)
+    {
+        // Drone.UpgradesLoaded copies its behavior speed to DroneSteering.
+        // The validated deployment family retains that recovered value.
+        return army.EffectiveSpeed(UnitIdFor(behaviour), 1f);
+    }
+
     public ArmyBaseCombatStats OrdinaryStats(
         string behaviour, int normalUpgradeIndex, bool heroic = false)
     {

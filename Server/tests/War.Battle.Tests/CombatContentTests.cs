@@ -1641,7 +1641,7 @@ internal static class CombatContentTests
         if (droneRuntime.ReservedDronePath(drone.EntityId) is not > 0)
             throw new Exception("A live co-op Drone did not reserve its recovered path.");
         IReadOnlyList<DynamicShotTarget> droneShapes = droneRuntime
-            .PlaceNewDroneTargets(drone.EntityId);
+            .PlaceDroneTargets(drone.EntityId);
         Vector3 droneStart = new(drone.X, drone.Y, drone.Z);
         if (drone.SpawnTick != 1 || droneShapes.Count != 2 ||
             droneShapes.Count(shape => shape.DroneRoot &&
@@ -1653,13 +1653,24 @@ internal static class CombatContentTests
             droneShapes.Any(shape =>
                 shape.EntityId != drone.EntityId ||
                 shape.Hitbox.TransformPosition != droneStart) ||
-            droneRuntime.PlaceNewDroneTargets(999).Count != 0)
+            droneRuntime.PlaceDroneTargets(999).Count != 0)
             throw new Exception("Co-op Drone needs its two source-owned spawn colliders.");
-        droneRuntime.Advance(2);
-        if (droneRuntime.PlaceNewDroneTargets(drone.EntityId).Count != 0)
-            throw new Exception("A stale Drone pose cannot authorize co-op hits.");
-        if (!droneRuntime.ApplyHostEnemyDamage(drone.EntityId, drone.MaxHealth, 2) ||
-            droneRuntime.ReservedDronePath(drone.EntityId) != null)
+        droneRuntime.Advance(25);
+        BattleCoopEnemySpawn movedDrone = droneRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == drone.EntityId);
+        IReadOnlyList<DynamicShotTarget> movedShapes = droneRuntime
+            .PlaceDroneTargets(drone.EntityId);
+        Vector3 movedPosition = new(movedDrone.CurrentX, movedDrone.CurrentY,
+            movedDrone.CurrentZ);
+        if (movedDrone.PoseTick != 25 || movedDrone.SpawnTick != 1 ||
+            new Vector3(movedDrone.X, movedDrone.Y, movedDrone.Z) != droneStart ||
+            Vector3.Distance(movedPosition, droneStart) <= 0 ||
+            movedShapes.Count != 2 || movedShapes.Any(shape =>
+                shape.Hitbox.TransformPosition != movedPosition))
+            throw new Exception($"A co-op Drone did not publish its live host flight pose: pose={movedDrone.PoseTick}, spawn={movedDrone.SpawnTick}, distance={Vector3.Distance(movedPosition, droneStart)}, shapes={movedShapes.Count}, center={movedShapes.FirstOrDefault()?.Hitbox.TransformPosition}, position={movedPosition}.");
+        if (!droneRuntime.ApplyHostEnemyDamage(drone.EntityId, drone.MaxHealth, 25) ||
+            droneRuntime.ReservedDronePath(drone.EntityId) != null ||
+            droneRuntime.PlaceDroneTargets(drone.EntityId).Count != 0)
             throw new Exception("Lethal co-op Drone damage did not release its path.");
 
         const int buggyMissionIndex = 36;

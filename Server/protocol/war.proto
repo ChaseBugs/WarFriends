@@ -450,8 +450,8 @@ message BattleCoopState {
   // mission_type is empty for the older generic wave prototype.
   int32 mission_index = 11; string mission_type = 12;
   int32 objective_target = 13; int32 enemy_kills = 14;
-  // Host-created enemy identity, source-scene placement, and vitality.
-  // Movement and validated player-hit routing require later integration.
+  // Host-created enemy identity, source-scene placement, vitality, and
+  // current Drone flight pose. Other AI movement and player-hit routing remain open.
   repeated BattleCoopEnemySpawn enemy_spawns = 15;
   // The signed roster's first player takes the source master position;
   // the second takes the other main allied defend position.
@@ -502,9 +502,12 @@ message BattleCoopEnemySpawn {
   float max_health = 12; float health = 13;
   // Set only after the host confirms lethal damage; zero otherwise.
   uint64 death_tick = 14;
-  // Serialized scene orientation at spawn. Movement and pose updates remain
-  // separate host authority; absent for maps without recovered rotation.
+  // Serialized scene orientation at spawn; absent where source has no rotation.
   BattleJointRotation source_rotation = 15;
+  // Current host pose is separate from the immutable source spawn anchor.
+  // pose_tick starts at spawn_tick and advances only with host motion.
+  float current_x = 16; float current_y = 17; float current_z = 18;
+  BattleJointRotation current_rotation = 19; uint64 pose_tick = 20;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;
