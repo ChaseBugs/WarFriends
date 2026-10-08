@@ -19,6 +19,9 @@ internal static class CombatContentTests
             scores.PointsForFlags(1) != 5 ||
             scores.PointsForFlags(1 | 2) != 6 ||
             scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.Player) != 10 ||
+            scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.Player, 32) != 15 ||
+            scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.Player, 64) != 20 ||
+            scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.Player, 128) != 35 ||
             scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.AlliedArmy) != 5 ||
             scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.UnownedBasicDamage) != 12 ||
             scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.UnownedExplosion) != 14)
@@ -34,7 +37,7 @@ internal static class CombatContentTests
             // The host must establish every flag before it can add Score points.
         }
 
-        return 10;
+        return 13;
     }
 
     private static int VerifyMissionCatalog(
@@ -378,6 +381,74 @@ internal static class CombatContentTests
             !scored.ConfirmAutomaticSpawn(uncreditedBehaviour.Value, 803, 24) ||
             !scored.ConfirmAiDeath(803, 24) || scored.Score != 15)
             throw new Exception("An unattributed AI death must not award mission score.");
+        int? laterPlayerBehaviour = scored.SelectAutomaticBehaviour(32);
+        if (laterPlayerBehaviour == null ||
+            !scored.ConfirmAutomaticSpawn(laterPlayerBehaviour.Value, 804, 32) ||
+            !scored.ConfirmAttributedAiDeath(804, firstPlayer,
+                CoopEnemyKillCredit.Player, skillShots, 32) ||
+            scored.Score != 30)
+            throw new Exception("Army and unattributed kills must not consume the player combo.");
+
+        var comboMission = new CoopMissionEngine(catalog, scoreRule.Index, _ => 0);
+        comboMission.Admit(firstPlayer);
+        comboMission.Admit(secondPlayer);
+        comboMission.MarkReady(firstPlayer, 0);
+        comboMission.MarkReady(secondPlayer, 0);
+        int[] expectedComboTotals = [10, 25, 45, 80];
+        for (int index = 0; index < expectedComboTotals.Length; index++)
+        {
+            ulong killTick = (ulong)(8 + index * 8);
+            int? behaviour = comboMission.SelectAutomaticBehaviour(killTick);
+            ulong entityId = (ulong)(900 + index);
+            if (behaviour == null ||
+                !comboMission.ConfirmAutomaticSpawn(behaviour.Value, entityId, killTick) ||
+                !comboMission.ConfirmAttributedAiDeath(entityId, firstPlayer,
+                    CoopEnemyKillCredit.Player, skillShots, killTick) ||
+                comboMission.ConfirmAttributedAiDeath(entityId, firstPlayer,
+                    CoopEnemyKillCredit.Player, skillShots, killTick) ||
+                comboMission.Score != expectedComboTotals[index])
+                throw new Exception("Client's 0.9-second kill combo changed Score points.");
+        }
+
+        var alliedCombos = new CoopMissionEngine(catalog, scoreRule.Index, _ => 0);
+        alliedCombos.Admit(firstPlayer);
+        alliedCombos.Admit(secondPlayer);
+        alliedCombos.MarkReady(firstPlayer, 0);
+        alliedCombos.MarkReady(secondPlayer, 0);
+        string[] creditedPlayers = [firstPlayer, secondPlayer, firstPlayer];
+        int[] expectedAlliedTotals = [10, 20, 35];
+        for (int index = 0; index < creditedPlayers.Length; index++)
+        {
+            ulong killTick = (ulong)(8 + index * 8);
+            int? behaviour = alliedCombos.SelectAutomaticBehaviour(killTick);
+            ulong entityId = (ulong)(920 + index);
+            if (behaviour == null ||
+                !alliedCombos.ConfirmAutomaticSpawn(behaviour.Value, entityId, killTick) ||
+                !alliedCombos.ConfirmAttributedAiDeath(entityId,
+                    creditedPlayers[index], CoopEnemyKillCredit.Player,
+                    skillShots, killTick) ||
+                alliedCombos.Score != expectedAlliedTotals[index])
+                throw new Exception("One ally's kill must not advance the other's combo.");
+        }
+
+        var expiredCombo = new CoopMissionEngine(catalog, scoreRule.Index, _ => 0);
+        expiredCombo.Admit(firstPlayer);
+        expiredCombo.Admit(secondPlayer);
+        expiredCombo.MarkReady(firstPlayer, 0);
+        expiredCombo.MarkReady(secondPlayer, 0);
+        int? firstComboBehaviour = expiredCombo.SelectAutomaticBehaviour(8);
+        if (firstComboBehaviour == null ||
+            !expiredCombo.ConfirmAutomaticSpawn(firstComboBehaviour.Value, 911, 8) ||
+            !expiredCombo.ConfirmAttributedAiDeath(911, firstPlayer,
+                CoopEnemyKillCredit.Player, skillShots, 8))
+            throw new Exception("A combo boundary fixture needs a confirmed first kill.");
+        int? nextComboBehaviour = expiredCombo.SelectAutomaticBehaviour(16);
+        if (nextComboBehaviour == null ||
+            !expiredCombo.ConfirmAutomaticSpawn(nextComboBehaviour.Value, 912, 16) ||
+            !expiredCombo.ConfirmAttributedAiDeath(912, firstPlayer,
+                CoopEnemyKillCredit.Player, skillShots, 35) ||
+            expiredCombo.Score != 20)
+            throw new Exception("A kill at the exact combo deadline must start a new streak.");
 
         MissionRule survivalRule = catalog.Missions.First(rule =>
             rule.MissionType == "SurviveXSeconds");
@@ -404,7 +475,7 @@ internal static class CombatContentTests
             abandoned.Outcome != MissionOutcome.Failed ||
             abandoned.SelectAutomaticBehaviour(8) != null)
             throw new Exception("A participant departure fails and closes an active mission.");
-        return 9;
+        return 13;
     }
 
     private static int VerifyCoopAllocation(

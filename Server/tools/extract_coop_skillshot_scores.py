@@ -57,6 +57,15 @@ def scene_items(source):
     return items
 
 
+def combo_window(source):
+    start = source.index("  skillShotItemDefinitions:\n")
+    nearby = source[start - 200:start]
+    match = re.search(r"^  timeForCombo: (\d+(?:\.\d+)?)$", nearby, re.M)
+    if not match:
+        raise ValueError("MainScene skill-shot combo window changed")
+    return float(match.group(1))
+
+
 def main():
     scene_bytes = SCENE.read_bytes()
     content_bytes = CONTENT.read_bytes()
@@ -89,6 +98,7 @@ def main():
         "battleContentSha256": hashlib.sha256(content_bytes).hexdigest(),
         "sheetCodeSha256": hashlib.sha256(sheet_bytes).hexdigest(),
         "skillCodeSha256": hashlib.sha256(flag_bytes).hexdigest(),
+        "comboWindowSeconds": combo_window(scene),
         "rows": rows,
     }
     expected = json.dumps(document, indent=2) + "\n"

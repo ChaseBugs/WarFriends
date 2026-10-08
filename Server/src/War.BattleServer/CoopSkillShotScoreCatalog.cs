@@ -25,8 +25,12 @@ public sealed class CoopSkillShotScoreCatalog
     private const int ExplosiveKillFlag = 8192;
     private const int AlliedArmyKillFlag = 32768;
     private const int EnvironmentalKillFlag = 262144;
+    internal const int DoubleKillFlag = 32;
+    internal const int TripleKillFlag = 64;
+    internal const int MultiKillFlag = 128;
+    internal const int ComboWindowTicks = 27;
     private const string ReviewedSha256 =
-        "8b8cbf00db4f478431c00e362d3cc07f65160c2dd55269a4ef077a24afd4e2a4";
+        "4813a3a2404bb0ad2e08035eec0de1ad954b315446e71c8c0dcb0b23d431e5fd";
     private readonly IReadOnlyList<CoopSkillShotScore> rows;
     private readonly int knownFlags;
 
@@ -38,14 +42,18 @@ public sealed class CoopSkillShotScoreCatalog
 
     public IReadOnlyList<CoopSkillShotScore> Rows => rows;
 
-    public int PointsForConfirmedEnemyKill(CoopEnemyKillCredit credit)
+    public int PointsForConfirmedEnemyKill(CoopEnemyKillCredit credit,
+        int comboFlag = 0)
     {
         // SkillShotController.GameEntityOnKilled emits these base flags for an
-        // enemy death. Headshots, combos and other bonuses need separate host
-        // evidence and are intentionally absent here.
+        // enemy death. Only a player-owned kill calls RecieveKill, so its combo
+        // flag must come from the host's accepted kill history.
+        if (comboFlag != 0 && (credit != CoopEnemyKillCredit.Player ||
+            comboFlag is not (DoubleKillFlag or TripleKillFlag or MultiKillFlag)))
+            throw new ArgumentOutOfRangeException(nameof(comboFlag));
         return credit switch
         {
-            CoopEnemyKillCredit.Player => PointsForFlags(KillFlag),
+            CoopEnemyKillCredit.Player => PointsForFlags(KillFlag | comboFlag),
             CoopEnemyKillCredit.AlliedArmy => PointsForFlags(AlliedArmyKillFlag),
             CoopEnemyKillCredit.UnownedBasicDamage =>
                 PointsForFlags(KillFlag | EnvironmentalKillFlag),
@@ -80,7 +88,9 @@ public sealed class CoopSkillShotScoreCatalog
         JsonElement root = document.RootElement;
         if (root.GetProperty("version").GetInt32() != 1 ||
             root.GetProperty("sceneSha256").GetString() != sceneSha256 ||
-            root.GetProperty("battleContentSha256").GetString() != battleContentSha256)
+            root.GetProperty("battleContentSha256").GetString() != battleContentSha256 ||
+            root.GetProperty("comboWindowSeconds").GetSingle() != 0.9f ||
+            MatchManifest.TickRate != 30)
             throw new InvalidDataException("Co-op skill-shot scores use different source data.");
 
         JsonElement sourceRows = root.GetProperty("rows");

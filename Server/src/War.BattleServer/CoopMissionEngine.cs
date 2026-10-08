@@ -12,6 +12,8 @@ public sealed class CoopMissionEngine
     private readonly HashSet<string> participants = new(StringComparer.Ordinal);
     private readonly HashSet<string> ready = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> participantScores = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (ulong LastTick, int Count)> playerKillStreaks =
+        new(StringComparer.Ordinal);
     private readonly MissionObjectiveState objective;
     private readonly MissionAutomaticSpawnState spawns;
     private readonly string missionType;
@@ -151,7 +153,27 @@ public sealed class CoopMissionEngine
             return false;
 
         ArgumentNullException.ThrowIfNull(scores);
-        int earnedPoints = scores.PointsForConfirmedEnemyKill(credit);
+        int nextStreak = 0;
+        int comboFlag = 0;
+        if (credit == CoopEnemyKillCredit.Player)
+        {
+            bool hasPrevious = playerKillStreaks.TryGetValue(creditedPlayerId,
+                out var previousKill);
+            if (hasPrevious && tick < previousKill.LastTick)
+                return false;
+            bool continuesCombo = hasPrevious &&
+                tick - previousKill.LastTick <
+                    CoopSkillShotScoreCatalog.ComboWindowTicks;
+            nextStreak = continuesCombo ? checked(previousKill.Count + 1) : 1;
+            comboFlag = nextStreak switch
+            {
+                2 => CoopSkillShotScoreCatalog.DoubleKillFlag,
+                3 => CoopSkillShotScoreCatalog.TripleKillFlag,
+                > 3 => CoopSkillShotScoreCatalog.MultiKillFlag,
+                _ => 0
+            };
+        }
+        int earnedPoints = scores.PointsForConfirmedEnemyKill(credit, comboFlag);
         if (earnedPoints <= 0 || objective.Score > 1_000_000_000 - earnedPoints ||
             !spawns.ConfirmDeath(entityId))
             return false;
@@ -161,6 +183,8 @@ public sealed class CoopMissionEngine
             throw new InvalidDataException("Confirmed skill-shot failed mission objective replay.");
         participantScores[creditedPlayerId] =
             checked(participantScores[creditedPlayerId] + earnedPoints);
+        if (credit == CoopEnemyKillCredit.Player)
+            playerKillStreaks[creditedPlayerId] = (tick, nextStreak);
         if (Outcome != MissionOutcome.InProgress)
             spawns.Finish();
         return true;
