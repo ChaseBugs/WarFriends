@@ -20,7 +20,11 @@ internal static class CombatContentTests
         if (scores.Rows.Count != 19 || scores.Rows[0].Name != "HeadShot" ||
             scores.PointsForFlags(0) != 0 ||
             scores.PointsForFlags(1) != 5 ||
-            scores.PointsForFlags(1 | 2) != 6)
+            scores.PointsForFlags(1 | 2) != 6 ||
+            scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.Player) != 10 ||
+            scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.AlliedArmy) != 5 ||
+            scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.UnownedBasicDamage) != 12 ||
+            scores.PointsForConfirmedEnemyKill(CoopEnemyKillCredit.UnownedExplosion) != 14)
             throw new Exception("Recovered co-op skill-shot points differ from Client.");
 
         try
@@ -33,7 +37,7 @@ internal static class CombatContentTests
             // The host must establish every flag before it can add Score points.
         }
 
-        return 6;
+        return 10;
     }
 
     private static int VerifyMissionCatalog(

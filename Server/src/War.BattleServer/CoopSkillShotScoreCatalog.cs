@@ -6,13 +6,25 @@ namespace War.BattleServer;
 
 public sealed record CoopSkillShotScore(int Flag, string Name, string DictionaryId, int MissionPoints);
 
+public enum CoopEnemyKillCredit
+{
+    Player,
+    AlliedArmy,
+    UnownedBasicDamage,
+    UnownedExplosion
+}
+
 /// <summary>
-/// Source points for Score missions. A kill alone does not add score in the recovered
-/// client: ScoreManager adds these points only when SkillShotManager reports flags.
-/// Call PointsForFlags only with flags established by host combat rules.
+/// Source points for Score missions. SkillShotController gives different flags
+/// for a player's kill, an allied army kill, and an unowned environmental kill.
+/// Call these methods only with events established by host combat rules.
 /// </summary>
 public sealed class CoopSkillShotScoreCatalog
 {
+    private const int KillFlag = 4096;
+    private const int ExplosiveKillFlag = 8192;
+    private const int AlliedArmyKillFlag = 32768;
+    private const int EnvironmentalKillFlag = 262144;
     private const string ReviewedSha256 =
         "8b8cbf00db4f478431c00e362d3cc07f65160c2dd55269a4ef077a24afd4e2a4";
     private readonly IReadOnlyList<CoopSkillShotScore> rows;
@@ -25,6 +37,23 @@ public sealed class CoopSkillShotScoreCatalog
     }
 
     public IReadOnlyList<CoopSkillShotScore> Rows => rows;
+
+    public int PointsForConfirmedEnemyKill(CoopEnemyKillCredit credit)
+    {
+        // SkillShotController.GameEntityOnKilled emits these base flags for an
+        // enemy death. Headshots, combos and other bonuses need separate host
+        // evidence and are intentionally absent here.
+        return credit switch
+        {
+            CoopEnemyKillCredit.Player => PointsForFlags(KillFlag),
+            CoopEnemyKillCredit.AlliedArmy => PointsForFlags(AlliedArmyKillFlag),
+            CoopEnemyKillCredit.UnownedBasicDamage =>
+                PointsForFlags(KillFlag | EnvironmentalKillFlag),
+            CoopEnemyKillCredit.UnownedExplosion =>
+                PointsForFlags(KillFlag | EnvironmentalKillFlag | ExplosiveKillFlag),
+            _ => throw new ArgumentOutOfRangeException(nameof(credit))
+        };
+    }
 
     public int PointsForFlags(int confirmedFlags)
     {
