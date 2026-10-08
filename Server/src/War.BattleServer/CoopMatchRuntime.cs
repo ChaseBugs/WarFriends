@@ -3432,18 +3432,46 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
-    /// Samples the Assaulter's idle muzzle from its host-owned arrival clock.
-    /// The recovered Client restarts Idle when entering cover. Unity's
-    /// crossfade has not been verified here, so this is diagnostic geometry.
+    /// Samples the Assaulter's idle muzzle from its host-owned cover clock.
+    /// The first stay starts at arrival; a later corner stay starts only after
+    /// the validated cover-back queue reaches a pure idle frame.
     /// </summary>
     internal CoopMuzzlePose? ObserveIdleAssaulterMuzzle(ulong enemyId)
     {
         if (phase != BattlePhase.Running || enemyMuzzles == null ||
             !infantryPointArrivals.TryGetValue(enemyId,
                 out CoopInfantryPointArrival? arrival) ||
-            infantryShotWindups.ContainsKey(enemyId) ||
             tick < arrival.Tick)
             return null;
+
+        float idleSeconds;
+        if (infantryShotWindups.TryGetValue(enemyId,
+                out CoopInfantryShotWindup? windup))
+        {
+            if (windup.CompletedTick == null ||
+                windup.AnimationClip is not
+                    ("player_look_right3" or "player_look_left3") ||
+                cornerQueuePoses == null ||
+                infantryPaths.ContainsKey(enemyId))
+                return null;
+            ulong coverStart = CornerCoverBackStartTick(enemyId, windup);
+            if (tick < coverStart || tick - coverStart > 1_000_000)
+                return null;
+            string coverClip = windup.AnimationClip ==
+                "player_look_right3" ? "player_right_coverBack3" :
+                "player_left_coverBack3";
+            float? pureIdle = cornerQueuePoses.PureIdleSeconds(
+                coverClip, (int)(tick - coverStart));
+            if (pureIdle == null)
+                return null;
+            idleSeconds = pureIdle.Value;
+        }
+        else
+        {
+            // EnemyController calls Idle on its first cover arrival.
+            idleSeconds = (tick - arrival.Tick) /
+                (float)MatchManifest.TickRate;
+        }
 
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == enemyId && spawn.Behaviour == "Assaulter" &&
@@ -3456,8 +3484,6 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             enemy.CurrentZ);
         BattleJointRotation facing = enemy.CurrentRotation!;
         Quaternion rotation = new(facing.X, facing.Y, facing.Z, facing.W);
-        float idleSeconds = (tick - arrival.Tick) /
-            (float)MatchManifest.TickRate;
         return enemyMuzzles.Place("idle_1", position, rotation,
             idleSeconds);
     }
@@ -3583,9 +3609,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
-    /// Uses the host's cover-arrival clock for the first target-selection
-    /// muzzle. A later volley has a different idle clock and is not accepted
-    /// through this entry point.
+    /// Uses the host's current pure-idle cover clock for target selection.
+    /// The first stay starts at arrival; a repeated corner stay starts after
+    /// its queued cover-back animation reaches idle.
     /// </summary>
     internal CoopMovingPlayerAimPlan? PlanDiagnosticWalkingTargetAtCover(
         ulong enemyId, string playerId)

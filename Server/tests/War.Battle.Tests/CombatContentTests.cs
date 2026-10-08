@@ -3757,6 +3757,10 @@ internal static class CombatContentTests
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
                     "Co-op corner queued blend escaped its diagnostic gate.");
+            if (cornerRuntime.ObserveIdleAssaulterMuzzle(
+                    cornerEnemy.EntityId) != null)
+                throw new Exception(
+                    "Co-op corner selected an idle muzzle during its blend.");
             cornerRuntime.Advance(coverReturnTick + 14);
             if (cornerRuntime.PlaceCornerQueuedIdleHitboxes(
                     cornerEnemy.EntityId).Count != 3 ||
@@ -3771,6 +3775,31 @@ internal static class CombatContentTests
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
                     "Co-op corner lost its continued diagnostic idle.");
+            string completedCoverClip = coverWindup.AnimationClip ==
+                "player_look_right3" ? "player_right_coverBack3" :
+                "player_left_coverBack3";
+            float? resumedIdleSeconds = content.CoopCornerQueuePoses
+                .PureIdleSeconds(completedCoverClip, 31);
+            BattleCoopEnemySpawn resumedEnemy = cornerRuntime.Snapshot()
+                .Coop.EnemySpawns.Single(enemy =>
+                    enemy.EntityId == cornerEnemy.EntityId);
+            BattleJointRotation resumedFacing =
+                resumedEnemy.CurrentRotation!;
+            CoopMuzzlePose expectedResumedMuzzle = content.CoopEnemyMuzzles
+                .Place("idle_1", new Vector3(resumedEnemy.CurrentX,
+                    resumedEnemy.CurrentY, resumedEnemy.CurrentZ),
+                    new Quaternion(resumedFacing.X, resumedFacing.Y,
+                        resumedFacing.Z, resumedFacing.W),
+                    resumedIdleSeconds!.Value);
+            CoopMuzzlePose? resumedMuzzle = cornerRuntime
+                .ObserveIdleAssaulterMuzzle(cornerEnemy.EntityId);
+            if (content.CoopCornerQueuePoses.PureIdleSeconds(
+                    completedCoverClip, 29) != null ||
+                resumedMuzzle == null ||
+                Vector3.Distance(resumedMuzzle.Position,
+                    expectedResumedMuzzle.Position) > 0.00001f)
+                throw new Exception(
+                    "Co-op corner did not resume its queued idle muzzle.");
             ulong nextCornerShot = cornerRuntime.InfantryShotWindup(
                     cornerEnemy.EntityId)?.NextEligibleTick ??
                 throw new Exception("Co-op corner lost its next shot clock.");
@@ -3859,6 +3888,47 @@ internal static class CombatContentTests
                 });
             return result;
         }
+        var repeatMovingDestinations = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        CoopMatchRuntime repeatMovingRuntime = CreateReadyCornerRuntime(
+            repeatMovingDestinations);
+        repeatMovingRuntime.Advance(8);
+        ulong repeatMovingEnemyId = repeatMovingRuntime.Snapshot()
+            .Coop.EnemySpawns.Single().EntityId;
+        repeatMovingRuntime.Advance(
+            cornerArrival.FirstShootEligibleTick);
+        CoopInfantryShotWindup repeatFirstWindup = repeatMovingRuntime
+            .InfantryShotWindup(repeatMovingEnemyId) ??
+            throw new Exception("Repeated walking fixture missed its first volley.");
+        ulong repeatFinalRound = repeatFirstWindup.CallbackTick + 1;
+        for (int index = 1; index < repeatFirstWindup.Batch.Count; index++)
+            repeatFinalRound = rifle.NextRoundEligibleTick(
+                repeatFinalRound);
+        repeatMovingRuntime.Advance(repeatFinalRound);
+        ulong repeatMovingShot = repeatMovingRuntime.InfantryShotWindup(
+                repeatMovingEnemyId)?.NextEligibleTick ??
+            throw new Exception("Repeated walking fixture lost its cooldown.");
+        repeatMovingRuntime.Advance(repeatMovingShot - 3);
+        if (repeatMovingRuntime.Command(firstPlayer, new MatchCommand
+            {
+                CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = 1 }
+            }).Code != "moving")
+            throw new Exception(
+                "Repeated walking fixture did not lock another cover.");
+        repeatMovingRuntime.Advance(repeatMovingShot);
+        CoopInfantryShotWindup? repeatWalkingWindup = repeatMovingRuntime
+            .InfantryShotWindup(repeatMovingEnemyId);
+        if (repeatWalkingWindup?.StartTick != repeatMovingShot ||
+            repeatWalkingWindup.TargetWasWalking != true)
+            throw new Exception(
+                "Repeated corner volley did not select its moving ally.");
+        repeatMovingRuntime.Advance(repeatWalkingWindup.CallbackTick);
+        if (repeatMovingRuntime.InfantryShotWindup(
+                repeatMovingEnemyId)?.CallbackAimReady != true)
+            throw new Exception(
+                "Repeated corner volley lost its queued callback aim.");
         int cornerTargetChoices = 0;
         var changingTargetDestinations = new CoopEnemyDestinationState(
             enemyMap, enemyPointMasks, enemyCombat,

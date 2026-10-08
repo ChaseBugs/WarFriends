@@ -163,8 +163,9 @@ internal sealed class CoopCornerQueuePoseCatalog
         {
             // The last Unity queue frame is pure idle and matches the
             // recovered looping idle clip at this exact animation time.
-            float idleSeconds = idleSecondsAtLastFrame[coverClip] +
-                (tick - 30) / (float)MatchManifest.TickRate;
+            float idleSeconds = PureIdleSeconds(coverClip, tick) ??
+                throw new InvalidDataException(
+                    "Co-op corner queue has no pure idle frame.");
             return enemyPoses.Place("idle_1", rootPosition, rootRotation,
                 idleSeconds, prefix);
         }
@@ -174,6 +175,18 @@ internal sealed class CoopCornerQueuePoseCatalog
             rootPosition + Vector3.Transform(part.Center, facing),
             part.Size, Quaternion.Normalize(facing * part.Rotation),
             part.Radius, part.Axis, part.HalfSegment)).ToArray();
+    }
+
+    internal float? PureIdleSeconds(string coverClip, int tick)
+    {
+        if (!frames.ContainsKey(coverClip) || tick < 0 ||
+            tick > 1_000_000)
+            throw new InvalidDataException(
+                "Invalid co-op corner idle clock.");
+        if (tick < 30)
+            return null;
+        return idleSecondsAtLastFrame[coverClip] +
+            (tick - 30) / (float)MatchManifest.TickRate;
     }
 
     private static float ReadIdleWeight(JsonElement sample)
