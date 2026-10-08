@@ -89,8 +89,11 @@ public static class CoopEnemyPointSelection
         return soldier.BehaviorType switch
         {
             "SoldierBehaviourEngineer" => 256,
-            "SoldierBehaviourParachuter" => spawnedByCard ? 6 : 1,
-            "SoldierBehaviourSwat" => spawnedByCard ? 32 : soldier.Mask,
+            "SoldierBehaviourParachuter" when spawnedByCard => 6,
+            "SoldierBehaviourSwat" when spawnedByCard => 32,
+            "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" =>
+                throw new NotSupportedException(
+                    "Ordinary Rusher initial points require the active player shield."),
             "SoldierBehaviourCommando" or "SoldierBehaviourFlamethrower" or
             "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper" =>
                 throw new NotSupportedException(

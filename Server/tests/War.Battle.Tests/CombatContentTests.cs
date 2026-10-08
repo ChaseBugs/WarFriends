@@ -2917,11 +2917,27 @@ internal static class CombatContentTests
         CoopSoldierPointMask swatMask = masks.Soldiers.Single(soldier =>
             soldier.BehaviorType == "SoldierBehaviourSwat");
         if (CoopEnemyPointSelection.InitialMask(engineerMask, false) != 256 ||
-            CoopEnemyPointSelection.InitialMask(parachuterMask, false) != 1 ||
             CoopEnemyPointSelection.InitialMask(parachuterMask, true) != 6 ||
-            CoopEnemyPointSelection.InitialMask(swatMask, false) != 33 ||
             CoopEnemyPointSelection.InitialMask(swatMask, true) != 32)
             throw new Exception("Special soldier point acceptance differs from Client.");
+        try
+        {
+            _ = CoopEnemyPointSelection.InitialMask(parachuterMask, false);
+            throw new Exception("Ordinary Parachuter bypassed shield-linked Rusher points.");
+        }
+        catch (NotSupportedException)
+        {
+            // Its inherited GetInitPoint uses the active player's rusher list.
+        }
+        try
+        {
+            _ = CoopEnemyPointSelection.InitialMask(swatMask, false);
+            throw new Exception("Ordinary Swat bypassed shield-linked Rusher points.");
+        }
+        catch (NotSupportedException)
+        {
+            // Card-spawned Swat uses GetPoint; ordinary Swat does not.
+        }
 
         CoopEnemyPoint? nearest = CoopEnemyPointSelection.SelectOrdinary(
             desert, assaulter.Mask, obstacle.TransformPosition,
