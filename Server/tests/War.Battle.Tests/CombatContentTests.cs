@@ -776,10 +776,94 @@ internal static class CombatContentTests
         }
     }
 
+    private static void VerifyCoopCornerQueue(string directory,
+        EnemyPoseCatalog poses)
+    {
+        string path = Path.Combine(directory,
+            "coop-corner-queue-unity-reference.json");
+        byte[] source = File.ReadAllBytes(path);
+        string digest = Convert.ToHexStringLower(SHA256.HashData(source));
+        if (digest !=
+            "2b5701f1973edcf465295ea55e84cfe8aa4783b8641b9a670b48d95ad59d42c3")
+            throw new Exception("Unity corner queue reference changed.");
+
+        using JsonDocument document = JsonDocument.Parse(source);
+        JsonElement reference = document.RootElement;
+        if (reference.GetProperty("version").GetInt32() != 1 ||
+            reference.GetProperty("client").GetString() != "1.4.0" ||
+            reference.GetProperty("unity").GetString() != "2018.3.0f2" ||
+            reference.GetProperty("prefab").GetString() !=
+                "Assets/GameObject/enemy.prefab" ||
+            reference.GetProperty("prefabSha256").GetString() !=
+                poses.SourceSha256 ||
+            reference.GetProperty("captureRate").GetInt32() !=
+                MatchManifest.TickRate)
+            throw new Exception("Unity corner queue lost source identity.");
+
+        string[] coverClips =
+            ["player_right_coverBack3", "player_left_coverBack3"];
+        int[] firstBlendedTicks = [6, 8];
+        int[] firstIdleTicks = [14, 16];
+        JsonElement[] scenarios = reference.GetProperty("scenarios")
+            .EnumerateArray().ToArray();
+        if (scenarios.Length != coverClips.Length)
+            throw new Exception("Unity corner queue lost a cover side.");
+        for (int side = 0; side < scenarios.Length; side++)
+        {
+            JsonElement scenario = scenarios[side];
+            string coverClip = coverClips[side];
+            if (scenario.GetProperty("coverClip").GetString() != coverClip ||
+                scenario.GetProperty("idleClip").GetString() != "idle_1")
+                throw new Exception("Unity corner queue changed clips.");
+            JsonElement[] samples = scenario.GetProperty("samples")
+                .EnumerateArray().ToArray();
+            if (samples.Length != 31)
+                throw new Exception("Unity corner queue lost fixed frames.");
+            for (int frame = 0; frame < samples.Length; frame++)
+            {
+                JsonElement sample = samples[frame];
+                if (Math.Abs(sample.GetProperty("seconds").GetSingle() -
+                        frame / (float)MatchManifest.TickRate) > 0.00001f)
+                    throw new Exception("Unity corner queue changed its clock.");
+                JsonElement[] parts = sample.GetProperty("parts")
+                    .EnumerateArray().ToArray();
+                if (parts.Length != 3)
+                    throw new Exception("Unity corner queue lost colliders.");
+                for (int partIndex = 0; partIndex < parts.Length; partIndex++)
+                {
+                    JsonElement part = parts[partIndex];
+                    string expectedPath = poses.Clip(coverClip)
+                        .Frames[0].Parts[partIndex].SourcePath;
+                    JsonElement center = part.GetProperty("center");
+                    JsonElement rotation = part.GetProperty("rotation");
+                    if (part.GetProperty("path").GetString() != expectedPath ||
+                        center.GetArrayLength() != 3 ||
+                        rotation.GetArrayLength() != 4 ||
+                        center.EnumerateArray().Any(value =>
+                            !float.IsFinite(value.GetSingle())) ||
+                        rotation.EnumerateArray().Any(value =>
+                            !float.IsFinite(value.GetSingle())))
+                        throw new Exception(
+                            "Unity corner queue contains invalid collider data.");
+                }
+            }
+            JsonElement[] blended = samples[firstBlendedTicks[side]]
+                .GetProperty("states").EnumerateArray().ToArray();
+            JsonElement[] idle = samples[firstIdleTicks[side]]
+                .GetProperty("states").EnumerateArray().ToArray();
+            if (blended.Length != 2 || idle.Length != 1 ||
+                idle[0].GetProperty("name").GetString() !=
+                    "idle_1 - Queued Clone" ||
+                idle[0].GetProperty("weight").GetSingle() != 1)
+                throw new Exception("Unity corner queue changed its fade.");
+        }
+    }
+
     private static int VerifyCoopAllocation(
         string directory, MissionCatalog catalog, BattleCombatContent content)
     {
         VerifyCoopCornerUnityPose(directory, catalog, content);
+        VerifyCoopCornerQueue(directory, content.EnemyPoses);
         ArmyDeploymentCatalog army = content.Army;
         CoopAssaulterWeaponCatalog rifle = content.CoopAssaulterWeapon;
         if (rifle.WeaponPrefabGuid !=
