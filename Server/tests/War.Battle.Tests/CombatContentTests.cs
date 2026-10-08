@@ -70,6 +70,7 @@ internal static class CombatContentTests
             directory, catalog, content);
         int skillShotAssertions = VerifyCoopSkillShotScores(skillShots);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
+        int colliderAssertions = VerifyCoopSceneColliders(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
         int botAssertions = VerifyCoopBotRules(directory, catalog, content);
@@ -98,7 +99,7 @@ internal static class CombatContentTests
                 "A changed boss scene hash was accepted.");
             return 5 + skillShotAssertions + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
-                allocationAssertions + mapAssertions + navMeshAssertions +
+                allocationAssertions + mapAssertions + colliderAssertions + navMeshAssertions +
                 routeAssertions + botAssertions + bossSpawnAssertions;
         }
         finally
@@ -2263,6 +2264,49 @@ internal static class CombatContentTests
         finally
         {
             Directory.Delete(temporaryDirectory, recursive: true);
+        }
+    }
+
+    private static int VerifyCoopSceneColliders(
+        string directory, MissionCatalog missions)
+    {
+        string path = Path.Combine(directory,
+            "recovered-coop-scene-colliders.json");
+        CoopSceneColliderCatalog catalog =
+            CoopSceneColliderCatalog.Load(path, missions);
+        CoopSceneColliders desert = catalog.MapForMission(missions, 0);
+        CoopSceneCollider[] all = catalog.Maps
+            .SelectMany(map => map.Colliders).ToArray();
+        if (catalog.Maps.Count != 5 || all.Length != 795 ||
+            all.Count(row => row.ComponentType == "MeshCollider") != 654 ||
+            all.Count(row => row.ComponentType == "BoxCollider") != 139 ||
+            all.Count(row => row.ComponentType == "CapsuleCollider") != 2 ||
+            all.Count(row => row.ComponentType == "MeshCollider" &&
+                row.Shape.MeshFileId == 0) != 54 ||
+            desert.Scene != "Desert_New" || desert.Colliders.Count != 106 ||
+            all.Any(row => row.TransformChain[0].FileId != row.TransformFileId))
+            throw new Exception("Co-op scene collider source identities are incomplete.");
+
+        string temporaryPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-colliders-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode altered = JsonNode.Parse(File.ReadAllText(path))!;
+            altered["maps"]![0]!["colliders"]![0]!["layer"] = 31;
+            File.WriteAllText(temporaryPath, altered.ToJsonString());
+            try
+            {
+                _ = CoopSceneColliderCatalog.Load(temporaryPath, missions);
+                throw new Exception("Altered co-op collider source was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return 795;
+            }
+        }
+        finally
+        {
+            File.Delete(temporaryPath);
         }
     }
 
