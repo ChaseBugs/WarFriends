@@ -1580,6 +1580,91 @@ using (var churnWorker = new NetworkWorker(churnConfig,
     }
 }
 Directory.Delete(churnOutboxPath, recursive: true);
+string slowOutboxPath = Path.Combine(Path.GetTempPath(),
+    "war-slow-forwarder-" + Guid.NewGuid().ToString("N"));
+new TerminalOutbox(slowOutboxPath).Publish(timer.Snapshot());
+var slowRequestStarted = new TaskCompletionSource<bool>(
+    TaskCreationOptions.RunContinuationsAsynchronously);
+var releaseSlowResponse = new TaskCompletionSource<bool>(
+    TaskCreationOptions.RunContinuationsAsynchronously);
+var slowBackendBuilder = WebApplication.CreateBuilder();
+slowBackendBuilder.WebHost.UseUrls("http://127.0.0.1:0");
+slowBackendBuilder.Logging.ClearProviders();
+var slowBackend = slowBackendBuilder.Build();
+slowBackend.MapPost("/accept", async (HttpContext context) =>
+{
+    slowRequestStarted.TrySetResult(true);
+    await releaseSlowResponse.Task.WaitAsync(context.RequestAborted);
+    return Results.Ok(new { code = "accepted" });
+});
+await slowBackend.StartAsync();
+var slowConfig = new ConfigurationBuilder().AddConfiguration(multiConfig)
+    .AddInMemoryCollection(new Dictionary<string, string?>
+    {
+        ["Battle:ResultOutboxPath"] = slowOutboxPath,
+        ["Battle:BackendResultEndpoint"] = slowBackend.Urls.Single() + "/accept",
+        ["Battle:ControlKey"] = Convert.ToBase64String(
+            Enumerable.Repeat((byte)8, 32).ToArray())
+    }).Build();
+using (var slowWorker = new NetworkWorker(slowConfig,
+    logs.CreateLogger<NetworkWorker>()))
+{
+    try
+    {
+        await slowWorker.StartAsync(CancellationToken.None);
+        await slowRequestStarted.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        using var probePeer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var probeTickets = new BattleTickets(signingKey);
+        long probeTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        const ulong probeSessionId = 99001;
+        byte[] probeKey = probeTickets.SessionKey(probeSessionId);
+        var probeTarget = new IPEndPoint(IPAddress.Loopback, port);
+        var probeClaims = new TicketClaims
+        {
+            PlayerId = a, ServerId = definition.ServerId,
+            SessionId = probeSessionId, IssuedUnixSeconds = probeTime,
+            ExpiresUnixSeconds = probeTime + 120,
+            Purpose = "connectivity-probe"
+        };
+        var probeHello = new Packet
+        {
+            Version = 1, SessionId = probeSessionId, Sequence = 1,
+            Hello = new ClientHello { Ticket = probeTickets.Sign(probeClaims) }
+        };
+        await probePeer.SendAsync(PacketCodec.Encode(probeHello, probeKey), probeTarget);
+        using var probeDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        var welcomeBytes = await probePeer.ReceiveAsync(probeDeadline.Token);
+        Check(PacketCodec.ReadUntrusted(welcomeBytes.Buffer)?.Welcome != null,
+            "slow Backend forwarding leaves UDP probe admission responsive");
+
+        async Task<ulong> ReadProbeTick(ulong sequence)
+        {
+            var ping = new Packet
+            {
+                Version = 1, SessionId = probeSessionId, Sequence = sequence,
+                Ping = new Ping { ClientTime = sequence }
+            };
+            await probePeer.SendAsync(PacketCodec.Encode(ping, probeKey), probeTarget);
+            var received = await probePeer.ReceiveAsync(probeDeadline.Token);
+            return PacketCodec.ReadUntrusted(received.Buffer)?.Pong?.ServerTick ?? 0;
+        }
+
+        ulong beforeSlowWait = await ReadProbeTick(2);
+        await Task.Delay(250);
+        ulong afterSlowWait = await ReadProbeTick(3);
+        Check(!releaseSlowResponse.Task.IsCompleted &&
+              afterSlowWait >= beforeSlowWait + 4,
+            "a pending Backend HTTP result cannot pause the 30 Hz battle clock");
+    }
+    finally
+    {
+        releaseSlowResponse.TrySetResult(true);
+        await slowWorker.StopAsync(CancellationToken.None);
+        await slowBackend.StopAsync();
+        await slowBackend.DisposeAsync();
+    }
+}
+Directory.Delete(slowOutboxPath, recursive: true);
 using(var multiWorker=new NetworkWorker(multiConfig,logs.CreateLogger<NetworkWorker>()))
 {
     var multiPeers=new List<UdpClient>();

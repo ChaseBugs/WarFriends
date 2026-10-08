@@ -185,6 +185,9 @@ public sealed class NetworkWorker : BackgroundService
         socket.Bind(bind);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
         Task receive = Receive(socket, linked.Token);
+        Task forwardResults = resultForwarder != null && resultEndpoint != null
+            ? ForwardResults(linked.Token)
+            : Task.CompletedTask;
         logger.LogInformation("Protobuf UDP listening at {Endpoint}; {Rate} Hz; startup matches: {Count}", bind, TickRate, match.Count);
         lock(controlGate)
             if(!stoppingToken.IsCancellationRequested && Volatile.Read(ref controlClosed)==0)
@@ -253,12 +256,6 @@ public sealed class NetworkWorker : BackgroundService
                     }
                     match.Advance(tick);
                     PersistTerminals();
-                    if (resultForwarder != null && resultEndpoint != null && tick % (ulong)TickRate == 0)
-                    {
-                        try { await terminalOutbox.ForwardPendingAsync(resultForwarder, resultEndpoint, 16, stoppingToken); }
-                        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { throw; }
-                        catch (Exception e) { logger.LogWarning("Backend result forwarding deferred: {ErrorType}", e.GetType().Name); }
-                    }
                     if(tick%(ulong)(TickRate*3600)==0)
                         terminalOutbox.PruneAcknowledged(DateTimeOffset.UtcNow);
                     for (int i = 0; i < 128 && incoming.Reader.TryRead(out var datagram); i++)
@@ -293,13 +290,41 @@ public sealed class NetworkWorker : BackgroundService
             while(registrations.Reader.TryRead(out var abandoned))
                 abandoned.Completion.TrySetResult(new MatchRegistrationResult("control-unavailable",""));
             linked.Cancel();
-            try { await receive; }
+            try { await Task.WhenAll(receive, forwardResults); }
             catch (OperationCanceledException) { }
             finally
             {
                 int aborted=match.AbortForHostShutdown();
                 PersistTerminals();
                 if(aborted>0)logger.LogInformation("Persisted {Count} unscored host-shutdown results",aborted);
+            }
+        }
+    }
+    private async Task ForwardResults(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await terminalOutbox.ForwardPendingAsync(
+                    resultForwarder!, resultEndpoint!, 16, cancellationToken);
+            }
+            catch (OperationCanceledException) when
+                (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception error)
+            {
+                logger.LogWarning("Backend result forwarding deferred: {ErrorType}",
+                    error.GetType().Name);
+            }
+
+            try { await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken); }
+            catch (OperationCanceledException) when
+                (cancellationToken.IsCancellationRequested)
+            {
+                break;
             }
         }
     }
