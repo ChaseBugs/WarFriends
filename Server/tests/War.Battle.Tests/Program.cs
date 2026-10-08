@@ -571,6 +571,30 @@ string hash = new string('a', 64);
 var definition = new MatchManifest("test-match", "test-host", "fixture-map", hash, hash,
     MatchManifest.PrototypeMode, 10, 60, 10,
     [new(a, new("fixture-rifle", 2, 3, 0.1, 0.2)), new(b, new("fixture-rifle", 2, 3, 0.1, 0.2))]);
+var localRoom = new LocalOfflineRoom();
+var localCallbacks = new List<LocalRoomCallback>();
+localRoom.Callback += localCallbacks.Add;
+localRoom.JoinSoloRoom();
+Check(localRoom.IsOffline && localRoom.IsInRoom &&
+      localRoom.RoomName == LocalOfflineRoom.SoloRoomName &&
+      localRoom.PlayerId == 1 && localRoom.MasterPlayerId == 1 &&
+      localRoom.PlayerCount == 1 &&
+      localCallbacks.SequenceEqual(new[]
+      {
+          LocalRoomCallback.ConnectedToMaster, LocalRoomCallback.LeftRoom,
+          LocalRoomCallback.CreatedRoom, LocalRoomCallback.JoinedRoom
+      }), "local solo room preserves first-join callback order and roster");
+localCallbacks.Clear();
+localRoom.JoinSoloRoom();
+Check(localCallbacks.SequenceEqual(new[]
+      {
+          LocalRoomCallback.LeftRoom, LocalRoomCallback.CreatedRoom,
+          LocalRoomCallback.JoinedRoom
+      }), "local solo room replacement does not reconnect to master");
+localRoom.Disconnect();
+Check(!localRoom.IsOffline && !localRoom.IsInRoom &&
+      localRoom.PlayerCount == 0 && localRoom.PlayerId == -1,
+      "local solo room disconnect clears ownership");
 var lifecycleGrant = new MatchConnectionGrant
 {
     Host = "127.0.0.1", Port = 1, SessionId = 1, MatchId = "test-match",

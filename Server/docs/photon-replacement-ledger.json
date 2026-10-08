@@ -1,8 +1,8 @@
 {
   "source": "Clients/ExportedProject",
   "calls": [
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":242,"call":"PhotonNetwork.LeaveRoom()","replacement":"Local campaign room lifecycle without Photon runtime","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":243,"call":"PhotonNetwork.CreateRoom()","replacement":"Local campaign room lifecycle without Photon runtime","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":256,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedBattleClient.LeaveMatch for owned battles; migrate remaining local room teardown","status":"open"}
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":250,"call":"PhotonNetwork.LeaveRoom()","replacement":"Local campaign room lifecycle without Photon runtime","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":251,"call":"PhotonNetwork.CreateRoom()","replacement":"Local campaign room lifecycle without Photon runtime","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":267,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedBattleClient.LeaveMatch for owned battles; migrate remaining local room teardown","status":"open"}
   ]
 }

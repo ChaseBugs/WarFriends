@@ -4,10 +4,13 @@ using System.Collections.Generic;
 using CodeStage.AntiCheat.ObscuredTypes;
 using ExitGames.Client.Photon;
 using Google2u;
+using War.Client;
 using UnityEngine;
 
 public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 {
+	private static readonly LocalOfflineRoom mLocalOfflineRoom = new LocalOfflineRoom();
+
 	private static SelfHostedBattleClient GetActiveSelfHostedClient()
 	{
 		SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
@@ -33,8 +36,10 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static int GetPlayerCount()
 	{
 		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
-		if (selfHosted != null && selfHosted.State != null)
-			return selfHosted.State.Players.Count;
+		if (selfHosted != null)
+			return selfHosted.State == null ? 0 : selfHosted.State.Players.Count;
+		if (mLocalOfflineRoom.IsOffline)
+			return mLocalOfflineRoom.PlayerCount;
 		return PhotonNetwork.room == null ? 0 : PhotonNetwork.room.playerCount;
 	}
 
@@ -75,6 +80,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		{
 			SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
 			if (selfHosted != null) return true;
+			if (mLocalOfflineRoom.IsOffline) return mLocalOfflineRoom.IsInRoom;
 			return PhotonNetwork.connected && PhotonNetwork.inRoom && PhotonNetwork.room != null;
 		}
 	}
@@ -239,8 +245,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
 		Singleton<PhotonConnectionManager>.instance.isClient = false;
 		PhotonNetwork.offlineMode = true;
+		if (!PhotonNetwork.offlineMode)
+			throw new InvalidOperationException("Local solo room could not enter offline mode.");
 		PhotonNetwork.LeaveRoom();
-		PhotonNetwork.CreateRoom("OfflineRoom");
+		if (!PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName))
+			throw new InvalidOperationException("Local solo room could not be created.");
+		mLocalOfflineRoom.JoinSoloRoom();
 	}
 
 	public static void Disconnect()
@@ -253,6 +263,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 			return;
 		}
 		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
+		mLocalOfflineRoom.Disconnect();
 		PhotonNetwork.Disconnect();
 	}
 

@@ -39,3 +39,5 @@ their shared room guards. Then migrate local PhotonView/RPC/object lifecycle
 usage in those scenes and verify campaign, tutorial, offline DeathMatch, and
 instant battle in Unity Play Mode. The self-hosted UDP room remains separate
 and authoritative for multiplayer; solo campaign simulation may stay local.
+
+`War.Client.LocalOfflineRoom` now models this fixed `OfflineRoom` lifecycle without Photon types. Its first join emits `ConnectedToMaster`, `LeftRoom`, `CreatedRoom`, `JoinedRoom`; replacing an existing solo room omits the repeated master connection callback. It exposes local/master player ID 1 and one occupant, then clears ownership on disconnect. `PhotonConnectionManager` mirrors successful offline room creation into this state and uses it for local `isInRoom` and player-count reads. This is a partial migration: the bundled Photon room still creates the Unity `Room`/`PhotonPlayer` objects and dispatches scene callbacks, and recovered solo gameplay still calls their APIs. The model cannot replace those calls until their consumers and callback bridge are migrated together.

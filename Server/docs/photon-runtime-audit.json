@@ -1,20 +1,20 @@
 {
   "project": "Clients\\ExportedProject",
-  "photonReferences": 254,
+  "photonReferences": 255,
   "forbiddenRuntimeCalls": [
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 242,
+      "line": 250,
       "text": "PhotonNetwork.LeaveRoom();"
     },
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 243,
-      "text": "PhotonNetwork.CreateRoom(\"OfflineRoom\");"
+      "line": 251,
+      "text": "if (!PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName))"
     },
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 256,
+      "line": 267,
       "text": "PhotonNetwork.Disconnect();"
     }
   ],
