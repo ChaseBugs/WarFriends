@@ -71,7 +71,8 @@ internal sealed record CoopInfantryRoundIntent(
     ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real,
     Vector3 AimPosition, CoopQueuedMuzzleSample? ObservedLocalMuzzle,
     Vector3? ObservedWorldLaunchOrigin, ulong ProjectileId,
-    string TargetPlayerId, int TargetTransformFileId);
+    string TargetPlayerId, int TargetTransformFileId,
+    bool ShieldTarget);
 
 internal sealed record CoopDiagnosticFlightResult(
     ulong ProjectileId, ulong EnemyEntityId, ulong Tick,
@@ -1749,10 +1750,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             // Every emitted round owns one stable match-wide identity, even
             // if a later batch reuses this enemy's local round index.
             ulong projectileId = checked(++nextDiagnosticProjectileId);
+            PlayerShotTarget sourceTarget = playerShotTargets!.Gameplay.Single(
+                target => target.TransformFileId ==
+                    windup.TargetTransformFileId);
+            // SoldierBehaviour.GetShotType marks a Shield target separately
+            // from the real/fake roll. BulletBase uses that type for its trail.
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
                 tick, real, aimPosition, observedMuzzle,
                 observedWorldOrigin, projectileId, windup.PlayerId,
-                windup.TargetTransformFileId));
+                windup.TargetTransformFileId, sourceTarget.Type == 2));
             if (rounds.Count == windup.Batch.Count)
             {
                 // SoldierBehaviour.Shooting calls EndShooting after its

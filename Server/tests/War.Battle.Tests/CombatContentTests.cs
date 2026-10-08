@@ -2265,7 +2265,7 @@ internal static class CombatContentTests
             movingAimEnemy.EntityId, 0, 8, true, Vector3.UnitZ,
             obstacleSample, Vector3.Zero, 90123, firstPlayer,
             content.PlayerShotTargets.Gameplay.Single(target =>
-                target.Type == 16).TransformFileId);
+                target.Type == 16).TransformFileId, false);
         var movingImpact = new BulletImpact(90123, string.Empty,
             movingWorldHit.ToBulletCollision(), 9,
             movingAimEnemy.EntityId);
@@ -2795,7 +2795,7 @@ internal static class CombatContentTests
         var sourceShieldRound = new CoopInfantryRoundIntent(
             arrivalEnemy.EntityId, 0, 1, true, Vector3.UnitZ,
             obstacleSample, Vector3.Zero, 12345, firstPlayer,
-            content.PlayerShotTargets.Gameplay[0].TransformFileId);
+            content.PlayerShotTargets.Gameplay[0].TransformFileId, false);
         var sourceShieldImpact = new BulletImpact(12345, string.Empty,
             covered.ToBulletCollision(), 2, arrivalEnemy.EntityId);
         var sourceShieldResult = new CoopDiagnosticFlightResult(12345,
@@ -3072,7 +3072,11 @@ internal static class CombatContentTests
             walkingRounds[0].AimPosition != expectedWalkingAim ||
             walkingRounds[0].TargetPlayerId != walkingWindup.PlayerId ||
             walkingRounds[0].TargetTransformFileId !=
-                walkingWindup.TargetTransformFileId)
+                walkingWindup.TargetTransformFileId ||
+            walkingRounds[0].ShieldTarget !=
+                (content.PlayerShotTargets.Gameplay.Single(target =>
+                    target.TransformFileId ==
+                        walkingWindup.TargetTransformFileId).Type == 2))
             throw new Exception(
                 "Moving cover volley did not retain its callback aim.");
         BattlePlayerState movingRoundPlayer = movingVolleyRuntime.Snapshot()
@@ -3263,6 +3267,7 @@ internal static class CombatContentTests
             firstRound[0].TargetPlayerId != placedTarget.PlayerId ||
             firstRound[0].TargetTransformFileId !=
                 placedTarget.TransformFileId ||
+            firstRound[0].ShieldTarget != (sourceTarget.Type == 2) ||
             firstRound[0].ObservedLocalMuzzle != obstacleSample)
             throw new Exception($"Co-op rifle missed its first host round intent: {firstRound.FirstOrDefault()}, expected observation {obstacleSample}.");
         Vector3 expectedLaunchOrigin =
