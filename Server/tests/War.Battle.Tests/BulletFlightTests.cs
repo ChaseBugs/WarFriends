@@ -49,6 +49,24 @@ internal static class BulletFlightTests
         Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,Vector3.Zero,0,(o,d,r)=>null));
         Reject(() => new BulletFlight(6,a,slow with { Speed=float.NaN },Vector3.Zero,Vector3.One,0,(o,d,r)=>null));
         Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,Vector3.One,0,(o,d,r)=>new(r+1,Vector3.Zero,"x",null,1)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"",null,1)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",null,float.NaN)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",
+                    b.ToUpperInvariant(),1)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",null,1,
+                    ColliderLayer:32)));
+        Reject(() => new BulletFlight(6,a,slow,Vector3.Zero,
+            Vector3.One,0,(origin,direction,_) =>
+                new(1,origin+direction,"fixture/body",null,1,
+                    DynamicEntityId:0)));
         var step = new BulletFlight(7,a,slow,Vector3.Zero,Vector3.One,0,(o,d,r)=>null);
         Reject(() => step.Advance(2));
 

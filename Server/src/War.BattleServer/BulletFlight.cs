@@ -96,11 +96,30 @@ internal sealed class BulletFlight
 
     private ShotCollision? Trace(Vector3 from, Vector3 ray, float range)
     {
-        if (range <= 0) return null;
-        var hit = trace(from,ray,range);
-        if (hit != null && (!float.IsFinite(hit.Distance) || hit.Distance < 0 || hit.Distance>range ||
-            !PlayerHitbox.Finite(hit.Position) || Vector3.Distance(hit.Position,from+Vector3.Normalize(ray)*hit.Distance)>0.002f))
-            throw new InvalidDataException("Collision resolver returned invalid impact geometry.");
+        if (range <= 0)
+            return null;
+        ShotCollision? hit = trace(from, ray, range);
+        if (hit == null)
+            return null;
+
+        if (!float.IsFinite(hit.Distance) ||
+            hit.Distance < 0 || hit.Distance > range ||
+            !PlayerHitbox.Finite(hit.Position) ||
+            Vector3.Distance(hit.Position,
+                from + Vector3.Normalize(ray) * hit.Distance) > 0.002f)
+            throw new InvalidDataException(
+                "Collision resolver returned invalid impact geometry.");
+        if (string.IsNullOrWhiteSpace(hit.SourcePath) ||
+            hit.SourcePath.Length > 1024 ||
+            hit.SourcePath.Any(char.IsControl) ||
+            !float.IsFinite(hit.PartWeight) || hit.PartWeight < 0 ||
+            (hit.PlayerId != null &&
+             (!Guid.TryParseExact(hit.PlayerId, "N", out _) ||
+              hit.PlayerId != hit.PlayerId.ToLowerInvariant())) ||
+            hit.ColliderLayer is < 0 or > 31 ||
+            hit.DynamicEntityId == 0)
+            throw new InvalidDataException(
+                "Collision resolver returned invalid impact identity.");
         return hit;
     }
 
