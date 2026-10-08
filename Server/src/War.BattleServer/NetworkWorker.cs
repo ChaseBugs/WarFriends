@@ -185,9 +185,7 @@ public sealed class NetworkWorker : BackgroundService
         socket.Bind(bind);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
         Task receive = Receive(socket, linked.Token);
-        Task forwardResults = resultForwarder != null && resultEndpoint != null
-            ? ForwardResults(linked.Token)
-            : Task.CompletedTask;
+        Task maintainOutbox = MaintainOutbox(linked.Token);
         logger.LogInformation("Protobuf UDP listening at {Endpoint}; {Rate} Hz; startup matches: {Count}", bind, TickRate, match.Count);
         lock(controlGate)
             if(!stoppingToken.IsCancellationRequested && Volatile.Read(ref controlClosed)==0)
@@ -198,6 +196,8 @@ public sealed class NetworkWorker : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                if (maintainOutbox.IsFaulted)
+                    await maintainOutbox;
                 if (receive.IsCompleted) await receive;
                 long now = Stopwatch.GetTimestamp();
                 accumulator += (now - previous) / (double)Stopwatch.Frequency;
@@ -256,8 +256,6 @@ public sealed class NetworkWorker : BackgroundService
                     }
                     match.Advance(tick);
                     PersistTerminals();
-                    if(tick%(ulong)(TickRate*3600)==0)
-                        terminalOutbox.PruneAcknowledged(DateTimeOffset.UtcNow);
                     for (int i = 0; i < 128 && incoming.Reader.TryRead(out var datagram); i++)
                     {
                         lock(incomingGate)
@@ -290,7 +288,7 @@ public sealed class NetworkWorker : BackgroundService
             while(registrations.Reader.TryRead(out var abandoned))
                 abandoned.Completion.TrySetResult(new MatchRegistrationResult("control-unavailable",""));
             linked.Cancel();
-            try { await Task.WhenAll(receive, forwardResults); }
+            try { await Task.WhenAll(receive, maintainOutbox); }
             catch (OperationCanceledException) { }
             finally
             {
@@ -300,24 +298,37 @@ public sealed class NetworkWorker : BackgroundService
             }
         }
     }
-    private async Task ForwardResults(CancellationToken cancellationToken)
+    private async Task MaintainOutbox(CancellationToken cancellationToken)
     {
+        DateTimeOffset nextPrune = DateTimeOffset.UtcNow.AddHours(1);
         while (!cancellationToken.IsCancellationRequested)
         {
-            try
+            if (resultForwarder != null && resultEndpoint != null)
             {
-                await terminalOutbox.ForwardPendingAsync(
-                    resultForwarder!, resultEndpoint!, 16, cancellationToken);
+                try
+                {
+                    await terminalOutbox.ForwardPendingAsync(
+                        resultForwarder, resultEndpoint, 16, cancellationToken);
+                }
+                catch (OperationCanceledException) when
+                    (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception error)
+                {
+                    logger.LogWarning("Backend result forwarding deferred: {ErrorType}",
+                        error.GetType().Name);
+                }
             }
-            catch (OperationCanceledException) when
-                (cancellationToken.IsCancellationRequested)
+
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+            if (now >= nextPrune)
             {
-                break;
-            }
-            catch (Exception error)
-            {
-                logger.LogWarning("Backend result forwarding deferred: {ErrorType}",
-                    error.GetType().Name);
+                // Invalid durable acknowledgement state is authority damage.
+                // Let the Worker stop instead of serving matches past it.
+                terminalOutbox.PruneAcknowledged(now);
+                nextPrune = now.AddHours(1);
             }
 
             try { await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken); }
