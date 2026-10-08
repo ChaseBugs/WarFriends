@@ -2801,6 +2801,7 @@ internal static class CombatContentTests
             spawnPoints.Maps.First(map => map.Scene != coop.MapId),
             shotMeshes);
         if (enemyFlight?.EnemyEntityId != arrivalEnemy.EntityId ||
+            enemyFlight.Id != firstRound[0].ProjectileId ||
             enemyFlight.OwnerId != string.Empty ||
             enemyFlight.Position != origin ||
             enemyFlight.Finished ||
@@ -2918,7 +2919,8 @@ internal static class CombatContentTests
         catch (InvalidOperationException) { }
         poseLossRuntime.AttachDiagnosticWorld(alliedShotWorld);
         poseLossRuntime.Advance(expectedCrawlCallback + 1);
-        ulong poseLossProjectileId = checked(arrivalEnemy.EntityId * 16 + 1);
+        ulong poseLossProjectileId = poseLossRuntime.InfantryRoundIntents(
+            arrivalEnemy.EntityId).Single().ProjectileId;
         if (!poseLossRuntime.ActiveDiagnosticFlightIds().Contains(
                 poseLossProjectileId) ||
             poseLossRuntime.Command(firstPlayer, new MatchCommand
@@ -2976,6 +2978,7 @@ internal static class CombatContentTests
         if (expectedBatchCount < 2 || secondRound.Count != 2 ||
             secondRound[1].RoundIndex != 1 ||
             secondRound[1].Tick != secondRoundTick ||
+            secondRound[1].ProjectileId <= secondRound[0].ProjectileId ||
             secondRound[1].Real != ((expectedRealMask & 2) != 0))
             throw new Exception("Co-op rifle lost its second batch round.");
         if (expectedBatchCount > 2 && arrivalRuntime.InfantryShotWindup(
@@ -2991,6 +2994,8 @@ internal static class CombatContentTests
             if (rounds.Count != index + 1 ||
                 rounds[index].RoundIndex != index ||
                 rounds[index].Tick != lastRoundTick ||
+                rounds[index].ProjectileId <=
+                    rounds[index - 1].ProjectileId ||
                 rounds[index].Real !=
                     ((expectedRealMask & (1 << index)) != 0))
                 throw new Exception("Co-op rifle lost a prepared batch round.");

@@ -67,7 +67,7 @@ internal sealed record CoopInfantryShotWindup(
 internal sealed record CoopInfantryRoundIntent(
     ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real,
     Vector3 AimPosition, CoopQueuedMuzzleSample? ObservedLocalMuzzle,
-    Vector3? ObservedWorldLaunchOrigin);
+    Vector3? ObservedWorldLaunchOrigin, ulong ProjectileId);
 
 internal sealed record CoopDiagnosticFlightResult(
     ulong ProjectileId, ulong EnemyEntityId, ulong Tick,
@@ -136,6 +136,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryRoundIntents = [];
     private readonly Dictionary<ulong, BulletFlight> diagnosticFlights = [];
     private readonly List<CoopDiagnosticFlightResult> diagnosticFlightResults = [];
+    private ulong nextDiagnosticProjectileId;
     private sealed record PlayerDamageReceipt(string PlayerId,
         ResolvedPlayerDamage Hit, float RandomRoll, ulong Tick,
         PlayerDamageResult Result);
@@ -1604,9 +1605,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     throw new InvalidDataException(
                         "Observed co-op launch origin is not finite.");
             }
+            // Every emitted round owns one stable match-wide identity, even
+            // if a later batch reuses this enemy's local round index.
+            ulong projectileId = checked(++nextDiagnosticProjectileId);
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
                 tick, real, aimPosition, observedMuzzle,
-                observedWorldOrigin));
+                observedWorldOrigin, projectileId));
             if (rounds.Count == windup.Batch.Count)
             {
                 // SoldierBehaviour.Shooting calls EndShooting after its
@@ -2357,9 +2361,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             PlaceIdleAlliedCollisionPoses() == null)
             return null;
 
-        ulong projectileId = checked(enemyEntityId * 16 +
-            (ulong)roundIndex + 1);
-        return new BulletFlight(projectileId, enemyEntityId,
+        return new BulletFlight(round.ProjectileId, enemyEntityId,
             assaulterWeapon.RealBulletFlight(), origin,
             round.AimPosition, tick, (from, direction, range) =>
             {
