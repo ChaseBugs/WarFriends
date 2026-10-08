@@ -2224,6 +2224,27 @@ internal static class CombatContentTests
             movementRuntime.PlaceMovingPlayerPose(secondPlayer) != null)
             throw new Exception(
                 "Co-op moving run rig lost its source target or host route pose.");
+        IReadOnlyList<CollisionPlayer>? movingAllies = movementRuntime
+            .PlaceCurrentAlliedCollisionPoses();
+        if (movingAllies?.Count != 2 ||
+            movingAllies[0].PlayerId != firstPlayer ||
+            movingAllies[1].PlayerId != secondPlayer ||
+            movingAllies[0].Pose.RootPosition !=
+                movingRig.Collision.RootPosition ||
+            movingAllies[0].Pose.PoseKind ==
+                "serialized-reference-only" ||
+            movingAllies[0].Pose.Parts.Count != 2 ||
+            movingAllies[1].Pose.Parts.Count != 2)
+            throw new Exception(
+                "Co-op diagnostic collision frame lost the moving ally.");
+        Vector3 movingRayStart = movingAllies[0].Pose.Parts[0].Center -
+            Vector3.UnitZ;
+        if (movingAllies[0].Pose.Raycast(movingRayStart,
+                Vector3.UnitZ, 2) == null ||
+            movementRuntime.TraceCurrentAlliedEnemyRay(alliedShotWorld,
+                movingRayStart, Vector3.UnitZ, 2) == null)
+            throw new Exception(
+                "Co-op moving ally has no current diagnostic ray hit.");
         movementRuntime.Advance(7);
         BattlePlayerState beforeAimStep = movementRuntime.Snapshot()
             .Players.Single(player => player.PlayerId == firstPlayer);
@@ -2363,6 +2384,9 @@ internal static class CombatContentTests
             arrived.RiflePose?.Layers[0].Clip != RiflePoseClip.Idle ||
             movementRuntime.PlaceMovingPlayerPose(firstPlayer) != null)
             throw new Exception("Co-op movement must finish at the source defend position.");
+        if (movementRuntime.PlaceCurrentAlliedCollisionPoses() != null)
+            throw new Exception(
+                "Co-op collision reused an unfinished cover-arrival tween.");
         Quaternion arrivedRotation = sourceMapSpawns.PlayerPositions[3]
             .SourceRotation!.Value;
         Vector3 expectedArrivedAim = -Vector3.Transform(Vector3.UnitZ,
@@ -2378,6 +2402,9 @@ internal static class CombatContentTests
             MatchManifest.TickRate);
         IReadOnlyList<CollisionPlayer>? settledAllies =
             movementRuntime.PlaceIdleAlliedCollisionPoses();
+        if (movementRuntime.PlaceCurrentAlliedCollisionPoses()?.Count != 2)
+            throw new Exception(
+                "Co-op collision did not resume after both allies settled.");
         if (settledAllies?.Count != 2 ||
             settledAllies[0].Pose.RootPosition !=
                 sourceMapSpawns.PlayerPositions[3].Position ||
@@ -2968,6 +2995,16 @@ internal static class CombatContentTests
             walkingRounds[0].AimPosition != expectedWalkingAim)
             throw new Exception(
                 "Moving cover volley did not retain its callback aim.");
+        BattlePlayerState movingRoundPlayer = movingVolleyRuntime.Snapshot()
+            .Players.Single(player => player.PlayerId == firstPlayer);
+        BulletFlight? movingRoundFlight = movingVolleyRuntime
+            .CreateDiagnosticAssaulterFlight(movingCoverEnemy.EntityId,
+                0, alliedShotWorld);
+        if (!movingRoundPlayer.Moving || movingRoundFlight == null ||
+            movingVolleyRuntime.Snapshot().Players.Any(player =>
+                player.Health != player.MaxHealth))
+            throw new Exception(
+                "Moving cover round lost its diagnostic collision pose.");
         arrivalRuntime.Advance(expectedArrival - 1);
         if (arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null)
             throw new Exception("Co-op Assaulter reached its point too early.");

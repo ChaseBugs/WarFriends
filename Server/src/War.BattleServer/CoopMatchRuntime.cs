@@ -2425,6 +2425,33 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return poses;
     }
 
+    /// <summary>
+    /// Places each ally at its current host-owned idle or run animation.
+    /// A movement start, cover-arrival tween, unsupported weapon family, or
+    /// dead ally closes the complete two-player diagnostic collision frame.
+    /// </summary>
+    internal IReadOnlyList<CollisionPlayer>?
+        PlaceCurrentAlliedCollisionPoses()
+    {
+        if (phase != BattlePhase.Running || playerPoses == null ||
+            participants.Count != 2)
+            return null;
+
+        var poses = new List<CollisionPlayer>(2);
+        foreach (Participant player in manifest.Players.Select(
+            definition => participants[definition.PlayerId]))
+        {
+            PlayerAimPose? pose = player.Route == null
+                ? PlaceSettledWeaponPose(player)?.Pose
+                : SampleMovingWeaponPose(player)?.Pose;
+            if (pose == null)
+                return null;
+            poses.Add(new CollisionPlayer(player.PlayerId,
+                pose.Collision, 22, 2));
+        }
+        return poses;
+    }
+
     internal CoopPlayerShotHit? TraceIdleAlliedEnemyRay(
         CoopPlayerShotCollisionWorld world, Vector3 origin,
         Vector3 direction, float maximumDistance)
@@ -2432,6 +2459,23 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ArgumentNullException.ThrowIfNull(world);
         IReadOnlyList<CollisionPlayer>? poses =
             PlaceIdleAlliedCollisionPoses();
+        if (poses == null || enemyBulletMask is not uint mask)
+            return null;
+        return world.Trace(origin, direction, maximumDistance,
+            mask, poses, alliedShields?.Snapshot());
+    }
+
+    internal CoopPlayerShotHit? TraceCurrentAlliedEnemyRay(
+        CoopPlayerShotCollisionWorld world, Vector3 origin,
+        Vector3 direction, float maximumDistance)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        if (world.Scene != manifest.MapId ||
+            world.SceneSha256 != manifest.MapRevision)
+            throw new InvalidDataException(
+                "Co-op enemy ray uses a different signed scene.");
+        IReadOnlyList<CollisionPlayer>? poses =
+            PlaceCurrentAlliedCollisionPoses();
         if (poses == null || enemyBulletMask is not uint mask)
             return null;
         return world.Trace(origin, direction, maximumDistance,
@@ -2477,8 +2521,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     /// <summary>
     /// Builds a real Assaulter's source slow-bullet flight for inspection.
-    /// Every collision query rechecks the current allied pose; a later move
-    /// invalidates the diagnostic instead of turning a stale pose into a hit.
+    /// Every collision query rechecks the current allied pose. A moving ally
+    /// uses the sampled run rig; an unavailable transition closes the flight.
     /// No impact from this flight is applied to player health.
     /// </summary>
     internal BulletFlight? CreateDiagnosticAssaulterFlight(
@@ -2500,7 +2544,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopInfantryRoundIntent round = rounds[roundIndex];
         if (!round.Real || round.Tick != tick ||
             round.ObservedWorldLaunchOrigin is not Vector3 origin ||
-            PlaceIdleAlliedCollisionPoses() == null)
+            PlaceCurrentAlliedCollisionPoses() == null)
             return null;
 
         return new BulletFlight(round.ProjectileId, enemyEntityId,
@@ -2508,7 +2552,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             round.AimPosition, tick, (from, direction, range) =>
             {
                 IReadOnlyList<CollisionPlayer>? currentPoses =
-                    PlaceIdleAlliedCollisionPoses();
+                    PlaceCurrentAlliedCollisionPoses();
                 if (currentPoses == null)
                     throw new InvalidOperationException(
                         "Co-op bullet lost its current allied poses.");
@@ -2606,7 +2650,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         foreach ((ulong id, BulletFlight flight) in diagnosticFlights.ToArray())
         {
-            if (PlaceIdleAlliedCollisionPoses() == null)
+            if (PlaceCurrentAlliedCollisionPoses() == null)
             {
                 FinishDiagnosticFlight(id, flight, "pose-unavailable", null);
                 continue;

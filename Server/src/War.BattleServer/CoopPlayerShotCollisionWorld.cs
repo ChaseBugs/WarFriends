@@ -21,8 +21,8 @@ internal sealed record CoopPlayerShotHit(
 
 /// <summary>
 /// Traces an enemy round against the recovered co-op scene and two host-owned
-/// allied poses. This is diagnostic until moving poses, live cover, and the
-/// Unity 5.2 collision differences are resolved.
+/// allied poses. Moving run poses can be supplied for inspection; live cover,
+/// Unity 5.2 collision parity, and damage authority remain unresolved.
 /// </summary>
 internal sealed class CoopPlayerShotCollisionWorld
 {
