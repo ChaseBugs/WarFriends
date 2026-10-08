@@ -24,6 +24,11 @@
       0.9999999999999831
     ]
   },
+  "shotOffset": [
+    0.0,
+    0.0,
+    0.0
+  ],
   "bulletPrefabGuid": "855689762fa6e774aaee190652b08c6f",
   "bulletComponentFileId": 11409266,
   "bulletPrefabSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",

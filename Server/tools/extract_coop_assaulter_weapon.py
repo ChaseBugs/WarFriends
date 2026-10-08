@@ -76,6 +76,12 @@ def main():
         raise ValueError("Assaulter rifle muzzle or projectile changed")
     if "fastBullet: 0" not in rifle or spawn not in prefab_transforms:
         raise ValueError("Assaulter rifle firing geometry changed")
+    shot_offset = require(
+        r"^  shotOffset: \{x: ([^,]+), y: ([^,]+), z: ([^}]+)\}$",
+        rifle, "rifle shot offset")
+    shot_offset_values = [float(value) for value in shot_offset.groups()]
+    if shot_offset_values != [0.0, 0.0, 0.0]:
+        raise ValueError("Assaulter rifle shot offset changed")
     muzzle = relative(spawn, prefab_transforms, prefab_names, True)
     setup = prefab_blocks[11496012]
     if "m_GameObject: {fileID: 147589}" not in setup:
@@ -99,6 +105,9 @@ def main():
     if ("TimeManager.realTimeWithoutPauses > base.lastShotTime + (float)cadence"
             not in GUN.read_text(encoding="utf-8-sig")):
         raise ValueError("Gun cadence comparison changed")
+    if "spawnPoint.transform.position + shotOffset" not in GUN.read_text(
+            encoding="utf-8-sig"):
+        raise ValueError("Gun launch origin changed")
     bullet_source = BASE_BULLET.read_text(encoding="utf-8-sig")
     if ("speed = bulletSetup.bulletSpeed;" not in bullet_source or
             "distanceToCheck = bulletSetup.checkDistance;" not in bullet_source or
@@ -121,6 +130,7 @@ def main():
         "weaponType": 0,
         "muzzleTransformFileId": spawn,
         "muzzle": muzzle,
+        "shotOffset": shot_offset_values,
         "bulletPrefabGuid": bullet.group(2),
         "bulletComponentFileId": int(bullet.group(1)),
         "bulletPrefabSha256": digest(BULLET),

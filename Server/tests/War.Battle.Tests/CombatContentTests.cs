@@ -598,6 +598,7 @@ internal static class CombatContentTests
             rifle.MuzzleTransformFileId != 455190 ||
             Vector3.Distance(rifle.MuzzleRestPosition,
                 new Vector3(0, 0.045f, 0.17f)) > 0.0001f ||
+            rifle.ShotOffset != Vector3.Zero ||
             rifle.RealBulletSpeed != 5f ||
             rifle.FakeBulletSpeed != 7.5f ||
             rifle.CollisionCheckDistance != 0.35f ||

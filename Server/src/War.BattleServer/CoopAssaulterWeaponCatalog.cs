@@ -11,12 +11,13 @@ namespace War.BattleServer;
 internal sealed class CoopAssaulterWeaponCatalog
 {
     private const string ArtifactSha256 =
-        "9d150780500ccfe888e3e4dd9188a7da4e3916c46833928456b3fa5e5f58b8b2";
+        "72c7ff7191faaeb9eed2e310979b502adab852abc1adf7e05c0f19aee72ca30e";
 
     internal string WeaponPrefabGuid { get; }
     internal string BulletPrefabGuid { get; }
     internal int MuzzleTransformFileId { get; }
     internal Vector3 MuzzleRestPosition { get; }
+    internal Vector3 ShotOffset { get; }
     internal float RealBulletSpeed { get; }
     internal float FakeBulletSpeed { get; }
     internal float CollisionCheckDistance { get; }
@@ -24,7 +25,8 @@ internal sealed class CoopAssaulterWeaponCatalog
 
     private CoopAssaulterWeaponCatalog(string weaponPrefabGuid,
         string bulletPrefabGuid, int muzzleTransformFileId,
-        Vector3 muzzleRestPosition, float realBulletSpeed,
+        Vector3 muzzleRestPosition, Vector3 shotOffset,
+        float realBulletSpeed,
         float fakeBulletSpeed, float collisionCheckDistance,
         float cadenceSeconds)
     {
@@ -32,6 +34,7 @@ internal sealed class CoopAssaulterWeaponCatalog
         BulletPrefabGuid = bulletPrefabGuid;
         MuzzleTransformFileId = muzzleTransformFileId;
         MuzzleRestPosition = muzzleRestPosition;
+        ShotOffset = shotOffset;
         RealBulletSpeed = realBulletSpeed;
         FakeBulletSpeed = fakeBulletSpeed;
         CollisionCheckDistance = collisionCheckDistance;
@@ -55,7 +58,8 @@ internal sealed class CoopAssaulterWeaponCatalog
             "version", "unitId", "sceneSha256", "behaviourComponentFileId",
             "inventoryComponentFileId", "weaponPrefab", "weaponPrefabSha256",
             "weaponPrefabGuid", "weaponComponentFileId", "weaponType",
-            "muzzleTransformFileId", "muzzle", "bulletPrefabGuid",
+            "muzzleTransformFileId", "muzzle", "shotOffset",
+            "bulletPrefabGuid",
             "bulletComponentFileId", "bulletPrefabSha256",
             "bulletSetupComponentFileId", "realBulletSpeed",
             "fakeBulletSpeed", "collisionCheckDistance",
@@ -129,12 +133,21 @@ internal sealed class CoopAssaulterWeaponCatalog
             !float.IsFinite(muzzleRotation.LengthSquared()) ||
             MathF.Abs(muzzleRotation.LengthSquared() - 1f) > 0.0001f)
             throw new InvalidDataException("Co-op Assaulter muzzle differs from source.");
+        JsonElement offset = row.GetProperty("shotOffset");
+        if (offset.ValueKind != JsonValueKind.Array ||
+            offset.GetArrayLength() != 3)
+            throw new InvalidDataException("Co-op Assaulter shot offset is malformed.");
+        var shotOffset = new Vector3(offset[0].GetSingle(),
+            offset[1].GetSingle(), offset[2].GetSingle());
+        if (!PlayerHitbox.Finite(shotOffset) || shotOffset != Vector3.Zero)
+            throw new InvalidDataException(
+                "Co-op Assaulter launch origin differs from source.");
 
         return new CoopAssaulterWeaponCatalog(
             row.GetProperty("weaponPrefabGuid").GetString()!,
             row.GetProperty("bulletPrefabGuid").GetString()!,
             row.GetProperty("muzzleTransformFileId").GetInt32(),
-            muzzlePosition,
+            muzzlePosition, shotOffset,
             row.GetProperty("realBulletSpeed").GetSingle(),
             row.GetProperty("fakeBulletSpeed").GetSingle(),
             row.GetProperty("collisionCheckDistance").GetSingle(),
