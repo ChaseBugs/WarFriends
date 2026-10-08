@@ -2593,7 +2593,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopAssaulterPlayerImpactPlan? PlanDiagnosticPlayerImpact(
         ulong projectileId)
     {
-        if (diagnosticWorld == null)
+        if (diagnosticWorld == null || playerPoses == null)
             return null;
         CoopDiagnosticFlightResult? result = diagnosticFlightResults
             .SingleOrDefault(row => row.ProjectileId == projectileId);
@@ -2605,7 +2605,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return null;
         CoopAssaulterPlayerImpactPlan? plan =
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(result,
-                enemy, combat);
+                enemy, combat, playerPoses);
         if (plan == null ||
             !participants.TryGetValue(plan.PlayerId,
                 out Participant? player) ||

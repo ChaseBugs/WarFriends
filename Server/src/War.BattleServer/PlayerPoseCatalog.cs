@@ -14,6 +14,12 @@ public sealed partial class PlayerPoseCatalog
     public string Revision { get; }
     public int FrameCount => clips.Values.Sum(c => c.Frames.Length);
     public IReadOnlyList<string> ClipNames { get; }
+    internal float? SourcePartWeight(string path)
+    {
+        PlayerHitbox? part = Get("T_pose").Frames[0].Parts
+            .FirstOrDefault(candidate => candidate.SourcePath == path);
+        return part?.Weight;
+    }
     private static readonly string[] Expected = ["T_pose", "idle", "run", "player_look_left3", "player_fire_left3", "player_left_coverBack3",
         "player_look_right3", "player_fire_right3", "player_right_coverBack3", "rifle_shot_loop",
         "player_look_left_qbz", "player_fire_left_qbz", "player_left_coverBack_qbz",

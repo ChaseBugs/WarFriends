@@ -98,11 +98,13 @@ internal static class CoopAssaulterPlayerImpactPlanner
     internal static CoopAssaulterPlayerImpactPlan? FromDiagnostic(
         CoopDiagnosticFlightResult result,
         BattleCoopEnemySpawn enemy,
-        CoopEnemyCombatCatalog combat)
+        CoopEnemyCombatCatalog combat,
+        PlayerPoseCatalog playerPoses)
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(enemy);
         ArgumentNullException.ThrowIfNull(combat);
+        ArgumentNullException.ThrowIfNull(playerPoses);
 
         BulletImpact? impact = result.Impact;
         if (result.Outcome != "impact" || impact == null ||
@@ -119,7 +121,9 @@ internal static class CoopAssaulterPlayerImpactPlanner
             playerId != playerId.ToLowerInvariant() ||
             string.IsNullOrWhiteSpace(impact.Hit.SourcePath) ||
             !float.IsFinite(impact.Hit.PartWeight) ||
-            impact.Hit.PartWeight is <= 0 or > 1000)
+            impact.Hit.PartWeight is <= 0 or > 1000 ||
+            playerPoses.SourcePartWeight(impact.Hit.SourcePath) !=
+                impact.Hit.PartWeight)
             return null;
 
         float sourceDamage = enemy.CardUnit
