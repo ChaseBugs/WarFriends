@@ -16,6 +16,7 @@ public sealed class SenderEndpointRegistry
     {
         public SenderRateWindow Rate { get; } = new();
         public ulong LastSeenTick { get; set; }
+        public bool KnownMatchEndpoint { get; set; }
     }
 
     private readonly Dictionary<IPEndPoint, Entry> entries = [];
@@ -33,7 +34,8 @@ public sealed class SenderEndpointRegistry
 
     public int Count => entries.Count;
 
-    public SenderAdmission Admit(IPEndPoint endpoint, ulong tick)
+    public SenderAdmission Admit(IPEndPoint endpoint, ulong tick,
+        bool knownMatchEndpoint = false)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
 
@@ -42,7 +44,19 @@ public sealed class SenderEndpointRegistry
             if (entries.Count == capacity)
                 RemoveIdleEntries(tick);
             if (entries.Count == capacity)
-                return SenderAdmission.CapacityReached;
+            {
+                if (!knownMatchEndpoint)
+                    return SenderAdmission.CapacityReached;
+
+                // A burst of unowned source endpoints must not lock a known
+                // match participant out of the bounded rate table. Every
+                // admitted endpoint still gets a fresh per-sender rate window.
+                IPEndPoint oldest = entries
+                    .OrderBy(pair => pair.Value.KnownMatchEndpoint)
+                    .ThenBy(pair => pair.Value.LastSeenTick)
+                    .First().Key;
+                entries.Remove(oldest);
+            }
 
             entry = new Entry();
             entries.Add(endpoint, entry);
@@ -51,6 +65,8 @@ public sealed class SenderEndpointRegistry
         if (tick < entry.LastSeenTick)
             throw new InvalidDataException("Sender tick moved backwards.");
         entry.LastSeenTick = tick;
+        if (knownMatchEndpoint)
+            entry.KnownMatchEndpoint = true;
         return entry.Rate.Allow(tick)
             ? SenderAdmission.Allowed
             : SenderAdmission.RateLimited;

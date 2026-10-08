@@ -10472,6 +10472,26 @@ internal static class CombatContentTests
                   endpointRegistry.Admit(activeEndpoint, 10) ==
                     SenderAdmission.RateLimited,
                 "idle eviction does not reset an active sender's rate limit");
+            var protectedRegistry = new SenderEndpointRegistry(
+                capacity: 2, idleTicks: 10);
+            Check(protectedRegistry.Admit(firstEndpoint, 0) == SenderAdmission.Allowed &&
+                  protectedRegistry.Admit(activeEndpoint, 0, knownMatchEndpoint: true) ==
+                    SenderAdmission.Allowed &&
+                  protectedRegistry.Admit(newEndpoint, 0) ==
+                    SenderAdmission.CapacityReached &&
+                  protectedRegistry.Admit(newEndpoint, 0, knownMatchEndpoint: true) ==
+                    SenderAdmission.Allowed &&
+                  protectedRegistry.Admit(firstEndpoint, 0) ==
+                    SenderAdmission.CapacityReached,
+                "known match endpoints reclaim a bounded sender slot from unowned traffic");
+            bool protectedRateBound = true;
+            for (int attempt = 1; attempt < 256; attempt++)
+                protectedRateBound &= protectedRegistry.Admit(activeEndpoint, 0,
+                    knownMatchEndpoint: true) == SenderAdmission.Allowed;
+            Check(protectedRateBound &&
+                  protectedRegistry.Admit(activeEndpoint, 0,
+                      knownMatchEndpoint: true) == SenderAdmission.RateLimited,
+                "a protected match endpoint still obeys its sender rate window");
             var cancelledLoading=new BattleLoadingState(new string('e',64));
             Check(cancelledLoading.Cancel("client-timeout")&&!cancelledLoading.Cancel("again")&&
                   !cancelledLoading.Admit("26262626262626262626262626262626"),

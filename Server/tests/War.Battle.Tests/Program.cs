@@ -1595,6 +1595,58 @@ using (var churnWorker = new NetworkWorker(churnConfig,
         Check(churnWorker.Metrics.Handled >= 3 &&
               churnWorker.Metrics.EndpointLimitDrops == 1,
             "a new live UDP sender enters after idle entries expire");
+
+        var churnMatch = await churnWorker.RegisterMatch(
+            definition with { MatchId = "endpoint-priority-match" },
+            CancellationToken.None);
+        Check(churnMatch.Code == "registered" && churnMatch.Grants?.Count == 2,
+            "endpoint priority probe allocates a real two-player match");
+        MatchConnectionGrant priorityGrant = churnMatch.Grants!.Single(
+            grant => grant.PlayerId == a);
+        byte[] priorityKey = priorityGrant.SessionKey.ToByteArray();
+        using var priorityPeer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var priorityHello = new Packet
+        {
+            Version = 1, SessionId = priorityGrant.SessionId, Sequence = 1,
+            MatchHello = new MatchHello
+            {
+                Ticket = priorityGrant.Ticket,
+                MatchId = priorityGrant.MatchId
+            }
+        };
+        await priorityPeer.SendAsync(PacketCodec.Encode(priorityHello,
+            priorityKey), churnEndpoint);
+        using (var admissionDeadline = new CancellationTokenSource(
+            TimeSpan.FromSeconds(3)))
+        {
+            var admitted = await priorityPeer.ReceiveAsync(admissionDeadline.Token);
+            Check(PacketCodec.ReadUntrusted(admitted.Buffer)?.MatchReply?.Code ==
+                "admitted", "known match endpoint enters the live UDP rate table");
+        }
+
+        await Task.Delay(2200);
+        long handledBeforeRefill = churnWorker.Metrics.Handled;
+        await firstPeer.SendAsync(churnProbe, churnEndpoint);
+        await secondPeer.SendAsync(churnProbe, churnEndpoint);
+        for (int attempt = 0; attempt < 100 &&
+            churnWorker.Metrics.Handled < handledBeforeRefill + 2; attempt++)
+            await Task.Delay(10);
+        Check(churnWorker.Metrics.Handled >= handledBeforeRefill + 2,
+            "unowned senders refill the live rate table after match endpoint idles");
+        var priorityPoll = new Packet
+        {
+            Version = 1, SessionId = priorityGrant.SessionId, Sequence = 2,
+            MatchCommand = new MatchCommand { Poll = new PollMatch() }
+        };
+        await priorityPeer.SendAsync(PacketCodec.Encode(priorityPoll,
+            priorityKey), churnEndpoint);
+        using (var priorityDeadline = new CancellationTokenSource(
+            TimeSpan.FromSeconds(3)))
+        {
+            var reply = await priorityPeer.ReceiveAsync(priorityDeadline.Token);
+            Check(PacketCodec.ReadUntrusted(reply.Buffer)?.MatchReply?.Code ==
+                "state", "known match endpoint reclaims a rate-table slot during sender churn");
+        }
     }
     finally
     {

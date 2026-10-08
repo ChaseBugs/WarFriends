@@ -412,11 +412,16 @@ public sealed class NetworkWorker : BackgroundService
             Packet? packet=PacketCodec.ReadUntrusted(bytes);
             if(packet==null){Interlocked.Increment(ref malformedDrops);continue;}
             var endpoint=(IPEndPoint)received.RemoteEndPoint;
+            bool knownMatchEndpoint = false;
             if(IsMatchBody(packet.BodyCase))
             {
                 var active=Volatile.Read(ref activeMatchEndpoints);
                 if(active.TryGetValue(packet.SessionId,out var owner))
-                {if(!owner.Equals(endpoint)){Interlocked.Increment(ref unownedDrops);continue;}}
+                {
+                    if(!owner.Equals(endpoint))
+                    {Interlocked.Increment(ref unownedDrops);continue;}
+                    knownMatchEndpoint = true;
+                }
                 else if(packet.BodyCase!=Packet.BodyOneofCase.MatchHello)
                 {Interlocked.Increment(ref unownedDrops);continue;}
             }
@@ -424,7 +429,8 @@ public sealed class NetworkWorker : BackgroundService
             // other matches need admission, commands, or reconnect polls.
             lock(incomingGate)
             {
-                SenderAdmission admission = senderEndpoints.Admit(endpoint, tick);
+                SenderAdmission admission = senderEndpoints.Admit(
+                    endpoint, tick, knownMatchEndpoint);
                 if (admission == SenderAdmission.CapacityReached)
                 { Interlocked.Increment(ref endpointLimitDrops); continue; }
                 if (admission == SenderAdmission.RateLimited)
