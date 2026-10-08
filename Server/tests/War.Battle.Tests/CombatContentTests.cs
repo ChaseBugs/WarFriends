@@ -1802,8 +1802,13 @@ internal static class CombatContentTests
             Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
             shotScenes);
         var alliedShotWorld = new CoopPlayerShotCollisionWorld(
-            new CoopNativeSceneRaycaster(
-                shotScenes.MapForMission(catalog, 0), shotMeshes));
+            shotScenes.MapForMission(catalog, 0), shotMeshes);
+        try
+        {
+            arrivalRuntime.AttachDiagnosticWorld(alliedShotWorld);
+            throw new Exception("Co-op diagnostic world was attached after host ticks began.");
+        }
+        catch (InvalidOperationException) { }
         Vector3 diagnosticRayStart = idleAllies[0].Pose.Parts[0].Center -
             2 * Vector3.UnitZ;
         CoopPlayerShotHit? directHit = alliedShotWorld.Trace(
@@ -2032,6 +2037,7 @@ internal static class CombatContentTests
             return runtime;
         }
         var fakeRuntime = ReadyShotRuntime(() => 0.75f, () => 0.25f);
+        fakeRuntime.AttachDiagnosticWorld(alliedShotWorld);
         fakeRuntime.Advance(expectedCrawlCallback + 1);
         BattleCoopEnemySpawn fakeEnemy = fakeRuntime.Snapshot().Coop
             .EnemySpawns.Single(enemy =>
@@ -2047,7 +2053,8 @@ internal static class CombatContentTests
         if (fakeRuntime.CreateDiagnosticAssaulterFlight(
                 fakeEnemy.EntityId, 0, alliedShotWorld) != null)
             throw new Exception("A fake co-op round created a damaging bullet.");
-        if (fakeRuntime.TrackDiagnosticAssaulterFlight(
+        if (fakeRuntime.ActiveDiagnosticFlightIds().Count != 0 ||
+            fakeRuntime.TrackDiagnosticAssaulterFlight(
                 fakeEnemy.EntityId, 0, alliedShotWorld))
             throw new Exception("A fake co-op round entered the flight loop.");
         Vector3 fakeEnemyPosition = new(fakeEnemy.CurrentX,
@@ -2064,9 +2071,20 @@ internal static class CombatContentTests
             throw new Exception("Co-op fake round lost its source sideways/upward aim.");
         var poseLossRuntime = ReadyShotRuntime(() => 0.75f,
             () => 0.25f, realShotRoll: 0f);
+        try
+        {
+            poseLossRuntime.AttachDiagnosticWorld(
+                new CoopPlayerShotCollisionWorld(
+                    shotScenes.Maps.First(map =>
+                        map.Scene != coop.MapId), shotMeshes));
+            throw new Exception("Co-op diagnostic ray used another mission scene.");
+        }
+        catch (InvalidOperationException) { }
+        poseLossRuntime.AttachDiagnosticWorld(alliedShotWorld);
         poseLossRuntime.Advance(expectedCrawlCallback + 1);
-        if (!poseLossRuntime.TrackDiagnosticAssaulterFlight(
-                arrivalEnemy.EntityId, 0, alliedShotWorld) ||
+        ulong poseLossProjectileId = checked(arrivalEnemy.EntityId * 16 + 1);
+        if (!poseLossRuntime.ActiveDiagnosticFlightIds().Contains(
+                poseLossProjectileId) ||
             poseLossRuntime.Command(firstPlayer, new MatchCommand
             {
                 CommandId = 2,
@@ -2075,10 +2093,12 @@ internal static class CombatContentTests
             throw new Exception("Co-op pose-loss flight setup was rejected.");
         poseLossRuntime.Advance(expectedCrawlCallback + 2);
         CoopDiagnosticFlightResult? cancelledFlight = poseLossRuntime
-            .DiagnosticFlightResults().SingleOrDefault();
+            .DiagnosticFlightResults().SingleOrDefault(result =>
+                result.ProjectileId == poseLossProjectileId);
         if (cancelledFlight?.Outcome != "pose-unavailable" ||
             cancelledFlight.EnemyEntityId != arrivalEnemy.EntityId ||
-            poseLossRuntime.ActiveDiagnosticFlightIds().Count != 0)
+            poseLossRuntime.ActiveDiagnosticFlightIds().Contains(
+                poseLossProjectileId))
             throw new Exception("A moving ally left a stale diagnostic flight active.");
         foreach ((Func<float> distance, Func<float> sideRoll) in new[]
             {
@@ -4579,7 +4599,7 @@ internal static class CombatContentTests
                 distantOrigin + new Vector3(3, 0, 5)), 22, 2)
         };
         var playerWorld = new CoopPlayerShotCollisionWorld(
-            new CoopNativeSceneRaycaster(colliders.Maps[0], geometry));
+            colliders.Maps[0], geometry);
         uint recoveredEnemyMask = unchecked((uint)-143121921);
         CoopPlayerShotHit? allyHit = playerWorld.Trace(distantOrigin,
             Vector3.UnitZ, 10, recoveredEnemyMask, alliedPoses);

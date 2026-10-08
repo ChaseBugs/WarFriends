@@ -122,6 +122,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryRoundIntents = [];
     private readonly Dictionary<ulong, BulletFlight> diagnosticFlights = [];
     private readonly List<CoopDiagnosticFlightResult> diagnosticFlightResults = [];
+    private CoopPlayerShotCollisionWorld? diagnosticWorld;
     private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
     private readonly Dictionary<ulong, ulong> nextObstacleRepositionTicks = [];
@@ -1496,6 +1497,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
                 tick, real, aimPosition, observedMuzzle,
                 observedWorldOrigin));
+            if (real && diagnosticWorld != null)
+                TrackDiagnosticAssaulterFlight(entityId, index,
+                    diagnosticWorld);
             stateRevision++;
         }
     }
@@ -1900,6 +1904,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     internal IReadOnlyList<CoopDiagnosticFlightResult>
         DiagnosticFlightResults() => diagnosticFlightResults.ToArray();
+
+    internal void AttachDiagnosticWorld(CoopPlayerShotCollisionWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        if (diagnosticWorld != null || tick != 0 ||
+            world.Scene != manifest.MapId ||
+            world.SceneSha256 != manifest.MapRevision ||
+            infantryRoundIntents.Count != 0)
+            throw new InvalidOperationException(
+                "Co-op diagnostic world differs from the signed scene or shot state.");
+        diagnosticWorld = world;
+    }
 
     internal IReadOnlyList<ulong> ActiveDiagnosticFlightIds() =>
         diagnosticFlights.Keys.Order().ToArray();

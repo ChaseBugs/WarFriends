@@ -27,10 +27,17 @@ internal sealed record CoopPlayerShotHit(
 internal sealed class CoopPlayerShotCollisionWorld
 {
     private readonly CoopNativeSceneRaycaster scene;
+    internal string Scene { get; }
+    internal string SceneSha256 { get; }
 
-    internal CoopPlayerShotCollisionWorld(CoopNativeSceneRaycaster scene)
+    internal CoopPlayerShotCollisionWorld(CoopSceneColliders source,
+        CoopMeshGeometryCatalog geometry)
     {
-        this.scene = scene ?? throw new ArgumentNullException(nameof(scene));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(geometry);
+        Scene = source.Scene;
+        SceneSha256 = source.SceneSha256;
+        scene = new CoopNativeSceneRaycaster(source, geometry);
     }
 
     internal CoopPlayerShotHit? Trace(Vector3 origin, Vector3 direction,
