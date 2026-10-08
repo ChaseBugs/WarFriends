@@ -1849,7 +1849,7 @@ internal static class CombatContentTests
             throw new Exception("Boss damage must be host-owned and settle only once.");
         CoopMissionSuccessScore? survivingScore =
             bossRuntime.HostSuccessScore(bossFirstPlayer);
-        MatchSnapshot completedBoss = bossRuntime.Snapshot();
+        MatchSnapshot completedBoss = bossRuntime.TerminalEvidenceSnapshot();
         BattleCoopPlayerScore[] wireScores = MatchSnapshot.Parser
             .ParseFrom(completedBoss.ToByteArray()).Coop.SuccessScores.ToArray();
         if (survivingScore?.Stars != 3 ||

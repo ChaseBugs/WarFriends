@@ -141,6 +141,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     private readonly MatchManifest manifest;
     private readonly MissionCatalog missionCatalog;
+    private readonly CoopSpawnPointCatalog spawnPointCatalog;
+    private readonly CoopBossRuntimeSources? bossRuntimeSources;
     private readonly CoopMissionEngine mission;
     private readonly MissionRule missionRule;
     private readonly Func<string, IReadOnlyList<CoopSpawnPoint>> spawnCandidates;
@@ -317,6 +319,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         ArgumentNullException.ThrowIfNull(catalog);
         missionCatalog = catalog;
+        bossRuntimeSources = bossSources;
         manifest = MatchManifest.Validate(allocation);
         MissionMapRule? missionMap = manifest.MissionIndex is int selectedMission
             ? catalog.MapForMission(selectedMission) : null;
@@ -381,6 +384,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
         ArgumentNullException.ThrowIfNull(spawnPoints);
+        spawnPointCatalog = spawnPoints;
         ArgumentNullException.ThrowIfNull(paths);
         if (bossSources != null && shieldSources != null)
             throw new InvalidDataException("Co-op shield sources were supplied twice.");
@@ -3814,7 +3818,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             }));
     }
 
-    public MatchSnapshot TerminalEvidenceSnapshot() => Snapshot();
+    public MatchSnapshot TerminalEvidenceSnapshot()
+    {
+        MatchSnapshot evidence = Snapshot();
+        if (evidence.TerminalReason == "mission-success")
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(evidence,
+                manifest, missionCatalog, combat, bossRuntimeSources,
+                spawnPointCatalog);
+        }
+        return evidence;
+    }
 
     public MatchEventBatch EventBatch(string playerId, ulong afterEventId)
     {
