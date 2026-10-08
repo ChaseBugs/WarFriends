@@ -124,6 +124,7 @@ message UseShieldsUpCommand { string request_id = 1; }
 message UseShieldGeneratorCommand { string request_id = 1; }
 message UseAmmoBoxCommand { string request_id = 1; }
 message UseAmmoThiefCommand { string request_id = 1; }
+message UseBrokenLegsCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -148,6 +149,7 @@ message MatchCommand {
     UseShieldGeneratorCommand use_shield_generator = 30;
     UseAmmoBoxCommand use_ammo_box = 31;
     UseAmmoThiefCommand use_ammo_thief = 32;
+    UseBrokenLegsCommand use_broken_legs = 33;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -249,6 +251,7 @@ message BattlePlayerState {
   // UDP gameplay snapshots leave this zero. Excludes army fire,
   // deployables, fake pellets, and area explosions. Not yet Client MatchStats.hits.
   uint32 confirmed_player_bullet_hits = 45;
+  bool movement_frozen = 46;
 }
 message BattleArmyUsage {
   int32 option_index = 1; string unit_id = 2; uint32 deployments = 3;

@@ -863,6 +863,42 @@ internal static class BazookaCatalogTests
             shieldsUpMatch.Advance(shieldTick);
         Check(!shieldsUpMatch.Snapshot().CardEffects.Any(effect => effect.CardId == "CardShieldGenerator"),
             "MainScene's four-second Shield Generator window expires at the host tick boundary");
+        var freezeMatch = new MatchEngine(shieldAllocation with
+        { MatchId = "bazooka-broken-legs-card" }, map, content);
+        freezeMatch.ConfigureCardSelection(["CardBrokenLegs"]);
+        freezeMatch.ConfigureCardInventory([(one, "CardBrokenLegs", 1)]);
+        freezeMatch.Admit(one);
+        freezeMatch.Admit(two);
+        var freezeSelection = new SelectCardsCommand();
+        freezeSelection.CardIds.Add("CardBrokenLegs");
+        Check(freezeMatch.Command(one, new() { CommandId = 1,
+                  SelectCards = freezeSelection }).Code == "cards-selected",
+            "the allocated player selects Broken Legs before battle");
+        freezeMatch.Command(one, new() { CommandId = 2,
+            Ready = new() { ManifestHash = freezeMatch.ManifestHash } });
+        freezeMatch.Command(two, new() { CommandId = 1,
+            Ready = new() { ManifestHash = freezeMatch.ManifestHash } });
+        freezeMatch.Advance(60);
+        var freezeCommand = new MatchCommand { CommandId = 3,
+            UseBrokenLegs = new() { RequestId = "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1" } };
+        Check(freezeMatch.Command(one, freezeCommand).Code == "broken-legs-active" &&
+              freezeMatch.Snapshot().Players.Single(player => player.PlayerId == two).MovementFrozen &&
+              !freezeMatch.Snapshot().Players.Single(player => player.PlayerId == one).MovementFrozen,
+            "Broken Legs freezes only the opposing player's new cover moves");
+        int victimStart = shieldAllocation.Players[1].StartCover;
+        int moveDirection = map.Adjacent(victimStart, 1, 2) >= 0 ? 1 : -1;
+        Check(map.Adjacent(victimStart, moveDirection, 2) >= 0,
+            "the freeze fixture has an available opposing cover route");
+        Check(freezeMatch.Command(two, new() { CommandId = 2,
+                  MoveCover = new() { Direction = moveDirection } }).Code == "movement-frozen" &&
+              freezeMatch.Command(one, freezeCommand).Code == "broken-legs-active",
+            "a frozen player cannot start a cover move and card replay does not extend the window");
+        for (ulong freezeTick = 61; freezeTick <= 210; freezeTick++)
+            freezeMatch.Advance(freezeTick);
+        Check(!freezeMatch.Snapshot().Players.Single(player => player.PlayerId == two).MovementFrozen &&
+              freezeMatch.Command(two, new() { CommandId = 3,
+                  MoveCover = new() { Direction = moveDirection } }).Code == "moving",
+            "the recovered five-second freeze expires before a new cover move");
         string enemyShield=covers[1].SourcePath+"/riot_shield";float shieldBefore=shieldSimulation.Snapshot().Single(x=>x.OwnerFraction==2&&x.CoverIndex==covers[1].SourceIndex).Health;
         var shieldMutation=shieldSimulation.ApplyExplosion(enemyShield,1,"Google2u.Bazooka_RPG7",rpg.ExplosionDamage,0);
         Check(shieldMutation!=null&&Math.Abs(shieldBefore-shieldMutation.Health-rpg.ExplosionDamage*2)<.01f,

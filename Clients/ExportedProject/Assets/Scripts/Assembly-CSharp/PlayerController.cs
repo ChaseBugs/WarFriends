@@ -15,6 +15,7 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 		if (destroyableParts == null) throw new InvalidOperationException("Player damage presentation is missing.");
 		destroyableParts.ApplySelfHostedState(state.Health, state.MaxHealth, state.Dead);
 		isAlive = !state.Dead;
+		movingFreeze = state.MovementFrozen;
 		WeaponInventory inventory = ResolveSelfHostedInventory();
 		if (inventory != null && selectedWeaponIndex >= 0) inventory.ApplySelfHostedSelection(selectedWeaponIndex);
 		if (inventory != null && inventory.usedWeapons != null && inventory.usedWeapons.Count > inventory.weaponIndex)

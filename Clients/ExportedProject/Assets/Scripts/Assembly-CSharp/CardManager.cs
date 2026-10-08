@@ -521,7 +521,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			if (selfHosted != null && selfHosted.IsConnected &&
 				(card is CardDecoy || card is CardLandmine || card is CardHeavyTurret ||
 				card is CardHealingStorm || card is CardShieldsUp || card is CardShieldGenerator ||
-				card is CardAmmoBox || card is CardAmmoThief ||
+				card is CardAmmoBox || card is CardAmmoThief || card is CardBrokenLegs ||
 				card.GetType() == typeof(CardHealMeNow)))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
@@ -555,19 +555,13 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardShieldGenerator) reply = await client.UseShieldGeneratorResult();
 			else if (card is CardAmmoBox) reply = await client.UseAmmoBoxResult();
 			else if (card is CardAmmoThief) reply = await client.UseAmmoThiefResult();
+			else if (card is CardBrokenLegs) reply = await client.UseBrokenLegsResult();
 			else if (card is CardLandmine) reply = await client.UseLandMineResult();
 			else if (card is CardHeavyTurret) reply = await client.UseHeavyTurretResult();
-			else reply = await client.UseDecoyResult();
-			bool accepted = card.GetType() == typeof(CardHealMeNow) ? reply.Code == "medkit-healed" :
-				card is CardHealingStorm ? reply.Code == "healing-storm-applied" :
-				card is CardShieldsUp ? reply.Code == "shields-up-applied" :
-				card is CardShieldGenerator ? reply.Code == "shield-generator-active" :
-				card is CardAmmoBox ? reply.Code == "ammo-box-applied" :
-				card is CardAmmoThief ? reply.Code == "ammo-thief-applied" :
-				card is CardLandmine ? reply.Code == "land-mine-spawned" || reply.Code == "land-mine-replayed" :
-				card is CardHeavyTurret ? reply.Code == "heavy-turret-spawned" || reply.Code == "heavy-turret-replayed" :
-				reply.Code == "decoy-spawned" || reply.Code == "decoy-replayed";
-			if (!accepted) throw new InvalidOperationException("Battle host rejected card activation: " + reply.Code);
+			else if (card is CardDecoy) reply = await client.UseDecoyResult();
+			else throw new InvalidOperationException("Unsupported self-hosted card: " + card.id);
+			if (!IsAcceptedSelfHostedCardReply(card, reply.Code))
+				throw new InvalidOperationException("Battle host rejected card activation: " + reply.Code);
 			card.playerId = 0;
 			CardWasUsed(card, fraction);
 			card.RemoveCard();
@@ -583,6 +577,21 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			mCardUseInProgress = false;
 			Debug.LogError("Self-hosted card activation failed: " + exception.Message);
 		}
+	}
+
+	private static bool IsAcceptedSelfHostedCardReply(Card card, string code)
+	{
+		if (card.GetType() == typeof(CardHealMeNow)) return code == "medkit-healed";
+		if (card is CardHealingStorm) return code == "healing-storm-applied";
+		if (card is CardShieldsUp) return code == "shields-up-applied";
+		if (card is CardShieldGenerator) return code == "shield-generator-active";
+		if (card is CardAmmoBox) return code == "ammo-box-applied";
+		if (card is CardAmmoThief) return code == "ammo-thief-applied";
+		if (card is CardBrokenLegs) return code == "broken-legs-active";
+		if (card is CardLandmine) return code == "land-mine-spawned" || code == "land-mine-replayed";
+		if (card is CardHeavyTurret) return code == "heavy-turret-spawned" || code == "heavy-turret-replayed";
+		if (card is CardDecoy) return code == "decoy-spawned" || code == "decoy-replayed";
+		return false;
 	}
 
 	public Card[] BuyThreeCards(int warbucks)

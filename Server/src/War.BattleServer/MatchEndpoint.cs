@@ -306,6 +306,8 @@ public sealed class MatchEndpoint
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:
                         clean.UseAmmoThief=new UseAmmoThiefCommand {RequestId=command.UseAmmoThief.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseBrokenLegs:
+                        clean.UseBrokenLegs=new UseBrokenLegsCommand {RequestId=command.UseBrokenLegs.RequestId};break;
                     case MatchCommand.IntentOneofCase.DeployArmy:
                         clean.DeployArmy=new DeployArmyCommand {OptionIndex=command.DeployArmy.OptionIndex};break;
                     case MatchCommand.IntentOneofCase.VehicleAttack:

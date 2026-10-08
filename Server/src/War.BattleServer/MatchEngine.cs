@@ -372,6 +372,37 @@ public sealed partial class MatchEngine : IMatchRuntime
         return "ammo-thief-applied";
     }
 
+    private string UseBrokenLegs(Player owner, string requestId)
+    {
+        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardBrokenLegs", StringComparer.Ordinal))
+            return "broken-legs-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
+            return "invalid-broken-legs-request";
+        if (cardReservations == null || players.Single(player => player != owner).Admitted != true)
+            return "broken-legs-authority-unavailable";
+        if (events.Count >= MaximumRetainedEvents || stateRevision == ulong.MaxValue)
+            return "event-backpressure";
+
+        // CardBrokenLegs.movingFreeze blocks new cover movement on the
+        // opponent for BrokenLegsTime (five seconds in recovered constants).
+        // It does not stop a route that was already in progress.
+        var effect = new WarCardEffectRequest("CardBrokenLegs", Vector3.Zero, 5, 0);
+        return TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect)
+            ? "broken-legs-active" : "broken-legs-unavailable";
+    }
+
+    private bool MovementFrozen(Player target)
+    {
+        return cardEffects.Snapshot().Any(effect =>
+        {
+            if (effect.Definition.CardId != "CardBrokenLegs" || !effect.Lease.ActiveAt(tick))
+                return false;
+            var source = Find(effect.OwnerPlayerId);
+            return source?.Admitted == true &&
+                   source.Definition.Fraction != target.Definition.Fraction;
+        });
+    }
+
     internal bool TryResolveCardStatus(string ownerPlayerId, string effectId, string targetPlayerId)
     {
         var target = Find(targetPlayerId);
@@ -1798,6 +1829,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseAmmoBox(p,c.UseAmmoBox.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoThief)
             return UseAmmoThief(p,c.UseAmmoThief.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseBrokenLegs)
+            return UseBrokenLegs(p,c.UseBrokenLegs.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
@@ -1877,6 +1910,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             if (map == null) return "map-unavailable";
             if(grenadeCombat?.Busy(p.Definition.PlayerId)==true)return "shooting";
             if (p.Route != null) return "already-moving";
+            if (MovementFrozen(p)) return "movement-frozen";
             int target = map.Adjacent(p.Cover, c.MoveCover.Direction, p.Definition.Fraction);
             if (target < 0) return "cover-unavailable";
             if (c.MoveCover.HasTargetCoverIndex &&
@@ -2558,6 +2592,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             ConfirmedArmySpawns=p.ConfirmedArmySpawns,ConfirmedArmyLosses=p.ConfirmedArmyLosses,
             ConfirmedCardsPlayed=Terminal ? (uint)performance.CardActivationsFor(p.Definition.PlayerId) : 0,
             CardsSelected = p.CardsSelected,
+            MovementFrozen = MovementFrozen(p),
             RiflePose = rifleCombat?.Snapshot(p.Definition.PlayerId) ?? grenadeCombat?.Snapshot(p.Definition.PlayerId,tick)
             ,MinigunHeld = rifleCombat?.MinigunHeld(p.Definition.PlayerId) ?? false
             ,BazookaTargeting = rifleCombat?.BazookaTargeting(p.Definition.PlayerId) ?? false
