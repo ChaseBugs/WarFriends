@@ -2263,7 +2263,9 @@ internal static class CombatContentTests
             throw new Exception("Co-op moving aim fixture lacks an Assaulter.");
         var movingImpactRound = new CoopInfantryRoundIntent(
             movingAimEnemy.EntityId, 0, 8, true, Vector3.UnitZ,
-            obstacleSample, Vector3.Zero, 90123);
+            obstacleSample, Vector3.Zero, 90123, firstPlayer,
+            content.PlayerShotTargets.Gameplay.Single(target =>
+                target.Type == 16).TransformFileId);
         var movingImpact = new BulletImpact(90123, string.Empty,
             movingWorldHit.ToBulletCollision(), 9,
             movingAimEnemy.EntityId);
@@ -2792,7 +2794,8 @@ internal static class CombatContentTests
             throw new Exception("Diagnostic shield planning accepted an unknown hit.");
         var sourceShieldRound = new CoopInfantryRoundIntent(
             arrivalEnemy.EntityId, 0, 1, true, Vector3.UnitZ,
-            obstacleSample, Vector3.Zero, 12345);
+            obstacleSample, Vector3.Zero, 12345, firstPlayer,
+            content.PlayerShotTargets.Gameplay[0].TransformFileId);
         var sourceShieldImpact = new BulletImpact(12345, string.Empty,
             covered.ToBulletCollision(), 2, arrivalEnemy.EntityId);
         var sourceShieldResult = new CoopDiagnosticFlightResult(12345,
@@ -2820,6 +2823,11 @@ internal static class CombatContentTests
             CoopAssaulterShieldImpactPlanner.FromDiagnostic(
                 sourceShieldResult,
                 sourceShieldRound with { Real = false }, arrivalEnemy,
+                alliedShotWorld, enemyCombat, content.Shields) != null ||
+            CoopAssaulterShieldImpactPlanner.FromDiagnostic(
+                sourceShieldResult,
+                sourceShieldRound with { TargetPlayerId = "unknown" },
+                arrivalEnemy,
                 alliedShotWorld, enemyCombat, content.Shields) != null)
             throw new Exception("Diagnostic shield impact lost source ownership.");
         CoopPlayerShotHit? bodyHit = alliedShotWorld.Trace(
@@ -2874,6 +2882,10 @@ internal static class CombatContentTests
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
                 playerResult,
                 sourcePlayerRound with { ProjectileId = 999 },
+                arrivalEnemy, enemyCombat, content.Poses) != null ||
+            CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
+                playerResult,
+                sourcePlayerRound with { TargetTransformFileId = 0 },
                 arrivalEnemy, enemyCombat, content.Poses) != null ||
             CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
                 playerResult,
@@ -3057,7 +3069,10 @@ internal static class CombatContentTests
             movingVolleyRuntime.InfantryRoundIntents(
                 movingCoverEnemy.EntityId);
         if (walkingRounds.Count != 1 || !walkingRounds[0].Real ||
-            walkingRounds[0].AimPosition != expectedWalkingAim)
+            walkingRounds[0].AimPosition != expectedWalkingAim ||
+            walkingRounds[0].TargetPlayerId != walkingWindup.PlayerId ||
+            walkingRounds[0].TargetTransformFileId !=
+                walkingWindup.TargetTransformFileId)
             throw new Exception(
                 "Moving cover volley did not retain its callback aim.");
         BattlePlayerState movingRoundPlayer = movingVolleyRuntime.Snapshot()
@@ -3236,6 +3251,9 @@ internal static class CombatContentTests
             firstRound[0].Tick != expectedCrawlCallback + 1 ||
             firstRound[0].Real != ((expectedRealMask & 1) != 0) ||
             firstRound[0].AimPosition != placedTarget.Position ||
+            firstRound[0].TargetPlayerId != placedTarget.PlayerId ||
+            firstRound[0].TargetTransformFileId !=
+                placedTarget.TransformFileId ||
             firstRound[0].ObservedLocalMuzzle != obstacleSample)
             throw new Exception($"Co-op rifle missed its first host round intent: {firstRound.FirstOrDefault()}, expected observation {obstacleSample}.");
         Vector3 expectedLaunchOrigin =

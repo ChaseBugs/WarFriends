@@ -29,6 +29,9 @@ internal static class CoopAssaulterRoundProof
         BulletImpact? impact = result.Impact;
         if (impact == null || !round.Real || round.RoundIndex < 0 ||
             round.ProjectileId == 0 || round.EnemyEntityId == 0 ||
+            !Guid.TryParseExact(round.TargetPlayerId, "N", out _) ||
+            round.TargetPlayerId != round.TargetPlayerId.ToLowerInvariant() ||
+            round.TargetTransformFileId <= 0 ||
             round.ObservedLocalMuzzle == null ||
             round.ObservedWorldLaunchOrigin is not Vector3 origin ||
             !PlayerHitbox.Finite(origin) ||

@@ -70,7 +70,8 @@ internal sealed record CoopInfantryShotWindup(
 internal sealed record CoopInfantryRoundIntent(
     ulong EnemyEntityId, int RoundIndex, ulong Tick, bool Real,
     Vector3 AimPosition, CoopQueuedMuzzleSample? ObservedLocalMuzzle,
-    Vector3? ObservedWorldLaunchOrigin, ulong ProjectileId);
+    Vector3? ObservedWorldLaunchOrigin, ulong ProjectileId,
+    string TargetPlayerId, int TargetTransformFileId);
 
 internal sealed record CoopDiagnosticFlightResult(
     ulong ProjectileId, ulong EnemyEntityId, ulong Tick,
@@ -1750,7 +1751,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             ulong projectileId = checked(++nextDiagnosticProjectileId);
             rounds.Add(new CoopInfantryRoundIntent(entityId, index,
                 tick, real, aimPosition, observedMuzzle,
-                observedWorldOrigin, projectileId));
+                observedWorldOrigin, projectileId, windup.PlayerId,
+                windup.TargetTransformFileId));
             if (rounds.Count == windup.Batch.Count)
             {
                 // SoldierBehaviour.Shooting calls EndShooting after its
