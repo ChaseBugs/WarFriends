@@ -2068,6 +2068,11 @@ bool dropCommandFourReplies=false;
 bool sawDroppedCommandFour=false;
 bool dropCommandSixRequests=false;
 bool sawDroppedCommandSix=false;
+int eventRepliesToDrop=0;
+int droppedEventReplies=0;
+bool reorderEventReplies=false;
+bool reorderedEventReplies=false;
+byte[]? delayedEventReply=null;
 Task relay = Task.Run(async () =>
 {
     IPEndPoint? client = null;
@@ -2082,6 +2087,32 @@ Task relay = Task.Run(async () =>
                 if (!dropped && packet?.MatchReply?.Code == "shot-accepted") { dropped = true; continue; }
                 if(dropCommandFourReplies && packet?.MatchReply?.CommandId==4)
                 { sawDroppedCommandFour=true; continue; }
+                if(packet?.MatchEventBatch != null)
+                {
+                    if(eventRepliesToDrop > 0)
+                    {
+                        eventRepliesToDrop--;
+                        droppedEventReplies++;
+                        continue;
+                    }
+                    if(reorderEventReplies && delayedEventReply == null)
+                    {
+                        delayedEventReply = datagram.Buffer;
+                        continue;
+                    }
+                    if(reorderEventReplies && delayedEventReply != null)
+                    {
+                        if(client != null)
+                        {
+                            await proxy.SendAsync(datagram.Buffer,client,proxyStop.Token);
+                            await proxy.SendAsync(delayedEventReply,client,proxyStop.Token);
+                        }
+                        delayedEventReply = null;
+                        reorderEventReplies = false;
+                        reorderedEventReplies = true;
+                        continue;
+                    }
+                }
                 if(injectUnconsumedReply && !injectedUnconsumedReply &&
                    packet?.MatchReply?.CommandId==3 && packet.MatchReply.Snapshot!=null)
                 {
@@ -2211,7 +2242,10 @@ try
             new string('3',32),CancellationToken.None);
         Check(secondReconnect.Code=="reconnect-issued"&&secondReconnect.Grants?.Count==1,
             "Worker issues a second player-bound replacement capability");
-        using(var twiceResumed=new MatchConnection(secondReconnect.Grants!.Single()))
+        dropCommandSixRequests=false;
+        var twiceGrant = secondReconnect.Grants!.Single().Clone();
+        twiceGrant.Port = (uint)proxyPort;
+        using(var twiceResumed=new MatchConnection(twiceGrant))
         {
             var twiceAdmission=await twiceResumed.ConnectAsync(CancellationToken.None);
             Check(twiceAdmission.Snapshot.Players.Single(player=>player.PlayerId==a)
@@ -2223,9 +2257,26 @@ try
                   replayed.Snapshot.Players.Single(player=>player.PlayerId==a)
                     .LastCommandId==6,
                 "fresh SDK submits the original unconsumed mutation under its original ID");
+            Check((await sdkB.ForfeitAsync(CancellationToken.None)).Snapshot.WinnerPlayerId == a,
+                "SDK terminal projection");
+            eventRepliesToDrop = 3;
+            reorderEventReplies = true;
+            var presentedEvents = new List<ulong>();
+            var eventConsumer = new MatchEventConsumer();
+            eventConsumer.EventReceived += battleEvent => presentedEvents.Add(battleEvent.EventId);
+            int receivedEvents = await twiceResumed.PollAndConsumeEventsAsync(
+                eventConsumer,CancellationToken.None);
+            Check(droppedEventReplies == 3 && reorderedEventReplies && receivedEvents > 0,
+                "SDK recovers terminal events after three lost and two reordered live UDP replies");
+            Check(presentedEvents.SequenceEqual(
+                    Enumerable.Range(1,receivedEvents).Select(id => (ulong)id)),
+                "recovered event page presents each consecutive event once");
+            Check(await twiceResumed.PollAndConsumeEventsAsync(
+                      eventConsumer,CancellationToken.None) == 0 &&
+                  presentedEvents.Count == receivedEvents,
+                "a stale reordered reply cannot repeat an already presented event");
         }
     }
-    Check((await sdkB.ForfeitAsync(CancellationToken.None)).Snapshot.WinnerPlayerId == a, "SDK terminal projection");
 }
 finally
 {
