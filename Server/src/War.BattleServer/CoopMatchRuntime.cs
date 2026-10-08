@@ -595,6 +595,32 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return mutation;
     }
 
+    // This prepares the Client's first player-target preference pass. It does
+    // not perform visibility checks, choose a weapon, or authorize a shot.
+    // Pressure and random draw must come from the host AI decision loop.
+    internal string? ChooseHostBossPlayerPreference(
+        float underPressure, float randomValue)
+    {
+        if (phase != BattlePhase.Running || boss == null ||
+            alliedShields == null || bossAttackTiming == null)
+            return null;
+
+        CoopBossPlayerCandidate[] candidates = manifest.Players
+            .Select(player => participants[player.PlayerId])
+            .Where(player => player.Admitted && player.Ready && !player.Dead)
+            .Select(player => new CoopBossPlayerCandidate(
+                player.PlayerId,
+                Math.Clamp(player.Health /
+                    player.Definition.Combat!.MaxHealth, 0f, 1f),
+                alliedShields.HealthRatioAt(player.CoverIndex),
+                Walking: player.Route != null,
+                HasCurrentPoint: true))
+            .ToArray();
+        return candidates.Length == 0 ? null :
+            CoopBossPlayerPreference.Choose(bossAttackTiming, candidates,
+                underPressure, randomValue);
+    }
+
     public MatchReply Reply(ulong commandId, string code)
     {
         return new MatchReply

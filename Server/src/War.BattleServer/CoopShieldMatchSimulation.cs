@@ -54,6 +54,17 @@ internal sealed class CoopShieldMatchSimulation
     internal IReadOnlyList<ShieldMutation> Snapshot() =>
         Array.AsReadOnly(covers.Select(cover => cover.Snapshot()).ToArray());
 
+    internal float HealthRatioAt(int coverIndex)
+    {
+        Cover? cover = covers.SingleOrDefault(row => row.Index == coverIndex);
+        if (cover == null)
+            throw new InvalidDataException("Player has no source shield cover.");
+        if (cover.Lifecycle.MaxHealth <= 0)
+            return 0;
+        return Math.Clamp(cover.Lifecycle.Health /
+            cover.Lifecycle.MaxHealth, 0f, 1f);
+    }
+
     internal ShieldMutation? ApplyHostShot(
         int coverIndex, string weaponId, float damage, ulong tick)
     {

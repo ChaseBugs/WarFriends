@@ -608,11 +608,18 @@ internal static class CombatContentTests
             bossStart.Players.Single(player => player.PlayerId == bossFirstPlayer)
                 .CoverIndex != 5)
             throw new Exception("Boss allies started outside multiplayer fraction two.");
+        if (bossRuntime.ChooseHostBossPlayerPreference(0f, 0.02f) !=
+                bossFirstPlayer ||
+            bossRuntime.ChooseHostBossPlayerPreference(0f, 0.07f) !=
+                bossSecondPlayer)
+            throw new Exception("Boss preference did not use the live allied roster.");
         ShieldMutation? destroyedAllyCover = bossRuntime.ApplyHostShieldShot(
             5, "Google2u.AssaultRifle_AK47", 100_000f);
         if (destroyedAllyCover?.Destroyed != true ||
             bossRuntime.Snapshot().Shields.Single(shield =>
                 shield.OwnerFraction == 2 && shield.CoverIndex == 5).Health != 0 ||
+            bossRuntime.ChooseHostBossPlayerPreference(0f, 0.1f) !=
+                bossFirstPlayer ||
             bossRuntime.ApplyHostEnemyShieldShot(1,
                 "Google2u.AssaultRifle_AK47", 10f)?.Health !=
                     content.Shields.Health(bossRules.ForMission(4).Level) - 10f)
@@ -679,6 +686,9 @@ internal static class CombatContentTests
                 MoveCover = new MoveCoverCommand { Direction = -1 }
             }).Code != "match-not-running")
             throw new Exception("A dead co-op ally must spectate while the mission continues.");
+        if (bossRuntime.ChooseHostBossPlayerPreference(0f, 0.07f) !=
+            bossFirstPlayer)
+            throw new Exception("Boss preference still considered a dead ally.");
         if (!bossRuntime.ApplyHostBossDamage(100, 200) ||
             bossRuntime.Snapshot().Coop.Boss?.Health !=
                 bossHealth.ForMission(4).MaximumHealth - 100 ||
