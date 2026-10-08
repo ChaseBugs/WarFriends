@@ -2182,6 +2182,39 @@ internal static class CombatContentTests
                 player => player.PlayerId == secondPlayer).PositionZ !=
                 mainAnchors[1].Position.Z)
             throw new Exception("Only the accepted co-op player may advance on host ticks.");
+        RiflePoseState? movingPose = underway.RiflePose;
+        Vector3 routeStep = new(underway.PositionX - movingPlayer.PositionX,
+            0, underway.PositionZ - movingPlayer.PositionZ);
+        Quaternion expectedMovingFacing = Quaternion.CreateFromAxisAngle(
+            Vector3.UnitY, MathF.Atan2(routeStep.X, routeStep.Z));
+        Quaternion actualMovingFacing = movingPose?.RootRotation is
+            { } movingFacingWire
+            ? new Quaternion(movingFacingWire.X, movingFacingWire.Y,
+                movingFacingWire.Z, movingFacingWire.W)
+            : Quaternion.Identity;
+        if (movingPose?.Layers.Count != 1 ||
+            movingPose.Layers[0].Clip != RiflePoseClip.Run ||
+            movingPose.SampledTick != 2 ||
+            Math.Abs(Quaternion.Dot(actualMovingFacing,
+                expectedMovingFacing)) < 0.9999f ||
+            !RiflePoseProjection.ValidWire(movingPose, 2) ||
+            movementRuntime.PlaceIdleAlliedCollisionPoses() != null)
+            throw new Exception(
+                "Co-op moving ally did not project its host route as a run pose.");
+        PlayerAimPose? movingRig = movementRuntime.PlaceMovingPlayerPose(
+            firstPlayer);
+        PlayerShotTarget movingSourceTarget = content.PlayerShotTargets.Gameplay
+            .Single(target => target.Type == 0x10);
+        if (movingRig?.MovingTarget == null ||
+            movingRig.MovingTarget.Position != movingRig.BodyTarget(
+                movingSourceTarget.TransformFileId).Position ||
+            movingRig.Collision.RootPosition != new Vector3(
+                underway.PositionX, underway.PositionY, underway.PositionZ) ||
+            Math.Abs(Quaternion.Dot(movingRig.Collision.RootRotation,
+                expectedMovingFacing)) < 0.9999f ||
+            movementRuntime.PlaceMovingPlayerPose(secondPlayer) != null)
+            throw new Exception(
+                "Co-op moving run rig lost its source target or host route pose.");
         try
         {
             _ = movementRuntime.PlayerAimForward(firstPlayer);
@@ -2195,7 +2228,9 @@ internal static class CombatContentTests
             player => player.PlayerId == firstPlayer);
         if (arrived.Moving || arrived.CoverIndex != 3 ||
             new Vector3(arrived.PositionX, arrived.PositionY, arrived.PositionZ) !=
-                sourceMapSpawns.PlayerPositions[3].Position)
+                sourceMapSpawns.PlayerPositions[3].Position ||
+            arrived.RiflePose?.Layers[0].Clip != RiflePoseClip.Idle ||
+            movementRuntime.PlaceMovingPlayerPose(firstPlayer) != null)
             throw new Exception("Co-op movement must finish at the source defend position.");
         Quaternion arrivedRotation = sourceMapSpawns.PlayerPositions[3]
             .SourceRotation!.Value;

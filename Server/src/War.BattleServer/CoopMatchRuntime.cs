@@ -102,6 +102,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         public CoopDefendRoute? Route;
         public ulong MoveStartTick;
         public ulong MoveEndTick;
+        public Quaternion MovementFacing = Quaternion.Identity;
         public float Health = definition.Combat!.MaxHealth;
         public bool Dead;
         public bool HasMoved;
@@ -115,6 +116,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     private sealed record SettledWeaponPose(PlayerAimPose Pose,
         string WeaponId);
+
+    private sealed record MovingWeaponPose(PlayerAimPose Pose,
+        string RunClip, double RunSeconds);
 
     private readonly MatchManifest manifest;
     private readonly MissionCatalog missionCatalog;
@@ -2962,6 +2966,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         participant.MoveStartTick = tick + 1;
         participant.MoveEndTick = participant.MoveStartTick +
             (ulong)Math.Max(1, Math.Ceiling(length * MatchManifest.TickRate));
+        participant.MovementFacing = playerPositions[participant.CoverIndex]
+            .SourceRotation ?? throw new InvalidDataException(
+                "Co-op moving player lost its source cover rotation.");
         return "moving";
     }
 
@@ -2989,15 +2996,29 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             float segmentLength = Vector3.Distance(start, end);
             if (remaining <= segmentLength)
             {
-                participant.Position = Vector3.Lerp(start, end,
-                    (float)(remaining / segmentLength));
+                SetMovingPlayerPosition(participant, Vector3.Lerp(start, end,
+                    (float)(remaining / segmentLength)));
                 stateRevision++;
                 return;
             }
             remaining -= segmentLength;
         }
-        participant.Position = route.Corners[^1];
+        SetMovingPlayerPosition(participant, route.Corners[^1]);
         stateRevision++;
+    }
+
+    private static void SetMovingPlayerPosition(Participant player,
+        Vector3 position)
+    {
+        Vector3 displacement = position - player.Position;
+        displacement.Y = 0;
+        if (displacement.LengthSquared() > 0.0000000001f)
+        {
+            float yaw = MathF.Atan2(displacement.X, displacement.Z);
+            player.MovementFacing = Quaternion.CreateFromAxisAngle(
+                Vector3.UnitY, yaw);
+        }
+        player.Position = position;
     }
 
     // Only a later host projectile or AI hit resolver may call this method.
@@ -3282,7 +3303,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 PositionY = participant.Position.Y,
                 PositionZ = participant.Position.Z
             };
-            playerState.RiflePose = StationaryPlayerPose(participant);
+            playerState.RiflePose = participant.Route == null
+                ? StationaryPlayerPose(participant)
+                : MovingPlayerPose(participant);
             snapshot.Players.Add(playerState);
         }
         return snapshot;
@@ -3315,6 +3338,67 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             [new RifleClipLayer(new RifleClipSelection(
                 idleClip, 0, 1, true), 1)],
             coverRotation, Quaternion.Identity, null);
+    }
+
+    private RiflePoseState? MovingPlayerPose(Participant player)
+    {
+        MovingWeaponPose? moving = SampleMovingWeaponPose(player);
+        if (moving == null)
+            return null;
+        return RiflePoseProjection.Create(tick,
+            [new RifleClipLayer(new RifleClipSelection(
+                moving.RunClip, moving.RunSeconds, 1, true), 1)],
+            player.MovementFacing, Quaternion.Identity, null);
+    }
+
+    internal PlayerAimPose? PlaceMovingPlayerPose(string playerId)
+    {
+        return participants.TryGetValue(playerId, out Participant? player)
+            ? SampleMovingWeaponPose(player)?.Pose : null;
+    }
+
+    private MovingWeaponPose? SampleMovingWeaponPose(Participant player)
+    {
+        if (!player.Admitted || !player.Ready || player.Dead ||
+            player.Route == null || player.Weapons == null ||
+            PlayerWeapons == null || playerWeaponBindings == null ||
+            playerPoses == null || tick <= player.MoveStartTick)
+            return null;
+
+        CoopPlayerWeapon equipped = PlayerWeapons.ForPlayer(player.PlayerId)
+            .Single(weapon => weapon.Slot == player.Weapons.ActiveSlot);
+        int family = playerWeaponBindings.Get(
+            equipped.Weapon.SourceId).AnimationFamily;
+        string? runClip = SupportedRunClip(family);
+        if (runClip == null)
+            return null;
+
+        double runSeconds = (tick - player.MoveStartTick) /
+            (double)MatchManifest.TickRate;
+        PlayerAimPose pose = playerPoses.SampleBlended(
+            runClip, runSeconds, true,
+            runClip, runSeconds, true, 0,
+            Quaternion.Identity).Place(
+                player.Position, player.MovementFacing);
+        return new MovingWeaponPose(pose, runClip, runSeconds);
+    }
+
+    private static string? SupportedRunClip(int family)
+    {
+        return family switch
+        {
+            0 => "run",
+            1 => "grenade_run",
+            2 => "bazooka_run",
+            4 => "minigun_run",
+            5 => "pistol_run",
+            6 => "run_grenadelauncher",
+            7 or 15 => "shotgunner_run",
+            9 => "qbz_run",
+            10 => "sniper_run",
+            13 => "qbz2_run",
+            _ => null
+        };
     }
 
     private static void AddShields(MatchSnapshot snapshot,
