@@ -85,12 +85,23 @@ def main():
         accuracy = finite_decimal(config, "SHOOTACCURACY")
         explosive_switch = finite_decimal(config,
             "SWITCHGRENADEBAZOOKAPROBABILITY")
+        opponent_shot = finite_decimal(config,
+            "PICKOPPONENTSHOTPROBABILITY")
+        opponent_without_shield = finite_decimal(config,
+            "PICKOPPONENTSHOTPROBABILITYNOSHIELD")
+        walking_opponent = finite_decimal(config,
+            "PICKWALKINGOPPONENTSHOTPROBABILITY")
+        headshot = finite_decimal(config, "HEADSHOTPROBABILITY")
         offense = finite_decimal(config, "OPPONENTOFFENSE")
         reaction = finite_decimal(config, "OPPONENTOFFENCEREACTIONTIME")
         if (minimum_frequency > maximum_frequency
                 or minimum_length > maximum_length
                 or not 0 <= accuracy <= 1
                 or not 0 <= explosive_switch <= 1
+                or not 0 <= opponent_shot <= 1
+                or not 0 <= opponent_without_shield <= 1
+                or not 0 <= walking_opponent <= 1
+                or not 0 <= headshot <= 1
                 or not 0 <= offense <= 1):
             raise ValueError(f"mission {mission_index} has invalid shooting bounds")
         mission_rows.append({
@@ -111,6 +122,10 @@ def main():
             "shootingLengthMaxSeconds": maximum_length,
             "shootAccuracy": accuracy,
             "explosiveSwitchProbability": explosive_switch,
+            "opponentShotProbability": opponent_shot,
+            "opponentWithoutShieldProbability": opponent_without_shield,
+            "walkingOpponentShotProbability": walking_opponent,
+            "headshotProbability": headshot,
             "opponentOffense": offense,
             "opponentOffenseReactionSeconds": reaction,
         })

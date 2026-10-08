@@ -954,6 +954,8 @@ internal static class CombatContentTests
             attacks.ForMission(74).ExplosiveCategory != "RocketLauncher" ||
             attacks.ForMission(4).ShootFrequencyMinSeconds != 3.25f ||
             attacks.ForMission(4).ExplosiveSwitchProbability != 0.05f ||
+            attacks.ForMission(4).OpponentShotProbability != 0.105f ||
+            attacks.ForMission(4).HeadshotProbability != 0.15f ||
             attacks.ForMission(74).ConfigIndex != 12 ||
             attacks.ForMission(74).ShootAccuracy != 0.565f)
             throw new Exception("Boss attack timing differs from source bot sheets.");
@@ -978,6 +980,32 @@ internal static class CombatContentTests
             _ = CoopBossWeaponChoice.ForOrdinaryPlayerTarget(firstTiming, false,
                 readyWeapon, readyWeapon, readyWeapon, float.NaN, 0f);
             throw new Exception("Invalid boss weapon random evidence was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+        }
+        const string firstAlly = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        const string secondAlly = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        CoopBossPlayerCandidate[] preferenceCandidates =
+        [
+            new(firstAlly, 1f, 1f, false, true),
+            new(secondAlly, 1f, 1f, false, true)
+        ];
+        if (CoopBossPlayerPreference.Choose(firstTiming, preferenceCandidates,
+                0f, 0.02f) != firstAlly ||
+            CoopBossPlayerPreference.Choose(firstTiming, preferenceCandidates,
+                0f, 0.07f) != secondAlly ||
+            CoopBossPlayerPreference.Choose(firstTiming, preferenceCandidates,
+                0f, 0.2f) != null ||
+            CoopBossPlayerPreference.Choose(firstTiming,
+                [preferenceCandidates[0] with { ShieldHealthRatio = 0f },
+                 preferenceCandidates[1]], 0f, 0.1f) != firstAlly)
+            throw new Exception("Boss player preference differs from Client weights.");
+        try
+        {
+            _ = CoopBossPlayerPreference.Choose(firstTiming,
+                preferenceCandidates, float.NaN, 0.02f);
+            throw new Exception("Invalid boss pressure became target authority.");
         }
         catch (InvalidDataException)
         {
@@ -1096,7 +1124,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 41 + combatAssertions + arsenalAssertions;
+                return 48 + combatAssertions + arsenalAssertions;
             }
         }
         finally
