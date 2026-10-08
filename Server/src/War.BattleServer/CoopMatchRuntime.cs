@@ -60,6 +60,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
+    private IReadOnlyDictionary<string, BattleAllocationProjection>? battleAllocations;
     private readonly IReadOnlyDictionary<string, CoopPlayerAnchor> playerStarts;
     private readonly IReadOnlyList<CoopPlayerAnchor> playerPositions;
     private readonly Func<int, int, CoopDefendRoute> routeBetween;
@@ -424,8 +425,49 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     public void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations)
     {
-        if (allocations.Any())
-            throw new InvalidDataException("Co-op loadout projection is not yet battle authority.");
+        ArgumentNullException.ThrowIfNull(allocations);
+        if (phase != BattlePhase.Waiting || battleAllocations != null ||
+            participants.Values.Any(player => player.Admitted))
+            throw new InvalidOperationException(
+                "Co-op allocations must be bound once before admission.");
+
+        BattleAllocationProjection[] values = allocations
+            .Select(BattleAllocationProjection.Validate).ToArray();
+        if (values.Length != manifest.Players.Length ||
+            values.Select(value => value.PlayerId)
+                .Distinct(StringComparer.Ordinal).Count() != values.Length)
+            throw new InvalidDataException(
+                "Co-op allocation needs one row for each signed ally.");
+
+        foreach (BattleAllocationProjection value in values)
+        {
+            ParticipantManifest? signedPlayer = manifest.Players.SingleOrDefault(
+                player => player.PlayerId == value.PlayerId);
+            if (signedPlayer == null)
+                throw new InvalidDataException(
+                    "Co-op allocation names a player outside the signed roster.");
+            bool normalChanged = signedPlayer.ArmyNormalUpgradeIndexes is { } normal &&
+                !normal.SequenceEqual(value.NormalUpgradeIndexes);
+            bool specialChanged = signedPlayer.ArmySpecialUpgradeIndexes is { } special &&
+                !special.SequenceEqual(value.SpecialUpgradeIndexes);
+            bool eliteChanged = signedPlayer.ArmyEliteUpgradeIndexes is { } elite &&
+                !elite.SequenceEqual(value.EliteUpgradeIndexes);
+            if (normalChanged || specialChanged || eliteChanged)
+                throw new InvalidDataException(
+                    "Co-op allocation differs from the signed ally's upgrade lanes.");
+        }
+
+        battleAllocations = values.ToDictionary(value => value.PlayerId,
+            StringComparer.Ordinal);
+    }
+
+    internal BattleAllocationProjection AllocationFor(string playerId)
+    {
+        if (battleAllocations == null ||
+            !battleAllocations.TryGetValue(playerId, out BattleAllocationProjection? value))
+            throw new InvalidOperationException("Co-op allocation is not bound.");
+        // The projection has mutable properties; callers receive a fresh copy.
+        return BattleAllocationProjection.Validate(value);
     }
 
     public MatchReply Command(string playerId, MatchCommand command)

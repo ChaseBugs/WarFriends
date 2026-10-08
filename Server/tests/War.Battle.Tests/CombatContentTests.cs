@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using War.Protocol;
 using War.Protocol.Transport;
+using War.Shared;
 
 internal static class CombatContentTests
 {
@@ -478,6 +479,102 @@ internal static class CombatContentTests
         return 13;
     }
 
+    private static int VerifyCoopAllocationBinding(MatchManifest coop,
+        MissionCatalog missions, CoopSpawnPointCatalog spawnPoints,
+        CoopNavMeshPathCatalog routes, CoopEnemyCombatCatalog combat,
+        ArmyDeploymentCatalog army)
+    {
+        string firstPlayer = coop.Players[0].PlayerId;
+        string secondPlayer = coop.Players[1].PlayerId;
+        var cards = new List<string> { "card-a" };
+        var first = new BattleAllocationProjection(firstPlayer,
+            cards, [], [], [], []);
+        var second = new BattleAllocationProjection(secondPlayer,
+            [], [], [], [], []);
+
+        CoopMatchRuntime NewRuntime() => new(coop, missions,
+            spawnPoints, routes, combat);
+
+        var runtime = NewRuntime();
+        runtime.ConfigureBattleAllocations([first, second]);
+        cards[0] = "card-b";
+        BattleAllocationProjection copy = runtime.AllocationFor(firstPlayer);
+        if (copy.CardIds.Single() != "card-a")
+            throw new Exception("Co-op allocation retained mutable Backend input.");
+        copy.CardIds = ["card-c"];
+        if (runtime.AllocationFor(firstPlayer).CardIds.Single() != "card-a")
+            throw new Exception("Co-op allocation leaked mutable lookup output.");
+
+        void RejectRows(BattleAllocationProjection[] rows)
+        {
+            try
+            {
+                NewRuntime().ConfigureBattleAllocations(rows);
+                throw new Exception("Invalid co-op allocation was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+            }
+        }
+        RejectRows([first]);
+        RejectRows([first, first]);
+        RejectRows([first, new BattleAllocationProjection("outsider",
+            [], [], [], [], [])]);
+
+        runtime.Admit(firstPlayer);
+        try
+        {
+            runtime.ConfigureBattleAllocations([first, second]);
+            throw new Exception("Co-op allocation was rebound after admission.");
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        var admittedWithoutAllocation = NewRuntime();
+        admittedWithoutAllocation.Admit(firstPlayer);
+        try
+        {
+            admittedWithoutAllocation.ConfigureBattleAllocations([first, second]);
+            throw new Exception("Co-op allocation was added after admission.");
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        MatchManifest signedStages = coop with
+        {
+            Players = coop.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = [army.Families[0].UnitId],
+                ArmyNormalUpgradeIndexes = [2],
+                ArmySpecialUpgradeIndexes = [-1],
+                ArmyEliteUpgradeIndexes = [-1]
+            }).ToArray()
+        };
+        MatchManifest.Validate(signedStages);
+        var stageRuntime = new CoopMatchRuntime(signedStages, missions,
+            spawnPoints, routes, combat);
+        var wrongStage = new BattleAllocationProjection(firstPlayer,
+            [], [], [3], [-1], [-1]);
+        var correctStage = new BattleAllocationProjection(secondPlayer,
+            [], [], [2], [-1], [-1]);
+        try
+        {
+            stageRuntime.ConfigureBattleAllocations([wrongStage, correctStage]);
+            throw new Exception("Backend stage replaced a signed co-op army stage.");
+        }
+        catch (InvalidDataException)
+        {
+        }
+        stageRuntime.ConfigureBattleAllocations([
+            new BattleAllocationProjection(firstPlayer, [], [], [2], [-1], [-1]),
+            correctStage
+        ]);
+        if (stageRuntime.AllocationFor(firstPlayer).NormalUpgradeIndexes.Single() != 2)
+            throw new Exception("Signed co-op army stage was not retained.");
+        return 9;
+    }
+
     private static int VerifyCoopAllocation(
         string directory, MissionCatalog catalog, BattleCombatContent content)
     {
@@ -574,6 +671,8 @@ internal static class CombatContentTests
             Players = duel.Players.Select(player => player with { Fraction = 2 }).ToArray()
         };
         MatchManifest.Validate(coop);
+        int allocationBindingAssertions = VerifyCoopAllocationBinding(
+            coop, catalog, spawnPoints, routes, enemyCombat, army);
         MatchManifest shieldAllocation = coop with
         {
             SceneMasterPlayerId = coop.Players[1].PlayerId,
@@ -1352,7 +1451,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 52;
+        return 52 + allocationBindingAssertions;
     }
 
     private static int VerifyCoopBossAiSpawns(MissionCatalog missions,

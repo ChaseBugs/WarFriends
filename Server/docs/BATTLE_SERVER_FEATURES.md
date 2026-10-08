@@ -277,6 +277,8 @@ For B22 Score missions, the recovered `ScoreManager.AddSkillshot` adds each matc
 
 MainScene sets `SkillShotManager.timeForCombo` to 0.9 seconds. `RecieveKill` adds Double, Tripple, or Multi Kill after the second, third, or later close player-owned kill; at the 30 Hz server tick rate the strict window is fewer than 27 ticks. The pinned skill-shot artifact now records that scene value, and `CoopMissionEngine` advances one host kill streak only after an attributed death succeeds. Army and unowned kills do not advance it, failed/replayed deaths cannot consume it, and headshot, movement, weapon, and vehicle bonuses remain closed pending their own host evidence. Each Client owns its own `SkillShotManager` streak, so the host keeps separate streaks for the two allies.
 
+The isolated co-op runtime now binds the Backend's two trusted `BattleAllocationProjection` rows before admission. It validates both player identities and any upgrade lanes already signed into the match manifest, copies the rows, and refuses later rebinding. This prepares card and army authority without accepting a Client-provided loadout. `MatchRouter` still declines co-op registration, and `FireCommand` remains closed until signed weapon state, projectile collision, and damage attribution are composed into the runtime.
+
 1. Continue B07-B09 with the next recovered weapon projectile family and its normal Unity presentation. Keep results unscored until authority and Client presentation are complete.
 2. Expand weapon variants and world/entity destruction (B09-B12), then army/AI/vehicles/cards/objectives (B13-B19).
 3. Complete mode rules, statistics and durable result/control contracts (B20-B26), with Backend integration limited to those boundaries.
