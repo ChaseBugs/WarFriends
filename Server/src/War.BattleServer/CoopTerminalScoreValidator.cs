@@ -9,10 +9,14 @@ namespace War.BattleServer;
 internal static class CoopTerminalScoreValidator
 {
     internal static void ValidateNonSuccess(MatchSnapshot snapshot,
-        MatchManifest allocation, MissionCatalog missions)
+        MatchManifest allocation, MissionCatalog missions,
+        CoopEnemyCombatCatalog combat,
+        CoopBossRuntimeSources? bossSources = null,
+        CoopSpawnPointCatalog? spawnPoints = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(missions);
+        ArgumentNullException.ThrowIfNull(combat);
         MatchManifest manifest = MatchManifest.Validate(allocation);
         if (manifest.Mode != MatchManifest.CoopMissionMode ||
             manifest.MissionIndex is not int missionIndex ||
@@ -101,6 +105,25 @@ internal static class CoopTerminalScoreValidator
                 throw new InvalidDataException(
                     "Unknown co-op non-success reason.");
         }
+
+        ValidateParticipantStarts(snapshot, manifest, rule, missions,
+            bossSources, spawnPoints);
+        if (!snapshot.Coop.Started)
+            return;
+        if (rule.MissionType == "KillOpponent")
+            ValidateBossState(snapshot, rule, missions, bossSources);
+        else if (snapshot.Coop.Boss != null)
+            throw new InvalidDataException(
+                "Non-boss co-op failure contains a boss.");
+        Dictionary<string, HashSet<SpawnOrigin>> origins =
+            SourceSpawnOrigins(rule, missions, bossSources, spawnPoints);
+        ValidateEnemyLedger(snapshot, rule, combat, origins);
+        int confirmedDeaths = CountConfirmedEnemyDeaths(snapshot);
+        int expectedKillCount = rule.MissionType == "KillXEnemies"
+            ? confirmedDeaths : 0;
+        if (snapshot.Coop.EnemyKills != expectedKillCount)
+            throw new InvalidDataException(
+                "Co-op failure kill count differs from host deaths.");
     }
 
     internal static void ValidateSuccess(
@@ -342,14 +365,7 @@ internal static class CoopTerminalScoreValidator
     private static void ValidateObjective(MatchSnapshot snapshot, MissionRule rule)
     {
         BattleCoopState state = snapshot.Coop;
-        int confirmedDeaths = state.EnemySpawns.Count(enemy =>
-            enemy.DeathTick != 0 && enemy.Health == 0 &&
-            enemy.DeathTick >= enemy.SpawnTick &&
-            enemy.DeathTick <= snapshot.EndTick);
-        if (state.EnemySpawns.Any(enemy => enemy.DeathTick != 0 &&
-                (enemy.Health != 0 || enemy.DeathTick < enemy.SpawnTick ||
-                 enemy.DeathTick > snapshot.EndTick)))
-            throw new InvalidDataException("Co-op enemy death ledger is inconsistent.");
+        int confirmedDeaths = CountConfirmedEnemyDeaths(snapshot);
 
         switch (rule.MissionType)
         {
@@ -379,6 +395,22 @@ internal static class CoopTerminalScoreValidator
             default:
                 throw new InvalidDataException("Unknown co-op mission objective.");
         }
+    }
+
+    private static int CountConfirmedEnemyDeaths(MatchSnapshot snapshot)
+    {
+        int confirmed = 0;
+        foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
+        {
+            if (enemy.DeathTick == 0)
+                continue;
+            if (enemy.Health != 0 || enemy.DeathTick < enemy.SpawnTick ||
+                enemy.DeathTick > snapshot.EndTick)
+                throw new InvalidDataException(
+                    "Co-op enemy death ledger is inconsistent.");
+            confirmed++;
+        }
+        return confirmed;
     }
 
     private static void ValidateEnemyLedger(MatchSnapshot snapshot,

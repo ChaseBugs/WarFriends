@@ -5272,8 +5272,32 @@ internal static class CombatContentTests
         try
         {
             CoopTerminalScoreValidator.ValidateNonSuccess(
-                forgedFailureReward, coop, catalog);
+                forgedFailureReward, coop, catalog, enemyCombat,
+                spawnPoints: spawnPoints);
             throw new Exception("A failed co-op mission carried reward eligibility.");
+        }
+        catch (InvalidDataException) { }
+        MatchSnapshot forgedFailureAnchor = runtime.TerminalEvidenceSnapshot();
+        forgedFailureAnchor.Coop.EnemySpawns[0].SpawnComponentFileId++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateNonSuccess(
+                forgedFailureAnchor, coop, catalog, enemyCombat,
+                spawnPoints: spawnPoints);
+            throw new Exception("A failed co-op result carried a forged spawn anchor.");
+        }
+        catch (InvalidDataException) { }
+        MatchSnapshot futureFailureDeath = runtime.TerminalEvidenceSnapshot();
+        BattleCoopEnemySpawn forgedDeadEnemy =
+            futureFailureDeath.Coop.EnemySpawns[0];
+        forgedDeadEnemy.Health = 0;
+        forgedDeadEnemy.DeathTick = futureFailureDeath.EndTick + 1;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateNonSuccess(
+                futureFailureDeath, coop, catalog, enemyCombat,
+                spawnPoints: spawnPoints);
+            throw new Exception("A failed co-op result counted a future death.");
         }
         catch (InvalidDataException) { }
         ulong terminalTick = runtime.Snapshot().EndTick;

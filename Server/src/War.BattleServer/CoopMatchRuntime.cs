@@ -3830,7 +3830,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         else
         {
             CoopTerminalScoreValidator.ValidateNonSuccess(evidence,
-                manifest, missionCatalog);
+                manifest, missionCatalog, combat, bossRuntimeSources,
+                spawnPointCatalog);
         }
         return evidence;
     }
