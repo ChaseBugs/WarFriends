@@ -55,6 +55,8 @@ internal static class CoopTerminalScoreValidator
             throw new InvalidDataException("Co-op success differs from source mission.");
 
         ValidateBossState(snapshot, rule, missions, bossSources);
+        ValidateParticipantStarts(snapshot, manifest, rule, missions,
+            bossSources, spawnPoints);
         Dictionary<string, HashSet<SpawnOrigin>> origins =
             SourceSpawnOrigins(rule, missions, bossSources, spawnPoints);
         ValidateEnemyLedger(snapshot, rule, combat, origins);
@@ -117,6 +119,51 @@ internal static class CoopTerminalScoreValidator
 
     private readonly record struct SpawnOrigin(int ComponentFileId,
         float X, float Y, float Z);
+
+    private static void ValidateParticipantStarts(MatchSnapshot snapshot,
+        MatchManifest manifest, MissionRule rule, MissionCatalog missions,
+        CoopBossRuntimeSources? bossSources,
+        CoopSpawnPointCatalog? spawnPoints)
+    {
+        IReadOnlyList<CoopPlayerAnchor> anchors;
+        if (rule.MissionType == "KillOpponent")
+        {
+            CoopBossRuntimeSources sources = bossSources ??
+                throw new InvalidDataException("Boss allied anchors are missing.");
+            anchors = sources.Anchors.MapForMission(missions, rule.Index)
+                .AlliedStarts.Select(point => new CoopPlayerAnchor(
+                    point.Index, point.ComponentFileId,
+                    point.GameObjectFileId, point.TransformFileId,
+                    point.Main, point.Position)).ToArray();
+        }
+        else
+        {
+            CoopSpawnPointCatalog sources = spawnPoints ??
+                throw new InvalidDataException("Co-op allied anchors are missing.");
+            anchors = sources.MapForMission(missions, rule.Index)
+                .PlayerPositions.Where(point => point.Main)
+                .OrderBy(point => point.Index).ToArray();
+        }
+
+        if (anchors.Count != manifest.Players.Length ||
+            snapshot.Coop.ParticipantStarts.Count != anchors.Count)
+            throw new InvalidDataException(
+                "Co-op terminal start roster is incomplete.");
+        for (int index = 0; index < anchors.Count; index++)
+        {
+            CoopPlayerAnchor expected = anchors[index];
+            BattleCoopParticipantStart actual =
+                snapshot.Coop.ParticipantStarts[index];
+            // The signed first player replaces Photon master ownership.
+            if (actual.PlayerId != manifest.Players[index].PlayerId ||
+                actual.DefendComponentFileId != expected.ComponentFileId ||
+                actual.X != expected.Position.X ||
+                actual.Y != expected.Position.Y ||
+                actual.Z != expected.Position.Z)
+                throw new InvalidDataException(
+                    "Co-op allied start differs from its source scene.");
+        }
+    }
 
     private static Dictionary<string, HashSet<SpawnOrigin>> SourceSpawnOrigins(
         MissionRule rule, MissionCatalog missions,

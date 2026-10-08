@@ -1863,6 +1863,20 @@ internal static class CombatContentTests
             throw new Exception("Boss success score did not use frozen host outcome.");
         CoopTerminalScoreValidator.ValidateSuccess(
             completedBoss, bossAllocation, catalog, enemyCombat, bossSources);
+        MatchSnapshot swappedBossStarts = completedBoss.Clone();
+        BattleCoopParticipantStart firstBossStart =
+            swappedBossStarts.Coop.ParticipantStarts[0].Clone();
+        swappedBossStarts.Coop.ParticipantStarts[0] =
+            swappedBossStarts.Coop.ParticipantStarts[1];
+        swappedBossStarts.Coop.ParticipantStarts[1] = firstBossStart;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                swappedBossStarts, bossAllocation, catalog, enemyCombat,
+                bossSources);
+            throw new Exception("Boss allies swapped their signed start anchors.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot forgedBossHealth = completedBoss.Clone();
         forgedBossHealth.Coop.Boss.MaxHealth++;
         try
@@ -4603,6 +4617,16 @@ internal static class CombatContentTests
         MatchSnapshot completedKill = damagedRuntime.TerminalEvidenceSnapshot();
         CoopTerminalScoreValidator.ValidateSuccess(
             completedKill, coop, catalog, enemyCombat, spawnPoints: spawnPoints);
+        MatchSnapshot forgedAllyStart = completedKill.Clone();
+        forgedAllyStart.Coop.ParticipantStarts[0].DefendComponentFileId++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                forgedAllyStart, coop, catalog, enemyCombat,
+                spawnPoints: spawnPoints);
+            throw new Exception("Invented co-op allied start passed terminal proof.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot forgedEnemyAnchor = completedKill.Clone();
         forgedEnemyAnchor.Coop.EnemySpawns[0].SpawnComponentFileId++;
         try
