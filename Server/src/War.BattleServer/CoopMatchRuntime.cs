@@ -437,6 +437,22 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return true;
     }
 
+    /// <summary>
+    /// Commit ammo only after a host projectile exists for this signed slot.
+    /// The client Fire command cannot call this method.
+    /// </summary>
+    internal bool ConfirmHostPlayerShot(string playerId, int slot, ulong shotTick)
+    {
+        if (phase != BattlePhase.Running || shotTick != tick ||
+            !participants.TryGetValue(playerId, out Participant? player) ||
+            !player.Admitted || !player.Ready || player.Dead ||
+            player.Weapons == null ||
+            !player.Weapons.ConfirmHostShot(slot, shotTick))
+            return false;
+        stateRevision++;
+        return true;
+    }
+
     public void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations)
     {
         ArgumentNullException.ThrowIfNull(allocations);
@@ -569,6 +585,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 !participant.Weapons.TrySelectSlot(command.SwitchWeapon.Slot, tick))
                 return "weapon-slot-unavailable";
             return "weapon-selected";
+        }
+        if (command.IntentCase == MatchCommand.IntentOneofCase.Reload)
+        {
+            if (phase != BattlePhase.Running || !participant.Ready || participant.Dead)
+                return "match-not-running";
+            CoopPlayerWeaponState? weapons = participant.Weapons;
+            if (weapons == null ||
+                !weapons.TryStartReload(weapons.ActiveSlot, tick))
+                return "reload-unavailable";
+            return "reloading";
         }
         return "coop-command-unavailable";
     }

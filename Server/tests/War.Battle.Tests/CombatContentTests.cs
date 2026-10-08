@@ -727,6 +727,16 @@ internal static class CombatContentTests
             initialWeaponView.ReserveAmmo != coop.Players[0].Weapon.ReserveAmmo ||
             initialWeaponView.CombatEnabled || initialWeaponView.ShotsFired != 0)
             throw new Exception("Co-op weapons did not bind the signed source stages.");
+        weaponRuntime.Admit(coop.Players[0].PlayerId);
+        weaponRuntime.Admit(coop.Players[1].PlayerId);
+        var initialReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = weaponRuntime.ManifestHash } };
+        weaponRuntime.Command(coop.Players[0].PlayerId, initialReady);
+        weaponRuntime.Command(coop.Players[1].PlayerId, initialReady);
+        if (weaponRuntime.Command(coop.Players[0].PlayerId,
+                new MatchCommand { CommandId = 2,
+                    Reload = new ReloadCommand() }).Code != "reload-unavailable")
+            throw new Exception("Full co-op clip must not start a reload.");
 
         const string alternateRifle = "Google2u.AssaultRifle_Famas";
         WeaponManifest alternateWeapon = content.CreateCoopWeaponManifest(
@@ -785,6 +795,40 @@ internal static class CombatContentTests
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == switcher).ActiveWeaponSlot != 1)
             throw new Exception("An unallocated co-op weapon slot became active.");
+        BattlePlayerState beforeHostShot = switchingRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == switcher);
+        var unsupportedFire = new MatchCommand { CommandId = 4,
+            Fire = new FireCommand { TargetX = 1 } };
+        if (switchingRuntime.Command(switcher, unsupportedFire).Code !=
+                "coop-command-unavailable" ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).ClipAmmo != beforeHostShot.ClipAmmo ||
+            switchingRuntime.ConfirmHostPlayerShot("outside", 1, 0) ||
+            switchingRuntime.ConfirmHostPlayerShot(partner, 1, 0) ||
+            !switchingRuntime.ConfirmHostPlayerShot(switcher, 1, 0) ||
+            switchingRuntime.ConfirmHostPlayerShot(switcher, 1, 0) ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).ClipAmmo != alternateWeapon.ClipSize - 1)
+            throw new Exception("Only a host-created co-op shot may consume ammo.");
+        var reloadSecond = new MatchCommand { CommandId = 5,
+            Reload = new ReloadCommand() };
+        ulong alternateReloadTicks = (ulong)Math.Ceiling(
+            alternateWeapon.ReloadSeconds * MatchManifest.TickRate);
+        if (switchingRuntime.Command(switcher, reloadSecond).Code != "reloading" ||
+            switchingRuntime.Command(switcher, reloadSecond).Code != "reloading" ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).ReloadEndTick != alternateReloadTicks)
+            throw new Exception("Co-op reload did not start once from host ammo.");
+        switchingRuntime.Advance(alternateReloadTicks);
+        BattlePlayerState reloadedAlly = switchingRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == switcher);
+        if (reloadedAlly.ClipAmmo != alternateWeapon.ClipSize ||
+            reloadedAlly.ReserveAmmo != alternateWeapon.ReserveAmmo - 1 ||
+            reloadedAlly.ReloadEndTick != 0 ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == partner).ReserveAmmo !=
+                twoWeapons.Players[1].Weapon.ReserveAmmo)
+            throw new Exception("Co-op reload changed the wrong slot or ally.");
         MatchManifest skippedSlot = twoWeapons with
         {
             Players = twoWeapons.Players.Select((player, index) => index == 0
@@ -1614,7 +1658,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 64 + allocationBindingAssertions;
+        return 69 + allocationBindingAssertions;
     }
 
     private static int VerifyCoopBossAiSpawns(MissionCatalog missions,
