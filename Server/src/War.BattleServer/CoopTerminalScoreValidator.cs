@@ -165,12 +165,25 @@ internal static class CoopTerminalScoreValidator
                 throw new InvalidDataException(
                     "Co-op enemy spawn has invalid identity or time.");
 
+            ulong elapsedTicks = enemy.SpawnTick - snapshot.StartTick;
             if (enemy.TimedEvent)
+            {
+                // DueTimedEvents checks each new whole mission second.
+                // Its first check happens one tick after Ready starts play.
+                if (elapsedTicks != 1 &&
+                    elapsedTicks % MatchManifest.TickRate != 0)
+                    throw new InvalidDataException(
+                        "Co-op timed spawn missed its event clock.");
                 ValidateTimedSpawn(enemy, snapshot.StartTick, rule,
                     timedEventCounts);
+            }
             else if (enemy.CardUnit || !rule.Behaviours.Any(behaviour =>
                          behaviour.Name == enemy.Behaviour &&
-                         behaviour.Level == enemy.Level))
+                         behaviour.Level == enemy.Level) ||
+                     elapsedTicks <
+                         MissionAutomaticSpawnState.AutomaticIntervalTicks ||
+                     elapsedTicks %
+                         MissionAutomaticSpawnState.AutomaticIntervalTicks != 0)
                 throw new InvalidDataException(
                     "Co-op automatic spawn differs from the mission rule.");
 

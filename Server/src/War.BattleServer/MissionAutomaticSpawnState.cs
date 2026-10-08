@@ -25,7 +25,8 @@ public sealed class MissionAutomaticSpawnState
 
     // WaveManager checks realTimeWithoutPauses > lastGenTime + 0.25f.
     // At the Worker's 30 Hz fixed step, the first later tick is tick eight.
-    private const ulong AutomaticIntervalTicks = MatchManifest.TickRate / 4 + 1;
+    internal const ulong AutomaticIntervalTicks =
+        MatchManifest.TickRate / 4 + 1;
 
     internal MissionAutomaticSpawnState(MissionRule mission, Func<int, int>? choice)
     {

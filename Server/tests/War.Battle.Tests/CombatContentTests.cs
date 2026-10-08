@@ -4595,6 +4595,16 @@ internal static class CombatContentTests
                 "A skipped co-op spawn identity passed terminal proof.");
         }
         catch (InvalidDataException) { }
+        MatchSnapshot offClockAutomatic = completedKill.Clone();
+        offClockAutomatic.Coop.EnemySpawns[0].SpawnTick--;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                offClockAutomatic, coop, catalog, enemyCombat);
+            throw new Exception(
+                "An automatic co-op spawn ignored its host cadence.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot nonfiniteEnemy = completedKill.Clone();
         nonfiniteEnemy.Coop.EnemySpawns[0].Health = float.NaN;
         try
@@ -4681,6 +4691,21 @@ internal static class CombatContentTests
             throw new Exception("Survive mission must succeed at the source deadline.");
         CoopTerminalScoreValidator.ValidateSuccess(
             survived, surviveAllocation, catalog, enemyCombat);
+        MatchSnapshot offClockTimed = survived.Clone();
+        BattleCoopEnemySpawn? timedRow = offClockTimed.Coop.EnemySpawns
+            .FirstOrDefault(enemy => enemy.TimedEvent);
+        if (timedRow == null)
+            throw new Exception(
+                "Survive fixture did not exercise a source timed event.");
+        timedRow.SpawnTick++;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                offClockTimed, surviveAllocation, catalog, enemyCombat);
+            throw new Exception(
+                "A timed co-op spawn ignored its whole-second clock.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot earlySurvival = survived.Clone();
         earlySurvival.EndTick--;
         earlySurvival.ServerTick--;
