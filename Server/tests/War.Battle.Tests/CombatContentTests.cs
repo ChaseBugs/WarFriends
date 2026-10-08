@@ -2312,6 +2312,40 @@ internal static class CombatContentTests
                 expectedCallbackAim) > 0.00001f)
             throw new Exception(
                 "Assaulter shot callback lost its second source lead step.");
+        if (movementRuntime.PredictDiagnosticWalkingShotStart(
+                walkingTarget, observedMuzzle) != null)
+            throw new Exception(
+                "Walking callback predicted on the target-selection tick.");
+        movementRuntime.Advance(9);
+        BattlePlayerState callbackPlayer = movementRuntime.Snapshot()
+            .Players.Single(player => player.PlayerId == firstPlayer);
+        Vector3 callbackVelocity = new(
+            callbackPlayer.PositionX - afterAimStep.PositionX,
+            callbackPlayer.PositionY - afterAimStep.PositionY,
+            callbackPlayer.PositionZ - afterAimStep.PositionZ);
+        callbackVelocity *= MatchManifest.TickRate;
+        CoopWalkingShotStartAim? walkingCallback = movementRuntime
+            .PredictDiagnosticWalkingShotStart(walkingTarget,
+                observedMuzzle);
+        Vector3 expectedWalkingCallback =
+            CoopAssaulterMovingAim.AtShotStart(observedMuzzle,
+                walkingTarget.PredictedAimPosition,
+                callbackVelocity, 5f);
+        if (walkingCallback?.Tick != 9 ||
+            walkingCallback.TransformFileId !=
+                walkingTarget.TransformFileId ||
+            walkingCallback.TargetMask != walkingTarget.TargetMask ||
+            Vector3.Distance(walkingCallback.CurrentPlayerVelocity,
+                callbackVelocity) > 0.00001f ||
+            Vector3.Distance(walkingCallback.UpdatedAimPosition,
+                expectedWalkingCallback) > 0.00001f)
+            throw new Exception(
+                "Walking callback reused an old velocity or target.");
+        if (movementRuntime.PredictDiagnosticWalkingShotStart(
+                walkingTarget with { PlayerId = secondPlayer },
+                observedMuzzle) != null)
+            throw new Exception(
+                "Walking callback accepted another player's stationary pose.");
         Quaternion destinationRotation = sourceMapSpawns.PlayerPositions[3]
             .SourceRotation!.Value;
         Vector3 destinationAim = -Vector3.Transform(Vector3.UnitZ,

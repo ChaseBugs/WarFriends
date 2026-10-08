@@ -86,6 +86,12 @@ internal sealed record CoopMovingPlayerAimPlan(
     internal int TargetMask { get; init; } = 0x10;
 }
 
+internal sealed record CoopWalkingShotStartAim(
+    ulong EnemyEntityId, string PlayerId, int TransformFileId,
+    int TargetMask, Vector3 PreparedAimPosition,
+    Vector3 CurrentPlayerVelocity, Vector3 UpdatedAimPosition,
+    ulong Tick);
+
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
 /// cannot accept combat commands until host AI and player controls are wired.
@@ -3526,6 +3532,45 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             TargetMask = 2
         };
+    }
+
+    /// <summary>
+    /// Applies the Assaulter's second prediction to the prepared target.
+    /// ShootJustStarted reads the player's velocity again; it does not reuse
+    /// the velocity captured by PickPlayerOpponent. A caller must supply an
+    /// observed weapon muzzle from that later animation moment.
+    /// </summary>
+    internal CoopWalkingShotStartAim? PredictDiagnosticWalkingShotStart(
+        CoopMovingPlayerAimPlan prepared, Vector3 observedWeaponMuzzle)
+    {
+        ArgumentNullException.ThrowIfNull(prepared);
+        if (phase != BattlePhase.Running || assaulterWeapon == null ||
+            playerShotTargets == null || prepared.Tick >= tick ||
+            !participants.TryGetValue(prepared.PlayerId,
+                out Participant? player) ||
+            SampleMovingWeaponPose(player) == null ||
+            !enemySpawns.Any(enemy =>
+                enemy.EntityId == prepared.EnemyEntityId &&
+                enemy.Behaviour == "Assaulter" && enemy.Health > 0 &&
+                enemy.DeathTick == 0))
+            return null;
+
+        bool knownTarget = playerShotTargets.Gameplay.Any(target =>
+            target.TransformFileId == prepared.TransformFileId &&
+            target.Type == prepared.TargetMask);
+        if (!knownTarget || !PlayerHitbox.Finite(
+                prepared.PredictedAimPosition))
+            throw new InvalidDataException(
+                "Walking shot lost its selected source target.");
+
+        Vector3 updatedAim = CoopAssaulterMovingAim.AtShotStart(
+            observedWeaponMuzzle, prepared.PredictedAimPosition,
+            player.MovementVelocity,
+            assaulterWeapon.RealBulletFlight().Speed);
+        return new CoopWalkingShotStartAim(prepared.EnemyEntityId,
+            prepared.PlayerId, prepared.TransformFileId,
+            prepared.TargetMask, prepared.PredictedAimPosition,
+            player.MovementVelocity, updatedAim, tick);
     }
 
     internal static int WalkingPlayerTargetMask(Vector3 forward,
