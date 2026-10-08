@@ -18,7 +18,8 @@ public sealed class WarCardReservationState
     public bool TryReserve(string requestId,string ownerPlayerId,string cardId)
     {
         var request=(ownerPlayerId,requestId);var inventory=(ownerPlayerId,cardId);
-        if(!Guid.TryParseExact(requestId,"N",out _)||!Guid.TryParseExact(ownerPlayerId,"N",out _)||
+        if(!Guid.TryParseExact(requestId,"N",out _)||requestId!=requestId.ToLowerInvariant()||
+           !Guid.TryParseExact(ownerPlayerId,"N",out _)||
            ownerPlayerId!=ownerPlayerId.ToLowerInvariant()||string.IsNullOrWhiteSpace(cardId)||
            reservations.ContainsKey(request))return false;
         if(!counts.TryGetValue(inventory,out int available)||available<1)return false;

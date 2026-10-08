@@ -57,7 +57,8 @@ public sealed partial class MatchEngine
         if(decoySource==null||map==null||armyNavMeshConnectivity==null)return "decoy-disabled";
         if(!owner.CardsSelected||!owner.SelectedCards.Contains("CardDecoy",StringComparer.Ordinal))
             return "decoy-not-selected";
-        if(!Guid.TryParseExact(requestId,"N",out _))return "invalid-decoy-request";
+        if(!Guid.TryParseExact(requestId,"N",out _)||
+           requestId!=requestId.ToLowerInvariant())return "invalid-decoy-request";
         if(decoys.TryReplay(requestId,owner.Definition.PlayerId,out _))return "decoy-replayed";
         if(cardReservations==null)return "card-inventory-disabled";
         if(!performance.CanRecordCard(requestId))return "decoy-receipt-unavailable";

@@ -8473,6 +8473,10 @@ internal static class CombatContentTests
             string decoyRequest=new string('d',32),decoyOwner=new string('1',32);
             var decoyPlacements=selectedDecoys.Select((slot,index)=>(slot,
                 new Vector3(index,0,index),Vector3.UnitZ)).ToArray();
+            Check(!decoyRegistry.TrySpawn(decoyRequest.ToUpperInvariant(),
+                      decoyOwner,1,576.25f,decoyPlacements,out _) &&
+                  decoyRegistry.Snapshot().Count==0,
+                  "Decoy registry rejects a noncanonical spelling before reserving slots");
             Check(decoyRegistry.TrySpawn(decoyRequest,decoyOwner,1,576.25f,decoyPlacements,out var spawnedDecoys)&&
                   spawnedDecoys.Count==3&&decoyRegistry.Snapshot().Count==3&&
                   decoyRegistry.OccupiedObstacleIds.SetEquals(selectedDecoys.Select(x=>x.ComponentFileId))&&
@@ -9075,6 +9079,9 @@ internal static class CombatContentTests
                   cards.Remaining(otherCardOwner,"LandMine")==1&&
                   !cards.TryReserve("44444444444444444444444444444444",cardOwner,"LandMine"),
                   "War Card activation consumes one server-owned card exactly once by request ID");
+            Check(!cards.TryReserve(new string('A',32),cardOwner,"LandMine") &&
+                  cards.Remaining(cardOwner,"LandMine")==1,
+                  "War Card reservations reject noncanonical request IDs without consuming stock");
             Check(cards.TryRelease("44444444444444444444444444444444",cardOwner) && cards.Remaining(cardOwner,"LandMine")==2 &&
                   !cards.TryRelease("44444444444444444444444444444444",cardOwner),
                   "failed War Card effects can release their reservation exactly once");
@@ -9851,6 +9858,11 @@ internal static class CombatContentTests
                   UseDecoy=new(){RequestId=new string('e',32)}}).Code=="decoy-unavailable"&&
               decoyMatch.Snapshot().Decoys.Count==3,
               "Decoy request replay creates no duplicate and exhausted inventory cannot create partial state");
+        Check(decoyMatch.Command(decoyPlayer,new(){CommandId=6,
+                  UseDecoy=new(){RequestId=liveDecoyRequest.ToUpperInvariant()}})
+                  .Code=="invalid-decoy-request"&&
+              decoyMatch.Snapshot().Decoys.Count==3,
+              "Decoy command rejects another spelling of an existing request ID");
         Check(decoyMatch.Command(decoyOpponent,new(){CommandId=3,
                   UseDecoy=new(){RequestId=new string('f',32)}}).Code=="decoy-spawned"&&
               decoyMatch.Snapshot().Decoys.Count==6&&decoyMatch.Snapshot().CardActivations==2,
