@@ -4691,6 +4691,40 @@ internal static class CombatContentTests
             throw new Exception("Survive mission must succeed at the source deadline.");
         CoopTerminalScoreValidator.ValidateSuccess(
             survived, surviveAllocation, catalog, enemyCombat);
+        MatchSnapshot overCapacity = survived.Clone();
+        ulong lastSpawnTick = overCapacity.Coop.EnemySpawns[^1].SpawnTick;
+        ulong elapsedSinceStart = lastSpawnTick - overCapacity.StartTick;
+        ulong interval = MissionAutomaticSpawnState.AutomaticIntervalTicks;
+        ulong nextAutomaticTick = overCapacity.StartTick +
+            (elapsedSinceStart / interval + 1) * interval;
+        int liveListedEnemies = overCapacity.Coop.EnemySpawns.Count(enemy =>
+            enemy.DeathTick == 0 && surviveRule.Behaviours.Any(behaviour =>
+                behaviour.Name == enemy.Behaviour));
+        if (nextAutomaticTick >= overCapacity.EndTick ||
+            liveListedEnemies < surviveRule.MaxUnitsAtOnce)
+            throw new Exception(
+                "Survive fixture did not reach its automatic spawn cap.");
+        MissionSpawnBehaviour availableBehaviour = surviveRule.Behaviours
+            .Single(behaviour => behaviour.Name == "MachineGunner");
+        float sourceMaximum = enemyCombat.OrdinaryStats(
+            availableBehaviour.Name, availableBehaviour.Level).Health;
+        overCapacity.Coop.EnemySpawns.Add(new BattleCoopEnemySpawn
+        {
+            EntityId = (ulong)overCapacity.Coop.EnemySpawns.Count + 1,
+            Behaviour = availableBehaviour.Name,
+            Level = availableBehaviour.Level,
+            SpawnTick = nextAutomaticTick,
+            MaxHealth = sourceMaximum,
+            Health = sourceMaximum
+        });
+        try
+        {
+            CoopTerminalScoreValidator.ValidateSuccess(
+                overCapacity, surviveAllocation, catalog, enemyCombat);
+            throw new Exception(
+                "A co-op automatic spawn exceeded the live scene cap.");
+        }
+        catch (InvalidDataException) { }
         MatchSnapshot offClockTimed = survived.Clone();
         BattleCoopEnemySpawn? timedRow = offClockTimed.Coop.EnemySpawns
             .FirstOrDefault(enemy => enemy.TimedEvent);

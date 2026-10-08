@@ -157,14 +157,20 @@ internal static class CoopTerminalScoreValidator
     {
         ulong expectedEntityId = 1;
         var timedEventCounts = new int[rule.Events.Count];
+        var earlierSpawns = new List<BattleCoopEnemySpawn>();
         foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
         {
             if (enemy.EntityId != expectedEntityId ||
                 enemy.SpawnTick < snapshot.StartTick ||
-                enemy.SpawnTick >= snapshot.Coop.DeadlineTick)
+                enemy.SpawnTick >= snapshot.Coop.DeadlineTick ||
+                (earlierSpawns.Count > 0 &&
+                 (enemy.SpawnTick < earlierSpawns[^1].SpawnTick ||
+                  enemy.SpawnTick == earlierSpawns[^1].SpawnTick &&
+                  enemy.TimedEvent && !earlierSpawns[^1].TimedEvent)))
                 throw new InvalidDataException(
                     "Co-op enemy spawn has invalid identity or time.");
 
+            ValidateSpawnCapacity(enemy, earlierSpawns, rule);
             ulong elapsedTicks = enemy.SpawnTick - snapshot.StartTick;
             if (enemy.TimedEvent)
             {
@@ -203,6 +209,57 @@ internal static class CoopTerminalScoreValidator
                 throw new InvalidDataException(
                     "Co-op success has an invalid enemy spawn ledger.");
             expectedEntityId++;
+            earlierSpawns.Add(enemy);
+        }
+    }
+
+    private static void ValidateSpawnCapacity(BattleCoopEnemySpawn enemy,
+        IReadOnlyList<BattleCoopEnemySpawn> earlierSpawns,
+        MissionRule rule)
+    {
+        MissionSpawnBehaviour? sourceBehaviour = rule.Behaviours
+            .FirstOrDefault(behaviour => string.Equals(behaviour.Name,
+                enemy.Behaviour, StringComparison.OrdinalIgnoreCase));
+        int liveInScene = 0;
+        int liveOfBehaviour = 0;
+        int earlierAutomaticCount = 0;
+        foreach (BattleCoopEnemySpawn earlier in earlierSpawns)
+        {
+            bool sameBehaviour = string.Equals(earlier.Behaviour,
+                enemy.Behaviour, StringComparison.OrdinalIgnoreCase);
+            if (sameBehaviour && !earlier.TimedEvent)
+                earlierAutomaticCount++;
+            // Host damage for this tick follows SpawnDueEnemies. A death on
+            // the same tick cannot make room for an earlier spawn decision.
+            if (earlier.DeathTick != 0 &&
+                earlier.DeathTick < enemy.SpawnTick)
+                continue;
+            if (sameBehaviour)
+                liveOfBehaviour++;
+            if (rule.Behaviours.Any(behaviour => string.Equals(
+                    behaviour.Name, earlier.Behaviour,
+                    StringComparison.OrdinalIgnoreCase)))
+                liveInScene++;
+        }
+
+        if (enemy.TimedEvent)
+        {
+            // Mission.UpdateMission checks the behavior's scene limit even
+            // when zero; event behaviors outside WaveManager have no limit.
+            if (sourceBehaviour != null &&
+                liveOfBehaviour >= sourceBehaviour.SceneLimit)
+                throw new InvalidDataException(
+                    "Co-op timed spawn exceeded its scene limit.");
+        }
+        else if (liveInScene >= rule.MaxUnitsAtOnce ||
+                 sourceBehaviour == null ||
+                 sourceBehaviour.SceneLimit != 0 &&
+                 liveOfBehaviour >= sourceBehaviour.SceneLimit ||
+                 sourceBehaviour.MissionLimit != 0 &&
+                 earlierAutomaticCount >= sourceBehaviour.MissionLimit)
+        {
+            throw new InvalidDataException(
+                "Co-op automatic spawn exceeded its source capacity.");
         }
     }
 
