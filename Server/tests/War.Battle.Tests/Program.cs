@@ -829,6 +829,43 @@ Check(excessiveAmmoMatch.Command(a, ammoBoxCommand).Code == "ammo-box-authority-
       excessiveAmmoMatch.Snapshot().CardActivations == 0 &&
       excessiveAmmoMatch.Snapshot().Players[0].ReserveAmmo == int.MaxValue,
     "an overflowing source grant rejects before spending the card or changing ammo");
+var splitTransfer = AmmoThiefTransferPolicy.Calculate(100, 10, 20, 5);
+Check(splitTransfer.ReserveTaken == 10 && splitTransfer.ClipTaken == 15 &&
+      splitTransfer.TotalTaken == 25 && splitTransfer.ClipAccessed,
+    "Ammo Thief takes the victim's reserve before its clip and credits only actual loss");
+var shortTransfer = AmmoThiefTransferPolicy.Calculate(100, 0, 10, 5);
+Check(shortTransfer.TotalTaken == 10 && shortTransfer.ClipTaken == 10,
+    "Ammo Thief cannot create ammo when the victim has less than its source target");
+Reject(() => AmmoThiefTransferPolicy.Calculate(100, 0, 10, int.MaxValue - 9),
+    "Ammo Thief rejects an owner reserve overflow before mutation");
+var thiefMatch = new MatchEngine(slottedDefinition with { MatchId = "ammo-thief-second-weapon" });
+thiefMatch.ConfigureCardSelection(["CardAmmoThief"]);
+thiefMatch.ConfigureCardInventory([(a, "CardAmmoThief", 1)]);
+Check(thiefMatch.Admit(a) && thiefMatch.Admit(b), "Ammo Thief fixture admits both players");
+var selectedAmmoThief = new SelectCardsCommand();
+selectedAmmoThief.CardIds.Add("CardAmmoThief");
+Check(thiefMatch.Command(a, new MatchCommand { CommandId = 1,
+    SelectCards = selectedAmmoThief }).Code == "cards-selected",
+    "owner selects its allocated Ammo Thief");
+thiefMatch.Command(a, Ready(2, thiefMatch.ManifestHash));
+thiefMatch.Command(b, Ready(1, thiefMatch.ManifestHash));
+thiefMatch.Advance(60);
+var thiefCommand = new MatchCommand { CommandId = 3,
+    UseAmmoThief = new UseAmmoThiefCommand { RequestId = "98989898989898989898989898989898" } };
+Check(thiefMatch.Command(a, thiefCommand).Code == "ammo-thief-applied",
+    "authenticated Ammo Thief spends one card without client-selected slots or amount");
+var thiefOwnerSecond = thiefMatch.Command(a, new MatchCommand { CommandId = 4,
+    SwitchWeapon = new SwitchWeaponCommand { Slot = 2 } });
+var thiefVictimSecond = thiefMatch.Command(b, new MatchCommand { CommandId = 2,
+    SwitchWeapon = new SwitchWeaponCommand { Slot = 2 } });
+Check(thiefOwnerSecond.Snapshot.Players[0].ReserveAmmo == alternateWeapon.ReserveAmmo + 1 &&
+      thiefVictimSecond.Snapshot.Players[1].ReserveAmmo == alternateWeapon.ReserveAmmo - 1 &&
+      thiefVictimSecond.Snapshot.Players[1].ClipAmmo == alternateWeapon.ClipSize,
+    "the source second used weapon transfers one reserve round without touching the clip");
+Check(thiefMatch.Command(a, thiefCommand).Code == "ammo-thief-applied" &&
+      thiefMatch.Command(a, new MatchCommand { CommandId = 5,
+          UseAmmoThief = new UseAmmoThiefCommand { RequestId = "99999999999999999999999999999999" } }).Code == "ammo-thief-unavailable",
+    "Ammo Thief retry cannot transfer twice and spent inventory stays closed");
 var slotMatch=new MatchEngine(slottedDefinition);
 Check(slotMatch.Admit(a)&&slotMatch.Admit(b),"multi-weapon match admission");
 slotMatch.Command(a,Ready(1,slotMatch.ManifestHash));slotMatch.Command(b,Ready(1,slotMatch.ManifestHash));slotMatch.Advance(60);

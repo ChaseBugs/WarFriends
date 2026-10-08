@@ -123,6 +123,7 @@ message UseHealingStormCommand { string request_id = 1; }
 message UseShieldsUpCommand { string request_id = 1; }
 message UseShieldGeneratorCommand { string request_id = 1; }
 message UseAmmoBoxCommand { string request_id = 1; }
+message UseAmmoThiefCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -146,6 +147,7 @@ message MatchCommand {
     UseShieldsUpCommand use_shields_up = 29;
     UseShieldGeneratorCommand use_shield_generator = 30;
     UseAmmoBoxCommand use_ammo_box = 31;
+    UseAmmoThiefCommand use_ammo_thief = 32;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.

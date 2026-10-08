@@ -23,7 +23,7 @@ public static class WarCardEffectCatalog
             ["CardBrokenLegs"]=new("CardBrokenLegs",WarCardEffectKind.Status,true,true),
             ["CardSlowdown"]=new("CardSlowdown",WarCardEffectKind.Status,true,true),
             ["CardAmmoBox"]=new("CardAmmoBox",WarCardEffectKind.Ammo,false,true),
-            ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,true,true),
+            ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,false,true),
             ["CardHealthForSoldiers"]=new("CardHealthForSoldiers",WarCardEffectKind.Modifier,false,true),
             ["CardHealthForMachines"]=new("CardHealthForMachines",WarCardEffectKind.Modifier,false,true)
         };

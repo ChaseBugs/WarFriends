@@ -329,6 +329,49 @@ public sealed partial class MatchEngine : IMatchRuntime
         return "ammo-box-applied";
     }
 
+    private string UseAmmoThief(Player owner, string requestId)
+    {
+        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardAmmoThief", StringComparer.Ordinal))
+            return "ammo-thief-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
+            return "invalid-ammo-thief-request";
+        if (cardReservations == null || owner.Weapons.Count < 2)
+            return "ammo-thief-authority-unavailable";
+        if (events.Count >= MaximumRetainedEvents || stateRevision > ulong.MaxValue - 2)
+            return "event-backpressure";
+
+        var victim = players.Single(player => player != owner);
+        if (!victim.Admitted || victim.Weapons.Count < 2)
+            return "ammo-thief-authority-unavailable";
+        var receivingWeapon = owner.Weapons.OrderBy(slot => slot.Key).Skip(1).First().Value;
+        var stolenWeapon = victim.Weapons.OrderBy(slot => slot.Key).Skip(1).First().Value;
+        AmmoThiefTransfer transfer;
+        try
+        {
+            transfer = AmmoThiefTransferPolicy.Calculate(
+                stolenWeapon.Definition.Weapon.ReserveAmmo,
+                stolenWeapon.Reserve, stolenWeapon.Clip, receivingWeapon.Reserve);
+        }
+        catch (InvalidDataException)
+        {
+            return "ammo-thief-authority-unavailable";
+        }
+
+        var effect = new WarCardEffectRequest("CardAmmoThief", Vector3.Zero, 0, 0);
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect))
+            return "ammo-thief-unavailable";
+        stolenWeapon.Reserve -= transfer.ReserveTaken;
+        if (transfer.ClipAccessed)
+        {
+            stolenWeapon.Clip -= transfer.ClipTaken;
+            // Weapon.ammoLeftInClip's recovered setter cancels a reload.
+            stolenWeapon.ReloadEnd = 0;
+        }
+        receivingWeapon.Reserve += transfer.TotalTaken;
+        stateRevision++;
+        return "ammo-thief-applied";
+    }
+
     internal bool TryResolveCardStatus(string ownerPlayerId, string effectId, string targetPlayerId)
     {
         var target = Find(targetPlayerId);
@@ -1753,6 +1796,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseShieldGenerator(p,c.UseShieldGenerator.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoBox)
             return UseAmmoBox(p,c.UseAmmoBox.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoThief)
+            return UseAmmoThief(p,c.UseAmmoThief.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
