@@ -55,7 +55,7 @@ public static class SelfHostedPlayerPoseExport
                 "player_look_right_shotgun", "player_fire_right_shotgun", "player_right_coverBack_shotgun",
                 "player_look_left_pistol", "player_fire_left_pistol", "player_left_coverBack_pistol",
                 "player_look_right_pistol", "player_fire_right_pistol", "player_right_coverBack_pistol",
-                "qbz_run", "qbz2_run", "shotgunner_run", "pistol_run", "shootAdditive",
+                "qbz_run", "qbz2_run", "qbz_idle", "qbz2_idle", "shotgunner_run", "pistol_run", "shootAdditive",
                 "player_look_left_minigun", "player_fire_left_minigun", "player_left_coverBack_minigun",
                 "player_look_right_minigun", "player_fire_right_minigun", "player_right_coverBack_minigun",
                 "minigun_run", "minigun_idle",

@@ -96,7 +96,7 @@ internal static class BazookaCatalogTests
         try{catalog.Stage("Google2u.Bazooka_RPG7",26);throw new Exception("FAIL: bazooka stage bound");}catch(InvalidDataException){checks++;}
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),null,null,null,null,null,null,
             Path.Combine(directory,"bazooka-content-manifest.json"));
-        Check(content.BazookaRevision!=null&&content.Poses.ClipNames.Count==61&&content.Poses.FrameCount==1065,"bazooka package binds expanded pose authority");
+        Check(content.BazookaRevision!=null&&content.Poses.ClipNames.Count==63&&content.Poses.FrameCount==1164,"bazooka package binds expanded pose authority");
         var idle=content.Poses.SampleBlended("bazooka_idle",0,true,"bazooka_idle",0,true,0);
         Check(idle.Muzzle("Google2u.Bazooka_RPG7").SourcePath==catalog.Binding("Google2u.Bazooka_RPG7").MuzzlePath&&
             idle.Muzzle("Google2u.Bazooka_M202#secondary").SourcePath==m202.SecondaryMuzzlePath,"bazooka primary and Fangs secondary muzzles bind rig");

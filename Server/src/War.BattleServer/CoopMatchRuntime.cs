@@ -1836,6 +1836,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             0 when weaponId.StartsWith("Google2u.AssaultRifle_",
                 StringComparison.Ordinal) => "idle",
+            9 when weaponId.StartsWith("Google2u.AssaultRifle_",
+                StringComparison.Ordinal) => "qbz_idle",
+            13 when weaponId.StartsWith("Google2u.AssaultRifle_",
+                StringComparison.Ordinal) => "qbz2_idle",
             2 when weaponId.StartsWith("Google2u.Bazooka_",
                 StringComparison.Ordinal) => "bazooka_idle",
             4 when weaponId == "Google2u.LMG_Minigun" => "minigun_idle",

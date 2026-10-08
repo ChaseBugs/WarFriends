@@ -16,7 +16,11 @@ internal static class PlayerPoseTests
         }
         var catalog = PlayerPoseCatalog.Load(path,sourceHash);
         count += RifleCoverTests.Run(catalog);
-        Check(catalog.ClipNames.Count == 61, "complete rifle, shotgun, pistol-family, minigun, sniper and bazooka cover/run/idle clip set");
+        Check(catalog.ClipNames.Count == 63, "complete rifle, QBZ, shotgun, pistol-family, minigun, sniper and bazooka cover/run/idle clip set");
+        Check(new RifleCoverTimeline(catalog, 9).Selection.Name == "qbz_idle",
+            "QBZ rifle starts from its recovered idle clip");
+        Check(new RifleCoverTimeline(catalog, 13).Selection.Name == "qbz2_idle",
+            "QBZ2 rifle starts from its recovered idle clip");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var rigNodes=doc.RootElement.GetProperty("rigNodes").EnumerateArray().ToArray();
         var rigParents=rigNodes.Select(n=>n.GetProperty("parent").GetInt32()).ToArray();

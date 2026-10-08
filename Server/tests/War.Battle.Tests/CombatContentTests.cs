@@ -843,7 +843,7 @@ internal static class CombatContentTests
                     Reload = new ReloadCommand() }).Code != "reload-unavailable")
             throw new Exception("Full co-op clip must not start a reload.");
 
-        const string alternateRifle = "Google2u.AssaultRifle_M16";
+        const string alternateRifle = "Google2u.AssaultRifle_Famas";
         WeaponManifest alternateWeapon = content.CreateCoopWeaponManifest(
             alternateRifle, 0);
         int alternateIndex = content.AllWeaponBindings.Get(
@@ -902,7 +902,7 @@ internal static class CombatContentTests
                     RiflePoseState initialIdlePose ||
             !RiflePoseProjection.ValidWire(initialIdlePose, 0) ||
             initialIdlePose.Layers.Count != 1 ||
-            initialIdlePose.Layers[0].Clip != RiflePoseClip.Idle ||
+            initialIdlePose.Layers[0].Clip != RiflePoseClip.QbzIdle ||
             switchingRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == partner).ActiveWeaponSlot != 0)
             throw new Exception("Only the signed ally switched to the second source rifle.");
@@ -1044,7 +1044,7 @@ internal static class CombatContentTests
                     RiflePoseState settledPose ||
             !RiflePoseProjection.ValidWire(settledPose,
                 switchingRuntime.Snapshot().ServerTick) ||
-            settledPose.Layers[0].Clip != RiflePoseClip.Idle)
+            settledPose.Layers[0].Clip != RiflePoseClip.QbzIdle)
             throw new Exception(
                 "A host-confirmed co-op shot never restored both source collision poses.");
         ulong repeatedShotTick = switchingRuntime.Snapshot().ServerTick;
@@ -1058,7 +1058,7 @@ internal static class CombatContentTests
             !RiflePoseProjection.ValidWire(activeShotPose,
                 repeatedShotTick + 1) ||
             activeShotPose.Layers.Count != 1 ||
-            (int)activeShotPose.Layers[0].Clip is not (2 or 5) ||
+            (int)activeShotPose.Layers[0].Clip is not (8 or 11) ||
             switchingRuntime.PlaceIdleAlliedCollisionPoses() != null)
             throw new Exception(
                 "A second co-op shot did not publish its host-owned uncover pose.");

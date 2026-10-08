@@ -1,6 +1,6 @@
 # Initialized player animation poses
 
-`PlayerPoseCatalog` contains 61 ordered source clips, 1,065 initialized collider snapshots sampled at 30 Hz, 6,390 Unity `Collider.Raycast` comparisons, and 11,715 weapon muzzle samples (eleven per frame). The added families include minigun and sniper cover/run/idle sets plus bazooka uncover/shoot/run/idle clips. `SelfHostedPlayerPoseExport.Run` exports the MainScene gameplay rig only. The preview rig remains excluded.
+`PlayerPoseCatalog` contains 63 ordered source clips, 1,164 initialized collider snapshots sampled at 30 Hz, 6,984 Unity `Collider.Raycast` comparisons, and 12,804 weapon muzzle samples (eleven per frame). The added families include QBZ and QBZ2 idle, minigun and sniper cover/run/idle sets, plus bazooka uncover/shoot/run/idle clips. `SelfHostedPlayerPoseExport.Run` exports the MainScene gameplay rig only. The preview rig remains excluded.
 
 ## Initialization and recovered aliases
 
@@ -12,9 +12,9 @@ Unity 2018 creates runtime clip instances for `Animation.AddClip` aliases. Expor
 
 ## Server representation
 
-`content/recovered-player-poses.json` contains `T_pose`, `idle`, `run`, `rifle_shot_loop`, the six left/right look/fire/coverBack clips for each of the default, QBZ, QBZ2 and shotgun-style rifle families, plus the three additional family-specific run clips. Samples retain root transforms, ordered body-part identities, sizes, centers, rotations, weights and initialized active/enabled flags. The exact source MainScene hash must agree with the caller's expected hash before loading.
+`content/recovered-player-poses.json` contains `T_pose`, `idle`, `run`, `rifle_shot_loop`, the six left/right look/fire/coverBack clips for each of the default, QBZ, QBZ2 and shotgun-style rifle families, their family-specific run clips, and source `qbz_idle`/`qbz2_idle`. Samples retain root transforms, ordered body-part identities, sizes, centers, rotations, weights and initialized active/enabled flags. The exact source MainScene hash must agree with the caller's expected hash before loading.
 
-The importer requires all 61 clips in source order, complete ordered frame timelines, valid clip identities, bounded finite geometry, normalized rotations, and the same two enabled body parts throughout. Accepted frames are immutable. A placed frame retains the `initialized-single-clip-samples` provenance instead of becoming a serialized-reference pose.
+The importer requires all 63 clips in source order, complete ordered frame timelines, valid clip identities, bounded finite geometry, normalized rotations, and the same two enabled body parts throughout. Accepted frames are immutable. A placed frame retains the `initialized-single-clip-samples` provenance instead of becoming a serialized-reference pose.
 
 The full artifact SHA-256 is exposed as `Revision`, separately from MainScene provenance, for future match-content binding. Animation samples cannot change a part's base damage weight. Neither revision nor source provenance makes this catalog a complete animation state machine.
 

@@ -22,7 +22,7 @@ Both available modes remain **unscored**: `RewardEligible` is always false. The 
 
 ### Recovered maps and Unity integration
 
-- Initialized player poses cover 61 source clips and 1,065 snapshots at 30 Hz, with 6,390 Unity collider-ray comparisons. A guarded runtime alias repair restores the attached `idle_1`/`run_0` clips under the names requested by gameplay. Local rig blending and procedural aim drive live weapon collision during cover movement and stationary firing. See [player pose evidence](PLAYER_POSES.md).
+- Initialized player poses cover 63 source clips and 1,164 snapshots at 30 Hz, with 6,984 Unity collider-ray comparisons. A guarded runtime alias repair restores the attached `idle_1`/`run_0` clips under the names requested by gameplay. Local rig blending and procedural aim drive live weapon collision during cover movement and stationary firing. See [player pose evidence](PLAYER_POSES.md).
 
 - Player collision includes validated reference-pose box/sphere geometry, a capsule intersection kernel, rigid placement and a host-only nearest-player/map-occlusion resolver. All 32 exported Unity part-ray comparisons pass; animated parts feed live stationary rifle firing. See [player collision evidence](PLAYER_COLLISION.md).
 
