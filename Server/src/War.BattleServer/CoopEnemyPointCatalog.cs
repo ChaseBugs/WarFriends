@@ -9,7 +9,11 @@ public sealed record CoopEnemyPoint(
     int Order, int ComponentFileId, string ComponentType,
     int GameObjectFileId, int TransformFileId,
     Vector3 TransformPosition, Quaternion Rotation,
-    Vector3 Position, Vector3? SegmentStart, Vector3? SegmentEnd);
+    Vector3 Position, Vector3? SegmentStart, Vector3? SegmentEnd)
+{
+    public Vector3? CornerDirection { get; init; }
+    public bool? CornerRightSide { get; init; }
+}
 
 public sealed record CoopMapEnemyPoints(
     int Stage, string Scene, string SceneSha256,
@@ -25,7 +29,7 @@ public sealed record CoopMapEnemyPoints(
 public sealed class CoopEnemyPointCatalog
 {
     private const string ArtifactSha256 =
-        "813d039cbdd340f0d28d71aaaca1d2b4a484c5dce0cdf106d64ab6c87ab71699";
+        "0f5f764d8fbd5848daab67ec87ba90e98f2368c6ef6ff8478d4963818def7972";
     private static readonly int[] ExpectedMapCounts = [26, 23, 25, 24, 32];
     private static readonly IReadOnlyDictionary<string, int> ExpectedTypes =
         new Dictionary<string, int>(StringComparer.Ordinal)
@@ -148,6 +152,8 @@ public sealed class CoopEnemyPointCatalog
     {
         bool segment = row.TryGetProperty("segment", out JsonElement range);
         bool offset = row.TryGetProperty("effectivePosition", out JsonElement effective);
+        bool corner = row.TryGetProperty("cornerDirection", out JsonElement direction);
+        bool cornerSide = row.TryGetProperty("cornerRightSide", out JsonElement side);
         if (segment)
             RequireFields(row, "order", "componentFileId", "componentType",
                 "gameObjectFileId", "transformFileId", "fraction",
@@ -157,6 +163,11 @@ public sealed class CoopEnemyPointCatalog
                 "gameObjectFileId", "transformFileId", "fraction",
                 "worldPosition", "worldRotation", "positionKind",
                 "effectivePosition");
+        else if (corner)
+            RequireFields(row, "order", "componentFileId", "componentType",
+                "gameObjectFileId", "transformFileId", "fraction",
+                "worldPosition", "worldRotation", "positionKind",
+                "cornerDirection", "cornerRightSide");
         else
             RequireFields(row, "order", "componentFileId", "componentType",
                 "gameObjectFileId", "transformFileId", "fraction",
@@ -168,6 +179,8 @@ public sealed class CoopEnemyPointCatalog
             !ExpectedTypes.ContainsKey(type) ||
             segment != (type == "EnemyPointObstacle") ||
             offset != (type == "EnemyPointEngineerTurret") ||
+            corner != (type == "EnemyPointCorner") ||
+            cornerSide != corner ||
             kind != (segment ? "segment" : "fixed"))
             throw new InvalidDataException(
                 "Co-op enemy destination has invalid source identity.");
@@ -199,10 +212,19 @@ public sealed class CoopEnemyPointCatalog
                 throw new InvalidDataException(
                     "Co-op engineer destination lost its source offset.");
         }
+        Vector3? cornerDirection = corner ? Vector(direction) : null;
+        if (cornerDirection.HasValue &&
+            (cornerDirection.Value.LengthSquared() < 0.0001f ||
+             side.ValueKind is not (JsonValueKind.True or JsonValueKind.False)))
+            throw new InvalidDataException("Invalid co-op corner side or direction.");
         return new CoopEnemyPoint(order, PositiveId(row, "componentFileId"),
             type, PositiveId(row, "gameObjectFileId"),
             PositiveId(row, "transformFileId"), transform, rotation,
-            position, start, end);
+            position, start, end)
+        {
+            CornerDirection = cornerDirection,
+            CornerRightSide = corner ? side.GetBoolean() : null
+        };
     }
 
     private static Vector3 Vector(JsonElement value)

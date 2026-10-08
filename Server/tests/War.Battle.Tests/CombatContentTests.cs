@@ -4047,6 +4047,8 @@ internal static class CombatContentTests
             point.ComponentType == "EnemyPointObstacle");
         CoopEnemyPoint engineer = desert.Points.First(point =>
             point.ComponentType == "EnemyPointEngineerTurret");
+        CoopEnemyPoint corner = desert.Points.Single(point =>
+            point.ComponentFileId == 1698);
         CoopEnemyPoint? sciFiInitial =
             CoopEnemyPointSelection.SelectNearestToFloor(desert, 2,
                 new HashSet<int>());
@@ -4064,12 +4066,26 @@ internal static class CombatContentTests
             all.Count(point => point.SegmentStart.HasValue) != 58 ||
             all.Count(point => point.ComponentType ==
                 "EnemyPointEngineerTurret") != 20 ||
+            all.Count(point => point.CornerDirection.HasValue) != 5 ||
+            corner.CornerDirection != Vector3.UnitX ||
+            corner.CornerRightSide != true ||
             obstacle.SegmentStart == null || obstacle.SegmentEnd == null ||
             Vector3.Distance(obstacle.Position,
                 (obstacle.SegmentStart.Value +
                  obstacle.SegmentEnd.Value) * 0.5f) > 0.0001f ||
             Vector3.Distance(engineer.Position, expectedEngineer) > 0.0001f)
             throw new Exception("Co-op enemy destinations differ from the source scenes.");
+
+        Vector3 enemyAtCorner = corner.Position;
+        // direction +X makes -X the zero-angle line. The first target is
+        // exposed on the serialized right side; the second is behind cover.
+        if (!CoopCornerShotPolicy.CanExpose(corner, enemyAtCorner,
+                enemyAtCorner + new Vector3(-1, 0, 1)) ||
+            CoopCornerShotPolicy.CanExpose(corner, enemyAtCorner,
+                enemyAtCorner + new Vector3(-1, 0, -1)) ||
+            CoopCornerShotPolicy.CanExpose(corner, enemyAtCorner,
+                enemyAtCorner + new Vector3(-1, 0, 0.1f)))
+            throw new Exception("Co-op corner side/dead-zone gate differs from Client.");
 
         CoopPlayerRusherPoints sourceShield = desertRushers.PlayerPoints[0];
         CoopRusherPoint[] orderedRushers = sourceShield.Points.ToArray();

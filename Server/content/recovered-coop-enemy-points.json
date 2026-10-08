@@ -32,7 +32,13 @@
             0.0,
             0.9770242742310565
           ],
-          "positionKind": "fixed"
+          "positionKind": "fixed",
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 1,
@@ -1446,7 +1452,13 @@
             0.0,
             0.9770242742310565
           ],
-          "positionKind": "fixed"
+          "positionKind": "fixed",
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 1,
@@ -2163,7 +2175,13 @@
             0.0,
             0.9770242742310565
           ],
-          "positionKind": "fixed"
+          "positionKind": "fixed",
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 1,
@@ -2846,7 +2864,13 @@
             0.0,
             0.9770242742310565
           ],
-          "positionKind": "fixed"
+          "positionKind": "fixed",
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 1,
@@ -2866,7 +2890,13 @@
             0.0,
             0.9770242742310565
           ],
-          "positionKind": "fixed"
+          "positionKind": "fixed",
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 2,

@@ -121,6 +121,19 @@ def extract_map(map_entry, script_types):
         if point_type == "EnemyPointObstacle":
             row["positionKind"] = "segment"
             row["segment"] = obstacle_segment(blocks, component)
+        elif point_type == "EnemyPointCorner":
+            direction = field(component, "direction")
+            coordinates = [float(value) for value in re.findall(
+                r"[xyz]: (-?[0-9.]+)", direction,
+            )]
+            right_side = int(field(component, "rightSide"))
+            if (len(coordinates) != 3 or
+                    not all(math.isfinite(value) for value in coordinates) or
+                    math.dist(coordinates, [0.0, 0.0, 0.0]) < 0.01 or
+                    right_side not in (0, 1)):
+                raise ValueError("invalid source corner direction or side")
+            row["cornerDirection"] = coordinates
+            row["cornerRightSide"] = bool(right_side)
         elif point_type == "EnemyPointEngineerTurret":
             # The Client property returns transform.position - forward * 0.2.
             forward = rotate(rotation, [0.0, 0.0, 1.0])
