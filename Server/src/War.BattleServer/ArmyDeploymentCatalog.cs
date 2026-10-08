@@ -156,6 +156,26 @@ public sealed class ArmyDeploymentCatalog
         return raw with{SoldierHealth=health};
     }
 
+    /// <summary>
+    /// Helicopter.Spawn creates attached soldiers from the normal upgrade row.
+    /// MissionsManager.ScaleUpgradesForMission applies COOPHP to enemy crew
+    /// before Helicopter.SpawnAssaulter sets each soldier's maximum health.
+    /// </summary>
+    public ArmyHelicopterCrewStats CoopHelicopterCrew(int normalIndex, bool heroic = false)
+    {
+        const string unitId = "ID_UNIT-HELICOPTER";
+        ArmyHelicopterCrewStats source = ComposeHelicopterCrew(normalIndex, null, null);
+        if (coopCombatScales == null ||
+            !coopCombatScales.TryGetValue(unitId, out ArmyCoopCombatScale? scale))
+            throw new InvalidDataException("Co-op Helicopter crew scale is unavailable.");
+        float maximumHealth = source.SoldierHealth *
+            (heroic ? scale.HeroicHealth : scale.Health);
+        if (!float.IsFinite(maximumHealth) || maximumHealth <= 0 ||
+            maximumHealth > 10_000_000)
+            throw new InvalidDataException("Co-op Helicopter crew health exceeds source bounds.");
+        return source with { SoldierHealth = maximumHealth };
+    }
+
     /// <summary>Source LoadData adds each bought lane's row before perk and mode scaling.</summary>
     public ArmyBaseCombatStats ComposeStats(string unitId,int normalIndex,int? specialIndex,int? eliteIndex)
     {

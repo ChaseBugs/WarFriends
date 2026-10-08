@@ -1758,8 +1758,24 @@ internal static class CombatContentTests
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "DeployHeli");
         IReadOnlyList<DynamicShotTarget> transportBodies = transportRuntime
             .PlaceTransportHelicopterTargets(transport.EntityId);
-        if (transport.SpawnTick != transportTick ||
+        ArmyHelicopterCrewStats expectedTransportCrew = enemyCombat.TransportCrew(
+            transport.Level);
+        IReadOnlyList<HelicopterCrewMemberSnapshot> attachedCrew =
+            transportRuntime.TransportCrewMembers(transport.EntityId);
+        IReadOnlyList<HelicopterCrewPose> attachedCrewPoses =
+            transportRuntime.AttachedTransportCrewPoses(transport.EntityId);
+        if (transport.SpawnTick != transportTick || transport.Level != 8 ||
+            expectedTransportCrew.Seats != 2 ||
+            MathF.Abs(expectedTransportCrew.SoldierHealth - 1468.125f) > .001f ||
             transportBodies.Count != 11 ||
+            transport.CrewCount != expectedTransportCrew.Seats ||
+            attachedCrew.Count != expectedTransportCrew.Seats ||
+            attachedCrewPoses.Count != expectedTransportCrew.Seats ||
+            attachedCrew[0].PointComponentFileId !=
+                content.HelicopterCrewPoints.Slots[0].ComponentFileId ||
+            attachedCrew.Any(member => member.Maximum !=
+                expectedTransportCrew.SoldierHealth ||
+                member.Health != member.Maximum || member.DropStartTick != 0) ||
             transportBodies.Any(body => body.EntityId != transport.EntityId ||
                 body.Layer != 27 || !body.HelicopterBody ||
                 !body.Hitbox.SourcePath.StartsWith(
@@ -1776,17 +1792,30 @@ internal static class CombatContentTests
             flownTransport.CurrentY, flownTransport.CurrentZ);
         IReadOnlyList<DynamicShotTarget> flownBodies = transportRuntime
             .PlaceTransportHelicopterTargets(transport.EntityId);
+        uint expectedDropMask = 0;
+        for (int slot = 0; slot < expectedTransportCrew.Seats; slot++)
+            if (afterFlight >= flownTransport.StopTick +
+                    (ulong)(150 + 60 * slot))
+                expectedDropMask |= 1u << slot;
+        IReadOnlyList<HelicopterCrewDescentSnapshot> descents =
+            transportRuntime.TransportCrewDescents(transport.EntityId);
         if (transportRuntime.ReservedAirPath(transport.EntityId) is not > 0 ||
             flownTransport.PoseTick != afterFlight ||
             flownTransport.SpawnTick != transportTick ||
             flownTransport.StopTick == 0 || flownTransport.StopTick > afterFlight ||
+            flownTransport.CrewCount != expectedTransportCrew.Seats ||
+            flownTransport.CrewDropMask != expectedDropMask ||
+            descents.Count != System.Numerics.BitOperations.PopCount(expectedDropMask) ||
+            transportRuntime.AttachedTransportCrewPoses(transport.EntityId).Count +
+                descents.Count != expectedTransportCrew.Seats ||
             transportPosition == transportStart || flownBodies.Count != 11 ||
             flownBodies.Any(body => body.Hitbox.TransformPosition != transportPosition))
             throw new Exception("Co-op transport Helicopter lost its flight, stop, or body pose.");
         if (!transportRuntime.ApplyHostEnemyDamage(transport.EntityId,
                 transport.MaxHealth, afterFlight) ||
             transportRuntime.ReservedAirPath(transport.EntityId) != null ||
-            transportRuntime.PlaceTransportHelicopterTargets(transport.EntityId).Count != 0)
+            transportRuntime.PlaceTransportHelicopterTargets(transport.EntityId).Count != 0 ||
+            transportRuntime.TransportCrewMembers(transport.EntityId).Count != 0)
             throw new Exception("Co-op transport Helicopter death retained its path or hitboxes.");
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,

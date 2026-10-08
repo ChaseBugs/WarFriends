@@ -510,6 +510,9 @@ message BattleCoopEnemySpawn {
   BattleJointRotation current_rotation = 19; uint64 pose_tick = 20;
   // Transport Helicopter only: first source stop-point arrival, zero before.
   uint64 stop_tick = 21;
+  // Transport Helicopter seats exist at spawn; bits mark source-timed rope
+  // descent starts, not a proven NavMesh landing or combat-ready soldier.
+  uint32 crew_count = 22; uint32 crew_drop_mask = 23;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

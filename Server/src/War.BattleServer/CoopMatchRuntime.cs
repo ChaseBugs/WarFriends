@@ -65,6 +65,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly DroneColliderCatalog? droneColliders;
     private readonly GroundVehicleWeaponCatalog? groundVehicleBodies;
     private readonly HelicopterBodyColliderCatalog? transportHelicopterBodies;
+    private readonly HelicopterCrewPointCatalog? transportCrewPoints;
     private readonly CoopSkillShotScoreCatalog? skillShotScores;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly CoopAirPathReservations? airPathReservations;
@@ -74,6 +75,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Dictionary<ulong, AssaultHelicopterWaypointState> assaultHelicopterFlights = [];
     private readonly Dictionary<ulong, HelicopterWaypointState> transportHelicopterFlights = [];
     private readonly Dictionary<ulong, HelicopterOrientationState> transportHelicopterOrientations = [];
+    private readonly Dictionary<ulong, HelicopterCrewState> transportHelicopterCrew = [];
+    private readonly Dictionary<ulong, HelicopterCrewSchedule> transportCrewSchedules = [];
     private readonly Func<float> chooseAirDirection;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
@@ -161,6 +164,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         droneColliders = playerWeaponContent?.DroneColliders;
         groundVehicleBodies = playerWeaponContent?.GroundVehicleWeapons;
         transportHelicopterBodies = playerWeaponContent?.HelicopterBodyColliders;
+        transportCrewPoints = playerWeaponContent?.HelicopterCrewPoints;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
@@ -256,6 +260,41 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     public bool HasPlayer(string playerId) => participants.ContainsKey(playerId);
 
     internal int? ReservedAirPath(ulong entityId) => airPathReservations?.PathFor(entityId);
+
+    internal IReadOnlyList<HelicopterCrewMemberSnapshot> TransportCrewMembers(ulong entityId)
+    {
+        return transportHelicopterCrew.TryGetValue(entityId, out HelicopterCrewState? crew)
+            ? crew.Snapshot() : [];
+    }
+
+    internal IReadOnlyList<HelicopterCrewDescentSnapshot> TransportCrewDescents(ulong entityId)
+    {
+        return transportHelicopterCrew.TryGetValue(entityId, out HelicopterCrewState? crew)
+            ? crew.DescentSnapshot(tick) : [];
+    }
+
+    internal IReadOnlyList<HelicopterCrewPose> AttachedTransportCrewPoses(ulong entityId)
+    {
+        if (phase != BattlePhase.Running || transportCrewPoints == null ||
+            !transportHelicopterCrew.TryGetValue(entityId, out HelicopterCrewState? crew))
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "DeployHeli" &&
+            spawn.PoseTick == tick && spawn.Health > 0 &&
+            spawn.DeathTick == 0 && spawn.CurrentRotation != null);
+        if (enemy == null)
+            return [];
+
+        var position = new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ);
+        var rotation = new Quaternion(enemy.CurrentRotation.X,
+            enemy.CurrentRotation.Y, enemy.CurrentRotation.Z,
+            enemy.CurrentRotation.W);
+        IReadOnlyList<HelicopterCrewMemberSnapshot> members = crew.Snapshot();
+        IReadOnlyList<HelicopterCrewPose> poses = transportCrewPoints.PlaceAttached(
+            position, rotation, members.Count);
+        return poses.Where(pose => members[pose.Slot].DropStartTick == 0)
+            .ToArray();
+    }
 
     public bool Admit(string playerId)
     {
@@ -426,7 +465,19 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             bool arrived = flight.Advance(time);
             BattleCoopEnemySpawn enemy = enemySpawns.Single(spawn => spawn.EntityId == entityId);
             if (arrived)
+            {
                 enemy.StopTick = tick;
+                if (transportHelicopterCrew.TryGetValue(entityId, out HelicopterCrewState? crew))
+                    transportCrewSchedules.Add(entityId,
+                        new HelicopterCrewSchedule(tick, crew.Snapshot().Count));
+            }
+            if (transportCrewSchedules.TryGetValue(entityId,
+                    out HelicopterCrewSchedule? schedule))
+            {
+                HelicopterCrewState crew = transportHelicopterCrew[entityId];
+                crew.Advance(schedule, tick);
+                enemy.CrewDropMask = schedule.DueMask(tick);
+            }
             HelicopterOrientationState orientation =
                 transportHelicopterOrientations[entityId];
             orientation.Advance(flight.Position, flight.Velocity, flight.Steering,
@@ -553,6 +604,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     combat.MovementSpeed(behaviour)));
             transportHelicopterOrientations.Add(enemy.EntityId,
                 new HelicopterOrientationState());
+            if (transportCrewPoints != null)
+            {
+                ArmyHelicopterCrewStats crew = combat.TransportCrew(level);
+                transportHelicopterCrew.Add(enemy.EntityId,
+                    new HelicopterCrewState(crew, transportCrewPoints, tick));
+                enemy.CrewCount = (uint)crew.Seats;
+            }
         }
         return enemy;
     }
@@ -810,6 +868,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 airPathReservations?.Release(entityId);
                 transportHelicopterFlights.Remove(entityId);
                 transportHelicopterOrientations.Remove(entityId);
+                transportHelicopterCrew.Remove(entityId);
+                transportCrewSchedules.Remove(entityId);
             }
             if (mission.Outcome == MissionOutcome.Succeeded)
                 End(BattlePhase.Ended, "mission-success");
