@@ -743,7 +743,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             SettleCornerInfantryRoots();
             AdvanceObstacleRepositions();
             ChooseFirstInfantryTargets();
-            CompleteCornerShotTurns();
+            AdvanceCornerShotTurns();
             AdvanceInfantryShotWindups();
             AdvanceInfantryRoundIntents();
             AdvanceCornerRetargets();
@@ -1483,25 +1483,34 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             assaulterWeapon.CadenceSeconds);
     }
 
-    private void CompleteCornerShotTurns()
+    private void AdvanceCornerShotTurns()
     {
         foreach ((ulong entityId, CoopInfantryShotWindup windup)
             in infantryShotWindups)
         {
             if (windup.AnimationClip is not
                     ("player_look_right3" or "player_look_left3") ||
-                tick != windup.StartTick + 9)
+                tick <= windup.StartTick ||
+                tick > windup.StartTick + 9)
                 continue;
             BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
                 spawn.EntityId == entityId && spawn.Health > 0 &&
                 spawn.DeathTick == 0);
             if (enemy == null)
                 continue;
+            CoopEnemyPoint? point = enemyDestinations?.PointFor(entityId);
+            if (point == null || point.ComponentType != "EnemyPointCorner")
+                throw new InvalidDataException(
+                    "Co-op corner shot lost its source point.");
 
-            // PrepareToShoot starts TweenRotation for 0.3 seconds. We know
-            // its final facing, but have not verified the intervening
-            // animation and collider frames against Unity.
-            Quaternion rotation = windup.FinalRootRotation;
+            // TweenRotation uses NGUI's default EaseInOut factor. Its
+            // default animation curve has unit tangents and is linear, so
+            // it leaves this factor unchanged before Quaternion.Slerp.
+            float progress = (tick - windup.StartTick) / 9f;
+            float eased = progress - MathF.Sin(progress * 2f * MathF.PI) /
+                (2f * MathF.PI);
+            Quaternion rotation = Quaternion.Slerp(CornerFacing(point),
+                windup.FinalRootRotation, eased);
             enemy.CurrentRotation = new BattleJointRotation
             {
                 X = rotation.X, Y = rotation.Y,

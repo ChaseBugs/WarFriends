@@ -3011,8 +3011,23 @@ internal static class CombatContentTests
             BattleCoopEnemySpawn beforeTurn = cornerRuntime.Snapshot()
                 .Coop.EnemySpawns.Single(enemy =>
                     enemy.EntityId == cornerEnemy.EntityId);
-            if (beforeTurn.PoseTick != cornerArrival.Tick + 15)
-                throw new Exception("Co-op corner turn completed too early.");
+            BattleJointRotation intermediate = beforeTurn.CurrentRotation ??
+                throw new Exception("Co-op corner turn lost its intermediate facing.");
+            Quaternion cornerStartRotation = Quaternion.CreateFromAxisAngle(
+                Vector3.UnitY, MathF.Atan2(
+                    -sourceCorner.CornerDirection!.Value.X,
+                    -sourceCorner.CornerDirection.Value.Z));
+            float progress = 8f / 9f;
+            float eased = progress - MathF.Sin(progress * 2f * MathF.PI) /
+                (2f * MathF.PI);
+            Quaternion expectedIntermediate = Quaternion.Slerp(
+                cornerStartRotation, coverWindup.FinalRootRotation, eased);
+            Quaternion actualIntermediate = new(intermediate.X,
+                intermediate.Y, intermediate.Z, intermediate.W);
+            if (beforeTurn.PoseTick != coverWindup.StartTick + 8 ||
+                1 - Math.Abs(Quaternion.Dot(actualIntermediate,
+                    expectedIntermediate)) > 0.00002f)
+                throw new Exception("Co-op corner turn missed its eased frame.");
             cornerRuntime.Advance(coverWindup.StartTick + 9);
             BattleCoopEnemySpawn afterTurn = cornerRuntime.Snapshot()
                 .Coop.EnemySpawns.Single(enemy =>
