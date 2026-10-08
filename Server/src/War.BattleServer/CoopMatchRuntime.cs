@@ -54,7 +54,8 @@ internal sealed record CoopInfantryShotBatch(
 
 internal sealed record CoopInfantryShotWindup(
     ulong EnemyEntityId, string PlayerId, int TargetTransformFileId,
-    Vector3 PreparedAimPosition, Quaternion FinalRootRotation,
+    Vector3 PreparedAimPosition, Quaternion StartRootRotation,
+    Quaternion FinalRootRotation,
     string AnimationClip, string QueuedFireClip,
     ulong StartTick, ulong CallbackTick,
     ulong? CallbackStartedTick, CoopInfantryShotBatch Batch,
@@ -1340,12 +1341,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             bool obstacleShot = arrival.HasUnchangedObstaclePointForFirstShot;
             bool cornerShot = arrival.State ==
                 CoopInfantryPointState.CornerHiding &&
-                (!cornerLatestShotAttempts.TryGetValue(entityId,
-                    out CoopCornerShotAttempt? previousAttempt) ||
-                 previousAttempt.NextEligibleTick <= tick);
+                CornerReadyToShoot(entityId);
             if ((!obstacleShot && !cornerShot) ||
                 tick < arrival.FirstShootEligibleTick ||
-                infantryFirstTargets.ContainsKey(entityId))
+                (obstacleShot && infantryFirstTargets.ContainsKey(entityId)))
                 continue;
             Participant[] eligiblePlayers = manifest.Players
                 .Select(entry => participants[entry.PlayerId])
@@ -1393,12 +1392,35 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 if (!exposed)
                     continue;
             }
-            infantryFirstTargets.Add(entityId, plan);
+            infantryFirstTargets.TryAdd(entityId, plan);
             if (enemyPoses != null)
-                infantryShotWindups.Add(entityId,
-                    CreateInfantryShotWindup(arrival, placedTarget, batch));
+            {
+                // A new cover volley starts its own round sequence. The
+                // previous project's projectile IDs remain match-unique.
+                infantryRoundIntents.Remove(entityId);
+                infantryShotWindups[entityId] =
+                    CreateInfantryShotWindup(arrival, placedTarget, batch);
+            }
             stateRevision++;
         }
+    }
+
+    private bool CornerReadyToShoot(ulong entityId)
+    {
+        if (infantryShotWindups.TryGetValue(entityId,
+                out CoopInfantryShotWindup? windup) &&
+            (windup.CompletedTick == null ||
+             windup.NextEligibleTick > tick))
+            return false;
+        if (cornerLatestShotAttempts.TryGetValue(entityId,
+                out CoopCornerShotAttempt? attempt) &&
+            attempt.NextEligibleTick != null)
+            return attempt.NextEligibleTick <= tick;
+        if (windup != null)
+            return true;
+        if (attempt != null)
+            return false;
+        return true;
     }
 
     private CoopInfantryShotBatch CreateInfantryShotBatch(ulong entityId)
@@ -1487,6 +1509,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
         return new CoopInfantryShotWindup(target.EnemyEntityId,
             target.PlayerId, target.TransformFileId, target.Position,
+            new Quaternion(enemy.CurrentRotation.X, enemy.CurrentRotation.Y,
+                enemy.CurrentRotation.Z, enemy.CurrentRotation.W),
             finalRootRotation, clipName,
             queuedFireClip, tick,
             callbackTick, null, batch,
@@ -1520,7 +1544,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             float progress = (tick - windup.StartTick) / 9f;
             float eased = progress - MathF.Sin(progress * 2f * MathF.PI) /
                 (2f * MathF.PI);
-            Quaternion rotation = Quaternion.Slerp(CornerFacing(point),
+            Quaternion rotation = Quaternion.Slerp(windup.StartRootRotation,
                 windup.FinalRootRotation, eased);
             enemy.CurrentRotation = new BattleJointRotation
             {
@@ -1668,7 +1692,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             in nextCornerChangeTicks.ToArray())
         {
             if (tick < changeTick ||
-                infantryFirstTargets.ContainsKey(entityId))
+                (infantryShotWindups.TryGetValue(entityId,
+                    out CoopInfantryShotWindup? activeWindup) &&
+                 activeWindup.CompletedTick == null))
                 continue;
             // CornerHidingUpdate checks its shot first, then its change
             // timer. A successful target exits hiding; a rejected target

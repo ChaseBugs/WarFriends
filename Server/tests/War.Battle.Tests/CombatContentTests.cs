@@ -3423,11 +3423,41 @@ internal static class CombatContentTests
             ulong nextCornerShot = cornerRuntime.InfantryShotWindup(
                     cornerEnemy.EntityId)?.NextEligibleTick ??
                 throw new Exception("Co-op corner lost its next shot clock.");
+            IReadOnlyList<CoopInfantryRoundIntent> firstVolley =
+                cornerRuntime.InfantryRoundIntents(cornerEnemy.EntityId);
+            BattleJointRotation facingBeforeSecondVolley = cornerRuntime
+                .Snapshot().Coop.EnemySpawns.Single(enemy =>
+                    enemy.EntityId == cornerEnemy.EntityId).CurrentRotation ??
+                throw new Exception("Co-op corner lost its second-volley facing.");
             cornerRuntime.Advance(nextCornerShot);
+            CoopInfantryShotWindup? secondWindup = cornerRuntime
+                .InfantryShotWindup(cornerEnemy.EntityId);
+            if (secondWindup?.StartTick != nextCornerShot ||
+                secondWindup.CompletedTick != null ||
+                cornerRuntime.CornerLatestShotAttempt(
+                    cornerEnemy.EntityId)?.Tick != nextCornerShot ||
+                cornerRuntime.InfantryRoundIntents(
+                    cornerEnemy.EntityId).Count != 0 ||
+                Quaternion.Dot(secondWindup.StartRootRotation,
+                    new Quaternion(facingBeforeSecondVolley.X,
+                        facingBeforeSecondVolley.Y,
+                        facingBeforeSecondVolley.Z,
+                        facingBeforeSecondVolley.W)) < 0.99999f)
+                throw new Exception(
+                    "Co-op corner did not restart a fresh volley from its current facing.");
             if (cornerRuntime.PlaceCornerQueuedIdleHitboxes(
                     cornerEnemy.EntityId).Count != 0)
                 throw new Exception(
                     "Co-op corner reused idle past its next shot deadline.");
+            cornerRuntime.Advance(secondWindup.CallbackTick + 1);
+            IReadOnlyList<CoopInfantryRoundIntent> secondVolley =
+                cornerRuntime.InfantryRoundIntents(cornerEnemy.EntityId);
+            if (firstVolley.Count != coverWindup.Batch.Count ||
+                secondVolley.Count != 1 ||
+                secondVolley[0].RoundIndex != 0 ||
+                secondVolley[0].ProjectileId <= firstVolley[^1].ProjectileId)
+                throw new Exception(
+                    "Co-op corner reused its first volley or projectile identity.");
         }
 
         // Flip only the test point's exposed side when needed so this
