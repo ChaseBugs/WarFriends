@@ -1868,8 +1868,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
         // A previously fired ally can re-enter the diagnostic idle collision
         // window only after the source cover-shot animation has finished.
-        return player.ShotTimeline?.Phase == RifleCoverPhase.Idle &&
+        return (player.ShotTimeline == null ||
+                player.ShotTimeline.Phase == RifleCoverPhase.Idle) &&
             tick >= player.ShotPoseReadyTick;
+    }
+
+    private static bool UsesCoverShotTimeline(int animationFamily)
+    {
+        return animationFamily is 0 or 2 or 4 or 5 or 7 or 9 or 10 or
+            13 or 15;
     }
 
     internal RifleMuzzlePose? PlaceIdlePlayerMuzzle(string playerId)
@@ -2239,7 +2246,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             .Single(weapon => weapon.Slot == slot);
         int family = playerWeaponBindings.Get(
             selected.Weapon.SourceId).AnimationFamily;
-        if (family is not (0 or 2 or 4 or 5 or 7 or 9 or 10 or 13 or 15))
+        if (!UsesCoverShotTimeline(family))
             return false;
         RifleCoverTimeline timeline = player.ShotTimeline != null &&
             player.ShotAnimationFamily == family
@@ -2405,10 +2412,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     weapon.Slot == command.SwitchWeapon.Slot);
                 int family = playerWeaponBindings!.Get(
                     selected.Weapon.SourceId).AnimationFamily;
-                participant.ShotTimeline = new RifleCoverTimeline(
-                    playerPoses!, family);
-                participant.ShotTimeline.Advance(
-                    tick / (double)MatchManifest.TickRate);
+                // Grenades use their own throw/launcher gestures. Changing
+                // away from a rifle ends its cover animation, but its shot
+                // still needs the same one-second collision settling gate.
+                if (UsesCoverShotTimeline(family))
+                {
+                    participant.ShotTimeline = new RifleCoverTimeline(
+                        playerPoses!, family);
+                    participant.ShotTimeline.Advance(
+                        tick / (double)MatchManifest.TickRate);
+                }
+                else
+                    participant.ShotTimeline = null;
                 participant.ShotAnimationFamily = family;
                 participant.ShotPoseReadyTick = checked(
                     tick + MatchManifest.TickRate);

@@ -995,6 +995,25 @@ internal static class CombatContentTests
                 if (wirePose?.Layers.Count != 1 ||
                     wirePose.Layers[0].Clip != expectedWireClip)
                     throw new Exception($"Co-op {weaponId} lost its idle wire pose.");
+
+                var selectFirst = new MatchCommand { CommandId = 3,
+                    SwitchWeapon = new SwitchWeaponCommand { Slot = 0 } };
+                var selectGrenadeAgain = new MatchCommand { CommandId = 4,
+                    SwitchWeapon = new SwitchWeaponCommand { Slot = 1 } };
+                if (poseRuntime.Command(switcher, selectFirst).Code !=
+                        "weapon-selected" ||
+                    !poseRuntime.ConfirmHostPlayerShot(switcher, 0,
+                        new Vector3(100, 0, 100), 0) ||
+                    poseRuntime.Command(switcher, selectGrenadeAgain).Code !=
+                        "weapon-selected" ||
+                    poseRuntime.PlaceIdleAlliedCollisionPoses() != null)
+                    throw new Exception($"Co-op {weaponId} bypassed rifle shot settling.");
+                poseRuntime.Advance(MatchManifest.TickRate);
+                if (poseRuntime.PlaceIdleAlliedCollisionPoses() == null ||
+                    poseRuntime.Snapshot().Players.Single(player =>
+                        player.PlayerId == switcher).RiflePose?.Layers[0].Clip !=
+                            expectedWireClip)
+                    throw new Exception($"Co-op {weaponId} failed to settle after a rifle shot.");
             }
         }
         if (switchingRuntime.Command(switcher, new MatchCommand { CommandId = 3,
