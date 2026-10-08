@@ -326,14 +326,38 @@ public sealed class BattleCombatContent
     public WeaponManifest CreateMixedWeaponManifest(string id,int upgrade)
     {
         if(MixedRevision==null)throw new InvalidDataException("Mixed combat package is incomplete.");
-        if(id.StartsWith("Google2u.AssaultRifle_",StringComparison.Ordinal))return Stats.CreateManifest(id,upgrade);
-        if(id.StartsWith("Google2u.Shotgun_",StringComparison.Ordinal))return Shotguns!.CreateManifest(id,upgrade);
-        if(id.StartsWith("Google2u.SMG_",StringComparison.Ordinal))return Smgs!.CreateManifest(id,upgrade);
-        if(id.StartsWith("Google2u.Pistol_",StringComparison.Ordinal))return Pistols!.CreateManifest(id,upgrade);
-        if(id==MinigunCatalog.SourceId)return Minigun!.CreateManifest(upgrade);
-        if(id.StartsWith("Google2u.SniperRifle_",StringComparison.Ordinal))return Snipers!.CreateManifest(id,upgrade);
-        if(id.StartsWith("Google2u.Bazooka_",StringComparison.Ordinal))return Bazookas?.CreateManifest(id,upgrade)??throw new InvalidDataException("Bazooka content is not configured.");
-        if(id.StartsWith("Google2u.LMG_",StringComparison.Ordinal))return Lmgs!.CreateManifest(id,upgrade);
-        throw new InvalidDataException("Mixed match equips an unsupported weapon class.");
+        return CreateCoopWeaponManifest(id,upgrade);
+    }
+
+    /// <summary>
+    /// Resolve one recovered weapon stage without requiring every PvP weapon
+    /// family to be loaded. A co-op match validates only its equipped classes.
+    /// </summary>
+    public WeaponManifest CreateCoopWeaponManifest(string id,int upgrade)
+    {
+        if (id.StartsWith("Google2u.AssaultRifle_", StringComparison.Ordinal))
+            return Stats.CreateManifest(id, upgrade);
+        if (id.StartsWith("Google2u.Shotgun_", StringComparison.Ordinal))
+            return Shotguns?.CreateManifest(id, upgrade) ??
+                throw new InvalidDataException("Shotgun content is not configured.");
+        if (id.StartsWith("Google2u.SMG_", StringComparison.Ordinal))
+            return Smgs?.CreateManifest(id, upgrade) ??
+                throw new InvalidDataException("SMG content is not configured.");
+        if (id.StartsWith("Google2u.Pistol_", StringComparison.Ordinal))
+            return Pistols?.CreateManifest(id, upgrade) ??
+                throw new InvalidDataException("Pistol content is not configured.");
+        if (id == MinigunCatalog.SourceId)
+            return Minigun?.CreateManifest(upgrade) ??
+                throw new InvalidDataException("Minigun content is not configured.");
+        if (id.StartsWith("Google2u.SniperRifle_", StringComparison.Ordinal))
+            return Snipers?.CreateManifest(id, upgrade) ??
+                throw new InvalidDataException("Sniper content is not configured.");
+        if (id.StartsWith("Google2u.Bazooka_", StringComparison.Ordinal))
+            return Bazookas?.CreateManifest(id, upgrade) ??
+                throw new InvalidDataException("Bazooka content is not configured.");
+        if (id.StartsWith("Google2u.LMG_", StringComparison.Ordinal))
+            return Lmgs?.CreateManifest(id, upgrade) ??
+                throw new InvalidDataException("LMG content is not configured.");
+        throw new InvalidDataException("Co-op or mixed match equips an unsupported weapon class.");
     }
 }

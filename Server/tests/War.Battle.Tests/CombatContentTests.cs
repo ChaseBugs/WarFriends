@@ -671,6 +671,50 @@ internal static class CombatContentTests
             Players = duel.Players.Select(player => player with { Fraction = 2 }).ToArray()
         };
         MatchManifest.Validate(coop);
+        CoopPlayerWeaponCatalog playerWeapons =
+            CoopPlayerWeaponCatalog.Bind(coop, content);
+        var weaponRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat,
+            playerWeaponContent: content);
+        if (playerWeapons.ForPlayer(coop.Players[0].PlayerId).Single().Weapon !=
+                coop.Players[0].Weapon ||
+            playerWeapons.ForPlayer(coop.Players[1].PlayerId).Single().UpgradeIndex != 0 ||
+            weaponRuntime.PlayerWeapons?.ForPlayer(
+                coop.Players[0].PlayerId).Single().Weapon != coop.Players[0].Weapon)
+            throw new Exception("Co-op weapons did not bind the signed source stages.");
+        try
+        {
+            MatchManifest alteredWeapon = coop with
+            {
+                Players = coop.Players.Select((player, index) => index == 0
+                    ? player with { Weapon = player.Weapon with
+                        { ClipSize = player.Weapon.ClipSize + 1 } }
+                    : player).ToArray()
+            };
+            _ = CoopPlayerWeaponCatalog.Bind(alteredWeapon, content);
+            throw new Exception("Co-op accepted a forged weapon clip size.");
+        }
+        catch (InvalidDataException)
+        {
+        }
+        int sourceWeaponIndex = content.AllWeaponBindings.Get(
+            coop.Players[0].Weapon.SourceId).InventoryIndex;
+        try
+        {
+            MatchManifest alteredIndex = coop with
+            {
+                Players = coop.Players.Select((player, index) => index == 0
+                    ? player with { WeaponSlots =
+                        [new WeaponSlotManifest(0, sourceWeaponIndex + 1,
+                            player.Weapon, player.WeaponUpgrade!.Value)] }
+                    : player).ToArray()
+            };
+            _ = CoopPlayerWeaponCatalog.Bind(alteredIndex, content);
+            throw new Exception("Co-op accepted a forged weapon inventory index.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         int allocationBindingAssertions = VerifyCoopAllocationBinding(
             coop, catalog, spawnPoints, routes, enemyCombat, army);
         MatchManifest shieldAllocation = coop with
@@ -1451,7 +1495,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 52 + allocationBindingAssertions;
+        return 56 + allocationBindingAssertions;
     }
 
     private static int VerifyCoopBossAiSpawns(MissionCatalog missions,

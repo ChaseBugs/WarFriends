@@ -279,6 +279,8 @@ MainScene sets `SkillShotManager.timeForCombo` to 0.9 seconds. `RecieveKill` add
 
 The isolated co-op runtime now binds the Backend's two trusted `BattleAllocationProjection` rows before admission. It validates both player identities and any upgrade lanes already signed into the match manifest, copies the rows, and refuses later rebinding. This prepares card and army authority without accepting a Client-provided loadout. `MatchRouter` still declines co-op registration, and `FireCommand` remains closed until signed weapon state, projectile collision, and damage attribution are composed into the runtime.
 
+`CoopPlayerWeaponCatalog` now compares the signed co-op weapon and optional ordered slots with the recovered per-family weapon stages and inventory binding graph. It requires the same MainScene provenance as the mission catalog and rejects a changed clip or inventory index before runtime use. `BattleCombatContent.CreateCoopWeaponManifest` resolves only equipped classes, while PvP mixed-mode validation still requires its complete mixed package. The isolated runtime can bind these validated player weapons when supplied the combat content; it still has no co-op projectile or hit routing, so this is loadout authority rather than a playable fire path.
+
 1. Continue B07-B09 with the next recovered weapon projectile family and its normal Unity presentation. Keep results unscored until authority and Client presentation are complete.
 2. Expand weapon variants and world/entity destruction (B09-B12), then army/AI/vehicles/cards/objectives (B13-B19).
 3. Complete mode rules, statistics and durable result/control contracts (B20-B26), with Backend integration limited to those boundaries.

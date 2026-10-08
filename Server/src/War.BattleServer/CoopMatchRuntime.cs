@@ -75,6 +75,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private CoopShieldMatchSimulation? alliedShields;
     private CoopShieldMatchSimulation? enemyShields;
     internal CoopBossLoadout? BossLoadout { get; }
+    internal CoopPlayerWeaponCatalog? PlayerWeapons { get; }
     private readonly Func<float>? chooseAttackFraction;
     private CoopBossCombatState? boss;
     internal CoopBossAttackCadence? BossAttackCadence { get; private set; }
@@ -95,11 +96,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null,
         CoopShieldRuntimeSources? shieldSources = null,
-        CoopSkillShotScoreCatalog? skillShotScores = null)
+        CoopSkillShotScoreCatalog? skillShotScores = null,
+        BattleCombatContent? playerWeaponContent = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
-            skillShotScores: skillShotScores)
+            skillShotScores: skillShotScores,
+            playerWeaponContent: playerWeaponContent)
     {
     }
 
@@ -109,7 +112,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? chooseBehaviour, Func<int, int>? choosePoint,
         Func<float>? chooseAttackFraction = null,
         CoopShieldRuntimeSources? shieldSources = null,
-        CoopSkillShotScoreCatalog? skillShotScores = null)
+        CoopSkillShotScoreCatalog? skillShotScores = null,
+        BattleCombatContent? playerWeaponContent = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -125,6 +129,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
+        if (playerWeaponContent != null)
+            PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;
