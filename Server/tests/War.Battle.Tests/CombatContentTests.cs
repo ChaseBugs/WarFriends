@@ -2952,6 +2952,8 @@ internal static class CombatContentTests
             throw new Exception("Co-op infantry route clock is inconsistent.");
         VerifyCoopAssaulterMotionReference(directory, missions,
             connectivity, infantrySpawn, infantryTarget);
+        VerifyCoopFiveMapPathReference(directory, missions, navigation,
+            spawnPoints, enemyPoints, connectivity);
 
         string temporaryDirectory = Path.Combine(Path.GetTempPath(),
             $"war-coop-navigation-{Guid.NewGuid():N}");
@@ -3140,6 +3142,115 @@ internal static class CombatContentTests
             $"facing p95={facingErrors[(int)(facingErrors.Count * 0.95)]:F1}/" +
             $"{smoothedFacingErrors[(int)(smoothedFacingErrors.Count * 0.95)]:F1} degrees, " +
             $"Unity duration={previousTime:F2}s, host duration={corridor.SmoothedLength / 0.9f:F2}s.");
+    }
+
+    private static void VerifyCoopFiveMapPathReference(string directory,
+        MissionCatalog missions, CoopNavMeshSourceCatalog navSources,
+        CoopSpawnPointCatalog spawns, CoopEnemyPointCatalog enemyPoints,
+        CoopNavMeshConnectivity navigation)
+    {
+        string referencePath = Path.Combine(directory,
+            "coop-infantry-five-map-path-reference.json");
+        byte[] referenceBytes = File.ReadAllBytes(referencePath);
+        if (Convert.ToHexStringLower(SHA256.HashData(referenceBytes)) !=
+            "e69e0344f465a7ba0230c8ce9c1d289f1d9ba8b6e1f420196f45edf2703d959c")
+            throw new Exception("Five-map Unity path reference changed.");
+        using JsonDocument inputDocument = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "coop-infantry-five-map-path-input.json")));
+        using JsonDocument referenceDocument = JsonDocument.Parse(referenceBytes);
+        JsonElement inputs = inputDocument.RootElement.GetProperty("cases");
+        JsonElement references = referenceDocument.RootElement
+            .GetProperty("cases");
+        if (inputDocument.RootElement.GetProperty("version").GetInt32() != 1 ||
+            referenceDocument.RootElement.GetProperty("version").GetInt32() != 1 ||
+            inputs.GetArrayLength() != 5 || references.GetArrayLength() != 5)
+            throw new Exception("Five-map Unity path inventory is incomplete.");
+
+        static Vector3 ReadVector(JsonElement value) => new(
+            value.GetProperty("x").GetSingle(),
+            value.GetProperty("y").GetSingle(),
+            value.GetProperty("z").GetSingle());
+
+        for (int index = 0; index < 5; index++)
+        {
+            JsonElement input = inputs[index];
+            JsonElement reference = references[index];
+            int missionIndex = input.GetProperty("missionIndex").GetInt32();
+            MissionMapRule missionMap = missions.MapForMission(missionIndex);
+            CoopNavMeshSource navMesh = navSources.MapForMission(missions,
+                missionIndex);
+            CoopMapSpawnPoints mapSpawns = spawns.MapForMission(missions,
+                missionIndex);
+            CoopMapEnemyPoints mapPoints = enemyPoints.MapForMission(missions,
+                missionIndex);
+            CoopSpawnPoint spawn = mapSpawns.EnemySpawnPoints.First(point =>
+                point.ComponentType == "SpawnPoint");
+            CoopEnemyPoint? point = CoopEnemyPointSelection.SelectOrdinary(
+                mapPoints, 14, spawn.Position, new HashSet<int>());
+            if (point == null)
+                throw new Exception("A source co-op map lacks its Assaulter point.");
+            Vector3 destination = CoopEnemyPointSelection.GeneratePosition(
+                point, 0.5f);
+            if (missionMap.Stage != index + 1 ||
+                input.GetProperty("stage").GetInt32() != missionMap.Stage ||
+                input.GetProperty("scene").GetString() != missionMap.Scene ||
+                input.GetProperty("asset").GetString() != navMesh.SourceAsset ||
+                input.GetProperty("spawnComponentFileId").GetInt32() !=
+                    spawn.ComponentFileId ||
+                input.GetProperty("pointComponentFileId").GetInt32() !=
+                    point.ComponentFileId ||
+                Vector3.Distance(ReadVector(input.GetProperty("start")),
+                    spawn.Position) > 0.001f ||
+                Vector3.Distance(ReadVector(input.GetProperty("end")),
+                    destination) > 0.001f)
+                throw new Exception("Five-map path input differs from source.");
+
+            if (reference.GetProperty("stage").GetInt32() != missionMap.Stage ||
+                reference.GetProperty("scene").GetString() != missionMap.Scene ||
+                reference.GetProperty("asset").GetString() != navMesh.SourceAsset ||
+                reference.GetProperty("spawnComponentFileId").GetInt32() !=
+                    spawn.ComponentFileId ||
+                reference.GetProperty("pointComponentFileId").GetInt32() !=
+                    point.ComponentFileId ||
+                !reference.GetProperty("startSampled").GetBoolean() ||
+                !reference.GetProperty("endSampled").GetBoolean() ||
+                reference.GetProperty("status").GetString() != "PathComplete")
+                throw new Exception("Five-map Unity path differs from input.");
+
+            Vector3? start = navigation.SampleNearest(missions,
+                missionIndex, spawn.Position, 3f);
+            Vector3? end = navigation.SampleNearest(missions,
+                missionIndex, destination, 3f);
+            ArmyNavMeshCorridor? corridor = start.HasValue && end.HasValue ?
+                navigation.PlanCorridor(missions, missionIndex,
+                    start.Value, end.Value) : null;
+            JsonElement unityCorners = reference.GetProperty("corners");
+            if (corridor is not { PlanarCovered: true } ||
+                unityCorners.GetArrayLength() < 2 ||
+                unityCorners.GetArrayLength() !=
+                    corridor.SmoothedPoints.Count ||
+                Vector3.Distance(ReadVector(reference.GetProperty(
+                    "sampledStart")), corridor.SmoothedPoints[0]) > 0.05f ||
+                Vector3.Distance(ReadVector(reference.GetProperty(
+                    "sampledEnd")), corridor.SmoothedPoints[^1]) > 0.05f)
+                throw new Exception("Host has no source-bound co-op route.");
+            float unityLength = 0;
+            for (int corner = 0; corner < unityCorners.GetArrayLength(); corner++)
+            {
+                if (Vector3.Distance(ReadVector(unityCorners[corner]),
+                        corridor.SmoothedPoints[corner]) > 0.05f)
+                    throw new Exception(
+                        "Host co-op corner differs from the Unity path.");
+                if (corner == 0)
+                    continue;
+                unityLength += Vector3.Distance(
+                    ReadVector(unityCorners[corner - 1]),
+                    ReadVector(unityCorners[corner]));
+            }
+            Console.WriteLine($"Co-op map {missionMap.Scene}: Unity {unityCorners.GetArrayLength()} corners/{unityLength:F2} units; host {corridor.SmoothedPoints.Count} corners/{corridor.SmoothedLength:F2} units.");
+            if (corridor.SmoothedLength > unityLength * 1.1f + 0.05f)
+                throw new Exception("Host co-op route detours beyond Unity's path.");
+        }
     }
 
     private static int VerifyCoopSceneColliders(
