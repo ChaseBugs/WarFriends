@@ -1429,14 +1429,23 @@ internal static class CombatContentTests
             throw new Exception("A due co-op AI must be created at an enemy source anchor.");
         IReadOnlyList<PlayerHitbox> spawnedInfantry =
             runtime.PlaceNewInfantryHitboxes(firstEnemy.EntityId);
+        CoopEnemyCollisionFrame infantrySpawnFrame =
+            runtime.CurrentEnemyCollisionFrame();
         if (spawnedInfantry.Count != 3 || spawnedInfantry.Any(part =>
                 !part.SourcePath.StartsWith("coop/1/", StringComparison.Ordinal)) ||
+            infantrySpawnFrame.Targets.Count(part =>
+                part.EntityId == firstEnemy.EntityId &&
+                part.ArmyInfantry && part.Layer == 23 &&
+                part.PartComponentFileId == 0) != 3 ||
+            infantrySpawnFrame.UnplacedEnemyIds.Contains(firstEnemy.EntityId) ||
             enemyCombat.InfantryIdleClip("Assaulter") != "idle_1" ||
             enemyCombat.InfantryIdleClip("Tank") != null ||
             runtime.PlaceNewInfantryHitboxes(999).Count != 0)
             throw new Exception("Co-op infantry needs its recovered spawn-time colliders.");
         runtime.Advance(9);
-        if (runtime.PlaceNewInfantryHitboxes(firstEnemy.EntityId).Count != 0)
+        if (runtime.PlaceNewInfantryHitboxes(firstEnemy.EntityId).Count != 0 ||
+            !runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds
+                .Contains(firstEnemy.EntityId))
             throw new Exception("A stale spawn pose must not authorize later co-op hits.");
 
         var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
@@ -2838,7 +2847,17 @@ internal static class CombatContentTests
         }
         if (!rejectedMissing)
             throw new Exception("A live co-op enemy was omitted from shot authority.");
-        return checkedRays - physxDifferences.Count + 5;
+        var infantryPart = new DynamicShotTarget(8, 0, 23, hitbox,
+            ArmyInfantry: true);
+        CoopShotHit? infantryHit = emptySpace.Trace(distantOrigin,
+            Vector3.UnitZ, 10, 1u << 23,
+            new CoopEnemyCollisionFrame([infantryPart], []));
+        if (infantryHit?.EnemyEntityId != 8 ||
+            infantryHit.EnemyPartFileId != null ||
+            infantryHit.EnemyPartPath != hitbox.SourcePath ||
+            infantryHit.PartWeight != hitbox.Weight)
+            throw new Exception("Source infantry hit part lost its path or damage weight.");
+        return checkedRays - physxDifferences.Count + 6;
     }
 
     private static Vector3 ReadRayVector(JsonElement values)

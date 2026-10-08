@@ -4,7 +4,8 @@ namespace War.BattleServer;
 
 internal sealed record CoopShotHit(
     float Distance, Vector3 Position, int? SceneColliderFileId,
-    ulong? EnemyEntityId, int? EnemyPartFileId);
+    ulong? EnemyEntityId, int? EnemyPartFileId,
+    string? EnemyPartPath = null, float PartWeight = 0);
 
 internal sealed record CoopEnemyCollisionFrame(
     IReadOnlyList<DynamicShotTarget> Targets,
@@ -47,14 +48,28 @@ internal sealed class CoopShotCollisionWorld
             sceneHit.ComponentFileId, null, null);
         Vector3 ray = Vector3.Normalize(direction);
 
-        var identities = new HashSet<(ulong EntityId, int PartFileId)>();
+        // Vehicles and air units retain serialized collider IDs. The sampled
+        // infantry rig has no collider IDs in its pose artifact, so its three
+        // parts use the source hierarchy path plus shape kind within one AI.
+        var sourceParts = new HashSet<(ulong EntityId, int PartFileId)>();
+        var infantryParts = new HashSet<
+            (ulong EntityId, string Path, PlayerHitboxKind Kind)>();
         foreach (DynamicShotTarget target in enemyTargets)
         {
             if (target == null || target.EntityId == 0 ||
                 target.Layer is < 0 or > 31 || target.Hitbox == null ||
-                target.PartComponentFileId <= 0 ||
-                !identities.Add((target.EntityId, target.PartComponentFileId)))
+                (target.ArmyInfantry && target.PartComponentFileId != 0) ||
+                (target.PartComponentFileId <= 0 &&
+                    !(target.ArmyInfantry && target.PartComponentFileId == 0 &&
+                      target.Layer == 23)))
                 throw new InvalidDataException("Invalid co-op enemy hitbox identity.");
+            bool newIdentity = target.PartComponentFileId > 0
+                ? sourceParts.Add((target.EntityId,
+                    target.PartComponentFileId))
+                : infantryParts.Add((target.EntityId,
+                    target.Hitbox.SourcePath, target.Hitbox.Kind));
+            if (!newIdentity)
+                throw new InvalidDataException("Duplicate co-op enemy hitbox identity.");
             if ((layerMask & (1u << target.Layer)) == 0)
                 continue;
 
@@ -67,7 +82,10 @@ internal sealed class CoopShotCollisionWorld
                 continue;
             nearest = new CoopShotHit(distance.Value,
                 origin + ray * distance.Value, null,
-                target.EntityId, target.PartComponentFileId);
+                target.EntityId,
+                target.PartComponentFileId > 0
+                    ? target.PartComponentFileId : null,
+                target.Hitbox.SourcePath, target.Hitbox.Weight);
         }
         return nearest;
     }

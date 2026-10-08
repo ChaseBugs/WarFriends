@@ -835,7 +835,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 "DeployHeli" => PlaceTransportHelicopterTargets(enemy.EntityId),
                 "Humvee" or "Buggy" or "Tank" or "Transporter" =>
                     PlaceNewGroundVehicleTargets(enemy.EntityId),
-                _ => []
+                _ => PlaceNewInfantryHitboxes(enemy.EntityId)
+                    .Select(hitbox => new DynamicShotTarget(enemy.EntityId,
+                        0, 23, hitbox, ArmyInfantry: true))
+                    .ToArray()
             };
             targets.AddRange(placed);
             // The attached/descending rope crew are separate live soldiers.
