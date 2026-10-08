@@ -19,6 +19,9 @@ internal sealed record CoopBossRuntimeSources(
 internal sealed record CoopShieldRuntimeSources(
     CoopShieldStateCatalog States, ShieldSourceCatalog Policy);
 
+internal sealed record CoopBossPreferredShotPlan(
+    string PlayerId, CoopBossWeaponSlotKind Slot, string WeaponSourceId);
+
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
 /// cannot accept combat commands until host AI and player controls are wired.
@@ -619,6 +622,32 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return candidates.Length == 0 ? null :
             CoopBossPlayerPreference.Choose(bossAttackTiming, candidates,
                 underPressure, randomValue);
+    }
+
+    // An open shooting window may prepare a target and source weapon. This
+    // does not consume ammunition: sight, aim, and host projectile creation
+    // must succeed before BossArsenal.ConfirmShot can run.
+    internal CoopBossPreferredShotPlan? PlanPreferredBossPlayerShot(
+        float underPressure, float targetDraw, bool inDanger,
+        float explosiveDraw, float rifleDraw)
+    {
+        if (BossAttackCadence?.WindowOpen != true ||
+            BossArsenal == null || bossAttackTiming == null)
+            return null;
+        string? targetId = ChooseHostBossPlayerPreference(
+            underPressure, targetDraw);
+        if (targetId == null)
+            return null;
+
+        CoopBossWeaponSlotKind slot =
+            CoopBossWeaponChoice.ForOrdinaryPlayerTarget(
+                bossAttackTiming, inDanger,
+                BossArsenal.Readiness(CoopBossWeaponSlotKind.Primary, tick),
+                BossArsenal.Readiness(CoopBossWeaponSlotKind.Secondary, tick),
+                BossArsenal.Readiness(CoopBossWeaponSlotKind.Explosive, tick),
+                explosiveDraw, rifleDraw);
+        return new CoopBossPreferredShotPlan(targetId, slot,
+            BossArsenal.Definition(slot).SourceId);
     }
 
     public MatchReply Reply(ulong commandId, string code)

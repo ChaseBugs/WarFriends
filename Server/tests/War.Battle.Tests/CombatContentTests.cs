@@ -611,7 +611,9 @@ internal static class CombatContentTests
         if (bossRuntime.ChooseHostBossPlayerPreference(0f, 0.02f) !=
                 bossFirstPlayer ||
             bossRuntime.ChooseHostBossPlayerPreference(0f, 0.07f) !=
-                bossSecondPlayer)
+                bossSecondPlayer ||
+            bossRuntime.PlanPreferredBossPlayerShot(0f, 0.02f,
+                false, 0.999f, 0f) != null)
             throw new Exception("Boss preference did not use the live allied roster.");
         ShieldMutation? destroyedAllyCover = bossRuntime.ApplyHostShieldShot(
             5, "Google2u.AssaultRifle_AK47", 100_000f);
@@ -653,6 +655,19 @@ internal static class CombatContentTests
             bossRuntime.Snapshot().Shields.Single(shield =>
                 shield.OwnerFraction == 2 && shield.CoverIndex == 5).Destroyed)
             throw new Exception("Boss attack windows lost source shooting timing.");
+        CoopBossPreferredShotPlan? primaryPlan =
+            bossRuntime.PlanPreferredBossPlayerShot(0f, 0.02f,
+                false, 0.999f, 0f);
+        CoopBossPreferredShotPlan? secondaryPlan =
+            bossRuntime.PlanPreferredBossPlayerShot(0f, 0.07f,
+                false, 0.999f, 0.999f);
+        if (primaryPlan?.PlayerId != bossFirstPlayer ||
+            primaryPlan.Slot != CoopBossWeaponSlotKind.Primary ||
+            primaryPlan.WeaponSourceId != bossRuntime.BossArsenal!.Definition(
+                CoopBossWeaponSlotKind.Primary).SourceId ||
+            secondaryPlan?.PlayerId != bossSecondPlayer ||
+            secondaryPlan.Slot != CoopBossWeaponSlotKind.Secondary)
+            throw new Exception("Boss shot planning lost host target or source weapon.");
         BattlePlayerState movedBossAlly = bossRuntime.Snapshot().Players.Single(
             player => player.PlayerId == bossFirstPlayer);
         if (movedBossAlly.Moving || movedBossAlly.CoverIndex != 7 ||
