@@ -237,7 +237,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             playerPositions = map.PlayerPositions.Select(anchor =>
                 new CoopPlayerAnchor(anchor.Index, anchor.ComponentFileId,
                     anchor.GameObjectFileId, anchor.TransformFileId,
-                    anchor.Main, anchor.Position)).ToArray();
+                    anchor.Main, anchor.Position)
+                {
+                    SourceRotation = anchor.Rotation
+                }).ToArray();
             routeBetween = routes.Between;
             alliedFirstCover = 4;
             alliedLastCover = 7;
@@ -310,6 +313,28 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     internal CoopAssignedEnemyDestination? EnemyDestination(ulong entityId) =>
         enemyDestinations?.ForEnemy(entityId);
+
+    internal Vector3 PlayerAimForward(string playerId)
+    {
+        RequireAdmitted(playerId);
+        Participant player = participants[playerId];
+        if (player.Route != null)
+            throw new InvalidOperationException(
+                "Moving co-op aim needs the shield-lock handoff timing.");
+        CoopPlayerAnchor cover = playerPositions[player.CoverIndex];
+        if (cover.SourceRotation is not Quaternion rotation)
+            throw new InvalidDataException(
+                "Co-op player cover lacks its source rotation.");
+
+        // PlayerController.aimForward uses the negative current defend-point
+        // forward while the player is stationary behind that cover.
+        Vector3 forward = -Vector3.Transform(Vector3.UnitZ, rotation);
+        if (!PlayerHitbox.Finite(forward) ||
+            MathF.Abs(forward.LengthSquared() - 1f) > 0.001f)
+            throw new InvalidDataException(
+                "Co-op player cover has an invalid aim direction.");
+        return forward;
+    }
 
     internal CoopInfantryPointArrival? InfantryPointArrival(ulong entityId) =>
         infantryPointArrivals.GetValueOrDefault(entityId);

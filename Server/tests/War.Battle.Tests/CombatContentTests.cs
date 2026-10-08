@@ -1080,6 +1080,13 @@ internal static class CombatContentTests
                 throw new Exception("Boss allies could not start the isolated runtime.");
         }
         MatchSnapshot bossStart = bossRuntime.Snapshot();
+        CoopBossMapAnchors bossSourceAnchors = bossAnchors.MapForMission(
+            catalog, 4);
+        Vector3 bossExpectedAim = -Vector3.Transform(Vector3.UnitZ,
+            bossSourceAnchors.PlayerPositions[5].Rotation);
+        if (Vector3.Distance(bossRuntime.PlayerAimForward(bossFirstPlayer),
+                bossExpectedAim) > 0.00001f)
+            throw new Exception("Boss ally aim differs from its multiplayer defend anchor.");
         BattleCoopBossState? transmittedBoss = MatchSnapshot.Parser
             .ParseFrom(bossStart.ToByteArray()).Coop.Boss;
         int transmittedShields = MatchSnapshot.Parser
@@ -1382,6 +1389,10 @@ internal static class CombatContentTests
             !PlayerHitbox.Finite(sourceMuzzle.Position) ||
             runtime.PlaceIdlePlayerMuzzle("not-an-ally") != null)
             throw new Exception("An untouched co-op rifle needs its source idle muzzle.");
+        Vector3 sourceAim = -Vector3.Transform(Vector3.UnitZ, startRotation);
+        if (Vector3.Distance(runtime.PlayerAimForward(firstPlayer),
+                sourceAim) > 0.00001f)
+            throw new Exception("Co-op ally aim differs from its source defend anchor.");
         startingState.Coop.ParticipantStarts[0].X = 999;
         if (runtime.Snapshot().Coop.ParticipantStarts[0].X != mainAnchors[0].Position.X)
             throw new Exception("A client snapshot must not mutate an allied start anchor.");
@@ -1415,6 +1426,14 @@ internal static class CombatContentTests
                 player => player.PlayerId == secondPlayer).PositionZ !=
                 mainAnchors[1].Position.Z)
             throw new Exception("Only the accepted co-op player may advance on host ticks.");
+        try
+        {
+            _ = movementRuntime.PlayerAimForward(firstPlayer);
+            throw new Exception("Moving co-op aim used an unverified shield handoff.");
+        }
+        catch (InvalidOperationException)
+        {
+        }
         movementRuntime.Advance(movingPlayer.MoveEndTick);
         BattlePlayerState arrived = movementRuntime.Snapshot().Players.Single(
             player => player.PlayerId == firstPlayer);
@@ -1422,6 +1441,13 @@ internal static class CombatContentTests
             new Vector3(arrived.PositionX, arrived.PositionY, arrived.PositionZ) !=
                 sourceMapSpawns.PlayerPositions[3].Position)
             throw new Exception("Co-op movement must finish at the source defend position.");
+        Quaternion arrivedRotation = sourceMapSpawns.PlayerPositions[3]
+            .SourceRotation!.Value;
+        Vector3 expectedArrivedAim = -Vector3.Transform(Vector3.UnitZ,
+            arrivedRotation);
+        if (Vector3.Distance(movementRuntime.PlayerAimForward(firstPlayer),
+                expectedArrivedAim) > 0.00001f)
+            throw new Exception("Co-op ally aim did not follow the accepted cover move.");
         if (movementRuntime.Command(secondPlayer, new MatchCommand { CommandId = 3,
                 MoveCover = new MoveCoverCommand { Direction = -1 } }).Code != "moving" ||
             movementRuntime.Snapshot().Players.Single(player =>
