@@ -22,7 +22,7 @@ public sealed class CoopPlayerWeaponState
     }
 
     private readonly Dictionary<int, SlotState> slots;
-    public int ActiveSlot { get; }
+    public int ActiveSlot { get; private set; }
     public ulong CurrentTick { get; private set; }
 
     public CoopPlayerWeaponState(
@@ -43,6 +43,14 @@ public sealed class CoopPlayerWeaponState
         SlotState weapon = GetSlot(slot);
         return new CoopWeaponReadiness(slot, weapon.Clip, weapon.Reserve,
             weapon.ReloadEndTick, weapon.NextFireTick, weapon.ShotsFired);
+    }
+
+    public bool TrySelectSlot(int slot, ulong tick)
+    {
+        if (tick != CurrentTick || !slots.ContainsKey(slot))
+            return false;
+        ActiveSlot = slot;
+        return true;
     }
 
     public bool ConfirmHostShot(int slot, ulong tick)

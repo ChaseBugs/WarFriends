@@ -727,6 +727,80 @@ internal static class CombatContentTests
             initialWeaponView.ReserveAmmo != coop.Players[0].Weapon.ReserveAmmo ||
             initialWeaponView.CombatEnabled || initialWeaponView.ShotsFired != 0)
             throw new Exception("Co-op weapons did not bind the signed source stages.");
+
+        const string alternateRifle = "Google2u.AssaultRifle_Famas";
+        WeaponManifest alternateWeapon = content.CreateCoopWeaponManifest(
+            alternateRifle, 0);
+        int alternateIndex = content.AllWeaponBindings.Get(
+            alternateRifle).InventoryIndex;
+        int firstWeaponIndex = content.AllWeaponBindings.Get(
+            coop.Players[0].Weapon.SourceId).InventoryIndex;
+        MatchManifest twoWeapons = coop with
+        {
+            Players = coop.Players.Select((player, index) => index == 0
+                ? player with { WeaponSlots =
+                [
+                    new WeaponSlotManifest(0, firstWeaponIndex,
+                        player.Weapon, player.WeaponUpgrade!.Value),
+                    new WeaponSlotManifest(1, alternateIndex,
+                        alternateWeapon, 0)
+                ] }
+                : player).ToArray()
+        };
+        CoopPlayerWeaponCatalog twoWeaponCatalog =
+            CoopPlayerWeaponCatalog.Bind(twoWeapons, content);
+        var selectedAmmo = new CoopPlayerWeaponState(
+            twoWeaponCatalog.ForPlayer(twoWeapons.Players[0].PlayerId), 0);
+        if (!selectedAmmo.TrySelectSlot(1, 0) ||
+            !selectedAmmo.ConfirmHostShot(1, 0) ||
+            !selectedAmmo.TrySelectSlot(0, 0) ||
+            selectedAmmo.Readiness(0).Clip != coop.Players[0].Weapon.ClipSize ||
+            !selectedAmmo.TrySelectSlot(1, 0) ||
+            selectedAmmo.Readiness(1).Clip != alternateWeapon.ClipSize - 1)
+            throw new Exception("Co-op weapon slots lost independent ammunition.");
+        var switchingRuntime = new CoopMatchRuntime(twoWeapons, catalog,
+            spawnPoints, routes, enemyCombat, playerWeaponContent: content);
+        string switcher = twoWeapons.Players[0].PlayerId;
+        string partner = twoWeapons.Players[1].PlayerId;
+        switchingRuntime.Admit(switcher);
+        switchingRuntime.Admit(partner);
+        var switchReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = switchingRuntime.ManifestHash } };
+        switchingRuntime.Command(switcher, switchReady);
+        switchingRuntime.Command(partner, switchReady);
+        var selectSecond = new MatchCommand { CommandId = 2,
+            SwitchWeapon = new SwitchWeaponCommand { Slot = 1 } };
+        if (switchingRuntime.Command(switcher, selectSecond).Code != "weapon-selected" ||
+            switchingRuntime.Command(switcher, selectSecond).Code != "weapon-selected" ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).ActiveWeaponSlot != 1 ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).ClipAmmo != alternateWeapon.ClipSize ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == partner).ActiveWeaponSlot != 0)
+            throw new Exception("Only the signed ally switched to the second source rifle.");
+        if (switchingRuntime.Command(switcher, new MatchCommand { CommandId = 3,
+                SwitchWeapon = new SwitchWeaponCommand { Slot = 7 } }).Code !=
+            "weapon-slot-unavailable" ||
+            switchingRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == switcher).ActiveWeaponSlot != 1)
+            throw new Exception("An unallocated co-op weapon slot became active.");
+        MatchManifest skippedSlot = twoWeapons with
+        {
+            Players = twoWeapons.Players.Select((player, index) => index == 0
+                ? player with { WeaponSlots =
+                    [player.WeaponSlots![0],
+                        player.WeaponSlots[1] with { Slot = 3 }] }
+                : player).ToArray()
+        };
+        try
+        {
+            _ = CoopPlayerWeaponCatalog.Bind(skippedSlot, content);
+            throw new Exception("Co-op accepted a slot the Client cannot select.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         try
         {
             MatchManifest alteredWeapon = coop with
@@ -1540,7 +1614,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 60 + allocationBindingAssertions;
+        return 64 + allocationBindingAssertions;
     }
 
     private static int VerifyCoopBossAiSpawns(MissionCatalog missions,

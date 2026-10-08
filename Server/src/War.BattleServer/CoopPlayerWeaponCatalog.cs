@@ -53,6 +53,11 @@ public sealed class CoopPlayerWeaponCatalog
             for (int index = 0; index < slots.Length; index++)
             {
                 WeaponSlotManifest slot = slots[index];
+                // WeaponInventory.ApplySelfHostedSelection addresses usedWeapons
+                // by zero-based list index, so gaps cannot be presented safely.
+                if (slot.Slot != index)
+                    throw new InvalidDataException(
+                        "Co-op weapon slots must match Client list indexes.");
                 WeaponManifest expected = combat.CreateCoopWeaponManifest(
                     slot.Weapon.SourceId, slot.WeaponUpgrade);
                 int sourceIndex = combat.AllWeaponBindings.Get(

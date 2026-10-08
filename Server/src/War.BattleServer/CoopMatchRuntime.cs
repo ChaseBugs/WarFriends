@@ -559,6 +559,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         if (command.IntentCase == MatchCommand.IntentOneofCase.MoveCover)
             return StartPlayerMovement(participant, command.MoveCover.Direction);
+        if (command.IntentCase == MatchCommand.IntentOneofCase.SwitchWeapon)
+        {
+            if (phase != BattlePhase.Running || !participant.Ready || participant.Dead)
+                return "match-not-running";
+            if (participant.Route != null)
+                return "moving";
+            if (participant.Weapons == null ||
+                !participant.Weapons.TrySelectSlot(command.SwitchWeapon.Slot, tick))
+                return "weapon-slot-unavailable";
+            return "weapon-selected";
+        }
         return "coop-command-unavailable";
     }
 
