@@ -2122,7 +2122,8 @@ internal static class CombatContentTests
 
         var movementRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
-            choosePoint: _ => 0, playerWeaponContent: content);
+            choosePoint: _ => 0, playerWeaponContent: content,
+            chooseInfantryShieldRoll: () => 0f);
         var assertedCoverRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, playerWeaponContent: content);
@@ -2242,6 +2243,44 @@ internal static class CombatContentTests
         CoopMovingPlayerAimPlan? movingAim = movementRuntime
             .PlanDiagnosticMovingPlayerAim(movingAimEnemy.EntityId,
                 firstPlayer, observedMuzzle);
+        if (CoopMatchRuntime.WalkingPlayerTargetMask(Vector3.UnitZ,
+                Vector3.UnitZ, 0.25f, () => 0.25f) != 2 ||
+            CoopMatchRuntime.WalkingPlayerTargetMask(Vector3.UnitZ,
+                Vector3.UnitZ, 0.25f, () => 0.26f) != 0x10 ||
+            CoopMatchRuntime.WalkingPlayerTargetMask(Vector3.UnitZ,
+                -Vector3.UnitZ, 0f,
+                () => throw new Exception("Side aim drew a shield roll.")) != 2)
+            throw new Exception(
+                "Walking shield selection missed its half-chance boundary.");
+        void RejectWalkingMask(Action action)
+        {
+            try { action(); }
+            catch (InvalidDataException) { return; }
+            throw new Exception("Invalid walking target authority was accepted.");
+        }
+        RejectWalkingMask(() => CoopMatchRuntime.WalkingPlayerTargetMask(
+            Vector3.UnitZ, Vector3.UnitZ, float.NaN, () => 0.1f));
+        RejectWalkingMask(() => CoopMatchRuntime.WalkingPlayerTargetMask(
+            Vector3.UnitZ, Vector3.UnitZ, 0.25f,
+            () => float.NaN));
+        CoopMovingPlayerAimPlan? walkingTarget = movementRuntime
+            .PlanDiagnosticWalkingPlayerTarget(movingAimEnemy.EntityId,
+                firstPlayer, observedMuzzle);
+        PlayerShotTarget? walkingSourceTarget = walkingTarget == null
+            ? null : content.PlayerShotTargets.Gameplay.Single(target =>
+                target.TransformFileId == walkingTarget.TransformFileId);
+        if (walkingTarget == null || walkingSourceTarget == null ||
+            walkingTarget.TargetMask != 2 ||
+            walkingSourceTarget.Type != 2 ||
+            walkingTarget.Tick != 8 ||
+            (walkingTarget.TargetMask == 2 &&
+             walkingTarget.PredictedAimPosition !=
+                walkingTarget.MovingTargetPosition) ||
+            (walkingTarget.TargetMask == 0x10 &&
+             walkingTarget.PredictedAimPosition !=
+                movingAim?.PredictedAimPosition))
+            throw new Exception(
+                "Walking Assaulter target lost its posed shield or moving body.");
         Vector3 expectedVelocity = new(afterAimStep.PositionX -
             beforeAimStep.PositionX, afterAimStep.PositionY -
             beforeAimStep.PositionY, afterAimStep.PositionZ -

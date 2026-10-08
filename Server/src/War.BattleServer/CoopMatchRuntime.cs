@@ -81,7 +81,10 @@ internal sealed record CoopInfantryPlayerShotTarget(
 internal sealed record CoopMovingPlayerAimPlan(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
     Vector3 MovingTargetPosition, Vector3 PlayerVelocity,
-    Vector3 PredictedAimPosition, ulong Tick);
+    Vector3 PredictedAimPosition, ulong Tick)
+{
+    internal int TargetMask { get; init; } = 0x10;
+}
 
 /// <summary>
 /// Authenticated co-op mission shell. It owns admission and terminal state but
@@ -3475,6 +3478,77 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return new CoopMovingPlayerAimPlan(enemyId, playerId,
             selected.TransformFileId, movingTarget,
             player.MovementVelocity, predicted, tick);
+    }
+
+    /// <summary>
+    /// Replays PickPlayerOpponent's walking player branch. The Client halves
+    /// shield probability while walking; a shield pick keeps its raw target
+    /// position, while the Moving pick gets the first projectile lead.
+    /// This is diagnostic and never schedules an Assaulter volley.
+    /// </summary>
+    internal CoopMovingPlayerAimPlan? PlanDiagnosticWalkingPlayerTarget(
+        ulong enemyId, string playerId, Vector3 observedWeaponMuzzle)
+    {
+        if (phase != BattlePhase.Running || playerShotTargets == null ||
+            !participants.TryGetValue(playerId, out Participant? player))
+            return null;
+        MovingWeaponPose? moving = SampleMovingWeaponPose(player);
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == enemyId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0);
+        if (moving == null || enemy == null)
+            return null;
+
+        float shieldProbability = combat.ShieldHitProbability(enemy.Behaviour);
+        if (shieldProbability < 0)
+            return null;
+        Vector3 enemyPosition = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        Vector3 towardEnemy = enemyPosition - player.Position;
+        if (towardEnemy.LengthSquared() == 0)
+            return null;
+
+        int targetMask = WalkingPlayerTargetMask(
+            PlayerAimForward(playerId), towardEnemy,
+            shieldProbability * 0.5f, chooseInfantryShieldRoll);
+        if (targetMask != 2)
+            return PlanDiagnosticMovingPlayerAim(enemyId, playerId,
+                observedWeaponMuzzle);
+
+        PlayerShotTarget shield = playerShotTargets.Nearest(2,
+            enemyPosition, target => moving.Pose.BodyTarget(
+                target.TransformFileId).Position);
+        Vector3 shieldPosition = moving.Pose.BodyTarget(
+            shield.TransformFileId).Position;
+        return new CoopMovingPlayerAimPlan(enemyId, playerId,
+            shield.TransformFileId, shieldPosition,
+            player.MovementVelocity, shieldPosition, tick)
+        {
+            TargetMask = 2
+        };
+    }
+
+    internal static int WalkingPlayerTargetMask(Vector3 forward,
+        Vector3 towardEnemy, float shieldProbability, Func<float> random)
+    {
+        if (!PlayerHitbox.Finite(forward) ||
+            !PlayerHitbox.Finite(towardEnemy) ||
+            forward.LengthSquared() == 0 ||
+            towardEnemy.LengthSquared() == 0 ||
+            !float.IsFinite(shieldProbability) ||
+            shieldProbability is < 0 or > 1)
+            throw new InvalidDataException(
+                "Invalid walking player target selection authority.");
+
+        float facing = Vector3.Dot(Vector3.Normalize(forward),
+            Vector3.Normalize(towardEnemy));
+        if (facing < MathF.Cos(50f * MathF.PI / 180f))
+            return 2;
+        float roll = random();
+        if (!float.IsFinite(roll) || roll is < 0 or >= 1)
+            throw new InvalidDataException(
+                "Invalid walking player shield roll.");
+        return roll <= shieldProbability ? 2 : 0x10;
     }
 
     private MovingWeaponPose? SampleMovingWeaponPose(Participant player)
