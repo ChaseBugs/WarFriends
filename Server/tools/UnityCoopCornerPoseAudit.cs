@@ -87,6 +87,26 @@ public static class UnityCoopCornerPoseAudit
                     }).ToArray()
                 });
             }
+            // Sample the actual NGUI component on this prefab. A fixed
+            // target makes its easing and quaternion behavior reproducible.
+            enemy.transform.rotation = rotation;
+            Quaternion turnTarget = Quaternion.Euler(0f, -45f, 0f);
+            TweenRotation turn = TweenRotation.Begin(enemy, 0.3f,
+                turnTarget);
+            // In this Edit Mode audit, AddComponent can reset local rotation
+            // before Begin reads it. Pin the source state explicitly.
+            turn.from = rotation.eulerAngles;
+            enemy.transform.rotation = rotation;
+            var turnSamples = new List<object>();
+            for (int turnTick = 0; turnTick <= 9; turnTick++)
+            {
+                turn.Sample(turnTick / 9f, turnTick == 9);
+                turnSamples.Add(new
+                {
+                    tick = turnTick,
+                    rotation = Values(enemy.transform.rotation)
+                });
+            }
             File.WriteAllText(outputPath, JsonConvert.SerializeObject(new
             {
                 version = 1,
@@ -98,7 +118,9 @@ public static class UnityCoopCornerPoseAudit
                 pointComponentFileId = CornerComponentId,
                 position = Values(position),
                 rotation = Values(rotation),
-                samples
+                samples,
+                turnTarget = Values(turnTarget),
+                turnSamples
             }, Formatting.Indented));
             Debug.Log("COOP_CORNER_POSE_AUDIT_PASSED samples=" +
                 samples.Count);

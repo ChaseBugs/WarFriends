@@ -597,7 +597,7 @@ internal static class CombatContentTests
         byte[] source = File.ReadAllBytes(path);
         string digest = Convert.ToHexStringLower(SHA256.HashData(source));
         if (digest !=
-            "67beafcf35d85cedd7345ee88c808ddf75d63ed160bd561bbc96d18714d3f610")
+            "94588c7674250869368a60a209276099b1d95896f4f41496ec879411ae30a9ed")
             throw new Exception("Unity corner pose reference changed.");
 
         using JsonDocument document = JsonDocument.Parse(source);
@@ -650,6 +650,25 @@ internal static class CombatContentTests
                     throw new Exception(
                         "Host corner idle collider differs from Unity placement.");
             }
+        }
+        Quaternion turnTarget = Rotation(reference.GetProperty(
+            "turnTarget"));
+        JsonElement[] turnSamples = reference.GetProperty("turnSamples")
+            .EnumerateArray().ToArray();
+        if (turnSamples.Length != 10)
+            throw new Exception("Unity corner turn lost a fixed tick.");
+        for (int turnTick = 0; turnTick <= 9; turnTick++)
+        {
+            JsonElement sample = turnSamples[turnTick];
+            float progress = turnTick / 9f;
+            float eased = progress - MathF.Sin(progress * 2f * MathF.PI) /
+                (2f * MathF.PI);
+            Quaternion expected = Quaternion.Slerp(rotation, turnTarget,
+                eased);
+            Quaternion actual = Rotation(sample.GetProperty("rotation"));
+            if (sample.GetProperty("tick").GetInt32() != turnTick ||
+                1 - Math.Abs(Quaternion.Dot(expected, actual)) > 0.00002f)
+                throw new Exception("Host corner turn differs from Unity NGUI.");
         }
     }
 
