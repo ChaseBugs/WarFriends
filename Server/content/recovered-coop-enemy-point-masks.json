@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "soldiers": [
+    {
+      "behaviorFileId": 35664,
+      "behaviorType": "SoldierBehaviourAssaulter",
+      "unitId": "ID_UNIT-ASSAULT",
+      "enemyPointMask": 14
+    },
+    {
+      "behaviorFileId": 43123,
+      "behaviorType": "SoldierBehaviourSniper",
+      "unitId": "ID_UNIT-SNIPER",
+      "enemyPointMask": 6
+    },
+    {
+      "behaviorFileId": 42012,
+      "behaviorType": "SoldierBehaviourBazooka",
+      "unitId": "ID_UNIT-ROCKETSOLDIER",
+      "enemyPointMask": 6
+    },
+    {
+      "behaviorFileId": 46839,
+      "behaviorType": "SoldierBehaviourShotgunner",
+      "unitId": "ID_UNIT-SHOTGUNNER",
+      "enemyPointMask": 9
+    },
+    {
+      "behaviorFileId": 49788,
+      "behaviorType": "SoldierBehaviourGrennader",
+      "unitId": "ID_UNIT-GRENADIER",
+      "enemyPointMask": 14
+    },
+    {
+      "behaviorFileId": 38324,
+      "behaviorType": "SoldierBehaviourParachuter",
+      "unitId": "ID_UNIT-PARATROOPER",
+      "enemyPointMask": 1
+    },
+    {
+      "behaviorFileId": 38536,
+      "behaviorType": "SoldierBehaviourSwat",
+      "unitId": "ID_UNIT-SWAT",
+      "enemyPointMask": 33
+    },
+    {
+      "behaviorFileId": 41873,
+      "behaviorType": "SoldierBehaviourMinigunner",
+      "unitId": "ID_UNIT-MINIGUNNER",
+      "enemyPointMask": 128
+    },
+    {
+      "behaviorFileId": 48221,
+      "behaviorType": "SoldierBehaviourEngineer",
+      "unitId": "ID_UNIT-ENGINEER",
+      "enemyPointMask": 768
+    },
+    {
+      "behaviorFileId": 38275,
+      "behaviorType": "SoldierBehaviourMachineGunner",
+      "unitId": "ID_UNIT-MACHINEGUNNER",
+      "enemyPointMask": 2
+    },
+    {
+      "behaviorFileId": 37224,
+      "behaviorType": "SoldierBehaviourSciFi",
+      "unitId": "ID_UNIT-SCIFI",
+      "enemyPointMask": 2
+    },
+    {
+      "behaviorFileId": 48623,
+      "behaviorType": "SoldierBehaviourFlamethrower",
+      "unitId": "ID_UNIT-FLAMETHROWER",
+      "enemyPointMask": 9
+    },
+    {
+      "behaviorFileId": 47747,
+      "behaviorType": "SoldierBehaviourCommando",
+      "unitId": "ID_UNIT-COMMANDO",
+      "enemyPointMask": 9
+    },
+    {
+      "behaviorFileId": 36243,
+      "behaviorType": "SoldierBehaviourGunslinger",
+      "unitId": "ID_UNIT-GUNSLINGER",
+      "enemyPointMask": 2048
+    },
+    {
+      "behaviorFileId": 41188,
+      "behaviorType": "SoldierBehaviourMortar",
+      "unitId": "ID_UNIT-MORTAR",
+      "enemyPointMask": 4096
+    },
+    {
+      "behaviorFileId": 44715,
+      "behaviorType": "SoldierBehaviourWarper",
+      "unitId": "ID_UNIT-WARPER",
+      "enemyPointMask": 1
+    }
+  ]
+}

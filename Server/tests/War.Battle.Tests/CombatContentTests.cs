@@ -70,7 +70,8 @@ internal static class CombatContentTests
             directory, catalog, content);
         int skillShotAssertions = VerifyCoopSkillShotScores(skillShots);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
-        int enemyPointAssertions = VerifyCoopEnemyPoints(directory, catalog);
+        int enemyPointAssertions = VerifyCoopEnemyPoints(directory, catalog,
+            content.Army);
         int colliderAssertions = VerifyCoopSceneColliders(directory, catalog);
         int prefabColliderAssertions = VerifyCoopPrefabColliders(directory);
         int nativeRayAssertions = VerifyCoopNativeSceneRays(directory, catalog);
@@ -2869,7 +2870,7 @@ internal static class CombatContentTests
     }
 
     private static int VerifyCoopEnemyPoints(
-        string directory, MissionCatalog missions)
+        string directory, MissionCatalog missions, ArmyDeploymentCatalog army)
     {
         CoopSpawnPointCatalog spawns = CoopSpawnPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-spawn-points.json"),
@@ -2901,6 +2902,68 @@ internal static class CombatContentTests
             Vector3.Distance(engineer.Position, expectedEngineer) > 0.0001f)
             throw new Exception("Co-op enemy destinations differ from the source scenes.");
 
+        string maskPath = Path.Combine(directory,
+            "recovered-coop-enemy-point-masks.json");
+        CoopEnemyPointMaskCatalog masks = CoopEnemyPointMaskCatalog.Load(
+            maskPath, army);
+        CoopSoldierPointMask assaulter = masks.Soldiers[0];
+        if (masks.Soldiers.Count != 16 ||
+            assaulter.UnitId != "ID_UNIT-ASSAULT" || assaulter.Mask != 14)
+            throw new Exception("Co-op soldier point masks differ from MainScene.");
+
+        CoopEnemyPoint? nearest = CoopEnemyPointSelection.SelectOrdinary(
+            desert, assaulter.Mask, obstacle.TransformPosition,
+            new HashSet<int>());
+        if (nearest == null || (assaulter.Mask & PointBit(nearest)) == 0)
+            throw new Exception("Ordinary soldier did not select a free accepted point.");
+        HashSet<int> occupied = [nearest.ComponentFileId];
+        CoopEnemyPoint? next = CoopEnemyPointSelection.SelectOrdinary(
+            desert, assaulter.Mask, obstacle.TransformPosition, occupied);
+        if (next?.ComponentFileId == nearest.ComponentFileId)
+            throw new Exception("Occupied enemy point was selected again.");
+
+        // A source-only specialist point must not become an ordinary hiding point.
+        CoopEnemyPoint? minigunner = CoopEnemyPointSelection.SelectOrdinary(
+            desert, 128, obstacle.TransformPosition, new HashSet<int>());
+        if (minigunner?.ComponentType != "EnemyPointMinigunner")
+            throw new Exception("Co-op point mask did not restrict the point type.");
+
+        CoopEnemyPoint[] equalDistance =
+        [
+            obstacle with { Order = 0, ComponentFileId = 1,
+                TransformPosition = new Vector3(-1, 0, 0) },
+            obstacle with { Order = 1, ComponentFileId = 2,
+                TransformPosition = new Vector3(1, 0, 0) }
+        ];
+        CoopMapEnemyPoints tiedMap = desert with { Points = equalDistance };
+        CoopEnemyPoint? first = CoopEnemyPointSelection.SelectOrdinary(
+            tiedMap, 2, Vector3.Zero, new HashSet<int>());
+        if (first?.ComponentFileId != 1)
+            throw new Exception("Equal-distance enemy points lost source order.");
+
+        string damagedMaskPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-point-masks-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode damagedMasks = JsonNode.Parse(
+                File.ReadAllText(maskPath))!;
+            damagedMasks["soldiers"]![0]!["enemyPointMask"] = 0;
+            File.WriteAllText(damagedMaskPath, damagedMasks.ToJsonString());
+            try
+            {
+                _ = CoopEnemyPointMaskCatalog.Load(damagedMaskPath, army);
+                throw new Exception("Changed co-op point mask was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                // The complete source artifact is pinned before selection.
+            }
+        }
+        finally
+        {
+            File.Delete(damagedMaskPath);
+        }
+
         string damagedPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-enemy-points-{Guid.NewGuid():N}.json");
         try
@@ -2922,8 +2985,16 @@ internal static class CombatContentTests
         {
             File.Delete(damagedPath);
         }
-        return 8;
+        return 15;
     }
+
+    private static int PointBit(CoopEnemyPoint point) => point.ComponentType switch
+    {
+        "EnemyPointObstacle" => 2,
+        "EnemyPointCorner" => 4,
+        "EnemyPointMinigunner" => 128,
+        _ => 0
+    };
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
     {
