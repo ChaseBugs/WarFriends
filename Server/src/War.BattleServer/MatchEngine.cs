@@ -276,6 +276,25 @@ public sealed partial class MatchEngine : IMatchRuntime
         return "shields-up-applied";
     }
 
+    private string UseShieldGenerator(Player owner, string requestId)
+    {
+        if (!owner.CardsSelected ||
+            !owner.SelectedCards.Contains("CardShieldGenerator", StringComparer.Ordinal))
+            return "shield-generator-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
+            return "invalid-shield-generator-request";
+        if (cardReservations == null || shields == null)
+            return "shield-generator-authority-unavailable";
+        if (events.Count >= MaximumRetainedEvents || stateRevision == ulong.MaxValue)
+            return "event-backpressure";
+
+        // MainScene overrides CardShieldGenerator.timeInSeconds to four.
+        // Cover occupancy and health gain are resolved on later host ticks.
+        var effect = new WarCardEffectRequest("CardShieldGenerator", Vector3.Zero, 4, 1);
+        return TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect)
+            ? "shield-generator-active" : "shield-generator-unavailable";
+    }
+
     internal bool TryResolveCardStatus(string ownerPlayerId, string effectId, string targetPlayerId)
     {
         var target = Find(targetPlayerId);
@@ -1038,8 +1057,24 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try
             {
-                foreach(var repaired in shields.Advance(tick))
-                {stateRevision++;EmitShield(MatchEventKind.ShieldRepaired,"",repaired,0);}
+                var regeneratingFractions = cardEffects.Snapshot()
+                    .Where(effect => effect.Definition.CardId == "CardShieldGenerator" &&
+                                     effect.Lease.ActiveAt(tick))
+                    .Select(effect => Find(effect.OwnerPlayerId)?.Definition.Fraction ?? 0)
+                    .Where(fraction => fraction is 1 or 2).Distinct().ToArray();
+                var occupiedCovers = players.Where(player => player.Admitted && !player.Dead)
+                    .Select(player => player.Route != null ? player.Destination : player.Cover)
+                    .Where(index => map != null && index >= 0 && index < map.Covers.Count)
+                    .Select(index => map!.Covers[index].SourceIndex).ToArray();
+                shields.SetCardRegeneration(regeneratingFractions, occupiedCovers);
+                var before = shields.Snapshot().ToDictionary(shield => shield.CoverIndex);
+                foreach (var changed in shields.Advance(tick))
+                {
+                    stateRevision++;
+                    var eventKind = before[changed.CoverIndex].Destroyed
+                        ? MatchEventKind.ShieldRepaired : MatchEventKind.ShieldRegenerated;
+                    EmitShield(eventKind, "", changed, 0);
+                }
             }
             catch(InvalidDataException){End("invalid-shield-authority","",false);return;}
         }
@@ -1680,6 +1715,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
             return UseShieldsUp(p,c.UseShieldsUp.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldGenerator)
+            return UseShieldGenerator(p,c.UseShieldGenerator.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;

@@ -520,7 +520,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
 			if (selfHosted != null && selfHosted.IsConnected &&
 				(card is CardDecoy || card is CardLandmine || card is CardHeavyTurret ||
-				card is CardHealingStorm || card is CardShieldsUp ||
+				card is CardHealingStorm || card is CardShieldsUp || card is CardShieldGenerator ||
 				card.GetType() == typeof(CardHealMeNow)))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
@@ -551,12 +551,14 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			if (card.GetType() == typeof(CardHealMeNow)) reply = await client.UseMedkitResult();
 			else if (card is CardHealingStorm) reply = await client.UseHealingStormResult();
 			else if (card is CardShieldsUp) reply = await client.UseShieldsUpResult();
+			else if (card is CardShieldGenerator) reply = await client.UseShieldGeneratorResult();
 			else if (card is CardLandmine) reply = await client.UseLandMineResult();
 			else if (card is CardHeavyTurret) reply = await client.UseHeavyTurretResult();
 			else reply = await client.UseDecoyResult();
 			bool accepted = card.GetType() == typeof(CardHealMeNow) ? reply.Code == "medkit-healed" :
 				card is CardHealingStorm ? reply.Code == "healing-storm-applied" :
 				card is CardShieldsUp ? reply.Code == "shields-up-applied" :
+				card is CardShieldGenerator ? reply.Code == "shield-generator-active" :
 				card is CardLandmine ? reply.Code == "land-mine-spawned" || reply.Code == "land-mine-replayed" :
 				card is CardHeavyTurret ? reply.Code == "heavy-turret-spawned" || reply.Code == "heavy-turret-replayed" :
 				reply.Code == "decoy-spawned" || reply.Code == "decoy-replayed";

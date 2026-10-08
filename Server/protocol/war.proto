@@ -121,6 +121,7 @@ message UseHeavyTurretCommand { string request_id = 1; }
 message UseMedkitCommand { string request_id = 1; }
 message UseHealingStormCommand { string request_id = 1; }
 message UseShieldsUpCommand { string request_id = 1; }
+message UseShieldGeneratorCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -142,6 +143,7 @@ message MatchCommand {
     UseMedkitCommand use_medkit = 27;
     UseHealingStormCommand use_healing_storm = 28;
     UseShieldsUpCommand use_shields_up = 29;
+    UseShieldGeneratorCommand use_shield_generator = 30;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -587,6 +589,7 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_DRONE_FIRED = 39;
   MATCH_EVENT_KIND_HELICOPTER_FIRED = 40;
   MATCH_EVENT_KIND_ASSAULT_HELICOPTER_FIRED = 41;
+  MATCH_EVENT_KIND_SHIELD_REGENERATED = 42;
 }
 message DroneShotPresentation {
   uint64 army_entity_key = 1;

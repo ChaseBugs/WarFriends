@@ -795,14 +795,41 @@ internal static class BazookaCatalogTests
               shieldSimulation.Snapshot().Where(row => row.OwnerFraction == 2)
                   .All(row => row.MaxHealth == originalShields.Single(x => x.CoverIndex == row.CoverIndex).MaxHealth),
             "Shields Up changes every allied maximum without refilling health or touching the enemy");
+        var regenerationProbe = new ShieldMatchSimulation(map, content.Shields, shieldAllocation);
+        var occupiedCover = covers[0];
+        string occupiedShield = occupiedCover.SourcePath + "/riot_shield";
+        var injuredShield = regenerationProbe.ApplyShot(occupiedShield, 2,
+            "Google2u.Bazooka_RPG7", 100, 0)
+            ?? throw new Exception("The shield injury fixture did not hit its cover.");
+        Check(injuredShield.Health < injuredShield.MaxHealth,
+            "trusted enemy damage injures the occupied cover shield");
+        regenerationProbe.SetCardRegeneration([1], [occupiedCover.SourceIndex]);
+        var regeneration = regenerationProbe.Advance(1);
+        float healedShieldHealth = regenerationProbe.Snapshot()
+            .Single(row => row.CoverIndex == occupiedCover.SourceIndex).Health;
+        Check(regeneration.Any(row => row.CoverIndex == occupiedCover.SourceIndex) &&
+              healedShieldHealth > injuredShield.Health,
+            "Shield Generator heals an injured allied shield occupied by its player");
+        regenerationProbe.SetCardRegeneration([1], []);
+        regenerationProbe.Advance(2);
+        Check(regenerationProbe.Snapshot().Single(row => row.CoverIndex == occupiedCover.SourceIndex).Health ==
+              healedShieldHealth,
+            "an unoccupied shield does not regenerate during the card window");
+        regenerationProbe.SetCardRegeneration([], [occupiedCover.SourceIndex]);
+        regenerationProbe.Advance(3);
+        Check(regenerationProbe.Snapshot().Single(row => row.CoverIndex == occupiedCover.SourceIndex).Health ==
+              healedShieldHealth,
+            "an expired card window stops occupied-shield regeneration");
         var shieldsUpMatch = new MatchEngine(shieldAllocation with
         { MatchId = "bazooka-shields-up-card" }, content: content);
-        shieldsUpMatch.ConfigureCardSelection(["CardShieldsUp"]);
-        shieldsUpMatch.ConfigureCardInventory([(one, "CardShieldsUp", 1)]);
+        shieldsUpMatch.ConfigureCardSelection(["CardShieldsUp", "CardShieldGenerator"]);
+        shieldsUpMatch.ConfigureCardInventory([
+            (one, "CardShieldsUp", 1), (one, "CardShieldGenerator", 1)]);
         shieldsUpMatch.Admit(one);
         shieldsUpMatch.Admit(two);
         var shieldCardSelection = new SelectCardsCommand();
         shieldCardSelection.CardIds.Add("CardShieldsUp");
+        shieldCardSelection.CardIds.Add("CardShieldGenerator");
         Check(shieldsUpMatch.Command(one, new() { CommandId = 1,
                   SelectCards = shieldCardSelection }).Code == "cards-selected",
             "only the allocated player can select Shields Up");
@@ -825,6 +852,17 @@ internal static class BazookaCatalogTests
               shieldsUpMatch.Command(one, new() { CommandId = 4,
                   UseShieldsUp = new() { RequestId = "94949494949494949494949494949494" } }).Code == "shields-up-unavailable",
             "Shields Up command replay cannot multiply twice or spend exhausted inventory");
+        var generatorCommand = new MatchCommand { CommandId = 5,
+            UseShieldGenerator = new()
+            { RequestId = "95959595959595959595959595959595" } };
+        Check(shieldsUpMatch.Command(one, generatorCommand).Code == "shield-generator-active" &&
+              shieldsUpMatch.Command(one, generatorCommand).Code == "shield-generator-active" &&
+              shieldsUpMatch.Snapshot().CardEffects.Any(effect => effect.CardId == "CardShieldGenerator"),
+            "authenticated Shield Generator starts one replay-safe, owner-scoped effect");
+        for (ulong shieldTick = 61; shieldTick <= 180; shieldTick++)
+            shieldsUpMatch.Advance(shieldTick);
+        Check(!shieldsUpMatch.Snapshot().CardEffects.Any(effect => effect.CardId == "CardShieldGenerator"),
+            "MainScene's four-second Shield Generator window expires at the host tick boundary");
         string enemyShield=covers[1].SourcePath+"/riot_shield";float shieldBefore=shieldSimulation.Snapshot().Single(x=>x.OwnerFraction==2&&x.CoverIndex==covers[1].SourceIndex).Health;
         var shieldMutation=shieldSimulation.ApplyExplosion(enemyShield,1,"Google2u.Bazooka_RPG7",rpg.ExplosionDamage,0);
         Check(shieldMutation!=null&&Math.Abs(shieldBefore-shieldMutation.Health-rpg.ExplosionDamage*2)<.01f,

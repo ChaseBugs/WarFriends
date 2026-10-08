@@ -57,6 +57,15 @@ internal sealed class ShieldMatchSimulation
         }
         return alliedShields.Select(entry => entry.Snapshot()).ToArray();
     }
+    internal void SetCardRegeneration(IReadOnlyCollection<int> enabledFractions,
+        IReadOnlyCollection<int> occupiedCoverSourceIndexes)
+    {
+        foreach (var entry in entries)
+        {
+            entry.Lifecycle.CanRegenerate = enabledFractions.Contains(entry.Cover.Fraction);
+            entry.Lifecycle.HasPlayer = occupiedCoverSourceIndexes.Contains(entry.Cover.SourceIndex);
+        }
+    }
     internal bool IsLiveEnemyShield(string dynamicOwner,int shooterFraction)
     {
         if(shooterFraction is not (1 or 2))throw new InvalidDataException("Invalid shield shooter fraction.");
@@ -133,18 +142,19 @@ internal sealed class ShieldMatchSimulation
     {
         if(tick<lastTick || tick-lastTick>120 || tick>10000000)
             throw new InvalidDataException("Invalid shield simulation tick.");
-        var changes=new List<ShieldMutation>();
+        var changes=new Dictionary<int,ShieldMutation>();
         while(lastTick<tick)
         {
             lastTick++;
             foreach(var row in entries)
             {
                 bool wasDestroyed=row.Lifecycle.Destroyed;
+                float healthBefore = row.Lifecycle.Health;
                 row.Lifecycle.Advance(lastTick);
-                if(wasDestroyed && !row.Lifecycle.Destroyed)
-                {row.Revision++;changes.Add(row.Snapshot());}
+                if ((wasDestroyed && !row.Lifecycle.Destroyed) || row.Lifecycle.Health != healthBefore)
+                {row.Revision++;changes[row.Cover.SourceIndex]=row.Snapshot();}
             }
         }
-        return changes.AsReadOnly();
+        return changes.Values.OrderBy(change=>change.CoverIndex).ToArray();
     }
 }
