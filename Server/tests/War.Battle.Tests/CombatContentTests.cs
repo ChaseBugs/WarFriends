@@ -10422,6 +10422,28 @@ internal static class CombatContentTests
             Check(senderWindow.Allow(1)&&senderWindow.Allow(1)&&!senderWindow.Allow(1)&&senderWindow.Allow(11),
                   "hostile-network sender rate windows bound bursts and reset on the next tick window");
             Reject(()=>senderWindow.Allow(0));
+            var endpointRegistry = new SenderEndpointRegistry(
+                capacity: 2, idleTicks: 10);
+            var firstEndpoint = new IPEndPoint(IPAddress.Loopback, 31001);
+            var activeEndpoint = new IPEndPoint(IPAddress.Loopback, 31002);
+            var newEndpoint = new IPEndPoint(IPAddress.Loopback, 31003);
+            Check(endpointRegistry.Admit(firstEndpoint, 0) == SenderAdmission.Allowed &&
+                  endpointRegistry.Admit(activeEndpoint, 0) == SenderAdmission.Allowed &&
+                  endpointRegistry.Admit(newEndpoint, 0) == SenderAdmission.CapacityReached,
+                "sender registry bounds distinct UDP endpoints");
+            Check(endpointRegistry.Admit(activeEndpoint, 5) == SenderAdmission.Allowed &&
+                  endpointRegistry.Admit(newEndpoint, 10) == SenderAdmission.Allowed &&
+                  endpointRegistry.Count == 2 &&
+                  endpointRegistry.Admit(firstEndpoint, 10) == SenderAdmission.CapacityReached,
+                "an idle sender leaves capacity while an active sender keeps its rate window");
+            bool originalWindowRetained = true;
+            for (int admitted = 0; admitted < 254; admitted++)
+                originalWindowRetained &= endpointRegistry.Admit(
+                    activeEndpoint, 10) == SenderAdmission.Allowed;
+            Check(originalWindowRetained &&
+                  endpointRegistry.Admit(activeEndpoint, 10) ==
+                    SenderAdmission.RateLimited,
+                "idle eviction does not reset an active sender's rate limit");
             var cancelledLoading=new BattleLoadingState(new string('e',64));
             Check(cancelledLoading.Cancel("client-timeout")&&!cancelledLoading.Cancel("again")&&
                   !cancelledLoading.Admit("26262626262626262626262626262626"),

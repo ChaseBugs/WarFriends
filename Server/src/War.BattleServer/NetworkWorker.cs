@@ -31,7 +31,7 @@ public sealed class NetworkWorker : BackgroundService
     private readonly Channel<Datagram> incoming = Channel.CreateBounded<Datagram>(new BoundedChannelOptions(512) { SingleReader = true, SingleWriter = true, FullMode = BoundedChannelFullMode.Wait });
     private readonly object incomingGate = new();
     private readonly Dictionary<IPEndPoint,int> pendingByEndpoint = [];
-    private readonly Dictionary<IPEndPoint,SenderRateWindow> rateByEndpoint = [];
+    private readonly SenderEndpointRegistry senderEndpoints = new();
     private Dictionary<ulong,IPEndPoint> activeMatchEndpoints = [];
     private long receivedDatagrams,handledDatagrams,malformedDrops,unownedDrops,
         endpointLimitDrops,queueFullDrops,tickBacklogs;
@@ -325,12 +325,11 @@ public sealed class NetworkWorker : BackgroundService
             // other matches need admission, commands, or reconnect polls.
             lock(incomingGate)
             {
-                if(!rateByEndpoint.TryGetValue(endpoint,out var rate))
-                {
-                    if(rateByEndpoint.Count>=4096){Interlocked.Increment(ref endpointLimitDrops);continue;}
-                    rateByEndpoint[endpoint]=rate=new SenderRateWindow();
-                }
-                if(!rate.Allow(tick)){Interlocked.Increment(ref malformedDrops);continue;}
+                SenderAdmission admission = senderEndpoints.Admit(endpoint, tick);
+                if (admission == SenderAdmission.CapacityReached)
+                { Interlocked.Increment(ref endpointLimitDrops); continue; }
+                if (admission == SenderAdmission.RateLimited)
+                { Interlocked.Increment(ref malformedDrops); continue; }
                 int pending=pendingByEndpoint.GetValueOrDefault(endpoint);
                 if(pending>=PendingPerEndpointLimit)
                 {Interlocked.Increment(ref endpointLimitDrops);continue;}
