@@ -8,6 +8,101 @@ namespace War.BattleServer;
 /// </summary>
 internal static class CoopTerminalScoreValidator
 {
+    internal static void ValidateNonSuccess(MatchSnapshot snapshot,
+        MatchManifest allocation, MissionCatalog missions)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(missions);
+        MatchManifest manifest = MatchManifest.Validate(allocation);
+        if (manifest.Mode != MatchManifest.CoopMissionMode ||
+            manifest.MissionIndex is not int missionIndex ||
+            manifest.CatalogRevision != missions.SourceSha256 ||
+            snapshot.MatchId != manifest.MatchId ||
+            snapshot.ManifestHash != manifest.Digest() ||
+            snapshot.Coop == null ||
+            snapshot.RewardEligible ||
+            snapshot.WinnerPlayerId.Length != 0 ||
+            snapshot.Coop.Completed ||
+            !snapshot.Coop.Failed ||
+            snapshot.Coop.SuccessScores.Count != 0 ||
+            snapshot.EndTick != snapshot.ServerTick ||
+            snapshot.ServerTick > 10_000_000 ||
+            snapshot.StartTick > snapshot.EndTick)
+            throw new InvalidDataException("Invalid co-op non-success envelope.");
+
+        MissionRule rule = missions.Get(missionIndex);
+        ulong durationTicks = checked((ulong)rule.TimeSeconds *
+            MatchManifest.TickRate);
+        if (manifest.DurationSeconds != rule.TimeSeconds ||
+            snapshot.Coop.MissionIndex != rule.Index ||
+            snapshot.Coop.MissionType != rule.MissionType ||
+            snapshot.Coop.ObjectiveTarget != rule.Objective.GetValueOrDefault() ||
+            snapshot.Coop.ObjectiveScore is < 0 or > 1_000_000_000 ||
+            snapshot.Coop.EnemyKills < 0 ||
+            snapshot.Players.Count != manifest.Players.Length)
+            throw new InvalidDataException(
+                "Co-op non-success differs from its mission rule.");
+
+        string[] roster = manifest.Players.Select(player => player.PlayerId)
+            .Order(StringComparer.Ordinal).ToArray();
+        string[] remaining = snapshot.Coop.ParticipantIds.ToArray();
+        if (!remaining.SequenceEqual(remaining.Order(StringComparer.Ordinal)) ||
+            remaining.Distinct(StringComparer.Ordinal).Count() != remaining.Length ||
+            remaining.Any(playerId => !roster.Contains(playerId,
+                StringComparer.Ordinal)))
+            throw new InvalidDataException(
+                "Co-op non-success has invalid participant identities.");
+
+        if (snapshot.Coop.Started)
+        {
+            if (snapshot.Coop.DeadlineTick !=
+                    snapshot.StartTick + durationTicks ||
+                snapshot.EndTick > snapshot.Coop.DeadlineTick)
+                throw new InvalidDataException(
+                    "Co-op failure has an invalid mission clock.");
+        }
+        else if (snapshot.StartTick != 0 ||
+                 snapshot.Coop.DeadlineTick != 0 ||
+                 snapshot.Coop.EnemySpawns.Count != 0)
+        {
+            throw new InvalidDataException(
+                "Prestart co-op terminal evidence contains mission play.");
+        }
+
+        switch (snapshot.TerminalReason)
+        {
+            case "mission-failed":
+                if (snapshot.Phase != BattlePhase.Ended ||
+                    !snapshot.Coop.Started ||
+                    snapshot.EndTick != snapshot.Coop.DeadlineTick ||
+                    !remaining.SequenceEqual(roster))
+                    throw new InvalidDataException(
+                        "Co-op timeout differs from the source deadline.");
+                break;
+            case "forfeit":
+                if (snapshot.Phase != BattlePhase.Ended ||
+                    remaining.Length >= roster.Length)
+                    throw new InvalidDataException(
+                        "Co-op forfeit did not remove a participant.");
+                break;
+            case "cancelled-before-start":
+            case "admission-timeout":
+                if (snapshot.Phase != BattlePhase.Aborted ||
+                    snapshot.Coop.Started)
+                    throw new InvalidDataException(
+                        "Co-op prestart abort started mission play.");
+                break;
+            case "host-shutdown":
+                if (snapshot.Phase != BattlePhase.Aborted)
+                    throw new InvalidDataException(
+                        "Co-op host shutdown is not an abort.");
+                break;
+            default:
+                throw new InvalidDataException(
+                    "Unknown co-op non-success reason.");
+        }
+    }
+
     internal static void ValidateSuccess(
         MatchSnapshot snapshot, MatchManifest allocation,
         MissionCatalog missions, CoopEnemyCombatCatalog combat,

@@ -5267,6 +5267,15 @@ internal static class CombatContentTests
         if (!runtime.Terminal || runtime.Snapshot().TerminalReason != "mission-failed" ||
             runtime.TerminalEvidenceSnapshot().RewardEligible)
             throw new Exception("A timed-out kill mission remains unscored and terminal.");
+        MatchSnapshot forgedFailureReward = runtime.TerminalEvidenceSnapshot();
+        forgedFailureReward.RewardEligible = true;
+        try
+        {
+            CoopTerminalScoreValidator.ValidateNonSuccess(
+                forgedFailureReward, coop, catalog);
+            throw new Exception("A failed co-op mission carried reward eligibility.");
+        }
+        catch (InvalidDataException) { }
         ulong terminalTick = runtime.Snapshot().EndTick;
         runtime.Advance(ulong.MaxValue);
         if (runtime.Snapshot().EndTick != terminalTick ||
@@ -5435,8 +5444,31 @@ internal static class CombatContentTests
         earlyForfeit.Command(firstPlayer, new MatchCommand
             { CommandId = 1, Forfeit = new ForfeitCommand() });
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
-            earlyForfeit.Snapshot().RewardEligible)
+            earlyForfeit.TerminalEvidenceSnapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
+        var cancelled = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat);
+        if (!cancelled.CancelBeforeStart() ||
+            cancelled.TerminalEvidenceSnapshot().TerminalReason !=
+                "cancelled-before-start")
+            throw new Exception("A cancelled co-op allocation was not an abort.");
+        var admissionTimeout = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat);
+        admissionTimeout.Advance((ulong)coop.AdmissionSeconds *
+            MatchManifest.TickRate);
+        if (admissionTimeout.TerminalEvidenceSnapshot().TerminalReason !=
+            "admission-timeout")
+            throw new Exception("A co-op admission timeout was not an abort.");
+        var hostShutdown = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat);
+        hostShutdown.Admit(firstPlayer);
+        hostShutdown.Admit(secondPlayer);
+        hostShutdown.Command(firstPlayer, firstReady);
+        hostShutdown.Command(secondPlayer, firstReady);
+        if (!hostShutdown.AbortForHostShutdown() ||
+            hostShutdown.TerminalEvidenceSnapshot().TerminalReason !=
+                "host-shutdown")
+            throw new Exception("A running co-op host shutdown was not an abort.");
         return 75 + allocationBindingAssertions;
     }
 
