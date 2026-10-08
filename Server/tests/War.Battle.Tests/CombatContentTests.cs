@@ -1896,7 +1896,7 @@ internal static class CombatContentTests
                 (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1)
             throw new Exception("Co-op corner arrival missed its source state.");
         cornerRuntime.Advance(cornerArrival.FirstShootEligibleTick);
-        CoopCornerFirstShotAttempt? cornerAttempt = cornerRuntime
+        CoopCornerShotAttempt? cornerAttempt = cornerRuntime
             .CornerFirstShotAttempt(cornerEnemy.EntityId);
         BattleCoopEnemySpawn cornerAtShot = cornerRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy =>
@@ -1917,6 +1917,70 @@ internal static class CombatContentTests
         if (cornerRuntime.CornerFirstShotAttempt(cornerEnemy.EntityId)
             != cornerAttempt)
             throw new Exception("Co-op corner retried without a new shot clock.");
+
+        // Flip only the test point's exposed side when needed so this
+        // otherwise identical fixture exercises CornerHidingUpdate's
+        // rejected-angle retry. Production maps remain digest-pinned.
+        bool rejectedSide = cornerAttempt.Exposed
+            ? !sourceCorner.CornerRightSide!.Value
+            : sourceCorner.CornerRightSide!.Value;
+        CoopMapEnemyPoints rejectedMap = enemyMap with
+        {
+            Points = enemyMap.Points.Select(point =>
+                point.ComponentFileId == sourceCorner.ComponentFileId
+                    ? point with { CornerRightSide = rejectedSide }
+                    : point).ToArray()
+        };
+        var rejectedDestinations = new CoopEnemyDestinationState(
+            rejectedMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var rejectedRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat,
+            chooseBehaviour: _ => 0,
+            choosePoint: count => count > cornerSpawnIndex
+                ? cornerSpawnIndex : 0,
+            enemyDestinations: rejectedDestinations,
+            infantryNavigation: infantryNavigation,
+            playerWeaponContent: content,
+            chooseInfantryShotFraction: () => 0.5f,
+            chooseInfantryPlayer: _ => 0,
+            chooseInfantryShieldRoll: () => 0.5f);
+        rejectedRuntime.Admit(firstPlayer);
+        rejectedRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            rejectedRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = rejectedRuntime.ManifestHash
+                }
+            });
+        rejectedRuntime.Advance(8);
+        ulong rejectedEntityId = rejectedRuntime.Snapshot()
+            .Coop.EnemySpawns.Single().EntityId;
+        rejectedRuntime.Advance(cornerArrival.FirstShootEligibleTick);
+        CoopCornerShotAttempt? rejectedFirst = rejectedRuntime
+            .CornerFirstShotAttempt(rejectedEntityId);
+        ulong expectedRetry = cornerArrival.FirstShootEligibleTick +
+            (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1;
+        if (rejectedFirst?.Exposed != false ||
+            rejectedFirst.NextEligibleTick != expectedRetry ||
+            rejectedRuntime.InfantryFirstPlayerTarget(rejectedEntityId) != null)
+            throw new Exception("Rejected co-op corner angle did not schedule a retry.");
+        rejectedRuntime.Advance(expectedRetry - 1);
+        if (rejectedRuntime.CornerLatestShotAttempt(rejectedEntityId) !=
+            rejectedFirst)
+            throw new Exception("Co-op corner retried before the strict shot gate.");
+        rejectedRuntime.Advance(expectedRetry);
+        CoopCornerShotAttempt? retriedCorner = rejectedRuntime
+            .CornerLatestShotAttempt(rejectedEntityId);
+        if (retriedCorner?.Tick != expectedRetry ||
+            retriedCorner.Exposed ||
+            retriedCorner.NextEligibleTick <= expectedRetry ||
+            rejectedRuntime.CornerFirstShotAttempt(rejectedEntityId) !=
+                rejectedFirst)
+            throw new Exception("Co-op corner did not retry its rejected target.");
 
         MissionRule rusherRule = catalog.Get(2);
         MissionMapRule rusherMissionMap = catalog.MapForMission(2);

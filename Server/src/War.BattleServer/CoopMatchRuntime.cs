@@ -44,8 +44,9 @@ internal sealed record CoopInfantryPointArrival(
 internal sealed record CoopInfantryPlayerTargetPlan(
     ulong EnemyEntityId, string PlayerId, int ShotTargetMask, ulong Tick);
 
-internal sealed record CoopCornerFirstShotAttempt(
-    ulong Tick, string PlayerId, Vector3 TargetPosition, bool Exposed);
+internal sealed record CoopCornerShotAttempt(
+    ulong Tick, string PlayerId, Vector3 TargetPosition, bool Exposed,
+    ulong? NextEligibleTick);
 
 internal sealed record CoopInfantryPlayerShotTarget(
     ulong EnemyEntityId, string PlayerId, int TransformFileId,
@@ -90,8 +91,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Dictionary<ulong, CoopInfantryPathState> infantryPaths = [];
     private readonly Dictionary<ulong, CoopInfantryPointArrival> infantryPointArrivals = [];
     private readonly Dictionary<ulong, CoopInfantryPlayerTargetPlan> infantryFirstTargets = [];
-    private readonly Dictionary<ulong, CoopCornerFirstShotAttempt>
+    private readonly Dictionary<ulong, CoopCornerShotAttempt>
         cornerFirstShotAttempts = [];
+    private readonly Dictionary<ulong, CoopCornerShotAttempt>
+        cornerLatestShotAttempts = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
     private readonly HashSet<ulong> movingObstacleRepositions = [];
     private readonly Func<float> chooseInfantryShotFraction;
@@ -382,8 +385,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     internal CoopInfantryPlayerTargetPlan? InfantryFirstPlayerTarget(
         ulong entityId) => infantryFirstTargets.GetValueOrDefault(entityId);
 
-    internal CoopCornerFirstShotAttempt? CornerFirstShotAttempt(
+    internal CoopCornerShotAttempt? CornerFirstShotAttempt(
         ulong entityId) => cornerFirstShotAttempts.GetValueOrDefault(entityId);
+
+    internal CoopCornerShotAttempt? CornerLatestShotAttempt(
+        ulong entityId) => cornerLatestShotAttempts.GetValueOrDefault(entityId);
 
     internal ulong? ObstacleRepositionStartedTick(ulong entityId) =>
         obstacleRepositionStartedTicks.TryGetValue(entityId, out ulong start)
@@ -946,6 +952,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryPointArrivals.Remove(enemy.EntityId);
         infantryFirstTargets.Remove(enemy.EntityId);
         cornerFirstShotAttempts.Remove(enemy.EntityId);
+        cornerLatestShotAttempts.Remove(enemy.EntityId);
         obstacleRepositionStartedTicks.Remove(enemy.EntityId);
         movingObstacleRepositions.Remove(enemy.EntityId);
         // Assaulter follows EnemyController.SetFinalTarget's ordinary walking
@@ -1129,7 +1136,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             bool obstacleShot = arrival.HasUnchangedObstaclePointForFirstShot;
             bool cornerShot = arrival.State ==
                 CoopInfantryPointState.CornerHiding &&
-                !cornerFirstShotAttempts.ContainsKey(entityId);
+                (!cornerLatestShotAttempts.TryGetValue(entityId,
+                    out CoopCornerShotAttempt? previousAttempt) ||
+                 previousAttempt.NextEligibleTick <= tick);
             if ((!obstacleShot && !cornerShot) ||
                 tick < arrival.FirstShootEligibleTick ||
                 infantryFirstTargets.ContainsKey(entityId))
@@ -1162,13 +1171,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 Vector3 enemyPosition = new(enemy.CurrentX, enemy.CurrentY,
                     enemy.CurrentZ);
                 // PrepareToShoot chooses a target before rejecting a corner
-                // angle. Keep the rejected first attempt closed; later retry
-                // timing still needs the Client's GenerateNextShootTime draw.
+                // angle. CornerHidingUpdate then calls GenerateNextShootTime
+                // on rejection; the accepted branch awaits shot animation.
                 bool exposed = CoopCornerShotPolicy.CanExpose(corner,
                     enemyPosition, target.Position);
-                cornerFirstShotAttempts.Add(entityId,
-                    new CoopCornerFirstShotAttempt(tick, plan.PlayerId,
-                        target.Position, exposed));
+                ulong? retryTick = exposed ? null :
+                    FirstInfantryShotEligibleTick(enemy, tick);
+                var attempt = new CoopCornerShotAttempt(tick,
+                    plan.PlayerId, target.Position, exposed, retryTick);
+                cornerFirstShotAttempts.TryAdd(entityId, attempt);
+                cornerLatestShotAttempts[entityId] = attempt;
+                stateRevision++;
                 if (!exposed)
                     continue;
             }
@@ -1519,6 +1532,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             infantryPointArrivals.Remove(entityId);
             infantryFirstTargets.Remove(entityId);
             cornerFirstShotAttempts.Remove(entityId);
+            cornerLatestShotAttempts.Remove(entityId);
             obstacleRepositionStartedTicks.Remove(entityId);
             movingObstacleRepositions.Remove(entityId);
             if (enemy.Behaviour == "Drone")
@@ -2152,6 +2166,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryPointArrivals.Clear();
         infantryFirstTargets.Clear();
         cornerFirstShotAttempts.Clear();
+        cornerLatestShotAttempts.Clear();
         obstacleRepositionStartedTicks.Clear();
         movingObstacleRepositions.Clear();
         foreach (Participant participant in participants.Values)
