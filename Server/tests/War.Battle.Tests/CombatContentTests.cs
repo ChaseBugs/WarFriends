@@ -2174,6 +2174,14 @@ internal static class CombatContentTests
             movingPlayer.MoveEndTick <= 1 ||
             movingPlayer.PositionZ != mainAnchors[0].Position.Z)
             throw new Exception("Co-op movement must begin at the signed source shield.");
+        Quaternion lockedCoverRotation = sourceMapSpawns.PlayerPositions[3]
+            .SourceRotation!.Value;
+        Vector3 lockedAim = -Vector3.Transform(Vector3.UnitZ,
+            lockedCoverRotation);
+        if (Vector3.Distance(movementRuntime.PlayerAimForward(firstPlayer),
+                lockedAim) > 0.00001f)
+            throw new Exception(
+                "Co-op shield lock did not hand aim to the destination.");
         movementRuntime.Advance(2);
         BattlePlayerState underway = movementRuntime.Snapshot().Players.Single(
             player => player.PlayerId == firstPlayer);
@@ -2265,14 +2273,14 @@ internal static class CombatContentTests
                 expectedCallbackAim) > 0.00001f)
             throw new Exception(
                 "Assaulter shot callback lost its second source lead step.");
-        try
-        {
-            _ = movementRuntime.PlayerAimForward(firstPlayer);
-            throw new Exception("Moving co-op aim used an unverified shield handoff.");
-        }
-        catch (InvalidOperationException)
-        {
-        }
+        Quaternion destinationRotation = sourceMapSpawns.PlayerPositions[3]
+            .SourceRotation!.Value;
+        Vector3 destinationAim = -Vector3.Transform(Vector3.UnitZ,
+            destinationRotation);
+        if (Vector3.Distance(movementRuntime.PlayerAimForward(firstPlayer),
+                destinationAim) > 0.00001f)
+            throw new Exception(
+                "Moving co-op aim missed the locked destination cover.");
         movementRuntime.Advance(movingPlayer.MoveEndTick);
         BattlePlayerState arrived = movementRuntime.Snapshot().Players.Single(
             player => player.PlayerId == firstPlayer);

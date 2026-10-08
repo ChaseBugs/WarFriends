@@ -470,16 +470,22 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         RequireAdmitted(playerId);
         Participant player = participants[playerId];
-        if (player.Route != null)
-            throw new InvalidOperationException(
-                "Moving co-op aim needs the shield-lock handoff timing.");
-        CoopPlayerAnchor cover = playerPositions[player.CoverIndex];
+        // PlayerController switches currentPlayerPoint to mGoToPosition
+        // when Shield.GetLock succeeds, before GoTo starts walking.
+        int currentPointIndex = player.Route == null
+            ? player.CoverIndex : player.DestinationIndex;
+        if (currentPointIndex < alliedFirstCover ||
+            currentPointIndex > alliedLastCover)
+            throw new InvalidDataException(
+                "Co-op player has no locked aim cover.");
+        CoopPlayerAnchor cover = playerPositions[currentPointIndex];
         if (cover.SourceRotation is not Quaternion rotation)
             throw new InvalidDataException(
                 "Co-op player cover lacks its source rotation.");
 
         // PlayerController.aimForward uses the negative current defend-point
-        // forward while the player is stationary behind that cover.
+        // forward from currentPlayerPoint, including the locked destination
+        // during a walk.
         Vector3 forward = -Vector3.Transform(Vector3.UnitZ, rotation);
         if (!PlayerHitbox.Finite(forward) ||
             MathF.Abs(forward.LengthSquared() - 1f) > 0.001f)
