@@ -1215,7 +1215,7 @@ internal static class CombatContentTests
             if (ready.Code != "ready")
                 throw new Exception("Boss allies could not start the isolated runtime.");
             if (playerId == bossFirstPlayer &&
-                bossRuntime.ApplyHostPlayerDamage(bossFirstPlayer,
+                bossRuntime.ApplyHostPlayerDamage(500, bossFirstPlayer,
                     new ResolvedPlayerDamage(5, CombatDamageType.Basic,
                         HasWeapon: false), 1f, 0) != null)
                 throw new Exception("A co-op ally took damage before both peers were ready.");
@@ -1338,15 +1338,15 @@ internal static class CombatContentTests
                 bossAnchors.Maps[0].PlayerPositions[7].Position) > 0.0001f)
             throw new Exception("Boss ally did not reach the skipped multiplayer shield.");
         float secondMaximum = bossAllocation.Players[1].Combat!.MaxHealth;
-        if (bossRuntime.ApplyHostPlayerDamage(bossSecondPlayer,
+        if (bossRuntime.ApplyHostPlayerDamage(501, bossSecondPlayer,
                 new ResolvedPlayerDamage(5, CombatDamageType.Basic,
                     HasWeapon: false), 1f, 199) != null ||
-            bossRuntime.ApplyHostPlayerDamage(bossSecondPlayer,
+            bossRuntime.ApplyHostPlayerDamage(502, bossSecondPlayer,
                 new ResolvedPlayerDamage(5, CombatDamageType.Basic,
                     HasWeapon: false), 1f, 201) != null)
             throw new Exception("Co-op host damage must use the current mission tick.");
         PlayerDamageResult? nonlethalHit = bossRuntime.ApplyHostPlayerDamage(
-            bossSecondPlayer, new ResolvedPlayerDamage(5, CombatDamageType.Basic,
+            503, bossSecondPlayer, new ResolvedPlayerDamage(5, CombatDamageType.Basic,
                 HasWeapon: false), 1f, 200);
         BattlePlayerState woundedAlly = bossRuntime.Snapshot().Players.Single(
             player => player.PlayerId == bossSecondPlayer);
@@ -1355,16 +1355,36 @@ internal static class CombatContentTests
             woundedAlly.MaxHealth != secondMaximum ||
             woundedAlly.DamageRevision != 1)
             throw new Exception("Co-op host damage did not update player vitality.");
+        PlayerDamageResult? replayedHit = bossRuntime.ApplyHostPlayerDamage(
+            503, bossSecondPlayer, new ResolvedPlayerDamage(5,
+                CombatDamageType.Basic, HasWeapon: false), 1f, 200);
+        if (replayedHit != nonlethalHit ||
+            bossRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == bossSecondPlayer).DamageRevision != 1 ||
+            bossRuntime.ApplyHostPlayerDamage(0, bossSecondPlayer,
+                new ResolvedPlayerDamage(5, CombatDamageType.Basic,
+                    HasWeapon: false), 1f, 200) != null ||
+            bossRuntime.ApplyHostPlayerDamage(503, bossSecondPlayer,
+                new ResolvedPlayerDamage(6, CombatDamageType.Basic,
+                    HasWeapon: false), 1f, 200) != null ||
+            bossRuntime.ApplyHostPlayerDamage(503, bossFirstPlayer,
+                new ResolvedPlayerDamage(5, CombatDamageType.Basic,
+                    HasWeapon: false), 1f, 200) != null)
+            throw new Exception("A co-op hit replay changed host-owned health.");
         PlayerDamageResult? lethalHit = bossRuntime.ApplyHostPlayerDamage(
-            bossSecondPlayer, new ResolvedPlayerDamage(secondMaximum,
+            504, bossSecondPlayer, new ResolvedPlayerDamage(secondMaximum,
                 CombatDamageType.Basic, HasWeapon: false), 1f, 200);
         if (lethalHit?.Dead != true ||
             !bossRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == bossSecondPlayer).Dead ||
             bossRuntime.Snapshot().Phase != BattlePhase.Running ||
-            bossRuntime.ApplyHostPlayerDamage(bossSecondPlayer,
+            bossRuntime.ApplyHostPlayerDamage(505, bossSecondPlayer,
                 new ResolvedPlayerDamage(1, CombatDamageType.Basic), 1f,
                 200) != null ||
+            bossRuntime.ApplyHostPlayerDamage(504, bossSecondPlayer,
+                new ResolvedPlayerDamage(secondMaximum,
+                    CombatDamageType.Basic, HasWeapon: false), 1f,
+                200) != lethalHit ||
             bossRuntime.Command(bossSecondPlayer, new MatchCommand
             {
                 CommandId = 3,

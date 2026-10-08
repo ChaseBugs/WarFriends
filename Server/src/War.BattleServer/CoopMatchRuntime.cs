@@ -125,6 +125,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         infantryRoundIntents = [];
     private readonly Dictionary<ulong, BulletFlight> diagnosticFlights = [];
     private readonly List<CoopDiagnosticFlightResult> diagnosticFlightResults = [];
+    private sealed record PlayerDamageReceipt(string PlayerId,
+        ResolvedPlayerDamage Hit, float RandomRoll, ulong Tick,
+        PlayerDamageResult Result);
+    private readonly Dictionary<ulong, PlayerDamageReceipt> playerDamageReceipts = [];
+    private const int MaximumPlayerDamageReceipts = 65_536;
     private CoopPlayerShotCollisionWorld? diagnosticWorld;
     private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
@@ -2410,9 +2415,22 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     // Its impact must belong to this live mission tick, after both allies
     // have entered the match. The signed Client cannot request this damage.
     internal PlayerDamageResult? ApplyHostPlayerDamage(
-        string playerId, ResolvedPlayerDamage hit, float randomRoll,
-        ulong impactTick)
+        ulong impactId, string playerId, ResolvedPlayerDamage hit,
+        float randomRoll, ulong impactTick)
     {
+        // A host collision owns one ID. An exact retry returns its original
+        // result even if the first hit killed the player or the clock advanced.
+        if (impactId == 0 || hit == null)
+            return null;
+        if (playerDamageReceipts.TryGetValue(impactId,
+                out PlayerDamageReceipt? receipt))
+        {
+            return receipt.PlayerId == playerId && receipt.Hit == hit &&
+                receipt.RandomRoll == randomRoll && receipt.Tick == impactTick
+                    ? receipt.Result : null;
+        }
+        if (playerDamageReceipts.Count >= MaximumPlayerDamageReceipts)
+            return null;
         if (phase != BattlePhase.Running || impactTick != tick ||
             impactTick >= mission.DeadlineTick ||
             !participants.TryGetValue(playerId, out Participant? participant) ||
@@ -2423,6 +2441,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         PlayerDamageResult result = PlayerDamage.Resolve(
             participant.Definition.Combat!, participant.Health, hit,
             sameFraction: false, self: false, randomRoll);
+        playerDamageReceipts.Add(impactId, new PlayerDamageReceipt(playerId,
+            hit, randomRoll, impactTick, result));
         if (!result.Applied)
             return result;
 
