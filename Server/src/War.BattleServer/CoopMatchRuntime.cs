@@ -58,6 +58,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly MissionRule missionRule;
     private readonly Func<string, IReadOnlyList<CoopSpawnPoint>> spawnCandidates;
     private readonly CoopEnemyCombatCatalog combat;
+    private readonly CoopEnemyDestinationState? enemyDestinations;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -120,14 +121,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopSkillShotScoreCatalog? skillShotScores = null,
         BattleCombatContent? playerWeaponContent = null,
         CoopAirWaypointCatalog? coopAirWaypoints = null,
-        Func<float>? chooseAirDirection = null)
+        Func<float>? chooseAirDirection = null,
+        CoopEnemyDestinationState? enemyDestinations = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
             (CoopBossRuntimeSources?)null, chooseBehaviour, choosePoint,
             chooseAttackFraction: null, shieldSources: shieldSources,
             skillShotScores: skillShotScores,
             playerWeaponContent: playerWeaponContent,
             coopAirWaypoints: coopAirWaypoints,
-            chooseAirDirection: chooseAirDirection)
+            chooseAirDirection: chooseAirDirection,
+            enemyDestinations: enemyDestinations)
     {
     }
 
@@ -140,7 +143,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopSkillShotScoreCatalog? skillShotScores = null,
         BattleCombatContent? playerWeaponContent = null,
         CoopAirWaypointCatalog? coopAirWaypoints = null,
-        Func<float>? chooseAirDirection = null)
+        Func<float>? chooseAirDirection = null,
+        CoopEnemyDestinationState? enemyDestinations = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -153,6 +157,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             manifest.MapRevision != missionMap.SceneSha256 ||
             manifest.DurationSeconds != catalog.Get(missionIndex).TimeSeconds)
             throw new InvalidDataException("Co-op allocation differs from source mission authority.");
+        if (enemyDestinations != null &&
+            (catalog.Get(missionIndex).MissionType == "KillOpponent" ||
+             enemyDestinations.Scene != missionMap.Scene ||
+             enemyDestinations.SceneSha256 != missionMap.SceneSha256 ||
+             !enemyDestinations.UsesCombat(combat)))
+            throw new InvalidDataException(
+                "Co-op enemy destinations differ from the signed mission map.");
+        this.enemyDestinations = enemyDestinations;
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
@@ -256,11 +268,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             participant.CoverIndex = start.Index;
             participant.Position = start.Position;
         }
+        enemyDestinations?.BindToMatch();
     }
 
     public bool HasPlayer(string playerId) => participants.ContainsKey(playerId);
 
     internal int? ReservedAirPath(ulong entityId) => airPathReservations?.PathFor(entityId);
+
+    internal CoopAssignedEnemyDestination? EnemyDestination(ulong entityId) =>
+        enemyDestinations?.ForEnemy(entityId);
 
     internal IReadOnlyList<HelicopterCrewMemberSnapshot> TransportCrewMembers(ulong entityId)
     {
@@ -599,6 +615,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         enemy.CurrentY = point.Position.Y;
         enemy.CurrentZ = point.Position.Z;
         enemy.PoseTick = tick;
+        enemyDestinations?.TryAssignInitial(enemy.EntityId, behaviour,
+            cardUnit, point.Position);
         if (point.SourceRotation is Quaternion rotation)
         {
             enemy.SourceRotation = new BattleJointRotation
@@ -962,6 +980,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (remaining == 0)
         {
             enemy.DeathTick = impactTick;
+            enemyDestinations?.Release(entityId);
             if (enemy.Behaviour == "Drone")
             {
                 airPathReservations?.Release(entityId);
@@ -1588,6 +1607,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         if (Terminal)
             return;
+        enemyDestinations?.ReleaseAll();
         foreach (Participant participant in participants.Values)
         {
             participant.Route = null;

@@ -624,6 +624,12 @@ internal static class CombatContentTests
             File.Delete(alteredCardPath);
         }
         var enemyCombat = new CoopEnemyCombatCatalog(catalog, army, cardRows);
+        CoopEnemyPointCatalog enemyPointCatalog = CoopEnemyPointCatalog.Load(
+            Path.Combine(directory, "recovered-coop-enemy-points.json"),
+            catalog, spawnPoints);
+        CoopEnemyPointMaskCatalog enemyPointMasks = CoopEnemyPointMaskCatalog.Load(
+            Path.Combine(directory, "recovered-coop-enemy-point-masks.json"),
+            army);
         ArmyBaseCombatStats sniperStart = enemyCombat.CardStats("Sniper", 0);
         ArmyBaseCombatStats sniperEnd = enemyCombat.CardStats("Sniper", 1);
         ArmyBaseCombatStats grenadeStart = enemyCombat.CardStats("Grenadier", 0);
@@ -1450,6 +1456,54 @@ internal static class CombatContentTests
             !runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds
                 .Contains(firstEnemy.EntityId))
             throw new Exception("A stale spawn pose must not authorize later co-op hits.");
+
+        CoopMapEnemyPoints enemyMap = enemyPointCatalog.MapForMission(catalog, 0);
+        var destinationState = new CoopEnemyDestinationState(
+            enemyMap, enemyPointMasks, enemyCombat,
+            chooseObstacleFraction: () => 0.5f);
+        var destinationRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => 0, enemyDestinations: destinationState);
+        try
+        {
+            _ = new CoopMatchRuntime(coop, catalog, spawnPoints,
+                routes, enemyCombat, enemyDestinations: destinationState);
+            throw new Exception("Two co-op matches shared destination claims.");
+        }
+        catch (InvalidOperationException)
+        {
+            // A destination state belongs to one authoritative match.
+        }
+        destinationRuntime.Admit(firstPlayer);
+        destinationRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            destinationRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = destinationRuntime.ManifestHash
+                }
+            });
+        destinationRuntime.Advance(8);
+        BattleCoopEnemySpawn destinationEnemy = destinationRuntime.Snapshot()
+            .Coop.EnemySpawns.Single();
+        CoopAssignedEnemyDestination? assignedDestination =
+            destinationRuntime.EnemyDestination(destinationEnemy.EntityId);
+        CoopEnemyPoint? expectedPoint = CoopEnemyPointSelection.SelectOrdinary(
+            enemyMap, 14,
+            new Vector3(destinationEnemy.X, destinationEnemy.Y,
+                destinationEnemy.Z), new HashSet<int>());
+        if (assignedDestination == null || expectedPoint == null ||
+            assignedDestination.PointComponentFileId !=
+                expectedPoint.ComponentFileId ||
+            destinationEnemy.CurrentX != destinationEnemy.X ||
+            destinationEnemy.CurrentZ != destinationEnemy.Z)
+            throw new Exception("Co-op spawn did not reserve its source initial point.");
+        if (!destinationRuntime.ApplyHostEnemyDamage(destinationEnemy.EntityId,
+                destinationEnemy.Health, 8) ||
+            destinationRuntime.EnemyDestination(destinationEnemy.EntityId) != null)
+            throw new Exception("Co-op enemy death retained its point claim.");
 
         var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
