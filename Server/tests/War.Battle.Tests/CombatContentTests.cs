@@ -1665,8 +1665,13 @@ internal static class CombatContentTests
             throw new Exception("A live co-op Drone did not reserve its recovered path.");
         IReadOnlyList<DynamicShotTarget> droneShapes = droneRuntime
             .PlaceDroneTargets(drone.EntityId);
+        CoopEnemyCollisionFrame droneFrame =
+            droneRuntime.CurrentEnemyCollisionFrame();
         Vector3 droneStart = new(drone.X, drone.Y, drone.Z);
         if (drone.SpawnTick != 1 || droneShapes.Count != 2 ||
+            droneFrame.Targets.Count(shape =>
+                shape.EntityId == drone.EntityId) != 2 ||
+            droneFrame.UnplacedEnemyIds.Contains(drone.EntityId) ||
             droneShapes.Count(shape => shape.DroneRoot &&
                 shape.Hitbox.Kind == PlayerHitboxKind.Box &&
                 shape.Layer == 27) != 1 ||
@@ -1693,7 +1698,9 @@ internal static class CombatContentTests
             throw new Exception($"A co-op Drone did not publish its live host flight pose: pose={movedDrone.PoseTick}, spawn={movedDrone.SpawnTick}, distance={Vector3.Distance(movedPosition, droneStart)}, shapes={movedShapes.Count}, center={movedShapes.FirstOrDefault()?.Hitbox.TransformPosition}, position={movedPosition}.");
         if (!droneRuntime.ApplyHostEnemyDamage(drone.EntityId, drone.MaxHealth, 25) ||
             droneRuntime.ReservedAirPath(drone.EntityId) != null ||
-            droneRuntime.PlaceDroneTargets(drone.EntityId).Count != 0)
+            droneRuntime.PlaceDroneTargets(drone.EntityId).Count != 0 ||
+            droneRuntime.CurrentEnemyCollisionFrame().Targets.Any(shape =>
+                shape.EntityId == drone.EntityId))
             throw new Exception("Lethal co-op Drone damage did not release its path.");
 
         const int buggyMissionIndex = 36;
@@ -1720,9 +1727,14 @@ internal static class CombatContentTests
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "Buggy");
         IReadOnlyList<DynamicShotTarget> buggyBodies = buggyRuntime
             .PlaceNewGroundVehicleTargets(buggy.EntityId);
+        CoopEnemyCollisionFrame buggySpawnFrame =
+            buggyRuntime.CurrentEnemyCollisionFrame();
         int expectedBuggyBodies = content.GroundVehicleWeapons
             .For("ID_UNIT-BUGGY").BodyParts.Sum(part => part.Colliders.Count);
         if (buggy.SpawnTick != 1 || buggyBodies.Count != expectedBuggyBodies ||
+            buggySpawnFrame.Targets.Count(body =>
+                body.EntityId == buggy.EntityId) != expectedBuggyBodies ||
+            buggySpawnFrame.UnplacedEnemyIds.Contains(buggy.EntityId) ||
             buggyBodies.Any(body => body.EntityId != buggy.EntityId ||
                 body.Layer != 27 || !body.GroundVehicleBody ||
                 !body.Hitbox.SourcePath.StartsWith(
@@ -1731,7 +1743,10 @@ internal static class CombatContentTests
             buggyRuntime.PlaceNewGroundVehicleTargets(999).Count != 0)
             throw new Exception("Co-op Buggy needs source-owned enemy body targets.");
         buggyRuntime.Advance(2);
-        if (buggyRuntime.PlaceNewGroundVehicleTargets(buggy.EntityId).Count != 0)
+        CoopEnemyCollisionFrame staleBuggyFrame =
+            buggyRuntime.CurrentEnemyCollisionFrame();
+        if (buggyRuntime.PlaceNewGroundVehicleTargets(buggy.EntityId).Count != 0 ||
+            !staleBuggyFrame.UnplacedEnemyIds.Contains(buggy.EntityId))
             throw new Exception("A stale ground-vehicle pose cannot authorize hits.");
 
         const int transportMissionIndex = 46;
@@ -2782,21 +2797,23 @@ internal static class CombatContentTests
             Quaternion.Identity, 1, Vector3.Zero, 0);
         var target = new DynamicShotTarget(7, 42, 27, hitbox,
             DroneRoot: true);
+        var completeFrame = new CoopEnemyCollisionFrame([target], []);
         uint enemyLayer = 1u << 27;
         CoopShotHit? hostHit = emptySpace.Trace(distantOrigin, Vector3.UnitZ,
-            10, enemyLayer, [target]);
+            10, enemyLayer, completeFrame);
         if (hostHit?.EnemyEntityId != 7 ||
             hostHit.EnemyPartFileId != 42 ||
             Math.Abs(hostHit.Distance - 4) > 0.001f ||
-            emptySpace.Trace(distantOrigin, Vector3.UnitZ, 10, 0, [target]) != null ||
+            emptySpace.Trace(distantOrigin, Vector3.UnitZ, 10, 0,
+                completeFrame) != null ||
             emptySpace.Trace(distantOrigin, Vector3.UnitZ, 3, enemyLayer,
-                [target]) != null)
+                completeFrame) != null)
             throw new Exception("Co-op shot tracing lost host enemy geometry or layer/range bounds.");
         bool rejectedDuplicate = false;
         try
         {
             emptySpace.Trace(distantOrigin, Vector3.UnitZ, 10, enemyLayer,
-                [target, target]);
+                new CoopEnemyCollisionFrame([target, target], []));
         }
         catch (InvalidDataException)
         {
@@ -2804,7 +2821,19 @@ internal static class CombatContentTests
         }
         if (!rejectedDuplicate)
             throw new Exception("One co-op collider was supplied twice.");
-        return checkedRays - physxDifferences.Count + 4;
+        bool rejectedMissing = false;
+        try
+        {
+            emptySpace.Trace(distantOrigin, Vector3.UnitZ, 10,
+                enemyLayer, new CoopEnemyCollisionFrame([target], [8]));
+        }
+        catch (InvalidOperationException)
+        {
+            rejectedMissing = true;
+        }
+        if (!rejectedMissing)
+            throw new Exception("A live co-op enemy was omitted from shot authority.");
+        return checkedRays - physxDifferences.Count + 5;
     }
 
     private static Vector3 ReadRayVector(JsonElement values)

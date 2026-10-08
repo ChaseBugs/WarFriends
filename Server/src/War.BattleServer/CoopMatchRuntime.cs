@@ -814,6 +814,38 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Collects the enemy colliders valid at this host tick. An enemy without
+    /// a complete current pose is reported, not silently omitted from a ray.
+    /// The transport gunner is a separate live target and is not placed yet.
+    /// </summary>
+    internal CoopEnemyCollisionFrame CurrentEnemyCollisionFrame()
+    {
+        var targets = new List<DynamicShotTarget>();
+        var unplaced = new List<ulong>();
+        foreach (BattleCoopEnemySpawn enemy in enemySpawns)
+        {
+            if (enemy.Health <= 0 || enemy.DeathTick != 0)
+                continue;
+
+            IReadOnlyList<DynamicShotTarget> placed = enemy.Behaviour switch
+            {
+                "Drone" => PlaceDroneTargets(enemy.EntityId),
+                "Helicopter" => PlaceAssaultHelicopterTargets(enemy.EntityId),
+                "DeployHeli" => PlaceTransportHelicopterTargets(enemy.EntityId),
+                "Humvee" or "Buggy" or "Tank" or "Transporter" =>
+                    PlaceNewGroundVehicleTargets(enemy.EntityId),
+                _ => []
+            };
+            targets.AddRange(placed);
+            if (placed.Count == 0 ||
+                (enemy.Behaviour == "DeployHeli" && enemy.GunnerHealth > 0))
+                unplaced.Add(enemy.EntityId);
+        }
+        return new CoopEnemyCollisionFrame(targets.ToArray(),
+            unplaced.ToArray(), BossUnplaced: boss?.Health > 0);
+    }
+
+    /// <summary>
     /// Recovers an untouched ally's idle rifle muzzle from the source rig and
     /// defend-position transform. Moving, firing, or using another weapon
     /// requires a live pose and cannot reuse this starting geometry.

@@ -6,6 +6,11 @@ internal sealed record CoopShotHit(
     float Distance, Vector3 Position, int? SceneColliderFileId,
     ulong? EnemyEntityId, int? EnemyPartFileId);
 
+internal sealed record CoopEnemyCollisionFrame(
+    IReadOnlyList<DynamicShotTarget> Targets,
+    IReadOnlyList<ulong> UnplacedEnemyIds,
+    bool BossUnplaced = false);
+
 /// <summary>
 /// Compares recovered scene geometry with host-placed enemy hitboxes. This is
 /// a collision diagnostic, not a complete co-op bullet world: instantiated
@@ -22,9 +27,15 @@ internal sealed class CoopShotCollisionWorld
 
     internal CoopShotHit? Trace(Vector3 origin, Vector3 direction,
         float maximumDistance, uint layerMask,
-        IReadOnlyList<DynamicShotTarget> enemyTargets)
+        CoopEnemyCollisionFrame frame)
     {
+        ArgumentNullException.ThrowIfNull(frame);
+        IReadOnlyList<DynamicShotTarget> enemyTargets = frame.Targets;
         ArgumentNullException.ThrowIfNull(enemyTargets);
+        ArgumentNullException.ThrowIfNull(frame.UnplacedEnemyIds);
+        if (frame.UnplacedEnemyIds.Count != 0 || frame.BossUnplaced)
+            throw new InvalidOperationException(
+                "Co-op shot world is missing a live enemy collider.");
         if (enemyTargets.Count > 512)
             throw new InvalidDataException("Too many co-op shot targets.");
 
