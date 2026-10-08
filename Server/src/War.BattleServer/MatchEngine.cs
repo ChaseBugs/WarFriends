@@ -1689,6 +1689,9 @@ public sealed partial class MatchEngine : IMatchRuntime
             if (p.Route != null) return "already-moving";
             int target = map.Adjacent(p.Cover, c.MoveCover.Direction, p.Definition.Fraction);
             if (target < 0) return "cover-unavailable";
+            if (c.MoveCover.HasTargetCoverIndex &&
+                c.MoveCover.TargetCoverIndex != target)
+                return "cover-target-mismatch";
             if (players.Any(other => other != p && (other.Cover == target || (other.Route != null && other.Destination == target)))) return "cover-occupied";
             var route = map.Path(p.Cover, target);
             float length = 0;

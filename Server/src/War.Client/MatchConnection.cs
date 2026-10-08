@@ -76,6 +76,16 @@ namespace War.Client
             return Run(new MatchCommand{SelectCards=command},false,false,ct);
         }
         public Task<MatchReply> MoveCoverAsync(int direction, CancellationToken ct) => Run(new MatchCommand { MoveCover = new MoveCoverCommand { Direction = direction } }, false, false, ct);
+        public Task<MatchReply> MoveCoopCoverAsync(int direction,
+            int targetCoverIndex, CancellationToken ct) => Run(
+            new MatchCommand
+            {
+                MoveCover = new MoveCoverCommand
+                {
+                    Direction = direction,
+                    TargetCoverIndex = targetCoverIndex
+                }
+            }, false, false, ct);
         public Task<MatchReply> DeployArmyAsync(int optionIndex, CancellationToken ct) => Run(new MatchCommand { DeployArmy = new DeployArmyCommand { OptionIndex = optionIndex } }, false, false, ct);
         public Task<MatchReply> RetryPendingAsync(CancellationToken ct) => Run(null, false, true, ct);
 

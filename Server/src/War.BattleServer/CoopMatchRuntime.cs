@@ -2295,7 +2295,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return "forfeit";
         }
         if (command.IntentCase == MatchCommand.IntentOneofCase.MoveCover)
-            return StartPlayerMovement(participant, command.MoveCover.Direction);
+            return StartPlayerMovement(participant,
+                command.MoveCover.Direction,
+                command.MoveCover.HasTargetCoverIndex
+                    ? command.MoveCover.TargetCoverIndex : null);
         if (command.IntentCase == MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             if (phase != BattlePhase.Running || !participant.Ready || participant.Dead)
@@ -2320,7 +2323,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return "coop-command-unavailable";
     }
 
-    private string StartPlayerMovement(Participant participant, int direction)
+    private string StartPlayerMovement(Participant participant,
+        int direction, int? assertedTargetCover)
     {
         if (phase != BattlePhase.Running || !participant.Ready || participant.Dead)
             return "match-not-running";
@@ -2343,6 +2347,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         }
         if (target < alliedFirstCover || target > alliedLastCover)
             return "cover-unavailable";
+        // PlayerController.GoLeft/GoRight asks Shield.GetLock for one named
+        // defend point. Never reserve a different cover behind its back.
+        if (assertedTargetCover.HasValue &&
+            assertedTargetCover.Value != target)
+            return "cover-target-mismatch";
 
         CoopDefendRoute route = routeBetween(participant.CoverIndex, target);
         participant.HasMoved = true;

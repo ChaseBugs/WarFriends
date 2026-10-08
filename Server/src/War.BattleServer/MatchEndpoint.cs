@@ -248,7 +248,14 @@ public sealed class MatchEndpoint
                     case MatchCommand.IntentOneofCase.Forfeit:clean.Forfeit=new ForfeitCommand();break;
                     case MatchCommand.IntentOneofCase.Poll:clean.Poll=new PollMatch();break;
                     case MatchCommand.IntentOneofCase.MoveCover:
-                        clean.MoveCover=new MoveCoverCommand {Direction=command.MoveCover.Direction};break;
+                        clean.MoveCover = new MoveCoverCommand
+                        {
+                            Direction = command.MoveCover.Direction
+                        };
+                        if (command.MoveCover.HasTargetCoverIndex)
+                            clean.MoveCover.TargetCoverIndex =
+                                command.MoveCover.TargetCoverIndex;
+                        break;
                     case MatchCommand.IntentOneofCase.SwitchWeapon:
                         clean.SwitchWeapon=new SwitchWeaponCommand {Slot=command.SwitchWeapon.Slot};break;
                     case MatchCommand.IntentOneofCase.MinigunHold:

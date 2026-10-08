@@ -84,7 +84,12 @@ message ReloadCommand {}
 message SwitchWeaponCommand { int32 slot = 1; }
 message ForfeitCommand {}
 message PollMatch {}
-message MoveCoverCommand { int32 direction = 1; }
+message MoveCoverCommand {
+  int32 direction = 1;
+  // The recovered co-op Shield.GetLock names a specific defend point.
+  // Keep it optional for existing PvP direction-only movement.
+  optional int32 target_cover_index = 2;
+}
 message DeployArmyCommand { int32 option_index = 1; }
 message SelectCardsCommand {
   repeated string card_ids = 1;

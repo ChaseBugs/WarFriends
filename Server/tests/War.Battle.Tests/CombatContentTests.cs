@@ -1646,6 +1646,38 @@ internal static class CombatContentTests
         var movementRuntime = new CoopMatchRuntime(coop, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, playerWeaponContent: content);
+        var assertedCoverRuntime = new CoopMatchRuntime(coop, catalog,
+            spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
+            choosePoint: _ => 0, playerWeaponContent: content);
+        assertedCoverRuntime.Admit(firstPlayer);
+        assertedCoverRuntime.Admit(secondPlayer);
+        foreach (string playerId in new[] { firstPlayer, secondPlayer })
+            assertedCoverRuntime.Command(playerId,
+                new MatchCommand { CommandId = 1,
+                    Ready = new ReadyCommand
+                    { ManifestHash = assertedCoverRuntime.ManifestHash } });
+        var wrongCover = new MatchCommand { CommandId = 2,
+            MoveCover = new MoveCoverCommand
+            { Direction = 1, TargetCoverIndex = 2 } };
+        if (assertedCoverRuntime.Command(firstPlayer, wrongCover).Code !=
+                "cover-target-mismatch" ||
+            assertedCoverRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == firstPlayer).Moving)
+            throw new Exception("A mismatched co-op shield lock moved the ally.");
+        var exactCover = new MatchCommand { CommandId = 3,
+            MoveCover = new MoveCoverCommand
+            { Direction = 1, TargetCoverIndex = 3 } };
+        string exactCoverResult = assertedCoverRuntime
+            .Command(firstPlayer, exactCover).Code;
+        BattlePlayerState acceptedCover = assertedCoverRuntime.Snapshot()
+            .Players.Single(player => player.PlayerId == firstPlayer);
+        if (exactCoverResult != "moving" || !acceptedCover.Moving ||
+            acceptedCover.CoverIndex != 1)
+            throw new Exception("The exact co-op shield lock was rejected.");
+        assertedCoverRuntime.Advance(acceptedCover.MoveEndTick);
+        if (assertedCoverRuntime.Snapshot().Players.Single(player =>
+                player.PlayerId == firstPlayer).CoverIndex != 3)
+            throw new Exception("The accepted shield lock reached another cover.");
         movementRuntime.Admit(firstPlayer);
         movementRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })
@@ -3556,15 +3588,26 @@ internal static class CombatContentTests
         if (Send(claims, firstKey, peer, 2, udpReady).MatchReply.Code != "ready" ||
             Send(secondClaims, secondKey, secondPeer, 2, udpReady).MatchReply.Code != "ready")
             throw new Exception("Both UDP allies must make the co-op mission ready.");
-        var udpMove = new MatchCommand { CommandId = 2,
+        var mismatchedUdpMove = new MatchCommand { CommandId = 2,
+            MoveCover = new MoveCoverCommand
+            { Direction = 1, TargetCoverIndex = 2 } };
+        if (Send(claims, firstKey, peer, 3,
+                mismatchedUdpMove).MatchReply.Code !=
+            "cover-target-mismatch")
+            throw new Exception("UDP discarded the asserted co-op shield identity.");
+        var udpMove = new MatchCommand { CommandId = 3,
+            MoveCover = new MoveCoverCommand
+            { Direction = 1, TargetCoverIndex = 3 } };
+        var secondUdpMove = new MatchCommand { CommandId = 2,
             MoveCover = new MoveCoverCommand { Direction = 1 } };
-        if (Send(claims, firstKey, peer, 3, udpMove).MatchReply.Code != "moving" ||
-            Send(secondClaims, secondKey, secondPeer, 3, udpMove).MatchReply.Code !=
+        if (Send(claims, firstKey, peer, 4, udpMove).MatchReply.Code != "moving" ||
+            Send(secondClaims, secondKey, secondPeer, 3,
+                secondUdpMove).MatchReply.Code !=
                 "cover-unavailable")
             throw new Exception("UDP co-op movement must reserve one authoritative shield.");
         udpEndpoint.Advance(2);
         var poll = new MatchCommand { Poll = new PollMatch() };
-        MatchSnapshot firstView = Send(claims, firstKey, peer, 4, poll)
+        MatchSnapshot firstView = Send(claims, firstKey, peer, 5, poll)
             .MatchReply.Snapshot;
         MatchSnapshot secondView = Send(secondClaims, secondKey, secondPeer, 4, poll)
             .MatchReply.Snapshot;
