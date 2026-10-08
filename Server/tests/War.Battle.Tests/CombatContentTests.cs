@@ -769,8 +769,12 @@ internal static class CombatContentTests
             CoopPlayerWeaponCatalog.Bind(twoWeapons, content);
         var selectedAmmo = new CoopPlayerWeaponState(
             twoWeaponCatalog.ForPlayer(twoWeapons.Players[0].PlayerId), 0);
-        if (!selectedAmmo.TrySelectSlot(1, 0) ||
+        if (selectedAmmo.CheckShot(0, 0) != CoopShotAvailability.Ready ||
+            selectedAmmo.CheckShot(1, 0) != CoopShotAvailability.WrongSlot ||
+            selectedAmmo.CheckShot(0, 1) != CoopShotAvailability.WrongTick ||
+            !selectedAmmo.TrySelectSlot(1, 0) ||
             !selectedAmmo.ConfirmHostShot(1, 0) ||
+            selectedAmmo.CheckShot(1, 0) != CoopShotAvailability.Cooldown ||
             !selectedAmmo.TrySelectSlot(0, 0) ||
             selectedAmmo.Readiness(0).Clip != coop.Players[0].Weapon.ClipSize ||
             !selectedAmmo.TrySelectSlot(1, 0) ||

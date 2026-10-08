@@ -4,6 +4,16 @@ public sealed record CoopWeaponReadiness(
     int Slot, int Clip, int Reserve, ulong ReloadEndTick,
     ulong NextFireTick, ulong ShotsFired);
 
+internal enum CoopShotAvailability
+{
+    Ready,
+    WrongSlot,
+    WrongTick,
+    Reloading,
+    Cooldown,
+    NoAmmo
+}
+
 /// <summary>
 /// Host-owned ammunition and timing for source-validated co-op weapon slots.
 /// ConfirmHostShot is an internal combat seam: call it only after a real host
@@ -55,13 +65,9 @@ public sealed class CoopPlayerWeaponState
 
     public bool ConfirmHostShot(int slot, ulong tick)
     {
-        if (slot != ActiveSlot || tick != CurrentTick)
+        if (CheckShot(slot, tick) != CoopShotAvailability.Ready)
             return false;
         SlotState weapon = GetSlot(slot);
-        if (weapon.Clip == 0 || weapon.ReloadEndTick != 0 ||
-            tick < weapon.NextFireTick)
-            return false;
-
         weapon.Clip--;
         weapon.ShotsFired = checked(weapon.ShotsFired + 1);
         weapon.NextFireTick = checked(tick + TickDuration(
@@ -69,6 +75,28 @@ public sealed class CoopPlayerWeaponState
         if (weapon.Clip == 0 && weapon.Reserve > 0)
             StartReload(weapon, tick);
         return true;
+    }
+
+    /// <summary>
+    /// Checks a proposed host shot without spending ammunition. The projectile
+    /// simulator must still establish a muzzle, unobstructed path, and damage
+    /// before ConfirmHostShot commits this weapon state.
+    /// </summary>
+    internal CoopShotAvailability CheckShot(int slot, ulong tick)
+    {
+        if (slot != ActiveSlot || !slots.ContainsKey(slot))
+            return CoopShotAvailability.WrongSlot;
+        if (tick != CurrentTick)
+            return CoopShotAvailability.WrongTick;
+
+        SlotState weapon = GetSlot(slot);
+        if (weapon.ReloadEndTick != 0)
+            return CoopShotAvailability.Reloading;
+        if (tick < weapon.NextFireTick)
+            return CoopShotAvailability.Cooldown;
+        if (weapon.Clip == 0)
+            return CoopShotAvailability.NoAmmo;
+        return CoopShotAvailability.Ready;
     }
 
     public bool TryStartReload(int slot, ulong tick)
