@@ -1933,11 +1933,60 @@ internal static class CombatContentTests
             enemyCombat.InfantryIdleClip("Tank") != null ||
             runtime.PlaceNewInfantryHitboxes(999).Count != 0)
             throw new Exception("Co-op infantry needs its recovered spawn-time colliders.");
+        CoopSceneColliderCatalog rifleScenes = CoopSceneColliderCatalog.Load(
+            Path.Combine(directory, "recovered-coop-scene-colliders.json"),
+            catalog);
+        CoopMeshGeometryCatalog rifleGeometry = CoopMeshGeometryCatalog.Load(
+            Path.Combine(directory, "recovered-coop-mesh-geometry.json"),
+            rifleScenes);
+        CoopShotCollisionWorld rifleWorld = new(
+            new CoopNativeSceneRaycaster(
+                rifleScenes.MapForMission(catalog, 0), rifleGeometry));
+        RifleMuzzlePose rifleMuzzle = runtime.PlaceIdlePlayerMuzzle(
+            firstPlayer) ?? throw new Exception("Co-op rifle lacks a host muzzle.");
+        Vector3 rifleOrigin = rifleMuzzle.Position + content.Bindings.Get(
+            coop.Players[0].Weapon.SourceId).ShotOffset;
+        Vector3 enemyDirection = new Vector3(firstEnemy.X, firstEnemy.Y,
+            firstEnemy.Z) - rifleOrigin;
+        CoopShotHit? directRifleHit = rifleWorld.Trace(rifleOrigin,
+            enemyDirection, 100, content.Bindings.BulletMask(2),
+            infantrySpawnFrame);
+        CoopShotHit? runtimeRifleHit = runtime.TraceCurrentRifleEnemyRay(
+            firstPlayer, rifleWorld, enemyDirection, 100);
+        if (directRifleHit == null || runtimeRifleHit != directRifleHit ||
+            runtime.TraceCurrentRifleEnemyRay(secondPlayer + "x",
+                rifleWorld, enemyDirection, 100) != null)
+            throw new Exception("Co-op rifle trace lost its signed host origin.");
+        CoopShotCollisionWorld otherScene = new(
+            new CoopNativeSceneRaycaster(
+                rifleScenes.MapForMission(catalog,
+                    catalog.Missions.First(rule =>
+                        rule.MapStage != catalog.Get(0).MapStage &&
+                        rule.MissionType != "KillOpponent").Index),
+                rifleGeometry));
+        try
+        {
+            runtime.TraceCurrentRifleEnemyRay(firstPlayer, otherScene,
+                enemyDirection, 100);
+            throw new Exception("Co-op rifle trace accepted another scene.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         runtime.Advance(9);
         if (runtime.PlaceNewInfantryHitboxes(firstEnemy.EntityId).Count != 0 ||
             !runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds
                 .Contains(firstEnemy.EntityId))
             throw new Exception("A stale spawn pose must not authorize later co-op hits.");
+        try
+        {
+            runtime.TraceCurrentRifleEnemyRay(firstPlayer, rifleWorld,
+                enemyDirection, 100);
+            throw new Exception("A stale enemy pose authorized a co-op rifle ray.");
+        }
+        catch (InvalidOperationException)
+        {
+        }
 
         CoopMapEnemyPoints enemyMap = enemyPointCatalog.MapForMission(catalog, 0);
         Vector3 rotationOrigin = Vector3.Zero;

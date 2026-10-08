@@ -152,6 +152,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopAssaulterQueueCatalog? assaulterQueue;
     private readonly PlayerPoseCatalog? playerPoses;
     private readonly WeaponBindingGraphCatalog? playerWeaponBindings;
+    private readonly RifleBindingCatalog? rifleBindings;
     private readonly uint? enemyBulletMask;
     private readonly PlayerShotTargetCatalog? playerShotTargets;
     private readonly AssaultHelicopterBoxColliderCatalog? assaultHelicopterBody;
@@ -324,6 +325,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         assaulterQueue = playerWeaponContent?.CoopAssaulterQueue;
         playerPoses = playerWeaponContent?.Poses;
         playerWeaponBindings = playerWeaponContent?.AllWeaponBindings;
+        rifleBindings = playerWeaponContent?.Bindings;
         enemyBulletMask = playerWeaponContent?.Bindings.BulletMask(1);
         playerShotTargets = playerWeaponContent?.PlayerShotTargets;
         assaultHelicopterBody = playerWeaponContent?.AssaultHelicopterBoxCollider;
@@ -1928,6 +1930,43 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return null;
         return world.Trace(origin, direction, maximumDistance,
             mask, poses, alliedShields?.Snapshot());
+    }
+
+    /// <summary>
+    /// Inspect a current rifle ray from the host-placed muzzle against this
+    /// mission's scene and enemy poses. This cannot authorize a hit yet:
+    /// pooled and moving enemy colliders are still incomplete.
+    /// </summary>
+    internal CoopShotHit? TraceCurrentRifleEnemyRay(
+        string playerId, CoopShotCollisionWorld world,
+        Vector3 direction, float maximumDistance)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        if (world.Scene != manifest.MapId ||
+            world.SceneSha256 != manifest.MapRevision)
+            throw new InvalidDataException(
+                "Co-op rifle ray uses a different signed scene.");
+        if (phase != BattlePhase.Running || rifleBindings == null ||
+            PlayerWeapons == null ||
+            !participants.TryGetValue(playerId, out Participant? player) ||
+            !player.Admitted || !player.Ready || player.Dead ||
+            player.Weapons == null)
+            return null;
+
+        int slot = player.Weapons.ActiveSlot;
+        if (player.Weapons.CheckShot(slot, tick) !=
+            CoopShotAvailability.Ready)
+            return null;
+        RifleMuzzlePose? muzzle = PlaceIdlePlayerMuzzle(playerId);
+        if (muzzle == null)
+            return null;
+
+        CoopPlayerWeapon equipped = PlayerWeapons.ForPlayer(playerId)
+            .Single(weapon => weapon.Slot == slot);
+        RifleBinding rifle = rifleBindings.Get(equipped.Weapon.SourceId);
+        Vector3 origin = muzzle.Position + rifle.ShotOffset;
+        return world.Trace(origin, direction, maximumDistance,
+            rifleBindings.BulletMask(2), CurrentEnemyCollisionFrame());
     }
 
     /// <summary>

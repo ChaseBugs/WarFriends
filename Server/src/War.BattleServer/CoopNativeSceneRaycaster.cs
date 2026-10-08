@@ -18,12 +18,16 @@ public sealed class CoopNativeSceneRaycaster
         CoopMeshGeometry? Mesh);
 
     private readonly PlacedCollider[] colliders;
+    internal string Scene { get; }
+    internal string SceneSha256 { get; }
 
     public CoopNativeSceneRaycaster(
         CoopSceneColliders scene, CoopMeshGeometryCatalog geometry)
     {
         ArgumentNullException.ThrowIfNull(scene);
         ArgumentNullException.ThrowIfNull(geometry);
+        Scene = scene.Scene;
+        SceneSha256 = scene.SceneSha256;
         var placed = new List<PlacedCollider>();
         foreach (CoopSceneCollider collider in scene.Colliders)
         {

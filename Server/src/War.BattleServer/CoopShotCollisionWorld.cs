@@ -20,6 +20,8 @@ internal sealed record CoopEnemyCollisionFrame(
 internal sealed class CoopShotCollisionWorld
 {
     private readonly CoopNativeSceneRaycaster scene;
+    internal string Scene => scene.Scene;
+    internal string SceneSha256 => scene.SceneSha256;
 
     internal CoopShotCollisionWorld(CoopNativeSceneRaycaster scene)
     {
