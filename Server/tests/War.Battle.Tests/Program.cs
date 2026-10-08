@@ -1041,6 +1041,15 @@ var otherHello = Hello(otherClaims, 1); otherHello.MatchHello.MatchId = otherDef
 Check(router.Handle(otherHello, PacketCodec.Encode(otherHello, tokens.SessionKey(otherClaims)), stranger, now) != null, "second match isolated admission");
 var misrouted = routedHello.Clone(); misrouted.MatchHello.MatchId = otherDefinition.MatchId;
 Check(router.Handle(misrouted, PacketCodec.Encode(misrouted, tokens.SessionKey(claimsA)), sender, now) == null, "session cannot cross matches");
+Check(router.ActiveSessionEndpoints().Count == 2,
+    "router exposes only endpoints bound to its two admitted matches");
+Check(router.CancelBeforeStart(definition.MatchId).Code == "cancelled-before-start" &&
+      router.CancelBeforeStart(otherDefinition.MatchId).Code == "cancelled-before-start",
+    "prestart cancellation closes both routed matches");
+router.Advance(1);
+router.Advance(3602);
+Check(router.Count == 0 && router.ActiveSessionEndpoints().Count == 0,
+    "expired matches remove their former endpoint ownership from the router");
 Reject(() => new MatchRouter([definition, definition], definition.ServerId, signingKey), "duplicate match allocation");
 Reject(() => new MatchRouter(Enumerable.Range(0, 33).Select(i => definition with { MatchId = "m" + i }), definition.ServerId, signingKey), "bounded match allocation");
 var liveRouter = new MatchRouter([], definition.ServerId, signingKey);

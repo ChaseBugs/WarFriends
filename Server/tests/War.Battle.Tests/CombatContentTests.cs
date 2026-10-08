@@ -10492,6 +10492,12 @@ internal static class CombatContentTests
                   protectedRegistry.Admit(activeEndpoint, 0,
                       knownMatchEndpoint: true) == SenderAdmission.RateLimited,
                 "a protected match endpoint still obeys its sender rate window");
+            protectedRegistry.SetKnownMatchEndpoints([activeEndpoint]);
+            Check(protectedRegistry.Admit(firstEndpoint, 0,
+                      knownMatchEndpoint: true) == SenderAdmission.Allowed &&
+                  protectedRegistry.Admit(activeEndpoint, 0,
+                      knownMatchEndpoint: true) == SenderAdmission.RateLimited,
+                "departed match endpoints lose eviction priority without resetting a live player's rate window");
             var cancelledLoading=new BattleLoadingState(new string('e',64));
             Check(cancelledLoading.Cancel("client-timeout")&&!cancelledLoading.Cancel("again")&&
                   !cancelledLoading.Admit("26262626262626262626262626262626"),

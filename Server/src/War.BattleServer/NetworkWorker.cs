@@ -309,7 +309,10 @@ public sealed class NetworkWorker : BackgroundService
                             throw;
                         }
                     }
+                    int matchesBeforeAdvance = match.Count;
                     match.Advance(tick);
+                    if (match.Count != matchesBeforeAdvance)
+                        PublishActiveMatchEndpoints();
                     PersistTerminals();
                     for (int i = 0; i < 128 && incoming.Reader.TryRead(out var datagram); i++)
                     {
@@ -466,7 +469,7 @@ public sealed class NetworkWorker : BackgroundService
                 return;
             }
             if(packet.BodyCase==Packet.BodyOneofCase.MatchHello && response!=null)
-                Volatile.Write(ref activeMatchEndpoints,match.ActiveSessionEndpoints());
+                PublishActiveMatchEndpoints();
             PersistTerminals();
             if (response != null)
             {
@@ -500,6 +503,17 @@ public sealed class NetworkWorker : BackgroundService
         try { await socket.SendToAsync(encoded, SocketFlags.None, d.Endpoint, ct); }
         catch (SocketException e) { logger.LogDebug("UDP send failed: {Code}", e.SocketErrorCode); }
     }
+    private void PublishActiveMatchEndpoints()
+    {
+        Dictionary<ulong, IPEndPoint> active =
+            match.ActiveSessionEndpoints();
+        lock (incomingGate)
+        {
+            senderEndpoints.SetKnownMatchEndpoints(active.Values);
+            Volatile.Write(ref activeMatchEndpoints, active);
+        }
+    }
+
     private static bool IsMatchBody(Packet.BodyOneofCase body)
         => body is Packet.BodyOneofCase.MatchHello or Packet.BodyOneofCase.MatchCommand or
             Packet.BodyOneofCase.MatchReply or Packet.BodyOneofCase.MatchEventPoll or Packet.BodyOneofCase.MatchEventBatch or

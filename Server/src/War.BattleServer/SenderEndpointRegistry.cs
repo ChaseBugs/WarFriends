@@ -34,6 +34,14 @@ public sealed class SenderEndpointRegistry
 
     public int Count => entries.Count;
 
+    public void SetKnownMatchEndpoints(IEnumerable<IPEndPoint> endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(endpoints);
+        var known = endpoints.ToHashSet();
+        foreach ((IPEndPoint endpoint, Entry entry) in entries)
+            entry.KnownMatchEndpoint = known.Contains(endpoint);
+    }
+
     public SenderAdmission Admit(IPEndPoint endpoint, ulong tick,
         bool knownMatchEndpoint = false)
     {
