@@ -1801,6 +1801,51 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     }
 
     /// <summary>
+    /// Samples the queued corner fire clip after the look clip ends. A
+    /// visible fire pose alone does not prove a projectile or damage event.
+    /// </summary>
+    internal IReadOnlyList<PlayerHitbox> PlaceCornerFireHitboxes(
+        ulong entityId)
+    {
+        if (phase != BattlePhase.Running || enemyPoses == null ||
+            !infantryShotWindups.TryGetValue(entityId,
+                out CoopInfantryShotWindup? windup) ||
+            windup.AnimationClip is not
+                ("player_look_right3" or "player_look_left3") ||
+            tick <= windup.StartTick)
+            return [];
+        float lookTicks = enemyPoses.Clip(windup.AnimationClip).Length *
+            MatchManifest.TickRate;
+        int lookEndTick = (int)MathF.Round(lookTicks);
+        if (MathF.Abs(lookTicks - lookEndTick) > 0.0001f)
+            throw new InvalidDataException(
+                "Co-op corner look clip does not end on a fixed tick.");
+        ulong elapsedTicks = tick - windup.StartTick;
+        if (elapsedTicks <= (ulong)lookEndTick)
+            return [];
+        // Both source look clips exceed fifteen ticks by less than a
+        // microsecond. The exported rig has one frame per fixed tick.
+        float fireSeconds = (elapsedTicks - (ulong)lookEndTick) /
+            (float)MatchManifest.TickRate;
+        if (fireSeconds <= 0 ||
+            fireSeconds > enemyPoses.Clip(windup.QueuedFireClip).Length)
+            return [];
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
+            spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
+            spawn.Health > 0 && spawn.DeathTick == 0 &&
+            spawn.PoseTick == windup.StartTick + 9 &&
+            spawn.CurrentRotation != null);
+        if (enemy == null)
+            return [];
+        BattleJointRotation facing = enemy.CurrentRotation!;
+        Quaternion rotation = new(facing.X, facing.Y, facing.Z, facing.W);
+        Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
+            enemy.CurrentZ);
+        return enemyPoses.Place(windup.QueuedFireClip, position,
+            rotation, fireSeconds, $"coop/{entityId}/");
+    }
+
+    /// <summary>
     /// Places the recovered Assault Helicopter body and front glass at its
     /// current host pose. The five body meshes, body box, and front glass
     /// retain distinct damage-part identities.
@@ -1978,6 +2023,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             parts = PlaceSettledCornerAssaulterHitboxes(enemy.EntityId);
         if (parts.Count == 0)
             parts = PlaceCornerUncoverHitboxes(enemy.EntityId);
+        if (parts.Count == 0)
+            parts = PlaceCornerFireHitboxes(enemy.EntityId);
         return parts.Select(part => new DynamicShotTarget(enemy.EntityId,
             0, 23, part, ArmyInfantry: true)).ToArray();
     }

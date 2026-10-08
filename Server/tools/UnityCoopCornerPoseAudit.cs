@@ -135,6 +135,35 @@ public static class UnityCoopCornerPoseAudit
                     }).ToArray()
                 });
             }
+            string fireClip = (bool)corner["cornerRightSide"]
+                ? "player_fire_right3" : "player_fire_left3";
+            if (animation[fireClip] == null)
+                throw new InvalidOperationException("Missing source fire clip.");
+            var fireSamples = new List<object>();
+            foreach (int shotTick in new[] { 16, 17, 20, 25 })
+            {
+                float fireSeconds = shotTick / 30f -
+                    animation[lookClip].length;
+                Sample(animation, "T_pose", 1f);
+                Sample(animation, fireClip, fireSeconds /
+                    animation[fireClip].length);
+                turn.Sample(1f, true);
+                Physics.SyncTransforms();
+                fireSamples.Add(new
+                {
+                    tick = shotTick,
+                    fireSeconds,
+                    parts = colliders.Select(collider => new
+                    {
+                        path = PathOf(collider.transform),
+                        center = Values(collider.transform.TransformPoint(
+                            collider is BoxCollider box
+                                ? box.center
+                                : ((SphereCollider)collider).center)),
+                        rotation = Values(collider.transform.rotation)
+                    }).ToArray()
+                });
+            }
             File.WriteAllText(outputPath, JsonConvert.SerializeObject(new
             {
                 version = 1,
@@ -150,7 +179,9 @@ public static class UnityCoopCornerPoseAudit
                 turnTarget = Values(turnTarget),
                 turnSamples,
                 lookClip,
-                uncoverSamples
+                uncoverSamples,
+                fireClip,
+                fireSamples
             }, Formatting.Indented));
             Debug.Log("COOP_CORNER_POSE_AUDIT_PASSED samples=" +
                 samples.Count);

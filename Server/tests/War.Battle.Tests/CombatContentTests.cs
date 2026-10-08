@@ -597,7 +597,7 @@ internal static class CombatContentTests
         byte[] source = File.ReadAllBytes(path);
         string digest = Convert.ToHexStringLower(SHA256.HashData(source));
         if (digest !=
-            "ed2c1a6d76bc92d13c2102f52122d5f6f7f2145f805e221020f999595e24dafd")
+            "ae5a2919bc3f86d517a227d8394152c280a01c05b1be97292b7fb40faed8d64d")
             throw new Exception("Unity corner pose reference changed.");
 
         using JsonDocument document = JsonDocument.Parse(source);
@@ -701,6 +701,46 @@ internal static class CombatContentTests
                         expectedRotation)) > 0.00002f)
                     throw new Exception(
                         "Host corner uncover collider differs from Unity.");
+            }
+        }
+        string fireClip = reference.GetProperty("fireClip").GetString()!;
+        if (fireClip != "player_fire_right3")
+            throw new Exception("Unity corner fire clip lost its source side.");
+        foreach (JsonElement sample in reference.GetProperty("fireSamples")
+            .EnumerateArray())
+        {
+            int sampleTick = sample.GetProperty("tick").GetInt32();
+            float seconds = sampleTick / (float)MatchManifest.TickRate -
+                content.EnemyPoses.Clip(lookClip).Length;
+            if (Math.Abs(seconds - sample.GetProperty("fireSeconds")
+                    .GetSingle()) > 0.00001f)
+                throw new Exception("Unity corner fire start time changed.");
+            // The source clip exceeds fifteen fixed ticks by less than a
+            // microsecond. Sample the nearest exported 30 Hz frame.
+            float frameSeconds = (sampleTick - 15) /
+                (float)MatchManifest.TickRate;
+            IReadOnlyList<PlayerHitbox> placed = content.EnemyPoses.Place(
+                fireClip, position, turnTarget, frameSeconds);
+            JsonElement[] parts = sample.GetProperty("parts")
+                .EnumerateArray().ToArray();
+            if (parts.Length != 3 || placed.Count != parts.Length)
+                throw new Exception("Unity corner fire lost collider parts.");
+            for (int index = 0; index < parts.Length; index++)
+            {
+                PlayerHitbox part = placed[index];
+                Vector3 expectedCenter = Vector(parts[index].GetProperty(
+                    "center"));
+                Quaternion expectedRotation = Rotation(parts[index]
+                    .GetProperty("rotation"));
+                if (part.SourcePath != parts[index].GetProperty("path")
+                        .GetString() ||
+                    Vector3.Distance(part.Center, expectedCenter) > 0.0002f ||
+                    1 - Math.Abs(Quaternion.Dot(part.Rotation,
+                        expectedRotation)) > 0.00002f)
+                    throw new Exception(
+                        $"Host corner fire collider differs from Unity at " +
+                        $"tick {sampleTick}, part {index}: " +
+                        $"{part.Center} versus {expectedCenter}.");
             }
         }
     }
@@ -3109,6 +3149,15 @@ internal static class CombatContentTests
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
                     "Co-op corner lost the late diagnostic uncover pose.");
+            cornerRuntime.Advance(coverWindup.StartTick + 17);
+            if (cornerRuntime.PlaceCornerUncoverHitboxes(
+                    cornerEnemy.EntityId).Count != 0 ||
+                cornerRuntime.PlaceCornerFireHitboxes(
+                    cornerEnemy.EntityId).Count != 3 ||
+                !cornerRuntime.CurrentEnemyCollisionFrame()
+                    .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
+                throw new Exception(
+                    "Co-op corner fire escaped its diagnostic gate.");
         }
 
         // Flip only the test point's exposed side when needed so this

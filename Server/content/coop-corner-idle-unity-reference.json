@@ -542,5 +542,200 @@
         }
       ]
     }
+  ],
+  "fireClip": "player_fire_right3",
+  "fireSamples": [
+    {
+      "tick": 16,
+      "fireSeconds": 0.03333286,
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.6961212,
+            -2.110813,
+            -12.5969677
+          ],
+          "rotation": [
+            -0.182635516,
+            0.219649911,
+            -0.660877049,
+            0.694002748
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.6868229,
+            -2.195594,
+            -12.60352
+          ],
+          "rotation": [
+            -0.182635516,
+            0.219649911,
+            -0.660877049,
+            0.694002748
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "center": [
+            -27.68896,
+            -1.878622,
+            -12.6161041
+          ],
+          "rotation": [
+            -0.343742,
+            0.209311351,
+            -0.711508036,
+            0.576009154
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 17,
+      "fireSeconds": 0.06666619,
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.6997261,
+            -2.110749,
+            -12.5933914
+          ],
+          "rotation": [
+            -0.182657018,
+            0.219613582,
+            -0.6609557,
+            0.6939336
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.6904411,
+            -2.19553256,
+            -12.5999317
+          ],
+          "rotation": [
+            -0.182657018,
+            0.219613582,
+            -0.6609557,
+            0.6939336
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "center": [
+            -27.6997452,
+            -1.879626,
+            -12.6053591
+          ],
+          "rotation": [
+            -0.3448058,
+            0.204511657,
+            -0.7099856,
+            0.578968346
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 20,
+      "fireSeconds": 0.1666662,
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.7009182,
+            -2.11074686,
+            -12.592227
+          ],
+          "rotation": [
+            -0.18251887,
+            0.219847277,
+            -0.660450161,
+            0.6943772
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.6915379,
+            -2.1955142,
+            -12.5988445
+          ],
+          "rotation": [
+            -0.18251887,
+            0.219847277,
+            -0.660450161,
+            0.6943772
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "center": [
+            -27.7106056,
+            -1.880582,
+            -12.5958166
+          ],
+          "rotation": [
+            -0.348286271,
+            0.211295888,
+            -0.6920899,
+            0.5958713
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 25,
+      "fireSeconds": 0.333332866,
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.69618,
+            -2.11082315,
+            -12.59692
+          ],
+          "rotation": [
+            -0.182549521,
+            0.219795361,
+            -0.660562456,
+            0.694278657
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            -27.6868229,
+            -2.195594,
+            -12.60352
+          ],
+          "rotation": [
+            -0.182549521,
+            0.219795361,
+            -0.660562456,
+            0.694278657
+          ]
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "center": [
+            -27.6894226,
+            -1.87789106,
+            -12.6139736
+          ],
+          "rotation": [
+            -0.324420333,
+            0.202466369,
+            -0.7045619,
+            0.59778893
+          ]
+        }
+      ]
+    }
   ]
 }
