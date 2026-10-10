@@ -10110,6 +10110,16 @@ internal static class CombatContentTests
                   grenadeMaximum.Grenade == new ArmyGrenadeDamageStats(341, 1024) &&
                   content.Army.CardBaseStats("ELITEPARA", 0, maximumCardLevel).Grenade == null,
                 "Grenadier card explosion damage follows its source rows and integer interpolation");
+            var droneCard = content.Army.CardBaseStats("HEAVYDRONE", 0, maximumCardLevel);
+            var normalDroneShot = content.Army.ComposeDroneShot(0, null, null);
+            var droneFamily = content.Army.Families.Single(family =>
+                family.UnitId == "ID_UNIT-DRONE");
+            Check(droneCard.Drone is {CanTurnInvisible: false} &&
+                  droneCard.Drone.MovementSpeed == droneFamily.MovementSpeed &&
+                  droneCard.Drone.ShotSpeed == normalDroneShot.ShotSpeed &&
+                  droneCard.Drone.ShieldHitProbability == normalDroneShot.ShieldHitProbability &&
+                  content.Army.CardBaseStats("ELITEPARA", 0, maximumCardLevel).Drone == null,
+                "Drone card keeps source movement, bullet, and shield constants without a special lane");
             Reject(()=>content.Army.CardBaseStats("ELITEPARA",-1,maximumCardLevel));
             Reject(()=>content.Army.CardBaseStats("ELITEPARA",maximumCardLevel+1,
                 maximumCardLevel));

@@ -12,9 +12,11 @@ public sealed record ArmyUpgradeShotStats(float ProbabilityOfRealShot,int FireBa
 public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatchSizeMin,
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
 public sealed record ArmyGrenadeDamageStats(float Minimum, float Explosion);
+public sealed record ArmyCardDroneRuntime(float MovementSpeed, float ShotSpeed,
+    float ShieldHitProbability, bool CanTurnInvisible);
 public sealed record ArmyCardBaseStats(CardSpawnUnitSourceCatalog.Row Source,
     float Progress,ArmyBaseCombatStats Combat,ArmyBaseShotStats Shot,
-    ArmyGrenadeDamageStats? Grenade);
+    ArmyGrenadeDamageStats? Grenade, ArmyCardDroneRuntime? Drone);
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew,float ShieldHitProbability=0);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
@@ -171,8 +173,25 @@ public sealed class ArmyDeploymentCatalog
         ArmyGrenadeDamageStats? grenade = source.UnitId == "ID_UNIT-GRENADIER"
             ? ComposeCardGrenadeDamage(source, progress)
             : null;
+        ArmyCardDroneRuntime? drone = source.UnitId == "ID_UNIT-DRONE"
+            ? ComposeCardDroneRuntime()
+            : null;
         return new ArmyCardBaseStats(source, progress,
-            new ArmyBaseCombatStats(health, damage), shot, grenade);
+            new ArmyBaseCombatStats(health, damage), shot, grenade, drone);
+    }
+
+    private ArmyCardDroneRuntime ComposeCardDroneRuntime()
+    {
+        var family = Families.Single(family => family.UnitId == "ID_UNIT-DRONE");
+        if (droneBulletSpeed is not float shotSpeed ||
+            droneShieldProbability is not float shieldProbability)
+            throw new InvalidDataException("Drone card runtime constants are unavailable.");
+
+        // AIObject.SpawnByCard uses a new UnitUpgrades(1f), so isSpecial is
+        // false. Drone's invisibility branch requires hasSpecial and cannot
+        // be enabled by the card's ordinary SPECIAL table column.
+        return new ArmyCardDroneRuntime(family.MovementSpeed, shotSpeed,
+            shieldProbability, CanTurnInvisible: false);
     }
 
     private ArmyGrenadeDamageStats ComposeCardGrenadeDamage(
