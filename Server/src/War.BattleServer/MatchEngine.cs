@@ -162,24 +162,27 @@ public sealed partial class MatchEngine : IMatchRuntime
         return true;
     }
 
-    private bool HasSelectedCard(Player owner,string cardClassId)
+    private bool HasSelectedCard(Player owner, string cardClassId)
     {
         if (!owner.CardsSelected) return false;
+
         string sourceId = WarCardSourceIdentityCatalog.Resolve(cardClassId);
         if (cardReservations == null)
-            return owner.SelectedCards.Contains(sourceId,StringComparer.Ordinal) ||
-                owner.SelectedCards.Contains(cardClassId,StringComparer.Ordinal);
+            return owner.SelectedCards.Contains(sourceId, StringComparer.Ordinal) ||
+                owner.SelectedCards.Contains(cardClassId, StringComparer.Ordinal);
+
         // Selection must name the same inventory identity that the Backend
         // allocated. A different spelling cannot spend an unselected card.
-        string inventoryId = CardInventoryId(owner.Definition.PlayerId,cardClassId);
-        return owner.SelectedCards.Contains(inventoryId,StringComparer.Ordinal);
+        string inventoryId = CardInventoryId(owner.Definition.PlayerId, cardClassId);
+        return owner.SelectedCards.Contains(inventoryId, StringComparer.Ordinal);
     }
 
-    private string CardInventoryId(string ownerPlayerId,string cardClassId,string? sourceId=null)
+    private string CardInventoryId(string ownerPlayerId, string cardClassId, string? sourceId = null)
     {
-        string recoveredId = WarCardSourceIdentityCatalog.Resolve(cardClassId,sourceId);
-        if (cardReservations?.HasInventory(ownerPlayerId,recoveredId)==true)
+        string recoveredId = WarCardSourceIdentityCatalog.Resolve(cardClassId, sourceId);
+        if (cardReservations?.HasInventory(ownerPlayerId, recoveredId) == true)
             return recoveredId;
+
         return cardClassId;
     }
 
