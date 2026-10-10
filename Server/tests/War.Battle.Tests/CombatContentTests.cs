@@ -10052,6 +10052,13 @@ internal static class CombatContentTests
                   "recovered card class and serialized source identities stay distinct");
             Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit"));
             Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit","DECOY"));
+            Check(CardSpawnUnitSourceCatalog.All.Count==7&&
+                  CardSpawnUnitSourceCatalog.Get("ELITEPARA") is {UnitId:"ID_UNIT-PARATROOPER",
+                      Count:2,SpawnDelaySeconds:0.5f}&&
+                  CardSpawnUnitSourceCatalog.Get("HEAVYDRONE") is {UnitId:"ID_UNIT-DRONE",
+                      Count:1,SpawnDelaySeconds:0f},
+                  "unit-card source identities retain their distinct spawn count and timing");
+            Reject(()=>CardSpawnUnitSourceCatalog.Get("DECOY"));
             var boundedPerformance=new BattlePerformanceLedger(1);
             boundedPerformance.RecordCard("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
             Reject(()=>boundedPerformance.RecordObjective("cccccccccccccccccccccccccccccccc"));
