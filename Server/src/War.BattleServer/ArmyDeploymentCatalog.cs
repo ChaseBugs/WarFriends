@@ -11,8 +11,10 @@ public sealed record ArmyUpgradeShotStats(float ProbabilityOfRealShot,int FireBa
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
 public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatchSizeMin,
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
+public sealed record ArmyGrenadeDamageStats(float Minimum, float Explosion);
 public sealed record ArmyCardBaseStats(CardSpawnUnitSourceCatalog.Row Source,
-    float Progress,ArmyBaseCombatStats Combat,ArmyBaseShotStats Shot);
+    float Progress,ArmyBaseCombatStats Combat,ArmyBaseShotStats Shot,
+    ArmyGrenadeDamageStats? Grenade);
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew,float ShieldHitProbability=0);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
@@ -44,6 +46,7 @@ public sealed class ArmyDeploymentCatalog
     private readonly IReadOnlyDictionary<int,ArmyDeploymentOption> options;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyBaseCombatStats>>? baseStats;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
+    private IReadOnlyList<ArmyGrenadeDamageStats>? grenadierDamageStages;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
     private IReadOnlyList<float>? transporterRepairBotHealth;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? vehiclePassengerHealth;
@@ -165,8 +168,30 @@ public sealed class ArmyDeploymentCatalog
 
         var shot = ComposeCardShot(source.UnitId, source.CardMinimumRowIndex,
             source.CardMaximumRowIndex, progress);
+        ArmyGrenadeDamageStats? grenade = source.UnitId == "ID_UNIT-GRENADIER"
+            ? ComposeCardGrenadeDamage(source, progress)
+            : null;
         return new ArmyCardBaseStats(source, progress,
-            new ArmyBaseCombatStats(health, damage), shot);
+            new ArmyBaseCombatStats(health, damage), shot, grenade);
+    }
+
+    private ArmyGrenadeDamageStats ComposeCardGrenadeDamage(
+        CardSpawnUnitSourceCatalog.Row source, float progress)
+    {
+        if (grenadierDamageStages == null ||
+            source.CardMaximumRowIndex >= grenadierDamageStages.Count)
+            throw new InvalidDataException("Grenadier card damage rows are unavailable.");
+
+        var minimum = grenadierDamageStages[source.CardMinimumRowIndex];
+        var maximum = grenadierDamageStages[source.CardMaximumRowIndex];
+
+        // SoldierBehaviourDefinititonGrennader.Interpolate truncates both
+        // grenade fields to integers after interpolating the card rows.
+        float near = (int)(minimum.Minimum +
+            (maximum.Minimum - minimum.Minimum) * progress);
+        float explosion = (int)(minimum.Explosion +
+            (maximum.Explosion - minimum.Explosion) * progress);
+        return new ArmyGrenadeDamageStats(near, explosion);
     }
 
     /// <summary>UpgradeSlotsHelicopter adds Seats across selected lanes; GetSoldierHpInMechanic reads only the normal row.</summary>
@@ -689,6 +714,9 @@ public sealed class ArmyDeploymentCatalog
                 throw new InvalidDataException("Army upgrade lane offsets differ from recovered source.");
             var stages=new ArmyBaseCombatStats[stageRows.GetArrayLength()];
             var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
+            var grenadeStages=family.UnitId=="ID_UNIT-GRENADIER"
+                ? new ArmyGrenadeDamageStats[stageRows.GetArrayLength()]
+                : null;
             var specials=new float[stageRows.GetArrayLength()];
             var passengerHealth=vehiclePassenger?new float[stageRows.GetArrayLength()]:null;
             var crewSeats=family.UnitId=="ID_UNIT-HELICOPTER"?new int[stageRows.GetArrayLength()]:null;
@@ -708,6 +736,15 @@ public sealed class ArmyDeploymentCatalog
                 float frequencyMax=stage.GetProperty("SHOTFREQUENCYMAX").GetSingle();
                 float probability=stage.GetProperty("REALSHOTPROBABILITY").GetSingle();
                 float specialValue=stage.GetProperty("SPECIAL").GetSingle();
+                if(grenadeStages!=null)
+                {
+                    float near=stage.GetProperty("GRENADEMINDAMAGE").GetSingle();
+                    float explosion=stage.GetProperty("GRENADEEXPLODEDAMAGE").GetSingle();
+                    if(!float.IsFinite(near)||!float.IsFinite(explosion)||
+                       near<0||explosion<near||explosion>10_000_000)
+                        throw new InvalidDataException("Grenadier damage row is invalid.");
+                    grenadeStages[i]=new ArmyGrenadeDamageStats(near,explosion);
+                }
                 float soldierHp=passengerHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
                 int helicopterSeatCount=crewSeats==null?0:stage.GetProperty("SEATS").GetInt32();
                 float helicopterHp=crewHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
@@ -752,6 +789,8 @@ public sealed class ArmyDeploymentCatalog
                 }
             }
             acceptedStats.Add(family.UnitId,Array.AsReadOnly(stages));
+            if(grenadeStages!=null)
+                grenadierDamageStages=Array.AsReadOnly(grenadeStages);
             acceptedShots.Add(family.UnitId,Array.AsReadOnly(shots));
             acceptedSpecials.Add(family.UnitId,Array.AsReadOnly(specials));
             if(passengerHealth!=null)

@@ -10102,6 +10102,14 @@ internal static class CombatContentTests
                   content.Army.CardBaseStats("ELITESNIPER",maximumCardLevel,
                         maximumCardLevel).Combat,
                   "card stat interpolation keeps the extracted endpoints and sniper row-zero fallback");
+            var grenadeMinimum = content.Army.CardBaseStats(
+                "GREATGRENADIER", 0, maximumCardLevel);
+            var grenadeMaximum = content.Army.CardBaseStats(
+                "GREATGRENADIER", maximumCardLevel, maximumCardLevel);
+            Check(grenadeMinimum.Grenade == new ArmyGrenadeDamageStats(26, 79) &&
+                  grenadeMaximum.Grenade == new ArmyGrenadeDamageStats(341, 1024) &&
+                  content.Army.CardBaseStats("ELITEPARA", 0, maximumCardLevel).Grenade == null,
+                "Grenadier card explosion damage follows its source rows and integer interpolation");
             Reject(()=>content.Army.CardBaseStats("ELITEPARA",-1,maximumCardLevel));
             Reject(()=>content.Army.CardBaseStats("ELITEPARA",maximumCardLevel+1,
                 maximumCardLevel));
