@@ -1,15 +1,19 @@
 """Check the Worker card ID map against recovered 1.4.0 MainScene components."""
 
 from pathlib import Path
+import hashlib
+import json
 import re
 
 
 ROOT = Path(__file__).resolve().parents[2]
+ASSETS = ROOT / "Clients/ExportedProject/Assets"
 SCRIPTS = ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp"
 SCENE = ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity"
 CATALOG = ROOT / "Server/src/War.BattleServer/WarCardSourceIdentityCatalog.cs"
 EFFECTS = ROOT / "Server/src/War.BattleServer/WarCardEffectCatalog.cs"
 UNIT_CARDS = ROOT / "Server/src/War.BattleServer/CardSpawnUnitSourceCatalog.cs"
+CONTENT = ROOT / "Server/content/recovered-battle-content.json"
 
 source = CATALOG.read_text(encoding="utf-8")
 declared = {
@@ -30,6 +34,10 @@ for card_class in classes:
     guid_to_class[re.search(r"^guid: ([0-9a-f]{32})$", meta, re.M).group(1)] = card_class
 
 scene = SCENE.read_text(encoding="utf-8", errors="replace")
+content = json.loads(CONTENT.read_text(encoding="utf-8"))
+assert content["mainSceneSha256"] == hashlib.sha256(SCENE.read_bytes()).hexdigest()
+content_sheets = {sheet["type"].removeprefix("Google2u."): sheet
+                  for sheet in content["sheets"]}
 rarity = {
     name: int(value)
     for name, value in re.findall(r"^  - NAME: ([A-Z0-9_]+)\r?\n    RARITY: (-?\d+)", scene, re.M)
@@ -76,10 +84,15 @@ slot_guid_by_unit = {}
 for unit_id, class_name in slot_class_by_unit.items():
     meta = (SCRIPTS / f"{class_name}.cs.meta").read_text(encoding="utf-8")
     slot_guid_by_unit[unit_id] = re.search(r"^guid: ([0-9a-f]{32})$", meta, re.M).group(1)
+sheet_guids = {}
+for meta_path in (ASSETS / "Plugins/Assembly-CSharp-firstpass/Google2u").glob("DBUpgradeSlots*.cs.meta"):
+    meta = meta_path.read_text(encoding="utf-8")
+    sheet_guid = re.search(r"^guid: ([0-9a-f]{32})$", meta, re.M).group(1)
+    sheet_guids[sheet_guid] = meta_path.name.removesuffix(".cs.meta")
 
 blocks = {}
 for block in scene.split("--- !u!"):
-    component = re.match(r"114 &(\d+)", block)
+    component = re.match(r"\d+ &(\d+)", block)
     if component:
         blocks[int(component.group(1))] = block
 
@@ -97,15 +110,45 @@ for component_id, block in blocks.items():
     behaviour_guid = re.search(r"m_Script: \{fileID: 11500000, guid: ([0-9a-f]{32})", behaviour).group(1)
     unit_id = behaviour_guid_to_unit[behaviour_guid]
     slot_id = int(re.search(r"^  upgradeSlots: \{fileID: (\d+)\}$", behaviour, re.M).group(1))
-    assert f"guid: {slot_guid_by_unit[unit_id]}" in blocks[slot_id], (card_id, slot_id)
+    slot = blocks[slot_id]
+    assert f"guid: {slot_guid_by_unit[unit_id]}" in slot, (card_id, slot_id)
+    slot_game_object = int(re.search(r"^  m_GameObject: \{fileID: (\d+)\}$", slot, re.M).group(1))
+    sibling_ids = [int(value) for value in re.findall(
+        r"- 114: \{fileID: (\d+)\}", blocks[slot_game_object])]
+    sheet_ids = [sibling for sibling in sibling_ids if re.search(
+        r"m_Script: \{fileID: 11500000, guid: ([0-9a-f]{32})", blocks[sibling]).group(1)
+        in sheet_guids]
+    assert len(sheet_ids) == 1, (card_id, sheet_ids)
+    sheet_id = sheet_ids[0]
+    sheet_guid = re.search(r"m_Script: \{fileID: 11500000, guid: ([0-9a-f]{32})",
+                           blocks[sheet_id]).group(1)
+    sheet_type = sheet_guids[sheet_guid]
+    names_text = re.search(r"^  rowNames:\n(.*?)^  Rows:", blocks[sheet_id], re.M | re.S).group(1)
+    row_names = re.findall(r"^  - ([A-Z0-9_]+)$", names_text, re.M)
+    sheet_rows = content_sheets[sheet_type]["rows"]
+    assert len(row_names) == len(sheet_rows), (card_id, sheet_type)
+    if "CARDS_MIN" in row_names and "CARDS_MAX" in row_names:
+        min_row = row_names.index("CARDS_MIN")
+        max_row = row_names.index("CARDS_MAX")
+        assert max_row == min_row + 1
+    else:
+        assert card_id == "ELITESNIPER" and "VEHICLE_MIN" in row_names and \
+            "VEHICLE_MAX" in row_names, card_id
+        # UpgradeSlots.LoadDataForCard logs the missing rows and uses zero.
+        min_row = max_row = 0
+    for row in (sheet_rows[min_row], sheet_rows[max_row]):
+        assert 0 < row["HP"] <= 10_000_000 and 0 < row["DAMAGE"] <= 10_000_000, card_id
+    assert sheet_rows[min_row]["HP"] <= sheet_rows[max_row]["HP"], card_id
     scene_unit_cards.add((card_id, component_id, behaviour_id, slot_id,
-                          unit_id, count, delay))
+                          sheet_id, min_row, max_row, unit_id, count, delay))
 
 catalog_text = UNIT_CARDS.read_text(encoding="utf-8")
 catalog_unit_cards = {
-    (card_id, int(component), int(behaviour), int(slot), unit_id, int(count), float(delay))
-    for card_id, component, behaviour, slot, unit_id, count, delay in re.findall(
-        r'new\("([A-Z0-9_]+)", (\d+), (\d+), (\d+), "(ID_UNIT-[A-Z0-9]+)", (\d+), ([0-9.]+)f?\)',
+    (card_id, int(component), int(behaviour), int(slot), int(sheet),
+     int(minimum), int(maximum), unit_id, int(count), float(delay))
+    for card_id, component, behaviour, slot, sheet, minimum, maximum, unit_id, count, delay in re.findall(
+        r'new\("([A-Z0-9_]+)",\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*'
+        r'"(ID_UNIT-[A-Z0-9]+)",\s*(\d+),\s*([0-9.]+)f?\)',
         catalog_text)
 }
 assert len(scene_unit_cards) == len(catalog_unit_cards) == 7

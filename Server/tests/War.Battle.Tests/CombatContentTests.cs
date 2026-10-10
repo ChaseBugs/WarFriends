@@ -10054,10 +10054,13 @@ internal static class CombatContentTests
             Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit","DECOY"));
             Check(CardSpawnUnitSourceCatalog.All.Count==7&&
                   CardSpawnUnitSourceCatalog.Get("ELITEPARA") is {UnitId:"ID_UNIT-PARATROOPER",
-                      Count:2,SpawnDelaySeconds:0.5f}&&
+                      Count:2,SpawnDelaySeconds:0.5f,CardMinimumRowIndex:123,
+                      CardMaximumRowIndex:124}&&
                   CardSpawnUnitSourceCatalog.Get("HEAVYDRONE") is {UnitId:"ID_UNIT-DRONE",
-                      Count:1,SpawnDelaySeconds:0f},
-                  "unit-card source identities retain their distinct spawn count and timing");
+                      Count:1,SpawnDelaySeconds:0f}&&
+                  CardSpawnUnitSourceCatalog.Get("ELITESNIPER").UsesMissingCardRowsFallback&&
+                  CardSpawnUnitSourceCatalog.All.Count(row=>row.UsesMissingCardRowsFallback)==1,
+                  "unit-card source retains spawn timing and the sniper's missing card-row fallback");
             Reject(()=>CardSpawnUnitSourceCatalog.Get("DECOY"));
             var boundedPerformance=new BattlePerformanceLedger(1);
             boundedPerformance.RecordCard("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
