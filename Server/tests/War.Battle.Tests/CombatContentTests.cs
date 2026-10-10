@@ -11065,14 +11065,14 @@ internal static class CombatContentTests
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["CardDecoy"],[],[0],[133],[-1]),
-            new(decoyOpponent,["CardDecoy"],[],[0],[-1],[-1])]);
+            new(decoyPlayer,["DECOY"],[],[0],[133],[-1]),
+            new(decoyOpponent,["DECOY"],[],[0],[-1],[-1])]);
         decoyMatch.Admit(decoyPlayer);decoyMatch.Admit(decoyOpponent);
         Check(decoyMatch.DroneTargetSnapshot().Select(r=>r.Id).SequenceEqual(new[]{"player:"+decoyPlayer,"player:"+decoyOpponent}),"admitted players register in recovered owner bucket order");
         decoyMatch.Admit(decoyPlayer);
         Check(decoyMatch.DroneTargetSnapshot().Count==2,"repeat admission does not duplicate shootable target");
         MatchCommand SelectDecoy(ulong id)=>new(){CommandId=id,SelectCards=new SelectCardsCommand
-        {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}};
+        {CardIds={"DECOY"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}};
         Check(decoyMatch.Command(decoyPlayer,SelectDecoy(1)).Code=="cards-selected",
             "Decoy owner selects the recovered card before battle start");
         var opponentSelection=SelectDecoy(1);opponentSelection.SelectCards.SpecialUpgradeIndexes.Clear();
@@ -14874,8 +14874,8 @@ internal static class CombatContentTests
         var missileDecoyManifest=missileDecoySource with {MatchId="vehicle-missile-decoy-blast"};
         var missileDecoyMatch=new MatchEngine(missileDecoyManifest,content:content,armyChoice:_=>0);
         missileDecoyMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["CardDecoy"],[],[0],[133],[-1]),
-            new(decoyOpponent,["CardDecoy"],[],[0],[-1],[-1])]);
+            new(decoyPlayer,["DECOY"],[],[0],[133],[-1]),
+            new(decoyOpponent,["DECOY"],[],[0],[-1],[-1])]);
         missileDecoyMatch.Admit(decoyPlayer);missileDecoyMatch.Admit(decoyOpponent);
         Check(missileDecoyMatch.Command(decoyPlayer,SelectDecoy(1)).Code=="cards-selected"&&
               missileDecoyMatch.Command(decoyOpponent,opponentSelection).Code=="cards-selected",

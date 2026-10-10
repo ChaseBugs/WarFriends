@@ -38,14 +38,15 @@ public sealed partial class MatchEngine
     {
         if(landMineSource==null||map==null||armyNavMeshConnectivity==null||
            (rifleCombat==null&&grenadeCombat==null))return "land-mine-disabled";
-        if(!owner.CardsSelected||!owner.SelectedCards.Contains("CardLandmine",StringComparer.Ordinal))return "land-mine-not-selected";
+        if(!HasSelectedCard(owner,"CardLandmine"))return "land-mine-not-selected";
         if(!Guid.TryParseExact(requestId,"N",out _))return "invalid-land-mine-request";
         if(landMines.TryReplay(requestId,owner.Definition.PlayerId,out _))return "land-mine-replayed";
         if(cardReservations==null)return "card-inventory-disabled";
         if(!performance.CanRecordCard(requestId))return "land-mine-receipt-unavailable";
         if(events.Count>MaximumRetainedEvents-landMineSource.SpawnLimit)return "event-backpressure";
         if(stateRevision>ulong.MaxValue-(ulong)landMineSource.SpawnLimit)return "land-mine-receipt-unavailable";
-        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,"CardLandmine"))return "land-mine-unavailable";
+        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,
+               CardInventoryId(owner.Definition.PlayerId,"CardLandmine")))return "land-mine-unavailable";
         try
         {
             var slots=landMineSource.Select(map.Source,owner.Definition.Fraction,armyChoice);
@@ -83,8 +84,7 @@ public sealed partial class MatchEngine
     {
         if(landMineSource==null||map==null||armyNavMeshConnectivity==null||
            (rifleCombat==null&&grenadeCombat==null))return "timed-mine-disabled";
-        if(!owner.CardsSelected||
-           !owner.SelectedCards.Contains("CardMineYourStep",StringComparer.Ordinal))
+        if(!HasSelectedCard(owner,"CardMineYourStep"))
             return "timed-mine-not-selected";
         if(!Guid.TryParseExact(requestId,"N",out _)||requestId!=requestId.ToLowerInvariant())
             return "invalid-timed-mine-request";
@@ -105,7 +105,8 @@ public sealed partial class MatchEngine
         }
         catch(InvalidDataException){return "timed-mine-placement-unavailable";}
         if(placement==null)return "timed-mine-placement-unavailable";
-        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,"CardMineYourStep"))
+        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,
+               CardInventoryId(owner.Definition.PlayerId,"CardMineYourStep")))
             return "timed-mine-unavailable";
 
         try

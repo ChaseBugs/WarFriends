@@ -33,4 +33,5 @@ public sealed class WarCardReservationState
         counts[key] = checked(counts[key] + 1); return true;
     }
     public int Remaining(string ownerPlayerId,string cardId)=>counts.GetValueOrDefault((ownerPlayerId,cardId));
+    public bool HasInventory(string ownerPlayerId,string cardId)=>counts.ContainsKey((ownerPlayerId,cardId));
 }

@@ -10,12 +10,13 @@ public sealed partial class MatchEngine
     private string UseHeavyTurret(Player owner,string requestId)
     {
         if(heavyTurretSource==null||map==null||armyNavMeshConnectivity==null)return "heavy-turret-disabled";
-        if(!owner.CardsSelected||!owner.SelectedCards.Contains("CardHeavyTurret",StringComparer.Ordinal))return "heavy-turret-not-selected";
+        if(!HasSelectedCard(owner,"CardHeavyTurret"))return "heavy-turret-not-selected";
         if(!Guid.TryParseExact(requestId,"N",out _))return "invalid-heavy-turret-request";
         if(heavyTurrets.TryReplay(requestId,owner.Definition.PlayerId,out _))return "heavy-turret-replayed";
         if(cardReservations==null)return "card-inventory-disabled";
         if(!performance.CanRecordCard(requestId)||events.Count>=MaximumRetainedEvents||stateRevision==ulong.MaxValue)return "heavy-turret-receipt-unavailable";
-        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,"CardHeavyTurret"))return "heavy-turret-unavailable";
+        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,
+               CardInventoryId(owner.Definition.PlayerId,"CardHeavyTurret")))return "heavy-turret-unavailable";
         try
         {
             var slot=heavyTurretSource.SelectNearestFree(map,owner.Cover,owner.Definition.Fraction,owner.Position,

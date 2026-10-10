@@ -350,9 +350,31 @@ public abstract class GameControllerOnline : IGameController
 			if (client == null || !client.IsConnected) throw new InvalidOperationException("Self-hosted room is not connected.");
 			string selected = CardManager.instance.selectedCards;
 			string[] cards = string.IsNullOrEmpty(selected) ? new string[0] : selected.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+			BattlePlayerView local = null;
+			if (client.PlayerViews != null)
+			{
+				foreach (BattlePlayerView view in client.PlayerViews)
+				{
+					if (view.PlayerId == client.LocalPlayerId)
+					{
+						local = view;
+						break;
+					}
+				}
+			}
+			if (local == null) throw new InvalidOperationException("The local battle player view is unavailable.");
+			List<int> normal = new List<int>();
+			List<int> special = new List<int>();
+			List<int> elite = new List<int>();
+			foreach (BattleUnitView unit in local.Units)
+			{
+				normal.Add(unit.UpgradeIndex);
+				special.Add(unit.SpecialIndex);
+				elite.Add(unit.EliteIndex);
+			}
 			List<string> buddies = new List<string>();
 			foreach (Tuple<string, CardManager.BuddyCardData> buddy in CardManager.instance.selectedBuddyCards) buddies.Add(buddy.Value1);
-			War.Protocol.MatchReply reply = await client.SelectCardsResult(cards, new int[0], new int[0], new int[0], buddies);
+			War.Protocol.MatchReply reply = await client.SelectCardsResult(cards, normal, special, elite, buddies);
 			if (reply.Code != "cards-selected") throw new InvalidOperationException("Battle host rejected card selection: " + reply.Code);
 		}
 		catch (Exception exception)

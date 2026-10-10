@@ -162,6 +162,27 @@ public sealed partial class MatchEngine : IMatchRuntime
         return true;
     }
 
+    private bool HasSelectedCard(Player owner,string cardClassId)
+    {
+        if (!owner.CardsSelected) return false;
+        string sourceId = WarCardSourceIdentityCatalog.Resolve(cardClassId);
+        if (cardReservations == null)
+            return owner.SelectedCards.Contains(sourceId,StringComparer.Ordinal) ||
+                owner.SelectedCards.Contains(cardClassId,StringComparer.Ordinal);
+        // Selection must name the same inventory identity that the Backend
+        // allocated. A different spelling cannot spend an unselected card.
+        string inventoryId = CardInventoryId(owner.Definition.PlayerId,cardClassId);
+        return owner.SelectedCards.Contains(inventoryId,StringComparer.Ordinal);
+    }
+
+    private string CardInventoryId(string ownerPlayerId,string cardClassId,string? sourceId=null)
+    {
+        string recoveredId = WarCardSourceIdentityCatalog.Resolve(cardClassId,sourceId);
+        if (cardReservations?.HasInventory(ownerPlayerId,recoveredId)==true)
+            return recoveredId;
+        return cardClassId;
+    }
+
     internal bool TryApplyCardEffect(string effectId, string ownerPlayerId, WarCardEffectRequest request)
     {
         if (Find(ownerPlayerId)?.Admitted != true || phase is not (BattlePhase.Countdown or BattlePhase.Running) ||
@@ -169,7 +190,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         try { WarCardEffectRequestValidator.Validate(request); }
         catch (InvalidDataException) { return false; }
         var reserved = cardReservations != null;
-        if (reserved && !cardReservations!.TryReserve(effectId,ownerPlayerId,request.CardId)) return false;
+        string inventoryId = CardInventoryId(ownerPlayerId,request.CardId,request.SourceCardId);
+        if (reserved && !cardReservations!.TryReserve(effectId,ownerPlayerId,inventoryId)) return false;
         if (!cardEffects.TryApply(effectId, ownerPlayerId, request, tick))
         {
             if (reserved) cardReservations!.TryRelease(effectId,ownerPlayerId);
@@ -227,7 +249,7 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     private string UseMedkit(Player owner, string requestId)
     {
-        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardHealMeNow", StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,"CardHealMeNow"))
             return "medkit-not-selected";
         if (owner.Dead || owner.Definition.Combat == null)
             return "medkit-owner-unavailable";
@@ -249,7 +271,7 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     private string UseShieldsUp(Player owner, string requestId)
     {
-        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardShieldsUp", StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,"CardShieldsUp"))
             return "shields-up-not-selected";
         if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
             return "invalid-shields-up-request";
@@ -279,8 +301,7 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     private string UseShieldGenerator(Player owner, string requestId)
     {
-        if (!owner.CardsSelected ||
-            !owner.SelectedCards.Contains("CardShieldGenerator", StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,"CardShieldGenerator"))
             return "shield-generator-not-selected";
         if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
             return "invalid-shield-generator-request";
@@ -298,7 +319,7 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     private string UseAmmoBox(Player owner, string requestId)
     {
-        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardAmmoBox", StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,"CardAmmoBox"))
             return "ammo-box-not-selected";
         if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
             return "invalid-ammo-box-request";
@@ -332,7 +353,7 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     private string UseAmmoThief(Player owner, string requestId)
     {
-        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardAmmoThief", StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,"CardAmmoThief"))
             return "ammo-thief-not-selected";
         if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
             return "invalid-ammo-thief-request";
@@ -375,7 +396,7 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     private string UseBrokenLegs(Player owner, string requestId)
     {
-        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardBrokenLegs", StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,"CardBrokenLegs"))
             return "broken-legs-not-selected";
         if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
             return "invalid-broken-legs-request";
@@ -1798,6 +1819,9 @@ public sealed partial class MatchEngine : IMatchRuntime
                 if (p.Definition.ArmyNormalUpgradeIndexes == null && normal.Length != 0 ||
                     p.Definition.ArmySpecialUpgradeIndexes == null && special.Length != 0 ||
                     p.Definition.ArmyEliteUpgradeIndexes == null && elite.Length != 0)
+                    return "invalid-card-selection";
+                if (cardReservations != null && c.SelectCards.CardIds.Any(cardId =>
+                    !cardReservations.HasInventory(p.Definition.PlayerId,cardId)))
                     return "invalid-card-selection";
                 if (buddySelections == null && c.SelectCards.BuddyCardIds.Count != 0) return "buddy-selection-disabled";
                 var buddies = buddySelections == null

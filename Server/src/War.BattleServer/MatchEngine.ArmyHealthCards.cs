@@ -10,7 +10,7 @@ public sealed partial class MatchEngine
 
     private string UseArmyHealthBuff(Player owner, string requestId, string cardId)
     {
-        if (!owner.CardsSelected || !owner.SelectedCards.Contains(cardId, StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,cardId))
             return "army-health-card-not-selected";
         if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
             return "invalid-army-health-card-request";

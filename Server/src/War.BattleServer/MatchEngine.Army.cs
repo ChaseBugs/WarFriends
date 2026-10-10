@@ -1737,7 +1737,7 @@ public sealed partial class MatchEngine
 
     private string UseHealingStorm(Player owner, string requestId)
     {
-        if (!owner.CardsSelected || !owner.SelectedCards.Contains("CardHealingStorm", StringComparer.Ordinal))
+        if (!HasSelectedCard(owner,"CardHealingStorm"))
             return "healing-storm-not-selected";
         if (!Guid.TryParseExact(requestId, "N", out _) || requestId != requestId.ToLowerInvariant())
             return "invalid-healing-storm-request";

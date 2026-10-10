@@ -138,12 +138,12 @@ internal static class PlayerDamageTests
         {
             MatchId = "live-medkit-owner-healing"
         });
-        liveMatch.ConfigureCardSelection(["CardHealMeNow"]);
-        liveMatch.ConfigureCardInventory([(a, "CardHealMeNow", 2)]);
+        liveMatch.ConfigureCardSelection(["MEDKIT"]);
+        liveMatch.ConfigureCardInventory([(a, "MEDKIT", 2)]);
         liveMatch.Admit(a);
         liveMatch.Admit(b);
         var medkitSelection = new SelectCardsCommand();
-        medkitSelection.CardIds.Add("CardHealMeNow");
+        medkitSelection.CardIds.Add("MEDKIT");
         Check(liveMatch.Command(a, new MatchCommand
         {
             CommandId = 1, SelectCards = medkitSelection
@@ -184,6 +184,18 @@ internal static class PlayerDamageTests
             CommandId = 5,
             UseMedkit = new UseMedkitCommand { RequestId = "85858585858585858585858585858585" }
         }).Code == "medkit-unavailable", "exhausted inventory cannot heal again");
+        var aliasMatch = new MatchEngine(manifest with {MatchId="medkit-selection-identity"});
+        aliasMatch.ConfigureCardSelection(["MEDKIT","CardHealMeNow"]);
+        aliasMatch.ConfigureCardInventory([(a,"MEDKIT",1)]);
+        aliasMatch.Admit(a);
+        aliasMatch.Admit(b);
+        var wrongSelection = new SelectCardsCommand();
+        wrongSelection.CardIds.Add("CardHealMeNow");
+        Check(aliasMatch.Command(a,new MatchCommand {CommandId=1,
+                  SelectCards=wrongSelection}).Code=="invalid-card-selection"&&
+              !aliasMatch.Snapshot().Players[0].CardsSelected&&
+              aliasMatch.Snapshot().CardActivations==0,
+            "a class-name selection cannot replace Backend inventory bound to its source ID");
         const string healingStormEffectId = "82828282828282828282828282828282";
         Check(medkitMatch.TryApplyCardEffect(healingStormEffectId, a,
             new WarCardEffectRequest("CardHealingStorm",

@@ -55,7 +55,7 @@ public sealed partial class MatchEngine
     private string UseDecoy(Player owner,string requestId)
     {
         if(decoySource==null||map==null||armyNavMeshConnectivity==null)return "decoy-disabled";
-        if(!owner.CardsSelected||!owner.SelectedCards.Contains("CardDecoy",StringComparer.Ordinal))
+        if(!HasSelectedCard(owner,"CardDecoy"))
             return "decoy-not-selected";
         if(!Guid.TryParseExact(requestId,"N",out _)||
            requestId!=requestId.ToLowerInvariant())return "invalid-decoy-request";
@@ -64,7 +64,8 @@ public sealed partial class MatchEngine
         if(!performance.CanRecordCard(requestId))return "decoy-receipt-unavailable";
         if(events.Count>MaximumRetainedEvents-decoySource.SpawnCount)return "event-backpressure";
         if(stateRevision>ulong.MaxValue-(ulong)decoySource.SpawnCount)return "decoy-receipt-unavailable";
-        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,"CardDecoy"))return "decoy-unavailable";
+        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,
+               CardInventoryId(owner.Definition.PlayerId,"CardDecoy")))return "decoy-unavailable";
         var registeredTargets=new List<string>();
         try
         {
