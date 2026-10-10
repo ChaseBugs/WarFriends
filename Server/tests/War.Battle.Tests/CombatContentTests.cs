@@ -9797,14 +9797,14 @@ internal static class CombatContentTests
                 new[]{new DeployablePlacement(1,new(1,0,0))},_=>4));
             var effects=new WarCardEffectRuntime(2);
             Check(effects.TryApply("fx-1","44444444444444444444444444444444",
-                      new WarCardEffectRequest("CardSlowdown",new(1,0,1),1,0),10)&&
+                      new WarCardEffectRequest("CardSlowdown",Vector3.Zero,5,0),10)&&
                   !effects.TryApply("fx-1","44444444444444444444444444444444",
-                      new WarCardEffectRequest("CardSlowdown",new(1,0,1),1,0),10)&&
-                  effects.Count==1&&effects.Expire(10+MatchManifest.TickRate)==1&&effects.Count==0,
+                      new WarCardEffectRequest("CardSlowdown",Vector3.Zero,5,0),10)&&
+                  effects.Count==1&&effects.Expire(10+5*MatchManifest.TickRate)==1&&effects.Count==0,
                   "War Card effects create idempotent server leases and expire on authoritative ticks");
             Check(effects.TryApply("fx-2", "44444444444444444444444444444444",
-                      new WarCardEffectRequest("CardSlowdown", new(1, 0, 1), 1, 0),
-                      10 + MatchManifest.TickRate),
+                      new WarCardEffectRequest("CardSlowdown",Vector3.Zero,5,0),
+                      10 + 5*MatchManifest.TickRate),
                   "an expired effect releases its owner's active card slot");
             var objectiveState=new BattleObjectiveState(new Dictionary<BattleObjectiveKind,int>
                 {{BattleObjectiveKind.DestroyCrates,2}});

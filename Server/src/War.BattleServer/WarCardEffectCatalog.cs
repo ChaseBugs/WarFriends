@@ -21,7 +21,7 @@ public static class WarCardEffectCatalog
             ["CardShieldGenerator"]=new("CardShieldGenerator",WarCardEffectKind.Shield,false,true),
             ["CardShieldsUp"]=new("CardShieldsUp",WarCardEffectKind.Shield,false,true),
             ["CardBrokenLegs"]=new("CardBrokenLegs",WarCardEffectKind.Status,false,true),
-            ["CardSlowdown"]=new("CardSlowdown",WarCardEffectKind.Status,true,true),
+            ["CardSlowdown"]=new("CardSlowdown",WarCardEffectKind.Status,false,true),
             ["CardAmmoBox"]=new("CardAmmoBox",WarCardEffectKind.Ammo,false,true),
             ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,false,true),
             ["CardHealthForSoldiers"]=new("CardHealthForSoldiers",WarCardEffectKind.Modifier,false,true),
