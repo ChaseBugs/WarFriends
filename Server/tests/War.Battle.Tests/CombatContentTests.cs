@@ -9469,6 +9469,11 @@ internal static class CombatContentTests
                       Math.Abs(placement.ExplosionDamage - 200f) < 0.001f &&
                       Math.Abs(placement.OuterDamage - 20f) < 0.001f,
                     "Mine Your Step chooses one of three adjacent enemy-cover midpoints and uses opponent maximum health");
+                var navigable = MineYourStepSourcePolicy.Select(sourceMap, ownerFraction,
+                    _ => pair, point => content.ArmyNavMeshConnectivity.SampleNearest(sourceMap,
+                        point, MineYourStepSourcePolicy.NavMeshSampleRadius), 1000f);
+                Check(navigable != null,
+                    "Mine Your Step midpoint resolves on the recovered map navigation mesh");
             }
             var mineMap = content.Maps[0];
             Check(MineYourStepSourcePolicy.Select(mineMap, 1, _ => 0, _ => null, 1000f) == null,
@@ -11164,6 +11169,53 @@ internal static class CombatContentTests
         Check(mineShieldAfter.Health<mineShieldBefore.Health&&
               mineShieldAfter.Revision>mineShieldBefore.Revision,
               "Land Mine blast mutates the nearby recovered shield through host explosion authority");
+        var timedMineManifest=landMineManifest with
+        {
+            MatchId="mine-your-step-match",IdleSeconds=120
+        };
+        var timedMineMatch=new MatchEngine(timedMineManifest,content:content,armyChoice:_=>0);
+        timedMineMatch.ConfigureBattleAllocations([
+            new(decoyPlayer,["CardMineYourStep"],[],[0],[133],[-1]),
+            new(decoyOpponent,[],[],[0],[-1],[-1])
+        ]);
+        timedMineMatch.Admit(decoyPlayer);
+        timedMineMatch.Admit(decoyOpponent);
+        Check(timedMineMatch.Command(decoyPlayer,new(){CommandId=1,
+                  SelectCards=new SelectCardsCommand {CardIds={"CardMineYourStep"},
+                      NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}}).Code=="cards-selected"&&
+              timedMineMatch.Command(decoyOpponent,new(){CommandId=1,
+                  SelectCards=new SelectCardsCommand {NormalUpgradeIndexes={0},
+                      SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+            "Mine Your Step requires the trusted selected card before battle start");
+        foreach(var playerId in new[]{decoyPlayer,decoyOpponent})
+            timedMineMatch.Command(playerId,new(){CommandId=2,
+                Ready=new(){ManifestHash=timedMineMatch.ManifestHash}});
+        timedMineMatch.Advance(60);
+        const string timedCardRequest="98989898989898989898989898989898";
+        var timedReply=timedMineMatch.Command(decoyPlayer,new(){CommandId=3,
+            UseMineYourStep=new(){RequestId=timedCardRequest}});
+        var timedRow=timedReply.Snapshot.LandMines.SingleOrDefault();
+        Check(timedReply.Code=="timed-mine-spawned"&&timedRow!=null&&
+              timedRow.CardId=="CardMineYourStep"&&timedRow.HidingComponentFileId==0&&
+              timedRow.EntityId>=(1UL<<63)&&timedRow.ExpiresTick==510&&
+              Math.Abs(timedRow.Damage-200f)<.001f&&
+              Math.Abs(timedRow.OuterDamage-20f)<.001f,
+            "authenticated timed mine uses opponent health and a separate 15-second identity");
+        Check(timedMineMatch.Command(decoyPlayer,new(){CommandId=4,
+                  UseMineYourStep=new(){RequestId=timedCardRequest}}).Code=="timed-mine-replayed"&&
+              timedMineMatch.Command(decoyPlayer,new(){CommandId=5,
+                  UseMineYourStep=new(){RequestId="99999999999999999999999999999999"}}).Code=="timed-mine-unavailable"&&
+              timedMineMatch.Snapshot().LandMines.Count==1,
+            "timed mine retry and exhausted inventory cannot plant a second entity");
+        ulong timedEventCursor=timedMineMatch.EventBatch(decoyPlayer,0).LatestEventId;
+        for(ulong mineTick=61;mineTick<=510;mineTick++)timedMineMatch.Advance(mineTick);
+        Check(timedMineMatch.Snapshot().LandMines.Count==0&&
+              timedMineMatch.EventBatch(decoyPlayer,timedEventCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==timedRow!.EntityId&&row.Reason=="timer")&&
+              timedMineMatch.Command(decoyPlayer,new(){CommandId=6,
+                  UseMineYourStep=new(){RequestId=timedCardRequest}}).Code=="timed-mine-replayed",
+            "timed mine detonates at its host deadline and retains replay after removal");
         var snowMineMap=content.Maps.Single(m=>m.Source.EndsWith("Snow_Multiplayer.unity",StringComparison.Ordinal));
         var snowVictimCover=snowMineMap.Covers.Single(c=>c.SourceIndex==2&&c.Fraction==1);
         var snowBarrelCover=snowMineMap.Covers.Single(c=>c.SourceIndex==3&&c.Fraction==1);

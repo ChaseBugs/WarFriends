@@ -6,7 +6,20 @@ using War.Protocol;
 // The visual copies the recovered MineAmmo mesh without Photon, physics or gameplay scripts.
 public sealed class SelfHostedLandMinePresenter : MonoBehaviour
 {
+	private sealed class TimedVisual
+	{
+		public MeshRenderer Renderer;
+		public MaterialPropertyBlock Properties = new MaterialPropertyBlock();
+		public ulong ExpiresTick;
+		public ulong ObservedTick;
+		public float ObservedAt;
+		public float LastUpdateAt;
+		public float BlinkingTime;
+		public bool BlinkOn;
+	}
+
 	private readonly Dictionary<ulong, GameObject> active = new Dictionary<ulong, GameObject>();
+	private readonly Dictionary<ulong, TimedVisual> timed = new Dictionary<ulong, TimedVisual>();
 	private MineAmmo visualSource;
 
 	public void Configure(MineAmmo source)
@@ -28,6 +41,23 @@ public sealed class SelfHostedLandMinePresenter : MonoBehaviour
 				active.Add(state.EntityId, visual);
 			}
 			visual.transform.position = new Vector3(state.X, state.Y, state.Z);
+			if (state.CardId == "CardMineYourStep")
+			{
+				TimedVisual indicator;
+				if (!timed.TryGetValue(state.EntityId, out indicator))
+				{
+					indicator = new TimedVisual { Renderer = visual.GetComponentInChildren<MeshRenderer>(),
+						LastUpdateAt = Time.realtimeSinceStartup };
+					if (indicator.Renderer == null)
+						throw new System.InvalidOperationException("The timed mine renderer is unavailable.");
+				if (indicator.Renderer.sharedMaterials.Length < 2)
+						throw new System.InvalidOperationException("The timed mine blink material is unavailable.");
+					timed.Add(state.EntityId, indicator);
+				}
+				indicator.ExpiresTick = state.ExpiresTick;
+				indicator.ObservedTick = snapshot.ServerTick;
+				indicator.ObservedAt = Time.realtimeSinceStartup;
+			}
 		}
 		List<ulong> stale = new List<ulong>();
 		foreach (KeyValuePair<ulong, GameObject> pair in active)
@@ -39,7 +69,7 @@ public sealed class SelfHostedLandMinePresenter : MonoBehaviour
 	{
 		if (item != null && item.Kind == MatchEventKind.LandMineTriggered)
 		{
-			if (Application.isPlaying)
+			if (Application.isPlaying && item.Reason != "owner-disconnected")
 				Explosion.PlayEffects(Explosion.ExplosionType.Big, new Vector3(item.X, item.Y, item.Z));
 			Remove(item.ProjectileId);
 		}
@@ -51,7 +81,8 @@ public sealed class SelfHostedLandMinePresenter : MonoBehaviour
 			throw new System.InvalidOperationException("The recovered Land Mine visual is unavailable.");
 		MeshFilter sourceFilter = visualSource.mineModel.GetComponent<MeshFilter>();
 		if (sourceFilter == null) throw new System.InvalidOperationException("The recovered Land Mine mesh is unavailable.");
-		GameObject root = new GameObject("SelfHostedLandMine_" + state.EntityId);
+		string name = state.CardId == "CardMineYourStep" ? "SelfHostedTimedMine_" : "SelfHostedLandMine_";
+		GameObject root = new GameObject(name + state.EntityId);
 		GameObject body = new GameObject(visualSource.mineModel.gameObject.name);
 		body.transform.SetParent(root.transform, false);
 		body.transform.localPosition = visualSource.mineModel.transform.localPosition;
@@ -65,11 +96,36 @@ public sealed class SelfHostedLandMinePresenter : MonoBehaviour
 		return root;
 	}
 
+	private void Update()
+	{
+		foreach (TimedVisual visual in timed.Values)
+		{
+			float now = Time.realtimeSinceStartup;
+			float elapsed = now - visual.ObservedAt;
+			ulong ticksRemaining = visual.ExpiresTick > visual.ObservedTick
+				? visual.ExpiresTick - visual.ObservedTick : 0;
+			float remaining = Mathf.Max(0f, (float)ticksRemaining / 30f - elapsed);
+			float fraction = Mathf.Clamp01(remaining / 15f);
+			float blinkInterval = fraction * 0.5f + 0.1f;
+			float delta = Mathf.Max(0f, now - visual.LastUpdateAt);
+			visual.LastUpdateAt = now;
+			visual.BlinkingTime += visual.BlinkOn ? delta : -delta * 0.5f;
+			if ((visual.BlinkOn && visual.BlinkingTime > blinkInterval) ||
+				(!visual.BlinkOn && visual.BlinkingTime < 0f))
+				visual.BlinkOn = !visual.BlinkOn;
+			float pulse = visual.BlinkingTime / blinkInterval;
+			visual.Properties.SetColor("_TintColor",
+				Color.Lerp(Color.black, new Color(1f, 0.5f, 0.5f, 1f), pulse));
+			visual.Renderer.SetPropertyBlock(visual.Properties, 1);
+		}
+	}
+
 	private void Remove(ulong entityId)
 	{
 		GameObject visual;
 		if (!active.TryGetValue(entityId, out visual)) return;
 		active.Remove(entityId);
+		timed.Remove(entityId);
 		DestroyObject(visual);
 	}
 
@@ -77,6 +133,7 @@ public sealed class SelfHostedLandMinePresenter : MonoBehaviour
 	{
 		foreach (GameObject visual in active.Values) DestroyObject(visual);
 		active.Clear();
+		timed.Clear();
 	}
 
 	private static void DestroyObject(GameObject value)

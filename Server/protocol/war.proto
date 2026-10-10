@@ -127,6 +127,7 @@ message UseAmmoThiefCommand { string request_id = 1; }
 message UseBrokenLegsCommand { string request_id = 1; }
 message UseSuperSoldiersCommand { string request_id = 1; }
 message UseVehicleHealthCommand { string request_id = 1; }
+message UseMineYourStepCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -154,6 +155,7 @@ message MatchCommand {
     UseBrokenLegsCommand use_broken_legs = 33;
     UseSuperSoldiersCommand use_super_soldiers = 34;
     UseVehicleHealthCommand use_vehicle_health = 35;
+    UseMineYourStepCommand use_mine_your_step = 36;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -391,6 +393,7 @@ message BattleLandMineState {
   uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;
   int32 owner_fraction = 4; int32 hiding_component_file_id = 5;
   float x = 6; float y = 7; float z = 8; float damage = 9;
+  string card_id = 10; float outer_damage = 11; uint64 expires_tick = 12;
 }
 message BattleHeavyTurretState {
   uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;

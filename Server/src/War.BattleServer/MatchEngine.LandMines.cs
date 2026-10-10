@@ -7,6 +7,17 @@ public sealed partial class MatchEngine
 {
     private sealed record LandMinePassengerTrigger(VehicleEntity Vehicle,string Role);
 
+    private float MineBlastDamage(Vector3 origin, float explosionDamage,
+        float? outerDamage, PlayerHitbox hitbox, Vector3 targetRoot)
+    {
+        if (!outerDamage.HasValue) return explosionDamage;
+        if (landMineSource == null || !PlayerHitbox.Finite(targetRoot))
+            throw new InvalidDataException("Timed mine lost source or target geometry.");
+        return MineYourStepFalloff.Damage(outerDamage.Value, explosionDamage,
+            landMineSource.DeadRadius, landMineSource.HurtRadius,
+            Vector3.Distance(origin, targetRoot), hitbox.BoundsDistanceToPoint(origin));
+    }
+
     // Host-only insertion used by deterministic simulation proofs and future
     // server-authored scene mechanics. No UDP command can choose a position.
     internal bool TryRegisterLandMine(string requestId,string ownerPlayerId,Vector3 position,float damage)
@@ -68,166 +79,249 @@ public sealed partial class MatchEngine
         }
     }
 
+    private string UseMineYourStep(Player owner,string requestId)
+    {
+        if(landMineSource==null||map==null||armyNavMeshConnectivity==null||
+           (rifleCombat==null&&grenadeCombat==null))return "timed-mine-disabled";
+        if(!owner.CardsSelected||
+           !owner.SelectedCards.Contains("CardMineYourStep",StringComparer.Ordinal))
+            return "timed-mine-not-selected";
+        if(!Guid.TryParseExact(requestId,"N",out _)||requestId!=requestId.ToLowerInvariant())
+            return "invalid-timed-mine-request";
+        if(timedMines.TryReplay(requestId,owner.Definition.PlayerId))return "timed-mine-replayed";
+        if(cardReservations==null)return "card-inventory-disabled";
+        if(!performance.CanRecordCard(requestId)||stateRevision==ulong.MaxValue)
+            return "timed-mine-receipt-unavailable";
+        if(events.Count>=MaximumRetainedEvents)return "event-backpressure";
+
+        var opponent=players.Single(player=>player!=owner);
+        float maximum=opponent.Definition.Combat?.MaxHealth??0;
+        MineYourStepPlacement? placement;
+        try
+        {
+            placement=MineYourStepSourcePolicy.Select(map,owner.Definition.Fraction,
+                armyChoice,point=>armyNavMeshConnectivity.SampleNearest(map,point,
+                    MineYourStepSourcePolicy.NavMeshSampleRadius),maximum);
+        }
+        catch(InvalidDataException){return "timed-mine-placement-unavailable";}
+        if(placement==null)return "timed-mine-placement-unavailable";
+        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,"CardMineYourStep"))
+            return "timed-mine-unavailable";
+
+        try
+        {
+            if(!timedMines.TrySpawn(requestId,owner.Definition.PlayerId,
+                   owner.Definition.Fraction,placement,tick,out var mine)||mine==null)
+            {
+                cardReservations.TryRelease(requestId,owner.Definition.PlayerId);
+                return "timed-mine-unavailable";
+            }
+            performance.RecordCard(requestId,owner.Definition.PlayerId,"CardMineYourStep");
+            stateRevision++;
+            Emit(MatchEventKind.LandMineSpawned,mine.OwnerPlayerId,"CardMineYourStep",
+                mine.EntityId,mine.Position,mine.ExplosionDamage,
+                mine.ExpiresTick.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            return "timed-mine-spawned";
+        }
+        catch(Exception error) when(error is InvalidDataException or ArgumentOutOfRangeException or OverflowException)
+        {
+            timedMines.TryRollbackSpawn(requestId,owner.Definition.PlayerId);
+            performance.TryRollbackCard(requestId);
+            cardReservations.TryRelease(requestId,owner.Definition.PlayerId);
+            return "invalid-timed-mine-authority";
+        }
+    }
+
     private PlayerCollisionModel LandMinePose(string playerId)
         =>rifleCombat?.Pose(playerId).Collision??grenadeCombat?.Collision(playerId)??
           throw new InvalidDataException("Land Mine lost current player collision authority.");
 
     private void AdvanceLandMines()
     {
-        if(landMineSource==null||landMines.Snapshot().Count==0)return;
+        if(landMineSource==null)return;
         foreach(var mine in landMines.Snapshot())
         {
-            var playerTrigger=players.Where(x=>!x.Dead&&x.Definition.Fraction!=mine.OwnerFraction)
-                .OrderBy(x=>x.Definition.PlayerId,StringComparer.Ordinal)
-                .FirstOrDefault(x=>LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
-                    LandMinePose(x.Definition.PlayerId)));
-            var armyTrigger=activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
-                    infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey)
-                .FirstOrDefault(x=>LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
-                    (InfantryPose(x.EntityKey)??throw new InvalidDataException("Land Mine trigger lost infantry pose.")).Parts));
-            VehicleEntity? vehicleTrigger=null;
-            if(playerTrigger==null&&armyTrigger==null)
-                vehicleTrigger=FindLandMineVehicleTrigger(mine);
-            LandMinePassengerTrigger? passengerTrigger=null;
-            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null)
-                passengerTrigger=FindLandMinePassengerTrigger(mine);
-            DecoyMatchEntity? decoyTrigger=null;
-            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&passengerTrigger==null)
-                decoyTrigger=FindLandMineDecoyTrigger(mine);
-            HeavyTurretMatchEntity? turretTrigger=null;
-            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
-               passengerTrigger==null&&decoyTrigger==null)
-                turretTrigger=FindLandMineHeavyTurretTrigger(mine);
-            BattleArmyEntityState? aircraftTrigger=null;
-            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
-               passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null)
-                aircraftTrigger=FindLandMineAircraftTrigger(mine);
-            BattleArmyEntityState? gunnerTrigger=null;
-            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
-               passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null&&aircraftTrigger==null)
-                gunnerTrigger=FindLandMineHelicopterGunnerTrigger(mine);
-            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
-               passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null&&
-               aircraftTrigger==null&&gunnerTrigger==null)
-                continue;
-            if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
-                throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
-            stateRevision++;
-            string target;
-            string reason;
-            if(playerTrigger!=null)
+            AdvanceOneMine(mine,null,null);
+            if(Terminal)return;
+        }
+        foreach(var timed in timedMines.Snapshot())
+        {
+            var mine=new LandMineMatchEntity(timed.EntityId,timed.RequestId,
+                timed.OwnerPlayerId,timed.OwnerFraction,0,timed.Position,timed.ExplosionDamage);
+            AdvanceOneMine(mine,timed.OuterDamage,timed.ExpiresTick);
+            if(Terminal)return;
+        }
+    }
+
+    private void AdvanceOneMine(LandMineMatchEntity mine,float? outerDamage,ulong? expiresTick)
+    {
+        var source=landMineSource??throw new InvalidDataException("Land Mine source disappeared.");
+        var playerTrigger=players.Where(x=>!x.Dead&&x.Definition.Fraction!=mine.OwnerFraction)
+            .OrderBy(x=>x.Definition.PlayerId,StringComparer.Ordinal)
+            .FirstOrDefault(x=>LandMineExplosion.Triggered(mine.Position,source.Prefab,
+                LandMinePose(x.Definition.PlayerId)));
+        var armyTrigger=activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
+                infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey)
+            .FirstOrDefault(x=>LandMineExplosion.Triggered(mine.Position,source.Prefab,
+                (InfantryPose(x.EntityKey)??throw new InvalidDataException("Land Mine trigger lost infantry pose.")).Parts));
+        VehicleEntity? vehicleTrigger=null;
+        if(playerTrigger==null&&armyTrigger==null)
+            vehicleTrigger=FindLandMineVehicleTrigger(mine);
+        LandMinePassengerTrigger? passengerTrigger=null;
+        if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null)
+            passengerTrigger=FindLandMinePassengerTrigger(mine);
+        DecoyMatchEntity? decoyTrigger=null;
+        if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&passengerTrigger==null)
+            decoyTrigger=FindLandMineDecoyTrigger(mine);
+        HeavyTurretMatchEntity? turretTrigger=null;
+        if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+           passengerTrigger==null&&decoyTrigger==null)
+            turretTrigger=FindLandMineHeavyTurretTrigger(mine);
+        BattleArmyEntityState? aircraftTrigger=null;
+        if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+           passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null)
+            aircraftTrigger=FindLandMineAircraftTrigger(mine);
+        BattleArmyEntityState? gunnerTrigger=null;
+        if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+           passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null&&aircraftTrigger==null)
+            gunnerTrigger=FindLandMineHelicopterGunnerTrigger(mine);
+        if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+           passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null&&
+           aircraftTrigger==null&&gunnerTrigger==null&&
+           (!expiresTick.HasValue||tick<expiresTick.Value))
+            return;
+        if(expiresTick.HasValue)
+        {
+            if(!timedMines.TryRemove(mine.EntityId,out var removedTimed)||
+               removedTimed?.RequestId!=mine.RequestId)
+                throw new InvalidDataException("Timed mine compare-and-remove failed.");
+        }
+        else if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
+            throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
+        stateRevision++;
+        string target;
+        string reason;
+        if(playerTrigger!=null)
+        {
+            target=playerTrigger.Definition.PlayerId;
+            reason="player-trigger";
+        }
+        else if(armyTrigger!=null)
+        {
+            target=armyTrigger.OwnerPlayerId;
+            reason="army-trigger:"+armyTrigger.EntityKey;
+        }
+        else if(vehicleTrigger!=null)
+        {
+            target=vehicleTrigger.OwnerPlayerId;
+            reason="vehicle-trigger:"+vehicleTrigger.EntityId;
+        }
+        else if(passengerTrigger!=null)
+        {
+            target=passengerTrigger.Vehicle.OwnerPlayerId;
+            reason="vehicle-passenger-trigger:"+passengerTrigger.Vehicle.EntityId+":"+
+                passengerTrigger.Role;
+        }
+        else if(decoyTrigger!=null)
+        {
+            target=decoyTrigger.OwnerPlayerId;
+            reason="decoy-trigger:"+decoyTrigger.EntityId;
+        }
+        else if(turretTrigger!=null)
+        {
+            target=turretTrigger.OwnerPlayerId;
+            reason="heavy-turret-trigger:"+turretTrigger.EntityId;
+        }
+        else if(aircraftTrigger!=null)
+        {
+            target=aircraftTrigger.OwnerPlayerId;
+            reason="air-trigger:"+aircraftTrigger.EntityKey;
+        }
+        else if(gunnerTrigger!=null)
+        {
+            target=gunnerTrigger.OwnerPlayerId;
+            reason="helicopter-gunner-trigger:"+gunnerTrigger.EntityKey;
+        }
+        else {target="";reason="timer";}
+        Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
+            mine.EntityId,mine.Position,mine.Damage,reason);
+        var attacker=Find(mine.OwnerPlayerId)??throw new InvalidDataException("Land Mine owner disappeared.");
+        if(map!=null)
+        {
+            Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
+            Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
+            foreach(var collider in map.DynamicSphereOverlaps(mine.Position,source.HurtRadius,
+                        uint.MaxValue,enabled,layer))
             {
-                target=playerTrigger.Definition.PlayerId;
-                reason="player-trigger";
-            }
-            else if(armyTrigger!=null)
-            {
-                target=armyTrigger.OwnerPlayerId;
-                reason="army-trigger:"+armyTrigger.EntityKey;
-            }
-            else if(vehicleTrigger!=null)
-            {
-                target=vehicleTrigger.OwnerPlayerId;
-                reason="vehicle-trigger:"+vehicleTrigger.EntityId;
-            }
-            else if(passengerTrigger!=null)
-            {
-                target=passengerTrigger.Vehicle.OwnerPlayerId;
-                reason="vehicle-passenger-trigger:"+passengerTrigger.Vehicle.EntityId+":"+
-                    passengerTrigger.Role;
-            }
-            else if(decoyTrigger!=null)
-            {
-                target=decoyTrigger.OwnerPlayerId;
-                reason="decoy-trigger:"+decoyTrigger.EntityId;
-            }
-            else if(turretTrigger!=null)
-            {
-                target=turretTrigger.OwnerPlayerId;
-                reason="heavy-turret-trigger:"+turretTrigger.EntityId;
-            }
-            else if(aircraftTrigger!=null)
-            {
-                target=aircraftTrigger.OwnerPlayerId;
-                reason="air-trigger:"+aircraftTrigger.EntityKey;
-            }
-            else
-            {
-                target=gunnerTrigger!.OwnerPlayerId;
-                reason="helicopter-gunner-trigger:"+gunnerTrigger.EntityKey;
-            }
-            Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
-                mine.EntityId,mine.Position,mine.Damage,reason);
-            var attacker=Find(mine.OwnerPlayerId)??throw new InvalidDataException("Land Mine owner disappeared.");
-            if(map!=null)
-            {
-                Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
-                Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
-                foreach(var collider in map.DynamicSphereOverlaps(mine.Position,landMineSource.HurtRadius,
-                            uint.MaxValue,enabled,layer))
+                if(shields?.IsLiveShield(collider.DynamicOwner)!=true&&
+                   barrels?.Contains(collider.ColliderIndex)!=true)continue;
+                var effect=LandMineExplosion.ResolveDynamic(mine.Position,mine.Damage,
+                    outerDamage??mine.Damage,landMineSource,collider);
+                if(effect.RawDamage<=0)continue;
+                if(shields?.IsLiveShield(collider.DynamicOwner)==true)
                 {
-                    if(shields?.IsLiveShield(collider.DynamicOwner)!=true&&
-                       barrels?.Contains(collider.ColliderIndex)!=true)continue;
-                    var effect=LandMineExplosion.ResolveDynamic(mine.Position,mine.Damage,landMineSource,collider);
-                    if(shields?.IsLiveShield(collider.DynamicOwner)==true)
-                    {
-                        var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,
-                            attacker.Definition.Fraction,effect.RawDamage,tick);
-                        if(shield!=null){stateRevision++;EmitShield(shield.Destroyed?
-                            MatchEventKind.ShieldDestroyed:MatchEventKind.ShieldDamaged,
-                            mine.OwnerPlayerId,shield,mine.EntityId);}
-                    }
-                    else if(barrels?.Contains(collider.ColliderIndex)==true)
-                    {
-                        ApplyBarrelDamage(mine.OwnerPlayerId,mine.EntityId,collider.ColliderIndex,
-                            effect.RawDamage,effect.Kind==CombatDamageType.Explosion?
-                                BarrelChainCause.Explosion:BarrelChainCause.Shiver);
-                        if(Terminal)return;
-                    }
+                    var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,
+                        attacker.Definition.Fraction,effect.RawDamage,tick);
+                    if(shield!=null){stateRevision++;EmitShield(shield.Destroyed?
+                        MatchEventKind.ShieldDestroyed:MatchEventKind.ShieldDamaged,
+                        mine.OwnerPlayerId,shield,mine.EntityId);}
+                }
+                else if(barrels?.Contains(collider.ColliderIndex)==true)
+                {
+                    ApplyBarrelDamage(mine.OwnerPlayerId,mine.EntityId,collider.ColliderIndex,
+                        effect.RawDamage,effect.Kind==CombatDamageType.Explosion?
+                            BarrelChainCause.Explosion:BarrelChainCause.Shiver);
+                    if(Terminal)return;
                 }
             }
-            // Capture only entities still alive after environmental barrel
-            // chains. A later disappearance in this block belongs to this
-            // mine's own source-backed blast, not to the barrel chain.
-            var armyBeforeBlast=activeArmyEntities.Values.ToArray();
-            ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
-            ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
-            ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
-            ApplyLandMineHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
-            // The mounted gunner owns separate health. MissileExplode selects
-            // one of its current pose parts and uses the mine's equal inner
-            // and outer damage values, without bullet part weights.
-            ApplyHelicopterGunnerExplosion(mine.OwnerPlayerId,mine.Position,
-                landMineSource.DeadRadius,landMineSource.HurtRadius,
-                mine.Damage,mine.Damage,false);
-            ApplyLandMineAssaultHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
-            ApplyLandMineAssaultHelicopterGlassExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
-            ApplyLandMineRepairDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
-            ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
-            ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
-            foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
-                        infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey).ToArray())
-            {
-                var pose=InfantryPose(army.EntityKey)??throw new InvalidDataException("Land Mine explosion lost infantry pose.");
-                var root=new Vector3(army.X,army.Y,army.Z);
-                var effect=LandMineExplosion.Resolve(mine.Position,mine.Damage,landMineSource,pose.Parts,root);
-                if(effect!=null&&ApplyArmyHostDamage(army.EntityKey,effect.RawDamage))
-                    attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
-            }
-            RecordPlayerExplosionArmyKills(armyBeforeBlast,mine.OwnerPlayerId,
-                mine.OwnerFraction,"player-mine");
+        }
+        // Capture only entities still alive after environmental barrel
+        // chains. A later disappearance in this block belongs to this
+        // mine's own source-backed blast, not to the barrel chain.
+        var armyBeforeBlast=activeArmyEntities.Values.ToArray();
+        ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,
+            mine.EntityId,outerDamage);
+        ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,
+            mine.EntityId,outerDamage);
+        ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,outerDamage);
+        ApplyLandMineHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,outerDamage);
+        // The mounted gunner owns separate health. The source blast uses
+        // its selected collider and does not apply bullet-part weights.
+        ApplyHelicopterGunnerExplosion(mine.OwnerPlayerId,mine.Position,
+            source.DeadRadius,source.HurtRadius,
+            outerDamage??mine.Damage,mine.Damage,false);
+        ApplyLandMineAssaultHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,
+            mine.Damage,outerDamage);
+        ApplyLandMineAssaultHelicopterGlassExplosion(mine.OwnerPlayerId,mine.Position,
+            mine.Damage,outerDamage);
+        ApplyLandMineRepairDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,outerDamage);
+        ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,outerDamage);
+        ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,outerDamage);
+        foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
+                    infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey).ToArray())
+        {
+            var pose=InfantryPose(army.EntityKey)??throw new InvalidDataException("Land Mine explosion lost infantry pose.");
+            var root=new Vector3(army.X,army.Y,army.Z);
+            var effect=LandMineExplosion.Resolve(mine.Position,mine.Damage,
+                outerDamage??mine.Damage,landMineSource,pose.Parts,root,
+                outerDamage.HasValue?1f:landMineSource.PlayerRadiusCoefficient);
+            if(effect!=null&&ApplyArmyHostDamage(army.EntityKey,effect.RawDamage))
+                attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+        }
+        RecordPlayerExplosionArmyKills(armyBeforeBlast,mine.OwnerPlayerId,
+            mine.OwnerFraction,"player-mine");
+        if(Terminal)return;
+        foreach(var victim in players.Where(x=>!x.Dead).ToArray())
+        {
+            var effect=LandMineExplosion.Resolve(mine.Position,mine.Damage,
+                outerDamage??mine.Damage,landMineSource,
+                LandMinePose(victim.Definition.PlayerId),victim.Position);
+            if(effect==null)continue;
+            bool enemy=attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction;
+            ApplyResolvedPlayerDamage(mine.OwnerPlayerId,victim.Definition.PlayerId,
+                new(effect.RawDamage,effect.Kind,HasWeapon:true,FriendKill:true,Overtime:overtime),
+                damageRoll?.Invoke()??1f,enemy);
             if(Terminal)return;
-            foreach(var victim in players.Where(x=>!x.Dead).ToArray())
-            {
-                var effect=LandMineExplosion.Resolve(mine.Position,mine.Damage,landMineSource,
-                    LandMinePose(victim.Definition.PlayerId),victim.Position);
-                if(effect==null)continue;
-                bool enemy=attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction;
-                ApplyResolvedPlayerDamage(mine.OwnerPlayerId,victim.Definition.PlayerId,
-                    new(effect.RawDamage,effect.Kind,HasWeapon:true,FriendKill:true,Overtime:overtime),
-                    damageRoll?.Invoke()??1f,enemy);
-                if(Terminal)return;
-            }
         }
     }
 
@@ -383,7 +477,8 @@ public sealed partial class MatchEngine
 
     // Called only by a consumed host mine or a deterministic host simulation
     // proof. A client command cannot choose an explosion center or victim.
-    internal int ApplyLandMineVehicleExplosion(string ownerId,Vector3 position,float damage)
+    internal int ApplyLandMineVehicleExplosion(string ownerId,Vector3 position,float damage,
+        float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||groundVehicleWeapons==null||
            explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
@@ -408,7 +503,8 @@ public sealed partial class MatchEngine
                 .ThenBy(x=>x.PartComponentFileId)
                 .ThenBy(x=>x.Hitbox.SourcePath,StringComparer.Ordinal).FirstOrDefault();
             if(selected==null)continue;
-            float amount=damage*(targetOwner.Definition.Fraction==attacker.Definition.Fraction?
+            float amount=MineBlastDamage(position,damage,outerDamage,selected.Hitbox,target.Position)*
+                (targetOwner.Definition.Fraction==attacker.Definition.Fraction?
                 explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
                 throw new InvalidDataException("Land Mine vehicle damage exceeded host bounds.");
@@ -429,7 +525,8 @@ public sealed partial class MatchEngine
         return hits;
     }
 
-    internal int ApplyLandMinePassengerExplosion(string ownerId,Vector3 position,float damage)
+    internal int ApplyLandMinePassengerExplosion(string ownerId,Vector3 position,float damage,
+        float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||groundVehicleWeapons==null||
            explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
@@ -460,7 +557,7 @@ public sealed partial class MatchEngine
                 if(selected==null)continue;
                 // MineAmmo calls Explosion.MissileExplode: a part collider chooses
                 // its damage owner, but its bullet head/body weight is not used.
-                float amount=damage*
+                float amount=MineBlastDamage(position,damage,outerDamage,selected,selected.Center)*
                     (targetOwner.Definition.Fraction==attacker.Definition.Fraction?
                         explosionPolicy.Friendly:1f);
                 if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
@@ -476,7 +573,8 @@ public sealed partial class MatchEngine
         return hits;
     }
 
-    internal int ApplyLandMineRepairDroneExplosion(string ownerId,Vector3 position,float damage)
+    internal int ApplyLandMineRepairDroneExplosion(string ownerId,Vector3 position,float damage,
+        float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||groundVehicleWeapons==null||
            explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
@@ -508,7 +606,8 @@ public sealed partial class MatchEngine
                     drone.PathIndex,layer,drone.Snapshot());
                 if(!collider.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
 
-                float amount=damage*(friendly?explosionPolicy.Friendly:1f);
+                float amount=MineBlastDamage(position,damage,outerDamage,
+                    collider.Hitbox,drone.Position)*(friendly?explosionPolicy.Friendly:1f);
                 if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
                    !ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,amount))
                     throw new InvalidDataException("Land Mine repair-drone damage escaped host bounds.");
@@ -525,7 +624,7 @@ public sealed partial class MatchEngine
     }
 
     internal int ApplyLandMineDecoyExplosion(string ownerId,Vector3 position,float damage,
-        ulong mineId)
+        ulong mineId,float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||decoySource==null||
            explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
@@ -539,7 +638,9 @@ public sealed partial class MatchEngine
             if(!collider.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
             var target=decoys.Snapshot().SingleOrDefault(x=>x.EntityId==collider.EntityId)??
                 throw new InvalidDataException("Land Mine Decoy lost its health authority.");
-            float amount=damage*(target.OwnerFraction==attacker.Definition.Fraction?
+            float amount=MineBlastDamage(position,damage,outerDamage,
+                collider.Hitbox,target.Position)*
+                (target.OwnerFraction==attacker.Definition.Fraction?
                 explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
                !decoys.TryDamage(target.EntityId,amount,out var before,out bool destroyed)||before==null)
@@ -558,7 +659,7 @@ public sealed partial class MatchEngine
     }
 
     internal int ApplyLandMineHeavyTurretExplosion(string ownerId,Vector3 position,float damage,
-        ulong mineId)
+        ulong mineId,float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||heavyTurretSource==null||
            explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
@@ -575,7 +676,8 @@ public sealed partial class MatchEngine
             if(selected==null)continue;
             var target=heavyTurrets.Snapshot().SingleOrDefault(x=>x.EntityId==group.Key)??
                 throw new InvalidDataException("Land Mine turret lost its health authority.");
-            float amount=damage*
+            float amount=MineBlastDamage(position,damage,outerDamage,
+                    selected.Hitbox,target.Position)*
                 (target.OwnerFraction==attacker.Definition.Fraction?explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
                !heavyTurrets.TryDamage(group.Key,amount,out var changed,out bool destroyed)||changed==null)
@@ -589,7 +691,8 @@ public sealed partial class MatchEngine
         return hits;
     }
 
-    internal int ApplyLandMineDroneExplosion(string ownerId,Vector3 position,float damage)
+    internal int ApplyLandMineDroneExplosion(string ownerId,Vector3 position,float damage,
+        float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||droneColliders==null||
            explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
@@ -607,7 +710,9 @@ public sealed partial class MatchEngine
                 .Single(x=>x.RootOwned&&x.ComponentFileId==6544804);
             // The child sphere shares a destroyable layer but no damage component.
             if(!root.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
-            float amount=damage*(drone.OwnerFraction==attacker.Definition.Fraction?
+            float amount=MineBlastDamage(position,damage,outerDamage,root.Hitbox,
+                new Vector3(drone.X,drone.Y,drone.Z))*
+                (drone.OwnerFraction==attacker.Definition.Fraction?
                 explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
                 throw new InvalidDataException("Land Mine Drone damage escaped host bounds.");
@@ -619,7 +724,8 @@ public sealed partial class MatchEngine
         return hits;
     }
 
-    internal int ApplyLandMineHelicopterBodyExplosion(string ownerId,Vector3 position,float damage)
+    internal int ApplyLandMineHelicopterBodyExplosion(string ownerId,Vector3 position,float damage,
+        float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||helicopterBodyColliders==null||
            explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
@@ -639,7 +745,8 @@ public sealed partial class MatchEngine
                 .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(position))
                 .ThenBy(x=>x.ColliderFileId).FirstOrDefault();
             if(selected==null)continue;
-            float amount=damage*
+            float amount=MineBlastDamage(position,damage,outerDamage,selected.Hitbox,
+                    new Vector3(helicopter.X,helicopter.Y,helicopter.Z))*
                 (helicopter.OwnerFraction==attacker.Definition.Fraction?
                     explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
@@ -653,7 +760,7 @@ public sealed partial class MatchEngine
     }
 
     internal int ApplyLandMineAssaultHelicopterBodyExplosion(string ownerId,
-        Vector3 position,float damage)
+        Vector3 position,float damage,float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||
            assaultHelicopterBoxCollider==null||assaultHelicopterMeshColliders==null||
@@ -678,14 +785,17 @@ public sealed partial class MatchEngine
             };
             bodyParts.AddRange(assaultHelicopterMeshColliders.Place(root,path.Rotation)
                 .Select(part=>part.Hitbox));
-            bool bodyOverlaps=bodyParts.Any(part=>part.Enabled&&part.Active&&
-                part.OverlapsSphere(position,landMineSource.HurtRadius));
-            if(!bodyOverlaps)continue;
+            var selected=bodyParts.Where(part=>part.Enabled&&part.Active&&
+                    part.OverlapsSphere(position,landMineSource.HurtRadius))
+                .OrderBy(part=>part.BoundsDistanceToPoint(position))
+                .ThenBy(part=>part.SourcePath,StringComparer.Ordinal).FirstOrDefault();
+            if(selected==null)continue;
 
             // MissileExplode groups all body parts by their shared destroyable
             // owner. The glass has another owner and is not a body damage part.
             bool friendly=aircraft.OwnerFraction==attacker.Definition.Fraction;
-            float amount=damage*(friendly?explosionPolicy.Friendly:1f);
+            float amount=MineBlastDamage(position,damage,outerDamage,selected,root)*
+                (friendly?explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
                 throw new InvalidDataException("Land Mine Assault Helicopter damage exceeded host bounds.");
             if(!ApplyArmyHostDamage(aircraft.EntityKey,amount))continue;
@@ -696,7 +806,7 @@ public sealed partial class MatchEngine
     }
 
     internal int ApplyLandMineAssaultHelicopterGlassExplosion(string ownerId,
-        Vector3 position,float damage)
+        Vector3 position,float damage,float? outerDamage=null)
     {
         if(phase!=BattlePhase.Running||landMineSource==null||
            assaultHelicopterMeshColliders==null||explosionPolicy==null||
@@ -722,7 +832,8 @@ public sealed partial class MatchEngine
                !front.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
 
             bool friendly=aircraft.OwnerFraction==attacker.Definition.Fraction;
-            float amount=damage*(friendly?explosionPolicy.Friendly:1f);
+            float amount=MineBlastDamage(position,damage,outerDamage,front.Hitbox,
+                front.Hitbox.Center)*(friendly?explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
                 throw new InvalidDataException("Land Mine Assault Helicopter glass damage exceeded host bounds.");
             if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;

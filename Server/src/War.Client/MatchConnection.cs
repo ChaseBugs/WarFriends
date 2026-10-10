@@ -78,6 +78,8 @@ namespace War.Client
             Run(new MatchCommand {UseSuperSoldiers=new UseSuperSoldiersCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseVehicleHealthAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseVehicleHealth=new UseVehicleHealthCommand {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseMineYourStepAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseMineYourStep=new UseMineYourStepCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> ReloadAsync(CancellationToken ct) => Run(new MatchCommand { Reload = new ReloadCommand() }, false, false, ct);
         public Task<MatchReply> SwitchWeaponAsync(int slot,CancellationToken ct) => Run(new MatchCommand { SwitchWeapon = new SwitchWeaponCommand { Slot=slot } }, false, false, ct);
         public Task<MatchReply> ForfeitAsync(CancellationToken ct) => Run(new MatchCommand { Forfeit = new ForfeitCommand() }, false, false, ct);
@@ -755,10 +757,19 @@ namespace War.Client
                 {
                     if(mine.EntityId==0||mine.EntityId<=priorLandMine||
                        !Guid.TryParseExact(mine.RequestId,"N",out _)||!Guid.TryParseExact(mine.OwnerPlayerId,"N",out _)||
-                       (mine.OwnerFraction!=1&&mine.OwnerFraction!=2)||mine.HidingComponentFileId<=0||
-                       !landMineSlots.Add(mine.HidingComponentFileId)||
+                       (mine.OwnerFraction!=1&&mine.OwnerFraction!=2)||
                        !FiniteCoordinate(mine.X)||!FiniteCoordinate(mine.Y)||!FiniteCoordinate(mine.Z)||
-                       float.IsNaN(mine.Damage)||float.IsInfinity(mine.Damage)||mine.Damage<=0||mine.Damage>10_000_000)
+                       float.IsNaN(mine.Damage)||float.IsInfinity(mine.Damage)||mine.Damage<=0||mine.Damage>10_000_000||
+                       float.IsNaN(mine.OuterDamage)||float.IsInfinity(mine.OuterDamage)||
+                       mine.OuterDamage<=0||mine.OuterDamage>mine.Damage||
+                       (mine.CardId=="CardLandmine" &&
+                           (mine.HidingComponentFileId<=0||!landMineSlots.Add(mine.HidingComponentFileId)||
+                            mine.ExpiresTick!=0||mine.OuterDamage!=mine.Damage))||
+                       (mine.CardId=="CardMineYourStep" &&
+                           (mine.HidingComponentFileId!=0||mine.ExpiresTick<=snapshot.ServerTick||
+                            mine.ExpiresTick>snapshot.ServerTick+450||
+                            Math.Abs(mine.OuterDamage-mine.Damage*.1f)>.001f))||
+                       (mine.CardId!="CardLandmine"&&mine.CardId!="CardMineYourStep"))
                         throw new InvalidOperationException("Battle host returned an invalid Land Mine snapshot row.");
                     priorLandMine=mine.EntityId;
                 }

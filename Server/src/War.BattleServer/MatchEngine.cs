@@ -79,6 +79,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     private readonly int decoyMaxDisplayLevel;
     private readonly DecoyMatchRegistry decoys=new();
     private readonly LandMineMatchRegistry landMines=new();
+    private readonly TimedMineMatchRegistry timedMines=new();
     private readonly HeavyTurretMatchRegistry heavyTurrets=new();
     private readonly Dictionary<ulong,BattleArmyEntityState> activeArmyEntities=[];
     // Air entities use the same single-writer tick as the rest of the match.  The
@@ -1415,7 +1416,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             try{foreach(var launch in grenadeCombat.Advance(tick,id=>{var actor=Find(id)!;return new(actor.Position,actor.Cover,actor.Route!=null);}))StartGrenadeProjectile(launch);}
             catch(InvalidDataException){End("invalid-projectile-authority","",false);return;}
         }
-        if(advanced&&phase==BattlePhase.Running&&landMines.Snapshot().Count>0)
+        if(advanced&&phase==BattlePhase.Running&&
+           (landMines.Snapshot().Count>0||timedMines.Snapshot().Count>0))
         {
             try{AdvanceLandMines();}
             catch(InvalidDataException){End("invalid-land-mine-authority","",false);return;}
@@ -1624,6 +1626,12 @@ public sealed partial class MatchEngine : IMatchRuntime
                 decoy.Position,0,"owner-disconnected");
         }
         foreach(var mine in landMines.RemoveOwner(ownerPlayerId))
+        {
+            stateRevision++;
+            Emit(MatchEventKind.LandMineTriggered,ownerPlayerId,"",mine.EntityId,
+                mine.Position,0,"owner-disconnected");
+        }
+        foreach(var mine in timedMines.RemoveOwner(ownerPlayerId))
         {
             stateRevision++;
             Emit(MatchEventKind.LandMineTriggered,ownerPlayerId,"",mine.EntityId,
@@ -1839,6 +1847,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseArmyHealthBuff(p,c.UseSuperSoldiers.RequestId,"CardHealthForSoldiers");
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseVehicleHealth)
             return UseArmyHealthBuff(p,c.UseVehicleHealth.RequestId,"CardHealthForMachines");
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseMineYourStep)
+            return UseMineYourStep(p,c.UseMineYourStep.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
@@ -2529,7 +2539,15 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             EntityId=x.EntityId,RequestId=x.RequestId,OwnerPlayerId=x.OwnerPlayerId,
             OwnerFraction=x.OwnerFraction,HidingComponentFileId=x.HidingComponentFileId,
-            X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,Damage=x.Damage
+            X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,Damage=x.Damage,
+            CardId="CardLandmine",OuterDamage=x.Damage
+        }));
+        snapshot.LandMines.AddRange(timedMines.Snapshot().Select(x=>new BattleLandMineState
+        {
+            EntityId=x.EntityId,RequestId=x.RequestId,OwnerPlayerId=x.OwnerPlayerId,
+            OwnerFraction=x.OwnerFraction,HidingComponentFileId=0,
+            X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,Damage=x.ExplosionDamage,
+            CardId="CardMineYourStep",OuterDamage=x.OuterDamage,ExpiresTick=x.ExpiresTick
         }));
         snapshot.HeavyTurrets.AddRange(heavyTurrets.Snapshot().Select(x=>new BattleHeavyTurretState
         {

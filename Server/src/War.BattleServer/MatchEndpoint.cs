@@ -312,6 +312,8 @@ public sealed class MatchEndpoint
                         clean.UseSuperSoldiers=new UseSuperSoldiersCommand {RequestId=command.UseSuperSoldiers.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseVehicleHealth:
                         clean.UseVehicleHealth=new UseVehicleHealthCommand {RequestId=command.UseVehicleHealth.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseMineYourStep:
+                        clean.UseMineYourStep=new UseMineYourStepCommand {RequestId=command.UseMineYourStep.RequestId};break;
                     case MatchCommand.IntentOneofCase.DeployArmy:
                         clean.DeployArmy=new DeployArmyCommand {OptionIndex=command.DeployArmy.OptionIndex};break;
                     case MatchCommand.IntentOneofCase.VehicleAttack:

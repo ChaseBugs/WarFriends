@@ -519,7 +519,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			mCooldown = card.cooldown;
 			SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
 			if (selfHosted != null && selfHosted.IsConnected &&
-				(card is CardDecoy || card is CardLandmine || card is CardHeavyTurret ||
+				(card is CardDecoy || card is CardLandmine || card is CardMineYourStep ||
+				card is CardHeavyTurret ||
 				card is CardHealingStorm || card is CardShieldsUp || card is CardShieldGenerator ||
 				card is CardAmmoBox || card is CardAmmoThief || card is CardBrokenLegs ||
 				card is CardHealthForSoldiers || card is CardHealthForMachines ||
@@ -560,6 +561,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardHealthForSoldiers) reply = await client.UseSuperSoldiersResult();
 			else if (card is CardHealthForMachines) reply = await client.UseVehicleHealthResult();
 			else if (card is CardLandmine) reply = await client.UseLandMineResult();
+			else if (card is CardMineYourStep) reply = await client.UseMineYourStepResult();
 			else if (card is CardHeavyTurret) reply = await client.UseHeavyTurretResult();
 			else if (card is CardDecoy) reply = await client.UseDecoyResult();
 			else throw new InvalidOperationException("Unsupported self-hosted card: " + card.id);
@@ -594,6 +596,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		if (card is CardHealthForSoldiers || card is CardHealthForMachines)
 			return code == "army-health-card-active";
 		if (card is CardLandmine) return code == "land-mine-spawned" || code == "land-mine-replayed";
+		if (card is CardMineYourStep) return code == "timed-mine-spawned" || code == "timed-mine-replayed";
 		if (card is CardHeavyTurret) return code == "heavy-turret-spawned" || code == "heavy-turret-replayed";
 		if (card is CardDecoy) return code == "decoy-spawned" || code == "decoy-replayed";
 		return false;
