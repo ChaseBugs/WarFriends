@@ -10062,6 +10062,22 @@ internal static class CombatContentTests
                   CardSpawnUnitSourceCatalog.All.Count(row=>row.UsesMissingCardRowsFallback)==1,
                   "unit-card source retains spawn timing and the sniper's missing card-row fallback");
             Reject(()=>CardSpawnUnitSourceCatalog.Get("DECOY"));
+            var paratrooperSpawns = new CardSpawnUnitSchedule("ELITEPARA", 90);
+            Check(paratrooperSpawns.Count == 2 &&
+                  paratrooperSpawns.DueTick(0) == 90 &&
+                  paratrooperSpawns.DueTick(1) == 105,
+                "the second paratrooper card call follows the source half-second delay");
+            var sniperSpawns = new CardSpawnUnitSchedule("ELITESNIPER", 90);
+            Check(sniperSpawns.Count == 2 &&
+                  sniperSpawns.DueTick(0) == 90 &&
+                  sniperSpawns.DueTick(1) == 90,
+                "zero-delay card calls may spawn both sniper units on one host tick");
+            var droneSpawns = new CardSpawnUnitSchedule("HEAVYDRONE", 90);
+            Check(droneSpawns.Count == 1 && droneSpawns.DueTick(0) == 90,
+                "single-unit card activation schedules exactly one drone");
+            Reject(()=>paratrooperSpawns.DueTick(2));
+            Reject(()=>droneSpawns.DueTick(1));
+            Reject(()=>new CardSpawnUnitSchedule("ELITEPARA", ulong.MaxValue));
             int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
             foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
             {
