@@ -64,6 +64,27 @@ public static class CardSpawnUnitSourceCatalog
         Rows.TryGetValue(sourceCardId, out var row) ? row :
         throw new InvalidDataException("Unknown recovered unit-card identity.");
 
+    /// <summary>
+    /// A card uses the same scene behaviour and upgrade-slot components as
+    /// its ordinary army family. This binding permits the host to reuse that
+    /// family's source spawn-point rules without using its normal stat rows.
+    /// </summary>
+    public static ArmyDeploymentFamily Family(ArmyDeploymentCatalog army,
+        string sourceCardId)
+    {
+        ArgumentNullException.ThrowIfNull(army);
+        Row card = Get(sourceCardId);
+        ArmyDeploymentFamily[] matches = army.Families.Where(family =>
+            family.UnitId == card.UnitId &&
+            family.BehaviorFileId == card.BehaviourComponentFileId &&
+            family.UpgradeSlotsFileId == card.UpgradeSlotsComponentFileId).ToArray();
+
+        if (matches.Length != 1)
+            throw new InvalidDataException("Unit card does not bind one recovered army behaviour.");
+
+        return matches[0];
+    }
+
     public static IReadOnlyList<Row> All => Rows.Values.OrderBy(row => row.SourceCardId,
         StringComparer.Ordinal).ToArray();
 }

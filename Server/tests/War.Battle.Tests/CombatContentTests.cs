@@ -10081,12 +10081,17 @@ internal static class CombatContentTests
             int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
             foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
             {
+                var spawnFamily=CardSpawnUnitSourceCatalog.Family(content.Army,
+                    cardSource.SourceCardId);
                 var cardMinimum=content.Army.CardBaseStats(cardSource.SourceCardId,0,maximumCardLevel);
                 var cardMiddle=content.Army.CardBaseStats(cardSource.SourceCardId,
                     maximumCardLevel/2,maximumCardLevel);
                 var cardMaximum=content.Army.CardBaseStats(cardSource.SourceCardId,
                     maximumCardLevel,maximumCardLevel);
-                Check(cardMinimum.Source==cardSource&&
+                Check(spawnFamily.BehaviorFileId==cardSource.BehaviourComponentFileId&&
+                      spawnFamily.UpgradeSlotsFileId==cardSource.UpgradeSlotsComponentFileId&&
+                      spawnFamily.UnitId==cardSource.UnitId&&
+                      cardMinimum.Source==cardSource&&
                       cardMiddle.Combat.Health>=cardMinimum.Combat.Health&&
                       cardMaximum.Combat.Health>=cardMiddle.Combat.Health&&
                       cardMinimum.Combat.Damage>0&&

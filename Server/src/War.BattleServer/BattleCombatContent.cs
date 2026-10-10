@@ -105,6 +105,7 @@ public sealed class BattleCombatContent
         // including the sniper's source-defined row-zero fallback.
         foreach (var card in CardSpawnUnitSourceCatalog.All)
         {
+            CardSpawnUnitSourceCatalog.Family(army,card.SourceCardId);
             army.CardBaseStats(card.SourceCardId,0,barrelPolicy.MaxDisplayLevel);
             army.CardBaseStats(card.SourceCardId,barrelPolicy.MaxDisplayLevel,
                 barrelPolicy.MaxDisplayLevel);
