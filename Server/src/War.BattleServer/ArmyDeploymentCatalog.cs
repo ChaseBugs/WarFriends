@@ -11,6 +11,8 @@ public sealed record ArmyUpgradeShotStats(float ProbabilityOfRealShot,int FireBa
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
 public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatchSizeMin,
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
+public sealed record ArmyCardBaseStats(CardSpawnUnitSourceCatalog.Row Source,
+    float Progress,ArmyBaseCombatStats Combat,ArmyBaseShotStats Shot);
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew,float ShieldHitProbability=0);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
@@ -134,6 +136,37 @@ public sealed class ArmyDeploymentCatalog
             !float.IsFinite(damage) || damage < 0 || damage > 10_000_000)
             throw new InvalidDataException("Co-op card combat stats exceed source bounds.");
         return new ArmyBaseCombatStats(health, damage);
+    }
+
+    /// <summary>
+    /// CardSpawnUnit uses the owner's source level and the named card rows.
+    /// No packet may choose a unit, an upgrade index, health, or damage.
+    /// This returns base combat and firing fields; card spawning also needs
+    /// the source-specific grenade, drone, and animation setup.
+    /// </summary>
+    public ArmyCardBaseStats CardBaseStats(string sourceCardId,
+        int playerLevel, int maximumDisplayLevel)
+    {
+        var source = CardSpawnUnitSourceCatalog.Get(sourceCardId);
+        if (maximumDisplayLevel <= 0 || maximumDisplayLevel > 1000 ||
+            playerLevel < 0 || playerLevel > maximumDisplayLevel ||
+            baseStats == null || !baseStats.TryGetValue(source.UnitId, out var stages) ||
+            source.CardMaximumRowIndex >= stages.Count)
+            throw new InvalidDataException("Unit card level or source upgrade rows are invalid.");
+
+        float progress = (float)playerLevel / maximumDisplayLevel;
+        var minimum = stages[source.CardMinimumRowIndex];
+        var maximum = stages[source.CardMaximumRowIndex];
+        float health = minimum.Health + (maximum.Health - minimum.Health) * progress;
+        float damage = minimum.Damage + (maximum.Damage - minimum.Damage) * progress;
+        if (!float.IsFinite(health) || health <= 0 || health > 10_000_000 ||
+            !float.IsFinite(damage) || damage < 0 || damage > 10_000_000)
+            throw new InvalidDataException("Unit card base combat stats exceed source bounds.");
+
+        var shot = ComposeCardShot(source.UnitId, source.CardMinimumRowIndex,
+            source.CardMaximumRowIndex, progress);
+        return new ArmyCardBaseStats(source, progress,
+            new ArmyBaseCombatStats(health, damage), shot);
     }
 
     /// <summary>UpgradeSlotsHelicopter adds Seats across selected lanes; GetSoldierHpInMechanic reads only the normal row.</summary>

@@ -101,6 +101,14 @@ public sealed class BattleCombatContent
         var barrelOverlap=BarrelOverlapOrderCatalog.Load(Path.Combine(directory,"unity-barrel-overlap-reference.json"),manifest.BarrelOverlapRevision,maps,barrels);
         var army=ArmyDeploymentCatalog.Load(Path.Combine(directory,"recovered-army-deployment.json"),manifest.ArmyDeploymentRevision,manifest.SceneRevision);
         army.ValidateSourceSheet(Path.Combine(directory,"recovered-battle-content.json"));
+        // A content release must carry every recovered card-unit endpoint,
+        // including the sniper's source-defined row-zero fallback.
+        foreach (var card in CardSpawnUnitSourceCatalog.All)
+        {
+            army.CardBaseStats(card.SourceCardId,0,barrelPolicy.MaxDisplayLevel);
+            army.CardBaseStats(card.SourceCardId,barrelPolicy.MaxDisplayLevel,
+                barrelPolicy.MaxDisplayLevel);
+        }
         var armyWeapons=ArmyWeaponBindingCatalog.Load(Path.Combine(directory,"recovered-rusher-weapon-bindings.json"),manifest.ArmyWeaponBindingsRevision,manifest.SceneRevision);
         var groundVehicleWeapons=GroundVehicleWeaponCatalog.Load(Path.Combine(directory,
             "recovered-ground-vehicle-weapons.json"),manifest.GroundVehicleWeaponsRevision);

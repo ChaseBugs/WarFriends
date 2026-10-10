@@ -10062,6 +10062,33 @@ internal static class CombatContentTests
                   CardSpawnUnitSourceCatalog.All.Count(row=>row.UsesMissingCardRowsFallback)==1,
                   "unit-card source retains spawn timing and the sniper's missing card-row fallback");
             Reject(()=>CardSpawnUnitSourceCatalog.Get("DECOY"));
+            int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
+            foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
+            {
+                var cardMinimum=content.Army.CardBaseStats(cardSource.SourceCardId,0,maximumCardLevel);
+                var cardMiddle=content.Army.CardBaseStats(cardSource.SourceCardId,
+                    maximumCardLevel/2,maximumCardLevel);
+                var cardMaximum=content.Army.CardBaseStats(cardSource.SourceCardId,
+                    maximumCardLevel,maximumCardLevel);
+                Check(cardMinimum.Source==cardSource&&
+                      cardMiddle.Combat.Health>=cardMinimum.Combat.Health&&
+                      cardMaximum.Combat.Health>=cardMiddle.Combat.Health&&
+                      cardMinimum.Combat.Damage>0&&
+                      cardMaximum.Combat.Damage>=cardMinimum.Combat.Damage&&
+                      cardMinimum.Shot.FireBatchSizeMin>0&&cardMaximum.Shot.FireBatchSizeMax>0,
+                    "card-only source rows produce bounded level-scaled stats for "+cardSource.SourceCardId);
+            }
+            Check(Math.Abs(content.Army.CardBaseStats("ELITEPARA",0,maximumCardLevel)
+                        .Combat.Health-100.8f)<.001f&&
+                  Math.Abs(content.Army.CardBaseStats("ELITEPARA",maximumCardLevel,
+                        maximumCardLevel).Combat.Health-1665.609f)<.01f&&
+                  content.Army.CardBaseStats("ELITESNIPER",0,maximumCardLevel).Combat==
+                  content.Army.CardBaseStats("ELITESNIPER",maximumCardLevel,
+                        maximumCardLevel).Combat,
+                  "card stat interpolation keeps the extracted endpoints and sniper row-zero fallback");
+            Reject(()=>content.Army.CardBaseStats("ELITEPARA",-1,maximumCardLevel));
+            Reject(()=>content.Army.CardBaseStats("ELITEPARA",maximumCardLevel+1,
+                maximumCardLevel));
             var boundedPerformance=new BattlePerformanceLedger(1);
             boundedPerformance.RecordCard("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
             Reject(()=>boundedPerformance.RecordObjective("cccccccccccccccccccccccccccccccc"));
