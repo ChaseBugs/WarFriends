@@ -1798,7 +1798,9 @@ using (var slowWorker = new NetworkWorker(slowConfig,
     try
     {
         await slowWorker.StartAsync(CancellationToken.None);
-        await slowRequestStarted.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        // The Worker retries this background HTTP send on a one-second cadence.
+        // Allow scheduling jitter before judging whether it started at all.
+        await slowRequestStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
         using var probePeer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         var probeTickets = new BattleTickets(signingKey);
         long probeTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();

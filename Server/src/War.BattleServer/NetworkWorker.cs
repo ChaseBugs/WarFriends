@@ -153,6 +153,16 @@ public sealed class NetworkWorker : BackgroundService
     private static BattleRuntimeConfig ResolveRuntime(IConfiguration config) =>
         BattleRuntimeConfigValidator.FromConfiguration(config);
 
+    private static HttpClient CreateBackendHttpClient()
+    {
+        // Worker control traffic is direct, self-hosted traffic. A machine's
+        // web proxy must not intercept loopback or private Backend endpoints.
+        return new HttpClient(new SocketsHttpHandler { UseProxy = false })
+        {
+            Timeout = TimeSpan.FromSeconds(5)
+        };
+    }
+
     public NetworkWorker(IConfiguration config, ILogger<NetworkWorker> logger)
         : this(config, ResolveRuntime(config), logger) { }
 
@@ -222,12 +232,12 @@ public sealed class NetworkWorker : BackgroundService
         if (settings.BackendResultEndpoint != null)
         {
             resultEndpoint=settings.BackendResultEndpoint;
-            resultForwarder=new BackendResultForwarder(new HttpClient { Timeout=TimeSpan.FromSeconds(5) },controlKey!,serverId);
+            resultForwarder=new BackendResultForwarder(CreateBackendHttpClient(),controlKey!,serverId);
         }
         if (settings.BackendAllocationEndpoint != null)
         {
             allocationEndpoint=settings.BackendAllocationEndpoint;
-            allocationClient=new BackendAllocationClient(new HttpClient {Timeout=TimeSpan.FromSeconds(5)},controlKey!,serverId);
+            allocationClient=new BackendAllocationClient(CreateBackendHttpClient(),controlKey!,serverId);
         }
         activeJournal=new ActiveMatchJournal(Path.Combine(settings.ResultOutboxPath,"active"), maxMatches);
         terminalOutbox=new TerminalOutbox(settings.ResultOutboxPath,activeJournal.ActiveMatchIds());

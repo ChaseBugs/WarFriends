@@ -9519,9 +9519,16 @@ internal static class CombatContentTests
                 mineDynamic with {TransformPosition=new(.5f,0,0),BoundsMin=new(.3f,-.2f,-.2f),
                     BoundsMax=new(.7f,.2f,.2f)});
             var outerMineDynamic=LandMineExplosion.ResolveDynamic(Vector3.Zero,57.625f,landMines,mineDynamic);
+            var timedDynamic=LandMineExplosion.ResolveDynamic(Vector3.Zero,200f,20f,
+                landMines,mineDynamic);
+            float expectedTimedDynamic=MineYourStepFalloff.Damage(20,200,
+                landMines.DeadRadius,landMines.HurtRadius,1.6f,1.4f);
             Check(nearMineDynamic is {Kind:CombatDamageType.Explosion,RawDamage:57.625f}&&
-                  outerMineDynamic is {Kind:CombatDamageType.Shiver,RawDamage:57.625f},
-                  "Land Mine scene blast retains recovered dead/hurt types and equal card damage");
+                  outerMineDynamic is {Kind:CombatDamageType.Shiver,RawDamage:57.625f}&&
+                  timedDynamic.Kind==CombatDamageType.Shiver&&
+                  Math.Abs(timedDynamic.RawDamage-expectedTimedDynamic)<.001f&&
+                  timedDynamic.RawDamage<200f&&timedDynamic.RawDamage>20f,
+                  "mine blast keeps ordinary equal damage while timed mines use the recovered outer falloff");
             var rotatedBody=new PlayerHitbox("rotated-body",PlayerHitboxKind.Box,1,Vector3.Zero,new(.4f,.4f,2),
                 Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.PI/4),0,Vector3.Zero,0);
             var capsuleBody=new PlayerHitbox("capsule-body",PlayerHitboxKind.Capsule,1,Vector3.Zero,Vector3.Zero,
