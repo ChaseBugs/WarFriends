@@ -1,6 +1,6 @@
 {
-  "War.Client.dll": "86f2ad5a96fa9d22e6bcae45f7a22d475b3a1bccc8fdec4202f0b85cf10fa03b",
-  "War.Shared.dll": "68fe2e0136a4dc96fcb3d187a7edcb4e95a356f7047105b46aeaf3db2ce7f7f6",
+  "War.Client.dll": "f75c664101ffaab4e6a901b42ecf5889e8ad4680a2eb43850751ac268698d5e5",
+  "War.Shared.dll": "9dc7aeb94c0262017c4dc001769ae08ab64175375d5f294ee9767bd2ed8873c7",
   "Google.Protobuf.dll": "47f3d4534309a33fec7241e995151935628e54511142515a647d67d74710d67a",
   "System.Memory.dll": "41b5e1a4c59abdb1ce1467f58c3d9fd06d39dff4fc61d500a2410fece8037f4b",
   "System.Buffers.dll": "9444b5a41a816b193c033bec199d74cdfc8298ed8300a3c39a4e953dec137494",

@@ -10,6 +10,7 @@ public static class WarCardSourceIdentityCatalog
             ["CardAmmoThief"]=["AMMOTHIEF"],
             ["CardShieldGenerator"]=["SHIELDGENERATOR"],
             ["CardHealthForSoldiers"]=["SUPERSOLDIERS"],
+            ["CardMassShieldDestroyer"]=["APOCALYPSE"],
             ["CardLandmine"]=["MINE"],
             ["CardBrokenLegs"]=["FREEZE"],
             ["CardHeavyTurret"]=["HEAVYTURRET"],

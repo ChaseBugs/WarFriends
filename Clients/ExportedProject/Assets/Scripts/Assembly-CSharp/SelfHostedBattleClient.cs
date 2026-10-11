@@ -608,6 +608,15 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         Apply(reply);
         return reply.Clone();
     }
+    public async Task<MatchReply> UseMassShieldDestroyerResult()
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        MatchReply reply = await connection.UseMassShieldDestroyerAsync(
+            Guid.NewGuid().ToString("N"), lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
     public async Task<MatchReply> UseSuperSoldiersResult()
     {
         if (!IsConnected || connection == null)

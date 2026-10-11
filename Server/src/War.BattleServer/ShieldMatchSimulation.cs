@@ -57,6 +57,28 @@ internal sealed class ShieldMatchSimulation
         }
         return alliedShields.Select(entry => entry.Snapshot()).ToArray();
     }
+    internal IReadOnlyList<ShieldMutation> DestroyByCard(
+        int attackerFraction,IReadOnlyList<int> coverIndexes,ulong tick)
+    {
+        if (tick!=lastTick || attackerFraction is not (1 or 2) ||
+            coverIndexes.Count is <1 or >3 ||
+            coverIndexes.Distinct().Count()!=coverIndexes.Count ||
+            coverIndexes.Any(index => index<0 || index>=entries.Length ||
+                entries[index].Cover.Fraction==attackerFraction ||
+                entries[index].Lifecycle.Destroyed))
+            throw new InvalidDataException("Invalid shield-destroy card targets.");
+
+        var changed=new List<ShieldMutation>();
+        foreach (int index in coverIndexes)
+        {
+            var entry=entries[index];
+            if (!entry.Lifecycle.DestroyByCard(tick))
+                throw new InvalidDataException("Shield-destroy card lost its target.");
+            entry.Revision++;
+            changed.Add(entry.Snapshot());
+        }
+        return changed.AsReadOnly();
+    }
     internal void SetCardRegeneration(IReadOnlyCollection<int> enabledFractions,
         IReadOnlyCollection<int> occupiedCoverSourceIndexes)
     {

@@ -323,6 +323,48 @@ public sealed partial class MatchEngine : IMatchRuntime
             ? "shield-generator-active" : "shield-generator-unavailable";
     }
 
+    private string UseMassShieldDestroyer(Player owner, string requestId)
+    {
+        if (!HasSelectedCard(owner,"CardMassShieldDestroyer"))
+            return "mass-shield-card-not-selected";
+        if (!Guid.TryParseExact(requestId,"N",out _) ||
+            requestId!=requestId.ToLowerInvariant())
+            return "invalid-mass-shield-card-request";
+        if (cardReservations==null || shields==null)
+            return "mass-shield-card-authority-unavailable";
+
+        IReadOnlyList<int> targets;
+        try
+        {
+            targets=MassShieldDestroyerTargetPolicy.Select(shields.Snapshot(),
+                owner.Definition.Fraction,armyChoice);
+        }
+        catch (InvalidDataException)
+        {
+            return "mass-shield-card-authority-unavailable";
+        }
+        if (events.Count+1+targets.Count>MaximumRetainedEvents ||
+            stateRevision>ulong.MaxValue-1-(ulong)targets.Count)
+            return "event-backpressure";
+
+        // MainScene sets shieldCount to three. The packet supplies no target
+        // or damage; only the host draws from currently living enemy covers.
+        var effect=new WarCardEffectRequest("CardMassShieldDestroyer",Vector3.Zero,0,1);
+        if (!TryApplyCardEffect(requestId,owner.Definition.PlayerId,effect))
+            return "mass-shield-card-unavailable";
+        if (targets.Count>0)
+        {
+            var destroyed=shields.DestroyByCard(owner.Definition.Fraction,targets,tick);
+            foreach (var shield in destroyed)
+            {
+                stateRevision++;
+                EmitShield(MatchEventKind.ShieldDestroyed,
+                    owner.Definition.PlayerId,shield,0);
+            }
+        }
+        return "mass-shields-destroyed";
+    }
+
     private string UseAmmoBox(Player owner, string requestId)
     {
         if (!HasSelectedCard(owner,"CardAmmoBox"))
@@ -1958,6 +2000,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseShieldsUp(p,c.UseShieldsUp.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldGenerator)
             return UseShieldGenerator(p,c.UseShieldGenerator.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseMassShieldDestroyer)
+            return UseMassShieldDestroyer(p,c.UseMassShieldDestroyer.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoBox)
             return UseAmmoBox(p,c.UseAmmoBox.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoThief)

@@ -24,6 +24,7 @@ def command_stages(native_smoke: bool, mongo_executable: str | None):
     stages = [
         ("Mission source catalog", [python, "Server/tools/extract_mission_catalog.py", "--check"]),
         ("Co-op spawn source catalog", [python, "Server/tools/extract_coop_spawn_points.py", "--check"]),
+        ("Battle card source inventory", [python, "Server/tools/audit_battle_card_inventory.py", "--check"]),
         ("Photon replacement ledger", [python, "Server/tools/verify_photon_replacement_ledger.py"]),
         ("Portable content hashes", [python, "Server/tools/verify_content_checkout_hashes.py"]),
         ("Solution build", ["dotnet", "build", "Server/WarFriendsServer.sln", "--nologo", "-v", "minimal"]),

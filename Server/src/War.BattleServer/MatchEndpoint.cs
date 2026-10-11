@@ -302,6 +302,9 @@ public sealed class MatchEndpoint
                         clean.UseShieldsUp=new UseShieldsUpCommand {RequestId=command.UseShieldsUp.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseShieldGenerator:
                         clean.UseShieldGenerator=new UseShieldGeneratorCommand {RequestId=command.UseShieldGenerator.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseMassShieldDestroyer:
+                        clean.UseMassShieldDestroyer=new UseMassShieldDestroyerCommand
+                            {RequestId=command.UseMassShieldDestroyer.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoBox:
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:

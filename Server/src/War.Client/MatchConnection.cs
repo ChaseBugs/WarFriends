@@ -75,6 +75,9 @@ namespace War.Client
             Run(new MatchCommand {UseAmmoThief=new UseAmmoThiefCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseBrokenLegsAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseBrokenLegs=new UseBrokenLegsCommand {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseMassShieldDestroyerAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseMassShieldDestroyer=new UseMassShieldDestroyerCommand
+                {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseSuperSoldiersAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseSuperSoldiers=new UseSuperSoldiersCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseVehicleHealthAsync(string requestId,CancellationToken ct) =>

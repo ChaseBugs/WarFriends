@@ -104,6 +104,17 @@ internal sealed class ShieldLifecycle
         Health=0;Destroyed=true;destroyedTick=tick;
         return true;
     }
+    internal bool DestroyByCard(ulong tick)
+    {
+        Time(tick);
+        if (Destroyed) return false;
+        // Shield.DestroyShield sets a negative Unity health sentinel and then
+        // runs the ordinary destruction path. The host publishes zero health.
+        Health=0;
+        Destroyed=true;
+        destroyedTick=tick;
+        return true;
+    }
     internal void Advance(ulong tick)
     {
         if(tick!=lastTick+1 || tick>10000000)throw new InvalidDataException("Shield lifecycle requires the next tick.");

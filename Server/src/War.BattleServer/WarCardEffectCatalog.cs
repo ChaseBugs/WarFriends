@@ -20,6 +20,7 @@ public static class WarCardEffectCatalog
             ["CardHealingStorm"]=new("CardHealingStorm",WarCardEffectKind.Heal,false,true),
             ["CardShieldGenerator"]=new("CardShieldGenerator",WarCardEffectKind.Shield,false,true),
             ["CardShieldsUp"]=new("CardShieldsUp",WarCardEffectKind.Shield,false,true),
+            ["CardMassShieldDestroyer"]=new("CardMassShieldDestroyer",WarCardEffectKind.Shield,false,true),
             ["CardBrokenLegs"]=new("CardBrokenLegs",WarCardEffectKind.Status,false,true),
             ["CardSlowdown"]=new("CardSlowdown",WarCardEffectKind.Status,false,true),
             ["CardAmmoBox"]=new("CardAmmoBox",WarCardEffectKind.Ammo,false,true),

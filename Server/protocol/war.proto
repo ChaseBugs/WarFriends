@@ -128,6 +128,7 @@ message UseBrokenLegsCommand { string request_id = 1; }
 message UseSuperSoldiersCommand { string request_id = 1; }
 message UseVehicleHealthCommand { string request_id = 1; }
 message UseMineYourStepCommand { string request_id = 1; }
+message UseMassShieldDestroyerCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
 message MatchCommand {
@@ -159,6 +160,7 @@ message MatchCommand {
     UseVehicleHealthCommand use_vehicle_health = 35;
     UseMineYourStepCommand use_mine_your_step = 36;
     UseUnitCardCommand use_unit_card = 37;
+    UseMassShieldDestroyerCommand use_mass_shield_destroyer = 38;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.

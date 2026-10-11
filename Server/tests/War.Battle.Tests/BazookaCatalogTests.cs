@@ -863,6 +863,79 @@ internal static class BazookaCatalogTests
             shieldsUpMatch.Advance(shieldTick);
         Check(!shieldsUpMatch.Snapshot().CardEffects.Any(effect => effect.CardId == "CardShieldGenerator"),
             "MainScene's four-second Shield Generator window expires at the host tick boundary");
+        var apocalypseMatch = new MatchEngine(shieldAllocation with
+        { MatchId = "bazooka-mass-shield-card" }, map, content,
+            armyChoice: count => count - 1);
+        apocalypseMatch.ConfigureCardSelection(["APOCALYPSE"]);
+        apocalypseMatch.ConfigureCardInventory([(one, "APOCALYPSE", 1)]);
+        apocalypseMatch.Admit(one);
+        apocalypseMatch.Admit(two);
+        var apocalypseSelection = new SelectCardsCommand();
+        apocalypseSelection.CardIds.Add("APOCALYPSE");
+        Check(apocalypseMatch.Command(one, new() { CommandId = 1,
+                  SelectCards = apocalypseSelection }).Code == "cards-selected",
+            "the host accepts only the selected and allocated Apocalypse card");
+        apocalypseMatch.Command(one, new() { CommandId = 2,
+            Ready = new() { ManifestHash = apocalypseMatch.ManifestHash } });
+        apocalypseMatch.Command(two, new() { CommandId = 1,
+            Ready = new() { ManifestHash = apocalypseMatch.ManifestHash } });
+        apocalypseMatch.Advance(60);
+        var initialEnemyShields = apocalypseMatch.Snapshot().Shields
+            .Where(row => row.OwnerFraction == 2).ToArray();
+        var sourceShieldRows = apocalypseMatch.Snapshot().Shields
+            .Select(row => new ShieldMutation(
+                row.CoverIndex,row.OwnerFraction,row.Health,row.MaxHealth,
+                row.Destroyed,row.Revision)).ToArray();
+        var expectedTargets = MassShieldDestroyerTargetPolicy.Select(
+            sourceShieldRows, 1, count => count - 1);
+        Check(expectedTargets.Count == 3 && expectedTargets.Distinct().Count() == 3,
+            "source Apocalypse draws three distinct living enemy covers");
+        var twoEnemyShields = sourceShieldRows.Select(row =>
+            row.CoverIndex == initialEnemyShields[0].CoverIndex ||
+            row.CoverIndex == initialEnemyShields[1].CoverIndex
+                ? row with { Health = 0, Destroyed = true } : row).ToArray();
+        Check(MassShieldDestroyerTargetPolicy.Select(twoEnemyShields,1,
+                  count => count-1).Count == 2 &&
+              MassShieldDestroyerTargetPolicy.Select(sourceShieldRows.Select(row =>
+                  row.OwnerFraction == 2
+                      ? row with { Health = 0, Destroyed = true } : row).ToArray(),
+                  1,count => count-1).Count == 0,
+            "the card selects only surviving enemy shields and can spend with no target");
+        var cardDestroyedShield = new ShieldLifecycle(content.Shields,0,0);
+        Check(cardDestroyedShield.DestroyByCard(0) && cardDestroyedShield.Destroyed &&
+              cardDestroyedShield.Health == 0 && !cardDestroyedShield.DestroyByCard(0),
+            "card destruction uses the normal zero-health shield lifecycle once");
+        ulong shieldRepairTick = (ulong)MathF.Ceiling(
+            content.Shields.RepairSeconds * MatchManifest.TickRate);
+        for (ulong cardRepairTick = 1; cardRepairTick <= shieldRepairTick; cardRepairTick++)
+            cardDestroyedShield.Advance(cardRepairTick);
+        Check(cardDestroyedShield.Destroyed == !content.Shields.RepairEnabled &&
+              (cardDestroyedShield.Destroyed ||
+               cardDestroyedShield.Health == cardDestroyedShield.MaxHealth),
+            "a card-destroyed shield keeps the source repair policy");
+        var apocalypseCommand = new MatchCommand { CommandId = 3,
+            UseMassShieldDestroyer = new()
+            { RequestId = "96969696969696969696969696969696" } };
+        Check(apocalypseMatch.Command(one, apocalypseCommand).Code == "mass-shields-destroyed" &&
+              apocalypseMatch.Snapshot().Shields
+                  .Where(row => row.OwnerFraction == 2 && row.Destroyed)
+                  .Select(row => row.CoverIndex).Order()
+                  .SequenceEqual(expectedTargets.Order()) &&
+              apocalypseMatch.Snapshot().Shields
+                  .Where(row => row.OwnerFraction == 1).All(row => !row.Destroyed) &&
+              apocalypseMatch.Snapshot().Shields
+                  .Where(row => row.OwnerFraction == 2 && !row.Destroyed)
+                  .Single().Health == initialEnemyShields.Single(row =>
+                      !expectedTargets.Contains(row.CoverIndex)).Health,
+            "host Apocalypse destroys only its three selected enemy shields");
+        Check(apocalypseMatch.Command(one, apocalypseCommand).Code == "mass-shields-destroyed" &&
+              apocalypseMatch.Command(one, new() { CommandId = 4,
+                  UseMassShieldDestroyer = new()
+                  { RequestId = "97979797979797979797979797979797" } }).Code ==
+                  "mass-shield-card-unavailable" &&
+              apocalypseMatch.Snapshot().Shields.Count(row =>
+                  row.OwnerFraction == 2 && row.Destroyed) == 3,
+            "Apocalypse retry replays once and exhausted stock cannot destroy the fourth shield");
         var freezeMatch = new MatchEngine(shieldAllocation with
         { MatchId = "bazooka-broken-legs-card" }, map, content);
         freezeMatch.ConfigureCardSelection(["CardBrokenLegs"]);
