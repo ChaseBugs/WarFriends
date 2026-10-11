@@ -10397,6 +10397,44 @@ internal static class CombatContentTests
                       "ELITESWAT", 1, Vector3.Zero)?.ComponentFileId ==
                       firstSwatPoint!.ComponentFileId,
                 "released card SWAT point can be claimed by a later soldier");
+            var sniperPointOwners = new CardEnemyPointOccupancy(cardInitialPoints,
+                parkCardMap);
+            CardUnitInitialPoint[] sniperCorners =
+            [
+                nearestPara!, alternatePara!
+            ];
+            CardUnitInitialPoint nearCorner = sniperCorners[0];
+            CardUnitInitialPoint farCorner = sniperCorners[1];
+            const ulong firstSniperKey = (1UL << 32) | 201;
+            const ulong secondSniperKey = (1UL << 32) | 202;
+            const ulong thirdSniperKey = (1UL << 32) | 203;
+            CardUnitInitialPoint? safeSniperPoint =
+                sniperPointOwners.TryAssignSniper(firstSniperKey, 1,
+                    nearCorner.Position, nearCorner.Position);
+            Check(safeSniperPoint?.ComponentFileId == farCorner.ComponentFileId &&
+                  sniperPointOwners.Occupant(farCorner.ComponentFileId) ==
+                      firstSniperKey,
+                "card Sniper excludes a nearby opponent before choosing its first Corner");
+            CardUnitInitialPoint? secondSniperPoint =
+                sniperPointOwners.TryAssignSniper(secondSniperKey, 1,
+                    nearCorner.Position, new Vector3(100, 0, 100));
+            Check(secondSniperPoint?.ComponentFileId == nearCorner.ComponentFileId &&
+                  sniperPointOwners.TryAssignSniper(thirdSniperKey, 1,
+                      nearCorner.Position, new Vector3(100, 0, 100)) == null &&
+                  sniperPointOwners.TryAssignSniper(firstSniperKey, 1,
+                      nearCorner.Position, nearCorner.Position) == safeSniperPoint,
+                "card Sniper uses nearest free eligible point with stable reservation replay");
+            Check(sniperPointOwners.Release(firstSniperKey) &&
+                  sniperPointOwners.Occupant(farCorner.ComponentFileId) == null &&
+                  sniperPointOwners.TryAssignSniper(thirdSniperKey, 1,
+                      farCorner.Position, new Vector3(100, 0, 100))?
+                      .ComponentFileId == farCorner.ComponentFileId,
+                "card Sniper death frees its source point for a later soldier");
+            RecoveredBattleMap snowSniperMap = content.Maps.Single(map =>
+                map.Source == "Assets/Scenes/Snow_Multiplayer.unity");
+            Check(cardInitialPoints.SelectSniper(snowSniperMap, 1,
+                      Vector3.Zero, new Vector3(100, 0, 100), _ => true) == null,
+                "Snow card Sniper has no source Corner or Hiding destination");
             Reject(() => CardUnitInitialPointCatalog.Load(cardEnemyPointPath,
                 new string('0', 64), content.Maps));
             var cardDroneFamily = CardSpawnUnitSourceCatalog.Family(content.Army,
@@ -12449,6 +12487,73 @@ internal static class CombatContentTests
               minigunnerCardMatch.ArmyDamage(minigunnerCardRow.EntityKey) == null &&
               minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
             "card Minigunner death releases movement, damage, and roster authority");
+        var sniperCardMatch = ReadyCardMatch("host-card-sniper", "ELITESNIPER");
+        const string sniperCardRequest = "a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4";
+        Check(sniperCardMatch.TryScheduleCardUnit(sniperCardRequest,
+                  decoyPlayer, "ELITESNIPER"),
+            "selected Sniper card schedules its two source soldiers");
+        var sniperCardRows = sniperCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.OrderBy(row => row.LocalEntityId).ToArray();
+        Check(sniperCardRows.Length == 2 &&
+              sniperCardRows.All(row => row.UnitId == "ID_UNIT-SNIPER" &&
+                  sniperCardMatch.ArmyDamage(row.EntityKey) != null) &&
+              sniperCardRows.Select(row => sniperCardMatch
+                      .CardEnemyPoint(row.EntityKey)?.ComponentFileId)
+                  .Where(id => id.HasValue).Distinct().Count() == 2,
+            "host card Snipers bind fallback card stats and distinct Park Corners");
+        bool bothSnipersArrived = false;
+        for (ulong sniperTick = 61; sniperTick < 1000 &&
+             !sniperCardMatch.Terminal && !bothSnipersArrived; sniperTick++)
+        {
+            if (sniperTick % 90 == 0)
+            {
+                sniperCardMatch.ArmyBatch(decoyPlayer);
+                sniperCardMatch.ArmyBatch(decoyOpponent);
+            }
+            sniperCardMatch.Advance(sniperTick);
+            bothSnipersArrived = sniperCardRows.All(row =>
+                sniperCardMatch.CardSniperAtPoint(row.EntityKey));
+        }
+        Check(bothSnipersArrived && sniperCardRows.All(row =>
+              !sniperCardMatch.CardSniperWalking(row.EntityKey)),
+            "card Snipers walk to their host-reserved source Corners");
+        foreach (var sniper in sniperCardRows)
+        {
+            int pointId = sniperCardMatch.CardEnemyPoint(sniper.EntityKey)?
+                .ComponentFileId ?? 0;
+            Check(pointId > 0 &&
+                  sniperCardMatch.ConfirmArmyDeath(sniper.EntityKey, false) &&
+                  sniperCardMatch.CardEnemyPointOccupant(pointId) == null &&
+                  !sniperCardMatch.CardSniperAtPoint(sniper.EntityKey),
+                "card Sniper death releases its point, pose, and damage rows");
+        }
+        RecoveredBattleMap snowCardSniperMap = content.Maps.Single(map =>
+            map.Source == "Assets/Scenes/Snow_Multiplayer.unity");
+        var snowSniperMatch = ReadyCardMatch("host-card-sniper-snow",
+            "ELITESNIPER", snowCardSniperMap);
+        Check(snowSniperMatch.TryScheduleCardUnit(
+                  "b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4",
+                  decoyPlayer, "ELITESNIPER"),
+            "Snow Sniper card still creates its two source soldiers");
+        var snowSnipers = snowSniperMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.ToArray();
+        Check(snowSnipers.Length == 2 && snowSnipers.All(row =>
+              snowSniperMatch.CardEnemyPoint(row.EntityKey) == null &&
+              !snowSniperMatch.CardSniperWalking(row.EntityKey)),
+            "Snow has no fabricated Corner destination for card Snipers");
+        for (ulong snowTick = 61; snowTick <= 210; snowTick++)
+        {
+            if (snowTick % 90 == 0)
+            {
+                snowSniperMatch.ArmyBatch(decoyPlayer);
+                snowSniperMatch.ArmyBatch(decoyOpponent);
+            }
+            snowSniperMatch.Advance(snowTick);
+        }
+        Check(!snowSniperMatch.Terminal && snowSnipers.All(row =>
+              snowSniperMatch.CardEnemyPoint(row.EntityKey) == null &&
+              !snowSniperMatch.CardSniperAtPoint(row.EntityKey)),
+            "Snow card Snipers remain in the Client's five-second point retry path");
         var swatCardMatch = ReadyCardMatch("host-card-swat", "ELITESWAT");
         const string swatCardRequest = "c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9";
         Check(swatCardMatch.TryScheduleCardUnit(swatCardRequest,

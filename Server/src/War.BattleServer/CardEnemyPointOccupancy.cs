@@ -50,6 +50,32 @@ internal sealed class CardEnemyPointOccupancy
         return point;
     }
 
+    internal CardUnitInitialPoint? TryAssignSniper(ulong entityKey,
+        int fraction, Vector3 soldierPosition, Vector3 opponentPosition)
+    {
+        if (entityKey == 0 || fraction is not (1 or 2) ||
+            (int)(entityKey >> 32) != fraction ||
+            !PlayerHitbox.Finite(soldierPosition) ||
+            !PlayerHitbox.Finite(opponentPosition))
+            throw new InvalidDataException("Card Sniper has no valid point identity.");
+        if (assigned.TryGetValue(entityKey, out var existing))
+        {
+            if (existing.Fraction != fraction ||
+                !AcceptsPoint("ELITESNIPER", existing.ComponentType))
+                throw new InvalidDataException("Card Sniper changed its reserved point.");
+            return existing;
+        }
+
+        CardUnitInitialPoint? point = catalog.SelectSniper(map, fraction,
+            soldierPosition, opponentPosition,
+            pointFileId => !occupants.ContainsKey(pointFileId));
+        if (point == null)
+            return null;
+        occupants.Add(point.ComponentFileId, entityKey);
+        assigned.Add(entityKey, point);
+        return point;
+    }
+
     internal bool Release(ulong entityKey)
     {
         if (!assigned.TryGetValue(entityKey, out CardUnitInitialPoint? point))
@@ -99,6 +125,8 @@ internal sealed class CardEnemyPointOccupancy
         if (sourceCardId == "ELITESWAT")
             return pointType == "EnemyPointSwat";
         if (sourceCardId == "ELITEPARA")
+            return pointType is "EnemyPointCorner" or "EnemyPointHiding";
+        if (sourceCardId == "ELITESNIPER")
             return pointType is "EnemyPointCorner" or "EnemyPointHiding";
         return false;
     }

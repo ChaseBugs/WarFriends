@@ -149,6 +149,31 @@ public sealed class CardUnitInitialPointCatalog
             .FirstOrDefault();
     }
 
+    internal CardUnitInitialPoint? SelectSniper(RecoveredBattleMap map,
+        int fraction, Vector3 soldierPosition, Vector3 opponentPosition,
+        Func<int, bool> available)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(available);
+        if (fraction is not (1 or 2) ||
+            !PlayerHitbox.Finite(soldierPosition) ||
+            !PlayerHitbox.Finite(opponentPosition) ||
+            !maps.TryGetValue(map.Source, out var points))
+            throw new InvalidDataException("Invalid card Sniper point selection.");
+
+        // MainScene SoldierBehaviourSniper has enemyPointType 6
+        // (Hiding | Corner) and minSniperDistance 6. GetPoint first filters
+        // strictly farther than that distance from the enemy player, then
+        // chooses the nearest remaining point to this soldier.
+        return points.Where(point => point.Fraction == fraction &&
+                (point.ComponentType is "EnemyPointCorner" or "EnemyPointHiding") &&
+                Vector3.Distance(point.Position, opponentPosition) > 6f &&
+                available(point.ComponentFileId))
+            .OrderBy(point => Vector3.Distance(point.Position, soldierPosition))
+            .ThenBy(point => point.Order)
+            .FirstOrDefault();
+    }
+
     internal IReadOnlyList<CardUnitInitialPoint> NextFreePoints(
         RecoveredBattleMap map, string sourceCardId, int fraction,
         int currentPointFileId, Func<int, bool> available)

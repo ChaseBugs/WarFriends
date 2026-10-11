@@ -11,6 +11,9 @@ public sealed partial class MatchEngine
     private CardEnemyPointOccupancy? cardEnemyPoints;
     private readonly Dictionary<ulong, ulong> swatPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> swatWalks = [];
+    private readonly Dictionary<ulong, ulong> sniperPointRetryTicks = [];
+    private readonly Dictionary<ulong, CardSoldierWalkState> sniperWalks = [];
+    private readonly HashSet<ulong> snipersAtPoint = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
     private readonly Dictionary<ulong, CardParachuteFlightState> parachuteFlights = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAirAttacks = [];
@@ -35,6 +38,12 @@ public sealed partial class MatchEngine
     internal bool CardSwatWalking(ulong entityKey) => swatWalks.ContainsKey(entityKey);
 
     internal bool CardSwatAttacking(ulong entityKey) => swatAttacks.ContainsKey(entityKey);
+
+    internal bool CardSniperWalking(ulong entityKey) =>
+        sniperWalks.ContainsKey(entityKey);
+
+    internal bool CardSniperAtPoint(ulong entityKey) =>
+        snipersAtPoint.Contains(entityKey);
 
     internal bool CardParatrooperWalking(ulong entityKey) =>
         paratrooperWalks.ContainsKey(entityKey);
@@ -134,6 +143,8 @@ public sealed partial class MatchEngine
                 InitializeCardParatrooper(entity);
             if (entity.SourceCardId == "ELITESWAT")
                 InitializeCardSwat(entity);
+            if (entity.SourceCardId == "ELITESNIPER")
+                InitializeCardSniper(entity);
             armyEntityRevision++;
             stateRevision++;
             Emit(MatchEventKind.ArmySpawned, owner.Definition.PlayerId,
@@ -260,7 +271,7 @@ public sealed partial class MatchEngine
         }
         try
         {
-            ArmyNavMeshCorridor route = PlanCardParatrooperRoute(
+            ArmyNavMeshCorridor route = PlanCardSoldierRoute(
                 landedPosition, point.Position);
             float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
             var walk = new CardSoldierWalkState(point.ComponentFileId, route,
@@ -292,24 +303,24 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card Paratrooper landed more than once.");
     }
 
-    private ArmyNavMeshCorridor PlanCardParatrooperRoute(Vector3 startPosition,
+    private ArmyNavMeshCorridor PlanCardSoldierRoute(Vector3 startPosition,
         Vector3 destinationPosition)
     {
         if (map == null || armyNavMeshConnectivity == null)
-            throw new InvalidDataException("Card Paratrooper has no source navigation map.");
-        // Scene transforms and the collision contact sit slightly above the
-        // baked NavMesh. Unity's agent projects both to its surface.
+            throw new InvalidDataException("Card soldier has no source navigation map.");
+        // Scene transforms and parachute contacts can sit slightly above
+        // the baked NavMesh. Unity's agent projects them to its surface.
         Vector3 start = armyNavMeshConnectivity.SampleNearest(map,
             startPosition, 1.25f) ??
-            throw new InvalidDataException("Card Paratrooper landed outside the NavMesh.");
+            throw new InvalidDataException("Card soldier starts outside the NavMesh.");
         Vector3 destination = armyNavMeshConnectivity.SampleNearest(map,
             destinationPosition, 0.5f) ??
-            throw new InvalidDataException("Card Paratrooper destination lies outside the NavMesh.");
+            throw new InvalidDataException("Card soldier destination lies outside the NavMesh.");
         ArmyNavMeshCorridor route = armyNavMeshConnectivity.PlanCorridor(
             map, start, destination) ??
-            throw new InvalidDataException("Card Paratrooper has no NavMesh corridor.");
+            throw new InvalidDataException("Card soldier has no NavMesh corridor.");
         if (!route.PlanarCovered)
-            throw new InvalidDataException("Card Paratrooper corridor leaves the source NavMesh.");
+            throw new InvalidDataException("Card soldier corridor leaves the source NavMesh.");
         return route;
     }
 
@@ -331,7 +342,7 @@ public sealed partial class MatchEngine
         if (selected < 0 || selected >= candidates.Length)
             throw new InvalidDataException("Invalid host Paratrooper fallback choice.");
         ArmySpawnPoint spawn = candidates[selected];
-        ArmyNavMeshCorridor route = PlanCardParatrooperRoute(
+        ArmyNavMeshCorridor route = PlanCardSoldierRoute(
             landedPosition, spawn.Position);
         float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
         paratrooperFallbackWalks.Add(entity.EntityKey,
@@ -381,7 +392,7 @@ public sealed partial class MatchEngine
             }
             try
             {
-                ArmyNavMeshCorridor route = PlanCardParatrooperRoute(
+                ArmyNavMeshCorridor route = PlanCardSoldierRoute(
                     position, point.Position);
                 float speed = armyCatalog!.EffectiveSpeed(entity.UnitId, 1f);
                 paratrooperWalks.Add(entityKey, new CardSoldierWalkState(
@@ -758,7 +769,7 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Invalid host Corner point choice.");
             CardUnitInitialPoint next = available[index];
             Vector3 position = new(entity.X, entity.Y, entity.Z);
-            ArmyNavMeshCorridor route = PlanCardParatrooperRoute(
+            ArmyNavMeshCorridor route = PlanCardSoldierRoute(
                 position, next.Position);
             float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
             var walk = new CardSoldierWalkState(next.ComponentFileId, route,
@@ -802,6 +813,101 @@ public sealed partial class MatchEngine
         if (!swatWalks.TryAdd(entity.EntityKey, new CardSoldierWalkState(
             point.ComponentFileId, route, armyCatalog.InfantryAgent, speed)))
             throw new InvalidDataException("Card SWAT already has a walk.");
+    }
+
+    private void InitializeCardSniper(BattleArmyEntityState entity)
+    {
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Sniper lost its source spawn identity.");
+        if (source.EntityKey != entity.EntityKey ||
+            source.SourceCardId != "ELITESNIPER" ||
+            entity.UnitId != "ID_UNIT-SNIPER")
+            throw new InvalidDataException("Card Sniper cannot bind its source rows.");
+
+        // The MainScene sniper sheet has no CARDS_MIN/MAX rows. The card
+        // lifecycle has already applied the recovered row-zero fallback.
+        armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
+        armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
+        TryAssignCardSniperPoint(entity);
+    }
+
+    private void TryAssignCardSniperPoint(BattleArmyEntityState entity)
+    {
+        if (cardEnemyPoints == null || armyCatalog == null ||
+            entity.SourceCardId != "ELITESNIPER")
+            throw new InvalidDataException("Card Sniper has no source point authority.");
+        Player owner = Find(entity.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Sniper owner left the match.");
+        Player opponent = players.Single(player => player != owner);
+        Vector3 position = new(entity.X, entity.Y, entity.Z);
+        CardUnitInitialPoint? point = cardEnemyPoints.TryAssignSniper(
+            entity.EntityKey, entity.OwnerFraction, position,
+            opponent.Position);
+        if (point == null)
+        {
+            // GenerateInitPoint retries five seconds after GetInitPoint
+            // finds no free point past minSniperDistance.
+            sniperPointRetryTicks[entity.EntityKey] = checked(tick +
+                5u * MatchManifest.TickRate);
+            return;
+        }
+
+        try
+        {
+            ArmyNavMeshCorridor route = PlanCardSoldierRoute(
+                position, point.Position);
+            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            sniperWalks.Add(entity.EntityKey, new CardSoldierWalkState(
+                point.ComponentFileId, route, armyCatalog.InfantryAgent,
+                speed));
+            sniperPointRetryTicks.Remove(entity.EntityKey);
+        }
+        catch
+        {
+            cardEnemyPoints.Release(entity.EntityKey);
+            throw;
+        }
+    }
+
+    private void AdvanceCardSniperPointRetries()
+    {
+        foreach (var (entityKey, dueTick) in sniperPointRetryTicks
+            .OrderBy(row => row.Key).ToArray())
+        {
+            if (tick < dueTick)
+                continue;
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITESNIPER")
+                throw new InvalidDataException("Card Sniper retry lost its soldier.");
+            TryAssignCardSniperPoint(entity);
+        }
+    }
+
+    private void AdvanceCardSniperWalks()
+    {
+        foreach (var (entityKey, walk) in sniperWalks
+            .OrderBy(row => row.Key).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITESNIPER" ||
+                cardEnemyPoints?.Find(entityKey)?.ComponentFileId !=
+                    walk.PointFileId)
+                throw new InvalidDataException("Card Sniper walk lost its point.");
+            walk.AdvanceTick();
+            entity.X = walk.Position.X;
+            entity.Y = walk.Position.Y;
+            entity.Z = walk.Position.Z;
+            entity.PositionTick = tick;
+            cardUnitCombat?.UpdatePose(entity);
+            if (!walk.Arrived)
+                continue;
+
+            sniperWalks.Remove(entityKey);
+            if (!snipersAtPoint.Add(entityKey))
+                throw new InvalidDataException("Card Sniper arrived twice.");
+            // Corner/Hiding attack and critical-hit rules are not yet
+            // admitted. Arrival only publishes source-backed placement.
+        }
     }
 
     private void AdvanceCardSwatPointRetries()
@@ -1024,6 +1130,15 @@ public sealed partial class MatchEngine
             swatAttacks.Remove(entityKey);
             swatShotTargets.Remove(entityKey);
             rusherShotCounts.Remove(entityKey);
+            armyDamage.Remove(entityKey);
+            armyShots.Remove(entityKey);
+            cardEnemyPoints?.Release(entityKey);
+        }
+        if (entity.SourceCardId == "ELITESNIPER")
+        {
+            sniperPointRetryTicks.Remove(entityKey);
+            sniperWalks.Remove(entityKey);
+            snipersAtPoint.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);
