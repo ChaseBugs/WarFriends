@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace War.BattleServer;
 
 /// <summary>Host provenance for one unit created by a selected War Card.</summary>
@@ -10,6 +12,7 @@ internal sealed record CardUnitEntity(
     string UnitId,
     int SpawnComponentFileId,
     int ReservationFileId,
+    Vector3 Position,
     ulong SpawnTick,
     ArmyCardBaseStats BaseStats);
 
@@ -63,7 +66,7 @@ internal sealed class CardUnitEntityRegistry
         var entity = new CardUnitEntity(localId, entityKey,
             intent.RequestId, intent.OwnerPlayerId, intent.SourceCardId,
             stats.Source.UnitId, point.ComponentFileId,
-            point.ReservationFileId, tick, stats);
+            point.ReservationFileId, point.Position, tick, stats);
         active.Add(localId, entity);
         spawnedCalls.Add(call, intent);
         return entity;

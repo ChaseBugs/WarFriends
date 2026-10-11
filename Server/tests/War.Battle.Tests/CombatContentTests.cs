@@ -10115,11 +10115,27 @@ internal static class CombatContentTests
             Check(cardPoint != null, "a source Drone card has a host-selectable spawn point");
             var cardEntities = new CardUnitEntityRegistry();
             var droneIntent = new CardUnitSpawnIntent(secondCardRequest,
-                "card-owner", "HEAVYDRONE", 0, 104);
+                "11111111-1111-1111-1111-111111111111", "HEAVYDRONE", 0, 104);
             var droneStats = content.Army.CardBaseStats("HEAVYDRONE", 0,
                 content.BarrelPolicy.MaxDisplayLevel);
             var cardEntity = cardEntities.Add(droneIntent, 1, cardPoint!, droneStats,
                 content.Army, 104);
+            var cardRoster = CardUnitEntityProjection.Create(cardEntity!, 1);
+            var cardRosterWire = BattleArmyEntityState.Parser.ParseFrom(
+                cardRoster.ToByteArray());
+            Check(cardRosterWire.EntityKey == cardEntity!.EntityKey &&
+                  cardRosterWire.OwnerPlayerId == droneIntent.OwnerPlayerId &&
+                  cardRosterWire.SourceCardId == "HEAVYDRONE" &&
+                  cardRosterWire.OptionIndex == -1 &&
+                  cardRosterWire.UnitId == "ID_UNIT-DRONE" &&
+                  cardRosterWire.MaxHealth == droneStats.Combat.Health &&
+                  cardRosterWire.Health == cardRosterWire.MaxHealth &&
+                  cardRosterWire.X == cardPoint!.Position.X &&
+                  cardRosterWire.Y == cardPoint.Position.Y &&
+                  cardRosterWire.Z == cardPoint.Position.Z &&
+                  cardRosterWire.DroneRotation?.W == 1,
+                "card-unit roster preserves source identity, card health, and spawn pose");
+            Reject(() => CardUnitEntityProjection.Create(cardEntity, 2));
             Check(cardEntity != null &&
                   cardEntity.LocalEntityId == CardUnitEntityRegistry.FirstLocalEntityId &&
                   cardEntity.EntityKey == ((1UL << 32) | (uint)cardEntity.LocalEntityId) &&
