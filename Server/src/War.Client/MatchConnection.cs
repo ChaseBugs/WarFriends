@@ -515,13 +515,21 @@ namespace War.Client
                        row.Kind==MatchEventKind.Unspecified ||
                        (row.Kind==MatchEventKind.ArmySpawned || row.Kind==MatchEventKind.ArmyDied ||
                         row.Kind==MatchEventKind.WarperWarpStarted || row.Kind==MatchEventKind.WarperWarpEnded) &&
-                       (row.ArmyEntityId<=0 || row.ArmyOptionIndex<0 || row.ArmyOptionIndex>=45 ||
+                       (row.ArmyEntityId<=0 ||
+                        (row.SourceCardId.Length == 0
+                            ? row.ArmyOptionIndex < 0 || row.ArmyOptionIndex >= 45
+                            : (row.Kind != MatchEventKind.ArmySpawned &&
+                               row.Kind != MatchEventKind.ArmyDied) ||
+                              row.ArmyOptionIndex != -1 ||
+                              !CardUnitSourceIdentity.Matches(row.SourceCardId, row.ArmyUnitId)) ||
                         row.ArmySpawnComponentFileId<=0 || row.ArmyReservationFileId<0 ||
                         (row.Kind==MatchEventKind.ArmySpawned ?
                             !Guid.TryParseExact(row.ActorId,"N",out _) || row.ArmyEnergyRecipientId!="" :
                          row.Kind==MatchEventKind.ArmyDied ?
                             !Guid.TryParseExact(row.TargetId,"N",out _) ||
-                            !Guid.TryParseExact(row.ArmyEnergyRecipientId,"N",out _) ||
+                            (row.SourceCardId.Length == 0
+                                ? !Guid.TryParseExact(row.ArmyEnergyRecipientId,"N",out _)
+                                : row.ArmyEnergyRecipientId != "") ||
                             row.Reason!="suicide" && row.Reason!="combat" :
                             !Guid.TryParseExact(row.ActorId,"N",out _) || row.TargetId!="" ||
                             row.ArmyEnergyRecipientId!="" || row.ArmyUnitId!="ID_UNIT-WARPER" ||

@@ -647,6 +647,9 @@ message MatchEvent {
   DroneShotPresentation drone_shot = 23;
   HelicopterShotPresentation helicopter_shot = 24;
   AssaultHelicopterShotPresentation assault_helicopter_shot = 25;
+  // CardSpawnUnit lifecycle only; paired with army_option_index -1 and no
+  // army-energy recipient on death.
+  string source_card_id = 26;
 }
 message MatchEventBatch {
   string match_id = 1; string manifest_hash = 2;

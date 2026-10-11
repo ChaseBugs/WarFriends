@@ -40,6 +40,17 @@ Check(MatchCommand.Parser.ParseFrom(useUnitCardWire.ToByteArray()).Equals(useUni
       CardUnitSourceIdentity.IsKnown(useUnitCardWire.UseUnitCard.SourceCardId) &&
       !CardUnitSourceIdentity.IsKnown("DECOY"),
     "unit-card intent carries only its request and recovered source card identity");
+var cardSpawnEvent = new MatchEvent
+{
+    EventId = 1, Kind = MatchEventKind.ArmySpawned,
+    ActorId = Guid.NewGuid().ToString("N"), ArmyEntityId = 2_000_000_000,
+    ArmyOptionIndex = -1, ArmyUnitId = "ID_UNIT-DRONE",
+    SourceCardId = "HEAVYDRONE", ArmySpawnComponentFileId = 123
+};
+Check(MatchEvent.Parser.ParseFrom(cardSpawnEvent.ToByteArray()).Equals(cardSpawnEvent) &&
+      CardUnitSourceIdentity.Matches(cardSpawnEvent.SourceCardId,
+          cardSpawnEvent.ArmyUnitId),
+    "card-unit spawn event retains card origin without an army option");
 var decoyRequest=Guid.NewGuid().ToString("N");
 var decoyWire=new MatchCommand{CommandId=18,UseDecoy=new UseDecoyCommand{RequestId=decoyRequest}};
 var decoySnapshot=new MatchSnapshot();decoySnapshot.Decoys.Add(new BattleDecoyState
