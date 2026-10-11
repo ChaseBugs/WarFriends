@@ -408,7 +408,8 @@ public sealed partial class MatchEngine
             return null;
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             entity.SourceCardId != "ELITEPARA" ||
-            rifleCombat == null || playerShotTargets == null)
+            rifleCombat == null || playerShotTargets == null ||
+            armyWeapons == null)
             throw new InvalidDataException("Airborne Paratrooper lost its target authority.");
 
         Player owner = Find(entity.OwnerPlayerId) ??
@@ -419,8 +420,19 @@ public sealed partial class MatchEngine
 
         Vector3 position = new(entity.X, entity.Y, entity.Z);
         PlayerAimPose opponentPose = rifleCombat.Pose(opponent.Definition.PlayerId);
-        return CardParatrooperAirTarget.Select(playerShotTargets,
-            opponentPose, position);
+        CardParatrooperAirTarget target = CardParatrooperAirTarget.Select(
+            playerShotTargets, opponentPose, position);
+        if (!target.WithinRange)
+            return target;
+
+        // The recovered weapon rest transform supplies the current host
+        // approximation of the animated muzzle's Y. Visibility is an
+        // eligibility check, never a claim that the Client fired a round.
+        float restMuzzleHeight = position.Y +
+            armyWeapons.Muzzle(entity.UnitId).RestPosition.Y;
+        HelicopterSightRay sight = CardParatrooperAirTarget.SightRay(
+            position, restMuzzleHeight, target.Position);
+        return target with { HasClearSight = rifleCombat.HelicopterCanSee(sight) };
     }
 
     private ArmyRusherTarget? CardParatrooperBodyTarget(ulong entityKey)

@@ -12014,10 +12014,21 @@ internal static class CombatContentTests
         Check(initialAirAim?.TransformFileId == sourceShieldTargetId &&
               initialAirAim.Distance > 0f,
             "airborne Paratrooper selects the posed source Shield target");
+        HelicopterSightRay directAirSight = CardParatrooperAirTarget.SightRay(
+            Vector3.Zero, 1f, new Vector3(0f, 1f, 8f));
+        Check(Vector3.Distance(directAirSight.Origin,
+                  new Vector3(0f, 1f, 0.18f)) < 0.0001f &&
+              directAirSight.Direction == Vector3.UnitZ &&
+              MathF.Abs(directAirSight.Range - 7.32f) < 0.0001f &&
+              directAirSight.LayerMask ==
+                  HelicopterTurretSightRay.SourceLayerMask,
+            "airborne visibility ray keeps the Client offset, near-target stop, and collider mask");
         Reject(() => CardParatrooperAirTarget.Select(
             content.PlayerShotTargets,
             automaticCityLanding.CombatPose(decoyPlayer),
             new Vector3(float.NaN, 0f, 0f)));
+        Reject(() => CardParatrooperAirTarget.SightRay(
+            Vector3.Zero, float.NaN, Vector3.UnitZ));
         for (ulong cardTick = 61; cardTick <= 365 &&
              !automaticCityLanding.Terminal; cardTick++)
         {
@@ -12046,7 +12057,8 @@ internal static class CombatContentTests
                               .BodyTarget(sourceShieldTargetId).Position) < 0.0001f &&
                       fallingAim.WithinRange ==
                           (fallingAim.Distance <=
-                           CardParatrooperAirTarget.MaximumRange),
+                           CardParatrooperAirTarget.MaximumRange) &&
+                      (!fallingAim.HasClearSight || fallingAim.WithinRange),
                     "falling Paratrooper tracks the live Shield pose and source range gate");
             }
         }
