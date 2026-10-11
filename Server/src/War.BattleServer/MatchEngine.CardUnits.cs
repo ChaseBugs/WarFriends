@@ -367,15 +367,15 @@ public sealed partial class MatchEngine
                 entity.SourceCardId != "ELITEPARA" ||
                 cardEnemyPoints?.Find(entityKey)?.ComponentFileId != walk.PointFileId)
                 throw new InvalidDataException("Card Paratrooper walk lost its soldier or point.");
-            if (walk.Arrived)
-                continue;
-
-            walk.AdvanceTick();
-            entity.X = walk.Position.X;
-            entity.Y = walk.Position.Y;
-            entity.Z = walk.Position.Z;
-            entity.PositionTick = tick;
-            cardUnitCombat?.UpdatePose(entity);
+            if (!walk.Arrived)
+            {
+                walk.AdvanceTick();
+                entity.X = walk.Position.X;
+                entity.Y = walk.Position.Y;
+                entity.Z = walk.Position.Z;
+                entity.PositionTick = tick;
+                cardUnitCombat?.UpdatePose(entity);
+            }
             if (walk.Arrived)
             {
                 paratrooperWalks.Remove(entityKey);
@@ -400,6 +400,27 @@ public sealed partial class MatchEngine
         if (!paratrooperAttacks.TryAdd(entityKey, attack))
             throw new InvalidDataException("Card Paratrooper attack started twice.");
         rusherShotCounts.Add(entityKey, 0);
+    }
+
+    internal CardParatrooperAirTarget? CardParatrooperAirAim(ulong entityKey)
+    {
+        if (!parachuteFlights.ContainsKey(entityKey))
+            return null;
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "ELITEPARA" ||
+            rifleCombat == null || playerShotTargets == null)
+            throw new InvalidDataException("Airborne Paratrooper lost its target authority.");
+
+        Player owner = Find(entity.OwnerPlayerId) ??
+            throw new InvalidDataException("Airborne Paratrooper owner left the match.");
+        Player opponent = players.Single(player => player != owner);
+        if (opponent.Dead)
+            return null;
+
+        Vector3 position = new(entity.X, entity.Y, entity.Z);
+        PlayerAimPose opponentPose = rifleCombat.Pose(opponent.Definition.PlayerId);
+        return CardParatrooperAirTarget.Select(playerShotTargets,
+            opponentPose, position);
     }
 
     private ArmyRusherTarget? CardParatrooperBodyTarget(ulong entityKey)

@@ -10291,6 +10291,15 @@ internal static class CombatContentTests
             }
             Check(checkedParachuteFalls == 10,
                 "all ten multiplayer Parachute spawn flights have pinned impulses");
+            var stationaryRoute = new ArmyNavMeshCorridor(
+                [Vector3.Zero, Vector3.Zero], 0f,
+                [Vector3.Zero, Vector3.Zero], 0f, true, 0f);
+            var stationaryCardWalk = new CardSoldierWalkState(1,
+                stationaryRoute, content.Army.InfantryAgent, 0.8f);
+            stationaryCardWalk.AdvanceTick();
+            Check(stationaryCardWalk.Arrived &&
+                  stationaryCardWalk.Position == Vector3.Zero,
+                "a card soldier already at its source point has no walking step");
             Check(prematureParachuteContacts == 1,
                 "Desert geometry can overlap before Unity's first measured impulse");
             Reject(() => new CardParachutePreContactMotion(
@@ -11998,6 +12007,17 @@ internal static class CombatContentTests
               automaticCityLanding.CardParatrooperFalling(
                   cityParatrooper.EntityKey),
             "new City Paratrooper starts at its elevated source parachute point");
+        int sourceShieldTargetId = content.PlayerShotTargets.Gameplay
+            .Single(target => target.Type == 2).TransformFileId;
+        CardParatrooperAirTarget? initialAirAim = automaticCityLanding
+            .CardParatrooperAirAim(cityParatrooper.EntityKey);
+        Check(initialAirAim?.TransformFileId == sourceShieldTargetId &&
+              initialAirAim.Distance > 0f,
+            "airborne Paratrooper selects the posed source Shield target");
+        Reject(() => CardParatrooperAirTarget.Select(
+            content.PlayerShotTargets,
+            automaticCityLanding.CombatPose(decoyPlayer),
+            new Vector3(float.NaN, 0f, 0f)));
         for (ulong cardTick = 61; cardTick <= 365 &&
              !automaticCityLanding.Terminal; cardTick++)
         {
@@ -12018,11 +12038,23 @@ internal static class CombatContentTests
                           cityParatrooper.EntityKey) == null &&
                       fallingCityParatrooper.Y < citySpawnHeight,
                     "host publishes a falling pose without reserving a Corner early");
+                CardParatrooperAirTarget? fallingAim = automaticCityLanding
+                    .CardParatrooperAirAim(cityParatrooper.EntityKey);
+                Check(fallingAim?.TransformFileId == sourceShieldTargetId &&
+                      Vector3.Distance(fallingAim.Position,
+                          automaticCityLanding.CombatPose(decoyPlayer)
+                              .BodyTarget(sourceShieldTargetId).Position) < 0.0001f &&
+                      fallingAim.WithinRange ==
+                          (fallingAim.Distance <=
+                           CardParatrooperAirTarget.MaximumRange),
+                    "falling Paratrooper tracks the live Shield pose and source range gate");
             }
         }
         Check(!automaticCityLanding.Terminal &&
               !automaticCityLanding.CardParatrooperFalling(
                   cityParatrooper.EntityKey) &&
+              automaticCityLanding.CardParatrooperAirAim(
+                  cityParatrooper.EntityKey) == null &&
               automaticCityLanding.CardEnemyPoint(cityParatrooper.EntityKey) != null &&
               (automaticCityLanding.CardParatrooperWalking(
                    cityParatrooper.EntityKey) ||
