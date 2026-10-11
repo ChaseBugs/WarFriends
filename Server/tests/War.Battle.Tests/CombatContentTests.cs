@@ -11529,9 +11529,29 @@ internal static class CombatContentTests
         Check(minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
                   .Entities.Single().PositionTick == 61,
             "card Minigunner movement updates its published host pose");
+        bool cardMinigunnerFired = false;
+        for (ulong cardTick = 62; cardTick < 1200 &&
+             !minigunnerCardMatch.Terminal && !cardMinigunnerFired; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                // Keep both admitted players connected while the distant
+                // card spawn walks to its point and waits for its first shot.
+                minigunnerCardMatch.ArmyBatch(decoyPlayer);
+                minigunnerCardMatch.ArmyBatch(decoyOpponent);
+            }
+            minigunnerCardMatch.Advance(cardTick);
+            cardMinigunnerFired = minigunnerCardMatch.EventBatch(decoyPlayer, 0)
+                .Events.Any(row => row.Kind == MatchEventKind.Shot &&
+                    row.ActorId == decoyPlayer && row.Reason == "army");
+        }
+        Check(cardMinigunnerFired,
+            "card Minigunner reaches its source point and fires through the host attack clock");
+        int deathPoint = minigunnerCardMatch.MinigunnerPoint(
+            minigunnerCardRow.EntityKey) ?? 0;
         Check(minigunnerCardMatch.ConfirmArmyDeath(minigunnerCardRow.EntityKey, false) &&
               minigunnerCardMatch.MinigunnerPoint(minigunnerCardRow.EntityKey) == null &&
-              minigunnerCardMatch.MinigunnerPointOccupant(minigunnerDestination) == null &&
+              minigunnerCardMatch.MinigunnerPointOccupant(deathPoint) == null &&
               minigunnerCardMatch.ArmyDamage(minigunnerCardRow.EntityKey) == null &&
               minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
             "card Minigunner death releases movement, damage, and roster authority");
