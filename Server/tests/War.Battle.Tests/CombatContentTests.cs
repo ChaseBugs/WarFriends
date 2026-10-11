@@ -10126,6 +10126,34 @@ internal static class CombatContentTests
                 "card units receive distinct, replay-safe host identities without army options");
             Reject(()=>cardEntities.Add(droneIntent with {SourceCardId="ELITESNIPER"},
                 1, cardPoint!, droneStats, content.Army, 104));
+            var coordinatedCards = new CardUnitSpawnState();
+            var coordinatedEntities = new CardUnitEntityRegistry();
+            var sharedRoutes = new ArmySpawnReservationLedger(
+                content.ArmySpawnPoints, cardMap);
+            var cardCoordinator = new CardUnitSpawnCoordinator(
+                coordinatedCards, coordinatedEntities, content.Army, cardMap,
+                new ArmySpawnPointSelector(content.ArmySpawnPoints), sharedRoutes,
+                content.BarrelPolicy.MaxDisplayLevel, _ => 0);
+            const string coordinatedRequest = "c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3";
+            var ordinaryArmy = new ArmyDeploymentState(content.Army,
+                ["ID_UNIT-ASSAULT"]);
+            int energyBeforeCard = ordinaryArmy.Energy;
+            Check(coordinatedCards.TrySchedule(coordinatedRequest,
+                  "card-owner", "HEAVYDRONE", 105),
+                "card activation schedules a source Drone without selecting an army option");
+            var dueCard = coordinatedCards.Due(105).Single();
+            var createdCard = cardCoordinator.SpawnDue(dueCard, 1, 0,
+                Vector3.Zero, 105);
+            Check(createdCard != null &&
+                  createdCard.SourceCardId == "HEAVYDRONE" &&
+                  createdCard.BaseStats.Combat.Health == droneStats.Combat.Health &&
+                  sharedRoutes.Owns(createdCard.EntityKey,
+                      createdCard.ReservationFileId) &&
+                  coordinatedCards.PendingCount == 0 &&
+                  ordinaryArmy.Energy == energyBeforeCard &&
+                  cardCoordinator.ReleaseRoute(createdCard) &&
+                  coordinatedEntities.Remove(createdCard.LocalEntityId) == createdCard,
+                "due card unit binds source stats and shared route without spending army energy");
             int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
             foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
             {
