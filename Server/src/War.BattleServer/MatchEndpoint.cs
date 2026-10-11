@@ -342,6 +342,9 @@ public sealed class MatchEndpoint
                     case MatchCommand.IntentOneofCase.UseBackstab:
                         clean.UseBackstab=new UseBackstabCommand
                             {RequestId=command.UseBackstab.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseRandomKevlar:
+                        clean.UseRandomKevlar=new UseRandomKevlarCommand
+                            {RequestId=command.UseRandomKevlar.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoBox:
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:

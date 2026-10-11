@@ -1301,10 +1301,11 @@ public sealed partial class MatchEngine
         if (authoritative == null ||
             authoritative.OwnerPlayerId != entity.OwnerPlayerId ||
             authoritative.SourceCardId != entity.SourceCardId ||
-            authoritative.Health != entity.Health)
+            authoritative.Health != entity.Health ||
+            authoritative.Kevlar != entity.Kevlar ||
+            authoritative.MaxKevlar != entity.MaxKevlar)
             throw new InvalidDataException("Card-unit death lost its roster proof.");
-        if (cardUnitCombat.ApplyHostDamage(entityKey, entity.Health) is not
-            { Died: true })
+        if (cardUnitCombat.ConfirmDeath(entityKey) is not { Died: true })
             throw new InvalidDataException("Card-unit death did not remove its health authority.");
         if (!activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Card-unit death lost its public roster row.");

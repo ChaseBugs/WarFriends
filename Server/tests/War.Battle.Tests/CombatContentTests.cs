@@ -10065,14 +10065,28 @@ internal static class CombatContentTests
                   "accepted card activation retains its player owner on replay");
             Reject(()=>ownedCards.RecordCard(cardReceipt,secondCardOwner,"CardDecoy"));
             Reject(()=>ownedCards.RecordCard(cardReceipt,firstCardOwner,"CardLandmine"));
-            Check(WarCardSourceIdentityCatalog.All.Count==37&&
+            Check(WarCardSourceIdentityCatalog.All.Count==38&&
                   WarCardSourceIdentityCatalog.Resolve("CardHeavyTurret")=="HEAVYTURRET"&&
                   WarCardSourceIdentityCatalog.Resolve("CardBackstab")=="BACKSTAB"&&
+                  WarCardSourceIdentityCatalog.Resolve("CardRandomKevlar")=="RANDOMKEVLAR"&&
                   WarCardSourceIdentityCatalog.Resolve("CardMassShieldDestroyer")=="APOCALYPSE"&&
                   WarCardSourceIdentityCatalog.Resolve("CardShieldDestroyer")=="DESTROYSHIELD"&&
                   WarCardSourceIdentityCatalog.Resolve("CardHealMeNowSmall")=="SMALLMEDKIT"&&
                   WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit","ELITEPARA")=="ELITEPARA",
                   "recovered card class and serialized source identities stay distinct");
+            var kevlarCandidates = Enumerable.Range(1, 4)
+                .Select(id => new BattleArmyEntityState { EntityKey = (ulong)id })
+                .ToArray();
+            var chosenKevlarTargets = MatchEngine.SelectRandomKevlarTargets(
+                kevlarCandidates, _ => 0);
+            Check(chosenKevlarTargets.Select(row => row.EntityKey)
+                    .SequenceEqual([1UL, 2UL, 3UL]) &&
+                  kevlarCandidates.Length == 4 &&
+                  MatchEngine.SelectRandomKevlarTargets(
+                      kevlarCandidates.Take(2).ToArray(), _ => 0).Count == 2,
+                "Random Kevlar selects at most three distinct soldiers without changing its candidates");
+            Reject(() => MatchEngine.SelectRandomKevlarTargets(kevlarCandidates,
+                count => count));
             Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit"));
             Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit","DECOY"));
             Check(CardSpawnUnitSourceCatalog.All.Count==7&&
@@ -10583,11 +10597,28 @@ internal static class CombatContentTests
                   currentCard.PositionTick == 107 &&
                   currentCard.Health == woundedCard.Entity.Health,
                 "card-unit movement keeps its private health roster in sync");
+            float cardKevlarMaximum = combatRow.MaxHealth * 0.2f;
+            var armoredCard = cardCombat.RefillKevlar(combatRow.EntityKey,
+                cardKevlarMaximum);
+            Check(armoredCard is { Kevlar: > 0 } &&
+                  armoredCard.MaxKevlar == cardKevlarMaximum &&
+                  cardCombat.ApplyHostDamage(combatRow.EntityKey,
+                      cardKevlarMaximum / 2) is { Died: false } armorHit &&
+                  armorHit.Entity.Health == woundedCard.Entity.Health &&
+                  armorHit.Entity.Kevlar == cardKevlarMaximum / 2,
+                "card-unit Kevlar absorbs a host hit before health");
+            var overflowHit = cardCombat.ApplyHostDamage(combatRow.EntityKey,
+                cardKevlarMaximum);
+            Check(overflowHit is { Died: false } &&
+                  overflowHit.Entity.Kevlar == 0 &&
+                  overflowHit.Entity.Health == woundedCard.Entity.Health -
+                      cardKevlarMaximum / 2,
+                "damage beyond card-unit Kevlar reaches health");
             bool rejectedInvalidCardDamage = false;
             try { cardCombat.ApplyHostDamage(combatRow.EntityKey, float.NaN); }
             catch (ArgumentOutOfRangeException) { rejectedInvalidCardDamage = true; }
             Check(rejectedInvalidCardDamage &&
-                  cardCombat.Find(combatRow.EntityKey)?.Health == woundedCard!.Entity.Health,
+                  cardCombat.Find(combatRow.EntityKey)?.Health == overflowHit!.Entity.Health,
                 "invalid host damage cannot mutate card-unit health");
             var killedCard = cardCombat.ApplyHostDamage(combatRow.EntityKey,
                 droneStats.Combat.Health);
@@ -14195,13 +14226,14 @@ internal static class CombatContentTests
             MatchId = "enemy-soldier-backstab"
         }, content: content, armyChoice: _ => 0);
         backstabMatch.ConfigureBattleAllocations([
-            new(soldierOwner, ["CardBackstab"], [], [0], [-1], [-1]),
+            new(soldierOwner, ["CardBackstab", "CardRandomKevlar"], [], [0], [-1], [-1]),
             new(helicopterOwner, [], [], [0], [-1], [-1])
         ]);
         backstabMatch.Admit(soldierOwner);
         backstabMatch.Admit(helicopterOwner);
         var backstabCards = new SelectCardsCommand();
         backstabCards.CardIds.Add("CardBackstab");
+        backstabCards.CardIds.Add("CardRandomKevlar");
         backstabCards.NormalUpgradeIndexes.Add(0);
         backstabCards.SpecialUpgradeIndexes.Add(-1);
         backstabCards.EliteUpgradeIndexes.Add(-1);
@@ -14234,6 +14266,25 @@ internal static class CombatContentTests
               backstabMatch.ArmyHealth(backstabAlly.EntityKey) > 0 &&
               backstabMatch.Command(soldierOwner, backstabCommand).Code == "backstab-applied",
             "Backstab deals enemy maximum health through host death authority once");
+        var randomKevlarCommand = new MatchCommand { CommandId = 5,
+            UseRandomKevlar = new UseRandomKevlarCommand
+            { RequestId = "80808080808080808080808080808080" } };
+        float alliedKevlarMaximum = backstabAlly.MaxHealth * 0.2f;
+        Check(backstabMatch.Command(soldierOwner, randomKevlarCommand).Code ==
+                  "random-kevlar-applied" &&
+              backstabMatch.ArmyKevlar(backstabAlly.EntityKey) == alliedKevlarMaximum &&
+              backstabMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities
+                  .First(row => row.EntityKey == backstabAlly.EntityKey)
+                  .MaxKevlar == alliedKevlarMaximum &&
+              backstabMatch.Command(soldierOwner, randomKevlarCommand).Code ==
+                  "random-kevlar-applied",
+            "Random Kevlar refills an allied soldier once and publishes its armor");
+        Check(backstabMatch.ApplyArmyHostDamage(backstabAlly.EntityKey,
+                  alliedKevlarMaximum / 2) &&
+              backstabMatch.ArmyHealth(backstabAlly.EntityKey) == backstabAlly.MaxHealth &&
+              backstabMatch.ArmyKevlar(backstabAlly.EntityKey) ==
+                  alliedKevlarMaximum / 2,
+            "Random Kevlar absorbs the first host hit before soldier health");
         var healthCardMatch = new MatchEngine(flameManifest with
         {
             MatchId = "allied-soldier-health-card"

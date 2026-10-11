@@ -97,6 +97,9 @@ namespace War.Client
         public Task<MatchReply> UseBackstabAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseBackstab=new UseBackstabCommand
                 {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseRandomKevlarAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseRandomKevlar=new UseRandomKevlarCommand
+                {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseHealingStormAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseHealingStorm=new UseHealingStormCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseShieldsUpAsync(string requestId,CancellationToken ct) =>

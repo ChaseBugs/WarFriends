@@ -162,6 +162,32 @@ internal static class PlayerDamageTests
             UseBackstab = new UseBackstabCommand
             { RequestId = "77777777777777777777777777777777" } }).Code ==
               "backstab-unavailable", "Backstab cannot spend exhausted inventory");
+        var randomKevlarMatch = new MatchEngine(manifest with
+            { MatchId = "random-kevlar-no-army" });
+        randomKevlarMatch.ConfigureCardSelection(["RANDOMKEVLAR"]);
+        randomKevlarMatch.ConfigureCardInventory([(a, "RANDOMKEVLAR", 1)]);
+        randomKevlarMatch.Admit(a);
+        randomKevlarMatch.Admit(b);
+        var randomKevlarSelection = new SelectCardsCommand();
+        randomKevlarSelection.CardIds.Add("RANDOMKEVLAR");
+        Check(randomKevlarMatch.Command(a, new MatchCommand { CommandId = 1,
+            SelectCards = randomKevlarSelection }).Code == "cards-selected",
+            "player selects a source Random Kevlar card");
+        randomKevlarMatch.Command(a, new MatchCommand { CommandId = 2,
+            Ready = new ReadyCommand { ManifestHash = randomKevlarMatch.ManifestHash } });
+        randomKevlarMatch.Command(b, new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = randomKevlarMatch.ManifestHash } });
+        randomKevlarMatch.Advance(60);
+        var randomKevlarCommand = new MatchCommand { CommandId = 3,
+            UseRandomKevlar = new UseRandomKevlarCommand
+            { RequestId = "79797979797979797979797979797979" } };
+        Check(randomKevlarMatch.Command(a, randomKevlarCommand).Code ==
+                  "random-kevlar-no-target" &&
+              randomKevlarMatch.Command(a, randomKevlarCommand).Code ==
+                  "random-kevlar-no-target" &&
+              randomKevlarMatch.Snapshot().CardEffects.Count(effect =>
+                  effect.CardId == "CardRandomKevlar") == 1,
+            "Random Kevlar spends once without a live allied soldier");
         var noDamagePlayers = players.Select((p, i) => i == 1
             ? p with { Combat = body with { NoDamageChance = 1 } } : p).ToArray();
         var noDamageMatch = new MatchEngine(fixture with

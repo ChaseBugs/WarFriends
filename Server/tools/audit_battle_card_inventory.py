@@ -294,6 +294,21 @@ def check_backstab_source():
         raise ValueError("BACKSTAB soldier or damage source changed")
 
 
+def check_random_kevlar_source():
+    card = (ASSETS / "Scripts/Assembly-CSharp/CardRandomKevlar.cs").read_text(
+        encoding="utf-8-sig")
+    enemy = (ASSETS / "Scripts/Assembly-CSharp/EnemyController.cs").read_text(
+        encoding="utf-8-sig")
+    kevlar = (ASSETS / "Scripts/Assembly-CSharp/Kevlar.cs").read_text(
+        encoding="utf-8-sig")
+    if ("enemyController.fraction == fraction && enemyController.destroyableObject.health > 0f && enemyController.canBeFreezed" not in card or
+        "Mathf.Min(3, list.Count)" not in card or
+        "list[num].SetUpKevlar()" not in card or
+        "public void SetUpKevlar(float hpPercents = 0.2f)" not in enemy or
+        "kevlarDestroyableObject.maxHealth = kevlarStrength * destroyableObject.maxHealth" not in kevlar):
+        raise ValueError("RANDOMKEVLAR soldier count or armor source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -306,7 +321,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 27 or
+    if (len(names) != 28 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -331,6 +346,7 @@ def render():
     check_kevlar_up_source()
     check_shield_spawner_source()
     check_backstab_source()
+    check_random_kevlar_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()

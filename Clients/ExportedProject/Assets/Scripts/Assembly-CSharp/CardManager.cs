@@ -530,7 +530,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				card is CardSwiftImmortality || card is CardBelovedEnemy ||
 				card is CardDisarmedAndLocked || card is CardShiedlsRefection ||
 				card is CardKevlarUp || card is CardShieldsSpawner ||
-				card is CardBackstab))
+				card is CardBackstab || card is CardRandomKevlar))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
@@ -581,6 +581,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardKevlarUp) reply = await client.UseKevlarUpResult();
 			else if (card is CardShieldsSpawner) reply = await client.UseShieldSpawnerResult();
 			else if (card is CardBackstab) reply = await client.UseBackstabResult();
+			else if (card is CardRandomKevlar) reply = await client.UseRandomKevlarResult();
 			else if (card is CardHealingStorm) reply = await client.UseHealingStormResult();
 			else if (card is CardShieldsUp) reply = await client.UseShieldsUpResult();
 			else if (card is CardShieldGenerator) reply = await client.UseShieldGeneratorResult();
@@ -629,6 +630,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		if (card is CardKevlarUp) return code == "kevlar-up-applied";
 		if (card is CardShieldsSpawner) return code == "shield-spawner-applied";
 		if (card is CardBackstab) return code == "backstab-applied" || code == "backstab-no-target";
+		if (card is CardRandomKevlar) return code == "random-kevlar-applied" || code == "random-kevlar-no-target";
 		if (card is CardHealingStorm) return code == "healing-storm-applied";
 		if (card is CardShieldsUp) return code == "shields-up-applied";
 		if (card is CardShieldGenerator) return code == "shield-generator-active";

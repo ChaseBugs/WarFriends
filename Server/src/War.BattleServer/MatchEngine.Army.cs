@@ -16,7 +16,7 @@ public sealed partial class MatchEngine
     {
         public float Maximum=maximum;
         public float Current=maximum;
-        public float KevlarMaximum { get; }=kevlarMaximum;
+        public float KevlarMaximum=kevlarMaximum;
         public float Kevlar=kevlarMaximum;
     }
     private sealed class ArmyInfantryAnimation(string clip,ulong startTick,Vector3 facing)
@@ -3623,12 +3623,13 @@ public sealed partial class MatchEngine
         {
             if (phase != BattlePhase.Running || cardUnitCombat == null)
                 return false;
-            if (damage >= cardRow.Health)
+            if (damage >= cardRow.Health + cardRow.Kevlar)
                 return ConfirmCardUnitDeath(entityKey, false);
             var result = cardUnitCombat.ApplyHostDamage(entityKey, damage);
             if (result is not { Died: false })
                 throw new InvalidDataException("Card-unit damage lost its health authority.");
             cardRow.Health = result.Entity.Health;
+            cardRow.Kevlar = result.Entity.Kevlar;
             armyEntityRevision++;
             stateRevision++;
             return true;
