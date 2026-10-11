@@ -10172,10 +10172,20 @@ internal static class CombatContentTests
                   sharedRoutes.Owns(createdCard.EntityKey,
                       createdCard.ReservationFileId) &&
                   coordinatedCards.PendingCount == 0 &&
-                  ordinaryArmy.Energy == energyBeforeCard &&
-                  cardCoordinator.ReleaseRoute(createdCard) &&
-                  coordinatedEntities.Remove(createdCard.LocalEntityId) == createdCard,
+                  ordinaryArmy.Energy == energyBeforeCard,
                 "due card unit binds source stats and shared route without spending army energy");
+            Reject(() => cardCoordinator.RemoveConfirmed(createdCard! with
+            {
+                ReservationFileId = createdCard!.ReservationFileId + 1
+            }));
+            Check(coordinatedEntities.Find(createdCard!.LocalEntityId) == createdCard &&
+                  sharedRoutes.Owns(createdCard.EntityKey,
+                      createdCard.ReservationFileId) &&
+                  cardCoordinator.RemoveConfirmed(createdCard) &&
+                  !cardCoordinator.RemoveConfirmed(createdCard) &&
+                  coordinatedEntities.ActiveCount == 0 &&
+                  ordinaryArmy.Energy == energyBeforeCard,
+                "confirmed card-unit cleanup needs the owned route and never grants army energy");
             int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
             foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
             {

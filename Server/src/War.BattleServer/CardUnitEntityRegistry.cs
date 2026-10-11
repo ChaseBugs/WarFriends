@@ -41,6 +41,9 @@ internal sealed class CardUnitEntityRegistry
             intent.DueTick > tick || tick > 10_000_000 ||
             stats.Source != CardSpawnUnitSourceCatalog.Get(intent.SourceCardId) ||
             point.ComponentFileId <= 0 || point.ReservationFileId < 0 ||
+            !float.IsFinite(point.Position.X) ||
+            !float.IsFinite(point.Position.Y) ||
+            !float.IsFinite(point.Position.Z) ||
             !float.IsFinite(stats.Combat.Health) || stats.Combat.Health <= 0 ||
             stats.Combat.Health > 10_000_000)
             throw new InvalidDataException("Invalid card-unit entity authority.");

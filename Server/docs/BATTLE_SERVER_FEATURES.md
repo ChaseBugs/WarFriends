@@ -91,6 +91,8 @@ The new `UseUnitCardCommand` carries only a canonical request ID and the source 
 
 `CardUnitSpawnCoordinator` now combines a due source call with trusted player level, the verified card family, the host point selector, and the same route-reservation ledger used by normal deployments. A focused Drone case proves the resulting card entity has the card-only stats and reserved scene route without changing army energy. A missing point consumes that one source call, matching the recovered Client's failed-spawn behavior. The coordinator is not yet invoked by live match ticks, so the card command remains closed.
 
+The coordinator can also remove a host-confirmed dead card unit after checking its active identity and owned route. A mismatched death leaves both intact, and a repeated death is a no-op. This cleanup has no ordinary army-energy credit. Live combat still needs to supply the death proof and remove its vitality, targeting, and published roster state.
+
 The pending card-unit queue can now cancel an activation before any of its units have spawned. This permits a later command handler to roll back scheduling when card inventory or effect admission fails; it cannot erase a partially completed two-unit card or reopen a consumed request ID. The live command remains closed while match-tick publication and death cleanup are still being connected.
 
 Card-unit spawn/death events now have a `source_card_id` field matching the entity roster. The portable SDK accepts `army_option_index = -1` only for one of the seven exact source card/unit pairs, and a card-unit death must carry no normal army-energy recipient. Ordinary deployment and Warper event validation remains on the existing option-index path. The Worker does not emit these events yet.

@@ -65,9 +65,25 @@ internal sealed class CardUnitSpawnCoordinator
         return entity;
     }
 
-    internal bool ReleaseRoute(CardUnitEntity entity)
+    /// <summary>
+    /// Removes a card unit after host combat confirms its death. The caller
+    /// owns the combat proof; this method verifies entity and route identity.
+    /// Card units have no ordinary army power and grant no kill energy.
+    /// </summary>
+    internal bool RemoveConfirmed(CardUnitEntity entity)
     {
         if (entity == null) throw new ArgumentNullException(nameof(entity));
-        return reservations.Release(entity.EntityKey);
+
+        CardUnitEntity? active = entities.Find(entity.LocalEntityId);
+        if (active == null)
+            return false;
+        if (active != entity ||
+            !reservations.Owns(entity.EntityKey, entity.ReservationFileId))
+            throw new InvalidDataException("Card-unit death lacks entity and route proof.");
+
+        if (!reservations.Release(entity.EntityKey) ||
+            entities.Remove(entity.LocalEntityId) != entity)
+            throw new InvalidDataException("Card-unit death compare-and-remove failed.");
+        return true;
     }
 }
