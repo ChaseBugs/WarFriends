@@ -64,6 +64,8 @@ public static class UnityParachuteFallExport
                         Physics.SyncTransforms();
                         Vector3 forward = sourceTransform.forward;
                         var frames = new List<object>();
+                        object[] nearbyAtFirstImpulse = null;
+                        int firstImpulseFrame = -1;
                         for (int frame = 0; frame <= 600; frame++)
                         {
                             frames.Add(new
@@ -85,9 +87,34 @@ public static class UnityParachuteFallExport
                                 bodyObject.transform.up) / 180f;
                             Vector3 torque = Vector3.Cross(Vector3.up, desiredUp) *
                                 5f * tilt - body.angularVelocity;
+                            Vector3 previousVelocity = body.velocity;
                             body.AddTorque(torque, ForceMode.VelocityChange);
                             body.AddForce(forward * 115f * 0.2f);
                             Physics.Simulate(Time.fixedDeltaTime);
+                            Vector3 expectedVelocity = (previousVelocity +
+                                (forward * 23f + Physics.gravity) *
+                                Time.fixedDeltaTime) * 0.8f;
+                            if (firstImpulseFrame < 0 &&
+                                Vector3.Distance(expectedVelocity, body.velocity) > 0.01f)
+                            {
+                                firstImpulseFrame = frame + 1;
+                                nearbyAtFirstImpulse = Physics.OverlapSphere(
+                                    body.position, 2f, ~0,
+                                    QueryTriggerInteraction.Ignore)
+                                    .Where(collider => collider.transform.root !=
+                                        bodyObject.transform)
+                                    .Select(collider => new
+                                    {
+                                        path = HierarchyPath(collider.transform),
+                                        type = collider.GetType().Name,
+                                        layer = collider.gameObject.layer,
+                                        distance = Vector3.Distance(body.position,
+                                            collider.bounds.ClosestPoint(body.position))
+                                    })
+                                    .OrderBy(row => row.distance)
+                                    .ThenBy(row => row.path, StringComparer.Ordinal)
+                                    .Take(20).Cast<object>().ToArray();
+                            }
                         }
                         falls.Add(new
                         {
@@ -95,6 +122,8 @@ public static class UnityParachuteFallExport
                             fraction = (int)spawn["fraction"],
                             origin = Array(sourcePosition),
                             forward = Array(forward),
+                            firstImpulseFrame,
+                            nearbyAtFirstImpulse,
                             frames
                         });
                     }
@@ -176,6 +205,16 @@ public static class UnityParachuteFallExport
         if (matches.Length != 1)
             throw new InvalidOperationException("Cannot bind source parachute spawn transform.");
         return matches[0];
+    }
+
+    private static string HierarchyPath(Transform transform)
+    {
+        var names = new List<string>();
+        for (Transform current = transform; current != null;
+             current = current.parent)
+            names.Add(current.name);
+        names.Reverse();
+        return string.Join("/", names.ToArray());
     }
 
     private static Vector3 Vector(JToken values)

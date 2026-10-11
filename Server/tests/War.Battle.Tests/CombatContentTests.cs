@@ -10115,7 +10115,7 @@ internal static class CombatContentTests
                 "recovered-parachute-fall-reference.json");
             byte[] parachuteReferenceBytes = File.ReadAllBytes(parachuteReferencePath);
             Check(Convert.ToHexStringLower(SHA256.HashData(parachuteReferenceBytes)) ==
-                  "4fbbf00589a814b59b3e9053f06686c55325137e5cdb0e5282cf49c52c54e27f",
+                  "3b86c8c86ea076a0f13969c0729cc25ef456b533a689af79d1879a45fc94124f",
                 "Parachute Unity trace summary retains its reviewed source revision");
             using var parachuteDocument = JsonDocument.Parse(parachuteReferenceBytes);
             JsonElement parachuteReference = parachuteDocument.RootElement;
@@ -10123,6 +10123,10 @@ internal static class CombatContentTests
                       "2018.3.0f2" &&
                   parachuteReference.GetProperty("sourcePrefabSha256").GetString() ==
                       "0c6bf529101a625276bd3560a5b83a7249e404275dbf15b0ad2ac2c2864c729a" &&
+                  parachuteReference.GetProperty("physicsSettingsSha256").GetString() ==
+                      "044c87594dbc3f5a1bc257f823e49c587e4ce03558d0edcc31c367168d19ddf1" &&
+                  parachuteReference.GetProperty("parachuteCollisionMask").GetString() ==
+                      "000020c9" &&
                   parachuteReference.GetProperty("fixedTimestep").GetSingle() ==
                       CardParachutePreContactMotion.FixedSeconds &&
                   parachuteReference.GetProperty("dragFactor").GetSingle() ==
@@ -10153,6 +10157,18 @@ internal static class CombatContentTests
                           Vector3.Distance(sourceSpawn.Position, origin) < 0.0001f &&
                           fall.GetProperty("firstImpulseFrame").GetInt32() is > 300 and < 550,
                         "Parachute impulse trace binds one source faction spawn");
+                    JsonElement candidates = fall.GetProperty("collisionCandidates");
+                    Check(candidates.GetArrayLength() is > 0 and <= 5 &&
+                          candidates.EnumerateArray().All(candidate =>
+                              candidate.GetProperty("path").GetString() is
+                                  { Length: > 0 and <= 1024 } &&
+                              (candidate.GetProperty("type").GetString() is
+                                  "MeshCollider" or "BoxCollider") &&
+                              (0x20c9u & (1u << candidate.GetProperty(
+                                  "layer").GetInt32())) != 0 &&
+                              candidate.GetProperty("boundsDistance").GetSingle()
+                                  is >= 0f and <= 2f),
+                        "Unity impact has nearby source-collision-layer candidates");
                     var flight = new CardParachutePreContactMotion(origin, fraction);
                     foreach (JsonElement sample in fall.GetProperty(
                         "preContactVelocitySamples").EnumerateArray())

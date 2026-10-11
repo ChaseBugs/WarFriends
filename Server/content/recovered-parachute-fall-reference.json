@@ -2,8 +2,10 @@
   "version": 1,
   "unityVersion": "2018.3.0f2",
   "scenario": "parachute-prefab-force-and-scene-contact",
-  "rawTraceSha256": "f28f2718c908a7ccbf8da59d97d4a6fb7ed1086feabb4c43a916f9442ad724d3",
+  "rawTraceSha256": "e9eacd080f87cbd8dfa06b6f7c546207a8dd2b71d860ff30ffe7688ce806fcdc",
   "sourcePrefabSha256": "0c6bf529101a625276bd3560a5b83a7249e404275dbf15b0ad2ac2c2864c729a",
+  "physicsSettingsSha256": "044c87594dbc3f5a1bc257f823e49c587e4ce03558d0edcc31c367168d19ddf1",
+  "parachuteCollisionMask": "000020c9",
   "unityImportedPrefabSha256": "19a3ac65b3e3a42b03e0ae6a194e5429fba203c5d52b789ab23b15f246973c45",
   "prefabPhysics": {
     "parachuteDrag": 5.0,
@@ -70,6 +72,55 @@
             -1.641937,
             0.037498,
             -1.440497
+          ],
+          "firstImpulseRotation": [
+            0.025466,
+            0.706807,
+            0.005926,
+            0.706924
+          ],
+          "previousPosition": [
+            -1.648165,
+            0.041405,
+            -1.439794
+          ],
+          "previousRotation": [
+            0.015463,
+            0.706938,
+            0.015463,
+            0.706937
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.0
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.048661
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.086766
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.12495
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.377228
+            }
           ],
           "previousVelocity": [
             1.84,
@@ -167,6 +218,55 @@
             1.870886,
             -0.358225,
             0.250834
+          ],
+          "firstImpulseRotation": [
+            -0.022484,
+            -0.705927,
+            0.044193,
+            0.706547
+          ],
+          "previousPosition": [
+            1.875258,
+            -0.345725,
+            0.251014
+          ],
+          "previousRotation": [
+            -0.033266,
+            -0.706323,
+            0.033266,
+            0.706325
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "type": "BoxCollider",
+              "layer": 13,
+              "boundsDistance": 0.0
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.708965
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/bariera05",
+              "type": "MeshCollider",
+              "layer": 0,
+              "boundsDistance": 0.956054
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.993225
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/sandbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.239486
+            }
           ],
           "previousVelocity": [
             -1.84,
@@ -271,6 +371,55 @@
             0.073866,
             -1.551402
           ],
+          "firstImpulseRotation": [
+            0.026902,
+            0.706855,
+            0.012661,
+            0.706733
+          ],
+          "previousPosition": [
+            -1.811826,
+            0.08464,
+            -1.553427
+          ],
+          "previousRotation": [
+            0.020709,
+            0.706804,
+            0.020709,
+            0.706803
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRoot/CityMap/Barriers/barrier 1 mat/sign_3",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.026569
+            },
+            {
+              "path": "LevelRoot/CityMap/Barriers/barrier 1 mat/tires",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.85429
+            },
+            {
+              "path": "LevelRoot/CityMap/Barriers/barrier 1 mat/roadblock",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.917105
+            },
+            {
+              "path": "LevelRoot/CityMap/Barrels/barrelDesert",
+              "type": "MeshCollider",
+              "layer": 0,
+              "boundsDistance": 1.087773
+            },
+            {
+              "path": "LevelRoot/CityMap/Barriers/barrier 1 mat/trashbag",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.740126
+            }
+          ],
           "previousVelocity": [
             1.84,
             -0.7848,
@@ -367,6 +516,43 @@
             -0.746238,
             -0.914983,
             -1.055859
+          ],
+          "firstImpulseRotation": [
+            0.035584,
+            -0.713443,
+            -0.03493,
+            0.698937
+          ],
+          "previousPosition": [
+            -0.722433,
+            -0.901993,
+            -1.055653
+          ],
+          "previousRotation": [
+            0.032623,
+            -0.706353,
+            -0.032623,
+            0.706354
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRoot/CityMap/Barriers/barrier 1 mat/sign_3",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.022108
+            },
+            {
+              "path": "LevelRoot/CityMap/Barriers/barrier 1 mat/tires",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.837409
+            },
+            {
+              "path": "LevelRoot/CityMap/Barrels/barrelDesert",
+              "type": "MeshCollider",
+              "layer": 0,
+              "boundsDistance": 1.863005
+            }
           ],
           "previousVelocity": [
             -1.84,
@@ -471,6 +657,55 @@
             -3.016793,
             -9.961911
           ],
+          "firstImpulseRotation": [
+            0.03677,
+            0.705625,
+            0.039149,
+            0.706547
+          ],
+          "previousPosition": [
+            -24.392744,
+            -3.00488,
+            -9.961657
+          ],
+          "previousRotation": [
+            0.038743,
+            0.706045,
+            0.038743,
+            0.706044
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRoot/desert_map/props/well",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.210328
+            },
+            {
+              "path": "LevelRoot/desert_map/props/well",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.367818
+            },
+            {
+              "path": "LevelRoot/desert_map/props/barier",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.782782
+            },
+            {
+              "path": "LevelRoot/desert_map/props/barier",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.232496
+            },
+            {
+              "path": "LevelRoot/desert_map/barrels/barrelDesert",
+              "type": "MeshCollider",
+              "layer": 0,
+              "boundsDistance": 1.384759
+            }
+          ],
           "previousVelocity": [
             1.84,
             -0.7848,
@@ -567,6 +802,55 @@
             -22.327927,
             -2.942307,
             -9.610069
+          ],
+          "firstImpulseRotation": [
+            -0.036851,
+            -0.709332,
+            0.029333,
+            0.703299
+          ],
+          "previousPosition": [
+            -22.285902,
+            -2.930576,
+            -9.605062
+          ],
+          "previousRotation": [
+            -0.035756,
+            -0.706202,
+            0.035756,
+            0.706203
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRoot/desert_map/props/well",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.700733
+            },
+            {
+              "path": "LevelRoot/desert_map/props/barier",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.72573
+            },
+            {
+              "path": "LevelRoot/desert_map/props/barier",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.833196
+            },
+            {
+              "path": "LevelRoot/desert_map/props/well",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.83614
+            },
+            {
+              "path": "LevelRoot/desert_map/barrels/barrelDesert",
+              "type": "MeshCollider",
+              "layer": 0,
+              "boundsDistance": 0.906239
+            }
           ],
           "previousVelocity": [
             -1.84,
@@ -671,6 +955,55 @@
             -0.017774,
             -1.30366
           ],
+          "firstImpulseRotation": [
+            0.023398,
+            0.706795,
+            0.001269,
+            0.707031
+          ],
+          "previousPosition": [
+            -1.716251,
+            -0.006511,
+            -1.303642
+          ],
+          "previousRotation": [
+            0.012218,
+            0.707002,
+            0.012218,
+            0.707001
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.017361
+            },
+            {
+              "path": "LevelRootPark/park_map/Barriers/car_02",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.576031
+            },
+            {
+              "path": "LevelRootPark/park_map/Barriers/funride",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.720637
+            },
+            {
+              "path": "LevelRootPark/park_map/Barriers/seats (1)",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.020012
+            },
+            {
+              "path": "LevelRootPark/park_map/Barriers/ice-cream",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.069938
+            }
+          ],
           "previousVelocity": [
             1.84,
             -0.7848,
@@ -767,6 +1100,49 @@
             3.002297,
             -0.018185,
             -1.08108
+          ],
+          "firstImpulseRotation": [
+            -0.000655,
+            -0.70702,
+            0.023947,
+            0.706788
+          ],
+          "previousPosition": [
+            3.003576,
+            -0.009511,
+            -1.081107
+          ],
+          "previousRotation": [
+            -0.012218,
+            -0.707001,
+            0.012218,
+            0.707002
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.017772
+            },
+            {
+              "path": "LevelRootPark/park_map/Barriers/statue_of_liberty",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.077072
+            },
+            {
+              "path": "LevelRootPark/park_map/Barriers/seats",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.948935
+            },
+            {
+              "path": "LevelRootPark/park_map/Barriers/bench",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.611537
+            }
           ],
           "previousVelocity": [
             -1.84,
@@ -871,6 +1247,55 @@
             -0.066581,
             -1.534293
           ],
+          "firstImpulseRotation": [
+            0.031299,
+            0.706682,
+            0.018145,
+            0.706606
+          ],
+          "previousPosition": [
+            -1.166564,
+            -0.055041,
+            -1.534069
+          ],
+          "previousRotation": [
+            0.024516,
+            0.706682,
+            0.024516,
+            0.706681
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.0
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "type": "BoxCollider",
+              "layer": 13,
+              "boundsDistance": 0.091589
+            },
+            {
+              "path": "LevelRoot/snow_map/metal",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.382202
+            },
+            {
+              "path": "LevelRoot/snow_map/barrelSnow",
+              "type": "MeshCollider",
+              "layer": 0,
+              "boundsDistance": 1.37041
+            },
+            {
+              "path": "LevelRoot/snow_map/roadblock",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 1.532588
+            }
+          ],
           "previousVelocity": [
             1.84,
             -0.7848,
@@ -967,6 +1392,55 @@
             3.00848,
             0.181598,
             0.111912
+          ],
+          "firstImpulseRotation": [
+            0.002926,
+            -0.706256,
+            0.026495,
+            0.707454
+          ],
+          "previousPosition": [
+            2.999255,
+            0.188545,
+            0.11239
+          ],
+          "previousRotation": [
+            -0.011388,
+            -0.707015,
+            0.011388,
+            0.707016
+          ],
+          "collisionCandidates": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.0
+            },
+            {
+              "path": "LevelRoot/snow_map/armybox_1",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.069764
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "type": "BoxCollider",
+              "layer": 13,
+              "boundsDistance": 0.339768
+            },
+            {
+              "path": "LevelRoot/snow_map/armybox_3",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.604128
+            },
+            {
+              "path": "LevelRoot/snow_map/armybox_2",
+              "type": "MeshCollider",
+              "layer": 13,
+              "boundsDistance": 0.650138
+            }
           ],
           "previousVelocity": [
             -1.84,

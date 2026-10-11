@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SPAWNS = ROOT / "Server/content/recovered-army-spawn-points.json"
 PREFAB = ROOT / "Clients/ExportedProject/Assets/GameObject/parachute.prefab"
+PHYSICS = ROOT / "Server/content/recovered-unity-physics-settings.json"
 OUTPUT = ROOT / "Server/content/recovered-parachute-fall-reference.json"
 STEP = 0.02
 DRAG_FACTOR = 0.8
@@ -86,7 +87,11 @@ def first_impulse(frames, forward):
 def summarize(path):
     trace = json.loads(Path(path).read_text(encoding="utf-8"))
     spawn_maps = json.loads(SPAWNS.read_text(encoding="utf-8"))["maps"]
+    physics = json.loads(PHYSICS.read_text(encoding="utf-8"))
+    parachute_mask = physics["layers"][15]["collisionMask"]
     if (trace["version"] != 1 or trace["unityVersion"] != "2018.3.0f2" or
+            physics["layers"][15]["name"] != "CollideOnlyEnviroment" or
+            parachute_mask != "000020c9" or
             not physics_matches(prefab_physics(PREFAB),
                                 trace["prefabPhysics"]) or
             trace["fixedTimestep"] != STEP or
@@ -120,6 +125,24 @@ def summarize(path):
             if (impact["frame"] <= 300 or impact["frame"] >= 550 or
                     not 0.01 < residual < 10):
                 raise ValueError("Parachute first impulse is outside source bounds")
+            if impact["frame"] != fall["firstImpulseFrame"]:
+                raise ValueError("Unity impulse frame disagrees with its trace")
+            collision_candidates = []
+            for collider in fall["nearbyAtFirstImpulse"]:
+                layer = collider["layer"]
+                distance = collider["distance"]
+                if not 0 <= layer <= 31 or not math.isfinite(distance):
+                    raise ValueError("Invalid Unity impact collider")
+                if 0x20C9 & (1 << layer):
+                    collision_candidates.append({
+                        "path": collider["path"],
+                        "type": collider["type"],
+                        "layer": layer,
+                        "boundsDistance": round(distance, 6),
+                    })
+            if not collision_candidates:
+                raise ValueError("No source-collision-layer collider near impact")
+            collision_candidates = collision_candidates[:5]
             rows.append({
                 "spawnComponentFileId": fall["componentFileId"],
                 "fraction": fall["fraction"],
@@ -127,6 +150,10 @@ def summarize(path):
                 "forward": rounded(forward),
                 "firstImpulseFrame": impact["frame"],
                 "firstImpulsePosition": rounded(impact["position"]),
+                "firstImpulseRotation": rounded(impact["rotation"]),
+                "previousPosition": rounded(previous["position"]),
+                "previousRotation": rounded(previous["rotation"]),
+                "collisionCandidates": collision_candidates,
                 "previousVelocity": rounded(previous["velocity"]),
                 "impulseVelocity": rounded(impact["velocity"]),
                 "preContactVelocitySamples": [
@@ -148,6 +175,8 @@ def summarize(path):
         "scenario": trace["scenario"],
         "rawTraceSha256": digest(path),
         "sourcePrefabSha256": digest(PREFAB),
+        "physicsSettingsSha256": digest(PHYSICS),
+        "parachuteCollisionMask": parachute_mask,
         "unityImportedPrefabSha256": trace["prefabSha256"],
         "prefabPhysics": prefab_physics(PREFAB),
         "fixedTimestep": STEP,
