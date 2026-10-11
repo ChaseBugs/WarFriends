@@ -138,6 +138,7 @@ message UseBulletSpongeCommand { string request_id = 1; }
 message UseImmortalCommand { string request_id = 1; }
 message UseSlowMoveCommand { string request_id = 1; }
 message UseDisarmedCommand { string request_id = 1; }
+message UseShieldReflectionCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
 message MatchCommand {
@@ -177,6 +178,7 @@ message MatchCommand {
     UseImmortalCommand use_immortal = 43;
     UseSlowMoveCommand use_slow_move = 44;
     UseDisarmedCommand use_disarmed = 45;
+    UseShieldReflectionCommand use_shield_reflection = 46;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.

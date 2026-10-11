@@ -787,6 +787,21 @@ internal static class BazookaCatalogTests
         var shieldAllocation=allocation with {MatchId="bazooka-shield",Players=
             [allocation.Players[0] with {ShieldLevel=0},allocation.Players[1] with {ShieldLevel=0}]};
         var shieldSimulation=new ShieldMatchSimulation(map,content.Shields,shieldAllocation);
+        bool shieldReflectionActive = true;
+        var reflectionProbe = new ShieldMatchSimulation(map, content.Shields,
+            shieldAllocation, fraction => fraction == 1 && shieldReflectionActive);
+        string reflectedShieldPath = covers[0].SourcePath + "/riot_shield";
+        float reflectedHealth = reflectionProbe.Snapshot()
+            .Single(row => row.CoverIndex == covers[0].SourceIndex).Health;
+        Check(reflectionProbe.ApplyExplosion(reflectedShieldPath, 2,
+                  "Google2u.Bazooka_RPG7", 100, 0) == null &&
+              reflectionProbe.Snapshot().Single(row =>
+                  row.CoverIndex == covers[0].SourceIndex).Health == reflectedHealth,
+            "reflection protects an allied cover shield from a bazooka blast");
+        shieldReflectionActive = false;
+        Check(reflectionProbe.ApplyExplosion(reflectedShieldPath, 2,
+                  "Google2u.Bazooka_RPG7", 100, 0)?.Health < reflectedHealth,
+            "the same blast damages the shield when reflection expires");
         var originalShields = shieldSimulation.Snapshot();
         var strongerShields = shieldSimulation.ApplyShieldsUp(1);
         Check(strongerShields.Count == originalShields.Count(row => row.OwnerFraction == 1) &&
@@ -863,6 +878,36 @@ internal static class BazookaCatalogTests
             shieldsUpMatch.Advance(shieldTick);
         Check(!shieldsUpMatch.Snapshot().CardEffects.Any(effect => effect.CardId == "CardShieldGenerator"),
             "MainScene's four-second Shield Generator window expires at the host tick boundary");
+        var reflectionMatch = new MatchEngine(shieldAllocation with
+        { MatchId = "bazooka-shield-reflection-card" }, map, content);
+        reflectionMatch.ConfigureCardSelection(["REFLECTION"]);
+        reflectionMatch.ConfigureCardInventory([(one, "REFLECTION", 1)]);
+        reflectionMatch.Admit(one);
+        reflectionMatch.Admit(two);
+        var reflectionSelection = new SelectCardsCommand();
+        reflectionSelection.CardIds.Add("REFLECTION");
+        Check(reflectionMatch.Command(one, new MatchCommand
+        {
+            CommandId = 1, SelectCards = reflectionSelection
+        }).Code == "cards-selected", "owner selects source shield reflection");
+        reflectionMatch.Command(one, new MatchCommand { CommandId = 2,
+            Ready = new ReadyCommand { ManifestHash = reflectionMatch.ManifestHash } });
+        reflectionMatch.Command(two, new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = reflectionMatch.ManifestHash } });
+        reflectionMatch.Advance(60);
+        var reflectionCommand = new MatchCommand { CommandId = 3,
+            UseShieldReflection = new UseShieldReflectionCommand
+            { RequestId = "85858585858585858585858585858585" } };
+        Check(reflectionMatch.Command(one, reflectionCommand).Code == "shield-reflection-active" &&
+              reflectionMatch.Command(one, reflectionCommand).Code == "shield-reflection-active" &&
+              reflectionMatch.Snapshot().CardEffects.Any(effect =>
+                  effect.CardId == "CardShiedlsRefection"),
+            "authenticated reflection starts one replay-safe shield lease");
+        for (ulong reflectionTick = 61; reflectionTick <= 510; reflectionTick++)
+            reflectionMatch.Advance(reflectionTick);
+        Check(!reflectionMatch.Snapshot().CardEffects.Any(effect =>
+                  effect.CardId == "CardShiedlsRefection"),
+            "source reflection ends after fifteen host seconds");
         var apocalypseMatch = new MatchEngine(shieldAllocation with
         { MatchId = "bazooka-mass-shield-card" }, map, content,
             armyChoice: count => count - 1, combatRandom: () => 1f);

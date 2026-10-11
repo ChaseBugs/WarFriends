@@ -5,6 +5,7 @@ namespace War.BattleServer;
 internal sealed class ShieldLifecycle
 {
     private readonly ShieldSourceCatalog policy;
+    private readonly Func<bool> isImmortal;
     private float maximum;
     private ulong lastTick;
     private ulong destroyedTick;
@@ -17,9 +18,11 @@ internal sealed class ShieldLifecycle
     internal bool HasPlayer {get;set;}
     internal bool AutoRepair {get;set;}=true;
     internal ulong DestroyedTick=>destroyedTick;
-    internal ShieldLifecycle(ShieldSourceCatalog policy,int provenZeroBasedLevel,ulong startingTick)
+    internal ShieldLifecycle(ShieldSourceCatalog policy,int provenZeroBasedLevel,ulong startingTick,
+        Func<bool>? isImmortal=null)
     {
         this.policy=policy??throw new ArgumentNullException(nameof(policy));
+        this.isImmortal=isImmortal??(() => false);
         if(startingTick>10000000)throw new InvalidDataException("Invalid shield starting tick.");
         maximum=policy.Health(provenZeroBasedLevel);Health=maximum;lastTick=startingTick;
     }
@@ -60,7 +63,7 @@ internal sealed class ShieldLifecycle
         float amount=sourceDamage*policy.DamageToShield(weaponId);
         if(!float.IsFinite(amount) || amount>100000000)
             throw new InvalidDataException("Shield damage overflow.");
-        if(Destroyed || amount==0)return;
+        if(Destroyed || isImmortal() || amount==0)return;
         Health-=amount;
         if(Health<=0)
         {
@@ -75,7 +78,7 @@ internal sealed class ShieldLifecycle
         float amount=sourceDamage*policy.UnitToShieldCoefficient;
         if(!float.IsFinite(amount) || amount>100000000)
             throw new InvalidDataException("Unit shield damage overflow.");
-        if(Destroyed || amount==0)return;
+        if(Destroyed || isImmortal() || amount==0)return;
         Health-=amount;
         if(Health<=0){Health=0;Destroyed=true;destroyedTick=tick;}
     }
@@ -84,7 +87,7 @@ internal sealed class ShieldLifecycle
         Time(tick);
         if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>100000000)
             throw new InvalidDataException("Invalid host unit flame damage.");
-        if(Destroyed||sourceDamage==0)return;
+        if(Destroyed||isImmortal()||sourceDamage==0)return;
         // Shield.DoDamage applies UnitToShieldCoef only for DamageType.Shot.
         // FlameAmmo calls Burn, whose DamageType is Flame.
         Health-=sourceDamage;

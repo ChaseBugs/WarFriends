@@ -620,6 +620,15 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         Apply(reply);
         return reply.Clone();
     }
+    public async Task<MatchReply> UseShieldReflectionResult()
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        MatchReply reply = await connection.UseShieldReflectionAsync(
+            Guid.NewGuid().ToString("N"), lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
     public async Task<MatchReply> UseHealingStormResult()
     {
         if (!IsConnected || connection == null)

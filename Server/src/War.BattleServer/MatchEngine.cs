@@ -1116,7 +1116,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             if (map==null || content==null) throw new InvalidDataException("Live combat needs source map and combat package.");
             if(manifest.Players.All(p=>p.ShieldLevel.HasValue))
-                shields=new ShieldMatchSimulation(map,content.Shields,manifest);
+                shields=new ShieldMatchSimulation(map,content.Shields,manifest,
+                    ShieldReflectionActive);
             explosionPolicy=content.Explosions;
             if(manifest.SceneMasterPlayerId!=null)
             {
@@ -2103,6 +2104,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseSlowMove(p,c.UseSlowMove.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseDisarmed)
             return UseDisarmed(p,c.UseDisarmed.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldReflection)
+            return UseShieldReflection(p,c.UseShieldReflection.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)

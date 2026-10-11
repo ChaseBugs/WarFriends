@@ -330,6 +330,9 @@ public sealed class MatchEndpoint
                     case MatchCommand.IntentOneofCase.UseDisarmed:
                         clean.UseDisarmed=new UseDisarmedCommand
                             {RequestId=command.UseDisarmed.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseShieldReflection:
+                        clean.UseShieldReflection=new UseShieldReflectionCommand
+                            {RequestId=command.UseShieldReflection.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoBox:
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:

@@ -20,7 +20,8 @@ internal sealed class ShieldMatchSimulation
     private readonly ShieldSourceCatalog policy;
     private ulong lastTick;
     internal IReadOnlyList<ShieldMutation> Snapshot()=>Array.AsReadOnly(entries.Select(e=>e.Snapshot()).ToArray());
-    internal ShieldMatchSimulation(RecoveredBattleMap map,ShieldSourceCatalog policy,MatchManifest manifest)
+    internal ShieldMatchSimulation(RecoveredBattleMap map,ShieldSourceCatalog policy,MatchManifest manifest,
+        Func<int,bool>? isImmortalFraction=null)
     {
         if(map==null || policy==null || manifest.Players.Length!=2 ||
             manifest.Players.Any(p=>!p.ShieldLevel.HasValue) ||
@@ -28,7 +29,8 @@ internal sealed class ShieldMatchSimulation
             throw new InvalidDataException("Shield simulation requires complete trusted allocation.");
         this.policy=policy;
         entries=map.Covers.Select(c=>new Entry(c,new ShieldLifecycle(policy,
-            manifest.Players.Single(p=>p.Fraction==c.Fraction).ShieldLevel!.Value,0))).ToArray();
+            manifest.Players.Single(p=>p.Fraction==c.Fraction).ShieldLevel!.Value,0,
+            () => isImmortalFraction?.Invoke(c.Fraction)==true))).ToArray();
         byOwner=entries.ToDictionary(e=>e.Cover.SourcePath+"/riot_shield",StringComparer.Ordinal);
         if(entries.Length!=8 || byOwner.Count!=8)throw new InvalidDataException("Incomplete shield cover identity.");
     }

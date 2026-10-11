@@ -85,6 +85,9 @@ namespace War.Client
         public Task<MatchReply> UseDisarmedAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseDisarmed=new UseDisarmedCommand
                 {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseShieldReflectionAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseShieldReflection=new UseShieldReflectionCommand
+                {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseHealingStormAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseHealingStorm=new UseHealingStormCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseShieldsUpAsync(string requestId,CancellationToken ct) =>

@@ -40,6 +40,18 @@ internal static class ShieldLifecycleTests
         for(ulong tick=1;tick<=181;tick++)disabled.Advance(tick);
         Check(disabled.Destroyed && disabled.MaxHealth==4626,"disabled auto repair preserves destroyed shield");
         Reject(()=>new ShieldLifecycle(policy,44,0));
+        bool reflectionActive = true;
+        var reflected = new ShieldLifecycle(policy, 0, 0, () => reflectionActive);
+        reflected.ApplyShot("Google2u.Shotgun_SPAS", 100, 0);
+        reflected.ApplyUnitShot(25, 0);
+        reflected.ApplyUnitFlame(25, 0);
+        Check(reflected.Health == reflected.MaxHealth,
+            "shield reflection blocks player, army, and flame damage");
+        Reject(() => reflected.ApplyShot("unknown", 1, 0));
+        reflectionActive = false;
+        reflected.ApplyShot("Google2u.Shotgun_SPAS", 100, 0);
+        Check(reflected.Health == reflected.MaxHealth - 100,
+            "shield damage resumes when the card lease expires");
         return checks;
     }
 }
