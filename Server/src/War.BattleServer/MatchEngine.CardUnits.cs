@@ -22,6 +22,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> paratrooperShotTargets = [];
+    private readonly Dictionary<ulong, ulong> paratrooperCornerChangeTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> swatAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> swatShotTargets = [];
 
@@ -56,6 +57,10 @@ public sealed partial class MatchEngine
 
     internal bool CardParatrooperAttacking(ulong entityKey) =>
         paratrooperAttacks.ContainsKey(entityKey);
+
+    internal ulong? CardParatrooperCornerChangeTick(ulong entityKey) =>
+        paratrooperCornerChangeTicks.TryGetValue(entityKey, out ulong due)
+            ? due : null;
 
     /// <summary>
     /// Host-only activation seam. The UDP command remains closed until
@@ -438,6 +443,11 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card Paratrooper attack started twice.");
         if (!rusherShotCounts.ContainsKey(entityKey))
             throw new InvalidDataException("Card Paratrooper lost its airborne shot count.");
+        int waitSeconds = 10 + armyChoice(10);
+        if (waitSeconds is < 10 or > 19 ||
+            !paratrooperCornerChangeTicks.TryAdd(entityKey,
+                checked(tick + (ulong)waitSeconds * MatchManifest.TickRate)))
+            throw new InvalidDataException("Card Paratrooper lost its Corner change clock.");
     }
 
     internal CardParatrooperAirTarget? CardParatrooperAirAim(ulong entityKey)
@@ -550,16 +560,20 @@ public sealed partial class MatchEngine
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             entity.SourceCardId != "ELITEPARA" || enemyMuzzles == null ||
             cardEnemyPoints?.Find(entityKey) is not
-                { ComponentType: "EnemyPointCorner", CornerRightSide: bool rightSide }
-                point)
+                { ComponentType: "EnemyPointCorner", CornerRightSide: bool rightSide,
+                  CornerDirection: Vector3 direction })
             throw new InvalidDataException("Corner Paratrooper lost its firing pose.");
 
         // ShootFromCover queues the side-specific fire clip after uncovering.
         // Shoot occurs 0.05 seconds after uncoverLength, so sample that clip
         // at the same elapsed time instead of using the resting weapon pose.
+        // SwitchState(CornerHiding) turns toward -enemyPointCorner.direction;
+        // the point's serialized transform rotation is different.
         string clip = rightSide ? "player_fire_right3" : "player_fire_left3";
         Vector3 position = new(entity.X, entity.Y, entity.Z);
-        return enemyMuzzles.Place(clip, position, point.Rotation, 0.05f);
+        float yaw = MathF.Atan2(-direction.X, -direction.Z);
+        Quaternion facing = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw);
+        return enemyMuzzles.Place(clip, position, facing, 0.05f);
     }
 
     private void AdvanceCardParatrooperAirAttacks()
@@ -708,6 +722,54 @@ public sealed partial class MatchEngine
                 paratrooperShotTargets.Remove(entityKey);
         }
         LaunchRusherShotIntents();
+        AdvanceCardParatrooperCornerChanges();
+    }
+
+    private void AdvanceCardParatrooperCornerChanges()
+    {
+        if (cardEnemyPoints == null || armyCatalog == null)
+            throw new InvalidDataException("Card Paratrooper has no point-change authority.");
+
+        foreach (var (entityKey, attack) in paratrooperAttacks
+            .OrderBy(row => row.Key).ToArray())
+        {
+            if (!paratrooperCornerChangeTicks.TryGetValue(entityKey,
+                    out ulong changeTick) ||
+                !activeArmyEntities.TryGetValue(entityKey, out var entity))
+                throw new InvalidDataException("Card Paratrooper lost its Corner clock.");
+            // CornerHidingUpdate changes points only while hidden and after
+            // the current shooting callback has finished.
+            if (tick <= changeTick || attack.Phase is
+                ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing)
+                continue;
+
+            IReadOnlyList<CardUnitInitialPoint> available =
+                cardEnemyPoints.NextFreePoints(entityKey, "ELITEPARA",
+                    entity.OwnerFraction);
+            if (available.Count == 0)
+            {
+                paratrooperCornerChangeTicks[entityKey] = checked(changeTick +
+                    10u * MatchManifest.TickRate);
+                continue;
+            }
+
+            int index = armyChoice(available.Count);
+            if (index < 0 || index >= available.Count)
+                throw new InvalidDataException("Invalid host Corner point choice.");
+            CardUnitInitialPoint next = available[index];
+            Vector3 position = new(entity.X, entity.Y, entity.Z);
+            ArmyNavMeshCorridor route = PlanCardParatrooperRoute(
+                position, next.Position);
+            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            var walk = new CardSoldierWalkState(next.ComponentFileId, route,
+                armyCatalog.InfantryAgent, speed);
+
+            cardEnemyPoints.Transfer(entityKey, next);
+            paratrooperAttacks.Remove(entityKey);
+            paratrooperShotTargets.Remove(entityKey);
+            paratrooperCornerChangeTicks.Remove(entityKey);
+            paratrooperWalks.Add(entityKey, walk);
+        }
     }
 
     private void TryAssignCardSwatPoint(BattleArmyEntityState entity)
@@ -979,6 +1041,7 @@ public sealed partial class MatchEngine
             paratrooperPointRetryTicks.Remove(entityKey);
             paratrooperAttacks.Remove(entityKey);
             paratrooperShotTargets.Remove(entityKey);
+            paratrooperCornerChangeTicks.Remove(entityKey);
             rusherShotCounts.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);

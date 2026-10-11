@@ -149,6 +149,26 @@ public sealed class CardUnitInitialPointCatalog
             .FirstOrDefault();
     }
 
+    internal IReadOnlyList<CardUnitInitialPoint> NextFreePoints(
+        RecoveredBattleMap map, string sourceCardId, int fraction,
+        int currentPointFileId, Func<int, bool> available)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(available);
+        if (fraction is not (1 or 2) || currentPointFileId <= 0 ||
+            sourceCardId != "ELITEPARA" ||
+            !maps.TryGetValue(map.Source, out var points))
+            throw new InvalidDataException("Invalid card point-change selection.");
+
+        // SpawningManager.GetNextFreeEnemyPoint retains collection order
+        // and draws one uniform index after excluding the current point.
+        return points.Where(point => point.Fraction == fraction &&
+                point.ComponentFileId != currentPointFileId &&
+                (point.ComponentType is "EnemyPointCorner" or "EnemyPointHiding") &&
+                available(point.ComponentFileId))
+            .ToArray();
+    }
+
     private static Vector3 Position(JsonElement values)
     {
         float[] coordinates = values.EnumerateArray().Select(value => value.GetSingle()).ToArray();

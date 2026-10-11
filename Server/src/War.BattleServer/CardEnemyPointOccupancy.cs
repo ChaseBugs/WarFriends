@@ -61,6 +61,39 @@ internal sealed class CardEnemyPointOccupancy
         return true;
     }
 
+    internal IReadOnlyList<CardUnitInitialPoint> NextFreePoints(
+        ulong entityKey, string sourceCardId, int fraction)
+    {
+        if (!assigned.TryGetValue(entityKey, out var current) ||
+            current.Fraction != fraction ||
+            !AcceptsPoint(sourceCardId, current.ComponentType))
+            throw new InvalidDataException("Card soldier has no current point to leave.");
+        return catalog.NextFreePoints(map, sourceCardId, fraction,
+            current.ComponentFileId,
+            pointFileId => !occupants.ContainsKey(pointFileId));
+    }
+
+    internal void Transfer(ulong entityKey, CardUnitInitialPoint next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+        if (!assigned.TryGetValue(entityKey, out var current) ||
+            current.ComponentFileId == next.ComponentFileId ||
+            current.Fraction != next.Fraction ||
+            !AcceptsPoint("ELITEPARA", next.ComponentType) ||
+            !occupants.TryGetValue(current.ComponentFileId, out ulong owner) ||
+            owner != entityKey || occupants.ContainsKey(next.ComponentFileId) ||
+            !catalog.NextFreePoints(map, "ELITEPARA", current.Fraction,
+                current.ComponentFileId, _ => true)
+                .Any(point => point.ComponentFileId == next.ComponentFileId))
+            throw new InvalidDataException("Card point transfer lost its source reservation.");
+
+        // The match loop is single-threaded. Check both identities before
+        // changing either map, then move the reservation as one operation.
+        occupants.Remove(current.ComponentFileId);
+        occupants.Add(next.ComponentFileId, entityKey);
+        assigned[entityKey] = next;
+    }
+
     private static bool AcceptsPoint(string sourceCardId, string pointType)
     {
         if (sourceCardId == "ELITESWAT")

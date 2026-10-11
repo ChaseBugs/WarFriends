@@ -12104,6 +12104,7 @@ internal static class CombatContentTests
                   .ComponentFileId == exposedParaPoint.ComponentFileId,
             "exposed-side Paratrooper lands beside the other Park Corner");
         bool firingParaShotSeen = false;
+        ulong firingParaTick = 60;
         for (ulong cardTick = 61; cardTick < 1000 &&
              !firingParaMatch.Terminal && !firingParaShotSeen; cardTick++)
         {
@@ -12113,6 +12114,7 @@ internal static class CombatContentTests
                 firingParaMatch.ArmyBatch(decoyOpponent);
             }
             firingParaMatch.Advance(cardTick);
+            firingParaTick = cardTick;
             firingParaShotSeen = firingParaMatch.EventBatch(decoyPlayer, 0)
                 .Events.Any(row => row.Kind == MatchEventKind.Shot &&
                     row.ActorId == decoyPlayer && row.Reason == "army");
@@ -12122,13 +12124,92 @@ internal static class CombatContentTests
             "exposed Park Corner fires a card Paratrooper projectile on the host clock");
         CoopMuzzlePose? cornerMuzzle = firingParaMatch
             .CardParatrooperCornerMuzzle(firingPara.EntityKey);
+        Vector3 cornerDirection = exposedParaPoint.CornerDirection ??
+            throw new InvalidDataException("Park Corner lost its source direction.");
+        float cornerYaw = MathF.Atan2(-cornerDirection.X,
+            -cornerDirection.Z);
+        Quaternion cornerFacing = Quaternion.CreateFromAxisAngle(
+            Vector3.UnitY, cornerYaw);
+        var posedPara = firingParaMatch
+            .ArmyEntityBatch(decoyPlayer, 0, 0).Entities
+            .Single(row => row.EntityKey == firingPara.EntityKey);
+        string cornerFireClip = exposedParaPoint.CornerRightSide == true
+            ? "player_fire_right3" : "player_fire_left3";
+        CoopMuzzlePose expectedCornerMuzzle = content.CoopEnemyMuzzles.Place(
+            cornerFireClip,
+            new Vector3(posedPara.X, posedPara.Y, posedPara.Z),
+            cornerFacing, 0.05f);
         Check(cornerMuzzle != null &&
-              PlayerHitbox.Finite(cornerMuzzle.Position),
-            "arrived Paratrooper has a sampled side-specific Corner rifle muzzle");
+              Vector3.Distance(cornerMuzzle.Position,
+                  expectedCornerMuzzle.Position) < 0.0001f,
+            "Corner rifle muzzle follows the Client's -direction turn and side-specific fire clip");
+        bool paraChangedCorner = false;
+        for (ulong cardTick = firingParaTick + 1; cardTick < 1000 &&
+             !firingParaMatch.Terminal && !paraChangedCorner; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                firingParaMatch.ArmyBatch(decoyPlayer);
+                firingParaMatch.ArmyBatch(decoyOpponent);
+            }
+            firingParaMatch.Advance(cardTick);
+            paraChangedCorner = firingParaMatch.CardParatrooperWalking(
+                firingPara.EntityKey) &&
+                firingParaMatch.CardEnemyPoint(firingPara.EntityKey)?
+                    .ComponentFileId != exposedParaPoint.ComponentFileId;
+        }
+        ulong occupiedOtherCorner = firingParaMatch.CardEnemyPointOccupant(
+            paraLandingPoint.ComponentFileId) ?? 0;
+        Check(!paraChangedCorner && occupiedOtherCorner != 0 &&
+              firingParaMatch.CardParatrooperCornerChangeTick(
+                  firingPara.EntityKey) > 999,
+            "Corner Paratrooper retries after its partner occupies the only other point");
+        Check(firingParaMatch.ConfirmArmyDeath(occupiedOtherCorner, false),
+            "partner death releases the alternate Corner before retry");
+        ulong transferTick = 0;
+        for (ulong cardTick = 1000; cardTick < 1400 &&
+             !firingParaMatch.Terminal && !paraChangedCorner; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                firingParaMatch.ArmyBatch(decoyPlayer);
+                firingParaMatch.ArmyBatch(decoyOpponent);
+            }
+            firingParaMatch.Advance(cardTick);
+            paraChangedCorner = firingParaMatch.CardParatrooperWalking(
+                firingPara.EntityKey) &&
+                firingParaMatch.CardEnemyPoint(firingPara.EntityKey)?
+                    .ComponentFileId == paraLandingPoint.ComponentFileId;
+            if (paraChangedCorner)
+                transferTick = cardTick;
+        }
+        Check(paraChangedCorner &&
+              firingParaMatch.CardEnemyPointOccupant(
+                  exposedParaPoint.ComponentFileId) == null &&
+              firingParaMatch.CardEnemyPointOccupant(
+                  paraLandingPoint.ComponentFileId) == firingPara.EntityKey &&
+              !firingParaMatch.CardParatrooperAttacking(firingPara.EntityKey),
+            "Corner Paratrooper transfers its reservation before walking to a free point");
+        bool reachedNewCorner = false;
+        for (ulong cardTick = transferTick + 1; cardTick < transferTick + 400 &&
+             !firingParaMatch.Terminal && !reachedNewCorner; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                firingParaMatch.ArmyBatch(decoyPlayer);
+                firingParaMatch.ArmyBatch(decoyOpponent);
+            }
+            firingParaMatch.Advance(cardTick);
+            reachedNewCorner = firingParaMatch.CardParatrooperAttacking(
+                firingPara.EntityKey);
+        }
+        Check(reachedNewCorner &&
+              !firingParaMatch.CardParatrooperWalking(firingPara.EntityKey),
+            "transferred Paratrooper resumes its Corner attack clock on arrival");
         Check(firingParaMatch.ConfirmArmyDeath(firingPara.EntityKey, false) &&
               !firingParaMatch.CardParatrooperAttacking(firingPara.EntityKey) &&
               firingParaMatch.CardEnemyPointOccupant(
-                  exposedParaPoint.ComponentFileId) == null,
+                  paraLandingPoint.ComponentFileId) == null,
             "Paratrooper death clears its attack and Corner reservation after firing");
         var snowCardMap = content.Maps.Single(sourceMap =>
             sourceMap.Source == "Assets/Scenes/Snow_Multiplayer.unity");
