@@ -11913,6 +11913,78 @@ internal static class CombatContentTests
             "Park Corner point has a nearby walkable landing fixture");
         Vector3 paraLanding = paraLandingCandidate ??
             throw new InvalidDataException("Park Paratrooper landing fixture is missing.");
+        var landingDuringShot = ReadyCardMatch(
+            "host-card-para-land-during-shot", "ELITEPARA");
+        Check(landingDuringShot.Command(decoyOpponent, new MatchCommand
+              {
+                  CommandId = 3,
+                  MoveCover = new MoveCoverCommand { Direction = -1 }
+              }).Code == "moving" &&
+              landingDuringShot.TryScheduleCardUnit(
+                  "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc",
+                  decoyPlayer, "ELITEPARA"),
+            "Park defender moves into the airborne rifle lane before landing");
+        ulong landingShotEntity = landingDuringShot
+            .ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single().EntityKey;
+        ulong landingWindupTick = 60;
+        for (ulong candidateTick = 61; candidateTick <= 150 &&
+             landingDuringShot.CardParatrooperAirAttack(landingShotEntity)?
+                 .Phase != ArmyRusherAttackPhase.Windup; candidateTick++)
+        {
+            if (candidateTick == 90)
+            {
+                landingDuringShot.ArmyBatch(decoyPlayer);
+                landingDuringShot.ArmyBatch(decoyOpponent);
+            }
+            landingDuringShot.Advance(candidateTick);
+            landingWindupTick = candidateTick;
+        }
+        ArmyRusherAttackState? landingAirAttack = landingDuringShot
+            .CardParatrooperAirAttack(landingShotEntity);
+        Check(landingAirAttack is
+                  { Phase: ArmyRusherAttackPhase.Windup, BatchSize: >= 2 } &&
+              landingDuringShot.CardParatrooperFalling(landingShotEntity) &&
+              landingDuringShot.ConfirmCardParatrooperLanding(
+                  landingShotEntity, paraLanding),
+            "host confirms landing after the source rifle batch has begun winding up");
+        bool heldCornerForAirBatch = false;
+        var airborneRoundsAfterLanding = new HashSet<ulong>();
+        bool beganCornerAfterAirBatch = false;
+        for (ulong shotTick = landingWindupTick + 1; shotTick <= 300 &&
+             !landingDuringShot.Terminal && !beganCornerAfterAirBatch;
+             shotTick++)
+        {
+            if (shotTick % 90 == 0)
+            {
+                landingDuringShot.ArmyBatch(decoyPlayer);
+                landingDuringShot.ArmyBatch(decoyOpponent);
+            }
+            landingDuringShot.Advance(shotTick);
+            ArmyRusherAttackState? pendingAir = landingDuringShot
+                .CardParatrooperAirAttack(landingShotEntity);
+            if (landingDuringShot.CardParatrooperWalkArrived(landingShotEntity) &&
+                pendingAir?.Phase is ArmyRusherAttackPhase.Windup or
+                    ArmyRusherAttackPhase.Firing)
+            {
+                heldCornerForAirBatch = true;
+                Check(!landingDuringShot.CardParatrooperAttacking(
+                          landingShotEntity),
+                    "Corner attack waits while a pre-landing rifle batch is pending");
+            }
+            foreach (MatchEvent round in landingDuringShot
+                .EventBatch(decoyPlayer, 0).Events.Where(row =>
+                    row.Kind == MatchEventKind.Shot &&
+                    landingDuringShot.ArmyProjectileSourceEntity(
+                        row.ProjectileId) == landingShotEntity))
+                airborneRoundsAfterLanding.Add(round.ProjectileId);
+            beganCornerAfterAirBatch = pendingAir == null &&
+                landingDuringShot.CardParatrooperAttacking(landingShotEntity);
+        }
+        Check(heldCornerForAirBatch &&
+              landingAirAttack!.BatchCursor == landingAirAttack.BatchSize &&
+              airborneRoundsAfterLanding.Count > 0 &&
+              beganCornerAfterAirBatch,
+            "pre-landing rifle rounds finish after touchdown before Corner attack starts");
         Reject(() => paraCardMatch.ConfirmCardParatrooperLanding(
             remainingPara.EntityKey,
             paraLandingPoint.Position + new Vector3(0.4f, 0, 0)));

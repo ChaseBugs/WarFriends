@@ -401,6 +401,9 @@ public sealed partial class MatchEngine
             return null;
         return (launch.OwnerPlayerId, launch.OwnerFraction, launch.Damage);
     }
+    internal ulong? ArmyProjectileSourceEntity(ulong projectileId) =>
+        armyProjectileAuthority.TryGetValue(projectileId, out var launch)
+            ? launch.EntityKey : null;
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];

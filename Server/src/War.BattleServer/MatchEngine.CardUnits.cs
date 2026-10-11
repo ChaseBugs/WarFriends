@@ -35,11 +35,17 @@ public sealed partial class MatchEngine
     internal bool CardParatrooperWalking(ulong entityKey) =>
         paratrooperWalks.ContainsKey(entityKey);
 
+    internal bool CardParatrooperWalkArrived(ulong entityKey) =>
+        paratrooperWalks.TryGetValue(entityKey, out var walk) && walk.Arrived;
+
     internal bool CardParatrooperFalling(ulong entityKey) =>
         parachuteFlights.ContainsKey(entityKey);
 
     internal bool CardParatrooperAirAttacking(ulong entityKey) =>
         paratrooperAirAttacks.ContainsKey(entityKey);
+
+    internal ArmyRusherAttackState? CardParatrooperAirAttack(ulong entityKey) =>
+        paratrooperAirAttacks.GetValueOrDefault(entityKey);
 
     internal int? CardParatrooperFallbackSpawn(ulong entityKey) =>
         paratrooperFallbackWalks.TryGetValue(entityKey, out var walk)
@@ -388,7 +394,10 @@ public sealed partial class MatchEngine
                 entity.PositionTick = tick;
                 cardUnitCombat?.UpdatePose(entity);
             }
-            if (walk.Arrived)
+            // WalkingUpdate waits for !mWillShoot before TargetReached.
+            // An airborne batch keeps that flag through OnLanded, so the
+            // Corner state cannot replace its pending windup or rounds.
+            if (walk.Arrived && !CardParatrooperHasPendingAirBatch(entityKey))
             {
                 paratrooperWalks.Remove(entityKey);
                 StartCardParatrooperAttack(entityKey);
@@ -508,6 +517,11 @@ public sealed partial class MatchEngine
         }
         LaunchRusherShotIntents();
     }
+
+    private bool CardParatrooperHasPendingAirBatch(ulong entityKey) =>
+        paratrooperAirAttacks.TryGetValue(entityKey, out var attack) &&
+        attack.Phase is ArmyRusherAttackPhase.Windup or
+            ArmyRusherAttackPhase.Firing;
 
     private ArmyRusherTarget? CardParatrooperBodyTarget(ulong entityKey)
     {
