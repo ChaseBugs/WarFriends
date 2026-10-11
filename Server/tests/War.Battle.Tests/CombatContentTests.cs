@@ -10186,6 +10186,54 @@ internal static class CombatContentTests
                   coordinatedEntities.ActiveCount == 0 &&
                   ordinaryArmy.Energy == energyBeforeCard,
                 "confirmed card-unit cleanup needs the owned route and never grants army energy");
+            var combatSchedule = new CardUnitSpawnState();
+            var combatEntities = new CardUnitEntityRegistry();
+            var combatRoutes = new ArmySpawnReservationLedger(
+                content.ArmySpawnPoints, cardMap);
+            var combatCoordinator = new CardUnitSpawnCoordinator(
+                combatSchedule, combatEntities, content.Army, cardMap,
+                new ArmySpawnPointSelector(content.ArmySpawnPoints), combatRoutes,
+                content.BarrelPolicy.MaxDisplayLevel, _ => 0);
+            var cardCombat = new CardUnitCombatLifecycle(combatCoordinator);
+            const string combatRequest = "d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4";
+            Check(combatSchedule.TrySchedule(combatRequest,
+                  "11111111-1111-1111-1111-111111111111", "HEAVYDRONE", 106),
+                "host schedules the source card before combat allocation");
+            var combatRow = cardCombat.SpawnDue(combatSchedule.Due(106).Single(),
+                1, 0, Vector3.Zero, 106);
+            Check(combatRow != null &&
+                  cardCombat.ActiveCount == 1 &&
+                  cardCombat.Find(combatRow.EntityKey)?.Health == droneStats.Combat.Health &&
+                  combatRoutes.Owns(combatRow.EntityKey,
+                      combatRow.ReservationFileId),
+                "card combat starts with source health and an owned route");
+            float firstCardHit = droneStats.Combat.Health / 4;
+            var woundedCard = cardCombat.ApplyHostDamage(combatRow!.EntityKey,
+                firstCardHit);
+            Check(woundedCard is { Died: false } &&
+                  woundedCard.Entity.Health == droneStats.Combat.Health - firstCardHit &&
+                  cardCombat.ActiveCount == 1 &&
+                  combatRoutes.Owns(combatRow.EntityKey,
+                      combatRow.ReservationFileId),
+                "nonlethal host damage updates only the card-unit health");
+            bool rejectedInvalidCardDamage = false;
+            try { cardCombat.ApplyHostDamage(combatRow.EntityKey, float.NaN); }
+            catch (ArgumentOutOfRangeException) { rejectedInvalidCardDamage = true; }
+            Check(rejectedInvalidCardDamage &&
+                  cardCombat.Find(combatRow.EntityKey)?.Health == woundedCard!.Entity.Health,
+                "invalid host damage cannot mutate card-unit health");
+            var killedCard = cardCombat.ApplyHostDamage(combatRow.EntityKey,
+                droneStats.Combat.Health);
+            Check(killedCard is { Died: true } &&
+                  killedCard.Entity.Health == 0 &&
+                  cardCombat.Find(combatRow.EntityKey) == null &&
+                  cardCombat.ApplyHostDamage(combatRow.EntityKey, 1) == null &&
+                  cardCombat.ActiveCount == 0 &&
+                  combatEntities.ActiveCount == 0 &&
+                  !combatRoutes.Owns(combatRow.EntityKey,
+                      combatRow.ReservationFileId) &&
+                  ordinaryArmy.Energy == energyBeforeCard,
+                "lethal card damage releases its entity and route once without army energy");
             int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
             foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
             {
