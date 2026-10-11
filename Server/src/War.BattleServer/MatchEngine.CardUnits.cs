@@ -92,6 +92,8 @@ public sealed partial class MatchEngine
                 InitializeCardDrone(entity);
             if (entity.SourceCardId == "ELITEMINIGUN")
                 InitializeCardMinigunner(entity);
+            if (entity.SourceCardId == "ELITEPARA")
+                InitializeCardParatrooper(entity);
             if (entity.SourceCardId == "ELITESWAT")
                 InitializeCardSwat(entity);
             armyEntityRevision++;
@@ -123,6 +125,21 @@ public sealed partial class MatchEngine
         armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
         rusherShotCounts.Add(entity.EntityKey, 0);
         TryAssignCardSwatPoint(entity);
+    }
+
+    private void InitializeCardParatrooper(BattleArmyEntityState entity)
+    {
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Paratrooper lost its source spawn identity.");
+        if (source.EntityKey != entity.EntityKey ||
+            source.SourceCardId != "ELITEPARA" ||
+            entity.UnitId != "ID_UNIT-PARATROOPER")
+            throw new InvalidDataException("Card Paratrooper cannot bind its combat rows.");
+
+        // CardSpawnUnit uses its card upgrade rows, not the ordinary army
+        // option. Corner-point selection occurs only after parachute landing.
+        armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
+        armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
     }
 
     private void TryAssignCardSwatPoint(BattleArmyEntityState entity)
@@ -377,6 +394,12 @@ public sealed partial class MatchEngine
             swatAttacks.Remove(entityKey);
             swatShotTargets.Remove(entityKey);
             rusherShotCounts.Remove(entityKey);
+            armyDamage.Remove(entityKey);
+            armyShots.Remove(entityKey);
+            cardEnemyPoints?.Release(entityKey);
+        }
+        if (entity.SourceCardId == "ELITEPARA")
+        {
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);

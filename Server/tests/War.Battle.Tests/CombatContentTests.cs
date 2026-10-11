@@ -11530,6 +11530,16 @@ internal static class CombatContentTests
                   row.UnitId == "ID_UNIT-PARATROOPER" &&
                   row.OptionIndex == -1),
             "delayed second Paratrooper card unit receives a distinct host identity at tick 75");
+        var paraStats = content.Army.CardBaseStats("ELITEPARA", 22,
+            content.BarrelPolicy.MaxDisplayLevel);
+        Check(paraRows.All(row => paraCardMatch.ArmyDamage(row.EntityKey) ==
+                  paraStats.Combat.Damage),
+            "both Paratroopers retain card-specific damage while awaiting landing");
+        Check(paraCardMatch.ConfirmArmyDeath(paraRows[0].EntityKey, false) &&
+              paraCardMatch.ArmyDamage(paraRows[0].EntityKey) == null &&
+              paraCardMatch.ArmyDamage(paraRows[1].EntityKey) ==
+                  paraStats.Combat.Damage,
+            "one Paratrooper death clears only its own combat authority");
         var minigunnerCardMatch = ReadyCardMatch("host-card-minigunner", "ELITEMINIGUN");
         const string minigunnerCardRequest = "b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8";
         Check(minigunnerCardMatch.TryScheduleCardUnit(minigunnerCardRequest,
