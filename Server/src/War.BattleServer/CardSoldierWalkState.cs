@@ -11,6 +11,7 @@ internal sealed class CardSoldierWalkState
     internal int PointFileId { get; }
     internal Vector3 Position => motion?.Position ?? stationaryPosition;
     internal bool Arrived => motion?.Arrived ?? true;
+    internal Vector3? Facing { get; private set; }
 
     internal CardSoldierWalkState(int pointFileId, ArmyNavMeshCorridor route,
         ArmyAgentConfig agent, float movementSpeed)
@@ -28,8 +29,13 @@ internal sealed class CardSoldierWalkState
         {
             Vector3 start = route.SmoothedPoints[index - 1];
             Vector3 end = route.SmoothedPoints[index];
-            planarLength += Vector2.Distance(new(start.X, start.Z),
-                new(end.X, end.Z));
+            Vector2 direction = new(end.X - start.X, end.Z - start.Z);
+            planarLength += direction.Length();
+            if (Facing == null && direction.LengthSquared() > 0.00000001f)
+            {
+                direction = Vector2.Normalize(direction);
+                Facing = new Vector3(direction.X, 0f, direction.Y);
+            }
         }
         if (!float.IsFinite(planarLength))
             throw new InvalidDataException("Card soldier route length is invalid.");
@@ -44,5 +50,13 @@ internal sealed class CardSoldierWalkState
         stationaryPosition = motion.Position;
     }
 
-    internal void AdvanceTick() => motion?.AdvanceTick();
+    internal void AdvanceTick()
+    {
+        if (motion == null)
+            return;
+        Vector2 direction = motion.PlanarDirection;
+        if (direction.LengthSquared() > 0.00000001f)
+            Facing = new Vector3(direction.X, 0f, direction.Y);
+        motion.AdvanceTick();
+    }
 }

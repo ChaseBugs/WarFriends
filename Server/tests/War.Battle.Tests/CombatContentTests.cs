@@ -10298,7 +10298,8 @@ internal static class CombatContentTests
                 stationaryRoute, content.Army.InfantryAgent, 0.8f);
             stationaryCardWalk.AdvanceTick();
             Check(stationaryCardWalk.Arrived &&
-                  stationaryCardWalk.Position == Vector3.Zero,
+                  stationaryCardWalk.Position == Vector3.Zero &&
+                  stationaryCardWalk.Facing == null,
                 "a card soldier already at its source point has no walking step");
             Check(prematureParachuteContacts == 1,
                 "Desert geometry can overlap before Unity's first measured impulse");
@@ -11955,6 +11956,7 @@ internal static class CombatContentTests
                   landingShotEntity, paraLanding),
             "host confirms landing after the source rifle batch has begun winding up");
         bool heldCornerForAirBatch = false;
+        bool sampledWalkMuzzleSeen = false;
         var airborneRoundsAfterLanding = new HashSet<ulong>();
         bool beganCornerAfterAirBatch = false;
         for (ulong shotTick = landingWindupTick + 1; shotTick <= 300 &&
@@ -11966,6 +11968,8 @@ internal static class CombatContentTests
                 landingDuringShot.ArmyBatch(decoyPlayer);
                 landingDuringShot.ArmyBatch(decoyOpponent);
             }
+            CoopMuzzlePose? walkMuzzleBeforeStep = landingDuringShot
+                .CardParatrooperPostLandingMuzzle(landingShotEntity, shotTick);
             landingDuringShot.Advance(shotTick);
             ArmyRusherAttackState? pendingAir = landingDuringShot
                 .CardParatrooperAirAttack(landingShotEntity);
@@ -11981,13 +11985,27 @@ internal static class CombatContentTests
             foreach (MatchEvent round in landingDuringShot
                 .EventBatch(decoyPlayer, 0).Events.Where(row =>
                     row.Kind == MatchEventKind.Shot &&
+                    row.Tick == shotTick &&
                     landingDuringShot.ArmyProjectileSourceEntity(
                         row.ProjectileId) == landingShotEntity))
+            {
+                if (pendingAir != null &&
+                    landingDuringShot.CardParatrooperWalking(landingShotEntity))
+                {
+                    Check(walkMuzzleBeforeStep != null &&
+                          Vector3.Distance(new Vector3(round.X, round.Y,
+                                  round.Z),
+                              walkMuzzleBeforeStep.Position) < 0.0001f,
+                        "post-landing airborne batch uses the sampled rifle Walk muzzle");
+                    sampledWalkMuzzleSeen = true;
+                }
                 airborneRoundsAfterLanding.Add(round.ProjectileId);
+            }
             beganCornerAfterAirBatch = pendingAir == null &&
                 landingDuringShot.CardParatrooperAttacking(landingShotEntity);
         }
         Check(heldCornerForAirBatch &&
+              sampledWalkMuzzleSeen &&
               landingAirAttack!.BatchCursor == landingAirAttack.BatchSize &&
               airborneRoundsAfterLanding.Count > 0 &&
               beganCornerAfterAirBatch,

@@ -16,6 +16,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAirAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> paratrooperAirShotTargets = [];
     private readonly Dictionary<ulong, ulong> paratrooperAirShotStartTicks = [];
+    private readonly Dictionary<ulong, ulong> paratrooperLandingTicks = [];
+    private readonly Dictionary<ulong, Quaternion> paratrooperLandingRotations = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -230,6 +232,7 @@ public sealed partial class MatchEngine
             entity.SourceCardId != "ELITEPARA" ||
             cardEnemyPoints == null || map == null ||
             armyNavMeshConnectivity == null || armyCatalog == null ||
+            !parachuteFlights.TryGetValue(entityKey, out var flight) ||
             !PlayerHitbox.Finite(landedPosition))
             return false;
         if (paratrooperWalks.ContainsKey(entityKey) ||
@@ -244,7 +247,10 @@ public sealed partial class MatchEngine
         {
             bool beganFallback = BeginCardParatrooperFallback(entity, landedPosition);
             if (beganFallback)
+            {
+                RecordCardParatrooperLanding(entityKey, flight);
                 parachuteFlights.Remove(entityKey);
+            }
             return beganFallback;
         }
         try
@@ -260,6 +266,7 @@ public sealed partial class MatchEngine
             entity.PositionTick = tick;
             cardUnitCombat!.UpdatePose(entity);
             paratrooperWalks.Add(entityKey, walk);
+            RecordCardParatrooperLanding(entityKey, flight);
             parachuteFlights.Remove(entityKey);
             armyEntityRevision++;
             stateRevision++;
@@ -270,6 +277,14 @@ public sealed partial class MatchEngine
             cardEnemyPoints.Release(entityKey);
             throw;
         }
+    }
+
+    private void RecordCardParatrooperLanding(ulong entityKey,
+        CardParachuteFlightState flight)
+    {
+        if (!paratrooperLandingTicks.TryAdd(entityKey, tick) ||
+            !paratrooperLandingRotations.TryAdd(entityKey, flight.Rotation))
+            throw new InvalidDataException("Card Paratrooper landed more than once.");
     }
 
     private ArmyNavMeshCorridor PlanCardParatrooperRoute(Vector3 startPosition,
@@ -494,6 +509,40 @@ public sealed partial class MatchEngine
             flight.Rotation, clipSeconds);
     }
 
+    internal CoopMuzzlePose? CardParatrooperPostLandingMuzzle(ulong entityKey,
+        ulong? sampleTick = null)
+    {
+        if (parachuteFlights.ContainsKey(entityKey))
+            return null;
+        ulong animationTick = sampleTick ?? tick;
+        if (!paratrooperLandingTicks.TryGetValue(entityKey,
+                out ulong landedAt) ||
+            !paratrooperLandingRotations.TryGetValue(entityKey,
+                out Quaternion landingRotation) ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "ELITEPARA" || enemyMuzzles == null ||
+            animationTick < landedAt ||
+            (animationTick > tick && animationTick - tick != 1))
+            throw new InvalidDataException("Landed Paratrooper lost its Walk muzzle authority.");
+
+        CardSoldierWalkState? walk = paratrooperWalks.GetValueOrDefault(entityKey) ??
+            paratrooperFallbackWalks.GetValueOrDefault(entityKey);
+        if (walk == null)
+            throw new InvalidDataException("Landed Paratrooper has no Walk route.");
+
+        Quaternion rotation = landingRotation;
+        if (walk.Facing is Vector3 forward)
+        {
+            float yaw = MathF.Atan2(forward.X, forward.Z);
+            rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw);
+        }
+        float walkSeconds = (animationTick - landedAt) /
+            (float)MatchManifest.TickRate;
+        Vector3 soldierPosition = new(entity.X, entity.Y, entity.Z);
+        return enemyMuzzles.Place("run_0", soldierPosition,
+            rotation, walkSeconds);
+    }
+
     private void AdvanceCardParatrooperAirAttacks()
     {
         if (armyWeapons == null)
@@ -548,6 +597,9 @@ public sealed partial class MatchEngine
             if (stillFalling)
                 firingMuzzle = CardParatrooperAirFiringMuzzle(entityKey)?.Position ??
                     throw new InvalidDataException("Airborne Paratrooper lost its shot muzzle.");
+            else
+                firingMuzzle = CardParatrooperPostLandingMuzzle(entityKey)?.Position ??
+                    throw new InvalidDataException("Landed Paratrooper lost its shot muzzle.");
             rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
                 entity.OwnerPlayerId, target.PlayerId, target.TargetFileId,
                 target.Position, attack.CurrentShotIsReal,
@@ -898,6 +950,8 @@ public sealed partial class MatchEngine
             paratrooperAirAttacks.Remove(entityKey);
             paratrooperAirShotTargets.Remove(entityKey);
             paratrooperAirShotStartTicks.Remove(entityKey);
+            paratrooperLandingTicks.Remove(entityKey);
+            paratrooperLandingRotations.Remove(entityKey);
             paratrooperWalks.Remove(entityKey);
             paratrooperFallbackWalks.Remove(entityKey);
             paratrooperPointRetryTicks.Remove(entityKey);
