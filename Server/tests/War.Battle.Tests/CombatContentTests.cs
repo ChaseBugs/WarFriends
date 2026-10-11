@@ -11266,49 +11266,54 @@ internal static class CombatContentTests
             MatchId="decoy-match",SceneMasterPlayerId=decoyPlayer,
             Players=[armyManifest.Players[0] with {PlayerLevel=22},armyManifest.Players[1] with {PlayerLevel=22}]
         };
-        var cardMatch = new MatchEngine(decoyManifest with
+        MatchEngine ReadyCardMatch(string matchId, string sourceCardId = "HEAVYDRONE")
         {
-            MatchId = "host-card-unit"
-        }, content: content, armyChoice: _ => 0);
+            var match = new MatchEngine(decoyManifest with
+            {
+                MatchId = matchId
+            }, content: content, armyChoice: _ => 0);
+            match.ConfigureBattleAllocations([
+                new(decoyPlayer, [sourceCardId], [], [0], [133], [-1]),
+                new(decoyOpponent, [sourceCardId], [], [0], [-1], [-1])
+            ]);
+            match.Admit(decoyPlayer);
+            match.Admit(decoyOpponent);
+            Check(match.Command(decoyPlayer, new MatchCommand
+            {
+                CommandId = 1,
+                SelectCards = new SelectCardsCommand
+                {
+                    CardIds = { sourceCardId },
+                    NormalUpgradeIndexes = { 0 },
+                    SpecialUpgradeIndexes = { 133 },
+                    EliteUpgradeIndexes = { -1 }
+                }
+            }).Code == "cards-selected", "host card owner selects its exact source ID");
+            Check(match.Command(decoyOpponent, new MatchCommand
+            {
+                CommandId = 1,
+                SelectCards = new SelectCardsCommand
+                {
+                    CardIds = { sourceCardId },
+                    NormalUpgradeIndexes = { 0 },
+                    SpecialUpgradeIndexes = { -1 },
+                    EliteUpgradeIndexes = { -1 }
+                }
+            }).Code == "cards-selected", "other card player keeps trusted army lanes");
+            match.Command(decoyPlayer, new MatchCommand
+            {
+                CommandId = 2, Ready = new() { ManifestHash = match.ManifestHash }
+            });
+            match.Command(decoyOpponent, new MatchCommand
+            {
+                CommandId = 2, Ready = new() { ManifestHash = match.ManifestHash }
+            });
+            match.Advance(60);
+            return match;
+        }
+        var cardMatch = ReadyCardMatch("host-card-unit");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
-        cardMatch.ConfigureBattleAllocations([
-            new(decoyPlayer, ["HEAVYDRONE"], [], [0], [133], [-1]),
-            new(decoyOpponent, ["HEAVYDRONE"], [], [0], [-1], [-1])
-        ]);
-        cardMatch.Admit(decoyPlayer);
-        cardMatch.Admit(decoyOpponent);
-        Check(cardMatch.Command(decoyPlayer, new MatchCommand
-        {
-            CommandId = 1,
-            SelectCards = new SelectCardsCommand
-            {
-                CardIds = { "HEAVYDRONE" },
-                NormalUpgradeIndexes = { 0 },
-                SpecialUpgradeIndexes = { 133 },
-                EliteUpgradeIndexes = { -1 }
-            }
-        }).Code == "cards-selected", "host card owner selects its exact source ID");
-        Check(cardMatch.Command(decoyOpponent, new MatchCommand
-        {
-            CommandId = 1,
-            SelectCards = new SelectCardsCommand
-            {
-                CardIds = { "HEAVYDRONE" },
-                NormalUpgradeIndexes = { 0 },
-                SpecialUpgradeIndexes = { -1 },
-                EliteUpgradeIndexes = { -1 }
-            }
-        }).Code == "cards-selected", "other card player keeps trusted army lanes");
-        cardMatch.Command(decoyPlayer, new MatchCommand
-        {
-            CommandId = 2, Ready = new() { ManifestHash = cardMatch.ManifestHash }
-        });
-        cardMatch.Command(decoyOpponent, new MatchCommand
-        {
-            CommandId = 2, Ready = new() { ManifestHash = cardMatch.ManifestHash }
-        });
-        cardMatch.Advance(60);
         const string hostCardRequest = "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5";
         Check(cardMatch.Command(decoyPlayer, new MatchCommand
         {
@@ -11387,6 +11392,86 @@ internal static class CombatContentTests
                   row.ArmyEntityId == liveCardRow.LocalEntityId &&
                   row.ArmyEnergyRecipientId == ""),
             "card death removes the match roster and emits no ordinary army energy recipient");
+        var firingCardMatch = ReadyCardMatch("host-card-drone-fire");
+        const string firingCardRequest = "f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6";
+        Check(firingCardMatch.TryScheduleCardUnit(firingCardRequest,
+                  decoyPlayer, "HEAVYDRONE"),
+            "second host match admits its selected Drone card for firing playback");
+        var firingCardRow = firingCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single();
+        Check(firingCardMatch.DroneAttackDeadline(firingCardRow.EntityKey) ==
+                  60f / MatchManifest.TickRate + 2,
+            "card Drone attack clock starts at its actual source spawn time");
+        ulong firingEventCursor = 0;
+        MatchEvent? cardFiringEvent = null;
+        for (ulong firingTick = 61; firingTick <= 256 &&
+             cardFiringEvent == null && !firingCardMatch.Terminal; firingTick++)
+        {
+            firingCardMatch.Advance(firingTick);
+            while (true)
+            {
+                var batch = firingCardMatch.EventBatch(decoyPlayer,
+                    firingEventCursor);
+                if (batch.Code != "events" || batch.Events.Count == 0)
+                    break;
+                cardFiringEvent ??= batch.Events.FirstOrDefault(row =>
+                    row.Kind == MatchEventKind.DroneFired &&
+                    row.DroneShot?.ArmyEntityKey == firingCardRow.EntityKey);
+                firingEventCursor = batch.Events[^1].EventId;
+            }
+        }
+        var cardFiringIntent = firingCardMatch.LastDroneIntent(
+            firingCardRow.EntityKey);
+        var cardDamagePolicy = content.Army.PlayerDamagePolicy(
+            "ID_UNIT-DRONE");
+        Check(cardFiringEvent != null &&
+              cardFiringIntent is { Speed: > 0, Damage: > 0 } &&
+              cardFiringIntent.Damage == liveCardStats.Combat.Damage &&
+              cardFiringEvent.DroneShot?.Speed == cardFiringIntent.Speed &&
+              cardFiringEvent.DroneShot?.Fake ==
+                  cardFiringIntent.Shot.Batch.IsFake &&
+              cardFiringIntent.Speed == content.DroneProjectile.Speed(
+                  liveCardStats.Drone!.ShotSpeed,
+                  cardFiringEvent.TargetId == "player:" + decoyOpponent,
+                  cardFiringIntent.Shot.Batch.IsFake) &&
+              cardFiringIntent.PlayerDamageCoefficient ==
+                  cardDamagePolicy.PlayerDamageRatio &&
+              cardFiringIntent.PlayerOvertimeDamageCoefficient ==
+                  cardDamagePolicy.OvertimePlayerDamageRatio &&
+              firingCardMatch.DroneAttackDeadline(firingCardRow.EntityKey) >
+                  60f / MatchManifest.TickRate + 2,
+            "card Drone fires through the host projectile clock and source player-damage policy");
+        var paraCardMatch = ReadyCardMatch("host-card-para", "ELITEPARA");
+        const string paraCardRequest = "a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7";
+        Check(paraCardMatch.TryScheduleCardUnit(paraCardRequest,
+                  decoyPlayer, "ELITEPARA"),
+            "host accepts one selected Paratrooper card as two source calls");
+        var firstParaRows = paraCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.ToArray();
+        Check(firstParaRows.Length == 1 &&
+              firstParaRows[0].SourceCardId == "ELITEPARA" &&
+              firstParaRows[0].SpawnTick == 60 &&
+              firstParaRows[0].OptionIndex == -1,
+            "first Paratrooper card unit publishes at activation tick");
+        bool rejectedSkippedCardTicks = false;
+        try { paraCardMatch.Advance(75); }
+        catch (InvalidOperationException error) when
+            (error.Message == "Pending card units require every simulation tick.")
+        { rejectedSkippedCardTicks = true; }
+        Check(rejectedSkippedCardTicks,
+            "pending delayed card calls require every host simulation tick");
+        for (ulong paraTick = 61; paraTick <= 75; paraTick++)
+            paraCardMatch.Advance(paraTick);
+        var paraRows = paraCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.OrderBy(row => row.LocalEntityId).ToArray();
+        Check(paraRows.Length == 2 &&
+              paraRows[0].EntityKey != paraRows[1].EntityKey &&
+              paraRows[0].SpawnTick == 60 &&
+              paraRows[1].SpawnTick == 75 &&
+              paraRows.All(row => row.SourceCardId == "ELITEPARA" &&
+                  row.UnitId == "ID_UNIT-PARATROOPER" &&
+                  row.OptionIndex == -1),
+            "delayed second Paratrooper card unit receives a distinct host identity at tick 75");
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([

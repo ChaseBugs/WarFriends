@@ -1066,6 +1066,12 @@ public sealed partial class MatchEngine : IMatchRuntime
     {
         if (nextTick < hostTick || nextTick > 10000000) throw new ArgumentOutOfRangeException(nameof(nextTick));
         ulong elapsed=nextTick-hostTick;
+        // Reject a gap before changing either clock. A caller must be able
+        // to replay each missed tick so delayed card spawns keep source time.
+        if (phase == BattlePhase.Running &&
+            !players.Any(player => player.Reconnecting) &&
+            cardUnitSpawns.PendingCount > 0 && elapsed > 1)
+            throw new InvalidOperationException("Pending card units require every simulation tick.");
         hostTick=nextTick;
         if (Terminal) return; // Preserve the exact terminal tick and result projection.
         if (phase == BattlePhase.Running && players.Any(player => player.Reconnecting))
@@ -1092,8 +1098,6 @@ public sealed partial class MatchEngine : IMatchRuntime
             return;
         }
         ulong simulationTick=checked(tick+elapsed);
-        if (cardUnitSpawns.PendingCount > 0 && simulationTick > tick + 1)
-            throw new InvalidOperationException("Pending card units require every simulation tick.");
         if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
         if ((rifleCombat!=null||grenadeCombat!=null) && phase==BattlePhase.Running && simulationTick>tick+1) throw new InvalidOperationException("Live combat playback requires every simulation tick.");
         bool advanced=simulationTick!=tick;
