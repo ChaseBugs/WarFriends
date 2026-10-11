@@ -62,6 +62,9 @@ public static class UnityParachuteFallExport
                         body.velocity = Vector3.zero;
                         body.angularVelocity = Vector3.zero;
                         Physics.SyncTransforms();
+                        Vector3 inertiaTensor = body.inertiaTensor;
+                        Quaternion inertiaRotation = body.inertiaTensorRotation;
+                        Vector3 localCenterOfMass = body.centerOfMass;
                         Vector3 forward = sourceTransform.forward;
                         var frames = new List<object>();
                         object[] nearbyAtFirstImpulse = null;
@@ -73,6 +76,7 @@ public static class UnityParachuteFallExport
                                 frame,
                                 position = Array(body.position),
                                 velocity = Array(body.velocity),
+                                angularVelocity = Array(body.angularVelocity),
                                 rotation = new[] { body.rotation.x, body.rotation.y,
                                     body.rotation.z, body.rotation.w },
                                 sleeping = body.IsSleeping()
@@ -122,6 +126,11 @@ public static class UnityParachuteFallExport
                             fraction = (int)spawn["fraction"],
                             origin = Array(sourcePosition),
                             forward = Array(forward),
+                            inertiaTensor = Array(inertiaTensor),
+                            inertiaRotation = new[] { inertiaRotation.x,
+                                inertiaRotation.y, inertiaRotation.z,
+                                inertiaRotation.w },
+                            localCenterOfMass = Array(localCenterOfMass),
                             firstImpulseFrame,
                             nearbyAtFirstImpulse,
                             frames

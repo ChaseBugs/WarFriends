@@ -121,6 +121,14 @@ def summarize(path):
                     abs(forward[0] - (1 if fall["fraction"] == 1 else -1)) > 0.001 or
                     abs(forward[1]) > 0.001 or abs(forward[2]) > 0.001):
                 raise ValueError("Parachute trace has an invalid spawn or orientation")
+            center_of_mass = fall["localCenterOfMass"]
+            inertia = fall["inertiaTensor"]
+            if (len(center_of_mass) != 3 or len(inertia) != 3 or
+                    math.dist(center_of_mass,
+                              [-0.03914738, 0.9514052, 0.00076295]) > 0.00001 or
+                    math.dist(inertia,
+                              [0.1086231, 0.3865516, 0.3317913]) > 0.00001):
+                raise ValueError("Parachute Rigidbody mass properties changed")
             previous, impact, residual = first_impulse(frames, forward)
             if (impact["frame"] <= 300 or impact["frame"] >= 550 or
                     not 0.01 < residual < 10):
@@ -148,6 +156,10 @@ def summarize(path):
                 "fraction": fall["fraction"],
                 "origin": rounded(fall["origin"]),
                 "forward": rounded(forward),
+                "initialRotation": rounded(frames[0]["rotation"]),
+                "localCenterOfMass": rounded(center_of_mass),
+                "inertiaTensor": rounded(inertia),
+                "inertiaRotation": rounded(fall["inertiaRotation"]),
                 "firstImpulseFrame": impact["frame"],
                 "firstImpulsePosition": rounded(impact["position"]),
                 "firstImpulseRotation": rounded(impact["rotation"]),
@@ -160,7 +172,9 @@ def summarize(path):
                     {"frame": frame,
                      "position": rounded(frames[frame]["position"]),
                      "rotation": rounded(frames[frame]["rotation"]),
-                     "velocity": rounded(frames[frame]["velocity"])}
+                     "velocity": rounded(frames[frame]["velocity"]),
+                     "angularVelocity": rounded(
+                         frames[frame]["angularVelocity"])}
                     for frame in (1, 50, 100, 200, 300,
                                   impact["frame"] - 10,
                                   impact["frame"] - 5,

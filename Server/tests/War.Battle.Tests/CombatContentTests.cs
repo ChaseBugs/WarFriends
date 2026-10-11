@@ -10115,7 +10115,7 @@ internal static class CombatContentTests
                 "recovered-parachute-fall-reference.json");
             byte[] parachuteReferenceBytes = File.ReadAllBytes(parachuteReferencePath);
             Check(Convert.ToHexStringLower(SHA256.HashData(parachuteReferenceBytes)) ==
-                  "fe7645aab633d4aca52df695c3da554155a29e1c119300fe3dd7b38c57e3dace",
+                  "86a20fac4001a59892c0f66082172f5a1b4f83a7f1fa877b7a0ccd5bd815177e",
                 "Parachute Unity trace summary retains its reviewed source revision");
             using var parachuteDocument = JsonDocument.Parse(parachuteReferenceBytes);
             JsonElement parachuteReference = parachuteDocument.RootElement;
@@ -10208,15 +10208,19 @@ internal static class CombatContentTests
                             sample.GetProperty("velocity"));
                         Vector3 observedRoot = ParachuteVector(
                             sample.GetProperty("position"));
+                        Vector3 observedAngularVelocity = ParachuteVector(
+                            sample.GetProperty("angularVelocity"));
+                        Quaternion observedRotation = Rotation(sample.GetProperty(
+                            "rotation"));
                         Check(Vector3.Distance(flight.Velocity, observedVelocity) <
                                   0.00002f &&
-                              Math.Abs(flight.Position.X - observedRoot.X) <
-                                  0.002f &&
-                              Math.Abs(flight.Position.Y - observedRoot.Y) <
-                                  0.15f &&
-                              Math.Abs(flight.Position.Z - observedRoot.Z) <
-                                  0.4f,
-                            "source Parachute velocity matches Unity before scene collision");
+                              Vector3.Distance(flight.Position, observedRoot) <
+                                  0.0001f &&
+                              Vector3.Distance(flight.AngularVelocity,
+                                  observedAngularVelocity) < 0.0001f &&
+                              1f - Math.Abs(Quaternion.Dot(flight.Rotation,
+                                  observedRotation)) < 0.00001f,
+                            "source Parachute pose and velocity match Unity before collision");
                     }
                     checkedParachuteFalls++;
                 }
@@ -10228,6 +10232,15 @@ internal static class CombatContentTests
             Reject(() => new CardParachutePreContactMotion(
                 new Vector3(float.NaN, 0, 0), 1));
             Reject(() => new CardParachutePreContactMotion(Vector3.Zero, 3));
+            Reject(() => new CardParachutePreContactMotion(
+                Vector3.Zero, 1, float.NaN));
+            Reject(() => new CardParachutePreContactMotion(
+                Vector3.Zero, 1, 2f));
+            var oppositeSway = new CardParachutePreContactMotion(
+                Vector3.Zero, 1, 1f);
+            oppositeSway.AdvanceFixedStep();
+            Check(oppositeSway.AngularVelocity.X > 0f,
+                "a later source sway phase reverses the first tilt");
             Reject(() => CardParachuteCompoundContact.HasNearbySceneSurface(
                 content.Maps[0], new Vector3(float.NaN, 0, 0),
                 Quaternion.Identity, 0.005f));
