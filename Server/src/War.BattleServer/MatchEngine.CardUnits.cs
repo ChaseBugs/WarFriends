@@ -10,7 +10,8 @@ public sealed partial class MatchEngine
     private CardUnitCombatLifecycle? cardUnitCombat;
     private CardEnemyPointOccupancy? cardEnemyPoints;
     private readonly Dictionary<ulong, ulong> swatPointRetryTicks = [];
-    private readonly Dictionary<ulong, CardSwatWalkState> swatWalks = [];
+    private readonly Dictionary<ulong, CardSoldierWalkState> swatWalks = [];
+    private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> swatAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> swatShotTargets = [];
 
@@ -23,6 +24,9 @@ public sealed partial class MatchEngine
     internal bool CardSwatWalking(ulong entityKey) => swatWalks.ContainsKey(entityKey);
 
     internal bool CardSwatAttacking(ulong entityKey) => swatAttacks.ContainsKey(entityKey);
+
+    internal bool CardParatrooperWalking(ulong entityKey) =>
+        paratrooperWalks.ContainsKey(entityKey);
 
     /// <summary>
     /// Host-only activation seam. The UDP command remains closed until
@@ -142,6 +146,85 @@ public sealed partial class MatchEngine
         armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
     }
 
+    /// <summary>
+    /// Called only after host physics confirms the parachute's collision.
+    /// The Client reserves its Corner/Hiding point in EnemyController.OnLanded,
+    /// not when CardSpawnUnit creates the soldier.
+    /// </summary>
+    internal bool ConfirmCardParatrooperLanding(ulong entityKey,
+        Vector3 landedPosition)
+    {
+        if (phase != BattlePhase.Running ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "ELITEPARA" ||
+            cardEnemyPoints == null || map == null ||
+            armyNavMeshConnectivity == null || armyCatalog == null ||
+            !PlayerHitbox.Finite(landedPosition))
+            return false;
+        if (paratrooperWalks.ContainsKey(entityKey) ||
+            cardEnemyPoints.Find(entityKey) != null)
+            return false;
+
+        CardUnitInitialPoint? point = cardEnemyPoints.TryAssign(entityKey,
+            "ELITEPARA", entity.OwnerFraction, landedPosition);
+        if (point == null)
+            return false;
+        try
+        {
+            // The Corner transform and collision contact sit slightly above
+            // the baked NavMesh. Unity's agent projects both to its surface.
+            Vector3 start = armyNavMeshConnectivity.SampleNearest(map,
+                landedPosition, 0.5f) ??
+                throw new InvalidDataException("Card Paratrooper landed outside the NavMesh.");
+            Vector3 destination = armyNavMeshConnectivity.SampleNearest(map,
+                point.Position, 0.5f) ??
+                throw new InvalidDataException("Card Paratrooper point lies outside the NavMesh.");
+            ArmyNavMeshCorridor route = armyNavMeshConnectivity.PlanCorridor(
+                map, start, destination) ??
+                throw new InvalidDataException("Card Paratrooper destination has no NavMesh corridor.");
+            if (!route.PlanarCovered)
+                throw new InvalidDataException("Card Paratrooper corridor leaves the source NavMesh.");
+
+            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            var walk = new CardSoldierWalkState(point.ComponentFileId, route,
+                armyCatalog.InfantryAgent, speed);
+            entity.X = landedPosition.X;
+            entity.Y = landedPosition.Y;
+            entity.Z = landedPosition.Z;
+            entity.PositionTick = tick;
+            cardUnitCombat!.UpdatePose(entity);
+            paratrooperWalks.Add(entityKey, walk);
+            armyEntityRevision++;
+            stateRevision++;
+            return true;
+        }
+        catch
+        {
+            cardEnemyPoints.Release(entityKey);
+            throw;
+        }
+    }
+
+    private void AdvanceCardParatrooperWalks()
+    {
+        foreach (var (entityKey, walk) in paratrooperWalks.OrderBy(row => row.Key))
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITEPARA" ||
+                cardEnemyPoints?.Find(entityKey)?.ComponentFileId != walk.PointFileId)
+                throw new InvalidDataException("Card Paratrooper walk lost its soldier or point.");
+            if (walk.Arrived)
+                continue;
+
+            walk.AdvanceTick();
+            entity.X = walk.Position.X;
+            entity.Y = walk.Position.Y;
+            entity.Z = walk.Position.Z;
+            entity.PositionTick = tick;
+            cardUnitCombat?.UpdatePose(entity);
+        }
+    }
+
     private void TryAssignCardSwatPoint(BattleArmyEntityState entity)
     {
         if (cardEnemyPoints == null || entity.SourceCardId != "ELITESWAT")
@@ -169,7 +252,7 @@ public sealed partial class MatchEngine
         // AIObject.SpawnByCard creates UnitUpgrades(1f), so SWAT has no
         // purchased special-speed lane. The recovered family speed applies.
         float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
-        if (!swatWalks.TryAdd(entity.EntityKey, new CardSwatWalkState(
+        if (!swatWalks.TryAdd(entity.EntityKey, new CardSoldierWalkState(
             point.ComponentFileId, route, armyCatalog.InfantryAgent, speed)))
             throw new InvalidDataException("Card SWAT already has a walk.");
     }
@@ -400,6 +483,7 @@ public sealed partial class MatchEngine
         }
         if (entity.SourceCardId == "ELITEPARA")
         {
+            paratrooperWalks.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);

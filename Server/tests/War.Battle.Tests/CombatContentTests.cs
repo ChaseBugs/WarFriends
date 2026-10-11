@@ -11540,6 +11540,63 @@ internal static class CombatContentTests
               paraCardMatch.ArmyDamage(paraRows[1].EntityKey) ==
                   paraStats.Combat.Damage,
             "one Paratrooper death clears only its own combat authority");
+        var remainingPara = paraRows[1];
+        var paraLandingPoint = content.CardUnitInitialPoints.Select(park,
+            "ELITEPARA", remainingPara.OwnerFraction,
+            new Vector3(remainingPara.X, remainingPara.Y, remainingPara.Z),
+            _ => true)!;
+        Vector3? paraLandingCandidate = null;
+        Vector3? paraDestination = content.ArmyNavMeshConnectivity.SampleNearest(
+            park, paraLandingPoint.Position, 0.5f);
+        foreach (Vector3 offset in new[]
+        {
+            new Vector3(0.4f, 0, 0), new Vector3(-0.4f, 0, 0),
+            new Vector3(0, 0, 0.4f), new Vector3(0, 0, -0.4f)
+        })
+        {
+            Vector3 candidate = paraLandingPoint.Position + offset;
+            Vector3? start = content.ArmyNavMeshConnectivity.SampleNearest(
+                park, candidate, 0.5f);
+            if (start.HasValue && paraDestination.HasValue &&
+                content.ArmyNavMeshConnectivity.PlanCorridor(
+                    park, start.Value, paraDestination.Value) != null)
+            {
+                paraLandingCandidate = candidate;
+                break;
+            }
+        }
+        Check(paraLandingCandidate.HasValue,
+            "Park Corner point has a nearby walkable landing fixture");
+        Vector3 paraLanding = paraLandingCandidate ??
+            throw new InvalidDataException("Park Paratrooper landing fixture is missing.");
+        Reject(() => paraCardMatch.ConfirmCardParatrooperLanding(
+            remainingPara.EntityKey,
+            paraLandingPoint.Position + new Vector3(0.4f, 0, 0)));
+        Check(paraCardMatch.CardEnemyPoint(remainingPara.EntityKey) == null &&
+              paraCardMatch.CardEnemyPointOccupant(
+                  paraLandingPoint.ComponentFileId) == null,
+            "failed Paratrooper route releases the tentative Corner reservation");
+        Check(paraCardMatch.ConfirmCardParatrooperLanding(
+                  remainingPara.EntityKey, paraLanding) &&
+              paraCardMatch.CardParatrooperWalking(remainingPara.EntityKey) &&
+              paraCardMatch.CardEnemyPoint(remainingPara.EntityKey)?
+                  .ComponentFileId == paraLandingPoint.ComponentFileId &&
+              !paraCardMatch.ConfirmCardParatrooperLanding(
+                  remainingPara.EntityKey, paraLanding),
+            "host-confirmed Paratrooper landing reserves one Corner point once");
+        paraCardMatch.Advance(76);
+        var walkingPara = paraCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single();
+        Check(walkingPara.EntityKey == remainingPara.EntityKey &&
+              new Vector3(walkingPara.X, walkingPara.Y, walkingPara.Z) !=
+                  paraLanding,
+            "landed Paratrooper begins host-owned movement to its Corner point");
+        Check(paraCardMatch.ConfirmArmyDeath(remainingPara.EntityKey, false) &&
+              !paraCardMatch.CardParatrooperWalking(remainingPara.EntityKey) &&
+              paraCardMatch.CardEnemyPoint(remainingPara.EntityKey) == null &&
+              paraCardMatch.CardEnemyPointOccupant(
+                  paraLandingPoint.ComponentFileId) == null,
+            "Paratrooper death releases its walk and Corner reservation");
         var minigunnerCardMatch = ReadyCardMatch("host-card-minigunner", "ELITEMINIGUN");
         const string minigunnerCardRequest = "b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8";
         Check(minigunnerCardMatch.TryScheduleCardUnit(minigunnerCardRequest,
