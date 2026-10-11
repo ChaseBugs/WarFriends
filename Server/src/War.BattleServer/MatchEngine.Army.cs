@@ -3593,6 +3593,21 @@ public sealed partial class MatchEngine
     {
         if(!float.IsFinite(damage) || damage<=0 || damage>10_000_000)
             throw new ArgumentOutOfRangeException(nameof(damage));
+        if (activeArmyEntities.TryGetValue(entityKey, out var cardRow) &&
+            cardRow.SourceCardId.Length > 0)
+        {
+            if (phase != BattlePhase.Running || cardUnitCombat == null)
+                return false;
+            if (damage >= cardRow.Health)
+                return ConfirmCardUnitDeath(entityKey, false);
+            var result = cardUnitCombat.ApplyHostDamage(entityKey, damage);
+            if (result is not { Died: false })
+                throw new InvalidDataException("Card-unit damage lost its health authority.");
+            cardRow.Health = result.Entity.Health;
+            armyEntityRevision++;
+            stateRevision++;
+            return true;
+        }
         if(phase!=BattlePhase.Running || !activeArmyEntities.ContainsKey(entityKey) ||
            !armyVitality.TryGetValue(entityKey,out var vitality))return false;
         if(ArmyDroneImmortal(entityKey))return false;
@@ -3638,6 +3653,8 @@ public sealed partial class MatchEngine
     internal bool ConfirmArmyDeath(ulong entityKey,bool suicide)
     {
         if(phase!=BattlePhase.Running || !activeArmyEntities.TryGetValue(entityKey,out var row))return false;
+        if (row.SourceCardId.Length > 0)
+            return ConfirmCardUnitDeath(entityKey, suicide);
         var owner=Find(row.OwnerPlayerId) ?? throw new InvalidDataException("Army entity owner disappeared.");
         var recipient=suicide ? owner : players.Single(p=>p!=owner);
         var spawned=owner.Army?.Entity(row.LocalEntityId);

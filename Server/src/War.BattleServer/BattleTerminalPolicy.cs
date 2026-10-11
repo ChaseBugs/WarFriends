@@ -14,6 +14,7 @@ public static class BattleTerminalPolicy
         "both-disconnected", "duration-limit", "simultaneous-barrel-death",
         "host-shutdown", "host-crash",
         "invalid-army-authority", "invalid-army-flame-authority",
+        "invalid-card-unit-authority",
         "invalid-army-impact-authority", "invalid-army-poison-authority",
         "invalid-army-projectile-authority", "invalid-barrel-authority",
         "invalid-buggy-projectile-authority", "invalid-combat-authority",

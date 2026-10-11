@@ -10115,7 +10115,7 @@ internal static class CombatContentTests
             Check(cardPoint != null, "a source Drone card has a host-selectable spawn point");
             var cardEntities = new CardUnitEntityRegistry();
             var droneIntent = new CardUnitSpawnIntent(secondCardRequest,
-                "11111111-1111-1111-1111-111111111111", "HEAVYDRONE", 0, 104);
+                "11111111111111111111111111111111", "HEAVYDRONE", 0, 104);
             var droneStats = content.Army.CardBaseStats("HEAVYDRONE", 0,
                 content.BarrelPolicy.MaxDisplayLevel);
             var cardEntity = cardEntities.Add(droneIntent, 1, cardPoint!, droneStats,
@@ -10197,7 +10197,7 @@ internal static class CombatContentTests
             var cardCombat = new CardUnitCombatLifecycle(combatCoordinator);
             const string combatRequest = "d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4";
             Check(combatSchedule.TrySchedule(combatRequest,
-                  "11111111-1111-1111-1111-111111111111", "HEAVYDRONE", 106),
+                  "11111111111111111111111111111111", "HEAVYDRONE", 106),
                 "host schedules the source card before combat allocation");
             var combatRow = cardCombat.SpawnDue(combatSchedule.Due(106).Single(),
                 1, 0, Vector3.Zero, 106);
@@ -11257,6 +11257,93 @@ internal static class CombatContentTests
             MatchId="decoy-match",SceneMasterPlayerId=decoyPlayer,
             Players=[armyManifest.Players[0] with {PlayerLevel=22},armyManifest.Players[1] with {PlayerLevel=22}]
         };
+        var cardMatch = new MatchEngine(decoyManifest with
+        {
+            MatchId = "host-card-unit"
+        }, content: content, armyChoice: _ => 0);
+        Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
+            "invalid card-unit authority has a durable unscored terminal reason");
+        cardMatch.ConfigureBattleAllocations([
+            new(decoyPlayer, ["HEAVYDRONE"], [], [0], [133], [-1]),
+            new(decoyOpponent, ["HEAVYDRONE"], [], [0], [-1], [-1])
+        ]);
+        cardMatch.Admit(decoyPlayer);
+        cardMatch.Admit(decoyOpponent);
+        Check(cardMatch.Command(decoyPlayer, new MatchCommand
+        {
+            CommandId = 1,
+            SelectCards = new SelectCardsCommand
+            {
+                CardIds = { "HEAVYDRONE" },
+                NormalUpgradeIndexes = { 0 },
+                SpecialUpgradeIndexes = { 133 },
+                EliteUpgradeIndexes = { -1 }
+            }
+        }).Code == "cards-selected", "host card owner selects its exact source ID");
+        Check(cardMatch.Command(decoyOpponent, new MatchCommand
+        {
+            CommandId = 1,
+            SelectCards = new SelectCardsCommand
+            {
+                CardIds = { "HEAVYDRONE" },
+                NormalUpgradeIndexes = { 0 },
+                SpecialUpgradeIndexes = { -1 },
+                EliteUpgradeIndexes = { -1 }
+            }
+        }).Code == "cards-selected", "other card player keeps trusted army lanes");
+        cardMatch.Command(decoyPlayer, new MatchCommand
+        {
+            CommandId = 2, Ready = new() { ManifestHash = cardMatch.ManifestHash }
+        });
+        cardMatch.Command(decoyOpponent, new MatchCommand
+        {
+            CommandId = 2, Ready = new() { ManifestHash = cardMatch.ManifestHash }
+        });
+        cardMatch.Advance(60);
+        const string hostCardRequest = "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5";
+        Check(cardMatch.Command(decoyPlayer, new MatchCommand
+        {
+            CommandId = 3,
+            UseUnitCard = new() { RequestId = hostCardRequest, SourceCardId = "HEAVYDRONE" }
+        }).Code == "unit-card-unavailable" &&
+              cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
+            "UDP card command stays closed before recovered AI and Client presentation");
+        Check(cardMatch.TryScheduleCardUnit(hostCardRequest, decoyPlayer,
+                  "HEAVYDRONE") &&
+              !cardMatch.TryScheduleCardUnit(hostCardRequest, decoyPlayer,
+                  "HEAVYDRONE"),
+            "host card activation charges one selected source identity once");
+        var liveCardRow = cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single();
+        Check(liveCardRow.SourceCardId == "HEAVYDRONE" &&
+              liveCardRow.OptionIndex == -1 &&
+              liveCardRow.UnitId == "ID_UNIT-DRONE" &&
+              liveCardRow.Health == liveCardRow.MaxHealth &&
+              liveCardRow.Health == content.Army.CardBaseStats("HEAVYDRONE", 22,
+                  content.BarrelPolicy.MaxDisplayLevel).Combat.Health &&
+              cardMatch.EventBatch(decoyPlayer, 0).Events.Any(row =>
+                  row.Kind == MatchEventKind.ArmySpawned &&
+                  row.SourceCardId == "HEAVYDRONE" &&
+                  row.ArmyEntityId == liveCardRow.LocalEntityId),
+            "match roster and event publish the source card unit and card-level health");
+        cardMatch.Advance(61);
+        Check(cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities
+                  .Any(row => row.EntityKey == liveCardRow.EntityKey),
+            "card-unit roster persists across the next live simulation tick");
+        Check(cardMatch.ApplyArmyHostDamage(liveCardRow.EntityKey,
+                  liveCardRow.Health / 4) &&
+              cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                  .Entities.Single().Health < liveCardRow.Health,
+            "trusted match damage updates the public card-unit health");
+        Check(cardMatch.ConfirmArmyDeath(liveCardRow.EntityKey, false) &&
+              !cardMatch.ConfirmArmyDeath(liveCardRow.EntityKey, false) &&
+              cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0 &&
+              cardMatch.EventBatch(decoyPlayer, 0).Events.Any(row =>
+                  row.Kind == MatchEventKind.ArmyDied &&
+                  row.SourceCardId == "HEAVYDRONE" &&
+                  row.ArmyEntityId == liveCardRow.LocalEntityId &&
+                  row.ArmyEnergyRecipientId == ""),
+            "card death removes the match roster and emits no ordinary army energy recipient");
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([

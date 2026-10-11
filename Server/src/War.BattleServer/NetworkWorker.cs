@@ -389,6 +389,13 @@ public sealed class NetworkWorker : BackgroundService
                     logger.LogWarning("Backend result forwarding deferred: {ErrorType}",
                         error.GetType().Name);
                 }
+                catch (IOException error) when (IsTemporaryFileSharing(error))
+                {
+                    // An external writer may briefly hold a Windows file lock.
+                    // Retry the read next cycle; a fully written corrupt record
+                    // still raises InvalidDataException and stops the Worker.
+                    logger.LogWarning("Backend result file is temporarily locked.");
+                }
             }
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -408,6 +415,9 @@ public sealed class NetworkWorker : BackgroundService
             }
         }
     }
+
+    private static bool IsTemporaryFileSharing(IOException error) =>
+        error.HResult is unchecked((int)0x80070020) or unchecked((int)0x80070021);
     private async Task Receive(Socket socket, CancellationToken ct)
     {
         byte[] buffer = new byte[mtuBytes + 1];

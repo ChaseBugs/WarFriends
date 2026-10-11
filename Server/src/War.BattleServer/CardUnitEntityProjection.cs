@@ -11,8 +11,8 @@ internal static class CardUnitEntityProjection
         ArgumentNullException.ThrowIfNull(entity);
 
         if (ownerFraction is not (1 or 2) ||
-            !Guid.TryParseExact(entity.OwnerPlayerId, "D", out var ownerId) ||
-            ownerId.ToString("D") != entity.OwnerPlayerId ||
+            !Guid.TryParseExact(entity.OwnerPlayerId, "N", out var ownerId) ||
+            ownerId.ToString("N") != entity.OwnerPlayerId ||
             !CardUnitSourceIdentity.Matches(entity.SourceCardId, entity.UnitId) ||
             entity.LocalEntityId < CardUnitEntityRegistry.FirstLocalEntityId ||
             entity.EntityKey != ((ulong)ownerFraction << 32 | (uint)entity.LocalEntityId) ||

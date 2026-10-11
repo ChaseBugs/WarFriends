@@ -968,6 +968,9 @@ public sealed partial class MatchEngine : IMatchRuntime
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;
             playerShotTargets=content.PlayerShotTargets;
             armyReservations=new ArmySpawnReservationLedger(content.ArmySpawnPoints,map);
+            cardUnitCombat = new CardUnitCombatLifecycle(new CardUnitSpawnCoordinator(
+                cardUnitSpawns, cardUnitEntities, content.Army, map, armySelector,
+                armyReservations, content.BarrelPolicy.MaxDisplayLevel, this.armyChoice));
             var vehicleCaps=content.Army.Families.Where(f=>!f.IsAir&&!f.IsSoldier&&f.VehicleShot!=null)
                 .ToDictionary(f=>f.UnitId,f=>f.MaxGeneratedCount,StringComparer.Ordinal);
             if(vehicleCaps.Count>0)vehicles=new VehicleEntityRegistry(vehicleCaps);
@@ -1089,6 +1092,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return;
         }
         ulong simulationTick=checked(tick+elapsed);
+        if (cardUnitSpawns.PendingCount > 0 && simulationTick > tick + 1)
+            throw new InvalidOperationException("Pending card units require every simulation tick.");
         if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
         if ((rifleCombat!=null||grenadeCombat!=null) && phase==BattlePhase.Running && simulationTick>tick+1) throw new InvalidOperationException("Live combat playback requires every simulation tick.");
         bool advanced=simulationTick!=tick;
@@ -1341,6 +1346,11 @@ public sealed partial class MatchEngine : IMatchRuntime
                 }
             }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
+        }
+        if (phase == BattlePhase.Running && cardUnitSpawns.PendingCount > 0)
+        {
+            try { AdvanceCardUnitSpawns(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
         if(advanced && phase==BattlePhase.Running && (rusherMotionCandidates.Count>0||warperRelocations.Count>0))
         {
