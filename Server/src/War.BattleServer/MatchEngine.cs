@@ -60,6 +60,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     private readonly BarrelMatchSimulation? barrels;
     private readonly ExplosionSourceCatalog? explosionPolicy;
     private readonly ArmySpawnPointSelector? armySelector;
+    private readonly ArmySpawnPointCatalog? armySpawnPoints;
     private readonly AirWaypointCatalog? airWaypoints;
     private readonly HelicopterCrewPointCatalog? helicopterCrewPoints;
     private readonly HelicopterGunnerExplosionCatalog? helicopterGunnerExplosions;
@@ -955,6 +956,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             groundVehicleWeapons=content.GroundVehicleWeapons;
             enemyPoses=content.EnemyPoses;enemyShotTargets=content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
+            armySpawnPoints=content.ArmySpawnPoints;
             airWaypoints=content.AirWaypoints;helicopterCrewPoints=content.HelicopterCrewPoints;
             helicopterGunnerExplosions=content.HelicopterGunnerExplosions;
             droneColliders=content.DroneColliders;
@@ -1370,6 +1372,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (advanced && phase == BattlePhase.Running && paratrooperWalks.Count > 0)
         {
             try { AdvanceCardParatrooperWalks(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && paratrooperFallbackWalks.Count > 0)
+        {
+            try { AdvanceCardParatrooperFallbacks(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running && paratrooperAttacks.Count > 0)

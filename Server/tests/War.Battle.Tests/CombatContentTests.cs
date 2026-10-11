@@ -11348,11 +11348,20 @@ internal static class CombatContentTests
             MatchId="decoy-match",SceneMasterPlayerId=decoyPlayer,
             Players=[armyManifest.Players[0] with {PlayerLevel=22},armyManifest.Players[1] with {PlayerLevel=22}]
         };
-        MatchEngine ReadyCardMatch(string matchId, string sourceCardId = "HEAVYDRONE")
+        MatchEngine ReadyCardMatch(string matchId, string sourceCardId = "HEAVYDRONE",
+            RecoveredBattleMap? sourceMap = null)
         {
+            RecoveredBattleMap battleMap = sourceMap ?? park;
             var match = new MatchEngine(decoyManifest with
             {
-                MatchId = matchId
+                MatchId = matchId,
+                MapId = Path.GetFileNameWithoutExtension(battleMap.Source),
+                MapRevision = battleMap.SourceHash,
+                Players = decoyManifest.Players.Select(player => player with
+                {
+                    StartCover = battleMap.Covers.First(cover =>
+                        cover.Main && cover.Fraction == player.Fraction).SourceIndex
+                }).ToArray()
             }, content: content, armyChoice: _ => 0);
             match.ConfigureBattleAllocations([
                 new(decoyPlayer, [sourceCardId], [], [0], [133], [-1]),
@@ -11708,6 +11717,64 @@ internal static class CombatContentTests
               firingParaMatch.CardEnemyPointOccupant(
                   exposedParaPoint.ComponentFileId) == null,
             "Paratrooper death clears its attack and Corner reservation after firing");
+        var snowCardMap = content.Maps.Single(sourceMap =>
+            sourceMap.Source == "Assets/Scenes/Snow_Multiplayer.unity");
+        var snowFallbackSpawn = content.ArmySpawnPoints.ForMap(snowCardMap)
+            .First(point => point.Collection == "spawnPointsCollection" &&
+                point.ComponentType == "SpawnPoint" && point.Fraction == 1);
+        Vector3? snowLanding = null;
+        Vector3? snowDestination = content.ArmyNavMeshConnectivity.SampleNearest(
+            snowCardMap, snowFallbackSpawn.Position, 0.5f);
+        foreach (Vector3 offset in new[]
+        {
+            new Vector3(0.4f, 0, 0), new Vector3(-0.4f, 0, 0),
+            new Vector3(0, 0, 0.4f), new Vector3(0, 0, -0.4f)
+        })
+        {
+            Vector3 candidate = snowFallbackSpawn.Position + offset;
+            Vector3? start = content.ArmyNavMeshConnectivity.SampleNearest(
+                snowCardMap, candidate, 0.5f);
+            if (start.HasValue && snowDestination.HasValue &&
+                content.ArmyNavMeshConnectivity.PlanCorridor(
+                    snowCardMap, start.Value, snowDestination.Value) != null)
+            {
+                snowLanding = candidate;
+                break;
+            }
+        }
+        Vector3 confirmedSnowLanding = snowLanding ??
+            throw new InvalidDataException("Snow normal spawn has no walkable landing fixture.");
+        var snowParaMatch = ReadyCardMatch("host-card-para-snow", "ELITEPARA",
+            snowCardMap);
+        const string snowParaRequest = "fefefefefefefefefefefefefefefefe";
+        Check(snowParaMatch.TryScheduleCardUnit(snowParaRequest,
+                  decoyPlayer, "ELITEPARA"),
+            "Snow Paratrooper card creates its first parachute unit");
+        var snowPara = snowParaMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single();
+        Check(snowParaMatch.ConfirmCardParatrooperLanding(snowPara.EntityKey,
+                  confirmedSnowLanding) &&
+              snowParaMatch.CardParatrooperFallbackSpawn(snowPara.EntityKey) ==
+                  snowFallbackSpawn.ComponentFileId &&
+              snowParaMatch.CardEnemyPoint(snowPara.EntityKey) == null,
+            "Snow landing selects the source same-faction normal spawn without inventing a Corner");
+        for (ulong cardTick = 61; cardTick <= 225; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                snowParaMatch.ArmyBatch(decoyPlayer);
+                snowParaMatch.ArmyBatch(decoyOpponent);
+            }
+            snowParaMatch.Advance(cardTick);
+        }
+        Check(snowParaMatch.CardParatrooperFallbackSpawn(snowPara.EntityKey) ==
+                  snowFallbackSpawn.ComponentFileId &&
+              snowParaMatch.CardEnemyPoint(snowPara.EntityKey) == null &&
+              !snowParaMatch.CardParatrooperAttacking(snowPara.EntityKey),
+            "Snow five-second point retry leaves the Paratrooper at its fallback spawn");
+        Check(snowParaMatch.ConfirmArmyDeath(snowPara.EntityKey, false) &&
+              snowParaMatch.CardParatrooperFallbackSpawn(snowPara.EntityKey) == null,
+            "Snow Paratrooper death clears its fallback walk and retry clock");
         var minigunnerCardMatch = ReadyCardMatch("host-card-minigunner", "ELITEMINIGUN");
         const string minigunnerCardRequest = "b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8";
         Check(minigunnerCardMatch.TryScheduleCardUnit(minigunnerCardRequest,

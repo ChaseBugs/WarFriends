@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace War.BattleServer;
 
-/// <summary>One card soldier walking to its reserved scene EnemyPoint.</summary>
+/// <summary>One card soldier walking to a scene point or fallback spawn.</summary>
 internal sealed class CardSoldierWalkState
 {
     private readonly ArmyNavMeshMotionState motion;
