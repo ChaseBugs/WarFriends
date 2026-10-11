@@ -315,6 +315,9 @@ public sealed class MatchEndpoint
                     case MatchCommand.IntentOneofCase.UseMaxHealth:
                         clean.UseMaxHealth=new UseMaxHealthCommand
                             {RequestId=command.UseMaxHealth.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseEmptyMag:
+                        clean.UseEmptyMag=new UseEmptyMagCommand
+                            {RequestId=command.UseEmptyMag.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoBox:
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:

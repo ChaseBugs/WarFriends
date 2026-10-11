@@ -133,6 +133,7 @@ message UseMineYourStepCommand { string request_id = 1; }
 message UseMassShieldDestroyerCommand { string request_id = 1; }
 message UseShieldDestroyerCommand { string request_id = 1; }
 message UseMaxHealthCommand { string request_id = 1; }
+message UseEmptyMagCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
 message MatchCommand {
@@ -167,6 +168,7 @@ message MatchCommand {
     UseMassShieldDestroyerCommand use_mass_shield_destroyer = 38;
     UseShieldDestroyerCommand use_shield_destroyer = 39;
     UseMaxHealthCommand use_max_health = 40;
+    UseEmptyMagCommand use_empty_mag = 41;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.

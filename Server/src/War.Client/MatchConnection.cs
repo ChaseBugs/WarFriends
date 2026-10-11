@@ -70,6 +70,9 @@ namespace War.Client
         public Task<MatchReply> UseMaxHealthAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseMaxHealth=new UseMaxHealthCommand
                 {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseEmptyMagAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseEmptyMag=new UseEmptyMagCommand
+                {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseHealingStormAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseHealingStorm=new UseHealingStormCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseShieldsUpAsync(string requestId,CancellationToken ct) =>

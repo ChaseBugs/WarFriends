@@ -2073,6 +2073,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseMedkit(p,c.UseMedkit.RequestId,c.UseMedkit.SourceCardId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseMaxHealth)
             return UseMaxHealth(p,c.UseMaxHealth.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseEmptyMag)
+            return UseEmptyMag(p,c.UseEmptyMag.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)

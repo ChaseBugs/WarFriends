@@ -29,6 +29,7 @@ public static class WarCardEffectCatalog
             ["CardSlowdown"]=new("CardSlowdown",WarCardEffectKind.Status,false,true),
             ["CardAmmoBox"]=new("CardAmmoBox",WarCardEffectKind.Ammo,false,true),
             ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,false,true),
+            ["CardEmptyMag"]=new("CardEmptyMag",WarCardEffectKind.Ammo,false,true),
             ["CardHealthForSoldiers"]=new("CardHealthForSoldiers",WarCardEffectKind.Modifier,false,true),
             ["CardHealthForMachines"]=new("CardHealthForMachines",WarCardEffectKind.Modifier,false,true)
         };

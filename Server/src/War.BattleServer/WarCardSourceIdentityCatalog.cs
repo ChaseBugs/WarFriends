@@ -8,6 +8,7 @@ public static class WarCardSourceIdentityCatalog
         new Dictionary<string,string[]>(StringComparer.Ordinal)
         {
             ["CardAmmoThief"]=["AMMOTHIEF"],
+            ["CardEmptyMag"]=["EMPTYMAG"],
             ["CardShieldGenerator"]=["SHIELDGENERATOR"],
             ["CardHealthForSoldiers"]=["SUPERSOLDIERS"],
             ["CardMassShieldDestroyer"]=["APOCALYPSE"],

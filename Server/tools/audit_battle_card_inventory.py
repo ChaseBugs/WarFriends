@@ -149,6 +149,18 @@ def check_max_health_source():
         raise ValueError("MAXHEALTHINC scene or healing source changed")
 
 
+def check_empty_mag_source():
+    source = (ASSETS / "Scripts/Assembly-CSharp/CardEmptyMag.cs")
+    behavior = source.read_text(encoding="utf-8-sig")
+    expected = [
+        "PlayerController.GetEnemyOf(fraction)",
+        "weaponInventory.usedWeapons[0].weapon.ammoLeftInClip = 0",
+        "weaponInventory.usedWeapons[0].weapon.Reload()",
+    ]
+    if any(rule not in behavior for rule in expected):
+        raise ValueError("EMPTYMAG first-weapon source behavior changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -161,7 +173,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 18 or
+    if (len(names) != 19 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -177,6 +189,7 @@ def render():
     check_instant_medkit_source()
     check_big_medkit_source()
     check_max_health_source()
+    check_empty_mag_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()

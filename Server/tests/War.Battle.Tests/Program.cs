@@ -812,6 +812,50 @@ Check(ammoBoxMatch.Command(a, ammoBoxCommand).Code == "ammo-box-applied" &&
       ammoBoxMatch.Command(a, new MatchCommand { CommandId = 5,
           UseAmmoBox = new UseAmmoBoxCommand { RequestId = "97979797979797979797979797979797" } }).Code == "ammo-box-unavailable",
     "Ammo Box retry does not grant again and spent inventory cannot be reused");
+var emptyMagMatch = new MatchEngine(slottedDefinition with
+{
+    MatchId = "empty-mag-first-weapon"
+});
+emptyMagMatch.ConfigureCardSelection(["EMPTYMAG"]);
+emptyMagMatch.ConfigureCardInventory([(a, "EMPTYMAG", 1)]);
+Check(emptyMagMatch.Admit(a) && emptyMagMatch.Admit(b),
+    "Empty Mag fixture admits both players");
+var emptyMagSelection = new SelectCardsCommand();
+emptyMagSelection.CardIds.Add("EMPTYMAG");
+Check(emptyMagMatch.Command(a, new MatchCommand
+{
+    CommandId = 1, SelectCards = emptyMagSelection
+}).Code == "cards-selected", "owner selects the recovered Empty Mag card");
+emptyMagMatch.Command(a, Ready(2, emptyMagMatch.ManifestHash));
+emptyMagMatch.Command(b, Ready(1, emptyMagMatch.ManifestHash));
+emptyMagMatch.Advance(60);
+Check(emptyMagMatch.Command(b, new MatchCommand
+{
+    CommandId = 2, SwitchWeapon = new SwitchWeaponCommand { Slot = 2 }
+}).Code == "weapon-selected", "opponent holds its second weapon");
+var emptyMagCommand = new MatchCommand
+{
+    CommandId = 3,
+    UseEmptyMag = new UseEmptyMagCommand
+    {
+        RequestId = "92929292929292929292929292929292"
+    }
+};
+Check(emptyMagMatch.Command(a, emptyMagCommand).Code == "enemy-mag-emptied" &&
+      emptyMagMatch.Snapshot().Players[1].ClipAmmo == alternateWeapon.ClipSize,
+    "Empty Mag targets the first equipped weapon, not the active second weapon");
+var firstWeaponAfterCard = emptyMagMatch.Command(b, new MatchCommand
+{
+    CommandId = 3, SwitchWeapon = new SwitchWeaponCommand { Slot = 0 }
+});
+Check(firstWeaponAfterCard.Code == "weapon-selected" &&
+      firstWeaponAfterCard.Snapshot.Players[1].ClipAmmo == 0 &&
+      firstWeaponAfterCard.Snapshot.Players[1].ReloadEndTick > 60,
+    "the first weapon has an empty clip and a fresh host reload");
+Check(emptyMagMatch.Command(a, emptyMagCommand).Code == "enemy-mag-emptied" &&
+      emptyMagMatch.Snapshot().Players[1].ReloadEndTick ==
+          firstWeaponAfterCard.Snapshot.Players[1].ReloadEndTick,
+    "replayed Empty Mag cannot restart the opponent's reload");
 var excessiveAmmo = definition.Players[0].Weapon with { ReserveAmmo = int.MaxValue };
 var excessiveAmmoManifest = definition with { MatchId = "ammo-box-overflow",
     Players = [definition.Players[0] with { Weapon = excessiveAmmo }, definition.Players[1]] };
