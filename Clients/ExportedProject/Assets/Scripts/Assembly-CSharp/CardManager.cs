@@ -525,7 +525,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				card is CardAmmoBox || card is CardAmmoThief || card is CardBrokenLegs ||
 				card is CardMassShieldDestroyer || card is CardShieldDestroyer ||
 				card is CardHealthForSoldiers || card is CardHealthForMachines ||
-				IsSelfHostedInstantMedkit(card)))
+				IsSelfHostedMedkit(card)))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
@@ -554,9 +554,10 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		}
 	}
 
-	private static bool IsSelfHostedInstantMedkit(Card card)
+	private static bool IsSelfHostedMedkit(Card card)
 	{
-		return card.GetType() == typeof(CardHealMeNow) || card is CardHealMeNowSmall;
+		return card.GetType() == typeof(CardHealMeNow) ||
+			card is CardHealMeNowSmall || card is CardHealMeNowBig;
 	}
 
 	private async void UseSelfHostedCard(SelfHostedBattleClient client, Card card, Fractions fraction)
@@ -564,7 +565,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		try
 		{
 			MatchReply reply;
-			if (IsSelfHostedInstantMedkit(card)) reply = await client.UseMedkitResult(card.id);
+			if (IsSelfHostedMedkit(card)) reply = await client.UseMedkitResult(card.id);
 			else if (card is CardHealingStorm) reply = await client.UseHealingStormResult();
 			else if (card is CardShieldsUp) reply = await client.UseShieldsUpResult();
 			else if (card is CardShieldGenerator) reply = await client.UseShieldGeneratorResult();
@@ -601,7 +602,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 
 	private static bool IsAcceptedSelfHostedCardReply(Card card, string code)
 	{
-		if (IsSelfHostedInstantMedkit(card)) return code == "medkit-healed";
+		if (card is CardHealMeNowBig) return code == "big-medkit-active";
+		if (IsSelfHostedMedkit(card)) return code == "medkit-healed";
 		if (card is CardHealingStorm) return code == "healing-storm-applied";
 		if (card is CardShieldsUp) return code == "shields-up-applied";
 		if (card is CardShieldGenerator) return code == "shield-generator-active";

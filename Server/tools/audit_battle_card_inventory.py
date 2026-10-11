@@ -114,19 +114,42 @@ def check_instant_medkit_source():
         raise ValueError("Instant medkit behavior source changed")
 
 
+def check_big_medkit_source():
+    content = ROOT / "Server/content/recovered-battle-content.json"
+    sheets = json.loads(content.read_text(encoding="utf-8"))["sheets"]
+    constants = next(sheet["rows"] for sheet in sheets
+                     if sheet["type"] == "Google2u.CardConstants")
+    values = {row["DBKEY"]: row["FLOATVALUE"] for row in constants}
+    if (values.get("BigMedKitCoefMin") != .25 or
+        values.get("BigMedKitCoefMax") != .35 or
+        values.get("BigMedKitTime") != 15):
+        raise ValueError("BIGMEDKIT source timing or coefficients changed")
+    scene = SCENE.read_text(encoding="utf-8-sig")
+    block = next((row for row in re.split(r"(?m)^--- ", scene)
+                  if re.search(r"(?m)^  id: BIGMEDKIT$", row)), None)
+    source = (ASSETS / "Scripts/Assembly-CSharp/CardHealMeNowBig.cs")
+    base = (ASSETS / "Scripts/Assembly-CSharp/CardHealMeNow.cs")
+    if (block is None or "  instatnt: 0\n" not in block or
+        "BigMedKitCoefMin" not in source.read_text(encoding="utf-8-sig") or
+        "BigMedKitCoefMax" not in source.read_text(encoding="utf-8-sig") or
+        "BigMedKitTime" not in source.read_text(encoding="utf-8-sig") or
+        "mLastUpdate != (int)Time.time" not in base.read_text(encoding="utf-8-sig")):
+        raise ValueError("BIGMEDKIT scene or periodic heal source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
-    use_card = use_card.split("private static bool IsSelfHostedInstantMedkit", 1)[0]
+    use_card = use_card.split("private static bool IsSelfHostedMedkit", 1)[0]
     body = source.split("private async void UseSelfHostedCard", 1)[1]
     body = body.split("private static bool IsAcceptedSelfHostedCardReply", 1)[0]
     names = set(re.findall(r"card is (Card[A-Za-z]+)", body))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", body))
-    medkit_helper = source.split("private static bool IsSelfHostedInstantMedkit", 1)[1]
+    medkit_helper = source.split("private static bool IsSelfHostedMedkit", 1)[1]
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 16 or
+    if (len(names) != 17 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -140,6 +163,7 @@ def render():
     check_apocalypse_source()
     check_single_shield_source()
     check_instant_medkit_source()
+    check_big_medkit_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()

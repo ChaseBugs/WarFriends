@@ -238,7 +238,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         var medkit = MedkitSourcePolicy.FromClass(effect.Definition.CardId);
         if (owner?.Admitted != true || owner.Dead ||
             effect.OwnerPlayerId != ownerPlayerId ||
-            medkit == null ||
+            medkit == null || medkit.DurationSeconds != 0 ||
             effect.StartedTick != tick || effect.Lease.ExpiresTick != tick ||
             resolvedMedkits.Contains(effectId) || phase != BattlePhase.Running ||
             owner.Definition.Combat == null)
@@ -274,9 +274,24 @@ public sealed partial class MatchEngine : IMatchRuntime
 
         // The selected card identity chooses a source-backed host coefficient;
         // the packet contains no healing amount or target.
-        var request = new WarCardEffectRequest(medkit.CardClassId, Vector3.Zero, 0, 1);
+        float healingFraction = 0;
+        if (medkit.DurationSeconds > 0)
+        {
+            float roll = combatRandom();
+            if (!float.IsFinite(roll) || roll < 0 || roll > 1)
+                return "invalid-medkit-random";
+            healingFraction = medkit.MinimumHealthFraction +
+                (medkit.MaximumHealthFraction - medkit.MinimumHealthFraction) * roll;
+        }
+        var request = new WarCardEffectRequest(medkit.CardClassId, Vector3.Zero,
+            medkit.DurationSeconds, 1, medkit.SourceCardId);
         if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, request))
             return "medkit-unavailable";
+        if (medkit.DurationSeconds > 0)
+        {
+            StartBigMedkit(requestId, owner.Definition.PlayerId, healingFraction);
+            return "big-medkit-active";
+        }
         return TryResolveMedkit(owner.Definition.PlayerId, requestId)?.Applied == true
             ? "medkit-healed" : "medkit-effect-unavailable";
     }
@@ -1171,6 +1186,10 @@ public sealed partial class MatchEngine : IMatchRuntime
             !players.Any(player => player.Reconnecting) &&
             cardUnitSpawns.PendingCount > 0 && elapsed > 1)
             throw new InvalidOperationException("Pending card units require every simulation tick.");
+        if (phase == BattlePhase.Running &&
+            !players.Any(player => player.Reconnecting) &&
+            bigMedkits.Count > 0 && elapsed > 1)
+            throw new InvalidOperationException("Timed medikit healing requires every simulation tick.");
         hostTick=nextTick;
         if (Terminal) return; // Preserve the exact terminal tick and result projection.
         if (phase == BattlePhase.Running && players.Any(player => player.Reconnecting))
@@ -1591,9 +1610,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         }
         if (advanced && phase == BattlePhase.Running)
         {
+            AdvanceBigMedkits();
             var expiredEffects = cardEffects.ExpireAndReturn(tick);
             foreach (var effect in expiredEffects)
             {
+                bigMedkits.Remove(effect.EffectId);
                 RemoveArmyHealthBuff(effect);
                 stateRevision++;
                 Emit(MatchEventKind.CardEffectExpired, effect.OwnerPlayerId,
@@ -1843,6 +1864,9 @@ public sealed partial class MatchEngine : IMatchRuntime
         foreach (var effect in cardEffects.ActiveForOwner(ownerPlayerId))
             RemoveArmyHealthBuff(effect);
         if (cardEffects.RemoveOwner(ownerPlayerId) > 0) stateRevision++;
+        foreach (var effectId in bigMedkits.Where(pair => pair.Value.OwnerPlayerId == ownerPlayerId)
+                     .Select(pair => pair.Key).ToArray())
+            bigMedkits.Remove(effectId);
         foreach (var air in airEntities.Snapshot().Where(x => x.AttackerPlayerId == ownerPlayerId))
         {
             if (!airEntities.TryDespawn(air.EntityKey)) continue;

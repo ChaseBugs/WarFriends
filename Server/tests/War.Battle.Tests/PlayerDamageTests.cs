@@ -136,8 +136,10 @@ internal static class PlayerDamageTests
             "one medkit effect cannot heal twice on the same host tick");
         Check(MedkitSourcePolicy.Resolve("MEDKIT")?.MaximumHealthFraction == .2f &&
               MedkitSourcePolicy.Resolve("SMALLMEDKIT")?.MaximumHealthFraction == .1f &&
-              MedkitSourcePolicy.Resolve("BIGMEDKIT") == null,
-            "only the two source-backed instant medikits are open");
+              MedkitSourcePolicy.Resolve("BIGMEDKIT") is
+                  { MinimumHealthFraction: .25f, MaximumHealthFraction: .35f,
+                    DurationSeconds: 15 },
+            "all three medikit coefficients and the timed duration come from CardConstants");
         medkitMatch.Advance(61);
         medkitMatch.ApplyResolvedPlayerDamage(b,a,
             new ResolvedPlayerDamage(20,CombatDamageType.Basic,HasWeapon:false),1);
@@ -232,6 +234,59 @@ internal static class PlayerDamageTests
               smallMatch.Command(a,smallCommand).Code=="medkit-healed" &&
               smallMatch.Snapshot().Players[0].Health==70,
             "authenticated SMALLMEDKIT heals once and replays without another grant");
+        var bigMatch = new MatchEngine(manifest with
+        {
+            MatchId = "live-big-medkit-timed-healing",
+            IdleSeconds = 120
+        }, combatRandom: () => .5f);
+        bigMatch.ConfigureCardSelection(["BIGMEDKIT"]);
+        bigMatch.ConfigureCardInventory([(a, "BIGMEDKIT", 1)]);
+        bigMatch.Admit(a);
+        bigMatch.Admit(b);
+        var bigSelection = new SelectCardsCommand();
+        bigSelection.CardIds.Add("BIGMEDKIT");
+        Check(bigMatch.Command(a, new MatchCommand
+        {
+            CommandId = 1, SelectCards = bigSelection
+        }).Code == "cards-selected", "owner selects BIGMEDKIT by its scene ID");
+        bigMatch.Command(a, new MatchCommand
+        {
+            CommandId = 2, Ready = new ReadyCommand { ManifestHash = bigMatch.ManifestHash }
+        });
+        bigMatch.Command(b, new MatchCommand
+        {
+            CommandId = 1, Ready = new ReadyCommand { ManifestHash = bigMatch.ManifestHash }
+        });
+        bigMatch.Advance(60);
+        bigMatch.ApplyResolvedPlayerDamage(b, a,
+            new ResolvedPlayerDamage(40, CombatDamageType.Basic, HasWeapon: false), 1);
+        var bigCommand = new MatchCommand
+        {
+            CommandId = 3,
+            UseMedkit = new UseMedkitCommand
+            {
+                RequestId = "89898989898989898989898989898989",
+                SourceCardId = "BIGMEDKIT"
+            }
+        };
+        Check(bigMatch.Command(a, bigCommand).Code == "big-medkit-active" &&
+              bigMatch.Snapshot().Players[0].Health == 60 &&
+              bigMatch.Command(a, bigCommand).Code == "big-medkit-active",
+            "BIGMEDKIT reserves once and does not heal immediately or on retry");
+        for (ulong healingTick = 61; healingTick < 90; healingTick++)
+            bigMatch.Advance(healingTick);
+        Check(bigMatch.Snapshot().Players[0].Health == 60,
+            "timed medikit waits for its first full second");
+        bigMatch.Advance(90);
+        Check(Math.Abs(bigMatch.Snapshot().Players[0].Health - 62) < .001f,
+            "the fixed random draw gives two health per second");
+        for (ulong healingTick = 91; healingTick <= 510; healingTick++)
+            bigMatch.Advance(healingTick);
+        Check(Math.Abs(bigMatch.Snapshot().Players[0].Health - 90) < .01f &&
+              bigMatch.Snapshot().CardEffects.Count == 0,
+            "fifteen pulses total thirty health and the effect expires: " +
+            bigMatch.Snapshot().Players[0].Health + ", effects=" +
+            bigMatch.Snapshot().CardEffects.Count);
         var aliasMatch = new MatchEngine(manifest with {MatchId="medkit-selection-identity"});
         aliasMatch.ConfigureCardSelection(["MEDKIT","CardHealMeNow"]);
         aliasMatch.ConfigureCardInventory([(a,"MEDKIT",1)]);

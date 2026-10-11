@@ -31,7 +31,7 @@ recovered Photon fallback; they need host commands before admission.
 | `ROCKETTURRET` | 3 | `CardRockyTurret` | no | no |
 | `DISARMED` | 3 | `CardDisarmedAndLocked` | no | no |
 | `ELITESWAT` | 3 | `CardSpawnUnit` | yes | no |
-| `BIGMEDKIT` | 3 | `CardHealMeNowBig` | no | no |
+| `BIGMEDKIT` | 3 | `CardHealMeNowBig` | yes | yes |
 | `AIRSTRIKE` | 3 | `CardAirstrike` | yes | no |
 | `SABOTAGE` | 2 | `CardSabotage` | no | no |
 | `HEAVYTURRET` | 2 | `CardHeavyTurret` | yes | yes |
