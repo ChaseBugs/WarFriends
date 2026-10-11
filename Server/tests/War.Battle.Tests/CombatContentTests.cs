@@ -11598,8 +11598,23 @@ internal static class CombatContentTests
               swatCardMatch.CardEnemyPointOccupant(firstCardSwatPoint.ComponentFileId) ==
                   swatCardRows[0].EntityKey,
             "host card SWAT calls own separate faction-correct enemy points");
+        Check(swatCardRows.All(row => swatCardMatch.CardSwatWalking(row.EntityKey)),
+            "both card SWAT soldiers begin source-point NavMesh walks");
+        swatCardMatch.Advance(61);
+        var walkingSwatRows = swatCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.ToArray();
+        Check(walkingSwatRows.Length == 2 &&
+              walkingSwatRows.All(row => row.PositionTick == 61) &&
+              walkingSwatRows.Any(row =>
+              {
+                  var spawned = swatCardRows.Single(before =>
+                      before.EntityKey == row.EntityKey);
+                  return row.X != spawned.X || row.Z != spawned.Z;
+              }),
+            "card SWAT walking publishes host-owned soldier positions");
         Check(swatCardMatch.ConfirmArmyDeath(swatCardRows[0].EntityKey, false) &&
               swatCardMatch.CardEnemyPointOccupant(firstCardSwatPoint!.ComponentFileId) == null &&
+              !swatCardMatch.CardSwatWalking(swatCardRows[0].EntityKey) &&
               swatCardMatch.CardEnemyPointOccupant(secondCardSwatPoint!.ComponentFileId) ==
                   swatCardRows[1].EntityKey,
             "confirmed card SWAT death releases only its own source enemy point");

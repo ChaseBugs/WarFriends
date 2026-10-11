@@ -10,12 +10,15 @@ public sealed partial class MatchEngine
     private CardUnitCombatLifecycle? cardUnitCombat;
     private CardEnemyPointOccupancy? cardEnemyPoints;
     private readonly Dictionary<ulong, ulong> swatPointRetryTicks = [];
+    private readonly Dictionary<ulong, CardSwatWalkState> swatWalks = [];
 
     internal CardUnitInitialPoint? CardEnemyPoint(ulong entityKey) =>
         cardEnemyPoints?.Find(entityKey);
 
     internal ulong? CardEnemyPointOccupant(int pointFileId) =>
         cardEnemyPoints?.Occupant(pointFileId);
+
+    internal bool CardSwatWalking(ulong entityKey) => swatWalks.ContainsKey(entityKey);
 
     /// <summary>
     /// Host-only activation seam. The UDP command remains closed until
@@ -117,6 +120,20 @@ public sealed partial class MatchEngine
             return;
         }
         swatPointRetryTicks.Remove(entity.EntityKey);
+        if (map == null || armyNavMeshConnectivity == null || armyCatalog == null)
+            throw new InvalidDataException("Card SWAT lacks source navigation content.");
+        ArmyNavMeshCorridor route = armyNavMeshConnectivity.PlanCorridor(
+            map, position, point.Position) ??
+            throw new InvalidDataException("Card SWAT destination has no NavMesh corridor.");
+        if (!route.PlanarCovered)
+            throw new InvalidDataException("Card SWAT corridor leaves the source NavMesh.");
+
+        // AIObject.SpawnByCard creates UnitUpgrades(1f), so SWAT has no
+        // purchased special-speed lane. The recovered family speed applies.
+        float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+        if (!swatWalks.TryAdd(entity.EntityKey, new CardSwatWalkState(
+            point.ComponentFileId, route, armyCatalog.InfantryAgent, speed)))
+            throw new InvalidDataException("Card SWAT already has a walk.");
     }
 
     private void AdvanceCardSwatPointRetries()
@@ -129,6 +146,26 @@ public sealed partial class MatchEngine
                 entity.SourceCardId != "ELITESWAT")
                 throw new InvalidDataException("Card SWAT retry lost its active soldier.");
             TryAssignCardSwatPoint(entity);
+        }
+    }
+
+    private void AdvanceCardSwatWalks()
+    {
+        foreach (var (entityKey, walk) in swatWalks.OrderBy(row => row.Key).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITESWAT" ||
+                cardEnemyPoints?.Find(entityKey)?.ComponentFileId != walk.PointFileId)
+                throw new InvalidDataException("Card SWAT walk lost its soldier or point.");
+
+            walk.AdvanceTick();
+            entity.X = walk.Position.X;
+            entity.Y = walk.Position.Y;
+            entity.Z = walk.Position.Z;
+            entity.PositionTick = tick;
+            cardUnitCombat?.UpdatePose(entity);
+            if (walk.Arrived)
+                swatWalks.Remove(entityKey);
         }
     }
 
@@ -242,6 +279,7 @@ public sealed partial class MatchEngine
         if (entity.SourceCardId == "ELITESWAT")
         {
             swatPointRetryTicks.Remove(entityKey);
+            swatWalks.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);
         }
 
