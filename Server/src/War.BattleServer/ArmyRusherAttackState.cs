@@ -74,6 +74,18 @@ public sealed class ArmyRusherAttackState
         Phase=ArmyRusherAttackPhase.Cooldown;
     }
 
+    /// <summary>
+    /// CornerHidingUpdate chooses a new shoot time when its chosen target
+    /// cannot be exposed from the source corner side.
+    /// </summary>
+    public void RetryAfterRejectedTarget()
+    {
+        if (Phase != ArmyRusherAttackPhase.Ready)
+            throw new InvalidDataException("Only a ready soldier can retry a rejected target.");
+        ScheduleCooldown(cooldownMinSeconds, cooldownMaxSeconds);
+        Phase = ArmyRusherAttackPhase.Cooldown;
+    }
+
     public bool AdvanceTick()
     {
         if(Phase==ArmyRusherAttackPhase.Windup)

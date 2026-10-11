@@ -11079,6 +11079,10 @@ internal static class CombatContentTests
                   walkingCooldown.Phase==ArmyRusherAttackPhase.Ready,
                   "selected Shotgunner schedules its divided walking interval before the first attack");
             Reject(()=>walkingCooldown.BeginInitialCooldown());
+            walkingCooldown.RetryAfterRejectedTarget();
+            Check(walkingCooldown.Phase == ArmyRusherAttackPhase.Cooldown &&
+                  walkingCooldown.CooldownTicksRemaining == 150,
+                "rejected Corner target waits for the next source shoot interval");
             Reject(()=>new ArmyRusherAttackState(new ArmyBaseShotStats(0f,0,15,-1,2)));
             Reject(()=>new ArmyRusherAttackState(new(1f,1,1,1,1),cooldownMinSeconds:2f));
             var shotIntent=new MatchEngine.ArmyRusherShotIntent(77,
@@ -11611,12 +11615,99 @@ internal static class CombatContentTests
               new Vector3(walkingPara.X, walkingPara.Y, walkingPara.Z) !=
                   paraLanding,
             "landed Paratrooper begins host-owned movement to its Corner point");
+        ulong paraAttackTick = 76;
+        for (ulong cardTick = 77; cardTick < 180 &&
+             !paraCardMatch.CardParatrooperAttacking(remainingPara.EntityKey);
+             cardTick++)
+        {
+            paraCardMatch.Advance(cardTick);
+            paraAttackTick = cardTick;
+        }
+        Check(paraCardMatch.CardParatrooperAttacking(remainingPara.EntityKey) &&
+              !paraCardMatch.CardParatrooperWalking(remainingPara.EntityKey),
+            "Paratrooper enters its card-specific Corner attack clock on arrival");
+        bool paraShotSeen = false;
+        for (ulong cardTick = paraAttackTick + 1; cardTick < 1000 &&
+             !paraCardMatch.Terminal && !paraShotSeen; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                paraCardMatch.ArmyBatch(decoyPlayer);
+                paraCardMatch.ArmyBatch(decoyOpponent);
+            }
+            paraCardMatch.Advance(cardTick);
+            paraShotSeen = paraCardMatch.EventBatch(decoyPlayer, 0)
+                .Events.Any(row => row.Kind == MatchEventKind.Shot &&
+                    row.ActorId == decoyPlayer && row.Reason == "army");
+        }
+        Check(!paraShotSeen,
+            "Paratrooper does not fire through the blocked side of its Corner");
         Check(paraCardMatch.ConfirmArmyDeath(remainingPara.EntityKey, false) &&
               !paraCardMatch.CardParatrooperWalking(remainingPara.EntityKey) &&
+              !paraCardMatch.CardParatrooperAttacking(remainingPara.EntityKey) &&
               paraCardMatch.CardEnemyPoint(remainingPara.EntityKey) == null &&
               paraCardMatch.CardEnemyPointOccupant(
                   paraLandingPoint.ComponentFileId) == null,
             "Paratrooper death releases its walk and Corner reservation");
+        var exposedParaPoint = content.CardUnitInitialPoints.Select(park,
+            "ELITEPARA", 1, Vector3.Zero,
+            id => id != paraLandingPoint.ComponentFileId)!;
+        var firingParaMatch = ReadyCardMatch("host-card-para-fire", "ELITEPARA");
+        const string firingParaRequest = "edededededededededededededededed";
+        Check(firingParaMatch.TryScheduleCardUnit(firingParaRequest,
+                  decoyPlayer, "ELITEPARA"),
+            "host accepts a second Paratrooper fixture for exposed-side firing");
+        var firingPara = firingParaMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single();
+        Vector3? exposedLanding = null;
+        Vector3? exposedDestination = content.ArmyNavMeshConnectivity.SampleNearest(
+            park, exposedParaPoint.Position, 0.5f);
+        foreach (Vector3 offset in new[]
+        {
+            new Vector3(0.4f, 0, 0), new Vector3(-0.4f, 0, 0),
+            new Vector3(0, 0, 0.4f), new Vector3(0, 0, -0.4f)
+        })
+        {
+            Vector3 candidate = exposedParaPoint.Position + offset;
+            Vector3? start = content.ArmyNavMeshConnectivity.SampleNearest(
+                park, candidate, 0.5f);
+            if (start.HasValue && exposedDestination.HasValue &&
+                content.ArmyNavMeshConnectivity.PlanCorridor(
+                    park, start.Value, exposedDestination.Value) != null)
+            {
+                exposedLanding = candidate;
+                break;
+            }
+        }
+        Vector3 confirmedExposedLanding = exposedLanding ??
+            throw new InvalidDataException("Exposed Park Corner has no walkable landing fixture.");
+        Check(firingParaMatch.ConfirmCardParatrooperLanding(firingPara.EntityKey,
+                  confirmedExposedLanding) &&
+              firingParaMatch.CardEnemyPoint(firingPara.EntityKey)?
+                  .ComponentFileId == exposedParaPoint.ComponentFileId,
+            "exposed-side Paratrooper lands beside the other Park Corner");
+        bool firingParaShotSeen = false;
+        for (ulong cardTick = 61; cardTick < 1000 &&
+             !firingParaMatch.Terminal && !firingParaShotSeen; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                firingParaMatch.ArmyBatch(decoyPlayer);
+                firingParaMatch.ArmyBatch(decoyOpponent);
+            }
+            firingParaMatch.Advance(cardTick);
+            firingParaShotSeen = firingParaMatch.EventBatch(decoyPlayer, 0)
+                .Events.Any(row => row.Kind == MatchEventKind.Shot &&
+                    row.ActorId == decoyPlayer && row.Reason == "army");
+        }
+        Check(firingParaShotSeen &&
+              firingParaMatch.CardParatrooperAttacking(firingPara.EntityKey),
+            "exposed Park Corner fires a card Paratrooper projectile on the host clock");
+        Check(firingParaMatch.ConfirmArmyDeath(firingPara.EntityKey, false) &&
+              !firingParaMatch.CardParatrooperAttacking(firingPara.EntityKey) &&
+              firingParaMatch.CardEnemyPointOccupant(
+                  exposedParaPoint.ComponentFileId) == null,
+            "Paratrooper death clears its attack and Corner reservation after firing");
         var minigunnerCardMatch = ReadyCardMatch("host-card-minigunner", "ELITEMINIGUN");
         const string minigunnerCardRequest = "b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8";
         Check(minigunnerCardMatch.TryScheduleCardUnit(minigunnerCardRequest,

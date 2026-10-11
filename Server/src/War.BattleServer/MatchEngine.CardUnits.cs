@@ -12,6 +12,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> swatPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> swatWalks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
+    private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
+    private readonly Dictionary<ulong, ArmyRusherTarget> paratrooperShotTargets = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> swatAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> swatShotTargets = [];
 
@@ -27,6 +29,9 @@ public sealed partial class MatchEngine
 
     internal bool CardParatrooperWalking(ulong entityKey) =>
         paratrooperWalks.ContainsKey(entityKey);
+
+    internal bool CardParatrooperAttacking(ulong entityKey) =>
+        paratrooperAttacks.ContainsKey(entityKey);
 
     /// <summary>
     /// Host-only activation seam. The UDP command remains closed until
@@ -207,7 +212,7 @@ public sealed partial class MatchEngine
 
     private void AdvanceCardParatrooperWalks()
     {
-        foreach (var (entityKey, walk) in paratrooperWalks.OrderBy(row => row.Key))
+        foreach (var (entityKey, walk) in paratrooperWalks.OrderBy(row => row.Key).ToArray())
         {
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
                 entity.SourceCardId != "ELITEPARA" ||
@@ -222,7 +227,97 @@ public sealed partial class MatchEngine
             entity.Z = walk.Position.Z;
             entity.PositionTick = tick;
             cardUnitCombat?.UpdatePose(entity);
+            if (walk.Arrived)
+            {
+                paratrooperWalks.Remove(entityKey);
+                StartCardParatrooperAttack(entityKey);
+            }
         }
+    }
+
+    private void StartCardParatrooperAttack(ulong entityKey)
+    {
+        if (!armyShots.TryGetValue(entityKey, out ArmyBaseShotStats? shot) ||
+            cardEnemyPoints?.Find(entityKey) is not
+                { ComponentType: "EnemyPointCorner", CornerDirection: not null,
+                  CornerRightSide: not null } ||
+            armyWeapons == null || enemyPoses == null)
+            throw new InvalidDataException("Card Paratrooper reached no source Corner attack row.");
+
+        int cadence = armyWeapons.CadenceTicks("ID_UNIT-PARATROOPER");
+        var attack = new ArmyRusherAttackState(shot, NextArmyFloat, cadence);
+        // SwitchState(CornerHiding) calls GenerateNextShootTime immediately.
+        attack.BeginInitialCooldown();
+        if (!paratrooperAttacks.TryAdd(entityKey, attack))
+            throw new InvalidDataException("Card Paratrooper attack started twice.");
+        rusherShotCounts.Add(entityKey, 0);
+    }
+
+    private ArmyRusherTarget? CardParatrooperBodyTarget(ulong entityKey)
+    {
+        if (rifleCombat == null || playerShotTargets == null ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            cardEnemyPoints?.Find(entityKey) is not { } corner ||
+            corner.CornerDirection is not Vector3 direction ||
+            corner.CornerRightSide is not bool rightSide)
+            return null;
+
+        Player owner = Find(entity.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Paratrooper owner left the match.");
+        Player opponent = players.Single(player => player != owner);
+        if (opponent.Dead)
+            return null;
+
+        var pose = rifleCombat.Pose(opponent.Definition.PlayerId);
+        var position = new Vector3(entity.X, entity.Y, entity.Z);
+        var target = playerShotTargets.Nearest(1, position,
+            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
+        Vector3 targetPosition = pose.BodyTarget(target.TransformFileId).Position;
+        if (!CornerShotPolicy.CanExpose(direction, rightSide,
+            position, targetPosition))
+            return null;
+        return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
+            target.TransformFileId, corner.ComponentFileId, targetPosition);
+    }
+
+    private void AdvanceCardParatrooperAttacks()
+    {
+        if (enemyPoses == null)
+            throw new InvalidDataException("Card Paratrooper has no cover animation content.");
+        float uncoverSeconds = enemyPoses.Clip("player_look_right3").Length;
+        int windupTicks = checked((int)MathF.Ceiling(
+            (uncoverSeconds + 0.05f) * MatchManifest.TickRate));
+        rusherShotIntents.Clear();
+        foreach (var (entityKey, attack) in paratrooperAttacks.OrderBy(row => row.Key))
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITEPARA" ||
+                cardEnemyPoints?.Find(entityKey) == null)
+                throw new InvalidDataException("Card Paratrooper attack lost its Corner soldier.");
+
+            if (attack.Phase == ArmyRusherAttackPhase.Ready)
+            {
+                ArmyRusherTarget? target = CardParatrooperBodyTarget(entityKey);
+                if (target == null)
+                    attack.RetryAfterRejectedTarget();
+                else if (attack.TryBegin(true, 1, windupTicks))
+                    paratrooperShotTargets[entityKey] = target;
+            }
+
+            attack.AdvanceTick();
+            if (!attack.ShotDue)
+                continue;
+            if (!paratrooperShotTargets.TryGetValue(entityKey, out var shotTarget))
+                throw new InvalidDataException("Card Paratrooper lost its latched shot target.");
+            rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
+                entity.OwnerPlayerId, shotTarget.PlayerId,
+                shotTarget.TargetFileId, shotTarget.Position,
+                attack.CurrentShotIsReal, attack.BatchCursor, attack.BatchSize));
+            attack.CommitShot();
+            if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
+                paratrooperShotTargets.Remove(entityKey);
+        }
+        LaunchRusherShotIntents();
     }
 
     private void TryAssignCardSwatPoint(BattleArmyEntityState entity)
@@ -484,6 +579,9 @@ public sealed partial class MatchEngine
         if (entity.SourceCardId == "ELITEPARA")
         {
             paratrooperWalks.Remove(entityKey);
+            paratrooperAttacks.Remove(entityKey);
+            paratrooperShotTargets.Remove(entityKey);
+            rusherShotCounts.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);
