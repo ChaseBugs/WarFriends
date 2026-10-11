@@ -12,9 +12,9 @@ resolved through the component's MonoScript GUID and `.cs.meta`.
 A dash in the reviewed column means the server catalog has not
 pinned that class/ID pair. Disabled rows may lack a scene component.
 A direct Client route is only a dispatch path, not end-to-end proof.
-The dispatcher currently has 15 card classes, and its fallback for
-other cards still calls Photon; those cards need a host path before
-offline play can admit them.
+The dispatcher currently has 16 card classes. While connected to
+the self-hosted match, unsupported cards are rejected before the
+recovered Photon fallback; they need host commands before admission.
 
 ## Source-enabled rows
 
@@ -46,7 +46,7 @@ offline play can admit them.
 | `MEATHEADS` | 2 | `CardSoldierOnSteroids` | no | no |
 | `BOOBYTRAP` | 2 | `CardBoobyTrap` | no | no |
 | `ELECTRICTRAPS` | 2 | `CardElectricTraps` | no | no |
-| `SMALLMEDKIT` | 1 | `CardHealMeNowSmall` | no | no |
+| `SMALLMEDKIT` | 1 | `CardHealMeNowSmall` | yes | yes |
 | `ELITEPARA` | 2 | `CardSpawnUnit` | yes | no |
 | `VEHICLEHEALTH` | 1 | `CardHealthForMachines` | yes | yes |
 | `TURRETCRATE` | 1 | `CardIncreaseBonusChance` | no | no |

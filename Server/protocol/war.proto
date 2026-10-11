@@ -118,7 +118,9 @@ message GrenadeThrowCommand {
 message UseDecoyCommand { string request_id = 1; }
 message UseLandMineCommand { string request_id = 1; }
 message UseHeavyTurretCommand { string request_id = 1; }
-message UseMedkitCommand { string request_id = 1; }
+// Empty source_card_id preserves the original MEDKIT command. Other IDs must
+// match the selected Backend-provisioned card; the host owns the heal amount.
+message UseMedkitCommand { string request_id = 1; string source_card_id = 2; }
 message UseHealingStormCommand { string request_id = 1; }
 message UseShieldsUpCommand { string request_id = 1; }
 message UseShieldGeneratorCommand { string request_id = 1; }

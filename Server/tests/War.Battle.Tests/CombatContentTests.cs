@@ -10065,10 +10065,11 @@ internal static class CombatContentTests
                   "accepted card activation retains its player owner on replay");
             Reject(()=>ownedCards.RecordCard(cardReceipt,secondCardOwner,"CardDecoy"));
             Reject(()=>ownedCards.RecordCard(cardReceipt,firstCardOwner,"CardLandmine"));
-            Check(WarCardSourceIdentityCatalog.All.Count==25&&
+            Check(WarCardSourceIdentityCatalog.All.Count==26&&
                   WarCardSourceIdentityCatalog.Resolve("CardHeavyTurret")=="HEAVYTURRET"&&
                   WarCardSourceIdentityCatalog.Resolve("CardMassShieldDestroyer")=="APOCALYPSE"&&
                   WarCardSourceIdentityCatalog.Resolve("CardShieldDestroyer")=="DESTROYSHIELD"&&
+                  WarCardSourceIdentityCatalog.Resolve("CardHealMeNowSmall")=="SMALLMEDKIT"&&
                   WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit","ELITEPARA")=="ELITEPARA",
                   "recovered card class and serialized source identities stay distinct");
             Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit"));

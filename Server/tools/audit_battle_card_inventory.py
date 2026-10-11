@@ -5,6 +5,7 @@ Run with --check to ensure the checked-in report still matches the Client.
 """
 
 import re
+import json
 import sys
 from pathlib import Path
 
@@ -92,13 +93,44 @@ def check_single_shield_source():
         raise ValueError("Single-shield card targeting source changed")
 
 
+def check_instant_medkit_source():
+    content = ROOT / "Server/content/recovered-battle-content.json"
+    sheets = json.loads(content.read_text(encoding="utf-8"))["sheets"]
+    constants = next(sheet["rows"] for sheet in sheets
+                     if sheet["type"] == "Google2u.CardConstants")
+    values = {row["DBKEY"]: row["FLOATVALUE"] for row in constants}
+    if values.get("SmallMedKitCoef") != .1 or values.get("MedKitCoef") != .2:
+        raise ValueError("Instant medkit source coefficients changed")
+    scene = SCENE.read_text(encoding="utf-8-sig")
+    for card_id in ("SMALLMEDKIT", "MEDKIT"):
+        block = next((row for row in re.split(r"(?m)^--- ", scene)
+                      if re.search(rf"(?m)^  id: {card_id}$", row)), None)
+        if block is None or "  instatnt: 1\n" not in block:
+            raise ValueError(f"Instant medkit scene state changed: {card_id}")
+    small = (ASSETS / "Scripts/Assembly-CSharp/CardHealMeNowSmall.cs")
+    base = (ASSETS / "Scripts/Assembly-CSharp/CardHealMeNow.cs")
+    if ("CardConstants.rowIds.SmallMedKitCoef" not in small.read_text(encoding="utf-8-sig") or
+        "CardConstants.rowIds.MedKitCoef" not in base.read_text(encoding="utf-8-sig")):
+        raise ValueError("Instant medkit behavior source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
+    use_card = source.split("public void UseCard(Card card)", 1)[1]
+    use_card = use_card.split("private static bool IsSelfHostedInstantMedkit", 1)[0]
     body = source.split("private async void UseSelfHostedCard", 1)[1]
     body = body.split("private static bool IsAcceptedSelfHostedCardReply", 1)[0]
     names = set(re.findall(r"card is (Card[A-Za-z]+)", body))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", body))
-    if len(names) != 15:
+    medkit_helper = source.split("private static bool IsSelfHostedInstantMedkit", 1)[1]
+    medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
+    names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
+    names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
+    if (len(names) != 16 or
+        "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
+        "Self-hosted card is not supported yet" not in use_card or
+        use_card.index("Self-hosted card is not supported yet") >
+            use_card.index('mPhotonView.RPC("PlayCardRPC"')):
         raise ValueError("Normal Client self-hosted card route count changed")
     return names
 
@@ -107,6 +139,7 @@ def render():
     rows = source_rows()
     check_apocalypse_source()
     check_single_shield_source()
+    check_instant_medkit_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()
@@ -137,9 +170,9 @@ def render():
         "A dash in the reviewed column means the server catalog has not",
         "pinned that class/ID pair. Disabled rows may lack a scene component.",
         "A direct Client route is only a dispatch path, not end-to-end proof.",
-        "The dispatcher currently has 15 card classes, and its fallback for",
-        "other cards still calls Photon; those cards need a host path before",
-        "offline play can admit them.",
+        "The dispatcher currently has 16 card classes. While connected to",
+        "the self-hosted match, unsupported cards are rejected before the",
+        "recovered Photon fallback; they need host commands before admission.",
         "",
         "## Source-enabled rows",
         "",

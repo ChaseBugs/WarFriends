@@ -17,6 +17,7 @@ public static class WarCardEffectCatalog
             ["CardAirstrike"]=new("CardAirstrike",WarCardEffectKind.Damage,true,true),
             ["CardGrenadesBurst"]=new("CardGrenadesBurst",WarCardEffectKind.Damage,true,true),
             ["CardHealMeNow"]=new("CardHealMeNow",WarCardEffectKind.Heal,false,true),
+            ["CardHealMeNowSmall"]=new("CardHealMeNowSmall",WarCardEffectKind.Heal,false,true),
             ["CardHealingStorm"]=new("CardHealingStorm",WarCardEffectKind.Heal,false,true),
             ["CardShieldGenerator"]=new("CardShieldGenerator",WarCardEffectKind.Shield,false,true),
             ["CardShieldsUp"]=new("CardShieldsUp",WarCardEffectKind.Shield,false,true),

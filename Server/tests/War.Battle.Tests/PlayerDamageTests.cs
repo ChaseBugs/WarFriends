@@ -134,6 +134,20 @@ internal static class PlayerDamageTests
         Check(medkitMatch.TryResolveMedkit(a, medkitEffectId) == null &&
               medkitMatch.Snapshot().Players[0].Health == 80,
             "one medkit effect cannot heal twice on the same host tick");
+        Check(MedkitSourcePolicy.Resolve("MEDKIT")?.MaximumHealthFraction == .2f &&
+              MedkitSourcePolicy.Resolve("SMALLMEDKIT")?.MaximumHealthFraction == .1f &&
+              MedkitSourcePolicy.Resolve("BIGMEDKIT") == null,
+            "only the two source-backed instant medikits are open");
+        medkitMatch.Advance(61);
+        medkitMatch.ApplyResolvedPlayerDamage(b,a,
+            new ResolvedPlayerDamage(20,CombatDamageType.Basic,HasWeapon:false),1);
+        const string smallMedkitEffectId = "8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b";
+        Check(medkitMatch.TryApplyCardEffect(smallMedkitEffectId,a,
+                  new WarCardEffectRequest("CardHealMeNowSmall",
+                      System.Numerics.Vector3.Zero,0,1,"SMALLMEDKIT")) &&
+              medkitMatch.TryResolveMedkit(a,smallMedkitEffectId) is
+                  {Applied:true,Health:70},
+            "SMALLMEDKIT heals ten percent of trusted maximum health");
         var liveMatch = new MatchEngine(manifest with
         {
             MatchId = "live-medkit-owner-healing"
@@ -184,6 +198,40 @@ internal static class PlayerDamageTests
             CommandId = 5,
             UseMedkit = new UseMedkitCommand { RequestId = "85858585858585858585858585858585" }
         }).Code == "medkit-unavailable", "exhausted inventory cannot heal again");
+        var smallMatch = new MatchEngine(manifest with
+        { MatchId = "live-small-medkit-owner-healing" });
+        smallMatch.ConfigureCardSelection(["SMALLMEDKIT"]);
+        smallMatch.ConfigureCardInventory([(a,"SMALLMEDKIT",1)]);
+        smallMatch.Admit(a);
+        smallMatch.Admit(b);
+        var smallSelection = new SelectCardsCommand();
+        smallSelection.CardIds.Add("SMALLMEDKIT");
+        Check(smallMatch.Command(a,new MatchCommand {CommandId=1,
+                  SelectCards=smallSelection}).Code=="cards-selected",
+            "the small medikit requires its allocated source identity");
+        smallMatch.Command(a,new MatchCommand {CommandId=2,
+            Ready=new ReadyCommand {ManifestHash=smallMatch.ManifestHash}});
+        smallMatch.Command(b,new MatchCommand {CommandId=1,
+            Ready=new ReadyCommand {ManifestHash=smallMatch.ManifestHash}});
+        smallMatch.Advance(60);
+        smallMatch.ApplyResolvedPlayerDamage(b,a,
+            new ResolvedPlayerDamage(40,CombatDamageType.Basic,HasWeapon:false),1);
+        Check(smallMatch.Command(a,new MatchCommand {CommandId=3,
+                  UseMedkit=new UseMedkitCommand
+                  {RequestId="86868686868686868686868686868686",
+                      SourceCardId="MEDKIT"}}).Code=="medkit-not-selected" &&
+              smallMatch.Snapshot().CardActivations==0 &&
+              smallMatch.Snapshot().Players[0].Health==60,
+            "a MEDKIT assertion cannot spend the selected SMALLMEDKIT");
+        var smallCommand=new MatchCommand {CommandId=4,
+            UseMedkit=new UseMedkitCommand
+            {RequestId="87878787878787878787878787878787",
+                SourceCardId="SMALLMEDKIT"}};
+        Check(smallMatch.Command(a,smallCommand).Code=="medkit-healed" &&
+              smallMatch.Snapshot().Players[0].Health==70 &&
+              smallMatch.Command(a,smallCommand).Code=="medkit-healed" &&
+              smallMatch.Snapshot().Players[0].Health==70,
+            "authenticated SMALLMEDKIT heals once and replays without another grant");
         var aliasMatch = new MatchEngine(manifest with {MatchId="medkit-selection-identity"});
         aliasMatch.ConfigureCardSelection(["MEDKIT","CardHealMeNow"]);
         aliasMatch.ConfigureCardInventory([(a,"MEDKIT",1)]);

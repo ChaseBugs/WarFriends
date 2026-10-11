@@ -233,18 +233,21 @@ public sealed partial class MatchEngine : IMatchRuntime
         string effectId)
     {
         var owner = Find(ownerPlayerId);
+        if (!cardEffects.TryGet(effectId, out var effect) || effect == null)
+            return null;
+        var medkit = MedkitSourcePolicy.FromClass(effect.Definition.CardId);
         if (owner?.Admitted != true || owner.Dead ||
-            !cardEffects.TryGet(effectId, out var effect) || effect == null || effect.OwnerPlayerId != ownerPlayerId ||
-            effect.Definition.CardId != "CardHealMeNow" ||
+            effect.OwnerPlayerId != ownerPlayerId ||
+            medkit == null ||
             effect.StartedTick != tick || effect.Lease.ExpiresTick != tick ||
             resolvedMedkits.Contains(effectId) || phase != BattlePhase.Running ||
             owner.Definition.Combat == null)
             return null;
 
-        // CardHealMeNow heals its own PlayerController. The recovered 1.4.0
-        // MedKitCoef source row is 0.2; neither target nor amount comes from
-        // a player packet. Healing is negative damage in DestroyableObject.
-        float amount = owner.Definition.Combat.MaxHealth * 0.2f;
+        // Both instant cards heal their own PlayerController. CardConstants
+        // supplies 0.2 for MEDKIT and 0.1 for SMALLMEDKIT. The packet never
+        // supplies an amount or a target.
+        float amount = owner.Definition.Combat.MaxHealth * medkit.MaximumHealthFraction;
         PlayerDamageResult? result = ApplyResolvedPlayerDamage(ownerPlayerId,
             ownerPlayerId, new ResolvedPlayerDamage(-amount,
                 CombatDamageType.Basic, HasWeapon: false), combatRandom(), false);
@@ -253,9 +256,12 @@ public sealed partial class MatchEngine : IMatchRuntime
         return result;
     }
 
-    private string UseMedkit(Player owner, string requestId)
+    private string UseMedkit(Player owner, string requestId,string sourceCardId)
     {
-        if (!HasSelectedCard(owner,"CardHealMeNow"))
+        var medkit=MedkitSourcePolicy.Resolve(sourceCardId);
+        if (medkit==null)
+            return "invalid-medkit-card";
+        if (!HasSelectedCard(owner,medkit.CardClassId))
             return "medkit-not-selected";
         if (owner.Dead || owner.Definition.Combat == null)
             return "medkit-owner-unavailable";
@@ -266,9 +272,9 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (events.Count >= MaximumRetainedEvents || stateRevision > ulong.MaxValue - 2)
             return "event-backpressure";
 
-        // The card belongs to this player. Its recovered 0.2 coefficient is
-        // resolved by the host; the packet contains no healing amount or target.
-        var request = new WarCardEffectRequest("CardHealMeNow", Vector3.Zero, 0, 1);
+        // The selected card identity chooses a source-backed host coefficient;
+        // the packet contains no healing amount or target.
+        var request = new WarCardEffectRequest(medkit.CardClassId, Vector3.Zero, 0, 1);
         if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, request))
             return "medkit-unavailable";
         return TryResolveMedkit(owner.Definition.PlayerId, requestId)?.Applied == true
@@ -2036,7 +2042,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHeavyTurret)
             return UseHeavyTurret(p,c.UseHeavyTurret.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseMedkit)
-            return UseMedkit(p,c.UseMedkit.RequestId);
+            return UseMedkit(p,c.UseMedkit.RequestId,c.UseMedkit.SourceCardId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)

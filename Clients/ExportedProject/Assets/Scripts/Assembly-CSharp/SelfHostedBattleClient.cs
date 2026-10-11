@@ -554,9 +554,15 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
     public async Task<MatchReply> UseMedkitResult()
     {
+        return await UseMedkitResult("MEDKIT");
+    }
+
+    public async Task<MatchReply> UseMedkitResult(string sourceCardId)
+    {
         if (!IsConnected || connection == null)
             throw new InvalidOperationException("Connect to a self-hosted match first.");
-        MatchReply reply = await connection.UseMedkitAsync(Guid.NewGuid().ToString("N"), lifetime.Token);
+        MatchReply reply = await connection.UseMedkitAsync(
+            Guid.NewGuid().ToString("N"), sourceCardId, lifetime.Token);
         Apply(reply);
         return reply.Clone();
     }
