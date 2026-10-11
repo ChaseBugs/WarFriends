@@ -74,6 +74,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     private readonly GroundVehicleWeaponCatalog? groundVehicleWeapons;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly CoopEnemyMuzzleCatalog? enemyMuzzles;
+    private readonly CoopAssaulterWeaponCatalog? assaulterWeapon;
     private readonly EnemyShotTargetCatalog? enemyShotTargets;
     private readonly DecoySourceCatalog? decoySource;
     private readonly LandMineSourceCatalog? landMineSource;
@@ -957,6 +958,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             groundVehicleWeapons=content.GroundVehicleWeapons;
             enemyPoses = content.EnemyPoses;
             enemyMuzzles = content.CoopEnemyMuzzles;
+            assaulterWeapon = content.CoopAssaulterWeapon;
             enemyShotTargets = content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armySpawnPoints=content.ArmySpawnPoints;

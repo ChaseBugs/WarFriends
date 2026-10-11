@@ -12528,6 +12528,33 @@ internal static class CombatContentTests
         bool bothSnipersArrived = false;
         MatchEvent? firstSniperShot = null;
         (string OwnerPlayerId, int OwnerFraction, float Damage)? firstSniperLaunch = null;
+        ulong? firstSniperShooter = null;
+        Vector3? firstSniperSampledMuzzle = null;
+        Vector3? firstSniperRestMuzzle = null;
+        void RecordFirstSniperShot()
+        {
+            if (firstSniperShot != null) return;
+            firstSniperShot = sniperCardMatch.EventBatch(decoyPlayer, 0)
+                .Events.FirstOrDefault(row => row.Kind == MatchEventKind.Shot &&
+                    row.ActorId == decoyPlayer && row.Reason == "army");
+            if (firstSniperShot == null) return;
+            firstSniperLaunch = sniperCardMatch.ArmyProjectileLaunch(
+                firstSniperShot.ProjectileId);
+            firstSniperShooter = sniperCardMatch.ArmyProjectileSourceEntity(
+                firstSniperShot.ProjectileId);
+            if (firstSniperShooter.HasValue)
+            {
+                Vector3 opponentCover = park.Covers.First(cover =>
+                    cover.Main && cover.Fraction == 2).Position;
+                firstSniperSampledMuzzle = sniperCardMatch.CardSniperFiringMuzzle(
+                    firstSniperShooter.Value, opponentCover);
+                var shooter = sniperCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                    .Entities.Single(row => row.EntityKey == firstSniperShooter.Value);
+                Vector3 position = new(shooter.X, shooter.Y, shooter.Z);
+                firstSniperRestMuzzle = content.ArmyWeapons.RestMuzzleOrigin(
+                    "ID_UNIT-SNIPER", position, opponentCover - position);
+            }
+        }
         ulong sniperArrivalTick = 60;
         for (ulong sniperTick = 61; sniperTick < 1000 &&
              !sniperCardMatch.Terminal && !bothSnipersArrived; sniperTick++)
@@ -12538,15 +12565,7 @@ internal static class CombatContentTests
                 sniperCardMatch.ArmyBatch(decoyOpponent);
             }
             sniperCardMatch.Advance(sniperTick);
-            if (firstSniperShot == null)
-            {
-                firstSniperShot = sniperCardMatch.EventBatch(decoyPlayer, 0)
-                    .Events.FirstOrDefault(row => row.Kind == MatchEventKind.Shot &&
-                        row.ActorId == decoyPlayer && row.Reason == "army");
-                if (firstSniperShot != null)
-                    firstSniperLaunch = sniperCardMatch.ArmyProjectileLaunch(
-                        firstSniperShot.ProjectileId);
-            }
+            RecordFirstSniperShot();
             sniperArrivalTick = sniperTick;
             bothSnipersArrived = sniperCardRows.All(row =>
                 sniperCardMatch.CardSniperAtPoint(row.EntityKey));
@@ -12567,15 +12586,7 @@ internal static class CombatContentTests
                 sniperCardMatch.ArmyBatch(decoyOpponent);
             }
             sniperCardMatch.Advance(sniperTick);
-            if (firstSniperShot == null)
-            {
-                firstSniperShot = sniperCardMatch.EventBatch(decoyPlayer, 0)
-                    .Events.FirstOrDefault(row => row.Kind == MatchEventKind.Shot &&
-                        row.ActorId == decoyPlayer && row.Reason == "army");
-                if (firstSniperShot != null)
-                    firstSniperLaunch = sniperCardMatch.ArmyProjectileLaunch(
-                        firstSniperShot.ProjectileId);
-            }
+            RecordFirstSniperShot();
         }
         Check(!sniperCardMatch.Terminal && sniperCardRows.All(row =>
               sniperCardMatch.CardSniperAtPoint(row.EntityKey)) &&
@@ -12591,6 +12602,16 @@ internal static class CombatContentTests
                   sniperCardMatch.ArmyDamage(row.EntityKey) ==
                       firstSniperLaunch.Value.Damage),
             "source Corner Sniper fires a host-owned BulletSlow with its card-row damage");
+        Check(firstSniperShot != null && firstSniperShooter.HasValue &&
+              firstSniperSampledMuzzle.HasValue &&
+              firstSniperRestMuzzle.HasValue &&
+              sniperCardRows.Any(row => row.EntityKey == firstSniperShooter.Value) &&
+              Vector3.Distance(new Vector3(firstSniperShot.X,
+                  firstSniperShot.Y, firstSniperShot.Z),
+                  firstSniperSampledMuzzle.Value) < .05f &&
+              Vector3.Distance(firstSniperSampledMuzzle.Value,
+                  firstSniperRestMuzzle.Value) > .1f,
+            "card Sniper shot starts from the side-specific animated weapon muzzle");
         Check(sniperCardMatch.ConfirmArmyDeath(
                   sniperCardRows[1].EntityKey, false) &&
               sniperCardMatch.CardEnemyPointOccupant(secondSniperPointId) == null,

@@ -3096,11 +3096,14 @@ public sealed partial class MatchEngine
             Vector3 origin;
             if (intent.MuzzleOverride is Vector3 sampledOrigin)
             {
-                if (behavior != "SoldierBehaviourParachuter" ||
-                    army.SourceCardId != "ELITEPARA" ||
+                bool cardParatrooper = behavior == "SoldierBehaviourParachuter" &&
+                    army.SourceCardId == "ELITEPARA";
+                bool cardSniper = behavior == "SoldierBehaviourSniper" &&
+                    army.SourceCardId == "ELITESNIPER";
+                if ((!cardParatrooper && !cardSniper) ||
                     !PlayerHitbox.Finite(sampledOrigin) ||
                     Vector3.Distance(sampledOrigin, entityPosition) > 5f)
-                    throw new InvalidDataException("Invalid card Paratrooper muzzle sample.");
+                    throw new InvalidDataException("Invalid card soldier muzzle sample.");
                 origin = sampledOrigin;
             }
             else

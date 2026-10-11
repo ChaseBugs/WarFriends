@@ -51,6 +51,22 @@ public sealed partial class MatchEngine
     internal ArmyRusherAttackState? CardSniperAttack(ulong entityKey) =>
         sniperAttacks.GetValueOrDefault(entityKey);
 
+    internal Vector3? CardSniperFiringMuzzle(ulong entityKey,
+        Vector3 targetPosition)
+    {
+        if (!sniperAttacks.ContainsKey(entityKey))
+            return null;
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "ELITESNIPER" ||
+            cardEnemyPoints?.Find(entityKey) is not { } corner ||
+            enemyMuzzles == null || assaulterWeapon == null ||
+            armyWeapons == null)
+            throw new InvalidDataException("Card Sniper lost animated muzzle authority.");
+        return CardSniperMuzzlePose.Place(enemyMuzzles, assaulterWeapon,
+            armyWeapons, corner, new Vector3(entity.X, entity.Y, entity.Z),
+            targetPosition);
+    }
+
     internal bool CardParatrooperWalking(ulong entityKey) =>
         paratrooperWalks.ContainsKey(entityKey);
 
@@ -1045,10 +1061,13 @@ public sealed partial class MatchEngine
                 continue;
             if (!sniperShotTargets.TryGetValue(entityKey, out var shot))
                 throw new InvalidDataException("Card Sniper lost its latched target.");
+            Vector3 muzzle = CardSniperFiringMuzzle(entityKey,
+                shot.Position) ?? throw new InvalidDataException(
+                    "Card Sniper shot has no source muzzle.");
             rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
                 entity.OwnerPlayerId, shot.PlayerId, shot.TargetFileId,
                 shot.Position, attack.CurrentShotIsReal,
-                attack.BatchCursor, attack.BatchSize));
+                attack.BatchCursor, attack.BatchSize, muzzle));
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 sniperShotTargets.Remove(entityKey);
