@@ -76,13 +76,29 @@ def check_apocalypse_source():
         raise ValueError("Apocalypse shield targeting source changed")
 
 
+def check_single_shield_source():
+    source = (ASSETS / "Scripts/Assembly-CSharp/CardShieldDestroyer.cs")
+    behavior = source.read_text(encoding="utf-8-sig")
+    expected = [
+        "if (item.fraction != callerFraction)",
+        "UnityEngine.Random.Range(0f, mPlayerPoints.Count - 1)",
+        "(int)Math.Round(num, 0)",
+        "mPlayerPoints[index].shield.DestroyShield();",
+    ]
+    target_selector = behavior.split("private void DestroyRandomShield", 1)[1]
+    target_selector = target_selector.split("public override void UseCard", 1)[0]
+    if (any(rule not in behavior for rule in expected) or
+        "item.point.shield.health > 0f" in target_selector):
+        raise ValueError("Single-shield card targeting source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     body = source.split("private async void UseSelfHostedCard", 1)[1]
     body = body.split("private static bool IsAcceptedSelfHostedCardReply", 1)[0]
     names = set(re.findall(r"card is (Card[A-Za-z]+)", body))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", body))
-    if len(names) != 14:
+    if len(names) != 15:
         raise ValueError("Normal Client self-hosted card route count changed")
     return names
 
@@ -90,6 +106,7 @@ def direct_client_routes():
 def render():
     rows = source_rows()
     check_apocalypse_source()
+    check_single_shield_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()
@@ -120,7 +137,7 @@ def render():
         "A dash in the reviewed column means the server catalog has not",
         "pinned that class/ID pair. Disabled rows may lack a scene component.",
         "A direct Client route is only a dispatch path, not end-to-end proof.",
-        "The dispatcher currently has 14 card classes, and its fallback for",
+        "The dispatcher currently has 15 card classes, and its fallback for",
         "other cards still calls Photon; those cards need a host path before",
         "offline play can admit them.",
         "",

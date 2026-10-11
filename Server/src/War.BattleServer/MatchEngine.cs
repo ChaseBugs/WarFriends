@@ -365,6 +365,49 @@ public sealed partial class MatchEngine : IMatchRuntime
         return "mass-shields-destroyed";
     }
 
+    private string UseShieldDestroyer(Player owner, string requestId)
+    {
+        if (!HasSelectedCard(owner,"CardShieldDestroyer"))
+            return "shield-destroyer-not-selected";
+        if (!Guid.TryParseExact(requestId,"N",out _) ||
+            requestId!=requestId.ToLowerInvariant())
+            return "invalid-shield-destroyer-request";
+        if (cardReservations==null || shields==null)
+            return "shield-destroyer-authority-unavailable";
+
+        int? target;
+        try
+        {
+            target=ShieldDestroyerTargetPolicy.Select(shields.Snapshot(),
+                owner.Definition.Fraction,combatRandom());
+        }
+        catch (InvalidDataException)
+        {
+            return "shield-destroyer-authority-unavailable";
+        }
+        if (events.Count+2>MaximumRetainedEvents ||
+            stateRevision>ulong.MaxValue-2)
+            return "event-backpressure";
+
+        // Unlike Apocalypse, the source selects a PlayerPoint without first
+        // checking its shield health. A dead-shield draw still spends the card.
+        var effect=new WarCardEffectRequest("CardShieldDestroyer",Vector3.Zero,0,1);
+        if (!TryApplyCardEffect(requestId,owner.Definition.PlayerId,effect))
+            return "shield-destroyer-unavailable";
+        if (target.HasValue)
+        {
+            var destroyed=shields.DestroySingleByCard(owner.Definition.Fraction,
+                target.Value,tick);
+            if (destroyed!=null)
+            {
+                stateRevision++;
+                EmitShield(MatchEventKind.ShieldDestroyed,
+                    owner.Definition.PlayerId,destroyed,0);
+            }
+        }
+        return "shield-destroyer-used";
+    }
+
     private string UseAmmoBox(Player owner, string requestId)
     {
         if (!HasSelectedCard(owner,"CardAmmoBox"))
@@ -2002,6 +2045,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseShieldGenerator(p,c.UseShieldGenerator.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseMassShieldDestroyer)
             return UseMassShieldDestroyer(p,c.UseMassShieldDestroyer.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldDestroyer)
+            return UseShieldDestroyer(p,c.UseShieldDestroyer.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoBox)
             return UseAmmoBox(p,c.UseAmmoBox.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseAmmoThief)

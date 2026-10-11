@@ -865,13 +865,15 @@ internal static class BazookaCatalogTests
             "MainScene's four-second Shield Generator window expires at the host tick boundary");
         var apocalypseMatch = new MatchEngine(shieldAllocation with
         { MatchId = "bazooka-mass-shield-card" }, map, content,
-            armyChoice: count => count - 1);
-        apocalypseMatch.ConfigureCardSelection(["APOCALYPSE"]);
-        apocalypseMatch.ConfigureCardInventory([(one, "APOCALYPSE", 1)]);
+            armyChoice: count => count - 1, combatRandom: () => 1f);
+        apocalypseMatch.ConfigureCardSelection(["APOCALYPSE", "DESTROYSHIELD"]);
+        apocalypseMatch.ConfigureCardInventory([
+            (one, "APOCALYPSE", 1), (one, "DESTROYSHIELD", 1)]);
         apocalypseMatch.Admit(one);
         apocalypseMatch.Admit(two);
         var apocalypseSelection = new SelectCardsCommand();
         apocalypseSelection.CardIds.Add("APOCALYPSE");
+        apocalypseSelection.CardIds.Add("DESTROYSHIELD");
         Check(apocalypseMatch.Command(one, new() { CommandId = 1,
                   SelectCards = apocalypseSelection }).Code == "cards-selected",
             "the host accepts only the selected and allocated Apocalypse card");
@@ -936,6 +938,62 @@ internal static class BazookaCatalogTests
               apocalypseMatch.Snapshot().Shields.Count(row =>
                   row.OwnerFraction == 2 && row.Destroyed) == 3,
             "Apocalypse retry replays once and exhausted stock cannot destroy the fourth shield");
+        var singleShieldCommand = new MatchCommand { CommandId = 5,
+            UseShieldDestroyer = new()
+            { RequestId = "98989898989898989898989898989898" } };
+        int shieldsBeforeDeadDraw = apocalypseMatch.Snapshot().Shields.Count(row =>
+            row.OwnerFraction == 2 && row.Destroyed);
+        Check(apocalypseMatch.Command(one, singleShieldCommand).Code ==
+                  "shield-destroyer-used" &&
+              apocalypseMatch.Snapshot().Shields.Count(row =>
+                  row.OwnerFraction == 2 && row.Destroyed) == shieldsBeforeDeadDraw &&
+              apocalypseMatch.Command(one, singleShieldCommand).Code ==
+                  "shield-destroyer-used",
+            "single Shield Destroyer spends once when its source draw finds an already dead shield");
+        int firstEnemyCover = initialEnemyShields[0].CoverIndex;
+        int thirdEnemyCover = initialEnemyShields[2].CoverIndex;
+        Check(ShieldDestroyerTargetPolicy.Select(sourceShieldRows,1,0f)==firstEnemyCover &&
+              ShieldDestroyerTargetPolicy.Select(sourceShieldRows,1,.5f)==thirdEnemyCover &&
+              ShieldDestroyerTargetPolicy.Select(sourceShieldRows,1,1f)==
+                  initialEnemyShields[3].CoverIndex &&
+              ShieldDestroyerTargetPolicy.Select(sourceShieldRows.Select(row =>
+                  row.CoverIndex==thirdEnemyCover
+                      ? row with { Health=0, Destroyed=true } : row).ToArray(),
+                  1,.5f)==thirdEnemyCover,
+            "single-card float draw uses source midpoint rounding and retains dead cover points");
+        var shieldDestroyerMatch = new MatchEngine(shieldAllocation with
+        { MatchId = "bazooka-single-shield-card" }, map, content,
+            combatRandom: () => 0f);
+        shieldDestroyerMatch.ConfigureCardSelection(["DESTROYSHIELD"]);
+        shieldDestroyerMatch.ConfigureCardInventory([(one,"DESTROYSHIELD",1)]);
+        shieldDestroyerMatch.Admit(one);
+        shieldDestroyerMatch.Admit(two);
+        var singleSelection = new SelectCardsCommand();
+        singleSelection.CardIds.Add("DESTROYSHIELD");
+        Check(shieldDestroyerMatch.Command(one,new() {CommandId=1,
+                  SelectCards=singleSelection}).Code=="cards-selected",
+            "single Shield Destroyer requires its allocated source identity");
+        shieldDestroyerMatch.Command(one,new() {CommandId=2,
+            Ready=new() {ManifestHash=shieldDestroyerMatch.ManifestHash}});
+        shieldDestroyerMatch.Command(two,new() {CommandId=1,
+            Ready=new() {ManifestHash=shieldDestroyerMatch.ManifestHash}});
+        shieldDestroyerMatch.Advance(60);
+        var liveSingleCommand=new MatchCommand {CommandId=3,
+            UseShieldDestroyer=new()
+            {RequestId="99999999999999999999999999999999"}};
+        Check(shieldDestroyerMatch.Command(one,liveSingleCommand).Code==
+                  "shield-destroyer-used" &&
+              shieldDestroyerMatch.Snapshot().Shields.Count(row=>
+                  row.OwnerFraction==2&&row.Destroyed)==1 &&
+              shieldDestroyerMatch.Snapshot().Shields.Single(row=>
+                  row.CoverIndex==firstEnemyCover).Destroyed &&
+              shieldDestroyerMatch.Command(one,liveSingleCommand).Code==
+                  "shield-destroyer-used" &&
+              shieldDestroyerMatch.Command(one,new() {CommandId=4,
+                  UseShieldDestroyer=new()
+                  {RequestId="9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a"}}).Code==
+                  "shield-destroyer-unavailable",
+            "host single-card command destroys one source-selected enemy shield exactly once");
         var freezeMatch = new MatchEngine(shieldAllocation with
         { MatchId = "bazooka-broken-legs-card" }, map, content);
         freezeMatch.ConfigureCardSelection(["CardBrokenLegs"]);

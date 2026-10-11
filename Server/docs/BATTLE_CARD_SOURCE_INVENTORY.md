@@ -12,7 +12,7 @@ resolved through the component's MonoScript GUID and `.cs.meta`.
 A dash in the reviewed column means the server catalog has not
 pinned that class/ID pair. Disabled rows may lack a scene component.
 A direct Client route is only a dispatch path, not end-to-end proof.
-The dispatcher currently has 14 card classes, and its fallback for
+The dispatcher currently has 15 card classes, and its fallback for
 other cards still calls Photon; those cards need a host path before
 offline play can admit them.
 
@@ -64,7 +64,7 @@ offline play can admit them.
 | `RANDOMKEVLAR` | 1 | `CardRandomKevlar` | no | no |
 | `EXPLOSIVETIMING` | 1 | `CardRocketTiming` | no | no |
 | `STREAKBOOST` | 1 | `CardScorestreakBooster` | no | no |
-| `DESTROYSHIELD` | 1 | `CardShieldDestroyer` | no | no |
+| `DESTROYSHIELD` | 1 | `CardShieldDestroyer` | yes | yes |
 | `SHIELDSPAWNER` | 1 | `CardShieldsSpawner` | no | no |
 | `SHIELDSHEALTH` | 2 | `CardShieldsUp` | yes | yes |
 | `SLOWDOWN` | 1 | `CardSlowdown` | yes | no |

@@ -523,7 +523,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				card is CardHeavyTurret ||
 				card is CardHealingStorm || card is CardShieldsUp || card is CardShieldGenerator ||
 				card is CardAmmoBox || card is CardAmmoThief || card is CardBrokenLegs ||
-				card is CardMassShieldDestroyer ||
+				card is CardMassShieldDestroyer || card is CardShieldDestroyer ||
 				card is CardHealthForSoldiers || card is CardHealthForMachines ||
 				card.GetType() == typeof(CardHealMeNow)))
 			{
@@ -560,6 +560,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardAmmoThief) reply = await client.UseAmmoThiefResult();
 			else if (card is CardBrokenLegs) reply = await client.UseBrokenLegsResult();
 			else if (card is CardMassShieldDestroyer) reply = await client.UseMassShieldDestroyerResult();
+			else if (card is CardShieldDestroyer) reply = await client.UseShieldDestroyerResult();
 			else if (card is CardHealthForSoldiers) reply = await client.UseSuperSoldiersResult();
 			else if (card is CardHealthForMachines) reply = await client.UseVehicleHealthResult();
 			else if (card is CardLandmine) reply = await client.UseLandMineResult();
@@ -596,6 +597,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		if (card is CardAmmoThief) return code == "ammo-thief-applied";
 		if (card is CardBrokenLegs) return code == "broken-legs-active";
 		if (card is CardMassShieldDestroyer) return code == "mass-shields-destroyed";
+		if (card is CardShieldDestroyer) return code == "shield-destroyer-used";
 		if (card is CardHealthForSoldiers || card is CardHealthForMachines)
 			return code == "army-health-card-active";
 		if (card is CardLandmine) return code == "land-mine-spawned" || code == "land-mine-replayed";

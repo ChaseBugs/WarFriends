@@ -79,6 +79,15 @@ internal sealed class ShieldMatchSimulation
         }
         return changed.AsReadOnly();
     }
+    internal ShieldMutation? DestroySingleByCard(int attackerFraction,int coverIndex,ulong tick)
+    {
+        if (tick!=lastTick || attackerFraction is not (1 or 2) ||
+            coverIndex<0 || coverIndex>=entries.Length ||
+            entries[coverIndex].Cover.Fraction==attackerFraction)
+            throw new InvalidDataException("Invalid single-shield card target.");
+        if (entries[coverIndex].Lifecycle.Destroyed) return null;
+        return DestroyByCard(attackerFraction,[coverIndex],tick).Single();
+    }
     internal void SetCardRegeneration(IReadOnlyCollection<int> enabledFractions,
         IReadOnlyCollection<int> occupiedCoverSourceIndexes)
     {
