@@ -267,6 +267,20 @@ def check_kevlar_up_source():
         raise ValueError("KEVLARUP armor amount or damage source changed")
 
 
+def check_shield_spawner_source():
+    source = (ASSETS / "Scripts/Assembly-CSharp/CardShieldsSpawner.cs")
+    behavior = source.read_text(encoding="utf-8-sig")
+    scene = (ASSETS / "Scenes/MainScene.unity").read_text(encoding="utf-8-sig")
+    expected = [
+        "public float multiplierRespawnRate = 0.7f",
+        "list[0].shield.refreshTime * multiplierRespawnRate",
+        "item2.shield.refreshTime = refreshTime",
+    ]
+    if (any(rule not in behavior for rule in expected) or
+        "multiplierRespawnRate: 0.7" not in scene):
+        raise ValueError("SHIELDSPAWNER repair multiplier source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -279,7 +293,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 25 or
+    if (len(names) != 26 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -302,6 +316,7 @@ def render():
     check_disarmed_source()
     check_shield_reflection_source()
     check_kevlar_up_source()
+    check_shield_spawner_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()

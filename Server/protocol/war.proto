@@ -140,6 +140,7 @@ message UseSlowMoveCommand { string request_id = 1; }
 message UseDisarmedCommand { string request_id = 1; }
 message UseShieldReflectionCommand { string request_id = 1; }
 message UseKevlarUpCommand { string request_id = 1; }
+message UseShieldSpawnerCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
 message MatchCommand {
@@ -181,6 +182,7 @@ message MatchCommand {
     UseDisarmedCommand use_disarmed = 45;
     UseShieldReflectionCommand use_shield_reflection = 46;
     UseKevlarUpCommand use_kevlar_up = 47;
+    UseShieldSpawnerCommand use_shield_spawner = 48;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -294,6 +296,7 @@ message BattleShieldState {
   int32 cover_index = 1; int32 owner_fraction = 2;
   float health = 3; float max_health = 4; bool destroyed = 5;
   uint64 revision = 6;
+  float repair_seconds = 7;
 }
 message BattleBarrelState {
   // Map-scoped collider index; source scene and revision come from the manifest.

@@ -2110,6 +2110,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseShieldReflection(p,c.UseShieldReflection.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseKevlarUp)
             return UseKevlarUp(p,c.UseKevlarUp.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldSpawner)
+            return UseShieldSpawner(p,c.UseShieldSpawner.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
@@ -2942,7 +2944,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         if(shields!=null)
             snapshot.Shields.AddRange(shields.Snapshot().Select(s=>new BattleShieldState
             {CoverIndex=s.CoverIndex,OwnerFraction=s.OwnerFraction,Health=s.Health,
-                MaxHealth=s.MaxHealth,Destroyed=s.Destroyed,Revision=s.Revision}));
+                MaxHealth=s.MaxHealth,Destroyed=s.Destroyed,Revision=s.Revision,
+                RepairSeconds=s.RepairSeconds}));
         snapshot.AirEntities.AddRange(airEntities.Snapshot().OrderBy(e=>e.EntityKey).Select(e =>
             new BattleAirEntityState
             {

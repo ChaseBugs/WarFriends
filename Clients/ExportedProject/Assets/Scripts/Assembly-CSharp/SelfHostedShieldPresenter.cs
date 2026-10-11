@@ -45,6 +45,6 @@ public sealed class SelfHostedShieldPresenter
 
 		foreach (BattleShieldState state in snapshot.Shields)
 			shieldsByCover[state.CoverIndex].ApplySelfHostedState(
-				state.Health, state.MaxHealth, state.Destroyed);
+				state.Health, state.MaxHealth, state.Destroyed, state.RepairSeconds);
 	}
 }

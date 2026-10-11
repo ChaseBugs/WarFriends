@@ -12,6 +12,7 @@ internal sealed class ShieldLifecycle
     private bool missionStartApplied;
     internal float Health {get;private set;}
     internal float MaxHealth=>maximum;
+    internal float RepairSeconds {get;private set;}
     internal bool Destroyed {get;private set;}
     internal bool ColliderEnabled=>!Destroyed;
     internal bool CanRegenerate {get;set;}
@@ -25,6 +26,13 @@ internal sealed class ShieldLifecycle
         this.isImmortal=isImmortal??(() => false);
         if(startingTick>10000000)throw new InvalidDataException("Invalid shield starting tick.");
         maximum=policy.Health(provenZeroBasedLevel);Health=maximum;lastTick=startingTick;
+        RepairSeconds=policy.RepairSeconds;
+    }
+    internal void SetRepairSeconds(float seconds)
+    {
+        if (!float.IsFinite(seconds) || seconds is <= 0 or > 3600)
+            throw new InvalidDataException("Invalid shield repair time.");
+        RepairSeconds=seconds;
     }
     internal void ApplyMissionStart(CoopShieldStart? start)
     {
@@ -125,7 +133,7 @@ internal sealed class ShieldLifecycle
         if(Destroyed)
         {
             if(AutoRepair && policy.RepairEnabled &&
-                tick-destroyedTick>=MathF.Ceiling(policy.RepairSeconds*MatchManifest.TickRate))
+                tick-destroyedTick>=MathF.Ceiling(RepairSeconds*MatchManifest.TickRate))
             {Health=maximum;Destroyed=false;destroyedTick=0;}
             return;
         }

@@ -52,6 +52,16 @@ internal static class ShieldLifecycleTests
         reflected.ApplyShot("Google2u.Shotgun_SPAS", 100, 0);
         Check(reflected.Health == reflected.MaxHealth - 100,
             "shield damage resumes when the card lease expires");
+        var fasterRepair = new ShieldLifecycle(policy, 0, 0);
+        fasterRepair.SetRepairSeconds(policy.RepairSeconds * 0.7f);
+        fasterRepair.ApplyShot("Google2u.Shotgun_SPAS", 1000, 0);
+        for (ulong tick = 1; tick < 126; tick++) fasterRepair.Advance(tick);
+        Check(fasterRepair.Destroyed && fasterRepair.RepairSeconds == 4.2f,
+            "Shield Spawner reduces the six-second source repair delay to 4.2 seconds");
+        fasterRepair.Advance(126);
+        Check(!fasterRepair.Destroyed && fasterRepair.Health == fasterRepair.MaxHealth,
+            "the accelerated shield repairs on its new host-tick deadline");
+        Reject(() => fasterRepair.SetRepairSeconds(float.NaN));
         return checks;
     }
 }

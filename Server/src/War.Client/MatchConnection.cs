@@ -91,6 +91,9 @@ namespace War.Client
         public Task<MatchReply> UseKevlarUpAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseKevlarUp=new UseKevlarUpCommand
                 {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseShieldSpawnerAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseShieldSpawner=new UseShieldSpawnerCommand
+                {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseHealingStormAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseHealingStorm=new UseHealingStormCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseShieldsUpAsync(string requestId,CancellationToken ct) =>

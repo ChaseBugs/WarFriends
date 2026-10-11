@@ -5,8 +5,13 @@ using UnityEngine;
 
 public class Shield : DestroyableObject
 {
-	public new void ApplySelfHostedState(float authoritativeHealth, float authoritativeMaxHealth, bool dead)
+	public void ApplySelfHostedState(float authoritativeHealth, float authoritativeMaxHealth,
+		bool dead, float repairSeconds)
 	{
+		if (float.IsNaN(repairSeconds) || float.IsInfinity(repairSeconds) ||
+			repairSeconds <= 0f || repairSeconds > 3600f)
+			throw new System.InvalidOperationException("Invalid authoritative shield repair time.");
+		mRepairTime = repairSeconds;
 		base.ApplySelfHostedState(authoritativeHealth, authoritativeMaxHealth, dead);
 		CheckIfShieldIsDestroyed();
 	}

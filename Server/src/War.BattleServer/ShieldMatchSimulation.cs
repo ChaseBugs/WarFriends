@@ -1,7 +1,7 @@
 namespace War.BattleServer;
 
 internal sealed record ShieldMutation(int CoverIndex,int OwnerFraction,float Health,float MaxHealth,
-    bool Destroyed,ulong Revision);
+    bool Destroyed,ulong Revision,float RepairSeconds=0);
 
 // Eight source-bound cover shields; only a complete trusted two-rank allocation
 // can construct this state. Unknown dynamic map owners stay collidable.
@@ -13,7 +13,7 @@ internal sealed class ShieldMatchSimulation
         internal ShieldLifecycle Lifecycle=lifecycle;
         internal ulong Revision;
         internal ShieldMutation Snapshot()=>new(Cover.SourceIndex,Cover.Fraction,Lifecycle.Health,
-            Lifecycle.MaxHealth,Lifecycle.Destroyed,Revision);
+            Lifecycle.MaxHealth,Lifecycle.Destroyed,Revision,Lifecycle.RepairSeconds);
     }
     private readonly Entry[] entries;
     private readonly Dictionary<string,Entry> byOwner;
@@ -58,6 +58,23 @@ internal sealed class ShieldMatchSimulation
             entry.Revision++;
         }
         return alliedShields.Select(entry => entry.Snapshot()).ToArray();
+    }
+    internal IReadOnlyList<ShieldMutation> AccelerateRepair(int ownerFraction,
+        float multiplier)
+    {
+        if (ownerFraction is not (1 or 2) || multiplier != 0.7f)
+            throw new InvalidDataException("Invalid shield repair card authority.");
+        var alliedShields=entries.Where(entry=>entry.Cover.Fraction==ownerFraction).ToArray();
+        if (alliedShields.Length==0)return [];
+        float newSeconds=alliedShields[0].Lifecycle.RepairSeconds*multiplier;
+        if (!float.IsFinite(newSeconds) || newSeconds<=0)
+            throw new InvalidDataException("Shield repair time underflow.");
+        foreach (var entry in alliedShields)
+        {
+            entry.Lifecycle.SetRepairSeconds(newSeconds);
+            entry.Revision++;
+        }
+        return alliedShields.Select(entry=>entry.Snapshot()).ToArray();
     }
     internal IReadOnlyList<ShieldMutation> DestroyByCard(
         int attackerFraction,IReadOnlyList<int> coverIndexes,ulong tick)

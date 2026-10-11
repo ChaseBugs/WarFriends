@@ -529,7 +529,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				card is CardEmptyMag || card is CardBulletSponge ||
 				card is CardSwiftImmortality || card is CardBelovedEnemy ||
 				card is CardDisarmedAndLocked || card is CardShiedlsRefection ||
-				card is CardKevlarUp))
+				card is CardKevlarUp || card is CardShieldsSpawner))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
@@ -578,6 +578,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardDisarmedAndLocked) reply = await client.UseDisarmedResult();
 			else if (card is CardShiedlsRefection) reply = await client.UseShieldReflectionResult();
 			else if (card is CardKevlarUp) reply = await client.UseKevlarUpResult();
+			else if (card is CardShieldsSpawner) reply = await client.UseShieldSpawnerResult();
 			else if (card is CardHealingStorm) reply = await client.UseHealingStormResult();
 			else if (card is CardShieldsUp) reply = await client.UseShieldsUpResult();
 			else if (card is CardShieldGenerator) reply = await client.UseShieldGeneratorResult();
@@ -624,6 +625,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		if (card is CardDisarmedAndLocked) return code == "disarmed-active";
 		if (card is CardShiedlsRefection) return code == "shield-reflection-active";
 		if (card is CardKevlarUp) return code == "kevlar-up-applied";
+		if (card is CardShieldsSpawner) return code == "shield-spawner-applied";
 		if (card is CardHealingStorm) return code == "healing-storm-applied";
 		if (card is CardShieldsUp) return code == "shields-up-applied";
 		if (card is CardShieldGenerator) return code == "shield-generator-active";

@@ -908,6 +908,41 @@ internal static class BazookaCatalogTests
         Check(!reflectionMatch.Snapshot().CardEffects.Any(effect =>
                   effect.CardId == "CardShiedlsRefection"),
             "source reflection ends after fifteen host seconds");
+        var spawnerMatch = new MatchEngine(shieldAllocation with
+        { MatchId = "bazooka-shield-spawner-card" }, map, content);
+        spawnerMatch.ConfigureCardSelection(["SHIELDSPAWNER"]);
+        spawnerMatch.ConfigureCardInventory([(one, "SHIELDSPAWNER", 2)]);
+        spawnerMatch.Admit(one);
+        spawnerMatch.Admit(two);
+        var spawnerSelection = new SelectCardsCommand();
+        spawnerSelection.CardIds.Add("SHIELDSPAWNER");
+        Check(spawnerMatch.Command(one, new MatchCommand
+        {
+            CommandId = 1, SelectCards = spawnerSelection
+        }).Code == "cards-selected", "owner selects source Shield Spawner");
+        spawnerMatch.Command(one, new MatchCommand { CommandId = 2,
+            Ready = new ReadyCommand { ManifestHash = spawnerMatch.ManifestHash } });
+        spawnerMatch.Command(two, new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = spawnerMatch.ManifestHash } });
+        spawnerMatch.Advance(60);
+        var firstSpawner = new MatchCommand { CommandId = 3,
+            UseShieldSpawner = new UseShieldSpawnerCommand
+            { RequestId = "86868686868686868686868686868686" } };
+        Check(spawnerMatch.Command(one, firstSpawner).Code == "shield-spawner-applied" &&
+              spawnerMatch.Command(one, firstSpawner).Code == "shield-spawner-applied" &&
+              spawnerMatch.Snapshot().Shields.Where(row => row.OwnerFraction == 1)
+                  .All(row => row.RepairSeconds == 4.2f) &&
+              spawnerMatch.Snapshot().Shields.Where(row => row.OwnerFraction == 2)
+                  .All(row => row.RepairSeconds == 6f),
+            "first source card shortens every allied repair timer exactly once");
+        spawnerMatch.Advance(61);
+        var secondSpawner = new MatchCommand { CommandId = 4,
+            UseShieldSpawner = new UseShieldSpawnerCommand
+            { RequestId = "87878787878787878787878787878787" } };
+        Check(spawnerMatch.Command(one, secondSpawner).Code == "shield-spawner-applied" &&
+              spawnerMatch.Snapshot().Shields.Where(row => row.OwnerFraction == 1)
+                  .All(row => row.RepairSeconds == 4.2f * 0.7f),
+            "another allocated card multiplies the current allied repair time");
         var apocalypseMatch = new MatchEngine(shieldAllocation with
         { MatchId = "bazooka-mass-shield-card" }, map, content,
             armyChoice: count => count - 1, combatRandom: () => 1f);
