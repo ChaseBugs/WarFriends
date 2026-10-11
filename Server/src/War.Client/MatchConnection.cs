@@ -108,6 +108,21 @@ namespace War.Client
                 }
             }, false, false, ct);
         public Task<MatchReply> DeployArmyAsync(int optionIndex, CancellationToken ct) => Run(new MatchCommand { DeployArmy = new DeployArmyCommand { OptionIndex = optionIndex } }, false, false, ct);
+        public Task<MatchReply> UseUnitCardAsync(string requestId,
+            string sourceCardId, CancellationToken ct)
+        {
+            if (!Guid.TryParseExact(requestId, "N", out _) ||
+                requestId != requestId.ToLowerInvariant() ||
+                !CardUnitSourceIdentity.IsKnown(sourceCardId))
+                throw new ArgumentException("Invalid unit-card request or source identity.");
+
+            var intent = new UseUnitCardCommand
+            {
+                RequestId = requestId,
+                SourceCardId = sourceCardId
+            };
+            return Run(new MatchCommand { UseUnitCard = intent }, false, false, ct);
+        }
         public Task<MatchReply> RetryPendingAsync(CancellationToken ct) => Run(null, false, true, ct);
 
         /// <summary>Copies an unresolved mutation before replacing this UDP session.</summary>

@@ -26,6 +26,20 @@ Check(BattleArmyEntityState.Parser.ParseFrom(cardUnitWire.ToByteArray()).Equals(
       !CardUnitSourceIdentity.Matches("HEAVYDRONE", "ID_UNIT-SNIPER") &&
       !CardUnitSourceIdentity.Matches("UNKNOWN", "ID_UNIT-DRONE"),
     "unit-card wire origin retains one recovered card and unit identity");
+var useUnitCardWire = new MatchCommand
+{
+    CommandId = 19,
+    UseUnitCard = new UseUnitCardCommand
+    {
+        RequestId = Guid.NewGuid().ToString("N"),
+        SourceCardId = "HEAVYDRONE"
+    }
+};
+Check(MatchCommand.Parser.ParseFrom(useUnitCardWire.ToByteArray()).Equals(useUnitCardWire) &&
+      useUnitCardWire.IntentCase == MatchCommand.IntentOneofCase.UseUnitCard &&
+      CardUnitSourceIdentity.IsKnown(useUnitCardWire.UseUnitCard.SourceCardId) &&
+      !CardUnitSourceIdentity.IsKnown("DECOY"),
+    "unit-card intent carries only its request and recovered source card identity");
 var decoyRequest=Guid.NewGuid().ToString("N");
 var decoyWire=new MatchCommand{CommandId=18,UseDecoy=new UseDecoyCommand{RequestId=decoyRequest}};
 var decoySnapshot=new MatchSnapshot();decoySnapshot.Decoys.Add(new BattleDecoyState

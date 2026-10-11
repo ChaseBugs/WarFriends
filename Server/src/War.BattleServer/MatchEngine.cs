@@ -1850,6 +1850,18 @@ public sealed partial class MatchEngine : IMatchRuntime
             return "forfeited";
         }
         if (phase != BattlePhase.Running) return "not-running";
+        if (c.IntentCase == MatchCommand.IntentOneofCase.UseUnitCard)
+        {
+            var unitCard = c.UseUnitCard;
+            if (!Guid.TryParseExact(unitCard.RequestId, "N", out _) ||
+                unitCard.RequestId != unitCard.RequestId.ToLowerInvariant() ||
+                !War.Shared.CardUnitSourceIdentity.IsKnown(unitCard.SourceCardId))
+                return "invalid-unit-card";
+
+            // Do not consume a card before host entity creation, death
+            // accounting, and Client presentation are connected.
+            return "unit-card-unavailable";
+        }
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseDecoy)
             return UseDecoy(p,c.UseDecoy.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseLandMine)

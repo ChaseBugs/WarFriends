@@ -28,5 +28,10 @@ namespace War.Shared
                 Units.TryGetValue(sourceCardId, out string expectedUnitId) &&
                 expectedUnitId == unitId;
         }
+
+        public static bool IsKnown(string sourceCardId)
+        {
+            return sourceCardId != null && Units.ContainsKey(sourceCardId);
+        }
     }
 }

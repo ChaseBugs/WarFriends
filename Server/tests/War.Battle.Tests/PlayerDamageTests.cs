@@ -196,6 +196,34 @@ internal static class PlayerDamageTests
               !aliasMatch.Snapshot().Players[0].CardsSelected&&
               aliasMatch.Snapshot().CardActivations==0,
             "a class-name selection cannot replace Backend inventory bound to its source ID");
+        var unitCardMatch = new MatchEngine(manifest with {MatchId="closed-unit-card-activation"});
+        unitCardMatch.ConfigureCardSelection(["HEAVYDRONE"]);
+        unitCardMatch.ConfigureCardInventory([(a,"HEAVYDRONE",1)]);
+        unitCardMatch.Admit(a);
+        unitCardMatch.Admit(b);
+        var unitCardSelection = new SelectCardsCommand();
+        unitCardSelection.CardIds.Add("HEAVYDRONE");
+        Check(unitCardMatch.Command(a,new MatchCommand {CommandId=1,
+            SelectCards=unitCardSelection}).Code=="cards-selected",
+            "owner may select a trusted unit card before battle");
+        unitCardMatch.Command(a,new MatchCommand {CommandId=2,
+            Ready=new ReadyCommand {ManifestHash=unitCardMatch.ManifestHash}});
+        unitCardMatch.Command(b,new MatchCommand {CommandId=1,
+            Ready=new ReadyCommand {ManifestHash=unitCardMatch.ManifestHash}});
+        unitCardMatch.Advance(60);
+        var closedUnitCard = unitCardMatch.Command(a,new MatchCommand
+        {
+            CommandId=3,
+            UseUnitCard=new UseUnitCardCommand
+            {
+                RequestId="b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4",
+                SourceCardId="HEAVYDRONE"
+            }
+        });
+        Check(closedUnitCard.Code=="unit-card-unavailable"&&
+              unitCardMatch.Snapshot().CardActivations==0&&
+              unitCardMatch.ArmyEntityBatch(a,0,0).ActiveCount==0,
+            "the typed unit-card command stays closed until host entities are authoritative");
         const string healingStormEffectId = "82828282828282828282828282828282";
         Check(medkitMatch.TryApplyCardEffect(healingStormEffectId, a,
             new WarCardEffectRequest("CardHealingStorm",
