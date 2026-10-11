@@ -10078,6 +10078,29 @@ internal static class CombatContentTests
             Reject(()=>paratrooperSpawns.DueTick(2));
             Reject(()=>droneSpawns.DueTick(1));
             Reject(()=>new CardSpawnUnitSchedule("ELITEPARA", ulong.MaxValue));
+            var cardSpawnState = new CardUnitSpawnState(pendingLimit: 2);
+            const string firstCardRequest = "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1";
+            const string secondCardRequest = "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2";
+            Check(cardSpawnState.TrySchedule(firstCardRequest, "card-owner", "ELITEPARA", 90) &&
+                  !cardSpawnState.TrySchedule(firstCardRequest, "card-owner", "ELITEPARA", 90) &&
+                  !cardSpawnState.TrySchedule(secondCardRequest, "card-owner", "HEAVYDRONE", 90) &&
+                  cardSpawnState.PendingCount == 2,
+                "unit-card scheduling is bounded and duplicate requests cannot create extra units");
+            var firstDueCardUnit = cardSpawnState.Due(90).Single();
+            Check(firstDueCardUnit.SourceCardId == "ELITEPARA" &&
+                  firstDueCardUnit.UnitIndex == 0 &&
+                  !cardSpawnState.Complete(firstDueCardUnit, 89) &&
+                  cardSpawnState.Complete(firstDueCardUnit, 90) &&
+                  !cardSpawnState.Complete(firstDueCardUnit, 90) &&
+                  cardSpawnState.Due(104).Count == 0,
+                "the first unit is consumed once and the delayed second unit waits");
+            Check(cardSpawnState.TrySchedule(secondCardRequest, "card-owner", "HEAVYDRONE", 104) &&
+                  cardSpawnState.Due(104).Single().SourceCardId == "HEAVYDRONE" &&
+                  cardSpawnState.Due(105).Count == 2,
+                "another card can occupy released pending capacity without shifting due times");
+            Reject(()=>cardSpawnState.TrySchedule("not-a-request", "card-owner", "HEAVYDRONE", 1));
+            Reject(()=>cardSpawnState.TrySchedule("C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3",
+                "card-owner", "HEAVYDRONE", 1));
             int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
             foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
             {
