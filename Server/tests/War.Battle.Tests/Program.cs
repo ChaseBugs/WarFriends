@@ -2694,6 +2694,85 @@ mapped.Advance(60);
 Check(mapped.Snapshot().Players[0].PositionX == aztec.Covers[5].Position.X, "deferred movement has no unsigned clock underflow");
 mapped.Advance(move.Snapshot.Players[0].MoveEndTick);
 Check(mapped.Snapshot().Players[0].CoverIndex == 6 && !mapped.Snapshot().Players[0].Moving, "server finishes recovered path");
+var slowDefinition = mappedDefinition with
+{
+    MatchId = "slow-move-active-route",
+    IdleSeconds = 120,
+    Players = [mappedDefinition.Players[0] with { MovementSpeed = 2 },
+        mappedDefinition.Players[1]]
+};
+var slowMatch = new MatchEngine(slowDefinition, aztec);
+slowMatch.ConfigureCardSelection(["SLOWMOVE"]);
+slowMatch.ConfigureCardInventory([(b, "SLOWMOVE", 1)]);
+slowMatch.Admit(a);
+slowMatch.Admit(b);
+var slowSelection = new SelectCardsCommand();
+slowSelection.CardIds.Add("SLOWMOVE");
+Check(slowMatch.Command(b, new MatchCommand
+{
+    CommandId = 1, SelectCards = slowSelection
+}).Code == "cards-selected", "opponent selects the source slow-move card");
+slowMatch.Command(a, Ready(1, slowMatch.ManifestHash));
+slowMatch.Command(b, Ready(2, slowMatch.ManifestHash));
+slowMatch.Advance(60);
+var normalMove = slowMatch.Command(a, new MatchCommand
+{
+    CommandId = 2, MoveCover = new MoveCoverCommand { Direction = 1 }
+});
+Check(normalMove.Code == "moving", "target starts a normal cover route");
+ulong normalMoveEnd = normalMove.Snapshot.Players[0].MoveEndTick;
+slowMatch.Advance(61);
+slowMatch.Advance(62);
+var slowCommand = new MatchCommand
+{
+    CommandId = 3,
+    UseSlowMove = new UseSlowMoveCommand
+    {
+        RequestId = "95959595959595959595959595959595"
+    }
+};
+var slowedReply = slowMatch.Command(b, slowCommand);
+ulong slowedMoveEnd = slowedReply.Snapshot.Players[0].MoveEndTick;
+Check(slowedReply.Code == "slow-move-active" &&
+      slowedMoveEnd > normalMoveEnd &&
+      slowMatch.Command(b, slowCommand).Code == "slow-move-active" &&
+      slowMatch.Snapshot().Players[0].MoveEndTick == slowedMoveEnd,
+    "the card slows an in-progress route without restarting it on retry");
+Vector3 beforeSlowStep = new(slowMatch.Snapshot().Players[0].PositionX,
+    slowMatch.Snapshot().Players[0].PositionY,
+    slowMatch.Snapshot().Players[0].PositionZ);
+slowMatch.Advance(63);
+Vector3 afterSlowStep = new(slowMatch.Snapshot().Players[0].PositionX,
+    slowMatch.Snapshot().Players[0].PositionY,
+    slowMatch.Snapshot().Players[0].PositionZ);
+float slowDistance = Vector3.Distance(beforeSlowStep, afterSlowStep);
+Check(slowDistance > 0 && slowDistance <= .5f / MatchManifest.TickRate + .001f,
+    "source 0.5 is an absolute speed, even when the original speed is two");
+for (ulong movementTick = 64; movementTick <= slowedMoveEnd; movementTick++)
+    slowMatch.Advance(movementTick);
+Check(slowMatch.Snapshot().Players[0].CoverIndex == 6 &&
+      !slowMatch.Snapshot().Players[0].Moving,
+    "the slowed route still reaches the authoritative destination");
+for (ulong effectTick = slowedMoveEnd + 1; effectTick <= 362; effectTick++)
+    slowMatch.Advance(effectTick);
+Check(slowMatch.Snapshot().CardEffects.Count == 0,
+    "the slow effect expires ten seconds after activation");
+var returnMove = slowMatch.Command(a, new MatchCommand
+{
+    CommandId = 3, MoveCover = new MoveCoverCommand { Direction = -1 }
+});
+Check(returnMove.Code == "moving", "the target starts a route after expiry");
+slowMatch.Advance(363);
+Vector3 beforeNormalStep = new(slowMatch.Snapshot().Players[0].PositionX,
+    slowMatch.Snapshot().Players[0].PositionY,
+    slowMatch.Snapshot().Players[0].PositionZ);
+slowMatch.Advance(364);
+Vector3 afterNormalStep = new(slowMatch.Snapshot().Players[0].PositionX,
+    slowMatch.Snapshot().Players[0].PositionY,
+    slowMatch.Snapshot().Players[0].PositionZ);
+Check(Vector3.Distance(beforeNormalStep, afterNormalStep) >
+          .5f / MatchManifest.TickRate + .001f,
+    "a new route uses the original speed after the card expires");
 Check(mapped.Command(a, new MatchCommand { CommandId = 4, MoveCover = new MoveCoverCommand { Direction = 2 } }).Code == "cover-unavailable", "invalid cover direction");
 Reject(() => new MatchEngine(mappedDefinition with { MapRevision = hash }, aztec), "map revision binding");
 Reject(() => new MatchEngine(mappedDefinition with { Players = [new(a, original.Weapon, 1, 5, 1), mappedDefinition.Players[1]] }, aztec), "cannot use opponent cover");

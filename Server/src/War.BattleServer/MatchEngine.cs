@@ -999,6 +999,9 @@ public sealed partial class MatchEngine : IMatchRuntime
         public Vector3[]? Route;
         public ulong MoveStart;
         public ulong MoveEnd;
+        public ulong LastMoveTick;
+        public float RouteLength;
+        public float RouteTravelled;
         public int Destination;
         public string LastGeometryHit = "";
         public float Health;
@@ -1195,6 +1198,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             !players.Any(player => player.Reconnecting) &&
             bigMedkits.Count > 0 && elapsed > 1)
             throw new InvalidOperationException("Timed medikit healing requires every simulation tick.");
+        if (phase == BattlePhase.Running &&
+            !players.Any(player => player.Reconnecting) &&
+            cardEffects.Snapshot().Any(effect =>
+                effect.Definition.CardId == "CardBelovedEnemy") && elapsed > 1)
+            throw new InvalidOperationException("Slowed movement requires every simulation tick.");
         hostTick=nextTick;
         if (Terminal) return; // Preserve the exact terminal tick and result projection.
         if (phase == BattlePhase.Running && players.Any(player => player.Reconnecting))
@@ -1620,6 +1628,12 @@ public sealed partial class MatchEngine : IMatchRuntime
             foreach (var effect in expiredEffects)
             {
                 bigMedkits.Remove(effect.EffectId);
+                if (effect.Definition.CardId == "CardBelovedEnemy")
+                {
+                    var slowedPlayer = players.Single(player =>
+                        player.Definition.PlayerId != effect.OwnerPlayerId);
+                    RecalculateMoveEnd(slowedPlayer);
+                }
                 RemoveArmyHealthBuff(effect);
                 stateRevision++;
                 Emit(MatchEventKind.CardEffectExpired, effect.OwnerPlayerId,
@@ -1866,9 +1880,14 @@ public sealed partial class MatchEngine : IMatchRuntime
             Emit(MatchEventKind.HeavyTurretDestroyed,ownerPlayerId,"",turret.EntityId,
                 turret.Position,0,"owner-disconnected");
         }
+        bool hadSlowMove = cardEffects.HasActiveCard(ownerPlayerId,
+            "CardBelovedEnemy");
         foreach (var effect in cardEffects.ActiveForOwner(ownerPlayerId))
             RemoveArmyHealthBuff(effect);
         if (cardEffects.RemoveOwner(ownerPlayerId) > 0) stateRevision++;
+        if (hadSlowMove)
+            RecalculateMoveEnd(players.Single(player =>
+                player.Definition.PlayerId != ownerPlayerId));
         foreach (var effectId in bigMedkits.Where(pair => pair.Value.OwnerPlayerId == ownerPlayerId)
                      .Select(pair => pair.Key).ToArray())
             bigMedkits.Remove(effectId);
@@ -2080,6 +2099,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseBulletSponge(p,c.UseBulletSponge.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseImmortal)
             return UseImmortal(p,c.UseImmortal.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseSlowMove)
+            return UseSlowMove(p,c.UseSlowMove.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
@@ -2192,9 +2213,12 @@ public sealed partial class MatchEngine : IMatchRuntime
             float length = 0;
             for (int i = 1; i < route.Length; i++) length += Vector3.Distance(route[i-1], route[i]);
             p.Route = route;
+            p.RouteLength = length;
+            p.RouteTravelled = 0;
             p.Destination = target;
             p.MoveStart = tick + 1; // Source GoTo defaults to a 0.02-second deferred destination.
-            p.MoveEnd = p.MoveStart + Math.Max(1, Ticks(length / p.Definition.MovementSpeed));
+            p.LastMoveTick = p.MoveStart;
+            p.MoveEnd = p.MoveStart + Math.Max(1, Ticks(length / PlayerSpeed(p)));
             rifleCombat?.StartMove(p.Definition.PlayerId);
             return "moving";
         }
@@ -2586,15 +2610,19 @@ public sealed partial class MatchEngine : IMatchRuntime
         try
         {
         if (p.Route == null) return;
-        if (tick <= p.MoveStart) return;
-        if (tick >= p.MoveEnd)
+        if (tick <= p.MoveStart || tick <= p.LastMoveTick) return;
+        ulong elapsedTicks = tick - p.LastMoveTick;
+        float distanceStep = (float)elapsedTicks / MatchManifest.TickRate * PlayerSpeed(p);
+        p.RouteTravelled = Math.Min(p.RouteLength, p.RouteTravelled + distanceStep);
+        p.LastMoveTick = tick;
+        if (p.RouteTravelled >= p.RouteLength || tick >= p.MoveEnd)
         {
             p.Cover = p.Destination;
             p.Position = map!.Covers[p.Cover].Position;
             p.Route = null;
             return;
         }
-        float traveled = (float)(tick - p.MoveStart) / MatchManifest.TickRate * p.Definition.MovementSpeed;
+        float traveled = p.RouteTravelled;
         for (int i = 1; i < p.Route.Length; i++)
         {
             float segment = Vector3.Distance(p.Route[i-1], p.Route[i]);

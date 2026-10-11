@@ -190,6 +190,27 @@ def check_immortal_source():
         raise ValueError("IMMORTAL duration or player authority source changed")
 
 
+def check_slow_move_source():
+    content = ROOT / "Server/content/recovered-battle-content.json"
+    sheets = json.loads(content.read_text(encoding="utf-8"))["sheets"]
+    constants = next(sheet["rows"] for sheet in sheets
+                     if sheet["type"] == "Google2u.CardConstants")
+    values = {row["DBKEY"]: row["FLOATVALUE"] for row in constants}
+    source = (ASSETS / "Scripts/Assembly-CSharp/CardBelovedEnemy.cs")
+    behavior = source.read_text(encoding="utf-8-sig")
+    expected = [
+        "CardConstants.rowIds.BelovedEnemyTime",
+        "CardConstants.rowIds.BelovedEnemySpeed",
+        "mSavedSpeed = mPlayer.speed",
+        "mPlayer.speed = mSlowedSpeed",
+        "mPlayer.speed = mSavedSpeed",
+    ]
+    if (values.get("BelovedEnemyTime") != 10 or
+        values.get("BelovedEnemySpeed") != .5 or
+        any(rule not in behavior for rule in expected)):
+        raise ValueError("SLOWMOVE absolute speed or timing source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -202,7 +223,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 21 or
+    if (len(names) != 22 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -221,6 +242,7 @@ def render():
     check_empty_mag_source()
     check_bullet_sponge_source()
     check_immortal_source()
+    check_slow_move_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()
