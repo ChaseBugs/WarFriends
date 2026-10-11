@@ -11645,6 +11645,15 @@ internal static class CombatContentTests
         }
         Check(swatFired,
             "card SWAT reaches its source point and publishes a host-owned shot");
+        var swatShot = firingSwatMatch.EventBatch(decoyPlayer, 0).Events
+            .FirstOrDefault(row => row.Kind == MatchEventKind.Shot &&
+                row.ActorId == decoyPlayer && row.Reason == "army");
+        var swatLaunch = swatShot == null ? null :
+            firingSwatMatch.ArmyProjectileLaunch(swatShot.ProjectileId);
+        Check(swatShot != null && swatLaunch is { } launch &&
+              launch.OwnerPlayerId == decoyPlayer && launch.OwnerFraction == 1 &&
+              launch.Damage == swatCardStats.Combat.Damage,
+            "card SWAT projectile retains its card-row damage and owner at launch");
         var arrivedSwat = firingSwatMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.FirstOrDefault(row =>
                 firingSwatMatch.CardSwatAttacking(row.EntityKey));
@@ -11657,6 +11666,29 @@ internal static class CombatContentTests
               firingSwatMatch.CardEnemyPointOccupant(arrivedSwatPoint) == null &&
               firingSwatMatch.ArmyDamage(arrivedSwat.EntityKey) == null,
             "card SWAT death after firing removes attack, point, and damage authority");
+        Check(firingSwatMatch.ArmyProjectileLaunch(swatShot!.ProjectileId) == swatLaunch,
+            "confirmed shooter death keeps the already launched projectile authority");
+        MatchEvent? swatImpact = null;
+        bool swatFlightFinished = false;
+        for (ulong flightTick = swatShot.Tick + 1;
+             flightTick < Math.Min(swatShot.Tick + 450, 1790) &&
+             !firingSwatMatch.Terminal && !swatFlightFinished; flightTick++)
+        {
+            if (flightTick % 90 == 0)
+            {
+                firingSwatMatch.ArmyBatch(decoyPlayer);
+                firingSwatMatch.ArmyBatch(decoyOpponent);
+            }
+            firingSwatMatch.Advance(flightTick);
+            swatImpact = firingSwatMatch.EventBatch(decoyPlayer, 0).Events
+                .FirstOrDefault(row => row.Kind == MatchEventKind.Impact &&
+                    row.ProjectileId == swatShot.ProjectileId);
+            swatFlightFinished = firingSwatMatch.ArmyProjectileLaunch(
+                swatShot.ProjectileId) == null;
+        }
+        Check(swatFlightFinished && !firingSwatMatch.Terminal &&
+              (swatImpact == null || swatImpact.Reason == "army"),
+            "card SWAT shot keeps its launch authority after soldier death until impact or expiry");
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([

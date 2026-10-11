@@ -2462,6 +2462,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         projectiles.Clear();
         shotgunFakeProjectiles.Clear();
         armyProjectiles.Clear();
+        armyProjectileAuthority.Clear();
         armyFlameBursts.Clear();
         bazookaProjectiles.Clear();
         scheduledBazookas.Clear();

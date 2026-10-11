@@ -391,7 +391,16 @@ public sealed partial class MatchEngine
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
     private readonly Dictionary<ulong,ArmyPoisonEffect> armyPoisons=[];
-    private readonly Dictionary<ulong,float> armyProjectileDamage=[];
+    private sealed record ArmyProjectileAuthority(ulong EntityKey,
+        string OwnerPlayerId, int OwnerFraction, float Damage, float PoisonRatio);
+    private readonly Dictionary<ulong,ArmyProjectileAuthority> armyProjectileAuthority=[];
+    internal (string OwnerPlayerId, int OwnerFraction, float Damage)? ArmyProjectileLaunch(
+        ulong projectileId)
+    {
+        if (!armyProjectileAuthority.TryGetValue(projectileId, out var launch))
+            return null;
+        return (launch.OwnerPlayerId, launch.OwnerFraction, launch.Damage);
+    }
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
@@ -3102,7 +3111,9 @@ public sealed partial class MatchEngine
                 projectileSpeed.Value,tick,
                 (from,direction,range)=>rifleCombat.TraceForArmy(intent.OwnerPlayerId,from,direction,range));
             armyProjectiles.Add(id,flight);
-            armyProjectileDamage.Add(id,launchDamage);
+            armyProjectileAuthority.Add(id,new ArmyProjectileAuthority(intent.EntityKey,
+                army.OwnerPlayerId,army.OwnerFraction,launchDamage,
+                armySpecial.GetValueOrDefault(intent.EntityKey)));
             Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
                 id,origin,0,"army");
         }
@@ -3112,52 +3123,56 @@ public sealed partial class MatchEngine
     {
         foreach(var pair in armyProjectiles.ToArray())
         {
-            if(!armyProjectileDamage.TryGetValue(pair.Key,out float projectileDamage))
-                throw new InvalidDataException("Army projectile lost its launch damage authority.");
+            if(!armyProjectileAuthority.TryGetValue(pair.Key,out var launch))
+                throw new InvalidDataException("Army projectile lost its launch authority.");
             ArmyProjectileImpact? impact;
             try { impact=pair.Value.Advance(tick); }
             catch(InvalidDataException){End("invalid-army-projectile-authority","",false);return;}
             if(pair.Value.Finished)
             {
                 armyProjectiles.Remove(pair.Key);
-                armyProjectileDamage.Remove(pair.Key);
+                armyProjectileAuthority.Remove(pair.Key);
             }
             if(impact==null)continue;
+            Player shooter=Find(launch.OwnerPlayerId)??
+                throw new InvalidDataException("Army projectile owner left its match.");
+            if(impact.EntityKey!=launch.EntityKey ||
+               shooter.Definition.Fraction!=launch.OwnerFraction)
+                throw new InvalidDataException("Army projectile changed its launch owner.");
             Emit(MatchEventKind.Impact,impact.EntityKey.ToString(),
                 impact.Collision.PlayerId??"",impact.ProjectileId,impact.Collision.Position,0,"army");
-            if(impact.Collision.DynamicOwner!=null && shields!=null &&
-               activeArmyEntities.TryGetValue(impact.EntityKey,out var shieldArmy))
+            if(impact.Collision.DynamicOwner!=null && shields!=null)
             {
                 try
                 {
                     var shield=shields.ApplyUnitShot(impact.Collision.DynamicOwner,
-                        shieldArmy.OwnerFraction,projectileDamage,tick);
+                        launch.OwnerFraction,launch.Damage,tick);
                     if(shield!=null)
                     {
                         stateRevision++;
                         EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
-                            MatchEventKind.ShieldDamaged,shieldArmy.OwnerPlayerId,shield,
+                            MatchEventKind.ShieldDamaged,launch.OwnerPlayerId,shield,
                             impact.ProjectileId);
                     }
                 }
                 catch(InvalidDataException){End("invalid-shield-authority","",false);return;}
             }
             if(impact.Collision.PlayerId==null)continue;
-            if(!activeArmyEntities.TryGetValue(impact.EntityKey,out var army))continue;
-            var owner=Find(army.OwnerPlayerId);
-            if(owner==null)continue;
             try
             {
                 var proof=ArmyRusherImpactResolver.Resolve(
-                    new ArmyRusherShotIntent(impact.EntityKey,owner.Definition.PlayerId,
+                    new ArmyRusherShotIntent(impact.EntityKey,launch.OwnerPlayerId,
                         impact.Collision.PlayerId,0,impact.Collision.Position,true,0,1),impact.Collision,
-                    projectileDamage);
-                var result=ApplyArmyRusherPlayerImpact(proof,damageRoll?.Invoke()??1f);
-                if(result is {Applied:true,Dead:false}&&armySpecial.TryGetValue(impact.EntityKey,out float ratio))
+                    launch.Damage);
+                var result=ApplyResolvedPlayerDamage(proof.AttackerPlayerId,
+                    proof.VictimPlayerId,new ResolvedPlayerDamage(proof.Damage,
+                        CombatDamageType.Shot,proof.PartWeight),
+                    damageRoll?.Invoke()??1f,confirmedProjectileImpact:true);
+                if(result is {Applied:true,Dead:false}&&launch.PoisonRatio>0)
                 {
-                    float pulse=projectileDamage/ArmyPoisonEffect.PulseCount*ratio;
+                    float pulse=launch.Damage/ArmyPoisonEffect.PulseCount*launch.PoisonRatio;
                     armyPoisons.Add(impact.ProjectileId,new ArmyPoisonEffect(impact.ProjectileId,
-                        impact.EntityKey,owner.Definition.PlayerId,impact.Collision.PlayerId,pulse,
+                        impact.EntityKey,launch.OwnerPlayerId,impact.Collision.PlayerId,pulse,
                         impact.Collision.Position,tick));
                 }
             }
@@ -3565,32 +3580,10 @@ public sealed partial class MatchEngine
            !activeArmyEntities.TryGetValue(impact.EntityKey,out var army) ||
            army.OwnerPlayerId!=impact.AttackerPlayerId)
             return null;
-        var attacker=Find(impact.AttackerPlayerId);
-        var victim=Find(impact.VictimPlayerId);
-        if(attacker==null || victim==null || !attacker.Admitted || !victim.Admitted ||
-           attacker.Dead || victim.Dead || victim.Definition.Combat==null)
-            return null;
-        var hit=new ResolvedPlayerDamage(impact.Damage,CombatDamageType.Shot,
-            impact.PartWeight);
-        var result=PlayerDamage.Resolve(victim.Definition.Combat,victim.Health,hit,
-            attacker.Definition.Fraction==victim.Definition.Fraction,attacker==victim,randomRoll);
-        if(!result.Applied)return result;
-        if(attacker.Definition.Fraction!=victim.Definition.Fraction)
-        {
-            attacker.ConfirmedPlayerHits=checked(attacker.ConfirmedPlayerHits+1);
-            attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
-            if(result.Dead)attacker.ConfirmedPlayerKills=checked(attacker.ConfirmedPlayerKills+1);
-        }
-        victim.Health=result.Health;victim.Dead=result.Dead;UpdateDronePlayerTarget(victim);victim.DamageRevision++;
-        stateRevision++;
-        if(result.Dead)
-        {
-            Emit(MatchEventKind.PlayerDeath,impact.AttackerPlayerId,impact.VictimPlayerId,
-                0,victim.Position,result.Health,"");
-            victim.Route=null;victim.ReloadEnd=0;
-            End("player-killed",players.Single(p=>p!=victim).Definition.PlayerId,true);
-        }
-        return result;
+        return ApplyResolvedPlayerDamage(impact.AttackerPlayerId,
+            impact.VictimPlayerId,new ResolvedPlayerDamage(impact.Damage,
+                CombatDamageType.Shot,impact.PartWeight),randomRoll,
+            confirmedProjectileImpact:true);
     }
 
     // Damage is already established by trusted host collision/weapon logic.
