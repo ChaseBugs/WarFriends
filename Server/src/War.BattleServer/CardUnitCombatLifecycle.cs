@@ -38,6 +38,21 @@ internal sealed class CardUnitCombatLifecycle
     internal BattleArmyEntityState? Find(ulong entityKey) =>
         roster.TryGetValue(entityKey, out var row) ? row.Clone() : null;
 
+    internal void UpdatePose(BattleArmyEntityState moved)
+    {
+        ArgumentNullException.ThrowIfNull(moved);
+        if (!roster.TryGetValue(moved.EntityKey, out var current) ||
+            moved.OwnerPlayerId != current.OwnerPlayerId ||
+            moved.SourceCardId != current.SourceCardId ||
+            moved.UnitId != current.UnitId ||
+            moved.Health != current.Health ||
+            moved.PositionTick < current.PositionTick ||
+            !float.IsFinite(moved.X) || !float.IsFinite(moved.Y) ||
+            !float.IsFinite(moved.Z))
+            throw new InvalidDataException("Card-unit pose lost its health or source proof.");
+        roster[moved.EntityKey] = moved.Clone();
+    }
+
     /// <summary>
     /// Called only after trusted host combat has established an impact.
     /// Card health comes from the recovered card upgrade rows, not the

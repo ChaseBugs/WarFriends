@@ -1,3 +1,4 @@
+using System.Numerics;
 using War.Protocol;
 
 namespace War.BattleServer;
@@ -72,6 +73,8 @@ public sealed partial class MatchEngine
                 continue; // Source Spawn consumed its failed point search.
 
             activeArmyEntities.Add(entity.EntityKey, entity);
+            if (entity.SourceCardId == "HEAVYDRONE")
+                InitializeCardDrone(entity);
             armyEntityRevision++;
             stateRevision++;
             Emit(MatchEventKind.ArmySpawned, owner.Definition.PlayerId,
@@ -84,6 +87,43 @@ public sealed partial class MatchEngine
             spawnEvent.ArmyReservationFileId = entity.ReservationFileId;
             spawnEvent.SourceCardId = entity.SourceCardId;
         }
+    }
+
+    private void InitializeCardDrone(BattleArmyEntityState entity)
+    {
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Drone lost its source spawn identity.");
+        ArmyCardBaseStats card = source.BaseStats;
+        ArmyCardDroneRuntime runtime = card.Drone ??
+            throw new InvalidDataException("Card Drone lacks its recovered runtime constants.");
+        if (source.EntityKey != entity.EntityKey ||
+            source.SourceCardId != "HEAVYDRONE" ||
+            entity.UnitId != "ID_UNIT-DRONE" ||
+            runtime.CanTurnInvisible ||
+            airWaypoints == null || map == null ||
+            droneWeapon == null || droneProjectile == null || armyCatalog == null)
+            throw new InvalidDataException("Card Drone cannot bind trusted flight authority.");
+
+        var shot = new ArmyVehicleShotStats(runtime.ShotSpeed,
+            card.Shot.ProbabilityOfRealShot,
+            card.Shot.FireBatchSizeMin, card.Shot.FireBatchSizeMax,
+            card.Shot.MinShootTime, card.Shot.MaxShootTime,
+            0, runtime.ShieldHitProbability);
+        var route = airWaypoints.ForSpawn(map, entity.SpawnComponentFileId);
+        var position = new Vector3(entity.X, entity.Y, entity.Z);
+        var family = CardSpawnUnitSourceCatalog.Family(armyCatalog,
+            entity.SourceCardId);
+
+        armyDamage.Add(entity.EntityKey, card.Combat.Damage);
+        armySpeed.Add(entity.EntityKey, runtime.MovementSpeed);
+        armyDroneShots.Add(entity.EntityKey, shot);
+        armyDronePaths.Add(entity.EntityKey, new DroneWaypointState(
+            route.Waypoints, route.JoinIndex, position, route.Radius,
+            runtime.MovementSpeed, true, true, NextArmyFloat));
+        droneAttacks.Add(entity.EntityKey, new DroneAttackState(
+            (float)((double)tick / MatchManifest.TickRate), shot,
+            droneWeapon, droneProjectile, NextArmyFloat, DroneBatchRange));
+        RegisterDroneArmyTarget(entity.EntityKey, family);
     }
 
     private bool ConfirmCardUnitDeath(ulong entityKey, bool suicide)
@@ -108,6 +148,20 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card-unit death did not remove its health authority.");
         if (!activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Card-unit death lost its public roster row.");
+
+        // Card Drone uses the same host flight/weapon systems as an ordinary
+        // Drone, but its stats came from CardSpawnUnit's source rows.
+        if (entity.SourceCardId == "HEAVYDRONE")
+        {
+            if (droneArmyTargets.Remove(entityKey))
+                droneTargets.Disable(DroneArmyId(entityKey));
+            armyDronePaths.Remove(entityKey);
+            armyDroneShots.Remove(entityKey);
+            droneAttacks.Remove(entityKey);
+            droneLastIntents.Remove(entityKey);
+            armyDamage.Remove(entityKey);
+            armySpeed.Remove(entityKey);
+        }
 
         armyEntityRevision++;
         stateRevision++;

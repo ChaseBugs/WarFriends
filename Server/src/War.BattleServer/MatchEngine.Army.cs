@@ -362,6 +362,8 @@ public sealed partial class MatchEngine
             row.PositionTick=tick;
             var q=path.Rotation;
             row.DroneRotation=new BattleJointRotation{X=q.X,Y=q.Y,Z=q.Z,W=q.W};
+            if (row.SourceCardId.Length > 0)
+                cardUnitCombat?.UpdatePose(row);
         }
     }
     private readonly Dictionary<ulong,float> armyDamage=[];

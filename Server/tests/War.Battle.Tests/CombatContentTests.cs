@@ -10216,6 +10216,15 @@ internal static class CombatContentTests
                   combatRoutes.Owns(combatRow.EntityKey,
                       combatRow.ReservationFileId),
                 "nonlethal host damage updates only the card-unit health");
+            var movedCard = woundedCard!.Entity.Clone();
+            movedCard.X += 1;
+            movedCard.PositionTick = 107;
+            cardCombat.UpdatePose(movedCard);
+            Check(cardCombat.Find(combatRow.EntityKey) is { } currentCard &&
+                  currentCard.X == movedCard.X &&
+                  currentCard.PositionTick == 107 &&
+                  currentCard.Health == woundedCard.Entity.Health,
+                "card-unit movement keeps its private health roster in sync");
             bool rejectedInvalidCardDamage = false;
             try { cardCombat.ApplyHostDamage(combatRow.EntityKey, float.NaN); }
             catch (ArgumentOutOfRangeException) { rejectedInvalidCardDamage = true; }
@@ -11315,12 +11324,25 @@ internal static class CombatContentTests
             "host card activation charges one selected source identity once");
         var liveCardRow = cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.Single();
+        var liveCardStats = content.Army.CardBaseStats("HEAVYDRONE", 22,
+            content.BarrelPolicy.MaxDisplayLevel);
         Check(liveCardRow.SourceCardId == "HEAVYDRONE" &&
               liveCardRow.OptionIndex == -1 &&
               liveCardRow.UnitId == "ID_UNIT-DRONE" &&
               liveCardRow.Health == liveCardRow.MaxHealth &&
-              liveCardRow.Health == content.Army.CardBaseStats("HEAVYDRONE", 22,
-                  content.BarrelPolicy.MaxDisplayLevel).Combat.Health &&
+              liveCardRow.Health == liveCardStats.Combat.Health &&
+              cardMatch.ArmyDamage(liveCardRow.EntityKey) ==
+                  liveCardStats.Combat.Damage &&
+              cardMatch.ArmySpeed(liveCardRow.EntityKey) ==
+                  liveCardStats.Drone!.MovementSpeed &&
+              cardMatch.DroneShotDefinition(liveCardRow.EntityKey) is
+                  { } cardDroneShot &&
+              cardDroneShot.ShotSpeed == liveCardStats.Drone.ShotSpeed &&
+              cardDroneShot.ProbabilityOfRealShot ==
+                  liveCardStats.Shot.ProbabilityOfRealShot &&
+              !cardMatch.ArmyDroneImmortal(liveCardRow.EntityKey) &&
+              cardMatch.DroneTargetSnapshot().Any(target =>
+                  target.Id == "army:" + liveCardRow.EntityKey) &&
               cardMatch.EventBatch(decoyPlayer, 0).Events.Any(row =>
                   row.Kind == MatchEventKind.ArmySpawned &&
                   row.SourceCardId == "HEAVYDRONE" &&
@@ -11328,8 +11350,24 @@ internal static class CombatContentTests
             "match roster and event publish the source card unit and card-level health");
         cardMatch.Advance(61);
         Check(cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities
-                  .Any(row => row.EntityKey == liveCardRow.EntityKey),
-            "card-unit roster persists across the next live simulation tick");
+                  .Any(row => row.EntityKey == liveCardRow.EntityKey &&
+                      row.PositionTick == 61 && row.DroneRotation != null),
+            "card Drone uses host flight motion on the next live simulation tick");
+        var cardDroneColliders = cardMatch.GroundVehicleShotTargets(decoyOpponent)
+            .Where(target => target.EntityId == liveCardRow.EntityKey).ToArray();
+        Check(cardDroneColliders.Length == 2 &&
+              cardDroneColliders.Count(target => target.DroneRoot) == 1,
+            "card Drone exposes the recovered root and child bullet colliders");
+        cardMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
+            liveCardRow.EntityKey, 13511718, 10);
+        Check(cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                  .Entities.Single().Health == liveCardRow.Health,
+            "card Drone child sphere has no damage-owning DestroyableObject");
+        cardMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
+            liveCardRow.EntityKey, 6544804, 10);
+        Check(cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                  .Entities.Single().Health == liveCardRow.Health - 10,
+            "card Drone root bullet hit reduces its card-row health");
         Check(cardMatch.ApplyArmyHostDamage(liveCardRow.EntityKey,
                   liveCardRow.Health / 4) &&
               cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
@@ -11338,6 +11376,11 @@ internal static class CombatContentTests
         Check(cardMatch.ConfirmArmyDeath(liveCardRow.EntityKey, false) &&
               !cardMatch.ConfirmArmyDeath(liveCardRow.EntityKey, false) &&
               cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0 &&
+              cardMatch.ArmyDamage(liveCardRow.EntityKey) == null &&
+              cardMatch.ArmySpeed(liveCardRow.EntityKey) == null &&
+              cardMatch.DroneShotDefinition(liveCardRow.EntityKey) == null &&
+              !cardMatch.DroneTargetSnapshot().Any(target =>
+                  target.Id == "army:" + liveCardRow.EntityKey) &&
               cardMatch.EventBatch(decoyPlayer, 0).Events.Any(row =>
                   row.Kind == MatchEventKind.ArmyDied &&
                   row.SourceCardId == "HEAVYDRONE" &&
