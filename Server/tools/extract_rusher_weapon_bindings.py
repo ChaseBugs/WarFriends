@@ -166,6 +166,25 @@ def sniper_corner_windup():
             "clip":{"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                     "sha256":hashlib.sha256(data).hexdigest(),"length":length}}
 
+def sniper_runtime_bullet(scene_text):
+    source=SCRIPTS/"SoldierBehaviourSniper.cs"
+    if "mWeapons[0].bulletPrefab = Singleton<ObjectPoolDatabase>.instance.bulletSlow;" not in \
+       source.read_text(encoding="utf-8-sig"):
+        raise ValueError("Sniper runtime bullet override changed")
+    guid="855689762fa6e774aaee190652b08c6f"
+    if f"bulletSlow: {{fileID: 11409266, guid: {guid}, type: 2}}" not in scene_text:
+        raise ValueError("MainScene BulletSlow source reference changed")
+    path=ROOT/"Clients/ExportedProject/Assets/GameObject/BulletSlow.prefab"
+    data=path.read_bytes(); prefab=data.decode("utf-8-sig")
+    speed=re.search(r"^  speed: ([0-9.]+)$",prefab,re.M)
+    distance=re.search(r"^  distanceToCheck: ([0-9.]+)$",prefab,re.M)
+    if not speed or not distance or float(speed.group(1))!=80 or float(distance.group(1))!=.6:
+        raise ValueError("Sniper BulletSlow flight fields changed")
+    return {"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "sha256":hashlib.sha256(data).hexdigest(),"speed":80.0,
+            "distanceToCheck":.6,"behaviorSource":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "behaviorSha256":hashlib.sha256(source.read_bytes()).hexdigest()}
+
 def attack_cadence(behavior_type):
     overrides={"SoldierBehaviourCommando":.2,"SoldierBehaviourWarper":.2,
                "SoldierBehaviourParachuter":.25,"SoldierBehaviourMinigunner":.17}
@@ -308,7 +327,7 @@ def main():
                      "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest()}
     warper=warper_relocation(content,enemy_source)
-    artifact={"version":13,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    artifact={"version":14,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -318,6 +337,7 @@ def main():
               "paratrooperKevlar":parachuter_kevlar,
               "shotgunnerWalkingFire":shotgunner_walk,
               "warperRelocation":warper,
+              "sniperRuntimeBullet":sniper_runtime_bullet(text),
               "families":rows}
     encoded=(json.dumps(artifact,indent=2)+"\n").encode()
     if __import__("sys").argv[1:]==["--check"]:

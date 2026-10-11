@@ -9055,8 +9055,9 @@ internal static class CombatContentTests
               content.ArmyWeapons.Windup("ID_UNIT-SNIPER").Rule=="corner-uncover-plus-0.05"&&
               content.ArmyWeapons.Windup("ID_UNIT-SNIPER").ClipAsset==
                   "Assets/AnimationClip/player_look_right3.anim"&&
-              content.ArmyWeapons.CadenceTicks("ID_UNIT-SNIPER")==11,
-              "card Sniper binds its serialized rifle and Corner uncover timing separately from Rusher shots");
+              content.ArmyWeapons.CadenceTicks("ID_UNIT-SNIPER")==11&&
+              content.ArmyWeapons.SniperProjectileSpeed==80f,
+              "card Sniper binds its serialized rifle, Corner uncover timing, and BulletSlow flight speed");
         var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
         Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsMinigunner"&&
               minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,
@@ -9144,6 +9145,15 @@ internal static class CombatContentTests
         {
             var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
             modified["families"]![0]!["attackWindup"]!["seconds"]=0f;
+            File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
+            string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
+            Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
+        }
+        finally {if(File.Exists(weaponBindingTemp))File.Delete(weaponBindingTemp);}
+        try
+        {
+            var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
+            modified["sniperRuntimeBullet"]!["speed"]=10f;
             File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
             string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
             Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
@@ -12516,6 +12526,8 @@ internal static class CombatContentTests
                   .Where(id => id.HasValue).Distinct().Count() == 2,
             "host card Snipers bind fallback card stats and distinct Park Corners");
         bool bothSnipersArrived = false;
+        MatchEvent? firstSniperShot = null;
+        (string OwnerPlayerId, int OwnerFraction, float Damage)? firstSniperLaunch = null;
         ulong sniperArrivalTick = 60;
         for (ulong sniperTick = 61; sniperTick < 1000 &&
              !sniperCardMatch.Terminal && !bothSnipersArrived; sniperTick++)
@@ -12526,6 +12538,15 @@ internal static class CombatContentTests
                 sniperCardMatch.ArmyBatch(decoyOpponent);
             }
             sniperCardMatch.Advance(sniperTick);
+            if (firstSniperShot == null)
+            {
+                firstSniperShot = sniperCardMatch.EventBatch(decoyPlayer, 0)
+                    .Events.FirstOrDefault(row => row.Kind == MatchEventKind.Shot &&
+                        row.ActorId == decoyPlayer && row.Reason == "army");
+                if (firstSniperShot != null)
+                    firstSniperLaunch = sniperCardMatch.ArmyProjectileLaunch(
+                        firstSniperShot.ProjectileId);
+            }
             sniperArrivalTick = sniperTick;
             bothSnipersArrived = sniperCardRows.All(row =>
                 sniperCardMatch.CardSniperAtPoint(row.EntityKey));
@@ -12546,6 +12567,15 @@ internal static class CombatContentTests
                 sniperCardMatch.ArmyBatch(decoyOpponent);
             }
             sniperCardMatch.Advance(sniperTick);
+            if (firstSniperShot == null)
+            {
+                firstSniperShot = sniperCardMatch.EventBatch(decoyPlayer, 0)
+                    .Events.FirstOrDefault(row => row.Kind == MatchEventKind.Shot &&
+                        row.ActorId == decoyPlayer && row.Reason == "army");
+                if (firstSniperShot != null)
+                    firstSniperLaunch = sniperCardMatch.ArmyProjectileLaunch(
+                        firstSniperShot.ProjectileId);
+            }
         }
         Check(!sniperCardMatch.Terminal && sniperCardRows.All(row =>
               sniperCardMatch.CardSniperAtPoint(row.EntityKey)) &&
@@ -12554,6 +12584,13 @@ internal static class CombatContentTests
               sniperCardMatch.CardEnemyPointOccupant(secondSniperPointId) ==
                   sniperCardRows[1].EntityKey,
             "occupied Park Corners keep both Snipers in the no-free-point retry path");
+        Check(firstSniperShot != null && firstSniperLaunch.HasValue &&
+              firstSniperLaunch.Value.OwnerPlayerId == decoyPlayer &&
+              firstSniperLaunch.Value.OwnerFraction == 1 &&
+              sniperCardRows.Any(row =>
+                  sniperCardMatch.ArmyDamage(row.EntityKey) ==
+                      firstSniperLaunch.Value.Damage),
+            "source Corner Sniper fires a host-owned BulletSlow with its card-row damage");
         Check(sniperCardMatch.ConfirmArmyDeath(
                   sniperCardRows[1].EntityKey, false) &&
               sniperCardMatch.CardEnemyPointOccupant(secondSniperPointId) == null,

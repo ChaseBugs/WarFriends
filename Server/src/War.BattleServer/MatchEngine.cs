@@ -1387,6 +1387,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceCardSniperWalks(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
+        if (advanced && phase == BattlePhase.Running && sniperAttacks.Count > 0)
+        {
+            try { AdvanceCardSniperAttacks(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && snipersAtPoint.Count > 0)
         {
             try { AdvanceCardSniperCornerChanges(); }

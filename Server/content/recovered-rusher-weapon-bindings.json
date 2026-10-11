@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 14,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -161,6 +161,14 @@
         ]
       }
     ]
+  },
+  "sniperRuntimeBullet": {
+    "asset": "Assets/GameObject/BulletSlow.prefab",
+    "sha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+    "speed": 80.0,
+    "distanceToCheck": 0.6,
+    "behaviorSource": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourSniper.cs",
+    "behaviorSha256": "fef1af461e3174c496b8f7d00f5d14e70f99bdb1ee6a0e32bef0087a3fac89fa"
   },
   "families": [
     {

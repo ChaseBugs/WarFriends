@@ -15,6 +15,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, CardSoldierWalkState> sniperWalks = [];
     private readonly HashSet<ulong> snipersAtPoint = [];
     private readonly Dictionary<ulong, ulong> sniperCornerChangeTicks = [];
+    private readonly Dictionary<ulong, ArmyRusherAttackState> sniperAttacks = [];
+    private readonly Dictionary<ulong, ArmyRusherTarget> sniperShotTargets = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
     private readonly Dictionary<ulong, CardParachuteFlightState> parachuteFlights = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAirAttacks = [];
@@ -45,6 +47,9 @@ public sealed partial class MatchEngine
 
     internal bool CardSniperAtPoint(ulong entityKey) =>
         snipersAtPoint.Contains(entityKey);
+
+    internal ArmyRusherAttackState? CardSniperAttack(ulong entityKey) =>
+        sniperAttacks.GetValueOrDefault(entityKey);
 
     internal bool CardParatrooperWalking(ulong entityKey) =>
         paratrooperWalks.ContainsKey(entityKey);
@@ -829,6 +834,8 @@ public sealed partial class MatchEngine
         // lifecycle has already applied the recovered row-zero fallback.
         armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
         armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
+        if (!rusherShotCounts.TryAdd(entity.EntityKey, 0))
+            throw new InvalidDataException("Card Sniper shot counter already exists.");
         TryAssignCardSniperPoint(entity);
     }
 
@@ -911,9 +918,142 @@ public sealed partial class MatchEngine
                 !sniperCornerChangeTicks.TryAdd(entityKey,
                     checked(tick + (ulong)waitSeconds * MatchManifest.TickRate)))
                 throw new InvalidDataException("Card Sniper lost its Corner clock.");
-            // Corner/Hiding attack and critical-hit rules are not yet
-            // admitted. Arrival only publishes source-backed placement.
+            StartCardSniperAttack(entityKey);
         }
+    }
+
+    private void StartCardSniperAttack(ulong entityKey)
+    {
+        if (!armyShots.TryGetValue(entityKey, out ArmyBaseShotStats? shot) ||
+            cardEnemyPoints?.Find(entityKey) is not
+                { ComponentType: "EnemyPointCorner", CornerDirection: not null,
+                  CornerRightSide: not null })
+            throw new InvalidDataException("Card Sniper reached no source Corner or shot row.");
+        int cadence = armyWeapons?.CadenceTicks("ID_UNIT-SNIPER") ??
+            throw new InvalidDataException("Card Sniper lacks source cadence.");
+        var attack = new ArmyRusherAttackState(shot, NextArmyFloat, cadence);
+        // SwitchState(CornerHiding) calls GenerateNextShootTime on arrival.
+        attack.BeginInitialCooldown();
+        if (!sniperAttacks.TryAdd(entityKey, attack))
+            throw new InvalidDataException("Card Sniper attack started twice.");
+    }
+
+    internal ArmyRusherTarget? CardSniperTarget(ulong entityKey)
+    {
+        if (rifleCombat == null || playerShotTargets == null || map == null ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            cardEnemyPoints?.Find(entityKey) is not { } point)
+            return null;
+        Player owner = Find(entity.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Sniper owner left the match.");
+        Player opponent = players.Single(player => player != owner);
+        if (opponent.Dead)
+            return null;
+
+        Vector3 origin = new(entity.X, entity.Y, entity.Z);
+        // SoldierBehaviourSniper.PickTarget calls TryPickDecoy first.
+        var enemyDecoys = decoys.Snapshot().Where(row =>
+            row.OwnerFraction != entity.OwnerFraction).OrderBy(row => row.EntityId).ToArray();
+        if (enemyDecoys.Length > 0)
+        {
+            int index = armyChoice(enemyDecoys.Length);
+            if (index < 0 || index >= enemyDecoys.Length || decoySource == null)
+                throw new InvalidDataException("Card Sniper Decoy choice lost source authority.");
+            var decoy = enemyDecoys[index];
+            float yaw = MathF.Atan2(decoy.Facing.X, decoy.Facing.Z);
+            Quaternion rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw);
+            Vector3 position = decoy.Position + Vector3.Transform(
+                decoySource.Prefab.TargetLocalPosition, rotation);
+            return new ArmyRusherTarget(entityKey, decoy.OwnerPlayerId,
+                decoySource.Prefab.TargetTransformFileId,
+                point.ComponentFileId, position);
+        }
+
+        var pose = rifleCombat.Pose(opponent.Definition.PlayerId);
+        if (opponent.Cover < 0 || opponent.Cover >= map.Covers.Count)
+            return null;
+        Vector3 aimForward = -Vector3.Transform(Vector3.UnitZ,
+            map.Covers[opponent.Cover].Rotation);
+        float shieldProbability = armyCatalog!.ShieldHitProbability(entity.UnitId);
+        if (opponent.Route != null)
+            shieldProbability *= .5f;
+        int mask = HeavyTurretStationaryTargetMask(aimForward,
+            origin - opponent.Position, shieldProbability, NextArmyFloat);
+        bool shieldAvailable = shields?.Snapshot().Any(row =>
+            row.CoverIndex == opponent.Cover && !row.Destroyed) ?? false;
+        if (mask == 2 && shieldAvailable)
+        {
+            var shield = playerShotTargets.Gameplay.Single(row => row.Type == 2);
+            return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
+                shield.TransformFileId, point.ComponentFileId,
+                map.Covers[opponent.Cover].ShotPosition);
+        }
+        if (opponent.Route != null && pose.MovingTarget is { } moving)
+        {
+            var source = playerShotTargets.Gameplay.Single(row => row.Type == 16);
+            ArmyWeaponBindingCatalog weapons = armyWeapons ??
+                throw new InvalidDataException("Card Sniper lacks source weapon aim speed.");
+            Vector3 muzzle = weapons.RestMuzzleOrigin(entity.UnitId,
+                origin, moving.Position - origin);
+            float leadSeconds = Vector3.Distance(muzzle, moving.Position) /
+                weapons.SniperPredictionSpeed + .2f;
+            Vector3 predicted = moving.Position +
+                leadSeconds * HeavyTurretPlayerVelocity(opponent);
+            if (!PlayerHitbox.Finite(predicted))
+                throw new InvalidDataException("Card Sniper moving target left scene bounds.");
+            return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
+                source.TransformFileId, point.ComponentFileId, predicted);
+        }
+        var body = playerShotTargets.Nearest(9, origin,
+            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
+        return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
+            body.TransformFileId, point.ComponentFileId,
+            pose.BodyTarget(body.TransformFileId).Position);
+    }
+
+    private void AdvanceCardSniperAttacks()
+    {
+        rusherShotIntents.Clear();
+        foreach (var (entityKey, attack) in sniperAttacks.OrderBy(row => row.Key))
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITESNIPER" ||
+                !snipersAtPoint.Contains(entityKey) || sniperWalks.ContainsKey(entityKey))
+                throw new InvalidDataException("Card Sniper attack lost its arrived soldier.");
+            if (attack.Phase == ArmyRusherAttackPhase.Ready)
+            {
+                ArmyRusherTarget? target = CardSniperTarget(entityKey);
+                CardUnitInitialPoint point = cardEnemyPoints?.Find(entityKey) ??
+                    throw new InvalidDataException("Card Sniper lost its Corner.");
+                bool canExpose = target != null &&
+                    point.CornerDirection is Vector3 direction &&
+                    point.CornerRightSide is bool rightSide &&
+                    CornerShotPolicy.CanExpose(direction, rightSide,
+                        new Vector3(entity.X, entity.Y, entity.Z), target.Position);
+                if (target != null && !canExpose)
+                    attack.RetryAfterRejectedTarget();
+                else if (canExpose)
+                {
+                    int windup = armyWeapons?.WindupTicks(entity.UnitId) ??
+                        throw new InvalidDataException("Card Sniper lacks source windup.");
+                    if (attack.TryBegin(true, 1, windup))
+                        sniperShotTargets[entityKey] = target!;
+                }
+            }
+            attack.AdvanceTick();
+            if (!attack.ShotDue)
+                continue;
+            if (!sniperShotTargets.TryGetValue(entityKey, out var shot))
+                throw new InvalidDataException("Card Sniper lost its latched target.");
+            rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
+                entity.OwnerPlayerId, shot.PlayerId, shot.TargetFileId,
+                shot.Position, attack.CurrentShotIsReal,
+                attack.BatchCursor, attack.BatchSize));
+            attack.CommitShot();
+            if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
+                sniperShotTargets.Remove(entityKey);
+        }
+        LaunchRusherShotIntents();
     }
 
     private void AdvanceCardSniperCornerChanges()
@@ -928,6 +1068,9 @@ public sealed partial class MatchEngine
                 !activeArmyEntities.TryGetValue(entityKey, out var entity))
                 throw new InvalidDataException("Card Sniper lost its Corner state.");
             if (tick <= changeTick)
+                continue;
+            if (sniperAttacks.TryGetValue(entityKey, out var attack) &&
+                attack.Phase is ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing)
                 continue;
 
             Player owner = Find(entity.OwnerPlayerId) ??
@@ -958,6 +1101,8 @@ public sealed partial class MatchEngine
                 opponent.Position);
             sniperCornerChangeTicks.Remove(entityKey);
             snipersAtPoint.Remove(entityKey);
+            sniperAttacks.Remove(entityKey);
+            sniperShotTargets.Remove(entityKey);
             sniperWalks.Add(entityKey, walk);
         }
     }
@@ -1192,6 +1337,9 @@ public sealed partial class MatchEngine
             sniperWalks.Remove(entityKey);
             snipersAtPoint.Remove(entityKey);
             sniperCornerChangeTicks.Remove(entityKey);
+            sniperAttacks.Remove(entityKey);
+            sniperShotTargets.Remove(entityKey);
+            rusherShotCounts.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);

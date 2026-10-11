@@ -3087,6 +3087,8 @@ public sealed partial class MatchEngine
                 "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper"=>10f,
                 "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
                 "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner"=>5f,
+                "SoldierBehaviourSniper" when army.SourceCardId=="ELITESNIPER"=>
+                    weaponBindings.SniperProjectileSpeed,
                 _=>null
             };
             if(!projectileSpeed.HasValue)continue;
