@@ -47,7 +47,7 @@ public sealed class ArmyWeaponBindingCatalog
     public ArmyShotgunnerWalkingFire ShotgunnerWalkingFire { get; }
     public ArmyWarperRelocation WarperRelocation { get; }
     public float SniperProjectileSpeed { get; }
-    public float SniperPredictionSpeed => 10f;
+    public float SniperPredictionSpeed => SniperProjectileSpeed;
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
@@ -126,7 +126,7 @@ public sealed class ArmyWeaponBindingCatalog
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
         Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","shotgunnerWalkingFire","warperRelocation","sniperRuntimeBullet","families");
-        if(root.GetProperty("version").GetInt32()!=14||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        if(root.GetProperty("version").GetInt32()!=15||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -329,16 +329,26 @@ public sealed class ArmyWeaponBindingCatalog
         if(!result.ContainsKey("ID_UNIT-SNIPER")||shotgunFalloffs.Count!=2)
             throw new InvalidDataException("Incomplete soldier weapon binding set.");
         var sniperBullet=root.GetProperty("sniperRuntimeBullet");
-        Exact(sniperBullet,"asset","sha256","speed","distanceToCheck","behaviorSource","behaviorSha256");
-        float sniperSpeed=sniperBullet.GetProperty("speed").GetSingle();
+        Exact(sniperBullet,"asset","sha256","prefabSpeed","prefabDistanceToCheck",
+            "runtimeSpeed","runtimeDistanceToCheck","behaviorSource","behaviorSha256",
+            "bulletSource","bulletSha256","gunSource","gunSha256");
+        float sniperSpeed=sniperBullet.GetProperty("runtimeSpeed").GetSingle();
         if(sniperBullet.GetProperty("asset").GetString()!=
                "Assets/GameObject/BulletSlow.prefab"||
            !Hash(sniperBullet.GetProperty("sha256").GetString())||
-           sniperSpeed!=80f||
-           sniperBullet.GetProperty("distanceToCheck").GetSingle()!=.6f||
+           sniperBullet.GetProperty("prefabSpeed").GetSingle()!=80f||
+           sniperBullet.GetProperty("prefabDistanceToCheck").GetSingle()!=.6f||
+           sniperSpeed!=10f||
+           sniperBullet.GetProperty("runtimeDistanceToCheck").GetSingle()!=1f||
            sniperBullet.GetProperty("behaviorSource").GetString()!=
                "Assets/Scripts/Assembly-CSharp/SoldierBehaviourSniper.cs"||
-           !Hash(sniperBullet.GetProperty("behaviorSha256").GetString()))
+           !Hash(sniperBullet.GetProperty("behaviorSha256").GetString())||
+           sniperBullet.GetProperty("bulletSource").GetString()!=
+               "Assets/Scripts/Assembly-CSharp/BulletBase.cs"||
+           !Hash(sniperBullet.GetProperty("bulletSha256").GetString())||
+           sniperBullet.GetProperty("gunSource").GetString()!=
+               "Assets/Scripts/Assembly-CSharp/Gun.cs"||
+           !Hash(sniperBullet.GetProperty("gunSha256").GetString()))
             throw new InvalidDataException("Invalid source Sniper runtime bullet.");
         return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,
             poison,swatSpecialSpeed,kevlar,walking,warper,sniperSpeed);

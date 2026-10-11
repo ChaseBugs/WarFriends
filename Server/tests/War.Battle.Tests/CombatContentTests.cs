@@ -9056,8 +9056,9 @@ internal static class CombatContentTests
               content.ArmyWeapons.Windup("ID_UNIT-SNIPER").ClipAsset==
                   "Assets/AnimationClip/player_look_right3.anim"&&
               content.ArmyWeapons.CadenceTicks("ID_UNIT-SNIPER")==11&&
-              content.ArmyWeapons.SniperProjectileSpeed==80f,
-              "card Sniper binds its serialized rifle, Corner uncover timing, and BulletSlow flight speed");
+               content.ArmyWeapons.SniperProjectileSpeed==10f &&
+               content.ArmyWeapons.SniperPredictionSpeed==10f,
+               "card Sniper uses the rifle ammo speed after BulletSlow setup");
         var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
         Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsMinigunner"&&
               minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,
@@ -9153,7 +9154,7 @@ internal static class CombatContentTests
         try
         {
             var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
-            modified["sniperRuntimeBullet"]!["speed"]=10f;
+            modified["sniperRuntimeBullet"]!["runtimeSpeed"]=80f;
             File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
             string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
             Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
@@ -12528,6 +12529,7 @@ internal static class CombatContentTests
         bool bothSnipersArrived = false;
         MatchEvent? firstSniperShot = null;
         (string OwnerPlayerId, int OwnerFraction, float Damage)? firstSniperLaunch = null;
+        float? firstSniperFlightSpeed = null;
         ulong? firstSniperShooter = null;
         Vector3? firstSniperSampledMuzzle = null;
         Vector3? firstSniperRestMuzzle = null;
@@ -12539,6 +12541,8 @@ internal static class CombatContentTests
                     row.ActorId == decoyPlayer && row.Reason == "army");
             if (firstSniperShot == null) return;
             firstSniperLaunch = sniperCardMatch.ArmyProjectileLaunch(
+                firstSniperShot.ProjectileId);
+            firstSniperFlightSpeed = sniperCardMatch.ArmyProjectileSpeed(
                 firstSniperShot.ProjectileId);
             firstSniperShooter = sniperCardMatch.ArmyProjectileSourceEntity(
                 firstSniperShot.ProjectileId);
@@ -12596,6 +12600,7 @@ internal static class CombatContentTests
                   sniperCardRows[1].EntityKey,
             "occupied Park Corners keep both Snipers in the no-free-point retry path");
         Check(firstSniperShot != null && firstSniperLaunch.HasValue &&
+              firstSniperFlightSpeed == 10f &&
               firstSniperLaunch.Value.OwnerPlayerId == decoyPlayer &&
               firstSniperLaunch.Value.OwnerFraction == 1 &&
               sniperCardRows.Any(row =>

@@ -34,6 +34,7 @@ internal sealed class ArmyProjectileFlight
     }
 
     internal Vector3 Position=>position;
+    internal float Speed=>speed;
     internal bool Finished=>finished;
 
     internal ArmyProjectileImpact? Advance(ulong nextTick)

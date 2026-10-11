@@ -166,7 +166,7 @@ def sniper_corner_windup():
             "clip":{"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                     "sha256":hashlib.sha256(data).hexdigest(),"length":length}}
 
-def sniper_runtime_bullet(scene_text):
+def sniper_runtime_bullet(scene_text, families):
     source=SCRIPTS/"SoldierBehaviourSniper.cs"
     if "mWeapons[0].bulletPrefab = Singleton<ObjectPoolDatabase>.instance.bulletSlow;" not in \
        source.read_text(encoding="utf-8-sig"):
@@ -180,10 +180,30 @@ def sniper_runtime_bullet(scene_text):
     distance=re.search(r"^  distanceToCheck: ([0-9.]+)$",prefab,re.M)
     if not speed or not distance or float(speed.group(1))!=80 or float(distance.group(1))!=.6:
         raise ValueError("Sniper BulletSlow flight fields changed")
+    sniper=next(row for row in families if row["unitId"]=="ID_UNIT-SNIPER")
+    rifle=sniper["inventory"][0]
+    if rifle["asset"]!="GameObject/SniperRifleEnemy.prefab" or \
+       rifle["projectile"]!={"speed":10.0,"checkDistance":1.0}:
+        raise ValueError("Sniper rifle ammo setup changed")
+    rifle_text=(ROOT/"Clients/ExportedProject/Assets"/rifle["asset"]).read_text(encoding="utf-8-sig")
+    if "  speedMultiplayer: 1\n" not in rifle_text:
+        raise ValueError("Sniper rifle speed multiplier changed")
+    bullet_source=SCRIPTS/"BulletBase.cs"
+    gun_source=SCRIPTS/"Gun.cs"
+    if "speed = bulletSetup.bulletSpeed;" not in bullet_source.read_text(encoding="utf-8-sig") or \
+       "distanceToCheck = bulletSetup.checkDistance;" not in bullet_source.read_text(encoding="utf-8-sig") or \
+       "ammo.LoadAmmoSetup(base.ammoSetup);" not in gun_source.read_text(encoding="utf-8-sig"):
+        raise ValueError("Sniper runtime ammo override changed")
     return {"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
-            "sha256":hashlib.sha256(data).hexdigest(),"speed":80.0,
-            "distanceToCheck":.6,"behaviorSource":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
-            "behaviorSha256":hashlib.sha256(source.read_bytes()).hexdigest()}
+            "sha256":hashlib.sha256(data).hexdigest(),"prefabSpeed":80.0,
+            "prefabDistanceToCheck":.6,"runtimeSpeed":rifle["projectile"]["speed"],
+            "runtimeDistanceToCheck":rifle["projectile"]["checkDistance"],
+            "behaviorSource":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "behaviorSha256":hashlib.sha256(source.read_bytes()).hexdigest(),
+            "bulletSource":bullet_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "bulletSha256":hashlib.sha256(bullet_source.read_bytes()).hexdigest(),
+            "gunSource":gun_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "gunSha256":hashlib.sha256(gun_source.read_bytes()).hexdigest()}
 
 def attack_cadence(behavior_type):
     overrides={"SoldierBehaviourCommando":.2,"SoldierBehaviourWarper":.2,
@@ -327,7 +347,7 @@ def main():
                      "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest()}
     warper=warper_relocation(content,enemy_source)
-    artifact={"version":14,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    artifact={"version":15,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -337,7 +357,7 @@ def main():
               "paratrooperKevlar":parachuter_kevlar,
               "shotgunnerWalkingFire":shotgunner_walk,
               "warperRelocation":warper,
-              "sniperRuntimeBullet":sniper_runtime_bullet(text),
+              "sniperRuntimeBullet":sniper_runtime_bullet(text,rows),
               "families":rows}
     encoded=(json.dumps(artifact,indent=2)+"\n").encode()
     if __import__("sys").argv[1:]==["--check"]:
