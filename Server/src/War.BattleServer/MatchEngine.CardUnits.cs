@@ -12,6 +12,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> swatPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> swatWalks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
+    private readonly Dictionary<ulong, CardParachuteFlightState> parachuteFlights = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -31,6 +32,9 @@ public sealed partial class MatchEngine
 
     internal bool CardParatrooperWalking(ulong entityKey) =>
         paratrooperWalks.ContainsKey(entityKey);
+
+    internal bool CardParatrooperFalling(ulong entityKey) =>
+        parachuteFlights.ContainsKey(entityKey);
 
     internal int? CardParatrooperFallbackSpawn(ulong entityKey) =>
         paratrooperFallbackWalks.TryGetValue(entityKey, out var walk)
@@ -155,6 +159,43 @@ public sealed partial class MatchEngine
         // option. Corner-point selection occurs only after parachute landing.
         armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
         armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
+        float offset = combatRandom();
+        if (!float.IsFinite(offset) || offset < 0f || offset > 1f)
+            throw new InvalidDataException("Invalid host Paratrooper sway offset.");
+        float phase = ((tick % (4u * MatchManifest.TickRate)) /
+            (2f * MatchManifest.TickRate) + offset) % 2f;
+        var flight = new CardParachuteFlightState(
+            new Vector3(entity.X, entity.Y, entity.Z),
+            entity.OwnerFraction, phase);
+        if (!parachuteFlights.TryAdd(entity.EntityKey, flight))
+            throw new InvalidDataException("Card Paratrooper reused a flight identity.");
+    }
+
+    private void AdvanceCardParachuteFlights()
+    {
+        if (map == null)
+            throw new InvalidDataException("Card Paratrooper has no scene map.");
+        foreach (var (entityKey, flight) in parachuteFlights
+            .OrderBy(row => row.Key).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITEPARA")
+                throw new InvalidDataException("Card Paratrooper flight lost its soldier.");
+
+            Vector3? landed = flight.AdvanceHostTick(map,
+                shields == null ? null : shields.ColliderEnabled,
+                barrels == null ? null : barrels.ColliderEnabled,
+                barrels == null ? null : barrels.RuntimeLayer);
+            Vector3 position = flight.Position;
+            entity.X = position.X;
+            entity.Y = position.Y;
+            entity.Z = position.Z;
+            entity.PositionTick = tick;
+            cardUnitCombat!.UpdatePose(entity);
+            if (landed.HasValue &&
+                !ConfirmCardParatrooperLanding(entityKey, landed.Value))
+                throw new InvalidDataException("Card Paratrooper landing was rejected.");
+        }
     }
 
     /// <summary>
@@ -181,7 +222,12 @@ public sealed partial class MatchEngine
         CardUnitInitialPoint? point = cardEnemyPoints.TryAssign(entityKey,
             "ELITEPARA", entity.OwnerFraction, landedPosition);
         if (point == null)
-            return BeginCardParatrooperFallback(entity, landedPosition);
+        {
+            bool beganFallback = BeginCardParatrooperFallback(entity, landedPosition);
+            if (beganFallback)
+                parachuteFlights.Remove(entityKey);
+            return beganFallback;
+        }
         try
         {
             ArmyNavMeshCorridor route = PlanCardParatrooperRoute(
@@ -195,6 +241,7 @@ public sealed partial class MatchEngine
             entity.PositionTick = tick;
             cardUnitCombat!.UpdatePose(entity);
             paratrooperWalks.Add(entityKey, walk);
+            parachuteFlights.Remove(entityKey);
             armyEntityRevision++;
             stateRevision++;
             return true;
@@ -214,7 +261,7 @@ public sealed partial class MatchEngine
         // Scene transforms and the collision contact sit slightly above the
         // baked NavMesh. Unity's agent projects both to its surface.
         Vector3 start = armyNavMeshConnectivity.SampleNearest(map,
-            startPosition, 0.5f) ??
+            startPosition, 1.25f) ??
             throw new InvalidDataException("Card Paratrooper landed outside the NavMesh.");
         Vector3 destination = armyNavMeshConnectivity.SampleNearest(map,
             destinationPosition, 0.5f) ??
@@ -680,6 +727,7 @@ public sealed partial class MatchEngine
         }
         if (entity.SourceCardId == "ELITEPARA")
         {
+            parachuteFlights.Remove(entityKey);
             paratrooperWalks.Remove(entityKey);
             paratrooperFallbackWalks.Remove(entityKey);
             paratrooperPointRetryTicks.Remove(entityKey);

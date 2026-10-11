@@ -15,7 +15,10 @@ internal static class CardParachuteCompoundContact
         new(-0.00023651123f, 0f, -0.0002412796f);
 
     internal static bool HasNearbySceneSurface(RecoveredBattleMap map,
-        Vector3 rootPosition, Quaternion rootRotation, float margin)
+        Vector3 rootPosition, Quaternion rootRotation, float margin,
+        Func<string, bool>? dynamicEnabled = null,
+        Func<int, bool>? colliderEnabled = null,
+        Func<int, int, int>? runtimeLayer = null)
     {
         if (map == null || !PlayerHitbox.Finite(rootPosition) ||
             !float.IsFinite(margin) || margin < 0f || margin > 0.02f ||
@@ -26,17 +29,22 @@ internal static class CardParachuteCompoundContact
                    new Vector3(0.0025825514f, 0.2140131f, -0.009037019f),
                    new Vector3(0.23838009f, 0.37729108f, 0.1947221f),
                    Quaternion.Normalize(new Quaternion(0f, 0.015279869f,
-                       0f, 0.9998833f)), margin) ||
+                       0f, 0.9998833f)), margin, dynamicEnabled,
+                   colliderEnabled, runtimeLayer) ||
                BoxTouchesScene(map, rootPosition, rootRotation,
                    new Vector3(0f, 0.9668381f, 0.03979206f),
                    new Vector3(1f, 0.43308878f, 1.9321573f),
                    Quaternion.Normalize(new Quaternion(0f, -0.69621986f,
-                       0f, 0.71782863f)), margin);
+                       0f, 0.71782863f)), margin, dynamicEnabled,
+                   colliderEnabled, runtimeLayer);
     }
 
     private static bool BoxTouchesScene(RecoveredBattleMap map,
         Vector3 rootPosition, Quaternion rootRotation, Vector3 colliderCenter,
-        Vector3 colliderSize, Quaternion childRotation, float margin)
+        Vector3 colliderSize, Quaternion childRotation, float margin,
+        Func<string, bool>? dynamicEnabled,
+        Func<int, bool>? colliderEnabled,
+        Func<int, int, int>? runtimeLayer)
     {
         Vector3 localCenter = ChildPosition +
             Vector3.Transform(colliderCenter, childRotation);
@@ -47,7 +55,7 @@ internal static class CardParachuteCompoundContact
         Vector3 querySize = colliderSize + new Vector3(2f * margin);
 
         return map.BoxOverlaps(worldCenter, querySize, worldRotation,
-            SceneCollisionMask);
+            SceneCollisionMask, dynamicEnabled, colliderEnabled, runtimeLayer);
     }
 
     private static bool ValidRotation(Quaternion rotation)

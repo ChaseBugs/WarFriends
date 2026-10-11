@@ -73,10 +73,27 @@ public sealed class ArmySpawnPointSelector
     {
         string category=Collection(family.BehaviorType);
         return catalog.ForMap(map).Where(point=>point.Collection==category && point.Fraction==fraction &&
-            (family.IsSoldier ? PointMask(point.ComponentType)!=0 &&
-                                (family.SpawnPointMask & PointMask(point.ComponentType))==PointMask(point.ComponentType)
+            (family.IsSoldier ? AcceptSoldierSpawnPoint(family,point)
                               : family.BehaviorType=="MechBehaviour" ? point.ComponentType=="SpawnPoint"
                               : pathAvailable(point))).ToArray();
+    }
+
+    private static bool AcceptSoldierSpawnPoint(ArmyDeploymentFamily family,
+        ArmySpawnPoint point)
+    {
+        int pointMask = PointMask(point.ComponentType);
+        if (pointMask == 0)
+            return false;
+        if ((family.SpawnPointMask & pointMask) == pointMask)
+            return true;
+
+        // MainScene behavior 38324 has base spawnPointType=Normal (1) but its
+        // definition has canUseParachute=1. The recovered Parachuter override
+        // accepts a Parachute point before testing the inherited base mask.
+        return point.ComponentType == "SpawnPointParachute" &&
+            family.BehaviorFileId == 38324 &&
+            family.BehaviorType == "SoldierBehaviourParachuter" &&
+            family.UnitId == "ID_UNIT-PARATROOPER";
     }
 
     private static int PointMask(string componentType)=>componentType switch

@@ -10158,6 +10158,16 @@ internal static class CombatContentTests
                           Vector3.Distance(sourceSpawn.Position, origin) < 0.0001f &&
                           fall.GetProperty("firstImpulseFrame").GetInt32() is > 300 and < 550,
                         "Parachute impulse trace binds one source faction spawn");
+                    ArmyDeploymentFamily paratrooperFamily = content.Army.Families
+                        .Single(family => family.UnitId == "ID_UNIT-PARATROOPER");
+                    ArmySpawnPoint? selectedParachute =
+                        new ArmySpawnPointSelector(content.ArmySpawnPoints)
+                            .Select(sourceMap, paratrooperFamily, fraction,
+                                Vector3.Zero, _ => 0, _ => true);
+                    Check(paratrooperFamily.SpawnPointMask == 1 &&
+                          paratrooperFamily.BehaviorFileId == 38324 &&
+                          selectedParachute?.ComponentFileId == spawnId,
+                        "Paratrooper's source override chooses the parachute point");
                     JsonElement candidates = fall.GetProperty("collisionCandidates");
                     Check(candidates.GetArrayLength() is > 0 and <= 5 &&
                           candidates.EnumerateArray().All(candidate =>
@@ -10221,6 +10231,60 @@ internal static class CombatContentTests
                               1f - Math.Abs(Quaternion.Dot(flight.Rotation,
                                   observedRotation)) < 0.00001f,
                             "source Parachute pose and velocity match Unity before collision");
+                    }
+                    var hostFlight = new CardParachuteFlightState(
+                        origin, fraction, 0f);
+                    Vector3? landed = null;
+                    for (int hostStep = 0; hostStep < 400 && !landed.HasValue;
+                         hostStep++)
+                        landed = hostFlight.AdvanceHostTick(sourceMap);
+                    int unityImpulse = fall.GetProperty("firstImpulseFrame")
+                        .GetInt32();
+                    Check(landed.HasValue && hostFlight.Landed &&
+                          Math.Abs(hostFlight.FixedFrame - unityImpulse) <= 1,
+                        "host two-contact landing agrees with Unity within one fixed step");
+                    Reject(() => hostFlight.AdvanceHostTick(sourceMap));
+                    Vector3 landingPosition = landed ??
+                        throw new InvalidDataException("Parachute landing was not detected.");
+                    Vector3? navStart = content.ArmyNavMeshConnectivity
+                        .SampleNearest(sourceMap, landingPosition, 1.25f);
+                    CardUnitInitialPoint? landingPoint = cardInitialPoints.Select(
+                        sourceMap, "ELITEPARA", fraction, landingPosition,
+                        _ => true);
+                    Vector3? navEnd = landingPoint == null ? null :
+                        content.ArmyNavMeshConnectivity.SampleNearest(
+                            sourceMap, landingPoint.Position, 0.5f);
+                    Check(navStart.HasValue &&
+                          (landingPoint == null ||
+                           navEnd.HasValue &&
+                           content.ArmyNavMeshConnectivity.PlanCorridor(
+                               sourceMap, navStart.Value, navEnd.Value) != null),
+                        "measured parachute landing has a source-backed walk start");
+                    foreach (float swayPhase in new[]
+                        { 0.25f, 0.5f, 1f, 1.5f, 1.99f })
+                    {
+                        var variedFlight = new CardParachuteFlightState(
+                            origin, fraction, swayPhase);
+                        Vector3? variedLanding = null;
+                        for (int hostStep = 0;
+                             hostStep < 400 && !variedLanding.HasValue;
+                             hostStep++)
+                            variedLanding = variedFlight.AdvanceHostTick(sourceMap);
+                        Vector3? variedStart = variedLanding.HasValue ?
+                            content.ArmyNavMeshConnectivity.SampleNearest(
+                                sourceMap, variedLanding.Value, 1.25f) : null;
+                        CardUnitInitialPoint? variedPoint = variedLanding.HasValue ?
+                            cardInitialPoints.Select(sourceMap, "ELITEPARA",
+                                fraction, variedLanding.Value, _ => true) : null;
+                        Vector3? variedEnd = variedPoint == null ? null :
+                            content.ArmyNavMeshConnectivity.SampleNearest(
+                                sourceMap, variedPoint.Position, 0.5f);
+                        Check(variedFlight.Landed && variedStart.HasValue &&
+                              (variedPoint == null || variedEnd.HasValue &&
+                               content.ArmyNavMeshConnectivity.PlanCorridor(
+                                   sourceMap, variedStart.Value,
+                                   variedEnd.Value) != null),
+                            "server-owned sway phase keeps a source-backed landing route");
                     }
                     checkedParachuteFalls++;
                 }
@@ -11709,6 +11773,7 @@ internal static class CombatContentTests
             "both Paratroopers retain card-specific damage while awaiting landing");
         Check(paraCardMatch.ConfirmArmyDeath(paraRows[0].EntityKey, false) &&
               paraCardMatch.ArmyDamage(paraRows[0].EntityKey) == null &&
+              !paraCardMatch.CardParatrooperFalling(paraRows[0].EntityKey) &&
               paraCardMatch.ArmyDamage(paraRows[1].EntityKey) ==
                   paraStats.Combat.Damage,
             "one Paratrooper death clears only its own combat authority");
@@ -11914,6 +11979,83 @@ internal static class CombatContentTests
         Check(snowParaMatch.ConfirmArmyDeath(snowPara.EntityKey, false) &&
               snowParaMatch.CardParatrooperFallbackSpawn(snowPara.EntityKey) == null,
             "Snow Paratrooper death clears its fallback walk and retry clock");
+        RecoveredBattleMap cityCardMap = content.Maps.Single(sourceMap =>
+            sourceMap.Source.EndsWith("City_Multiplayer.unity"));
+        var automaticCityLanding = ReadyCardMatch(
+            "host-card-para-auto-city", "ELITEPARA", cityCardMap);
+        Check(automaticCityLanding.TryScheduleCardUnit(
+                  "acacacacacacacacacacacacacacacac",
+                  decoyOpponent, "ELITEPARA"),
+            "City faction-two card starts host-owned parachute flight");
+        var cityParatrooper = automaticCityLanding.ArmyEntityBatch(
+            decoyOpponent, 0, 0).Entities.Single();
+        float citySpawnHeight = cityParatrooper.Y;
+        ArmySpawnPoint citySourceSpawn = content.ArmySpawnPoints.ForMap(cityCardMap)
+            .Single(point => point.ComponentFileId ==
+                cityParatrooper.SpawnComponentFileId);
+        Check(citySourceSpawn.ComponentType == "SpawnPointParachute" &&
+              citySpawnHeight > 6f &&
+              automaticCityLanding.CardParatrooperFalling(
+                  cityParatrooper.EntityKey),
+            "new City Paratrooper starts at its elevated source parachute point");
+        for (ulong cardTick = 61; cardTick <= 365 &&
+             !automaticCityLanding.Terminal; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                automaticCityLanding.ArmyBatch(decoyPlayer);
+                automaticCityLanding.ArmyBatch(decoyOpponent);
+            }
+            automaticCityLanding.Advance(cardTick);
+            if (cardTick == 100)
+            {
+                var fallingCityParatrooper = automaticCityLanding.ArmyEntityBatch(
+                    decoyOpponent, 0, 0).Entities.Single(entity =>
+                        entity.EntityKey == cityParatrooper.EntityKey);
+                Check(automaticCityLanding.CardParatrooperFalling(
+                          cityParatrooper.EntityKey) &&
+                      automaticCityLanding.CardEnemyPoint(
+                          cityParatrooper.EntityKey) == null &&
+                      fallingCityParatrooper.Y < citySpawnHeight,
+                    "host publishes a falling pose without reserving a Corner early");
+            }
+        }
+        Check(!automaticCityLanding.Terminal &&
+              !automaticCityLanding.CardParatrooperFalling(
+                  cityParatrooper.EntityKey) &&
+              automaticCityLanding.CardEnemyPoint(cityParatrooper.EntityKey) != null &&
+              (automaticCityLanding.CardParatrooperWalking(
+                   cityParatrooper.EntityKey) ||
+               automaticCityLanding.CardParatrooperAttacking(
+                   cityParatrooper.EntityKey)),
+            "City faction-two Paratrooper lands automatically and walks to a source Corner");
+
+        var automaticSnowLanding = ReadyCardMatch(
+            "host-card-para-auto-snow", "ELITEPARA", snowCardMap);
+        Check(automaticSnowLanding.TryScheduleCardUnit(
+                  "adadadadadadadadadadadadadadadad",
+                  decoyPlayer, "ELITEPARA"),
+            "Snow card starts host-owned fallback parachute flight");
+        var automaticSnowParatrooper = automaticSnowLanding.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.Single();
+        for (ulong cardTick = 61; cardTick <= 310 &&
+             !automaticSnowLanding.Terminal; cardTick++)
+        {
+            if (cardTick % 90 == 0)
+            {
+                automaticSnowLanding.ArmyBatch(decoyPlayer);
+                automaticSnowLanding.ArmyBatch(decoyOpponent);
+            }
+            automaticSnowLanding.Advance(cardTick);
+        }
+        Check(!automaticSnowLanding.Terminal &&
+              !automaticSnowLanding.CardParatrooperFalling(
+                  automaticSnowParatrooper.EntityKey) &&
+              automaticSnowLanding.CardParatrooperFallbackSpawn(
+                  automaticSnowParatrooper.EntityKey) != null &&
+              automaticSnowLanding.CardEnemyPoint(
+                  automaticSnowParatrooper.EntityKey) == null,
+            "Snow Paratrooper lands automatically without inventing a Corner");
         var minigunnerCardMatch = ReadyCardMatch("host-card-minigunner", "ELITEMINIGUN");
         const string minigunnerCardRequest = "b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8";
         Check(minigunnerCardMatch.TryScheduleCardUnit(minigunnerCardRequest,
