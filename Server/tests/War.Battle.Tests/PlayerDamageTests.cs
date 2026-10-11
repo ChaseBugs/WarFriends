@@ -61,6 +61,21 @@ internal static class PlayerDamageTests
         Reject(() => PlayerDamage.Resolve(body, 100, shot, false, false, float.NaN));
         Reject(() => PlayerDamage.Validate(body with { NoDamageChance = 1.1f }));
 
+        Check(PlayerKevlar.CardMaximum(100) == 20,
+            "Kevlar Up fills twenty percent of the current player maximum");
+        var armoredHit = PlayerKevlar.Absorb(Hit(new ResolvedPlayerDamage(25,
+            CombatDamageType.Basic, HasWeapon: false)), 20, 20, 100, false);
+        Check(armoredHit.Player.Health == 95 && armoredHit.RemainingKevlar == 0 &&
+              !armoredHit.Player.Dead,
+            "Kevlar absorbs its remaining twenty points before player death");
+        var immortalArmorHit = PlayerKevlar.Absorb(PlayerDamage.Resolve(
+            body with { Immortal = true }, 100,
+            new ResolvedPlayerDamage(10, CombatDamageType.Basic, HasWeapon: false),
+            false, false, 1), 20, 20, 100, true);
+        Check(immortalArmorHit.Player.Health == 100 && immortalArmorHit.RemainingKevlar == 10,
+            "source Kevlar still loses original damage while the player is immortal");
+        Reject(() => PlayerKevlar.Absorb(Hit(shot), float.NaN, 20, 100, false));
+
         var players = fixture.Players.Select((p, i) => p with { Fraction = i + 1, Combat = body }).ToArray();
         var manifest = fixture with { Players = players };
         Reject(() => MatchManifest.Validate(manifest with { Players = [players[0], players[1] with { Combat = null }] }));
@@ -82,6 +97,44 @@ internal static class PlayerDamageTests
         Check(snapshot.Phase == BattlePhase.Ended && snapshot.WinnerPlayerId == a && snapshot.TerminalReason == "player-killed" && snapshot.Players[1].Dead && !snapshot.RewardEligible, "unscored death terminal");
         Check(engine.ApplyResolvedPlayerDamage(a, b, lethal, 1) == null && engine.Snapshot().Equals(snapshot), "terminal cannot damage twice");
         Check(PacketCodec.Encode(new Packet { Version = 1, SessionId = 1, Sequence = 1, MatchReply = engine.Reply(0, "state") }, new byte[32]).Length <= 1200, "health snapshot fits MTU");
+        var kevlarMatch = new MatchEngine(manifest with { MatchId = "kevlar-up-player-damage" });
+        kevlarMatch.ConfigureCardSelection(["KEVLARUP"]);
+        kevlarMatch.ConfigureCardInventory([(b, "KEVLARUP", 1)]);
+        kevlarMatch.Admit(a);
+        kevlarMatch.Admit(b);
+        var kevlarSelection = new SelectCardsCommand();
+        kevlarSelection.CardIds.Add("KEVLARUP");
+        Check(kevlarMatch.Command(b, new MatchCommand
+        {
+            CommandId = 1, SelectCards = kevlarSelection
+        }).Code == "cards-selected", "player selects an allocated Kevlar Up card");
+        kevlarMatch.Command(a, new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = kevlarMatch.ManifestHash } });
+        kevlarMatch.Command(b, new MatchCommand { CommandId = 2,
+            Ready = new ReadyCommand { ManifestHash = kevlarMatch.ManifestHash } });
+        kevlarMatch.Advance(60);
+        var kevlarCommand = new MatchCommand { CommandId = 3,
+            UseKevlarUp = new UseKevlarUpCommand
+            { RequestId = "74747474747474747474747474747474" } };
+        Check(kevlarMatch.Command(b, kevlarCommand).Code == "kevlar-up-applied" &&
+              kevlarMatch.Command(b, kevlarCommand).Code == "kevlar-up-applied" &&
+              kevlarMatch.Snapshot().Players[1].KevlarHealth == 20 &&
+              kevlarMatch.Snapshot().Players[1].KevlarMaxHealth == 20,
+            "authenticated Kevlar Up fills one replay-safe armor pool");
+        kevlarMatch.ApplyResolvedPlayerDamage(a, b,
+            new ResolvedPlayerDamage(15, CombatDamageType.Basic, HasWeapon: false), 1);
+        Check(kevlarMatch.Snapshot().Players[1].Health == 100 &&
+              kevlarMatch.Snapshot().Players[1].KevlarHealth == 5,
+            "first player hit consumes Kevlar before health");
+        kevlarMatch.ApplyResolvedPlayerDamage(a, b,
+            new ResolvedPlayerDamage(10, CombatDamageType.Basic, HasWeapon: false), 1);
+        Check(kevlarMatch.Snapshot().Players[1].Health == 95 &&
+              kevlarMatch.Snapshot().Players[1].KevlarHealth == 0,
+            "overflow damage reaches health after the remaining Kevlar breaks");
+        Check(kevlarMatch.Command(b, new MatchCommand { CommandId = 4,
+            UseKevlarUp = new UseKevlarUpCommand
+            { RequestId = "75757575757575757575757575757575" } }).Code ==
+              "kevlar-up-unavailable", "spent Kevlar Up cannot refill armor twice");
         var noDamagePlayers = players.Select((p, i) => i == 1
             ? p with { Combat = body with { NoDamageChance = 1 } } : p).ToArray();
         var noDamageMatch = new MatchEngine(fixture with

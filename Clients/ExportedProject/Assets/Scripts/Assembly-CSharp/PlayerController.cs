@@ -14,6 +14,9 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 			throw new InvalidOperationException("Invalid authoritative player snapshot.");
 		if (destroyableParts == null) throw new InvalidOperationException("Player damage presentation is missing.");
 		destroyableParts.ApplySelfHostedState(state.Health, state.MaxHealth, state.Dead);
+		Kevlar kevlar = GetComponent<Kevlar>();
+		if (kevlar == null) throw new InvalidOperationException("Player Kevlar presentation is missing.");
+		kevlar.ApplySelfHostedState(state.KevlarHealth, state.KevlarMaxHealth);
 		isAlive = !state.Dead;
 		movingFreeze = state.MovementFrozen;
 		WeaponInventory inventory = ResolveSelfHostedInventory();

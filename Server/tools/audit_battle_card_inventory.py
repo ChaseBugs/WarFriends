@@ -247,6 +247,26 @@ def check_shield_reflection_source():
         raise ValueError("REFLECTION allied shield immunity source changed")
 
 
+def check_kevlar_up_source():
+    content = ROOT / "Server/content/recovered-battle-content.json"
+    sheets = json.loads(content.read_text(encoding="utf-8"))["sheets"]
+    constants = next(sheet["rows"] for sheet in sheets
+                     if sheet["type"] == "Google2u.CardConstants")
+    values = {row["DBKEY"]: row["FLOATVALUE"] for row in constants}
+    card = (ASSETS / "Scripts/Assembly-CSharp/CardKevlarUp.cs").read_text(encoding="utf-8-sig")
+    armor = (ASSETS / "Scripts/Assembly-CSharp/Kevlar.cs").read_text(encoding="utf-8-sig")
+    expected_card = ["CardConstants.rowIds.KevlarUpCoef", "playerOld.SetUpKevlar(kevlarStrength)"]
+    expected_armor = [
+        "kevlarDestroyableObject.maxHealth = kevlarStrength * destroyableObject.maxHealth",
+        "Mathf.Min(damageInfo.originalDamage, kevlarDestroyableObject.health)",
+        "Mathf.Max(0f, damageInfo.originalDamage)",
+    ]
+    if (values.get("KevlarUpCoef") != .2 or
+        any(rule not in card for rule in expected_card) or
+        any(rule not in armor for rule in expected_armor)):
+        raise ValueError("KEVLARUP armor amount or damage source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -259,7 +279,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 24 or
+    if (len(names) != 25 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -281,6 +301,7 @@ def render():
     check_slow_move_source()
     check_disarmed_source()
     check_shield_reflection_source()
+    check_kevlar_up_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()

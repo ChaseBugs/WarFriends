@@ -139,6 +139,7 @@ message UseImmortalCommand { string request_id = 1; }
 message UseSlowMoveCommand { string request_id = 1; }
 message UseDisarmedCommand { string request_id = 1; }
 message UseShieldReflectionCommand { string request_id = 1; }
+message UseKevlarUpCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
 message MatchCommand {
@@ -179,6 +180,7 @@ message MatchCommand {
     UseSlowMoveCommand use_slow_move = 44;
     UseDisarmedCommand use_disarmed = 45;
     UseShieldReflectionCommand use_shield_reflection = 46;
+    UseKevlarUpCommand use_kevlar_up = 47;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -281,6 +283,8 @@ message BattlePlayerState {
   // deployables, fake pellets, and area explosions. Not yet Client MatchStats.hits.
   uint32 confirmed_player_bullet_hits = 45;
   bool movement_frozen = 46;
+  float kevlar_health = 47;
+  float kevlar_max_health = 48;
 }
 message BattleArmyUsage {
   int32 option_index = 1; string unit_id = 2; uint32 deployments = 3;

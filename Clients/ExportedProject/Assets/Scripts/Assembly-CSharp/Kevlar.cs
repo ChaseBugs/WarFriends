@@ -8,7 +8,38 @@ public class Kevlar : Core_BaseScript
 
 	private PhotonView photonView;
 
+	private bool selfHostedActive;
+
 	public float kevlarStrength = 0.2f;
+
+	public void ApplySelfHostedState(float health, float maximum)
+	{
+		if (float.IsNaN(health) || float.IsInfinity(health) ||
+			float.IsNaN(maximum) || float.IsInfinity(maximum) ||
+			maximum < 0f || health < 0f || health > maximum)
+			throw new System.InvalidOperationException("Invalid authoritative Kevlar state.");
+		if (health == 0f)
+		{
+			if (selfHostedActive)
+				kevlarDestroyableObject.enabled = false;
+			selfHostedActive = false;
+			return;
+		}
+		if (!selfHostedActive)
+		{
+			kevlarDestroyableObject.owner = destroyableObject.owner;
+			kevlarDestroyableObject.healthBarPosition.transform.parent =
+				destroyableObject.healthBarPosition.parent;
+			kevlarDestroyableObject.healthBarPosition.transform.localPosition =
+				destroyableObject.healthBarPosition.localPosition;
+			kevlarDestroyableObject.offset = new Vector3(0f, 3.6f, 0f);
+			destroyableObject.forceHealthBar = true;
+			selfHostedActive = true;
+		}
+		kevlarDestroyableObject.maxHealth = maximum;
+		kevlarDestroyableObject.health = health;
+		kevlarDestroyableObject.enabled = true;
+	}
 
 	protected override void Awake()
 	{

@@ -1006,6 +1006,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         public string LastGeometryHit = "";
         public float Health;
         public float MaximumHealth;
+        public float KevlarMaximum;
+        public float KevlarHealth;
         public PlayerCombatManifest? CurrentCombat => Definition.Combat is { } combat
             ? combat with { MaxHealth = MaximumHealth } : null;
         public bool Dead;
@@ -2106,6 +2108,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseDisarmed(p,c.UseDisarmed.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldReflection)
             return UseShieldReflection(p,c.UseShieldReflection.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseKevlarUp)
+            return UseKevlarUp(p,c.UseKevlarUp.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
@@ -2577,10 +2581,14 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (attacker == null || victim == null || !attacker.Admitted || !victim.Admitted ||
             attacker.Dead || victim.Dead || victim.Definition.Combat == null) return null;
         bool selfDamage = attacker == victim && hit.Amount > 0;
-        var result = PlayerDamage.Resolve(CombatFor(victim), victim.Health, hit,
+        PlayerCombatManifest combat = CombatFor(victim);
+        var result = PlayerDamage.Resolve(combat, victim.Health, hit,
             attacker.Definition.Fraction == victim.Definition.Fraction,
             selfDamage, randomRoll);
         if (!result.Applied) return result;
+        var absorbed = PlayerKevlar.Absorb(result, victim.KevlarHealth,
+            victim.KevlarMaximum, victim.MaximumHealth, combat.Immortal);
+        result = absorbed.Player;
         if (confirmedProjectileImpact && attacker != victim && attacker.Definition.Fraction != victim.Definition.Fraction)
         {
             // Only this call site follows a one-shot flight impact. Direct
@@ -2591,6 +2599,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             if (result.Dead) attacker.ConfirmedPlayerKills = checked(attacker.ConfirmedPlayerKills + 1);
         }
         victim.Health = result.Health;
+        victim.KevlarHealth = absorbed.RemainingKevlar;
         victim.Dead = result.Dead;
         UpdateDronePlayerTarget(victim);
         victim.DamageRevision++;
@@ -2898,6 +2907,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             Moving = p.Route != null, MoveEndTick = p.MoveEnd, LastGeometryHit = p.LastGeometryHit,
             CombatEnabled = p.Definition.Combat != null, Health = p.Health,
             MaxHealth = p.MaximumHealth, Dead = p.Dead, DamageRevision = p.DamageRevision,
+            KevlarHealth = p.KevlarHealth, KevlarMaxHealth = p.KevlarMaximum,
             ConfirmedPlayerHits = p.ConfirmedPlayerHits, ConfirmedPlayerKills = p.ConfirmedPlayerKills,
             ConfirmedEnemyHits = p.ConfirmedEnemyHits,
             ConfirmedPlayerBulletHits=includeTerminalEvidence ? p.ConfirmedPlayerBulletHits : 0,

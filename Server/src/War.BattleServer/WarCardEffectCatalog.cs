@@ -32,6 +32,7 @@ public static class WarCardEffectCatalog
             ["CardBelovedEnemy"]=new("CardBelovedEnemy",WarCardEffectKind.Status,false,true),
             ["CardDisarmedAndLocked"]=new("CardDisarmedAndLocked",WarCardEffectKind.Status,false,true),
             ["CardShiedlsRefection"]=new("CardShiedlsRefection",WarCardEffectKind.Status,false,true),
+            ["CardKevlarUp"]=new("CardKevlarUp",WarCardEffectKind.Shield,false,true),
             ["CardAmmoBox"]=new("CardAmmoBox",WarCardEffectKind.Ammo,false,true),
             ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,false,true),
             ["CardEmptyMag"]=new("CardEmptyMag",WarCardEffectKind.Ammo,false,true),

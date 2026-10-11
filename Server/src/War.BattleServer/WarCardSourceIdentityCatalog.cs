@@ -14,6 +14,7 @@ public static class WarCardSourceIdentityCatalog
             ["CardBelovedEnemy"]=["SLOWMOVE"],
             ["CardDisarmedAndLocked"]=["DISARMED"],
             ["CardShiedlsRefection"]=["REFLECTION"],
+            ["CardKevlarUp"]=["KEVLARUP"],
             ["CardShieldGenerator"]=["SHIELDGENERATOR"],
             ["CardHealthForSoldiers"]=["SUPERSOLDIERS"],
             ["CardMassShieldDestroyer"]=["APOCALYPSE"],
