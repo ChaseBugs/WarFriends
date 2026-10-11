@@ -543,6 +543,25 @@ public sealed partial class MatchEngine
             rotation, walkSeconds);
     }
 
+    internal CoopMuzzlePose? CardParatrooperCornerMuzzle(ulong entityKey)
+    {
+        if (!paratrooperAttacks.ContainsKey(entityKey))
+            return null;
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "ELITEPARA" || enemyMuzzles == null ||
+            cardEnemyPoints?.Find(entityKey) is not
+                { ComponentType: "EnemyPointCorner", CornerRightSide: bool rightSide }
+                point)
+            throw new InvalidDataException("Corner Paratrooper lost its firing pose.");
+
+        // ShootFromCover queues the side-specific fire clip after uncovering.
+        // Shoot occurs 0.05 seconds after uncoverLength, so sample that clip
+        // at the same elapsed time instead of using the resting weapon pose.
+        string clip = rightSide ? "player_fire_right3" : "player_fire_left3";
+        Vector3 position = new(entity.X, entity.Y, entity.Z);
+        return enemyMuzzles.Place(clip, position, point.Rotation, 0.05f);
+    }
+
     private void AdvanceCardParatrooperAirAttacks()
     {
         if (armyWeapons == null)
@@ -677,10 +696,13 @@ public sealed partial class MatchEngine
                 continue;
             if (!paratrooperShotTargets.TryGetValue(entityKey, out var shotTarget))
                 throw new InvalidDataException("Card Paratrooper lost its latched shot target.");
+            Vector3 muzzle = CardParatrooperCornerMuzzle(entityKey)?.Position ??
+                throw new InvalidDataException("Card Paratrooper lost its Corner muzzle.");
             rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
                 entity.OwnerPlayerId, shotTarget.PlayerId,
                 shotTarget.TargetFileId, shotTarget.Position,
-                attack.CurrentShotIsReal, attack.BatchCursor, attack.BatchSize));
+                attack.CurrentShotIsReal, attack.BatchCursor, attack.BatchSize,
+                muzzle));
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 paratrooperShotTargets.Remove(entityKey);

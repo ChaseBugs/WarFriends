@@ -12120,6 +12120,11 @@ internal static class CombatContentTests
         Check(firingParaShotSeen &&
               firingParaMatch.CardParatrooperAttacking(firingPara.EntityKey),
             "exposed Park Corner fires a card Paratrooper projectile on the host clock");
+        CoopMuzzlePose? cornerMuzzle = firingParaMatch
+            .CardParatrooperCornerMuzzle(firingPara.EntityKey);
+        Check(cornerMuzzle != null &&
+              PlayerHitbox.Finite(cornerMuzzle.Position),
+            "arrived Paratrooper has a sampled side-specific Corner rifle muzzle");
         Check(firingParaMatch.ConfirmArmyDeath(firingPara.EntityKey, false) &&
               !firingParaMatch.CardParatrooperAttacking(firingPara.EntityKey) &&
               firingParaMatch.CardEnemyPointOccupant(
