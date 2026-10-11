@@ -22,6 +22,21 @@ public class WeaponInventory : Core_BaseScript
 
 	public float canNotChangeFract;
 
+	private float selfHostedLockFraction;
+
+	public bool weaponSwitchLocked => cannotChange || selfHostedLockFraction > 0f;
+
+	public float weaponSwitchLockFraction => cannotChange
+		? canNotChangeFract : selfHostedLockFraction;
+
+	public void SetSelfHostedWeaponLock(float remainingFraction)
+	{
+		if (float.IsNaN(remainingFraction) || float.IsInfinity(remainingFraction) ||
+			remainingFraction < 0f || remainingFraction > 1f)
+			throw new InvalidOperationException("Invalid authoritative weapon lock.");
+		selfHostedLockFraction = remainingFraction;
+	}
+
 	public int weaponIndex { get; private set; }
 
 	public PlayerWeapon pistol
@@ -48,7 +63,7 @@ public class WeaponInventory : Core_BaseScript
 		}
 		set
 		{
-			if (cannotChange)
+			if (weaponSwitchLocked)
 			{
 				return;
 			}

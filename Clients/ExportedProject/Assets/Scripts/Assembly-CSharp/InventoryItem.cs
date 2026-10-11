@@ -226,10 +226,10 @@ public class InventoryItem : PoolableObject
 			mIsEnabled = mWeapon.isEnabled;
 			SetEnabled(mIsEnabled);
 		}
-		blockedLabel.SetActive(mInventory.cannotChange && mInventory.currentWeapon != mWeapon && !Singleton<GameController>.instance.isTutorial);
-		if (mInventory.cannotChange && mInventory.currentWeapon != mWeapon && !Singleton<GameController>.instance.isTutorial)
+		blockedLabel.SetActive(mInventory.weaponSwitchLocked && mInventory.currentWeapon != mWeapon && !Singleton<GameController>.instance.isTutorial);
+		if (mInventory.weaponSwitchLocked && mInventory.currentWeapon != mWeapon && !Singleton<GameController>.instance.isTutorial)
 		{
-			UpdateIcoProgress("game-card-ico-disarmed", 2, mInventory.canNotChangeFract);
+			UpdateIcoProgress("game-card-ico-disarmed", 2, mInventory.weaponSwitchLockFraction);
 		}
 		else
 		{

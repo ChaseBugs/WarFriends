@@ -269,6 +269,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 							if (view.Weapons[i].Slot == state.ActiveWeaponSlot) { selected = i; break; }
 				if (selected < 0) throw new InvalidOperationException("Authoritative weapon slot is absent from the player view.");
 				player.ApplySelfHostedSnapshot(state, selected);
+				ApplyWeaponLock(player, state.PlayerId, snapshot);
 				if (player == local) ApplyMinigunMotor(player, state.MinigunHeld, ref localMinigunMotor);
 				else ApplyMinigunMotor(player, state.MinigunHeld, ref otherMinigunMotor);
 				if (player == local) ApplySniperScope(state.SniperScopeVisible);
@@ -301,6 +302,26 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 				Singleton<GameController>.instance.mainController.FinishGame();
 			}
 		}
+	}
+
+	private static void ApplyWeaponLock(PlayerController player, string playerId, MatchSnapshot snapshot)
+	{
+		WeaponInventory inventory = player.ResolveSelfHostedInventory();
+		if (inventory == null) return;
+
+		float remainingFraction = 0f;
+		foreach (BattleCardEffectState effect in snapshot.CardEffects)
+		{
+			if (effect.CardId != "CardDisarmedAndLocked" || effect.OwnerPlayerId == playerId ||
+				effect.ExpiresTick <= snapshot.ServerTick || effect.ExpiresTick <= effect.StartedTick)
+				continue;
+			ulong remainingTicks = effect.ExpiresTick - snapshot.ServerTick;
+			ulong durationTicks = effect.ExpiresTick - effect.StartedTick;
+			float fraction = Mathf.Clamp01((float)remainingTicks / durationTicks);
+			remainingFraction = Mathf.Max(remainingFraction, fraction);
+		}
+		// Keep the existing grenade/tutorial lock separate from this server effect.
+		inventory.SetSelfHostedWeaponLock(remainingFraction);
 	}
 
 	private void ApplyEvent(MatchEvent item)
@@ -375,6 +396,10 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 
 	private void OnDestroy()
 	{
+		if (local != null && local.weaponInventory != null)
+			local.weaponInventory.SetSelfHostedWeaponLock(0f);
+		if (other != null && other.weaponInventory != null)
+			other.weaponInventory.SetSelfHostedWeaponLock(0f);
 		if (client == null) return;
 		if (localMinigunMotor) ApplyMinigunMotor(local, false, ref localMinigunMotor);
 		if (otherMinigunMotor) ApplyMinigunMotor(other, false, ref otherMinigunMotor);
