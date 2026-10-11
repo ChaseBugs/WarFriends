@@ -11,6 +11,8 @@ public sealed partial class MatchEngine
     private CardEnemyPointOccupancy? cardEnemyPoints;
     private readonly Dictionary<ulong, ulong> swatPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSwatWalkState> swatWalks = [];
+    private readonly Dictionary<ulong, ArmyRusherAttackState> swatAttacks = [];
+    private readonly Dictionary<ulong, ArmyRusherTarget> swatShotTargets = [];
 
     internal CardUnitInitialPoint? CardEnemyPoint(ulong entityKey) =>
         cardEnemyPoints?.Find(entityKey);
@@ -19,6 +21,8 @@ public sealed partial class MatchEngine
         cardEnemyPoints?.Occupant(pointFileId);
 
     internal bool CardSwatWalking(ulong entityKey) => swatWalks.ContainsKey(entityKey);
+
+    internal bool CardSwatAttacking(ulong entityKey) => swatAttacks.ContainsKey(entityKey);
 
     /// <summary>
     /// Host-only activation seam. The UDP command remains closed until
@@ -89,7 +93,7 @@ public sealed partial class MatchEngine
             if (entity.SourceCardId == "ELITEMINIGUN")
                 InitializeCardMinigunner(entity);
             if (entity.SourceCardId == "ELITESWAT")
-                TryAssignCardSwatPoint(entity);
+                InitializeCardSwat(entity);
             armyEntityRevision++;
             stateRevision++;
             Emit(MatchEventKind.ArmySpawned, owner.Definition.PlayerId,
@@ -102,6 +106,23 @@ public sealed partial class MatchEngine
             spawnEvent.ArmyReservationFileId = entity.ReservationFileId;
             spawnEvent.SourceCardId = entity.SourceCardId;
         }
+    }
+
+    private void InitializeCardSwat(BattleArmyEntityState entity)
+    {
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card SWAT lost its source spawn identity.");
+        if (source.EntityKey != entity.EntityKey ||
+            source.SourceCardId != "ELITESWAT" ||
+            entity.UnitId != "ID_UNIT-SWAT")
+            throw new InvalidDataException("Card SWAT cannot bind its combat rows.");
+
+        // The card uses CARDS_MIN/MAX health, damage, and shot rows. It has
+        // no ordinary army option or purchased special upgrade lane.
+        armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
+        armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
+        rusherShotCounts.Add(entity.EntityKey, 0);
+        TryAssignCardSwatPoint(entity);
     }
 
     private void TryAssignCardSwatPoint(BattleArmyEntityState entity)
@@ -165,8 +186,81 @@ public sealed partial class MatchEngine
             entity.PositionTick = tick;
             cardUnitCombat?.UpdatePose(entity);
             if (walk.Arrived)
+            {
                 swatWalks.Remove(entityKey);
+                StartCardSwatAttack(entityKey);
+            }
         }
+    }
+
+    private void StartCardSwatAttack(ulong entityKey)
+    {
+        if (!armyShots.TryGetValue(entityKey, out ArmyBaseShotStats? shot) ||
+            cardEnemyPoints?.Find(entityKey) == null)
+            throw new InvalidDataException("Card SWAT reached no owned point or shot row.");
+        int cadence = armyWeapons?.CadenceTicks("ID_UNIT-SWAT") ??
+            throw new InvalidDataException("Card SWAT lacks source shot cadence.");
+        var attack = new ArmyRusherAttackState(shot, NextArmyFloat, cadence,
+            cooldownMinSeconds: 2f, cooldownMaxSeconds: 4f);
+        // EnemyPointSwat enters Swat state on arrival. Its first
+        // SwitchStateToSwat call sets mNextShootTime to mTime + 0.5f.
+        attack.BeginInitialCooldown(0.5f, 0.5f);
+        if (!swatAttacks.TryAdd(entityKey, attack))
+            throw new InvalidDataException("Card SWAT attack started twice.");
+    }
+
+    private ArmyRusherTarget? CardSwatBodyTarget(ulong entityKey)
+    {
+        if (rifleCombat == null || playerShotTargets == null ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            cardEnemyPoints?.Find(entityKey) is not { } point)
+            return null;
+        Player owner = Find(entity.OwnerPlayerId) ??
+            throw new InvalidDataException("Card SWAT owner left the match.");
+        Player opponent = players.Single(player => player != owner);
+        if (opponent.Dead)
+            return null;
+
+        var pose = rifleCombat.Pose(opponent.Definition.PlayerId);
+        var position = new Vector3(entity.X, entity.Y, entity.Z);
+        var target = playerShotTargets.Nearest(1, position,
+            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
+        return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
+            target.TransformFileId, point.ComponentFileId,
+            pose.BodyTarget(target.TransformFileId).Position);
+    }
+
+    private void AdvanceCardSwatAttacks()
+    {
+        rusherShotIntents.Clear();
+        foreach (var (entityKey, attack) in swatAttacks.OrderBy(row => row.Key))
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITESWAT" || swatWalks.ContainsKey(entityKey))
+                throw new InvalidDataException("Card SWAT attack lost its arrived soldier.");
+            ArmyRusherTarget? target = CardSwatBodyTarget(entityKey);
+            if (attack.Phase == ArmyRusherAttackPhase.Ready)
+            {
+                int windup = armyWeapons?.WindupTicks(entity.UnitId) ??
+                    throw new InvalidDataException("Card SWAT lacks source windup.");
+                if (attack.TryBegin(target != null, 1, windup))
+                    swatShotTargets[entityKey] = target!;
+            }
+
+            attack.AdvanceTick();
+            if (!attack.ShotDue)
+                continue;
+            if (!swatShotTargets.TryGetValue(entityKey, out var shotTarget))
+                throw new InvalidDataException("Card SWAT lost its latched shot target.");
+            rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
+                entity.OwnerPlayerId, shotTarget.PlayerId,
+                shotTarget.TargetFileId, shotTarget.Position,
+                attack.CurrentShotIsReal, attack.BatchCursor, attack.BatchSize));
+            attack.CommitShot();
+            if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
+                swatShotTargets.Remove(entityKey);
+        }
+        LaunchRusherShotIntents();
     }
 
     private void InitializeCardDrone(BattleArmyEntityState entity)
@@ -280,6 +374,11 @@ public sealed partial class MatchEngine
         {
             swatPointRetryTicks.Remove(entityKey);
             swatWalks.Remove(entityKey);
+            swatAttacks.Remove(entityKey);
+            swatShotTargets.Remove(entityKey);
+            rusherShotCounts.Remove(entityKey);
+            armyDamage.Remove(entityKey);
+            armyShots.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);
         }
 

@@ -11598,6 +11598,11 @@ internal static class CombatContentTests
               swatCardMatch.CardEnemyPointOccupant(firstCardSwatPoint.ComponentFileId) ==
                   swatCardRows[0].EntityKey,
             "host card SWAT calls own separate faction-correct enemy points");
+        var swatCardStats = content.Army.CardBaseStats("ELITESWAT", 22,
+            content.BarrelPolicy.MaxDisplayLevel);
+        Check(swatCardRows.All(row => swatCardMatch.ArmyDamage(row.EntityKey) ==
+                  swatCardStats.Combat.Damage),
+            "card SWAT binds its own damage row instead of the ordinary army stage");
         Check(swatCardRows.All(row => swatCardMatch.CardSwatWalking(row.EntityKey)),
             "both card SWAT soldiers begin source-point NavMesh walks");
         swatCardMatch.Advance(61);
@@ -11615,9 +11620,43 @@ internal static class CombatContentTests
         Check(swatCardMatch.ConfirmArmyDeath(swatCardRows[0].EntityKey, false) &&
               swatCardMatch.CardEnemyPointOccupant(firstCardSwatPoint!.ComponentFileId) == null &&
               !swatCardMatch.CardSwatWalking(swatCardRows[0].EntityKey) &&
+              swatCardMatch.ArmyDamage(swatCardRows[0].EntityKey) == null &&
               swatCardMatch.CardEnemyPointOccupant(secondCardSwatPoint!.ComponentFileId) ==
                   swatCardRows[1].EntityKey,
             "confirmed card SWAT death releases only its own source enemy point");
+        var firingSwatMatch = ReadyCardMatch("host-card-swat-fire", "ELITESWAT");
+        const string firingSwatRequest = "d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0";
+        Check(firingSwatMatch.TryScheduleCardUnit(firingSwatRequest,
+                  decoyPlayer, "ELITESWAT"),
+            "host schedules card SWAT for a complete arrival and shot trace");
+        bool swatFired = false;
+        for (ulong swatTick = 61; swatTick < 1500 &&
+             !firingSwatMatch.Terminal && !swatFired; swatTick++)
+        {
+            if (swatTick % 90 == 0)
+            {
+                firingSwatMatch.ArmyBatch(decoyPlayer);
+                firingSwatMatch.ArmyBatch(decoyOpponent);
+            }
+            firingSwatMatch.Advance(swatTick);
+            swatFired = firingSwatMatch.EventBatch(decoyPlayer, 0)
+                .Events.Any(row => row.Kind == MatchEventKind.Shot &&
+                    row.ActorId == decoyPlayer && row.Reason == "army");
+        }
+        Check(swatFired,
+            "card SWAT reaches its source point and publishes a host-owned shot");
+        var arrivedSwat = firingSwatMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.FirstOrDefault(row =>
+                firingSwatMatch.CardSwatAttacking(row.EntityKey));
+        int arrivedSwatPoint = arrivedSwat == null ? 0 :
+            firingSwatMatch.CardEnemyPoint(arrivedSwat.EntityKey)?.ComponentFileId ?? 0;
+        Check(arrivedSwat != null && arrivedSwatPoint > 0 &&
+              !firingSwatMatch.CardSwatWalking(arrivedSwat.EntityKey) &&
+              firingSwatMatch.ConfirmArmyDeath(arrivedSwat.EntityKey, false) &&
+              !firingSwatMatch.CardSwatAttacking(arrivedSwat.EntityKey) &&
+              firingSwatMatch.CardEnemyPointOccupant(arrivedSwatPoint) == null &&
+              firingSwatMatch.ArmyDamage(arrivedSwat.EntityKey) == null,
+            "card SWAT death after firing removes attack, point, and damage authority");
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([
