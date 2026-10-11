@@ -15,6 +15,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, CardParachuteFlightState> parachuteFlights = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAirAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> paratrooperAirShotTargets = [];
+    private readonly Dictionary<ulong, ulong> paratrooperAirShotStartTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -473,6 +474,26 @@ public sealed partial class MatchEngine
             flight.Rotation, idleSeconds);
     }
 
+    internal CoopMuzzlePose? CardParatrooperAirFiringMuzzle(ulong entityKey)
+    {
+        if (!parachuteFlights.TryGetValue(entityKey, out var flight))
+            return null;
+        if (!paratrooperAirShotStartTicks.TryGetValue(entityKey,
+                out ulong startedAt) ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "ELITEPARA" || enemyMuzzles == null ||
+            tick < startedAt)
+            throw new InvalidDataException("Airborne Paratrooper lost its firing animation clock.");
+
+        // SoldierAnimationController.ShootStand plays rifle_shot_loop at
+        // half speed. The source muzzle artifact samples that same clip.
+        float clipSeconds = (tick - startedAt) /
+            (float)MatchManifest.TickRate * 0.5f;
+        Vector3 soldierPosition = new(entity.X, entity.Y, entity.Z);
+        return enemyMuzzles.Place("rifle_shot_loop", soldierPosition,
+            flight.Rotation, clipSeconds);
+    }
+
     private void AdvanceCardParatrooperAirAttacks()
     {
         if (armyWeapons == null)
@@ -492,6 +513,7 @@ public sealed partial class MatchEngine
                 ArmyRusherAttackPhase.Ready or ArmyRusherAttackPhase.Cooldown)
             {
                 paratrooperAirAttacks.Remove(entityKey);
+                paratrooperAirShotStartTicks.Remove(entityKey);
                 continue;
             }
 
@@ -507,9 +529,12 @@ public sealed partial class MatchEngine
                     Player owner = Find(entity.OwnerPlayerId) ??
                         throw new InvalidDataException("Airborne attack lost its owner.");
                     Player opponent = players.Single(player => player != owner);
-                    paratrooperAirShotTargets[entityKey] = new ArmyRusherTarget(
+                    var shotTarget = new ArmyRusherTarget(
                         entityKey, opponent.Definition.PlayerId,
                         aim.TransformFileId, 0, aim.Position);
+                    if (!paratrooperAirShotTargets.TryAdd(entityKey, shotTarget) ||
+                        !paratrooperAirShotStartTicks.TryAdd(entityKey, tick))
+                        throw new InvalidDataException("Airborne Paratrooper reused a firing batch.");
                 }
             }
 
@@ -519,14 +544,19 @@ public sealed partial class MatchEngine
             if (!paratrooperAirShotTargets.TryGetValue(entityKey,
                 out ArmyRusherTarget? target))
                 throw new InvalidDataException("Airborne attack lost its latched Shield target.");
+            Vector3? firingMuzzle = null;
+            if (stillFalling)
+                firingMuzzle = CardParatrooperAirFiringMuzzle(entityKey)?.Position ??
+                    throw new InvalidDataException("Airborne Paratrooper lost its shot muzzle.");
             rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
                 entity.OwnerPlayerId, target.PlayerId, target.TargetFileId,
                 target.Position, attack.CurrentShotIsReal,
-                attack.BatchCursor, attack.BatchSize));
+                attack.BatchCursor, attack.BatchSize, firingMuzzle));
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
             {
                 paratrooperAirShotTargets.Remove(entityKey);
+                paratrooperAirShotStartTicks.Remove(entityKey);
                 if (!stillFalling)
                     paratrooperAirAttacks.Remove(entityKey);
             }
@@ -867,6 +897,7 @@ public sealed partial class MatchEngine
             parachuteFlights.Remove(entityKey);
             paratrooperAirAttacks.Remove(entityKey);
             paratrooperAirShotTargets.Remove(entityKey);
+            paratrooperAirShotStartTicks.Remove(entityKey);
             paratrooperWalks.Remove(entityKey);
             paratrooperFallbackWalks.Remove(entityKey);
             paratrooperPointRetryTicks.Remove(entityKey);

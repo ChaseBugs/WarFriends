@@ -10,7 +10,8 @@ public sealed partial class MatchEngine
     internal sealed record ArmyRusherTarget(ulong EntityKey,string PlayerId,int TargetFileId,
         int RusherPointFileId,Vector3 Position);
     internal sealed record ArmyRusherShotIntent(ulong EntityKey,string OwnerPlayerId,string TargetPlayerId,int TargetFileId,
-        Vector3 TargetPosition,bool IsReal,int BatchIndex,int BatchSize);
+        Vector3 TargetPosition,bool IsReal,int BatchIndex,int BatchSize,
+        Vector3? MuzzleOverride = null);
     private sealed class ArmyVitality(float maximum,float kevlarMaximum=0)
     {
         public float Maximum=maximum;
@@ -3057,6 +3058,8 @@ public sealed partial class MatchEngine
     private void LaunchRusherShotIntents()
     {
         if(rifleCombat==null || rusherShotIntents.Count==0)return;
+        ArmyWeaponBindingCatalog weaponBindings = armyWeapons ??
+            throw new InvalidDataException("Army projectile lacks weapon binding authority.");
         foreach(var intent in rusherShotIntents)
         {
             if(!activeArmyEntities.TryGetValue(intent.EntityKey,out var army) ||
@@ -3070,9 +3073,8 @@ public sealed partial class MatchEngine
             {
                 if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
                 var flameEntityPosition=new Vector3(army.X,army.Y,army.Z);
-                var flameOrigin=armyWeapons?.RestMuzzleOrigin(army.UnitId,flameEntityPosition,
-                    intent.TargetPosition-flameEntityPosition)??
-                    throw new InvalidDataException("Army flame shot lacks pinned weapon muzzle authority.");
+                var flameOrigin=weaponBindings.RestMuzzleOrigin(army.UnitId,
+                    flameEntityPosition, intent.TargetPosition-flameEntityPosition);
                 if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army flame identity exhausted.");
                 ulong flameId=++projectileId;
                 armyFlameBursts.Add(flameId,new ArmyFlameBurst(flameId,intent.EntityKey,intent.OwnerPlayerId,tick));
@@ -3089,10 +3091,23 @@ public sealed partial class MatchEngine
             };
             if(!projectileSpeed.HasValue)continue;
             var entityPosition=new Vector3(army.X,army.Y,army.Z);
-            var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,
-                intent.TargetPosition-entityPosition,muzzleIndex)??
-                throw new InvalidDataException("Army projectile lacks pinned muzzle authority.");
-            if(!armyWeapons.TryProjectileDamage(army.UnitId,ArmyDamage(intent.EntityKey)??0,
+            Vector3 origin;
+            if (intent.MuzzleOverride is Vector3 sampledOrigin)
+            {
+                if (behavior != "SoldierBehaviourParachuter" ||
+                    army.SourceCardId != "ELITEPARA" ||
+                    !PlayerHitbox.Finite(sampledOrigin) ||
+                    Vector3.Distance(sampledOrigin, entityPosition) > 5f)
+                    throw new InvalidDataException("Invalid card Paratrooper muzzle sample.");
+                origin = sampledOrigin;
+            }
+            else
+            {
+                origin = weaponBindings.RestMuzzleOrigin(army.UnitId,
+                    entityPosition, intent.TargetPosition - entityPosition,
+                    muzzleIndex);
+            }
+            if(!weaponBindings.TryProjectileDamage(army.UnitId,ArmyDamage(intent.EntityKey)??0,
                 origin,intent.TargetPosition,out float launchDamage))
             {
                 if(EventCapacityForShot())

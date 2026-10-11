@@ -11666,6 +11666,13 @@ internal static class CombatContentTests
         var airborneProjectile = airborneShot == null ? null :
             airborneFiringMatch.ArmyProjectileLaunch(
                 airborneShot.ProjectileId);
+        CoopMuzzlePose? sampledFiringMuzzle = airborneFiringMatch
+            .CardParatrooperAirFiringMuzzle(airborneFiringEntity);
+        Check(airborneShot != null && sampledFiringMuzzle != null &&
+              Vector3.Distance(new Vector3(airborneShot.X,
+                      airborneShot.Y, airborneShot.Z),
+                  sampledFiringMuzzle.Position) < 0.0001f,
+            "airborne projectile launches from the sampled half-speed rifle animation muzzle");
         float airborneCardDamage = content.Army.CardBaseStats(
             "ELITEPARA", 22, content.BarrelPolicy.MaxDisplayLevel)
             .Combat.Damage;
