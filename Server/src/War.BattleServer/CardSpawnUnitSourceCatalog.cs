@@ -1,3 +1,5 @@
+using War.Shared;
+
 namespace War.BattleServer;
 
 /// <summary>
@@ -51,6 +53,7 @@ public static class CardSpawnUnitSourceCatalog
             !float.IsFinite(row.SpawnDelaySeconds) || row.SpawnDelaySeconds < 0 ||
             row.SpawnDelaySeconds > 1 ||
             WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit", row.SourceCardId) != row.SourceCardId ||
+            !CardUnitSourceIdentity.Matches(row.SourceCardId, row.UnitId) ||
             !ArmyOptionIdentityCatalog.All.Any(option => option.UnitId == row.UnitId)))
             throw new InvalidDataException("Recovered unit-card catalog is incomplete.");
 

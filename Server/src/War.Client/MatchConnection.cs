@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using War.Protocol;
 using War.Protocol.Transport;
+using War.Shared;
 
 namespace War.Client
 {
@@ -274,7 +275,10 @@ namespace War.Client
                            (((ulong)entity.OwnerFraction<<32)|(uint)entity.LocalEntityId) ||
                        !Guid.TryParseExact(entity.OwnerPlayerId,"N",out _) ||
                        entity.OwnerPlayerId!=entity.OwnerPlayerId.ToLowerInvariant() ||
-                       entity.OptionIndex<0 || entity.OptionIndex>=45 ||
+                       (entity.SourceCardId.Length == 0
+                           ? entity.OptionIndex < 0 || entity.OptionIndex >= 45
+                           : entity.OptionIndex != -1 ||
+                             !CardUnitSourceIdentity.Matches(entity.SourceCardId, entity.UnitId)) ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):

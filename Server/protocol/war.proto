@@ -319,6 +319,9 @@ message BattleArmyEntityState {
   float assault_glass_max_health = 30; float assault_glass_health = 31;
   // Source root heading and bank for glass/body placement and Client presentation.
   BattleJointRotation assault_rotation = 32;
+  // Present only for CardSpawnUnit entities. Such entities use option_index -1;
+  // the exact source Card.id and unit pair is validated by Worker and SDK.
+  string source_card_id = 33;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

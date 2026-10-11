@@ -3,6 +3,7 @@ using Google.Protobuf;
 using War.Infrastructure;
 using War.Protocol;
 using War.Protocol.Transport;
+using War.Shared;
 
 int checks = 0;
 checks += await BattleMatchControlClientTests.Run();
@@ -15,6 +16,16 @@ var grenadeWire=new MatchCommand{CommandId=17,GrenadeThrow=new GrenadeThrowComma
 Check(MatchCommand.Parser.ParseFrom(grenadeWire.ToByteArray()).Equals(grenadeWire)&&
       grenadeWire.IntentCase==MatchCommand.IntentOneofCase.GrenadeThrow,
     "typed grenade swipe intent protobuf round trip");
+var cardUnitWire = new BattleArmyEntityState
+{
+    EntityKey = 4294967297, OwnerFraction = 1, LocalEntityId = 1,
+    OptionIndex = -1, UnitId = "ID_UNIT-DRONE", SourceCardId = "HEAVYDRONE"
+};
+Check(BattleArmyEntityState.Parser.ParseFrom(cardUnitWire.ToByteArray()).Equals(cardUnitWire) &&
+      CardUnitSourceIdentity.Matches(cardUnitWire.SourceCardId, cardUnitWire.UnitId) &&
+      !CardUnitSourceIdentity.Matches("HEAVYDRONE", "ID_UNIT-SNIPER") &&
+      !CardUnitSourceIdentity.Matches("UNKNOWN", "ID_UNIT-DRONE"),
+    "unit-card wire origin retains one recovered card and unit identity");
 var decoyRequest=Guid.NewGuid().ToString("N");
 var decoyWire=new MatchCommand{CommandId=18,UseDecoy=new UseDecoyCommand{RequestId=decoyRequest}};
 var decoySnapshot=new MatchSnapshot();decoySnapshot.Decoys.Add(new BattleDecoyState
