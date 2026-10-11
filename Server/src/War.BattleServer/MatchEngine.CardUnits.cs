@@ -8,6 +8,14 @@ public sealed partial class MatchEngine
     private readonly CardUnitSpawnState cardUnitSpawns = new();
     private readonly CardUnitEntityRegistry cardUnitEntities = new();
     private CardUnitCombatLifecycle? cardUnitCombat;
+    private CardEnemyPointOccupancy? cardEnemyPoints;
+    private readonly Dictionary<ulong, ulong> swatPointRetryTicks = [];
+
+    internal CardUnitInitialPoint? CardEnemyPoint(ulong entityKey) =>
+        cardEnemyPoints?.Find(entityKey);
+
+    internal ulong? CardEnemyPointOccupant(int pointFileId) =>
+        cardEnemyPoints?.Occupant(pointFileId);
 
     /// <summary>
     /// Host-only activation seam. The UDP command remains closed until
@@ -77,6 +85,8 @@ public sealed partial class MatchEngine
                 InitializeCardDrone(entity);
             if (entity.SourceCardId == "ELITEMINIGUN")
                 InitializeCardMinigunner(entity);
+            if (entity.SourceCardId == "ELITESWAT")
+                TryAssignCardSwatPoint(entity);
             armyEntityRevision++;
             stateRevision++;
             Emit(MatchEventKind.ArmySpawned, owner.Definition.PlayerId,
@@ -88,6 +98,37 @@ public sealed partial class MatchEngine
             spawnEvent.ArmySpawnComponentFileId = entity.SpawnComponentFileId;
             spawnEvent.ArmyReservationFileId = entity.ReservationFileId;
             spawnEvent.SourceCardId = entity.SourceCardId;
+        }
+    }
+
+    private void TryAssignCardSwatPoint(BattleArmyEntityState entity)
+    {
+        if (cardEnemyPoints == null || entity.SourceCardId != "ELITESWAT")
+            throw new InvalidDataException("Card SWAT has no source enemy-point authority.");
+        var position = new Vector3(entity.X, entity.Y, entity.Z);
+        CardUnitInitialPoint? point = cardEnemyPoints.TryAssign(entity.EntityKey,
+            entity.SourceCardId, entity.OwnerFraction, position);
+        if (point == null)
+        {
+            // EnemyController.GenerateInitPoint retries five seconds after
+            // a failed GetInitPoint. The unit itself remains spawned.
+            swatPointRetryTicks[entity.EntityKey] = checked(tick +
+                5u * MatchManifest.TickRate);
+            return;
+        }
+        swatPointRetryTicks.Remove(entity.EntityKey);
+    }
+
+    private void AdvanceCardSwatPointRetries()
+    {
+        foreach (var (entityKey, dueTick) in swatPointRetryTicks.ToArray())
+        {
+            if (tick < dueTick)
+                continue;
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITESWAT")
+                throw new InvalidDataException("Card SWAT retry lost its active soldier.");
+            TryAssignCardSwatPoint(entity);
         }
     }
 
@@ -197,6 +238,11 @@ public sealed partial class MatchEngine
             rusherShotCounts.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);
+        }
+        if (entity.SourceCardId == "ELITESWAT")
+        {
+            swatPointRetryTicks.Remove(entityKey);
+            cardEnemyPoints?.Release(entityKey);
         }
 
         armyEntityRevision++;

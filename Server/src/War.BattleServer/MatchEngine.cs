@@ -971,6 +971,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             cardUnitCombat = new CardUnitCombatLifecycle(new CardUnitSpawnCoordinator(
                 cardUnitSpawns, cardUnitEntities, content.Army, map, armySelector,
                 armyReservations, content.BarrelPolicy.MaxDisplayLevel, this.armyChoice));
+            cardEnemyPoints = new CardEnemyPointOccupancy(content.CardUnitInitialPoints, map);
             var vehicleCaps=content.Army.Families.Where(f=>!f.IsAir&&!f.IsSoldier&&f.VehicleShot!=null)
                 .ToDictionary(f=>f.UnitId,f=>f.MaxGeneratedCount,StringComparer.Ordinal);
             if(vehicleCaps.Count>0)vehicles=new VehicleEntityRegistry(vehicleCaps);
@@ -1354,6 +1355,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (phase == BattlePhase.Running && cardUnitSpawns.PendingCount > 0)
         {
             try { AdvanceCardUnitSpawns(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && swatPointRetryTicks.Count > 0)
+        {
+            try { AdvanceCardSwatPointRetries(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
         if(advanced && phase==BattlePhase.Running && (rusherMotionCandidates.Count>0||warperRelocations.Count>0))

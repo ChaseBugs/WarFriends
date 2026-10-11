@@ -10139,6 +10139,31 @@ internal static class CombatContentTests
             Check(nearestPara != null && alternatePara != null &&
                   nearestPara.ComponentFileId != alternatePara.ComponentFileId,
                 "occupied card Paratrooper initial point selects the next source point");
+            var swatPointOwners = new CardEnemyPointOccupancy(cardInitialPoints,
+                parkCardMap);
+            const ulong firstSwatKey = (1UL << 32) | 101;
+            const ulong secondSwatKey = (1UL << 32) | 102;
+            const ulong thirdSwatKey = (1UL << 32) | 103;
+            var firstSwatPoint = swatPointOwners.TryAssign(firstSwatKey,
+                "ELITESWAT", 1, Vector3.Zero);
+            var secondSwatPoint = swatPointOwners.TryAssign(secondSwatKey,
+                "ELITESWAT", 1, Vector3.Zero);
+            Check(firstSwatPoint != null && secondSwatPoint != null &&
+                  firstSwatPoint.ComponentFileId != secondSwatPoint.ComponentFileId &&
+                  swatPointOwners.TryAssign(firstSwatKey,
+                      "ELITESWAT", 1, Vector3.Zero) == firstSwatPoint &&
+                  swatPointOwners.TryAssign(thirdSwatKey,
+                      "ELITESWAT", 1, Vector3.Zero) == null &&
+                  swatPointOwners.Occupant(firstSwatPoint.ComponentFileId) == firstSwatKey,
+                "card SWAT soldiers reserve distinct source enemy points");
+            Reject(() => swatPointOwners.TryAssign(firstSwatKey,
+                "ELITEPARA", 1, Vector3.Zero));
+            Check(swatPointOwners.Release(firstSwatKey) &&
+                  !swatPointOwners.Release(firstSwatKey) &&
+                  swatPointOwners.TryAssign(thirdSwatKey,
+                      "ELITESWAT", 1, Vector3.Zero)?.ComponentFileId ==
+                      firstSwatPoint!.ComponentFileId,
+                "released card SWAT point can be claimed by a later soldier");
             Reject(() => CardUnitInitialPointCatalog.Load(cardEnemyPointPath,
                 new string('0', 64), content.Maps));
             var cardDroneFamily = CardSpawnUnitSourceCatalog.Family(content.Army,
@@ -11555,6 +11580,29 @@ internal static class CombatContentTests
               minigunnerCardMatch.ArmyDamage(minigunnerCardRow.EntityKey) == null &&
               minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
             "card Minigunner death releases movement, damage, and roster authority");
+        var swatCardMatch = ReadyCardMatch("host-card-swat", "ELITESWAT");
+        const string swatCardRequest = "c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9";
+        Check(swatCardMatch.TryScheduleCardUnit(swatCardRequest,
+                  decoyPlayer, "ELITESWAT"),
+            "selected SWAT card spawns both source soldiers");
+        var swatCardRows = swatCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.OrderBy(row => row.LocalEntityId).ToArray();
+        var firstCardSwatPoint = swatCardRows.Length == 2
+            ? swatCardMatch.CardEnemyPoint(swatCardRows[0].EntityKey) : null;
+        var secondCardSwatPoint = swatCardRows.Length == 2
+            ? swatCardMatch.CardEnemyPoint(swatCardRows[1].EntityKey) : null;
+        Check(firstCardSwatPoint != null && secondCardSwatPoint != null &&
+              firstCardSwatPoint.ComponentType == "EnemyPointSwat" &&
+              secondCardSwatPoint.ComponentType == "EnemyPointSwat" &&
+              firstCardSwatPoint.ComponentFileId != secondCardSwatPoint.ComponentFileId &&
+              swatCardMatch.CardEnemyPointOccupant(firstCardSwatPoint.ComponentFileId) ==
+                  swatCardRows[0].EntityKey,
+            "host card SWAT calls own separate faction-correct enemy points");
+        Check(swatCardMatch.ConfirmArmyDeath(swatCardRows[0].EntityKey, false) &&
+              swatCardMatch.CardEnemyPointOccupant(firstCardSwatPoint!.ComponentFileId) == null &&
+              swatCardMatch.CardEnemyPointOccupant(secondCardSwatPoint!.ComponentFileId) ==
+                  swatCardRows[1].EntityKey,
+            "confirmed card SWAT death releases only its own source enemy point");
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([
