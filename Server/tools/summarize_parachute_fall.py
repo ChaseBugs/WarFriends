@@ -159,8 +159,12 @@ def summarize(path):
                 "preContactVelocitySamples": [
                     {"frame": frame,
                      "position": rounded(frames[frame]["position"]),
+                     "rotation": rounded(frames[frame]["rotation"]),
                      "velocity": rounded(frames[frame]["velocity"])}
-                    for frame in (1, 50, 100, 200, 300)
+                    for frame in (1, 50, 100, 200, 300,
+                                  impact["frame"] - 10,
+                                  impact["frame"] - 5,
+                                  impact["frame"] - 2)
                 ],
             })
         accepted_maps.append({

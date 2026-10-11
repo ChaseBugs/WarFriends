@@ -10115,7 +10115,7 @@ internal static class CombatContentTests
                 "recovered-parachute-fall-reference.json");
             byte[] parachuteReferenceBytes = File.ReadAllBytes(parachuteReferencePath);
             Check(Convert.ToHexStringLower(SHA256.HashData(parachuteReferenceBytes)) ==
-                  "3b86c8c86ea076a0f13969c0729cc25ef456b533a689af79d1879a45fc94124f",
+                  "fe7645aab633d4aca52df695c3da554155a29e1c119300fe3dd7b38c57e3dace",
                 "Parachute Unity trace summary retains its reviewed source revision");
             using var parachuteDocument = JsonDocument.Parse(parachuteReferenceBytes);
             JsonElement parachuteReference = parachuteDocument.RootElement;
@@ -10138,6 +10138,7 @@ internal static class CombatContentTests
                 values[0].GetSingle(), values[1].GetSingle(),
                 values[2].GetSingle());
             int checkedParachuteFalls = 0;
+            int prematureParachuteContacts = 0;
             foreach (JsonElement scene in parachuteReference.GetProperty("maps")
                 .EnumerateArray())
             {
@@ -10169,6 +10170,33 @@ internal static class CombatContentTests
                               candidate.GetProperty("boundsDistance").GetSingle()
                                   is >= 0f and <= 2f),
                         "Unity impact has nearby source-collision-layer candidates");
+                    Quaternion Rotation(JsonElement values) => new(
+                        values[0].GetSingle(), values[1].GetSingle(),
+                        values[2].GetSingle(), values[3].GetSingle());
+                    Vector3 impactPosition = ParachuteVector(fall.GetProperty(
+                        "firstImpulsePosition"));
+                    Quaternion impactRotation = Rotation(fall.GetProperty(
+                        "firstImpulseRotation"));
+                    Check(CardParachuteCompoundContact.HasNearbySceneSurface(
+                              sourceMap, impactPosition, impactRotation, 0.005f),
+                        "source compound boxes find all measured scene impacts");
+                    foreach (JsonElement earlySample in fall.GetProperty(
+                        "preContactVelocitySamples").EnumerateArray().Take(5))
+                    {
+                        Check(!CardParachuteCompoundContact.HasNearbySceneSurface(
+                                  sourceMap,
+                                  ParachuteVector(earlySample.GetProperty("position")),
+                                  Rotation(earlySample.GetProperty("rotation")),
+                                  0.005f),
+                            "compound boxes stay clear during early free flight");
+                    }
+                    JsonElement nearImpact = fall.GetProperty(
+                        "preContactVelocitySamples")[7];
+                    if (CardParachuteCompoundContact.HasNearbySceneSurface(
+                            sourceMap,
+                            ParachuteVector(nearImpact.GetProperty("position")),
+                            Rotation(nearImpact.GetProperty("rotation")), 0.005f))
+                        prematureParachuteContacts++;
                     var flight = new CardParachutePreContactMotion(origin, fraction);
                     foreach (JsonElement sample in fall.GetProperty(
                         "preContactVelocitySamples").EnumerateArray())
@@ -10195,9 +10223,20 @@ internal static class CombatContentTests
             }
             Check(checkedParachuteFalls == 10,
                 "all ten multiplayer Parachute spawn flights have pinned impulses");
+            Check(prematureParachuteContacts == 1,
+                "Desert geometry can overlap before Unity's first measured impulse");
             Reject(() => new CardParachutePreContactMotion(
                 new Vector3(float.NaN, 0, 0), 1));
             Reject(() => new CardParachutePreContactMotion(Vector3.Zero, 3));
+            Reject(() => CardParachuteCompoundContact.HasNearbySceneSurface(
+                content.Maps[0], new Vector3(float.NaN, 0, 0),
+                Quaternion.Identity, 0.005f));
+            Reject(() => CardParachuteCompoundContact.HasNearbySceneSurface(
+                content.Maps[0], Vector3.Zero,
+                new Quaternion(0, 0, 0, 0), 0.005f));
+            Reject(() => CardParachuteCompoundContact.HasNearbySceneSurface(
+                content.Maps[0], Vector3.Zero,
+                Quaternion.Identity, -0.001f));
             foreach (var sourceMap in content.Maps)
             {
                 for (int fraction = 1; fraction <= 2; fraction++)
