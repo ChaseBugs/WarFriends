@@ -2705,10 +2705,14 @@ public sealed partial class MatchEngine
                 armyNavMeshConnectivity!.Classify(map!,before,next)==ArmyNavMeshConnection.Connected);
             army.X=steering.Position.X;army.Y=steering.Position.Y;army.Z=steering.Position.Z;
             army.PositionTick=tick;
+            if (army.SourceCardId.Length > 0)
+                cardUnitCombat?.UpdatePose(army);
             if(!movement.Arrived || steering.Offset!=Vector2.Zero ||
                Vector2.Distance(new(army.X,army.Z),new(movement.Destination.X,movement.Destination.Z))>=.04f)
                 continue;
             army.X=movement.Destination.X;army.Z=movement.Destination.Z;
+            if (army.SourceCardId.Length > 0)
+                cardUnitCombat?.UpdatePose(army);
             if(!minigunnerMovements.Remove(key)||!minigunnerSteering.Remove(key))
                 throw new InvalidDataException("Minigunner arrival removal failed.");
             StartMinigunnerAttack(key);

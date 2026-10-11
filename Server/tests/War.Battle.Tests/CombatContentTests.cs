@@ -11505,6 +11505,36 @@ internal static class CombatContentTests
                   row.UnitId == "ID_UNIT-PARATROOPER" &&
                   row.OptionIndex == -1),
             "delayed second Paratrooper card unit receives a distinct host identity at tick 75");
+        var minigunnerCardMatch = ReadyCardMatch("host-card-minigunner", "ELITEMINIGUN");
+        const string minigunnerCardRequest = "b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b8";
+        Check(minigunnerCardMatch.TryScheduleCardUnit(minigunnerCardRequest,
+                  decoyPlayer, "ELITEMINIGUN"),
+            "selected Minigunner card creates a host-owned unit");
+        var minigunnerCardRow = minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single();
+        var minigunnerCardStats = content.Army.CardBaseStats("ELITEMINIGUN", 22,
+            content.BarrelPolicy.MaxDisplayLevel);
+        int minigunnerDestination = minigunnerCardMatch.MinigunnerPoint(
+            minigunnerCardRow.EntityKey) ?? 0;
+        Check(minigunnerCardRow.SourceCardId == "ELITEMINIGUN" &&
+              minigunnerCardMatch.ArmyDamage(minigunnerCardRow.EntityKey) ==
+                  minigunnerCardStats.Combat.Damage &&
+              minigunnerCardMatch.MinigunnerMovementCandidate(
+                  minigunnerCardRow.EntityKey) != null &&
+              minigunnerDestination > 0 &&
+              minigunnerCardMatch.MinigunnerPointOccupant(minigunnerDestination) ==
+                  minigunnerCardRow.EntityKey,
+            "card Minigunner uses card damage and reserves a source movement point");
+        minigunnerCardMatch.Advance(61);
+        Check(minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                  .Entities.Single().PositionTick == 61,
+            "card Minigunner movement updates its published host pose");
+        Check(minigunnerCardMatch.ConfirmArmyDeath(minigunnerCardRow.EntityKey, false) &&
+              minigunnerCardMatch.MinigunnerPoint(minigunnerCardRow.EntityKey) == null &&
+              minigunnerCardMatch.MinigunnerPointOccupant(minigunnerDestination) == null &&
+              minigunnerCardMatch.ArmyDamage(minigunnerCardRow.EntityKey) == null &&
+              minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
+            "card Minigunner death releases movement, damage, and roster authority");
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([

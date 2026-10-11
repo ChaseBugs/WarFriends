@@ -75,6 +75,8 @@ public sealed partial class MatchEngine
             activeArmyEntities.Add(entity.EntityKey, entity);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
+            if (entity.SourceCardId == "ELITEMINIGUN")
+                InitializeCardMinigunner(entity);
             armyEntityRevision++;
             stateRevision++;
             Emit(MatchEventKind.ArmySpawned, owner.Definition.PlayerId,
@@ -126,6 +128,23 @@ public sealed partial class MatchEngine
         RegisterDroneArmyTarget(entity.EntityKey, family);
     }
 
+    private void InitializeCardMinigunner(BattleArmyEntityState entity)
+    {
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Minigunner lost its source spawn identity.");
+        if (source.EntityKey != entity.EntityKey ||
+            source.SourceCardId != "ELITEMINIGUN" ||
+            entity.UnitId != "ID_UNIT-MINIGUNNER" || armyCatalog == null)
+            throw new InvalidDataException("Card Minigunner cannot bind host combat authority.");
+
+        // CardSpawnUnit loads CARDS_MIN/MAX, not the owner's ordinary army
+        // upgrade lanes. The existing Minigunner movement and attack clocks
+        // can use these card-specific damage and shot values.
+        armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
+        armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
+        InitializeStationaryArmyCombat(entity.EntityKey, entity.UnitId);
+    }
+
     private bool ConfirmCardUnitDeath(ulong entityKey, bool suicide)
     {
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
@@ -161,6 +180,23 @@ public sealed partial class MatchEngine
             droneLastIntents.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armySpeed.Remove(entityKey);
+        }
+        if (entity.SourceCardId == "ELITEMINIGUN")
+        {
+            if (minigunnerPointByEntity.Remove(entityKey, out int pointId))
+            {
+                if (!occupiedMinigunnerPoints.TryGetValue(pointId, out ulong occupant) ||
+                    occupant != entityKey || !occupiedMinigunnerPoints.Remove(pointId))
+                    throw new InvalidDataException("Card Minigunner lost its destination reservation.");
+            }
+            minigunnerMovements.Remove(entityKey);
+            minigunnerSteering.Remove(entityKey);
+            minigunnerAttacks.Remove(entityKey);
+            minigunnerPointChangeTicks.Remove(entityKey);
+            minigunnerAttackTargets.Remove(entityKey);
+            rusherShotCounts.Remove(entityKey);
+            armyDamage.Remove(entityKey);
+            armyShots.Remove(entityKey);
         }
 
         armyEntityRevision++;
