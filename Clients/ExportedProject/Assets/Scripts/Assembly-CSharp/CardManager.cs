@@ -525,7 +525,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				card is CardAmmoBox || card is CardAmmoThief || card is CardBrokenLegs ||
 				card is CardMassShieldDestroyer || card is CardShieldDestroyer ||
 				card is CardHealthForSoldiers || card is CardHealthForMachines ||
-				IsSelfHostedMedkit(card)))
+				IsSelfHostedMedkit(card) || card is CardHealthierMyself))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
@@ -566,6 +566,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		{
 			MatchReply reply;
 			if (IsSelfHostedMedkit(card)) reply = await client.UseMedkitResult(card.id);
+			else if (card is CardHealthierMyself) reply = await client.UseMaxHealthResult();
 			else if (card is CardHealingStorm) reply = await client.UseHealingStormResult();
 			else if (card is CardShieldsUp) reply = await client.UseShieldsUpResult();
 			else if (card is CardShieldGenerator) reply = await client.UseShieldGeneratorResult();
@@ -604,6 +605,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 	{
 		if (card is CardHealMeNowBig) return code == "big-medkit-active";
 		if (IsSelfHostedMedkit(card)) return code == "medkit-healed";
+		if (card is CardHealthierMyself) return code == "max-health-increased";
 		if (card is CardHealingStorm) return code == "healing-storm-applied";
 		if (card is CardShieldsUp) return code == "shields-up-applied";
 		if (card is CardShieldGenerator) return code == "shield-generator-active";

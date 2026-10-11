@@ -247,7 +247,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         // Both instant cards heal their own PlayerController. CardConstants
         // supplies 0.2 for MEDKIT and 0.1 for SMALLMEDKIT. The packet never
         // supplies an amount or a target.
-        float amount = owner.Definition.Combat.MaxHealth * medkit.MaximumHealthFraction;
+        float amount = owner.MaximumHealth * medkit.MaximumHealthFraction;
         PlayerDamageResult? result = ApplyResolvedPlayerDamage(ownerPlayerId,
             ownerPlayerId, new ResolvedPlayerDamage(-amount,
                 CombatDamageType.Basic, HasWeapon: false), combatRandom(), false);
@@ -974,6 +974,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             var slots=definition.WeaponSlots ?? [new WeaponSlotManifest(0,0,definition.Weapon,definition.WeaponUpgrade??0)];
             Weapons=slots.ToDictionary(x=>x.Slot,x=>new WeaponRuntime(x));ActiveSlot=slots[0].Slot;
             Health=definition.Combat?.MaxHealth??0;
+            MaximumHealth=definition.Combat?.MaxHealth??0;
         }
         public ParticipantManifest Definition { get; }
         public readonly Dictionary<int,WeaponRuntime> Weapons;
@@ -1000,6 +1001,9 @@ public sealed partial class MatchEngine : IMatchRuntime
         public int Destination;
         public string LastGeometryHit = "";
         public float Health;
+        public float MaximumHealth;
+        public PlayerCombatManifest? CurrentCombat => Definition.Combat is { } combat
+            ? combat with { MaxHealth = MaximumHealth } : null;
         public bool Dead;
         public ulong DamageRevision;
         public uint ConfirmedPlayerHits;
@@ -2067,6 +2071,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseHeavyTurret(p,c.UseHeavyTurret.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseMedkit)
             return UseMedkit(p,c.UseMedkit.RequestId,c.UseMedkit.SourceCardId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseMaxHealth)
+            return UseMaxHealth(p,c.UseMaxHealth.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
@@ -2431,7 +2437,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             var pose=rifleCombat.Pose(victim.Definition.PlayerId).Collision;
             float roll=damageRoll();
             var effect=BazookaExplosion.ResolvePlayer(impact.Position,pose,victim.Position,
-                victim.Definition.Combat!,victim.Health,projectile.Stage,projectile.Binding,projectile.HalfDamage,
+                victim.CurrentCombat!,victim.Health,projectile.Stage,projectile.Binding,projectile.HalfDamage,
                 shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
                 attacker==victim,roll);
             if(effect==null)continue;
@@ -2510,7 +2516,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();var effect=GrenadeExplosion.ResolvePlayer(impact.Position,
-                grenadeCombat.Collision(victim.Definition.PlayerId),victim.Position,victim.Definition.Combat!,victim.Health,
+                grenadeCombat.Collision(victim.Definition.PlayerId),victim.Position,victim.CurrentCombat!,victim.Health,
                 projectile.Stage,shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,attacker==victim,roll);
             if(effect==null)continue;
             ApplyResolvedPlayerDamage(impact.OwnerId,victim.Definition.PlayerId,
@@ -2534,7 +2540,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (attacker == null || victim == null || !attacker.Admitted || !victim.Admitted ||
             attacker.Dead || victim.Dead || victim.Definition.Combat == null) return null;
         bool selfDamage = attacker == victim && hit.Amount > 0;
-        var result = PlayerDamage.Resolve(victim.Definition.Combat, victim.Health, hit,
+        var result = PlayerDamage.Resolve(victim.CurrentCombat!, victim.Health, hit,
             attacker.Definition.Fraction == victim.Definition.Fraction,
             selfDamage, randomRoll);
         if (!result.Applied) return result;
@@ -2850,7 +2856,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             CoverIndex = p.Cover, PositionX = p.Position.X, PositionY = p.Position.Y, PositionZ = p.Position.Z,
             Moving = p.Route != null, MoveEndTick = p.MoveEnd, LastGeometryHit = p.LastGeometryHit,
             CombatEnabled = p.Definition.Combat != null, Health = p.Health,
-            MaxHealth = p.Definition.Combat?.MaxHealth ?? 0, Dead = p.Dead, DamageRevision = p.DamageRevision,
+            MaxHealth = p.MaximumHealth, Dead = p.Dead, DamageRevision = p.DamageRevision,
             ConfirmedPlayerHits = p.ConfirmedPlayerHits, ConfirmedPlayerKills = p.ConfirmedPlayerKills,
             ConfirmedEnemyHits = p.ConfirmedEnemyHits,
             ConfirmedPlayerBulletHits=includeTerminalEvidence ? p.ConfirmedPlayerBulletHits : 0,

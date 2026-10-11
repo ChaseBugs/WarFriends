@@ -287,6 +287,57 @@ internal static class PlayerDamageTests
             "fifteen pulses total thirty health and the effect expires: " +
             bigMatch.Snapshot().Players[0].Health + ", effects=" +
             bigMatch.Snapshot().CardEffects.Count);
+        var maxHealthMatch = new MatchEngine(manifest with
+        {
+            MatchId = "live-max-health-card"
+        });
+        maxHealthMatch.ConfigureCardSelection(["MAXHEALTHINC"]);
+        maxHealthMatch.ConfigureCardInventory([(a, "MAXHEALTHINC", 1)]);
+        maxHealthMatch.Admit(a);
+        maxHealthMatch.Admit(b);
+        var maxHealthSelection = new SelectCardsCommand();
+        maxHealthSelection.CardIds.Add("MAXHEALTHINC");
+        Check(maxHealthMatch.Command(a, new MatchCommand
+        {
+            CommandId = 1, SelectCards = maxHealthSelection
+        }).Code == "cards-selected", "owner selects the source max-health card");
+        maxHealthMatch.Command(a, new MatchCommand
+        {
+            CommandId = 2,
+            Ready = new ReadyCommand { ManifestHash = maxHealthMatch.ManifestHash }
+        });
+        maxHealthMatch.Command(b, new MatchCommand
+        {
+            CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = maxHealthMatch.ManifestHash }
+        });
+        maxHealthMatch.Advance(60);
+        maxHealthMatch.ApplyResolvedPlayerDamage(b, a,
+            new ResolvedPlayerDamage(40, CombatDamageType.Basic,
+                HasWeapon: false), 1);
+        var maxHealthCommand = new MatchCommand
+        {
+            CommandId = 3,
+            UseMaxHealth = new UseMaxHealthCommand
+            {
+                RequestId = "90909090909090909090909090909090"
+            }
+        };
+        Check(maxHealthMatch.Command(a, maxHealthCommand).Code ==
+                  "max-health-increased" &&
+              Math.Abs(maxHealthMatch.Snapshot().Players[0].MaxHealth - 110) < .001f &&
+              Math.Abs(maxHealthMatch.Snapshot().Players[0].Health - 70) < .001f,
+            "scene 1.1 multiplier increases maximum and heals the same ten points");
+        Check(maxHealthMatch.Command(a, maxHealthCommand).Code ==
+                  "max-health-increased" &&
+              Math.Abs(maxHealthMatch.Snapshot().Players[0].MaxHealth - 110) < .001f,
+            "replayed MAXHEALTHINC cannot multiply maximum health twice");
+        maxHealthMatch.ApplyResolvedPlayerDamage(a, a,
+            new ResolvedPlayerDamage(-100, CombatDamageType.Basic,
+                HasWeapon: false), 1);
+        Check(Math.Abs(maxHealthMatch.Snapshot().Players[0].Health - 110) < .001f &&
+              maxHealthMatch.Snapshot().Players[1].MaxHealth == 100,
+            "later combat uses the owner's new maximum and leaves the opponent unchanged");
         var aliasMatch = new MatchEngine(manifest with {MatchId="medkit-selection-identity"});
         aliasMatch.ConfigureCardSelection(["MEDKIT","CardHealMeNow"]);
         aliasMatch.ConfigureCardInventory([(a,"MEDKIT",1)]);

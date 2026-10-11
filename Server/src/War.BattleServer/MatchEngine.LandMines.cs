@@ -95,7 +95,7 @@ public sealed partial class MatchEngine
         if(events.Count>=MaximumRetainedEvents)return "event-backpressure";
 
         var opponent=players.Single(player=>player!=owner);
-        float maximum=opponent.Definition.Combat?.MaxHealth??0;
+        float maximum=opponent.MaximumHealth;
         MineYourStepPlacement? placement;
         try
         {

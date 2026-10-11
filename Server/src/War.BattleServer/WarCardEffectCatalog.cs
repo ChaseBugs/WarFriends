@@ -19,6 +19,7 @@ public static class WarCardEffectCatalog
             ["CardHealMeNow"]=new("CardHealMeNow",WarCardEffectKind.Heal,false,true),
             ["CardHealMeNowSmall"]=new("CardHealMeNowSmall",WarCardEffectKind.Heal,false,true),
             ["CardHealMeNowBig"]=new("CardHealMeNowBig",WarCardEffectKind.Heal,false,true),
+            ["CardHealthierMyself"]=new("CardHealthierMyself",WarCardEffectKind.Heal,false,true),
             ["CardHealingStorm"]=new("CardHealingStorm",WarCardEffectKind.Heal,false,true),
             ["CardShieldGenerator"]=new("CardShieldGenerator",WarCardEffectKind.Shield,false,true),
             ["CardShieldsUp"]=new("CardShieldsUp",WarCardEffectKind.Shield,false,true),

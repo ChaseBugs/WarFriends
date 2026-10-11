@@ -25,6 +25,7 @@ public static class WarCardSourceIdentityCatalog
             ["CardHealMeNow"]=["MEDKIT"],
             ["CardHealMeNowSmall"]=["SMALLMEDKIT"],
             ["CardHealMeNowBig"]=["BIGMEDKIT"],
+            ["CardHealthierMyself"]=["MAXHEALTHINC"],
             ["CardGrenadesBurst"]=["CLUSTERGRENADE"],
             ["CardAmmoBox"]=["AMMOBOX"],
             ["CardSpawnUnit"]=["BIGROCKET","ELITEMINIGUN","ELITEPARA","ELITESNIPER",

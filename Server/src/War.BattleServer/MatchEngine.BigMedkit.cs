@@ -42,7 +42,7 @@ public sealed partial class MatchEngine
             while (healing.NextPulseTick <= tick &&
                    healing.NextPulseTick <= healing.ExpiresTick)
             {
-                float amount = owner.Definition.Combat.MaxHealth *
+                float amount = owner.MaximumHealth *
                     healing.FractionPerPulse;
                 ApplyResolvedPlayerDamage(healing.OwnerPlayerId,
                     healing.OwnerPlayerId,

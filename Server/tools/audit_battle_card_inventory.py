@@ -137,6 +137,18 @@ def check_big_medkit_source():
         raise ValueError("BIGMEDKIT scene or periodic heal source changed")
 
 
+def check_max_health_source():
+    scene = SCENE.read_text(encoding="utf-8-sig")
+    block = next((row for row in re.split(r"(?m)^--- ", scene)
+                  if re.search(r"(?m)^  id: MAXHEALTHINC$", row)), None)
+    source = (ASSETS / "Scripts/Assembly-CSharp/CardHealthierMyself.cs")
+    behavior = source.read_text(encoding="utf-8-sig")
+    if (block is None or "  multiplierMaxHealth: 1.1\n" not in block or
+        "maxHealth *= multiplierMaxHealth" not in behavior or
+        "Heal(healAmount, isNetworkCopy: false)" not in behavior):
+        raise ValueError("MAXHEALTHINC scene or healing source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -149,7 +161,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 17 or
+    if (len(names) != 18 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -164,6 +176,7 @@ def render():
     check_single_shield_source()
     check_instant_medkit_source()
     check_big_medkit_source()
+    check_max_health_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()
@@ -194,7 +207,7 @@ def render():
         "A dash in the reviewed column means the server catalog has not",
         "pinned that class/ID pair. Disabled rows may lack a scene component.",
         "A direct Client route is only a dispatch path, not end-to-end proof.",
-        "The dispatcher currently has 16 card classes. While connected to",
+        f"The dispatcher currently has {len(routes)} card classes. While connected to",
         "the self-hosted match, unsupported cards are rejected before the",
         "recovered Photon fallback; they need host commands before admission.",
         "",
