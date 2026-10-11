@@ -99,19 +99,42 @@ internal sealed class CardEnemyPointOccupancy
             pointFileId => !occupants.ContainsKey(pointFileId));
     }
 
-    internal void Transfer(ulong entityKey, CardUnitInitialPoint next)
+    internal IReadOnlyList<CardUnitInitialPoint> NextSniperPoints(
+        ulong entityKey, int fraction, Vector3 opponentPosition)
+    {
+        if (!assigned.TryGetValue(entityKey, out var current) ||
+            current.Fraction != fraction ||
+            !AcceptsPoint("ELITESNIPER", current.ComponentType))
+            throw new InvalidDataException("Card Sniper has no point to leave.");
+        return catalog.NextSniperPoints(map, fraction,
+            current.ComponentFileId, opponentPosition,
+            pointFileId => !occupants.ContainsKey(pointFileId));
+    }
+
+    internal void Transfer(ulong entityKey, string sourceCardId,
+        CardUnitInitialPoint next, Vector3? opponentPosition = null)
     {
         ArgumentNullException.ThrowIfNull(next);
+        if (sourceCardId is not ("ELITEPARA" or "ELITESNIPER"))
+            throw new InvalidDataException("Card soldier cannot transfer this point type.");
         if (!assigned.TryGetValue(entityKey, out var current) ||
             current.ComponentFileId == next.ComponentFileId ||
             current.Fraction != next.Fraction ||
-            !AcceptsPoint("ELITEPARA", next.ComponentType) ||
+            !AcceptsPoint(sourceCardId, current.ComponentType) ||
+            !AcceptsPoint(sourceCardId, next.ComponentType) ||
             !occupants.TryGetValue(current.ComponentFileId, out ulong owner) ||
-            owner != entityKey || occupants.ContainsKey(next.ComponentFileId) ||
-            !catalog.NextFreePoints(map, "ELITEPARA", current.Fraction,
-                current.ComponentFileId, _ => true)
-                .Any(point => point.ComponentFileId == next.ComponentFileId))
+            owner != entityKey || occupants.ContainsKey(next.ComponentFileId))
             throw new InvalidDataException("Card point transfer lost its source reservation.");
+
+        IReadOnlyList<CardUnitInitialPoint> eligible = sourceCardId == "ELITEPARA"
+            ? catalog.NextFreePoints(map, sourceCardId, current.Fraction,
+                current.ComponentFileId, _ => true)
+            : catalog.NextSniperPoints(map, current.Fraction,
+                current.ComponentFileId, opponentPosition ??
+                    throw new InvalidDataException("Sniper transfer lost its opponent pose."),
+                _ => true);
+        if (!eligible.Any(point => point.ComponentFileId == next.ComponentFileId))
+            throw new InvalidDataException("Card point transfer is not source-eligible.");
 
         // The match loop is single-threaded. Check both identities before
         // changing either map, then move the reservation as one operation.

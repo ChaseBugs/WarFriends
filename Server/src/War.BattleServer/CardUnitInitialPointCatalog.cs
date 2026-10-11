@@ -174,6 +174,28 @@ public sealed class CardUnitInitialPointCatalog
             .FirstOrDefault();
     }
 
+    internal IReadOnlyList<CardUnitInitialPoint> NextSniperPoints(
+        RecoveredBattleMap map, int fraction, int currentPointFileId,
+        Vector3 opponentPosition, Func<int, bool> available)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(available);
+        if (fraction is not (1 or 2) || currentPointFileId <= 0 ||
+            !PlayerHitbox.Finite(opponentPosition) ||
+            !maps.TryGetValue(map.Source, out var points))
+            throw new InvalidDataException("Invalid Sniper point-change selection.");
+
+        // SoldierBehaviourSniper.GetNewEnemyPoint scans the source list in
+        // order, keeps free Corner/Hiding points beyond six units from the
+        // current opponent, then draws one uniform index.
+        return points.Where(point => point.Fraction == fraction &&
+                point.ComponentFileId != currentPointFileId &&
+                (point.ComponentType is "EnemyPointCorner" or "EnemyPointHiding") &&
+                Vector3.Distance(point.Position, opponentPosition) > 6f &&
+                available(point.ComponentFileId))
+            .ToArray();
+    }
+
     internal IReadOnlyList<CardUnitInitialPoint> NextFreePoints(
         RecoveredBattleMap map, string sourceCardId, int fraction,
         int currentPointFileId, Func<int, bool> available)

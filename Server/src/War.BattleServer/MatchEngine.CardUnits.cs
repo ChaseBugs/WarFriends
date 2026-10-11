@@ -14,6 +14,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> sniperPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> sniperWalks = [];
     private readonly HashSet<ulong> snipersAtPoint = [];
+    private readonly Dictionary<ulong, ulong> sniperCornerChangeTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
     private readonly Dictionary<ulong, CardParachuteFlightState> parachuteFlights = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAirAttacks = [];
@@ -775,7 +776,7 @@ public sealed partial class MatchEngine
             var walk = new CardSoldierWalkState(next.ComponentFileId, route,
                 armyCatalog.InfantryAgent, speed);
 
-            cardEnemyPoints.Transfer(entityKey, next);
+            cardEnemyPoints.Transfer(entityKey, "ELITEPARA", next);
             paratrooperAttacks.Remove(entityKey);
             paratrooperShotTargets.Remove(entityKey);
             paratrooperCornerChangeTicks.Remove(entityKey);
@@ -905,8 +906,59 @@ public sealed partial class MatchEngine
             sniperWalks.Remove(entityKey);
             if (!snipersAtPoint.Add(entityKey))
                 throw new InvalidDataException("Card Sniper arrived twice.");
+            int waitSeconds = 10 + armyChoice(10);
+            if (waitSeconds is < 10 or > 19 ||
+                !sniperCornerChangeTicks.TryAdd(entityKey,
+                    checked(tick + (ulong)waitSeconds * MatchManifest.TickRate)))
+                throw new InvalidDataException("Card Sniper lost its Corner clock.");
             // Corner/Hiding attack and critical-hit rules are not yet
             // admitted. Arrival only publishes source-backed placement.
+        }
+    }
+
+    private void AdvanceCardSniperCornerChanges()
+    {
+        if (cardEnemyPoints == null || armyCatalog == null)
+            throw new InvalidDataException("Card Sniper has no point-change authority.");
+
+        foreach (ulong entityKey in snipersAtPoint.Order().ToArray())
+        {
+            if (!sniperCornerChangeTicks.TryGetValue(entityKey,
+                    out ulong changeTick) ||
+                !activeArmyEntities.TryGetValue(entityKey, out var entity))
+                throw new InvalidDataException("Card Sniper lost its Corner state.");
+            if (tick <= changeTick)
+                continue;
+
+            Player owner = Find(entity.OwnerPlayerId) ??
+                throw new InvalidDataException("Card Sniper owner left the match.");
+            Player opponent = players.Single(player => player != owner);
+            IReadOnlyList<CardUnitInitialPoint> available =
+                cardEnemyPoints.NextSniperPoints(entityKey,
+                    entity.OwnerFraction, opponent.Position);
+            if (available.Count == 0)
+            {
+                sniperCornerChangeTicks[entityKey] = checked(changeTick +
+                    10u * MatchManifest.TickRate);
+                continue;
+            }
+
+            int index = armyChoice(available.Count);
+            if (index < 0 || index >= available.Count)
+                throw new InvalidDataException("Invalid host Sniper point choice.");
+            CardUnitInitialPoint next = available[index];
+            Vector3 position = new(entity.X, entity.Y, entity.Z);
+            ArmyNavMeshCorridor route = PlanCardSoldierRoute(
+                position, next.Position);
+            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            var walk = new CardSoldierWalkState(next.ComponentFileId, route,
+                armyCatalog.InfantryAgent, speed);
+
+            cardEnemyPoints.Transfer(entityKey, "ELITESNIPER", next,
+                opponent.Position);
+            sniperCornerChangeTicks.Remove(entityKey);
+            snipersAtPoint.Remove(entityKey);
+            sniperWalks.Add(entityKey, walk);
         }
     }
 
@@ -1139,6 +1191,7 @@ public sealed partial class MatchEngine
             sniperPointRetryTicks.Remove(entityKey);
             sniperWalks.Remove(entityKey);
             snipersAtPoint.Remove(entityKey);
+            sniperCornerChangeTicks.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);
             cardEnemyPoints?.Release(entityKey);
