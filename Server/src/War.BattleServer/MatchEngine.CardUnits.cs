@@ -431,7 +431,7 @@ public sealed partial class MatchEngine
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             entity.SourceCardId != "ELITEPARA" ||
             rifleCombat == null || playerShotTargets == null ||
-            armyWeapons == null)
+            enemyMuzzles == null)
             throw new InvalidDataException("Airborne Paratrooper lost its target authority.");
 
         Player owner = Find(entity.OwnerPlayerId) ??
@@ -447,14 +447,30 @@ public sealed partial class MatchEngine
         if (!target.WithinRange)
             return target;
 
-        // The recovered weapon rest transform supplies the current host
-        // approximation of the animated muzzle's Y. Visibility is an
-        // eligibility check, never a claim that the Client fired a round.
-        float restMuzzleHeight = position.Y +
-            armyWeapons.Muzzle(entity.UnitId).RestPosition.Y;
+        // The Client checks visibility before ShootStand starts, while its
+        // rifle is in the idle clip. The muzzle samples were exported from
+        // the same enemy.prefab and assault rifle used by this card unit.
+        CoopMuzzlePose muzzle = CardParatrooperAirMuzzle(entityKey) ??
+            throw new InvalidDataException("Airborne Paratrooper lost its rifle muzzle.");
         HelicopterSightRay sight = CardParatrooperAirTarget.SightRay(
-            position, restMuzzleHeight, target.Position);
+            position, muzzle.Position.Y, target.Position);
         return target with { HasClearSight = rifleCombat.HelicopterCanSee(sight) };
+    }
+
+    internal CoopMuzzlePose? CardParatrooperAirMuzzle(ulong entityKey)
+    {
+        if (!parachuteFlights.TryGetValue(entityKey, out var flight))
+            return null;
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "ELITEPARA" || enemyMuzzles == null ||
+            tick < entity.SpawnTick)
+            throw new InvalidDataException("Airborne Paratrooper lost its animated muzzle authority.");
+
+        float idleSeconds = (tick - entity.SpawnTick) /
+            (float)MatchManifest.TickRate;
+        Vector3 soldierPosition = new(entity.X, entity.Y, entity.Z);
+        return enemyMuzzles.Place("idle_1", soldierPosition,
+            flight.Rotation, idleSeconds);
     }
 
     private void AdvanceCardParatrooperAirAttacks()

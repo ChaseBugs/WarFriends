@@ -12181,9 +12181,25 @@ internal static class CombatContentTests
             .Single(target => target.Type == 2).TransformFileId;
         CardParatrooperAirTarget? initialAirAim = automaticCityLanding
             .CardParatrooperAirAim(cityParatrooper.EntityKey);
+        CoopMuzzlePose? initialAirMuzzle = automaticCityLanding
+            .CardParatrooperAirMuzzle(cityParatrooper.EntityKey);
+        CoopMuzzlePose sourceIdleMuzzle = content.CoopEnemyMuzzles.Place(
+            "idle_1", new Vector3(cityParatrooper.X, cityParatrooper.Y,
+                cityParatrooper.Z),
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY, -MathF.PI / 2f),
+            0f);
         Check(initialAirAim?.TransformFileId == sourceShieldTargetId &&
               initialAirAim.Distance > 0f,
             "airborne Paratrooper selects the posed source Shield target");
+        Check(initialAirMuzzle != null &&
+              Vector3.Distance(initialAirMuzzle.Position,
+                  sourceIdleMuzzle.Position) < 0.0001f &&
+              Quaternion.Dot(initialAirMuzzle.Rotation,
+                  sourceIdleMuzzle.Rotation) > 0.9999f &&
+              MathF.Abs(sourceIdleMuzzle.Position.Y -
+                  (cityParatrooper.Y + content.ArmyWeapons
+                      .Muzzle("ID_UNIT-PARATROOPER").RestPosition.Y)) > 0.02f,
+            "airborne rifle muzzle begins at the Unity-sampled idle pose under the parachute rotation");
         HelicopterSightRay directAirSight = CardParatrooperAirTarget.SightRay(
             Vector3.Zero, 1f, new Vector3(0f, 1f, 8f));
         Check(Vector3.Distance(directAirSight.Origin,
@@ -12236,6 +12252,8 @@ internal static class CombatContentTests
               !automaticCityLanding.CardParatrooperFalling(
                   cityParatrooper.EntityKey) &&
               automaticCityLanding.CardParatrooperAirAim(
+                  cityParatrooper.EntityKey) == null &&
+              automaticCityLanding.CardParatrooperAirMuzzle(
                   cityParatrooper.EntityKey) == null &&
               automaticCityLanding.CardEnemyPoint(cityParatrooper.EntityKey) != null &&
               (automaticCityLanding.CardParatrooperWalking(

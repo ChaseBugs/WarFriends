@@ -14,6 +14,7 @@ internal sealed class CardParachuteFlightState
     private int consecutiveContacts;
 
     internal Vector3 Position => motion.Position;
+    internal Quaternion Rotation => motion.Rotation;
     internal int FixedFrame => motion.FixedFrame;
     internal bool Landed { get; private set; }
 
