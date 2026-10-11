@@ -196,7 +196,8 @@ public sealed class ArmyDeploymentState
             if(count<=0)throw new InvalidDataException("Reserved army spawn count was lost.");
             previewReserved[scheduled.Family.UnitId]=count-1;
             previewAlive[scheduled.Family.UnitId]=checked(previewAlive.GetValueOrDefault(scheduled.Family.UnitId)+1);
-            if(previewId==int.MaxValue)throw new InvalidDataException("Army entity ID exhausted.");
+            if(previewId>=CardUnitEntityRegistry.FirstLocalEntityId-1)
+                throw new InvalidDataException("Army entity ID entered the card-unit range.");
             if(entities.ContainsKey(++previewId))throw new InvalidDataException("Army entity ID already exists.");
         }
         var spawned=new List<ArmySpawn>();

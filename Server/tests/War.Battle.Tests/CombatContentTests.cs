@@ -10101,6 +10101,31 @@ internal static class CombatContentTests
             Reject(()=>cardSpawnState.TrySchedule("not-a-request", "card-owner", "HEAVYDRONE", 1));
             Reject(()=>cardSpawnState.TrySchedule("C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3",
                 "card-owner", "HEAVYDRONE", 1));
+            var cardMap = content.Maps[0];
+            var cardDroneFamily = CardSpawnUnitSourceCatalog.Family(content.Army,
+                "HEAVYDRONE");
+            var cardPoint = new ArmySpawnPointSelector(content.ArmySpawnPoints).Select(
+                cardMap, cardDroneFamily, 1, Vector3.Zero, _ => 0, _ => true);
+            Check(cardPoint != null, "a source Drone card has a host-selectable spawn point");
+            var cardEntities = new CardUnitEntityRegistry();
+            var droneIntent = new CardUnitSpawnIntent(secondCardRequest,
+                "card-owner", "HEAVYDRONE", 0, 104);
+            var droneStats = content.Army.CardBaseStats("HEAVYDRONE", 0,
+                content.BarrelPolicy.MaxDisplayLevel);
+            var cardEntity = cardEntities.Add(droneIntent, 1, cardPoint!, droneStats,
+                content.Army, 104);
+            Check(cardEntity != null &&
+                  cardEntity.LocalEntityId == CardUnitEntityRegistry.FirstLocalEntityId &&
+                  cardEntity.EntityKey == ((1UL << 32) | (uint)cardEntity.LocalEntityId) &&
+                  cardEntity.UnitId == "ID_UNIT-DRONE" &&
+                  cardEntities.ActiveCount == 1 &&
+                  cardEntities.Add(droneIntent, 1, cardPoint!, droneStats,
+                      content.Army, 104) == null &&
+                  cardEntities.Remove(cardEntity.LocalEntityId) == cardEntity &&
+                  cardEntities.ActiveCount == 0,
+                "card units receive distinct, replay-safe host identities without army options");
+            Reject(()=>cardEntities.Add(droneIntent with {SourceCardId="ELITESNIPER"},
+                1, cardPoint!, droneStats, content.Army, 104));
             int maximumCardLevel=content.BarrelPolicy.MaxDisplayLevel;
             foreach(var cardSource in CardSpawnUnitSourceCatalog.All)
             {
