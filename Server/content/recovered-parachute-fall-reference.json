@@ -1,0 +1,1052 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "scenario": "parachute-prefab-force-and-scene-contact",
+  "rawTraceSha256": "f28f2718c908a7ccbf8da59d97d4a6fb7ed1086feabb4c43a916f9442ad724d3",
+  "sourcePrefabSha256": "0c6bf529101a625276bd3560a5b83a7249e404275dbf15b0ad2ac2c2864c729a",
+  "unityImportedPrefabSha256": "19a3ac65b3e3a42b03e0ae6a194e5429fba203c5d52b789ab23b15f246973c45",
+  "prefabPhysics": {
+    "parachuteDrag": 5.0,
+    "speed": 115.0,
+    "m_Mass": 1.0,
+    "m_Drag": 10.0,
+    "m_AngularDrag": 0.5,
+    "m_UseGravity": 1.0,
+    "m_IsKinematic": 0.0,
+    "m_CollisionDetection": 2.0,
+    "m_Size": [
+      [
+        0.23838009,
+        0.37729108,
+        0.1947221
+      ],
+      [
+        1.0,
+        0.43308878,
+        1.9321573
+      ]
+    ],
+    "m_Center": [
+      [
+        0.0,
+        0.9668381,
+        0.03979206
+      ],
+      [
+        0.0025825514,
+        0.2140131,
+        -0.009037019
+      ]
+    ]
+  },
+  "fixedTimestep": 0.02,
+  "gravity": [
+    0.0,
+    -9.81,
+    0.0
+  ],
+  "dragFactor": 0.8,
+  "forwardForce": 23.0,
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "falls": [
+        {
+          "spawnComponentFileId": 2664,
+          "fraction": 1,
+          "origin": [
+            -14.7122,
+            5.610878,
+            -1.39823
+          ],
+          "forward": [
+            1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 360,
+          "firstImpulsePosition": [
+            -1.641937,
+            0.037498,
+            -1.440497
+          ],
+          "previousVelocity": [
+            1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            1.609329,
+            -0.267201,
+            0.02005
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                -14.70484,
+                5.607639,
+                -1.39572
+              ],
+              "velocity": [
+                0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                -13.019396,
+                4.890092,
+                -1.296867
+              ],
+              "velocity": [
+                1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                -11.179383,
+                4.111661,
+                -1.232839
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                -7.499352,
+                2.543659,
+                -1.49678
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                -3.819361,
+                0.967994,
+                -1.27246
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2200,
+          "fraction": 2,
+          "origin": [
+            15.859305,
+            5.610878,
+            0.16177
+          ],
+          "forward": [
+            -1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 385,
+          "firstImpulsePosition": [
+            1.870886,
+            -0.358225,
+            0.250834
+          ],
+          "previousVelocity": [
+            -1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            -1.622877,
+            -0.550415,
+            -0.018204
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                15.851944,
+                5.607638,
+                0.159259
+              ],
+              "velocity": [
+                -0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                14.1665,
+                4.890092,
+                0.060406
+              ],
+              "velocity": [
+                -1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                12.326488,
+                4.111661,
+                -0.003622
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                8.646449,
+                2.543659,
+                0.260317
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                4.96645,
+                0.967994,
+                0.035997
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "falls": [
+        {
+          "spawnComponentFileId": 3311,
+          "fraction": 1,
+          "origin": [
+            -17.047083,
+            6.578878,
+            -1.497791
+          ],
+          "forward": [
+            1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 419,
+          "firstImpulsePosition": [
+            -1.797056,
+            0.073866,
+            -1.551402
+          ],
+          "previousVelocity": [
+            1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            1.65239,
+            -0.449096,
+            -0.04406
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                -17.039722,
+                6.575638,
+                -1.49528
+              ],
+              "velocity": [
+                0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                -15.35428,
+                5.858092,
+                -1.396428
+              ],
+              "velocity": [
+                1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                -13.514268,
+                5.07966,
+                -1.3324
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                -9.834229,
+                3.511658,
+                -1.59634
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                -6.154215,
+                1.935993,
+                -1.37202
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3301,
+          "fraction": 2,
+          "origin": [
+            16.794422,
+            6.568878,
+            -0.967791
+          ],
+          "forward": [
+            -1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 481,
+          "firstImpulsePosition": [
+            -0.746238,
+            -0.914983,
+            -1.055859
+          ],
+          "previousVelocity": [
+            -1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            -1.172028,
+            -0.623458,
+            0.386141
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                16.787062,
+                6.565639,
+                -0.970303
+              ],
+              "velocity": [
+                -0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                15.10162,
+                5.848092,
+                -1.069155
+              ],
+              "velocity": [
+                -1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                13.261607,
+                5.069661,
+                -1.133183
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                9.581569,
+                3.501658,
+                -0.869242
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                5.901558,
+                1.925994,
+                -1.093563
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "falls": [
+        {
+          "spawnComponentFileId": 2349,
+          "fraction": 1,
+          "origin": [
+            -38.708084,
+            3.090878,
+            -9.857791
+          ],
+          "forward": [
+            1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 394,
+          "firstImpulsePosition": [
+            -24.355043,
+            -3.016793,
+            -9.961911
+          ],
+          "previousVelocity": [
+            1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            1.826521,
+            -0.755575,
+            -0.003958
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                -38.700726,
+                3.087638,
+                -9.855279
+              ],
+              "velocity": [
+                0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                -37.015278,
+                2.37009,
+                -9.756427
+              ],
+              "velocity": [
+                1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                -35.17526,
+                1.59166,
+                -9.692399
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                -31.495218,
+                0.023658,
+                -9.95634
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                -27.81518,
+                -1.552002,
+                -9.732019
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2808,
+          "fraction": 2,
+          "origin": [
+            -8.154578,
+            3.087878,
+            -9.700957
+          ],
+          "forward": [
+            -1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 389,
+          "firstImpulsePosition": [
+            -22.327927,
+            -2.942307,
+            -9.610069
+          ],
+          "previousVelocity": [
+            -1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            -1.541742,
+            -0.52432,
+            0.123527
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                -8.161939,
+                3.084638,
+                -9.703469
+              ],
+              "velocity": [
+                -0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                -9.847379,
+                2.36709,
+                -9.802321
+              ],
+              "velocity": [
+                -1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                -11.687391,
+                1.58866,
+                -9.866349
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                -15.36743,
+                0.020658,
+                -9.602408
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                -19.047468,
+                -1.555001,
+                -9.826729
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "falls": [
+        {
+          "spawnComponentFileId": 3545,
+          "fraction": 1,
+          "origin": [
+            -14.633081,
+            5.500878,
+            -1.270791
+          ],
+          "forward": [
+            1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 356,
+          "firstImpulsePosition": [
+            -1.713027,
+            -0.017774,
+            -1.30366
+          ],
+          "previousVelocity": [
+            1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            1.617462,
+            -0.510209,
+            0.011676
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                -14.625721,
+                5.497638,
+                -1.26828
+              ],
+              "velocity": [
+                0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                -12.940281,
+                4.780092,
+                -1.169428
+              ],
+              "velocity": [
+                1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                -11.100268,
+                4.001661,
+                -1.105399
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                -7.420238,
+                2.433659,
+                -1.36934
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                -3.740247,
+                0.857994,
+                -1.14502
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3169,
+          "fraction": 2,
+          "origin": [
+            15.920424,
+            5.497878,
+            -1.113957
+          ],
+          "forward": [
+            -1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 356,
+          "firstImpulsePosition": [
+            3.002297,
+            -0.018185,
+            -1.08108
+          ],
+          "previousVelocity": [
+            -1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            -1.606388,
+            -0.399039,
+            -0.007954
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                15.913062,
+                5.494639,
+                -1.116468
+              ],
+              "velocity": [
+                -0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                14.227622,
+                4.777093,
+                -1.215321
+              ],
+              "velocity": [
+                -1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                12.387609,
+                3.998662,
+                -1.279349
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                8.707571,
+                2.430659,
+                -1.015408
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                5.027571,
+                0.854994,
+                -1.239728
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "falls": [
+        {
+          "spawnComponentFileId": 3058,
+          "fraction": 1,
+          "origin": [
+            -14.6722,
+            5.700405,
+            -1.46823
+          ],
+          "forward": [
+            1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 372,
+          "firstImpulsePosition": [
+            -1.149953,
+            -0.066581,
+            -1.534293
+          ],
+          "previousVelocity": [
+            1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            1.675232,
+            -0.528675,
+            0.01799
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                -14.664839,
+                5.697166,
+                -1.465719
+              ],
+              "velocity": [
+                0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                -12.979395,
+                4.97962,
+                -1.366867
+              ],
+              "velocity": [
+                1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                -11.139382,
+                4.201188,
+                -1.302839
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                -7.459351,
+                2.633186,
+                -1.566779
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                -3.77936,
+                1.057521,
+                -1.342459
+              ],
+              "velocity": [
+                1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2591,
+          "fraction": 2,
+          "origin": [
+            15.879305,
+            5.680405,
+            0.08177
+          ],
+          "forward": [
+            -1.0,
+            0.0,
+            -0.0
+          ],
+          "firstImpulseFrame": 355,
+          "firstImpulsePosition": [
+            3.00848,
+            0.181598,
+            0.111912
+          ],
+          "previousVelocity": [
+            -1.84,
+            -0.7848,
+            -0.0
+          ],
+          "impulseVelocity": [
+            -1.541176,
+            -0.415132,
+            -0.070687
+          ],
+          "preContactVelocitySamples": [
+            {
+              "frame": 1,
+              "position": [
+                15.871944,
+                5.677165,
+                0.079259
+              ],
+              "velocity": [
+                -0.368,
+                -0.15696,
+                -0.0
+              ]
+            },
+            {
+              "frame": 50,
+              "position": [
+                14.1865,
+                4.959619,
+                -0.019594
+              ],
+              "velocity": [
+                -1.839974,
+                -0.784789,
+                -0.0
+              ]
+            },
+            {
+              "frame": 100,
+              "position": [
+                12.346488,
+                4.181188,
+                -0.083622
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 200,
+              "position": [
+                8.66645,
+                2.613186,
+                0.180318
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            },
+            {
+              "frame": 300,
+              "position": [
+                4.98645,
+                1.037521,
+                -0.044002
+              ],
+              "velocity": [
+                -1.84,
+                -0.7848,
+                -0.0
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

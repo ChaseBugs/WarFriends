@@ -10111,6 +10111,77 @@ internal static class CombatContentTests
             string cardEnemyPointPath = Path.Combine(directory,
                 "recovered-multiplayer-card-enemy-points.json");
             var cardInitialPoints = content.CardUnitInitialPoints;
+            string parachuteReferencePath = Path.Combine(directory,
+                "recovered-parachute-fall-reference.json");
+            byte[] parachuteReferenceBytes = File.ReadAllBytes(parachuteReferencePath);
+            Check(Convert.ToHexStringLower(SHA256.HashData(parachuteReferenceBytes)) ==
+                  "4fbbf00589a814b59b3e9053f06686c55325137e5cdb0e5282cf49c52c54e27f",
+                "Parachute Unity trace summary retains its reviewed source revision");
+            using var parachuteDocument = JsonDocument.Parse(parachuteReferenceBytes);
+            JsonElement parachuteReference = parachuteDocument.RootElement;
+            Check(parachuteReference.GetProperty("unityVersion").GetString() ==
+                      "2018.3.0f2" &&
+                  parachuteReference.GetProperty("sourcePrefabSha256").GetString() ==
+                      "0c6bf529101a625276bd3560a5b83a7249e404275dbf15b0ad2ac2c2864c729a" &&
+                  parachuteReference.GetProperty("fixedTimestep").GetSingle() ==
+                      CardParachutePreContactMotion.FixedSeconds &&
+                  parachuteReference.GetProperty("dragFactor").GetSingle() ==
+                      CardParachutePreContactMotion.DragFactor &&
+                  parachuteReference.GetProperty("forwardForce").GetSingle() ==
+                      CardParachutePreContactMotion.ForwardForce,
+                "host free-flight constants bind the imported source-equivalent prefab");
+            static Vector3 ParachuteVector(JsonElement values) => new(
+                values[0].GetSingle(), values[1].GetSingle(),
+                values[2].GetSingle());
+            int checkedParachuteFalls = 0;
+            foreach (JsonElement scene in parachuteReference.GetProperty("maps")
+                .EnumerateArray())
+            {
+                RecoveredBattleMap sourceMap = content.Maps[checkedParachuteFalls / 2];
+                Check(scene.GetProperty("source").GetString() == sourceMap.Source &&
+                      scene.GetProperty("sha256").GetString() == sourceMap.SourceHash,
+                    "Parachute physics fixture binds its recovered multiplayer scene");
+                foreach (JsonElement fall in scene.GetProperty("falls").EnumerateArray())
+                {
+                    int fraction = fall.GetProperty("fraction").GetInt32();
+                    int spawnId = fall.GetProperty("spawnComponentFileId").GetInt32();
+                    Vector3 origin = ParachuteVector(fall.GetProperty("origin"));
+                    ArmySpawnPoint sourceSpawn = content.ArmySpawnPoints.ForMap(sourceMap)
+                        .Single(point => point.ComponentFileId == spawnId);
+                    Check(sourceSpawn.ComponentType == "SpawnPointParachute" &&
+                          sourceSpawn.Fraction == fraction &&
+                          Vector3.Distance(sourceSpawn.Position, origin) < 0.0001f &&
+                          fall.GetProperty("firstImpulseFrame").GetInt32() is > 300 and < 550,
+                        "Parachute impulse trace binds one source faction spawn");
+                    var flight = new CardParachutePreContactMotion(origin, fraction);
+                    foreach (JsonElement sample in fall.GetProperty(
+                        "preContactVelocitySamples").EnumerateArray())
+                    {
+                        int frame = sample.GetProperty("frame").GetInt32();
+                        while (flight.FixedFrame < frame)
+                            flight.AdvanceFixedStep();
+                        Vector3 observedVelocity = ParachuteVector(
+                            sample.GetProperty("velocity"));
+                        Vector3 observedRoot = ParachuteVector(
+                            sample.GetProperty("position"));
+                        Check(Vector3.Distance(flight.Velocity, observedVelocity) <
+                                  0.00002f &&
+                              Math.Abs(flight.Position.X - observedRoot.X) <
+                                  0.002f &&
+                              Math.Abs(flight.Position.Y - observedRoot.Y) <
+                                  0.15f &&
+                              Math.Abs(flight.Position.Z - observedRoot.Z) <
+                                  0.4f,
+                            "source Parachute velocity matches Unity before scene collision");
+                    }
+                    checkedParachuteFalls++;
+                }
+            }
+            Check(checkedParachuteFalls == 10,
+                "all ten multiplayer Parachute spawn flights have pinned impulses");
+            Reject(() => new CardParachutePreContactMotion(
+                new Vector3(float.NaN, 0, 0), 1));
+            Reject(() => new CardParachutePreContactMotion(Vector3.Zero, 3));
             foreach (var sourceMap in content.Maps)
             {
                 for (int fraction = 1; fraction <= 2; fraction++)
