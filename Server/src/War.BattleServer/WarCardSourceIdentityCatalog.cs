@@ -12,6 +12,7 @@ public static class WarCardSourceIdentityCatalog
             ["CardBulletSponge"]=["BULLETHARMLESS"],
             ["CardSwiftImmortality"]=["IMMORTAL"],
             ["CardBelovedEnemy"]=["SLOWMOVE"],
+            ["CardDisarmedAndLocked"]=["DISARMED"],
             ["CardShieldGenerator"]=["SHIELDGENERATOR"],
             ["CardHealthForSoldiers"]=["SUPERSOLDIERS"],
             ["CardMassShieldDestroyer"]=["APOCALYPSE"],

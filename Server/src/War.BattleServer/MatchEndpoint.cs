@@ -327,6 +327,9 @@ public sealed class MatchEndpoint
                     case MatchCommand.IntentOneofCase.UseSlowMove:
                         clean.UseSlowMove=new UseSlowMoveCommand
                             {RequestId=command.UseSlowMove.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseDisarmed:
+                        clean.UseDisarmed=new UseDisarmedCommand
+                            {RequestId=command.UseDisarmed.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoBox:
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:

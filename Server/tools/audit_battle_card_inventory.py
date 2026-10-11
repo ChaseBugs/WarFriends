@@ -211,6 +211,24 @@ def check_slow_move_source():
         raise ValueError("SLOWMOVE absolute speed or timing source changed")
 
 
+def check_disarmed_source():
+    content = ROOT / "Server/content/recovered-battle-content.json"
+    sheets = json.loads(content.read_text(encoding="utf-8"))["sheets"]
+    constants = next(sheet["rows"] for sheet in sheets
+                     if sheet["type"] == "Google2u.CardConstants")
+    values = {row["DBKEY"]: row["FLOATVALUE"] for row in constants}
+    source = ASSETS / "Scripts/Assembly-CSharp/CardDisarmedAndLocked.cs"
+    behavior = source.read_text(encoding="utf-8-sig")
+    expected = [
+        "CardConstants.rowIds.DisarmedTime",
+        "mPlayer.weaponInventory.currentWeapon = mPlayer.weaponInventory.pistol",
+        "mPlayer.weaponInventory.cannotChange = true",
+        "mPlayer.weaponInventory.cannotChange = false",
+    ]
+    if values.get("DisarmedTime") != 5 or any(rule not in behavior for rule in expected):
+        raise ValueError("DISARMED pistol selection or timing source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -223,7 +241,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 22 or
+    if (len(names) != 23 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -243,6 +261,7 @@ def render():
     check_bullet_sponge_source()
     check_immortal_source()
     check_slow_move_source()
+    check_disarmed_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()

@@ -2101,6 +2101,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseImmortal(p,c.UseImmortal.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseSlowMove)
             return UseSlowMove(p,c.UseSlowMove.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseDisarmed)
+            return UseDisarmed(p,c.UseDisarmed.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
@@ -2125,6 +2127,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseMineYourStep(p,c.UseMineYourStep.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
+            if(WeaponSwitchLocked(p))return "weapon-switch-locked";
             int slot=c.SwitchWeapon.Slot;
             if(!p.Weapons.TryGetValue(slot,out var weapon))return "weapon-slot-unavailable";
             if(p.Route!=null)return "moving";

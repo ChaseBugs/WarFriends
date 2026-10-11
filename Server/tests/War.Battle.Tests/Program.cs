@@ -784,6 +784,72 @@ ParticipantManifest WithSlots(ParticipantManifest player)=>player with
     WeaponSlots=[new WeaponSlotManifest(0,0,player.Weapon,0),new WeaponSlotManifest(2,1,alternateWeapon,1)]
 };
 var slottedDefinition=definition with {Players=[WithSlots(definition.Players[0]),WithSlots(definition.Players[1])]};
+var pistolWeapon = new WeaponManifest("Google2u.Pistol_Berreta", 8, int.MaxValue, .2, 1);
+var disarmedVictim = slottedDefinition.Players[1] with
+{
+    WeaponSlots =
+    [
+        new WeaponSlotManifest(0, 0, slottedDefinition.Players[1].Weapon, 0),
+        new WeaponSlotManifest(2, 1, alternateWeapon, 1),
+        new WeaponSlotManifest(3, 2, pistolWeapon, 0)
+    ]
+};
+var disarmedDefinition = slottedDefinition with
+{
+    MatchId = "disarmed-source-pistol",
+    Players = [slottedDefinition.Players[0], disarmedVictim]
+};
+var disarmedMatch = new MatchEngine(disarmedDefinition);
+disarmedMatch.ConfigureCardSelection(["DISARMED"]);
+disarmedMatch.ConfigureCardInventory([(a, "DISARMED", 1)]);
+Check(disarmedMatch.Admit(a) && disarmedMatch.Admit(b), "disarmed fixture admits two players");
+var disarmedSelection = new SelectCardsCommand();
+disarmedSelection.CardIds.Add("DISARMED");
+Check(disarmedMatch.Command(a, new MatchCommand
+{
+    CommandId = 1, SelectCards = disarmedSelection
+}).Code == "cards-selected", "owner selects the source disarmed card");
+disarmedMatch.Command(a, Ready(2, disarmedMatch.ManifestHash));
+disarmedMatch.Command(b, Ready(1, disarmedMatch.ManifestHash));
+disarmedMatch.Advance(60);
+var disarmedCommand = new MatchCommand
+{
+    CommandId = 3,
+    UseDisarmed = new UseDisarmedCommand
+    {
+        RequestId = "8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f"
+    }
+};
+var disarmedReply = disarmedMatch.Command(a, disarmedCommand);
+Check(disarmedReply.Code == "disarmed-active" &&
+      disarmedReply.Snapshot.Players[1].ActiveWeaponSlot == 3 &&
+      disarmedMatch.Command(a, disarmedCommand).Code == "disarmed-active",
+    "disarmed forces the source pistol once and retries do not spend it twice");
+Check(disarmedMatch.Command(b, new MatchCommand
+{
+    CommandId = 2, SwitchWeapon = new SwitchWeaponCommand { Slot = 0 }
+}).Code == "weapon-switch-locked", "victim cannot switch weapons during the card timer");
+Check(disarmedMatch.Command(b, Fire(3)).Code == "shot-accepted",
+    "the recovered card still permits firing the forced pistol");
+for (ulong disarmedTick = 61; disarmedTick <= 210; disarmedTick++)
+    disarmedMatch.Advance(disarmedTick);
+Check(disarmedMatch.Command(b, new MatchCommand
+{
+    CommandId = 4, SwitchWeapon = new SwitchWeaponCommand { Slot = 0 }
+}).Code == "weapon-selected" &&
+      disarmedMatch.Snapshot().Players[1].ActiveWeaponSlot == 0,
+    "manual switching returns after five seconds without automatic weapon restoration");
+var missingPistolMatch = new MatchEngine(slottedDefinition with { MatchId = "disarmed-no-pistol" });
+missingPistolMatch.ConfigureCardSelection(["DISARMED"]);
+missingPistolMatch.ConfigureCardInventory([(a, "DISARMED", 1)]);
+missingPistolMatch.Admit(a);
+missingPistolMatch.Admit(b);
+missingPistolMatch.Command(a, new MatchCommand { CommandId = 1, SelectCards = disarmedSelection });
+missingPistolMatch.Command(a, Ready(2, missingPistolMatch.ManifestHash));
+missingPistolMatch.Command(b, Ready(1, missingPistolMatch.ManifestHash));
+missingPistolMatch.Advance(60);
+Check(missingPistolMatch.Command(a, disarmedCommand).Code == "disarmed-pistol-unavailable",
+    "missing signed pistol leaves the card unspent");
 var ammoBoxMatch = new MatchEngine(slottedDefinition with { MatchId = "ammo-box-source-slots" });
 ammoBoxMatch.ConfigureCardSelection(["CardAmmoBox"]);
 ammoBoxMatch.ConfigureCardInventory([(a, "CardAmmoBox", 1)]);

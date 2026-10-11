@@ -21,6 +21,8 @@ public sealed class PistolCatalog
     public string SceneRevision{get;}public string StatsRevision{get;}public string BindingsRevision{get;}public string PackageRevision{get;}
     public uint AlliesBulletMask{get;}public uint EnemiesBulletMask{get;}public int WeaponCount=>bindings.Count;public int StageCount=>stages.Values.Sum(x=>x.Length);
     public IReadOnlyCollection<PistolBinding> Bindings=>Array.AsReadOnly(Expected.Select(x=>Binding(x.Id)).ToArray());
+    public static bool IsPistolSourceId(string sourceId) =>
+        Expected.Any(expected => expected.Id == sourceId);
     private PistolCatalog(Dictionary<string,PistolStage[]> stages,Dictionary<string,PistolBinding> bindings,string scene,string stats,string binding,uint allies,uint enemies)
     {this.stages=stages;this.bindings=bindings;SceneRevision=scene;StatsRevision=stats;BindingsRevision=binding;AlliesBulletMask=allies;EnemiesBulletMask=enemies;
      PackageRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/pistol-content/v1\n"+scene+"\n"+stats+"\n"+binding)));}
