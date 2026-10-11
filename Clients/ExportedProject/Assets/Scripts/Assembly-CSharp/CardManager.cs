@@ -526,7 +526,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				card is CardMassShieldDestroyer || card is CardShieldDestroyer ||
 				card is CardHealthForSoldiers || card is CardHealthForMachines ||
 				IsSelfHostedMedkit(card) || card is CardHealthierMyself ||
-				card is CardEmptyMag || card is CardBulletSponge))
+				card is CardEmptyMag || card is CardBulletSponge ||
+				card is CardSwiftImmortality))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
@@ -570,6 +571,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardHealthierMyself) reply = await client.UseMaxHealthResult();
 			else if (card is CardEmptyMag) reply = await client.UseEmptyMagResult();
 			else if (card is CardBulletSponge) reply = await client.UseBulletSpongeResult();
+			else if (card is CardSwiftImmortality) reply = await client.UseImmortalResult();
 			else if (card is CardHealingStorm) reply = await client.UseHealingStormResult();
 			else if (card is CardShieldsUp) reply = await client.UseShieldsUpResult();
 			else if (card is CardShieldGenerator) reply = await client.UseShieldGeneratorResult();
@@ -611,6 +613,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		if (card is CardHealthierMyself) return code == "max-health-increased";
 		if (card is CardEmptyMag) return code == "enemy-mag-emptied";
 		if (card is CardBulletSponge) return code == "bullet-sponge-active";
+		if (card is CardSwiftImmortality) return code == "immortal-active";
 		if (card is CardHealingStorm) return code == "healing-storm-applied";
 		if (card is CardShieldsUp) return code == "shields-up-applied";
 		if (card is CardShieldGenerator) return code == "shield-generator-active";

@@ -28,6 +28,7 @@ public static class WarCardEffectCatalog
             ["CardBrokenLegs"]=new("CardBrokenLegs",WarCardEffectKind.Status,false,true),
             ["CardSlowdown"]=new("CardSlowdown",WarCardEffectKind.Status,false,true),
             ["CardBulletSponge"]=new("CardBulletSponge",WarCardEffectKind.Status,false,true),
+            ["CardSwiftImmortality"]=new("CardSwiftImmortality",WarCardEffectKind.Status,false,true),
             ["CardAmmoBox"]=new("CardAmmoBox",WarCardEffectKind.Ammo,false,true),
             ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,false,true),
             ["CardEmptyMag"]=new("CardEmptyMag",WarCardEffectKind.Ammo,false,true),

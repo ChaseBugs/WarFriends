@@ -32,7 +32,10 @@ public sealed partial class MatchEngine
         PlayerCombatManifest combat = player.CurrentCombat ??
             throw new InvalidDataException("Player combat authority is missing.");
         if (cardEffects.HasActiveCard(player.Definition.PlayerId, "CardBulletSponge"))
-            return combat with { NoDamageChance = 0.05f };
+            combat = combat with { NoDamageChance = 0.05f };
+        if (cardEffects.HasActiveCard(player.Definition.PlayerId,
+                "CardSwiftImmortality"))
+            combat = combat with { Immortal = true };
         return combat;
     }
 }

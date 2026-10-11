@@ -2078,6 +2078,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseEmptyMag(p,c.UseEmptyMag.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseBulletSponge)
             return UseBulletSponge(p,c.UseBulletSponge.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseImmortal)
+            return UseImmortal(p,c.UseImmortal.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)

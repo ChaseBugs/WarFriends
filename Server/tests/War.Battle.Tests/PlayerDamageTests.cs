@@ -399,6 +399,71 @@ internal static class PlayerDamageTests
         Check(spongeMatch.Snapshot().Players[0].Health == 80 &&
               spongeMatch.Snapshot().CardEffects.Count == 0,
             "the dodge chance ends when the sixty-second host lease expires");
+        var immortalMatch = new MatchEngine(manifest with
+        {
+            MatchId = "live-swift-immortality",
+            IdleSeconds = 120
+        });
+        immortalMatch.ConfigureCardSelection(["IMMORTAL"]);
+        immortalMatch.ConfigureCardInventory([(a, "IMMORTAL", 1)]);
+        immortalMatch.Admit(a);
+        immortalMatch.Admit(b);
+        var immortalSelection = new SelectCardsCommand();
+        immortalSelection.CardIds.Add("IMMORTAL");
+        Check(immortalMatch.Command(a, new MatchCommand
+        {
+            CommandId = 1, SelectCards = immortalSelection
+        }).Code == "cards-selected", "owner selects source IMMORTAL identity");
+        immortalMatch.Command(a, new MatchCommand
+        {
+            CommandId = 2, Ready = new ReadyCommand
+            {
+                ManifestHash = immortalMatch.ManifestHash
+            }
+        });
+        immortalMatch.Command(b, new MatchCommand
+        {
+            CommandId = 1, Ready = new ReadyCommand
+            {
+                ManifestHash = immortalMatch.ManifestHash
+            }
+        });
+        immortalMatch.Advance(60);
+        var immortalCommand = new MatchCommand
+        {
+            CommandId = 3,
+            UseImmortal = new UseImmortalCommand
+            {
+                RequestId = "94949494949494949494949494949494"
+            }
+        };
+        Check(immortalMatch.Command(a, immortalCommand).Code ==
+                  "immortal-active" &&
+              immortalMatch.Command(a, immortalCommand).Code ==
+                  "immortal-active" &&
+              immortalMatch.Snapshot().CardActivations == 1,
+            "IMMORTAL is consumed once and retries retain the first receipt");
+        Check(!immortalMatch.TryResolveCardStatus(a,
+                "94949494949494949494949494949494", b),
+            "the owner-only card cannot be redirected to an opponent");
+        PlayerDamageResult? immortalHit = immortalMatch.ApplyResolvedPlayerDamage(
+            b, a, new ResolvedPlayerDamage(10,
+                CombatDamageType.Basic, HasWeapon: false), 1);
+        Check(immortalHit is { Applied: true, Health: 100,
+                  Type: CombatDamageType.Immortal } &&
+              immortalMatch.Snapshot().Players[1].Health == 100,
+            "host damage honors the owner's temporary immortality only");
+        immortalMatch.Advance(300);
+        immortalMatch.ApplyResolvedPlayerDamage(b, a,
+            new ResolvedPlayerDamage(10, CombatDamageType.Basic,
+                HasWeapon: false), 1);
+        Check(immortalMatch.Snapshot().Players[0].Health == 90 &&
+              immortalMatch.Snapshot().CardEffects.Count == 0,
+            "ordinary damage resumes at the exact eight-second expiry tick");
+        Check(immortalMatch.Command(a, immortalCommand).Code ==
+                  "immortal-active" &&
+              immortalMatch.Snapshot().CardEffects.Count == 0,
+            "an old request cannot reactivate immortality after expiry");
         var aliasMatch = new MatchEngine(manifest with {MatchId="medkit-selection-identity"});
         aliasMatch.ConfigureCardSelection(["MEDKIT","CardHealMeNow"]);
         aliasMatch.ConfigureCardInventory([(a,"MEDKIT",1)]);

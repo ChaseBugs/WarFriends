@@ -76,6 +76,9 @@ namespace War.Client
         public Task<MatchReply> UseBulletSpongeAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseBulletSponge=new UseBulletSpongeCommand
                 {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseImmortalAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseImmortal=new UseImmortalCommand
+                {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseHealingStormAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseHealingStorm=new UseHealingStormCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseShieldsUpAsync(string requestId,CancellationToken ct) =>

@@ -321,6 +321,9 @@ public sealed class MatchEndpoint
                     case MatchCommand.IntentOneofCase.UseBulletSponge:
                         clean.UseBulletSponge=new UseBulletSpongeCommand
                             {RequestId=command.UseBulletSponge.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseImmortal:
+                        clean.UseImmortal=new UseImmortalCommand
+                            {RequestId=command.UseImmortal.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoBox:
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:

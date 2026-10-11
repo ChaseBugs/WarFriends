@@ -135,6 +135,7 @@ message UseShieldDestroyerCommand { string request_id = 1; }
 message UseMaxHealthCommand { string request_id = 1; }
 message UseEmptyMagCommand { string request_id = 1; }
 message UseBulletSpongeCommand { string request_id = 1; }
+message UseImmortalCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
 message MatchCommand {
@@ -171,6 +172,7 @@ message MatchCommand {
     UseMaxHealthCommand use_max_health = 40;
     UseEmptyMagCommand use_empty_mag = 41;
     UseBulletSpongeCommand use_bullet_sponge = 42;
+    UseImmortalCommand use_immortal = 43;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
