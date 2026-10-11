@@ -6,7 +6,8 @@ namespace War.BattleServer;
 
 /// <summary>A source EnemyPoint eligible for a card-spawned Rusher soldier.</summary>
 public sealed record CardUnitInitialPoint(int Order, int ComponentFileId,
-    string ComponentType, int Fraction, Vector3 Position, Quaternion Rotation);
+    string ComponentType, int Fraction, Vector3 Position, Quaternion Rotation,
+    Vector3? CornerDirection, bool? CornerRightSide);
 
 /// <summary>
 /// Card Paratroopers and SWAT choose from MapDefinition.enemyPointsCollection.
@@ -15,7 +16,7 @@ public sealed record CardUnitInitialPoint(int Order, int ComponentFileId,
 public sealed class CardUnitInitialPointCatalog
 {
     public const string VerifiedRevision =
-        "9611363d5c224911ea8d4570391d29cc00bf42d707af2a57b20013ef87c8eda2";
+        "f2b047343039b88371b7379dfa0d8721fc316956c486accec4493bda29fc588f";
     private readonly IReadOnlyDictionary<string, IReadOnlyList<CardUnitInitialPoint>> maps;
 
     private CardUnitInitialPointCatalog(
@@ -38,7 +39,7 @@ public sealed class CardUnitInitialPointCatalog
             new JsonDocumentOptions { MaxDepth = 8 });
         JsonElement root = document.RootElement;
         Exact(root, "version", "maps");
-        if (root.GetProperty("version").GetInt32() != 1 ||
+        if (root.GetProperty("version").GetInt32() != 2 ||
             root.GetProperty("maps").GetArrayLength() != sourceMaps.Count)
             throw new InvalidDataException("Card enemy point artifact is incomplete.");
 
@@ -61,15 +62,31 @@ public sealed class CardUnitInitialPointCatalog
             int previousOrder = -1;
             foreach (JsonElement point in mapRow.GetProperty("points").EnumerateArray())
             {
-                Exact(point, "order", "componentFileId", "componentType",
-                    "gameObjectFileId", "transformFileId", "fraction",
-                    "worldPosition", "worldRotation");
+                string type = point.GetProperty("componentType").GetString() ?? "";
+                if (type == "EnemyPointCorner")
+                    Exact(point, "order", "componentFileId", "componentType",
+                        "gameObjectFileId", "transformFileId", "fraction",
+                        "worldPosition", "worldRotation", "cornerDirection",
+                        "cornerRightSide");
+                else
+                    Exact(point, "order", "componentFileId", "componentType",
+                        "gameObjectFileId", "transformFileId", "fraction",
+                        "worldPosition", "worldRotation");
                 int order = point.GetProperty("order").GetInt32();
                 int componentId = point.GetProperty("componentFileId").GetInt32();
-                string type = point.GetProperty("componentType").GetString() ?? "";
                 int fraction = point.GetProperty("fraction").GetInt32();
                 Vector3 position = Position(point.GetProperty("worldPosition"));
                 Quaternion rotation = Rotation(point.GetProperty("worldRotation"));
+                Vector3? cornerDirection = null;
+                bool? cornerRightSide = null;
+                if (type == "EnemyPointCorner")
+                {
+                    cornerDirection = Position(point.GetProperty("cornerDirection"));
+                    cornerRightSide = point.GetProperty("cornerRightSide").GetBoolean();
+                    if (Math.Abs(cornerDirection.Value.LengthSquared() - 1f) > .001f ||
+                        Math.Abs(cornerDirection.Value.Y) > .001f)
+                        throw new InvalidDataException("Card Corner direction must be planar and normalized.");
+                }
                 if (order <= previousOrder || order > 1024 || componentId <= 0 ||
                     !componentIds.Add(componentId) ||
                     point.GetProperty("gameObjectFileId").GetInt32() <= 0 ||
@@ -78,7 +95,8 @@ public sealed class CardUnitInitialPointCatalog
                         ("EnemyPointCorner" or "EnemyPointHiding" or "EnemyPointSwat"))
                     throw new InvalidDataException("Invalid card enemy point identity or order.");
                 points.Add(new CardUnitInitialPoint(order, componentId,
-                    type, fraction, position, rotation));
+                    type, fraction, position, rotation,
+                    cornerDirection, cornerRightSide));
                 previousOrder = order;
             }
 

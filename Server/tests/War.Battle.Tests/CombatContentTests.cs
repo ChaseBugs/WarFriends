@@ -10121,12 +10121,17 @@ internal static class CombatContentTests
                         "ELITEPARA", fraction, Vector3.Zero, _ => true);
                     Check(swatPoint is { ComponentType: "EnemyPointSwat" } &&
                           swatPoint.Fraction == fraction &&
+                          swatPoint.CornerDirection == null &&
+                          swatPoint.CornerRightSide == null &&
                           (sourceMap.Source.Contains("Snow_Multiplayer",
                               StringComparison.Ordinal)
                               ? paraPoint == null
                               : paraPoint is { ComponentType: "EnemyPointCorner" } &&
-                                paraPoint.Fraction == fraction),
-                        "each card Rusher selects only its recovered faction and point type");
+                                paraPoint.Fraction == fraction &&
+                                paraPoint.CornerDirection ==
+                                    new Vector3(fraction == 1 ? 1 : -1, 0, 0) &&
+                                paraPoint.CornerRightSide.HasValue),
+                        "card soldiers select source point types and Corner shooting sides");
                 }
             }
             var parkCardMap = content.Maps.Single(map =>
@@ -10137,8 +10142,23 @@ internal static class CombatContentTests
                 "ELITEPARA", 1, Vector3.Zero,
                 id => id != nearestPara!.ComponentFileId);
             Check(nearestPara != null && alternatePara != null &&
-                  nearestPara.ComponentFileId != alternatePara.ComponentFileId,
+                  nearestPara.ComponentFileId != alternatePara.ComponentFileId &&
+                  nearestPara.CornerRightSide != alternatePara.CornerRightSide,
                 "occupied card Paratrooper initial point selects the next source point");
+            foreach (CardUnitInitialPoint corner in new[]
+                { nearestPara!, alternatePara! })
+            {
+                Vector3 soldier = corner.Position;
+                Vector3 exposedSide = soldier + new Vector3(0, 0,
+                    corner.CornerRightSide == true ? 1 : -1);
+                Vector3 blockedSide = soldier + new Vector3(0, 0,
+                    corner.CornerRightSide == true ? -1 : 1);
+                Check(CornerShotPolicy.CanExpose(corner.CornerDirection!.Value,
+                          corner.CornerRightSide!.Value, soldier, exposedSide) &&
+                      !CornerShotPolicy.CanExpose(corner.CornerDirection.Value,
+                          corner.CornerRightSide.Value, soldier, blockedSide),
+                    "Park Paratrooper corners expose only their serialized shooting side");
+            }
             var swatPointOwners = new CardEnemyPointOccupancy(cardInitialPoints,
                 parkCardMap);
             const ulong firstSwatKey = (1UL << 32) | 101;

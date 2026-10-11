@@ -7,6 +7,7 @@ different, shield-linked collection and cannot substitute for these rows.
 
 import hashlib
 import json
+import math
 import re
 import sys
 from collections import Counter
@@ -82,7 +83,7 @@ def extract_map(source_map, script_types):
         fraction = int(field(component, "mFraction"))
         if fraction not in (1, 2):
             raise ValueError("card enemy point has an invalid faction")
-        points.append({
+        row = {
             "order": order,
             "componentFileId": component_id,
             "componentType": point_type,
@@ -91,7 +92,20 @@ def extract_map(source_map, script_types):
             "fraction": fraction,
             "worldPosition": position,
             "worldRotation": rotation,
-        })
+        }
+        if point_type == "EnemyPointCorner":
+            coordinates = [float(value) for value in re.findall(
+                r"[xyz]: (-?[0-9.]+)", field(component, "direction"),
+            )]
+            right_side = int(field(component, "rightSide"))
+            if (len(coordinates) != 3 or
+                    not all(math.isfinite(value) for value in coordinates) or
+                    math.dist(coordinates, [0.0, 0.0, 0.0]) < 0.01 or
+                    right_side not in (0, 1)):
+                raise ValueError("invalid multiplayer Corner direction or side")
+            row["cornerDirection"] = coordinates
+            row["cornerRightSide"] = bool(right_side)
+        points.append(row)
 
     return {
         "source": source_map["source"],
@@ -126,7 +140,7 @@ def main():
         if actual != expected:
             raise ValueError(f"{name} card enemy point counts changed: {actual}")
 
-    content = json.dumps({"version": 1, "maps": maps}, indent=2) + "\n"
+    content = json.dumps({"version": 2, "maps": maps}, indent=2) + "\n"
     if sys.argv[1:] == ["--check"]:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != content:
             raise ValueError("card enemy points differ from source scenes")

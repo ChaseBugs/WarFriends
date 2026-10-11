@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "maps": [
     {
       "source": "Assets/Scenes/Aztec_Multiplayer.unity",
@@ -62,7 +62,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 30,
@@ -81,7 +87,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 40,
@@ -146,7 +158,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 1,
@@ -165,7 +183,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 13,
@@ -222,7 +246,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 45,
@@ -287,7 +317,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 1,
@@ -306,7 +342,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 13,
@@ -363,7 +405,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 36,
@@ -382,7 +430,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 48,
@@ -447,7 +501,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 1,
@@ -466,7 +526,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 10,
@@ -523,7 +589,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": true
         },
         {
           "order": 32,
@@ -542,7 +614,13 @@
             0.21312805437876325,
             0.0,
             0.9770242742310565
-          ]
+          ],
+          "cornerDirection": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "cornerRightSide": false
         },
         {
           "order": 40,
