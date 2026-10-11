@@ -1,4 +1,4 @@
-"""Pin serialized EnemyBasicInventory weapon object references for Rusher families."""
+"""Pin serialized enemy weapons for Rusher families and the card Sniper."""
 import hashlib,json,math,re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
@@ -150,6 +150,22 @@ def attack_windup(weapon_type):
             "clip":{"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                     "sha256":hashlib.sha256(data).hexdigest(),"length":length}}
 
+def sniper_corner_windup():
+    controller=(SCRIPTS/"EnemyController.cs").read_text(encoding="utf-8-sig")
+    animation=(SCRIPTS/"SoldierAnimationController.cs").read_text(encoding="utf-8-sig")
+    if "Shoot(mSoldierAnimationController.uncoverLength + 0.05f)" not in controller or \
+       'public float uncoverLength => mAnimation["player_look_right3"].length;' not in animation:
+        raise ValueError("Sniper Corner shot timing source changed")
+    path=CLIPS/"player_look_right3.anim"
+    data=path.read_bytes(); text=data.decode("utf-8-sig")
+    stop=re.search(r"^    m_StopTime: ([0-9.]+)$",text,re.M)
+    if not stop or "  m_Legacy: 1" not in text:
+        raise ValueError("Sniper Corner uncover clip changed")
+    length=float(stop.group(1))
+    return {"seconds":length+.05,"rule":"corner-uncover-plus-0.05",
+            "clip":{"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+                    "sha256":hashlib.sha256(data).hexdigest(),"length":length}}
+
 def attack_cadence(behavior_type):
     overrides={"SoldierBehaviourCommando":.2,"SoldierBehaviourWarper":.2,
                "SoldierBehaviourParachuter":.25,"SoldierBehaviourMinigunner":.17}
@@ -195,7 +211,8 @@ def main():
         m=re.search(r"^guid: ([0-9a-f]{32})$",path.read_text(encoding="utf-8-sig",errors="ignore"),re.M)
         if m: meta[m.group(1)]=path.with_suffix("")
     for family in families:
-        if "baseShot" not in family: continue
+        is_sniper=family["unitId"]=="ID_UNIT-SNIPER"
+        if "baseShot" not in family and not is_sniper: continue
         block=blocks[family["behaviorFileId"]]
         game_object=re.search(r"^  m_GameObject: \{fileID: (\d+)\}",block,re.M).group(1)
         inventories=[]
@@ -226,11 +243,11 @@ def main():
             ref["spawnPoint"]=relative(spawn_id,prefab_transforms,prefab_names,True)
         rows.append({"unitId":family["unitId"],"behaviorType":family["behaviorType"],
                      "behaviorFileId":family["behaviorFileId"],
-                     "attackWindup":attack_windup(inventories[0][0]["weaponType"]),
+                     "attackWindup":sniper_corner_windup() if is_sniper else attack_windup(inventories[0][0]["weaponType"]),
                      "attackCadence":attack_cadence(family["behaviorType"]),
                      "shotgunFalloff":shotgun_falloff(family["behaviorType"],inventories[0]),
                      "inventory":inventories[0]})
-    if len(rows)!=7: raise ValueError("expected six Rusher plus one Minigunner weapon bindings")
+    if len(rows)!=8: raise ValueError("expected six Rusher, one Minigunner, and one Sniper weapon binding")
     enemy_text,enemy_blocks,enemy_names,enemy_transforms=yaml(ENEMY)
     soldier_parts=next(block for block in enemy_blocks.values() if "gunSnapPointNotScaled:" in block)
     gun_snap=int(re.search(r"gunSnapPointNotScaled: \{fileID: (\d+)\}",soldier_parts).group(1))
@@ -291,7 +308,7 @@ def main():
                      "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest()}
     warper=warper_relocation(content,enemy_source)
-    artifact={"version":12,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    artifact={"version":13,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -306,5 +323,5 @@ def main():
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher plus one Minigunner binding and five-map Warper relocation authority pinned")
+    print("six Rusher, Minigunner, Sniper, and five-map Warper relocation authority pinned")
 if __name__=="__main__": main()

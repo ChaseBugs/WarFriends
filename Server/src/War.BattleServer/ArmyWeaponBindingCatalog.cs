@@ -29,7 +29,7 @@ public sealed record ArmyWarperRelocation(int InitialWarpCountMin,int InitialWar
     float ArrivalPauseSeconds,float RepeatAfterShotSeconds,string Rule,string ControllerSource,
     string ControllerSha256,IReadOnlyDictionary<string,ArmyWarperField> Fields);
 
-/// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
+/// <summary>Pinned enemy-rig and serialized soldier weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
 {
     private readonly IReadOnlyDictionary<string,ArmyWeaponMuzzle[]> muzzles;
@@ -123,7 +123,7 @@ public sealed class ArmyWeaponBindingCatalog
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
         Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","shotgunnerWalkingFire","warperRelocation","families");
-        if(root.GetProperty("version").GetInt32()!=12||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        if(root.GetProperty("version").GetInt32()!=13||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -216,7 +216,7 @@ public sealed class ArmyWeaponBindingCatalog
            warper.ControllerSource!="Assets/Scripts/Assembly-CSharp/EnemyController.cs"||!Hash(warper.ControllerSha256))
             throw new InvalidDataException("Invalid source Warper relocation policy.");
         var families=root.GetProperty("families");
-        if(families.GetArrayLength()!=7)throw new InvalidDataException("Incomplete Rusher/Minigunner weapon family set.");
+        if(families.GetArrayLength()!=8)throw new InvalidDataException("Incomplete Rusher/Minigunner/Sniper weapon family set.");
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
         var windups=new Dictionary<string,ArmyWeaponWindup>(StringComparer.Ordinal);
         var cadences=new Dictionary<string,ArmyWeaponCadence>(StringComparer.Ordinal);
@@ -261,13 +261,16 @@ public sealed class ArmyWeaponBindingCatalog
                 clipHash=clip.GetProperty("sha256").GetString();
                 clipLength=clip.GetProperty("length").GetSingle();
             }
+            bool sniper=unit=="ID_UNIT-SNIPER";
             bool flame=firstWeaponType==12,swat=firstWeaponType is 3 or 4;
             if(!float.IsFinite(seconds)||seconds<0||seconds>5||
                flame!=(rule=="flamethrower-zero")||swat!=(rule=="swat-shield-unhide")||
-               (!flame&&!swat)!=(rule=="stand-shoot-30-percent")||
+               sniper!=(rule=="corner-uncover-plus-0.05")||
+               (!flame&&!swat&&!sniper)!=(rule=="stand-shoot-30-percent")||
                (flame&&(seconds!=0||clip.ValueKind!=JsonValueKind.Null))||
                (!flame&&(clipAsset==null||!clipAsset.StartsWith("Assets/AnimationClip/",StringComparison.Ordinal)||
-                 !Hash(clipHash)||clipLength is not 1f||seconds!=(swat?1f:.3f))))
+                 !Hash(clipHash)||clipLength is not 1f||seconds!=(sniper?1.05f:swat?1f:.3f)))||
+               (sniper&&clipAsset!="Assets/AnimationClip/player_look_right3.anim"))
                 throw new InvalidDataException("Invalid source Rusher attack windup.");
             if((unit=="ID_UNIT-COMMANDO")!=(familyMuzzles.Count==2) ||
                unit=="ID_UNIT-COMMANDO"&&(firstWeaponType!=14||
@@ -275,6 +278,10 @@ public sealed class ArmyWeaponBindingCatalog
                  inventory[0].GetProperty("leftHand").GetBoolean()||
                  !inventory[1].GetProperty("leftHand").GetBoolean()))
                 throw new InvalidDataException("Invalid source Commando dual inventory.");
+            if(sniper&&(familyMuzzles.Count!=1||firstWeaponType!=10||
+               inventory[0].GetProperty("asset").GetString()!="GameObject/SniperRifleEnemy.prefab"||
+               familyMuzzles[0].Path.StartsWith("SniperRifleEnemy/",StringComparison.Ordinal)==false))
+                throw new InvalidDataException("Invalid source card Sniper rifle binding.");
             result.Add(unit,familyMuzzles.ToArray());
             windups.Add(unit,new(unit,seconds,rule,clipAsset,clipHash,clipLength));
             var cadence=family.GetProperty("attackCadence");
@@ -314,7 +321,8 @@ public sealed class ArmyWeaponBindingCatalog
             else if(falloffRow.ValueKind!=JsonValueKind.Null)
                 throw new InvalidDataException("Unexpected Rusher shotgun falloff.");
         }
-        if(shotgunFalloffs.Count!=2)throw new InvalidDataException("Incomplete Rusher shotgun falloff set.");
+        if(!result.ContainsKey("ID_UNIT-SNIPER")||shotgunFalloffs.Count!=2)
+            throw new InvalidDataException("Incomplete soldier weapon binding set.");
         return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed,kevlar,walking,warper);
     }
 

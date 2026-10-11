@@ -9049,6 +9049,14 @@ internal static class CombatContentTests
               content.ArmyWeapons.CadenceTicks("ID_UNIT-COMMANDO")==7&&
               content.ArmyWeapons.CadenceTicks("ID_UNIT-WARPER")==7,
               "Rusher batches enforce each strict source weapon cadence at 30 Hz");
+        Check(content.ArmyWeapons.MuzzleCount("ID_UNIT-SNIPER")==1&&
+              content.ArmyWeapons.Muzzle("ID_UNIT-SNIPER").Path.StartsWith("SniperRifleEnemy/",StringComparison.Ordinal)&&
+              content.ArmyWeapons.WindupTicks("ID_UNIT-SNIPER")==32&&
+              content.ArmyWeapons.Windup("ID_UNIT-SNIPER").Rule=="corner-uncover-plus-0.05"&&
+              content.ArmyWeapons.Windup("ID_UNIT-SNIPER").ClipAsset==
+                  "Assets/AnimationClip/player_look_right3.anim"&&
+              content.ArmyWeapons.CadenceTicks("ID_UNIT-SNIPER")==11,
+              "card Sniper binds its serialized rifle and Corner uncover timing separately from Rusher shots");
         var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
         Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsMinigunner"&&
               minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,

@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 13,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -163,6 +163,57 @@
     ]
   },
   "families": [
+    {
+      "unitId": "ID_UNIT-SNIPER",
+      "behaviorType": "SoldierBehaviourSniper",
+      "behaviorFileId": 43123,
+      "attackWindup": {
+        "seconds": 1.05,
+        "rule": "corner-uncover-plus-0.05",
+        "clip": {
+          "asset": "Assets/AnimationClip/player_look_right3.anim",
+          "sha256": "8e436ded13866414bf59a5595ce64f1a9ecb879d1bdb44eb51770d9a532246f7",
+          "length": 1.0
+        }
+      },
+      "attackCadence": {
+        "seconds": 0.35,
+        "strictTicks": 11,
+        "rule": "base-soldier",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
+        "sha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39"
+      },
+      "shotgunFalloff": null,
+      "inventory": [
+        {
+          "fileId": 48433,
+          "weaponFileId": 11470521,
+          "guid": "217c4f24f78782940b8d6e5e97b0c3c5",
+          "weaponType": 10,
+          "leftHand": false,
+          "asset": "GameObject/SniperRifleEnemy.prefab",
+          "prefabWeaponType": 10,
+          "projectile": {
+            "speed": 10.0,
+            "checkDistance": 1.0
+          },
+          "spawnPoint": {
+            "path": "SniperRifleEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -1.7555939583818345e-08,
+              0.03743575730610509,
+              0.20081651869389414
+            ],
+            "rotation": [
+              -7.071067418107332e-08,
+              -4.3711384535882286e-08,
+              -1.6292069606646132e-07,
+              0.9999999999999831
+            ]
+          }
+        }
+      ]
+    },
     {
       "unitId": "ID_UNIT-SHOTGUNNER",
       "behaviorType": "SoldierBehaviourShotgunner",
