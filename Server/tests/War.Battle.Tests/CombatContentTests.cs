@@ -10065,8 +10065,9 @@ internal static class CombatContentTests
                   "accepted card activation retains its player owner on replay");
             Reject(()=>ownedCards.RecordCard(cardReceipt,secondCardOwner,"CardDecoy"));
             Reject(()=>ownedCards.RecordCard(cardReceipt,firstCardOwner,"CardLandmine"));
-            Check(WarCardSourceIdentityCatalog.All.Count==36&&
+            Check(WarCardSourceIdentityCatalog.All.Count==37&&
                   WarCardSourceIdentityCatalog.Resolve("CardHeavyTurret")=="HEAVYTURRET"&&
+                  WarCardSourceIdentityCatalog.Resolve("CardBackstab")=="BACKSTAB"&&
                   WarCardSourceIdentityCatalog.Resolve("CardMassShieldDestroyer")=="APOCALYPSE"&&
                   WarCardSourceIdentityCatalog.Resolve("CardShieldDestroyer")=="DESTROYSHIELD"&&
                   WarCardSourceIdentityCatalog.Resolve("CardHealMeNowSmall")=="SMALLMEDKIT"&&
@@ -14189,6 +14190,50 @@ internal static class CombatContentTests
               stormMatch.Command(soldierOwner, new() { CommandId = 5,
                   UseHealingStorm = new() { RequestId = "92929292929292929292929292929292" } }).Code == "healing-storm-unavailable",
             "storm retries cannot heal twice and allocated inventory is consumed once");
+        var backstabMatch = new MatchEngine(flameManifest with
+        {
+            MatchId = "enemy-soldier-backstab"
+        }, content: content, armyChoice: _ => 0);
+        backstabMatch.ConfigureBattleAllocations([
+            new(soldierOwner, ["CardBackstab"], [], [0], [-1], [-1]),
+            new(helicopterOwner, [], [], [0], [-1], [-1])
+        ]);
+        backstabMatch.Admit(soldierOwner);
+        backstabMatch.Admit(helicopterOwner);
+        var backstabCards = new SelectCardsCommand();
+        backstabCards.CardIds.Add("CardBackstab");
+        backstabCards.NormalUpgradeIndexes.Add(0);
+        backstabCards.SpecialUpgradeIndexes.Add(-1);
+        backstabCards.EliteUpgradeIndexes.Add(-1);
+        Check(backstabMatch.Command(soldierOwner, new() { CommandId = 1,
+                  SelectCards = backstabCards }).Code == "cards-selected" &&
+              backstabMatch.Command(helicopterOwner, new() { CommandId = 1,
+                  SelectCards = noStormCards }).Code == "cards-selected",
+            "trusted Backstab ownership is selected before battle");
+        foreach (var playerId in new[] { soldierOwner, helicopterOwner })
+            backstabMatch.Command(playerId, new() { CommandId = 2,
+                Ready = new() { ManifestHash = backstabMatch.ManifestHash } });
+        backstabMatch.Advance(60);
+        int backstabOwnerOption = backstabMatch.ArmyBatch(soldierOwner).OptionIndexes[0];
+        int backstabEnemyOption = backstabMatch.ArmyBatch(helicopterOwner).OptionIndexes[0];
+        Check(backstabMatch.Command(soldierOwner, new() { CommandId = 3,
+                  DeployArmy = new() { OptionIndex = backstabOwnerOption } }).Code == "army-deploying" &&
+              backstabMatch.Command(helicopterOwner, new() { CommandId = 3,
+                  DeployArmy = new() { OptionIndex = backstabEnemyOption } }).Code == "army-deploying",
+            "both sides deploy soldiers for Backstab target proof");
+        for (ulong backstabTick = 61; backstabTick <= 75; backstabTick++)
+            backstabMatch.Advance(backstabTick);
+        var backstabSoldiers = backstabMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities;
+        var backstabAlly = backstabSoldiers.First(row => row.OwnerPlayerId == soldierOwner);
+        var backstabEnemy = backstabSoldiers.First(row => row.OwnerPlayerId == helicopterOwner);
+        var backstabCommand = new MatchCommand { CommandId = 4,
+            UseBackstab = new UseBackstabCommand
+            { RequestId = "78787878787878787878787878787878" } };
+        Check(backstabMatch.Command(soldierOwner, backstabCommand).Code == "backstab-applied" &&
+              backstabMatch.ArmyHealth(backstabEnemy.EntityKey) == null &&
+              backstabMatch.ArmyHealth(backstabAlly.EntityKey) > 0 &&
+              backstabMatch.Command(soldierOwner, backstabCommand).Code == "backstab-applied",
+            "Backstab deals enemy maximum health through host death authority once");
         var healthCardMatch = new MatchEngine(flameManifest with
         {
             MatchId = "allied-soldier-health-card"

@@ -16,6 +16,7 @@ public static class WarCardSourceIdentityCatalog
             ["CardShiedlsRefection"]=["REFLECTION"],
             ["CardKevlarUp"]=["KEVLARUP"],
             ["CardShieldsSpawner"]=["SHIELDSPAWNER"],
+            ["CardBackstab"]=["BACKSTAB"],
             ["CardShieldGenerator"]=["SHIELDGENERATOR"],
             ["CardHealthForSoldiers"]=["SUPERSOLDIERS"],
             ["CardMassShieldDestroyer"]=["APOCALYPSE"],

@@ -2112,6 +2112,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseKevlarUp(p,c.UseKevlarUp.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldSpawner)
             return UseShieldSpawner(p,c.UseShieldSpawner.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseBackstab)
+            return UseBackstab(p,c.UseBackstab.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)

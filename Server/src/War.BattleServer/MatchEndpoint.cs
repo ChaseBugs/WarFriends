@@ -339,6 +339,9 @@ public sealed class MatchEndpoint
                     case MatchCommand.IntentOneofCase.UseShieldSpawner:
                         clean.UseShieldSpawner=new UseShieldSpawnerCommand
                             {RequestId=command.UseShieldSpawner.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseBackstab:
+                        clean.UseBackstab=new UseBackstabCommand
+                            {RequestId=command.UseBackstab.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoBox:
                         clean.UseAmmoBox=new UseAmmoBoxCommand {RequestId=command.UseAmmoBox.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseAmmoThief:

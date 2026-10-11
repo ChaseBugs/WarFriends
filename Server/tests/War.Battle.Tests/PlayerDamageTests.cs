@@ -135,6 +135,33 @@ internal static class PlayerDamageTests
             UseKevlarUp = new UseKevlarUpCommand
             { RequestId = "75757575757575757575757575757575" } }).Code ==
               "kevlar-up-unavailable", "spent Kevlar Up cannot refill armor twice");
+        var backstabMatch = new MatchEngine(manifest with { MatchId = "backstab-no-army" });
+        backstabMatch.ConfigureCardSelection(["BACKSTAB"]);
+        backstabMatch.ConfigureCardInventory([(a, "BACKSTAB", 1)]);
+        backstabMatch.Admit(a);
+        backstabMatch.Admit(b);
+        var backstabSelection = new SelectCardsCommand();
+        backstabSelection.CardIds.Add("BACKSTAB");
+        Check(backstabMatch.Command(a, new MatchCommand { CommandId = 1,
+            SelectCards = backstabSelection }).Code == "cards-selected",
+            "player selects a source Backstab card");
+        backstabMatch.Command(a, new MatchCommand { CommandId = 2,
+            Ready = new ReadyCommand { ManifestHash = backstabMatch.ManifestHash } });
+        backstabMatch.Command(b, new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = backstabMatch.ManifestHash } });
+        backstabMatch.Advance(60);
+        var backstabCommand = new MatchCommand { CommandId = 3,
+            UseBackstab = new UseBackstabCommand
+            { RequestId = "76767676767676767676767676767676" } };
+        Check(backstabMatch.Command(a, backstabCommand).Code == "backstab-no-target" &&
+              backstabMatch.Command(a, backstabCommand).Code == "backstab-no-target" &&
+              backstabMatch.Snapshot().CardEffects.Count(effect =>
+                  effect.CardId == "CardBackstab") == 1,
+            "Backstab spends once without a live opposing soldier and replays safely");
+        Check(backstabMatch.Command(a, new MatchCommand { CommandId = 4,
+            UseBackstab = new UseBackstabCommand
+            { RequestId = "77777777777777777777777777777777" } }).Code ==
+              "backstab-unavailable", "Backstab cannot spend exhausted inventory");
         var noDamagePlayers = players.Select((p, i) => i == 1
             ? p with { Combat = body with { NoDamageChance = 1 } } : p).ToArray();
         var noDamageMatch = new MatchEngine(fixture with

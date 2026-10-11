@@ -141,6 +141,7 @@ message UseDisarmedCommand { string request_id = 1; }
 message UseShieldReflectionCommand { string request_id = 1; }
 message UseKevlarUpCommand { string request_id = 1; }
 message UseShieldSpawnerCommand { string request_id = 1; }
+message UseBackstabCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
 message MatchCommand {
@@ -183,6 +184,7 @@ message MatchCommand {
     UseShieldReflectionCommand use_shield_reflection = 46;
     UseKevlarUpCommand use_kevlar_up = 47;
     UseShieldSpawnerCommand use_shield_spawner = 48;
+    UseBackstabCommand use_backstab = 49;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
