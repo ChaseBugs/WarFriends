@@ -22,7 +22,7 @@ public sealed partial class MatchEngine
         if(chain.OrderedEffects.Count==0)return; // A flight cached before another blast removed it.
         var current=players.Select(p=>new BarrelExplosionPlayerState(p.Definition.PlayerId,
             rifleCombat?.Pose(p.Definition.PlayerId).Collision??grenadeCombat!.Collision(p.Definition.PlayerId),
-            p.CurrentCombat!,p.Health,p.Dead)).ToArray();
+            CombatFor(p),p.Health,p.Dead)).ToArray();
         var playerEffects=BarrelPlayerChainResolver.Resolve(map,chain,current,explosionPolicy,damageRoll,overtime);
         int deaths=playerEffects.Count(x=>x.Damage.Dead);
         if(events.Count+chain.Barrels.Count+playerEffects.Count+deaths+1>MaximumRetainedEvents ||

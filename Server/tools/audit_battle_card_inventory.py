@@ -161,6 +161,20 @@ def check_empty_mag_source():
         raise ValueError("EMPTYMAG first-weapon source behavior changed")
 
 
+def check_bullet_sponge_source():
+    source = (ASSETS / "Scripts/Assembly-CSharp/CardBulletSponge.cs")
+    behavior = source.read_text(encoding="utf-8-sig")
+    expected = [
+        "private const float timeInSeconds = 60f",
+        "private const float noDamageChance = 0.05f",
+        "SetNoDamageChance(0.05f)",
+        "mRemainingTime = 60f",
+        "SetNoDamageChance(0f)",
+    ]
+    if any(rule not in behavior for rule in expected):
+        raise ValueError("BULLETHARMLESS duration or dodge source changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -173,7 +187,7 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
-    if (len(names) != 19 or
+    if (len(names) != 20 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -190,6 +204,7 @@ def render():
     check_big_medkit_source()
     check_max_health_source()
     check_empty_mag_source()
+    check_bullet_sponge_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes = direct_client_routes()

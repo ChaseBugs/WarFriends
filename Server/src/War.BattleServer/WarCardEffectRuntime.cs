@@ -24,6 +24,9 @@ public sealed class WarCardEffectRuntime
         active.Values.Where(x => x.OwnerPlayerId == ownerPlayerId).OrderBy(x => x.EffectId).ToArray();
     public bool HasActiveKind(string ownerPlayerId, WarCardEffectKind kind) =>
         active.Values.Any(x => x.OwnerPlayerId == ownerPlayerId && x.Definition.Kind == kind);
+    public bool HasActiveCard(string ownerPlayerId, string cardClassId) =>
+        active.Values.Any(effect => effect.OwnerPlayerId == ownerPlayerId &&
+                                    effect.Definition.CardId == cardClassId);
 
     public bool TryApply(string effectId, string ownerPlayerId, WarCardEffectRequest request, ulong tick)
     {

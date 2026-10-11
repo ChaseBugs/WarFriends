@@ -2360,7 +2360,7 @@ public sealed partial class MatchEngine
             float roll=damageRoll();
             var effect=BuggyExplosion.ResolvePlayer(position,
                 rifleCombat.Pose(victim.Definition.PlayerId).Collision,victim.Position,
-                victim.CurrentCombat!,victim.Health,damage,binding,policy,
+                CombatFor(victim),victim.Health,damage,binding,policy,
                 shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
                 attacker==victim,roll);
             if(effect==null)continue;

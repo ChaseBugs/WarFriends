@@ -542,7 +542,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         var target = Find(targetPlayerId);
         if (Find(ownerPlayerId)?.Admitted != true || target?.Admitted != true ||
             !cardEffects.TryGet(effectId, out var effect) || effect == null || effect.OwnerPlayerId != ownerPlayerId ||
-            effect.Definition.Kind != WarCardEffectKind.Status || phase != BattlePhase.Running ||
+            effect.Definition.CardId is not ("CardBrokenLegs" or "CardSlowdown") ||
+            phase != BattlePhase.Running ||
             Find(ownerPlayerId)!.Definition.Fraction == target.Definition.Fraction || effect.Lease.ExpiresTick <= tick)
             return false;
         var seconds = (effect.Lease.ExpiresTick - tick) / (float)MatchManifest.TickRate;
@@ -2075,6 +2076,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseMaxHealth(p,c.UseMaxHealth.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseEmptyMag)
             return UseEmptyMag(p,c.UseEmptyMag.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseBulletSponge)
+            return UseBulletSponge(p,c.UseBulletSponge.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)
             return UseHealingStorm(p,c.UseHealingStorm.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseShieldsUp)
@@ -2439,7 +2442,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             var pose=rifleCombat.Pose(victim.Definition.PlayerId).Collision;
             float roll=damageRoll();
             var effect=BazookaExplosion.ResolvePlayer(impact.Position,pose,victim.Position,
-                victim.CurrentCombat!,victim.Health,projectile.Stage,projectile.Binding,projectile.HalfDamage,
+                CombatFor(victim),victim.Health,projectile.Stage,projectile.Binding,projectile.HalfDamage,
                 shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
                 attacker==victim,roll);
             if(effect==null)continue;
@@ -2518,7 +2521,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();var effect=GrenadeExplosion.ResolvePlayer(impact.Position,
-                grenadeCombat.Collision(victim.Definition.PlayerId),victim.Position,victim.CurrentCombat!,victim.Health,
+                grenadeCombat.Collision(victim.Definition.PlayerId),victim.Position,CombatFor(victim),victim.Health,
                 projectile.Stage,shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,attacker==victim,roll);
             if(effect==null)continue;
             ApplyResolvedPlayerDamage(impact.OwnerId,victim.Definition.PlayerId,
@@ -2542,7 +2545,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (attacker == null || victim == null || !attacker.Admitted || !victim.Admitted ||
             attacker.Dead || victim.Dead || victim.Definition.Combat == null) return null;
         bool selfDamage = attacker == victim && hit.Amount > 0;
-        var result = PlayerDamage.Resolve(victim.CurrentCombat!, victim.Health, hit,
+        var result = PlayerDamage.Resolve(CombatFor(victim), victim.Health, hit,
             attacker.Definition.Fraction == victim.Definition.Fraction,
             selfDamage, randomRoll);
         if (!result.Applied) return result;

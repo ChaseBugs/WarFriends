@@ -338,6 +338,67 @@ internal static class PlayerDamageTests
         Check(Math.Abs(maxHealthMatch.Snapshot().Players[0].Health - 110) < .001f &&
               maxHealthMatch.Snapshot().Players[1].MaxHealth == 100,
             "later combat uses the owner's new maximum and leaves the opponent unchanged");
+        var spongeMatch = new MatchEngine(manifest with
+        {
+            MatchId = "live-bullet-sponge-dodge",
+            DurationSeconds = 90,
+            IdleSeconds = 120
+        });
+        spongeMatch.ConfigureCardSelection(["BULLETHARMLESS"]);
+        spongeMatch.ConfigureCardInventory([(a, "BULLETHARMLESS", 1)]);
+        spongeMatch.Admit(a);
+        spongeMatch.Admit(b);
+        var spongeSelection = new SelectCardsCommand();
+        spongeSelection.CardIds.Add("BULLETHARMLESS");
+        Check(spongeMatch.Command(a, new MatchCommand
+        {
+            CommandId = 1, SelectCards = spongeSelection
+        }).Code == "cards-selected", "owner selects BULLETHARMLESS");
+        spongeMatch.Command(a, new MatchCommand
+        {
+            CommandId = 2, Ready = new ReadyCommand
+            {
+                ManifestHash = spongeMatch.ManifestHash
+            }
+        });
+        spongeMatch.Command(b, new MatchCommand
+        {
+            CommandId = 1, Ready = new ReadyCommand
+            {
+                ManifestHash = spongeMatch.ManifestHash
+            }
+        });
+        spongeMatch.Advance(60);
+        var spongeCommand = new MatchCommand
+        {
+            CommandId = 3,
+            UseBulletSponge = new UseBulletSpongeCommand
+            {
+                RequestId = "93939393939393939393939393939393"
+            }
+        };
+        Check(spongeMatch.Command(a, spongeCommand).Code ==
+                  "bullet-sponge-active" &&
+              spongeMatch.Command(a, spongeCommand).Code ==
+                  "bullet-sponge-active" &&
+              spongeMatch.Snapshot().CardActivations == 1,
+            "the card is spent once and a transport retry replays its result");
+        const string spongeEffectId = "93939393939393939393939393939393";
+        Check(!spongeMatch.TryResolveCardStatus(a, spongeEffectId, b),
+            "self protection cannot be redirected to an opposing player");
+        var spongeHit = new ResolvedPlayerDamage(10,
+            CombatDamageType.Basic, HasWeapon: false);
+        spongeMatch.ApplyResolvedPlayerDamage(b, a, spongeHit, .04f);
+        Check(spongeMatch.Snapshot().Players[0].Health == 100,
+            "a random roll below the source five percent avoids damage");
+        spongeMatch.ApplyResolvedPlayerDamage(b, a, spongeHit, .05f);
+        Check(spongeMatch.Snapshot().Players[0].Health == 90,
+            "the five percent comparison is strict");
+        spongeMatch.Advance(1860);
+        spongeMatch.ApplyResolvedPlayerDamage(b, a, spongeHit, .04f);
+        Check(spongeMatch.Snapshot().Players[0].Health == 80 &&
+              spongeMatch.Snapshot().CardEffects.Count == 0,
+            "the dodge chance ends when the sixty-second host lease expires");
         var aliasMatch = new MatchEngine(manifest with {MatchId="medkit-selection-identity"});
         aliasMatch.ConfigureCardSelection(["MEDKIT","CardHealMeNow"]);
         aliasMatch.ConfigureCardInventory([(a,"MEDKIT",1)]);
