@@ -13,6 +13,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, CardSoldierWalkState> swatWalks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
     private readonly Dictionary<ulong, CardParachuteFlightState> parachuteFlights = [];
+    private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAirAttacks = [];
+    private readonly Dictionary<ulong, ArmyRusherTarget> paratrooperAirShotTargets = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -35,6 +37,9 @@ public sealed partial class MatchEngine
 
     internal bool CardParatrooperFalling(ulong entityKey) =>
         parachuteFlights.ContainsKey(entityKey);
+
+    internal bool CardParatrooperAirAttacking(ulong entityKey) =>
+        paratrooperAirAttacks.ContainsKey(entityKey);
 
     internal int? CardParatrooperFallbackSpawn(ulong entityKey) =>
         paratrooperFallbackWalks.TryGetValue(entityKey, out var walk)
@@ -169,6 +174,13 @@ public sealed partial class MatchEngine
             entity.OwnerFraction, phase);
         if (!parachuteFlights.TryAdd(entity.EntityKey, flight))
             throw new InvalidDataException("Card Paratrooper reused a flight identity.");
+        // ParachuteUpdate tries its first shot on the next update. A failed
+        // range or visibility check schedules the source 1-4 second retry.
+        var airAttack = new ArmyRusherAttackState(source.BaseStats.Shot,
+            NextArmyFloat, shotIntervalTicks: 16);
+        if (!paratrooperAirAttacks.TryAdd(entity.EntityKey, airAttack) ||
+            !rusherShotCounts.TryAdd(entity.EntityKey, 0))
+            throw new InvalidDataException("Card Paratrooper reused its airborne attack identity.");
     }
 
     private void AdvanceCardParachuteFlights()
@@ -399,7 +411,8 @@ public sealed partial class MatchEngine
         attack.BeginInitialCooldown();
         if (!paratrooperAttacks.TryAdd(entityKey, attack))
             throw new InvalidDataException("Card Paratrooper attack started twice.");
-        rusherShotCounts.Add(entityKey, 0);
+        if (!rusherShotCounts.ContainsKey(entityKey))
+            throw new InvalidDataException("Card Paratrooper lost its airborne shot count.");
     }
 
     internal CardParatrooperAirTarget? CardParatrooperAirAim(ulong entityKey)
@@ -433,6 +446,67 @@ public sealed partial class MatchEngine
         HelicopterSightRay sight = CardParatrooperAirTarget.SightRay(
             position, restMuzzleHeight, target.Position);
         return target with { HasClearSight = rifleCombat.HelicopterCanSee(sight) };
+    }
+
+    private void AdvanceCardParatrooperAirAttacks()
+    {
+        if (armyWeapons == null)
+            throw new InvalidDataException("Airborne Paratrooper lacks weapon timing.");
+
+        int windupTicks = armyWeapons.WindupTicks("ID_UNIT-PARATROOPER");
+        rusherShotIntents.Clear();
+        foreach (var (entityKey, attack) in paratrooperAirAttacks
+            .OrderBy(row => row.Key).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "ELITEPARA")
+                throw new InvalidDataException("Airborne attack lost its Paratrooper.");
+
+            bool stillFalling = parachuteFlights.ContainsKey(entityKey);
+            if (!stillFalling && attack.Phase is
+                ArmyRusherAttackPhase.Ready or ArmyRusherAttackPhase.Cooldown)
+            {
+                paratrooperAirAttacks.Remove(entityKey);
+                continue;
+            }
+
+            if (attack.Phase == ArmyRusherAttackPhase.Ready)
+            {
+                CardParatrooperAirTarget? aim = CardParatrooperAirAim(entityKey);
+                if (aim == null || !aim.WithinRange || !aim.HasClearSight)
+                {
+                    attack.RetryAfterRejectedTarget();
+                }
+                else if (attack.TryBegin(true, 1, windupTicks))
+                {
+                    Player owner = Find(entity.OwnerPlayerId) ??
+                        throw new InvalidDataException("Airborne attack lost its owner.");
+                    Player opponent = players.Single(player => player != owner);
+                    paratrooperAirShotTargets[entityKey] = new ArmyRusherTarget(
+                        entityKey, opponent.Definition.PlayerId,
+                        aim.TransformFileId, 0, aim.Position);
+                }
+            }
+
+            attack.AdvanceTick();
+            if (!attack.ShotDue)
+                continue;
+            if (!paratrooperAirShotTargets.TryGetValue(entityKey,
+                out ArmyRusherTarget? target))
+                throw new InvalidDataException("Airborne attack lost its latched Shield target.");
+            rusherShotIntents.Add(new ArmyRusherShotIntent(entityKey,
+                entity.OwnerPlayerId, target.PlayerId, target.TargetFileId,
+                target.Position, attack.CurrentShotIsReal,
+                attack.BatchCursor, attack.BatchSize));
+            attack.CommitShot();
+            if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
+            {
+                paratrooperAirShotTargets.Remove(entityKey);
+                if (!stillFalling)
+                    paratrooperAirAttacks.Remove(entityKey);
+            }
+        }
+        LaunchRusherShotIntents();
     }
 
     private ArmyRusherTarget? CardParatrooperBodyTarget(ulong entityKey)
@@ -761,6 +835,8 @@ public sealed partial class MatchEngine
         if (entity.SourceCardId == "ELITEPARA")
         {
             parachuteFlights.Remove(entityKey);
+            paratrooperAirAttacks.Remove(entityKey);
+            paratrooperAirShotTargets.Remove(entityKey);
             paratrooperWalks.Remove(entityKey);
             paratrooperFallbackWalks.Remove(entityKey);
             paratrooperPointRetryTicks.Remove(entityKey);

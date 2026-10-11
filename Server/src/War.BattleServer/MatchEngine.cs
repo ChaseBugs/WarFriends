@@ -1364,6 +1364,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceCardParachuteFlights(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
+        if (advanced && phase == BattlePhase.Running && paratrooperAirAttacks.Count > 0)
+        {
+            try { AdvanceCardParatrooperAirAttacks(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && swatPointRetryTicks.Count > 0)
         {
             try { AdvanceCardSwatPointRetries(); }

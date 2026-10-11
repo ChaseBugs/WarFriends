@@ -11614,6 +11614,74 @@ internal static class CombatContentTests
             match.Advance(60);
             return match;
         }
+        var airborneFiringMatch = ReadyCardMatch(
+            "host-card-para-air-fire", "ELITEPARA");
+        MatchReply airborneMove = airborneFiringMatch.Command(decoyOpponent,
+            new MatchCommand
+            {
+                CommandId = 3,
+                MoveCover = new MoveCoverCommand { Direction = -1 }
+            });
+        Check(airborneMove.Code == "moving" &&
+              airborneFiringMatch.TryScheduleCardUnit(
+                  "abababababababababababababababab",
+                  decoyPlayer, "ELITEPARA"),
+            "defender moves toward the source Park parachute lane");
+        ulong airborneFiringEntity = airborneFiringMatch
+            .ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single().EntityKey;
+        ulong firstAirSightTick = 0;
+        ulong firstAirShotTick = 0;
+        for (ulong airTick = 61; airTick <= 150 &&
+             !airborneFiringMatch.Terminal && firstAirShotTick == 0; airTick++)
+        {
+            if (airTick == 90)
+            {
+                airborneFiringMatch.ArmyBatch(decoyPlayer);
+                airborneFiringMatch.ArmyBatch(decoyOpponent);
+            }
+            airborneFiringMatch.Advance(airTick);
+            CardParatrooperAirTarget? airborneShotAim = airborneFiringMatch
+                .CardParatrooperAirAim(airborneFiringEntity);
+            if (firstAirSightTick == 0 &&
+                airborneShotAim is { WithinRange: true, HasClearSight: true })
+                firstAirSightTick = airTick;
+            if (airborneFiringMatch.EventBatch(decoyPlayer, 0).Events.Any(
+                    row => row.Kind == MatchEventKind.Shot &&
+                           row.ActorId == decoyPlayer &&
+                           row.TargetId == decoyOpponent &&
+                           row.Reason == "army"))
+                firstAirShotTick = airTick;
+        }
+        Check(firstAirSightTick > 0 &&
+              firstAirShotTick >= firstAirSightTick + 9 &&
+              airborneFiringMatch.CardParatrooperFalling(
+                  airborneFiringEntity) &&
+              airborneFiringMatch.CardEnemyPoint(
+                  airborneFiringEntity) == null,
+            "host launches a card Paratrooper rifle round after clear airborne Shield sight and windup");
+        MatchEvent? airborneShot = airborneFiringMatch
+            .EventBatch(decoyPlayer, 0).Events.FirstOrDefault(row =>
+                row.Kind == MatchEventKind.Shot &&
+                row.ActorId == decoyPlayer && row.Reason == "army");
+        var airborneProjectile = airborneShot == null ? null :
+            airborneFiringMatch.ArmyProjectileLaunch(
+                airborneShot.ProjectileId);
+        float airborneCardDamage = content.Army.CardBaseStats(
+            "ELITEPARA", 22, content.BarrelPolicy.MaxDisplayLevel)
+            .Combat.Damage;
+        Check(airborneShot != null && airborneProjectile is { } airborneFlight &&
+              airborneFlight.OwnerPlayerId == decoyPlayer &&
+              airborneFlight.OwnerFraction == 1 &&
+              airborneFlight.Damage == airborneCardDamage,
+            "airborne round enters the host projectile path with card-row damage");
+        Check(airborneFiringMatch.ConfirmArmyDeath(
+                  airborneFiringEntity, false) &&
+              !airborneFiringMatch.CardParatrooperAirAttacking(
+                  airborneFiringEntity),
+            "airborne Paratrooper death releases its pending shot clock");
+        Check(airborneFiringMatch.ArmyProjectileLaunch(
+                  airborneShot!.ProjectileId) == airborneProjectile,
+            "confirmed Paratrooper death keeps its already launched round authoritative");
         var cardMatch = ReadyCardMatch("host-card-unit");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
@@ -11754,8 +11822,10 @@ internal static class CombatContentTests
         Check(firstParaRows.Length == 1 &&
               firstParaRows[0].SourceCardId == "ELITEPARA" &&
               firstParaRows[0].SpawnTick == 60 &&
-              firstParaRows[0].OptionIndex == -1,
-            "first Paratrooper card unit publishes at activation tick");
+              firstParaRows[0].OptionIndex == -1 &&
+              paraCardMatch.CardParatrooperAirAttacking(
+                  firstParaRows[0].EntityKey),
+            "first Paratrooper card unit publishes with its airborne shot clock");
         bool rejectedSkippedCardTicks = false;
         try { paraCardMatch.Advance(75); }
         catch (InvalidOperationException error) when
@@ -11777,12 +11847,40 @@ internal static class CombatContentTests
             "delayed second Paratrooper card unit receives a distinct host identity at tick 75");
         var paraStats = content.Army.CardBaseStats("ELITEPARA", 22,
             content.BarrelPolicy.MaxDisplayLevel);
+        ArmyBaseShotStats sourceAirShot = content.Army.Families.Single(
+            family => family.UnitId == "ID_UNIT-PARATROOPER").BaseShot!;
+        var airborneClock = new ArmyRusherAttackState(sourceAirShot,
+            () => 0.99f, shotIntervalTicks: 16);
+        Check(airborneClock.TryBegin(true, 1,
+                  content.ArmyWeapons.WindupTicks("ID_UNIT-PARATROOPER")) &&
+              airborneClock.BatchSize == 3,
+            "airborne shot clock draws the recovered Paratrooper batch before its windup");
+        for (int airTick = 0; airTick < 9; airTick++)
+        {
+            airborneClock.AdvanceTick();
+            Check(!airborneClock.ShotDue,
+                "airborne shot remains pending through the nine-tick rifle windup");
+        }
+        airborneClock.AdvanceTick();
+        Check(airborneClock.ShotDue && airborneClock.CommitShot(),
+            "airborne first round starts after the recovered 0.3-second windup");
+        for (int airTick = 0; airTick < 15; airTick++)
+        {
+            airborneClock.AdvanceTick();
+            Check(!airborneClock.ShotDue,
+                "airborne rifle does not fire before its half-second cadence");
+        }
+        airborneClock.AdvanceTick();
+        Check(airborneClock.ShotDue,
+            "airborne next round is due after the half-second cadence");
         Check(paraRows.All(row => paraCardMatch.ArmyDamage(row.EntityKey) ==
                   paraStats.Combat.Damage),
             "both Paratroopers retain card-specific damage while awaiting landing");
         Check(paraCardMatch.ConfirmArmyDeath(paraRows[0].EntityKey, false) &&
               paraCardMatch.ArmyDamage(paraRows[0].EntityKey) == null &&
               !paraCardMatch.CardParatrooperFalling(paraRows[0].EntityKey) &&
+              !paraCardMatch.CardParatrooperAirAttacking(
+                  paraRows[0].EntityKey) &&
               paraCardMatch.ArmyDamage(paraRows[1].EntityKey) ==
                   paraStats.Combat.Damage,
             "one Paratrooper death clears only its own combat authority");
