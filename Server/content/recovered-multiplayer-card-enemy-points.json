@@ -1,0 +1,672 @@
+{
+  "version": 1,
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "mapDefinitionFileId": 2666,
+      "collectionComponentFileId": 2334,
+      "points": [
+        {
+          "order": 8,
+          "componentFileId": 2486,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 586,
+          "transformFileId": 1209,
+          "fraction": 2,
+          "worldPosition": [
+            -1.0641999999999996,
+            -0.10673572999999992,
+            -0.658230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 9,
+          "componentFileId": 2317,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 452,
+          "transformFileId": 1011,
+          "fraction": 2,
+          "worldPosition": [
+            -1.4361999999999995,
+            -0.0852695,
+            0.986769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 18,
+          "componentFileId": 2295,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 425,
+          "transformFileId": 969,
+          "fraction": 2,
+          "worldPosition": [
+            2.8098,
+            0.10287790000000008,
+            3.257769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 30,
+          "componentFileId": 2260,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 384,
+          "transformFileId": 915,
+          "fraction": 1,
+          "worldPosition": [
+            -2.6151999999999997,
+            0.11787790000000009,
+            -3.210230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 40,
+          "componentFileId": 2271,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 395,
+          "transformFileId": 930,
+          "fraction": 1,
+          "worldPosition": [
+            1.1558000000000002,
+            -0.06640649999999992,
+            0.8897699999999991
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        },
+        {
+          "order": 41,
+          "componentFileId": 2477,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 576,
+          "transformFileId": 1193,
+          "fraction": 1,
+          "worldPosition": [
+            1.0697649999999994,
+            -0.0728858,
+            -0.638504696000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "mapDefinitionFileId": 3249,
+      "collectionComponentFileId": 3292,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 3244,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 738,
+          "transformFileId": 1594,
+          "fraction": 2,
+          "worldPosition": [
+            2.571916999999999,
+            0.01387790000000022,
+            -4.414791
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 1,
+          "componentFileId": 2949,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 454,
+          "transformFileId": 1264,
+          "fraction": 2,
+          "worldPosition": [
+            3.196916999999999,
+            0.05887790000000026,
+            4.754209
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 13,
+          "componentFileId": 3337,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 871,
+          "transformFileId": 1771,
+          "fraction": 2,
+          "worldPosition": [
+            -1.761083000000001,
+            0.1078779000000002,
+            -0.764791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 14,
+          "componentFileId": 2943,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 445,
+          "transformFileId": 1250,
+          "fraction": 2,
+          "worldPosition": [
+            -1.7270830000000004,
+            0.22187790000000024,
+            0.6752090000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 34,
+          "componentFileId": 3283,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 798,
+          "transformFileId": 1672,
+          "fraction": 1,
+          "worldPosition": [
+            -1.5540830000000003,
+            0.14487790000000023,
+            4.143209
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 45,
+          "componentFileId": 3011,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 552,
+          "transformFileId": 1379,
+          "fraction": 1,
+          "worldPosition": [
+            2.0889169999999986,
+            0.1268779000000002,
+            -0.5587909999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        },
+        {
+          "order": 46,
+          "componentFileId": 3223,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 710,
+          "transformFileId": 1561,
+          "fraction": 1,
+          "worldPosition": [
+            2.0549169999999988,
+            0.14987790000000023,
+            0.4572090000000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "mapDefinitionFileId": 2553,
+      "collectionComponentFileId": 2661,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 2785,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 596,
+          "transformFileId": 1300,
+          "fraction": 2,
+          "worldPosition": [
+            -19.1296786,
+            -2.3841562,
+            -14.086786
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 1,
+          "componentFileId": 2519,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 348,
+          "transformFileId": 1032,
+          "fraction": 2,
+          "worldPosition": [
+            -19.159083,
+            -2.3391221,
+            -2.781791
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 13,
+          "componentFileId": 2541,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 382,
+          "transformFileId": 1066,
+          "fraction": 2,
+          "worldPosition": [
+            -25.296083,
+            -2.54673573,
+            -9.894791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 14,
+          "componentFileId": 2606,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 457,
+          "transformFileId": 1144,
+          "fraction": 2,
+          "worldPosition": [
+            -25.137083,
+            -2.5252695,
+            -7.6096766
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 35,
+          "componentFileId": 2503,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 332,
+          "transformFileId": 1015,
+          "fraction": 1,
+          "worldPosition": [
+            -27.768204,
+            -2.3325468999999996,
+            -13.850336
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 36,
+          "componentFileId": 2734,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 543,
+          "transformFileId": 1237,
+          "fraction": 1,
+          "worldPosition": [
+            -28.2981585,
+            -2.4709532,
+            -2.7557910000000003
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 48,
+          "componentFileId": 2742,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 554,
+          "transformFileId": 1250,
+          "fraction": 1,
+          "worldPosition": [
+            -23.19832,
+            -2.5064064999999998,
+            -7.520791000000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        },
+        {
+          "order": 49,
+          "componentFileId": 2818,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 646,
+          "transformFileId": 1353,
+          "fraction": 1,
+          "worldPosition": [
+            -22.604083,
+            -2.5128858,
+            -9.163791
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "mapDefinitionFileId": 3572,
+      "collectionComponentFileId": 3153,
+      "points": [
+        {
+          "order": 0,
+          "componentFileId": 3591,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 858,
+          "transformFileId": 1732,
+          "fraction": 2,
+          "worldPosition": [
+            4.272918449999998,
+            0.15887792899999997,
+            -5.241791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 1,
+          "componentFileId": 3243,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 491,
+          "transformFileId": 1232,
+          "fraction": 2,
+          "worldPosition": [
+            2.8519184499999986,
+            0.070877929,
+            4.237208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 10,
+          "componentFileId": 3588,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 853,
+          "transformFileId": 1724,
+          "fraction": 2,
+          "worldPosition": [
+            -1.6330815500000018,
+            0.07187792900000001,
+            -0.4007910700000011
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 11,
+          "componentFileId": 3491,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 715,
+          "transformFileId": 1535,
+          "fraction": 2,
+          "worldPosition": [
+            -1.3500815500000023,
+            0.10587792899999993,
+            0.730208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 31,
+          "componentFileId": 3459,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 664,
+          "transformFileId": 1475,
+          "fraction": 1,
+          "worldPosition": [
+            -3.8070815500000013,
+            0.07745312900000001,
+            -5.079791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 32,
+          "componentFileId": 3522,
+          "componentType": "EnemyPointCorner",
+          "gameObjectFileId": 758,
+          "transformFileId": 1596,
+          "fraction": 1,
+          "worldPosition": [
+            -3.7780815500000013,
+            0.03987792899999998,
+            5.340208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.21312805437876325,
+            0.0,
+            0.9770242742310565
+          ]
+        },
+        {
+          "order": 40,
+          "componentFileId": 3385,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 544,
+          "transformFileId": 1315,
+          "fraction": 1,
+          "worldPosition": [
+            1.541918449999998,
+            0.09387792899999992,
+            1.256765629999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        },
+        {
+          "order": 41,
+          "componentFileId": 3455,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 653,
+          "transformFileId": 1463,
+          "fraction": 1,
+          "worldPosition": [
+            1.059176449999998,
+            0.09387792899999992,
+            -1.3837910700000011
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "mapDefinitionFileId": 2756,
+      "collectionComponentFileId": 2793,
+      "points": [
+        {
+          "order": 11,
+          "componentFileId": 2805,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 490,
+          "transformFileId": 1228,
+          "fraction": 2,
+          "worldPosition": [
+            -1.6761999999999997,
+            0.07040479999999993,
+            -1.198230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 12,
+          "componentFileId": 3106,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 739,
+          "transformFileId": 1491,
+          "fraction": 2,
+          "worldPosition": [
+            -1.9402000000000008,
+            0.09425739999999994,
+            0.5207699999999991
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 47,
+          "componentFileId": 2954,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 531,
+          "transformFileId": 1269,
+          "fraction": 1,
+          "worldPosition": [
+            1.2038000000000002,
+            0.11312040000000001,
+            0.875769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        },
+        {
+          "order": 48,
+          "componentFileId": 2632,
+          "componentType": "EnemyPointSwat",
+          "gameObjectFileId": 356,
+          "transformFileId": 1091,
+          "fraction": 1,
+          "worldPosition": [
+            1.0697649999999994,
+            0.10664109999999993,
+            -0.638504696000001
+          ],
+          "worldRotation": [
+            0.0,
+            0.7043353713772479,
+            0.0,
+            0.7098673711524388
+          ]
+        }
+      ]
+    }
+  ]
+}

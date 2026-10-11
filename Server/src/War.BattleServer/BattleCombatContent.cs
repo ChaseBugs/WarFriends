@@ -63,6 +63,7 @@ public sealed class BattleCombatContent
     internal HelicopterGunnerExplosionCatalog HelicopterGunnerExplosions { get; private init; }=null!;
     public DroneProjectileCatalog DroneProjectile { get; }
     public ArmyRusherPointCatalog ArmyRusherPoints { get; }
+    public CardUnitInitialPointCatalog CardUnitInitialPoints { get; private init; } = null!;
     public ArmyMinigunnerPointCatalog ArmyMinigunnerPoints { get; }
     public PlayerShotTargetCatalog PlayerShotTargets { get; }
     public ArmyNavMeshSourceCatalog ArmyNavMeshes { get; }
@@ -158,6 +159,9 @@ public sealed class BattleCombatContent
         var droneWeapon=DroneWeaponCatalog.Load(Path.Combine(directory,"recovered-drone-weapon.json"),manifest.DroneWeaponRevision);
         var airWaypoints=AirWaypointCatalog.Load(Path.Combine(directory,"recovered-air-waypoint-routes.json"),manifest.AirWaypointRoutesRevision,armySpawnPoints,maps);
         var armyRusherPoints=ArmyRusherPointCatalog.Load(Path.Combine(directory,"recovered-army-rusher-points.json"),manifest.ArmyRusherPointsRevision,maps);
+        var cardUnitInitialPoints=CardUnitInitialPointCatalog.Load(
+            Path.Combine(directory,"recovered-multiplayer-card-enemy-points.json"),
+            CardUnitInitialPointCatalog.VerifiedRevision,maps);
         var armyMinigunnerPoints=ArmyMinigunnerPointCatalog.Load(Path.Combine(directory,"recovered-army-minigunner-points.json"),manifest.ArmyMinigunnerPointsRevision,maps);
         var playerShotTargets=PlayerShotTargetCatalog.Load(Path.Combine(directory,"recovered-player-shot-targets.json"),manifest.PlayerShotTargetsRevision,manifest.SceneRevision);
         poses.AttachPlayerShotTargets(playerShotTargets);
@@ -236,6 +240,7 @@ public sealed class BattleCombatContent
             (bazookas==null?"":"\n"+bazookas.PackageRevision)))) : null;
         return new BattleCombatContent(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,decoys,landMines,heavyTurrets,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity,airWaypoints,droneWeapon,droneColliders,helicopterBodyColliders,airShotTargets,helicopterCrewPoints,droneProjectile,enemyShotTargets)
         {HelicopterGunnerExplosions=helicopterGunnerExplosions,
+            CardUnitInitialPoints=cardUnitInitialPoints,
             AssaultHelicopterWeapons=assaultHelicopterWeapons,
             AssaultHelicopterBoxCollider=assaultHelicopterBoxCollider,
             AssaultHelicopterMeshColliders=assaultHelicopterMeshColliders,

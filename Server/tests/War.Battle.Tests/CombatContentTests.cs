@@ -10108,6 +10108,39 @@ internal static class CombatContentTests
             Reject(()=>cardSpawnState.TrySchedule("C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3",
                 "card-owner", "HEAVYDRONE", 1));
             var cardMap = content.Maps[0];
+            string cardEnemyPointPath = Path.Combine(directory,
+                "recovered-multiplayer-card-enemy-points.json");
+            var cardInitialPoints = content.CardUnitInitialPoints;
+            foreach (var sourceMap in content.Maps)
+            {
+                for (int fraction = 1; fraction <= 2; fraction++)
+                {
+                    var swatPoint = cardInitialPoints.Select(sourceMap,
+                        "ELITESWAT", fraction, Vector3.Zero, _ => true);
+                    var paraPoint = cardInitialPoints.Select(sourceMap,
+                        "ELITEPARA", fraction, Vector3.Zero, _ => true);
+                    Check(swatPoint is { ComponentType: "EnemyPointSwat" } &&
+                          swatPoint.Fraction == fraction &&
+                          (sourceMap.Source.Contains("Snow_Multiplayer",
+                              StringComparison.Ordinal)
+                              ? paraPoint == null
+                              : paraPoint is { ComponentType: "EnemyPointCorner" } &&
+                                paraPoint.Fraction == fraction),
+                        "each card Rusher selects only its recovered faction and point type");
+                }
+            }
+            var parkCardMap = content.Maps.Single(map =>
+                map.Source == "Assets/Scenes/Park_Multiplayer.unity");
+            var nearestPara = cardInitialPoints.Select(parkCardMap,
+                "ELITEPARA", 1, Vector3.Zero, _ => true);
+            var alternatePara = cardInitialPoints.Select(parkCardMap,
+                "ELITEPARA", 1, Vector3.Zero,
+                id => id != nearestPara!.ComponentFileId);
+            Check(nearestPara != null && alternatePara != null &&
+                  nearestPara.ComponentFileId != alternatePara.ComponentFileId,
+                "occupied card Paratrooper initial point selects the next source point");
+            Reject(() => CardUnitInitialPointCatalog.Load(cardEnemyPointPath,
+                new string('0', 64), content.Maps));
             var cardDroneFamily = CardSpawnUnitSourceCatalog.Family(content.Army,
                 "HEAVYDRONE");
             var cardPoint = new ArmySpawnPointSelector(content.ArmySpawnPoints).Select(
