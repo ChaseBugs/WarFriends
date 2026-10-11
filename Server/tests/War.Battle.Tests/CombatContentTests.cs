@@ -10098,6 +10098,12 @@ internal static class CombatContentTests
                   cardSpawnState.Due(104).Single().SourceCardId == "HEAVYDRONE" &&
                   cardSpawnState.Due(105).Count == 2,
                 "another card can occupy released pending capacity without shifting due times");
+            Check(!cardSpawnState.CancelBeforeSpawn(firstCardRequest) &&
+                  cardSpawnState.CancelBeforeSpawn(secondCardRequest) &&
+                  cardSpawnState.PendingCount == 1 &&
+                  cardSpawnState.TrySchedule(secondCardRequest,
+                      "card-owner", "HEAVYDRONE", 106),
+                "a failed activation can undo only its entirely unspawned card call");
             Reject(()=>cardSpawnState.TrySchedule("not-a-request", "card-owner", "HEAVYDRONE", 1));
             Reject(()=>cardSpawnState.TrySchedule("C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3",
                 "card-owner", "HEAVYDRONE", 1));

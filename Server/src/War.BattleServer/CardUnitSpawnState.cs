@@ -14,6 +14,7 @@ internal sealed class CardUnitSpawnState
     private readonly int pendingLimit;
     private readonly List<CardUnitSpawnIntent> pending = [];
     private readonly HashSet<string> acceptedRequests = new(StringComparer.Ordinal);
+    private readonly HashSet<string> completedRequests = new(StringComparer.Ordinal);
 
     internal CardUnitSpawnState(int pendingLimit = 128)
     {
@@ -63,6 +64,22 @@ internal sealed class CardUnitSpawnState
     internal bool Complete(CardUnitSpawnIntent intent, ulong tick)
     {
         if (intent == null || tick < intent.DueTick) return false;
-        return pending.Remove(intent);
+        if (!pending.Remove(intent)) return false;
+        completedRequests.Add(intent.RequestId);
+        return true;
+    }
+
+    /// <summary>
+    /// Undo an activation only before any of its source calls have run. The
+    /// caller uses this if the inventory/effect reservation fails afterward.
+    /// </summary>
+    internal bool CancelBeforeSpawn(string requestId)
+    {
+        if (!acceptedRequests.Contains(requestId) ||
+            completedRequests.Contains(requestId)) return false;
+
+        pending.RemoveAll(intent => intent.RequestId == requestId);
+        acceptedRequests.Remove(requestId);
+        return true;
     }
 }
