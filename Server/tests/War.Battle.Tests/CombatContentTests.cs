@@ -11814,6 +11814,47 @@ internal static class CombatContentTests
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) ==
                   rocketStats.Rocket,
             "card Rocket spawn binds its level-scaled missile setup to the host entity");
+        int rocketCollisionChecks = 0;
+        var rocketFlight = new CardRocketMissileFlight(81,
+            rocketEntity.EntityKey, rocketStats.Rocket!, Vector3.Zero,
+            new Vector3(3, 0, 0), 0, false, (start, movement, distance) =>
+            {
+                rocketCollisionChecks++;
+                return new ShotCollision(.05f,
+                    start + Vector3.UnitX * .05f,
+                    "rocket-test-target", null, 1);
+            });
+        for (ulong flightTick = 1; flightTick <= 6; flightTick++)
+            Check(rocketFlight.Advance(flightTick) == null,
+                "Rocket flight waits until its initial half-unit travel ends");
+        Check(rocketCollisionChecks == 0 &&
+              MathF.Abs(rocketFlight.Position.X - .6f) < .0001f,
+            "Rocket travels at its recovered three-unit speed before collision checks");
+        CardRocketMissileImpact? rocketHit = rocketFlight.Advance(7);
+        Check(rocketHit is { ProjectileId: 81, Tick: 7, IsFake: false,
+                  Collision: not null } &&
+              rocketHit.SoldierEntityKey == rocketEntity.EntityKey &&
+              rocketCollisionChecks == 1 && rocketFlight.Finished,
+            "Rocket stops at one validated host collision after its startup distance");
+        var expiringRocket = new CardRocketMissileFlight(82,
+            rocketEntity.EntityKey, rocketStats.Rocket!, Vector3.Zero,
+            new Vector3(3, 0, 0), 0, true,
+            (_, _, _) => null);
+        CardRocketMissileImpact? rocketExpiry = null;
+        for (ulong flightTick = 1; flightTick <= 95 && rocketExpiry == null;
+             flightTick++)
+            rocketExpiry = expiringRocket.Advance(flightTick);
+        Check(rocketExpiry is { ProjectileId: 82, IsFake: true,
+                  Collision: null } && rocketExpiry.Position.X > 9f,
+            "fake Rocket flight retains visual travel and ends without collision");
+        var farRocket = new CardRocketMissileFlight(83,
+            rocketEntity.EntityKey, rocketStats.Rocket!, Vector3.Zero,
+            new Vector3(100, 0, 0), 0, false, (_, _, _) => null);
+        Check(farRocket.TargetPosition == new Vector3(50, 0, 0),
+            "Rocket launch caps the original target to fifty units");
+        Reject(() => new CardRocketMissileFlight(84,
+            rocketEntity.EntityKey, rocketStats.Rocket! with { Speed = 4 },
+            Vector3.Zero, Vector3.UnitX, 0, false, (_, _, _) => null));
         var rocketAim = rocketCardMatch.CardRocketAim(rocketEntity.EntityKey);
         CoverNode opposingCover = park.Covers.First(cover =>
             cover.Fraction == 2 && cover.Main);

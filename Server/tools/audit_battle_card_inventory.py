@@ -131,6 +131,7 @@ def check_rocket_card_setup():
     spawning = (ASSETS / "Scripts/Assembly-CSharp/SpawningManager.cs")
     enemy_controller = (ASSETS / "Scripts/Assembly-CSharp/EnemyController.cs")
     weapon_prefab = (ASSETS / "GameObject/BazookaEnemy.prefab")
+    missile_source = (ASSETS / "Scripts/Assembly-CSharp/Missile.cs")
     scene = SCENE.read_text(encoding="utf-8-sig")
     rocket_component = scene.split("--- !u!114 &42012\n", 1)[1].split(
         "\n--- !u!", 1)[0]
@@ -138,6 +139,9 @@ def check_rocket_card_setup():
         "--- !u!114 &11431434\n", 1)[1].split("\n--- !u!", 1)[0]
     bazooka_cadence = bazooka_weapon.split("  cadence:\n", 1)[1].split(
         "  clipSize:", 1)[0]
+    bazooka_ammo = weapon_prefab.read_text(encoding="utf-8-sig").split(
+        "--- !u!114 &11477035\n", 1)[1].split("\n--- !u!", 1)[0]
+    missile_behavior = missile_source.read_text(encoding="utf-8-sig")
     if (any(line not in behavior for line in required) or
         "unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);" not in
             card_spawn.read_text(encoding="utf-8-sig") or
@@ -155,6 +159,13 @@ def check_rocket_card_setup():
             spawning.read_text(encoding="utf-8-sig") or
         "fakeValue: 2" not in bazooka_cadence or
         "infiniteAmmo: 1" not in bazooka_weapon or
+        "stopTime: 0" not in bazooka_ammo or
+        "curvedTrajectory: 0" not in bazooka_ammo or
+        "if (Vector3.Distance(from, to) > 50f)" not in missile_behavior or
+        "else if (Vector3.Distance(mFrom, mTransform.position) > 0.5f)" not in
+            missile_behavior or
+        "if (progress > ((!mSetup.curvedTrajectory) ? 3f : 1.5f))" not in
+            missile_behavior or
         "ShootFromBazookaFromCover(mCoverShotRight);\n\t\t\t\tShoot(0.7f);" not in
             enemy_controller.read_text(encoding="utf-8-sig")):
         raise ValueError("Rocket card setup, aim, point or shot timing differs from recovered Client")
