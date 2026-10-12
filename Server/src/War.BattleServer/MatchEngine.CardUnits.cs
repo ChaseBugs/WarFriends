@@ -30,6 +30,7 @@ public sealed partial class MatchEngine
     private sealed record LandedCanopy(ulong LandingTick, Vector3 Position,
         Quaternion Rotation);
     private readonly Dictionary<ulong, LandedCanopy> deadParatrooperCanopies = [];
+    private readonly Dictionary<ulong, ArmyCardRocketRuntime> cardRocketMissiles = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -172,6 +173,8 @@ public sealed partial class MatchEngine
                 InitializeInfantryAnimation(entity.EntityKey);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
+            if (entity.SourceCardId == "BIGROCKET")
+                InitializeCardRocket(entity);
             if (entity.SourceCardId == "ELITEMINIGUN")
                 InitializeCardMinigunner(entity);
             if (entity.SourceCardId == "ELITEPARA")
@@ -1306,6 +1309,22 @@ public sealed partial class MatchEngine
         RegisterDroneArmyTarget(entity.EntityKey, family);
     }
 
+    private void InitializeCardRocket(BattleArmyEntityState entity)
+    {
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Rocket Soldier lost its spawn identity.");
+        if (source.EntityKey != entity.EntityKey ||
+            source.SourceCardId != "BIGROCKET" ||
+            entity.UnitId != "ID_UNIT-ROCKETSOLDIER" ||
+            source.BaseStats.Rocket is not { } missile)
+            throw new InvalidDataException("Card Rocket Soldier lacks source missile setup.");
+        if (!cardRocketMissiles.TryAdd(entity.EntityKey, missile))
+            throw new InvalidDataException("Card Rocket Soldier reused its missile identity.");
+    }
+
+    internal ArmyCardRocketRuntime? CardRocketMissile(ulong entityKey) =>
+        cardRocketMissiles.GetValueOrDefault(entityKey);
+
     private void InitializeCardMinigunner(BattleArmyEntityState entity)
     {
         CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
@@ -1347,6 +1366,7 @@ public sealed partial class MatchEngine
         if (!activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Card-unit death lost its public roster row.");
         infantryAnimations.Remove(entityKey);
+        cardRocketMissiles.Remove(entityKey);
 
         // Card Drone uses the same host flight/weapon systems as an ordinary
         // Drone, but its stats came from CardSpawnUnit's source rows.

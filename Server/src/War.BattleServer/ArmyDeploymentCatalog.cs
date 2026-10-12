@@ -14,9 +14,12 @@ public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatch
 public sealed record ArmyGrenadeDamageStats(float Minimum, float Explosion);
 public sealed record ArmyCardDroneRuntime(float MovementSpeed, float ShotSpeed,
     float ShieldHitProbability, bool CanTurnInvisible);
+public sealed record ArmyCardRocketRuntime(float DirectDamage,
+    float ExplosionDamage, float Speed, float PlayerBehindShieldRatio);
 public sealed record ArmyCardBaseStats(CardSpawnUnitSourceCatalog.Row Source,
     float Progress,ArmyBaseCombatStats Combat,ArmyBaseShotStats Shot,
-    ArmyGrenadeDamageStats? Grenade, ArmyCardDroneRuntime? Drone);
+    ArmyGrenadeDamageStats? Grenade, ArmyCardDroneRuntime? Drone,
+    ArmyCardRocketRuntime? Rocket);
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew,float ShieldHitProbability=0);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
@@ -147,7 +150,7 @@ public sealed class ArmyDeploymentCatalog
     /// CardSpawnUnit uses the owner's source level and the named card rows.
     /// No packet may choose a unit, an upgrade index, health, or damage.
     /// This returns base combat and firing fields; card spawning also needs
-    /// the source-specific grenade, drone, and animation setup.
+    /// the source-specific grenade, drone, rocket, and animation setup.
     /// </summary>
     public ArmyCardBaseStats CardBaseStats(string sourceCardId,
         int playerLevel, int maximumDisplayLevel)
@@ -176,8 +179,28 @@ public sealed class ArmyDeploymentCatalog
         ArmyCardDroneRuntime? drone = source.UnitId == "ID_UNIT-DRONE"
             ? ComposeCardDroneRuntime()
             : null;
+        ArmyCardRocketRuntime? rocket = source.UnitId == "ID_UNIT-ROCKETSOLDIER"
+            ? ComposeCardRocketRuntime(damage)
+            : null;
         return new ArmyCardBaseStats(source, progress,
-            new ArmyBaseCombatStats(health, damage), shot, grenade, drone);
+            new ArmyBaseCombatStats(health, damage), shot, grenade, drone,
+            rocket);
+    }
+
+    private ArmyCardRocketRuntime ComposeCardRocketRuntime(float cardDamage)
+    {
+        // SoldierBehaviourBazooka.ApplyWeaponsSetup gives its MissileSetup
+        // one tenth of the card-row damage on direct contact and the full
+        // damage on explosion. SpawnByCard has no special upgrade, so speed
+        // is the source's ordinary 3 units/second branch.
+        float directDamage = cardDamage * 0.1f;
+        float behindShield = PlayerDamagePolicy(
+            "ID_UNIT-ROCKETSOLDIER").BehindShieldRatio;
+        if (!float.IsFinite(directDamage) || directDamage < 0 ||
+            !float.IsFinite(behindShield) || behindShield < 0)
+            throw new InvalidDataException("Rocket card missile setup is invalid.");
+        return new ArmyCardRocketRuntime(directDamage, cardDamage, 3f,
+            behindShield);
     }
 
     private ArmyCardDroneRuntime ComposeCardDroneRuntime()

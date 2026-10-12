@@ -114,6 +114,25 @@ def check_instant_medkit_source():
         raise ValueError("Instant medkit behavior source changed")
 
 
+def check_rocket_card_setup():
+    soldier = (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviourBazooka.cs")
+    behavior = soldier.read_text(encoding="utf-8-sig")
+    required = [
+        "missileSetup.damageAmount = (float)base.mBehaviourDef.damage * 0.1f;",
+        "missileSetup.explodeDamageAmount = base.mBehaviourDef.damage;",
+        "missileSetup.playerBehindShieldRatio = upgradeSlots.playerBehindShieldDamageRatio;",
+        "missileSetup.speed = ((!controller.hasSpecial) ? 3f :",
+    ]
+    card_spawn = (ASSETS / "Scripts/Assembly-CSharp/AIObject.cs")
+    upgrade = (ASSETS / "Scripts/Assembly-CSharp/UpgradeSlots.cs")
+    if (any(line not in behavior for line in required) or
+        "unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);" not in
+            card_spawn.read_text(encoding="utf-8-sig") or
+        "playerBehindShieldDamageRatio => armyUpgradesRow.PLAYERBEHINDSHIELDDMGRATIO;" not in
+            upgrade.read_text(encoding="utf-8-sig")):
+        raise ValueError("Rocket card missile setup differs from recovered Client")
+
+
 def check_big_medkit_source():
     content = ROOT / "Server/content/recovered-battle-content.json"
     sheets = json.loads(content.read_text(encoding="utf-8"))["sheets"]
@@ -347,6 +366,7 @@ def render():
     check_apocalypse_source()
     check_single_shield_source()
     check_instant_medkit_source()
+    check_rocket_card_setup()
     check_big_medkit_source()
     check_max_health_source()
     check_empty_mag_source()

@@ -10679,6 +10679,18 @@ internal static class CombatContentTests
                   droneCard.Drone.ShieldHitProbability == normalDroneShot.ShieldHitProbability &&
                   content.Army.CardBaseStats("ELITEPARA", 0, maximumCardLevel).Drone == null,
                 "Drone card keeps source movement, bullet, and shield constants without a special lane");
+            var rocketCard = content.Army.CardBaseStats(
+                "BIGROCKET", maximumCardLevel / 2, maximumCardLevel);
+            var rocketPolicy = content.Army.PlayerDamagePolicy(
+                "ID_UNIT-ROCKETSOLDIER");
+            Check(rocketCard.Rocket is { Speed: 3f } &&
+                  Math.Abs(rocketCard.Rocket.DirectDamage -
+                      rocketCard.Combat.Damage * .1f) < .001f &&
+                  rocketCard.Rocket.ExplosionDamage == rocketCard.Combat.Damage &&
+                  rocketCard.Rocket.PlayerBehindShieldRatio ==
+                      rocketPolicy.BehindShieldRatio &&
+                  droneCard.Rocket == null,
+                "Rocket card derives its direct, blast, shield, and no-special speed setup");
             Reject(()=>content.Army.CardBaseStats("ELITEPARA",-1,maximumCardLevel));
             Reject(()=>content.Army.CardBaseStats("ELITEPARA",maximumCardLevel+1,
                 maximumCardLevel));
@@ -11789,6 +11801,22 @@ internal static class CombatContentTests
                   airborneShot!.ProjectileId) == airborneProjectile,
             "confirmed Paratrooper death keeps its already launched round authoritative");
         var cardMatch = ReadyCardMatch("host-card-unit");
+        var rocketCardMatch = ReadyCardMatch("host-card-rocket-setup", "BIGROCKET");
+        const string rocketSetupRequest = "d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5";
+        Check(rocketCardMatch.TryScheduleCardUnit(rocketSetupRequest,
+                  decoyPlayer, "BIGROCKET"),
+            "a trusted Rocket card call creates its source unit");
+        var rocketEntity = rocketCardMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.Single();
+        var rocketStats = content.Army.CardBaseStats("BIGROCKET", 22,
+            content.BarrelPolicy.MaxDisplayLevel);
+        Check(rocketEntity.SourceCardId == "BIGROCKET" &&
+              rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) ==
+                  rocketStats.Rocket,
+            "card Rocket spawn binds its level-scaled missile setup to the host entity");
+        Check(rocketCardMatch.ConfirmArmyDeath(rocketEntity.EntityKey, false) &&
+              rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) == null,
+            "card Rocket death removes the prepared missile authority");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
         const string hostCardRequest = "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5";
