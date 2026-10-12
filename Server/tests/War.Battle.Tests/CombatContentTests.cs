@@ -10764,6 +10764,7 @@ internal static class CombatContentTests
             Check(shotExplosion is { ProjectileId: 102,
                       SoldierEntityKey: 202 } &&
                   shotExplosion.Tick == shotGrenadeTick &&
+                  shotExplosion.ShotTriggered &&
                   shotGrenade.Finished && shotGrenade.ShotHealth == 0f,
                 "a lethal shot detonates the grenade before ground contact or fuse expiry");
             Reject(() => grenadierThrow.ShouldThrowGrenade(float.NaN, false));
@@ -12184,6 +12185,82 @@ internal static class CombatContentTests
         Check(playerBulletHitGrenade,
             "normal player Fire damages a falling Grenadier grenade: " +
             string.Join(", ", grenadeFireCodes.Select(row =>
+                row.Key + "=" + row.Value)));
+        var lethalFireMatch = ReadyCardMatch(
+            "player-fire-lethal-grenadier", "GREATGRENADIER");
+        Check(lethalFireMatch.TryScheduleCardUnit(new string('e', 32),
+                  decoyPlayer, "GREATGRENADIER"),
+            "lethal Fire test starts with one trusted Grenadier card");
+        ulong lethalFireCommand = 3;
+        ulong? preparedGrenadeId = null;
+        bool fireTriggeredExplosion = false;
+        var lethalFireCodes = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (ulong simulationTick = 61; simulationTick < 1800 &&
+             !fireTriggeredExplosion && !lethalFireMatch.Terminal;
+             simulationTick++)
+        {
+            DynamicShotTarget? target = lethalFireMatch
+                .PlayerShotTargets(decoyOpponent)
+                .FirstOrDefault(row => row.GrenadierGrenade &&
+                    (preparedGrenadeId == null ||
+                     row.EntityId == preparedGrenadeId.Value));
+            if (target != null && preparedGrenadeId == null)
+            {
+                preparedGrenadeId = target.EntityId;
+                Check(lethalFireMatch.ApplyCardGrenadierShot(decoyOpponent,
+                          target.EntityId, 999f) &&
+                      lethalFireMatch.CardGrenadierShotHealth(target.EntityId)
+                          == 1f,
+                    "trusted prior damage leaves one hit point for the real Fire command");
+            }
+            if (target != null)
+            {
+                Vector3 aim = target.Hitbox.Center;
+                string fireCode = lethalFireMatch.Command(decoyOpponent,
+                    new MatchCommand
+                {
+                    CommandId = lethalFireCommand++,
+                    Fire = new FireCommand
+                    {
+                        TargetX = aim.X, TargetY = aim.Y, TargetZ = aim.Z
+                    }
+                }).Code;
+                lethalFireCodes[fireCode] =
+                    lethalFireCodes.GetValueOrDefault(fireCode) + 1;
+            }
+            lethalFireMatch.Advance(simulationTick);
+            fireTriggeredExplosion = preparedGrenadeId is ulong grenadeId &&
+                lethalFireMatch.CardGrenadierExplosions().Any(explosion =>
+                    explosion.ProjectileId == grenadeId &&
+                    explosion.ShotTriggered);
+            if (simulationTick % 60 == 0)
+            {
+                lethalFireMatch.EventBatch(decoyPlayer, 0);
+                lethalFireMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        var lethalFireEvents = new List<MatchEvent>();
+        ulong lethalFireEventCursor = 0;
+        while (true)
+        {
+            var page = lethalFireMatch.EventBatch(decoyOpponent,
+                lethalFireEventCursor);
+            lethalFireEvents.AddRange(page.Events);
+            if (page.Events.Count == 0 ||
+                page.Events[^1].EventId == page.LatestEventId)
+                break;
+            lethalFireEventCursor = page.Events[^1].EventId;
+        }
+        Check(fireTriggeredExplosion && preparedGrenadeId is ulong detonatedId &&
+              lethalFireMatch.CardGrenadierActiveFlightCount == 0 &&
+              lethalFireMatch.Snapshot().Projectiles.All(projectile =>
+                  projectile.ProjectileId != detonatedId) &&
+              lethalFireEvents.Any(item =>
+                  item.Kind == MatchEventKind.Impact &&
+                  item.ProjectileId == detonatedId &&
+                  item.Reason == "card-grenadier"),
+            "normal Fire finishes a weakened grenade and publishes its authoritative explosion: " +
+            string.Join(", ", lethalFireCodes.Select(row =>
                 row.Key + "=" + row.Value)));
         var grenadierDecoyMatch = ReadyCardMatch(
             "host-card-grenadier-decoy", "GREATGRENADIER",

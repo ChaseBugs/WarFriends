@@ -3,7 +3,8 @@ using System.Numerics;
 namespace War.BattleServer;
 
 internal sealed record CardGrenadierExplosion(ulong ProjectileId,
-    ulong SoldierEntityKey, Vector3 Position, ulong Tick);
+    ulong SoldierEntityKey, Vector3 Position, ulong Tick,
+    bool ShotTriggered = false);
 
 /// <summary>
 /// GrenadeAmmoBase starts its fuse on the first static or destroyable contact.
@@ -117,7 +118,7 @@ internal sealed class CardGrenadierFlight
         // does not wait for the first ground contact or the remaining fuse.
         Finished = true;
         return new CardGrenadierExplosion(projectileId, soldierEntityKey,
-            Position, impactTick);
+            Position, impactTick, ShotTriggered: true);
     }
 
     private void ApplyContact(ShotCollision hit, Vector3 movement,
