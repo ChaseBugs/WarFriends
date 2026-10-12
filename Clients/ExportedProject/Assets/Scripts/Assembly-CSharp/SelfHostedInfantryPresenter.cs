@@ -52,7 +52,8 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         foreach (var row in rows)
         {
             if (string.IsNullOrEmpty(row.InfantryClip)) continue;
-            if (row.SourceCardId.Length != 0) continue; // Card infantry needs its own pose ledger.
+            if (row.SourceCardId.Length != 0 &&
+                row.SourceCardId != "ELITEMINIGUN") continue;
             if (!behaviours.ContainsKey(row.UnitId))
                 throw new InvalidOperationException("The host sent an unknown infantry visual family.");
             Validate(row);
@@ -96,8 +97,12 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     private Visual Create(BattleArmyEntityState row)
     {
         var soldier = behaviours[row.UnitId];
-        int styleIndex = (int)(row.EntityKey % (ulong)soldier.soldierVisuals.Count);
-        var style = soldier.soldierVisuals[styleIndex];
+        var styles = row.SourceCardId == "ELITEMINIGUN" ?
+            soldier.cardSoldierVisuals : soldier.soldierVisuals;
+        if (styles == null || styles.Count == 0)
+            throw new InvalidOperationException("Recovered infantry card style is absent.");
+        int styleIndex = (int)(row.EntityKey % (ulong)styles.Count);
+        var style = styles[styleIndex];
         style.LoadModel();
         var sourceSkin = source.meshChanger.skinnedMeshRenderer;
         if (style.modelMeshRenderer == null || style.modelMeshRenderer.sharedMesh == null ||

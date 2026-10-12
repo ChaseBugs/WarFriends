@@ -157,6 +157,8 @@ public sealed partial class MatchEngine
                 continue; // Source Spawn consumed its failed point search.
 
             activeArmyEntities.Add(entity.EntityKey, entity);
+            if (entity.SourceCardId == "ELITEMINIGUN")
+                InitializeInfantryAnimation(entity.EntityKey);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
             if (entity.SourceCardId == "ELITEMINIGUN")
@@ -1309,6 +1311,7 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card-unit death did not remove its health authority.");
         if (!activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Card-unit death lost its public roster row.");
+        infantryAnimations.Remove(entityKey);
 
         // Card Drone uses the same host flight/weapon systems as an ordinary
         // Drone, but its stats came from CardSpawnUnit's source rows.

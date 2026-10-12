@@ -80,10 +80,34 @@ public static class SelfHostedInfantryRenderAudit
                 Require(Mathf.Abs(visual.transform.position.x - 6f) < .01f,
                     "authoritative infantry motion " + family.Key);
             }
+            var cardRow = new BattleArmyEntityState
+            {
+                EntityKey = 100,
+                UnitId = "ID_UNIT-MINIGUNNER",
+                SourceCardId = "ELITEMINIGUN",
+                X = 1, SpawnTick = 60, PositionTick = 60,
+                MaxHealth = 100, Health = 100,
+                InfantryClip = "minigun_run",
+                InfantryClipStartTick = 60,
+                InfantryFacingZ = 1
+            };
+            presenter.Apply(new List<BattleArmyEntityState> { cardRow });
+            var cardVisual = GameObject.Find("SelfHostedInfantry_100");
+            var cardStyle = manager.levelBehaviours.Select(entry =>
+                    entry.behaviour as SoldierBehaviour)
+                .First(soldier => soldier != null &&
+                    soldier.unitDictionaryId == "ID_UNIT-MINIGUNNER")
+                .cardSoldierVisuals.Single();
+            cardStyle.LoadModel();
+            Require(cardVisual != null &&
+                cardVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
+                    .sharedMesh == cardStyle.modelMeshRenderer.sharedMesh,
+                "card Minigunner uses its recovered elite mesh");
             presenter.Apply(new List<BattleArmyEntityState>());
-            Require(GameObject.Find("SelfHostedInfantry_" + Families.Length) == null,
+            Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
             Debug.Log("UNITY_INFANTRY_RENDER_PASSED families=" + Families.Length +
+                " cardMinigunner=True" +
                 " skin=True scriptFree=True hostMotion=True removal=True");
             EditorApplication.Exit(0);
         }

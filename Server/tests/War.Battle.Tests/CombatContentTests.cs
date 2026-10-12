@@ -12509,6 +12509,8 @@ internal static class CombatContentTests
         int minigunnerDestination = minigunnerCardMatch.MinigunnerPoint(
             minigunnerCardRow.EntityKey) ?? 0;
         Check(minigunnerCardRow.SourceCardId == "ELITEMINIGUN" &&
+              minigunnerCardRow.InfantryClip ==
+                  minigunnerCardMatch.InfantryPose(minigunnerCardRow.EntityKey)?.Clip &&
               minigunnerCardMatch.ArmyDamage(minigunnerCardRow.EntityKey) ==
                   minigunnerCardStats.Combat.Damage &&
               minigunnerCardMatch.MinigunnerMovementCandidate(
@@ -12519,8 +12521,8 @@ internal static class CombatContentTests
             "card Minigunner uses card damage and reserves a source movement point");
         minigunnerCardMatch.Advance(61);
         Check(minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
-                  .Entities.Single().PositionTick == 61,
-            "card Minigunner movement updates its published host pose");
+                  .Entities.Single() is { PositionTick: 61, InfantryClip: "minigun_run" },
+            "card Minigunner movement publishes its host collision animation");
         bool cardMinigunnerFired = false;
         for (ulong cardTick = 62; cardTick < 1200 &&
              !minigunnerCardMatch.Terminal && !cardMinigunnerFired; cardTick++)
@@ -12545,6 +12547,7 @@ internal static class CombatContentTests
               minigunnerCardMatch.MinigunnerPoint(minigunnerCardRow.EntityKey) == null &&
               minigunnerCardMatch.MinigunnerPointOccupant(deathPoint) == null &&
               minigunnerCardMatch.ArmyDamage(minigunnerCardRow.EntityKey) == null &&
+              minigunnerCardMatch.InfantryPose(minigunnerCardRow.EntityKey) == null &&
               minigunnerCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
             "card Minigunner death releases movement, damage, and roster authority");
         var sniperCardMatch = ReadyCardMatch("host-card-sniper", "ELITESNIPER");
