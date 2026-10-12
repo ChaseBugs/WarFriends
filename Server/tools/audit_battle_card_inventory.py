@@ -119,6 +119,7 @@ def check_rocket_card_setup():
     soldier = (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviourBazooka.cs")
     behavior = soldier.read_text(encoding="utf-8-sig")
     required = [
+        "base.ApplyWeaponsSetup();",
         "missileSetup.damageAmount = (float)base.mBehaviourDef.damage * 0.1f;",
         "missileSetup.explodeDamageAmount = base.mBehaviourDef.damage;",
         "missileSetup.playerBehindShieldRatio = upgradeSlots.playerBehindShieldDamageRatio;",
@@ -167,6 +168,9 @@ def check_rocket_card_setup():
             spawning.read_text(encoding="utf-8-sig") or
         "fakeValue: 2" not in bazooka_cadence or
         "infiniteAmmo: 1" not in bazooka_weapon or
+        "mWeapons[0].cadence = 0.35f;" not in
+            (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviour.cs")
+            .read_text(encoding="utf-8-sig") or
         "stopTime: 0" not in bazooka_ammo or
         "curvedTrajectory: 0" not in bazooka_ammo or
         hashlib.sha256(weapon_prefab.read_bytes()).hexdigest() !=

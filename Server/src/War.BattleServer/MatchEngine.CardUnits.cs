@@ -1474,10 +1474,11 @@ public sealed partial class MatchEngine
             source.EntityKey != entityKey || source.SourceCardId != "BIGROCKET")
             throw new InvalidDataException("Card Rocket has no Corner attack authority.");
 
-        // BazookaEnemy has a two-second PhysicalAmmoWeapon cadence.
-        // EnemyController.SwitchState(CornerHiding) draws the first delay.
+        // SoldierBehaviour.ApplyWeaponsSetup replaces the prefab's two-second
+        // cadence with 0.35 seconds. CornerHiding draws the first delay.
         var attack = new ArmyRusherAttackState(source.BaseStats.Shot,
-            NextArmyFloat, shotIntervalTicks: 2 * MatchManifest.TickRate);
+            NextArmyFloat, shotIntervalTicks:
+                (int)MathF.Ceiling(.35f * MatchManifest.TickRate));
         attack.BeginInitialCooldown();
         if (!rocketAttacks.TryAdd(entityKey, attack))
             throw new InvalidDataException("Card Rocket attack started twice.");
