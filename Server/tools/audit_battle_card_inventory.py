@@ -552,7 +552,7 @@ def direct_client_routes():
         "IsSupportedSelfHostedUnitCard(card)" not in use_card or
         "UseUnitCardResult(card.id)" not in body):
         raise ValueError("Normal Client unit-card route changed")
-    if (len(names) != 28 or
+    if (len(names) != 29 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >

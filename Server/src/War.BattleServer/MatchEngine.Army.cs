@@ -4088,7 +4088,8 @@ public sealed partial class MatchEngine
 
     // Damage is already established by trusted host collision/weapon logic.
     // No client packet can call this transition or choose an army victim.
-    internal bool ApplyArmyHostDamage(ulong entityKey,float damage)
+    internal bool ApplyArmyHostDamage(ulong entityKey,float damage,
+        bool ignoreImmortality=false)
     {
         if(!float.IsFinite(damage) || damage<=0 || damage>10_000_000)
             throw new ArgumentOutOfRangeException(nameof(damage));
@@ -4110,7 +4111,7 @@ public sealed partial class MatchEngine
         }
         if(phase!=BattlePhase.Running || !activeArmyEntities.ContainsKey(entityKey) ||
            !armyVitality.TryGetValue(entityKey,out var vitality))return false;
-        if(ArmyDroneImmortal(entityKey))return false;
+        if(!ignoreImmortality && ArmyDroneImmortal(entityKey))return false;
         float absorbed=Math.Min(damage,vitality.Kevlar);
         float remainingKevlar=vitality.Kevlar-absorbed;
         damage-=absorbed;

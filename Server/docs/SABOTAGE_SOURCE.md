@@ -1,15 +1,20 @@
 # SABOTAGE card: recovered 1.4.0 contract
 
-This is source evidence for a **pending** BattleServer card, not a claim that
-the offline Client can activate it. The scene enables `SABOTAGE` and binds
-`CardSabotage`; the current Worker has no authenticated command for it.
+This records a **partially verified** BattleServer card. The scene enables
+`SABOTAGE` and binds `CardSabotage`. The Worker now accepts an authenticated
+request-ID-only protobuf command, and the normal offline Client routes the
+card through the installed portable SDK. Unity Play Mode and Android use have
+not yet been verified.
 
 `SabotageTargetPolicy` now implements and tests the two-draw selection over
 an explicit, ordered host candidate snapshot. `MatchEngine` can project its
 live mechanical army roots into that snapshot; a spawned card Drone enters
-the opposing set and leaves it on death in a live match test. No card
-command calls the selector yet: the normal `Turret` family, card spending,
-damage dispatch, protobuf, and Client wiring remain pending.
+the opposing set and leaves it on death in a live match test. A normal
+authenticated command now selects a target, consumes one selected card,
+applies source-max-health host damage while ignoring immortality, and retains
+the result for a repeated request ID. Tests cover an opposing card Drone and
+the source no-target spend. The normal `Turret` family and two-peer/Unity
+presentation remain unverified.
 
 ## Client behavior
 
@@ -48,23 +53,23 @@ own `maxHealth`, with `isOneHit` and `ignoreImmortality` set, part index zero,
 no weapon, and the activating player's ownership. This is not automatically
 equivalent to deleting an entire vehicle: multi-part damage, shared health,
 statistics, and death callbacks must pass through their existing host
-authorities. The exact recovered random-stream order and the eligible
-shootable registration set need validation before enabling the command.
+authorities. Live tests cover Drone removal through the existing card-unit
+death path; all mechanical family outcomes, statistics parity, and source
+real-time/random-stream parity still require broader verification.
 
 ## Implementation boundary
 
-1. Pin each live mechanical family and its main/non-main shootable parts to
-   the host entity registry, including visibility, owner, spawn tick, and
-   source `maxHealth`. Do not infer eligibility from a Client target list.
-2. Select one candidate with a bounded host random draw, then apply the
-   mature-main override exactly as above. Use a single current host tick to
-   compare the strict five-second threshold.
-3. Send the hit through the family's normal damage/death path, publish the
-   usual lifecycle events, and commit selection, card spending, and the
-   replay receipt atomically. Replaying a request must not draw again.
-4. Add a normal authenticated Client command, protobuf/SDK validation, and
-   focused cases for each mechanical family, young fallback, mature-main
-   override, no target, replay, and two-peer event agreement.
+1. Verify all eight mechanical army families through live command damage,
+   including shared vehicle health, aircraft, Drone immunity, and kill credit.
+   The currently unavailable normal `Turret` type must enter the same source
+   ordering when its separate card route is implemented. Never infer a target
+   or damage value from a Client packet.
+2. Compare strict five-second host-tick age and both random draws with a
+   running recovered Client. Unit tests prove the selection policy, while
+   a live match currently proves one Drone target.
+3. Verify ordered effect/death events on two connected Clients, Unity card
+   consumption and visuals in Play Mode, and Android runtime loading of the
+   updated `War.Client.dll` and `War.Shared.dll`.
 
 Source files: `Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardSabotage.cs`,
 `GameShootableEntity.cs`, `AIObject.cs`, and `DestroyableObject.cs`; scene

@@ -35,6 +35,7 @@ public static class WarCardEffectCatalog
             ["CardKevlarUp"]=new("CardKevlarUp",WarCardEffectKind.Shield,false,true),
             ["CardShieldsSpawner"]=new("CardShieldsSpawner",WarCardEffectKind.Shield,false,true),
             ["CardBackstab"]=new("CardBackstab",WarCardEffectKind.Damage,false,true),
+            ["CardSabotage"]=new("CardSabotage",WarCardEffectKind.Damage,false,true),
             ["CardRandomKevlar"]=new("CardRandomKevlar",WarCardEffectKind.Shield,false,true),
             ["CardAmmoBox"]=new("CardAmmoBox",WarCardEffectKind.Ammo,false,true),
             ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,false,true),

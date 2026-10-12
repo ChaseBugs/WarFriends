@@ -10065,9 +10065,10 @@ internal static class CombatContentTests
                   "accepted card activation retains its player owner on replay");
             Reject(()=>ownedCards.RecordCard(cardReceipt,secondCardOwner,"CardDecoy"));
             Reject(()=>ownedCards.RecordCard(cardReceipt,firstCardOwner,"CardLandmine"));
-            Check(WarCardSourceIdentityCatalog.All.Count==38&&
+            Check(WarCardSourceIdentityCatalog.All.Count==39&&
                   WarCardSourceIdentityCatalog.Resolve("CardHeavyTurret")=="HEAVYTURRET"&&
                   WarCardSourceIdentityCatalog.Resolve("CardBackstab")=="BACKSTAB"&&
+                  WarCardSourceIdentityCatalog.Resolve("CardSabotage")=="SABOTAGE"&&
                   WarCardSourceIdentityCatalog.Resolve("CardRandomKevlar")=="RANDOMKEVLAR"&&
                   WarCardSourceIdentityCatalog.Resolve("CardMassShieldDestroyer")=="APOCALYPSE"&&
                   WarCardSourceIdentityCatalog.Resolve("CardShieldDestroyer")=="DESTROYSHIELD"&&
@@ -11863,10 +11864,85 @@ internal static class CombatContentTests
                   activatingFraction: 1, currentTick: 60, drawIndex: _ => 0)
                   == null,
             "live card Drone enters only the opposing Sabotage candidate set");
-        Check(sabotageCandidateMatch.ApplyArmyHostDamage(
-                  sabotageDrone.EntityId, sabotageDrone.MaximumHealth) &&
+        Check(!sabotageCandidateMatch.ApplySabotageHostDamage(
+                  decoyPlayer, sabotageDrone) &&
+              !sabotageCandidateMatch.ApplySabotageHostDamage(
+                  decoyOpponent,
+                  sabotageDrone with { MaximumHealth = 1f }) &&
+              sabotageCandidateMatch.ApplySabotageHostDamage(
+                  decoyOpponent, sabotageDrone) &&
               sabotageCandidateMatch.SabotageMechanicalCandidates().Count == 0,
-            "a destroyed mechanical root leaves the pending Sabotage candidate set");
+            "trusted Sabotage damage rejects friendly or forged targets and retires a killed Drone");
+
+        var emptySabotageMatch = ReadyCardMatch(
+            "sabotage-without-mechanical-target", "SABOTAGE");
+        string emptySabotageRequest = new string('7', 32);
+        var emptySabotageCommand = new MatchCommand
+        {
+            CommandId = 3,
+            UseSabotage = new UseSabotageCommand
+            {
+                RequestId = emptySabotageRequest
+            }
+        };
+        Check(MatchEndpoint.ValidClientBody(new Packet
+              {
+                  MatchCommand = emptySabotageCommand
+              }) &&
+              emptySabotageMatch.Command(decoyPlayer,
+                  emptySabotageCommand).Code == "sabotage-no-target" &&
+              emptySabotageMatch.Snapshot().CardActivations == 1 &&
+              emptySabotageMatch.Command(decoyPlayer, new MatchCommand
+              {
+                  CommandId = 4,
+                  UseSabotage = new UseSabotageCommand
+                  {
+                      RequestId = emptySabotageRequest
+                  }
+              }).Code == "sabotage-no-target" &&
+              emptySabotageMatch.Snapshot().CardActivations == 1 &&
+              emptySabotageMatch.Command(decoyPlayer, new MatchCommand
+              {
+                  CommandId = 5,
+                  UseSabotage = new UseSabotageCommand
+                  {
+                      RequestId = new string('6', 32)
+                  }
+              }).Code == "sabotage-unavailable",
+            "Sabotage spends one selected card without a target and replays its exact result");
+
+        var liveSabotageMatch = ReadyCardMatch(
+            "sabotage-against-card-drone", "SABOTAGE",
+            opponentCardId: "HEAVYDRONE");
+        Check(liveSabotageMatch.TryScheduleCardUnit(
+                  new string('8', 32), decoyOpponent, "HEAVYDRONE"),
+            "opposing card Drone enters a live Sabotage match");
+        ulong liveSabotageDroneId = liveSabotageMatch
+            .SabotageMechanicalCandidates().Single().EntityId;
+        var liveSabotageCommand = new MatchCommand
+        {
+            CommandId = 3,
+            UseSabotage = new UseSabotageCommand
+            {
+                RequestId = new string('9', 32)
+            }
+        };
+        Check(liveSabotageMatch.Command(decoyPlayer,
+                  liveSabotageCommand).Code == "sabotage-applied" &&
+              liveSabotageMatch.SabotageMechanicalCandidates().Count == 0 &&
+              liveSabotageMatch.ArmyEntityBatch(decoyOpponent, 0, 0)
+                  .Entities.All(row => row.EntityKey != liveSabotageDroneId) &&
+              liveSabotageMatch.Snapshot().CardActivations == 2 &&
+              liveSabotageMatch.Command(decoyPlayer, new MatchCommand
+              {
+                  CommandId = 4,
+                  UseSabotage = new UseSabotageCommand
+                  {
+                      RequestId = liveSabotageCommand.UseSabotage.RequestId
+                  }
+              }).Code == "sabotage-applied" &&
+              liveSabotageMatch.Snapshot().CardActivations == 2,
+            "authenticated Sabotage consumes one card and kills the host-selected opposing Drone");
         var airborneFiringMatch = ReadyCardMatch(
             "host-card-para-air-fire", "ELITEPARA");
         MatchReply airborneMove = airborneFiringMatch.Command(decoyOpponent,

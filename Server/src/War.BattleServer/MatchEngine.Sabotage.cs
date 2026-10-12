@@ -1,7 +1,71 @@
+using System.Numerics;
+using War.Protocol;
+
 namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private readonly Dictionary<string, (string OwnerPlayerId, string ResultCode)>
+        sabotageReceipts = new(StringComparer.Ordinal);
+
+    private string UseSabotage(Player owner, string requestId)
+    {
+        if (phase != BattlePhase.Running)
+            return "sabotage-not-running";
+        if (!HasSelectedCard(owner, "CardSabotage"))
+            return "sabotage-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) ||
+            requestId != requestId.ToLowerInvariant())
+            return "invalid-sabotage-request";
+
+        if (sabotageReceipts.TryGetValue(requestId, out var replay))
+            return replay.OwnerPlayerId == owner.Definition.PlayerId
+                ? replay.ResultCode : "sabotage-request-conflict";
+        if (cardReservations == null)
+            return "sabotage-authority-unavailable";
+        string inventoryId = CardInventoryId(owner.Definition.PlayerId,
+            "CardSabotage", "SABOTAGE");
+        if (cardReservations.Remaining(owner.Definition.PlayerId,
+                inventoryId) < 1)
+            return "sabotage-unavailable";
+        if (sabotageReceipts.Count >= 256 ||
+            events.Count > MaximumRetainedEvents - 16 ||
+            stateRevision > ulong.MaxValue - 16)
+            return "event-backpressure";
+
+        SabotageTargetPolicy.Candidate? target;
+        try
+        {
+            target = SabotageTargetPolicy.Select(
+                SabotageMechanicalCandidates(), owner.Definition.Fraction,
+                tick, armyChoice);
+        }
+        catch (InvalidDataException)
+        {
+            return "sabotage-authority-unavailable";
+        }
+
+        // The packet carries no target or damage. The recovered Client spends
+        // SABOTAGE even when there is no visible opposing mechanical unit.
+        var effect = new WarCardEffectRequest(
+            "CardSabotage", Vector3.Zero, 0, 1, "SABOTAGE");
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect))
+            return "sabotage-unavailable";
+
+        string resultCode = "sabotage-no-target";
+        if (target != null)
+        {
+            if (!ApplySabotageHostDamage(owner.Definition.PlayerId, target))
+            {
+                End("invalid-card-unit-authority", "", false);
+                return "match-aborted";
+            }
+            resultCode = "sabotage-applied";
+        }
+        sabotageReceipts.Add(requestId, (owner.Definition.PlayerId, resultCode));
+        return resultCode;
+    }
+
     /// <summary>
     /// Projects the mechanical army roots already owned by this match into
     /// the Client's GameShootableEntity type order. This is a read-only input
@@ -34,5 +98,31 @@ public sealed partial class MatchEngine
         }
 
         return candidates;
+    }
+
+    /// <summary>
+    /// Applies a host-selected Sabotage hit to the same live root that was
+    /// offered for selection. The recovered card supplies max-health Shot
+    /// damage and explicitly ignores immortality; it does not accept damage
+    /// or a target from a client packet.
+    /// </summary>
+    internal bool ApplySabotageHostDamage(string attackerPlayerId,
+        SabotageTargetPolicy.Candidate selected)
+    {
+        var attacker = Find(attackerPlayerId);
+        if (attacker?.Admitted != true || phase != BattlePhase.Running ||
+            selected == null || selected.OwnerFraction == attacker.Definition.Fraction)
+            return false;
+
+        var current = SabotageMechanicalCandidates()
+            .FirstOrDefault(candidate => candidate.SourceType == selected.SourceType &&
+                candidate.EntityId == selected.EntityId &&
+                candidate.PartId == selected.PartId);
+        if (current == null || current != selected ||
+            !current.Alive || !current.Visible)
+            return false;
+
+        return ApplyArmyHostDamage(current.EntityId, current.MaximumHealth,
+            ignoreImmortality: true);
     }
 }
