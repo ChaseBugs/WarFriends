@@ -11877,6 +11877,25 @@ internal static class CombatContentTests
               outerDynamic.RawDamage >= rocketStats.Rocket.DirectDamage &&
               outerDynamic.RawDamage < rocketStats.Rocket.ExplosionDamage,
             "Rocket blast attenuates dynamic damage in the outer radius");
+        var directArmyRocket = CardRocketExplosion.ResolveArmy(Vector3.Zero,
+            Vector3.Zero, [rocketBody, rocketHead], rocketStats.Rocket!);
+        Check(directArmyRocket is { Kind: CombatDamageType.Explosion } &&
+              directArmyRocket.RawDamage == rocketStats.Rocket!.ExplosionDamage,
+            "Rocket blast gives a directly overlapped army body full card damage");
+        var outerArmyRocket = CardRocketExplosion.ResolveArmy(
+            new Vector3(1.1f, 0, 0), Vector3.Zero,
+            [rocketBody, rocketHead], rocketStats.Rocket!);
+        Check(outerArmyRocket is { Kind: CombatDamageType.Shiver } &&
+              MathF.Abs(outerArmyRocket.RawDamage -
+                  (rocketStats.Rocket!.DirectDamage +
+                   (rocketStats.Rocket.ExplosionDamage -
+                    rocketStats.Rocket.DirectDamage) *
+                   edgeFalloff * edgeFalloff)) < .0001f,
+            "Rocket army blast uses nearest bounds and root-distance falloff");
+        Check(CardRocketExplosion.ResolveArmy(new Vector3(4, 0, 0),
+                  Vector3.Zero, [rocketBody, rocketHead],
+                  rocketStats.Rocket!) == null,
+            "Rocket blast leaves infantry outside its source radius untouched");
         int rocketCollisionChecks = 0;
         var rocketFlight = new CardRocketMissileFlight(81,
             rocketEntity.EntityKey, rocketStats.Rocket!, Vector3.Zero,

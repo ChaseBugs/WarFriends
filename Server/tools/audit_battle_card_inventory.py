@@ -168,11 +168,14 @@ def check_rocket_card_setup():
             spawning.read_text(encoding="utf-8-sig") or
         "fakeValue: 2" not in bazooka_cadence or
         "infiniteAmmo: 1" not in bazooka_weapon or
+        "friendKill: 0" not in bazooka_weapon or
         "mWeapons[0].cadence = 0.35f;" not in
             (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviour.cs")
             .read_text(encoding="utf-8-sig") or
         "stopTime: 0" not in bazooka_ammo or
         "curvedTrajectory: 0" not in bazooka_ammo or
+        "hurtRadius: 1.2" not in bazooka_ammo or
+        "deadRadius: 0.8" not in bazooka_ammo or
         hashlib.sha256(weapon_prefab.read_bytes()).hexdigest() !=
             "70ced837878580b64c2f5a2665fbf47cde846c4503dba1cda625135b9c667d47" or
         "m_LocalPosition: {x: -0.047, y: -0.0015, z: 0.0344}" not in

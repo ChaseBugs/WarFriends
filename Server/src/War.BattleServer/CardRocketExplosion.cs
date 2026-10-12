@@ -54,6 +54,35 @@ internal static class CardRocketExplosion
         return new CardRocketDynamicHit(CombatDamageType.Shiver, damage);
     }
 
+    internal static CardRocketDynamicHit? ResolveArmy(Vector3 impact,
+        Vector3 armyRoot, IReadOnlyList<PlayerHitbox> parts,
+        ArmyCardRocketRuntime missile)
+    {
+        ValidateMissile(impact, missile);
+        if (!PlayerHitbox.Finite(armyRoot) || parts == null)
+            throw new InvalidDataException("Rocket blast needs current army hitboxes.");
+
+        var nearest = parts.Where(part => part != null &&
+                part.OverlapsSphere(impact, HurtRadius))
+            .OrderBy(part => part.BoundsDistanceToPoint(impact))
+            .ThenBy(part => part.SourcePath, StringComparer.Ordinal)
+            .FirstOrDefault();
+        if (nearest == null)
+            return null;
+
+        float distance = nearest.BoundsDistanceToPoint(impact);
+        if (distance < DeadRadius)
+            return new CardRocketDynamicHit(CombatDamageType.Explosion,
+                missile.ExplosionDamage);
+
+        float rootDistance = Vector3.Distance(armyRoot, impact);
+        float fraction = Math.Clamp(1f - (rootDistance - DeadRadius) /
+            (HurtRadius - DeadRadius), 0f, 1f);
+        float damage = missile.DirectDamage +
+            (missile.ExplosionDamage - missile.DirectDamage) * fraction * fraction;
+        return new CardRocketDynamicHit(CombatDamageType.Shiver, damage);
+    }
+
     internal static CardRocketPlayerHit? ResolvePlayer(Vector3 impact,
         PlayerCollisionModel pose, Vector3 playerRoot,
         ArmyCardRocketRuntime missile, bool shieldBetween)

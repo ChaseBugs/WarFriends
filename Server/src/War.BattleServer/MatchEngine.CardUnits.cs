@@ -1638,6 +1638,10 @@ public sealed partial class MatchEngine
                 }
             }
         }
+        ApplyCardRocketInfantryExplosion(impact, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
         foreach (var victim in players.Where(player => !player.Dead).ToArray())
         {
             var pose = rifleCombat.Pose(victim.Definition.PlayerId).Collision;
@@ -1655,6 +1659,38 @@ public sealed partial class MatchEngine
                 Overtime: overtime);
             ApplyResolvedPlayerDamage(launch.OwnerPlayerId,
                 victim.Definition.PlayerId, damage, damageRoll(), enemy);
+            if (Terminal)
+                return;
+        }
+    }
+
+    private void ApplyCardRocketInfantryExplosion(CardRocketMissileImpact impact,
+        CardRocketLaunchAuthority launch, int attackerFraction)
+    {
+        var targets = GroundVehicleShotTargets(launch.OwnerPlayerId, true)
+            .Where(target => target.ArmyInfantry)
+            .GroupBy(target => target.EntityId)
+            .OrderBy(group => group.Key);
+        foreach (var group in targets)
+        {
+            if (!activeArmyEntities.TryGetValue(group.Key, out var army) ||
+                !infantryAnimations.ContainsKey(group.Key))
+                throw new InvalidDataException(
+                    "Card Rocket infantry blast lost its target authority.");
+            // BazookaEnemy's PhysicalAmmoWeapon has friendKill = false.
+            if (army.OwnerFraction == attackerFraction)
+                continue;
+            var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                new Vector3(army.X, army.Y, army.Z),
+                group.Select(target => target.Hitbox).ToArray(),
+                launch.Missile);
+            if (hit == null)
+                continue;
+            if (!float.IsFinite(hit.RawDamage) ||
+                hit.RawDamage is <= 0 or > 10_000_000)
+                throw new InvalidDataException(
+                    "Card Rocket infantry damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key, hit.RawDamage);
             if (Terminal)
                 return;
         }
