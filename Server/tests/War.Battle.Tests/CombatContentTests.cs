@@ -12053,6 +12053,24 @@ internal static class CombatContentTests
                   .Single(row => row.EntityKey == pageLandingEntity)
                   .ParachuteLandingTick == 75,
             "the expanded canopy pose uses a three-entity UDP page and a final cursor page");
+        ulong beforeCanopyDeath = canopyPageMatch.EventBatch(decoyPlayer, 0)
+            .LatestEventId;
+        Check(canopyPageMatch.ConfirmArmyDeath(pageLandingEntity, false),
+            "the landed Paratrooper can die before the next client roster poll");
+        var canopyDeath = canopyPageMatch.EventBatch(decoyPlayer,
+            beforeCanopyDeath).Events.Single(row =>
+                row.Kind == MatchEventKind.ArmyDied &&
+                row.SourceCardId == "ELITEPARA");
+        Check(canopyDeath.ParachuteEntityKey == pageLandingEntity &&
+              canopyDeath.ParachuteLandingTick == 75 &&
+              canopyDeath.Tick == 75 &&
+              canopyDeath.ParachuteRotation != null &&
+              Vector3.Distance(new Vector3(canopyDeath.ParachuteLandingX,
+                  canopyDeath.ParachuteLandingY, canopyDeath.ParachuteLandingZ),
+                  paraLanding) < .0001f &&
+              canopyPageMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities
+                  .All(row => row.EntityKey != pageLandingEntity),
+            "death event retains canopy impact pose after its soldier leaves the roster");
         var landingDuringShot = ReadyCardMatch(
             "host-card-para-land-during-shot", "ELITEPARA");
         Check(landingDuringShot.Command(decoyOpponent, new MatchCommand

@@ -1409,9 +1409,6 @@ public sealed partial class MatchEngine
             paratrooperAirAttacks.Remove(entityKey);
             paratrooperAirShotTargets.Remove(entityKey);
             paratrooperAirShotStartTicks.Remove(entityKey);
-            paratrooperLandingTicks.Remove(entityKey);
-            paratrooperLandingRotations.Remove(entityKey);
-            paratrooperLandingPositions.Remove(entityKey);
             paratrooperWalks.Remove(entityKey);
             paratrooperFallbackWalks.Remove(entityKey);
             paratrooperPointRetryTicks.Remove(entityKey);
@@ -1438,6 +1435,26 @@ public sealed partial class MatchEngine
         deathEvent.ArmySpawnComponentFileId = entity.SpawnComponentFileId;
         deathEvent.ArmyReservationFileId = entity.ReservationFileId;
         deathEvent.SourceCardId = entity.SourceCardId;
+        if (entity.SourceCardId == "ELITEPARA" &&
+            paratrooperLandingTicks.TryGetValue(entityKey, out ulong landingTick))
+        {
+            if (!paratrooperLandingPositions.TryGetValue(entityKey, out Vector3 position) ||
+                !paratrooperLandingRotations.TryGetValue(entityKey, out Quaternion rotation) ||
+                !PlayerHitbox.Finite(position) || landingTick > tick)
+                throw new InvalidDataException("Dead Paratrooper lost its landing pose.");
+            if (tick - landingTick < 3u * MatchManifest.TickRate)
+            {
+                deathEvent.ParachuteEntityKey = entityKey;
+                deathEvent.ParachuteLandingTick = landingTick;
+                deathEvent.ParachuteRotation = ParachuteWireRotation(rotation);
+                deathEvent.ParachuteLandingX = position.X;
+                deathEvent.ParachuteLandingY = position.Y;
+                deathEvent.ParachuteLandingZ = position.Z;
+            }
+        }
+        paratrooperLandingTicks.Remove(entityKey);
+        paratrooperLandingRotations.Remove(entityKey);
+        paratrooperLandingPositions.Remove(entityKey);
         return true;
     }
 }

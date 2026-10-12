@@ -25,6 +25,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
 
     private sealed class RetiredCanopy
     {
+        public ulong EntityKey;
         public GameObject Root;
         public Material LandingMaterial;
         public float ExpiresAt;
@@ -100,6 +101,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
                 // landing. Its host impact pose and deadline remain valid.
                 retiredCanopies.Add(new RetiredCanopy
                 {
+                    EntityKey = entityKey,
                     Root = visual.Canopy,
                     LandingMaterial = visual.CanopyLandingMaterial,
                     ExpiresAt = visual.CanopyExpiryAt
@@ -110,6 +112,59 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             DestroyVisual(visual);
             active.Remove(entityKey);
         }
+    }
+
+    public void ApplyEvent(MatchEvent item)
+    {
+        if (item.Kind != MatchEventKind.ArmyDied ||
+            item.SourceCardId != "ELITEPARA" || item.ParachuteEntityKey == 0)
+            return;
+        if (item.ParachuteLandingTick > item.Tick ||
+            item.Tick - item.ParachuteLandingTick >= 90UL ||
+            !ValidRotation(item.ParachuteRotation) ||
+            !Finite(item.ParachuteLandingX) || !Finite(item.ParachuteLandingY) ||
+            !Finite(item.ParachuteLandingZ))
+            throw new InvalidOperationException("Invalid authoritative parachute death pose.");
+        ulong observedTick = client != null && client.State != null ?
+            Math.Max(item.Tick, client.State.ServerTick) : item.Tick;
+        ulong expiryTick = item.ParachuteLandingTick + 90UL;
+        if (observedTick >= expiryTick) return;
+        foreach (var retired in retiredCanopies)
+            if (retired.EntityKey == item.ParachuteEntityKey) return;
+        Visual visual;
+        if (active.TryGetValue(item.ParachuteEntityKey, out visual) &&
+            visual.Canopy != null && !visual.CanopyAttached)
+            return;
+        if (parachuteSource == null || parachuteSource.parashuteRenderer == null ||
+            parachuteSource.parashuteRenderer.GetComponent<MeshFilter>() == null)
+            throw new InvalidOperationException("Recovered parachute canopy mesh is absent.");
+        var canopy = new GameObject("ParachuteCanopy");
+        var sourceMap = new Dictionary<Transform, Transform>();
+        CopyVisualHierarchy(parachuteSource.transform, canopy.transform, true, sourceMap);
+        var renderer = canopy.GetComponentInChildren<MeshRenderer>(true);
+        var shader = Shader.Find("Legacy Shaders/Transparent/DiffuseNew");
+        if (renderer == null || renderer.sharedMaterial == null || shader == null)
+        {
+            DestroyVisual(canopy);
+            throw new InvalidOperationException("Recovered parachute landing material is absent.");
+        }
+        var material = new Material(renderer.sharedMaterial);
+        material.shader = shader;
+        renderer.sharedMaterial = material;
+        canopy.transform.position = new Vector3(item.ParachuteLandingX,
+            item.ParachuteLandingY, item.ParachuteLandingZ);
+        canopy.transform.rotation = new Quaternion(item.ParachuteRotation.X,
+            item.ParachuteRotation.Y, item.ParachuteRotation.Z,
+            item.ParachuteRotation.W);
+        retiredCanopies.Add(new RetiredCanopy
+        {
+            EntityKey = item.ParachuteEntityKey,
+            Root = canopy,
+            LandingMaterial = material,
+            ExpiresAt = Time.realtimeSinceStartup +
+                (float)((expiryTick - observedTick) / 30.0)
+        });
+        if (visual != null && visual.Canopy != null) DestroyCanopy(visual);
     }
 
     private static void Validate(BattleArmyEntityState row)

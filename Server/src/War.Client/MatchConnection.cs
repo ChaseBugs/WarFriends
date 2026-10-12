@@ -604,6 +604,22 @@ namespace War.Client
                         throw new InvalidOperationException("Battle host returned unordered events.");
                 foreach(var row in batch.Events)
                 {
+                    bool hasCanopy = row.ParachuteEntityKey != 0;
+                    if (hasCanopy && (row.Kind != MatchEventKind.ArmyDied ||
+                        row.SourceCardId != "ELITEPARA" ||
+                        row.ParachuteLandingTick > row.Tick ||
+                        row.Tick - row.ParachuteLandingTick >= 90 ||
+                        row.ParachuteRotation == null ||
+                        !FiniteCoordinate(row.ParachuteLandingX) ||
+                        !FiniteCoordinate(row.ParachuteLandingY) ||
+                        !FiniteCoordinate(row.ParachuteLandingZ)))
+                        throw new InvalidOperationException("Battle host returned invalid canopy death state.");
+                    if (!hasCanopy && (row.ParachuteLandingTick != 0 ||
+                        row.ParachuteRotation != null ||
+                        row.ParachuteLandingX != 0 ||
+                        row.ParachuteLandingY != 0 ||
+                        row.ParachuteLandingZ != 0))
+                        throw new InvalidOperationException("Battle host returned an unbound canopy death pose.");
                     bool entityLifecycle = row.Kind==MatchEventKind.AirSpawned || row.Kind==MatchEventKind.AirDespawned ||
                         row.Kind==MatchEventKind.DeployableSpawned || row.Kind==MatchEventKind.DeployableDespawned;
                     if(entityLifecycle && (row.ProjectileId==0 || !Guid.TryParseExact(row.ActorId,"N",out _)))

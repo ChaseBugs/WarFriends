@@ -39,6 +39,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private ulong decoyEventId;
 	private ulong landMineEventId;
 	private ulong heavyTurretEventId;
+	private ulong infantryEventId;
 
 	public void Configure(SelfHostedBattleClient owner, PlayerController localPlayer, PlayerController otherPlayer)
 	{
@@ -335,6 +336,11 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 
 	private void ApplyEvent(MatchEvent item)
 	{
+		if (infantryPresenter != null && item.EventId > infantryEventId)
+		{
+			infantryPresenter.ApplyEvent(item);
+			infantryEventId = item.EventId;
+		}
 		// The client acknowledges an event only after every callback returns.
 		// Keep each presenter's own cursor so a later callback failure retries
 		// only presenters that did not finish applying this event.

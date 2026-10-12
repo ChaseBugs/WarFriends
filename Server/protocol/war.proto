@@ -698,6 +698,14 @@ message MatchEvent {
   // CardSpawnUnit lifecycle only; paired with army_option_index -1 and no
   // army-energy recipient on death.
   string source_card_id = 26;
+  // ELITEPARA death may precede the next army roster. Preserve its landed
+  // canopy independently of the soldier for the source three-second linger.
+  uint64 parachute_entity_key = 27;
+  uint64 parachute_landing_tick = 28;
+  BattleJointRotation parachute_rotation = 29;
+  float parachute_landing_x = 30;
+  float parachute_landing_y = 31;
+  float parachute_landing_z = 32;
 }
 message MatchEventBatch {
   string match_id = 1; string manifest_hash = 2;
