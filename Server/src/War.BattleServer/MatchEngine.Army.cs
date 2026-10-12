@@ -432,7 +432,11 @@ public sealed partial class MatchEngine
             if(!activeArmyEntities.TryGetValue(key,out var army))
                 throw new InvalidDataException("Infantry animation lost its host entity.");
             var clips=ArmyInfantryPosePolicy.For(army.UnitId);string clip=clips.Idle;Vector3? facing=null;
-            if(army.SourceCardId=="ELITESWAT")
+            if(army.SourceCardId=="ELITESNIPER")
+            {
+                (clip,facing)=CardSniperInfantryPose(key,army,clips);
+            }
+            else if(army.SourceCardId=="ELITESWAT")
             {
                 if(swatWalks.TryGetValue(key,out var walk))
                 {clip=clips.Walk;facing=walk.Facing;}
@@ -475,6 +479,39 @@ public sealed partial class MatchEngine
             }
             animation.Update(clip,facing,tick);
         }
+    }
+
+    private (string Clip,Vector3? Facing) CardSniperInfantryPose(
+        ulong entityKey,BattleArmyEntityState soldier,ArmyInfantryClips clips)
+    {
+        if(sniperWalks.TryGetValue(entityKey,out var walk))
+            return (clips.Walk,walk.Facing);
+
+        CardUnitInitialPoint? corner=cardEnemyPoints?.Find(entityKey);
+        if(corner?.CornerRightSide is not bool rightSide)
+            return (clips.Idle,null); // Snow can lack a free Corner.
+
+        string side=rightSide?"right":"left";
+        Vector3? facing=AttackFacing(entityKey,soldier,sniperShotTargets) ??
+            corner.CornerDirection;
+        ArmyRusherAttackState? attack=sniperAttacks.GetValueOrDefault(entityKey);
+        if(attack?.Phase==ArmyRusherAttackPhase.Windup &&
+            sniperExposeTicks.TryGetValue(entityKey,out ulong exposeTick))
+        {
+            // ShotFromCover plays the look clip first, then queues fire.
+            string stage=tick-exposeTick<15?"look":"fire";
+            return ($"player_{stage}_{side}_sniper",facing);
+        }
+        if(sniperLastShotTicks.TryGetValue(entityKey,out ulong shotTick) &&
+            tick>=shotTick)
+        {
+            ulong elapsed=tick-shotTick;
+            if(elapsed<15)
+                return ($"player_fire_{side}_sniper",facing);
+            if(elapsed<27)
+                return ($"player_{side}_coverBack_sniper",facing);
+        }
+        return (clips.Idle,facing);
     }
 
     private static Vector3? Planar(Vector2 direction)=>direction.LengthSquared()>1e-10f?

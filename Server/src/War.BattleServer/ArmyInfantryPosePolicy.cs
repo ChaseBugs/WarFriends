@@ -37,7 +37,11 @@ internal static class ArmyInfantryPosePolicy
         var names=poses.Names.ToHashSet(StringComparer.Ordinal);
         if(Clips.Values.SelectMany(x=>new[]{x.Idle,x.Walk,x.Fire}).Any(x=>!names.Contains(x))||
            !names.Contains("warp_movement")||!names.Contains("warp_idle")||
-           !names.Contains("shield_unhide")||!names.Contains("shield_hide"))
+           !names.Contains("shield_unhide")||!names.Contains("shield_hide")||
+           new[]{"player_look_right_sniper","player_fire_right_sniper",
+                 "player_right_coverBack_sniper","player_look_left_sniper",
+                 "player_fire_left_sniper","player_left_coverBack_sniper"}
+               .Any(name=>!names.Contains(name)))
             throw new InvalidDataException("Infantry animation policy references an unpinned enemy clip.");
     }
 }

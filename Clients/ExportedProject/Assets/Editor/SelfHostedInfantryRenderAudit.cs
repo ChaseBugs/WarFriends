@@ -126,13 +126,39 @@ public static class SelfHostedInfantryRenderAudit
                 swatCardVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
                     .sharedMesh == swatCardStyle.modelMeshRenderer.sharedMesh,
                 "card SWAT uses its recovered elite mesh");
+            var sniperCardRow = new BattleArmyEntityState
+            {
+                EntityKey = 102,
+                UnitId = "ID_UNIT-SNIPER",
+                SourceCardId = "ELITESNIPER",
+                X = 3, SpawnTick = 60, PositionTick = 60,
+                MaxHealth = 100, Health = 100,
+                InfantryClip = "player_look_right_sniper",
+                InfantryClipStartTick = 60,
+                InfantryFacingZ = 1
+            };
+            presenter.Apply(new List<BattleArmyEntityState>
+                { cardRow, swatCardRow, sniperCardRow });
+            var sniperCardVisual = GameObject.Find("SelfHostedInfantry_102");
+            var sniperCardStyle = manager.levelBehaviours.Select(entry =>
+                    entry.behaviour as SoldierBehaviour)
+                .First(soldier => soldier != null &&
+                    soldier.unitDictionaryId == "ID_UNIT-SNIPER")
+                .cardSoldierVisuals.Single();
+            sniperCardStyle.LoadModel();
+            Require(sniperCardVisual != null &&
+                sniperCardVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
+                    .sharedMesh == sniperCardStyle.modelMeshRenderer.sharedMesh,
+                "card Sniper uses its recovered elite mesh and cover clip");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
             Require(GameObject.Find("SelfHostedInfantry_101") == null,
                 "removed SWAT card visual");
+            Require(GameObject.Find("SelfHostedInfantry_102") == null,
+                "removed Sniper card visual");
             Debug.Log("UNITY_INFANTRY_RENDER_PASSED families=" + Families.Length +
-                " cardMinigunner=True cardSwat=True" +
+                " cardMinigunner=True cardSwat=True cardSniper=True" +
                 " skin=True scriptFree=True hostMotion=True removal=True");
             EditorApplication.Exit(0);
         }

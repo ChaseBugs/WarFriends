@@ -17,6 +17,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> sniperCornerChangeTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> sniperAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> sniperShotTargets = [];
+    private readonly Dictionary<ulong, ulong> sniperExposeTicks = [];
+    private readonly Dictionary<ulong, ulong> sniperLastShotTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperWalks = [];
     private readonly Dictionary<ulong, CardParachuteFlightState> parachuteFlights = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAirAttacks = [];
@@ -159,7 +161,7 @@ public sealed partial class MatchEngine
                 continue; // Source Spawn consumed its failed point search.
 
             activeArmyEntities.Add(entity.EntityKey, entity);
-            if (entity.SourceCardId is "ELITEMINIGUN" or "ELITESWAT")
+            if (entity.SourceCardId is "ELITEMINIGUN" or "ELITESWAT" or "ELITESNIPER")
                 InitializeInfantryAnimation(entity.EntityKey);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
@@ -1057,7 +1059,10 @@ public sealed partial class MatchEngine
                     int windup = armyWeapons?.WindupTicks(entity.UnitId) ??
                         throw new InvalidDataException("Card Sniper lacks source windup.");
                     if (attack.TryBegin(true, 1, windup))
+                    {
                         sniperShotTargets[entityKey] = target!;
+                        sniperExposeTicks[entityKey] = tick;
+                    }
                 }
             }
             attack.AdvanceTick();
@@ -1072,6 +1077,9 @@ public sealed partial class MatchEngine
                 entity.OwnerPlayerId, shot.PlayerId, shot.TargetFileId,
                 shot.Position, attack.CurrentShotIsReal,
                 attack.BatchCursor, attack.BatchSize, muzzle));
+            // OnShot replays ShotFromCover and schedules the cover-back
+            // transition half a second after the round leaves the muzzle.
+            sniperLastShotTicks[entityKey] = tick;
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 sniperShotTargets.Remove(entityKey);
@@ -1126,6 +1134,8 @@ public sealed partial class MatchEngine
             snipersAtPoint.Remove(entityKey);
             sniperAttacks.Remove(entityKey);
             sniperShotTargets.Remove(entityKey);
+            sniperExposeTicks.Remove(entityKey);
+            sniperLastShotTicks.Remove(entityKey);
             sniperWalks.Add(entityKey, walk);
         }
     }
@@ -1375,6 +1385,8 @@ public sealed partial class MatchEngine
             sniperCornerChangeTicks.Remove(entityKey);
             sniperAttacks.Remove(entityKey);
             sniperShotTargets.Remove(entityKey);
+            sniperExposeTicks.Remove(entityKey);
+            sniperLastShotTicks.Remove(entityKey);
             rusherShotCounts.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);

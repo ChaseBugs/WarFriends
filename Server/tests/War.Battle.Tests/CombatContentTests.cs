@@ -12559,7 +12559,9 @@ internal static class CombatContentTests
             .Entities.OrderBy(row => row.LocalEntityId).ToArray();
         Check(sniperCardRows.Length == 2 &&
               sniperCardRows.All(row => row.UnitId == "ID_UNIT-SNIPER" &&
-                  sniperCardMatch.ArmyDamage(row.EntityKey) != null) &&
+                  sniperCardMatch.ArmyDamage(row.EntityKey) != null &&
+                  row.InfantryClip == "sniper_idle" &&
+                  sniperCardMatch.InfantryPose(row.EntityKey)?.Clip == row.InfantryClip) &&
               sniperCardRows.Select(row => sniperCardMatch
                       .CardEnemyPoint(row.EntityKey)?.ComponentFileId)
                   .Where(id => id.HasValue).Distinct().Count() == 2,
@@ -12571,6 +12573,25 @@ internal static class CombatContentTests
         ulong? firstSniperShooter = null;
         Vector3? firstSniperSampledMuzzle = null;
         Vector3? firstSniperRestMuzzle = null;
+        bool sniperWalkPoseSeen = false;
+        bool sniperLookPoseSeen = false;
+        bool sniperFirePoseSeen = false;
+        bool sniperCoverBackPoseSeen = false;
+        void RecordSniperPoses()
+        {
+            foreach (var row in sniperCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities)
+            {
+                if (row.InfantryClip != sniperCardMatch.InfantryPose(row.EntityKey)?.Clip)
+                    throw new Exception("Card Sniper visual and collision poses diverged.");
+                sniperWalkPoseSeen |= row.InfantryClip == "sniper_run";
+                sniperLookPoseSeen |= row.InfantryClip.StartsWith("player_look_",
+                    StringComparison.Ordinal);
+                sniperFirePoseSeen |= row.InfantryClip.StartsWith("player_fire_",
+                    StringComparison.Ordinal);
+                sniperCoverBackPoseSeen |= row.InfantryClip.Contains("_coverBack_sniper",
+                    StringComparison.Ordinal);
+            }
+        }
         void RecordFirstSniperShot()
         {
             if (firstSniperShot != null) return;
@@ -12607,6 +12628,7 @@ internal static class CombatContentTests
                 sniperCardMatch.ArmyBatch(decoyOpponent);
             }
             sniperCardMatch.Advance(sniperTick);
+            RecordSniperPoses();
             RecordFirstSniperShot();
             sniperArrivalTick = sniperTick;
             bothSnipersArrived = sniperCardRows.All(row =>
@@ -12628,8 +12650,12 @@ internal static class CombatContentTests
                 sniperCardMatch.ArmyBatch(decoyOpponent);
             }
             sniperCardMatch.Advance(sniperTick);
+            RecordSniperPoses();
             RecordFirstSniperShot();
         }
+        Check(sniperWalkPoseSeen && sniperLookPoseSeen &&
+              sniperFirePoseSeen && sniperCoverBackPoseSeen,
+            "card Sniper publishes source walk, reveal, fire, and cover-return poses");
         Check(!sniperCardMatch.Terminal && sniperCardRows.All(row =>
               sniperCardMatch.CardSniperAtPoint(row.EntityKey)) &&
               sniperCardMatch.CardEnemyPointOccupant(firstSniperPointId) ==
@@ -12700,6 +12726,7 @@ internal static class CombatContentTests
         Check(sniperRearrived &&
               sniperCardMatch.ConfirmArmyDeath(
                   sniperCardRows[0].EntityKey, false) &&
+              sniperCardMatch.InfantryPose(sniperCardRows[0].EntityKey) == null &&
               sniperCardMatch.CardEnemyPointOccupant(secondSniperPointId) == null &&
               sniperCardMatch.ArmyDamage(sniperCardRows[0].EntityKey) == null,
             "transferred Sniper reaches its Corner and releases authority on death");
