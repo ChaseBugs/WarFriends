@@ -5,9 +5,11 @@ the offline Client can activate it. The scene enables `SABOTAGE` and binds
 `CardSabotage`; the current Worker has no authenticated command for it.
 
 `SabotageTargetPolicy` now implements and tests the two-draw selection over
-an explicit, ordered host candidate snapshot. It is not yet called by the
-match: mechanical shootable registration, card spending, damage dispatch,
-protobuf, and Client wiring remain pending.
+an explicit, ordered host candidate snapshot. `MatchEngine` can project its
+live mechanical army roots into that snapshot; a spawned card Drone enters
+the opposing set and leaves it on death in a live match test. No card
+command calls the selector yet: the normal `Turret` family, card spending,
+damage dispatch, protobuf, and Client wiring remain pending.
 
 ## Client behavior
 
@@ -28,6 +30,18 @@ uniform draw from it replaces the first choice. An empty mature subset does
 **not** make the card inert: the first draw can still select a younger or
 non-main mechanical entry. With no visible living opposing entry, the card
 is spent without a hit.
+
+The eight recovered army families map to the first seven source classes and
+`Mech`; normal `Turret` is a separate class and has no currently enabled
+self-hosted card route. The recovered `HeavyTurret` prefab also has a visible
+main shootable, but its owner class is **not** `Turret`, so it is excluded by
+the source type list. Each of the ten checked mechanical prefabs has one
+`GameShootableEntity` component with `visible: 1`. The source defaults
+`isMain` to true; only `MiniDrone` assigns it false, and `MiniDrone` is not
+one of the nine selected owner types. This supports one root candidate per
+currently deployed mechanical army entity. The host expresses the strict
+five-second age in 30 Hz simulation ticks; real-time Unity timing parity
+still needs a running Client comparison.
 
 The selected `DestroyableObject` receives one `Shot` damage operation of its
 own `maxHealth`, with `isOneHit` and `ignoreImmortality` set, part index zero,

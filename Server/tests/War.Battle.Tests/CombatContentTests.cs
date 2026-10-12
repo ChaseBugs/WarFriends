@@ -11842,6 +11842,31 @@ internal static class CombatContentTests
             match.Advance(60);
             return match;
         }
+        var sabotageCandidateMatch = ReadyCardMatch(
+            "host-sabotage-candidate", "HEAVYDRONE");
+        Check(sabotageCandidateMatch.SabotageMechanicalCandidates().Count == 0 &&
+              sabotageCandidateMatch.TryScheduleCardUnit(
+                  new string('f', 32), decoyPlayer, "HEAVYDRONE"),
+            "Sabotage candidates come from spawned mechanical entities, not selected cards");
+        var sabotageDrone = sabotageCandidateMatch
+            .SabotageMechanicalCandidates().Single();
+        Check(sabotageDrone.SourceType == "Drone" &&
+              sabotageDrone.OwnerFraction == 1 && sabotageDrone.Visible &&
+              sabotageDrone.Alive && sabotageDrone.IsMain &&
+              sabotageDrone.HasAiOwner && sabotageDrone.MaximumHealth > 0f &&
+              SabotageTargetPolicy.Select(
+                  sabotageCandidateMatch.SabotageMechanicalCandidates(),
+                  activatingFraction: 2, currentTick: 60, drawIndex: _ => 0)
+                  == sabotageDrone &&
+              SabotageTargetPolicy.Select(
+                  sabotageCandidateMatch.SabotageMechanicalCandidates(),
+                  activatingFraction: 1, currentTick: 60, drawIndex: _ => 0)
+                  == null,
+            "live card Drone enters only the opposing Sabotage candidate set");
+        Check(sabotageCandidateMatch.ApplyArmyHostDamage(
+                  sabotageDrone.EntityId, sabotageDrone.MaximumHealth) &&
+              sabotageCandidateMatch.SabotageMechanicalCandidates().Count == 0,
+            "a destroyed mechanical root leaves the pending Sabotage candidate set");
         var airborneFiringMatch = ReadyCardMatch(
             "host-card-para-air-fire", "ELITEPARA");
         MatchReply airborneMove = airborneFiringMatch.Command(decoyOpponent,

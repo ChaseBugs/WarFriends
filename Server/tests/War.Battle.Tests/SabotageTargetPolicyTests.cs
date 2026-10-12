@@ -21,6 +21,24 @@ internal static class SabotageTargetPolicyTests
             "Mech", 40, 0, 0, 1, true, true, true, true, 1, 3000f);
         var candidates = new[] { youngDrone, hiddenTurret, alliedMech, matureTank };
 
+        var sourceFamilies = new Dictionary<string, string>
+        {
+            ["ID_UNIT-HUMVEE"] = "AICar",
+            ["ID_UNIT-BUGGY"] = "AICarBuggy",
+            ["ID_UNIT-TRANSPORTER"] = "AICarTransporter",
+            ["ID_UNIT-TANK"] = "Tank",
+            ["ID_UNIT-HELICOPTER"] = "Helicopter",
+            ["ID_UNIT-ASSAULTHELI"] = "AssaultHelicopter",
+            ["ID_UNIT-DRONE"] = "Drone",
+            ["ID_UNIT-MECH"] = "Mech"
+        };
+        Check(sourceFamilies.All(family =>
+                SabotageTargetPolicy.SourceTypeForArmyUnit(family.Key) ==
+                family.Value) &&
+              SabotageTargetPolicy.SourceTypeForArmyUnit("ID_UNIT-ASSAULT") == null &&
+              SabotageTargetPolicy.SourceTypeForArmyUnit("HeavyTurret") == null,
+            "only the eight recovered mechanical army families map to source owner types");
+
         var drawSizes = new List<int>();
         SabotageTargetPolicy.Candidate? selected = SabotageTargetPolicy.Select(
             candidates, 1, 251, count =>

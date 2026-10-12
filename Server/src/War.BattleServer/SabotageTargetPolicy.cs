@@ -26,8 +26,28 @@ internal static class SabotageTargetPolicy
         "Helicopter", "AssaultHelicopter", "Drone", "Turret", "Mech"
     ];
 
+    // The recovered army family IDs name behaviors, while the Client's
+    // GameShootableEntity registry groups entries by their concrete owner type.
+    // HeavyTurret is deliberately absent: it is not the source Turret type.
+    private static readonly IReadOnlyDictionary<string, string> ArmyOwnerTypes =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["ID_UNIT-HUMVEE"] = "AICar",
+            ["ID_UNIT-BUGGY"] = "AICarBuggy",
+            ["ID_UNIT-TRANSPORTER"] = "AICarTransporter",
+            ["ID_UNIT-TANK"] = "Tank",
+            ["ID_UNIT-HELICOPTER"] = "Helicopter",
+            ["ID_UNIT-ASSAULTHELI"] = "AssaultHelicopter",
+            ["ID_UNIT-DRONE"] = "Drone",
+            ["ID_UNIT-MECH"] = "Mech"
+        };
+
     private const int MaximumCandidates = 1024;
     private const ulong MatureAgeTicks = 5 * MatchManifest.TickRate;
+
+    internal static string? SourceTypeForArmyUnit(string unitId) =>
+        ArmyOwnerTypes.TryGetValue(unitId, out string? sourceType)
+            ? sourceType : null;
 
     internal static Candidate? Select(
         IEnumerable<Candidate> sourceCandidates,
