@@ -1585,11 +1585,11 @@ public sealed partial class MatchEngine
             if (!rocketLaunches.Remove(id, out var launch))
                 throw new InvalidDataException("Card Rocket lost its launch authority.");
             if (!impact.IsFake)
-                ApplyCardRocketPlayerExplosion(impact, launch);
+                ApplyCardRocketExplosion(impact, launch);
         }
     }
 
-    private void ApplyCardRocketPlayerExplosion(CardRocketMissileImpact impact,
+    private void ApplyCardRocketExplosion(CardRocketMissileImpact impact,
         CardRocketLaunchAuthority launch)
     {
         if (rifleCombat == null || damageRoll == null)
@@ -1597,7 +1597,7 @@ public sealed partial class MatchEngine
         var attacker = Find(launch.OwnerPlayerId) ??
             throw new InvalidDataException("Card Rocket owner disappeared.");
         bool shieldBetween = false;
-        if (map != null && shields != null)
+        if (map != null)
         {
             Func<int, bool>? enabled = barrels == null ? null :
                 index => barrels.ColliderEnabled(index);
@@ -1605,8 +1605,38 @@ public sealed partial class MatchEngine
                 (index, source) => barrels.RuntimeLayer(index, source);
             var overlaps = map.DynamicSphereOverlaps(impact.Position, 1.2f,
                 uint.MaxValue, enabled, layer);
-            shieldBetween = overlaps.Any(collider =>
+            var closest = CardRocketExplosion.ClosestColliders(
+                impact.Position, overlaps);
+            shieldBetween = shields != null && closest.Any(collider =>
                 shields.IsLiveShield(collider.DynamicOwner));
+            foreach (var collider in closest)
+            {
+                CardRocketDynamicHit hit = CardRocketExplosion.ResolveDynamic(
+                    impact.Position, collider, launch.Missile);
+                if (shields != null &&
+                    shields.IsLiveShield(collider.DynamicOwner))
+                {
+                    var shield = shields.ApplyUnitExplosion(
+                        collider.DynamicOwner, attacker.Definition.Fraction,
+                        hit.RawDamage, tick);
+                    if (shield != null)
+                    {
+                        stateRevision++;
+                        EmitShield(shield.Destroyed ? MatchEventKind.ShieldDestroyed :
+                            MatchEventKind.ShieldDamaged, launch.OwnerPlayerId,
+                            shield, impact.ProjectileId);
+                    }
+                }
+                else if (barrels?.Contains(collider.ColliderIndex) == true)
+                {
+                    ApplyBarrelDamage(launch.OwnerPlayerId,
+                        impact.ProjectileId, collider.ColliderIndex,
+                        hit.RawDamage, hit.Kind == CombatDamageType.Explosion ?
+                            BarrelChainCause.Explosion : BarrelChainCause.Shiver);
+                    if (Terminal)
+                        return;
+                }
+            }
         }
         foreach (var victim in players.Where(player => !player.Dead).ToArray())
         {

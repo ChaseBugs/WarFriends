@@ -11844,6 +11844,39 @@ internal static class CombatContentTests
         Check(CardRocketExplosion.ResolvePlayer(new Vector3(4, 0, 0),
                   rocketPose, Vector3.Zero, rocketStats.Rocket!, false) == null,
             "Rocket outside its recovered hurt radius cannot damage a player");
+        var nearDynamic = new MapDynamicCollider(11, "test/shield/near",
+            "test-shield", 10, Vector3.Zero,
+            new Vector3(-.2f), new Vector3(.2f));
+        var farDynamic = nearDynamic with
+        {
+            ColliderIndex = 12,
+            SourcePath = "test/shield/far",
+            TransformPosition = Vector3.UnitX,
+            BoundsMin = new Vector3(.9f, -.1f, -.1f),
+            BoundsMax = new Vector3(1.1f, .1f, .1f)
+        };
+        var distinctDynamic = farDynamic with
+        {
+            ColliderIndex = 13,
+            DynamicOwner = "test-barrel"
+        };
+        var selectedRocketColliders = CardRocketExplosion.ClosestColliders(
+            Vector3.Zero, [farDynamic, nearDynamic, distinctDynamic]);
+        Check(selectedRocketColliders.Count == 2 &&
+              selectedRocketColliders[0].ColliderIndex == 11 &&
+              selectedRocketColliders[1].ColliderIndex == 13,
+            "Rocket blast chooses one closest collider per dynamic owner");
+        var directDynamic = CardRocketExplosion.ResolveDynamic(Vector3.Zero,
+            nearDynamic, rocketStats.Rocket!);
+        Check(directDynamic.Kind == CombatDamageType.Explosion &&
+              directDynamic.RawDamage == rocketStats.Rocket!.ExplosionDamage,
+            "Rocket blast applies full card damage inside the dynamic dead radius");
+        var outerDynamic = CardRocketExplosion.ResolveDynamic(Vector3.Zero,
+            farDynamic, rocketStats.Rocket!);
+        Check(outerDynamic.Kind == CombatDamageType.Shiver &&
+              outerDynamic.RawDamage >= rocketStats.Rocket.DirectDamage &&
+              outerDynamic.RawDamage < rocketStats.Rocket.ExplosionDamage,
+            "Rocket blast attenuates dynamic damage in the outer radius");
         int rocketCollisionChecks = 0;
         var rocketFlight = new CardRocketMissileFlight(81,
             rocketEntity.EntityKey, rocketStats.Rocket!, Vector3.Zero,
