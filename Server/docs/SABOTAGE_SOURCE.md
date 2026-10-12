@@ -17,11 +17,11 @@ destroys each of the eight recovered mechanical army families: Humvee, Buggy,
 Transporter, Tank, Helicopter, Assault Helicopter, Drone, and Mech. Each match
 proves one card consumption, replay without a second spend, and identical
 ordered effect/death events through both participants' host event pages. The
-source no-target spend is also covered. A signed two-peer UDP match now
-proves Humvee deployment, one `SABOTAGE` activation, retry without a second
-spend, and identical ordered card-effect/death events on both sockets. The
-normal `Turret` family, UDP proof for the other seven families, and Unity
-presentation remain unverified.
+source no-target spend is also covered. Eight signed two-peer UDP matches
+now prove deployment and a live `SABOTAGE` kill for each mechanical family,
+one card activation per match, retry without a second spend, and identical
+ordered card-effect/death events on both sockets. The normal `Turret`
+family and Unity presentation remain unverified.
 
 ## Client behavior
 
@@ -67,15 +67,13 @@ real-time/random-stream parity still require verification.
 
 ## Implementation boundary
 
-1. Verify the other seven families through real two-peer UDP damage/cleanup
-   events, and
-   compare kill credit and terminal statistics with the recovered Client.
+1. Compare kill credit and terminal statistics with the recovered Client.
    The currently unavailable normal `Turret` type must enter the same source
    ordering when its separate card route is implemented. Never infer a target
    or damage value from a Client packet.
 2. Compare strict five-second host-tick age and both random draws with a
-   running recovered Client. Unit tests prove the selection policy, while
-   isolated live matches currently prove one target in each family.
+   running recovered Client. Policy tests and signed UDP matches prove one
+   target in each family, but do not establish Unity timing parity.
 3. Verify Unity card consumption and visuals in Play Mode, plus Android
    runtime loading of the
    updated `War.Client.dll` and `War.Shared.dll`.

@@ -13,6 +13,30 @@ internal static class LiveSabotageUdpTests
 {
     internal static async Task<int> Run(string directory)
     {
+        string[] mechanicalUnitIds =
+        [
+            "ID_UNIT-HUMVEE", "ID_UNIT-BUGGY", "ID_UNIT-TRANSPORTER",
+            "ID_UNIT-TANK", "ID_UNIT-HELICOPTER", "ID_UNIT-ASSAULTHELI",
+            "ID_UNIT-DRONE", "ID_UNIT-MECH"
+        ];
+
+        int checks = 0;
+        foreach (string unitId in mechanicalUnitIds)
+        {
+            try
+            {
+                checks += await VerifyOneUnit(directory, unitId);
+            }
+            catch (Exception error)
+            {
+                throw new Exception($"SABOTAGE UDP case failed for {unitId}.", error);
+            }
+        }
+        return checks;
+    }
+
+    private static async Task<int> VerifyOneUnit(string directory, string unitId)
+    {
         int checks = 0;
         void Check(bool condition, string description)
         {
@@ -35,7 +59,7 @@ internal static class LiveSabotageUdpTests
         string defenderId = new('b', 32);
 
         var manifest = new MatchManifest(
-            "sabotage-live-udp", "local-1", "Park_Multiplayer", map.SourceHash,
+            "sabotage-live-udp-" + unitId, "local-1", "Park_Multiplayer", map.SourceHash,
             content.Revision, MatchManifest.RifleCombatMode, 10, 90, 120,
             [
                 new(attackerId, weapon, 1, attackerCover.SourceIndex, 1,
@@ -45,16 +69,22 @@ internal static class LiveSabotageUdpTests
                     ArmyNormalUpgradeIndexes = [0],
                     ArmySpecialUpgradeIndexes = [-1],
                     ArmyEliteUpgradeIndexes = [-1],
-                    ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)]
+                    ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)],
+                    ArmyDamageScales = [1f],
+                    ArmySpeedCoefficients = [1f],
+                    ArmyAccuracyCoefficients = [1f]
                 },
                 new(defenderId, weapon, 2, defenderCover.SourceIndex, 1,
                     new(1000), 0, 0, 0)
                 {
-                    EquippedArmyUnitIds = ["ID_UNIT-HUMVEE"],
+                    EquippedArmyUnitIds = [unitId],
                     ArmyNormalUpgradeIndexes = [0],
                     ArmySpecialUpgradeIndexes = [-1],
                     ArmyEliteUpgradeIndexes = [-1],
-                    ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)]
+                    ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)],
+                    ArmyDamageScales = [1f],
+                    ArmySpeedCoefficients = [1f],
+                    ArmyAccuracyCoefficients = [1f]
                 }
             ])
         {
@@ -148,11 +178,11 @@ internal static class LiveSabotageUdpTests
             while (state.Snapshot.Phase != BattlePhase.Running);
 
             var armyOffer = await defender.PollArmyAsync(timeout.Token);
-            int humveeOption = armyOffer.OptionIndexes.First(index =>
-                ArmyOptionIdentityCatalog.Get(index).UnitId == "ID_UNIT-HUMVEE");
-            Check((await defender.DeployArmyAsync(humveeOption,
+            int unitOption = armyOffer.OptionIndexes.First(index =>
+                ArmyOptionIdentityCatalog.Get(index).UnitId == unitId);
+            Check((await defender.DeployArmyAsync(unitOption,
                   timeout.Token)).Code == "army-deploying",
-                "the defending UDP player deploys its assigned Humvee");
+                $"the defending UDP player deploys its assigned {unitId}");
 
             IReadOnlyList<BattleArmyEntityState> before;
             do
@@ -160,15 +190,14 @@ internal static class LiveSabotageUdpTests
                 await Task.Delay(100, timeout.Token);
                 before = await attacker.FetchArmyEntitiesAsync(timeout.Token);
             }
-            while (!before.Any(entity => entity.UnitId == "ID_UNIT-HUMVEE"));
-            var humvee = before.Single(entity =>
-                entity.UnitId == "ID_UNIT-HUMVEE");
-            var defenderHumvee = (await defender.FetchArmyEntitiesAsync(
-                timeout.Token)).Single(entity => entity.EntityKey == humvee.EntityKey);
-            Check(humvee.OwnerPlayerId == defenderId &&
-                  defenderHumvee.OwnerPlayerId == defenderId &&
-                  defenderHumvee.UnitId == humvee.UnitId,
-                "both UDP players see the same host-owned mechanical target");
+            while (!before.Any(entity => entity.UnitId == unitId));
+            var target = before.First(entity => entity.UnitId == unitId);
+            var defenderTarget = (await defender.FetchArmyEntitiesAsync(
+                timeout.Token)).Single(entity => entity.EntityKey == target.EntityKey);
+            Check(target.OwnerPlayerId == defenderId &&
+                  defenderTarget.OwnerPlayerId == defenderId &&
+                  defenderTarget.UnitId == target.UnitId && target.Health > 0,
+                $"both UDP players see the same live {unitId} target");
 
             string requestId = new string('c', 32);
             MatchReply used = await attacker.UseSabotageAsync(requestId,
@@ -176,8 +205,8 @@ internal static class LiveSabotageUdpTests
             var afterSabotage = await defender.FetchArmyEntitiesAsync(timeout.Token);
             Check(used.Code == "sabotage-applied" &&
                   used.Snapshot.CardActivations == 1 &&
-                  afterSabotage.All(entity => entity.EntityKey != humvee.EntityKey),
-                $"authenticated UDP SABOTAGE spends one card and removes the Humvee: {used.Code}, {used.Snapshot.CardActivations}, {afterSabotage.Count}");
+                  afterSabotage.All(entity => entity.EntityKey != target.EntityKey),
+                $"authenticated UDP SABOTAGE spends one card and removes {unitId}: {used.Code}, {used.Snapshot.CardActivations}, {afterSabotage.Count}");
             MatchReply retry = await attacker.UseSabotageAsync(requestId,
                 timeout.Token);
             Check(retry.Code == "sabotage-applied" &&
@@ -204,14 +233,22 @@ internal static class LiveSabotageUdpTests
 
             var attackerEvents = await Events(attacker);
             var defenderEvents = await Events(defender);
-            Check(attackerEvents.SequenceEqual(defenderEvents) &&
-                  attackerEvents.Any(gameEvent =>
-                      gameEvent.Kind == MatchEventKind.CardEffectApplied &&
-                      gameEvent.ActorId == attackerId) &&
-                  attackerEvents.Any(gameEvent =>
-                      gameEvent.Kind == MatchEventKind.ArmyDied &&
-                      gameEvent.ArmyUnitId == "ID_UNIT-HUMVEE"),
-                "both UDP sockets replay the same card use and Humvee death");
+            static bool IsSabotageEvent(MatchEvent gameEvent, string ownerId,
+                string targetUnitId) =>
+                gameEvent.Kind == MatchEventKind.CardEffectApplied &&
+                gameEvent.ActorId == ownerId ||
+                gameEvent.Kind == MatchEventKind.ArmyDied &&
+                gameEvent.ArmyUnitId == targetUnitId;
+            var attackerCardEvents = attackerEvents.Where(gameEvent =>
+                IsSabotageEvent(gameEvent, attackerId, unitId)).ToArray();
+            var defenderCardEvents = defenderEvents.Where(gameEvent =>
+                IsSabotageEvent(gameEvent, attackerId, unitId)).ToArray();
+            Check(attackerCardEvents.SequenceEqual(defenderCardEvents) &&
+                  attackerCardEvents.Count(gameEvent =>
+                      gameEvent.Kind == MatchEventKind.CardEffectApplied) == 1 &&
+                  attackerCardEvents.Count(gameEvent =>
+                      gameEvent.Kind == MatchEventKind.ArmyDied) == 1,
+                $"both UDP sockets replay the same card use and {unitId} death");
         }
         finally
         {
