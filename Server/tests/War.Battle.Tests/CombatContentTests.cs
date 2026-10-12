@@ -12082,12 +12082,12 @@ internal static class CombatContentTests
         Check(cardMatch.Command(decoyPlayer, new MatchCommand
         {
             CommandId = 3,
-            UseUnitCard = new() { RequestId = hostCardRequest, SourceCardId = "BIGROCKET" }
+            UseUnitCard = new() { RequestId = hostCardRequest, SourceCardId = "GREATGRENADIER" }
         }).Code == "unit-card-unavailable" &&
               cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
-            "Rocket card stays closed before its distinct Client presentation is verified");
+            "Grenadier card stays closed until its host combat is implemented");
         string[] presentedUnitCards =
-            ["ELITEMINIGUN", "ELITESWAT", "ELITESNIPER", "ELITEPARA", "HEAVYDRONE"];
+            ["ELITEMINIGUN", "ELITESWAT", "ELITESNIPER", "ELITEPARA", "HEAVYDRONE", "BIGROCKET"];
         for (int cardIndex = 0; cardIndex < presentedUnitCards.Length; cardIndex++)
         {
             string cardId = presentedUnitCards[cardIndex];

@@ -13,7 +13,7 @@ A dash in the reviewed column means the server catalog has not
 pinned that class/ID pair. Disabled rows may lack a scene component.
 A direct Client route is only a dispatch path, not end-to-end proof.
 The dispatcher currently has 28 card classes and
-5 source-specific unit-card IDs. While connected to
+6 source-specific unit-card IDs. While connected to
 the self-hosted match, unsupported cards are rejected before the
 recovered Photon fallback; they need host commands before admission.
 
@@ -26,7 +26,7 @@ recovered Photon fallback; they need host commands before admission.
 | `HEAVYDRONE` | 3 | `CardSpawnUnit` | yes | yes |
 | `APOCALYPSE` | 3 | `CardMassShieldDestroyer` | yes | yes |
 | `MINEENEMY` | 3 | `CardMineYourStep` | yes | yes |
-| `BIGROCKET` | 3 | `CardSpawnUnit` | yes | no |
+| `BIGROCKET` | 3 | `CardSpawnUnit` | yes | yes |
 | `ELITEMINIGUN` | 3 | `CardSpawnUnit` | yes | yes |
 | `IMMORTAL` | 3 | `CardSwiftImmortality` | yes | yes |
 | `ROCKETTURRET` | 3 | `CardRockyTurret` | no | no |
