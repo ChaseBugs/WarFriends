@@ -69,7 +69,7 @@ public sealed partial class MatchEngine
     /// <summary>
     /// Projects the mechanical army roots already owned by this match into
     /// the Client's GameShootableEntity type order. This is a read-only input
-    /// for the pending Sabotage card; it does not spend a card or deal damage.
+    /// for Sabotage selection; reading it does not spend a card or deal damage.
     /// </summary>
     internal IReadOnlyList<SabotageTargetPolicy.Candidate>
         SabotageMechanicalCandidates()

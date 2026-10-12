@@ -13,8 +13,10 @@ the opposing set and leaves it on death in a live match test. A normal
 authenticated command now selects a target, consumes one selected card,
 applies source-max-health host damage while ignoring immortality, and retains
 the result for a repeated request ID. Tests cover an opposing card Drone and
-the source no-target spend. The normal `Turret` family and two-peer/Unity
-presentation remain unverified.
+the source no-target spend. Host damage tests now cover all eight recovered
+mechanical army families: Humvee, Buggy, Transporter, Tank, Helicopter,
+Assault Helicopter, Drone, and Mech. The normal `Turret` family and
+two-peer/Unity presentation remain unverified.
 
 ## Client behavior
 
@@ -53,14 +55,17 @@ own `maxHealth`, with `isOneHit` and `ignoreImmortality` set, part index zero,
 no weapon, and the activating player's ownership. This is not automatically
 equivalent to deleting an entire vehicle: multi-part damage, shared health,
 statistics, and death callbacks must pass through their existing host
-authorities. Live tests cover Drone removal through the existing card-unit
-death path; all mechanical family outcomes, statistics parity, and source
-real-time/random-stream parity still require broader verification.
+authorities. Live host-state tests now verify each of the eight deployed
+mechanical families uses its ordinary death and cleanup path. Only Drone has
+a complete normal card-command proof; command-driven outcomes for the other
+seven families, statistics parity, and source real-time/random-stream parity
+still require verification.
 
 ## Implementation boundary
 
-1. Verify all eight mechanical army families through live command damage,
-   including shared vehicle health, aircraft, Drone immunity, and kill credit.
+1. Verify the seven remaining mechanical army families through normal card
+   commands and two-peer damage/cleanup events, including shared vehicle
+   health, aircraft, Drone immunity, and kill credit.
    The currently unavailable normal `Turret` type must enter the same source
    ordering when its separate card route is implemented. Never infer a target
    or damage value from a Client packet.

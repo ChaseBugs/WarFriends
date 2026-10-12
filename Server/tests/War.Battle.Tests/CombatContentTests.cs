@@ -14622,6 +14622,16 @@ internal static class CombatContentTests
             "broken Assault Helicopter glass cannot be damaged again by a Land Mine");
         Reject(() => mineGlassMatch.ApplyLandMineAssaultHelicopterGlassExplosion(
             decoyOpponent, glassCollider.Hitbox.Center, float.NaN));
+        var sabotageAssaultHelicopter = mineGlassMatch
+            .SabotageMechanicalCandidates().Single();
+        Check(sabotageAssaultHelicopter.SourceType == "AssaultHelicopter" &&
+              sabotageAssaultHelicopter.EntityId == mineGlassAircraft.EntityKey &&
+              mineGlassMatch.ApplySabotageHostDamage(decoyOpponent,
+                  sabotageAssaultHelicopter) &&
+              mineGlassMatch.SabotageMechanicalCandidates().Count == 0 &&
+              mineGlassMatch.ArmyHealth(mineGlassAircraft.EntityKey) == null &&
+              mineGlassMatch.AssaultGlassHealth(mineGlassAircraft.EntityKey) == null,
+            "host Sabotage removes an Assault Helicopter body and separate broken glass authority");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});
@@ -16627,6 +16637,19 @@ internal static class CombatContentTests
                   .Select((shot,i)=>shot-helicopterFireTicks[i]).All(delta=>delta is >=6 and <=8)&&
               helicopterConsumer.LastEventId==helicopterEventCursor,
               "normal Helicopter batches publish source-speed rounds, fly, collide and replay through SDK events");
+        var sabotageHelicopter = autonomousHelicopterMatch
+            .SabotageMechanicalCandidates().Single(candidate =>
+                candidate.EntityId == autonomousHelicopter.EntityKey);
+        Check(sabotageHelicopter.SourceType == "Helicopter" &&
+              autonomousHelicopterMatch.ApplySabotageHostDamage(
+                  soldierOwner, sabotageHelicopter) &&
+              autonomousHelicopterMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                  .Entities.All(entity =>
+                      entity.EntityKey != autonomousHelicopter.EntityKey) &&
+              autonomousHelicopterMatch.SabotageMechanicalCandidates()
+                  .All(candidate =>
+                      candidate.EntityId != autonomousHelicopter.EntityKey),
+            "host Sabotage max-health hit retires an autonomous deployed Helicopter");
         var fakeHelicopterFlight=new HelicopterFakeProjectileFlight(Vector3.Zero,
             new Vector3(0,0,10),12,100);
         fakeHelicopterFlight.Advance(115);
@@ -17459,6 +17482,64 @@ internal static class CombatContentTests
         Check(humveeId!=0&&rusherId!=0&&humveeRusherMatch.GroundVehicleArmyTarget(humveeId)==rusherId&&
               humveeRusherMatch.GroundVehicleSelectedShotSpeed(humveeId)==14,
               "live Humvee selects the opposing AttackerRusher before player fallback and keeps full projectile speed");
+        var sabotageHumvee = humveeRusherMatch.SabotageMechanicalCandidates()
+            .Single(candidate => candidate.EntityId == humveeId);
+        Check(sabotageHumvee.SourceType == "AICar" &&
+              humveeRusherMatch.ApplySabotageHostDamage(helicopterOwner,
+                  sabotageHumvee) &&
+              humveeRusherMatch.Snapshot().Vehicles.All(vehicle =>
+                  vehicle.EntityId != humveeId) &&
+              humveeRusherMatch.SabotageMechanicalCandidates()
+                  .All(candidate => candidate.EntityId != humveeId),
+            "host Sabotage max-health hit removes a deployed Humvee and its vehicle registry");
+        var sabotageMechManifest = humveeRusherManifest with
+        {
+            MatchId = "sabotage-live-mech",
+            Players =
+            [
+                humveeRusherManifest.Players[0] with
+                {
+                    EquippedArmyUnitIds = ["ID_UNIT-MECH"]
+                },
+                humveeRusherManifest.Players[1]
+            ]
+        };
+        content.ValidateAllocation(sabotageMechManifest);
+        var sabotageMechMatch = new MatchEngine(sabotageMechManifest,
+            content: content, armyChoice: _ => 0);
+        sabotageMechMatch.Admit(soldierOwner);
+        sabotageMechMatch.Admit(helicopterOwner);
+        foreach (string participant in new[] { soldierOwner, helicopterOwner })
+            sabotageMechMatch.Command(participant, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand
+                {
+                    ManifestHash = sabotageMechMatch.ManifestHash
+                }
+            });
+        sabotageMechMatch.Advance(60);
+        int sabotageMechOption = sabotageMechMatch.ArmyBatch(soldierOwner)
+            .OptionIndexes.First();
+        Check(sabotageMechMatch.Command(soldierOwner, new MatchCommand
+              {
+                  CommandId = 2,
+                  DeployArmy = new DeployArmyCommand
+                  {
+                      OptionIndex = sabotageMechOption
+                  }
+              }).Code == "army-deploying",
+            "a source Mech enters the normal host deployment schedule");
+        sabotageMechMatch.Advance(61);
+        var sabotageMech = sabotageMechMatch.SabotageMechanicalCandidates()
+            .Single();
+        Check(sabotageMech.SourceType == "Mech" &&
+              sabotageMechMatch.ApplySabotageHostDamage(helicopterOwner,
+                  sabotageMech) &&
+              sabotageMechMatch.SabotageMechanicalCandidates().Count == 0 &&
+              sabotageMechMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                  .Entities.Count == 0,
+            "host Sabotage max-health hit removes a normally deployed Mech");
         var humveeDecoyManifest=humveeRusherManifest with
         {
             MatchId="humvee-decoy-priority",SceneMasterPlayerId=soldierOwner,
@@ -17571,6 +17652,16 @@ internal static class CombatContentTests
             Check(cannonDecoyMatch.DecoyHealth(cannonDecoyId)<initialCannonDecoyHealth||
                   cannonDecoyMatch.DecoyHealth(cannonDecoyId)==null,
                 cannonUnit+" normal missile flight damages its selected Decoy");
+            var sabotageCannon = cannonDecoyMatch.SabotageMechanicalCandidates()
+                .Single(candidate => candidate.EntityId == cannonEntityId);
+            string expectedMechanicalType = cannonUnit == "ID_UNIT-BUGGY"
+                ? "AICarBuggy" : "Tank";
+            Check(sabotageCannon.SourceType == expectedMechanicalType &&
+                  cannonDecoyMatch.ApplySabotageHostDamage(helicopterOwner,
+                      sabotageCannon) &&
+                  cannonDecoyMatch.Snapshot().Vehicles.All(vehicle =>
+                      vehicle.EntityId != cannonEntityId),
+                cannonUnit + " Sabotage hit removes its live vehicle registry");
         }
         var turretVehicleManifest=humveeDecoyManifest with {MatchId="turret-ground-vehicle-priority"};
         var turretVehicleMatch=new MatchEngine(turretVehicleManifest,content:content,armyChoice:_=>0,combatRandom:()=>0);
@@ -18555,12 +18646,36 @@ internal static class CombatContentTests
         Check(repairBulletHit&&repairShotMatch.Snapshot().Players
                   .Single(x=>x.PlayerId==helicopterOwner).ConfirmedEnemyHits>0,
             "normal player Fire projectile reaches the moving Transporter repair-drone root");
-        var destroyedVehicle=parkedVehicles[0];
+        var sabotageTransporter = repairShotMatch
+            .SabotageMechanicalCandidates().Single();
+        Check(sabotageTransporter.SourceType == "AICarTransporter" &&
+              sabotageTransporter.EntityId == shotTransporter.EntityKey &&
+              repairShotMatch.ApplySabotageHostDamage(helicopterOwner,
+                  sabotageTransporter) &&
+              repairShotMatch.SabotageMechanicalCandidates().Count == 0 &&
+              repairShotMatch.Snapshot().Vehicles.Count == 0,
+            "host Sabotage removes a deployed Transporter and its repair-drone owner");
+        Check(staleMatch.SabotageMechanicalCandidates()
+                  .Select(candidate => candidate.SourceType)
+                  .SequenceEqual(["AICar", "Tank"]),
+            "simultaneous Humvee and Tank roots retain the Client's mechanical type order");
+        var destroyedVehicle=parkedVehicles.Single(row=>
+            row.UnitId=="ID_UNIT-HUMVEE");
         Check(staleMatch.ApplyArmyHostDamage(destroyedVehicle.EntityKey,destroyedVehicle.MaxHealth)&&
               staleMatch.VehicleRouteMotion(destroyedVehicle.EntityKey)==null&&
               staleMatch.Snapshot().Vehicles.All(v=>v.EntityId!=destroyedVehicle.EntityKey)&&
               staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Count==1,
               "confirmed ground-vehicle death removes route, vehicle registry, and army entity authority");
+        var sabotageTank = staleMatch.SabotageMechanicalCandidates().Single();
+        Check(sabotageTank.SourceType == "Tank" &&
+              sabotageTank.EntityId == liveTank.EntityKey &&
+              staleMatch.ApplySabotageHostDamage(helicopterOwner,
+                  sabotageTank) &&
+              staleMatch.SabotageMechanicalCandidates().Count == 0 &&
+              staleMatch.Snapshot().Vehicles.All(vehicle =>
+                  vehicle.EntityId != liveTank.EntityKey) &&
+              staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Count == 0,
+            "host Sabotage max-health hit removes a deployed Tank and its vehicle registry");
         Reject(()=>new MatchEngine(detached with { Players=[detached.Players[0] with
             {EquippedArmyUnitIds=["ID_UNIT-UNKNOWN"]},detached.Players[1]] },content:content));
         Reject(()=>MatchManifest.Validate(detached with { Players=[detached.Players[0] with
