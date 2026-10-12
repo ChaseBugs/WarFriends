@@ -17517,8 +17517,40 @@ internal static class CombatContentTests
               Math.Abs(transporterMatch.Snapshot().Vehicles.Single().Health-
                   vehicleAfterFriendlyMissile)<.01f,
             "Buggy secondary permits half-damage to allied ground vehicle with synchronized health");
+        int soldierFraction = transporterManifest.Players.Single(player =>
+            player.PlayerId == soldierOwner).Fraction;
+        int helicopterFraction = transporterManifest.Players.Single(player =>
+            player.PlayerId == helicopterOwner).Fraction;
+        var smallRocketMissile = rocketStats.Rocket! with
+        {
+            DirectDamage = .2f,
+            ExplosionDamage = 2f
+        };
+        var friendlyVehicleRocket = new CardRocketLaunchAuthority(
+            soldierOwner, smallRocketMissile, cardRocketLaunch.PlayerPolicy);
+        var vehicleRocketImpact = new CardRocketMissileImpact(905, 1,
+            missileBodyCenter, null, 75, false);
+        transporterMatch.ApplyCardRocketGroundVehicleExplosion(
+            vehicleRocketImpact, friendlyVehicleRocket, soldierFraction);
+        Check(transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
+                  vehicleAfterFriendlyMissile,
+            "Rocket card blast skips an allied ground vehicle");
         Reject(()=>transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(helicopterOwner,
             "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},missileBodyCenter));
+        var enemyVehicleRocket = friendlyVehicleRocket with
+        {
+            OwnerPlayerId = helicopterOwner
+        };
+        transporterMatch.ApplyCardRocketGroundVehicleExplosion(
+            vehicleRocketImpact with { ProjectileId = 906 },
+            enemyVehicleRocket, helicopterFraction);
+        float vehicleAfterRocket = transporterMatch
+            .ArmyHealth(transporterEntity.EntityKey)!.Value;
+        Check(Math.Abs(vehicleAfterRocket -
+                  (vehicleAfterFriendlyMissile - 2f)) < .01f &&
+              Math.Abs(transporterMatch.Snapshot().Vehicles.Single().Health -
+                  vehicleAfterRocket) < .01f,
+            "Rocket card blast damages an enemy vehicle once and keeps both health stores equal");
         float lethalMissileDamage=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value+
             transporterMatch.ArmyKevlar(transporterEntity.EntityKey)!.Value+1;
         transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(helicopterOwner,

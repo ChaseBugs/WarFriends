@@ -1425,6 +1425,74 @@ public sealed partial class MatchEngine
         return hits;
     }
 
+    internal void ApplyCardRocketGroundVehicleExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running ||
+            groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Rocket has no vehicle blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket vehicle attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket vehicle attacker fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .OrderBy(value => value.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !groundVehicleFacing.TryGetValue(vehicle.EntityId,
+                    out var facing))
+                throw new InvalidDataException(
+                    "Card Rocket vehicle lost shared host authority.");
+            var owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Rocket vehicle owner disappeared.");
+            // The recovered BazookaEnemy weapon has friendKill = false.
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+
+            var body = groundVehicleWeapons.PlaceBody(vehicle.UnitId,
+                vehicle.EntityId, vehicle.Position, facing,
+                owner.Definition.Fraction);
+            var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                vehicle.Position, body.Select(part => part.Hitbox).ToArray(),
+                launch.Missile);
+            if (hit == null)
+                continue;
+            if (!float.IsFinite(hit.RawDamage) ||
+                hit.RawDamage is <= 0 or > 10_000_000)
+                throw new InvalidDataException(
+                    "Card Rocket vehicle damage exceeded host bounds.");
+            float before = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException(
+                    "Card Rocket vehicle lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId, hit.RawDamage);
+            if (Terminal)
+                return;
+            if (!activeArmyEntities.ContainsKey(vehicle.EntityId))
+                continue;
+            float after = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException(
+                    "Card Rocket vehicle vitality disappeared.");
+            float applied = before - after;
+            if (applied > 0 &&
+                (!vehicles.TryDamage(vehicle.EntityId, applied,
+                    out float registryApplied, out bool destroyed) ||
+                 destroyed || Math.Abs(applied - registryApplied) > .001f))
+                throw new InvalidDataException(
+                    "Card Rocket vehicle registry health diverged.");
+        }
+    }
+
     internal void ApplyGroundVehicleMissileVehicleExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
