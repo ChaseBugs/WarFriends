@@ -12,7 +12,8 @@ resolved through the component's MonoScript GUID and `.cs.meta`.
 A dash in the reviewed column means the server catalog has not
 pinned that class/ID pair. Disabled rows may lack a scene component.
 A direct Client route is only a dispatch path, not end-to-end proof.
-The dispatcher currently has 28 card classes. While connected to
+The dispatcher currently has 28 card classes and
+4 source-specific unit-card IDs. While connected to
 the self-hosted match, unsupported cards are rejected before the
 recovered Photon fallback; they need host commands before admission.
 
@@ -26,16 +27,16 @@ recovered Photon fallback; they need host commands before admission.
 | `APOCALYPSE` | 3 | `CardMassShieldDestroyer` | yes | yes |
 | `MINEENEMY` | 3 | `CardMineYourStep` | yes | yes |
 | `BIGROCKET` | 3 | `CardSpawnUnit` | yes | no |
-| `ELITEMINIGUN` | 3 | `CardSpawnUnit` | yes | no |
+| `ELITEMINIGUN` | 3 | `CardSpawnUnit` | yes | yes |
 | `IMMORTAL` | 3 | `CardSwiftImmortality` | yes | yes |
 | `ROCKETTURRET` | 3 | `CardRockyTurret` | no | no |
 | `DISARMED` | 3 | `CardDisarmedAndLocked` | yes | yes |
-| `ELITESWAT` | 3 | `CardSpawnUnit` | yes | no |
+| `ELITESWAT` | 3 | `CardSpawnUnit` | yes | yes |
 | `BIGMEDKIT` | 3 | `CardHealMeNowBig` | yes | yes |
 | `AIRSTRIKE` | 3 | `CardAirstrike` | yes | no |
 | `SABOTAGE` | 2 | `CardSabotage` | no | no |
 | `HEAVYTURRET` | 2 | `CardHeavyTurret` | yes | yes |
-| `ELITESNIPER` | 3 | `CardSpawnUnit` | yes | no |
+| `ELITESNIPER` | 3 | `CardSpawnUnit` | yes | yes |
 | `CLUSTERGRENADE` | 3 | `CardGrenadesBurst` | yes | no |
 | `HEADAHEAD` | 2 | `CardHeadAhead` | no | no |
 | `KEVLARUP` | 2 | `CardKevlarUp` | yes | yes |
@@ -47,7 +48,7 @@ recovered Photon fallback; they need host commands before admission.
 | `BOOBYTRAP` | 2 | `CardBoobyTrap` | no | no |
 | `ELECTRICTRAPS` | 2 | `CardElectricTraps` | no | no |
 | `SMALLMEDKIT` | 1 | `CardHealMeNowSmall` | yes | yes |
-| `ELITEPARA` | 2 | `CardSpawnUnit` | yes | no |
+| `ELITEPARA` | 2 | `CardSpawnUnit` | yes | yes |
 | `VEHICLEHEALTH` | 1 | `CardHealthForMachines` | yes | yes |
 | `TURRETCRATE` | 1 | `CardIncreaseBonusChance` | no | no |
 | `HEALTHCRATE` | 1 | `CardIncreaseBonusChance` | no | no |

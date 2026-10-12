@@ -239,7 +239,7 @@ public sealed class MatchEndpoint
         batch.HasMore=rows.Any(x=>x.ProjectileId>last);
         return batch;
     }
-    private static bool ValidClientBody(Packet packet)
+    internal static bool ValidClientBody(Packet packet)
     {
         switch(packet.BodyCase)
         {
@@ -357,6 +357,12 @@ public sealed class MatchEndpoint
                         clean.UseVehicleHealth=new UseVehicleHealthCommand {RequestId=command.UseVehicleHealth.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseMineYourStep:
                         clean.UseMineYourStep=new UseMineYourStepCommand {RequestId=command.UseMineYourStep.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseUnitCard:
+                        clean.UseUnitCard=new UseUnitCardCommand
+                        {
+                            RequestId=command.UseUnitCard.RequestId,
+                            SourceCardId=command.UseUnitCard.SourceCardId
+                        };break;
                     case MatchCommand.IntentOneofCase.DeployArmy:
                         clean.DeployArmy=new DeployArmyCommand {OptionIndex=command.DeployArmy.OptionIndex};break;
                     case MatchCommand.IntentOneofCase.VehicleAttack:

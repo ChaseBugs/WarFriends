@@ -528,6 +528,15 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public Task RetryPending() { return Execute(c => c.RetryPendingAsync(lifetime.Token)); }
     public Task Refresh() { return Execute(c => c.PollAsync(lifetime.Token)); }
     public Task DeployArmy(int optionIndex) { return Execute(c => c.DeployArmyAsync(optionIndex, lifetime.Token)); }
+    public async Task<MatchReply> UseUnitCardResult(string sourceCardId)
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        MatchReply reply = await connection.UseUnitCardAsync(
+            Guid.NewGuid().ToString("N"), sourceCardId, lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
     public async Task<MatchReply> UseDecoyResult()
     {
         if (!IsConnected || connection == null)

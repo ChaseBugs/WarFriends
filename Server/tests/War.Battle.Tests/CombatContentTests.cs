@@ -11798,7 +11798,44 @@ internal static class CombatContentTests
             UseUnitCard = new() { RequestId = hostCardRequest, SourceCardId = "HEAVYDRONE" }
         }).Code == "unit-card-unavailable" &&
               cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
-            "UDP card command stays closed before recovered AI and Client presentation");
+            "Drone card stays closed before its distinct Client presentation is verified");
+        string[] presentedSoldierCards =
+            ["ELITEMINIGUN", "ELITESWAT", "ELITESNIPER", "ELITEPARA"];
+        for (int cardIndex = 0; cardIndex < presentedSoldierCards.Length; cardIndex++)
+        {
+            string cardId = presentedSoldierCards[cardIndex];
+            var playableCardMatch = ReadyCardMatch(
+                "playable-unit-card-" + cardId.ToLowerInvariant(), cardId);
+            string requestId = new string((char)('a' + cardIndex), 32);
+            var activation = new MatchCommand
+            {
+                CommandId = 3,
+                UseUnitCard = new UseUnitCardCommand
+                {
+                    RequestId = requestId,
+                    SourceCardId = cardId
+                }
+            };
+            Check(MatchEndpoint.ValidClientBody(new Packet
+                  {
+                      MatchCommand = activation
+                  }),
+                "UDP ingress accepts the canonical unit-card source and request fields");
+            var activationReply = playableCardMatch.Command(decoyPlayer, activation);
+            var spawned = playableCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0);
+            Check(activationReply.Code == "unit-card-activated" &&
+                  activationReply.Snapshot.CardActivations == 1 &&
+                  spawned.Entities.Count >= 1 &&
+                  spawned.Entities.All(row => row.SourceCardId == cardId &&
+                      row.OptionIndex == -1 && row.OwnerPlayerId == decoyPlayer),
+                "authenticated unit card creates only its Backend-selected source soldiers");
+            Check(playableCardMatch.Command(decoyPlayer, activation).Code ==
+                  "unit-card-activated" &&
+                  playableCardMatch.Snapshot().CardActivations == 1 &&
+                  playableCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                      .ActiveCount == spawned.ActiveCount,
+                "unit-card command replay cannot spend or spawn twice");
+        }
         Check(cardMatch.TryScheduleCardUnit(hostCardRequest, decoyPlayer,
                   "HEAVYDRONE") &&
               !cardMatch.TryScheduleCardUnit(hostCardRequest, decoyPlayer,

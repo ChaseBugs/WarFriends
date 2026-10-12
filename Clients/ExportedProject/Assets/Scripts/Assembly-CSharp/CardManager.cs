@@ -530,7 +530,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				card is CardSwiftImmortality || card is CardBelovedEnemy ||
 				card is CardDisarmedAndLocked || card is CardShiedlsRefection ||
 				card is CardKevlarUp || card is CardShieldsSpawner ||
-				card is CardBackstab || card is CardRandomKevlar))
+				card is CardBackstab || card is CardRandomKevlar ||
+				IsSupportedSelfHostedUnitCard(card)))
 			{
 				UseSelfHostedCard(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
@@ -565,12 +566,21 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			card is CardHealMeNowSmall || card is CardHealMeNowBig;
 	}
 
+	private static bool IsSupportedSelfHostedUnitCard(Card card)
+	{
+		if (!(card is CardSpawnUnit)) return false;
+		return card.id == "ELITEMINIGUN" || card.id == "ELITESWAT" ||
+			card.id == "ELITESNIPER" || card.id == "ELITEPARA";
+	}
+
 	private async void UseSelfHostedCard(SelfHostedBattleClient client, Card card, Fractions fraction)
 	{
 		try
 		{
 			MatchReply reply;
-			if (IsSelfHostedMedkit(card)) reply = await client.UseMedkitResult(card.id);
+			if (IsSupportedSelfHostedUnitCard(card))
+				reply = await client.UseUnitCardResult(card.id);
+			else if (IsSelfHostedMedkit(card)) reply = await client.UseMedkitResult(card.id);
 			else if (card is CardHealthierMyself) reply = await client.UseMaxHealthResult();
 			else if (card is CardEmptyMag) reply = await client.UseEmptyMagResult();
 			else if (card is CardBulletSponge) reply = await client.UseBulletSpongeResult();
@@ -618,6 +628,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 
 	private static bool IsAcceptedSelfHostedCardReply(Card card, string code)
 	{
+		if (IsSupportedSelfHostedUnitCard(card)) return code == "unit-card-activated";
 		if (card is CardHealMeNowBig) return code == "big-medkit-active";
 		if (IsSelfHostedMedkit(card)) return code == "medkit-healed";
 		if (card is CardHealthierMyself) return code == "max-health-increased";

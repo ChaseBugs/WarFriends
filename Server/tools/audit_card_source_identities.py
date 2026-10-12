@@ -26,9 +26,31 @@ supported = set(re.findall(r'\["(Card\w+)"\]\s*=\s*new\(', EFFECTS.read_text(enc
 assert classes == supported, ("Worker card classes differ", classes ^ supported)
 
 guid_to_class = {}
+
+
+def derives_from_card(card_class):
+    """Follow recovered Card inheritance instead of requiring a direct base."""
+    current = card_class
+    visited = set()
+    while current != "Card":
+        if current in visited or not re.fullmatch(r"Card\w+", current):
+            return False
+        visited.add(current)
+        path = SCRIPTS / f"{current}.cs"
+        if not path.is_file():
+            return False
+        source_text = path.read_text(encoding="utf-8")
+        declaration = re.search(rf"class {current}\s*:\s*(Card\w*|Card)\b",
+                                source_text)
+        if declaration is None:
+            return False
+        current = declaration.group(1)
+    return True
+
+
 for card_class in classes:
     script = (SCRIPTS / f"{card_class}.cs").read_text(encoding="utf-8")
-    assert re.search(rf"class {card_class}\s*:\s*Card\b", script), card_class
+    assert derives_from_card(card_class), card_class
     assert "override CardManager.CardType rarity" not in script, card_class
     meta = (SCRIPTS / f"{card_class}.cs.meta").read_text(encoding="utf-8")
     guid_to_class[re.search(r"^guid: ([0-9a-f]{32})$", meta, re.M).group(1)] = card_class

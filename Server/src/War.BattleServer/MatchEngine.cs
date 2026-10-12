@@ -2086,10 +2086,23 @@ public sealed partial class MatchEngine : IMatchRuntime
                 unitCard.RequestId != unitCard.RequestId.ToLowerInvariant() ||
                 !War.Shared.CardUnitSourceIdentity.IsKnown(unitCard.SourceCardId))
                 return "invalid-unit-card";
-
-            // Do not consume a card before host entity creation, death
-            // accounting, and Client presentation are connected.
-            return "unit-card-unavailable";
+            // These four source soldiers have host combat poses and a
+            // script-free Client presenter. Drone, rocket, and grenadier
+            // cards remain closed until their distinct behavior is rendered.
+            if (unitCard.SourceCardId is not ("ELITEMINIGUN" or "ELITESWAT" or
+                "ELITESNIPER" or "ELITEPARA"))
+                return "unit-card-unavailable";
+            try
+            {
+                return TryScheduleCardUnit(unitCard.RequestId,
+                    p.Definition.PlayerId, unitCard.SourceCardId)
+                    ? "unit-card-activated" : "unit-card-unavailable";
+            }
+            catch (InvalidDataException)
+            {
+                End("invalid-card-unit-authority", "", false);
+                return "match-aborted";
+            }
         }
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseDecoy)
             return UseDecoy(p,c.UseDecoy.RequestId);

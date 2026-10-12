@@ -321,13 +321,25 @@ def direct_client_routes():
     medkit_helper = medkit_helper.split("private async void UseSelfHostedCard", 1)[0]
     names.update(re.findall(r"card is (Card[A-Za-z]+)", medkit_helper))
     names.update(re.findall(r"typeof\((Card[A-Za-z]+)\)", medkit_helper))
+    names.discard("CardSpawnUnit")
+    unit_card_helper = source.split(
+        "private static bool IsSupportedSelfHostedUnitCard", 1)[1]
+    unit_card_helper = unit_card_helper.split(
+        "private async void UseSelfHostedCard", 1)[0]
+    unit_card_ids = set(re.findall(r'card\.id == "([A-Z0-9_]+)"',
+                               unit_card_helper))
+    if (unit_card_ids != {"ELITEMINIGUN", "ELITESWAT",
+                          "ELITESNIPER", "ELITEPARA"} or
+        "IsSupportedSelfHostedUnitCard(card)" not in use_card or
+        "UseUnitCardResult(card.id)" not in body):
+        raise ValueError("Normal Client unit-card route changed")
     if (len(names) != 28 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
             use_card.index('mPhotonView.RPC("PlayCardRPC"')):
         raise ValueError("Normal Client self-hosted card route count changed")
-    return names
+    return names, unit_card_ids
 
 
 def render():
@@ -349,7 +361,7 @@ def render():
     check_random_kevlar_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
-    routes = direct_client_routes()
+    routes, unit_card_ids = direct_client_routes()
     unknown = sorted(set(classes) - {row[0] for row in rows})
     if unknown:
         raise ValueError(f"Reviewed card identity absent from MainScene: {unknown}")
@@ -377,7 +389,8 @@ def render():
         "A dash in the reviewed column means the server catalog has not",
         "pinned that class/ID pair. Disabled rows may lack a scene component.",
         "A direct Client route is only a dispatch path, not end-to-end proof.",
-        f"The dispatcher currently has {len(routes)} card classes. While connected to",
+        f"The dispatcher currently has {len(routes)} card classes and",
+        f"{len(unit_card_ids)} source-specific unit-card IDs. While connected to",
         "the self-hosted match, unsupported cards are rejected before the",
         "recovered Photon fallback; they need host commands before admission.",
         "",
@@ -392,7 +405,7 @@ def render():
             raise ValueError(f"Source-enabled card lacks a scene component: {source_id}")
         lines.append(f"| `{source_id}` | {rarity} | `{scene_class}` | "
                      f"{'yes' if source_id in classes else 'no'} | "
-                     f"{'yes' if scene_class in routes else 'no'} |")
+                     f"{'yes' if scene_class in routes or source_id in unit_card_ids else 'no'} |")
     lines += ["", "## Source-disabled rows", "",
               "| Source ID | Rarity | Scene class | Reviewed |",
               "|---|---:|---|---|"]
