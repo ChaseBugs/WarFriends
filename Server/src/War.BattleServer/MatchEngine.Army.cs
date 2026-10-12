@@ -1268,6 +1268,73 @@ public sealed partial class MatchEngine
         return hits;
     }
 
+    internal void ApplyCardRocketRepairDroneExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running || groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Rocket has no repair-drone blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket repair-drone attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket repair-drone attacker fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .Where(value => value.UnitId == "ID_UNIT-TRANSPORTER")
+                     .OrderBy(value => value.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !transporterRepairDrones.TryGetValue(vehicle.EntityId,
+                    out var drones))
+                throw new InvalidDataException(
+                    "Card Rocket repair drone lost shared host authority.");
+            var owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Rocket repair-drone owner disappeared.");
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+            int layer = owner.Definition.Fraction switch
+            {
+                1 => 23,
+                2 => 22,
+                _ => throw new InvalidDataException(
+                    "Card Rocket repair drone has unsupported faction.")
+            };
+
+            foreach (var drone in drones.OrderBy(value => value.PathIndex))
+            {
+                if (!drone.Active)
+                    continue;
+                var snapshot = drone.Snapshot();
+                var collider = groundVehicleWeapons.PlaceRepairDrone(
+                    vehicle.EntityId, drone.PathIndex, layer, snapshot);
+                var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                    snapshot.Position, [collider.Hitbox], launch.Missile);
+                if (hit == null)
+                    continue;
+                if (!float.IsFinite(hit.RawDamage) ||
+                    hit.RawDamage is <= 0 or > 10_000_000 ||
+                    !ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,
+                        drone.PathIndex, hit.RawDamage))
+                    throw new InvalidDataException(
+                        "Card Rocket repair-drone damage escaped host bounds.");
+                if (!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,
+                        vehicle.OwnerPlayerId, "", vehicle.EntityId,
+                        drone.Position, 0,
+                        "vehicle-repair-drone-down:" + drone.PathIndex);
+            }
+        }
+    }
+
     internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {

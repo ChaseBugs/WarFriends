@@ -17163,6 +17163,39 @@ internal static class CombatContentTests
               Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
                   missileVehicleHealth)<.01f,
             "Tank cannon friendKill=false prevents damage to a friendly repair drone");
+        var repairRocketMissile = rocketStats.Rocket! with
+        {
+            DirectDamage = .2f,
+            ExplosionDamage = 2f
+        };
+        var repairRocketLaunch = new CardRocketLaunchAuthority(
+            soldierOwner, repairRocketMissile,
+            content.Army.PlayerDamagePolicy("ID_UNIT-ROCKETSOLDIER"));
+        int repairFriendlyFraction = transporterManifest.Players.Single(
+            player => player.PlayerId == soldierOwner).Fraction;
+        int repairEnemyFraction = transporterManifest.Players.Single(
+            player => player.PlayerId == helicopterOwner).Fraction;
+        var repairRocketImpact = new CardRocketMissileImpact(909, 1,
+            missileDroneCenter, null, transporterTick, false);
+        transporterMatch.ApplyCardRocketRepairDroneExplosion(
+            repairRocketImpact, repairRocketLaunch,
+            repairFriendlyFraction);
+        Check(transporterMatch.TransporterRepairDrones(
+                  transporterEntity.EntityKey)[1].Health ==
+                  friendlyMissileHealth,
+            "Rocket card blast skips a friendly Transporter repair drone");
+        transporterMatch.ApplyCardRocketRepairDroneExplosion(
+            repairRocketImpact with { ProjectileId = 910 },
+            repairRocketLaunch with { OwnerPlayerId = helicopterOwner },
+            repairEnemyFraction);
+        float repairDroneAfterRocket = transporterMatch
+            .TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
+        Check(Math.Abs(repairDroneAfterRocket -
+                  (friendlyMissileHealth - 2f)) < .01f &&
+              transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
+                  missileVehicleHealth,
+            "Rocket card blast damages an enemy repair drone without touching vehicle health");
+        friendlyMissileHealth = repairDroneAfterRocket;
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
             "ID_UNIT-BUGGY",21,buggyMissileBinding,missileDroneCenter);
         Check(Math.Abs(transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health-

@@ -1650,6 +1650,10 @@ public sealed partial class MatchEngine
             attacker.Definition.Fraction);
         if (Terminal)
             return;
+        ApplyCardRocketRepairDroneExplosion(impact, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
         ApplyCardRocketPassengerExplosion(impact, launch,
             attacker.Definition.Fraction);
         if (Terminal)
