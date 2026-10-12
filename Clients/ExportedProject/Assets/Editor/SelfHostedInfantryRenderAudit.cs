@@ -212,6 +212,28 @@ public static class SelfHostedInfantryRenderAudit
             parachuteRow.ParachuteLandingY = 0;
             parachuteRow.ParachuteLandingZ = 0;
             parachuteRow.ParachuteRotation = null;
+            var deathRow = parachuteRow.Clone();
+            deathRow.EntityKey = 104;
+            deathRow.X = 5;
+            deathRow.PositionTick = 62;
+            deathRow.ParachuteLandingTick = 62;
+            deathRow.ParachuteLandingX = 5;
+            deathRow.ParachuteLandingY = 2;
+            deathRow.ParachuteLandingZ = 3;
+            deathRow.ParachuteRotation = new BattleJointRotation { W = 1 };
+            presenter.Apply(new List<BattleArmyEntityState>
+                { cardRow, swatCardRow, sniperCardRow, parachuteRow, deathRow });
+            var deathCanopy = GameObject.Find("ParachuteCanopy");
+            presenter.Apply(new List<BattleArmyEntityState>
+                { cardRow, swatCardRow, sniperCardRow, parachuteRow });
+            Require(GameObject.Find("SelfHostedInfantry_104") == null &&
+                deathCanopy != null &&
+                Vector3.Distance(deathCanopy.transform.position,
+                    new Vector3(5, 2, 3)) < .001f,
+                "landed canopy outlives its card soldier at the impact point");
+            presenter.RenderAt(Time.realtimeSinceStartup + 3.1f, .016f);
+            Require(deathCanopy == null,
+                "orphaned canopy expires on its original host deadline");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
@@ -223,6 +245,7 @@ public static class SelfHostedInfantryRenderAudit
                 "removed Paratrooper card visual");
             Debug.Log("UNITY_INFANTRY_RENDER_PASSED families=" + Families.Length +
                 " cardMinigunner=True cardSwat=True cardSniper=True cardParatrooper=True" +
+                " postDeathCanopy=True" +
                 " skin=True scriptFree=True hostMotion=True removal=True");
             EditorApplication.Exit(0);
         }

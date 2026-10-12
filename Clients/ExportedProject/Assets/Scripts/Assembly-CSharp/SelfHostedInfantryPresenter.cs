@@ -23,7 +23,15 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public Material CanopyLandingMaterial;
     }
 
+    private sealed class RetiredCanopy
+    {
+        public GameObject Root;
+        public Material LandingMaterial;
+        public float ExpiresAt;
+    }
+
     private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
+    private readonly List<RetiredCanopy> retiredCanopies = new List<RetiredCanopy>();
     private readonly Dictionary<string, SoldierBehaviour> behaviours =
         new Dictionary<string, SoldierBehaviour>(StringComparer.Ordinal);
     private EnemyController source;
@@ -84,7 +92,22 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             if (!present.Contains(pair.Key)) removed.Add(pair.Key);
         foreach (var entityKey in removed)
         {
-            DestroyVisual(active[entityKey]);
+            var visual = active[entityKey];
+            if (visual.Canopy != null && !visual.CanopyAttached &&
+                Time.realtimeSinceStartup < visual.CanopyExpiryAt)
+            {
+                // The original Parachute object outlives its soldier after
+                // landing. Its host impact pose and deadline remain valid.
+                retiredCanopies.Add(new RetiredCanopy
+                {
+                    Root = visual.Canopy,
+                    LandingMaterial = visual.CanopyLandingMaterial,
+                    ExpiresAt = visual.CanopyExpiryAt
+                });
+                visual.Canopy = null;
+                visual.CanopyLandingMaterial = null;
+            }
+            DestroyVisual(visual);
             active.Remove(entityKey);
         }
     }
@@ -299,6 +322,12 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             float elapsed = Mathf.Max(0f, realtime - visual.ReceivedAt);
             Sample(visual, visual.SecondsAtReceive + elapsed);
         }
+        for (int index = retiredCanopies.Count - 1; index >= 0; index--)
+        {
+            if (realtime < retiredCanopies[index].ExpiresAt) continue;
+            DestroyRetiredCanopy(retiredCanopies[index]);
+            retiredCanopies.RemoveAt(index);
+        }
     }
 
     private static void Sample(Visual visual, float seconds)
@@ -341,17 +370,20 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     {
         foreach (var visual in active.Values) DestroyVisual(visual);
         active.Clear();
+        foreach (var canopy in retiredCanopies) DestroyRetiredCanopy(canopy);
+        retiredCanopies.Clear();
+    }
+
+    private static void DestroyRetiredCanopy(RetiredCanopy canopy)
+    {
+        DestroyVisual(canopy.Root);
+        DestroyMaterial(canopy.LandingMaterial);
     }
 
     private static void DestroyCanopy(Visual visual)
     {
         if (visual.Canopy != null) DestroyVisual(visual.Canopy);
-        if (visual.CanopyLandingMaterial != null)
-        {
-            if (Application.isPlaying)
-                UnityEngine.Object.Destroy(visual.CanopyLandingMaterial);
-            else UnityEngine.Object.DestroyImmediate(visual.CanopyLandingMaterial);
-        }
+        DestroyMaterial(visual.CanopyLandingMaterial);
         visual.Canopy = null;
         visual.CanopyAttached = false;
         visual.CanopyLandingMaterial = null;
@@ -361,6 +393,13 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     {
         DestroyCanopy(visual);
         DestroyVisual(visual.Root);
+    }
+
+    private static void DestroyMaterial(Material material)
+    {
+        if (material == null) return;
+        if (Application.isPlaying) UnityEngine.Object.Destroy(material);
+        else UnityEngine.Object.DestroyImmediate(material);
     }
 
     private static void DestroyVisual(GameObject root)
