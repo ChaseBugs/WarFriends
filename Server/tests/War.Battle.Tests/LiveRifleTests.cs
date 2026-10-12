@@ -534,7 +534,9 @@ internal static class LiveRifleTests
             MaxHealth=float.MaxValue,Health=float.MaxValue,
             InfantryClip="flamethrower_shot_loop",InfantryClipStartTick=ulong.MaxValue,
             InfantryFacingX=float.MaxValue,InfantryFacingY=float.MaxValue,
-            InfantryFacingZ=float.MaxValue});
+            InfantryFacingZ=float.MaxValue,ParachuteActive=true,
+            ParachuteRotation=new BattleJointRotation
+            {X=float.MaxValue,Y=float.MaxValue,Z=float.MaxValue,W=float.MaxValue}});
         Check(War.Protocol.Transport.PacketCodec.Encode(new Packet {Version=1,SessionId=ulong.MaxValue,
             Sequence=ulong.MaxValue,Ack=ulong.MaxValue,AckBits=uint.MaxValue,
             MatchArmyEntityBatch=maximumArmy},new byte[32]).Length<=1200,

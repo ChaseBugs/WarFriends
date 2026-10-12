@@ -69,6 +69,30 @@ internal static class ArmyEntityPageTests
         RejectSecond(Page(7, 5, 101, false),
             "A short final army page was published as complete.");
 
+        var falling = new BattleArmyEntityState
+        {
+            UnitId = "ID_UNIT-PARATROOPER",
+            SourceCardId = "ELITEPARA",
+            ParachuteActive = true,
+            ParachuteRotation = new BattleJointRotation { W = 1 }
+        };
+        Check(MatchConnection.ValidParachute(falling),
+            "the card Paratrooper can carry a normalized flight rotation");
+        falling.ParachuteRotation.W = 2;
+        Check(!MatchConnection.ValidParachute(falling),
+            "the SDK rejects a damaged parachute rotation");
+        falling.ParachuteRotation.W = 1;
+        falling.SourceCardId = "";
+        Check(!MatchConnection.ValidParachute(falling),
+            "an ordinary unit cannot claim the card parachute visual");
+        falling.SourceCardId = "ELITEPARA";
+        falling.ParachuteActive = false;
+        Check(!MatchConnection.ValidParachute(falling),
+            "a landed unit cannot retain an active flight rotation");
+        falling.ParachuteRotation = null;
+        Check(MatchConnection.ValidParachute(falling),
+            "the landed card unit clears its separate flight visual");
+
         return checks;
     }
 }

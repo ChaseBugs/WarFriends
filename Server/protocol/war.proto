@@ -363,6 +363,10 @@ message BattleArmyEntityState {
   float infantry_facing_x = 36;
   float infantry_facing_y = 37;
   float infantry_facing_z = 38;
+  // The separate source parachute is visible only while its host flight is live.
+  // Its Rigidbody rotation is independent of the soldier's planar facing.
+  bool parachute_active = 39;
+  BattleJointRotation parachute_rotation = 40;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

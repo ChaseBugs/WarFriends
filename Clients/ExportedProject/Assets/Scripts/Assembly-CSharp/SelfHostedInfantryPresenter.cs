@@ -16,15 +16,18 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public ulong ClipStartTick;
         public float SecondsAtReceive;
         public float ReceivedAt;
+        public GameObject Canopy;
+        public Quaternion CanopyRotation;
     }
 
     private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
     private readonly Dictionary<string, SoldierBehaviour> behaviours =
         new Dictionary<string, SoldierBehaviour>(StringComparer.Ordinal);
     private EnemyController source;
+    private Parachute parachuteSource;
     private SelfHostedBattleClient client;
 
-    public void Configure(EnemyController enemyPrefab,
+    public void Configure(EnemyController enemyPrefab, Parachute parachutePrefab,
         LevelBehaviourManager behaviourManager, SelfHostedBattleClient battleClient)
     {
         if (enemyPrefab == null || enemyPrefab.meshChanger == null ||
@@ -33,6 +36,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             throw new InvalidOperationException("Recovered infantry visual sources are absent.");
 
         source = enemyPrefab;
+        parachuteSource = parachutePrefab;
         client = battleClient;
         foreach (var entry in behaviourManager.levelBehaviours)
         {
@@ -55,7 +59,8 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             if (row.SourceCardId.Length != 0 &&
                 row.SourceCardId != "ELITEMINIGUN" &&
                 row.SourceCardId != "ELITESWAT" &&
-                row.SourceCardId != "ELITESNIPER") continue;
+                row.SourceCardId != "ELITESNIPER" &&
+                row.SourceCardId != "ELITEPARA") continue;
             if (!behaviours.ContainsKey(row.UnitId))
                 throw new InvalidOperationException("The host sent an unknown infantry visual family.");
             Validate(row);
@@ -92,8 +97,20 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             !Finite(row.MaxHealth) || row.MaxHealth <= 0 ||
             !Finite(row.Health) || row.Health <= 0 || row.Health > row.MaxHealth ||
             !Finite(row.MaxKevlar) || row.MaxKevlar < 0 ||
-            !Finite(row.Kevlar) || row.Kevlar < 0 || row.Kevlar > row.MaxKevlar)
+            !Finite(row.Kevlar) || row.Kevlar < 0 || row.Kevlar > row.MaxKevlar ||
+            (row.ParachuteActive
+                ? row.SourceCardId != "ELITEPARA" || !ValidRotation(row.ParachuteRotation)
+                : row.ParachuteRotation != null))
             throw new InvalidOperationException("Invalid authoritative infantry visual state.");
+    }
+
+    private static bool ValidRotation(BattleJointRotation rotation)
+    {
+        if (rotation == null || !Finite(rotation.X) || !Finite(rotation.Y) ||
+            !Finite(rotation.Z) || !Finite(rotation.W)) return false;
+        float lengthSquared = rotation.X * rotation.X + rotation.Y * rotation.Y +
+            rotation.Z * rotation.Z + rotation.W * rotation.W;
+        return Mathf.Abs(lengthSquared - 1f) <= .001f;
     }
 
     private Visual Create(BattleArmyEntityState row)
@@ -180,7 +197,35 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         visual.SecondsAtReceive = serverTick >= visual.ClipStartTick ?
             (float)((serverTick - visual.ClipStartTick) / 30.0) : 0f;
         visual.ReceivedAt = Time.realtimeSinceStartup;
+        UpdateCanopy(visual, row);
         Sample(visual, visual.SecondsAtReceive);
+    }
+
+    private void UpdateCanopy(Visual visual, BattleArmyEntityState row)
+    {
+        if (!row.ParachuteActive)
+        {
+            if (visual.Canopy != null) DestroyVisual(visual.Canopy);
+            visual.Canopy = null;
+            return;
+        }
+        if (parachuteSource == null || parachuteSource.parashuteRenderer == null ||
+            parachuteSource.parashuteRenderer.GetComponent<MeshFilter>() == null)
+            throw new InvalidOperationException("Recovered parachute canopy mesh is absent.");
+        if (visual.Canopy == null)
+        {
+            visual.Canopy = new GameObject("ParachuteCanopy");
+            visual.Canopy.transform.SetParent(visual.Root.transform, false);
+            var sourceMap = new Dictionary<Transform, Transform>();
+            CopyVisualHierarchy(parachuteSource.transform,
+                visual.Canopy.transform, true, sourceMap);
+            if (visual.Canopy.GetComponentInChildren<MeshRenderer>(true) == null)
+                throw new InvalidOperationException("Recovered parachute visual has no renderer.");
+        }
+        visual.CanopyRotation = new Quaternion(row.ParachuteRotation.X,
+            row.ParachuteRotation.Y, row.ParachuteRotation.Z,
+            row.ParachuteRotation.W);
+        visual.Canopy.transform.rotation = visual.CanopyRotation;
     }
 
     private void Update()
@@ -193,6 +238,8 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         foreach (var visual in active.Values)
         {
             visual.Motion.Render(visual.Root.transform, realtime, frameSeconds);
+            if (visual.Canopy != null)
+                visual.Canopy.transform.rotation = visual.CanopyRotation;
             float elapsed = Mathf.Max(0f, realtime - visual.ReceivedAt);
             Sample(visual, visual.SecondsAtReceive + elapsed);
         }

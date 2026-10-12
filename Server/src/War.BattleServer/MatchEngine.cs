@@ -3083,6 +3083,19 @@ public sealed partial class MatchEngine : IMatchRuntime
                 entity.InfantryFacingY=animation.Facing.Y;
                 entity.InfantryFacingZ=animation.Facing.Z;
             }
+            if(parachuteFlights.TryGetValue(row.Key,out var flight))
+            {
+                if(entity.SourceCardId!="ELITEPARA")
+                    throw new InvalidDataException("Parachute flight lost its card identity.");
+                Quaternion rotation=flight.Rotation;
+                if(!float.IsFinite(rotation.X)||!float.IsFinite(rotation.Y)||
+                   !float.IsFinite(rotation.Z)||!float.IsFinite(rotation.W)||
+                   MathF.Abs(rotation.LengthSquared()-1f)>.001f)
+                    throw new InvalidDataException("Parachute flight has invalid rotation.");
+                entity.ParachuteActive=true;
+                entity.ParachuteRotation=new BattleJointRotation
+                {X=rotation.X,Y=rotation.Y,Z=rotation.Z,W=rotation.W};
+            }
             if(entity.UnitId=="ID_UNIT-HELICOPTER")
             {
                 var root=new Vector3(entity.X,entity.Y,entity.Z);

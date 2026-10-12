@@ -338,6 +338,7 @@ namespace War.Client
                            : entity.OptionIndex != -1 ||
                              !CardUnitSourceIdentity.Matches(entity.SourceCardId, entity.UnitId)) ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
+                       !ValidParachute(entity) ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
                            entity.HelicopterRotation!=null) ||
@@ -382,6 +383,14 @@ namespace War.Client
         }
 
         private static bool FiniteCoordinate(float x)=>!float.IsNaN(x) && !float.IsInfinity(x) && Math.Abs(x)<=10000;
+        internal static bool ValidParachute(BattleArmyEntityState entity)
+        {
+            if(!entity.ParachuteActive)
+                return entity.ParachuteRotation==null;
+            return entity.SourceCardId=="ELITEPARA" &&
+                   entity.UnitId=="ID_UNIT-PARATROOPER" &&
+                   ValidUnitRotation(entity.ParachuteRotation);
+        }
         internal static bool ValidHelicopterCrew(BattleArmyEntityState entity)
         {
             if(entity.HelicopterCrewCount>6)return false;

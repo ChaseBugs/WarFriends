@@ -45,7 +45,7 @@ public static class SelfHostedInfantryRenderAudit
             owner = new GameObject("SelfHostedInfantryRenderAudit");
             var client = owner.AddComponent<SelfHostedBattleClient>();
             var presenter = owner.AddComponent<SelfHostedInfantryPresenter>();
-            presenter.Configure(pool.enemy, manager, client);
+            presenter.Configure(pool.enemy, pool.parachute, manager, client);
 
             for (int index = 0; index < Families.Length; index++)
             {
@@ -150,6 +150,52 @@ public static class SelfHostedInfantryRenderAudit
                 sniperCardVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
                     .sharedMesh == sniperCardStyle.modelMeshRenderer.sharedMesh,
                 "card Sniper uses its recovered elite mesh and cover clip");
+            var parachuteRow = new BattleArmyEntityState
+            {
+                EntityKey = 103,
+                UnitId = "ID_UNIT-PARATROOPER",
+                SourceCardId = "ELITEPARA",
+                X = 4, Y = 12, SpawnTick = 60, PositionTick = 60,
+                MaxHealth = 100, Health = 100,
+                InfantryClip = "idle_1",
+                InfantryClipStartTick = 60,
+                InfantryFacingZ = 1,
+                ParachuteActive = true,
+                ParachuteRotation = new BattleJointRotation
+                    { Y = .7071068f, W = .7071068f }
+            };
+            presenter.Apply(new List<BattleArmyEntityState>
+                { cardRow, swatCardRow, sniperCardRow, parachuteRow });
+            var parachuteVisual = GameObject.Find("SelfHostedInfantry_103");
+            var canopy = parachuteVisual == null ? null :
+                parachuteVisual.transform.Find("ParachuteCanopy");
+            var sourceCanopy = pool.parachute.parashuteRenderer;
+            var paratrooperStyle = manager.levelBehaviours.Select(entry =>
+                    entry.behaviour as SoldierBehaviour)
+                .First(soldier => soldier != null &&
+                    soldier.unitDictionaryId == "ID_UNIT-PARATROOPER")
+                .cardSoldierVisuals.Single();
+            paratrooperStyle.LoadModel();
+            Require(canopy != null &&
+                canopy.GetComponentInChildren<MeshFilter>(true).sharedMesh ==
+                    sourceCanopy.GetComponent<MeshFilter>().sharedMesh &&
+                parachuteVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
+                    .sharedMesh == paratrooperStyle.modelMeshRenderer.sharedMesh &&
+                Mathf.Abs(canopy.rotation.y - .7071068f) < .0001f &&
+                canopy.GetComponentsInChildren<MonoBehaviour>(true).Length == 0 &&
+                canopy.GetComponentsInChildren<Collider>(true).Length == 0 &&
+                canopy.GetComponentsInChildren<Rigidbody>(true).Length == 0,
+                "airborne card Paratrooper uses the source canopy without gameplay components");
+            parachuteRow.ParachuteActive = false;
+            parachuteRow.ParachuteRotation = null;
+            parachuteRow.InfantryClip = "run_0";
+            parachuteRow.InfantryClipStartTick = 61;
+            parachuteRow.PositionTick = 61;
+            presenter.Apply(new List<BattleArmyEntityState>
+                { cardRow, swatCardRow, sniperCardRow, parachuteRow });
+            Require(parachuteVisual != null &&
+                parachuteVisual.transform.Find("ParachuteCanopy") == null,
+                "landed card Paratrooper removes its separate canopy visual");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
@@ -157,8 +203,10 @@ public static class SelfHostedInfantryRenderAudit
                 "removed SWAT card visual");
             Require(GameObject.Find("SelfHostedInfantry_102") == null,
                 "removed Sniper card visual");
+            Require(GameObject.Find("SelfHostedInfantry_103") == null,
+                "removed Paratrooper card visual");
             Debug.Log("UNITY_INFANTRY_RENDER_PASSED families=" + Families.Length +
-                " cardMinigunner=True cardSwat=True cardSniper=True" +
+                " cardMinigunner=True cardSwat=True cardSniper=True cardParatrooper=True" +
                 " skin=True scriptFree=True hostMotion=True removal=True");
             EditorApplication.Exit(0);
         }

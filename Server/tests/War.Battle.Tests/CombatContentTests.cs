@@ -11929,6 +11929,8 @@ internal static class CombatContentTests
               firstParaRows[0].SourceCardId == "ELITEPARA" &&
               firstParaRows[0].InfantryClip == "idle_1" &&
               paraCardMatch.InfantryPose(firstParaRows[0].EntityKey)?.Clip == "idle_1" &&
+              firstParaRows[0].ParachuteActive &&
+              firstParaRows[0].ParachuteRotation != null &&
               firstParaRows[0].SpawnTick == 60 &&
               firstParaRows[0].OptionIndex == -1 &&
               paraCardMatch.CardParatrooperAirAttacking(
@@ -11953,6 +11955,7 @@ internal static class CombatContentTests
                   row.UnitId == "ID_UNIT-PARATROOPER" &&
                   row.InfantryClip == "idle_1" &&
                   paraCardMatch.InfantryPose(row.EntityKey)?.Clip == row.InfantryClip &&
+                  row.ParachuteActive && row.ParachuteRotation != null &&
                   row.OptionIndex == -1),
             "delayed second Paratrooper card unit receives a distinct host identity at tick 75");
         var paraStats = content.Army.CardBaseStats("ELITEPARA", 22,
@@ -12133,6 +12136,8 @@ internal static class CombatContentTests
         Check(walkingPara.EntityKey == remainingPara.EntityKey &&
               walkingPara.InfantryClip == "run_0" &&
               paraCardMatch.InfantryPose(walkingPara.EntityKey)?.Clip == "run_0" &&
+              !walkingPara.ParachuteActive &&
+              walkingPara.ParachuteRotation == null &&
               new Vector3(walkingPara.X, walkingPara.Y, walkingPara.Z) !=
                   paraLanding,
             "landed Paratrooper begins host-owned movement to its Corner point");
