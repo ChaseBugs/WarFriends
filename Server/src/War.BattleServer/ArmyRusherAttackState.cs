@@ -43,7 +43,8 @@ public sealed class ArmyRusherAttackState
         this.cooldownMaxSeconds=cooldownMaxSeconds??definition.MaxShootTime;
     }
 
-    public bool TryBegin(bool eligible,int strictDelayTicks,int windupTicks)
+    public bool TryBegin(bool eligible,int strictDelayTicks,int windupTicks,
+        bool singleShot=false)
     {
         if(!eligible || Phase!=ArmyRusherAttackPhase.Ready || strictDelayTicks<1 || windupTicks<0)
             return false;
@@ -53,6 +54,9 @@ public sealed class ArmyRusherAttackState
             (int)MathF.Floor(Math.Clamp(random(),0f,.99999994f)*
                 (definition.FireBatchSizeMax-definition.FireBatchSizeMin));
         if(BatchSize<1)BatchSize=definition.FireBatchSizeMin;
+        // Grenadier chooses its secondary weapon before StartShooting.
+        // StartShooting still draws the ordinary batch, then overrides it.
+        if(singleShot)BatchSize=1;
         batchCursor=0;
         realShots=new bool[BatchSize];
         for(int i=0;i<BatchSize;i++)realShots[i]=random()<definition.ProbabilityOfRealShot;

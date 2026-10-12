@@ -14,6 +14,9 @@ public sealed partial class MatchEngine
 {
     internal sealed record CardGrenadierAim(ArmyRusherTarget Target,
         bool ThrowGrenade);
+    internal sealed record CardGrenadierShotIntent(ulong EntityKey,
+        ulong Tick, CardGrenadierAim Aim, bool IsReal, int ShotIndex,
+        int BatchSize);
 
     private readonly CardUnitSpawnState cardUnitSpawns = new();
     private readonly CardUnitEntityRegistry cardUnitEntities = new();
@@ -44,6 +47,9 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ArmyCardGrenadierRuntime> cardGrenadierThrows = [];
     private readonly Dictionary<ulong, ulong> grenadierPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> grenadierWalks = [];
+    private readonly Dictionary<ulong, ArmyRusherAttackState> grenadierAttacks = [];
+    private readonly Dictionary<ulong, CardGrenadierAim> grenadierShotTargets = [];
+    private readonly List<CardGrenadierShotIntent> grenadierShotIntents = [];
     private readonly Dictionary<ulong, ulong> rocketPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> rocketWalks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> rocketAttacks = [];
@@ -1520,9 +1526,86 @@ public sealed partial class MatchEngine
             entity.Z = walk.Position.Z;
             entity.PositionTick = tick;
             cardUnitCombat?.UpdatePose(entity);
-            if (walk.Arrived) grenadierWalks.Remove(entityKey);
+            if (walk.Arrived)
+            {
+                grenadierWalks.Remove(entityKey);
+                StartCardGrenadierAttack(entityKey);
+            }
         }
     }
+
+    private void StartCardGrenadierAttack(ulong entityKey)
+    {
+        CardUnitInitialPoint point = cardEnemyPoints?.Find(entityKey) ??
+            throw new InvalidDataException("Card Grenadier reached no Corner.");
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            point.ComponentType != "EnemyPointCorner")
+            throw new InvalidDataException("Card Grenadier reached no valid Corner.");
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Grenadier lost its shot row.");
+        if (source.EntityKey != entityKey ||
+            source.SourceCardId != "GREATGRENADIER")
+            throw new InvalidDataException("Card Grenadier lost its card identity.");
+
+        // SoldierBehaviour.ApplyWeaponsSetup replaces the pistol cadence
+        // with 0.35 seconds. A selected grenade has only one shot.
+        var attack = new ArmyRusherAttackState(source.BaseStats.Shot,
+            NextArmyFloat, shotIntervalTicks:
+                (int)MathF.Ceiling(.35f * MatchManifest.TickRate));
+        attack.BeginInitialCooldown();
+        if (!grenadierAttacks.TryAdd(entityKey, attack))
+            throw new InvalidDataException("Card Grenadier attack started twice.");
+    }
+
+    private void AdvanceCardGrenadierAttacks()
+    {
+        grenadierShotIntents.Clear();
+        foreach (var (entityKey, attack) in grenadierAttacks
+            .OrderBy(row => row.Key))
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "GREATGRENADIER" ||
+                grenadierWalks.ContainsKey(entityKey) ||
+                cardEnemyPoints?.Find(entityKey) is not { } point ||
+                point.ComponentType != "EnemyPointCorner" ||
+                point.CornerDirection is not Vector3 direction ||
+                point.CornerRightSide is not bool rightSide)
+                throw new InvalidDataException("Card Grenadier attack lost its Corner.");
+
+            if (attack.Phase == ArmyRusherAttackPhase.Ready)
+            {
+                CardGrenadierAim? aim = CardGrenadierChooseTarget(entityKey);
+                if (aim != null)
+                {
+                    Vector3 origin = new(entity.X, entity.Y, entity.Z);
+                    if (!CornerShotPolicy.CanExpose(direction, rightSide,
+                            origin, aim.Target.Position))
+                        attack.RetryAfterRejectedTarget();
+                    else if (attack.TryBegin(true, 1,
+                                 (int)MathF.Ceiling(.7f * MatchManifest.TickRate),
+                                 singleShot: aim.ThrowGrenade))
+                        grenadierShotTargets[entityKey] = aim;
+                }
+            }
+
+            attack.AdvanceTick();
+            if (!attack.ShotDue) continue;
+            if (!grenadierShotTargets.TryGetValue(entityKey, out var shot))
+                throw new InvalidDataException("Card Grenadier lost its latched target.");
+            grenadierShotIntents.Add(new CardGrenadierShotIntent(entityKey,
+                tick, shot, shot.ThrowGrenade || attack.CurrentShotIsReal,
+                attack.BatchCursor, attack.BatchSize));
+            attack.CommitShot();
+            if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
+                grenadierShotTargets.Remove(entityKey);
+        }
+    }
+
+    internal ArmyRusherAttackState? CardGrenadierAttack(ulong entityKey) =>
+        grenadierAttacks.GetValueOrDefault(entityKey);
+
+    internal IReadOnlyList<CardGrenadierShotIntent> CardGrenadierShotIntents() =>
+        grenadierShotIntents.ToArray();
 
     internal bool CardRocketWalking(ulong entityKey) =>
         rocketWalks.ContainsKey(entityKey);
@@ -1971,6 +2054,9 @@ public sealed partial class MatchEngine
         cardGrenadierThrows.Remove(entityKey);
         grenadierPointRetryTicks.Remove(entityKey);
         grenadierWalks.Remove(entityKey);
+        grenadierAttacks.Remove(entityKey);
+        grenadierShotTargets.Remove(entityKey);
+        grenadierShotIntents.RemoveAll(intent => intent.EntityKey == entityKey);
         rocketPointRetryTicks.Remove(entityKey);
         rocketWalks.Remove(entityKey);
         rocketAttacks.Remove(entityKey);

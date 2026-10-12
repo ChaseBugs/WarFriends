@@ -11408,6 +11408,17 @@ internal static class CombatContentTests
                   attack.BatchCursor==1 && attack.CommitShot() && attack.CommitShot() &&
                   attack.Phase==ArmyRusherAttackPhase.Cooldown && attack.CooldownTicksRemaining>=30,
                   "Rusher attack preserves windup, ordered real-shot bits, and cooldown after the batch");
+            var grenadierDraws = new Queue<float>(new[] { .75f, .2f, .6f });
+            var grenadierClock = new ArmyRusherAttackState(attackDefinition,
+                () => grenadierDraws.Dequeue());
+            Check(grenadierClock.TryBegin(true, 1, 0, singleShot: true) &&
+                  grenadierClock.BatchSize == 1 &&
+                  grenadierDraws.Count == 1 &&
+                  grenadierClock.AdvanceTick() &&
+                  grenadierClock.ShotDue &&
+                  grenadierClock.CommitShot() &&
+                  grenadierClock.Phase == ArmyRusherAttackPhase.Cooldown,
+                "Grenadier secondary draw keeps the ordinary batch roll before one-shot override");
             var rusherCooldown=new ArmyRusherAttackState(new(1f,1,1,.1f,.2f),()=>0,
                 cooldownMinSeconds:2f,cooldownMaxSeconds:4f);
             Check(rusherCooldown.TryBegin(true,1,0)&&rusherCooldown.AdvanceTick()&&
@@ -11860,15 +11871,38 @@ internal static class CombatContentTests
             grenadierEntity.EntityKey);
         Check(!grenadierCardMatch.CardGrenadierWalking(
                   grenadierEntity.EntityKey) &&
+              grenadierCardMatch.CardGrenadierAttack(
+                  grenadierEntity.EntityKey) is
+                  { Phase: ArmyRusherAttackPhase.Cooldown } &&
               grenadierAim is { Target: { PlayerId: var grenadierTargetPlayer } } &&
               grenadierTargetPlayer == decoyOpponent &&
               grenadierAim.Target.EntityKey == grenadierEntity.EntityKey &&
               grenadierAim.Target.RusherPointFileId == grenadierPointId &&
               PlayerHitbox.Finite(grenadierAim.Target.Position),
             "arrived card Grenadier selects a host-owned opposing player target");
+        MatchEngine.CardGrenadierShotIntent? grenadierIntent = null;
+        ulong grenadierStartTick = grenadierCardMatch.Snapshot().ServerTick;
+        for (ulong grenadierTick = grenadierStartTick + 1;
+             grenadierTick <= grenadierStartTick + 600 &&
+                 grenadierIntent == null; grenadierTick++)
+        {
+            grenadierCardMatch.Advance(grenadierTick);
+            grenadierIntent = grenadierCardMatch.CardGrenadierShotIntents()
+                .FirstOrDefault();
+        }
+        Check(grenadierIntent is { Aim: { Target: { PlayerId: var shotPlayer } } } &&
+              shotPlayer == decoyOpponent &&
+              grenadierIntent.EntityKey == grenadierEntity.EntityKey &&
+              grenadierIntent.Aim.ThrowGrenade &&
+              grenadierIntent.IsReal &&
+              grenadierIntent.BatchSize == 1 &&
+              grenadierIntent.ShotIndex == 0,
+            "arrived card Grenadier reaches a real one-shot grenade intent on the host clock");
         Check(grenadierCardMatch.ConfirmArmyDeath(
                   grenadierEntity.EntityKey, false) &&
               grenadierCardMatch.CardGrenadierThrow(
+                  grenadierEntity.EntityKey) == null &&
+              grenadierCardMatch.CardGrenadierAttack(
                   grenadierEntity.EntityKey) == null &&
               !grenadierCardMatch.CardGrenadierWalking(
                   grenadierEntity.EntityKey) &&

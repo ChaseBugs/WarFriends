@@ -137,6 +137,16 @@ def check_grenadier_card_setup():
         "switchToSecondaryProb =" in interpolation or
         "useSecondaryWeapon =" in interpolation):
         raise ValueError("Grenadier card secondary chance is no longer copied")
+    soldier_runtime = (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviour.cs")
+    runtime = soldier_runtime.read_text(encoding="utf-8-sig")
+    if ("mFireBatchSize = UnityEngine.Random.Range(soldierBehaviourDefinititon.fireBatchSizeMin, soldierBehaviourDefinititon.fireBatchSizeMax);" not in runtime or
+        "mFireBatchSize = 1;" not in runtime or
+        "Shoot(targetPosition, isFake: false);" not in runtime):
+        raise ValueError("Grenadier one-shot secondary sequence changed")
+    enemy = (ASSETS / "Scripts/Assembly-CSharp/EnemyController.cs")
+    if "ShootFromCover(!mCoverShotRight, 0.7f);" not in enemy.read_text(
+            encoding="utf-8-sig"):
+        raise ValueError("Grenadier Corner uncover timing changed")
 
     scene = SCENE.read_text(encoding="utf-8-sig")
     grenadier = scene.split("--- !u!114 &49788\n", 1)[1].split(
@@ -168,9 +178,7 @@ def check_grenadier_card_setup():
     if ("  speed: 5\n" not in pistol_setup or
         "return num / bulletSetup.bulletSpeed + 0.1f;" not in gun or
         "float num = weapon.ComputeFlyTimeToTarget(position) + extraTIme;" not in aiming or
-        "PredictPosition(currentWeapon, mShotTarget.transform.position, gameShootableEntity.velocity, 0.1f)" not in
-            (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviour.cs").read_text(
-                encoding="utf-8-sig")):
+        "PredictPosition(currentWeapon, mShotTarget.transform.position, gameShootableEntity.velocity, 0.1f)" not in runtime):
         raise ValueError("Grenadier card moving-target prediction changed")
 
 
