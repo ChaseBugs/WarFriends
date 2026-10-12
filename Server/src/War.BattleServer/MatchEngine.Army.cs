@@ -1535,6 +1535,69 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyCardRocketPassengerExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running || groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Rocket has no passenger blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket passenger attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket passenger attacker fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .OrderBy(value => value.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !groundVehicleFacing.TryGetValue(vehicle.EntityId,
+                    out var facing) ||
+                !vehiclePassengers.TryGetValue(vehicle.EntityId,
+                    out var passengers))
+                throw new InvalidDataException(
+                    "Card Rocket passenger lost shared host authority.");
+            var owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Rocket passenger owner disappeared.");
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+
+            foreach (var passenger in passengers.Values
+                         .OrderBy(value => value.Binding.PointComponentFileId))
+            {
+                if (!passenger.Active)
+                    continue;
+                if (passenger.AnimationStartTick > tick)
+                    throw new InvalidDataException(
+                        "Card Rocket passenger animation starts after match time.");
+                ulong animationTick = tick - passenger.AnimationStartTick;
+                var hitboxes = groundVehicleWeapons.PassengerPoses.Place(
+                    vehicle.UnitId, passenger.Binding, vehicle.Position,
+                    facing, animationTick);
+                var position = PassengerWorldPosition(vehicle.EntityId,
+                    passenger.Binding);
+                var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                    position, hitboxes, launch.Missile);
+                if (hit == null)
+                    continue;
+                if (!float.IsFinite(hit.RawDamage) ||
+                    hit.RawDamage is <= 0 or > 10_000_000)
+                    throw new InvalidDataException(
+                        "Card Rocket passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,
+                    passenger.Binding.Role, hit.RawDamage);
+            }
+        }
+    }
+
     internal void ApplyGroundVehicleMissilePassengerExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {

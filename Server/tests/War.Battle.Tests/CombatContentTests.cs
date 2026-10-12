@@ -17483,6 +17483,38 @@ internal static class CombatContentTests
             "opposing Tank blast damages passenger separately from Transporter body");
         Reject(()=>transporterMatch.ApplyGroundVehicleMissilePassengerExplosion(helicopterOwner,
             "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},missilePassengerCenter));
+        var passengerRocketMissile = rocketStats.Rocket! with
+        {
+            DirectDamage = .2f,
+            ExplosionDamage = 2f
+        };
+        var passengerRocketLaunch = new CardRocketLaunchAuthority(
+            soldierOwner, passengerRocketMissile, cardRocketLaunch.PlayerPolicy);
+        int passengerFriendlyFraction = transporterManifest.Players.Single(
+            player => player.PlayerId == soldierOwner).Fraction;
+        int passengerEnemyFraction = transporterManifest.Players.Single(
+            player => player.PlayerId == helicopterOwner).Fraction;
+        var passengerRocketImpact = new CardRocketMissileImpact(907, 1,
+            missilePassengerCenter, null, 75, false);
+        transporterMatch.ApplyCardRocketPassengerExplosion(
+            passengerRocketImpact, passengerRocketLaunch,
+            passengerFriendlyFraction);
+        Check(transporterMatch.VehiclePassengers(transporterEntity.EntityKey)
+                  .Single(value => value.Role == missilePassenger.Role).Health ==
+                  passengerAfterEnemyMissile,
+            "Rocket card blast skips a friendly vehicle passenger");
+        transporterMatch.ApplyCardRocketPassengerExplosion(
+            passengerRocketImpact with { ProjectileId = 908 },
+            passengerRocketLaunch with { OwnerPlayerId = helicopterOwner },
+            passengerEnemyFraction);
+        float passengerAfterRocket = transporterMatch
+            .VehiclePassengers(transporterEntity.EntityKey)
+            .Single(value => value.Role == missilePassenger.Role).Health;
+        Check(Math.Abs(passengerAfterRocket -
+                  (passengerAfterEnemyMissile - 2f)) < .01f &&
+              transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
+                  bodyBeforePassengerMissile,
+            "Rocket card blast damages an enemy passenger without changing vehicle-body health");
         var missileBody=transporterMatch.GroundVehicleShotTargets(helicopterOwner)
             .First(target=>target.EntityId==transporterEntity.EntityKey&&target.GroundVehicleBody).Hitbox;
         Vector3 missileBodyCenter=missileBody.Center;
