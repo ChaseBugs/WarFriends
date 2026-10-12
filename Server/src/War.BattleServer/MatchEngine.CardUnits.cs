@@ -50,6 +50,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ArmyRusherAttackState> grenadierAttacks = [];
     private readonly Dictionary<ulong, CardGrenadierAim> grenadierShotTargets = [];
     private readonly List<CardGrenadierShotIntent> grenadierShotIntents = [];
+    private readonly Dictionary<ulong, ulong> grenadierCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> rocketPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> rocketWalks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> rocketAttacks = [];
@@ -1555,6 +1556,11 @@ public sealed partial class MatchEngine
         attack.BeginInitialCooldown();
         if (!grenadierAttacks.TryAdd(entityKey, attack))
             throw new InvalidDataException("Card Grenadier attack started twice.");
+        int waitSeconds = 10 + armyChoice(10);
+        if (waitSeconds is < 10 or > 19 ||
+            !grenadierCornerChangeTicks.TryAdd(entityKey,
+                checked(tick + (ulong)waitSeconds * MatchManifest.TickRate)))
+            throw new InvalidDataException("Card Grenadier lost its Corner clock.");
     }
 
     private void AdvanceCardGrenadierAttacks()
@@ -1606,6 +1612,52 @@ public sealed partial class MatchEngine
 
     internal IReadOnlyList<CardGrenadierShotIntent> CardGrenadierShotIntents() =>
         grenadierShotIntents.ToArray();
+
+    private void AdvanceCardGrenadierCornerChanges()
+    {
+        if (cardEnemyPoints == null || armyCatalog == null)
+            throw new InvalidDataException("Card Grenadier has no point-change authority.");
+
+        foreach (var (entityKey, changeTick) in grenadierCornerChangeTicks
+            .OrderBy(row => row.Key).ToArray())
+        {
+            if (tick <= changeTick) continue;
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "GREATGRENADIER" ||
+                !grenadierAttacks.TryGetValue(entityKey, out var attack))
+                throw new InvalidDataException("Card Grenadier lost its Corner state.");
+            if (attack.Phase is ArmyRusherAttackPhase.Windup or
+                ArmyRusherAttackPhase.Firing)
+                continue;
+
+            IReadOnlyList<CardUnitInitialPoint> available =
+                cardEnemyPoints.NextFreePoints(entityKey,
+                    "GREATGRENADIER", entity.OwnerFraction);
+            if (available.Count == 0)
+            {
+                grenadierCornerChangeTicks[entityKey] = checked(changeTick +
+                    10u * MatchManifest.TickRate);
+                continue;
+            }
+
+            int index = armyChoice(available.Count);
+            if (index < 0 || index >= available.Count)
+                throw new InvalidDataException("Invalid host Grenadier point choice.");
+            CardUnitInitialPoint next = available[index];
+            Vector3 position = new(entity.X, entity.Y, entity.Z);
+            ArmyNavMeshCorridor route = PlanCardSoldierRoute(position,
+                next.Position);
+            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            var walk = new CardSoldierWalkState(next.ComponentFileId, route,
+                armyCatalog.InfantryAgent, speed);
+
+            cardEnemyPoints.Transfer(entityKey, "GREATGRENADIER", next);
+            grenadierCornerChangeTicks.Remove(entityKey);
+            grenadierAttacks.Remove(entityKey);
+            grenadierShotTargets.Remove(entityKey);
+            grenadierWalks.Add(entityKey, walk);
+        }
+    }
 
     internal bool CardRocketWalking(ulong entityKey) =>
         rocketWalks.ContainsKey(entityKey);
@@ -2057,6 +2109,7 @@ public sealed partial class MatchEngine
         grenadierAttacks.Remove(entityKey);
         grenadierShotTargets.Remove(entityKey);
         grenadierShotIntents.RemoveAll(intent => intent.EntityKey == entityKey);
+        grenadierCornerChangeTicks.Remove(entityKey);
         rocketPointRetryTicks.Remove(entityKey);
         rocketWalks.Remove(entityKey);
         rocketAttacks.Remove(entityKey);

@@ -207,7 +207,7 @@ public sealed class CardUnitInitialPointCatalog
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(available);
         if (fraction is not (1 or 2) || currentPointFileId <= 0 ||
-            sourceCardId != "ELITEPARA" ||
+            sourceCardId is not ("ELITEPARA" or "GREATGRENADIER") ||
             !maps.TryGetValue(map.Source, out var points))
             throw new InvalidDataException("Invalid card point-change selection.");
 

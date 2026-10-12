@@ -11898,6 +11898,31 @@ internal static class CombatContentTests
               grenadierIntent.BatchSize == 1 &&
               grenadierIntent.ShotIndex == 0,
             "arrived card Grenadier reaches a real one-shot grenade intent on the host clock");
+        int grenadierNextPointId = grenadierPointId;
+        ulong grenadierChangeStart = grenadierCardMatch.Snapshot().ServerTick;
+        for (ulong grenadierTick = grenadierChangeStart + 1;
+             grenadierTick <= grenadierChangeStart + 600 &&
+                 grenadierNextPointId == grenadierPointId; grenadierTick++)
+        {
+            grenadierCardMatch.Advance(grenadierTick);
+            if (grenadierTick % 60 == 0)
+            {
+                grenadierCardMatch.EventBatch(decoyPlayer, 0);
+                grenadierCardMatch.EventBatch(decoyOpponent, 0);
+            }
+            grenadierNextPointId = grenadierCardMatch.CardEnemyPoint(
+                grenadierEntity.EntityKey)?.ComponentFileId ?? 0;
+        }
+        Check(grenadierNextPointId != grenadierPointId &&
+              grenadierNextPointId > 0 &&
+              grenadierCardMatch.CardEnemyPointOccupant(grenadierPointId) == null &&
+              grenadierCardMatch.CardEnemyPointOccupant(
+                  grenadierNextPointId) == grenadierEntity.EntityKey &&
+              grenadierCardMatch.CardGrenadierWalking(
+                  grenadierEntity.EntityKey) &&
+              grenadierCardMatch.CardGrenadierAttack(
+                  grenadierEntity.EntityKey) == null,
+            "Grenadier changes to a free Corner without retaining its old shot clock");
         Check(grenadierCardMatch.ConfirmArmyDeath(
                   grenadierEntity.EntityKey, false) &&
               grenadierCardMatch.CardGrenadierThrow(
@@ -11906,7 +11931,8 @@ internal static class CombatContentTests
                   grenadierEntity.EntityKey) == null &&
               !grenadierCardMatch.CardGrenadierWalking(
                   grenadierEntity.EntityKey) &&
-              grenadierCardMatch.CardEnemyPointOccupant(grenadierPointId) == null,
+              grenadierCardMatch.CardEnemyPointOccupant(
+                  grenadierNextPointId) == null,
             "card Grenadier death releases its throw setup and point reservation");
         var snowGrenadierMap = content.Maps.Single(sourceMap =>
             sourceMap.Source.Contains("Snow_Multiplayer",

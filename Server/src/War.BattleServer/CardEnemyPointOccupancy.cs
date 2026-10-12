@@ -115,7 +115,8 @@ internal sealed class CardEnemyPointOccupancy
         CardUnitInitialPoint next, Vector3? opponentPosition = null)
     {
         ArgumentNullException.ThrowIfNull(next);
-        if (sourceCardId is not ("ELITEPARA" or "ELITESNIPER"))
+        if (sourceCardId is not ("ELITEPARA" or "ELITESNIPER" or
+            "GREATGRENADIER"))
             throw new InvalidDataException("Card soldier cannot transfer this point type.");
         if (!assigned.TryGetValue(entityKey, out var current) ||
             current.ComponentFileId == next.ComponentFileId ||
@@ -126,7 +127,8 @@ internal sealed class CardEnemyPointOccupancy
             owner != entityKey || occupants.ContainsKey(next.ComponentFileId))
             throw new InvalidDataException("Card point transfer lost its source reservation.");
 
-        IReadOnlyList<CardUnitInitialPoint> eligible = sourceCardId == "ELITEPARA"
+        IReadOnlyList<CardUnitInitialPoint> eligible = sourceCardId is
+            "ELITEPARA" or "GREATGRENADIER"
             ? catalog.NextFreePoints(map, sourceCardId, current.Fraction,
                 current.ComponentFileId, _ => true)
             : catalog.NextSniperPoints(map, current.Fraction,

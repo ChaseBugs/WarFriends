@@ -144,9 +144,20 @@ def check_grenadier_card_setup():
         "Shoot(targetPosition, isFake: false);" not in runtime):
         raise ValueError("Grenadier one-shot secondary sequence changed")
     enemy = (ASSETS / "Scripts/Assembly-CSharp/EnemyController.cs")
-    if "ShootFromCover(!mCoverShotRight, 0.7f);" not in enemy.read_text(
-            encoding="utf-8-sig"):
-        raise ValueError("Grenadier Corner uncover timing changed")
+    enemy_source = enemy.read_text(encoding="utf-8-sig")
+    if ("ShootFromCover(!mCoverShotRight, 0.7f);" not in enemy_source or
+        "mNextEnemyChangeTime = mTime + (float)UnityEngine.Random.Range(10, 20);" not in enemy_source or
+        "mNextEnemyChangeTime += 10f;" not in enemy_source):
+        raise ValueError("Grenadier Corner timing changed")
+    spawning = (ASSETS / "Scripts/Assembly-CSharp/SpawningManager.cs")
+    next_point = spawning.read_text(encoding="utf-8-sig").split(
+        "public EnemyPoint GetNextFreeEnemyPoint", 1)[1].split(
+        "public List<EnemyPoint> GetFreeEnemyPoints", 1)[0]
+    if ("soldierBehaviour.AcceptsPoint(enemyPoint2)" not in next_point or
+        "enemyPoint2.isFree" not in next_point or
+        "enemyPoint2 != enemyPoint" not in next_point or
+        "Random.Range(0, mAllPosiblePointsForEnemy.Count)" not in next_point):
+        raise ValueError("Grenadier Corner change selection changed")
 
     scene = SCENE.read_text(encoding="utf-8-sig")
     grenadier = scene.split("--- !u!114 &49788\n", 1)[1].split(
