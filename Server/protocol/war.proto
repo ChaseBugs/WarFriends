@@ -356,6 +356,13 @@ message BattleArmyEntityState {
   // Present only for CardSpawnUnit entities. Such entities use option_index -1;
   // the exact source Card.id and unit pair is validated by Worker and SDK.
   string source_card_id = 33;
+  // Host collision and presentation share this sampled infantry animation.
+  // Empty for non-infantry or allocations without a recovered pose catalog.
+  string infantry_clip = 34;
+  uint64 infantry_clip_start_tick = 35;
+  float infantry_facing_x = 36;
+  float infantry_facing_y = 37;
+  float infantry_facing_z = 38;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

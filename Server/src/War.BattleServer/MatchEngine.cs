@@ -3069,6 +3069,20 @@ public sealed partial class MatchEngine : IMatchRuntime
         foreach(var row in remaining.Take(4))
         {
             var entity=row.Value.Clone();
+            if(infantryAnimations.TryGetValue(row.Key,out var animation))
+            {
+                if(animation.StartTick>tick ||
+                   !float.IsFinite(animation.Facing.X) ||
+                   !float.IsFinite(animation.Facing.Y) ||
+                   !float.IsFinite(animation.Facing.Z) ||
+                   MathF.Abs(animation.Facing.LengthSquared()-1f)>.001f)
+                    throw new InvalidDataException("Infantry roster has invalid host animation.");
+                entity.InfantryClip=animation.Clip;
+                entity.InfantryClipStartTick=animation.StartTick;
+                entity.InfantryFacingX=animation.Facing.X;
+                entity.InfantryFacingY=animation.Facing.Y;
+                entity.InfantryFacingZ=animation.Facing.Z;
+            }
             if(entity.UnitId=="ID_UNIT-HELICOPTER")
             {
                 var root=new Vector3(entity.X,entity.Y,entity.Z);

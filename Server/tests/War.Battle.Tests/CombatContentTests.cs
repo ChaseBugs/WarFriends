@@ -14346,6 +14346,13 @@ internal static class CombatContentTests
         var flameRows=flameInfantryMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
         var flameSource=flameRows.First(x=>x.OwnerPlayerId==soldierOwner);
         var flameTarget=flameRows.First(x=>x.OwnerPlayerId==helicopterOwner);
+        var flamePose=flameInfantryMatch.InfantryPose(flameTarget.EntityKey)!;
+        Check(flameTarget.InfantryClip==flamePose.Clip &&
+              flameTarget.InfantryClipStartTick==flamePose.StartTick &&
+              flameTarget.InfantryFacingX==flamePose.Facing.X &&
+              flameTarget.InfantryFacingY==flamePose.Facing.Y &&
+              flameTarget.InfantryFacingZ==flamePose.Facing.Z,
+            "infantry roster publishes the same animation used by host collision");
         var flamePart=flameInfantryMatch.InfantryPose(flameTarget.EntityKey)!.Parts[0];
         float flameTargetBefore=flameInfantryMatch.ArmyHealth(flameTarget.EntityKey)!.Value;
         float flameSourceBefore=flameInfantryMatch.ArmyHealth(flameSource.EntityKey)!.Value;

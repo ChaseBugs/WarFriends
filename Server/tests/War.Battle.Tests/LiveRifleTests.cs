@@ -531,7 +531,10 @@ internal static class LiveRifleTests
             LocalEntityId=int.MaxValue,OptionIndex=47,UnitId="ID_UNIT-"+new string('A',40),
             SpawnComponentFileId=int.MaxValue,ReservationFileId=int.MaxValue,
             X=float.MaxValue,Y=float.MaxValue,Z=float.MaxValue,SpawnTick=ulong.MaxValue,
-            MaxHealth=float.MaxValue,Health=float.MaxValue});
+            MaxHealth=float.MaxValue,Health=float.MaxValue,
+            InfantryClip="flamethrower_shot_loop",InfantryClipStartTick=ulong.MaxValue,
+            InfantryFacingX=float.MaxValue,InfantryFacingY=float.MaxValue,
+            InfantryFacingZ=float.MaxValue});
         Check(War.Protocol.Transport.PacketCodec.Encode(new Packet {Version=1,SessionId=ulong.MaxValue,
             Sequence=ulong.MaxValue,Ack=ulong.MaxValue,AckBits=uint.MaxValue,
             MatchArmyEntityBatch=maximumArmy},new byte[32]).Length<=1200,
