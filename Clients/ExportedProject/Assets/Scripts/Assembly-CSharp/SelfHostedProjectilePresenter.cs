@@ -26,6 +26,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	private PlayerController local;
 	private PlayerController other;
 	private Weapon rocketWeapon;
+	private Weapon grenadierWeapon;
 
 	public void Configure(PlayerController localPlayer, PlayerController otherPlayer,
         LevelBehaviourManager behaviourManager)
@@ -36,18 +37,29 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             throw new System.InvalidOperationException("Recovered Rocket visual source is absent.");
         foreach (LevelBehaviourManager.BehaviourEntry entry in behaviourManager.levelBehaviours)
         {
-            SoldierBehaviourBazooka bazooka = entry.behaviour as SoldierBehaviourBazooka;
-            if (bazooka == null) continue;
-            EnemyBasicInventory inventory = bazooka.GetComponent<EnemyBasicInventory>();
-            if (inventory == null || inventory.cardWeapons == null ||
-                inventory.cardWeapons.Count == 0 || inventory.cardWeapons[0].weapon == null ||
-                inventory.cardWeapons[0].weapon.bulletPrefab == null)
-                throw new System.InvalidOperationException("Recovered Rocket missile prefab is absent.");
-            rocketWeapon = inventory.cardWeapons[0].weapon;
-            break;
+            if (entry.behaviour is SoldierBehaviourBazooka)
+            {
+                EnemyBasicInventory inventory = entry.behaviour.GetComponent<EnemyBasicInventory>();
+                if (inventory == null || inventory.cardWeapons == null ||
+                    inventory.cardWeapons.Count == 0 || inventory.cardWeapons[0].weapon == null ||
+                    inventory.cardWeapons[0].weapon.bulletPrefab == null)
+                    throw new System.InvalidOperationException("Recovered Rocket missile prefab is absent.");
+                rocketWeapon = inventory.cardWeapons[0].weapon;
+            }
+            if (entry.behaviour is SoldierBehaviourGrennader)
+            {
+                EnemyBasicInventory inventory = entry.behaviour.GetComponent<EnemyBasicInventory>();
+                if (inventory == null || inventory.cardWeapons == null ||
+                    inventory.cardWeapons.Count < 2 || inventory.cardWeapons[1].weapon == null ||
+                    inventory.cardWeapons[1].weapon.bulletPrefab == null)
+                    throw new System.InvalidOperationException("Recovered Grenadier grenade prefab is absent.");
+                grenadierWeapon = inventory.cardWeapons[1].weapon;
+            }
         }
         if (rocketWeapon == null)
             throw new System.InvalidOperationException("Recovered Rocket soldier is absent.");
+        if (grenadierWeapon == null)
+            throw new System.InvalidOperationException("Recovered Grenadier soldier is absent.");
 	}
 
 	// A reconnect snapshot is a new presentation baseline. Air-shot event
@@ -71,7 +83,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet" &&
                 state.Kind != "assault-helicopter-bullet" && state.Kind != "assault-helicopter-fake-bullet" &&
                 state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet" &&
-                state.Kind != "card-rocket" && state.Kind != "card-rocket-fake") continue;
+                state.Kind != "card-rocket" && state.Kind != "card-rocket-fake" &&
+                state.Kind != "card-grenadier") continue;
 			if (!ValidCoordinate(state.X) || !ValidCoordinate(state.Y) || !ValidCoordinate(state.Z) ||
                 !ValidCoordinate(state.VelocityX) || !ValidCoordinate(state.VelocityY) ||
                 !ValidCoordinate(state.VelocityZ))
@@ -186,7 +199,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             return;
         }
 		if (item == null || item.Kind != MatchEventKind.Impact ||
-		    (item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner" && item.Reason != "card-rocket" && item.Reason != "card-rocket-fake")) return;
+		    (item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner" && item.Reason != "card-rocket" && item.Reason != "card-rocket-fake" && item.Reason != "card-grenadier")) return;
         if (item.Reason == "drone" || item.Reason == "helicopter" || item.Reason == "assault-helicopter")
         {
             Visual droneVisual;
@@ -367,6 +380,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		}
         if (kind == "card-rocket" || kind == "card-rocket-fake")
             bullet = rocketWeapon == null ? null : rocketWeapon.bulletPrefab.gameObject;
+        if (kind == "card-grenadier")
+            bullet = grenadierWeapon == null ? null : grenadierWeapon.bulletPrefab.gameObject;
         if (kind == "drone-bullet" || kind == "drone-fake-bullet")
         {
             Drone drone = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone;

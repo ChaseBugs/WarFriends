@@ -11982,6 +11982,20 @@ internal static class CombatContentTests
               grenadierCardMatch.CardGrenadierActiveFlightCount == 1 &&
               grenadierCardMatch.PendingProjectileCount >= 1,
             "Grenadier shot intent launches a bounded host grenade from its source muzzle");
+        BattleProjectileState grenadierProjectile =
+            grenadierCardMatch.Snapshot().Projectiles.Single(row =>
+                row.Kind == "card-grenadier");
+        Check(grenadierProjectile.OwnerPlayerId == decoyPlayer &&
+              grenadierProjectile.ProjectileId > 0 &&
+              Vector3.Distance(new Vector3(grenadierProjectile.X,
+                  grenadierProjectile.Y, grenadierProjectile.Z),
+                  intentMuzzle) < .00001f &&
+              Vector3.Distance(new Vector3(
+                  grenadierProjectile.VelocityX,
+                  grenadierProjectile.VelocityY,
+                  grenadierProjectile.VelocityZ),
+                  intentVelocity) < .00001f,
+            "Grenadier projectile snapshot publishes its host pose and velocity");
         int grenadierNextPointId = grenadierPointId;
         CardGrenadierExplosion? liveGrenadierExplosion = null;
         ulong grenadierChangeStart = grenadierCardMatch.Snapshot().ServerTick;
@@ -12014,7 +12028,9 @@ internal static class CombatContentTests
               { SoldierEntityKey: var explodedGrenadier } &&
               explodedGrenadier == grenadierEntity.EntityKey &&
               liveGrenadierExplosion.Tick > grenadierIntent.Tick + 90 &&
-              PlayerHitbox.Finite(liveGrenadierExplosion.Position),
+              PlayerHitbox.Finite(liveGrenadierExplosion.Position) &&
+              grenadierCardMatch.Snapshot().Projectiles.All(row =>
+                  row.ProjectileId != grenadierProjectile.ProjectileId),
             "live Park grenade lands, keeps its fuse, and reaches a host explosion");
         Check(grenadierCardMatch.ConfirmArmyDeath(
                   grenadierEntity.EntityKey, false) &&

@@ -41,7 +41,11 @@ public static class SelfHostedGrenadeRenderAudit
             inventory.usedWeapons=new List<PlayerWeapon>{grenadeWeapon};
             player.playerProperties.playerID=new string('a',32);
             var presentationRoot=new GameObject("SelfHostedProjectileAudit");
-            var presenter=presentationRoot.AddComponent<SelfHostedProjectilePresenter>();presenter.Configure(player,player);
+            var behaviourManager=scene.GetRootGameObjects()
+                .SelectMany(root=>root.GetComponentsInChildren<LevelBehaviourManager>(true))
+                .Single();
+            var presenter=presentationRoot.AddComponent<SelfHostedProjectilePresenter>();
+            presenter.Configure(player,player,behaviourManager);
             var projectileSnapshot=new MatchSnapshot();projectileSnapshot.Projectiles.Add(new BattleProjectileState
             {ProjectileId=77,OwnerPlayerId=player.playerProperties.playerID,Kind="grenade",X=1,Y=2,Z=3,VelocityX=1,VelocityY=1,VelocityZ=0});
             presenter.Apply(projectileSnapshot);var projectile=GameObject.Find("SelfHostedProjectile_77");
@@ -64,7 +68,28 @@ public static class SelfHostedGrenadeRenderAudit
             presenter.ApplyScan(new MatchProjectileBatch{Code="projectiles",ScanId=2,SnapshotTick=11});
             if(GameObject.Find("SelfHostedProjectile_77")!=null)
                 throw new InvalidOperationException("Complete projectile scan retained an absent grenade visual.");
-            checks++;UnityEngine.Object.DestroyImmediate(presentationRoot);
+            checks++;
+            var cardSnapshot=new MatchSnapshot();
+            cardSnapshot.Projectiles.Add(new BattleProjectileState
+            {ProjectileId=78,OwnerPlayerId=player.playerProperties.playerID,
+                Kind="card-grenadier",X=3,Y=4,Z=5,
+                VelocityX=1,VelocityY=2,VelocityZ=3});
+            presenter.Apply(cardSnapshot);
+            var cardVisual=GameObject.Find("SelfHostedProjectile_78");
+            if(cardVisual==null||
+                cardVisual.GetComponentsInChildren<MeshFilter>(true)
+                    .All(mesh=>mesh.sharedMesh==null)||
+                Vector3.Distance(cardVisual.transform.position,
+                    new Vector3(3,4,5))>.0001f)
+                throw new InvalidOperationException("Grenadier snapshot lacks its recovered grenade mesh.");
+            checks++;
+            presenter.ApplyEvent(new MatchEvent
+            {Kind=MatchEventKind.Impact,Reason="card-grenadier",
+                ProjectileId=78,X=3,Y=4,Z=5});
+            if(GameObject.Find("SelfHostedProjectile_78")!=null)
+                throw new InvalidOperationException("Grenadier impact retained its projectile visual.");
+            checks++;
+            UnityEngine.Object.DestroyImmediate(presentationRoot);
             if(checks<850)throw new InvalidOperationException("Incomplete grenade render fixture.");
             Debug.Log("GRENADE_RENDER_AUDIT_PASSED checks="+checks);EditorApplication.Exit(0);
         }

@@ -1233,7 +1233,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             return;
         }
         ulong simulationTick=checked(tick+elapsed);
-        if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0||rocketFlights.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
+        if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0||rocketFlights.Count!=0||grenadierFlights.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
         if ((rifleCombat!=null||grenadeCombat!=null) && phase==BattlePhase.Running && simulationTick>tick+1) throw new InvalidOperationException("Live combat playback requires every simulation tick.");
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
@@ -2768,6 +2768,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         bazookaProjectiles.Clear();
         scheduledBazookas.Clear();
         grenadeProjectiles.Clear();
+        rocketFlights.Clear();
+        rocketLaunches.Clear();
+        grenadierFlights.Clear();
+        grenadierLaunches.Clear();
+        grenadierExplosions.Clear();
         phase = completed ? BattlePhase.Ended : BattlePhase.Aborted;
         terminalReason = reason;
         winner = winnerId;
@@ -2858,6 +2863,25 @@ public sealed partial class MatchEngine : IMatchRuntime
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
             VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,VelocityZ=x.Value.Flight.Velocity.Z
         }));
+        snapshot.Projectiles.AddRange(grenadierFlights.OrderBy(row => row.Key)
+            .Select(row =>
+            {
+                if (!grenadierLaunches.TryGetValue(row.Key, out var launch))
+                    throw new InvalidDataException(
+                        "Card Grenadier snapshot lost its launch authority.");
+                CardGrenadierFlight flight = row.Value;
+                return new BattleProjectileState
+                {
+                    ProjectileId = row.Key,
+                    OwnerPlayerId = launch.OwnerPlayerId,
+                    Kind = "card-grenadier",
+                    X = flight.Position.X, Y = flight.Position.Y,
+                    Z = flight.Position.Z,
+                    VelocityX = flight.Velocity.X,
+                    VelocityY = flight.Velocity.Y,
+                    VelocityZ = flight.Velocity.Z
+                };
+            }));
         snapshot.Projectiles.AddRange(rocketFlights.OrderBy(row => row.Key)
             .Select(row =>
             {

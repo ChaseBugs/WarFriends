@@ -58,6 +58,7 @@ namespace War.Client
         {
             return kind == "grenade" || kind == "grenade-molotov" ||
                 kind == "card-rocket" || kind == "card-rocket-fake" ||
+                kind == "card-grenadier" ||
                 kind == "heavy-turret-bullet" ||
                 kind == "helicopter-bullet" || kind == "helicopter-fake-bullet" ||
                 kind == "assault-helicopter-bullet" ||

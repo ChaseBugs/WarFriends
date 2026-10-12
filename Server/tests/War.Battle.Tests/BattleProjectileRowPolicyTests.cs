@@ -36,6 +36,7 @@ internal static class BattleProjectileRowPolicyTests
         var emittedKinds = new[]
         {
             "grenade", "grenade-molotov", "card-rocket",
+            "card-grenadier",
             "card-rocket-fake", "heavy-turret-bullet",
             "helicopter-bullet", "helicopter-fake-bullet",
             "assault-helicopter-bullet", "assault-helicopter-fake-bullet",

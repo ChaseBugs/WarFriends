@@ -30,7 +30,10 @@ public static class SelfHostedShotgunProjectileRenderAudit
             player.playerProperties.playerID=new string('a',32);
             host=new GameObject("SelfHostedShotgunProjectileRenderAudit");
             var presenter=host.AddComponent<SelfHostedProjectilePresenter>();
-            presenter.Configure(player,player);
+            var behaviourManager=scene.GetRootGameObjects()
+                .SelectMany(root=>root.GetComponentsInChildren<LevelBehaviourManager>(true))
+                .Single();
+            presenter.Configure(player,player,behaviourManager);
             var snapshot=new MatchSnapshot();
             snapshot.Projectiles.Add(new BattleProjectileState{ProjectileId=71,
                 OwnerPlayerId=player.playerProperties.playerID,Kind="shotgun-bullet",
