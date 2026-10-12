@@ -72,7 +72,8 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
                 row.SourceCardId != "ELITEMINIGUN" &&
                 row.SourceCardId != "ELITESWAT" &&
                 row.SourceCardId != "ELITESNIPER" &&
-                row.SourceCardId != "ELITEPARA") continue;
+                row.SourceCardId != "ELITEPARA" &&
+                row.SourceCardId != "BIGROCKET") continue;
             if (!behaviours.ContainsKey(row.UnitId))
                 throw new InvalidOperationException("The host sent an unknown infantry visual family.");
             Validate(row);

@@ -57,7 +57,8 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		client.BindRifleView(local.playerProperties.playerID, local.transform, localAnimator);
 		client.BindRifleView(other.playerProperties.playerID, other.transform, otherAnimator);
 		projectilePresenter = gameObject.AddComponent<SelfHostedProjectilePresenter>();
-		projectilePresenter.Configure(local, other);
+		projectilePresenter.Configure(local, other,
+            Singleton<LevelBehaviourManager>.instance);
 		decoyPresenter = gameObject.AddComponent<SelfHostedDecoyPresenter>();
 		decoyPresenter.Configure(client.LocalPlayerId);
 		MineAmmo mineVisual = local.weaponInventory == null || local.weaponInventory.landMine == null ? null :

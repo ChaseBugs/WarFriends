@@ -25,11 +25,29 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
 	private PlayerController local;
 	private PlayerController other;
+	private Weapon rocketWeapon;
 
-	public void Configure(PlayerController localPlayer, PlayerController otherPlayer)
+	public void Configure(PlayerController localPlayer, PlayerController otherPlayer,
+        LevelBehaviourManager behaviourManager)
 	{
 		local = localPlayer;
 		other = otherPlayer;
+        if (behaviourManager == null || behaviourManager.levelBehaviours == null)
+            throw new System.InvalidOperationException("Recovered Rocket visual source is absent.");
+        foreach (LevelBehaviourManager.BehaviourEntry entry in behaviourManager.levelBehaviours)
+        {
+            SoldierBehaviourBazooka bazooka = entry.behaviour as SoldierBehaviourBazooka;
+            if (bazooka == null) continue;
+            EnemyBasicInventory inventory = bazooka.GetComponent<EnemyBasicInventory>();
+            if (inventory == null || inventory.cardWeapons == null ||
+                inventory.cardWeapons.Count == 0 || inventory.cardWeapons[0].weapon == null ||
+                inventory.cardWeapons[0].weapon.bulletPrefab == null)
+                throw new System.InvalidOperationException("Recovered Rocket missile prefab is absent.");
+            rocketWeapon = inventory.cardWeapons[0].weapon;
+            break;
+        }
+        if (rocketWeapon == null)
+            throw new System.InvalidOperationException("Recovered Rocket soldier is absent.");
 	}
 
 	// A reconnect snapshot is a new presentation baseline. Air-shot event
@@ -52,7 +70,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 state.Kind != "drone-bullet" && state.Kind != "drone-fake-bullet" &&
                 state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet" &&
                 state.Kind != "assault-helicopter-bullet" && state.Kind != "assault-helicopter-fake-bullet" &&
-                state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet") continue;
+                state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet" &&
+                state.Kind != "card-rocket" && state.Kind != "card-rocket-fake") continue;
 			if (!ValidCoordinate(state.X) || !ValidCoordinate(state.Y) || !ValidCoordinate(state.Z) ||
                 !ValidCoordinate(state.VelocityX) || !ValidCoordinate(state.VelocityY) ||
                 !ValidCoordinate(state.VelocityZ))
@@ -167,7 +186,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             return;
         }
 		if (item == null || item.Kind != MatchEventKind.Impact ||
-            (item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner")) return;
+		    (item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner" && item.Reason != "card-rocket" && item.Reason != "card-rocket-fake")) return;
         if (item.Reason == "drone" || item.Reason == "helicopter" || item.Reason == "assault-helicopter")
         {
             Visual droneVisual;
@@ -346,6 +365,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 				turret.turretWeapon.batchedWeapon.weapon != null && turret.turretWeapon.batchedWeapon.weapon.bulletPrefab != null)
 				bullet = turret.turretWeapon.batchedWeapon.weapon.bulletPrefab.gameObject;
 		}
+        if (kind == "card-rocket" || kind == "card-rocket-fake")
+            bullet = rocketWeapon == null ? null : rocketWeapon.bulletPrefab.gameObject;
         if (kind == "drone-bullet" || kind == "drone-fake-bullet")
         {
             Drone drone = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone;
