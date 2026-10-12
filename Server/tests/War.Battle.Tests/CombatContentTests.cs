@@ -11849,13 +11849,35 @@ internal static class CombatContentTests
               rocketCardMatch.CardEnemyPointOccupant(
                   rocketPoint!.ComponentFileId) == rocketEntity.EntityKey,
             "Rocket card publishes its running pose while retaining the point");
+        CardRocketShotIntent? firstRocketShot = null;
+        for (ulong rocketTick = 91; rocketTick <= 900; rocketTick++)
+        {
+            rocketCardMatch.Advance(rocketTick);
+            firstRocketShot = rocketCardMatch.CardRocketShotIntents()
+                .FirstOrDefault(intent => intent.EntityKey == rocketEntity.EntityKey);
+            if (firstRocketShot != null)
+                break;
+            if (rocketTick % 60 == 0)
+            {
+                rocketCardMatch.EventBatch(decoyPlayer, 0);
+                rocketCardMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        Check(firstRocketShot != null &&
+              rocketCardMatch.CardRocketAttack(rocketEntity.EntityKey) != null &&
+              firstRocketShot.TargetPosition ==
+                  park.Covers[rocketMoveDestination].ShotPosition &&
+              firstRocketShot.ShotIndex == 0 && firstRocketShot.BatchSize >= 1,
+            "Rocket card latches its shield aim after Corner arrival and source windup");
         Check(rocketCardMatch.ConfirmArmyDeath(rocketEntity.EntityKey, false) &&
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) == null &&
               rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) == null &&
               !rocketCardMatch.CardRocketWalking(rocketEntity.EntityKey) &&
+              rocketCardMatch.CardRocketAttack(rocketEntity.EntityKey) == null &&
+              rocketCardMatch.CardRocketShotIntents().Count == 0 &&
               rocketCardMatch.CardEnemyPointOccupant(
                   rocketPoint!.ComponentFileId) == null,
-            "card Rocket death removes its missile, walk and point authority");
+            "card Rocket death removes its missile, point and pending attack authority");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
         const string hostCardRequest = "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5";

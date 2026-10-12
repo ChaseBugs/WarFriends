@@ -3,6 +3,9 @@ using War.Protocol;
 
 namespace War.BattleServer;
 
+internal sealed record CardRocketShotIntent(ulong EntityKey, ulong Tick,
+    Vector3 TargetPosition, bool IsReal, int ShotIndex, int BatchSize);
+
 public sealed partial class MatchEngine
 {
     private readonly CardUnitSpawnState cardUnitSpawns = new();
@@ -33,6 +36,9 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ArmyCardRocketRuntime> cardRocketMissiles = [];
     private readonly Dictionary<ulong, ulong> rocketPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> rocketWalks = [];
+    private readonly Dictionary<ulong, ArmyRusherAttackState> rocketAttacks = [];
+    private readonly Dictionary<ulong, Vector3> rocketShotTargets = [];
+    private readonly List<CardRocketShotIntent> rocketShotIntents = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -1331,6 +1337,12 @@ public sealed partial class MatchEngine
     internal bool CardRocketWalking(ulong entityKey) =>
         rocketWalks.ContainsKey(entityKey);
 
+    internal ArmyRusherAttackState? CardRocketAttack(ulong entityKey) =>
+        rocketAttacks.GetValueOrDefault(entityKey);
+
+    internal IReadOnlyList<CardRocketShotIntent> CardRocketShotIntents() =>
+        rocketShotIntents.ToArray();
+
     internal Vector3? CardRocketAim(ulong entityKey)
     {
         if (phase != BattlePhase.Running || map == null ||
@@ -1418,7 +1430,76 @@ public sealed partial class MatchEngine
             entity.PositionTick = tick;
             cardUnitCombat?.UpdatePose(entity);
             if (walk.Arrived)
+            {
                 rocketWalks.Remove(entityKey);
+                StartCardRocketAttack(entityKey);
+            }
+        }
+    }
+
+    private void StartCardRocketAttack(ulong entityKey)
+    {
+        CardUnitInitialPoint point = cardEnemyPoints?.Find(entityKey) ??
+            throw new InvalidDataException("Card Rocket reached no source Corner.");
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity))
+            throw new InvalidDataException("Card Rocket reached a point without its soldier.");
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Rocket lost its card shot row.");
+        if (point.ComponentType != "EnemyPointCorner" ||
+            source.EntityKey != entityKey || source.SourceCardId != "BIGROCKET")
+            throw new InvalidDataException("Card Rocket has no Corner attack authority.");
+
+        // BazookaEnemy has a two-second PhysicalAmmoWeapon cadence.
+        // EnemyController.SwitchState(CornerHiding) draws the first delay.
+        var attack = new ArmyRusherAttackState(source.BaseStats.Shot,
+            NextArmyFloat, shotIntervalTicks: 2 * MatchManifest.TickRate);
+        attack.BeginInitialCooldown();
+        if (!rocketAttacks.TryAdd(entityKey, attack))
+            throw new InvalidDataException("Card Rocket attack started twice.");
+    }
+
+    private void AdvanceCardRocketAttacks()
+    {
+        rocketShotIntents.Clear();
+        foreach (var (entityKey, attack) in rocketAttacks.OrderBy(row => row.Key))
+        {
+            CardUnitInitialPoint? point = cardEnemyPoints?.Find(entityKey);
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "BIGROCKET" ||
+                rocketWalks.ContainsKey(entityKey) ||
+                point?.ComponentType != "EnemyPointCorner" ||
+                point.CornerDirection is not Vector3 ||
+                point.CornerRightSide is not bool)
+                throw new InvalidDataException("Card Rocket attack lost its Corner.");
+            Vector3 cornerDirection = point.CornerDirection.Value;
+            bool cornerRightSide = point.CornerRightSide.Value;
+
+            if (attack.Phase == ArmyRusherAttackPhase.Ready)
+            {
+                Vector3? aim = CardRocketAim(entityKey);
+                Vector3 origin = new(entity.X, entity.Y, entity.Z);
+                if (aim is Vector3 target)
+                {
+                    if (!CornerShotPolicy.CanExpose(cornerDirection, cornerRightSide,
+                            origin, target))
+                        attack.RetryAfterRejectedTarget();
+                    else if (attack.TryBegin(true, 1,
+                                 (int)MathF.Ceiling(.7f * MatchManifest.TickRate)))
+                        rocketShotTargets[entityKey] = target;
+                }
+            }
+
+            attack.AdvanceTick();
+            if (!attack.ShotDue)
+                continue;
+            if (!rocketShotTargets.TryGetValue(entityKey, out Vector3 shotTarget))
+                throw new InvalidDataException("Card Rocket lost its latched aim.");
+            rocketShotIntents.Add(new CardRocketShotIntent(entityKey, tick,
+                shotTarget, attack.CurrentShotIsReal, attack.BatchCursor,
+                attack.BatchSize));
+            attack.CommitShot();
+            if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
+                rocketShotTargets.Remove(entityKey);
         }
     }
 
@@ -1466,6 +1547,9 @@ public sealed partial class MatchEngine
         cardRocketMissiles.Remove(entityKey);
         rocketPointRetryTicks.Remove(entityKey);
         rocketWalks.Remove(entityKey);
+        rocketAttacks.Remove(entityKey);
+        rocketShotTargets.Remove(entityKey);
+        rocketShotIntents.RemoveAll(intent => intent.EntityKey == entityKey);
         if (entity.SourceCardId == "BIGROCKET")
             cardEnemyPoints?.Release(entityKey);
 

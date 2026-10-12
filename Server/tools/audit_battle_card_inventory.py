@@ -129,9 +129,15 @@ def check_rocket_card_setup():
         "Scripts/Assembly-CSharp/GameShootableEntityPlayer.cs")
     player_controller = (ASSETS / "Scripts/Assembly-CSharp/PlayerController.cs")
     spawning = (ASSETS / "Scripts/Assembly-CSharp/SpawningManager.cs")
+    enemy_controller = (ASSETS / "Scripts/Assembly-CSharp/EnemyController.cs")
+    weapon_prefab = (ASSETS / "GameObject/BazookaEnemy.prefab")
     scene = SCENE.read_text(encoding="utf-8-sig")
     rocket_component = scene.split("--- !u!114 &42012\n", 1)[1].split(
         "\n--- !u!", 1)[0]
+    bazooka_weapon = weapon_prefab.read_text(encoding="utf-8-sig").split(
+        "--- !u!114 &11431434\n", 1)[1].split("\n--- !u!", 1)[0]
+    bazooka_cadence = bazooka_weapon.split("  cadence:\n", 1)[1].split(
+        "  clipSize:", 1)[0]
     if (any(line not in behavior for line in required) or
         "unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);" not in
             card_spawn.read_text(encoding="utf-8-sig") or
@@ -146,8 +152,12 @@ def check_rocket_card_setup():
         "unitDictionaryId: ID_UNIT-ROCKETSOLDIER" not in rocket_component or
         "enemyPointType: 6" not in rocket_component or
         "GetPoint(SoldierBehaviour behaviour, float minDistance = 0f" not in
-            spawning.read_text(encoding="utf-8-sig")):
-        raise ValueError("Rocket card setup, aim or point rules differ from recovered Client")
+            spawning.read_text(encoding="utf-8-sig") or
+        "fakeValue: 2" not in bazooka_cadence or
+        "infiniteAmmo: 1" not in bazooka_weapon or
+        "ShootFromBazookaFromCover(mCoverShotRight);\n\t\t\t\tShoot(0.7f);" not in
+            enemy_controller.read_text(encoding="utf-8-sig")):
+        raise ValueError("Rocket card setup, aim, point or shot timing differs from recovered Client")
 
 
 def check_big_medkit_source():
