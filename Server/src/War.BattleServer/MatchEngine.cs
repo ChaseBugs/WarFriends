@@ -3053,6 +3053,16 @@ public sealed partial class MatchEngine : IMatchRuntime
         player.LastSeen=hostTick;
         return result;
     }
+    private static BattleJointRotation ParachuteWireRotation(Quaternion rotation)
+    {
+        if(!float.IsFinite(rotation.X)||!float.IsFinite(rotation.Y)||
+           !float.IsFinite(rotation.Z)||!float.IsFinite(rotation.W)||
+           MathF.Abs(rotation.LengthSquared()-1f)>.001f)
+            throw new InvalidDataException("Parachute has invalid source rotation.");
+        return new BattleJointRotation
+        {X=rotation.X,Y=rotation.Y,Z=rotation.Z,W=rotation.W};
+    }
+
     public MatchArmyEntityBatch ArmyEntityBatch(string playerId,ulong after,ulong expectedRevision)
     {
         var player=Find(playerId);
@@ -3066,7 +3076,13 @@ public sealed partial class MatchEngine : IMatchRuntime
         if(after!=0 && (activeArmyEntities.Count==0 || after>activeArmyEntities.Keys.Max()))
         {result.Code="invalid-cursor";return result;}
         var remaining=activeArmyEntities.Where(pair=>pair.Key>after).OrderBy(pair=>pair.Key).ToArray();
-        foreach(var row in remaining.Take(4))
+        // A lingering canopy adds an impact pose to its soldier row. Keep
+        // those UDP pages at three entities; ordinary pages retain four.
+        bool hasLandingCanopy=remaining.Take(4).Any(row=>
+            paratrooperLandingTicks.TryGetValue(row.Key,out ulong landingTick) &&
+            tick>=landingTick && tick-landingTick<3u*MatchManifest.TickRate);
+        int pageSize=hasLandingCanopy?3:4;
+        foreach(var row in remaining.Take(pageSize))
         {
             var entity=row.Value.Clone();
             if(infantryAnimations.TryGetValue(row.Key,out var animation))
@@ -3087,14 +3103,25 @@ public sealed partial class MatchEngine : IMatchRuntime
             {
                 if(entity.SourceCardId!="ELITEPARA")
                     throw new InvalidDataException("Parachute flight lost its card identity.");
-                Quaternion rotation=flight.Rotation;
-                if(!float.IsFinite(rotation.X)||!float.IsFinite(rotation.Y)||
-                   !float.IsFinite(rotation.Z)||!float.IsFinite(rotation.W)||
-                   MathF.Abs(rotation.LengthSquared()-1f)>.001f)
-                    throw new InvalidDataException("Parachute flight has invalid rotation.");
                 entity.ParachuteActive=true;
-                entity.ParachuteRotation=new BattleJointRotation
-                {X=rotation.X,Y=rotation.Y,Z=rotation.Z,W=rotation.W};
+                entity.ParachuteRotation=ParachuteWireRotation(flight.Rotation);
+            }
+            else if(paratrooperLandingTicks.TryGetValue(row.Key,
+                        out ulong landingTick) && tick>=landingTick &&
+                    tick-landingTick<3u*MatchManifest.TickRate)
+            {
+                if(entity.SourceCardId!="ELITEPARA" ||
+                   !paratrooperLandingPositions.TryGetValue(row.Key,
+                       out Vector3 landingPosition) ||
+                   !paratrooperLandingRotations.TryGetValue(row.Key,
+                       out Quaternion landingRotation) ||
+                   !PlayerHitbox.Finite(landingPosition))
+                    throw new InvalidDataException("Parachute landing lost its source pose.");
+                entity.ParachuteLandingTick=landingTick;
+                entity.ParachuteLandingX=landingPosition.X;
+                entity.ParachuteLandingY=landingPosition.Y;
+                entity.ParachuteLandingZ=landingPosition.Z;
+                entity.ParachuteRotation=ParachuteWireRotation(landingRotation);
             }
             if(entity.UnitId=="ID_UNIT-HELICOPTER")
             {

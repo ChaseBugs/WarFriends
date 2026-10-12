@@ -367,6 +367,12 @@ message BattleArmyEntityState {
   // Its Rigidbody rotation is independent of the soldier's planar facing.
   bool parachute_active = 39;
   BattleJointRotation parachute_rotation = 40;
+  // Original Parachute survives for three seconds at its impact position.
+  // These fields exist only during that post-contact presentation window.
+  uint64 parachute_landing_tick = 41;
+  float parachute_landing_x = 42;
+  float parachute_landing_y = 43;
+  float parachute_landing_z = 44;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

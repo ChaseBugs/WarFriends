@@ -540,7 +540,20 @@ internal static class LiveRifleTests
         Check(War.Protocol.Transport.PacketCodec.Encode(new Packet {Version=1,SessionId=ulong.MaxValue,
             Sequence=ulong.MaxValue,Ack=ulong.MaxValue,AckBits=uint.MaxValue,
             MatchArmyEntityBatch=maximumArmy},new byte[32]).Length<=1200,
-            "four maximum-width army entities fit one authenticated UDP page");
+            "four airborne army entities fit one authenticated UDP page");
+        maximumArmy.Entities.RemoveAt(3);
+        foreach (var row in maximumArmy.Entities)
+        {
+            row.ParachuteActive=false;
+            row.ParachuteLandingTick=ulong.MaxValue;
+            row.ParachuteLandingX=float.MaxValue;
+            row.ParachuteLandingY=float.MaxValue;
+            row.ParachuteLandingZ=float.MaxValue;
+        }
+        Check(War.Protocol.Transport.PacketCodec.Encode(new Packet {Version=1,SessionId=ulong.MaxValue,
+            Sequence=ulong.MaxValue,Ack=ulong.MaxValue,AckBits=uint.MaxValue,
+            MatchArmyEntityBatch=maximumArmy},new byte[32]).Length<=1200,
+            "three landed-canopy army entities fit one authenticated UDP page");
         var maximumEvents=new MatchEventBatch {MatchId=new string('m',64),ManifestHash=new string('a',64),
             LatestEventId=ulong.MaxValue,Code="events"};
         for(int i=0;i<4;i++)maximumEvents.Events.Add(new MatchEvent {EventId=ulong.MaxValue-(ulong)(3-i),

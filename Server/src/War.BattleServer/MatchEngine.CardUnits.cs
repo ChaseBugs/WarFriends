@@ -26,6 +26,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> paratrooperAirShotStartTicks = [];
     private readonly Dictionary<ulong, ulong> paratrooperLandingTicks = [];
     private readonly Dictionary<ulong, Quaternion> paratrooperLandingRotations = [];
+    private readonly Dictionary<ulong, Vector3> paratrooperLandingPositions = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -295,7 +296,7 @@ public sealed partial class MatchEngine
             bool beganFallback = BeginCardParatrooperFallback(entity, landedPosition);
             if (beganFallback)
             {
-                RecordCardParatrooperLanding(entityKey, flight);
+                RecordCardParatrooperLanding(entityKey, flight, landedPosition);
                 parachuteFlights.Remove(entityKey);
             }
             return beganFallback;
@@ -313,7 +314,7 @@ public sealed partial class MatchEngine
             entity.PositionTick = tick;
             cardUnitCombat!.UpdatePose(entity);
             paratrooperWalks.Add(entityKey, walk);
-            RecordCardParatrooperLanding(entityKey, flight);
+            RecordCardParatrooperLanding(entityKey, flight, landedPosition);
             parachuteFlights.Remove(entityKey);
             armyEntityRevision++;
             stateRevision++;
@@ -327,10 +328,11 @@ public sealed partial class MatchEngine
     }
 
     private void RecordCardParatrooperLanding(ulong entityKey,
-        CardParachuteFlightState flight)
+        CardParachuteFlightState flight, Vector3 landedPosition)
     {
         if (!paratrooperLandingTicks.TryAdd(entityKey, tick) ||
-            !paratrooperLandingRotations.TryAdd(entityKey, flight.Rotation))
+            !paratrooperLandingRotations.TryAdd(entityKey, flight.Rotation) ||
+            !paratrooperLandingPositions.TryAdd(entityKey, landedPosition))
             throw new InvalidDataException("Card Paratrooper landed more than once.");
     }
 
@@ -1409,6 +1411,7 @@ public sealed partial class MatchEngine
             paratrooperAirShotStartTicks.Remove(entityKey);
             paratrooperLandingTicks.Remove(entityKey);
             paratrooperLandingRotations.Remove(entityKey);
+            paratrooperLandingPositions.Remove(entityKey);
             paratrooperWalks.Remove(entityKey);
             paratrooperFallbackWalks.Remove(entityKey);
             paratrooperPointRetryTicks.Remove(entityKey);

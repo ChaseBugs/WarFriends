@@ -323,7 +323,8 @@ namespace War.Client
                    batch.Code!="revision-changed" && batch.Code!="invalid-cursor" ||
                    batch.Entities.Count>4 || batch.Code!="entities" && (batch.Entities.Count!=0 || batch.HasMore) ||
                    batch.Code=="entities" && expectedRevision!=0 && batch.Revision!=expectedRevision ||
-                   batch.HasMore && batch.Entities.Count!=4)
+                   batch.HasMore && batch.Entities.Count!=3 &&
+                       batch.Entities.Count!=4)
                     throw new InvalidOperationException("Battle host returned invalid army entity authority.");
                 ulong prior=after;
                 foreach(var entity in batch.Entities)
@@ -338,7 +339,7 @@ namespace War.Client
                            : entity.OptionIndex != -1 ||
                              !CardUnitSourceIdentity.Matches(entity.SourceCardId, entity.UnitId)) ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
-                       !ValidParachute(entity) ||
+                       !ValidParachute(entity,batch.ServerTick) ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
                            entity.HelicopterRotation!=null) ||
@@ -383,13 +384,25 @@ namespace War.Client
         }
 
         private static bool FiniteCoordinate(float x)=>!float.IsNaN(x) && !float.IsInfinity(x) && Math.Abs(x)<=10000;
-        internal static bool ValidParachute(BattleArmyEntityState entity)
+        internal static bool ValidParachute(BattleArmyEntityState entity,
+            ulong serverTick)
         {
-            if(!entity.ParachuteActive)
-                return entity.ParachuteRotation==null;
-            return entity.SourceCardId=="ELITEPARA" &&
-                   entity.UnitId=="ID_UNIT-PARATROOPER" &&
-                   ValidUnitRotation(entity.ParachuteRotation);
+            bool hasLandingPosition=entity.ParachuteLandingX!=0 ||
+                entity.ParachuteLandingY!=0 || entity.ParachuteLandingZ!=0;
+            if(!entity.ParachuteActive && entity.ParachuteLandingTick==0)
+                return entity.ParachuteRotation==null && !hasLandingPosition;
+            if(entity.SourceCardId!="ELITEPARA" ||
+               entity.UnitId!="ID_UNIT-PARATROOPER" ||
+               !ValidUnitRotation(entity.ParachuteRotation))return false;
+            if(entity.ParachuteActive)
+                return entity.ParachuteLandingTick==0 && !hasLandingPosition;
+            return entity.ParachuteLandingTick>=entity.SpawnTick &&
+                   entity.ParachuteLandingTick<=entity.PositionTick &&
+                   entity.ParachuteLandingTick<=serverTick &&
+                   serverTick-entity.ParachuteLandingTick<90 &&
+                   FiniteCoordinate(entity.ParachuteLandingX) &&
+                   FiniteCoordinate(entity.ParachuteLandingY) &&
+                   FiniteCoordinate(entity.ParachuteLandingZ);
         }
         internal static bool ValidHelicopterCrew(BattleArmyEntityState entity)
         {

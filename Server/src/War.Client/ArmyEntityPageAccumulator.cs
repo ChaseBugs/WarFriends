@@ -25,7 +25,8 @@ namespace War.Client
             if (page == null || page.Code != "entities" || Complete)
                 throw new InvalidOperationException("Expected an unfinished army entity page.");
             if (page.ActiveCount > 10000 || page.Entities.Count > 4 ||
-                page.HasMore && page.Entities.Count != 4)
+                page.HasMore && page.Entities.Count != 3 &&
+                    page.Entities.Count != 4)
                 throw new InvalidOperationException("Army entity page exceeds its bounds.");
 
             if (entities.Count == 0 && Cursor == 0)

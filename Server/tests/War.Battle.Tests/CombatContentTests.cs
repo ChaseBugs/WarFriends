@@ -12026,6 +12026,33 @@ internal static class CombatContentTests
             "Park Corner point has a nearby walkable landing fixture");
         Vector3 paraLanding = paraLandingCandidate ??
             throw new InvalidDataException("Park Paratrooper landing fixture is missing.");
+        var canopyPageMatch = ReadyCardMatch("host-card-para-pages", "ELITEPARA");
+        Check(canopyPageMatch.TryScheduleCardUnit(
+                  "adadadadadadadadadadadadadadadad", decoyPlayer,
+                  "ELITEPARA") &&
+              canopyPageMatch.TryScheduleCardUnit(
+                  "aeaeaeaeaeaeaeaeaeaeaeaeaeaeaeae", decoyOpponent,
+                  "ELITEPARA"),
+            "both players schedule card Paratroopers for a canopy page");
+        for (ulong pageTick = 61; pageTick <= 75; pageTick++)
+            canopyPageMatch.Advance(pageTick);
+        ulong pageLandingEntity = canopyPageMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.First(row =>
+                row.OwnerPlayerId == decoyPlayer).EntityKey;
+        Check(canopyPageMatch.ConfirmCardParatrooperLanding(
+                  pageLandingEntity, paraLanding),
+            "one Paratrooper lands while four card soldiers remain active");
+        var firstCanopyPage = canopyPageMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0);
+        var finalCanopyPage = canopyPageMatch.ArmyEntityBatch(decoyPlayer,
+            firstCanopyPage.Entities[^1].EntityKey, firstCanopyPage.Revision);
+        Check(firstCanopyPage.ActiveCount == 4 &&
+              firstCanopyPage.Entities.Count == 3 && firstCanopyPage.HasMore &&
+              finalCanopyPage.Entities.Count == 1 && !finalCanopyPage.HasMore &&
+              firstCanopyPage.Entities.Concat(finalCanopyPage.Entities)
+                  .Single(row => row.EntityKey == pageLandingEntity)
+                  .ParachuteLandingTick == 75,
+            "the expanded canopy pose uses a three-entity UDP page and a final cursor page");
         var landingDuringShot = ReadyCardMatch(
             "host-card-para-land-during-shot", "ELITEPARA");
         Check(landingDuringShot.Command(decoyOpponent, new MatchCommand
@@ -12130,6 +12157,15 @@ internal static class CombatContentTests
               !paraCardMatch.ConfirmCardParatrooperLanding(
                   remainingPara.EntityKey, paraLanding),
             "host-confirmed Paratrooper landing reserves one Corner point once");
+        var landedPara = paraCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(row => row.EntityKey == remainingPara.EntityKey);
+        Check(!landedPara.ParachuteActive &&
+              landedPara.ParachuteLandingTick == 75 &&
+              landedPara.ParachuteLandingX == paraLanding.X &&
+              landedPara.ParachuteLandingY == paraLanding.Y &&
+              landedPara.ParachuteLandingZ == paraLanding.Z &&
+              landedPara.ParachuteRotation != null,
+            "landed Paratrooper keeps its canopy at the host impact pose");
         paraCardMatch.Advance(76);
         var walkingPara = paraCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.Single();
@@ -12137,7 +12173,8 @@ internal static class CombatContentTests
               walkingPara.InfantryClip == "run_0" &&
               paraCardMatch.InfantryPose(walkingPara.EntityKey)?.Clip == "run_0" &&
               !walkingPara.ParachuteActive &&
-              walkingPara.ParachuteRotation == null &&
+              walkingPara.ParachuteLandingTick == 75 &&
+              walkingPara.ParachuteRotation != null &&
               new Vector3(walkingPara.X, walkingPara.Y, walkingPara.Z) !=
                   paraLanding,
             "landed Paratrooper begins host-owned movement to its Corner point");
@@ -12302,6 +12339,12 @@ internal static class CombatContentTests
         Check(paraLookPoseSeen && paraFirePoseSeen && paraCoverBackPoseSeen &&
               paraFiringDirectionMatched,
             "card Paratrooper Corner publishes reveal, fire, and cover-return poses facing its muzzle");
+        var expiredCanopy = firingParaMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(row => row.EntityKey == firingPara.EntityKey);
+        Check(!expiredCanopy.ParachuteActive &&
+              expiredCanopy.ParachuteLandingTick == 0 &&
+              expiredCanopy.ParachuteRotation == null,
+            "Paratrooper canopy leaves the roster after three host seconds");
         Check(!paraChangedCorner && occupiedOtherCorner != 0 &&
               firingParaMatch.CardParatrooperCornerChangeTick(
                   firingPara.EntityKey) > 999,

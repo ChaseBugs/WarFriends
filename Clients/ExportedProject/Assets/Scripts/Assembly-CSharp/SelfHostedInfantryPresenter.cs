@@ -18,6 +18,9 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public float ReceivedAt;
         public GameObject Canopy;
         public Quaternion CanopyRotation;
+        public bool CanopyAttached;
+        public float CanopyExpiryAt;
+        public Material CanopyLandingMaterial;
     }
 
     private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
@@ -81,7 +84,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             if (!present.Contains(pair.Key)) removed.Add(pair.Key);
         foreach (var entityKey in removed)
         {
-            DestroyVisual(active[entityKey].Root);
+            DestroyVisual(active[entityKey]);
             active.Remove(entityKey);
         }
     }
@@ -98,10 +101,24 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             !Finite(row.Health) || row.Health <= 0 || row.Health > row.MaxHealth ||
             !Finite(row.MaxKevlar) || row.MaxKevlar < 0 ||
             !Finite(row.Kevlar) || row.Kevlar < 0 || row.Kevlar > row.MaxKevlar ||
-            (row.ParachuteActive
-                ? row.SourceCardId != "ELITEPARA" || !ValidRotation(row.ParachuteRotation)
-                : row.ParachuteRotation != null))
+            !ValidParachute(row))
             throw new InvalidOperationException("Invalid authoritative infantry visual state.");
+    }
+
+    private static bool ValidParachute(BattleArmyEntityState row)
+    {
+        bool hasLandingPosition = row.ParachuteLandingX != 0 ||
+            row.ParachuteLandingY != 0 || row.ParachuteLandingZ != 0;
+        if (!row.ParachuteActive && row.ParachuteLandingTick == 0)
+            return row.ParachuteRotation == null && !hasLandingPosition;
+        if (row.SourceCardId != "ELITEPARA" ||
+            !ValidRotation(row.ParachuteRotation)) return false;
+        if (row.ParachuteActive)
+            return row.ParachuteLandingTick == 0 && !hasLandingPosition;
+        return row.ParachuteLandingTick >= row.SpawnTick &&
+            row.ParachuteLandingTick <= row.PositionTick &&
+            Finite(row.ParachuteLandingX) &&
+            Finite(row.ParachuteLandingY) && Finite(row.ParachuteLandingZ);
     }
 
     private static bool ValidRotation(BattleJointRotation rotation)
@@ -197,16 +214,16 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         visual.SecondsAtReceive = serverTick >= visual.ClipStartTick ?
             (float)((serverTick - visual.ClipStartTick) / 30.0) : 0f;
         visual.ReceivedAt = Time.realtimeSinceStartup;
-        UpdateCanopy(visual, row);
+        UpdateCanopy(visual, row, serverTick);
         Sample(visual, visual.SecondsAtReceive);
     }
 
-    private void UpdateCanopy(Visual visual, BattleArmyEntityState row)
+    private void UpdateCanopy(Visual visual, BattleArmyEntityState row,
+        ulong serverTick)
     {
-        if (!row.ParachuteActive)
+        if (!row.ParachuteActive && row.ParachuteLandingTick == 0)
         {
-            if (visual.Canopy != null) DestroyVisual(visual.Canopy);
-            visual.Canopy = null;
+            DestroyCanopy(visual);
             return;
         }
         if (parachuteSource == null || parachuteSource.parashuteRenderer == null ||
@@ -225,6 +242,42 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         visual.CanopyRotation = new Quaternion(row.ParachuteRotation.X,
             row.ParachuteRotation.Y, row.ParachuteRotation.Z,
             row.ParachuteRotation.W);
+        if (row.ParachuteActive)
+        {
+            visual.Canopy.transform.SetParent(visual.Root.transform, false);
+            visual.Canopy.transform.localPosition = Vector3.zero;
+            visual.CanopyAttached = true;
+            visual.CanopyExpiryAt = 0;
+        }
+        else
+        {
+            ulong expiryTick = row.ParachuteLandingTick + 90UL;
+            if (serverTick >= expiryTick)
+            {
+                DestroyCanopy(visual);
+                return;
+            }
+            visual.Canopy.transform.SetParent(null, true);
+            visual.Canopy.transform.position = new Vector3(row.ParachuteLandingX,
+                row.ParachuteLandingY, row.ParachuteLandingZ);
+            if (visual.CanopyLandingMaterial == null)
+            {
+                var landingShader = Shader.Find(
+                    "Legacy Shaders/Transparent/DiffuseNew");
+                var canopyRenderer = visual.Canopy.GetComponentInChildren<MeshRenderer>(true);
+                if (landingShader == null || canopyRenderer == null ||
+                    canopyRenderer.sharedMaterial == null)
+                    throw new InvalidOperationException(
+                        "Recovered parachute landing material is absent.");
+                visual.CanopyLandingMaterial = new Material(
+                    canopyRenderer.sharedMaterial);
+                visual.CanopyLandingMaterial.shader = landingShader;
+                canopyRenderer.sharedMaterial = visual.CanopyLandingMaterial;
+            }
+            visual.CanopyAttached = false;
+            visual.CanopyExpiryAt = Time.realtimeSinceStartup +
+                (float)((expiryTick - serverTick) / 30.0);
+        }
         visual.Canopy.transform.rotation = visual.CanopyRotation;
     }
 
@@ -238,8 +291,11 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         foreach (var visual in active.Values)
         {
             visual.Motion.Render(visual.Root.transform, realtime, frameSeconds);
-            if (visual.Canopy != null)
+            if (visual.Canopy != null && visual.CanopyAttached)
                 visual.Canopy.transform.rotation = visual.CanopyRotation;
+            if (visual.Canopy != null && !visual.CanopyAttached &&
+                realtime >= visual.CanopyExpiryAt)
+                DestroyCanopy(visual);
             float elapsed = Mathf.Max(0f, realtime - visual.ReceivedAt);
             Sample(visual, visual.SecondsAtReceive + elapsed);
         }
@@ -283,8 +339,28 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
 
     private void OnDestroy()
     {
-        foreach (var visual in active.Values) DestroyVisual(visual.Root);
+        foreach (var visual in active.Values) DestroyVisual(visual);
         active.Clear();
+    }
+
+    private static void DestroyCanopy(Visual visual)
+    {
+        if (visual.Canopy != null) DestroyVisual(visual.Canopy);
+        if (visual.CanopyLandingMaterial != null)
+        {
+            if (Application.isPlaying)
+                UnityEngine.Object.Destroy(visual.CanopyLandingMaterial);
+            else UnityEngine.Object.DestroyImmediate(visual.CanopyLandingMaterial);
+        }
+        visual.Canopy = null;
+        visual.CanopyAttached = false;
+        visual.CanopyLandingMaterial = null;
+    }
+
+    private static void DestroyVisual(Visual visual)
+    {
+        DestroyCanopy(visual);
+        DestroyVisual(visual.Root);
     }
 
     private static void DestroyVisual(GameObject root)

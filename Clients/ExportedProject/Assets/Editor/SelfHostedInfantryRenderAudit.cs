@@ -187,15 +187,31 @@ public static class SelfHostedInfantryRenderAudit
                 canopy.GetComponentsInChildren<Rigidbody>(true).Length == 0,
                 "airborne card Paratrooper uses the source canopy without gameplay components");
             parachuteRow.ParachuteActive = false;
-            parachuteRow.ParachuteRotation = null;
+            parachuteRow.ParachuteLandingTick = 61;
+            parachuteRow.ParachuteLandingX = 4;
+            parachuteRow.ParachuteLandingY = 2;
+            parachuteRow.ParachuteLandingZ = 3;
             parachuteRow.InfantryClip = "run_0";
             parachuteRow.InfantryClipStartTick = 61;
             parachuteRow.PositionTick = 61;
             presenter.Apply(new List<BattleArmyEntityState>
                 { cardRow, swatCardRow, sniperCardRow, parachuteRow });
-            Require(parachuteVisual != null &&
+            Require(canopy != null && canopy.parent == null &&
+                Vector3.Distance(canopy.position, new Vector3(4, 2, 3)) < .001f &&
+                canopy.GetComponentInChildren<MeshRenderer>(true)
+                    .sharedMaterial.shader.name ==
+                    "Legacy Shaders/Transparent/DiffuseNew" &&
+                parachuteVisual != null &&
                 parachuteVisual.transform.Find("ParachuteCanopy") == null,
-                "landed card Paratrooper removes its separate canopy visual");
+                "landed canopy stays at its host impact position while soldier walks");
+            presenter.RenderAt(Time.realtimeSinceStartup + 3.1f, .016f);
+            Require(canopy == null && parachuteVisual != null,
+                "landed canopy expires after the source three-second lifetime");
+            parachuteRow.ParachuteLandingTick = 0;
+            parachuteRow.ParachuteLandingX = 0;
+            parachuteRow.ParachuteLandingY = 0;
+            parachuteRow.ParachuteLandingZ = 0;
+            parachuteRow.ParachuteRotation = null;
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
