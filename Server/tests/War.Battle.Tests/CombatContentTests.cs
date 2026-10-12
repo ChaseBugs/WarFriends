@@ -17217,6 +17217,31 @@ internal static class CombatContentTests
             "opposing Tank missile damages independent Decoy host health");
         Reject(()=>missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
             "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},enemyDecoyCenter));
+        var cardRocketLaunch = new CardRocketLaunchAuthority(decoyPlayer,
+            rocketStats.Rocket!, content.Army.PlayerDamagePolicy(
+                "ID_UNIT-ROCKETSOLDIER"));
+        int rocketAttackerFraction = missileDecoyManifest.Players
+            .Single(player => player.PlayerId == decoyPlayer).Fraction;
+        var friendlyDecoyRocketImpact = new CardRocketMissileImpact(901, 1,
+            friendlyDecoyCenter, null, 60, false);
+        float friendlyDecoyHealthBeforeRocket = missileDecoyMatch
+            .DecoyHealth(friendlyMissileDecoy.EntityId)!.Value;
+        missileDecoyMatch.ApplyCardRocketDecoyExplosion(
+            friendlyDecoyRocketImpact, cardRocketLaunch,
+            rocketAttackerFraction);
+        Check(missileDecoyMatch.DecoyHealth(friendlyMissileDecoy.EntityId) ==
+                  friendlyDecoyHealthBeforeRocket,
+            "Rocket card blast leaves a friendly Decoy at its prior health");
+        float enemyDecoyHealthBeforeRocket = missileDecoyMatch
+            .DecoyHealth(enemyMissileDecoy.EntityId)!.Value;
+        missileDecoyMatch.ApplyCardRocketDecoyExplosion(
+            new CardRocketMissileImpact(902, 1, enemyDecoyCenter,
+                null, 60, false), cardRocketLaunch, rocketAttackerFraction);
+        float? enemyDecoyHealthAfterRocket = missileDecoyMatch
+            .DecoyHealth(enemyMissileDecoy.EntityId);
+        Check(enemyDecoyHealthAfterRocket == null ||
+              enemyDecoyHealthAfterRocket < enemyDecoyHealthBeforeRocket,
+            "Rocket card blast damages one enemy Decoy host-health owner");
         for(int blast=0;blast<30&&missileDecoyMatch.DecoyHealth(enemyMissileDecoy.EntityId)!=null;blast++)
             missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
                 "ID_UNIT-TANK",21,tankMissileBinding,enemyDecoyCenter);
@@ -17279,6 +17304,24 @@ internal static class CombatContentTests
             "opposing Tank missile damages one Heavy Turret owner across three colliders");
         Reject(()=>missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
             "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},enemyTurretCenter));
+        float friendlyTurretHealthBeforeRocket = missileTurretMatch
+            .HeavyTurretHealth(friendlyMissileTurret.EntityId)!.Value;
+        missileTurretMatch.ApplyCardRocketHeavyTurretExplosion(
+            new CardRocketMissileImpact(903, 1, friendlyTurretCenter,
+                null, 60, false), cardRocketLaunch, rocketAttackerFraction);
+        Check(missileTurretMatch.HeavyTurretHealth(friendlyMissileTurret.EntityId) ==
+                  friendlyTurretHealthBeforeRocket,
+            "Rocket card blast leaves a friendly Heavy Turret untouched");
+        float enemyTurretHealthBeforeRocket = missileTurretMatch
+            .HeavyTurretHealth(enemyMissileTurret.EntityId)!.Value;
+        missileTurretMatch.ApplyCardRocketHeavyTurretExplosion(
+            new CardRocketMissileImpact(904, 1, enemyTurretCenter,
+                null, 60, false), cardRocketLaunch, rocketAttackerFraction);
+        float? enemyTurretHealthAfterRocket = missileTurretMatch
+            .HeavyTurretHealth(enemyMissileTurret.EntityId);
+        Check(enemyTurretHealthAfterRocket == null ||
+              enemyTurretHealthAfterRocket < enemyTurretHealthBeforeRocket,
+            "Rocket card blast damages one enemy Heavy Turret across its colliders");
         for(int blast=0;blast<200&&missileTurretMatch.HeavyTurretHealth(enemyMissileTurret.EntityId)!=null;blast++)
             missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
                 "ID_UNIT-TANK",21,tankMissileBinding,enemyTurretCenter);

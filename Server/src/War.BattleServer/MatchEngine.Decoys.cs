@@ -215,6 +215,42 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyCardRocketDecoyExplosion(CardRocketMissileImpact impact,
+        CardRocketLaunchAuthority launch, int attackerFraction)
+    {
+        if (decoySource == null)
+            return;
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Rocket Decoy owner disappeared.");
+        foreach (var collider in DecoyShotTargets(attacker, includeFriendly: true))
+        {
+            var target = decoys.Snapshot().SingleOrDefault(value =>
+                value.EntityId == collider.EntityId) ??
+                throw new InvalidDataException("Card Rocket Decoy lost host health.");
+            // BazookaEnemy has friendKill = false, including card-owned Decoys.
+            if (target.OwnerFraction == attackerFraction)
+                continue;
+            var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                target.Position, [collider.Hitbox], launch.Missile);
+            if (hit == null)
+                continue;
+            if (!float.IsFinite(hit.RawDamage) ||
+                hit.RawDamage is <= 0 or > 10_000_000 ||
+                !decoys.TryDamage(target.EntityId, hit.RawDamage,
+                    out var before, out bool destroyed) || before == null)
+                throw new InvalidDataException(
+                    "Card Rocket Decoy damage escaped host bounds.");
+            stateRevision++;
+            if (destroyed)
+            {
+                droneTargets.Disable(DroneDecoyId(target.EntityId));
+                Emit(MatchEventKind.DecoyDestroyed, launch.OwnerPlayerId,
+                    before.OwnerPlayerId, target.EntityId, before.Position, 0,
+                    "card-rocket");
+            }
+        }
+    }
+
     internal void ApplyGroundVehicleMissileDecoyExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {

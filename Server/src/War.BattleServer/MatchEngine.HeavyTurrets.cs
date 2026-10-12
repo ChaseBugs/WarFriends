@@ -369,6 +369,43 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyCardRocketHeavyTurretExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (heavyTurretSource == null)
+            return;
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Rocket turret owner disappeared.");
+        var colliders = HeavyTurretShotTargets(attacker,
+            includeFriendly: true);
+        foreach (var group in colliders.GroupBy(value => value.EntityId)
+                     .OrderBy(group => group.Key))
+        {
+            var turret = heavyTurrets.Snapshot().SingleOrDefault(value =>
+                value.EntityId == group.Key) ??
+                throw new InvalidDataException("Card Rocket turret lost host health.");
+            if (turret.OwnerFraction == attackerFraction)
+                continue;
+            var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                turret.Position, group.Select(value => value.Hitbox).ToArray(),
+                launch.Missile);
+            if (hit == null)
+                continue;
+            if (!float.IsFinite(hit.RawDamage) ||
+                hit.RawDamage is <= 0 or > 10_000_000 ||
+                !heavyTurrets.TryDamage(group.Key, hit.RawDamage,
+                    out var changed, out bool destroyed) || changed == null)
+                throw new InvalidDataException(
+                    "Card Rocket turret damage escaped host bounds.");
+            stateRevision++;
+            Emit(destroyed ? MatchEventKind.HeavyTurretDestroyed :
+                    MatchEventKind.HeavyTurretDamaged,
+                launch.OwnerPlayerId, changed.OwnerPlayerId, group.Key,
+                changed.Position, changed.Health, "card-rocket");
+        }
+    }
+
     internal void ApplyGroundVehicleMissileHeavyTurretExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {

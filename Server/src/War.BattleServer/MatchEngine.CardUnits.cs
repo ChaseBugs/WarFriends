@@ -1642,6 +1642,14 @@ public sealed partial class MatchEngine
             attacker.Definition.Fraction);
         if (Terminal)
             return;
+        ApplyCardRocketDecoyExplosion(impact, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
+        ApplyCardRocketHeavyTurretExplosion(impact, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
         foreach (var victim in players.Where(player => !player.Dead).ToArray())
         {
             var pose = rifleCombat.Pose(victim.Definition.PlayerId).Collision;
