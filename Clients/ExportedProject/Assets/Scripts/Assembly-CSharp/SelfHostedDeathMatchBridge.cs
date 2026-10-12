@@ -29,6 +29,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private SelfHostedLandMinePresenter landMinePresenter;
 	private SelfHostedHeavyTurretPresenter heavyTurretPresenter;
 	private SelfHostedDronePresenter dronePresenter;
+	private SelfHostedInfantryPresenter infantryPresenter;
 	private SelfHostedHelicopterPresenter helicopterPresenter;
 	private SelfHostedAssaultHelicopterPresenter assaultHelicopterPresenter;
 	private SelfHostedGroundVehiclePresenter groundVehiclePresenter;
@@ -67,6 +68,12 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		dronePresenter = gameObject.AddComponent<SelfHostedDronePresenter>();
 		dronePresenter.Configure(Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone);
 		client.ArmyEntitiesReceived += dronePresenter.Apply;
+		infantryPresenter = gameObject.AddComponent<SelfHostedInfantryPresenter>();
+		infantryPresenter.Configure(
+			Singleton<ObjectPoolDatabase>.instance == null ? null :
+				Singleton<ObjectPoolDatabase>.instance.enemy,
+			Singleton<LevelBehaviourManager>.instance, client);
+		client.ArmyEntitiesReceived += infantryPresenter.Apply;
 		helicopterPresenter = gameObject.AddComponent<SelfHostedHelicopterPresenter>();
 		ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;
 		LevelBehaviourManager behaviourManager = Singleton<LevelBehaviourManager>.instance;
@@ -410,6 +417,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (projectilePresenter != null) client.ProjectileScanReceived -= projectilePresenter.ApplyScan;
 		client.CombatEventReceived -= ApplyEvent;
 		if (dronePresenter != null) client.ArmyEntitiesReceived -= dronePresenter.Apply;
+		if (infantryPresenter != null) client.ArmyEntitiesReceived -= infantryPresenter.Apply;
 		if (helicopterPresenter != null) client.ArmyEntitiesReceived -= helicopterPresenter.Apply;
 		if (assaultHelicopterPresenter != null) client.ArmyEntitiesReceived -= assaultHelicopterPresenter.Apply;
 		if (local != null && local.playerProperties != null) client.UnbindRifleView(local.playerProperties.playerID);
