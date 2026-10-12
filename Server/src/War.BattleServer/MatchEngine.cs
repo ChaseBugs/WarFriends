@@ -1515,6 +1515,16 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceCardSniperPointRetries(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
+        if (advanced && phase == BattlePhase.Running && rocketPointRetryTicks.Count > 0)
+        {
+            try { AdvanceCardRocketPointRetries(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && rocketWalks.Count > 0)
+        {
+            try { AdvanceCardRocketWalks(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && sniperWalks.Count > 0)
         {
             try { AdvanceCardSniperWalks(); }

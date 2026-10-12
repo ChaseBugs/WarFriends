@@ -136,11 +136,11 @@ public sealed class CardUnitInitialPointCatalog
         ArgumentNullException.ThrowIfNull(available);
         if (fraction is not (1 or 2) || !PlayerHitbox.Finite(spawnPosition) ||
             !maps.TryGetValue(map.Source, out var points) ||
-            sourceCardId is not ("ELITEPARA" or "ELITESWAT"))
+            sourceCardId is not ("ELITEPARA" or "ELITESWAT" or "BIGROCKET"))
             throw new InvalidDataException("Invalid card initial-point selection.");
 
         return points.Where(point => point.Fraction == fraction &&
-                (sourceCardId == "ELITEPARA"
+                (sourceCardId is "ELITEPARA" or "BIGROCKET"
                     ? point.ComponentType is "EnemyPointCorner" or "EnemyPointHiding"
                     : point.ComponentType == "EnemyPointSwat") &&
                 available(point.ComponentFileId))

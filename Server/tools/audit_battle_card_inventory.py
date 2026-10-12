@@ -128,6 +128,10 @@ def check_rocket_card_setup():
     player_targets = (ASSETS /
         "Scripts/Assembly-CSharp/GameShootableEntityPlayer.cs")
     player_controller = (ASSETS / "Scripts/Assembly-CSharp/PlayerController.cs")
+    spawning = (ASSETS / "Scripts/Assembly-CSharp/SpawningManager.cs")
+    scene = SCENE.read_text(encoding="utf-8-sig")
+    rocket_component = scene.split("--- !u!114 &42012\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
     if (any(line not in behavior for line in required) or
         "unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);" not in
             card_spawn.read_text(encoding="utf-8-sig") or
@@ -138,8 +142,12 @@ def check_rocket_card_setup():
         "list.AddRange(base.GetShotTargets(type));" not in
             player_targets.read_text(encoding="utf-8-sig") or
         "currentPlayerPoint = mGoToPosition;" not in
-            player_controller.read_text(encoding="utf-8-sig")):
-        raise ValueError("Rocket card setup or shield aim differs from recovered Client")
+            player_controller.read_text(encoding="utf-8-sig") or
+        "unitDictionaryId: ID_UNIT-ROCKETSOLDIER" not in rocket_component or
+        "enemyPointType: 6" not in rocket_component or
+        "GetPoint(SoldierBehaviour behaviour, float minDistance = 0f" not in
+            spawning.read_text(encoding="utf-8-sig")):
+        raise ValueError("Rocket card setup, aim or point rules differ from recovered Client")
 
 
 def check_big_medkit_source():

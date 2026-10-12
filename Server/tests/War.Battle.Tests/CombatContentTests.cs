@@ -11819,6 +11819,15 @@ internal static class CombatContentTests
             cover.Fraction == 2 && cover.Main);
         Check(rocketAim == opposingCover.ShotPosition,
             "spawned Rocket card aims at the opponent's current cover shield");
+        Vector3 rocketStart = new(rocketEntity.X, rocketEntity.Y, rocketEntity.Z);
+        CardUnitInitialPoint? rocketPoint = content.CardUnitInitialPoints.Select(
+            park, "BIGROCKET", 1, rocketStart, _ => true);
+        Check(rocketPoint != null &&
+              rocketCardMatch.CardEnemyPoint(rocketEntity.EntityKey) == rocketPoint &&
+              rocketCardMatch.CardEnemyPointOccupant(rocketPoint.ComponentFileId) ==
+                  rocketEntity.EntityKey &&
+              rocketCardMatch.CardRocketWalking(rocketEntity.EntityKey),
+            "Rocket card reserves the nearest source Corner point and starts its walk");
         int rocketMoveDestination = park.Adjacent(
             park.Covers.ToList().IndexOf(opposingCover), -1, 2);
         Check(rocketMoveDestination >= 0 &&
@@ -11830,10 +11839,23 @@ internal static class CombatContentTests
               rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) ==
                   park.Covers[rocketMoveDestination].ShotPosition,
             "moving opponent changes the Rocket aim to the destination cover shield");
+        for (ulong rocketTick = 61; rocketTick <= 90; rocketTick++)
+            rocketCardMatch.Advance(rocketTick);
+        var movingRocket = rocketCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(entity => entity.EntityKey == rocketEntity.EntityKey);
+        Check(Vector3.Distance(rocketStart,
+                  new Vector3(movingRocket.X, movingRocket.Y, movingRocket.Z)) > .01f &&
+              movingRocket.InfantryClip == "bazooka_run" &&
+              rocketCardMatch.CardEnemyPointOccupant(
+                  rocketPoint!.ComponentFileId) == rocketEntity.EntityKey,
+            "Rocket card publishes its running pose while retaining the point");
         Check(rocketCardMatch.ConfirmArmyDeath(rocketEntity.EntityKey, false) &&
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) == null &&
-              rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) == null,
-            "card Rocket death removes the prepared missile authority");
+              rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) == null &&
+              !rocketCardMatch.CardRocketWalking(rocketEntity.EntityKey) &&
+              rocketCardMatch.CardEnemyPointOccupant(
+                  rocketPoint!.ComponentFileId) == null,
+            "card Rocket death removes its missile, walk and point authority");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
         const string hostCardRequest = "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5";

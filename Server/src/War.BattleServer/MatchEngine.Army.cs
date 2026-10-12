@@ -458,6 +458,12 @@ public sealed partial class MatchEngine
                     facing=AttackFacing(key,army,swatShotTargets);
                 }
             }
+            else if(army.SourceCardId=="BIGROCKET" &&
+                    rocketWalks.TryGetValue(key,out var rocketWalk))
+            {
+                clip=clips.Walk;
+                facing=rocketWalk.Facing;
+            }
             else if(warperRelocations.TryGetValue(key,out var warp))
             {
                 clip=warp.Phase==ArmyWarperRelocationPhase.Pause?"warp_idle":

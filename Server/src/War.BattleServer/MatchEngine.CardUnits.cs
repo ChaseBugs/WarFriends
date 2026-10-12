@@ -31,6 +31,8 @@ public sealed partial class MatchEngine
         Quaternion Rotation);
     private readonly Dictionary<ulong, LandedCanopy> deadParatrooperCanopies = [];
     private readonly Dictionary<ulong, ArmyCardRocketRuntime> cardRocketMissiles = [];
+    private readonly Dictionary<ulong, ulong> rocketPointRetryTicks = [];
+    private readonly Dictionary<ulong, CardSoldierWalkState> rocketWalks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -169,7 +171,7 @@ public sealed partial class MatchEngine
 
             activeArmyEntities.Add(entity.EntityKey, entity);
             if (entity.SourceCardId is "ELITEMINIGUN" or "ELITESWAT" or
-                "ELITESNIPER" or "ELITEPARA")
+                "ELITESNIPER" or "ELITEPARA" or "BIGROCKET")
                 InitializeInfantryAnimation(entity.EntityKey);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
@@ -1320,10 +1322,14 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card Rocket Soldier lacks source missile setup.");
         if (!cardRocketMissiles.TryAdd(entity.EntityKey, missile))
             throw new InvalidDataException("Card Rocket Soldier reused its missile identity.");
+        TryAssignCardRocketPoint(entity);
     }
 
     internal ArmyCardRocketRuntime? CardRocketMissile(ulong entityKey) =>
         cardRocketMissiles.GetValueOrDefault(entityKey);
+
+    internal bool CardRocketWalking(ulong entityKey) =>
+        rocketWalks.ContainsKey(entityKey);
 
     internal Vector3? CardRocketAim(ulong entityKey)
     {
@@ -1349,6 +1355,71 @@ public sealed partial class MatchEngine
         if (currentPoint < 0 || currentPoint >= map.Covers.Count)
             return null;
         return map.Covers[currentPoint].ShotPosition;
+    }
+
+    private void TryAssignCardRocketPoint(BattleArmyEntityState entity)
+    {
+        if (entity.SourceCardId != "BIGROCKET" || cardEnemyPoints == null ||
+            armyCatalog == null)
+            throw new InvalidDataException("Card Rocket has no source point authority.");
+
+        Vector3 position = new(entity.X, entity.Y, entity.Z);
+        CardUnitInitialPoint? point = cardEnemyPoints.TryAssign(
+            entity.EntityKey, entity.SourceCardId, entity.OwnerFraction, position);
+        if (point == null)
+        {
+            // EnemyController.GenerateInitPoint retries after five seconds.
+            rocketPointRetryTicks[entity.EntityKey] = checked(tick +
+                5u * MatchManifest.TickRate);
+            return;
+        }
+
+        try
+        {
+            ArmyNavMeshCorridor route = PlanCardSoldierRoute(position, point.Position);
+            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            rocketWalks.Add(entity.EntityKey, new CardSoldierWalkState(
+                point.ComponentFileId, route, armyCatalog.InfantryAgent, speed));
+            rocketPointRetryTicks.Remove(entity.EntityKey);
+        }
+        catch
+        {
+            cardEnemyPoints.Release(entity.EntityKey);
+            throw;
+        }
+    }
+
+    private void AdvanceCardRocketPointRetries()
+    {
+        foreach (var (entityKey, dueTick) in rocketPointRetryTicks.OrderBy(row => row.Key).ToArray())
+        {
+            if (tick < dueTick)
+                continue;
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "BIGROCKET")
+                throw new InvalidDataException("Card Rocket retry lost its soldier.");
+            TryAssignCardRocketPoint(entity);
+        }
+    }
+
+    private void AdvanceCardRocketWalks()
+    {
+        foreach (var (entityKey, walk) in rocketWalks.OrderBy(row => row.Key).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+                entity.SourceCardId != "BIGROCKET" ||
+                cardEnemyPoints?.Find(entityKey)?.ComponentFileId != walk.PointFileId)
+                throw new InvalidDataException("Card Rocket walk lost its point.");
+
+            walk.AdvanceTick();
+            entity.X = walk.Position.X;
+            entity.Y = walk.Position.Y;
+            entity.Z = walk.Position.Z;
+            entity.PositionTick = tick;
+            cardUnitCombat?.UpdatePose(entity);
+            if (walk.Arrived)
+                rocketWalks.Remove(entityKey);
+        }
     }
 
     private void InitializeCardMinigunner(BattleArmyEntityState entity)
@@ -1393,6 +1464,10 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card-unit death lost its public roster row.");
         infantryAnimations.Remove(entityKey);
         cardRocketMissiles.Remove(entityKey);
+        rocketPointRetryTicks.Remove(entityKey);
+        rocketWalks.Remove(entityKey);
+        if (entity.SourceCardId == "BIGROCKET")
+            cardEnemyPoints?.Release(entityKey);
 
         // Card Drone uses the same host flight/weapon systems as an ordinary
         // Drone, but its stats came from CardSpawnUnit's source rows.
