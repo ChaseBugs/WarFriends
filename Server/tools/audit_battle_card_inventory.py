@@ -119,6 +119,8 @@ def check_grenadier_card_setup():
     soldier = (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviourGrennader.cs")
     behavior = soldier.read_text(encoding="utf-8-sig")
     required = [
+        "UnityEngine.Random.value < base.soldierBehaviourDefinititon.switchToSecondaryProb",
+        "!mUseExternalWeapon",
         "grenadeAmmoSetup.damageAmount = base.mBehaviourDef.grenadeMinDamage;",
         "grenadeAmmoSetup.explodeDamageAmount = base.mBehaviourDef.grenadeExplodeDamage;",
         "grenadeAmmoSetup.playerBehindShieldRatio = upgradeSlots.playerBehindShieldDamageRatio;",
@@ -126,11 +128,22 @@ def check_grenadier_card_setup():
     ]
     if any(line not in behavior for line in required):
         raise ValueError("Grenadier card grenade behavior changed")
+    soldier_definition = (ASSETS /
+        "Scripts/Assembly-CSharp/SoldierBehaviourDefinititon.cs")
+    interpolation = soldier_definition.read_text(encoding="utf-8-sig").split(
+        "public override BehaviourDefinititon Interpolate", 1)[1].split(
+        "public override void ScaleByPerk", 1)[0]
+    if ("(SoldierBehaviourDefinititon)d1.Copy()" not in interpolation or
+        "switchToSecondaryProb =" in interpolation or
+        "useSecondaryWeapon =" in interpolation):
+        raise ValueError("Grenadier card secondary chance is no longer copied")
 
     scene = SCENE.read_text(encoding="utf-8-sig")
     grenadier = scene.split("--- !u!114 &49788\n", 1)[1].split(
         "\n--- !u!", 1)[0]
-    if "  enemyPointType: 14\n" not in grenadier:
+    if ("  enemyPointType: 14\n" not in grenadier or
+        "    useSecondaryWeapon: 1\n" not in grenadier or
+        "    switchToSecondaryProb: 0.4\n" not in grenadier):
         raise ValueError("Grenadier card enemy-point mask changed")
     inventory = scene.split("--- !u!114 &41066\n", 1)[1].split(
         "\n--- !u!", 1)[0]

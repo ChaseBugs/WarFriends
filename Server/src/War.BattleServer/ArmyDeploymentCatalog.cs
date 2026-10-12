@@ -18,7 +18,23 @@ public sealed record ArmyCardRocketRuntime(float DirectDamage,
     float ExplosionDamage, float Speed, float PlayerBehindShieldRatio);
 public sealed record ArmyCardGrenadierRuntime(float FuseSeconds,
     float ThrowAngleDegrees, float ThrowDistance, float InnerRadius,
-    float OuterRadius, float PlayerBehindShieldRatio);
+    float OuterRadius, float PlayerBehindShieldRatio,
+    float SecondaryWeaponProbability)
+{
+    /// <summary>
+    /// SoldierBehaviourGrennader.PickTarget chooses the grenade before
+    /// selecting a Decoy or player. Card soldiers have both source weapons.
+    /// The host supplies the random roll and owns the resulting weapon.
+    /// </summary>
+    public bool ShouldThrowGrenade(float roll, bool usingExternalWeapon)
+    {
+        if (!float.IsFinite(roll) || roll < 0f || roll >= 1f ||
+            !float.IsFinite(SecondaryWeaponProbability) ||
+            SecondaryWeaponProbability is < 0f or > 1f)
+            throw new InvalidDataException("Grenadier weapon roll is invalid.");
+        return !usingExternalWeapon && roll < SecondaryWeaponProbability;
+    }
+}
 public sealed record ArmyCardBaseStats(CardSpawnUnitSourceCatalog.Row Source,
     float Progress,ArmyBaseCombatStats Combat,ArmyBaseShotStats Shot,
     ArmyGrenadeDamageStats? Grenade, ArmyCardDroneRuntime? Drone,
@@ -204,7 +220,7 @@ public sealed class ArmyDeploymentCatalog
         if (!float.IsFinite(behindShield) || behindShield < 0)
             throw new InvalidDataException("Grenadier card shield damage is invalid.");
         return new ArmyCardGrenadierRuntime(3f, 45f, 0f, 0.9f, 1.2f,
-            behindShield);
+            behindShield, 0.4f);
     }
 
     private ArmyCardRocketRuntime ComposeCardRocketRuntime(float cardDamage)

@@ -10673,11 +10673,22 @@ internal static class CombatContentTests
             Check(grenadierThrow == new ArmyCardGrenadierRuntime(
                       3f, 45f, 0f, .9f, 1.2f,
                       content.Army.PlayerDamagePolicy(
-                          "ID_UNIT-GRENADIER").BehindShieldRatio) &&
+                          "ID_UNIT-GRENADIER").BehindShieldRatio, .4f) &&
                   grenadeMaximum.Grenadier == grenadierThrow &&
                   content.Army.CardBaseStats("ELITEPARA", 0,
                       maximumCardLevel).Grenadier == null,
                 "card Grenadier keeps its source fuse, throw shape and blast radii");
+            Check(grenadierThrow!.ShouldThrowGrenade(0f, false) &&
+                  grenadierThrow.ShouldThrowGrenade(.399f, false) &&
+                  !grenadierThrow.ShouldThrowGrenade(.4f, false) &&
+                  !grenadierThrow.ShouldThrowGrenade(.2f, true),
+                "Grenadier card selects its secondary weapon before target choice");
+            Reject(() => grenadierThrow.ShouldThrowGrenade(float.NaN, false));
+            Reject(() => grenadierThrow.ShouldThrowGrenade(1f, false));
+            Reject(() => (grenadierThrow with
+            {
+                SecondaryWeaponProbability = float.NaN
+            }).ShouldThrowGrenade(.2f, false));
             var droneCard = content.Army.CardBaseStats("HEAVYDRONE", 0, maximumCardLevel);
             var normalDroneShot = content.Army.ComposeDroneShot(0, null, null);
             var droneFamily = content.Army.Families.Single(family =>
