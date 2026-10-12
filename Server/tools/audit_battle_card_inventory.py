@@ -193,6 +193,22 @@ def check_grenadier_card_setup():
         "weapon.transform.localPosition = Vector3.zero;" not in soldier_parts or
         "ammo.Fire(spawnPoint.transform.position + shotOffset, position);" not in gun):
         raise ValueError("Grenadier card muzzle attachment source changed")
+    rigidbody = grenade.split("--- !u!54 &5469143\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    collider = grenade.split("--- !u!136 &13659786\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    child = grenade.split("--- !u!4 &491323\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    ammo = (ASSETS / "Scripts/Assembly-CSharp/GrenadeAmmoBase.cs").read_text(
+        encoding="utf-8-sig")
+    if ("  m_UseGravity: 1\n" not in rigidbody or
+        "  m_Radius: 0.05486127\n" not in collider or
+        "  m_Material: {fileID: 0}\n" not in collider or
+        "  m_LocalScale: {x: 2, y: 2, z: 2}\n" not in child or
+        "mRigidBody.drag = 0.2f;" not in ammo or
+        "mRigidBody.drag = 6f;" not in ammo or
+        "mCollider.enabled = true;" not in ammo):
+        raise ValueError("Grenadier card collision or drag source changed")
     pistol = (ASSETS / "GameObject/PistolEnemy.prefab").read_text(
         encoding="utf-8-sig")
     pistol_setup = pistol.split("--- !u!114 &11470521\n", 1)[1].split(

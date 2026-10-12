@@ -10692,6 +10692,42 @@ internal static class CombatContentTests
                 "Grenadier uses the recovered 45-degree ballistic launch without a range cap");
             Reject(() => grenadierThrow.LaunchVelocity(grenadeMuzzle,
                 grenadeMuzzle));
+            var cardGrenade = new CardGrenadierFlight(101, 202,
+                grenadierThrow, grenadeMuzzle,
+                grenadierThrow.LaunchVelocity(grenadeMuzzle, grenadeTarget),
+                0, (from, direction, range) =>
+                {
+                    Vector3 travel = Vector3.Normalize(direction);
+                    if (travel.Y >= 0f || from.Y <= 0f) return null;
+                    float distanceToGround = from.Y / -travel.Y;
+                    return distanceToGround <= range
+                        ? new ShotCollision(distanceToGround,
+                            from + travel * distanceToGround,
+                            "source-ground", null, 0f, Static: true,
+                            SurfaceNormal: Vector3.UnitY)
+                        : null;
+                });
+            ulong firstGrenadeContact = 0;
+            Vector3 firstGrenadeContactPosition = default;
+            CardGrenadierExplosion? cardGrenadeExplosion = null;
+            for (ulong flightTick = 1; flightTick < 500 &&
+                 cardGrenadeExplosion == null; flightTick++)
+            {
+                cardGrenadeExplosion = cardGrenade.Advance(flightTick);
+                if (firstGrenadeContact == 0 &&
+                    cardGrenade.FirstContactTick.HasValue)
+                {
+                    firstGrenadeContact = flightTick;
+                    firstGrenadeContactPosition = cardGrenade.Position;
+                }
+            }
+            Check(firstGrenadeContact > 1 &&
+                  cardGrenadeExplosion is { ProjectileId: 101,
+                      SoldierEntityKey: 202 } &&
+                  cardGrenadeExplosion.Tick == firstGrenadeContact + 90 &&
+                  cardGrenadeExplosion.Position.X >
+                      firstGrenadeContactPosition.X,
+                "card grenade keeps sliding after contact and explodes after its three-second fuse");
             Reject(() => grenadierThrow.ShouldThrowGrenade(float.NaN, false));
             Reject(() => grenadierThrow.ShouldThrowGrenade(1f, false));
             Reject(() => (grenadierThrow with
@@ -11922,15 +11958,20 @@ internal static class CombatContentTests
               Vector3.Distance(intentVelocity,
                   grenadierCardMatch.CardGrenadierThrow(
                       grenadierEntity.EntityKey)!.LaunchVelocity(intentMuzzle,
-                      grenadierIntent.Aim.Target.Position)) < .00001f,
-            "Grenadier shot intent uses its source-attached muzzle and ballistic velocity");
+                      grenadierIntent.Aim.Target.Position)) < .00001f &&
+              grenadierCardMatch.CardGrenadierActiveFlightCount == 1 &&
+              grenadierCardMatch.PendingProjectileCount >= 1,
+            "Grenadier shot intent launches a bounded host grenade from its source muzzle");
         int grenadierNextPointId = grenadierPointId;
+        CardGrenadierExplosion? liveGrenadierExplosion = null;
         ulong grenadierChangeStart = grenadierCardMatch.Snapshot().ServerTick;
         for (ulong grenadierTick = grenadierChangeStart + 1;
              grenadierTick <= grenadierChangeStart + 600 &&
                  grenadierNextPointId == grenadierPointId; grenadierTick++)
         {
             grenadierCardMatch.Advance(grenadierTick);
+            liveGrenadierExplosion ??= grenadierCardMatch.CardGrenadierExplosions()
+                .FirstOrDefault();
             if (grenadierTick % 60 == 0)
             {
                 grenadierCardMatch.EventBatch(decoyPlayer, 0);
@@ -11949,6 +11990,12 @@ internal static class CombatContentTests
               grenadierCardMatch.CardGrenadierAttack(
                   grenadierEntity.EntityKey) == null,
             "Grenadier changes to a free Corner without retaining its old shot clock");
+        Check(liveGrenadierExplosion is
+              { SoldierEntityKey: var explodedGrenadier } &&
+              explodedGrenadier == grenadierEntity.EntityKey &&
+              liveGrenadierExplosion.Tick > grenadierIntent.Tick + 90 &&
+              PlayerHitbox.Finite(liveGrenadierExplosion.Position),
+            "live Park grenade lands, keeps its fuse, and reaches a host explosion");
         Check(grenadierCardMatch.ConfirmArmyDeath(
                   grenadierEntity.EntityKey, false) &&
               grenadierCardMatch.CardGrenadierThrow(

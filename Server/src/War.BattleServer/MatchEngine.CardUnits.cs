@@ -51,6 +51,9 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ArmyRusherAttackState> grenadierAttacks = [];
     private readonly Dictionary<ulong, CardGrenadierAim> grenadierShotTargets = [];
     private readonly List<CardGrenadierShotIntent> grenadierShotIntents = [];
+    private readonly Dictionary<ulong, CardGrenadierFlight> grenadierFlights = [];
+    private readonly Dictionary<ulong, string> grenadierFlightOwners = [];
+    private readonly List<CardGrenadierExplosion> grenadierExplosions = [];
     private readonly Dictionary<ulong, ulong> grenadierCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> rocketPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> rocketWalks = [];
@@ -1620,6 +1623,7 @@ public sealed partial class MatchEngine
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 grenadierShotTargets.Remove(entityKey);
         }
+        LaunchCardGrenadierShotIntents();
     }
 
     internal ArmyRusherAttackState? CardGrenadierAttack(ulong entityKey) =>
@@ -1627,6 +1631,71 @@ public sealed partial class MatchEngine
 
     internal IReadOnlyList<CardGrenadierShotIntent> CardGrenadierShotIntents() =>
         grenadierShotIntents.ToArray();
+
+    internal int CardGrenadierActiveFlightCount => grenadierFlights.Count;
+
+    internal IReadOnlyList<CardGrenadierExplosion> CardGrenadierExplosions() =>
+        grenadierExplosions.ToArray();
+
+    private void LaunchCardGrenadierShotIntents()
+    {
+        if (grenadierShotIntents.Count == 0)
+            return;
+        if (rifleCombat == null)
+            throw new InvalidDataException("Card Grenadier has no collision world.");
+
+        foreach (CardGrenadierShotIntent intent in grenadierShotIntents)
+        {
+            if (!intent.Aim.ThrowGrenade)
+                continue;
+            if (!activeArmyEntities.TryGetValue(intent.EntityKey,
+                    out var soldier) ||
+                soldier.SourceCardId != "GREATGRENADIER" ||
+                !cardGrenadierThrows.TryGetValue(intent.EntityKey,
+                    out var setup) ||
+                intent.GrenadeMuzzlePosition is not Vector3 muzzle ||
+                intent.GrenadeLaunchVelocity is not Vector3 velocity)
+                throw new InvalidDataException(
+                    "Card Grenadier shot lost its launch authority.");
+            if (PendingProjectileCount >= MaximumProjectiles ||
+                !EventCapacityForShot())
+                continue;
+            if (projectileId == ulong.MaxValue)
+                throw new InvalidDataException("Card Grenadier projectile IDs exhausted.");
+
+            ulong id = ++projectileId;
+            string ownerId = soldier.OwnerPlayerId;
+            var flight = new CardGrenadierFlight(id, intent.EntityKey,
+                setup, muzzle, velocity, tick,
+                (from, direction, range) => rifleCombat.TraceForArmy(
+                    ownerId, from, direction, range));
+            grenadierFlights.Add(id, flight);
+            grenadierFlightOwners.Add(id, ownerId);
+            Emit(MatchEventKind.Shot, ownerId, "", id, muzzle, 0,
+                "card-grenadier");
+            stateRevision++;
+        }
+    }
+
+    private void AdvanceCardGrenadierFlights()
+    {
+        grenadierExplosions.Clear();
+        foreach (var (id, flight) in grenadierFlights.OrderBy(row => row.Key)
+                     .ToArray())
+        {
+            CardGrenadierExplosion? explosion = flight.Advance(tick);
+            if (explosion == null)
+                continue;
+            grenadierFlights.Remove(id);
+            grenadierExplosions.Add(explosion);
+            if (!grenadierFlightOwners.Remove(id, out string? ownerId))
+                throw new InvalidDataException(
+                    "Card Grenadier flight lost its owner.");
+            Emit(MatchEventKind.Impact, ownerId, "", id,
+                explosion.Position, 0, "card-grenadier");
+            stateRevision++;
+        }
+    }
 
     private void AdvanceCardGrenadierCornerChanges()
     {

@@ -112,6 +112,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     internal const int MaximumProjectiles = 128;
     internal int PendingProjectileCount => checked(projectiles.Count+shotgunFakeProjectiles.Count+
         armyProjectiles.Count+armyFlameBursts.Count+rocketFlights.Count+
+        grenadierFlights.Count+
         vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
         scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count+
         droneProjectiles.Count+helicopterProjectiles.Count+assaultHelicopterProjectiles.Count);
@@ -1529,6 +1530,12 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (advanced && phase == BattlePhase.Running && grenadierWalks.Count > 0)
         {
             try { AdvanceCardGrenadierWalks(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running &&
+            (grenadierFlights.Count > 0 || grenadierExplosions.Count > 0))
+        {
+            try { AdvanceCardGrenadierFlights(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running && grenadierAttacks.Count > 0)

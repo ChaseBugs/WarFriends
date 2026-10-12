@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace War.BattleServer;
 
 public sealed record CoverNode(int SourceIndex, int Fraction, bool Main, Vector3 Position, Vector3 ShotPosition, float ShieldBaseHealth,Quaternion Rotation,string SourcePath);
-public sealed record MapHit(float Distance, Vector3 Position, string SourcePath, string? DynamicOwner, int Layer, int ColliderIndex);
+public sealed record MapHit(float Distance, Vector3 Position, string SourcePath, string? DynamicOwner, int Layer, int ColliderIndex, Vector3 Normal);
 public sealed record MapDynamicCollider(int ColliderIndex, string SourcePath, string DynamicOwner, int Layer,
     Vector3 TransformPosition,Vector3 BoundsMin,Vector3 BoundsMax);
 public sealed record MapSphereCandidate(MapDynamicCollider Collider,float BoundsDistance);
@@ -332,11 +332,11 @@ public sealed partial class RecoveredBattleMap
                 !BoundsHit(origin, direction, shape.Min, shape.Max, distance)) continue;
             if (shape.Hull != null)
             {
-                float? hullHit = HullHit(shape.Hull, origin, direction, distance);
-                if (hullHit.HasValue && hullHit.Value <= distance && (nearest == null || hullHit.Value < nearest.Distance))
+                var hullHit = HullHit(shape.Hull, origin, direction, distance);
+                if (hullHit.HasValue && hullHit.Value.Distance <= distance && (nearest == null || hullHit.Value.Distance < nearest.Distance))
                 {
-                    distance = hullHit.Value;
-                    nearest = new MapHit(distance, origin + direction * distance, shape.Path, shape.DynamicOwner, layer,shape.SourceIndex);
+                    distance = hullHit.Value.Distance;
+                    nearest = new MapHit(distance, origin + direction * distance, shape.Path, shape.DynamicOwner, layer,shape.SourceIndex,hullHit.Value.Normal);
                 }
                 continue;
             }
@@ -346,7 +346,8 @@ public sealed partial class RecoveredBattleMap
                 if (hit.HasValue && hit.Value <= distance && (nearest == null || hit.Value < nearest.Distance))
                 {
                     distance = hit.Value;
-                    nearest = new MapHit(distance, origin + direction * distance, shape.Path, shape.DynamicOwner, layer,shape.SourceIndex);
+                    Vector3 normal=Vector3.Normalize(Vector3.Cross(shape.Triangles[i+1]-shape.Triangles[i],shape.Triangles[i+2]-shape.Triangles[i]));
+                    nearest = new MapHit(distance, origin + direction * distance, shape.Path, shape.DynamicOwner, layer,shape.SourceIndex,normal);
                 }
             }
         }
@@ -384,9 +385,10 @@ public sealed partial class RecoveredBattleMap
         if (planes.Count < 4) throw new InvalidDataException("Degenerate convex mesh.");
         return planes.ToArray();
     }
-    private static float? HullHit(Vector4[] planes, Vector3 origin, Vector3 ray, float far)
+    private static (float Distance,Vector3 Normal)? HullHit(Vector4[] planes, Vector3 origin, Vector3 ray, float far)
     {
         float near = 0;
+        Vector3 nearNormal=Vector3.Zero;
         bool inside = true;
         foreach (var plane in planes)
         {
@@ -396,10 +398,14 @@ public sealed partial class RecoveredBattleMap
             float denominator = Vector3.Dot(normal,ray);
             if (Math.Abs(denominator) < 1e-8f) { if (side > 0) return null; continue; }
             float t = -side/denominator;
-            if (denominator < 0) near = Math.Max(near,t); else far = Math.Min(far,t);
+            if (denominator < 0)
+            {
+                if(t>near){near=t;nearNormal=normal;}
+            }
+            else far = Math.Min(far,t);
             if (near > far) return null;
         }
-        return inside ? null : near;
+        return inside || nearNormal==Vector3.Zero ? null : (near,nearNormal);
     }
     private static bool BoundsHit(Vector3 origin, Vector3 ray, Vector3 min, Vector3 max, float far)
     {

@@ -66,6 +66,10 @@ internal static class PlayerCollisionTests
         // Use a source ground hit to put a player behind real geometry.
         var groundOrigin = map.Covers[0].Position + Vector3.UnitY*5;
         var ground = map.Raycast(groundOrigin, -Vector3.UnitY, 100) ?? throw new Exception("No source ground hit.");
+        Check(PlayerHitbox.Finite(ground.Normal) &&
+              Math.Abs(ground.Normal.Length() - 1f) < .0001f &&
+              Vector3.Dot(ground.Normal, -Vector3.UnitY) < 0f,
+            "recovered map ray reports an outward unit contact normal");
         Check(map.Raycast(groundOrigin, -Vector3.UnitY, ground.Distance)?.SourcePath == ground.SourcePath, "map includes exact range boundary");
         Check(map.BoxOverlaps(ground.Position,new(.22f,.27f,.29f),
                   Quaternion.CreateFromAxisAngle(Vector3.UnitY,.37f))&&
@@ -74,7 +78,8 @@ internal static class PlayerCollisionTests
         var behind = gameplay.Place(ground.Position-Vector3.UnitY*3, Quaternion.Identity);
         var blocked = new ShotCollisionWorld(map, [new(a, gameplay), new(b, behind)]).Raycast(a, groundOrigin, -Vector3.UnitY, 100);
         Check(blocked != null && blocked.PlayerId == null && blocked.SourcePath == ground.SourcePath &&
-              blocked.ColliderLayer == ground.Layer, "map occludes player behind geometry with its actual collider layer");
+              blocked.ColliderLayer == ground.Layer && blocked.SurfaceNormal == ground.Normal,
+              "map occludes player behind geometry and retains the contact normal");
 
         var json = JsonNode.Parse(File.ReadAllText(path))!;
         string temp = System.IO.Path.GetTempFileName();
