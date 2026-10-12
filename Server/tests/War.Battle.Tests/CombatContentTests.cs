@@ -10683,6 +10683,15 @@ internal static class CombatContentTests
                   !grenadierThrow.ShouldThrowGrenade(.4f, false) &&
                   !grenadierThrow.ShouldThrowGrenade(.2f, true),
                 "Grenadier card selects its secondary weapon before target choice");
+            var grenadeMuzzle = new Vector3(2f, 1f, 3f);
+            var grenadeTarget = new Vector3(7f, 1f, 3f);
+            Check(Vector3.Distance(grenadierThrow.LaunchVelocity(
+                      grenadeMuzzle, grenadeTarget),
+                      GrenadeFlight.BallisticVelocity(grenadeMuzzle,
+                          grenadeTarget, 45f)) < .00001f,
+                "Grenadier uses the recovered 45-degree ballistic launch without a range cap");
+            Reject(() => grenadierThrow.LaunchVelocity(grenadeMuzzle,
+                grenadeMuzzle));
             Reject(() => grenadierThrow.ShouldThrowGrenade(float.NaN, false));
             Reject(() => grenadierThrow.ShouldThrowGrenade(1f, false));
             Reject(() => (grenadierThrow with
