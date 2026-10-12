@@ -1699,16 +1699,53 @@ public sealed partial class MatchEngine
             CardGrenadierExplosion? explosion = flight.Advance(tick);
             if (explosion == null)
                 continue;
-            grenadierFlights.Remove(id);
-            grenadierExplosions.Add(explosion);
-            if (!grenadierLaunches.Remove(id, out var launch))
-                throw new InvalidDataException(
-                    "Card Grenadier explosion lost its damage authority.");
-            Emit(MatchEventKind.Impact, launch.OwnerPlayerId, "", id,
-                explosion.Position, 0, "card-grenadier");
-            stateRevision++;
-            ApplyCardGrenadierExplosion(explosion, launch);
+            PublishCardGrenadierExplosion(id, explosion);
         }
+    }
+
+    internal bool ApplyCardGrenadierShot(string shooterId, ulong grenadeId,
+        float damage)
+    {
+        Player shooter = Find(shooterId) ??
+            throw new InvalidDataException("Grenadier shot has no player owner.");
+        if (!float.IsFinite(damage) || damage <= 0f ||
+            damage > 10_000_000f)
+            throw new InvalidDataException("Invalid Grenadier shot damage.");
+        if (!grenadierFlights.TryGetValue(grenadeId, out var flight))
+        {
+            if (grenadierLaunches.ContainsKey(grenadeId))
+                throw new InvalidDataException("Grenadier launch has no flight.");
+            // Multiple host bullets may have selected the same live grenade
+            // before their impact ticks. A later impact has no target to hurt.
+            return false;
+        }
+        if (!grenadierLaunches.TryGetValue(grenadeId, out var launch) ||
+            flight.CurrentTick != tick)
+            throw new InvalidDataException("Grenadier shot lost its host target.");
+        Player owner = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException("Grenadier owner left the match.");
+        if (owner.Definition.Fraction == shooter.Definition.Fraction)
+            throw new InvalidDataException("Owner cannot shoot their own grenade.");
+
+        CardGrenadierExplosion? explosion = flight.ApplyShot(damage, tick);
+        if (explosion != null)
+            PublishCardGrenadierExplosion(grenadeId, explosion);
+        return true;
+    }
+
+    private void PublishCardGrenadierExplosion(ulong grenadeId,
+        CardGrenadierExplosion explosion)
+    {
+        if (!grenadierFlights.Remove(grenadeId) ||
+            !grenadierLaunches.Remove(grenadeId, out var launch) ||
+            explosion.ProjectileId != grenadeId)
+            throw new InvalidDataException(
+                "Card Grenadier explosion lost its damage authority.");
+        grenadierExplosions.Add(explosion);
+        Emit(MatchEventKind.Impact, launch.OwnerPlayerId, "", grenadeId,
+            explosion.Position, 0, "card-grenadier");
+        stateRevision++;
+        ApplyCardGrenadierExplosion(explosion, launch);
     }
 
     private void AdvanceCardGrenadierCornerChanges()

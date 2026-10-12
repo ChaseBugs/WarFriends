@@ -10746,6 +10746,26 @@ internal static class CombatContentTests
                   cardGrenadeExplosion.Position.X >
                       firstGrenadeContactPosition.X,
                 "card grenade keeps sliding after contact and explodes after its three-second fuse");
+            var shotGrenade = new CardGrenadierFlight(102, 202,
+                grenadierThrow, grenadeMuzzle, Vector3.UnitY, 0,
+                (_, _, _) => null);
+            Check(shotGrenade.ShotHealth == CardGrenadierFlight.SourceShotHealth &&
+                  !shotGrenade.ShotColliderEnabled,
+                "flying Grenadier grenade starts with source health and disabled collider");
+            ulong shotGrenadeTick = 0;
+            while (!shotGrenade.ShotColliderEnabled && shotGrenadeTick < 30)
+                shotGrenade.Advance(++shotGrenadeTick);
+            Check(shotGrenade.ShotColliderEnabled &&
+                  shotGrenade.ApplyShot(400f, shotGrenadeTick) == null &&
+                  shotGrenade.ShotHealth == 600f,
+                "an opposing shot damages the falling grenade without early detonation");
+            CardGrenadierExplosion? shotExplosion =
+                shotGrenade.ApplyShot(600f, shotGrenadeTick);
+            Check(shotExplosion is { ProjectileId: 102,
+                      SoldierEntityKey: 202 } &&
+                  shotExplosion.Tick == shotGrenadeTick &&
+                  shotGrenade.Finished && shotGrenade.ShotHealth == 0f,
+                "a lethal shot detonates the grenade before ground contact or fuse expiry");
             Reject(() => grenadierThrow.ShouldThrowGrenade(float.NaN, false));
             Reject(() => grenadierThrow.ShouldThrowGrenade(1f, false));
             Reject(() => (grenadierThrow with
@@ -12043,6 +12063,80 @@ internal static class CombatContentTests
               grenadierCardMatch.CardEnemyPointOccupant(
                   grenadierNextPointId) == null,
             "card Grenadier death releases its throw setup and point reservation");
+        var shotGrenadierMatch = ReadyCardMatch(
+            "host-card-grenadier-shot", "GREATGRENADIER");
+        Check(shotGrenadierMatch.TryScheduleCardUnit(
+                  new string('c', 32), decoyPlayer, "GREATGRENADIER"),
+            "shot-detonation match owns a selected Grenadier card");
+        DynamicShotTarget? liveGrenadeTarget = null;
+        for (ulong simulationTick = 61; simulationTick < 1800 &&
+             liveGrenadeTarget == null && !shotGrenadierMatch.Terminal;
+             simulationTick++)
+        {
+            shotGrenadierMatch.Advance(simulationTick);
+            liveGrenadeTarget = shotGrenadierMatch
+                .PlayerShotTargets(decoyOpponent)
+                .FirstOrDefault(target => target.GrenadierGrenade);
+            if (simulationTick % 60 == 0)
+            {
+                shotGrenadierMatch.EventBatch(decoyPlayer, 0);
+                shotGrenadierMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        Check(liveGrenadeTarget is { Layer: 27,
+                  GrenadierGrenade: true } &&
+              liveGrenadeTarget.Hitbox.Kind == PlayerHitboxKind.Sphere &&
+              liveGrenadeTarget.Hitbox.Radius == .06f &&
+              shotGrenadierMatch.PlayerShotTargets(decoyPlayer)
+                  .All(target => !target.GrenadierGrenade),
+            "falling grenade enters only the opposing player's source bullet layer");
+        var grenadeShotWorld = new ShotCollisionWorld(null,
+        [
+            new(decoyPlayer, referencePose.Place(
+                new(100, 0, 100), Quaternion.Identity).Collision),
+            new(decoyOpponent, referencePose.Place(
+                new(110, 0, 100), Quaternion.Identity).Collision)
+        ], dynamicTargets: shotGrenadierMatch.PlayerShotTargets);
+        Vector3 grenadeShotCenter = liveGrenadeTarget!.Hitbox.Center;
+        ShotCollision? grenadeBulletHit = grenadeShotWorld.Raycast(
+            decoyOpponent, grenadeShotCenter + Vector3.UnitX * .2f,
+            -Vector3.UnitX, .4f, content.Bindings.BulletMask(2));
+        Check(grenadeBulletHit is
+              { DynamicGrenadierGrenade: true, SourceDestroyable: true,
+                  PartWeight: 1f } &&
+              grenadeBulletHit.DynamicEntityId == liveGrenadeTarget.EntityId,
+            "player bullet ray selects the host-owned Grenadier grenade collider");
+        Check(grenadeShotWorld.OverlapEnemy(decoyOpponent,
+                  grenadeShotCenter + Vector3.UnitX * .2f, .5f,
+                  content.Bindings.BulletMask(2)).Any(target =>
+                      target.MainEntityId == "grenade:" +
+                          liveGrenadeTarget.EntityId) &&
+              !grenadeShotWorld.OverlapEnemy(decoyOpponent,
+                  grenadeShotCenter + Vector3.UnitX * .2f, .5f,
+                  0).Any(target => target.MainEntityId == "grenade:" +
+                      liveGrenadeTarget.EntityId),
+            "shotgun overlap selects the enemy grenade only through its source layer");
+        ulong shotEventBefore = shotGrenadierMatch
+            .EventBatch(decoyOpponent, 0).LatestEventId;
+        Reject(() => shotGrenadierMatch.ApplyCardGrenadierShot(decoyPlayer,
+            liveGrenadeTarget.EntityId, 1000f));
+        Check(shotGrenadierMatch.ApplyCardGrenadierShot(decoyOpponent,
+                  liveGrenadeTarget.EntityId, 400f) &&
+              shotGrenadierMatch.CardGrenadierActiveFlightCount == 1,
+            "a partial shot leaves the host Grenadier grenade in flight");
+        Check(shotGrenadierMatch.ApplyCardGrenadierShot(decoyOpponent,
+                  liveGrenadeTarget.EntityId, 600f) &&
+              shotGrenadierMatch.CardGrenadierActiveFlightCount == 0 &&
+              shotGrenadierMatch.CardGrenadierExplosions().Count == 1 &&
+              shotGrenadierMatch.EventBatch(decoyOpponent, shotEventBefore)
+                  .Events.Any(item => item.Kind == MatchEventKind.Impact &&
+                      item.ProjectileId == liveGrenadeTarget.EntityId &&
+                      item.Reason == "card-grenadier"),
+            "lethal host shot publishes one immediate Grenadier explosion and retires its flight");
+        Check(!shotGrenadierMatch.ApplyCardGrenadierShot(decoyOpponent,
+                  liveGrenadeTarget.EntityId, 1f) &&
+              shotGrenadierMatch.CardGrenadierExplosions().Count == 1,
+            "a later bullet cannot detonate an already retired grenade twice");
         var grenadierDecoyMatch = ReadyCardMatch(
             "host-card-grenadier-decoy", "GREATGRENADIER",
             opponentCardId: "DECOY");

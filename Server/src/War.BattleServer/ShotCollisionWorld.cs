@@ -6,8 +6,8 @@ namespace War.BattleServer;
 
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose,int Layer=-1,int Fraction=0);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
-    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false,bool DroneRoot=false,bool AssaultGlass=false);
-internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false,int? ColliderLayer=null,bool SourceDestroyable=false,Vector3? SurfaceNormal=null);
+    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false,bool DroneRoot=false,bool AssaultGlass=false,bool GrenadierGrenade=false);
+internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false,int? ColliderLayer=null,bool SourceDestroyable=false,Vector3? SurfaceNormal=null,bool DynamicGrenadierGrenade=false);
 
 // Input poses come exclusively from host animation/pose authority. This class has
 // no network adapter and no client-submitted target player or damage parameter.
@@ -59,7 +59,7 @@ internal sealed class ShotCollisionWorld
             {
                 if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null||
                    target.RepairDronePathIndex is <0 or >1||
-                   (target.PassengerRole==null&&target.RepairDronePathIndex==null&&!target.ArmyInfantry&&!target.Decoy&&!target.HeavyTurret&&!target.HelicopterGunner&&target.PartComponentFileId<=0)||
+                   (target.PassengerRole==null&&target.RepairDronePathIndex==null&&!target.ArmyInfantry&&!target.Decoy&&!target.HeavyTurret&&!target.HelicopterGunner&&!target.GrenadierGrenade&&target.PartComponentFileId<=0)||
                    (target.HelicopterGunner&&(target.PartComponentFileId!=0||target.PassengerRole!=null||
                        target.RepairDronePathIndex!=null||target.ArmyInfantry||target.Decoy||target.HeavyTurret))||
                    (target.PassengerRole!=null&&(target.PartComponentFileId!=0||target.RepairDronePathIndex!=null||
@@ -69,6 +69,18 @@ internal sealed class ShotCollisionWorld
                    (target.Decoy&&(target.PartComponentFileId!=0||target.PassengerRole!=null||target.RepairDronePathIndex!=null||target.ArmyInfantry||target.HeavyTurret))||
                    (target.HeavyTurret&&(target.PartComponentFileId<=0||target.PassengerRole!=null||target.RepairDronePathIndex!=null||target.ArmyInfantry||target.Decoy)))
                     throw new InvalidDataException("Invalid host dynamic shot target.");
+                if (target.GrenadierGrenade &&
+                    (target.PartComponentFileId != 0 ||
+                     target.Layer is not (26 or 27) ||
+                     target.PassengerRole != null ||
+                     target.RepairDronePathIndex != null ||
+                     target.ArmyInfantry || target.Decoy ||
+                     target.HeavyTurret || target.HelicopterGunner ||
+                     target.GroundVehicleBody || target.HelicopterBody ||
+                     target.DroneRoot || target.AssaultGlass ||
+                     target.Hitbox.Kind != PlayerHitboxKind.Sphere ||
+                     target.Hitbox.Radius != .06f))
+                    throw new InvalidDataException("Invalid Grenadier grenade shot target.");
                 if(target.AssaultGlass &&
                    (target.PartComponentFileId!=
                         AssaultHelicopterMeshColliderCatalog.FrontGlassColliderFileId ||
@@ -88,11 +100,13 @@ internal sealed class ShotCollisionWorld
                         DynamicRepairDronePathIndex:target.RepairDronePathIndex,
                         DynamicArmyInfantry:target.ArmyInfantry,DynamicDecoy:target.Decoy,
                         DynamicHeavyTurret:target.HeavyTurret,DynamicHelicopterGunner:target.HelicopterGunner,
+                        DynamicGrenadierGrenade:target.GrenadierGrenade,
                         ColliderLayer:target.Layer,
                         SourceDestroyable:target.Layer is 8 or 22 or 23 or 24 or 26 or 27 &&
                             (target.DroneRoot||target.GroundVehicleBody||target.HelicopterBody||target.AssaultGlass||
                              target.PassengerRole!=null||target.RepairDronePathIndex!=null||
-                             target.ArmyInfantry||target.Decoy||target.HeavyTurret||target.HelicopterGunner));
+                             target.ArmyInfantry||target.Decoy||target.HeavyTurret||target.HelicopterGunner||
+                             target.GrenadierGrenade));
             }
         return nearest;
     }
@@ -166,7 +180,9 @@ internal sealed class ShotCollisionWorld
                 bool assaultGlass=target.AssaultGlass&&target.PartComponentFileId==
                     AssaultHelicopterMeshColliderCatalog.FrontGlassColliderFileId&&
                     target.Layer==8;
-                if(!(target.Decoy||target.ArmyInfantry||vehicleBody||repairDrone||passenger||heavyTurret||helicopterBody||droneRoot||helicopterGunner||assaultGlass)||
+                bool grenade=target.GrenadierGrenade&&target.PartComponentFileId==0&&
+                    (target.Layer is 26 or 27)&&target.Hitbox.Kind==PlayerHitboxKind.Sphere;
+                if(!(target.Decoy||target.ArmyInfantry||vehicleBody||repairDrone||passenger||heavyTurret||helicopterBody||droneRoot||helicopterGunner||assaultGlass||grenade)||
                    (layerMask&(1u<<target.Layer))==0||
                    !target.Hitbox.OverlapsSphere(origin,radius))continue;
                 string identity=repairDrone?"repair-drone:"+target.EntityId+":"+
@@ -174,7 +190,8 @@ internal sealed class ShotCollisionWorld
                     "passenger:"+target.EntityId+":"+target.PassengerRole:
                     (target.Decoy?"decoy:":target.ArmyInfantry?"infantry:":
                      heavyTurret?"heavy-turret:":assaultGlass?"assault-glass:":helicopterBody?"helicopter:":
-                     droneRoot?"drone:":helicopterGunner?"helicopter-gunner:":"vehicle:")+target.EntityId;
+                     droneRoot?"drone:":helicopterGunner?"helicopter-gunner:":
+                     grenade?"grenade:":"vehicle:")+target.EntityId;
                 string collider=identity+":"+target.Hitbox.SourcePath;
                 int ordinal=dynamicColliderOrdinals.GetValueOrDefault(collider);
                 dynamicColliderOrdinals[collider]=checked(ordinal+1);

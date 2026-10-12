@@ -209,6 +209,19 @@ def check_grenadier_card_setup():
         "mRigidBody.drag = 6f;" not in ammo or
         "mCollider.enabled = true;" not in ammo):
         raise ValueError("Grenadier card collision or drag source changed")
+    projectile = (ASSETS / "GameObject/GrenadeAmmoEnemy.prefab").read_text(
+        encoding="utf-8-sig")
+    shot_collider = projectile.split("--- !u!135 &13561526\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    if ("  m_Radius: 0.06\n" not in shot_collider or
+        "  m_Center: {x: 0, y: 0.02, z: 0}" not in shot_collider or
+        "  mMaxHealth:\n" not in projectile or
+        "    fakeValue: 1000\n" not in projectile or
+        "  isMetal: 1\n" not in projectile or
+        "mDestroyableObject.OnDeath += DestroyableObjectOnOnDeath;" not in
+            (ASSETS / "Scripts/Assembly-CSharp/GrenadeAmmoEnemy.cs").read_text(
+                encoding="utf-8-sig")):
+        raise ValueError("Grenadier shot-detonation source changed")
     grenade_ammo = (ASSETS / "Scripts/Assembly-CSharp/GrenadeAmmo.cs").read_text(
         encoding="utf-8-sig")
     explosion = (ASSETS / "Scripts/Assembly-CSharp/Explosion.cs").read_text(

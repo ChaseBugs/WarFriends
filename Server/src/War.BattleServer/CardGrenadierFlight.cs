@@ -16,6 +16,8 @@ internal sealed class CardGrenadierFlight
     private const float ContactDrag = 6f;
     // GrenadeEnemy's capsule radius .05486127 sits under a scale-two child.
     private const float ColliderRadius = .10972254f;
+    // GrenadeAmmoEnemy.prefab's DestroyableObject starts at 1000 HP.
+    internal const float SourceShotHealth = 1000f;
 
     private readonly ulong projectileId;
     private readonly ulong soldierEntityKey;
@@ -29,8 +31,10 @@ internal sealed class CardGrenadierFlight
     internal Vector3 Position { get; private set; }
     internal Vector3 Velocity { get; private set; }
     internal bool Finished { get; private set; }
+    internal float ShotHealth { get; private set; } = SourceShotHealth;
     internal ulong? FirstContactTick => firstContactTick;
     internal ulong CurrentTick => tick;
+    internal bool ShotColliderEnabled => collisionEnabled;
 
     internal CardGrenadierFlight(ulong projectileId, ulong soldierEntityKey,
         ArmyCardGrenadierRuntime setup, Vector3 muzzlePosition,
@@ -97,6 +101,23 @@ internal sealed class CardGrenadierFlight
             throw new InvalidDataException(
                 "Card grenade never reached a source contact surface.");
         return null;
+    }
+
+    internal CardGrenadierExplosion? ApplyShot(float damage, ulong impactTick)
+    {
+        if (Finished || !collisionEnabled || impactTick != tick ||
+            !float.IsFinite(damage) ||
+            damage <= 0f || damage > 10_000_000f)
+            throw new InvalidDataException("Invalid card grenade shot damage.");
+        ShotHealth = Math.Max(0f, ShotHealth - damage);
+        if (ShotHealth > 0f)
+            return null;
+
+        // GrenadeAmmoEnemy.OnDeath calls Explode immediately. A lethal shot
+        // does not wait for the first ground contact or the remaining fuse.
+        Finished = true;
+        return new CardGrenadierExplosion(projectileId, soldierEntityKey,
+            Position, impactTick);
     }
 
     private void ApplyContact(ShotCollision hit, Vector3 movement,

@@ -921,6 +921,39 @@ public sealed partial class MatchEngine
         return result;
     }
 
+    internal IReadOnlyList<DynamicShotTarget> PlayerShotTargets(string shooterId)
+    {
+        var result = new List<DynamicShotTarget>(GroundVehicleShotTargets(shooterId));
+        Player shooter = Find(shooterId) ??
+            throw new InvalidDataException("Player shot owner disappeared.");
+        foreach (var (projectileId, flight) in grenadierFlights.OrderBy(row => row.Key))
+        {
+            if (!flight.ShotColliderEnabled)
+                continue;
+            if (!grenadierLaunches.TryGetValue(projectileId, out var launch))
+                throw new InvalidDataException("Card grenade lost its shot ownership.");
+            var owner = Find(launch.OwnerPlayerId) ??
+                throw new InvalidDataException("Card grenade owner left the match.");
+            if (owner.Definition.Fraction == shooter.Definition.Fraction)
+                continue;
+            int layer = owner.Definition.Fraction == 1 ? 27 :
+                owner.Definition.Fraction == 2 ? 26 :
+                throw new InvalidDataException("Card grenade has no source bullet layer.");
+            // GrenadeAmmoEnemy has a root sphere collider with a .02 Y center.
+            // The recovered projectile has no host spin pose, so this uses
+            // its exact radius around the host-owned flight position.
+            var hitbox = new PlayerHitbox(
+                "Assets/GameObject/GrenadeAmmoEnemy.prefab#13561526",
+                PlayerHitboxKind.Sphere, 1f,
+                flight.Position + new Vector3(0f, .02f, 0f),
+                Vector3.Zero, Quaternion.Identity, .06f,
+                Vector3.Zero, 0f);
+            result.Add(new DynamicShotTarget(projectileId, 0, layer,
+                hitbox, GrenadierGrenade: true));
+        }
+        return result;
+    }
+
     internal void ApplyArmyProjectileImpact(string shooterId,ulong entityId,float rawDamage,float partWeight)
     {
         if(!activeArmyEntities.TryGetValue(entityId,out var army)||!infantryAnimations.ContainsKey(entityId))return;

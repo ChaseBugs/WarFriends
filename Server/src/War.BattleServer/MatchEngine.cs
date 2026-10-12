@@ -1145,6 +1145,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                     barrels==null?null:barrels.ColliderEnabled,
                     barrels==null?null:barrels.RuntimeLayer,this.combatRandom);
                 rifleCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
+                rifleCombat.ConfigurePlayerShotTargets(PlayerShotTargets);
                 rifleCombat.ConfigureVisibilityTargets(HelicopterVisibilityTargets);
                 ConfigureVisualVolley((id,owner,target,at)=>rifleCombat.PrepareVisualVolley(
                     id,owner,target,at,this.combatRandom),this.combatRandom);
@@ -1833,7 +1834,13 @@ public sealed partial class MatchEngine : IMatchRuntime
                         contactedDrone.UnitId=="ID_UNIT-DRONE"&&
                         contactedDrone.OwnerFraction!=shooter.Definition.Fraction&&
                         ArmyDroneImmortal(vehicleId);
-                    if(impact.Hit.DynamicDecoy)
+                    if(impact.Hit.DynamicGrenadierGrenade)
+                    {
+                        if (ApplyCardGrenadierShot(impact.OwnerId,vehicleId,
+                                pair.Value.Damage.Amount*impact.Hit.PartWeight))
+                            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+                    }
+                    else if(impact.Hit.DynamicDecoy)
                         ApplyDecoyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
                             impact.Hit.PartWeight,impact.ProjectileId);
                     else if(impact.Hit.DynamicHeavyTurret)

@@ -40,6 +40,7 @@ internal sealed class RifleMatchSimulation
     private readonly Func<float> sourceRandom;
     private readonly string mode;
     private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
+    private Func<string,IReadOnlyList<DynamicShotTarget>>? playerShotTargets;
     private Func<IReadOnlyList<DynamicShotTarget>>? visibilityTargets;
     private ulong? lastTick;
     private double now;
@@ -47,6 +48,9 @@ internal sealed class RifleMatchSimulation
     internal RiflePoseState Snapshot(string id)=>actors.Single(a=>a.Definition.PlayerId==id).WirePose.Clone();
     internal void ConfigureDynamicTargets(Func<string,IReadOnlyList<DynamicShotTarget>> provider)
     {dynamicTargets=provider??throw new ArgumentNullException(nameof(provider));}
+    internal void ConfigurePlayerShotTargets(
+        Func<string,IReadOnlyList<DynamicShotTarget>> provider)
+    {playerShotTargets=provider??throw new ArgumentNullException(nameof(provider));}
     internal void ConfigureVisibilityTargets(Func<IReadOnlyList<DynamicShotTarget>> provider)
     {visibilityTargets=provider??throw new ArgumentNullException(nameof(provider));}
     internal void StartMove(string id)
@@ -283,7 +287,8 @@ internal sealed class RifleMatchSimulation
         var a=actors.Single(p=>p.Definition.PlayerId==owner);
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
             p.Definition.Fraction==1?23:22,p.Definition.Fraction)),
-            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,
+            playerShotTargets ?? dynamicTargets);
         var muzzle=a.Pose.Muzzle(a.Weapon.SourceId).Position;
         uint bulletMask=a.WeaponClass==LiveWeaponClass.Smg ? (a.Definition.Fraction==1?content.Smgs!.AlliesBulletMask:content.Smgs!.EnemiesBulletMask) :
             a.WeaponClass==LiveWeaponClass.Pistol ? (a.Definition.Fraction==1?content.Pistols!.AlliesBulletMask:content.Pistols!.EnemiesBulletMask) :
@@ -320,7 +325,8 @@ internal sealed class RifleMatchSimulation
             return new(PrepareVolley(id,owner,target,tick),[]);
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(
             p.Definition.PlayerId,p.Pose.Collision,p.Definition.Fraction==1?23:22,p.Definition.Fraction)),
-            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,
+            playerShotTargets ?? dynamicTargets);
         var binding=content.Shotguns!.Binding(actor.Weapon.SourceId);
         var stage=content.Shotguns.Stage(actor.Weapon.SourceId,actor.WeaponUpgrade);
         var muzzle=actor.Pose.Muzzle(actor.Weapon.SourceId).Position;
