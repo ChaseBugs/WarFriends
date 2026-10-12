@@ -2830,6 +2830,25 @@ public sealed partial class MatchEngine : IMatchRuntime
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
             VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,VelocityZ=x.Value.Flight.Velocity.Z
         }));
+        snapshot.Projectiles.AddRange(rocketFlights.OrderBy(row => row.Key)
+            .Select(row =>
+            {
+                if (!rocketLaunches.TryGetValue(row.Key, out var launch))
+                    throw new InvalidDataException(
+                        "Card Rocket snapshot lost its launch authority.");
+                var flight = row.Value;
+                return new BattleProjectileState
+                {
+                    ProjectileId = row.Key,
+                    OwnerPlayerId = launch.OwnerPlayerId,
+                    Kind = flight.IsFake ? "card-rocket-fake" : "card-rocket",
+                    X = flight.Position.X, Y = flight.Position.Y,
+                    Z = flight.Position.Z,
+                    VelocityX = flight.Velocity.X,
+                    VelocityY = flight.Velocity.Y,
+                    VelocityZ = flight.Velocity.Z
+                };
+            }));
         snapshot.Projectiles.AddRange(projectiles.OrderBy(x=>x.Key)
             .Where(x=>x.Value.WeaponSourceId.StartsWith("Google2u.Shotgun_",StringComparison.Ordinal))
             .Select(x=>new BattleProjectileState

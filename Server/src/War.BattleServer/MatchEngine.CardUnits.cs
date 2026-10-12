@@ -1551,7 +1551,8 @@ public sealed partial class MatchEngine
                 !cardRocketMissiles.TryGetValue(intent.EntityKey,
                     out var missile))
                 throw new InvalidDataException("Card Rocket shot lost its owner.");
-            if (PendingProjectileCount >= MaximumProjectiles)
+            if (PendingProjectileCount >= MaximumProjectiles ||
+                !EventCapacityForShot())
                 continue;
             if (projectileId == ulong.MaxValue)
                 throw new InvalidDataException("Card Rocket projectile IDs exhausted.");
@@ -1569,6 +1570,10 @@ public sealed partial class MatchEngine
             rocketFlights.Add(id, flight);
             rocketLaunches.Add(id, new CardRocketLaunchAuthority(ownerId,
                 missile, policy));
+            Emit(MatchEventKind.Shot, ownerId, "", id,
+                intent.MuzzlePosition, 0,
+                intent.IsReal ? "card-rocket" : "card-rocket-fake");
+            stateRevision++;
         }
     }
 
@@ -1584,6 +1589,10 @@ public sealed partial class MatchEngine
             rocketImpacts.Add(impact);
             if (!rocketLaunches.Remove(id, out var launch))
                 throw new InvalidDataException("Card Rocket lost its launch authority.");
+            Emit(MatchEventKind.Impact, launch.OwnerPlayerId,
+                impact.Collision?.PlayerId ?? "", id, impact.Position, 0,
+                impact.IsFake ? "card-rocket-fake" : "card-rocket");
+            stateRevision++;
             if (!impact.IsFake)
                 ApplyCardRocketExplosion(impact, launch);
         }

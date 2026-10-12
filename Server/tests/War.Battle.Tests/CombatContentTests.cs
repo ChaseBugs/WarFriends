@@ -12004,6 +12004,24 @@ internal static class CombatContentTests
                       firingRocket.Z)) < 5f &&
               rocketCardMatch.CardRocketActiveFlightCount == 1,
             "Rocket intent launches one missile from the animated BazookaEnemy Spawn position");
+        var rocketProjectileRow = rocketCardMatch.Snapshot().Projectiles
+            .Single(row => row.Kind is "card-rocket" or "card-rocket-fake");
+        Check(rocketProjectileRow.Kind ==
+                  (firstRocketShot.IsReal ? "card-rocket" : "card-rocket-fake") &&
+              rocketProjectileRow.OwnerPlayerId == decoyPlayer &&
+              rocketProjectileRow.X == firstRocketShot.MuzzlePosition.X &&
+              MathF.Abs(new Vector3(rocketProjectileRow.VelocityX,
+                  rocketProjectileRow.VelocityY,
+                  rocketProjectileRow.VelocityZ).Length() - 3f) < .0001f,
+            "Rocket snapshot publishes a source-speed projectile for reconnect");
+        ulong rocketShotEventId = rocketCardMatch
+            .EventBatch(decoyPlayer, 0).LatestEventId;
+        var rocketShotEvent = rocketCardMatch
+            .EventBatch(decoyPlayer, rocketShotEventId - 1).Events.Single();
+        Check(rocketShotEvent.Kind == MatchEventKind.Shot &&
+              rocketShotEvent.ProjectileId == rocketProjectileRow.ProjectileId &&
+              rocketShotEvent.Reason == rocketProjectileRow.Kind,
+            "Rocket firing publishes one replayable event with its projectile identity");
         rocketCardMatch.Advance(firstRocketShot.Tick + 1);
         Check(rocketCardMatch.CardRocketActiveFlightCount == 1 &&
               rocketCardMatch.CardRocketImpacts().Count == 0,
@@ -12018,6 +12036,8 @@ internal static class CombatContentTests
               rocketCardMatch.CardEnemyPointOccupant(
                   rocketPoint!.ComponentFileId) == null,
             "card Rocket death removes attack authority but keeps its launched missile");
+        ulong rocketBeforeImpactEventId = rocketCardMatch
+            .EventBatch(decoyPlayer, 0).LatestEventId;
         CardRocketMissileImpact? liveRocketImpact = null;
         for (ulong flightTick = firstRocketShot.Tick + 2;
              flightTick <= firstRocketShot.Tick + 1800 &&
@@ -12034,8 +12054,28 @@ internal static class CombatContentTests
             }
         }
         Check(liveRocketImpact != null &&
-              rocketCardMatch.CardRocketActiveFlightCount == 0,
+              rocketCardMatch.CardRocketActiveFlightCount == 0 &&
+              rocketCardMatch.Snapshot().Projectiles.All(row =>
+                  row.ProjectileId != rocketProjectileRow.ProjectileId),
             "a launched Rocket reaches a terminal host impact after its soldier dies");
+        var rocketImpactEvents = new List<MatchEvent>();
+        ulong rocketEventCursor = rocketBeforeImpactEventId;
+        while (true)
+        {
+            var page = rocketCardMatch.EventBatch(decoyPlayer,
+                rocketEventCursor);
+            rocketImpactEvents.AddRange(page.Events);
+            if (page.Events.Count == 0 ||
+                page.Events[^1].EventId == page.LatestEventId)
+                break;
+            rocketEventCursor = page.Events[^1].EventId;
+        }
+        Check(rocketImpactEvents.Any(item =>
+                  item.Kind == MatchEventKind.Impact &&
+                  item.ProjectileId == rocketProjectileRow.ProjectileId &&
+                  item.Reason == rocketProjectileRow.Kind &&
+                  item.X == liveRocketImpact!.Position.X),
+            "Rocket impact remains replayable after the firing soldier dies");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
         const string hostCardRequest = "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5";

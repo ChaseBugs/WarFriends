@@ -25,6 +25,8 @@ internal sealed class CardRocketMissileFlight
 
     internal Vector3 Position { get; private set; }
     internal Vector3 TargetPosition => end;
+    internal Vector3 Velocity { get; }
+    internal bool IsFake => isFake;
     internal bool Finished { get; private set; }
 
     internal CardRocketMissileFlight(ulong projectileId, ulong soldierEntityKey,
@@ -58,6 +60,7 @@ internal sealed class CardRocketMissileFlight
         if (!float.IsFinite(durationSeconds) || durationSeconds <= 0 ||
             durationSeconds > 1800)
             throw new InvalidDataException("Card Rocket has invalid flight duration.");
+        Velocity = Vector3.Normalize(end - start) * missile.Speed;
 
         // BazookaEnemy MissileSetup has stopTime = 0 and curvedTrajectory = 0.
         progress = 0;
