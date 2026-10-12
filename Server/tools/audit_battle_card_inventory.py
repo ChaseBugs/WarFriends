@@ -115,6 +115,33 @@ def check_instant_medkit_source():
         raise ValueError("Instant medkit behavior source changed")
 
 
+def check_grenadier_card_setup():
+    soldier = (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviourGrennader.cs")
+    behavior = soldier.read_text(encoding="utf-8-sig")
+    required = [
+        "grenadeAmmoSetup.damageAmount = base.mBehaviourDef.grenadeMinDamage;",
+        "grenadeAmmoSetup.explodeDamageAmount = base.mBehaviourDef.grenadeExplodeDamage;",
+        "grenadeAmmoSetup.playerBehindShieldRatio = upgradeSlots.playerBehindShieldDamageRatio;",
+        "grenadeAmmoSetup.explodeAfterTime = 3f;",
+    ]
+    if any(line not in behavior for line in required):
+        raise ValueError("Grenadier card grenade behavior changed")
+
+    scene = SCENE.read_text(encoding="utf-8-sig")
+    inventory = scene.split("--- !u!114 &41066\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    if ("cardWeapons:\n  - weapon: {fileID: 11431434, guid: 16439357c0b8cbc4a91424818b10119d, type: 2}" not in inventory or
+        "  - weapon: {fileID: 11419550, guid: bd74fc4b54938454a92a050c5517d60b, type: 2}" not in inventory):
+        raise ValueError("Grenadier card secondary weapon binding changed")
+
+    grenade = (ASSETS / "GameObject/GrenadeEnemy.prefab").read_text(
+        encoding="utf-8-sig")
+    for field in ("  angle: 45\n", "  throwDistance: 0\n",
+                  "  deadRadius: 0.9\n", "  hurtRadius: 1.2\n"):
+        if field not in grenade:
+            raise ValueError("Grenadier card throw or blast prefab changed")
+
+
 def check_rocket_card_setup():
     soldier = (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviourBazooka.cs")
     behavior = soldier.read_text(encoding="utf-8-sig")
@@ -436,6 +463,7 @@ def render():
     check_apocalypse_source()
     check_single_shield_source()
     check_instant_medkit_source()
+    check_grenadier_card_setup()
     check_rocket_card_setup()
     check_big_medkit_source()
     check_max_health_source()

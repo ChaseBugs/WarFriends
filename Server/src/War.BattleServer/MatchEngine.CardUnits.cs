@@ -38,6 +38,7 @@ public sealed partial class MatchEngine
         Quaternion Rotation);
     private readonly Dictionary<ulong, LandedCanopy> deadParatrooperCanopies = [];
     private readonly Dictionary<ulong, ArmyCardRocketRuntime> cardRocketMissiles = [];
+    private readonly Dictionary<ulong, ArmyCardGrenadierRuntime> cardGrenadierThrows = [];
     private readonly Dictionary<ulong, ulong> rocketPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> rocketWalks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> rocketAttacks = [];
@@ -184,12 +185,15 @@ public sealed partial class MatchEngine
 
             activeArmyEntities.Add(entity.EntityKey, entity);
             if (entity.SourceCardId is "ELITEMINIGUN" or "ELITESWAT" or
-                "ELITESNIPER" or "ELITEPARA" or "BIGROCKET")
+                "ELITESNIPER" or "ELITEPARA" or "BIGROCKET" or
+                "GREATGRENADIER")
                 InitializeInfantryAnimation(entity.EntityKey);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
             if (entity.SourceCardId == "BIGROCKET")
                 InitializeCardRocket(entity);
+            if (entity.SourceCardId == "GREATGRENADIER")
+                InitializeCardGrenadier(entity);
             if (entity.SourceCardId == "ELITEMINIGUN")
                 InitializeCardMinigunner(entity);
             if (entity.SourceCardId == "ELITEPARA")
@@ -1341,6 +1345,23 @@ public sealed partial class MatchEngine
     internal ArmyCardRocketRuntime? CardRocketMissile(ulong entityKey) =>
         cardRocketMissiles.GetValueOrDefault(entityKey);
 
+    private void InitializeCardGrenadier(BattleArmyEntityState entity)
+    {
+        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
+            throw new InvalidDataException("Card Grenadier lost its spawn identity.");
+        if (source.EntityKey != entity.EntityKey ||
+            source.SourceCardId != "GREATGRENADIER" ||
+            entity.UnitId != "ID_UNIT-GRENADIER" ||
+            source.BaseStats.Grenade is null ||
+            source.BaseStats.Grenadier is not { } throwSetup)
+            throw new InvalidDataException("Card Grenadier lacks its grenade setup.");
+        if (!cardGrenadierThrows.TryAdd(entity.EntityKey, throwSetup))
+            throw new InvalidDataException("Card Grenadier reused its throw identity.");
+    }
+
+    internal ArmyCardGrenadierRuntime? CardGrenadierThrow(ulong entityKey) =>
+        cardGrenadierThrows.GetValueOrDefault(entityKey);
+
     internal bool CardRocketWalking(ulong entityKey) =>
         rocketWalks.ContainsKey(entityKey);
 
@@ -1785,6 +1806,7 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card-unit death lost its public roster row.");
         infantryAnimations.Remove(entityKey);
         cardRocketMissiles.Remove(entityKey);
+        cardGrenadierThrows.Remove(entityKey);
         rocketPointRetryTicks.Remove(entityKey);
         rocketWalks.Remove(entityKey);
         rocketAttacks.Remove(entityKey);

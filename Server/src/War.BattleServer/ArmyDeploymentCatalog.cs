@@ -16,10 +16,13 @@ public sealed record ArmyCardDroneRuntime(float MovementSpeed, float ShotSpeed,
     float ShieldHitProbability, bool CanTurnInvisible);
 public sealed record ArmyCardRocketRuntime(float DirectDamage,
     float ExplosionDamage, float Speed, float PlayerBehindShieldRatio);
+public sealed record ArmyCardGrenadierRuntime(float FuseSeconds,
+    float ThrowAngleDegrees, float ThrowDistance, float InnerRadius,
+    float OuterRadius, float PlayerBehindShieldRatio);
 public sealed record ArmyCardBaseStats(CardSpawnUnitSourceCatalog.Row Source,
     float Progress,ArmyBaseCombatStats Combat,ArmyBaseShotStats Shot,
     ArmyGrenadeDamageStats? Grenade, ArmyCardDroneRuntime? Drone,
-    ArmyCardRocketRuntime? Rocket);
+    ArmyCardRocketRuntime? Rocket, ArmyCardGrenadierRuntime? Grenadier);
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew,float ShieldHitProbability=0);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
@@ -182,9 +185,26 @@ public sealed class ArmyDeploymentCatalog
         ArmyCardRocketRuntime? rocket = source.UnitId == "ID_UNIT-ROCKETSOLDIER"
             ? ComposeCardRocketRuntime(damage)
             : null;
+        ArmyCardGrenadierRuntime? grenadier = source.UnitId == "ID_UNIT-GRENADIER"
+            ? ComposeCardGrenadierRuntime()
+            : null;
         return new ArmyCardBaseStats(source, progress,
             new ArmyBaseCombatStats(health, damage), shot, grenade, drone,
-            rocket);
+            rocket, grenadier);
+    }
+
+    private ArmyCardGrenadierRuntime ComposeCardGrenadierRuntime()
+    {
+        // SoldierBehaviourGrennader.ApplyWeaponsSetup overrides the prefab's
+        // zero-second fuse. SpawnByCard has no special upgrade, so its normal
+        // three-second branch applies. The throw and blast shape come from
+        // the recovered GrenadeEnemy prefab.
+        float behindShield = PlayerDamagePolicy(
+            "ID_UNIT-GRENADIER").BehindShieldRatio;
+        if (!float.IsFinite(behindShield) || behindShield < 0)
+            throw new InvalidDataException("Grenadier card shield damage is invalid.");
+        return new ArmyCardGrenadierRuntime(3f, 45f, 0f, 0.9f, 1.2f,
+            behindShield);
     }
 
     private ArmyCardRocketRuntime ComposeCardRocketRuntime(float cardDamage)

@@ -10669,6 +10669,15 @@ internal static class CombatContentTests
                   grenadeMaximum.Grenade == new ArmyGrenadeDamageStats(341, 1024) &&
                   content.Army.CardBaseStats("ELITEPARA", 0, maximumCardLevel).Grenade == null,
                 "Grenadier card explosion damage follows its source rows and integer interpolation");
+            var grenadierThrow = grenadeMinimum.Grenadier;
+            Check(grenadierThrow == new ArmyCardGrenadierRuntime(
+                      3f, 45f, 0f, .9f, 1.2f,
+                      content.Army.PlayerDamagePolicy(
+                          "ID_UNIT-GRENADIER").BehindShieldRatio) &&
+                  grenadeMaximum.Grenadier == grenadierThrow &&
+                  content.Army.CardBaseStats("ELITEPARA", 0,
+                      maximumCardLevel).Grenadier == null,
+                "card Grenadier keeps its source fuse, throw shape and blast radii");
             var droneCard = content.Army.CardBaseStats("HEAVYDRONE", 0, maximumCardLevel);
             var normalDroneShot = content.Army.ComposeDroneShot(0, null, null);
             var droneFamily = content.Army.Families.Single(family =>
@@ -11801,6 +11810,25 @@ internal static class CombatContentTests
                   airborneShot!.ProjectileId) == airborneProjectile,
             "confirmed Paratrooper death keeps its already launched round authoritative");
         var cardMatch = ReadyCardMatch("host-card-unit");
+        var grenadierCardMatch = ReadyCardMatch(
+            "host-card-grenadier-setup", "GREATGRENADIER");
+        const string grenadierSetupRequest =
+            "f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5";
+        Check(grenadierCardMatch.TryScheduleCardUnit(grenadierSetupRequest,
+                  decoyPlayer, "GREATGRENADIER"),
+            "trusted Grenadier card schedules its recovered source unit");
+        var grenadierEntity = grenadierCardMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.Single();
+        var grenadierStats = content.Army.CardBaseStats("GREATGRENADIER",
+            22, content.BarrelPolicy.MaxDisplayLevel);
+        Check(grenadierCardMatch.CardGrenadierThrow(
+                  grenadierEntity.EntityKey) == grenadierStats.Grenadier,
+            "spawned card Grenadier retains its source grenade throw setup");
+        Check(grenadierCardMatch.ConfirmArmyDeath(
+                  grenadierEntity.EntityKey, false) &&
+              grenadierCardMatch.CardGrenadierThrow(
+                  grenadierEntity.EntityKey) == null,
+            "card Grenadier death releases its grenade throw authority");
         var rocketCardMatch = ReadyCardMatch("host-card-rocket-setup", "BIGROCKET");
         const string rocketSetupRequest = "d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5";
         Check(rocketCardMatch.TryScheduleCardUnit(rocketSetupRequest,
