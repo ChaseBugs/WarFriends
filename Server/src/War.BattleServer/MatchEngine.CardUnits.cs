@@ -1638,7 +1638,15 @@ public sealed partial class MatchEngine
                 }
             }
         }
+        ApplyCardRocketAssaultGlassExplosion(impact, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
         ApplyCardRocketArmyExplosion(impact, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
+        ApplyCardRocketHelicopterGunnerExplosion(impact, launch,
             attacker.Definition.Fraction);
         if (Terminal)
             return;

@@ -184,6 +184,82 @@ public sealed partial class MatchEngine
         return true;
     }
 
+    internal void ApplyCardRocketHelicopterGunnerExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running ||
+            groundVehicleWeapons == null || helicopterCrewPoints == null ||
+            helicopterGunnerExplosions == null)
+            throw new InvalidDataException(
+                "Card Rocket has no helicopter gunner blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket gunner attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket gunner attacker fraction changed.");
+
+        foreach (var helicopter in activeArmyEntities.Values
+                     .Where(row => row.UnitId == "ID_UNIT-HELICOPTER")
+                     .OrderBy(row => row.EntityKey).ToArray())
+        {
+            if (!armyHelicopterGunners.TryGetValue(helicopter.EntityKey,
+                    out var gunner))
+                continue;
+            var state = gunner.Snapshot();
+            if (!state.TurretEnabled)
+                continue;
+            if (helicopter.OwnerFraction == attackerFraction)
+                continue;
+            if (state.SpawnTick > tick ||
+                helicopter.HelicopterRotation == null)
+                throw new InvalidDataException(
+                    "Card Rocket gunner lost its current pose.");
+            var rotation = helicopter.HelicopterRotation;
+            var seat = helicopterCrewPoints.PlaceTurret(
+                new Vector3(helicopter.X, helicopter.Y, helicopter.Z),
+                new Quaternion(rotation.X, rotation.Y, rotation.Z,
+                    rotation.W));
+            ulong animationTick = tick - state.SpawnTick;
+            var parts = groundVehicleWeapons.PassengerPoses
+                .PlaceHelicopterGunner(seat, animationTick);
+            var positions = helicopterGunnerExplosions
+                .PlaceTransformPositions(seat, animationTick);
+            if (parts.Count != 3 || positions.Length != 3)
+                throw new InvalidDataException(
+                    "Card Rocket gunner has incomplete hitboxes.");
+            var nearest = parts.Select((part, index) => new
+                {
+                    Part = part,
+                    Index = index,
+                    Distance = part.BoundsDistanceToPoint(impact.Position)
+                })
+                .Where(row => row.Part.OverlapsSphere(impact.Position, 1.2f))
+                .OrderBy(row => row.Distance)
+                .ThenBy(row => row.Index)
+                .FirstOrDefault();
+            if (nearest == null)
+                continue;
+
+            float damage = launch.Missile.ExplosionDamage;
+            if (nearest.Distance >= .8f)
+            {
+                float rootDistance = Vector3.Distance(
+                    positions[nearest.Index], impact.Position);
+                float fraction = Math.Clamp(1f -
+                    (rootDistance - .8f) / .4f, 0f, 1f);
+                damage = launch.Missile.DirectDamage +
+                    (launch.Missile.ExplosionDamage -
+                     launch.Missile.DirectDamage) * fraction * fraction;
+            }
+            if (!float.IsFinite(damage) || damage is <= 0 or > 10_000_000)
+                throw new InvalidDataException(
+                    "Card Rocket gunner damage exceeded host bounds.");
+            DamageHelicopterGunner(helicopter.EntityKey, damage);
+        }
+    }
+
     internal void ApplyHelicopterGunnerExplosion(string shooterId,Vector3 origin,float deadRadius,
         float hurtRadius,float minimumDamage,float explosionDamage,bool halfDamage)
     {
@@ -1446,6 +1522,54 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Vehicle missile air-body damage exceeded host bounds.");
             ApplyArmyHostDamage(group.Key,amount);
             if(Terminal)return;
+        }
+    }
+
+    internal void ApplyCardRocketAssaultGlassExplosion(
+        CardRocketMissileImpact impact, CardRocketLaunchAuthority launch,
+        int attackerFraction)
+    {
+        if (phase != BattlePhase.Running)
+            throw new InvalidDataException(
+                "Card Rocket has no front-glass blast authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Rocket glass attacker disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Rocket glass attacker fraction changed.");
+        var aircraft = activeArmyEntities.Values
+            .Where(row => row.UnitId == "ID_UNIT-ASSAULTHELI")
+            .OrderBy(row => row.EntityKey).ToArray();
+        if (aircraft.Length == 0)
+            return;
+        if (assaultHelicopterMeshColliders == null)
+            throw new InvalidDataException(
+                "Card Rocket glass collider source is missing.");
+
+        foreach (var helicopter in aircraft)
+        {
+            if (!armyAssaultHelicopterPaths.TryGetValue(
+                    helicopter.EntityKey, out var path) ||
+                !armyAssaultGlass.TryGetValue(helicopter.EntityKey,
+                    out var glass))
+                throw new InvalidDataException(
+                    "Card Rocket glass lost aircraft authority.");
+            if (glass.Current <= 0 ||
+                helicopter.OwnerFraction == attackerFraction)
+                continue;
+            var front = assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new Vector3(helicopter.X, helicopter.Y, helicopter.Z),
+                path.Rotation);
+            var hit = CardRocketExplosion.ResolveArmy(impact.Position,
+                front.Hitbox.Center, [front.Hitbox], launch.Missile);
+            if (hit == null)
+                continue;
+            if (!float.IsFinite(hit.RawDamage) ||
+                hit.RawDamage is <= 0 or > 10_000_000)
+                throw new InvalidDataException(
+                    "Card Rocket glass damage exceeded host bounds.");
+            ApplyAssaultGlassDamage(helicopter.EntityKey, hit.RawDamage);
         }
     }
 

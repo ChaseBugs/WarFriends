@@ -17406,6 +17406,41 @@ internal static class CombatContentTests
             "Tank missile explosion damages one opposing Helicopter body once");
         Reject(()=>missileAirMatch.ApplyGroundVehicleMissileAirBodyExplosion(soldierOwner,
             "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},helicopterBody));
+        var rocketGunnerTarget = missileAirMatch
+            .GroundVehicleShotTargets(soldierOwner)
+            .First(target => target.EntityId == missileHelicopter.EntityKey &&
+                target.HelicopterGunner);
+        var gunnerRocketMissile = rocketStats.Rocket! with
+        {
+            DirectDamage = .2f,
+            ExplosionDamage = 2f
+        };
+        var gunnerRocketLaunch = new CardRocketLaunchAuthority(
+            helicopterOwner, gunnerRocketMissile,
+            content.Army.PlayerDamagePolicy("ID_UNIT-ROCKETSOLDIER"));
+        int gunnerFriendlyFraction = missileAirManifest.Players.Single(
+            player => player.PlayerId == helicopterOwner).Fraction;
+        int gunnerEnemyFraction = missileAirManifest.Players.Single(
+            player => player.PlayerId == soldierOwner).Fraction;
+        var gunnerRocketImpact = new CardRocketMissileImpact(911, 1,
+            rocketGunnerTarget.Hitbox.Center, null, 75, false);
+        float gunnerHealthBeforeRocket = missileAirMatch
+            .HelicopterGunner(missileHelicopter.EntityKey)!.Health;
+        missileAirMatch.ApplyCardRocketHelicopterGunnerExplosion(
+            gunnerRocketImpact, gunnerRocketLaunch,
+            gunnerFriendlyFraction);
+        Check(missileAirMatch.HelicopterGunner(
+                  missileHelicopter.EntityKey)!.Health ==
+                  gunnerHealthBeforeRocket,
+            "Rocket card blast skips an allied Helicopter gunner");
+        missileAirMatch.ApplyCardRocketHelicopterGunnerExplosion(
+            gunnerRocketImpact with { ProjectileId = 912 },
+            gunnerRocketLaunch with { OwnerPlayerId = soldierOwner },
+            gunnerEnemyFraction);
+        Check(Math.Abs(missileAirMatch.HelicopterGunner(
+                  missileHelicopter.EntityKey)!.Health -
+                  (gunnerHealthBeforeRocket - 2f)) < .01f,
+            "Rocket card blast damages an enemy gunner at the animated body collider");
         var missileGlassManifest=flameHelicopterManifest with
         {
             MatchId="vehicle-missile-assault-glass",
@@ -17454,6 +17489,39 @@ internal static class CombatContentTests
             "opposing Tank missile damages front glass at full source strength");
         Reject(()=>missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(soldierOwner,
             "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},missileGlassOrigin));
+        var glassRocketMissile = rocketStats.Rocket! with
+        {
+            DirectDamage = .2f,
+            ExplosionDamage = 2f
+        };
+        var glassRocketLaunch = new CardRocketLaunchAuthority(
+            helicopterOwner, glassRocketMissile,
+            content.Army.PlayerDamagePolicy("ID_UNIT-ROCKETSOLDIER"));
+        int glassFriendlyFraction = missileGlassManifest.Players.Single(
+            player => player.PlayerId == helicopterOwner).Fraction;
+        int glassEnemyFraction = missileGlassManifest.Players.Single(
+            player => player.PlayerId == soldierOwner).Fraction;
+        var glassRocketImpact = new CardRocketMissileImpact(913, 1,
+            missileGlassOrigin, null, 75, false);
+        float glassHealthBeforeRocket = missileGlassMatch
+            .AssaultGlassHealth(missileGlassAircraft.EntityKey)!.Value;
+        missileGlassMatch.ApplyCardRocketAssaultGlassExplosion(
+            glassRocketImpact, glassRocketLaunch,
+            glassFriendlyFraction);
+        Check(missileGlassMatch.AssaultGlassHealth(
+                  missileGlassAircraft.EntityKey) ==
+                  glassHealthBeforeRocket,
+            "Rocket card blast skips allied Assault Helicopter front glass");
+        missileGlassMatch.ApplyCardRocketAssaultGlassExplosion(
+            glassRocketImpact with { ProjectileId = 914 },
+            glassRocketLaunch with { OwnerPlayerId = soldierOwner },
+            glassEnemyFraction);
+        Check(Math.Abs(missileGlassMatch.AssaultGlassHealth(
+                  missileGlassAircraft.EntityKey)!.Value -
+                  (glassHealthBeforeRocket - 2f)) < .01f &&
+              missileGlassMatch.ArmyHealth(missileGlassAircraft.EntityKey) ==
+                  missileBodyBefore,
+            "Rocket card blast damages enemy front glass without changing aircraft-body health");
         Check(missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(soldierOwner,
                   "ID_UNIT-TANK",10_000,tankMissileBinding,missileGlassOrigin)==1&&
               missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)==0&&
