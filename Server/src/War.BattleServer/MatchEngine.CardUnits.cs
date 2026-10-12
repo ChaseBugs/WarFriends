@@ -31,6 +31,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> paratrooperCornerChangeTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> swatAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> swatShotTargets = [];
+    private readonly Dictionary<ulong, ulong> swatLastShotTicks = [];
+    private readonly Dictionary<ulong, ulong> swatShieldHideTicks = [];
 
     internal CardUnitInitialPoint? CardEnemyPoint(ulong entityKey) =>
         cardEnemyPoints?.Find(entityKey);
@@ -157,7 +159,7 @@ public sealed partial class MatchEngine
                 continue; // Source Spawn consumed its failed point search.
 
             activeArmyEntities.Add(entity.EntityKey, entity);
-            if (entity.SourceCardId == "ELITEMINIGUN")
+            if (entity.SourceCardId is "ELITEMINIGUN" or "ELITESWAT")
                 InitializeInfantryAnimation(entity.EntityKey);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
@@ -1215,7 +1217,12 @@ public sealed partial class MatchEngine
                 int windup = armyWeapons?.WindupTicks(entity.UnitId) ??
                     throw new InvalidDataException("Card SWAT lacks source windup.");
                 if (attack.TryBegin(target != null, 1, windup))
+                {
                     swatShotTargets[entityKey] = target!;
+                    // ShootFromSwatShield keeps the shield exposed for five
+                    // seconds before playing the recovered hide animation.
+                    swatShieldHideTicks[entityKey] = checked(tick + 150);
+                }
             }
 
             attack.AdvanceTick();
@@ -1227,6 +1234,10 @@ public sealed partial class MatchEngine
                 entity.OwnerPlayerId, shotTarget.PlayerId,
                 shotTarget.TargetFileId, shotTarget.Position,
                 attack.CurrentShotIsReal, attack.BatchCursor, attack.BatchSize));
+            swatLastShotTicks[entityKey] = tick;
+            // EnemyController.OnShot repeats ShootFromSwatShield with a
+            // half-second hide delay after the projectile leaves the muzzle.
+            swatShieldHideTicks[entityKey] = checked(tick + 15);
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 swatShotTargets.Remove(entityKey);
@@ -1349,6 +1360,8 @@ public sealed partial class MatchEngine
             swatWalks.Remove(entityKey);
             swatAttacks.Remove(entityKey);
             swatShotTargets.Remove(entityKey);
+            swatLastShotTicks.Remove(entityKey);
+            swatShieldHideTicks.Remove(entityKey);
             rusherShotCounts.Remove(entityKey);
             armyDamage.Remove(entityKey);
             armyShots.Remove(entityKey);

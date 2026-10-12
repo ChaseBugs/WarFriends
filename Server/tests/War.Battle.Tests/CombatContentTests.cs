@@ -12755,10 +12755,15 @@ internal static class CombatContentTests
             "card SWAT binds its own damage row instead of the ordinary army stage");
         Check(swatCardRows.All(row => swatCardMatch.CardSwatWalking(row.EntityKey)),
             "both card SWAT soldiers begin source-point NavMesh walks");
+        Check(swatCardRows.All(row => row.InfantryClip == "shield_idle" &&
+              swatCardMatch.InfantryPose(row.EntityKey)?.Clip == row.InfantryClip),
+            "card SWAT spawn exposes its initial shield pose to rendering and hitboxes");
         swatCardMatch.Advance(61);
         var walkingSwatRows = swatCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.ToArray();
         Check(walkingSwatRows.Length == 2 &&
+              walkingSwatRows.All(row => row.InfantryClip == "shield_run" &&
+                  swatCardMatch.InfantryPose(row.EntityKey)?.Clip == row.InfantryClip) &&
               walkingSwatRows.All(row => row.PositionTick == 61) &&
               walkingSwatRows.Any(row =>
               {
@@ -12770,6 +12775,7 @@ internal static class CombatContentTests
         Check(swatCardMatch.ConfirmArmyDeath(swatCardRows[0].EntityKey, false) &&
               swatCardMatch.CardEnemyPointOccupant(firstCardSwatPoint!.ComponentFileId) == null &&
               !swatCardMatch.CardSwatWalking(swatCardRows[0].EntityKey) &&
+              swatCardMatch.InfantryPose(swatCardRows[0].EntityKey) == null &&
               swatCardMatch.ArmyDamage(swatCardRows[0].EntityKey) == null &&
               swatCardMatch.CardEnemyPointOccupant(secondCardSwatPoint!.ComponentFileId) ==
                   swatCardRows[1].EntityKey,
@@ -12780,6 +12786,8 @@ internal static class CombatContentTests
                   decoyPlayer, "ELITESWAT"),
             "host schedules card SWAT for a complete arrival and shot trace");
         bool swatFired = false;
+        bool swatUnhidShield = false;
+        bool swatPlayedShot = false;
         for (ulong swatTick = 61; swatTick < 1500 &&
              !firingSwatMatch.Terminal && !swatFired; swatTick++)
         {
@@ -12789,12 +12797,20 @@ internal static class CombatContentTests
                 firingSwatMatch.ArmyBatch(decoyOpponent);
             }
             firingSwatMatch.Advance(swatTick);
+            var currentSwatRows = firingSwatMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                .Entities;
+            swatUnhidShield |= currentSwatRows.Any(row =>
+                row.InfantryClip == "shield_unhide" &&
+                firingSwatMatch.InfantryPose(row.EntityKey)?.Clip == row.InfantryClip);
+            swatPlayedShot |= currentSwatRows.Any(row =>
+                row.InfantryClip == "shield_shot" &&
+                firingSwatMatch.InfantryPose(row.EntityKey)?.Clip == row.InfantryClip);
             swatFired = firingSwatMatch.EventBatch(decoyPlayer, 0)
                 .Events.Any(row => row.Kind == MatchEventKind.Shot &&
                     row.ActorId == decoyPlayer && row.Reason == "army");
         }
-        Check(swatFired,
-            "card SWAT reaches its source point and publishes a host-owned shot");
+        Check(swatFired && swatUnhidShield && swatPlayedShot,
+            "card SWAT reveals its shield, shoots, and publishes the same collision pose");
         var swatShot = firingSwatMatch.EventBatch(decoyPlayer, 0).Events
             .FirstOrDefault(row => row.Kind == MatchEventKind.Shot &&
                 row.ActorId == decoyPlayer && row.Reason == "army");

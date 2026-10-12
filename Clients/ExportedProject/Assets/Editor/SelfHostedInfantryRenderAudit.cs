@@ -103,11 +103,36 @@ public static class SelfHostedInfantryRenderAudit
                 cardVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
                     .sharedMesh == cardStyle.modelMeshRenderer.sharedMesh,
                 "card Minigunner uses its recovered elite mesh");
+            var swatCardRow = new BattleArmyEntityState
+            {
+                EntityKey = 101,
+                UnitId = "ID_UNIT-SWAT",
+                SourceCardId = "ELITESWAT",
+                X = 2, SpawnTick = 60, PositionTick = 60,
+                MaxHealth = 100, Health = 100,
+                InfantryClip = "shield_run",
+                InfantryClipStartTick = 60,
+                InfantryFacingZ = 1
+            };
+            presenter.Apply(new List<BattleArmyEntityState> { cardRow, swatCardRow });
+            var swatCardVisual = GameObject.Find("SelfHostedInfantry_101");
+            var swatCardStyle = manager.levelBehaviours.Select(entry =>
+                    entry.behaviour as SoldierBehaviour)
+                .First(soldier => soldier != null &&
+                    soldier.unitDictionaryId == "ID_UNIT-SWAT")
+                .cardSoldierVisuals.Single();
+            swatCardStyle.LoadModel();
+            Require(swatCardVisual != null &&
+                swatCardVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
+                    .sharedMesh == swatCardStyle.modelMeshRenderer.sharedMesh,
+                "card SWAT uses its recovered elite mesh");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
+            Require(GameObject.Find("SelfHostedInfantry_101") == null,
+                "removed SWAT card visual");
             Debug.Log("UNITY_INFANTRY_RENDER_PASSED families=" + Families.Length +
-                " cardMinigunner=True" +
+                " cardMinigunner=True cardSwat=True" +
                 " skin=True scriptFree=True hostMotion=True removal=True");
             EditorApplication.Exit(0);
         }

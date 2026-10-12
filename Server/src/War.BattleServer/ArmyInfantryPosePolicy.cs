@@ -36,7 +36,8 @@ internal static class ArmyInfantryPosePolicy
             throw new InvalidDataException("Infantry animation policy does not cover the deployed soldier set.");
         var names=poses.Names.ToHashSet(StringComparer.Ordinal);
         if(Clips.Values.SelectMany(x=>new[]{x.Idle,x.Walk,x.Fire}).Any(x=>!names.Contains(x))||
-           !names.Contains("warp_movement")||!names.Contains("warp_idle"))
+           !names.Contains("warp_movement")||!names.Contains("warp_idle")||
+           !names.Contains("shield_unhide")||!names.Contains("shield_hide"))
             throw new InvalidDataException("Infantry animation policy references an unpinned enemy clip.");
     }
 }

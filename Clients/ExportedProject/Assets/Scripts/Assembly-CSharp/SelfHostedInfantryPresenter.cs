@@ -53,7 +53,8 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         {
             if (string.IsNullOrEmpty(row.InfantryClip)) continue;
             if (row.SourceCardId.Length != 0 &&
-                row.SourceCardId != "ELITEMINIGUN") continue;
+                row.SourceCardId != "ELITEMINIGUN" &&
+                row.SourceCardId != "ELITESWAT") continue;
             if (!behaviours.ContainsKey(row.UnitId))
                 throw new InvalidOperationException("The host sent an unknown infantry visual family.");
             Validate(row);
@@ -97,7 +98,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     private Visual Create(BattleArmyEntityState row)
     {
         var soldier = behaviours[row.UnitId];
-        var styles = row.SourceCardId == "ELITEMINIGUN" ?
+        var styles = row.SourceCardId.Length != 0 ?
             soldier.cardSoldierVisuals : soldier.soldierVisuals;
         if (styles == null || styles.Count == 0)
             throw new InvalidOperationException("Recovered infantry card style is absent.");

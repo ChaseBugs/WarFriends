@@ -432,7 +432,25 @@ public sealed partial class MatchEngine
             if(!activeArmyEntities.TryGetValue(key,out var army))
                 throw new InvalidDataException("Infantry animation lost its host entity.");
             var clips=ArmyInfantryPosePolicy.For(army.UnitId);string clip=clips.Idle;Vector3? facing=null;
-            if(warperRelocations.TryGetValue(key,out var warp))
+            if(army.SourceCardId=="ELITESWAT")
+            {
+                if(swatWalks.TryGetValue(key,out var walk))
+                {clip=clips.Walk;facing=walk.Facing;}
+                else
+                {
+                    var attack=swatAttacks.GetValueOrDefault(key);
+                    if(attack?.Phase==ArmyRusherAttackPhase.Windup)
+                        clip="shield_unhide";
+                    else if(swatLastShotTicks.TryGetValue(key,out ulong shotTick)&&
+                            tick>=shotTick&&tick-shotTick<8)
+                        clip=clips.Fire;
+                    else if(swatShieldHideTicks.TryGetValue(key,out ulong hideTick)&&
+                            tick>=hideTick&&tick-hideTick<18)
+                        clip="shield_hide";
+                    facing=AttackFacing(key,army,swatShotTargets);
+                }
+            }
+            else if(warperRelocations.TryGetValue(key,out var warp))
             {
                 clip=warp.Phase==ArmyWarperRelocationPhase.Pause?"warp_idle":
                     warp.Transparent?"warp_movement":clips.Walk;
