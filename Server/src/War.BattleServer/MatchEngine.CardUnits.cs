@@ -30,6 +30,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> paratrooperShotTargets = [];
+    private readonly Dictionary<ulong, ulong> paratrooperExposeTicks = [];
+    private readonly Dictionary<ulong, ulong> paratrooperLastShotTicks = [];
     private readonly Dictionary<ulong, ulong> paratrooperCornerChangeTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> swatAttacks = [];
     private readonly Dictionary<ulong, ArmyRusherTarget> swatShotTargets = [];
@@ -161,7 +163,8 @@ public sealed partial class MatchEngine
                 continue; // Source Spawn consumed its failed point search.
 
             activeArmyEntities.Add(entity.EntityKey, entity);
-            if (entity.SourceCardId is "ELITEMINIGUN" or "ELITESWAT" or "ELITESNIPER")
+            if (entity.SourceCardId is "ELITEMINIGUN" or "ELITESWAT" or
+                "ELITESNIPER" or "ELITEPARA")
                 InitializeInfantryAnimation(entity.EntityKey);
             if (entity.SourceCardId == "HEAVYDRONE")
                 InitializeCardDrone(entity);
@@ -741,7 +744,10 @@ public sealed partial class MatchEngine
                 if (target == null)
                     attack.RetryAfterRejectedTarget();
                 else if (attack.TryBegin(true, 1, windupTicks))
+                {
                     paratrooperShotTargets[entityKey] = target;
+                    paratrooperExposeTicks[entityKey] = tick;
+                }
             }
 
             attack.AdvanceTick();
@@ -756,6 +762,7 @@ public sealed partial class MatchEngine
                 shotTarget.TargetFileId, shotTarget.Position,
                 attack.CurrentShotIsReal, attack.BatchCursor, attack.BatchSize,
                 muzzle));
+            paratrooperLastShotTicks[entityKey] = tick;
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 paratrooperShotTargets.Remove(entityKey);
@@ -806,6 +813,8 @@ public sealed partial class MatchEngine
             cardEnemyPoints.Transfer(entityKey, "ELITEPARA", next);
             paratrooperAttacks.Remove(entityKey);
             paratrooperShotTargets.Remove(entityKey);
+            paratrooperExposeTicks.Remove(entityKey);
+            paratrooperLastShotTicks.Remove(entityKey);
             paratrooperCornerChangeTicks.Remove(entityKey);
             paratrooperWalks.Add(entityKey, walk);
         }
@@ -1405,6 +1414,8 @@ public sealed partial class MatchEngine
             paratrooperPointRetryTicks.Remove(entityKey);
             paratrooperAttacks.Remove(entityKey);
             paratrooperShotTargets.Remove(entityKey);
+            paratrooperExposeTicks.Remove(entityKey);
+            paratrooperLastShotTicks.Remove(entityKey);
             paratrooperCornerChangeTicks.Remove(entityKey);
             rusherShotCounts.Remove(entityKey);
             armyDamage.Remove(entityKey);

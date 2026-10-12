@@ -432,7 +432,11 @@ public sealed partial class MatchEngine
             if(!activeArmyEntities.TryGetValue(key,out var army))
                 throw new InvalidDataException("Infantry animation lost its host entity.");
             var clips=ArmyInfantryPosePolicy.For(army.UnitId);string clip=clips.Idle;Vector3? facing=null;
-            if(army.SourceCardId=="ELITESNIPER")
+            if(army.SourceCardId=="ELITEPARA")
+            {
+                (clip,facing)=CardParatrooperInfantryPose(key,clips);
+            }
+            else if(army.SourceCardId=="ELITESNIPER")
             {
                 (clip,facing)=CardSniperInfantryPose(key,army,clips);
             }
@@ -481,6 +485,50 @@ public sealed partial class MatchEngine
         }
     }
 
+    private (string Clip,Vector3? Facing) CardParatrooperInfantryPose(
+        ulong entityKey,ArmyInfantryClips clips)
+    {
+        if(parachuteFlights.TryGetValue(entityKey,out var flight))
+        {
+            // EnemyController.SwitchStateToParachute calls Idle. The separate
+            // canopy object owns the flight, while the hanging soldier keeps
+            // its idle base clip (air shots use an additive upper-body layer).
+            return (clips.Idle,Vector3.Transform(Vector3.UnitZ,flight.Rotation));
+        }
+
+        CardSoldierWalkState? walk=paratrooperWalks.GetValueOrDefault(entityKey) ??
+            paratrooperFallbackWalks.GetValueOrDefault(entityKey);
+        if(walk!=null)
+            return (walk.Arrived?clips.Idle:clips.Walk,walk.Facing);
+
+        CardUnitInitialPoint? corner=cardEnemyPoints?.Find(entityKey);
+        if(corner?.CornerRightSide is not bool rightSide)
+            return (clips.Idle,null);
+
+        string side=rightSide?"right":"left";
+        // EnemyController turns to the Corner's opposite direction before
+        // exposing. CardParatrooperCornerMuzzle uses that same rotation.
+        Vector3? facing=corner.CornerDirection is Vector3 direction?
+            -direction:null;
+        ArmyRusherAttackState? attack=paratrooperAttacks.GetValueOrDefault(entityKey);
+        if(attack?.Phase==ArmyRusherAttackPhase.Windup &&
+            paratrooperExposeTicks.TryGetValue(entityKey,out ulong exposeTick))
+        {
+            string stage=tick-exposeTick<15?"look":"fire";
+            return ($"player_{stage}_{side}3",facing);
+        }
+        if(paratrooperLastShotTicks.TryGetValue(entityKey,out ulong shotTick) &&
+            tick>=shotTick)
+        {
+            ulong elapsed=tick-shotTick;
+            if(elapsed<15)
+                return ($"player_fire_{side}3",facing);
+            if(elapsed<30)
+                return ($"player_{side}_coverBack3",facing);
+        }
+        return (clips.Idle,facing);
+    }
+
     private (string Clip,Vector3? Facing) CardSniperInfantryPose(
         ulong entityKey,BattleArmyEntityState soldier,ArmyInfantryClips clips)
     {
@@ -492,8 +540,12 @@ public sealed partial class MatchEngine
             return (clips.Idle,null); // Snow can lack a free Corner.
 
         string side=rightSide?"right":"left";
-        Vector3? facing=AttackFacing(entityKey,soldier,sniperShotTargets) ??
-            corner.CornerDirection;
+        // The Sniper's animated muzzle faces away from its latched target.
+        // While hidden, EnemyController keeps the opposite Corner direction.
+        Vector3? facing=sniperShotTargets.TryGetValue(entityKey,out var target)?
+            new Vector3(soldier.X-target.Position.X,0,
+                soldier.Z-target.Position.Z):
+            corner.CornerDirection is Vector3 direction?-direction:null;
         ArmyRusherAttackState? attack=sniperAttacks.GetValueOrDefault(entityKey);
         if(attack?.Phase==ArmyRusherAttackPhase.Windup &&
             sniperExposeTicks.TryGetValue(entityKey,out ulong exposeTick))

@@ -38,7 +38,10 @@ internal static class ArmyInfantryPosePolicy
         if(Clips.Values.SelectMany(x=>new[]{x.Idle,x.Walk,x.Fire}).Any(x=>!names.Contains(x))||
            !names.Contains("warp_movement")||!names.Contains("warp_idle")||
            !names.Contains("shield_unhide")||!names.Contains("shield_hide")||
-           new[]{"player_look_right_sniper","player_fire_right_sniper",
+           new[]{"player_look_right3","player_fire_right3",
+                 "player_right_coverBack3","player_look_left3",
+                 "player_fire_left3","player_left_coverBack3",
+                 "player_look_right_sniper","player_fire_right_sniper",
                  "player_right_coverBack_sniper","player_look_left_sniper",
                  "player_fire_left_sniper","player_left_coverBack_sniper"}
                .Any(name=>!names.Contains(name)))

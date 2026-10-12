@@ -11927,6 +11927,8 @@ internal static class CombatContentTests
             .Entities.ToArray();
         Check(firstParaRows.Length == 1 &&
               firstParaRows[0].SourceCardId == "ELITEPARA" &&
+              firstParaRows[0].InfantryClip == "idle_1" &&
+              paraCardMatch.InfantryPose(firstParaRows[0].EntityKey)?.Clip == "idle_1" &&
               firstParaRows[0].SpawnTick == 60 &&
               firstParaRows[0].OptionIndex == -1 &&
               paraCardMatch.CardParatrooperAirAttacking(
@@ -11949,6 +11951,8 @@ internal static class CombatContentTests
               paraRows[1].SpawnTick == 75 &&
               paraRows.All(row => row.SourceCardId == "ELITEPARA" &&
                   row.UnitId == "ID_UNIT-PARATROOPER" &&
+                  row.InfantryClip == "idle_1" &&
+                  paraCardMatch.InfantryPose(row.EntityKey)?.Clip == row.InfantryClip &&
                   row.OptionIndex == -1),
             "delayed second Paratrooper card unit receives a distinct host identity at tick 75");
         var paraStats = content.Army.CardBaseStats("ELITEPARA", 22,
@@ -12127,6 +12131,8 @@ internal static class CombatContentTests
         var walkingPara = paraCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.Single();
         Check(walkingPara.EntityKey == remainingPara.EntityKey &&
+              walkingPara.InfantryClip == "run_0" &&
+              paraCardMatch.InfantryPose(walkingPara.EntityKey)?.Clip == "run_0" &&
               new Vector3(walkingPara.X, walkingPara.Y, walkingPara.Z) !=
                   paraLanding,
             "landed Paratrooper begins host-owned movement to its Corner point");
@@ -12202,6 +12208,34 @@ internal static class CombatContentTests
                   .ComponentFileId == exposedParaPoint.ComponentFileId,
             "exposed-side Paratrooper lands beside the other Park Corner");
         bool firingParaShotSeen = false;
+        bool paraLookPoseSeen = false;
+        bool paraFirePoseSeen = false;
+        bool paraCoverBackPoseSeen = false;
+        bool paraFiringDirectionMatched = false;
+        void RecordParatrooperPose()
+        {
+            var row = firingParaMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+                .Entities.Single(entity => entity.EntityKey == firingPara.EntityKey);
+            if (row.InfantryClip != firingParaMatch.InfantryPose(row.EntityKey)?.Clip)
+                throw new Exception("Card Paratrooper visual and collision poses diverged.");
+            paraLookPoseSeen |= row.InfantryClip.StartsWith("player_look_",
+                StringComparison.Ordinal);
+            paraFirePoseSeen |= row.InfantryClip.StartsWith("player_fire_",
+                StringComparison.Ordinal);
+            if (row.InfantryClip.StartsWith("player_fire_", StringComparison.Ordinal))
+            {
+                Vector3 sourceDirection = exposedParaPoint.CornerDirection ??
+                    throw new InvalidDataException("Paratrooper Corner lost its direction.");
+                Vector3 expectedFacing = Vector3.Normalize(new Vector3(
+                    -sourceDirection.X, 0, -sourceDirection.Z));
+                Vector3 actualFacing = firingParaMatch.InfantryPose(
+                    row.EntityKey)?.Facing ?? Vector3.Zero;
+                paraFiringDirectionMatched |= Vector3.Dot(actualFacing,
+                    expectedFacing) > .99f;
+            }
+            paraCoverBackPoseSeen |= row.InfantryClip.Contains("_coverBack3",
+                StringComparison.Ordinal);
+        }
         ulong firingParaTick = 60;
         for (ulong cardTick = 61; cardTick < 1000 &&
              !firingParaMatch.Terminal && !firingParaShotSeen; cardTick++)
@@ -12212,6 +12246,7 @@ internal static class CombatContentTests
                 firingParaMatch.ArmyBatch(decoyOpponent);
             }
             firingParaMatch.Advance(cardTick);
+            RecordParatrooperPose();
             firingParaTick = cardTick;
             firingParaShotSeen = firingParaMatch.EventBatch(decoyPlayer, 0)
                 .Events.Any(row => row.Kind == MatchEventKind.Shot &&
@@ -12251,6 +12286,7 @@ internal static class CombatContentTests
                 firingParaMatch.ArmyBatch(decoyOpponent);
             }
             firingParaMatch.Advance(cardTick);
+            RecordParatrooperPose();
             paraChangedCorner = firingParaMatch.CardParatrooperWalking(
                 firingPara.EntityKey) &&
                 firingParaMatch.CardEnemyPoint(firingPara.EntityKey)?
@@ -12258,6 +12294,9 @@ internal static class CombatContentTests
         }
         ulong occupiedOtherCorner = firingParaMatch.CardEnemyPointOccupant(
             paraLandingPoint.ComponentFileId) ?? 0;
+        Check(paraLookPoseSeen && paraFirePoseSeen && paraCoverBackPoseSeen &&
+              paraFiringDirectionMatched,
+            "card Paratrooper Corner publishes reveal, fire, and cover-return poses facing its muzzle");
         Check(!paraChangedCorner && occupiedOtherCorner != 0 &&
               firingParaMatch.CardParatrooperCornerChangeTick(
                   firingPara.EntityKey) > 999,
@@ -12306,6 +12345,7 @@ internal static class CombatContentTests
             "transferred Paratrooper resumes its Corner attack clock on arrival");
         Check(firingParaMatch.ConfirmArmyDeath(firingPara.EntityKey, false) &&
               !firingParaMatch.CardParatrooperAttacking(firingPara.EntityKey) &&
+              firingParaMatch.InfantryPose(firingPara.EntityKey) == null &&
               firingParaMatch.CardEnemyPointOccupant(
                   paraLandingPoint.ComponentFileId) == null,
             "Paratrooper death clears its attack and Corner reservation after firing");
