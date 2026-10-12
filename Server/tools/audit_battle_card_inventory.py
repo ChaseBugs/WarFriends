@@ -125,12 +125,21 @@ def check_rocket_card_setup():
     ]
     card_spawn = (ASSETS / "Scripts/Assembly-CSharp/AIObject.cs")
     upgrade = (ASSETS / "Scripts/Assembly-CSharp/UpgradeSlots.cs")
+    player_targets = (ASSETS /
+        "Scripts/Assembly-CSharp/GameShootableEntityPlayer.cs")
+    player_controller = (ASSETS / "Scripts/Assembly-CSharp/PlayerController.cs")
     if (any(line not in behavior for line in required) or
         "unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);" not in
             card_spawn.read_text(encoding="utf-8-sig") or
         "playerBehindShieldDamageRatio => armyUpgradesRow.PLAYERBEHINDSHIELDDMGRATIO;" not in
-            upgrade.read_text(encoding="utf-8-sig")):
-        raise ValueError("Rocket card missile setup differs from recovered Client")
+            upgrade.read_text(encoding="utf-8-sig") or
+        "type &= ~ShotTargetType.Shield;" not in
+            player_targets.read_text(encoding="utf-8-sig") or
+        "list.AddRange(base.GetShotTargets(type));" not in
+            player_targets.read_text(encoding="utf-8-sig") or
+        "currentPlayerPoint = mGoToPosition;" not in
+            player_controller.read_text(encoding="utf-8-sig")):
+        raise ValueError("Rocket card setup or shield aim differs from recovered Client")
 
 
 def check_big_medkit_source():

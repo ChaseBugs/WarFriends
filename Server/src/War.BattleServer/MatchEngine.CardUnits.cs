@@ -1325,6 +1325,32 @@ public sealed partial class MatchEngine
     internal ArmyCardRocketRuntime? CardRocketMissile(ulong entityKey) =>
         cardRocketMissiles.GetValueOrDefault(entityKey);
 
+    internal Vector3? CardRocketAim(ulong entityKey)
+    {
+        if (phase != BattlePhase.Running || map == null ||
+            !cardRocketMissiles.ContainsKey(entityKey) ||
+            !activeArmyEntities.TryGetValue(entityKey, out var soldier) ||
+            soldier.SourceCardId != "BIGROCKET")
+            return null;
+
+        Player owner = Find(soldier.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Rocket Soldier lost its owner.");
+        Player opponent = players.Single(player => player != owner);
+        if (opponent.Dead)
+            return null;
+
+        // GetShotTargets(Shield) inserts the current cover's shield target,
+        // removes the Shield bit, then asks the base class for type None.
+        // Thus the serialized player target is never in this particular list.
+        // PlayerController sets currentPlayerPoint to the destination before
+        // moving, so a walking opponent still points at that cover shield.
+        int currentPoint = opponent.Route == null ? opponent.Cover :
+            opponent.Destination;
+        if (currentPoint < 0 || currentPoint >= map.Covers.Count)
+            return null;
+        return map.Covers[currentPoint].ShotPosition;
+    }
+
     private void InitializeCardMinigunner(BattleArmyEntityState entity)
     {
         CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??

@@ -11814,8 +11814,25 @@ internal static class CombatContentTests
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) ==
                   rocketStats.Rocket,
             "card Rocket spawn binds its level-scaled missile setup to the host entity");
+        var rocketAim = rocketCardMatch.CardRocketAim(rocketEntity.EntityKey);
+        CoverNode opposingCover = park.Covers.First(cover =>
+            cover.Fraction == 2 && cover.Main);
+        Check(rocketAim == opposingCover.ShotPosition,
+            "spawned Rocket card aims at the opponent's current cover shield");
+        int rocketMoveDestination = park.Adjacent(
+            park.Covers.ToList().IndexOf(opposingCover), -1, 2);
+        Check(rocketMoveDestination >= 0 &&
+              rocketCardMatch.Command(decoyOpponent, new MatchCommand
+              {
+                  CommandId = 3,
+                  MoveCover = new MoveCoverCommand { Direction = -1 }
+              }).Code == "moving" &&
+              rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) ==
+                  park.Covers[rocketMoveDestination].ShotPosition,
+            "moving opponent changes the Rocket aim to the destination cover shield");
         Check(rocketCardMatch.ConfirmArmyDeath(rocketEntity.EntityKey, false) &&
-              rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) == null,
+              rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) == null &&
+              rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) == null,
             "card Rocket death removes the prepared missile authority");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
