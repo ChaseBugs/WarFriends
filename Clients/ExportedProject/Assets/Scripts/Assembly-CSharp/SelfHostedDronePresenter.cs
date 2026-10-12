@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using War.Protocol;
 
-// Normal deployed Drone visuals only. No local AI, collision, Photon or special timer.
+// Renders normal and card-spawned Drones from the recovered prefab without
+// running its local AI, collision, Photon, or special timer.
 public sealed class SelfHostedDronePresenter : MonoBehaviour
 {
     private sealed class Visual
@@ -11,6 +12,7 @@ public sealed class SelfHostedDronePresenter : MonoBehaviour
         public GameObject Root;
         public SelfHostedRemoteTransformBuffer Transform;
         public List<MeshRenderer> MaterialTargets;
+        public bool SpawnedByCard;
     }
     private readonly Dictionary<ulong,Visual> active=new Dictionary<ulong,Visual>();
     private Drone source;
@@ -22,13 +24,19 @@ public sealed class SelfHostedDronePresenter : MonoBehaviour
         foreach(var row in rows)
         {
             if(row.UnitId!="ID_UNIT-DRONE")continue;
+            bool spawnedByCard = row.SourceCardId == "HEAVYDRONE";
+            if (row.SourceCardId.Length != 0 && !spawnedByCard ||
+                spawnedByCard && row.DroneTransparent)
+                throw new InvalidOperationException("Invalid authoritative Drone card visual state.");
             if(row.DroneRotation==null)
                 throw new InvalidOperationException("Authoritative Drone rotation is absent.");
             if(row.PositionTick<row.SpawnTick)
                 throw new InvalidOperationException("Drone visual tick predates spawn.");
             present.Add(row.EntityKey);Visual visual;
             if(!active.TryGetValue(row.EntityKey,out visual))
-            {visual=Create(row.EntityKey);active.Add(row.EntityKey,visual);}
+            {visual=Create(row.EntityKey, spawnedByCard);active.Add(row.EntityKey,visual);}
+            if (visual.SpawnedByCard != spawnedByCard)
+                throw new InvalidOperationException("Drone source identity changed after spawn.");
             Vector3 position=new Vector3(row.X,row.Y,row.Z);
             Quaternion rotation=new Quaternion(row.DroneRotation.X,row.DroneRotation.Y,
                 row.DroneRotation.Z,row.DroneRotation.W);
@@ -54,20 +62,22 @@ public sealed class SelfHostedDronePresenter : MonoBehaviour
         foreach(Visual visual in active.Values)
             visual.Transform.Render(visual.Root.transform,realtime,frameSeconds);
     }
-    private Visual Create(ulong id)
+    private Visual Create(ulong id, bool spawnedByCard)
     {
         if(source==null||source.visuals==null||source.visuals.mainRenderer==null||source.transparentMaterial==null)
             throw new InvalidOperationException("Recovered Drone visual/material bindings are absent.");
         var root=new GameObject("SelfHostedDrone_"+id);
         var map=new Dictionary<Transform,Transform>();
         Copy(source.transform,root.transform,true,map);
-        map[source.normalDrone.transform].gameObject.SetActive(true);
-        map[source.eliteDrone.transform].gameObject.SetActive(false);
+        // Drone.OnInstancied enables the elite mesh for SpawnByCard.
+        map[source.normalDrone.transform].gameObject.SetActive(!spawnedByCard);
+        map[source.eliteDrone.transform].gameObject.SetActive(spawnedByCard);
         var targets=new List<MeshRenderer>();
         targets.Add(map[source.visuals.mainRenderer.transform].GetComponent<MeshRenderer>());
         foreach(var renderer in source.visuals.renderedParts)
             targets.Add(map[renderer.transform].GetComponent<MeshRenderer>());
         return new Visual{Root=root,Transform=new SelfHostedRemoteTransformBuffer(),
+            SpawnedByCard=spawnedByCard,
             MaterialTargets=targets};
     }
     private static void Copy(Transform from,Transform to,bool root,Dictionary<Transform,Transform> map)

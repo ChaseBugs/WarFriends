@@ -11795,15 +11795,15 @@ internal static class CombatContentTests
         Check(cardMatch.Command(decoyPlayer, new MatchCommand
         {
             CommandId = 3,
-            UseUnitCard = new() { RequestId = hostCardRequest, SourceCardId = "HEAVYDRONE" }
+            UseUnitCard = new() { RequestId = hostCardRequest, SourceCardId = "BIGROCKET" }
         }).Code == "unit-card-unavailable" &&
               cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
-            "Drone card stays closed before its distinct Client presentation is verified");
-        string[] presentedSoldierCards =
-            ["ELITEMINIGUN", "ELITESWAT", "ELITESNIPER", "ELITEPARA"];
-        for (int cardIndex = 0; cardIndex < presentedSoldierCards.Length; cardIndex++)
+            "Rocket card stays closed before its distinct Client presentation is verified");
+        string[] presentedUnitCards =
+            ["ELITEMINIGUN", "ELITESWAT", "ELITESNIPER", "ELITEPARA", "HEAVYDRONE"];
+        for (int cardIndex = 0; cardIndex < presentedUnitCards.Length; cardIndex++)
         {
-            string cardId = presentedSoldierCards[cardIndex];
+            string cardId = presentedUnitCards[cardIndex];
             var playableCardMatch = ReadyCardMatch(
                 "playable-unit-card-" + cardId.ToLowerInvariant(), cardId);
             string requestId = new string((char)('a' + cardIndex), 32);

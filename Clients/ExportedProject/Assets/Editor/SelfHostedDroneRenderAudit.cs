@@ -31,6 +31,17 @@ public static class SelfHostedDroneRenderAudit
             var normal=visual.GetComponentsInChildren<Transform>(true).Single(x=>x.name==source.normalDrone.name);
             var elite=visual.GetComponentsInChildren<Transform>(true).Single(x=>x.name==source.eliteDrone.name);
             Require(normal.gameObject.activeSelf&&!elite.gameObject.activeSelf,"normal deployment variant");
+            var cardRow = row.Clone();
+            cardRow.EntityKey = 4294967298;
+            cardRow.SourceCardId = "HEAVYDRONE";
+            presenter.Apply(new List<BattleArmyEntityState> { row, cardRow });
+            var cardVisual = GameObject.Find("SelfHostedDrone_4294967298");
+            var cardNormal = cardVisual.GetComponentsInChildren<Transform>(true)
+                .Single(x => x.name == source.normalDrone.name);
+            var cardElite = cardVisual.GetComponentsInChildren<Transform>(true)
+                .Single(x => x.name == source.eliteDrone.name);
+            Require(!cardNormal.gameObject.activeSelf && cardElite.gameObject.activeSelf,
+                "card Drone uses the recovered elite variant");
             var materialNames=new HashSet<string>(source.visuals.renderedParts.Select(x=>x.name));
             materialNames.Add(source.visuals.mainRenderer.name);
             var targets=visual.GetComponentsInChildren<MeshRenderer>(true).Where(x=>materialNames.Contains(x.name)).ToArray();
@@ -60,7 +71,8 @@ public static class SelfHostedDroneRenderAudit
                 "remote Drone visual settles on the host pose");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedDrone_4294967297")==null,"roster removal");
-            Debug.Log("UNITY_DRONE_RENDER_PASSED interpolation=True materialTargets="+targets.Length);
+            Require(GameObject.Find("SelfHostedDrone_4294967298")==null,"card roster removal");
+            Debug.Log("UNITY_DRONE_RENDER_PASSED interpolation=True cardElite=True materialTargets="+targets.Length);
             EditorApplication.Exit(0);
         }
         catch(Exception e){Debug.LogError(e);EditorApplication.Exit(1);}

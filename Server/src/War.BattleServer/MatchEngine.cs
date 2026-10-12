@@ -2086,11 +2086,12 @@ public sealed partial class MatchEngine : IMatchRuntime
                 unitCard.RequestId != unitCard.RequestId.ToLowerInvariant() ||
                 !War.Shared.CardUnitSourceIdentity.IsKnown(unitCard.SourceCardId))
                 return "invalid-unit-card";
-            // These four source soldiers have host combat poses and a
-            // script-free Client presenter. Drone, rocket, and grenadier
-            // cards remain closed until their distinct behavior is rendered.
+            // These source units have host combat and script-free Client
+            // visuals, including the Drone's separate elite mesh. Rocket
+            // and Grenadier cards remain closed until their own behavior
+            // and presentation are connected.
             if (unitCard.SourceCardId is not ("ELITEMINIGUN" or "ELITESWAT" or
-                "ELITESNIPER" or "ELITEPARA"))
+                "ELITESNIPER" or "ELITEPARA" or "HEAVYDRONE"))
                 return "unit-card-unavailable";
             try
             {

@@ -570,7 +570,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 	{
 		if (!(card is CardSpawnUnit)) return false;
 		return card.id == "ELITEMINIGUN" || card.id == "ELITESWAT" ||
-			card.id == "ELITESNIPER" || card.id == "ELITEPARA";
+			card.id == "ELITESNIPER" || card.id == "ELITEPARA" ||
+			card.id == "HEAVYDRONE";
 	}
 
 	private async void UseSelfHostedCard(SelfHostedBattleClient client, Card card, Fractions fraction)
