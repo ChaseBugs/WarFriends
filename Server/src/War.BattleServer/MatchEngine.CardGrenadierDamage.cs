@@ -23,6 +23,14 @@ public sealed partial class MatchEngine
             attacker.Definition.Fraction);
         if (Terminal)
             return;
+        ApplyCardGrenadierDecoyDamage(explosion, launch,
+            attacker.Definition.Fraction, attacker);
+        if (Terminal)
+            return;
+        ApplyCardGrenadierHeavyTurretDamage(explosion, launch,
+            attacker.Definition.Fraction, attacker);
+        if (Terminal)
+            return;
 
         foreach (Player victim in players.Where(player => !player.Dead)
                      .ToArray())
@@ -137,27 +145,94 @@ public sealed partial class MatchEngine
             if (army.OwnerFraction == attackerFraction)
                 continue;
 
-            var nearest = group.Select(target => target.Hitbox)
-                .Where(hitbox => hitbox.OverlapsSphere(
-                    explosion.Position, launch.Setup.OuterRadius))
-                .OrderBy(hitbox => hitbox.BoundsDistanceToPoint(
-                    explosion.Position))
-                .ThenBy(hitbox => hitbox.SourcePath,
-                    StringComparer.Ordinal)
-                .FirstOrDefault();
-            if (nearest == null)
-                continue;
             Vector3 root = new(army.X, army.Y, army.Z);
             CardGrenadierBlastHit? hit =
-                CardGrenadierExplosionDamage.ResolveDynamic(
-                    explosion.Position,
-                    nearest.BoundsDistanceToPoint(explosion.Position),
-                    root, launch.Damage, launch.Setup);
+                CardGrenadierExplosionDamage.ResolveArmy(
+                    explosion.Position, root,
+                    group.Select(target => target.Hitbox).ToArray(),
+                    launch.Damage, launch.Setup);
             if (hit == null)
                 continue;
             ApplyArmyHostDamage(group.Key, hit.RawDamage);
             if (Terminal)
                 return;
+        }
+    }
+
+    private void ApplyCardGrenadierDecoyDamage(
+        CardGrenadierExplosion explosion,
+        CardGrenadierLaunchAuthority launch, int attackerFraction,
+        Player attacker)
+    {
+        if (decoySource == null)
+            return;
+        foreach (var collider in DecoyShotTargets(attacker,
+                     includeFriendly: true))
+        {
+            var target = decoys.Snapshot().SingleOrDefault(value =>
+                value.EntityId == collider.EntityId) ??
+                throw new InvalidDataException(
+                    "Card Grenadier Decoy lost host health.");
+            if (target.OwnerFraction == attackerFraction)
+                continue;
+            CardGrenadierBlastHit? hit =
+                CardGrenadierExplosionDamage.ResolveArmy(
+                    explosion.Position, target.Position,
+                    [collider.Hitbox], launch.Damage, launch.Setup);
+            if (hit == null)
+                continue;
+            if (!decoys.TryDamage(target.EntityId, hit.RawDamage,
+                    out var before, out bool destroyed) || before == null)
+                throw new InvalidDataException(
+                    "Card Grenadier Decoy damage escaped host bounds.");
+            stateRevision++;
+            if (destroyed)
+            {
+                droneTargets.Disable(DroneDecoyId(target.EntityId));
+                Emit(MatchEventKind.DecoyDestroyed,
+                    launch.OwnerPlayerId, before.OwnerPlayerId,
+                    target.EntityId, before.Position, 0,
+                    "card-grenadier");
+            }
+        }
+    }
+
+    private void ApplyCardGrenadierHeavyTurretDamage(
+        CardGrenadierExplosion explosion,
+        CardGrenadierLaunchAuthority launch, int attackerFraction,
+        Player attacker)
+    {
+        if (heavyTurretSource == null)
+            return;
+        var colliders = HeavyTurretShotTargets(attacker,
+            includeFriendly: true);
+        foreach (var group in colliders.GroupBy(value => value.EntityId)
+                     .OrderBy(group => group.Key))
+        {
+            var target = heavyTurrets.Snapshot().SingleOrDefault(value =>
+                value.EntityId == group.Key) ??
+                throw new InvalidDataException(
+                    "Card Grenadier turret lost host health.");
+            if (target.OwnerFraction == attackerFraction)
+                continue;
+            CardGrenadierBlastHit? hit =
+                CardGrenadierExplosionDamage.ResolveArmy(
+                    explosion.Position, target.Position,
+                    group.Select(value => value.Hitbox).ToArray(),
+                    launch.Damage, launch.Setup);
+            if (hit == null)
+                continue;
+            if (!heavyTurrets.TryDamage(group.Key, hit.RawDamage,
+                    out var changed, out bool destroyed) ||
+                changed == null)
+                throw new InvalidDataException(
+                    "Card Grenadier turret damage escaped host bounds.");
+            stateRevision++;
+            Emit(destroyed ? MatchEventKind.HeavyTurretDestroyed :
+                    MatchEventKind.HeavyTurretDamaged,
+                launch.OwnerPlayerId, changed.OwnerPlayerId,
+                group.Key, changed.Position, changed.Health,
+                "card-grenadier");
         }
     }
 }

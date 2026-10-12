@@ -70,6 +70,27 @@ internal static class CardGrenadierExplosionDamage
                 damage, setup));
     }
 
+    internal static CardGrenadierBlastHit? ResolveArmy(Vector3 explosion,
+        Vector3 targetRoot, IReadOnlyList<PlayerHitbox> parts,
+        ArmyGrenadeDamageStats damage, ArmyCardGrenadierRuntime setup)
+    {
+        Validate(explosion, damage, setup);
+        if (!PlayerHitbox.Finite(targetRoot) || parts == null ||
+            parts.Any(part => part == null))
+            throw new InvalidDataException(
+                "Card Grenadier needs current army hitboxes.");
+
+        PlayerHitbox? nearest = parts
+            .Where(part => part.OverlapsSphere(explosion,
+                setup.OuterRadius))
+            .OrderBy(part => part.BoundsDistanceToPoint(explosion))
+            .ThenBy(part => part.SourcePath, StringComparer.Ordinal)
+            .FirstOrDefault();
+        return nearest == null ? null : ResolveDynamic(explosion,
+            nearest.BoundsDistanceToPoint(explosion), targetRoot,
+            damage, setup);
+    }
+
     private static float RingDamage(float rootDistance,
         ArmyGrenadeDamageStats damage, ArmyCardGrenadierRuntime setup)
     {

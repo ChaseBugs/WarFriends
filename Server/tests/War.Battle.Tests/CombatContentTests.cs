@@ -11766,9 +11766,11 @@ internal static class CombatContentTests
             Players=[armyManifest.Players[0] with {PlayerLevel=22},armyManifest.Players[1] with {PlayerLevel=22}]
         };
         MatchEngine ReadyCardMatch(string matchId, string sourceCardId = "HEAVYDRONE",
-            RecoveredBattleMap? sourceMap = null)
+            RecoveredBattleMap? sourceMap = null,
+            string? opponentCardId = null)
         {
             RecoveredBattleMap battleMap = sourceMap ?? park;
+            string otherCard = opponentCardId ?? sourceCardId;
             var match = new MatchEngine(decoyManifest with
             {
                 MatchId = matchId,
@@ -11782,7 +11784,7 @@ internal static class CombatContentTests
             }, content: content, armyChoice: _ => 0);
             match.ConfigureBattleAllocations([
                 new(decoyPlayer, [sourceCardId], [], [0], [133], [-1]),
-                new(decoyOpponent, [sourceCardId], [], [0], [-1], [-1])
+                new(decoyOpponent, [otherCard], [], [0], [-1], [-1])
             ]);
             match.Admit(decoyPlayer);
             match.Admit(decoyOpponent);
@@ -11802,7 +11804,7 @@ internal static class CombatContentTests
                 CommandId = 1,
                 SelectCards = new SelectCardsCommand
                 {
-                    CardIds = { sourceCardId },
+                    CardIds = { otherCard },
                     NormalUpgradeIndexes = { 0 },
                     SpecialUpgradeIndexes = { -1 },
                     EliteUpgradeIndexes = { -1 }
@@ -12025,6 +12027,48 @@ internal static class CombatContentTests
               grenadierCardMatch.CardEnemyPointOccupant(
                   grenadierNextPointId) == null,
             "card Grenadier death releases its throw setup and point reservation");
+        var grenadierDecoyMatch = ReadyCardMatch(
+            "host-card-grenadier-decoy", "GREATGRENADIER",
+            opponentCardId: "DECOY");
+        Check(grenadierDecoyMatch.Command(decoyOpponent,
+                  new MatchCommand
+                  {
+                      CommandId = 3,
+                      UseDecoy = new UseDecoyCommand
+                      {
+                          RequestId = new string('a', 32)
+                      }
+                  }).Code == "decoy-spawned" &&
+              grenadierDecoyMatch.TryScheduleCardUnit(
+                  new string('b', 32), decoyPlayer,
+                  "GREATGRENADIER"),
+            "host Grenadier can face an authenticated opposing Decoy");
+        var grenadierDecoyUnit = grenadierDecoyMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.Single();
+        bool grenadeDamagedDecoy = false;
+        for (ulong simulationTick = 61; simulationTick < 1800 &&
+             !grenadeDamagedDecoy && !grenadierDecoyMatch.Terminal;
+             simulationTick++)
+        {
+            var previousHealth = grenadierDecoyMatch.Snapshot().Decoys
+                .ToDictionary(row => row.EntityId, row => row.Health);
+            grenadierDecoyMatch.Advance(simulationTick);
+            if (grenadierDecoyMatch.CardGrenadierExplosions().Count > 0)
+            {
+                grenadeDamagedDecoy =
+                    grenadierDecoyMatch.Snapshot().Decoys.Any(row =>
+                        previousHealth.TryGetValue(row.EntityId,
+                            out float before) && row.Health < before);
+            }
+            if (simulationTick % 60 == 0)
+            {
+                grenadierDecoyMatch.EventBatch(decoyPlayer, 0);
+                grenadierDecoyMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        Check(grenadeDamagedDecoy && !grenadierDecoyMatch.Terminal &&
+              grenadierDecoyUnit.EntityKey > 0,
+            "live Grenadier explosion reduces an opposing Decoy's host health");
         var snowGrenadierMap = content.Maps.Single(sourceMap =>
             sourceMap.Source.Contains("Snow_Multiplayer",
                 StringComparison.Ordinal));
@@ -12065,6 +12109,20 @@ internal static class CombatContentTests
         var rocketPose = PlayerCollisionModel.InitializedFrame("test",
             "rocket-target", Vector3.Zero, Quaternion.Identity,
             [rocketBody, rocketHead]);
+        var grenadeArmyHit =
+            CardGrenadierExplosionDamage.ResolveArmy(Vector3.Zero,
+                Vector3.Zero, [rocketBody, rocketHead],
+                grenadierStats.Grenade!, grenadierStats.Grenadier!);
+        Check(grenadeArmyHit is
+              { Kind: CombatDamageType.Explosion } &&
+              grenadeArmyHit.RawDamage ==
+                  grenadierStats.Grenade!.Explosion &&
+              CardGrenadierExplosionDamage.ResolveArmy(
+                  new Vector3(4f, 0, 0), Vector3.Zero,
+                  [rocketBody, rocketHead],
+                  grenadierStats.Grenade,
+                  grenadierStats.Grenadier!) == null,
+            "Grenadier dynamic targets share the source nearest-bounds blast rule");
         var closeGrenadePlayer =
             CardGrenadierExplosionDamage.ResolvePlayer(Vector3.Zero,
                 rocketPose, Vector3.Zero, grenadierStats.Grenade!,
