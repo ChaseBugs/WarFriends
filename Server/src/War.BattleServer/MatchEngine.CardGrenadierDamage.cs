@@ -39,6 +39,18 @@ public sealed partial class MatchEngine
             attacker.Definition.Fraction);
         if (Terminal)
             return;
+        ApplyCardGrenadierGroundVehicleExplosion(explosion, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
+        ApplyCardGrenadierPassengerExplosion(explosion, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
+        ApplyCardGrenadierHelicopterGunnerExplosion(explosion, launch,
+            attacker.Definition.Fraction);
+        if (Terminal)
+            return;
 
         foreach (Player victim in players.Where(player => !player.Dead)
                      .ToArray())
@@ -355,6 +367,208 @@ public sealed partial class MatchEngine
                     [front.Hitbox], launch.Damage, launch.Setup);
             if (hit != null)
                 ApplyAssaultGlassDamage(helicopter.EntityKey,
+                    hit.RawDamage);
+        }
+    }
+
+    internal void ApplyCardGrenadierGroundVehicleExplosion(
+        CardGrenadierExplosion explosion,
+        CardGrenadierLaunchAuthority launch, int attackerFraction)
+    {
+        if (phase != BattlePhase.Running ||
+            groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Grenadier has no vehicle blast authority.");
+        Player attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Grenadier vehicle owner disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Grenadier vehicle owner fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .OrderBy(row => row.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !groundVehicleFacing.TryGetValue(vehicle.EntityId,
+                    out var facing))
+                throw new InvalidDataException(
+                    "Card Grenadier vehicle lost shared host authority.");
+            Player owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Grenadier vehicle owner disappeared.");
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+
+            var body = groundVehicleWeapons.PlaceBody(vehicle.UnitId,
+                vehicle.EntityId, vehicle.Position, facing,
+                owner.Definition.Fraction);
+            CardGrenadierBlastHit? hit =
+                CardGrenadierExplosionDamage.ResolveArmy(
+                    explosion.Position, vehicle.Position,
+                    body.Select(part => part.Hitbox).ToArray(),
+                    launch.Damage, launch.Setup);
+            if (hit == null)
+                continue;
+
+            float before = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException(
+                    "Card Grenadier vehicle lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId, hit.RawDamage);
+            if (Terminal)
+                return;
+            if (!activeArmyEntities.ContainsKey(vehicle.EntityId))
+                continue;
+            float after = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException(
+                    "Card Grenadier vehicle vitality disappeared.");
+            float applied = before - after;
+            if (applied > 0f &&
+                (!vehicles.TryDamage(vehicle.EntityId, applied,
+                    out float registryApplied,
+                    out bool destroyed) || destroyed ||
+                 Math.Abs(applied - registryApplied) > .001f))
+                throw new InvalidDataException(
+                    "Card Grenadier vehicle health stores diverged.");
+        }
+    }
+
+    internal void ApplyCardGrenadierPassengerExplosion(
+        CardGrenadierExplosion explosion,
+        CardGrenadierLaunchAuthority launch, int attackerFraction)
+    {
+        if (phase != BattlePhase.Running ||
+            groundVehicleWeapons == null)
+            throw new InvalidDataException(
+                "Card Grenadier has no passenger blast authority.");
+        Player attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Grenadier passenger owner disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Grenadier passenger owner fraction changed.");
+        if (vehicles == null)
+            return;
+
+        foreach (var vehicle in vehicles.Snapshot()
+                     .OrderBy(row => row.EntityId).ToArray())
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId,
+                    out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !groundVehicleFacing.TryGetValue(vehicle.EntityId,
+                    out var facing) ||
+                !vehiclePassengers.TryGetValue(vehicle.EntityId,
+                    out var passengers))
+                throw new InvalidDataException(
+                    "Card Grenadier passenger lost shared host authority.");
+            Player owner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException(
+                    "Card Grenadier passenger owner disappeared.");
+            if (owner.Definition.Fraction == attackerFraction)
+                continue;
+
+            foreach (var passenger in passengers.Values
+                         .OrderBy(row =>
+                             row.Binding.PointComponentFileId))
+            {
+                if (!passenger.Active)
+                    continue;
+                if (passenger.AnimationStartTick > tick)
+                    throw new InvalidDataException(
+                        "Card Grenadier passenger animation starts after match time.");
+                ulong animationTick = tick -
+                    passenger.AnimationStartTick;
+                var hitboxes = groundVehicleWeapons.PassengerPoses.Place(
+                    vehicle.UnitId, passenger.Binding,
+                    vehicle.Position, facing, animationTick);
+                Vector3 position = PassengerWorldPosition(
+                    vehicle.EntityId, passenger.Binding);
+                CardGrenadierBlastHit? hit =
+                    CardGrenadierExplosionDamage.ResolveArmy(
+                        explosion.Position, position, hitboxes,
+                        launch.Damage, launch.Setup);
+                if (hit != null)
+                    ApplyVehiclePassengerHostDamage(vehicle.EntityId,
+                        passenger.Binding.Role, hit.RawDamage);
+            }
+        }
+    }
+
+    internal void ApplyCardGrenadierHelicopterGunnerExplosion(
+        CardGrenadierExplosion explosion,
+        CardGrenadierLaunchAuthority launch, int attackerFraction)
+    {
+        if (phase != BattlePhase.Running ||
+            groundVehicleWeapons == null ||
+            helicopterCrewPoints == null ||
+            helicopterGunnerExplosions == null)
+            throw new InvalidDataException(
+                "Card Grenadier has no helicopter gunner blast authority.");
+        Player attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException(
+                "Card Grenadier gunner owner disappeared.");
+        if (attacker.Definition.Fraction != attackerFraction)
+            throw new InvalidDataException(
+                "Card Grenadier gunner owner fraction changed.");
+
+        foreach (var helicopter in activeArmyEntities.Values
+                     .Where(row => row.UnitId == "ID_UNIT-HELICOPTER")
+                     .OrderBy(row => row.EntityKey).ToArray())
+        {
+            if (!armyHelicopterGunners.TryGetValue(
+                    helicopter.EntityKey, out var gunner))
+                continue;
+            var state = gunner.Snapshot();
+            if (!state.TurretEnabled ||
+                helicopter.OwnerFraction == attackerFraction)
+                continue;
+            if (state.SpawnTick > tick ||
+                helicopter.HelicopterRotation == null)
+                throw new InvalidDataException(
+                    "Card Grenadier gunner lost its current pose.");
+
+            var rotation = helicopter.HelicopterRotation;
+            var seat = helicopterCrewPoints.PlaceTurret(
+                new Vector3(helicopter.X, helicopter.Y, helicopter.Z),
+                new Quaternion(rotation.X, rotation.Y,
+                    rotation.Z, rotation.W));
+            ulong animationTick = tick - state.SpawnTick;
+            var parts = groundVehicleWeapons.PassengerPoses
+                .PlaceHelicopterGunner(seat, animationTick);
+            var positions = helicopterGunnerExplosions
+                .PlaceTransformPositions(seat, animationTick);
+            if (parts.Count != 3 || positions.Length != 3)
+                throw new InvalidDataException(
+                    "Card Grenadier gunner has incomplete hitboxes.");
+
+            var nearest = parts.Select((part, index) => new
+                {
+                    Part = part,
+                    Index = index,
+                    Distance = part.BoundsDistanceToPoint(
+                        explosion.Position)
+                })
+                .Where(row => row.Part.OverlapsSphere(
+                    explosion.Position, launch.Setup.OuterRadius))
+                .OrderBy(row => row.Distance)
+                .ThenBy(row => row.Index)
+                .FirstOrDefault();
+            if (nearest == null)
+                continue;
+            CardGrenadierBlastHit? hit =
+                CardGrenadierExplosionDamage.ResolveDynamic(
+                    explosion.Position, nearest.Distance,
+                    positions[nearest.Index], launch.Damage,
+                    launch.Setup);
+            if (hit != null)
+                DamageHelicopterGunner(helicopter.EntityKey,
                     hit.RawDamage);
         }
     }

@@ -17824,6 +17824,31 @@ internal static class CombatContentTests
                   missileHelicopter.EntityKey)!.Health -
                   (gunnerHealthBeforeRocket - 2f)) < .01f,
             "Rocket card blast damages an enemy gunner at the animated body collider");
+        var gunnerGrenadierLaunch = new CardGrenadierLaunchAuthority(
+            helicopterOwner, new ArmyGrenadeDamageStats(.2f, 2f),
+            grenadierStats.Grenadier!,
+            content.Army.PlayerDamagePolicy("ID_UNIT-GRENADIER"));
+        var gunnerGrenadierExplosion = new CardGrenadierExplosion(928, 1,
+            rocketGunnerTarget.Hitbox.Center, 75);
+        float gunnerHealthBeforeGrenadier = missileAirMatch
+            .HelicopterGunner(missileHelicopter.EntityKey)!.Health;
+        missileAirMatch.ApplyCardGrenadierHelicopterGunnerExplosion(
+            gunnerGrenadierExplosion, gunnerGrenadierLaunch,
+            gunnerFriendlyFraction);
+        Check(missileAirMatch.HelicopterGunner(
+                  missileHelicopter.EntityKey)!.Health ==
+                  gunnerHealthBeforeGrenadier,
+            "Grenadier blast skips an allied Helicopter gunner");
+        missileAirMatch.ApplyCardGrenadierHelicopterGunnerExplosion(
+            gunnerGrenadierExplosion with { ProjectileId = 929 },
+            gunnerGrenadierLaunch with
+            {
+                OwnerPlayerId = soldierOwner
+            }, gunnerEnemyFraction);
+        Check(Math.Abs(missileAirMatch.HelicopterGunner(
+                  missileHelicopter.EntityKey)!.Health -
+                  (gunnerHealthBeforeGrenadier - 2f)) < .01f,
+            "Grenadier blast damages an enemy gunner at its current animated collider");
         var missileGlassManifest=flameHelicopterManifest with
         {
             MatchId="vehicle-missile-assault-glass",
@@ -18024,6 +18049,33 @@ internal static class CombatContentTests
               transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
                   bodyBeforePassengerMissile,
             "Rocket card blast damages an enemy passenger without changing vehicle-body health");
+        var passengerGrenadierLaunch = new CardGrenadierLaunchAuthority(
+            soldierOwner, new ArmyGrenadeDamageStats(.2f, 2f),
+            grenadierStats.Grenadier!,
+            content.Army.PlayerDamagePolicy("ID_UNIT-GRENADIER"));
+        var passengerGrenadierExplosion = new CardGrenadierExplosion(926, 1,
+            missilePassengerCenter, 75);
+        transporterMatch.ApplyCardGrenadierPassengerExplosion(
+            passengerGrenadierExplosion, passengerGrenadierLaunch,
+            passengerFriendlyFraction);
+        Check(transporterMatch.VehiclePassengers(transporterEntity.EntityKey)
+                  .Single(row => row.Role == missilePassenger.Role).Health ==
+                  passengerAfterRocket,
+            "Grenadier blast skips a friendly vehicle passenger");
+        transporterMatch.ApplyCardGrenadierPassengerExplosion(
+            passengerGrenadierExplosion with { ProjectileId = 927 },
+            passengerGrenadierLaunch with
+            {
+                OwnerPlayerId = helicopterOwner
+            }, passengerEnemyFraction);
+        float passengerAfterGrenadier = transporterMatch
+            .VehiclePassengers(transporterEntity.EntityKey)
+            .Single(row => row.Role == missilePassenger.Role).Health;
+        Check(Math.Abs(passengerAfterGrenadier -
+                  (passengerAfterRocket - 2f)) < .01f &&
+              transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
+                  bodyBeforePassengerMissile,
+            "Grenadier blast damages an enemy passenger independently of vehicle body");
         var missileBody=transporterMatch.GroundVehicleShotTargets(helicopterOwner)
             .First(target=>target.EntityId==transporterEntity.EntityKey&&target.GroundVehicleBody).Hitbox;
         Vector3 missileBodyCenter=missileBody.Center;
@@ -18092,6 +18144,31 @@ internal static class CombatContentTests
               Math.Abs(transporterMatch.Snapshot().Vehicles.Single().Health -
                   vehicleAfterRocket) < .01f,
             "Rocket card blast damages an enemy vehicle once and keeps both health stores equal");
+        var vehicleGrenadierLaunch = new CardGrenadierLaunchAuthority(
+            soldierOwner, new ArmyGrenadeDamageStats(.2f, 2f),
+            grenadierStats.Grenadier!,
+            content.Army.PlayerDamagePolicy("ID_UNIT-GRENADIER"));
+        var vehicleGrenadierExplosion = new CardGrenadierExplosion(924, 1,
+            missileBodyCenter, 75);
+        transporterMatch.ApplyCardGrenadierGroundVehicleExplosion(
+            vehicleGrenadierExplosion, vehicleGrenadierLaunch,
+            soldierFraction);
+        Check(transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
+                  vehicleAfterRocket,
+            "Grenadier blast skips an allied ground vehicle");
+        transporterMatch.ApplyCardGrenadierGroundVehicleExplosion(
+            vehicleGrenadierExplosion with { ProjectileId = 925 },
+            vehicleGrenadierLaunch with
+            {
+                OwnerPlayerId = helicopterOwner
+            }, helicopterFraction);
+        float vehicleAfterGrenadier = transporterMatch
+            .ArmyHealth(transporterEntity.EntityKey)!.Value;
+        Check(Math.Abs(vehicleAfterGrenadier -
+                  (vehicleAfterRocket - 2f)) < .01f &&
+              Math.Abs(transporterMatch.Snapshot().Vehicles.Single().Health -
+                  vehicleAfterGrenadier) < .01f,
+            "Grenadier blast damages an enemy vehicle and keeps both health stores equal");
         float lethalMissileDamage=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value+
             transporterMatch.ArmyKevlar(transporterEntity.EntityKey)!.Value+1;
         transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(helicopterOwner,
