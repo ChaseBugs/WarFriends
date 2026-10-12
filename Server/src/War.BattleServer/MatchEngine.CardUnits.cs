@@ -1638,7 +1638,7 @@ public sealed partial class MatchEngine
                 }
             }
         }
-        ApplyCardRocketInfantryExplosion(impact, launch,
+        ApplyCardRocketArmyExplosion(impact, launch,
             attacker.Definition.Fraction);
         if (Terminal)
             return;
@@ -1664,19 +1664,29 @@ public sealed partial class MatchEngine
         }
     }
 
-    private void ApplyCardRocketInfantryExplosion(CardRocketMissileImpact impact,
+    private void ApplyCardRocketArmyExplosion(CardRocketMissileImpact impact,
         CardRocketLaunchAuthority launch, int attackerFraction)
     {
         var targets = GroundVehicleShotTargets(launch.OwnerPlayerId, true)
-            .Where(target => target.ArmyInfantry)
+            .Where(target => target.ArmyInfantry || target.DroneRoot ||
+                target.HelicopterBody)
             .GroupBy(target => target.EntityId)
             .OrderBy(group => group.Key);
         foreach (var group in targets)
         {
-            if (!activeArmyEntities.TryGetValue(group.Key, out var army) ||
-                !infantryAnimations.ContainsKey(group.Key))
+            if (!activeArmyEntities.TryGetValue(group.Key, out var army))
                 throw new InvalidDataException(
-                    "Card Rocket infantry blast lost its target authority.");
+                    "Card Rocket blast lost its army target authority.");
+            bool infantry = infantryAnimations.ContainsKey(group.Key) &&
+                group.All(target => target.ArmyInfantry);
+            bool drone = army.UnitId == "ID_UNIT-DRONE" &&
+                group.All(target => target.DroneRoot);
+            bool helicopter = army.UnitId is
+                ("ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI") &&
+                group.All(target => target.HelicopterBody);
+            if (!infantry && !drone && !helicopter)
+                throw new InvalidDataException(
+                    "Card Rocket blast has mismatched army hitboxes.");
             // BazookaEnemy's PhysicalAmmoWeapon has friendKill = false.
             if (army.OwnerFraction == attackerFraction)
                 continue;
@@ -1689,7 +1699,7 @@ public sealed partial class MatchEngine
             if (!float.IsFinite(hit.RawDamage) ||
                 hit.RawDamage is <= 0 or > 10_000_000)
                 throw new InvalidDataException(
-                    "Card Rocket infantry damage exceeded host bounds.");
+                    "Card Rocket army damage exceeded host bounds.");
             ApplyArmyHostDamage(group.Key, hit.RawDamage);
             if (Terminal)
                 return;
