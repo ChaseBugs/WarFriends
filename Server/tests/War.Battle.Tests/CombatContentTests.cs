@@ -17540,6 +17540,152 @@ internal static class CombatContentTests
               sabotageMechMatch.ArmyEntityBatch(soldierOwner, 0, 0)
                   .Entities.Count == 0,
             "host Sabotage max-health hit removes a normally deployed Mech");
+
+        var mechanicalFamilies = new (string UnitId, string SourceType)[]
+        {
+            ("ID_UNIT-HUMVEE", "AICar"),
+            ("ID_UNIT-BUGGY", "AICarBuggy"),
+            ("ID_UNIT-TRANSPORTER", "AICarTransporter"),
+            ("ID_UNIT-TANK", "Tank"),
+            ("ID_UNIT-HELICOPTER", "Helicopter"),
+            ("ID_UNIT-ASSAULTHELI", "AssaultHelicopter"),
+            ("ID_UNIT-DRONE", "Drone"),
+            ("ID_UNIT-MECH", "Mech")
+        };
+        List<MatchEvent> ReadSabotageEvents(MatchEngine match, string viewer)
+        {
+            var result = new List<MatchEvent>();
+            ulong cursor = 0;
+            while (true)
+            {
+                MatchEventBatch page = match.EventBatch(viewer, cursor);
+                if (page.Code != "events")
+                    throw new Exception("Sabotage event cursor was rejected: " +
+                        page.Code);
+                result.AddRange(page.Events);
+                if (page.Events.Count == 0 ||
+                    page.Events[^1].EventId == page.LatestEventId)
+                    return result;
+                cursor = page.Events[^1].EventId;
+            }
+        }
+        foreach (var family in mechanicalFamilies)
+        {
+            var familyManifest = humveeRusherManifest with
+            {
+                MatchId = "sabotage-command-" + family.UnitId.ToLowerInvariant(),
+                Players =
+                [
+                    humveeRusherManifest.Players[0] with
+                    {
+                        EquippedArmyUnitIds = [family.UnitId]
+                    },
+                    humveeRusherManifest.Players[1]
+                ]
+            };
+            content.ValidateAllocation(familyManifest);
+            var familyMatch = new MatchEngine(familyManifest,
+                content: content, armyChoice: _ => 0);
+            familyMatch.ConfigureBattleAllocations(
+            [
+                new(soldierOwner, [], [], [0], [-1], [-1]),
+                new(helicopterOwner, ["SABOTAGE"], [], [0], [-1], [-1])
+            ]);
+            familyMatch.Admit(soldierOwner);
+            familyMatch.Admit(helicopterOwner);
+
+            var emptyCardSelection = new MatchCommand
+            {
+                CommandId = 1,
+                SelectCards = new SelectCardsCommand
+                {
+                    NormalUpgradeIndexes = { 0 },
+                    SpecialUpgradeIndexes = { -1 },
+                    EliteUpgradeIndexes = { -1 }
+                }
+            };
+            var sabotageCardSelection = new MatchCommand
+            {
+                CommandId = 1,
+                SelectCards = new SelectCardsCommand
+                {
+                    CardIds = { "SABOTAGE" },
+                    NormalUpgradeIndexes = { 0 },
+                    SpecialUpgradeIndexes = { -1 },
+                    EliteUpgradeIndexes = { -1 }
+                }
+            };
+            Check(familyMatch.Command(soldierOwner,
+                      emptyCardSelection).Code == "cards-selected" &&
+                  familyMatch.Command(helicopterOwner,
+                      sabotageCardSelection).Code == "cards-selected",
+                family.UnitId + " match binds one Backend-selected SABOTAGE card");
+            foreach (string participant in new[] { soldierOwner, helicopterOwner })
+                familyMatch.Command(participant, new MatchCommand
+                {
+                    CommandId = 2,
+                    Ready = new ReadyCommand
+                    {
+                        ManifestHash = familyMatch.ManifestHash
+                    }
+                });
+            familyMatch.Advance(60);
+            int familyOption = familyMatch.ArmyBatch(soldierOwner)
+                .OptionIndexes.First();
+            Check(familyMatch.Command(soldierOwner, new MatchCommand
+                  {
+                      CommandId = 3,
+                      DeployArmy = new DeployArmyCommand
+                      {
+                          OptionIndex = familyOption
+                      }
+                  }).Code == "army-deploying",
+                family.UnitId + " deploys through its normal army command");
+            familyMatch.Advance(61);
+            var liveCandidate = familyMatch.SabotageMechanicalCandidates()
+                .Single();
+            string requestId = new string('a', 32);
+            var sabotageCommand = new MatchCommand
+            {
+                CommandId = 3,
+                UseSabotage = new UseSabotageCommand
+                {
+                    RequestId = requestId
+                }
+            };
+            string resultCode = familyMatch.Command(helicopterOwner,
+                sabotageCommand).Code;
+            Check(liveCandidate.SourceType == family.SourceType &&
+                  resultCode == "sabotage-applied" &&
+                  familyMatch.SabotageMechanicalCandidates().Count == 0 &&
+                  familyMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                      .Entities.Count == 0 &&
+                  familyMatch.Snapshot().CardActivations == 1,
+                family.UnitId + " is removed by one authenticated SABOTAGE command: " +
+                resultCode);
+            Check(familyMatch.Command(helicopterOwner, new MatchCommand
+                  {
+                      CommandId = 4,
+                      UseSabotage = new UseSabotageCommand
+                      {
+                          RequestId = requestId
+                      }
+                  }).Code == "sabotage-applied" &&
+                  familyMatch.Snapshot().CardActivations == 1,
+                family.UnitId + " SABOTAGE retry returns the original result");
+            var attackerEvents = ReadSabotageEvents(familyMatch,
+                helicopterOwner);
+            var defenderEvents = ReadSabotageEvents(familyMatch,
+                soldierOwner);
+            Check(attackerEvents.SequenceEqual(defenderEvents) &&
+                  attackerEvents.Any(gameEvent =>
+                      gameEvent.Kind == MatchEventKind.CardEffectApplied &&
+                      gameEvent.ActorId == helicopterOwner) &&
+                  attackerEvents.Any(gameEvent =>
+                      gameEvent.Kind == MatchEventKind.ArmyDied &&
+                      gameEvent.ArmyUnitId == family.UnitId),
+                family.UnitId + " card use and death events replay to both peers");
+        }
         var humveeDecoyManifest=humveeRusherManifest with
         {
             MatchId="humvee-decoy-priority",SceneMasterPlayerId=soldierOwner,

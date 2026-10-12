@@ -12,11 +12,13 @@ live mechanical army roots into that snapshot; a spawned card Drone enters
 the opposing set and leaves it on death in a live match test. A normal
 authenticated command now selects a target, consumes one selected card,
 applies source-max-health host damage while ignoring immortality, and retains
-the result for a repeated request ID. Tests cover an opposing card Drone and
-the source no-target spend. Host damage tests now cover all eight recovered
-mechanical army families: Humvee, Buggy, Transporter, Tank, Helicopter,
-Assault Helicopter, Drone, and Mech. The normal `Turret` family and
-two-peer/Unity presentation remain unverified.
+the result for a repeated request ID. A normal authenticated command now
+destroys each of the eight recovered mechanical army families: Humvee, Buggy,
+Transporter, Tank, Helicopter, Assault Helicopter, Drone, and Mech. Each match
+proves one card consumption, replay without a second spend, and identical
+ordered effect/death events through both participants' host event pages. The
+source no-target spend is also covered. The normal `Turret` family and real
+two-peer UDP/Unity presentation remain unverified.
 
 ## Client behavior
 
@@ -55,25 +57,23 @@ own `maxHealth`, with `isOneHit` and `ignoreImmortality` set, part index zero,
 no weapon, and the activating player's ownership. This is not automatically
 equivalent to deleting an entire vehicle: multi-part damage, shared health,
 statistics, and death callbacks must pass through their existing host
-authorities. Live host-state tests now verify each of the eight deployed
-mechanical families uses its ordinary death and cleanup path. Only Drone has
-a complete normal card-command proof; command-driven outcomes for the other
-seven families, statistics parity, and source real-time/random-stream parity
-still require verification.
+authorities. Live host-state tests verify each of the eight deployed
+mechanical families uses its ordinary death and cleanup path; normal-command
+tests now verify all eight in isolated matches. Statistics parity and source
+real-time/random-stream parity still require verification.
 
 ## Implementation boundary
 
-1. Verify the seven remaining mechanical army families through normal card
-   commands and two-peer damage/cleanup events, including shared vehicle
-   health, aircraft, Drone immunity, and kill credit.
+1. Verify each family through real two-peer UDP damage/cleanup events, and
+   compare kill credit and terminal statistics with the recovered Client.
    The currently unavailable normal `Turret` type must enter the same source
    ordering when its separate card route is implemented. Never infer a target
    or damage value from a Client packet.
 2. Compare strict five-second host-tick age and both random draws with a
    running recovered Client. Unit tests prove the selection policy, while
-   a live match currently proves one Drone target.
-3. Verify ordered effect/death events on two connected Clients, Unity card
-   consumption and visuals in Play Mode, and Android runtime loading of the
+   isolated live matches currently prove one target in each family.
+3. Verify Unity card consumption and visuals in Play Mode, plus Android
+   runtime loading of the
    updated `War.Client.dll` and `War.Shared.dll`.
 
 Source files: `Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/CardSabotage.cs`,
