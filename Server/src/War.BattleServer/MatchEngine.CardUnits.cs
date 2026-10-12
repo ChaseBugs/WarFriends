@@ -7,6 +7,9 @@ internal sealed record CardRocketShotIntent(ulong EntityKey, ulong Tick,
     Vector3 TargetPosition, Vector3 MuzzlePosition, bool IsReal,
     int ShotIndex, int BatchSize);
 
+internal sealed record CardRocketLaunchAuthority(string OwnerPlayerId,
+    ArmyCardRocketRuntime Missile, ArmyPlayerDamagePolicy PlayerPolicy);
+
 public sealed partial class MatchEngine
 {
     private readonly CardUnitSpawnState cardUnitSpawns = new();
@@ -41,6 +44,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, Vector3> rocketShotTargets = [];
     private readonly List<CardRocketShotIntent> rocketShotIntents = [];
     private readonly Dictionary<ulong, CardRocketMissileFlight> rocketFlights = [];
+    private readonly Dictionary<ulong, CardRocketLaunchAuthority> rocketLaunches = [];
     private readonly List<CardRocketMissileImpact> rocketImpacts = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
@@ -1554,12 +1558,17 @@ public sealed partial class MatchEngine
 
             ulong id = ++projectileId;
             string ownerId = soldier.OwnerPlayerId;
+            if (armyCatalog == null)
+                throw new InvalidDataException("Card Rocket has no player damage policy.");
+            var policy = armyCatalog.PlayerDamagePolicy(soldier.UnitId);
             var flight = new CardRocketMissileFlight(id, intent.EntityKey,
                 missile, intent.MuzzlePosition, intent.TargetPosition,
                 tick, !intent.IsReal,
                 (from, direction, range) => rifleCombat.TraceForArmy(
                     ownerId, from, direction, range));
             rocketFlights.Add(id, flight);
+            rocketLaunches.Add(id, new CardRocketLaunchAuthority(ownerId,
+                missile, policy));
         }
     }
 
@@ -1573,6 +1582,51 @@ public sealed partial class MatchEngine
                 continue;
             rocketFlights.Remove(id);
             rocketImpacts.Add(impact);
+            if (!rocketLaunches.Remove(id, out var launch))
+                throw new InvalidDataException("Card Rocket lost its launch authority.");
+            if (!impact.IsFake)
+                ApplyCardRocketPlayerExplosion(impact, launch);
+        }
+    }
+
+    private void ApplyCardRocketPlayerExplosion(CardRocketMissileImpact impact,
+        CardRocketLaunchAuthority launch)
+    {
+        if (rifleCombat == null || damageRoll == null)
+            throw new InvalidDataException("Card Rocket has no player collision authority.");
+        var attacker = Find(launch.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Rocket owner disappeared.");
+        bool shieldBetween = false;
+        if (map != null && shields != null)
+        {
+            Func<int, bool>? enabled = barrels == null ? null :
+                index => barrels.ColliderEnabled(index);
+            Func<int, int, int>? layer = barrels == null ? null :
+                (index, source) => barrels.RuntimeLayer(index, source);
+            var overlaps = map.DynamicSphereOverlaps(impact.Position, 1.2f,
+                uint.MaxValue, enabled, layer);
+            shieldBetween = overlaps.Any(collider =>
+                shields.IsLiveShield(collider.DynamicOwner));
+        }
+        foreach (var victim in players.Where(player => !player.Dead).ToArray())
+        {
+            var pose = rifleCombat.Pose(victim.Definition.PlayerId).Collision;
+            CardRocketPlayerHit? hit = CardRocketExplosion.ResolvePlayer(
+                impact.Position, pose, victim.Position, launch.Missile,
+                shieldBetween);
+            if (hit == null)
+                continue;
+            bool enemy = attacker.Definition.Fraction != victim.Definition.Fraction;
+            var damage = new ResolvedPlayerDamage(hit.RawDamage, hit.Kind,
+                HasWeapon: true, FriendKill: false,
+                PlayerCoefficient: launch.PlayerPolicy.PlayerDamageRatio,
+                PlayerOvertimeCoefficient:
+                    launch.PlayerPolicy.OvertimePlayerDamageRatio,
+                Overtime: overtime);
+            ApplyResolvedPlayerDamage(launch.OwnerPlayerId,
+                victim.Definition.PlayerId, damage, damageRoll(), enemy);
+            if (Terminal)
+                return;
         }
     }
 

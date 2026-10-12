@@ -11814,6 +11814,36 @@ internal static class CombatContentTests
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) ==
                   rocketStats.Rocket,
             "card Rocket spawn binds its level-scaled missile setup to the host entity");
+        var rocketBody = new PlayerHitbox("rocket-target/body",
+            PlayerHitboxKind.Box, 1, Vector3.Zero,
+            new Vector3(.4f, .4f, .4f), Quaternion.Identity, 0,
+            Vector3.Zero, 0);
+        var rocketHead = new PlayerHitbox("rocket-target/head",
+            PlayerHitboxKind.Sphere, 1, Vector3.UnitY,
+            Vector3.Zero, Quaternion.Identity, .15f,
+            Vector3.Zero, 0);
+        var rocketPose = PlayerCollisionModel.InitializedFrame("test",
+            "rocket-target", Vector3.Zero, Quaternion.Identity,
+            [rocketBody, rocketHead]);
+        var nearRocketHit = CardRocketExplosion.ResolvePlayer(Vector3.Zero,
+            rocketPose, Vector3.Zero, rocketStats.Rocket!, false);
+        Check(nearRocketHit is { Kind: CombatDamageType.Explosion } &&
+              nearRocketHit.RawDamage == rocketStats.Rocket!.ExplosionDamage,
+            "Rocket direct-radius impact applies the card's full explosion damage");
+        var edgeRocketHit = CardRocketExplosion.ResolvePlayer(
+            new Vector3(1.1f, 0, 0), rocketPose, Vector3.Zero,
+            rocketStats.Rocket!, true);
+        float edgeFalloff = 1f - (1.1f - .8f) / (.4f);
+        float expectedEdgeDamage = (rocketStats.Rocket!.DirectDamage +
+            (rocketStats.Rocket.ExplosionDamage -
+                rocketStats.Rocket.DirectDamage) * edgeFalloff * edgeFalloff) *
+            rocketStats.Rocket.PlayerBehindShieldRatio;
+        Check(edgeRocketHit is { Kind: CombatDamageType.Shiver } &&
+              MathF.Abs(edgeRocketHit.RawDamage - expectedEdgeDamage) < .0001f,
+            "Rocket outer-radius impact uses root-distance falloff and shield ratio");
+        Check(CardRocketExplosion.ResolvePlayer(new Vector3(4, 0, 0),
+                  rocketPose, Vector3.Zero, rocketStats.Rocket!, false) == null,
+            "Rocket outside its recovered hurt radius cannot damage a player");
         int rocketCollisionChecks = 0;
         var rocketFlight = new CardRocketMissileFlight(81,
             rocketEntity.EntityKey, rocketStats.Rocket!, Vector3.Zero,
