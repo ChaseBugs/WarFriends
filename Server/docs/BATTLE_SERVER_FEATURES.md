@@ -8,7 +8,7 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
-The pending `SABOTAGE` card has a [recovered source contract](SABOTAGE_SOURCE.md): the master first draws from all visible opposing mechanical shootables, then prefers a second draw from main AI-owned parts older than five seconds. The current Worker has no authenticated activation for it. Mechanical-part registration, host selection and damage, idempotent spending, and normal Client/UDP verification are required before its source-enabled row can open.
+The pending `SABOTAGE` card has a [recovered source contract](SABOTAGE_SOURCE.md): the master first draws from all visible opposing mechanical shootables, then prefers a second draw from main AI-owned parts older than five seconds. A tested `SabotageTargetPolicy` now selects from an explicit host candidate snapshot in source type/registration order. The current Worker does not yet call it or expose authenticated activation. Mechanical-part registration, damage, idempotent spending, and normal Client/UDP verification are required before its source-enabled row can open.
 
 | ID | Required feature | Status / present evidence | Completion evidence required |
 |---|---|---|---|

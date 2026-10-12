@@ -4,6 +4,11 @@ This is source evidence for a **pending** BattleServer card, not a claim that
 the offline Client can activate it. The scene enables `SABOTAGE` and binds
 `CardSabotage`; the current Worker has no authenticated command for it.
 
+`SabotageTargetPolicy` now implements and tests the two-draw selection over
+an explicit, ordered host candidate snapshot. It is not yet called by the
+match: mechanical shootable registration, card spending, damage dispatch,
+protobuf, and Client wiring remain pending.
+
 ## Client behavior
 
 `CardSabotage.UseCard` runs target selection only on the old Photon master,

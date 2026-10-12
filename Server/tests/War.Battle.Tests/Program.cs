@@ -547,7 +547,14 @@ if(args is ["--combat-content-only"])
     return;
 }
 
+if(args is ["--sabotage-target-only"])
+{
+    Console.WriteLine($"PASS: {SabotageTargetPolicyTests.Run()} Sabotage target assertions");
+    return;
+}
+
 int checks = 0;
+checks += SabotageTargetPolicyTests.Run();
 checks += MatchReplyTransferTests.Run();
 checks += await LiveReplyTransferUdpTests.Run();
 checks += await BackendAllocationClientTests.Run();
