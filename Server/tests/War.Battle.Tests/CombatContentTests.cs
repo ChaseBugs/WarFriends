@@ -10692,6 +10692,24 @@ internal static class CombatContentTests
                 "Grenadier uses the recovered 45-degree ballistic launch without a range cap");
             Reject(() => grenadierThrow.LaunchVelocity(grenadeMuzzle,
                 grenadeMuzzle));
+            var closeGrenadeDamage =
+                CardGrenadierExplosionDamage.ResolveDynamic(
+                    Vector3.Zero, .4f, Vector3.Zero,
+                    grenadeMinimum.Grenade!, grenadierThrow);
+            var edgeGrenadeDamage =
+                CardGrenadierExplosionDamage.ResolveDynamic(
+                    Vector3.Zero, 1f, Vector3.UnitX,
+                    grenadeMinimum.Grenade!, grenadierThrow);
+            Check(closeGrenadeDamage is
+                  { Kind: CombatDamageType.Explosion, RawDamage: 79f } &&
+                  edgeGrenadeDamage is
+                  { Kind: CombatDamageType.Shiver } &&
+                  edgeGrenadeDamage.RawDamage > 26f &&
+                  edgeGrenadeDamage.RawDamage < 79f &&
+                  CardGrenadierExplosionDamage.ResolveDynamic(
+                      Vector3.Zero, 1.21f, Vector3.UnitX,
+                      grenadeMinimum.Grenade!, grenadierThrow) == null,
+                "card grenade uses source inner and outer damage at its exact radii");
             var cardGrenade = new CardGrenadierFlight(101, 202,
                 grenadierThrow, grenadeMuzzle,
                 grenadierThrow.LaunchVelocity(grenadeMuzzle, grenadeTarget),
@@ -12047,6 +12065,27 @@ internal static class CombatContentTests
         var rocketPose = PlayerCollisionModel.InitializedFrame("test",
             "rocket-target", Vector3.Zero, Quaternion.Identity,
             [rocketBody, rocketHead]);
+        var closeGrenadePlayer =
+            CardGrenadierExplosionDamage.ResolvePlayer(Vector3.Zero,
+                rocketPose, Vector3.Zero, grenadierStats.Grenade!,
+                grenadierStats.Grenadier!, false);
+        var shieldedGrenadePlayer =
+            CardGrenadierExplosionDamage.ResolvePlayer(
+                new Vector3(.95f, 0, 0), rocketPose, Vector3.Zero,
+                grenadierStats.Grenade!, grenadierStats.Grenadier!, true);
+        Check(closeGrenadePlayer is
+              { Kind: CombatDamageType.Explosion } &&
+              closeGrenadePlayer.RawDamage ==
+                  grenadierStats.Grenade!.Explosion &&
+              shieldedGrenadePlayer is
+              { Kind: CombatDamageType.Shiver } &&
+              shieldedGrenadePlayer.RawDamage >
+                  grenadierStats.Grenade.Minimum *
+                      grenadierStats.Grenadier!.PlayerBehindShieldRatio &&
+              shieldedGrenadePlayer.RawDamage <
+                  grenadierStats.Grenade.Explosion *
+                      grenadierStats.Grenadier.PlayerBehindShieldRatio,
+            "Grenadier player blast uses its .7 overlap radius and shield reduction");
         var nearRocketHit = CardRocketExplosion.ResolvePlayer(Vector3.Zero,
             rocketPose, Vector3.Zero, rocketStats.Rocket!, false);
         Check(nearRocketHit is { Kind: CombatDamageType.Explosion } &&

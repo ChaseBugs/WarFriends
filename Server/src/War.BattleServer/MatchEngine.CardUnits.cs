@@ -9,6 +9,9 @@ internal sealed record CardRocketShotIntent(ulong EntityKey, ulong Tick,
 
 internal sealed record CardRocketLaunchAuthority(string OwnerPlayerId,
     ArmyCardRocketRuntime Missile, ArmyPlayerDamagePolicy PlayerPolicy);
+internal sealed record CardGrenadierLaunchAuthority(string OwnerPlayerId,
+    ArmyGrenadeDamageStats Damage, ArmyCardGrenadierRuntime Setup,
+    ArmyPlayerDamagePolicy PlayerPolicy);
 
 public sealed partial class MatchEngine
 {
@@ -52,7 +55,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, CardGrenadierAim> grenadierShotTargets = [];
     private readonly List<CardGrenadierShotIntent> grenadierShotIntents = [];
     private readonly Dictionary<ulong, CardGrenadierFlight> grenadierFlights = [];
-    private readonly Dictionary<ulong, string> grenadierFlightOwners = [];
+    private readonly Dictionary<ulong, CardGrenadierLaunchAuthority>
+        grenadierLaunches = [];
     private readonly List<CardGrenadierExplosion> grenadierExplosions = [];
     private readonly Dictionary<ulong, ulong> grenadierCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> rocketPointRetryTicks = [];
@@ -1665,12 +1669,21 @@ public sealed partial class MatchEngine
 
             ulong id = ++projectileId;
             string ownerId = soldier.OwnerPlayerId;
+            CardUnitEntity source = cardUnitEntities.Find(
+                soldier.LocalEntityId) ?? throw new InvalidDataException(
+                    "Card Grenadier lost its launch damage row.");
+            if (source.EntityKey != intent.EntityKey ||
+                source.BaseStats.Grenade is not { } damage ||
+                armyCatalog == null)
+                throw new InvalidDataException(
+                    "Card Grenadier lost its source explosion authority.");
             var flight = new CardGrenadierFlight(id, intent.EntityKey,
                 setup, muzzle, velocity, tick,
                 (from, direction, range) => rifleCombat.TraceForArmy(
                     ownerId, from, direction, range));
             grenadierFlights.Add(id, flight);
-            grenadierFlightOwners.Add(id, ownerId);
+            grenadierLaunches.Add(id, new(ownerId, damage, setup,
+                armyCatalog.PlayerDamagePolicy(soldier.UnitId)));
             Emit(MatchEventKind.Shot, ownerId, "", id, muzzle, 0,
                 "card-grenadier");
             stateRevision++;
@@ -1688,12 +1701,13 @@ public sealed partial class MatchEngine
                 continue;
             grenadierFlights.Remove(id);
             grenadierExplosions.Add(explosion);
-            if (!grenadierFlightOwners.Remove(id, out string? ownerId))
+            if (!grenadierLaunches.Remove(id, out var launch))
                 throw new InvalidDataException(
-                    "Card Grenadier flight lost its owner.");
-            Emit(MatchEventKind.Impact, ownerId, "", id,
+                    "Card Grenadier explosion lost its damage authority.");
+            Emit(MatchEventKind.Impact, launch.OwnerPlayerId, "", id,
                 explosion.Position, 0, "card-grenadier");
             stateRevision++;
+            ApplyCardGrenadierExplosion(explosion, launch);
         }
     }
 
