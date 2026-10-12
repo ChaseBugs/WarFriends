@@ -11905,8 +11905,25 @@ internal static class CombatContentTests
               grenadierIntent.Aim.ThrowGrenade &&
               grenadierIntent.IsReal &&
               grenadierIntent.BatchSize == 1 &&
-              grenadierIntent.ShotIndex == 0,
+              grenadierIntent.ShotIndex == 0 &&
+              grenadierIntent.GrenadeMuzzlePosition is Vector3 &&
+              grenadierIntent.GrenadeLaunchVelocity is Vector3,
             "arrived card Grenadier reaches a real one-shot grenade intent on the host clock");
+        Vector3 intentMuzzle = grenadierIntent!.GrenadeMuzzlePosition!.Value;
+        Vector3 intentVelocity = grenadierIntent.GrenadeLaunchVelocity!.Value;
+        var firingGrenadier = grenadierCardMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.Single();
+        Vector3 firingPosition = new(firingGrenadier.X,
+            firingGrenadier.Y, firingGrenadier.Z);
+        Vector3 expectedMuzzle = content.ArmyWeapons.CardGrenadierRestMuzzle(
+            firingPosition, grenadierIntent.Aim.Target.Position - firingPosition);
+        Check(PlayerHitbox.Finite(intentMuzzle) &&
+              Vector3.Distance(intentMuzzle, expectedMuzzle) < .00001f &&
+              Vector3.Distance(intentVelocity,
+                  grenadierCardMatch.CardGrenadierThrow(
+                      grenadierEntity.EntityKey)!.LaunchVelocity(intentMuzzle,
+                      grenadierIntent.Aim.Target.Position)) < .00001f,
+            "Grenadier shot intent uses its source-attached muzzle and ballistic velocity");
         int grenadierNextPointId = grenadierPointId;
         ulong grenadierChangeStart = grenadierCardMatch.Snapshot().ServerTick;
         for (ulong grenadierTick = grenadierChangeStart + 1;

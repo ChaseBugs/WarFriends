@@ -16,7 +16,8 @@ public sealed partial class MatchEngine
         bool ThrowGrenade);
     internal sealed record CardGrenadierShotIntent(ulong EntityKey,
         ulong Tick, CardGrenadierAim Aim, bool IsReal, int ShotIndex,
-        int BatchSize);
+        int BatchSize, Vector3? GrenadeMuzzlePosition,
+        Vector3? GrenadeLaunchVelocity);
 
     private readonly CardUnitSpawnState cardUnitSpawns = new();
     private readonly CardUnitEntityRegistry cardUnitEntities = new();
@@ -1598,9 +1599,23 @@ public sealed partial class MatchEngine
             if (!attack.ShotDue) continue;
             if (!grenadierShotTargets.TryGetValue(entityKey, out var shot))
                 throw new InvalidDataException("Card Grenadier lost its latched target.");
+            Vector3? grenadeMuzzle = null;
+            Vector3? grenadeVelocity = null;
+            if (shot.ThrowGrenade)
+            {
+                ArmyWeaponBindingCatalog weapons = armyWeapons ??
+                    throw new InvalidDataException("Card Grenadier lost its weapon binding.");
+                ArmyCardGrenadierRuntime throwSetup = cardGrenadierThrows[entityKey];
+                Vector3 soldierPosition = new(entity.X, entity.Y, entity.Z);
+                grenadeMuzzle = weapons.CardGrenadierRestMuzzle(soldierPosition,
+                    shot.Target.Position - soldierPosition);
+                grenadeVelocity = throwSetup.LaunchVelocity(grenadeMuzzle.Value,
+                    shot.Target.Position);
+            }
             grenadierShotIntents.Add(new CardGrenadierShotIntent(entityKey,
                 tick, shot, shot.ThrowGrenade || attack.CurrentShotIsReal,
-                attack.BatchCursor, attack.BatchSize));
+                attack.BatchCursor, attack.BatchSize,
+                grenadeMuzzle, grenadeVelocity));
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 grenadierShotTargets.Remove(entityKey);

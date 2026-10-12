@@ -118,6 +118,24 @@ public sealed class ArmyWeaponBindingCatalog
             Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
     }
 
+    /// <summary>
+    /// The card Grenadier's secondary weapon uses its prefab root as the
+    /// spawn point. SoldierParts attaches that root at the right gun snap.
+    /// This is the resting rig pose; animation can move the hand later.
+    /// </summary>
+    public Vector3 CardGrenadierRestMuzzle(Vector3 entityPosition,Vector3 planarForward)
+    {
+        if(!PlayerHitbox.Finite(entityPosition)||!PlayerHitbox.Finite(planarForward))
+            throw new InvalidDataException("Invalid Grenadier muzzle placement.");
+        planarForward.Y=0;
+        if(planarForward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Grenadier muzzle has no planar facing.");
+        planarForward=Vector3.Normalize(planarForward);
+        float yaw=MathF.Atan2(planarForward.X,planarForward.Z);
+        return entityPosition+Vector3.Transform(GunSnapPosition,
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+    }
+
     public static ArmyWeaponBindingCatalog Load(string path,string expectedRevision,string sceneRevision)
     {
         byte[] bytes=File.ReadAllBytes(path);

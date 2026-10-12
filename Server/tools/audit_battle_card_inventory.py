@@ -178,12 +178,25 @@ def check_grenadier_card_setup():
                   "  deadRadius: 0.9\n", "  hurtRadius: 1.2\n"):
         if field not in grenade:
             raise ValueError("Grenadier card throw or blast prefab changed")
+    grenade_weapon = grenade.split("--- !u!114 &11419550\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    grenade_root = grenade.split("--- !u!4 &454010\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    soldier_parts = (ASSETS / "Scripts/Assembly-CSharp/SoldierParts.cs").read_text(
+        encoding="utf-8-sig")
+    gun = (ASSETS / "Scripts/Assembly-CSharp/Gun.cs").read_text(
+        encoding="utf-8-sig")
+    if ("  spawnPoint: {fileID: 454010}\n" not in grenade_weapon or
+        "  shootOffset: {x: 0, y: 0, z: 0}\n" not in grenade_weapon or
+        "  m_Father: {fileID: 0}\n" not in grenade_root or
+        "weapon.transform.parent = ((!weaponPrefab.leftHand) ? gunSnapPointNotScaled.transform" not in soldier_parts or
+        "weapon.transform.localPosition = Vector3.zero;" not in soldier_parts or
+        "ammo.Fire(spawnPoint.transform.position + shotOffset, position);" not in gun):
+        raise ValueError("Grenadier card muzzle attachment source changed")
     pistol = (ASSETS / "GameObject/PistolEnemy.prefab").read_text(
         encoding="utf-8-sig")
     pistol_setup = pistol.split("--- !u!114 &11470521\n", 1)[1].split(
         "\n--- !u!", 1)[0]
-    gun = (ASSETS / "Scripts/Assembly-CSharp/Gun.cs").read_text(
-        encoding="utf-8-sig")
     aiming = (ASSETS / "Scripts/Assembly-CSharp/AimingHelper.cs").read_text(
         encoding="utf-8-sig")
     if ("  speed: 5\n" not in pistol_setup or
