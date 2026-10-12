@@ -17,8 +17,11 @@ destroys each of the eight recovered mechanical army families: Humvee, Buggy,
 Transporter, Tank, Helicopter, Assault Helicopter, Drone, and Mech. Each match
 proves one card consumption, replay without a second spend, and identical
 ordered effect/death events through both participants' host event pages. The
-source no-target spend is also covered. The normal `Turret` family and real
-two-peer UDP/Unity presentation remain unverified.
+source no-target spend is also covered. A signed two-peer UDP match now
+proves Humvee deployment, one `SABOTAGE` activation, retry without a second
+spend, and identical ordered card-effect/death events on both sockets. The
+normal `Turret` family, UDP proof for the other seven families, and Unity
+presentation remain unverified.
 
 ## Client behavior
 
@@ -64,7 +67,8 @@ real-time/random-stream parity still require verification.
 
 ## Implementation boundary
 
-1. Verify each family through real two-peer UDP damage/cleanup events, and
+1. Verify the other seven families through real two-peer UDP damage/cleanup
+   events, and
    compare kill credit and terminal statistics with the recovered Client.
    The currently unavailable normal `Turret` type must enter the same source
    ordering when its separate card route is implemented. Never infer a target

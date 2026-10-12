@@ -252,6 +252,17 @@ if(args is ["--barrel-only"])
     return;
 }
 
+if (args is ["--sabotage-udp-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = await LiveSabotageUdpTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} focused live SABOTAGE UDP assertions");
+    return;
+}
+
 if(args is ["--helicopter-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -2735,6 +2746,7 @@ checks += LiveShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveShotgunTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveShotgunTests.RunOvertimeUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveBarrelUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += await LiveSabotageUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveHelicopterUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveAssaultGlassUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveAssaultGlassUdpTests.RunBazooka(Path.Combine(contentRoot.FullName,"content"));
