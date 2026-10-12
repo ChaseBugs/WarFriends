@@ -535,7 +535,7 @@ def direct_client_routes():
                                unit_card_helper))
     if (unit_card_ids != {"ELITEMINIGUN", "ELITESWAT",
                           "ELITESNIPER", "ELITEPARA", "HEAVYDRONE",
-                          "BIGROCKET"} or
+                          "BIGROCKET", "GREATGRENADIER"} or
         "IsSupportedSelfHostedUnitCard(card)" not in use_card or
         "UseUnitCardResult(card.id)" not in body):
         raise ValueError("Normal Client unit-card route changed")

@@ -93,6 +93,11 @@ public static class SelfHostedGrenadeRenderAudit
             if(checks<850)throw new InvalidOperationException("Incomplete grenade render fixture.");
             Debug.Log("GRENADE_RENDER_AUDIT_PASSED checks="+checks);EditorApplication.Exit(0);
         }
+        catch(Exception exception)
+        {
+            Debug.LogError(exception);
+            EditorApplication.Exit(1);
+        }
         finally
         {
             if(previous.Any(s=>s.isActive&&s.isLoaded)&&previous.All(s=>!string.IsNullOrEmpty(s.path)))EditorSceneManager.RestoreSceneManagerSetup(previous);

@@ -12417,18 +12417,20 @@ internal static class CombatContentTests
         Check(cardMatch.Command(decoyPlayer, new MatchCommand
         {
             CommandId = 3,
-            UseUnitCard = new() { RequestId = hostCardRequest, SourceCardId = "GREATGRENADIER" }
+            UseUnitCard = new() { RequestId = hostCardRequest,
+                SourceCardId = "GREATGRENADIER" }
         }).Code == "unit-card-unavailable" &&
               cardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).ActiveCount == 0,
-            "Grenadier card stays closed until its host combat is implemented");
+            "an unselected Grenadier card cannot spawn or consume inventory");
         string[] presentedUnitCards =
-            ["ELITEMINIGUN", "ELITESWAT", "ELITESNIPER", "ELITEPARA", "HEAVYDRONE", "BIGROCKET"];
+            ["ELITEMINIGUN", "ELITESWAT", "ELITESNIPER", "ELITEPARA",
+                "HEAVYDRONE", "BIGROCKET", "GREATGRENADIER"];
         for (int cardIndex = 0; cardIndex < presentedUnitCards.Length; cardIndex++)
         {
             string cardId = presentedUnitCards[cardIndex];
             var playableCardMatch = ReadyCardMatch(
                 "playable-unit-card-" + cardId.ToLowerInvariant(), cardId);
-            string requestId = new string((char)('a' + cardIndex), 32);
+            string requestId = new string((char)('1' + cardIndex), 32);
             var activation = new MatchCommand
             {
                 CommandId = 3,

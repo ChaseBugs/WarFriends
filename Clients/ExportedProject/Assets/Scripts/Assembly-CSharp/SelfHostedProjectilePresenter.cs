@@ -215,6 +215,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         if (item.Reason == "heavy-turret" || item.Reason == "drone" || item.Reason == "helicopter" ||
             item.Reason == "assault-helicopter" ||
 			item.Reason == "helicopter-gunner") return;
+		if (!Application.isPlaying) return;
 		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
 	}

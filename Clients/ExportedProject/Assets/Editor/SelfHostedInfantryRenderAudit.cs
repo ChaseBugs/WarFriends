@@ -252,6 +252,30 @@ public static class SelfHostedInfantryRenderAudit
             presenter.RenderAt(Time.realtimeSinceStartup + 3.1f, .016f);
             Require(recoveredCanopy == null,
                 "reconnect canopy is idempotent and expires on the host deadline");
+            var grenadierCardRow = new BattleArmyEntityState
+            {
+                EntityKey = 106,
+                UnitId = "ID_UNIT-GRENADIER",
+                SourceCardId = "GREATGRENADIER",
+                X = 3, SpawnTick = 60, PositionTick = 60,
+                MaxHealth = 100, Health = 100,
+                InfantryClip = "idle_1",
+                InfantryClipStartTick = 60,
+                InfantryFacingZ = 1
+            };
+            presenter.Apply(new List<BattleArmyEntityState> { grenadierCardRow });
+            var grenadierVisual = GameObject.Find("SelfHostedInfantry_106");
+            var grenadierSoldier = manager.levelBehaviours
+                .Select(entry => entry.behaviour as SoldierBehaviour)
+                .First(soldier => soldier != null &&
+                    soldier.unitDictionaryId == "ID_UNIT-GRENADIER");
+            var grenadierStyle = grenadierSoldier.cardSoldierVisuals[0];
+            grenadierStyle.LoadModel();
+            Require(grenadierVisual != null &&
+                grenadierVisual.GetComponentInChildren<SkinnedMeshRenderer>(true)
+                    .sharedMesh == grenadierStyle.modelMeshRenderer.sharedMesh &&
+                grenadierVisual.GetComponentsInChildren<MonoBehaviour>(true).Length == 0,
+                "card Grenadier uses its recovered mesh without gameplay scripts");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
@@ -261,8 +285,11 @@ public static class SelfHostedInfantryRenderAudit
                 "removed Sniper card visual");
             Require(GameObject.Find("SelfHostedInfantry_103") == null,
                 "removed Paratrooper card visual");
+            Require(GameObject.Find("SelfHostedInfantry_106") == null,
+                "removed Grenadier card visual");
             Debug.Log("UNITY_INFANTRY_RENDER_PASSED families=" + Families.Length +
-                " cardMinigunner=True cardSwat=True cardSniper=True cardParatrooper=True" +
+                " cardMinigunner=True cardSwat=True cardSniper=True" +
+                " cardParatrooper=True cardGrenadier=True" +
                 " postDeathCanopy=True reconnectCanopy=True" +
                 " skin=True scriptFree=True hostMotion=True removal=True");
             EditorApplication.Exit(0);

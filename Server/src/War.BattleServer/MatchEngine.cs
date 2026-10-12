@@ -2136,11 +2136,11 @@ public sealed partial class MatchEngine : IMatchRuntime
                 unitCard.RequestId != unitCard.RequestId.ToLowerInvariant() ||
                 !War.Shared.CardUnitSourceIdentity.IsKnown(unitCard.SourceCardId))
                 return "invalid-unit-card";
-            // These source units have host combat and script-free Client
-            // visuals. Grenadier remains closed until its distinct combat
-            // and presentation paths are connected.
+            // Only source units with host combat and script-free Client
+            // visuals may consume a selected card.
             if (unitCard.SourceCardId is not ("ELITEMINIGUN" or "ELITESWAT" or
-                "ELITESNIPER" or "ELITEPARA" or "HEAVYDRONE" or "BIGROCKET"))
+                "ELITESNIPER" or "ELITEPARA" or "HEAVYDRONE" or "BIGROCKET" or
+                "GREATGRENADIER"))
                 return "unit-card-unavailable";
             try
             {
