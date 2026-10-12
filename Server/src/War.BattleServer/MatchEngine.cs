@@ -1237,6 +1237,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;
+        foreach (ulong entityKey in deadParatrooperCanopies
+            .Where(entry => tick >= entry.Value.LandingTick +
+                3u * MatchManifest.TickRate)
+            .Select(entry => entry.Key).ToArray())
+            deadParatrooperCanopies.Remove(entityKey);
         if(advanced)
         {
             try
@@ -2752,6 +2757,22 @@ public sealed partial class MatchEngine : IMatchRuntime
             ,CardActivations = (uint)performance.CardActivations,
             ObjectiveCredits = (uint)performance.ObjectiveCredits
         };
+        foreach (var entry in deadParatrooperCanopies.OrderBy(entry => entry.Key))
+        {
+            LandedCanopy canopy = entry.Value;
+            if (entry.Key == 0 || canopy.LandingTick > tick ||
+                tick - canopy.LandingTick >= 3u * MatchManifest.TickRate ||
+                !PlayerHitbox.Finite(canopy.Position))
+                throw new InvalidDataException("Dead Paratrooper canopy lost its host pose.");
+            snapshot.LandedCanopies.Add(new BattleLandedCanopyState
+            {
+                EntityKey = entry.Key,
+                LandingTick = canopy.LandingTick,
+                Rotation = ParachuteWireRotation(canopy.Rotation),
+                X = canopy.Position.X, Y = canopy.Position.Y,
+                Z = canopy.Position.Z
+            });
+        }
         snapshot.RibbonIds.AddRange(ribbons.Snapshot());
         // Terminal evidence only; live snapshots retain their authenticated MTU budget.
         if (Terminal) snapshot.PerformanceStartTick = performance.StartTick;

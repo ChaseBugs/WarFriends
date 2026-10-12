@@ -12071,6 +12071,23 @@ internal static class CombatContentTests
               canopyPageMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities
                   .All(row => row.EntityKey != pageLandingEntity),
             "death event retains canopy impact pose after its soldier leaves the roster");
+        var survivingCanopy = canopyPageMatch.Snapshot();
+        War.Client.BattleLandedCanopyPolicy.Validate(survivingCanopy);
+        Check(survivingCanopy.LandedCanopies.Count == 1 &&
+              survivingCanopy.LandedCanopies[0].EntityKey == pageLandingEntity &&
+              survivingCanopy.LandedCanopies[0].LandingTick == 75,
+            "a reconnect snapshot restores a dead soldier's unexpired canopy");
+        var corruptCanopy = survivingCanopy.Clone();
+        corruptCanopy.LandedCanopies[0].Rotation = null;
+        bool corruptCanopyRejected = false;
+        try { War.Client.BattleLandedCanopyPolicy.Validate(corruptCanopy); }
+        catch (InvalidOperationException) { corruptCanopyRejected = true; }
+        Check(corruptCanopyRejected,
+            "the portable SDK rejects a reconnect canopy without its source rotation");
+        for (ulong canopyTick = 76; canopyTick <= 165; canopyTick++)
+            canopyPageMatch.Advance(canopyTick);
+        Check(canopyPageMatch.Snapshot().LandedCanopies.Count == 0,
+            "dead soldier canopy leaves reconnect state at its source deadline");
         var landingDuringShot = ReadyCardMatch(
             "host-card-para-land-during-shot", "ELITEPARA");
         Check(landingDuringShot.Command(decoyOpponent, new MatchCommand

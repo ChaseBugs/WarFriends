@@ -234,6 +234,24 @@ public static class SelfHostedInfantryRenderAudit
             presenter.RenderAt(Time.realtimeSinceStartup + 3.1f, .016f);
             Require(deathCanopy == null,
                 "orphaned canopy expires on its original host deadline");
+            var reconnectSnapshot = new MatchSnapshot { ServerTick = 63 };
+            reconnectSnapshot.LandedCanopies.Add(new BattleLandedCanopyState
+            {
+                EntityKey = 105,
+                LandingTick = 62,
+                Rotation = new BattleJointRotation { W = 1 },
+                X = 6, Y = 2, Z = 3
+            });
+            presenter.ApplySnapshot(reconnectSnapshot);
+            var recoveredCanopy = GameObject.Find("ParachuteCanopy");
+            Require(recoveredCanopy != null &&
+                Vector3.Distance(recoveredCanopy.transform.position,
+                    new Vector3(6, 2, 3)) < .001f,
+                "reconnect snapshot restores a canopy without its dead soldier");
+            presenter.ApplySnapshot(reconnectSnapshot);
+            presenter.RenderAt(Time.realtimeSinceStartup + 3.1f, .016f);
+            Require(recoveredCanopy == null,
+                "reconnect canopy is idempotent and expires on the host deadline");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedInfantry_100") == null,
                 "removed infantry visual");
@@ -245,7 +263,7 @@ public static class SelfHostedInfantryRenderAudit
                 "removed Paratrooper card visual");
             Debug.Log("UNITY_INFANTRY_RENDER_PASSED families=" + Families.Length +
                 " cardMinigunner=True cardSwat=True cardSniper=True cardParatrooper=True" +
-                " postDeathCanopy=True" +
+                " postDeathCanopy=True reconnectCanopy=True" +
                 " skin=True scriptFree=True hostMotion=True removal=True");
             EditorApplication.Exit(0);
         }

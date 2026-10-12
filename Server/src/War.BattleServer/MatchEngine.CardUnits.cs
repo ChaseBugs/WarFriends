@@ -27,6 +27,9 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ulong> paratrooperLandingTicks = [];
     private readonly Dictionary<ulong, Quaternion> paratrooperLandingRotations = [];
     private readonly Dictionary<ulong, Vector3> paratrooperLandingPositions = [];
+    private sealed record LandedCanopy(ulong LandingTick, Vector3 Position,
+        Quaternion Rotation);
+    private readonly Dictionary<ulong, LandedCanopy> deadParatrooperCanopies = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -1444,6 +1447,8 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Dead Paratrooper lost its landing pose.");
             if (tick - landingTick < 3u * MatchManifest.TickRate)
             {
+                deadParatrooperCanopies.Add(entityKey,
+                    new LandedCanopy(landingTick, position, rotation));
                 deathEvent.ParachuteEntityKey = entityKey;
                 deathEvent.ParachuteLandingTick = landingTick;
                 deathEvent.ParachuteRotation = ParachuteWireRotation(rotation);

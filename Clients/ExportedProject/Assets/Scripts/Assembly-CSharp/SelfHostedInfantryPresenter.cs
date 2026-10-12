@@ -167,6 +167,27 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         if (visual != null && visual.Canopy != null) DestroyCanopy(visual);
     }
 
+    public void ApplySnapshot(MatchSnapshot snapshot)
+    {
+        if (snapshot == null) throw new ArgumentNullException("snapshot");
+        foreach (BattleLandedCanopyState canopy in snapshot.LandedCanopies)
+        {
+            // Use the same visual and lifetime path as the replayable death event.
+            ApplyEvent(new MatchEvent
+            {
+                Kind = MatchEventKind.ArmyDied,
+                SourceCardId = "ELITEPARA",
+                Tick = snapshot.ServerTick,
+                ParachuteEntityKey = canopy.EntityKey,
+                ParachuteLandingTick = canopy.LandingTick,
+                ParachuteRotation = canopy.Rotation,
+                ParachuteLandingX = canopy.X,
+                ParachuteLandingY = canopy.Y,
+                ParachuteLandingZ = canopy.Z
+            });
+        }
+    }
+
     private static void Validate(BattleArmyEntityState row)
     {
         var facing = new Vector3(row.InfantryFacingX,

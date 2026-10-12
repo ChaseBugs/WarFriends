@@ -266,6 +266,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private void Apply(MatchSnapshot snapshot)
 	{
 		if (snapshot == null || client == null) return;
+		if (infantryPresenter != null) infantryPresenter.ApplySnapshot(snapshot);
 		foreach (BattlePlayerState state in snapshot.Players)
 		{
 			PlayerController player = state.PlayerId == local.playerProperties.playerID ? local :

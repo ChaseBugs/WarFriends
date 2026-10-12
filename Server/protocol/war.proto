@@ -426,6 +426,15 @@ message MatchSnapshot {
   // Event cursor captured with this authoritative state. A reconnecting
   // client may start after it only when rebuilding all scene projections.
   uint64 latest_event_id = 34;
+  // Canopies outlive dead ELITEPARA soldiers for three host seconds. This
+  // state repairs a reconnect after the death-event cursor has expired.
+  repeated BattleLandedCanopyState landed_canopies = 35;
+}
+message BattleLandedCanopyState {
+  uint64 entity_key = 1;
+  uint64 landing_tick = 2;
+  BattleJointRotation rotation = 3;
+  float x = 4; float y = 5; float z = 6;
 }
 message BattleArmyKillEvidence {
   uint64 entity_key = 1; string unit_id = 2;
