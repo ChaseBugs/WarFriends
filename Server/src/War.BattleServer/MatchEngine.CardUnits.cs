@@ -1638,6 +1638,10 @@ public sealed partial class MatchEngine
 
     internal int CardGrenadierActiveFlightCount => grenadierFlights.Count;
 
+    internal float? CardGrenadierShotHealth(ulong grenadeId) =>
+        grenadierFlights.TryGetValue(grenadeId, out var flight)
+            ? flight.ShotHealth : null;
+
     internal IReadOnlyList<CardGrenadierExplosion> CardGrenadierExplosions() =>
         grenadierExplosions.ToArray();
 

@@ -12137,6 +12137,54 @@ internal static class CombatContentTests
                   liveGrenadeTarget.EntityId, 1f) &&
               shotGrenadierMatch.CardGrenadierExplosions().Count == 1,
             "a later bullet cannot detonate an already retired grenade twice");
+        var firedGrenadierMatch = ReadyCardMatch(
+            "player-fire-card-grenadier", "GREATGRENADIER");
+        Check(firedGrenadierMatch.TryScheduleCardUnit(new string('d', 32),
+                  decoyPlayer, "GREATGRENADIER"),
+            "player Fire test starts with one trusted Grenadier card");
+        ulong grenadeFireCommand = 3;
+        bool playerBulletHitGrenade = false;
+        var grenadeFireCodes = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (ulong simulationTick = 61; simulationTick < 1800 &&
+             !playerBulletHitGrenade && !firedGrenadierMatch.Terminal;
+             simulationTick++)
+        {
+            DynamicShotTarget? target = firedGrenadierMatch
+                .PlayerShotTargets(decoyOpponent)
+                .FirstOrDefault(row => row.GrenadierGrenade);
+            float? previousShotHealth = target == null ? null :
+                firedGrenadierMatch.CardGrenadierShotHealth(target.EntityId);
+            if (target != null)
+            {
+                Vector3 aim = target.Hitbox.Center;
+                string code = firedGrenadierMatch.Command(decoyOpponent,
+                    new MatchCommand
+                    {
+                        CommandId = grenadeFireCommand++,
+                        Fire = new FireCommand
+                        {
+                            TargetX = aim.X,
+                            TargetY = aim.Y,
+                            TargetZ = aim.Z
+                        }
+                    }).Code;
+                grenadeFireCodes[code] = grenadeFireCodes.GetValueOrDefault(code) + 1;
+            }
+            firedGrenadierMatch.Advance(simulationTick);
+            if (target != null && previousShotHealth is float before &&
+                firedGrenadierMatch.CardGrenadierShotHealth(target.EntityId)
+                    is float after && after < before)
+                playerBulletHitGrenade = true;
+            if (simulationTick % 60 == 0)
+            {
+                firedGrenadierMatch.EventBatch(decoyPlayer, 0);
+                firedGrenadierMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        Check(playerBulletHitGrenade,
+            "normal player Fire damages a falling Grenadier grenade: " +
+            string.Join(", ", grenadeFireCodes.Select(row =>
+                row.Key + "=" + row.Value)));
         var grenadierDecoyMatch = ReadyCardMatch(
             "host-card-grenadier-decoy", "GREATGRENADIER",
             opponentCardId: "DECOY");
