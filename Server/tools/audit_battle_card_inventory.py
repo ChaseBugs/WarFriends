@@ -157,6 +157,21 @@ def check_grenadier_card_setup():
                   "  deadRadius: 0.9\n", "  hurtRadius: 1.2\n"):
         if field not in grenade:
             raise ValueError("Grenadier card throw or blast prefab changed")
+    pistol = (ASSETS / "GameObject/PistolEnemy.prefab").read_text(
+        encoding="utf-8-sig")
+    pistol_setup = pistol.split("--- !u!114 &11470521\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    gun = (ASSETS / "Scripts/Assembly-CSharp/Gun.cs").read_text(
+        encoding="utf-8-sig")
+    aiming = (ASSETS / "Scripts/Assembly-CSharp/AimingHelper.cs").read_text(
+        encoding="utf-8-sig")
+    if ("  speed: 5\n" not in pistol_setup or
+        "return num / bulletSetup.bulletSpeed + 0.1f;" not in gun or
+        "float num = weapon.ComputeFlyTimeToTarget(position) + extraTIme;" not in aiming or
+        "PredictPosition(currentWeapon, mShotTarget.transform.position, gameShootableEntity.velocity, 0.1f)" not in
+            (ASSETS / "Scripts/Assembly-CSharp/SoldierBehaviour.cs").read_text(
+                encoding="utf-8-sig")):
+        raise ValueError("Grenadier card moving-target prediction changed")
 
 
 def check_rocket_card_setup():

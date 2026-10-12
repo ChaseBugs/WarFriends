@@ -11852,6 +11852,20 @@ internal static class CombatContentTests
               grenadierCardMatch.CardEnemyPointOccupant(grenadierPointId) ==
                   grenadierEntity.EntityKey,
             "card Grenadier movement retains its reserved source point");
+        for (ulong grenadierTick = 62;
+             grenadierTick <= 900 && grenadierCardMatch.CardGrenadierWalking(
+                 grenadierEntity.EntityKey); grenadierTick++)
+            grenadierCardMatch.Advance(grenadierTick);
+        var grenadierAim = grenadierCardMatch.CardGrenadierChooseTarget(
+            grenadierEntity.EntityKey);
+        Check(!grenadierCardMatch.CardGrenadierWalking(
+                  grenadierEntity.EntityKey) &&
+              grenadierAim is { Target: { PlayerId: var grenadierTargetPlayer } } &&
+              grenadierTargetPlayer == decoyOpponent &&
+              grenadierAim.Target.EntityKey == grenadierEntity.EntityKey &&
+              grenadierAim.Target.RusherPointFileId == grenadierPointId &&
+              PlayerHitbox.Finite(grenadierAim.Target.Position),
+            "arrived card Grenadier selects a host-owned opposing player target");
         Check(grenadierCardMatch.ConfirmArmyDeath(
                   grenadierEntity.EntityKey, false) &&
               grenadierCardMatch.CardGrenadierThrow(

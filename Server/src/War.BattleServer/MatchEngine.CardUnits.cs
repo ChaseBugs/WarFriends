@@ -12,6 +12,9 @@ internal sealed record CardRocketLaunchAuthority(string OwnerPlayerId,
 
 public sealed partial class MatchEngine
 {
+    internal sealed record CardGrenadierAim(ArmyRusherTarget Target,
+        bool ThrowGrenade);
+
     private readonly CardUnitSpawnState cardUnitSpawns = new();
     private readonly CardUnitEntityRegistry cardUnitEntities = new();
     private CardUnitCombatLifecycle? cardUnitCombat;
@@ -1364,6 +1367,93 @@ public sealed partial class MatchEngine
 
     internal ArmyCardGrenadierRuntime? CardGrenadierThrow(ulong entityKey) =>
         cardGrenadierThrows.GetValueOrDefault(entityKey);
+
+    internal CardGrenadierAim? CardGrenadierChooseTarget(ulong entityKey)
+    {
+        if (rifleCombat == null || playerShotTargets == null || map == null ||
+            armyCatalog == null || armyWeapons == null ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "GREATGRENADIER" ||
+            grenadierWalks.ContainsKey(entityKey) ||
+            cardEnemyPoints?.Find(entityKey) is not { } point ||
+            !cardGrenadierThrows.TryGetValue(entityKey, out var setup))
+            return null;
+
+        Player owner = Find(entity.OwnerPlayerId) ??
+            throw new InvalidDataException("Card Grenadier owner left the match.");
+        Player opponent = players.Single(player => player != owner);
+        if (opponent.Dead) return null;
+
+        // PickTarget chooses the secondary weapon before its Decoy/player
+        // branch. The card has both source weapons and no external weapon.
+        bool throwGrenade = setup.ShouldThrowGrenade(NextArmyFloat(), false);
+        Vector3 origin = new(entity.X, entity.Y, entity.Z);
+        var enemyDecoys = decoys.Snapshot().Where(row =>
+            row.OwnerFraction != entity.OwnerFraction)
+            .OrderBy(row => row.EntityId).ToArray();
+        if (enemyDecoys.Length > 0)
+        {
+            int index = armyChoice(enemyDecoys.Length);
+            if (index < 0 || index >= enemyDecoys.Length || decoySource == null)
+                throw new InvalidDataException("Card Grenadier Decoy choice is invalid.");
+            var decoy = enemyDecoys[index];
+            float yaw = MathF.Atan2(decoy.Facing.X, decoy.Facing.Z);
+            Quaternion rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw);
+            Vector3 position = decoy.Position + Vector3.Transform(
+                decoySource.Prefab.TargetLocalPosition, rotation);
+            return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
+                decoy.OwnerPlayerId, decoySource.Prefab.TargetTransformFileId,
+                point.ComponentFileId, position), throwGrenade);
+        }
+
+        if (opponent.Cover < 0 || opponent.Cover >= map.Covers.Count)
+            return null;
+        var pose = rifleCombat.Pose(opponent.Definition.PlayerId);
+        Vector3 aimForward = -Vector3.Transform(Vector3.UnitZ,
+            map.Covers[opponent.Cover].Rotation);
+        float shieldProbability = armyCatalog.ShieldHitProbability(entity.UnitId);
+        if (opponent.Route != null) shieldProbability *= .5f;
+        int mask = HeavyTurretStationaryTargetMask(aimForward,
+            origin - opponent.Position, shieldProbability, NextArmyFloat);
+        bool shieldAvailable = shields?.Snapshot().Any(row =>
+            row.CoverIndex == opponent.Cover && !row.Destroyed) ?? false;
+        if (mask == 2 && shieldAvailable)
+        {
+            var shield = playerShotTargets.Gameplay.Single(row => row.Type == 2);
+            return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
+                opponent.Definition.PlayerId, shield.TransformFileId,
+                point.ComponentFileId,
+                map.Covers[opponent.Cover].ShotPosition), throwGrenade);
+        }
+
+        if (opponent.Route != null && pose.MovingTarget is { } moving)
+        {
+            var source = playerShotTargets.Gameplay.Single(row => row.Type == 16);
+            Vector3 velocity = HeavyTurretPlayerVelocity(opponent);
+            float flySeconds = .1f;
+            if (!throwGrenade)
+            {
+                Vector3 muzzle = armyWeapons.RestMuzzleOrigin(entity.UnitId,
+                    origin, moving.Position - origin);
+                // PistolEnemy BulletSetup speed is 5. Gun adds .1 seconds;
+                // PickPlayerOpponent passes another .1 to AimingHelper.
+                flySeconds += Vector3.Distance(muzzle, moving.Position) / 5f + .1f;
+            }
+            Vector3 predicted = moving.Position + flySeconds * velocity;
+            if (!PlayerHitbox.Finite(predicted))
+                throw new InvalidDataException("Card Grenadier moving aim left the map.");
+            return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
+                opponent.Definition.PlayerId, source.TransformFileId,
+                point.ComponentFileId, predicted), throwGrenade);
+        }
+
+        var body = playerShotTargets.Nearest(9, origin,
+            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
+        return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
+            opponent.Definition.PlayerId, body.TransformFileId,
+            point.ComponentFileId,
+            pose.BodyTarget(body.TransformFileId).Position), throwGrenade);
+    }
 
     internal bool CardGrenadierWalking(ulong entityKey) =>
         grenadierWalks.ContainsKey(entityKey);
