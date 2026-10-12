@@ -17554,7 +17554,31 @@ internal static class CombatContentTests
               transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
                   missileVehicleHealth,
             "Rocket card blast damages an enemy repair drone without touching vehicle health");
-        friendlyMissileHealth = repairDroneAfterRocket;
+        var repairGrenadierLaunch = new CardGrenadierLaunchAuthority(
+            soldierOwner, new ArmyGrenadeDamageStats(.2f, 2f),
+            grenadierStats.Grenadier!,
+            content.Army.PlayerDamagePolicy("ID_UNIT-GRENADIER"));
+        var repairGrenadierExplosion = new CardGrenadierExplosion(920, 1,
+            missileDroneCenter, transporterTick);
+        transporterMatch.ApplyCardGrenadierRepairDroneExplosion(
+            repairGrenadierExplosion, repairGrenadierLaunch,
+            repairFriendlyFraction);
+        Check(transporterMatch.TransporterRepairDrones(
+                  transporterEntity.EntityKey)[1].Health ==
+                  repairDroneAfterRocket,
+            "Grenadier blast skips a friendly Transporter repair drone");
+        transporterMatch.ApplyCardGrenadierRepairDroneExplosion(
+            repairGrenadierExplosion with { ProjectileId = 921 },
+            repairGrenadierLaunch with { OwnerPlayerId = helicopterOwner },
+            repairEnemyFraction);
+        float repairDroneAfterGrenadier = transporterMatch
+            .TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
+        Check(Math.Abs(repairDroneAfterGrenadier -
+                  (repairDroneAfterRocket - 2f)) < .01f &&
+              transporterMatch.ArmyHealth(transporterEntity.EntityKey) ==
+                  missileVehicleHealth,
+            "Grenadier blast damages an opposing repair drone without changing vehicle health");
+        friendlyMissileHealth = repairDroneAfterGrenadier;
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
             "ID_UNIT-BUGGY",21,buggyMissileBinding,missileDroneCenter);
         Check(Math.Abs(transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health-
@@ -17881,6 +17905,31 @@ internal static class CombatContentTests
               missileGlassMatch.ArmyHealth(missileGlassAircraft.EntityKey) ==
                   missileBodyBefore,
             "Rocket card blast damages enemy front glass without changing aircraft-body health");
+        var glassGrenadierLaunch = new CardGrenadierLaunchAuthority(
+            helicopterOwner, new ArmyGrenadeDamageStats(.2f, 2f),
+            grenadierStats.Grenadier!,
+            content.Army.PlayerDamagePolicy("ID_UNIT-GRENADIER"));
+        var glassGrenadierExplosion = new CardGrenadierExplosion(922, 1,
+            missileGlassOrigin, 75);
+        float glassHealthBeforeGrenadier = missileGlassMatch
+            .AssaultGlassHealth(missileGlassAircraft.EntityKey)!.Value;
+        missileGlassMatch.ApplyCardGrenadierAssaultGlassExplosion(
+            glassGrenadierExplosion, glassGrenadierLaunch,
+            glassFriendlyFraction);
+        Check(missileGlassMatch.AssaultGlassHealth(
+                  missileGlassAircraft.EntityKey) ==
+                  glassHealthBeforeGrenadier,
+            "Grenadier blast skips allied Assault Helicopter front glass");
+        missileGlassMatch.ApplyCardGrenadierAssaultGlassExplosion(
+            glassGrenadierExplosion with { ProjectileId = 923 },
+            glassGrenadierLaunch with { OwnerPlayerId = soldierOwner },
+            glassEnemyFraction);
+        Check(Math.Abs(missileGlassMatch.AssaultGlassHealth(
+                  missileGlassAircraft.EntityKey)!.Value -
+                  (glassHealthBeforeGrenadier - 2f)) < .01f &&
+              missileGlassMatch.ArmyHealth(
+                  missileGlassAircraft.EntityKey) == missileBodyBefore,
+            "Grenadier blast damages enemy front glass without changing aircraft-body health");
         Check(missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(soldierOwner,
                   "ID_UNIT-TANK",10_000,tankMissileBinding,missileGlassOrigin)==1&&
               missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)==0&&
