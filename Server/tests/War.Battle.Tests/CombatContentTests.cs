@@ -11910,15 +11910,50 @@ internal static class CombatContentTests
                   park.Covers[rocketMoveDestination].ShotPosition &&
               firstRocketShot.ShotIndex == 0 && firstRocketShot.BatchSize >= 1,
             "Rocket card latches its shield aim after Corner arrival and source windup");
+        var firingRocket = rocketCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(entity => entity.EntityKey == rocketEntity.EntityKey);
+        Vector3 expectedRocketMuzzle = CardRocketMuzzlePose.Place(
+            content.CoopEnemyMuzzles, content.CoopAssaulterWeapon,
+            rocketPoint!, new Vector3(firingRocket.X, firingRocket.Y,
+                firingRocket.Z), firstRocketShot!.TargetPosition);
+        Check(firstRocketShot.MuzzlePosition == expectedRocketMuzzle &&
+              Vector3.Distance(firstRocketShot.MuzzlePosition,
+                  new Vector3(firingRocket.X, firingRocket.Y,
+                      firingRocket.Z)) < 5f &&
+              rocketCardMatch.CardRocketActiveFlightCount == 1,
+            "Rocket intent launches one missile from the animated BazookaEnemy Spawn position");
+        rocketCardMatch.Advance(firstRocketShot.Tick + 1);
+        Check(rocketCardMatch.CardRocketActiveFlightCount == 1 &&
+              rocketCardMatch.CardRocketImpacts().Count == 0,
+            "Rocket missile advances on the next host tick without an immediate impact");
         Check(rocketCardMatch.ConfirmArmyDeath(rocketEntity.EntityKey, false) &&
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) == null &&
               rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) == null &&
               !rocketCardMatch.CardRocketWalking(rocketEntity.EntityKey) &&
               rocketCardMatch.CardRocketAttack(rocketEntity.EntityKey) == null &&
               rocketCardMatch.CardRocketShotIntents().Count == 0 &&
+              rocketCardMatch.CardRocketActiveFlightCount == 1 &&
               rocketCardMatch.CardEnemyPointOccupant(
                   rocketPoint!.ComponentFileId) == null,
-            "card Rocket death removes its missile, point and pending attack authority");
+            "card Rocket death removes attack authority but keeps its launched missile");
+        CardRocketMissileImpact? liveRocketImpact = null;
+        for (ulong flightTick = firstRocketShot.Tick + 2;
+             flightTick <= firstRocketShot.Tick + 1800 &&
+                 liveRocketImpact == null; flightTick++)
+        {
+            rocketCardMatch.Advance(flightTick);
+            liveRocketImpact = rocketCardMatch.CardRocketImpacts()
+                .FirstOrDefault(impact =>
+                    impact.SoldierEntityKey == rocketEntity.EntityKey);
+            if (flightTick % 60 == 0)
+            {
+                rocketCardMatch.EventBatch(decoyPlayer, 0);
+                rocketCardMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        Check(liveRocketImpact != null &&
+              rocketCardMatch.CardRocketActiveFlightCount == 0,
+            "a launched Rocket reaches a terminal host impact after its soldier dies");
         Check(BattleTerminalPolicy.IsAbortedReason("invalid-card-unit-authority"),
             "invalid card-unit authority has a durable unscored terminal reason");
         const string hostCardRequest = "e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5";

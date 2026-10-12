@@ -111,7 +111,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     private ulong projectileId;
     internal const int MaximumProjectiles = 128;
     internal int PendingProjectileCount => checked(projectiles.Count+shotgunFakeProjectiles.Count+
-        armyProjectiles.Count+armyFlameBursts.Count+
+        armyProjectiles.Count+armyFlameBursts.Count+rocketFlights.Count+
         vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
         scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count+
         droneProjectiles.Count+helicopterProjectiles.Count+assaultHelicopterProjectiles.Count);
@@ -1232,7 +1232,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             return;
         }
         ulong simulationTick=checked(tick+elapsed);
-        if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
+        if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0||rocketFlights.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
         if ((rifleCombat!=null||grenadeCombat!=null) && phase==BattlePhase.Running && simulationTick>tick+1) throw new InvalidOperationException("Live combat playback requires every simulation tick.");
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
@@ -1523,6 +1523,12 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (advanced && phase == BattlePhase.Running && rocketWalks.Count > 0)
         {
             try { AdvanceCardRocketWalks(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running &&
+            (rocketFlights.Count > 0 || rocketImpacts.Count > 0))
+        {
+            try { AdvanceCardRocketFlights(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running && rocketAttacks.Count > 0)

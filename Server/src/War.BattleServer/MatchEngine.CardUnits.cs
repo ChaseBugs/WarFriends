@@ -4,7 +4,8 @@ using War.Protocol;
 namespace War.BattleServer;
 
 internal sealed record CardRocketShotIntent(ulong EntityKey, ulong Tick,
-    Vector3 TargetPosition, bool IsReal, int ShotIndex, int BatchSize);
+    Vector3 TargetPosition, Vector3 MuzzlePosition, bool IsReal,
+    int ShotIndex, int BatchSize);
 
 public sealed partial class MatchEngine
 {
@@ -39,6 +40,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, ArmyRusherAttackState> rocketAttacks = [];
     private readonly Dictionary<ulong, Vector3> rocketShotTargets = [];
     private readonly List<CardRocketShotIntent> rocketShotIntents = [];
+    private readonly Dictionary<ulong, CardRocketMissileFlight> rocketFlights = [];
+    private readonly List<CardRocketMissileImpact> rocketImpacts = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> paratrooperFallbackWalks = [];
     private readonly Dictionary<ulong, ulong> paratrooperPointRetryTicks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> paratrooperAttacks = [];
@@ -1343,6 +1346,11 @@ public sealed partial class MatchEngine
     internal IReadOnlyList<CardRocketShotIntent> CardRocketShotIntents() =>
         rocketShotIntents.ToArray();
 
+    internal int CardRocketActiveFlightCount => rocketFlights.Count;
+
+    internal IReadOnlyList<CardRocketMissileImpact> CardRocketImpacts() =>
+        rocketImpacts.ToArray();
+
     internal Vector3? CardRocketAim(ulong entityKey)
     {
         if (phase != BattlePhase.Running || map == null ||
@@ -1367,6 +1375,23 @@ public sealed partial class MatchEngine
         if (currentPoint < 0 || currentPoint >= map.Covers.Count)
             return null;
         return map.Covers[currentPoint].ShotPosition;
+    }
+
+    internal Vector3? CardRocketFiringMuzzle(ulong entityKey,
+        Vector3 targetPosition)
+    {
+        if (!rocketAttacks.ContainsKey(entityKey))
+            return null;
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.SourceCardId != "BIGROCKET" ||
+            cardEnemyPoints?.Find(entityKey) is not { } corner ||
+            enemyMuzzles == null || assaulterWeapon == null)
+            throw new InvalidDataException(
+                "Card Rocket lost its animated muzzle authority.");
+
+        Vector3 soldierPosition = new(entity.X, entity.Y, entity.Z);
+        return CardRocketMuzzlePose.Place(enemyMuzzles, assaulterWeapon,
+            corner, soldierPosition, targetPosition);
     }
 
     private void TryAssignCardRocketPoint(BattleArmyEntityState entity)
@@ -1494,12 +1519,59 @@ public sealed partial class MatchEngine
                 continue;
             if (!rocketShotTargets.TryGetValue(entityKey, out Vector3 shotTarget))
                 throw new InvalidDataException("Card Rocket lost its latched aim.");
+            Vector3 muzzle = CardRocketFiringMuzzle(entityKey, shotTarget) ??
+                throw new InvalidDataException("Card Rocket shot has no source muzzle.");
             rocketShotIntents.Add(new CardRocketShotIntent(entityKey, tick,
-                shotTarget, attack.CurrentShotIsReal, attack.BatchCursor,
+                shotTarget, muzzle, attack.CurrentShotIsReal, attack.BatchCursor,
                 attack.BatchSize));
             attack.CommitShot();
             if (attack.Phase == ArmyRusherAttackPhase.Cooldown)
                 rocketShotTargets.Remove(entityKey);
+        }
+        LaunchCardRocketShotIntents();
+    }
+
+    private void LaunchCardRocketShotIntents()
+    {
+        if (rocketShotIntents.Count == 0)
+            return;
+        if (rifleCombat == null)
+            throw new InvalidDataException("Card Rocket has no collision world.");
+
+        foreach (CardRocketShotIntent intent in rocketShotIntents)
+        {
+            if (!activeArmyEntities.TryGetValue(intent.EntityKey,
+                    out var soldier) ||
+                soldier.SourceCardId != "BIGROCKET" ||
+                !cardRocketMissiles.TryGetValue(intent.EntityKey,
+                    out var missile))
+                throw new InvalidDataException("Card Rocket shot lost its owner.");
+            if (PendingProjectileCount >= MaximumProjectiles)
+                continue;
+            if (projectileId == ulong.MaxValue)
+                throw new InvalidDataException("Card Rocket projectile IDs exhausted.");
+
+            ulong id = ++projectileId;
+            string ownerId = soldier.OwnerPlayerId;
+            var flight = new CardRocketMissileFlight(id, intent.EntityKey,
+                missile, intent.MuzzlePosition, intent.TargetPosition,
+                tick, !intent.IsReal,
+                (from, direction, range) => rifleCombat.TraceForArmy(
+                    ownerId, from, direction, range));
+            rocketFlights.Add(id, flight);
+        }
+    }
+
+    private void AdvanceCardRocketFlights()
+    {
+        rocketImpacts.Clear();
+        foreach (var (id, flight) in rocketFlights.OrderBy(row => row.Key).ToArray())
+        {
+            CardRocketMissileImpact? impact = flight.Advance(tick);
+            if (impact == null)
+                continue;
+            rocketFlights.Remove(id);
+            rocketImpacts.Add(impact);
         }
     }
 

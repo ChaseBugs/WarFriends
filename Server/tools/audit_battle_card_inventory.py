@@ -7,6 +7,7 @@ Run with --check to ensure the checked-in report still matches the Client.
 import re
 import json
 import sys
+import hashlib
 from pathlib import Path
 
 
@@ -141,6 +142,13 @@ def check_rocket_card_setup():
         "  clipSize:", 1)[0]
     bazooka_ammo = weapon_prefab.read_text(encoding="utf-8-sig").split(
         "--- !u!114 &11477035\n", 1)[1].split("\n--- !u!", 1)[0]
+    bazooka_prefab_text = weapon_prefab.read_text(encoding="utf-8-sig")
+    bazooka_spawn = bazooka_prefab_text.split(
+        "--- !u!4 &496729\n", 1)[1].split("\n--- !u!", 1)[0]
+    bazooka_launcher = bazooka_prefab_text.split(
+        "--- !u!4 &472700\n", 1)[1].split("\n--- !u!", 1)[0]
+    bazooka_root = bazooka_prefab_text.split(
+        "--- !u!4 &443158\n", 1)[1].split("\n--- !u!", 1)[0]
     missile_behavior = missile_source.read_text(encoding="utf-8-sig")
     if (any(line not in behavior for line in required) or
         "unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);" not in
@@ -161,13 +169,29 @@ def check_rocket_card_setup():
         "infiniteAmmo: 1" not in bazooka_weapon or
         "stopTime: 0" not in bazooka_ammo or
         "curvedTrajectory: 0" not in bazooka_ammo or
+        hashlib.sha256(weapon_prefab.read_bytes()).hexdigest() !=
+            "70ced837878580b64c2f5a2665fbf47cde846c4503dba1cda625135b9c667d47" or
+        "m_LocalPosition: {x: -0.047, y: -0.0015, z: 0.0344}" not in
+            bazooka_spawn or
+        "m_LocalScale: {x: 1.4, y: 1.4, z: 1.4}" not in
+            bazooka_launcher or
+        "m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}" not in
+            bazooka_launcher or
+        "m_LocalRotation: {x: 3.0908623E-08, y: -0.7071068, z: -0.7071068, w: -3.0908623E-08}" not in
+            bazooka_root or
         "if (Vector3.Distance(from, to) > 50f)" not in missile_behavior or
         "else if (Vector3.Distance(mFrom, mTransform.position) > 0.5f)" not in
             missile_behavior or
         "if (progress > ((!mSetup.curvedTrajectory) ? 3f : 1.5f))" not in
             missile_behavior or
         "ShootFromBazookaFromCover(mCoverShotRight);\n\t\t\t\tShoot(0.7f);" not in
-            enemy_controller.read_text(encoding="utf-8-sig")):
+            enemy_controller.read_text(encoding="utf-8-sig") or
+        "weapon.transform.localScale = Vector3.one;" not in
+            (ASSETS / "Scripts/Assembly-CSharp/SoldierParts.cs").read_text(
+                encoding="utf-8-sig") or
+        "mAnimation.Play(\"bazooka_shoot_right\");" not in
+            (ASSETS / "Scripts/Assembly-CSharp/SoldierAnimationController.cs")
+            .read_text(encoding="utf-8-sig")):
         raise ValueError("Rocket card setup, aim, point or shot timing differs from recovered Client")
 
 
