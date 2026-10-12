@@ -8,6 +8,8 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The pending `SABOTAGE` card has a [recovered source contract](SABOTAGE_SOURCE.md): the master first draws from all visible opposing mechanical shootables, then prefers a second draw from main AI-owned parts older than five seconds. The current Worker has no authenticated activation for it. Mechanical-part registration, host selection and damage, idempotent spending, and normal Client/UDP verification are required before its source-enabled row can open.
+
 | ID | Required feature | Status / present evidence | Completion evidence required |
 |---|---|---|---|
 | B01 | Complete source contract and RPC migration ledger | Partial: source inventory, guide, 165 RPC definitions and 173 literal calls indexed; [first reviewed lifecycle/weapon/unit RPC migration slice](BATTLE_RPC_MIGRATION.md) maps replacement authority and remaining Client gaps | Every RPC, stream, room/property call and dynamic call classified; replacement and test linked; no unreviewed gameplay dependency |
