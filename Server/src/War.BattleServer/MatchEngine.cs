@@ -1520,6 +1520,17 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceCardRocketPointRetries(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
+        if (advanced && phase == BattlePhase.Running &&
+            grenadierPointRetryTicks.Count > 0)
+        {
+            try { AdvanceCardGrenadierPointRetries(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && grenadierWalks.Count > 0)
+        {
+            try { AdvanceCardGrenadierWalks(); }
+            catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && rocketWalks.Count > 0)
         {
             try { AdvanceCardRocketWalks(); }

@@ -23,7 +23,10 @@ SOURCE = ROOT / "Server/content/recovered-battle-content.json"
 OUTPUT = ROOT / "Server/content/recovered-multiplayer-card-enemy-points.json"
 MAP_GUID = "f8e8488fbe21f6c02c9eef456d27a3b9"
 COLLECTION_GUID = "d9d8bf95b76e06b83a10740c1390212a"
-CARD_POINT_TYPES = {"EnemyPointCorner", "EnemyPointHiding", "EnemyPointSwat"}
+# Grenadier's mask also admits Vehicle/Car points. Keeping that type in the
+# extraction set proves whether any such point exists in the five maps.
+CARD_POINT_TYPES = {"EnemyPointCorner", "EnemyPointHiding",
+                    "EnemyPointSwat", "EnemyPointVehicle"}
 EXPECTED_COUNTS = {
     "Aztec": {"EnemyPointCorner": (1, 1), "EnemyPointSwat": (2, 2)},
     "City": {"EnemyPointCorner": (1, 2), "EnemyPointSwat": (2, 2)},

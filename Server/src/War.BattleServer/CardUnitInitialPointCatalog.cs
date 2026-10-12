@@ -10,7 +10,8 @@ public sealed record CardUnitInitialPoint(int Order, int ComponentFileId,
     Vector3? CornerDirection, bool? CornerRightSide);
 
 /// <summary>
-/// Card Paratroopers and SWAT choose from MapDefinition.enemyPointsCollection.
+/// Card Paratroopers, Rocket Soldiers, Grenadiers, Snipers, and SWAT choose
+/// from MapDefinition.enemyPointsCollection.
 /// These points are distinct from their ordinary shield-linked Rusher slots.
 /// </summary>
 public sealed class CardUnitInitialPointCatalog
@@ -136,11 +137,14 @@ public sealed class CardUnitInitialPointCatalog
         ArgumentNullException.ThrowIfNull(available);
         if (fraction is not (1 or 2) || !PlayerHitbox.Finite(spawnPosition) ||
             !maps.TryGetValue(map.Source, out var points) ||
-            sourceCardId is not ("ELITEPARA" or "ELITESWAT" or "BIGROCKET"))
+            sourceCardId is not ("ELITEPARA" or "ELITESWAT" or "BIGROCKET" or
+                "GREATGRENADIER"))
             throw new InvalidDataException("Invalid card initial-point selection.");
 
+        // GREATGRENADIER's source mask also includes Car, but the five
+        // multiplayer EnemyPointsCollections contain no Vehicle point.
         return points.Where(point => point.Fraction == fraction &&
-                (sourceCardId is "ELITEPARA" or "BIGROCKET"
+                (sourceCardId is "ELITEPARA" or "BIGROCKET" or "GREATGRENADIER"
                     ? point.ComponentType is "EnemyPointCorner" or "EnemyPointHiding"
                     : point.ComponentType == "EnemyPointSwat") &&
                 available(point.ComponentFileId))

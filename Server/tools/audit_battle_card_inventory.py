@@ -128,6 +128,10 @@ def check_grenadier_card_setup():
         raise ValueError("Grenadier card grenade behavior changed")
 
     scene = SCENE.read_text(encoding="utf-8-sig")
+    grenadier = scene.split("--- !u!114 &49788\n", 1)[1].split(
+        "\n--- !u!", 1)[0]
+    if "  enemyPointType: 14\n" not in grenadier:
+        raise ValueError("Grenadier card enemy-point mask changed")
     inventory = scene.split("--- !u!114 &41066\n", 1)[1].split(
         "\n--- !u!", 1)[0]
     if ("cardWeapons:\n  - weapon: {fileID: 11431434, guid: 16439357c0b8cbc4a91424818b10119d, type: 2}" not in inventory or

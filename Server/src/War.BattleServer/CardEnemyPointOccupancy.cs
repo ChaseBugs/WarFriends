@@ -147,7 +147,7 @@ internal sealed class CardEnemyPointOccupancy
     {
         if (sourceCardId == "ELITESWAT")
             return pointType == "EnemyPointSwat";
-        if (sourceCardId is "ELITEPARA" or "BIGROCKET")
+        if (sourceCardId is "ELITEPARA" or "BIGROCKET" or "GREATGRENADIER")
             return pointType is "EnemyPointCorner" or "EnemyPointHiding";
         if (sourceCardId == "ELITESNIPER")
             return pointType is "EnemyPointCorner" or "EnemyPointHiding";

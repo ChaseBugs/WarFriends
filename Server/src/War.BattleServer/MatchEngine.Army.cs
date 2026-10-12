@@ -540,6 +540,12 @@ public sealed partial class MatchEngine
                 clip=clips.Walk;
                 facing=rocketWalk.Facing;
             }
+            else if(army.SourceCardId=="GREATGRENADIER" &&
+                    grenadierWalks.TryGetValue(key,out var grenadierWalk))
+            {
+                clip=clips.Walk;
+                facing=grenadierWalk.Facing;
+            }
             else if(warperRelocations.TryGetValue(key,out var warp))
             {
                 clip=warp.Phase==ArmyWarperRelocationPhase.Pause?"warp_idle":

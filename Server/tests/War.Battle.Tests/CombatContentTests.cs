@@ -11822,13 +11822,49 @@ internal static class CombatContentTests
         var grenadierStats = content.Army.CardBaseStats("GREATGRENADIER",
             22, content.BarrelPolicy.MaxDisplayLevel);
         Check(grenadierCardMatch.CardGrenadierThrow(
-                  grenadierEntity.EntityKey) == grenadierStats.Grenadier,
-            "spawned card Grenadier retains its source grenade throw setup");
+                  grenadierEntity.EntityKey) == grenadierStats.Grenadier &&
+              grenadierCardMatch.CardEnemyPoint(
+                  grenadierEntity.EntityKey) is {ComponentType: "EnemyPointCorner"} &&
+              grenadierCardMatch.CardGrenadierWalking(grenadierEntity.EntityKey),
+            "spawned card Grenadier binds its throw setup and nearest free Corner");
+        int grenadierPointId = grenadierCardMatch.CardEnemyPoint(
+            grenadierEntity.EntityKey)!.ComponentFileId;
+        Vector3 grenadierStart = new(grenadierEntity.X, grenadierEntity.Y,
+            grenadierEntity.Z);
+        grenadierCardMatch.Advance(61);
+        var movingGrenadier = grenadierCardMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.Single();
+        Check(movingGrenadier.PositionTick == 61 &&
+              Vector3.Distance(grenadierStart, new Vector3(
+                  movingGrenadier.X, movingGrenadier.Y,
+                  movingGrenadier.Z)) > 0 &&
+              grenadierCardMatch.CardEnemyPointOccupant(grenadierPointId) ==
+                  grenadierEntity.EntityKey,
+            "card Grenadier movement retains its reserved source point");
         Check(grenadierCardMatch.ConfirmArmyDeath(
                   grenadierEntity.EntityKey, false) &&
               grenadierCardMatch.CardGrenadierThrow(
-                  grenadierEntity.EntityKey) == null,
-            "card Grenadier death releases its grenade throw authority");
+                  grenadierEntity.EntityKey) == null &&
+              !grenadierCardMatch.CardGrenadierWalking(
+                  grenadierEntity.EntityKey) &&
+              grenadierCardMatch.CardEnemyPointOccupant(grenadierPointId) == null,
+            "card Grenadier death releases its throw setup and point reservation");
+        var snowGrenadierMap = content.Maps.Single(sourceMap =>
+            sourceMap.Source.Contains("Snow_Multiplayer",
+                StringComparison.Ordinal));
+        var snowGrenadierMatch = ReadyCardMatch(
+            "host-card-grenadier-snow", "GREATGRENADIER", snowGrenadierMap);
+        Check(snowGrenadierMatch.TryScheduleCardUnit(
+                  "f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6",
+                  decoyPlayer, "GREATGRENADIER"),
+            "Grenadier card can spawn on Snow without inventing a Corner");
+        var snowGrenadier = snowGrenadierMatch.ArmyEntityBatch(
+            decoyPlayer, 0, 0).Entities.Single();
+        Check(snowGrenadierMatch.CardEnemyPoint(
+                  snowGrenadier.EntityKey) == null &&
+              !snowGrenadierMatch.CardGrenadierWalking(
+                  snowGrenadier.EntityKey),
+            "Snow Grenadier waits for its five-second source point retry");
         var rocketCardMatch = ReadyCardMatch("host-card-rocket-setup", "BIGROCKET");
         const string rocketSetupRequest = "d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5";
         Check(rocketCardMatch.TryScheduleCardUnit(rocketSetupRequest,
