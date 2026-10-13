@@ -4,13 +4,17 @@ using War.Backend;
 using War.BattleServer;
 using War.Persistence;
 using War.Shared;
+using System.Net;
+using System.Net.Http.Json;
 
 internal static class SabotageBackendResultTests
 {
-    internal static async Task<int> Run(string contentDirectory, string mongoUri)
+    internal static async Task<int> Run(string contentDirectory, string mongoUri,
+        bool useHttp = false)
     {
         string database = "war_sabotage_live_" + Guid.NewGuid().ToString("N");
         var mongo = new MongoClient(mongoUri);
+        BackendResultHttpTestHost? httpHost = null;
         try
         {
             var results = new BattleResultStore(mongoUri, database);
@@ -18,6 +22,21 @@ internal static class SabotageBackendResultTests
             var acceptance = new BattleTerminalAcceptance(results,
                 new BattleMatchQueueStore(mongoUri, database),
                 new BattleManifestSnapshotStore(mongoUri, database));
+            if (useHttp)
+                httpHost = await BackendResultHttpTestHost.Start(
+                    contentDirectory, mongoUri, database);
+            using var http = new HttpClient();
+            BackendResultForwarder? forwarder = httpHost == null ? null :
+                new BackendResultForwarder(http, httpHost.ControlKey, "local-1");
+
+            async Task<string> Accept(string matchId, string digest, byte[] payload,
+                CancellationToken cancellationToken)
+            {
+                if (forwarder != null)
+                    return await forwarder.AcceptAsync(httpHost!.Endpoint,
+                        matchId, digest, payload, cancellationToken);
+                return await acceptance.Accept(matchId, digest, payload, cancellationToken);
+            }
 
             return await LiveSabotageUdpTests.RunCardDrone(contentDirectory,
                 async (evidence, cancellationToken) =>
@@ -31,10 +50,29 @@ internal static class SabotageBackendResultTests
 
                     string matchId = evidence.Snapshot.MatchId;
                     byte[] payload = evidence.Snapshot.ToByteArray();
-                    Check(await acceptance.Accept(matchId, evidence.Digest,
+                    if (httpHost != null)
+                    {
+                        using var unsigned = await http.PostAsJsonAsync(httpHost.Endpoint,
+                            new { serverId = "local-1", matchId, digest = evidence.Digest,
+                                snapshot = Convert.ToBase64String(payload) }, cancellationToken);
+                        Check(unsigned.StatusCode == HttpStatusCode.Unauthorized,
+                            "unsigned HTTP result cannot enter Backend authority");
+                        var wrongKey = new BackendResultForwarder(http, new byte[32], "local-1");
+                        try
+                        {
+                            await wrongKey.AcceptAsync(httpHost.Endpoint, matchId,
+                                evidence.Digest, payload, cancellationToken);
+                            throw new Exception("Backend accepted an invalid result signature.");
+                        }
+                        catch (HttpRequestException error) when (error.Message.EndsWith("401"))
+                        {
+                            checks++;
+                        }
+                    }
+                    Check(await Accept(matchId, evidence.Digest,
                         payload, cancellationToken) == "accepted",
                         "Backend acceptance persists the real UDP card Drone result");
-                    Check(await acceptance.Accept(matchId, evidence.Digest,
+                    Check(await Accept(matchId, evidence.Digest,
                         payload, cancellationToken) == "already-accepted",
                         "repeated result delivery cannot create another result");
 
@@ -61,11 +99,15 @@ internal static class SabotageBackendResultTests
                     byte[] forgedPayload = forged.ToByteArray();
                     try
                     {
-                        await acceptance.Accept(matchId, TerminalResultDigest.Compute(forgedPayload),
+                        await Accept(matchId, TerminalResultDigest.Compute(forgedPayload),
                             forgedPayload, cancellationToken);
                         throw new Exception("Backend accepted forged card Drone provenance.");
                     }
                     catch (InvalidDataException)
+                    {
+                        checks++;
+                    }
+                    catch (HttpRequestException error) when (useHttp && error.Message.EndsWith("400"))
                     {
                         checks++;
                     }
@@ -77,6 +119,7 @@ internal static class SabotageBackendResultTests
         }
         finally
         {
+            httpHost?.Dispose();
             await mongo.DropDatabaseAsync(database);
         }
     }

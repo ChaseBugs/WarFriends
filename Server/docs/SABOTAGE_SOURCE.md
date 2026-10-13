@@ -89,12 +89,19 @@ tick; its validated projection reports one card kill. A native Mongo-backed
 test now submits that real UDP result through `BattleTerminalAcceptance`,
 checks accepted/replayed delivery, reopens the Mongo repository, and verifies
 exact bytes, provenance, and source-shaped statistics. Forged spawn provenance
-is rejected without changing the stored result. Signed HTTP delivery and
-Unity statistics presentation remain unverified.
+is rejected without changing the stored result. The HTTP variant starts the
+real Backend executable and uses `BackendResultForwarder` to submit the same
+UDP/outbox evidence through the production signed endpoint. It verifies first
+acceptance, exact replay, Mongo provenance/statistics reads, HTTP 401 for
+unsigned/wrong-key requests, and HTTP 400 for signed forged spawn provenance.
+Automatic Worker forwarding/ack scheduling for this card case and Unity
+statistics presentation remain unverified.
 
 Run the optional live storage test against a disposable native Mongo instance:
 `dotnet run --project Server/tests/War.Battle.Tests -c Release -- --sabotage-backend-live mongodb://127.0.0.1:27017/`.
 It creates and removes its own randomly named test database; no Docker is used.
+For the signed HTTP variant, use `--sabotage-http-live` instead, against a
+native Mongo replica set and after building the Release Backend executable.
 
 ## Implementation boundary
 
