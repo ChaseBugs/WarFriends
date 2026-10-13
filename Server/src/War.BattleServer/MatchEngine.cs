@@ -2863,7 +2863,10 @@ public sealed partial class MatchEngine : IMatchRuntime
                 {
                     EntityKey=row.EntityKey,UnitId=row.UnitId,
                     VictimOwnerPlayerId=row.VictimOwnerId,AttackerPlayerId=row.AttackerId,
-                    Cause=row.Cause,Tick=row.Tick
+                    Cause=row.Cause,Tick=row.Tick,
+                    VictimSourceCardId=sabotageCardVictims.GetValueOrDefault(row.EntityKey)?.SourceCardId ?? "",
+                    VictimSpawnRequestId=sabotageCardVictims.GetValueOrDefault(row.EntityKey)?.RequestId ?? "",
+                    VictimSpawnTick=sabotageCardVictims.GetValueOrDefault(row.EntityKey)?.SpawnTick ?? 0
                 }));
         snapshot.Projectiles.AddRange(grenadeProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
         {

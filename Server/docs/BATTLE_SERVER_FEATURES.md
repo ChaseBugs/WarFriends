@@ -12,6 +12,8 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 Host-confirmed `SABOTAGE` deaths now enter private terminal evidence as `card-sabotage`, bounded by the attacker's validated card usage. A read-only projection reports the recovered `Kill`, `OneHitKill`, `VehicleDestroyed`, and Tank-only `TankDestroyed` candidate counts for all eight families; a forged card kill without a card use is rejected. Full `SkillShotManager` callback, current-weapon attribution, and durable-statistics parity remain open.
 
+Card-spawned Drone Sabotage deaths now retain source-card/spawn-request/tick provenance from the host registry. Terminal validation binds the card entity namespace and unique spawn request to the victim's HEAVYDRONE usage, with separate attacker SABOTAGE usage; ordinary army deployment/loss counters remain scoped to equipped units. Focused tests cover credit and malformed provenance. Actual UDP card-Drone terminal-result delivery and Unity statistics remain open.
+
 | ID | Required feature | Status / present evidence | Completion evidence required |
 |---|---|---|---|
 | B01 | Complete source contract and RPC migration ledger | Partial: source inventory, guide, 165 RPC definitions and 173 literal calls indexed; [first reviewed lifecycle/weapon/unit RPC migration slice](BATTLE_RPC_MIGRATION.md) maps replacement authority and remaining Client gaps | Every RPC, stream, room/property call and dynamic call classified; replacement and test linked; no unreviewed gameplay dependency |

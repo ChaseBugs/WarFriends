@@ -11943,6 +11943,45 @@ internal static class CombatContentTests
               }).Code == "sabotage-applied" &&
               liveSabotageMatch.Snapshot().CardActivations == 2,
             "authenticated Sabotage consumes one card and kills the host-selected opposing Drone");
+        liveSabotageMatch.Command(decoyPlayer, new MatchCommand
+        {
+            CommandId = 5,
+            Forfeit = new ForfeitCommand()
+        });
+        var cardDroneTerminal = liveSabotageMatch.TerminalEvidenceSnapshot();
+        var cardDroneKill = cardDroneTerminal.DirectArmyKills.Single();
+        Check(cardDroneKill.EntityKey == liveSabotageDroneId &&
+              cardDroneKill.VictimSourceCardId == "HEAVYDRONE" &&
+              cardDroneKill.VictimSpawnRequestId == new string('8', 32) &&
+              cardDroneKill.VictimSpawnTick <= cardDroneKill.Tick,
+            "Sabotage retains the released Card Drone's exact source spawn identity");
+        byte[] cardDronePayload = cardDroneTerminal.ToByteArray();
+        var cardDroneStats = BattleSabotageKillStatsProjection.FromPayload(
+            cardDronePayload, liveSabotageMatch.MatchId,
+            TerminalResultDigest.Compute(cardDronePayload));
+        Check(cardDroneStats.Single(row => row.PlayerId == decoyPlayer) is
+              { Kills: 1, OneHitKills: 1, VehiclesDestroyed: 1, TanksDestroyed: 0 },
+            "validated Card Drone death projects source Sabotage kill credit");
+        void RejectCardDroneProof(Action<BattleArmyKillEvidence> corrupt)
+        {
+            var forged = cardDroneTerminal.Clone();
+            corrupt(forged.DirectArmyKills[0]);
+            byte[] payload = forged.ToByteArray();
+            Reject(() => TerminalOutbox.ValidatePayload(payload,
+                liveSabotageMatch.MatchId, TerminalResultDigest.Compute(payload)));
+        }
+        RejectCardDroneProof(row => row.VictimSourceCardId = "ELITESWAT");
+        RejectCardDroneProof(row => row.VictimSpawnRequestId = "invalid");
+        RejectCardDroneProof(row => row.VictimSpawnTick = row.Tick + 1);
+        RejectCardDroneProof(row => row.VictimOwnerPlayerId = decoyPlayer);
+        RejectCardDroneProof(row => row.Cause = "player-bullet");
+        var wrongSpawnCard = cardDroneTerminal.Clone();
+        wrongSpawnCard.CardUsage.Single(row => row.SourceCardId == "HEAVYDRONE")
+            .SourceCardId = "ELITESWAT";
+        byte[] wrongSpawnCardPayload = wrongSpawnCard.ToByteArray();
+        Reject(() => TerminalOutbox.ValidatePayload(wrongSpawnCardPayload,
+            liveSabotageMatch.MatchId,
+            TerminalResultDigest.Compute(wrongSpawnCardPayload)));
         var airborneFiringMatch = ReadyCardMatch(
             "host-card-para-air-fire", "ELITEPARA");
         MatchReply airborneMove = airborneFiringMatch.Command(decoyOpponent,

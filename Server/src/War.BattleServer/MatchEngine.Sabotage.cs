@@ -7,6 +7,7 @@ public sealed partial class MatchEngine
 {
     private readonly Dictionary<string, (string OwnerPlayerId, string ResultCode)>
         sabotageReceipts = new(StringComparer.Ordinal);
+    private readonly Dictionary<ulong, CardUnitEntity> sabotageCardVictims = [];
 
     private string UseSabotage(Player owner, string requestId)
     {
@@ -58,18 +59,34 @@ public sealed partial class MatchEngine
         if (target != null)
         {
             var victim = activeArmyEntities.GetValueOrDefault(target.EntityId);
+            CardUnitEntity? cardVictim = null;
+            if (victim != null && victim.SourceCardId.Length > 0)
+            {
+                cardVictim = cardUnitEntities.Find(victim.LocalEntityId);
+                if (cardVictim == null || cardVictim.EntityKey != victim.EntityKey ||
+                    cardVictim.OwnerPlayerId != victim.OwnerPlayerId ||
+                    cardVictim.SourceCardId != "HEAVYDRONE" ||
+                    cardVictim.UnitId != victim.UnitId)
+                {
+                    End("invalid-card-unit-authority", "", false);
+                    return "match-aborted";
+                }
+            }
             if (!ApplySabotageHostDamage(owner.Definition.PlayerId, target))
             {
                 End("invalid-card-unit-authority", "", false);
                 return "match-aborted";
             }
-            // This ledger binds equipped-army deaths to deployment receipts.
-            // Card-spawned units need their separate spawn receipts first.
-            if (victim != null && victim.SourceCardId.Length == 0 &&
+            // Retain the source spawn proof before the death path releases it.
+            if (victim != null &&
                 !activeArmyEntities.ContainsKey(target.EntityId))
+            {
                 directArmyKills.Add((target.EntityId, victim.UnitId,
                     victim.OwnerPlayerId, owner.Definition.PlayerId,
                     "card-sabotage", tick));
+                if (cardVictim != null)
+                    sabotageCardVictims.Add(target.EntityId, cardVictim);
+            }
             resultCode = "sabotage-applied";
         }
         sabotageReceipts.Add(requestId, (owner.Definition.PlayerId, resultCode));

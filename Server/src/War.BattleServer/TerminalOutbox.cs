@@ -342,6 +342,7 @@ public sealed class TerminalOutbox
         var byVictim=players.Keys.ToDictionary(x=>x,_=>0UL,StringComparer.Ordinal);
         var byVictimUnit=new Dictionary<(string PlayerId,string UnitId),ulong>();
         var identities=new HashSet<ulong>();
+        var cardSpawnRequests = new HashSet<string>(StringComparer.Ordinal);
         ulong previousTick=0,previousEntity=0;
         foreach(var row in snapshot.DirectArmyKills)
         {
@@ -362,14 +363,34 @@ public sealed class TerminalOutbox
                    (row.Tick==previousTick&&row.EntityKey<=previousEntity)))||
                !players.TryGetValue(row.AttackerPlayerId,out var attacker)||
                !players.TryGetValue(row.VictimOwnerPlayerId,out var victim)||
-               attacker.PlayerId==victim.PlayerId||
-               !victim.ArmyUsage.Any(x=>x.UnitId==row.UnitId&&x.ConfirmedSpawns>0))
+               attacker.PlayerId==victim.PlayerId)
                 throw new InvalidDataException("Invalid direct player army kill evidence.");
+            if (row.VictimSourceCardId.Length > 0)
+            {
+                if (row.Cause != "card-sabotage" ||
+                    row.VictimSourceCardId != "HEAVYDRONE" ||
+                    row.UnitId != "ID_UNIT-DRONE" ||
+                    (uint)row.EntityKey < CardUnitEntityRegistry.FirstLocalEntityId ||
+                    (uint)row.EntityKey >= CardUnitEntityRegistry.FirstLocalEntityId + 4096 ||
+                    !Guid.TryParseExact(row.VictimSpawnRequestId, "N", out _) ||
+                    row.VictimSpawnRequestId != row.VictimSpawnRequestId.ToLowerInvariant() ||
+                    !cardSpawnRequests.Add(row.VictimSpawnRequestId) ||
+                    row.VictimSpawnTick < snapshot.StartTick ||
+                    row.VictimSpawnTick > row.Tick)
+                    throw new InvalidDataException("Invalid card-spawned Sabotage victim proof.");
+            }
+            else
+            {
+                if (row.VictimSpawnRequestId.Length != 0 || row.VictimSpawnTick != 0 ||
+                    (uint)row.EntityKey >= CardUnitEntityRegistry.FirstLocalEntityId ||
+                    !victim.ArmyUsage.Any(x => x.UnitId == row.UnitId && x.ConfirmedSpawns > 0))
+                    throw new InvalidDataException("Invalid equipped-army victim proof.");
+                byVictim[row.VictimOwnerPlayerId]++;
+                var victimUnit=(row.VictimOwnerPlayerId,row.UnitId);
+                byVictimUnit.TryGetValue(victimUnit,out ulong directKills);
+                byVictimUnit[victimUnit]=directKills+1;
+            }
             if(row.Cause=="player-bullet")byAttacker[row.AttackerPlayerId]++;
-            byVictim[row.VictimOwnerPlayerId]++;
-            var victimUnit=(row.VictimOwnerPlayerId,row.UnitId);
-            byVictimUnit.TryGetValue(victimUnit,out ulong directKills);
-            byVictimUnit[victimUnit]=directKills+1;
             previousTick=row.Tick;previousEntity=row.EntityKey;
         }
         if(players.Values.Any(p=>byAttacker[p.PlayerId]>p.ConfirmedPlayerBulletHits||
@@ -387,6 +408,15 @@ public sealed class TerminalOutbox
                 .Sum(row=>(long)row.Count);
             if((ulong)cardKills>cardUses)
                 throw new InvalidDataException("Sabotage kills exceed trusted card uses.");
+            int cardDroneDeaths = snapshot.DirectArmyKills.Count(row =>
+                row.VictimOwnerPlayerId == player.PlayerId &&
+                row.VictimSourceCardId == "HEAVYDRONE");
+            long droneCardUses = snapshot.CardUsage.Where(row =>
+                row.OwnerPlayerId == player.PlayerId &&
+                row.CardId == "CardSpawnUnit" && row.SourceCardId == "HEAVYDRONE")
+                .Sum(row => (long)row.Count);
+            if (cardDroneDeaths > droneCardUses)
+                throw new InvalidDataException("Card Drone deaths exceed trusted spawn-card uses.");
         }
     }
     private static bool ValidTerminalPlayer(BattlePlayerState p,ulong serverTick)

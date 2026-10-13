@@ -74,8 +74,15 @@ attacker's trusted `SABOTAGE` usage, and a read-only result projection exposes
 the four source-shaped counts. Tests cover all eight families and reject a
 forged card kill without a card use. This is candidate statistics evidence,
 not a complete `SkillShotManager` or reward implementation.
-Card-spawned Drone kill attribution still needs its own spawn-receipt binding;
-the equipped-army ledger cannot represent that source of ownership.
+Card-spawned Drone deaths now retain the released registry's `HEAVYDRONE`
+source ID, spawn request ID, and spawn tick in private terminal evidence.
+Validation requires the card entity namespace, unique canonical spawn request,
+ordered spawn/death ticks, exact Drone identity, and sufficient trusted
+`CardSpawnUnit` usage by the victim owner as well as `SABOTAGE` usage by the
+attacker. The card death does not consume ordinary army loss/deployment capacity.
+Focused tests verify the credit and reject forged source, request, timestamp,
+owner, cause, and missing matching spawn-card usage. Real UDP card-Drone
+terminal-result delivery and Unity statistics presentation remain unverified.
 
 ## Implementation boundary
 
