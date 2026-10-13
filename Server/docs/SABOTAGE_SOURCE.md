@@ -85,8 +85,16 @@ owner, cause, and missing matching spawn-card usage. A signed two-peer UDP
 match now activates HEAVYDRONE, kills it with SABOTAGE, replays both peers'
 effect/death events, and ends by authenticated forfeit. The Worker's persisted
 outbox retains the exact spawn request, source, owner, attacker, entity, and
-tick; its validated projection reports one card kill. Backend ingestion of
-this result and Unity statistics presentation remain unverified.
+tick; its validated projection reports one card kill. A native Mongo-backed
+test now submits that real UDP result through `BattleTerminalAcceptance`,
+checks accepted/replayed delivery, reopens the Mongo repository, and verifies
+exact bytes, provenance, and source-shaped statistics. Forged spawn provenance
+is rejected without changing the stored result. Signed HTTP delivery and
+Unity statistics presentation remain unverified.
+
+Run the optional live storage test against a disposable native Mongo instance:
+`dotnet run --project Server/tests/War.Battle.Tests -c Release -- --sabotage-backend-live mongodb://127.0.0.1:27017/`.
+It creates and removes its own randomly named test database; no Docker is used.
 
 ## Implementation boundary
 

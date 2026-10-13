@@ -263,6 +263,17 @@ if (args is ["--sabotage-udp-only"])
     return;
 }
 
+if (args is ["--sabotage-backend-live", var mongoUri])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), mongoUri);
+    Console.WriteLine($"PASS: {focused} live SABOTAGE UDP/Mongo Backend acceptance assertions");
+    return;
+}
+
 if(args is ["--helicopter-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

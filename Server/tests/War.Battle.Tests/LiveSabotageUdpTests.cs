@@ -36,8 +36,13 @@ internal static class LiveSabotageUdpTests
         return checks;
     }
 
+    internal static Task<int> RunCardDrone(string directory,
+        Func<TerminalOutbox.Evidence, CancellationToken, Task<int>> verifyBackend) =>
+        VerifyOneUnit(directory, "ID_UNIT-DRONE", true, verifyBackend);
+
     private static async Task<int> VerifyOneUnit(string directory, string unitId,
-        bool cardSpawned = false)
+        bool cardSpawned = false,
+        Func<TerminalOutbox.Evidence, CancellationToken, Task<int>>? verifyBackend = null)
     {
         int checks = 0;
         void Check(bool condition, string description)
@@ -291,6 +296,8 @@ internal static class LiveSabotageUdpTests
                 Check(stats.Single(row => row.PlayerId == attackerId) is
                       { Kills: 1, OneHitKills: 1, VehiclesDestroyed: 1, TanksDestroyed: 0 },
                     "persisted UDP terminal evidence exposes one source-shaped card kill");
+                if (verifyBackend != null)
+                    checks += await verifyBackend(saved, timeout.Token);
             }
         }
         finally
