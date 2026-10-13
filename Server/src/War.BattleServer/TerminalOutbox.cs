@@ -296,7 +296,6 @@ public sealed class TerminalOutbox
         }
         if(snapshot.Players.Aggregate(0UL,(sum,player)=>sum+player.ConfirmedCardsPlayed)!=snapshot.CardActivations)
             throw new InvalidDataException("Terminal card ownership does not conserve activations.");
-        ValidateDirectArmyKills(snapshot);
         if(snapshot.CardUsage.Count>WarCardEffectCatalog.All.Count*2)
             throw new InvalidDataException("Terminal card usage exceeds its source catalog.");
         var usageByOwner=snapshot.Players.ToDictionary(p=>p.PlayerId,_=>0UL,StringComparer.Ordinal);
@@ -322,6 +321,7 @@ public sealed class TerminalOutbox
         if(usageTotal!=snapshot.CardActivations ||
            snapshot.Players.Any(p=>usageByOwner[p.PlayerId]!=p.ConfirmedCardsPlayed))
             throw new InvalidDataException("Terminal card usage does not conserve player credits.");
+        ValidateDirectArmyKills(snapshot);
         if(hits>uint.MaxValue || kills>uint.MaxValue || spawns>uint.MaxValue || losses>uint.MaxValue ||
            snapshot.CardActivations>int.MaxValue || snapshot.ObjectiveCredits>int.MaxValue)
             throw new InvalidDataException("Terminal performance counters exceed their durable contract.");
@@ -348,7 +348,9 @@ public sealed class TerminalOutbox
             if(row.EntityKey==0||row.EntityKey>>32 is not (1 or 2)||
                (uint)row.EntityKey==0||!identities.Add(row.EntityKey)||
                !knownUnits.Contains(row.UnitId)||
-               row.Cause is not ("player-bullet" or "player-grenade" or "player-mine" or "player-bazooka")||
+               row.Cause is not ("player-bullet" or "player-grenade" or "player-mine" or "player-bazooka" or "card-sabotage")||
+               (row.Cause=="card-sabotage" &&
+                   !BattleSabotageKillStatsProjection.SupportsVictim(row.UnitId))||
                (row.Cause=="player-grenade"&&
                    !BattleDirectKillStatsProjection.SupportsGrenadeVictim(row.UnitId))||
                (row.Cause=="player-mine"&&
@@ -375,6 +377,17 @@ public sealed class TerminalOutbox
            byVictimUnit.Any(pair=>pair.Value>(ulong)players[pair.Key.PlayerId].ArmyUsage
                .Where(x=>x.UnitId==pair.Key.UnitId).Sum(x=>x.ConfirmedSpawns)))
             throw new InvalidDataException("Direct army kill evidence exceeds confirmed host contacts or losses.");
+        foreach(var player in snapshot.Players)
+        {
+            int cardKills=snapshot.DirectArmyKills.Count(row=>
+                row.AttackerPlayerId==player.PlayerId && row.Cause=="card-sabotage");
+            ulong cardUses=(ulong)snapshot.CardUsage.Where(row=>
+                row.OwnerPlayerId==player.PlayerId &&
+                row.CardId=="CardSabotage" && row.SourceCardId=="SABOTAGE")
+                .Sum(row=>(long)row.Count);
+            if((ulong)cardKills>cardUses)
+                throw new InvalidDataException("Sabotage kills exceed trusted card uses.");
+        }
     }
     private static bool ValidTerminalPlayer(BattlePlayerState p,ulong serverTick)
     {

@@ -44,6 +44,8 @@ public sealed partial class MatchEngine
         {
             return "sabotage-authority-unavailable";
         }
+        if (target != null && directArmyKills.Count >= 256)
+            return "event-backpressure";
 
         // The packet carries no target or damage. The recovered Client spends
         // SABOTAGE even when there is no visible opposing mechanical unit.
@@ -55,11 +57,19 @@ public sealed partial class MatchEngine
         string resultCode = "sabotage-no-target";
         if (target != null)
         {
+            var victim = activeArmyEntities.GetValueOrDefault(target.EntityId);
             if (!ApplySabotageHostDamage(owner.Definition.PlayerId, target))
             {
                 End("invalid-card-unit-authority", "", false);
                 return "match-aborted";
             }
+            // This ledger binds equipped-army deaths to deployment receipts.
+            // Card-spawned units need their separate spawn receipts first.
+            if (victim != null && victim.SourceCardId.Length == 0 &&
+                !activeArmyEntities.ContainsKey(target.EntityId))
+                directArmyKills.Add((target.EntityId, victim.UnitId,
+                    victim.OwnerPlayerId, owner.Definition.PlayerId,
+                    "card-sabotage", tick));
             resultCode = "sabotage-applied";
         }
         sabotageReceipts.Add(requestId, (owner.Definition.PlayerId, resultCode));

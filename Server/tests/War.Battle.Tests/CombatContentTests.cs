@@ -14908,6 +14908,12 @@ internal static class CombatContentTests
               {UnitId:"ID_UNIT-DRONE",Cause:"player-bullet",AttackerPlayerId:var directAttacker}&&
               directAttacker==decoyOpponent,
             "validated terminal projection retains direct player-bullet army kill attribution");
+        var forgedSabotageKill = droneShotMatch.TerminalEvidenceSnapshot();
+        forgedSabotageKill.DirectArmyKills[0].Cause = "card-sabotage";
+        byte[] forgedSabotageBytes = forgedSabotageKill.ToByteArray();
+        Reject(() => TerminalOutbox.ValidatePayload(forgedSabotageBytes,
+            droneShotMatch.MatchId,
+            TerminalResultDigest.Compute(forgedSabotageBytes)));
         foreach(var family in content.Army.Families)
         {
             var unitResult=droneShotMatch.TerminalEvidenceSnapshot();
@@ -17685,6 +17691,29 @@ internal static class CombatContentTests
                       gameEvent.Kind == MatchEventKind.ArmyDied &&
                       gameEvent.ArmyUnitId == family.UnitId),
                 family.UnitId + " card use and death events replay to both peers");
+            familyMatch.Command(soldierOwner, new MatchCommand
+            {
+                CommandId = 4,
+                Forfeit = new ForfeitCommand()
+            });
+            var terminalSabotage = familyMatch.TerminalEvidenceSnapshot();
+            Check(terminalSabotage.DirectArmyKills.Single() is
+                  { Cause: "card-sabotage" } kill &&
+                  kill.EntityKey == liveCandidate.EntityId &&
+                  kill.UnitId == family.UnitId &&
+                  kill.AttackerPlayerId == helicopterOwner &&
+                  kill.VictimOwnerPlayerId == soldierOwner,
+                family.UnitId + " retains one host-confirmed card kill in private terminal evidence");
+            byte[] sabotagePayload = terminalSabotage.ToByteArray();
+            string sabotageDigest = TerminalResultDigest.Compute(sabotagePayload);
+            var sabotageStats = BattleSabotageKillStatsProjection.FromPayload(
+                sabotagePayload, familyMatch.MatchId, sabotageDigest)
+                .Single(row => row.PlayerId == helicopterOwner);
+            Check(sabotageStats.Kills == 1 && sabotageStats.OneHitKills == 1 &&
+                  sabotageStats.VehiclesDestroyed == 1 &&
+                  sabotageStats.TanksDestroyed ==
+                      (family.UnitId == "ID_UNIT-TANK" ? 1 : 0),
+                family.UnitId + " projects the recovered player-owned Shot skill-shot flags");
         }
         var humveeDecoyManifest=humveeRusherManifest with
         {

@@ -65,9 +65,22 @@ mechanical families uses its ordinary death and cleanup path; normal-command
 tests now verify all eight in isolated matches. Statistics parity and source
 real-time/random-stream parity still require verification.
 
+`SkillShotController` handles the card's player-owned `Shot` death callback.
+For each of these eight mechanical families it marks `Kill`, `OneHitKill`,
+and `VehicleDestroyed`; a Tank also marks `TankDestroyed`. The host now
+records `card-sabotage` only after confirmed removal, with the exact unit,
+victim, attacker, and tick. Terminal validation limits those records to the
+attacker's trusted `SABOTAGE` usage, and a read-only result projection exposes
+the four source-shaped counts. Tests cover all eight families and reject a
+forged card kill without a card use. This is candidate statistics evidence,
+not a complete `SkillShotManager` or reward implementation.
+Card-spawned Drone kill attribution still needs its own spawn-receipt binding;
+the equipped-army ledger cannot represent that source of ownership.
+
 ## Implementation boundary
 
-1. Compare kill credit and terminal statistics with the recovered Client.
+1. Compare the remaining `SkillShotManager` callbacks, current-weapon kill
+   attribution, and durable statistics with the running recovered Client.
    The currently unavailable normal `Turret` type must enter the same source
    ordering when its separate card route is implemented. Never infer a target
    or damage value from a Client packet.

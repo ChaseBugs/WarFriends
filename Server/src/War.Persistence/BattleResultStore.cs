@@ -165,6 +165,13 @@ public sealed class BattleResultStore
         return result==null ? null : BattleDirectKillStatsProjection.FromPayload(
             result.Snapshot,result.MatchId,result.Digest);
     }
+    public async Task<IReadOnlyList<BattleSabotageKillStats>?> GetSabotageKillStats(
+        string matchId, CancellationToken ct)
+    {
+        var result = await Get(matchId, ct);
+        return result == null ? null : BattleSabotageKillStatsProjection.FromPayload(
+            result.Snapshot, result.MatchId, result.Digest);
+    }
     public async Task<long> Prune(DateTimeOffset now, TimeSpan retention, CancellationToken ct)
     {
         var page = await PrunePage(now, retention, ct);
