@@ -32,10 +32,12 @@ internal static class LiveSabotageUdpTests
                 throw new Exception($"SABOTAGE UDP case failed for {unitId}.", error);
             }
         }
+        checks += await VerifyOneUnit(directory, "ID_UNIT-DRONE", cardSpawned: true);
         return checks;
     }
 
-    private static async Task<int> VerifyOneUnit(string directory, string unitId)
+    private static async Task<int> VerifyOneUnit(string directory, string unitId,
+        bool cardSpawned = false)
     {
         int checks = 0;
         void Check(bool condition, string description)
@@ -59,7 +61,7 @@ internal static class LiveSabotageUdpTests
         string defenderId = new('b', 32);
 
         var manifest = new MatchManifest(
-            "sabotage-live-udp-" + unitId, "local-1", "Park_Multiplayer", map.SourceHash,
+            "sabotage-live-udp-" + (cardSpawned ? "card-drone" : unitId), "local-1", "Park_Multiplayer", map.SourceHash,
             content.Revision, MatchManifest.RifleCombatMode, 10, 90, 120,
             [
                 new(attackerId, weapon, 1, attackerCover.SourceIndex, 1,
@@ -77,7 +79,7 @@ internal static class LiveSabotageUdpTests
                 new(defenderId, weapon, 2, defenderCover.SourceIndex, 1,
                     new(1000), 0, 0, 0)
                 {
-                    EquippedArmyUnitIds = [unitId],
+                    EquippedArmyUnitIds = [cardSpawned ? "ID_UNIT-ASSAULT" : unitId],
                     ArmyNormalUpgradeIndexes = [0],
                     ArmySpecialUpgradeIndexes = [-1],
                     ArmyEliteUpgradeIndexes = [-1],
@@ -92,7 +94,7 @@ internal static class LiveSabotageUdpTests
             Allocations =
             [
                 new(attackerId, ["SABOTAGE"], [], [0], [-1], [-1]),
-                new(defenderId, [], [], [0], [-1], [-1])
+                new(defenderId, cardSpawned ? ["HEAVYDRONE"] : [], [], [0], [-1], [-1])
             ]
         };
         content.ValidateAllocation(manifest);
@@ -107,6 +109,8 @@ internal static class LiveSabotageUdpTests
         string signingKey = Convert.ToBase64String(
             RandomNumberGenerator.GetBytes(32));
         var tokens = new MatchTokens(signingKey);
+        string outboxDirectory = Path.Combine(Path.GetTempPath(),
+            "war-sabotage-outbox-" + Guid.NewGuid().ToString("N"));
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -114,8 +118,7 @@ internal static class LiveSabotageUdpTests
                 ["Battle:ServerId"] = manifest.ServerId,
                 ["Battle:Port"] = port.ToString(),
                 ["Battle:MatchManifestPath"] = manifestFile,
-                ["Battle:ResultOutboxPath"] = Path.Combine(Path.GetTempPath(),
-                    "war-sabotage-outbox-" + Guid.NewGuid().ToString("N")),
+                ["Battle:ResultOutboxPath"] = outboxDirectory,
                 ["Battle:CombatContentManifestPath"] = Path.Combine(directory,
                     "combat-content-manifest.json")
             }).Build();
@@ -162,7 +165,7 @@ internal static class LiveSabotageUdpTests
             var attackerSelection = await attacker.SelectCardsAsync(
                 ["SABOTAGE"], [0], [-1], [-1], [], timeout.Token);
             var defenderSelection = await defender.SelectCardsAsync(
-                [], [0], [-1], [-1], [], timeout.Token);
+                cardSpawned ? ["HEAVYDRONE"] : [], [0], [-1], [-1], [], timeout.Token);
             Check(attackerSelection.Code == "cards-selected" &&
                   defenderSelection.Code == "cards-selected",
                 $"UDP card selections match the Backend-owned SABOTAGE allocation: {attackerSelection.Code}, {defenderSelection.Code}");
@@ -177,12 +180,22 @@ internal static class LiveSabotageUdpTests
             }
             while (state.Snapshot.Phase != BattlePhase.Running);
 
-            var armyOffer = await defender.PollArmyAsync(timeout.Token);
-            int unitOption = armyOffer.OptionIndexes.First(index =>
-                ArmyOptionIdentityCatalog.Get(index).UnitId == unitId);
-            Check((await defender.DeployArmyAsync(unitOption,
-                  timeout.Token)).Code == "army-deploying",
-                $"the defending UDP player deploys its assigned {unitId}");
+            string spawnRequestId = new string('d', 32);
+            if (cardSpawned)
+            {
+                Check((await defender.UseUnitCardAsync(spawnRequestId,
+                    "HEAVYDRONE", timeout.Token)).Code == "unit-card-activated",
+                    "the defending UDP player activates its allocated HEAVYDRONE");
+            }
+            else
+            {
+                var armyOffer = await defender.PollArmyAsync(timeout.Token);
+                int unitOption = armyOffer.OptionIndexes.First(index =>
+                    ArmyOptionIdentityCatalog.Get(index).UnitId == unitId);
+                Check((await defender.DeployArmyAsync(unitOption,
+                      timeout.Token)).Code == "army-deploying",
+                    $"the defending UDP player deploys its assigned {unitId}");
+            }
 
             IReadOnlyList<BattleArmyEntityState> before;
             do
@@ -204,13 +217,13 @@ internal static class LiveSabotageUdpTests
                 timeout.Token);
             var afterSabotage = await defender.FetchArmyEntitiesAsync(timeout.Token);
             Check(used.Code == "sabotage-applied" &&
-                  used.Snapshot.CardActivations == 1 &&
+                  used.Snapshot.CardActivations == (cardSpawned ? 2u : 1u) &&
                   afterSabotage.All(entity => entity.EntityKey != target.EntityKey),
                 $"authenticated UDP SABOTAGE spends one card and removes {unitId}: {used.Code}, {used.Snapshot.CardActivations}, {afterSabotage.Count}");
             MatchReply retry = await attacker.UseSabotageAsync(requestId,
                 timeout.Token);
             Check(retry.Code == "sabotage-applied" &&
-                  retry.Snapshot.CardActivations == 1,
+                  retry.Snapshot.CardActivations == (cardSpawned ? 2u : 1u),
                 "a repeated request ID cannot spend or kill twice over UDP");
 
             async Task<List<MatchEvent>> Events(MatchConnection peer)
@@ -249,6 +262,36 @@ internal static class LiveSabotageUdpTests
                   attackerCardEvents.Count(gameEvent =>
                       gameEvent.Kind == MatchEventKind.ArmyDied) == 1,
                 $"both UDP sockets replay the same card use and {unitId} death");
+
+            if (cardSpawned)
+            {
+                Check((await defender.ForfeitAsync(timeout.Token)).Code == "forfeited",
+                    "the card Drone UDP match reaches a normal terminal state");
+                string resultFile = Path.Combine(outboxDirectory, manifest.MatchId + ".wfr");
+                while (!File.Exists(resultFile))
+                    await Task.Delay(100, timeout.Token);
+                var outbox = new TerminalOutbox(outboxDirectory);
+                TerminalOutbox.Evidence? saved = null;
+                while (saved == null)
+                {
+                    saved = outbox.PendingPage().SingleOrDefault(row =>
+                        row.Snapshot.MatchId == manifest.MatchId);
+                    if (saved == null) await Task.Delay(100, timeout.Token);
+                }
+                var kill = saved.Snapshot.DirectArmyKills.Single();
+                Check(kill.EntityKey == target.EntityKey &&
+                      kill.VictimOwnerPlayerId == defenderId &&
+                      kill.AttackerPlayerId == attackerId &&
+                      kill.VictimSourceCardId == "HEAVYDRONE" &&
+                      kill.VictimSpawnRequestId == spawnRequestId &&
+                      kill.VictimSpawnTick == target.SpawnTick,
+                    "Worker outbox retains the exact UDP card Drone spawn and killer proof");
+                var stats = BattleSabotageKillStatsProjection.FromPayload(
+                    saved.Snapshot.ToByteArray(), manifest.MatchId, saved.Digest);
+                Check(stats.Single(row => row.PlayerId == attackerId) is
+                      { Kills: 1, OneHitKills: 1, VehiclesDestroyed: 1, TanksDestroyed: 0 },
+                    "persisted UDP terminal evidence exposes one source-shaped card kill");
+            }
         }
         finally
         {

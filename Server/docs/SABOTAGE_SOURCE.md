@@ -81,8 +81,12 @@ ordered spawn/death ticks, exact Drone identity, and sufficient trusted
 `CardSpawnUnit` usage by the victim owner as well as `SABOTAGE` usage by the
 attacker. The card death does not consume ordinary army loss/deployment capacity.
 Focused tests verify the credit and reject forged source, request, timestamp,
-owner, cause, and missing matching spawn-card usage. Real UDP card-Drone
-terminal-result delivery and Unity statistics presentation remain unverified.
+owner, cause, and missing matching spawn-card usage. A signed two-peer UDP
+match now activates HEAVYDRONE, kills it with SABOTAGE, replays both peers'
+effect/death events, and ends by authenticated forfeit. The Worker's persisted
+outbox retains the exact spawn request, source, owner, attacker, entity, and
+tick; its validated projection reports one card kill. Backend ingestion of
+this result and Unity statistics presentation remain unverified.
 
 ## Implementation boundary
 
