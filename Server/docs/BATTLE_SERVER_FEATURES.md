@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+PvP score-streak parameters now load as reviewed scene/content-bound policy:
+Restart's effective multiplayer ratio is 0.75 (the serialized 0.075 is
+overwritten), no-crate matches use zero, and MainScene decay is 1.1 per second.
+The source strict 100 threshold and one bonus per Update are recorded. Actual
+crate eligibility, float frame transitions, card multiplier overrides, delayed
+bonus selection/spawning and live integration remain required.
+
 The per-player PvP score ledger now initializes all 19 source counters and
 records every matching skill-shot row using reviewed multiplayer points.
 Host receipts prevent repeated awards and reject changed flags; unknown flags,

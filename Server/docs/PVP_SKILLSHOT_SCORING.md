@@ -89,3 +89,41 @@ decay, bonus multipliers, bonus generation, controller lifetime, and all eligibl
 host callbacks still need integration. No Client-supplied flags or scores are
 authorized by this class. Run `--pvp-score-state-only` for the score/count ledger
 checks; the complete Battle suite also includes them.
+
+## Source score-streak parameters and remaining authority
+
+`PvpScoreStreakPolicy` is now loaded with the combat package from the reviewed
+`recovered-pvp-score-streak-policy.json`. Its digest and the scene/content
+bindings are checked before content publication. The regeneration tool is
+`Server/tools/extract_pvp_score_streak_policy.py`.
+
+MainScene serializes `killStreakScoreRatio: 0.075`, but `ScoreManager.Restart`
+replaces it with `Constants.MultiPlayerScoreStreakRatio: 0.75`. If the selected
+controller's `dropCreates` is false, Restart then assigns zero. The source
+decay rate is the scene override `killsStreakProgressLoss: 1.1`, not the code
+default of one. The policy exposes this ratio selection only; the caller must
+establish the source eligibility rather than accept a packet's Boolean.
+
+For normal online matches `GameControllerOnline.dropCreates` requires the local
+player not to be `LevelManager.isNoob`, a present opponent, and the opponent's
+`playerProperties.level` strictly above `MatchmakingEasyBotTillLevel`.
+`LevelManager.isNoob` compares the local rank's display number to that same
+constant after its source integer cast. These different rank representations
+must be traced through allocation before a host crate gate is enabled.
+
+Each matching definition adds `(float)points * ratio * bonusMultiplier` to the
+player's progress. `CardScorestreakBooster` assigns its own player's multiplier;
+`CardScoreStreakKiller` assigns the opponent's multiplier. They overwrite this
+field and restore one on removal; assuming multiplicative stacking would change
+the source behavior. MainScene's STREAKBOOST row sets 1.25 for 60 seconds.
+CRATEBLOCKER sets zero for 60 seconds, overriding its class default of 0.8;
+therefore using that default would incorrectly permit progress gain. These
+serialized card identities/parameters remain to be bound to host card authority.
+
+During a running source Update, decay occurs first and the value is clamped to
+zero. Only `progress > 100` generates a bonus, subtracting 100 once; exactly 100
+does not qualify, and a large value is not drained with a loop. GenerateNewBonus
+schedules SpawnBonus after 1.5 seconds. Its probability selection excludes the
+shared last index and uses owner-specific queues. This policy does not implement
+frame precision, bonus selection, crate spawning, or an authoritative game
+clock. Those remain required before score progress can affect live gameplay.

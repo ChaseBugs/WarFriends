@@ -43,3 +43,4 @@ Server/content/recovered-coop-boss-loadouts.json text eol=lf
 Server/content/coop-navmesh/*.asset binary
 Server/content/recovered-pvp-skillshot-scores.json text eol=lf
 Server/content/unity-pvp-combo-reference.json text eol=lf
+Server/content/recovered-pvp-score-streak-policy.json text eol=lf

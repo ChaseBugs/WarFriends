@@ -1,0 +1,55 @@
+"""Pin source ScoreManager parameters; no Client asset changes."""
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def main():
+    scene_bytes = (ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity").read_bytes()
+    content_bytes = (ROOT / "Server/content/recovered-battle-content.json").read_bytes()
+    manager_bytes = (ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ScoreManager.cs").read_bytes()
+    scene = scene_bytes.decode("utf-8-sig")
+    content = json.loads(content_bytes)
+    if content["mainSceneSha256"] != hashlib.sha256(scene_bytes).hexdigest():
+        raise ValueError("Score policy and content refer to different scenes")
+    matches = re.findall(r"^  killsStreakProgressLoss: ([0-9.]+)\r?$", scene, re.M)
+    if len(matches) != 1:
+        raise ValueError("Expected one ScoreManager decay binding")
+    constants = [sheet for sheet in content["sheets"] if sheet["type"] == "Google2u.Constants"]
+    if len(constants) != 1:
+        raise ValueError("Expected one source Constants sheet")
+    ratios = [row["FLOATVALUE"] for row in constants[0]["rows"]
+              if row["DBKEY"] == "MultiPlayerScoreStreakRatio"]
+    if len(ratios) != 1 or ratios[0] != 0.75 or float(matches[0]) != 1.1:
+        raise ValueError("Reviewed PvP score-streak values changed")
+    manager = manager_bytes.decode("utf-8-sig")
+    for expression in ("Constants.rowIds.MultiPlayerScoreStreakRatio", "killStreakScoreRatio = 0f;",
+                       "killStreakProgress > 100f", "killStreakProgress -= 100f;"):
+        if expression not in manager:
+            raise ValueError("Source score-streak transition changed")
+    document = {
+        "version": 1,
+        "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
+        "battleContentSha256": hashlib.sha256(content_bytes).hexdigest(),
+        "scoreManagerSha256": hashlib.sha256(manager_bytes).hexdigest(),
+        "multiplayerRatio": ratios[0],
+        "progressLossPerSecond": float(matches[0]),
+        "bonusThreshold": 100,
+        "maximumBonusesPerUpdate": 1,
+    }
+    data = (json.dumps(document, indent=2) + "\n").encode("utf-8")
+    output = ROOT / "Server/content/recovered-pvp-score-streak-policy.json"
+    if "--check" in sys.argv:
+        if output.read_bytes() != data:
+            raise ValueError("Checked-in PvP score-streak policy differs from current source")
+    else:
+        output.write_bytes(data)
+    print("PvP score-streak policy SHA-256 " + hashlib.sha256(data).hexdigest())
+
+
+if __name__ == "__main__":
+    main()
