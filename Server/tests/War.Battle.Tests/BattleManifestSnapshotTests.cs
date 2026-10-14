@@ -34,6 +34,11 @@ internal static class BattleManifestSnapshotTests
             if(root==null)throw new FileNotFoundException("Mixed template missing.");
             var template=JsonNode.Parse(await File.ReadAllBytesAsync(Path.Combine(root.FullName,"content/local-mixed-match-template.json")))!.AsObject();
             template["MatchId"]=match;
+            template["SceneMasterPlayerId"] = players[0];
+            template["PvpBonusMode"] = MatchManifest.OrdinaryPvpBonusMode;
+            template["PvpGoldBonusesAtAdmission"] = 0;
+            foreach (var player in template["Players"]!.AsArray())
+                player!["PlayerLevel"] = 8;
             byte[] first=System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(template);
             byte[] saved=await store.GetOrCreate(match,players,()=>Task.FromResult(first),CancellationToken.None);
             if(!saved.SequenceEqual(first))throw new Exception("Manifest snapshot first publication changed bytes.");
@@ -103,6 +108,27 @@ internal static class BattleManifestSnapshotTests
             if(await resultStore.Get(match,CancellationToken.None)!=null ||
                (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
                 throw new Exception("Rejected performance evidence changed durable result or pair authority.");
+            terminal.PvpCurrencyQuotes.Add(new BattlePvpCurrencyQuote {
+                BoxId = new string('d', 32), RecipientPlayerId = players[1],
+                Currency = "gold", BaseDraw = 4, Amount = 4,
+                RecipientLevelIndex = 8
+            });
+            var forgedRank = terminal.Clone();
+            forgedRank.PvpCurrencyQuotes[0].RecipientLevelIndex = 9;
+            (byte[] forgedRankPayload, string forgedRankDigest) = Evidence(forgedRank);
+            if (TerminalOutbox.ValidatePayload(forgedRankPayload, match,
+                forgedRankDigest).PvpCurrencyQuotes.Count != 1)
+                throw new Exception("Forged rank did not reach the frozen-manifest boundary.");
+            try
+            {
+                await acceptance.Accept(match, forgedRankDigest, forgedRankPayload,
+                    CancellationToken.None);
+                throw new Exception("A plausible forged recipient rank entered result storage.");
+            }
+            catch (InvalidDataException) { }
+            if (await resultStore.Get(match, CancellationToken.None) != null ||
+                (await queue.Existing(players[0], CancellationToken.None))?.MatchId != match)
+                throw new Exception("Rejected currency rank changed the result or queue pair.");
             (byte[] payload,string digest)=Evidence(terminal);
             var orphan=terminal.Clone();
             orphan.MatchId="m"+Guid.NewGuid().ToString("N");
@@ -120,6 +146,10 @@ internal static class BattleManifestSnapshotTests
             if(await resultStore.Accept(match,digest,payload,CancellationToken.None)!="accepted" ||
                (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
                 throw new Exception("Result storage unexpectedly released an unreconciled queue pair.");
+            if ((await resultStore.Get(match, CancellationToken.None))?.Snapshot is not byte[] savedPayload ||
+                TerminalOutbox.ValidatePayload(savedPayload, match,
+                    TerminalResultDigest.Compute(savedPayload)).PvpCurrencyQuotes.Single().Amount != 4)
+                throw new Exception("Durable result lost the accepted currency evidence.");
             var cardStats=await resultStore.GetCardStats(match,CancellationToken.None);
             if(cardStats==null || cardStats.Count!=2 || cardStats.Any(x=>x.CardsPlayed!=0 ||
                 x.CardsPlayedSeparately.Count!=0))

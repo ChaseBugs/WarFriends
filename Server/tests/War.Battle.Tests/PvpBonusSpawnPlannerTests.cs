@@ -435,6 +435,19 @@ internal static class PvpBonusSpawnPlannerTests
         }
         Check(ValidatedQuotePayload(quoteTerminal).PvpCurrencyQuotes.Count == 2,
             "terminal validator accepts both host-collected currency receipts");
+        PvpBonusCurrencyManifestValidator.Validate(quoteTerminal, clockManifest);
+        checks++;
+        var changedRankTerminal = quoteTerminal.Clone();
+        changedRankTerminal.PvpCurrencyQuotes.Single(quote => quote.Currency == "gold")
+            .RecipientLevelIndex = 9;
+        Check(ValidatedQuotePayload(changedRankTerminal).PvpCurrencyQuotes.Count == 2,
+            "Gold arithmetic alone cannot detect a plausible forged recipient rank");
+        try
+        {
+            PvpBonusCurrencyManifestValidator.Validate(changedRankTerminal, clockManifest);
+            throw new Exception("Currency quote changed the frozen recipient rank.");
+        }
+        catch (InvalidDataException) { checks++; }
         string quoteSpool = Path.Combine(Path.GetTempPath(),
             "war-pvp-quotes-" + Guid.NewGuid().ToString("N"));
         try

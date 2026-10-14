@@ -40,7 +40,10 @@ public sealed class BattleTerminalAcceptance
             if(manifest.MatchId!=matchId || manifest.Digest()!=terminal.ManifestHash ||
                !manifest.Players.Select(x=>x.PlayerId).SequenceEqual(pair.Players!,StringComparer.Ordinal))
                 throw new InvalidDataException("Terminal proof differs from frozen match authority.");
+            PvpBonusCurrencyManifestValidator.Validate(terminal, manifest);
         }
+        else if (terminal.PvpCurrencyQuotes.Count != 0)
+            throw new InvalidDataException("Currency evidence has no frozen match allocation.");
         string code=await results.Accept(matchId,digest,payload,ct);
         if(code!="conflict")
         {

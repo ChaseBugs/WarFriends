@@ -191,9 +191,11 @@ durable terminal outbox. Public UDP snapshots omit it. Outbox validation
 requires unique ordered box IDs, an admitted recipient, a bounded rank, and
 the exact source Gold range or Unity-verified Warbucks amount. A reopened
 outbox retains the same rows. The terminal result remains unscored with
-`RewardEligible=false`; Backend must still compare each recorded recipient
-rank with the frozen match manifest and settle the wallet atomically before
-any quote becomes a grant. A Worker crash before terminal publication still
+`RewardEligible=false`. During result acceptance, Backend now compares each
+recorded recipient rank with the frozen match manifest before storing the
+result or releasing the queue pair, and refuses currency rows without that
+allocation proof. It must still settle the wallet atomically before any quote
+becomes a grant. A Worker crash before terminal publication still
 produces an unscored host-crash result without these in-memory quotes.
 The source `KillStreakBonusKevlar` sets `kevlarStrength` to 0.1 before
 `SetUpKevlar`, separate from the 0.2 Kevlar Up card. `PlayerKevlar` now exposes
