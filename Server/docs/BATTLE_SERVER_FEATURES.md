@@ -26,6 +26,11 @@ The online crate gate now derives from the pinned Client `dropCreates`,
 `isNoob`, level display conversion and Constants row four. The two rank
 comparisons are intentionally different, and the policy rejects rank indexes
 outside the recovered 0-42 range. Live source-view allocation remains open.
+All ten original multiplayer box spawn areas are now source-pinned by map
+digest and collider file ID, with their world AABBs loaded at combat-content
+startup. Host area/axis draws can resolve a source position; actual Unity
+`BoxCollider.bounds`, falling box physics, map contact and crate publication
+remain unverified.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

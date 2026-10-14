@@ -16,6 +16,7 @@ public sealed class BattleCombatContent
     public PvpSkillShotScoreCatalog PvpScores { get; private init; } = null!;
     public PvpScoreStreakPolicy PvpScoreStreak { get; private init; } = null!;
     public PvpBonusCatalog PvpBonuses { get; private init; } = null!;
+    public PvpBonusSpawnAreaCatalog PvpBonusSpawnAreas { get; private init; } = null!;
     public RifleBindingCatalog Bindings { get; }
     public WeaponBindingGraphCatalog AllWeaponBindings { get; }
     public PlayerPoseCatalog Poses { get; }
@@ -251,6 +252,8 @@ public sealed class BattleCombatContent
             PvpScores=PvpSkillShotScoreCatalog.Load(
                 Path.Combine(directory, "recovered-pvp-skillshot-scores.json"),
                 manifest.SceneRevision, manifest.StatsRevision),
+            PvpBonusSpawnAreas=PvpBonusSpawnAreaCatalog.Load(
+                Path.Combine(directory, "recovered-pvp-bonus-spawn-areas.json"), maps),
             HelicopterGunnerExplosions=helicopterGunnerExplosions,
             CardUnitInitialPoints=cardUnitInitialPoints,
             AssaultHelicopterWeapons=assaultHelicopterWeapons,

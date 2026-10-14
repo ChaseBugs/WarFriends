@@ -90,6 +90,20 @@ bonus through the shot/collection path. Those steps must be replaced with host
 authority and replay-safe events; reward-bearing collection must settle through
 the Backend. The current catalog performs none of those mutations.
 
+`recovered-pvp-bonus-spawn-areas.json` now pins the two `MapDefinition.spawnAreas`
+BoxColliders in source order for each of the five multiplayer maps. The
+extractor checks each scene digest, collider type, transform chain, and the
+original `SpawnBonus` area/X/Y/Z sampling calls. Every referenced transform
+has identity rotation and unit scale, so the exported world AABBs come from
+local BoxCollider bounds plus parent positions. `PvpBonusSpawnAreaCatalog`
+loads this reviewed artifact with the combat package, binds all five map
+hashes, and maps an explicit host area choice plus three unit draws to a world
+position. This is a geometry input, not a live crate spawn or proof of Unity
+physics. Actual Unity `BoxCollider.bounds`, random sampling, fall/contact,
+pool identity, host entity publication, and pickup still need runtime proof.
+Regenerate/check with `python Server/tools/extract_pvp_bonus_spawn_areas.py
+--check`; focused server checks use `--pvp-bonus-spawn-areas-only`.
+
 ## Collection contract to implement next
 
 `KillStreakBonusBox.OnInstancied` sets health to one and clears `onGround`.

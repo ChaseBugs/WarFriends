@@ -252,6 +252,17 @@ if(args is ["--barrel-only"])
     return;
 }
 
+if (args is ["--pvp-bonus-spawn-areas-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = PvpBonusSpawnAreaTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} PvP bonus spawn area assertions");
+    return;
+}
+
 if (args is ["--pvp-progress-transaction-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -2910,6 +2921,7 @@ checks += PvpBonusCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"))
 checks += PvpBonusSelectionTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusDelayTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusProgressCoordinatorTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += PvpBonusSpawnAreaTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyEntityPageTests.Run();
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += HelicopterBazookaTests.Run(Path.Combine(contentRoot.FullName,"content"));

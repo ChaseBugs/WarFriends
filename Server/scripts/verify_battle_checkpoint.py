@@ -27,6 +27,7 @@ def command_stages(native_smoke: bool, mongo_executable: str | None):
         ("Battle card source inventory", [python, "Server/tools/audit_battle_card_inventory.py", "--check"]),
         ("PvP score-streak source policy", [python, "Server/tools/extract_pvp_score_streak_policy.py", "--check"]),
         ("PvP bonus source catalog", [python, "Server/tools/extract_pvp_bonus_catalog.py", "--check"]),
+        ("PvP bonus spawn areas", [python, "Server/tools/extract_pvp_bonus_spawn_areas.py", "--check"]),
         ("Photon replacement ledger", [python, "Server/tools/verify_photon_replacement_ledger.py"]),
         ("Portable content hashes", [python, "Server/tools/verify_content_checkout_hashes.py"]),
         ("Solution build", ["dotnet", "build", "Server/WarFriendsServer.sln", "--nologo", "-v", "minimal"]),
