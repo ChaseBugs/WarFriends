@@ -1902,7 +1902,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                         pair.Value.Damage with { PartWeight = impact.Hit.PartWeight }, damageRoll!(),true,
                         impact.Hit.SourceDestroyable,
                         pvpBonusProgress == null ? null :
-                            PvpPlayerBulletHitReceiptId(pair.Key, impact.Hit.PlayerId));
+                            PvpHitReceiptId("player-bullet", pair.Key, impact.Hit.PlayerId));
                 }
                 catch (InvalidDataException) { End("invalid-combat-authority", "", false); }
                 catch (InvalidOperationException) { End("pvp-score-backpressure", "", false); }
@@ -2664,7 +2664,8 @@ public sealed partial class MatchEngine : IMatchRuntime
     // deliberately absent from MatchCommand and cannot be used as an RPC relay.
     internal PlayerDamageResult? ApplyResolvedPlayerDamage(string attackerId, string victimId,
         ResolvedPlayerDamage hit, float randomRoll,bool confirmedProjectileImpact=false,
-        bool sourcePlayerBullet=false,string? pvpPlayerDamageReceiptId=null)
+        bool sourcePlayerBullet=false,string? pvpPlayerDamageReceiptId=null,
+        PvpPlayerDamageOwner pvpDamageOwner=PvpPlayerDamageOwner.Player)
     {
         if (phase != BattlePhase.Running) return null;
         var attacker = Find(attackerId);
@@ -2687,7 +2688,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                 throw new InvalidDataException("PvP hit receipt lacks confirmed player projectile authority.");
             preparedProgress = pvpBonusProgress.PrepareConfirmedPlayerDamageCopy(
                 attackerId, victimId, pvpPlayerDamageReceiptId,
-                PvpPlayerDamageOwner.Player, result.Type, victim.Route != null,
+                pvpDamageOwner, result.Type, victim.Route != null,
                 confirmedMultiplier: 1f, out _);
         }
         if (confirmedProjectileImpact && attacker != victim && attacker.Definition.Fraction != victim.Definition.Fraction)

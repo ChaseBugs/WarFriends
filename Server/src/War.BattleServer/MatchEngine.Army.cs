@@ -3667,7 +3667,10 @@ public sealed partial class MatchEngine
                 var result=ApplyResolvedPlayerDamage(proof.AttackerPlayerId,
                     proof.VictimPlayerId,new ResolvedPlayerDamage(proof.Damage,
                         CombatDamageType.Shot,proof.PartWeight),
-                    damageRoll?.Invoke()??1f,confirmedProjectileImpact:true);
+                    damageRoll?.Invoke()??1f,confirmedProjectileImpact:true,
+                    pvpPlayerDamageReceiptId:pvpBonusProgress==null?null:
+                        PvpHitReceiptId("army-projectile",impact.ProjectileId,proof.VictimPlayerId),
+                    pvpDamageOwner:PvpPlayerDamageOwner.Army);
                 if(result is {Applied:true,Dead:false}&&launch.PoisonRatio>0)
                 {
                     float pulse=launch.Damage/ArmyPoisonEffect.PulseCount*launch.PoisonRatio;
@@ -3677,6 +3680,7 @@ public sealed partial class MatchEngine
                 }
             }
             catch(InvalidDataException){End("invalid-army-impact-authority","",false);return;}
+            catch(InvalidOperationException){End("pvp-score-backpressure","",false);return;}
             if(Terminal)return;
         }
     }

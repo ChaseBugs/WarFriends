@@ -29,7 +29,9 @@ its timer throttle is verified. The source-view coordinator now publishes
 classified damage, score and streak gain under one receipt, including silent
 receipts for excluded damage. Normal player-owned bullet impact now stages
 this score transition before damage publication, with a deterministic receipt
-bound to match, projectile and victim. Army-owned hits, death/combo flags,
+bound to match, projectile and victim. Live infantry projectile impacts now
+use the same staged transition for `ArmyPlayerHit`, in a separate receipt
+namespace. Other army-owned hits, death/combo flags,
 card multiplier lifetimes, frame advancement and actual crate issuance remain
 open. MainScene's serialized `CRATEBLOCKER` value is zero despite its C# class
 default of 0.8.

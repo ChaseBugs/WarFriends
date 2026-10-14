@@ -177,6 +177,16 @@ internal static class PvpBonusSpawnPlannerTests
               engine.BonusProgress.ScoreSnapshot(localId).Score == 6 &&
               engine.BonusProgress.Snapshot(localId).Progress == 4.5f,
             "confirmed player bullet publishes source hit score with accepted damage");
+        var armyHit = engine.ApplyResolvedPlayerDamage(localId,
+            manifest.Players[1].PlayerId,
+            new ResolvedPlayerDamage(10f, CombatDamageType.Shot), 1f,
+            confirmedProjectileImpact: true,
+            pvpPlayerDamageReceiptId: Id(601),
+            pvpDamageOwner: PvpPlayerDamageOwner.Army);
+        Check(armyHit is {Applied:true} &&
+              engine.BonusProgress.ScoreSnapshot(localId).Score == 16 &&
+              engine.BonusProgress.Snapshot(localId).Progress == 12f,
+            "host-confirmed army impact credits the owning player's ArmyPlayerHit row");
         var enginePlanner = engine.BonusPlanner;
         enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
         var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);
@@ -223,9 +233,9 @@ internal static class PvpBonusSpawnPlannerTests
             Id(507), manifest.Players[1].PlayerId);
         Check(trapped.BoobyTrapped &&
               engine.ApplyCollectedPvpBonus(trappedPlan.Request.ReceiptId) == "bonus-applied" &&
-              engine.Snapshot().Players[1].Health == 840f &&
+              engine.Snapshot().Players[1].Health == 830f &&
               engine.ApplyCollectedPvpBonus(trappedPlan.Request.ReceiptId) == "bonus-applied" &&
-              engine.Snapshot().Players[1].Health == 840f,
+              engine.Snapshot().Players[1].Health == 830f,
             "stolen trapped crate damages the thief once through the player explosion path");
 
         var lethalEngine = new MatchEngine(manifest, map, content, combatRandom: () => 1f);

@@ -176,7 +176,9 @@ unverified Flame, self damage and friendly army damage retain an unscored
 receipt so replay cannot convert them into points. The normal player-owned
 bullet impact now stages this transition before publishing damage; a malformed
 or exhausted score receipt aborts the host hit without partial score or health.
-Army-owned damage, death/combo flags, verified walking state parity, card
+The live infantry projectile collision stages `ArmyPlayerHit` under a separate
+projectile receipt before player damage; poison follow-up pulses remain excluded.
+Other army-owned damage, death/combo flags, verified walking state parity, card
 multiplier lifetimes, source frame advancement and crate issuance remain open.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component
 serializes zero; the server retains the scene value.

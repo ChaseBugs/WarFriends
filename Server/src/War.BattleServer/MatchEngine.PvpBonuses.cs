@@ -17,9 +17,9 @@ public sealed partial class MatchEngine
     internal PvpBonusProgressCoordinator BonusProgress => pvpBonusProgress ??
         throw new InvalidOperationException("PvP bonus progress is not configured.");
 
-    private string PvpPlayerBulletHitReceiptId(ulong projectileKey, string victimId)
+    private string PvpHitReceiptId(string source, ulong projectileKey, string victimId)
     {
-        string identity = "pvp-player-hit/v1\n" + manifest.MatchId + "\n" +
+        string identity = "pvp-" + source + "-hit/v1\n" + manifest.MatchId + "\n" +
             projectileKey.ToString(CultureInfo.InvariantCulture) + "\n" + victimId;
         byte[] digest = SHA256.HashData(Encoding.UTF8.GetBytes(identity));
         return Convert.ToHexStringLower(digest)[..32];
