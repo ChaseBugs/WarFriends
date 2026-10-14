@@ -13,7 +13,8 @@ internal enum SabotageResultTestMode
     SignedHttp,
     AutomaticForward,
     Http503Recovery,
-    ConnectionRecovery
+    ConnectionRecovery,
+    WorkerRecovery
 }
 
 internal static class SabotageBackendResultTests
@@ -23,10 +24,12 @@ internal static class SabotageBackendResultTests
     {
         bool useHttp = testMode != SabotageResultTestMode.Storage;
         bool automaticForward = testMode is SabotageResultTestMode.AutomaticForward or
-            SabotageResultTestMode.Http503Recovery or SabotageResultTestMode.ConnectionRecovery;
+            SabotageResultTestMode.Http503Recovery or SabotageResultTestMode.ConnectionRecovery or
+            SabotageResultTestMode.WorkerRecovery;
         bool simulateOutage = testMode is SabotageResultTestMode.Http503Recovery or
-            SabotageResultTestMode.ConnectionRecovery;
+            SabotageResultTestMode.ConnectionRecovery or SabotageResultTestMode.WorkerRecovery;
         bool loseConnection = testMode == SabotageResultTestMode.ConnectionRecovery;
+        bool restartWorker = testMode == SabotageResultTestMode.WorkerRecovery;
         string database = "war_sabotage_live_" + Guid.NewGuid().ToString("N");
         var mongo = new MongoClient(mongoUri);
         BackendResultHttpTestHost? httpHost = null;
@@ -157,9 +160,9 @@ internal static class SabotageBackendResultTests
                     if (await results.Get(pending.Snapshot.MatchId, cancellationToken) != null ||
                         !outbox.HasIdentity(pending.Snapshot.MatchId))
                         throw new Exception("Failed HTTP delivery changed durable result authority.");
-                    outage.Restore();
+                    if (!restartWorker) outage.Restore();
                     return 1;
-                });
+                }, restartWorker, restartWorker ? () => outage!.Restore() : null);
         }
         finally
         {

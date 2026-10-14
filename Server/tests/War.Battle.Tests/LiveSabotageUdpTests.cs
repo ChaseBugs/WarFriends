@@ -40,16 +40,18 @@ internal static class LiveSabotageUdpTests
         Func<TerminalOutbox.Evidence, CancellationToken, Task<int>> verifyBackend,
         Uri? automaticEndpoint = null, byte[]? controlKey = null,
         Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null,
-        Func<TerminalOutbox, CancellationToken, Task<int>>? beforeDelivery = null) =>
+        Func<TerminalOutbox, CancellationToken, Task<int>>? beforeDelivery = null,
+        bool restartWorker = false, Action? restoreDelivery = null) =>
         VerifyOneUnit(directory, "ID_UNIT-DRONE", true, verifyBackend,
-            automaticEndpoint, controlKey, readBackend, beforeDelivery);
+            automaticEndpoint, controlKey, readBackend, beforeDelivery, restartWorker, restoreDelivery);
 
     private static async Task<int> VerifyOneUnit(string directory, string unitId,
         bool cardSpawned = false,
         Func<TerminalOutbox.Evidence, CancellationToken, Task<int>>? verifyBackend = null,
         Uri? automaticEndpoint = null, byte[]? controlKey = null,
         Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null,
-        Func<TerminalOutbox, CancellationToken, Task<int>>? beforeDelivery = null)
+        Func<TerminalOutbox, CancellationToken, Task<int>>? beforeDelivery = null,
+        bool restartWorker = false, Action? restoreDelivery = null)
     {
         int checks = 0;
         void Check(bool condition, string description)
@@ -138,6 +140,8 @@ internal static class LiveSabotageUdpTests
             }).Build();
         using var worker = new NetworkWorker(configuration,
             NullLogger<NetworkWorker>.Instance);
+        WorkerResultRecoveryProcess? recoveryProcess = null;
+        bool originalStopped = false;
 
         MatchConnectionGrant Grant(string playerId, ulong sessionId)
         {
@@ -291,6 +295,18 @@ internal static class LiveSabotageUdpTests
                             await Task.Delay(100, timeout.Token);
                         checks += await beforeDelivery(new TerminalOutbox(outboxDirectory), timeout.Token);
                     }
+                    if (restartWorker)
+                    {
+                        var pending = new TerminalOutbox(outboxDirectory).PendingPage().Single();
+                        await worker.StopAsync(timeout.Token);
+                        originalStopped = true;
+                        recoveryProcess = await WorkerResultRecoveryProcess.Start(directory, configuration, timeout.Token);
+                        var recovered = new TerminalOutbox(outboxDirectory).PendingPage().Single();
+                        Check(recovered.Digest == pending.Digest &&
+                              recovered.Snapshot.ToByteArray().SequenceEqual(pending.Snapshot.ToByteArray()),
+                            "a fresh native Worker reopens exact pending card evidence before Backend recovery");
+                        restoreDelivery!();
+                    }
                     while (saved == null)
                     {
                         saved = await readBackend(manifest.MatchId, timeout.Token);
@@ -336,7 +352,8 @@ internal static class LiveSabotageUdpTests
         }
         finally
         {
-            await worker.StopAsync(CancellationToken.None);
+            recoveryProcess?.Dispose();
+            if (!originalStopped) await worker.StopAsync(CancellationToken.None);
             File.Delete(manifestFile);
         }
 

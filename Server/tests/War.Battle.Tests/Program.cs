@@ -322,6 +322,18 @@ if (args is ["--sabotage-connection-loss-live", var connectionMongoUri])
     return;
 }
 
+if (args is ["--sabotage-worker-recovery-live", var recoveryMongoUri])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), recoveryMongoUri,
+        SabotageResultTestMode.WorkerRecovery);
+    Console.WriteLine($"PASS: {focused} SABOTAGE native Worker recovery assertions");
+    return;
+}
+
 if(args is ["--helicopter-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
