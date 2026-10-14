@@ -958,6 +958,32 @@ internal static class PvpBonusSpawnPlannerTests
                 return (collider.Hitbox.Center, drone.Health);
             },
             (match, vehicleId) => match.TransporterRepairDrones(vehicleId).First().Health);
+
+        void BlastEnemyAirBody(string unitId, int receiptBase)
+        {
+            var (match, currentTick) = BonusArmyMatch(unitId);
+            var target = match.ArmyEntityBatch(localId, 0, 0).Entities.First();
+            var airBody = match.GroundVehicleShotTargets(localId).First(part =>
+                part.EntityId == target.EntityKey &&
+                (part.DroneRoot || part.HelicopterBody));
+            float healthBefore = match.ArmyHealth(target.EntityKey)!.Value;
+            var planner = match.BonusPlanner;
+            planner.EnqueueConfirmedBonus(Id(receiptBase), localId, 3);
+            var box = planner.PlanMatured(grenadeFrame, 0, context, draw);
+            planner.ConfirmDestroyed(box.Request.ReceiptId,
+                Id(receiptBase + 1), null, airBody.Hitbox.Center);
+            match.PlanCollectedPvpGrenades(box.Request.ReceiptId);
+            ulong nextTick = currentTick;
+            while (nextTick < 420 && !match.Terminal &&
+                   match.ArmyHealth(target.EntityKey) == healthBefore)
+                match.Advance(++nextTick);
+            float? healthAfter = match.ArmyHealth(target.EntityKey);
+            Check(healthAfter == null || healthAfter < healthBefore,
+                "host bonus grenade damages the deployed " + unitId + " air body");
+        }
+
+        BlastEnemyAirBody("ID_UNIT-DRONE", 720);
+        BlastEnemyAirBody("ID_UNIT-HELICOPTER", 730);
         try
         {
             engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);

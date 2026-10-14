@@ -140,6 +140,9 @@ public sealed partial class MatchEngine
         ApplyPvpBonusGrenadePassengers(explosion, stage, owner);
         ApplyPvpBonusGrenadeGroundVehicles(explosion, stage, owner);
         if (Terminal) return;
+        ApplyPvpBonusGrenadeAssaultGlass(explosion, stage, owner);
+        ApplyPvpBonusGrenadeAirBodies(explosion, stage, owner);
+        if (Terminal) return;
         foreach (var victim in players.Where(player => !player.Dead).ToArray())
         {
             float roll = damageRoll();

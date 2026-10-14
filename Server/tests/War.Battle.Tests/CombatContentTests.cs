@@ -9901,7 +9901,8 @@ internal static class CombatContentTests
                 "invalid-drone-route-authority","invalid-helicopter-route-authority",
                 "invalid-land-mine-authority","invalid-tank-projectile-authority",
                 "invalid-vehicle-route-authority","invalid-assault-helicopter-projectile-authority",
-                "invalid-assault-helicopter-route-authority","source-kill-backpressure","host-crash"})
+                "invalid-assault-helicopter-route-authority","invalid-pvp-grenade-authority",
+                "source-kill-backpressure","host-crash"})
                 BattleTerminalPolicy.Validate(reason,"",false,false);
             count++;
             Reject(()=>BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,false));

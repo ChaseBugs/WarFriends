@@ -292,8 +292,12 @@ registry in sync, and a lethal Assault blast records a direct player-grenade
 kill in terminal evidence. Allied units are excluded by the Manager weapon's
 `friendKill: 0`. Tank passengers and Transporter repair drones now use their
 own host poses, hitboxes, and health pools in the same explosion; deployed-unit
-fixtures exercise both without treating them as vehicle-body damage. Air
-bodies, shields/barrels, and player-hit score credit are still open.
+fixtures exercise both without treating them as vehicle-body damage. Drone
+and Helicopter bodies now use the same host air-collider grouping and
+shared Army vitality as normal grenades, with deployed-unit blast fixtures.
+The Assault Helicopter body and separate front glass have source-based damage
+paths, but their moving flight/contact case still needs a successful live
+fixture. Shields/barrels and player-hit score credit are still open.
 Unity Rigidbody bounce against other layers and exact Unity Update ordering
 still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*

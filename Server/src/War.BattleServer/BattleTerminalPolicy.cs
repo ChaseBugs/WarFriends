@@ -23,6 +23,7 @@ public static class BattleTerminalPolicy
         "invalid-heavy-turret-authority", "invalid-helicopter-projectile-authority",
         "invalid-helicopter-route-authority", "invalid-infantry-animation-authority",
         "invalid-land-mine-authority", "invalid-projectile-authority",
+        "invalid-pvp-grenade-authority",
         "invalid-repair-drone-authority", "invalid-shield-authority",
         "invalid-tank-projectile-authority", "invalid-vehicle-impact-authority",
         "invalid-vehicle-projectile-authority", "invalid-vehicle-route-authority",
