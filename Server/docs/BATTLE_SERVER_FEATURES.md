@@ -8,6 +8,15 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+Source bonus selection now has shared last-index exclusion, side-specific FIFO
+queue overrides, source -1 fallback, and bounded host receipts that prevent
+repeat draws/queue consumption. An original-prefix Mono probe covers 66 fixed
+weight/draw cases, including the observed prefab-eight/source-index-nine upper
+endpoint. That invalid source wire index is recorded, not authorized for live
+publication. Random sampling, manager lifetime/replay scope, delayed spawn,
+collection, bonus effects, Backend rewards and normal Unity projection remain
+open.
+
 The [source bonus crate catalog](PVP_BONUS_CRATES.md) now binds all nine MainScene
 prefabs in network index order to reviewed ordinary/Arena weights and source
 code provenance. Host-context weights preserve Gold's local-rank/cap override,

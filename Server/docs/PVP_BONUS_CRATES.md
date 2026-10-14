@@ -78,10 +78,11 @@ Run `Server/scripts/AuditPvpBonus.ps1` for the isolated Mono fixture and
 selection excludes one shared `mLastBonusIndex`. That index starts at zero and
 is not reset by the shown GameStarted handler. The float random draw, strict
 cumulative comparison, upper endpoint, all-zero behavior, selection lifetime,
-queue overrides and source perspective still need explicit verification before
-host selection is enabled. At an unselected final loop iteration the source
-keeps the last prefab while its index can reach the list count; do not assume a
-uniform or valid-index fallback without tracing the original runtime behavior.
+queue overrides and source perspective require the manager state described
+below; actual random sampling and lifetime binding still need verification
+before live selection is enabled. At an unselected final loop iteration the
+source keeps the last prefab while its index reaches the list count. The source
+probe below confirms this; there is no uniform or valid-index fallback.
 
 After selection, the source chooses a map spawn area and a point inside its
 bounds, assigns owner/box identity, sends the spawn RPC, and later activates the
@@ -118,3 +119,48 @@ collision marks the box on-ground/alive. Spawn-area geometry, falling contacts,
 these damage callbacks and recipient fallback require host simulation evidence
 before the crate entity is admitted. No current SDK event or catalog test proves
 that gameplay path.
+
+## Verified selection state
+
+`PvpBonusSelectionState` now mirrors the selection prefix of SpawnBonus. Its
+shared last index starts at zero, so the initial weighted selection excludes
+Gold. It sums source float weights with storage after each addition, uses the
+strict `draw < cumulative` comparison, and shares exclusion history between
+the two source fractions. It does not generate Unity's random sequence: the
+serialized host actor supplies one draw in the exact total-weight range.
+
+Each side has a FIFO queue. A nonnegative queued index bypasses probability
+gates and exclusion, without drawing randomly; `CardIncreaseBonusChance` can
+enqueue the IndexOf result `-1`, which consumes that queue head and falls back
+to weighted selection. Queueing and selection have canonical host receipts;
+replays do not enqueue again, redraw, consume another head or rewind history.
+Changed operation kinds, sides, indices, or selection contexts are rejected.
+Invalid draw results leave the pending head and accepted state unchanged.
+
+`ClearQueuesForGameStart` reproduces the original queue clear without resetting
+the last index. It retains receipts so an old accepted enqueue cannot reappear
+after a clear. Queue size 64 per side and 4,096 combined mutation receipts are
+explicit host safety bounds, not recovered production limits. Source manager
+lifetime, replay scope, capacity handoff, and previous-game state still require
+binding before admission into live matches.
+
+The isolated Unity 2018.3 probe compiles the original SpawnBonus prefix up to
+the last-index assignment; only Random.Range is replaced by controlled draws.
+It captures 66 cases with ordinary/Arena/fractional/all-zero weights, exclusion
+indices 0/1/8/9, zero/cumulative/midpoint/upper-endpoint draws, and queued
+overrides on both sides. Prefab selection, source index, float total and draw
+count are compared against the server. This tests the prefix over fixed weight
+snapshots, not Unity random distribution, spawn physics or full game behavior.
+
+For a draw equal to total, or an all-zero diagnostic table, the original retains
+prefab index eight but records/sends source index nine. The state preserves both
+values and marks `HasValidSourceIndex` false. The next selection then excludes
+no prefab, matching the source last index nine. This is not authorization to
+publish an out-of-range SDK event or silently remap it. A reviewed live wire
+boundary must handle this observed source defect before selection is connected.
+
+Run `Server/scripts/AuditPvpSelection.ps1` for the Mono fixture and
+`--pvp-selection-only` for source comparison, queue ordering, replay, corrupted
+draw and capacity checks. Delayed spawning, source-manager perspective, actual
+random sampling, crate contacts, collection, effects and Backend rewards remain
+unbound.
