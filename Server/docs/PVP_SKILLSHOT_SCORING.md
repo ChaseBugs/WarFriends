@@ -74,3 +74,18 @@ the original Unity 5.2 Android runtime, or complete game statistics.
 Run `Server/scripts/AuditPvpCombo.ps1` to regenerate the isolated Mono fixture.
 Run `--pvp-combo-only` in the Battle test executable for source comparison,
 replay, clock corruption, and capacity validation.
+
+`PvpSkillShotScoreState` now implements one player's source multiplayer score
+and all 19 skill-shot counters. `SkillShotManager.AddSkillshot` visits every
+matching definition and `ScoreManager.AddSkillshot` increments that row once,
+including zero-point definitions. This state accepts only host-confirmed flags
+and a canonical host receipt, computes changes before publishing them, and
+replays the original result without recounting or rewinding accumulated score.
+Changed flags, unknown bits, malformed identity, and full replay capacity fail
+without awarding anything. Consumers receive a read-only counter view.
+
+This is not yet the live ScoreManager replacement. Progress gain, per-frame
+decay, bonus multipliers, bonus generation, controller lifetime, and all eligible
+host callbacks still need integration. No Client-supplied flags or scores are
+authorized by this class. Run `--pvp-score-state-only` for the score/count ledger
+checks; the complete Battle suite also includes them.

@@ -252,6 +252,17 @@ if(args is ["--barrel-only"])
     return;
 }
 
+if (args is ["--pvp-score-state-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = PvpSkillShotScoreStateTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} source PvP score state assertions");
+    return;
+}
+
 if (args is ["--pvp-combo-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -2836,6 +2847,7 @@ checks += ArmyFlameBurstTests.Run();
 checks += CombatContentTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpSkillShotScoreTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpKillComboTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += PvpSkillShotScoreStateTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyEntityPageTests.Run();
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += HelicopterBazookaTests.Run(Path.Combine(contentRoot.FullName,"content"));

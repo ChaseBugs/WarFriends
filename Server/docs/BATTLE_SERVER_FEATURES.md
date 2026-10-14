@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The per-player PvP score ledger now initializes all 19 source counters and
+records every matching skill-shot row using reviewed multiplayer points.
+Host receipts prevent repeated awards and reject changed flags; unknown flags,
+capacity exhaustion, and checked overflow cannot partially publish a score.
+This source state is not yet wired to live callbacks or kill-streak progress,
+decay, multipliers, bonus generation, and Unity presentation.
+
 The shared PvP combo primitive now preserves the recovered pre-score-filter callback semantics and strict 0.9f window, with bounded retry-safe death receipts. An isolated Unity 2018.3 compilation of the original method supplies 22 comparison samples; these exposed promoted Mono comparison precision for large float clocks, which the .NET primitive now matches explicitly. Full eligible-death wiring, authoritative scaled clock/lifetime, live score/bonus transitions, and Unity statistics remain open.
 
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) now pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank. Live combo/score/progress/bonus authority and the normal Unity callback remain open; calling the original callback with base flags alone would authorize incomplete Client-side gameplay.
