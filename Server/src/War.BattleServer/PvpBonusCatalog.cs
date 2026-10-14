@@ -8,6 +8,7 @@ public sealed record PvpBonusSource(int Index, string Name, string PrefabGuid,
     long ComponentFileId, string PrefabPath, string PrefabSha256,
     float Probability, float ArenaProbability);
 public sealed record PvpBonusGoldRange(int Minimum, int MaximumExclusive);
+public sealed record PvpBonusWarbucksDrawRange(int Minimum, int MaximumExclusive);
 
 /// <summary>Host-established source perspective, never a Client probability request.</summary>
 public sealed record PvpBonusWeightContext(bool IsWarArena, bool IsFriendlyDeathMatch,
@@ -17,18 +18,36 @@ public sealed record PvpBonusWeightContext(bool IsWarArena, bool IsFriendlyDeath
 public sealed class PvpBonusCatalog
 {
     private const string ReviewedSha256 =
-        "15dd2f0e05e2d3966d111e9ed2b9e065eadc6bc3e1cafe600e03d59254fd8755";
+        "e2b8b7e890bea0001574f5cc942b078b4003cbbd252db54af9971049423d509f";
     private static readonly string[] SourceNames = ["KillStreakBonusGold",
         "KillStreakBonusAddHealth", "KillStreakBonusWarbucks", "KillStreakBonusGrenades",
         "KillStreakBonusSlowMotion", "KillStreakBonusTurret", "KillStreakBonusKevlar",
         "KillStreakBonusCard", "KillStreakBonusAddAmmo"];
     public IReadOnlyList<PvpBonusSource> Rows { get; }
     public float LowAmmoThreshold { get; }
+    public float WarbucksScalingBase { get; }
+    public PvpBonusWarbucksDrawRange WarbucksBaseDrawRange { get; } = new(500, 1500);
 
-    private PvpBonusCatalog(PvpBonusSource[] rows, float lowAmmoThreshold)
+    private PvpBonusCatalog(PvpBonusSource[] rows, float lowAmmoThreshold,
+        float warbucksScalingBase)
     {
         Rows = new ReadOnlyCollection<PvpBonusSource>(rows);
         LowAmmoThreshold = lowAmmoThreshold;
+        WarbucksScalingBase = warbucksScalingBase;
+    }
+
+    public int WarbucksRewardForBaseDraw(int ownerLevelIndex, int baseDraw)
+    {
+        if (ownerLevelIndex is < 0 or > 42)
+            throw new ArgumentOutOfRangeException(nameof(ownerLevelIndex));
+        if (baseDraw < WarbucksBaseDrawRange.Minimum ||
+            baseDraw >= WarbucksBaseDrawRange.MaximumExclusive)
+            throw new ArgumentOutOfRangeException(nameof(baseDraw));
+        // The Client draws a base integer, then truncates the scaled float.
+        float scaled = MathF.Pow(WarbucksScalingBase, ownerLevelIndex - 3) * baseDraw;
+        if (!float.IsFinite(scaled) || scaled < 0f || scaled > int.MaxValue)
+            throw new InvalidDataException("PvP Warbucks reward exceeds source integer authority.");
+        return (int)scaled;
     }
 
     public PvpBonusGoldRange GoldRewardRange(int displayLevel)
@@ -104,6 +123,9 @@ public sealed class PvpBonusCatalog
             rules.GetProperty("goldLowLevelMaximum").GetSingle() != 10f ||
             rules.GetProperty("goldRegularMinimum").GetSingle() != 3f ||
             rules.GetProperty("goldRegularMaximum").GetSingle() != 6f ||
+            rules.GetProperty("warbucksMinimum").GetSingle() != 500f ||
+            rules.GetProperty("warbucksMaximum").GetSingle() != 1500f ||
+            rules.GetProperty("warbucksScalingBase").GetSingle() != 1.033f ||
             rules.GetProperty("cardUnlockLevel").GetSingle() != 6f ||
             rules.GetProperty("lowAmmoThreshold").GetSingle() != 0.1f ||
             rules.GetProperty("lowAmmoMultiplier").GetSingle() != 2f ||
@@ -123,6 +145,7 @@ public sealed class PvpBonusCatalog
                 row.GetProperty("prefabSha256").GetString()!, row.GetProperty("probability").GetSingle(),
                 row.GetProperty("arenaProbability").GetSingle());
         }
-        return new PvpBonusCatalog(rows, rules.GetProperty("lowAmmoThreshold").GetSingle());
+        return new PvpBonusCatalog(rows, rules.GetProperty("lowAmmoThreshold").GetSingle(),
+            rules.GetProperty("warbucksScalingBase").GetSingle());
     }
 }

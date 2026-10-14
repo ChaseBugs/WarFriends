@@ -51,6 +51,12 @@ Four subclasses then change it:
   random draw. The Battle catalog exposes those ranges; no Gold wallet grant
   or terminal reward receipt is published yet.
 - Warbucks: `IsAllowedMoneyBonus` closes friendly DeathMatch, with no extra cap.
+  The recovered `BonussesDefinitions` table supplies a base integer draw of
+  500 through 1499. `KillStreakBonusAddMoney` multiplies that draw by
+  `WarbucksScalingBase` 1.033 raised to the owner's zero-based level index
+  minus three, then truncates to an integer. The catalog now validates this
+  range and factor and exposes the calculated amount; wallet delivery and a
+  durable reward receipt remain closed.
 - Card: closes friendly DeathMatch and requires the supplied owner's
   `playerProperties.level` strictly above the source unlock value six. This is
   the owner's zero-based rank index, unlike Gold's local display number.

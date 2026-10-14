@@ -31,6 +31,19 @@ internal static class PvpBonusCatalogTests
                 throw new Exception("Gold reward accepted an unsupported display level."); }
             catch (ArgumentOutOfRangeException) { checks++; }
         }
+        Check(catalog.WarbucksBaseDrawRange == new PvpBonusWarbucksDrawRange(500, 1500) &&
+              catalog.WarbucksScalingBase == 1.033f &&
+              catalog.WarbucksRewardForBaseDraw(3, 500) == 500 &&
+              catalog.WarbucksRewardForBaseDraw(3, 1499) == 1499 &&
+              catalog.WarbucksRewardForBaseDraw(0, 500) < 500 &&
+              catalog.WarbucksRewardForBaseDraw(42, 1499) > 1499,
+            "source Warbucks box draws an exclusive base range then scales by owner rank");
+        foreach (var invalid in new[] {(-1, 500), (43, 500), (3, 499), (3, 1500)})
+        {
+            try { catalog.WarbucksRewardForBaseDraw(invalid.Item1, invalid.Item2);
+                throw new Exception("Warbucks reward accepted an invalid rank or base draw."); }
+            catch (ArgumentOutOfRangeException) { checks++; }
+        }
 
         byte[] referenceBytes = File.ReadAllBytes(Path.Combine(directory, "unity-pvp-bonus-reference.json"));
         Check(Convert.ToHexStringLower(SHA256.HashData(referenceBytes)) ==
