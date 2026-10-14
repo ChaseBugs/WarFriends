@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Security.Cryptography;
 
 namespace War.BattleServer;
 
@@ -82,11 +83,18 @@ internal sealed class PvpBonusSpawnPlanner
     }
 
     /// <summary>
-    /// Quotes a reward only for a collected host box. This is not a wallet
-    /// grant; Backend must commit the quote under the box receipt exactly once.
-    /// The host supplies the draw, never a Client packet.
+    /// Quotes a reward only for a collected host box. The Worker chooses one
+    /// integer in the source range and retains it for retries. This is not a
+    /// wallet grant; Backend must commit the box receipt exactly once.
     /// </summary>
-    internal PvpBonusCurrencyRewardQuote QuoteCurrencyReward(string boxId, int baseDraw)
+    internal PvpBonusCurrencyRewardQuote QuoteCurrencyReward(string boxId) =>
+        QuoteCurrencyRewardCore(boxId, null);
+
+    // Controlled draw for source tests; production calls the overload above.
+    internal PvpBonusCurrencyRewardQuote QuoteCurrencyReward(string boxId, int baseDraw) =>
+        QuoteCurrencyRewardCore(boxId, baseDraw);
+
+    private PvpBonusCurrencyRewardQuote QuoteCurrencyRewardCore(string boxId, int? suppliedDraw)
     {
         lock (gate)
         {
@@ -95,7 +103,7 @@ internal sealed class PvpBonusSpawnPlanner
                 throw new InvalidOperationException("Collected box has no currency reward.");
             if (currencyQuotes.TryGetValue(boxId, out var previous))
             {
-                if (previous.BaseDraw != baseDraw ||
+                if ((suppliedDraw.HasValue && previous.BaseDraw != suppliedDraw.Value) ||
                     previous.RecipientPlayerId != intent.RecipientPlayerId ||
                     previous.Kind != intent.Kind)
                     throw new InvalidDataException("Currency reward replay changed its authority.");
@@ -103,12 +111,26 @@ internal sealed class PvpBonusSpawnPlanner
             }
 
             int recipientLevel = owners[intent.RecipientPlayerId].Level;
-            int amount;
+            int minimum;
+            int maximumExclusive;
             if (intent.Kind == PvpBonusEffectKind.Gold)
             {
                 var range = bonusCatalog.GoldRewardRange(recipientLevel + 1);
-                if (baseDraw < range.Minimum || baseDraw >= range.MaximumExclusive)
-                    throw new ArgumentOutOfRangeException(nameof(baseDraw));
+                minimum = range.Minimum;
+                maximumExclusive = range.MaximumExclusive;
+            }
+            else
+            {
+                minimum = bonusCatalog.WarbucksBaseDrawRange.Minimum;
+                maximumExclusive = bonusCatalog.WarbucksBaseDrawRange.MaximumExclusive;
+            }
+            int baseDraw = suppliedDraw ??
+                RandomNumberGenerator.GetInt32(minimum, maximumExclusive);
+            if (baseDraw < minimum || baseDraw >= maximumExclusive)
+                throw new ArgumentOutOfRangeException(nameof(suppliedDraw));
+            int amount;
+            if (intent.Kind == PvpBonusEffectKind.Gold)
+            {
                 amount = baseDraw;
             }
             else

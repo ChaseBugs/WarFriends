@@ -193,7 +193,8 @@ internal static class PvpBonusSpawnPlannerTests
         Check(goldQuote == new PvpBonusCurrencyRewardQuote(currencyManifest.MatchId,
                   goldPlan.Request.ReceiptId, currencyManifest.Players[1].PlayerId,
                   PvpBonusEffectKind.Gold, 8, 8) &&
-              currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 8) == goldQuote,
+              currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 8) == goldQuote &&
+              currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId) == goldQuote,
             "stolen Gold box uses the recipient's display rank and replays one host quote");
         try { currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 5);
             throw new Exception("Gold reward replay changed its draw."); }
@@ -213,6 +214,26 @@ internal static class PvpBonusSpawnPlannerTests
         catch (InvalidDataException) { checks++; }
 
         var third = Mature(5, 7);
+        currencyPlanner.EnqueueConfirmedBonus(Id(504), localId, 0);
+        var randomGoldPlan = currencyPlanner.PlanMatured(third, 0, context, draw);
+        currencyPlanner.ConfirmDestroyed(randomGoldPlan.Request.ReceiptId, Id(505), null);
+        var hostDrawnQuote = currencyPlanner.QuoteCurrencyReward(randomGoldPlan.Request.ReceiptId);
+        var hostGoldRange = content.PvpBonuses.GoldRewardRange(9);
+        Check(hostDrawnQuote.BaseDraw >= hostGoldRange.Minimum &&
+              hostDrawnQuote.BaseDraw < hostGoldRange.MaximumExclusive &&
+              hostDrawnQuote.Amount == hostDrawnQuote.BaseDraw &&
+              currencyPlanner.QuoteCurrencyReward(randomGoldPlan.Request.ReceiptId) == hostDrawnQuote,
+            "host draws a Gold reward in the recipient range only once per collected box");
+        var randomMoneyPlanner = new PvpBonusSpawnPlanner(content, currencyManifest, localId);
+        randomMoneyPlanner.EnqueueConfirmedBonus(Id(506), localId, 2);
+        var randomMoneyPlan = randomMoneyPlanner.PlanMatured(first, 0, context, draw);
+        randomMoneyPlanner.ConfirmDestroyed(randomMoneyPlan.Request.ReceiptId, Id(507),
+            currencyManifest.Players[1].PlayerId);
+        var hostMoneyQuote = randomMoneyPlanner.QuoteCurrencyReward(randomMoneyPlan.Request.ReceiptId);
+        Check(hostMoneyQuote.BaseDraw is >= 500 and < 1500 &&
+              hostMoneyQuote.Amount == hostMoneyQuote.BaseDraw &&
+              randomMoneyPlanner.QuoteCurrencyReward(randomMoneyPlan.Request.ReceiptId) == hostMoneyQuote,
+            "host draws one Warbucks base value and scales by the actual rank-three recipient");
         var weights = content.PvpBonuses.WeightsForSourceContext(
             new(false, false, 9, 8, 0, false));
         float upperEndpoint = PvpBonusSelectionState.SourceTotal(weights, 8);
