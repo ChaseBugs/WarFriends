@@ -279,7 +279,11 @@ Photon components, follows the host projectile pose, and plays a medium
 explosion effect on the confirmed impact event. Rendered Play Mode parity is
 still unverified. The current presenter and SDK DLLs compiled in a disposable
 Unity 2018.3.0f2 project containing the Client scripts and Plugins; this was
-a script compilation check without the full scene/assets or Play Mode.
+a script compilation check without the full scene/assets or Play Mode. A
+separate MainScene Editor audit checked the Manager grenade's copied mesh,
+absence of collision/Photon/damage components, host position update, and
+impact removal; the full grenade fixture passed 876 checks. The Editor audit
+does not render a running match or capture the explosion effect.
 The normal Unity `CardManager` sends this command and spends the card only
 after an accepted host reply; the portable SDK DLLs were refreshed. The host uses
 the `PlayerPoint` child shield's serialized `hudIndicator.snapTransform`

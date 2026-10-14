@@ -89,8 +89,47 @@ public static class SelfHostedGrenadeRenderAudit
             if(GameObject.Find("SelfHostedProjectile_78")!=null)
                 throw new InvalidOperationException("Grenadier impact retained its projectile visual.");
             checks++;
+
+            // The Manager grenade belongs to the scene, not the player's
+            // equipped weapon. Only its meshes may enter the presentation copy.
+            var manager=scene.GetRootGameObjects()
+                .SelectMany(root=>root.GetComponentsInChildren<KillStreakManager>(true))
+                .Single();
+            var managerGrenade=manager.GetComponent<Grenade>();
+            if(managerGrenade==null||managerGrenade.bulletPrefab==null)
+                throw new InvalidOperationException("Recovered Manager grenade prefab is absent.");
+            var sourceMeshes=managerGrenade.bulletPrefab
+                .GetComponentsInChildren<MeshFilter>(true)
+                .Select(mesh=>mesh.sharedMesh).ToArray();
+            var clusterSnapshot=new MatchSnapshot();
+            clusterSnapshot.Projectiles.Add(new BattleProjectileState
+            {ProjectileId=79,OwnerPlayerId=player.playerProperties.playerID,
+                Kind="pvp-bonus-grenade",X=4,Y=5,Z=6,
+                VelocityX=1,VelocityY=2,VelocityZ=3});
+            presenter.Apply(clusterSnapshot);
+            var clusterVisual=GameObject.Find("SelfHostedProjectile_79");
+            if(clusterVisual==null||sourceMeshes.Length==0||
+                !clusterVisual.GetComponentsInChildren<MeshFilter>(true)
+                    .Select(mesh=>mesh.sharedMesh).SequenceEqual(sourceMeshes)||
+                clusterVisual.GetComponentsInChildren<Collider>(true).Length!=0||
+                clusterVisual.GetComponentsInChildren<Rigidbody>(true).Length!=0||
+                clusterVisual.GetComponentsInChildren<GrenadeAmmoBase>(true).Length!=0||
+                clusterVisual.GetComponentsInChildren<PhotonView>(true).Length!=0)
+                throw new InvalidOperationException("Cluster Grenade visual kept gameplay authority or lost its source mesh.");
+            checks++;
+            clusterSnapshot.Projectiles[0].X=7;
+            presenter.Apply(clusterSnapshot);
+            if(Vector3.Distance(clusterVisual.transform.position,new Vector3(7,5,6))>.0001f)
+                throw new InvalidOperationException("Cluster Grenade visual ignored the next host position.");
+            checks++;
+            presenter.ApplyEvent(new MatchEvent
+            {Kind=MatchEventKind.Impact,Reason="pvp-bonus-grenade",
+                ProjectileId=79,X=7,Y=5,Z=6});
+            if(GameObject.Find("SelfHostedProjectile_79")!=null)
+                throw new InvalidOperationException("Cluster Grenade impact retained its projectile visual.");
+            checks++;
             UnityEngine.Object.DestroyImmediate(presentationRoot);
-            if(checks<850)throw new InvalidOperationException("Incomplete grenade render fixture.");
+            if(checks<876)throw new InvalidOperationException("Incomplete grenade render fixture.");
             Debug.Log("GRENADE_RENDER_AUDIT_PASSED checks="+checks);EditorApplication.Exit(0);
         }
         catch(Exception exception)
