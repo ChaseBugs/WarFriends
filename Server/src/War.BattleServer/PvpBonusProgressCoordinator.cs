@@ -46,6 +46,7 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     private readonly PvpSkillShotScoreCatalog scores;
     private PvpScoreStreakProgress localProgress;
     private PvpScoreStreakProgress opponentProgress;
+    private PvpScoreMultiplierState multipliers;
     private PvpSkillShotScoreState localScore;
     private PvpSkillShotScoreState opponentScore;
     private PvpKillComboState combo;
@@ -83,6 +84,7 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         // ScoreManager.Restart sets one ratio for both AddSkillshot branches.
         localProgress = new(scores, policy, dropsCrates, maximumGainReceipts);
         opponentProgress = new(scores, policy, dropsCrates, maximumGainReceipts);
+        multipliers = new PvpScoreMultiplierState(localOwnerId, opponentOwnerId);
         localScore = new(scores, maximumScoreReceipts);
         opponentScore = new(scores, maximumScoreReceipts);
         combo = new(scores, maximumComboReceipts);
@@ -91,6 +93,21 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
 
     public int PendingCount { get { lock (gate) return delays.PendingCount; } }
     public int DelayReceiptCount { get { lock (gate) return delays.ReceiptCount; } }
+    internal float ConfirmedMultiplierFor(string ownerId)
+    {
+        lock (gate) return multipliers.ForPlayer(ownerId);
+    }
+
+    internal void ApplyConfirmedScoreCard(string ownerId, string cardId)
+    {
+        lock (gate)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            // The caller must first validate the selected card and spend its
+            // reservation. This method owns only the source score property.
+            multipliers.UseCard(ownerId, cardId);
+        }
+    }
 
     public float RecordConfirmedSkillShot(string ownerId, string receiptId, int flags, float confirmedMultiplier)
         => RecordConfirmedSkillShotWithScore(ownerId, receiptId, flags, confirmedMultiplier).Progress;
@@ -199,6 +216,18 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
             }
             return result;
         }
+    }
+
+    internal PvpBonusProgressCoordinator PrepareConfirmedPlayerDamageCopy(string ownerId,
+        string victimId, string receiptId, PvpPlayerDamageOwner damageOwner,
+        CombatDamageType damageType, bool victimWalking,
+        out PvpConfirmedSkillShot? result)
+    {
+        // The live host must derive this value from its card timers. The
+        // explicit-multiplier overload remains for source-fixture tests.
+        return PrepareConfirmedPlayerDamageCopy(ownerId, victimId, receiptId,
+            damageOwner, damageType, victimWalking, ConfirmedMultiplierFor(ownerId),
+            out result);
     }
 
     internal PvpBonusProgressCoordinator PrepareConfirmedPlayerDamageCopy(string ownerId,
@@ -325,6 +354,7 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
             // callback, selection or spawn runs inside this transaction.
             var nextLocal = localProgress.PrepareFrameCopy(frameId, scaledDelta, gameIsRunning, out var local);
             var nextOpponent = opponentProgress.PrepareFrameCopy(frameId, scaledDelta, gameIsRunning, out var opponent);
+            var nextMultipliers = multipliers.PrepareAdvanceCopy(scaledDelta);
             var requests = new List<PvpBonusDelayedRequest>(2);
             AddRequest(requests, localOwnerId, local, frameId);
             AddRequest(requests, opponentOwnerId, opponent, frameId);
@@ -337,6 +367,7 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
             // including threshold subtraction, ordinals and timer aging.
             localProgress = nextLocal;
             opponentProgress = nextOpponent;
+            multipliers = nextMultipliers;
             delays = nextDelays;
             lastFrame = result;
             lastDeltaBits = deltaBits;

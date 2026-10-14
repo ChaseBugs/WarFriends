@@ -148,8 +148,14 @@ Update, matching each recovered Card script. The state rejects unknown owners,
 unknown cards, repeated active uses, and malformed game deltas. This is a
 host-owned effect state, but it is not yet connected to `MatchEngine` card
 reservation, the live skill-shot callback, or the normal Unity controller.
-The current coordinator still accepts a caller-supplied confirmed multiplier;
-that caller must not be treated as an untrusted packet source.
+The coordinator advances a copy of those timers with each staged PvP frame.
+`MatchEngine.ApplyResolvedPlayerDamage` now prepares its host-confirmed hit
+score using the coordinator's current multiplier, with no multiplier argument
+at that live call site. A source-fixture overload still takes an explicit
+multiplier for isolated tests. Card reservation and consumption have not yet
+been wired to `ApplyConfirmedScoreCard`, and other skill-shot callback paths
+still need to consume host-owned multiplier state before live scoring can be
+called complete.
 
 During a running source Update, decay occurs first and the value is clamped to
 zero. Only `progress > 100` generates a bonus, subtracting 100 once; exactly 100

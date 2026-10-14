@@ -85,6 +85,24 @@ public sealed class PvpScoreMultiplierState
         }
     }
 
+    internal PvpScoreMultiplierState PrepareAdvanceCopy(float scaledDeltaSeconds)
+    {
+        var candidate = new PvpScoreMultiplierState(firstPlayerId, secondPlayerId);
+        foreach (var pair in multipliers)
+            candidate.multipliers[pair.Key] = pair.Value;
+        foreach (var pair in activeCards)
+        {
+            var timer = pair.Value;
+            candidate.activeCards.Add(pair.Key, new CardTimer(timer.OwnerId,
+                timer.TargetId, timer.CardId)
+            {
+                RemainingSeconds = timer.RemainingSeconds
+            });
+        }
+        candidate.Advance(scaledDeltaSeconds);
+        return candidate;
+    }
+
     private string OpponentOf(string playerId) => playerId == firstPlayerId
         ? secondPlayerId : firstPlayerId;
 }

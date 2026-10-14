@@ -2713,8 +2713,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                 throw new InvalidDataException("PvP hit receipt lacks confirmed player projectile authority.");
             preparedProgress = pvpBonusProgress.PrepareConfirmedPlayerDamageCopy(
                 attackerId, victimId, pvpPlayerDamageReceiptId,
-                pvpDamageOwner, result.Type, victim.Route != null,
-                confirmedMultiplier: 1f, out _);
+                pvpDamageOwner, result.Type, victim.Route != null, out _);
         }
         if (confirmedProjectileImpact && attacker != victim && attacker.Definition.Fraction != victim.Definition.Fraction)
         {

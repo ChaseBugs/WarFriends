@@ -117,6 +117,23 @@ internal static class PvpBonusProgressCoordinatorTests
               candidateHit.ScoreSnapshot("local").Score == 6,
             "host can stage score and streak before publishing an accepted damage mutation");
         using var stagedFrame = Create();
+        stagedFrame.ApplyConfirmedScoreCard("local", PvpScoreMultiplierState.StreakBoost);
+        stagedFrame.ApplyConfirmedScoreCard("opponent", PvpScoreMultiplierState.CrateBlocker);
+        Check(stagedFrame.ConfirmedMultiplierFor("local") == 0f &&
+              stagedFrame.ConfirmedMultiplierFor("opponent") == 1f,
+            "host card effects select their source target before score gain");
+        var blockedHit = stagedFrame.PrepareConfirmedPlayerDamageCopy("local", "opponent",
+            Id(1015), PvpPlayerDamageOwner.Player, CombatDamageType.Shot,
+            victimWalking: false, out var blockedResult);
+        Check(blockedResult?.Score.Points == 6 && blockedResult.Progress == 0f &&
+              blockedHit.ScoreSnapshot("local").Score == 6 &&
+              stagedFrame.ScoreSnapshot("local").Score == 0,
+            "a confirmed hit scores normally while Crate Blocker stops progress");
+        var expiredCards = stagedFrame.PrepareFrameCopy(1, 60f, true, out _)
+            .PrepareFrameCopy(2, 1f / 30f, true, out _);
+        Check(stagedFrame.ConfirmedMultiplierFor("local") == 0f &&
+              expiredCards.ConfirmedMultiplierFor("local") == 1f,
+            "prepared frame expiry does not change live card authority before publication");
         ThreeKills(stagedFrame, "local", 1020);
         var candidateFrame = stagedFrame.PrepareFrameCopy(1, 0f, true,
             out var pendingFrame);
