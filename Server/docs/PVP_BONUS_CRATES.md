@@ -179,6 +179,11 @@ quote, and an uncollected or booby-trapped box yields no currency quote.
 The production overload chooses the integer with the Worker's own bounded
 random draw and replays the stored quote without drawing again. A supplied
 draw overload remains internal for deterministic source tests.
+`MatchEngine.ApplyCollectedPvpBonus` now calls that production path for a
+confirmed Gold or Warbucks box and returns `bonus-quoted`. Its read-only
+`CurrencyBonusQuotes` snapshot retains each box and actual recipient for a
+future terminal settlement handoff. Calling the effect path before collection
+returns unavailable, and calling it again after quoting does not redraw.
 This quote is still match-local evidence, not a Backend wallet transaction;
 durable settlement, count updates and delivery remain open.
 The source `KillStreakBonusKevlar` sets `kevlarStrength` to 0.1 before

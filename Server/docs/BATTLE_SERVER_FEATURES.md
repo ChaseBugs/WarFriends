@@ -48,7 +48,9 @@ host uses its digest-pinned scales after a one-Warbuck .NET boundary mismatch
 was found. Android Unity 5.2 parity still needs proof. A collected host box
 can now produce one recipient-bound currency quote using a Worker-owned
 integer draw, retained unchanged on replay;
-wallet delivery and durable receipt authority remain open. The host
+the MatchEngine effect method now creates and exposes that quote after
+confirmed collection. Wallet delivery and durable receipt authority remain
+open. The host
 also derives the first-two-weapon
 low-ammo condition from signed slot order, current reserve/clip and the
 source-pinned reloadable flag, rejecting a mismatched selection assertion. Other

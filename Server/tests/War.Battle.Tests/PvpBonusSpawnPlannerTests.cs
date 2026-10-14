@@ -389,6 +389,35 @@ internal static class PvpBonusSpawnPlannerTests
               clockEngine.Snapshot().Players[0].KevlarHealth ==
                   manifest.Players[0].Combat!.MaxHealth * 0.1f,
             "a box issued from the live streak clock reaches its verified Kevlar effect");
+        clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(752), localId, 0);
+        var liveGoldPlan = clockEngine.BonusPlanner.PlanMatured(second, 0, context, draw);
+        Check(clockEngine.ApplyCollectedPvpBonus(liveGoldPlan.Request.ReceiptId) ==
+                  "bonus-unavailable" && clockEngine.CurrencyBonusQuotes.Count == 0,
+            "uncollected live Gold box cannot produce a currency quote");
+        clockEngine.BonusPlanner.ConfirmDestroyed(liveGoldPlan.Request.ReceiptId,
+            Id(753), manifest.Players[1].PlayerId);
+        Check(clockEngine.ApplyCollectedPvpBonus(liveGoldPlan.Request.ReceiptId) ==
+                  "bonus-quoted" &&
+              clockEngine.CurrencyBonusQuotes.Single().RecipientPlayerId ==
+                  manifest.Players[1].PlayerId &&
+              clockEngine.CurrencyBonusQuotes.Single().Amount is >= 3 and < 6,
+            "live engine quotes stolen Gold for the confirmed recipient without a wallet grant");
+        var firstGoldQuote = clockEngine.CurrencyBonusQuotes.Single();
+        Check(clockEngine.ApplyCollectedPvpBonus(liveGoldPlan.Request.ReceiptId) ==
+                  "bonus-quoted" &&
+              clockEngine.CurrencyBonusQuotes.Single() == firstGoldQuote,
+            "replaying live Gold collection retains the first host draw");
+        clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(754), localId, 2);
+        var liveMoneyPlan = clockEngine.BonusPlanner.PlanMatured(third, 0, context, draw);
+        clockEngine.BonusPlanner.ConfirmDestroyed(liveMoneyPlan.Request.ReceiptId,
+            Id(755), null);
+        Check(clockEngine.ApplyCollectedPvpBonus(liveMoneyPlan.Request.ReceiptId) ==
+                  "bonus-quoted" &&
+              clockEngine.CurrencyBonusQuotes.Count == 2 &&
+              clockEngine.CurrencyBonusQuotes.Single(quote =>
+                  quote.BoxId == liveMoneyPlan.Request.ReceiptId).Kind ==
+                  PvpBonusEffectKind.Warbucks,
+            "live engine retains both Gold and Warbucks quotes by confirmed box ID");
         var enginePlanner = engine.BonusPlanner;
         enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
         var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);

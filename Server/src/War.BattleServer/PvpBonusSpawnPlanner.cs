@@ -71,6 +71,15 @@ internal sealed class PvpBonusSpawnPlanner
     internal int PlanCount { get { lock (gate) return plans.Count; } }
     internal int ActiveBoxCount { get { lock (gate) return boxes.ActiveCount; } }
     internal int BoxReceiptCount { get { lock (gate) return boxes.ReceiptCount; } }
+    internal IReadOnlyList<PvpBonusCurrencyRewardQuote> CurrencyQuotes
+    {
+        get
+        {
+            lock (gate)
+                return Array.AsReadOnly(currencyQuotes.Values
+                    .OrderBy(quote => quote.BoxId, StringComparer.Ordinal).ToArray());
+        }
+    }
 
     internal PvpBonusBoxSnapshot BoxSnapshot(string boxId)
     {

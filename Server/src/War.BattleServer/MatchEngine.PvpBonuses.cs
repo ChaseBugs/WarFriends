@@ -26,6 +26,8 @@ public sealed partial class MatchEngine
         throw new InvalidOperationException("PvP bonus authority is not configured.");
     internal PvpBonusProgressCoordinator BonusProgress => pvpBonusProgress ??
         throw new InvalidOperationException("PvP bonus progress is not configured.");
+    internal IReadOnlyList<PvpBonusCurrencyRewardQuote> CurrencyBonusQuotes =>
+        pvpBonusPlanner?.CurrencyQuotes ?? Array.Empty<PvpBonusCurrencyRewardQuote>();
     internal IReadOnlyList<PvpBonusDelayedRequest> MaturedBonusRequests =>
         new ReadOnlyCollection<PvpBonusDelayedRequest>(
             maturedPvpBonuses.Select(bonus => bonus.Request).ToArray());
@@ -156,6 +158,15 @@ public sealed partial class MatchEngine
         if (recipient?.Admitted != true || recipient.Dead ||
             recipient.Definition.Combat == null || stateRevision == ulong.MaxValue)
             return "bonus-unavailable";
+
+        if (intent.Kind is PvpBonusEffectKind.Gold or PvpBonusEffectKind.Warbucks)
+        {
+            // The original local recipient receives a random currency amount.
+            // Keep the host-owned quote for later durable settlement. No
+            // wallet balance, Gold analytics, or visible effect changes here.
+            _ = pvpBonusPlanner.QuoteCurrencyReward(boxId);
+            return "bonus-quoted";
+        }
 
         if (intent.Kind == PvpBonusEffectKind.BoobyTrap)
         {
