@@ -33,13 +33,14 @@ startup. An isolated Unity 2018.3 Editor probe matched all ten actual
 resolve a source position; falling box physics, map contact and crate
 publication remain unverified.
 Matured delay receipts can now produce one atomic server-side bonus/placement
-plan using validated roster perspective, the reviewed selection history and
-source map areas. Replays do not redraw; invalid coordinates or weights do not
-consume FIFO overrides. The source's invalid endpoint index is retained for
+plan and register its host box using validated roster perspective, the reviewed
+selection history and source map areas. Replays do not redraw; invalid
+coordinates, weights or full box capacity do not consume FIFO overrides. The
+source's invalid endpoint index is retained for
 history but mapped to its actual prefab for prospective publication. The
 normal MatchEngine callback, authoritative dynamic weight inputs, physical box,
 physics, collection settlement, rewards and Unity rendering remain open.
-Spawn plans can now enter a bounded host box registry with falling/grounded/
+Accepted spawn plans enter a bounded host box registry with falling/grounded/
 collected phases, one terminal damage receipt, owner-or-attacker recipient
 selection and one-use booby-trap interception on a stolen box. This is a
 collection candidate only; host physics, normal battle events, bonus effects,

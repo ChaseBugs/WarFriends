@@ -11,7 +11,8 @@ public sealed record PvpBonusSpawnPlan(PvpBonusDelayedRequest Request,
 /// <summary>
 /// Makes a crate-spawn plan only after an accepted delay matures. The host
 /// actor supplies its own draws and live analytics; no Client packet may do so.
-/// This does not create a physical box or grant its reward.
+/// An accepted plan also registers its host box before selection is published.
+/// This does not simulate physical falling or grant its reward.
 /// </summary>
 internal sealed class PvpBonusSpawnPlanner
 {
@@ -22,12 +23,14 @@ internal sealed class PvpBonusSpawnPlanner
     private readonly RecoveredBattleMap map;
     private readonly PvpBonusSpawnAreaCatalog areas;
     private PvpBonusSelectionState selection;
+    private readonly PvpBonusBoxRegistry boxes;
     private readonly Dictionary<string, SavedPlan> plans = new(StringComparer.Ordinal);
     private sealed record SavedPlan(PvpBonusDelayedRequest Request,
         PvpBonusSpawnContext Context, PvpBonusSpawnPlan Result);
 
     internal PvpBonusSpawnPlanner(BattleCombatContent content, MatchManifest manifest,
-        string localOwnerId, int maximumSelectionReceipts = 4096)
+        string localOwnerId, int maximumSelectionReceipts = 4096,
+        int maximumActiveBoxes = 256, int maximumBoxReceipts = 4096)
     {
         ArgumentNullException.ThrowIfNull(content);
         var admitted = MatchManifest.Validate(manifest);
@@ -52,11 +55,40 @@ internal sealed class PvpBonusSpawnPlanner
             throw new InvalidDataException("Bonus crate source view has no local roster owner.");
         localDisplayLevel = local.Level + 1;
         selection = new PvpBonusSelectionState(content.PvpBonuses, maximumSelectionReceipts);
+        boxes = new PvpBonusBoxRegistry(content, admitted, maximumActiveBoxes, maximumBoxReceipts);
     }
 
     internal int LastSourceIndex { get { lock (gate) return selection.LastSourceIndex; } }
     internal int QueuedCount(PvpBonusSide side) { lock (gate) return selection.QueuedCount(side); }
     internal int PlanCount { get { lock (gate) return plans.Count; } }
+    internal int ActiveBoxCount { get { lock (gate) return boxes.ActiveCount; } }
+    internal int BoxReceiptCount { get { lock (gate) return boxes.ReceiptCount; } }
+
+    internal PvpBonusBoxSnapshot BoxSnapshot(string boxId)
+    {
+        lock (gate) return boxes.Snapshot(boxId);
+    }
+
+    internal PvpBonusBoxSnapshot ConfirmStaticContact(string boxId)
+    {
+        lock (gate) return boxes.ConfirmStaticContact(boxId);
+    }
+
+    internal void ArmBoobyTrap(string receiptId, string ownerPlayerId)
+    {
+        lock (gate) boxes.ArmBoobyTrap(receiptId, ownerPlayerId);
+    }
+
+    internal bool HasArmedBoobyTrap(string ownerPlayerId)
+    {
+        lock (gate) return boxes.HasArmedBoobyTrap(ownerPlayerId);
+    }
+
+    internal PvpBonusBoxCollectionCandidate ConfirmDestroyed(string boxId,
+        string damageReceiptId, string? attackerPlayerId)
+    {
+        lock (gate) return boxes.ConfirmDestroyed(boxId, damageReceiptId, attackerPlayerId);
+    }
 
     internal void EnqueueConfirmedBonus(string receiptId, string ownerId, int sourceIndex)
     {
@@ -105,6 +137,9 @@ internal sealed class PvpBonusSpawnPlanner
             // at 9, while publishing only the actual prefab's valid index.
             var plan = new PvpBonusSpawnPlan(request, chosen.SourceIndex,
                 chosen.Prefab.Index, sourceAreas[draw.AreaOrder].ColliderFileId, position);
+            // Admit the actual box before committing the queue/last-index copy.
+            // Full box capacity leaves the matured request retriable on replay.
+            boxes.Register(plan);
             plans.Add(request.ReceiptId, new(request, context, plan));
             selection = candidate;
             return plan;

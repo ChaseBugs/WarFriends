@@ -15,8 +15,8 @@ public sealed record PvpBonusBoxSnapshot(string BoxId, PvpBonusSpawnPlan Plan,
 /// </summary>
 internal sealed class PvpBonusBoxRegistry
 {
-    private const int MaximumActiveBoxes = 256;
-    private const int MaximumReceipts = 4096;
+    private readonly int maximumActiveBoxes;
+    private readonly int maximumReceipts;
     private readonly object gate = new();
     private readonly string matchId;
     private readonly RecoveredBattleMap map;
@@ -28,9 +28,16 @@ internal sealed class PvpBonusBoxRegistry
     private readonly HashSet<int> armedFractions = new();
     private int activeCount;
 
-    internal PvpBonusBoxRegistry(BattleCombatContent content, MatchManifest manifest)
+    internal PvpBonusBoxRegistry(BattleCombatContent content, MatchManifest manifest,
+        int maximumActiveBoxes = 256, int maximumReceipts = 4096)
     {
         ArgumentNullException.ThrowIfNull(content);
+        if (maximumActiveBoxes is < 1 or > 256)
+            throw new ArgumentOutOfRangeException(nameof(maximumActiveBoxes));
+        if (maximumReceipts is < 2 or > 4096)
+            throw new ArgumentOutOfRangeException(nameof(maximumReceipts));
+        this.maximumActiveBoxes = maximumActiveBoxes;
+        this.maximumReceipts = maximumReceipts;
         var admitted = MatchManifest.Validate(manifest);
         if (admitted.Mode is MatchManifest.PrototypeMode or MatchManifest.CoopMissionMode)
             throw new InvalidDataException("Bonus boxes require an online PvP roster.");
@@ -78,7 +85,7 @@ internal sealed class PvpBonusBoxRegistry
                 damageReceipts.ContainsKey(request.ReceiptId))
                 throw new InvalidDataException("Box receipt conflicts with another host mutation.");
             // Reserve its eventual terminal damage receipt at spawn admission.
-            if (activeCount == MaximumActiveBoxes || ReservedReceipts + 2 > MaximumReceipts)
+            if (activeCount == maximumActiveBoxes || ReservedReceipts + 2 > maximumReceipts)
                 throw new InvalidOperationException("Bonus box capacity exhausted.");
             var result = new PvpBonusBoxSnapshot(request.ReceiptId, plan,
                 PvpBonusBoxPhase.Falling, null);
@@ -116,7 +123,7 @@ internal sealed class PvpBonusBoxRegistry
                     throw new InvalidDataException("Booby trap replay changed its owner.");
                 return;
             }
-            if (ReservedReceipts + 1 > MaximumReceipts)
+            if (ReservedReceipts + 1 > maximumReceipts)
                 throw new InvalidOperationException("Booby trap receipt capacity exhausted.");
             trapReceipts.Add(receiptId, ownerPlayerId);
             armedFractions.Add(fraction);

@@ -114,15 +114,17 @@ source's shared selection history and one map position. It derives the
 owner's fraction and rank plus the local display rank from the validated
 match manifest; the serialized host actor must establish Arena/friendly mode,
 Gold count, first-two low ammunition and random draws. The planner copies
-selection queues and receipts before attempting placement, then publishes
-both together. A failed area or weighted draw leaves the queue and last index
-untouched; a repeated receipt returns the original plan. On the source's
+selection queues and receipts before attempting placement, registers the
+host-owned box, then publishes the plan and selection together. A failed area,
+weighted draw, or full box registry leaves the queue and last index untouched;
+the matured request can be retried after capacity is freed. A repeated receipt
+returns the original plan. On the source's
 inclusive upper-endpoint fallthrough, the plan retains `SourceIndex=9` for
 future exclusion history and uses the actual prefab's valid index eight for
 publication. This explicit repair prevents an out-of-range prefab lookup in
 the replacement Client; it does not claim exact original RPC parity at that
-broken endpoint. The plan is not yet an entity, network event, physics body,
-collection result, or Backend reward. Run `--pvp-bonus-spawn-plan-only` for the
+broken endpoint. The registered host box is not yet a network entity or physics
+body, and it grants no reward. Run `--pvp-bonus-spawn-plan-only` for the
 focused transaction checks.
 
 `PvpBonusBoxRegistry` now admits a plan as a host-owned falling box only when

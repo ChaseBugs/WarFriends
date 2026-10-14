@@ -72,43 +72,39 @@ internal static class PvpBonusSpawnPlannerTests
               planner.QueuedCount(PvpBonusSide.Allies) == 0 && planner.LastSourceIndex == 8,
             "accepted queued override bypasses weights and consumes one FIFO item");
 
-        var boxes = new PvpBonusBoxRegistry(content, manifest);
-        var falling = boxes.Register(planned);
-        Check(falling.Phase == PvpBonusBoxPhase.Falling && boxes.ActiveCount == 1 &&
-              boxes.ReceiptCount == 1,
-            "a reviewed spawn plan creates one host-owned falling box with a reserved terminal slot");
-        Check(boxes.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded &&
-              boxes.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded,
+        var falling = planner.BoxSnapshot(planned.Request.ReceiptId);
+        Check(falling.Phase == PvpBonusBoxPhase.Falling && planner.ActiveBoxCount == 2 &&
+              planner.BoxReceiptCount == 2,
+            "accepted spawn plans also register host-owned falling boxes before selection commits");
+        Check(planner.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded &&
+              planner.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded,
             "repeated static contacts do not create another box or collection");
-        boxes.ArmBoobyTrap(Id(200), localId);
-        Check(boxes.HasArmedBoobyTrap(localId) && boxes.ReceiptCount == 2,
+        planner.ArmBoobyTrap(Id(200), localId);
+        Check(planner.HasArmedBoobyTrap(localId) && planner.BoxReceiptCount == 3,
             "confirmed card effect arms the earning fraction before collection");
-        var stolen = boxes.ConfirmDestroyed(falling.BoxId, Id(201), manifest.Players[1].PlayerId);
+        var stolen = planner.ConfirmDestroyed(falling.BoxId, Id(201), manifest.Players[1].PlayerId);
         Check(stolen is {Stolen:true,BoobyTrapped:true} &&
               stolen.OwnerPlayerId == localId && stolen.RecipientPlayerId == manifest.Players[1].PlayerId &&
-              boxes.ActiveCount == 0 && !boxes.HasArmedBoobyTrap(localId),
+              planner.ActiveBoxCount == 1 && !planner.HasArmedBoobyTrap(localId),
             "opposing damage claims exactly one box and consumes its owner's booby trap");
-        boxes.ArmBoobyTrap(Id(200), localId);
-        Check(!boxes.HasArmedBoobyTrap(localId),
+        planner.ArmBoobyTrap(Id(200), localId);
+        Check(!planner.HasArmedBoobyTrap(localId),
             "replaying an already consumed card receipt cannot arm another trap");
-        Check(boxes.ConfirmDestroyed(falling.BoxId, Id(201), manifest.Players[1].PlayerId) == stolen &&
-              boxes.Register(planned).Collection == stolen && boxes.ReceiptCount == 3,
+        Check(planner.ConfirmDestroyed(falling.BoxId, Id(201), manifest.Players[1].PlayerId) == stolen &&
+              planner.BoxSnapshot(falling.BoxId).Collection == stolen && planner.BoxReceiptCount == 4,
             "damage and spawn replay return their original terminal result without a second grant");
-        try { boxes.Register(planned with {Position = Vector3.Zero});
-            throw new Exception("Changed source area position reused a box receipt."); }
-        catch (InvalidDataException) { checks++; }
-        try { boxes.ArmBoobyTrap(Id(200), manifest.Players[1].PlayerId);
+        try { planner.ArmBoobyTrap(Id(200), manifest.Players[1].PlayerId);
             throw new Exception("Trap receipt changed its owner."); }
         catch (InvalidDataException) { checks++; }
-        try { boxes.ConfirmDestroyed(falling.BoxId, Id(202), localId);
+        try { planner.ConfirmDestroyed(falling.BoxId, Id(202), localId);
             throw new Exception("Collected box chose another winner."); }
         catch (InvalidDataException) { checks++; }
-        Check(boxes.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Collected,
+        Check(planner.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Collected,
             "late static contact cannot resurrect a collected box");
-        var airborne = boxes.Register(forced);
-        var ownerFallback = boxes.ConfirmDestroyed(airborne.BoxId, Id(203), null);
+        var airborne = planner.BoxSnapshot(forced.Request.ReceiptId);
+        var ownerFallback = planner.ConfirmDestroyed(airborne.BoxId, Id(203), null);
         Check(ownerFallback.RecipientPlayerId == localId && !ownerFallback.Stolen &&
-              !ownerFallback.BoobyTrapped && boxes.ActiveCount == 0,
+              !ownerFallback.BoobyTrapped && planner.ActiveBoxCount == 0,
             "source null damage owner falls back to the box owner even before ground contact");
 
         var third = Mature(5, 7);
@@ -149,6 +145,36 @@ internal static class PvpBonusSpawnPlannerTests
               enemyPlan.PrefabIndex == 7 && bothPlanner.LastSourceIndex == 7 &&
               bothPlanner.QueuedCount(PvpBonusSide.Enemy) == 0,
             "both owners share one selection history while fraction-specific queue overrides stay separate");
+
+        using var capacityProgress = PvpBonusProgressCoordinator.CreateForOnlineManifest(
+            content, manifest, localId);
+        var capacityPlanner = new PvpBonusSpawnPlanner(content, manifest, localId,
+            maximumActiveBoxes: 1);
+        PvpBonusProgressFrame CapacityMature(int issueFrame, int firstReceipt)
+        {
+            for (int index = 0; index < 3; index++)
+                capacityProgress.RecordConfirmedSkillShot(localId,
+                    Id(firstReceipt + index), 0x1210, 1f);
+            capacityProgress.AdvanceFrame((ulong)issueFrame, 0f, true);
+            return capacityProgress.AdvanceFrame((ulong)(issueFrame + 1), 1.5f, false);
+        }
+        var capacityFirst = capacityPlanner.PlanMatured(
+            CapacityMature(1, 300), 0, context, draw);
+        var capacitySecondFrame = CapacityMature(3, 303);
+        capacityPlanner.EnqueueConfirmedBonus(Id(310), localId, 8);
+        try { capacityPlanner.PlanMatured(capacitySecondFrame, 0, context, draw);
+            throw new Exception("Full box capacity consumed source selection."); }
+        catch (InvalidOperationException) { checks++; }
+        Check(capacityPlanner.PlanCount == 1 && capacityPlanner.ActiveBoxCount == 1 &&
+              capacityPlanner.BoxReceiptCount == 1 && capacityPlanner.LastSourceIndex == 1 &&
+              capacityPlanner.QueuedCount(PvpBonusSide.Allies) == 1,
+            "full box capacity preserves the matured request and its queued source override");
+        capacityPlanner.ConfirmDestroyed(capacityFirst.Request.ReceiptId, Id(311), null);
+        var capacityRetry = capacityPlanner.PlanMatured(capacitySecondFrame, 0, context, draw);
+        Check(capacityRetry.SourceIndex == 8 && capacityPlanner.PlanCount == 2 &&
+              capacityPlanner.ActiveBoxCount == 1 && capacityPlanner.LastSourceIndex == 8 &&
+              capacityPlanner.QueuedCount(PvpBonusSide.Allies) == 0,
+            "collection frees capacity and the exact matured request then commits once");
         return checks;
     }
 }
