@@ -20,6 +20,9 @@ public sealed partial class MatchEngine
     }
     private readonly List<MaturedBonus> maturedPvpBonuses = new();
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
+    private PvpBonusGrenadeBurstPolicy? pvpGrenadeBurstPolicy;
+    private readonly Dictionary<string, PvpBonusGrenadeBurstPlan> pvpGrenadeBurstPlans =
+        new(StringComparer.Ordinal);
     private readonly HashSet<string> appliedPvpBonusBoxes = new(StringComparer.Ordinal);
 
     internal PvpBonusSpawnPlanner BonusPlanner => pvpBonusPlanner ??
@@ -131,11 +134,49 @@ public sealed partial class MatchEngine
         var progress = PvpBonusProgressCoordinator.CreateForOnlineManifest(content,
             manifest, manifest.SceneMasterPlayerId);
         pvpBoobyTrap = content.PvpBoobyTrap;
+        pvpGrenadeBurstPolicy = new PvpBonusGrenadeBurstPolicy(content.PvpBonuses);
         pvpBonusWeapons = content.AllWeaponBindings;
         pvpBonusLowAmmoThreshold = content.PvpBonuses.LowAmmoThreshold;
         pvpGoldBonusesCollected = manifest.PvpGoldBonusesAtAdmission ?? 0;
         pvpBonusPlanner = planner;
         pvpBonusProgress = progress;
+    }
+
+    /// <summary>
+    /// Plans a collected grenade crate using the host's current shootable
+    /// registry. The caller must not pass Client-declared target positions.
+    /// Projectile creation and damage remain separate, later steps.
+    /// </summary>
+    internal PvpBonusGrenadeBurstPlan PlanCollectedPvpGrenades(string boxId,
+        IReadOnlyList<PvpBonusGrenadeTarget> hostShootables,
+        Func<float> nextHostFallbackOffset)
+    {
+        ArgumentNullException.ThrowIfNull(hostShootables);
+        ArgumentNullException.ThrowIfNull(nextHostFallbackOffset);
+        if (pvpGrenadeBurstPlans.TryGetValue(boxId, out var previous))
+            return previous;
+        if (phase != BattlePhase.Running || pvpBonusPlanner == null ||
+            pvpGrenadeBurstPolicy == null)
+            throw new InvalidOperationException("PvP grenade crate is unavailable.");
+
+        var intent = pvpBonusPlanner.EffectIntent(boxId);
+        if (intent.Kind != PvpBonusEffectKind.Grenades)
+            throw new InvalidDataException("Collected crate is not a grenade bonus.");
+        var recipient = Find(intent.RecipientPlayerId);
+        if (recipient?.Admitted != true || recipient.Dead ||
+            recipient.Definition.PlayerLevel is not int recipientLevel)
+            throw new InvalidOperationException("Grenade recipient lacks live host authority.");
+        string sceneMasterId = manifest.SceneMasterPlayerId ??
+            throw new InvalidDataException("Grenade source view is missing.");
+        var sourceView = Find(sceneMasterId);
+        if (sourceView == null)
+            throw new InvalidDataException("Grenade source view is outside the match.");
+        var boxPosition = pvpBonusPlanner.BoxSnapshot(boxId).Plan.Position;
+        var launches = pvpGrenadeBurstPolicy.Plan(sourceView.Definition.Fraction,
+            recipientLevel, boxPosition, hostShootables, nextHostFallbackOffset);
+        var plan = new PvpBonusGrenadeBurstPlan(boxId, intent.RecipientPlayerId, launches);
+        pvpGrenadeBurstPlans.Add(boxId, plan);
+        return plan;
     }
 
     /// <summary>

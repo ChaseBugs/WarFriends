@@ -7,6 +7,8 @@ public sealed record PvpBonusGrenadeTarget(string Id, int Fraction,
 public sealed record PvpBonusGrenadeDamageOverride(float Explosion, float Direct);
 public sealed record PvpBonusGrenadeLaunch(int ShotIndex, float DelayScaledSeconds,
     string? TargetId, Vector3 Position, PvpBonusGrenadeDamageOverride? DamageOverride);
+public sealed record PvpBonusGrenadeBurstPlan(string BoxId, string RecipientPlayerId,
+    IReadOnlyList<PvpBonusGrenadeLaunch> Launches);
 
 /// <summary>
 /// Plans the three targets of a collected grenade box. The caller supplies

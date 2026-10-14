@@ -253,7 +253,10 @@ radius, with 0.2 scaled seconds between shots. Missing targets become random
 box-centered X/Z offsets in [-1.5, 1.5]. The fallback grenade's source
 damage rows are 50 to 872, scaled by recipient rank/43. The planner now
 attaches the 43 bit-exact Unity-probed explosion and direct-damage pairs to
-fallback shots; targeted shots retain the prefab's `GrenadeAmmoSetup` values.
+fallback shots; targeted shots retain the `GrenadeAmmoSetup` values already on
+the shared `KillStreakManager` grenade component. A previous fallback burst can
+have changed that shared setup, so targeted shots do not necessarily use the
+initial prefab values.
 Projectile flight, impact, and actual damage remain unimplemented. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*
 fraction to `GetOpponents`; the planner keeps that perspective explicit until
@@ -263,6 +266,12 @@ assembly's iterator IL loads the captured `killStreakBonusBox` parameter in
 both distance calculations. The planner follows the original IL. Equal-distance
 ties retain host registry order as an explicit replacement choice; exact Mono
 sort tie parity remains unverified. This is not live grenade damage or pickup.
+`MatchEngine.PlanCollectedPvpGrenades` now binds the plan to a host-confirmed
+collected Grenades box, its saved position, recipient rank, and signed scene-master
+view. It caches the first plan by box ID so replay cannot consume more random
+draws or switch recipients. The shootable registry and fallback draws must still
+come from host simulation; this internal method does not create projectiles or
+grant an effect through the normal battle event path.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component
 serializes zero; the server retains the scene value.
 
