@@ -72,6 +72,22 @@ internal sealed class PvpBonusSpawnPlanner
     internal int QueuedCount(PvpBonusSide side) { lock (gate) return selection.QueuedCount(side); }
     internal int SourceIndexForQueuedCard(string sourceCardId) =>
         QueuedBonusCardSourceCatalog.IndexFor(sourceCardId, bonusCatalog);
+    internal int SpawnAreaCount => areas.ForMap(map).Count;
+
+    internal float WeightTotal(string ownerId, PvpBonusSpawnContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        lock (gate)
+        {
+            if (!owners.TryGetValue(ownerId, out var owner))
+                throw new InvalidDataException("Bonus owner is outside the admitted roster.");
+            var sourceContext = new PvpBonusWeightContext(context.IsWarArena,
+                context.IsFriendlyDeathMatch, localDisplayLevel, owner.Level,
+                context.GoldBonusesCollected, context.FirstTwoWeaponsHaveLowAmmo);
+            var weights = bonusCatalog.WeightsForSourceContext(sourceContext);
+            return PvpBonusSelectionState.SourceTotal(weights, selection.LastSourceIndex);
+        }
+    }
     internal int PlanCount { get { lock (gate) return plans.Count; } }
     internal int ActiveBoxCount { get { lock (gate) return boxes.ActiveCount; } }
     internal int BoxReceiptCount { get { lock (gate) return boxes.ReceiptCount; } }

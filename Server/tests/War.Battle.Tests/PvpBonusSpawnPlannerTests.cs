@@ -61,6 +61,12 @@ internal static class PvpBonusSpawnPlannerTests
         using var progress = PvpBonusProgressCoordinator.CreateForOnlineManifest(content, manifest, localId);
         var planner = new PvpBonusSpawnPlanner(content, manifest, localId);
         var context = new PvpBonusSpawnContext(false, false, 0, false);
+        var sourceWeights = content.PvpBonuses.WeightsForSourceContext(
+            new PvpBonusWeightContext(false, false, 9, 8, 0, false));
+        Check(planner.SpawnAreaCount == 2 &&
+              planner.WeightTotal(localId, context) ==
+                  PvpBonusSelectionState.SourceTotal(sourceWeights, 0),
+            "host draw bounds come from signed owner level and reviewed map areas");
         void ThreeKills(int first)
         {
             for (int index = 0; index < 3; index++)
@@ -465,13 +471,13 @@ internal static class PvpBonusSpawnPlannerTests
         Check(clockEngine.MaturedBonusRequests.Count == 1 &&
               clockEngine.BonusPlanner.ActiveBoxCount == 0,
             "invalid host selection leaves the oldest matured request available");
-        var issuedInMatch = clockEngine.IssueNextMaturedBonus(context, draw);
+        var issuedInMatch = clockEngine.IssueNextMaturedBonus();
         Check(issuedInMatch?.Request == maturedInMatch[0] &&
               issuedInMatch.PrefabIndex == 6 &&
               clockEngine.MaturedBonusRequests.Count == 0 &&
               clockEngine.BonusPlanner.ActiveBoxCount == 1 &&
-              clockEngine.IssueNextMaturedBonus(context, draw) == null,
-            "a host-confirmed selection registers one box and consumes its live request once");
+              clockEngine.IssueNextMaturedBonus() == null,
+            "host-owned context and draws register one queued box and consume its live request once");
         if (issuedInMatch == null)
             throw new Exception("Live matured bonus was not issued.");
         clockEngine.BonusPlanner.ConfirmDestroyed(issuedInMatch.Request.ReceiptId,

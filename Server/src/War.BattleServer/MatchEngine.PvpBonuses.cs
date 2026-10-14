@@ -359,6 +359,27 @@ public sealed partial class MatchEngine
 
     // A host allocation must supply the source game mode and live analytics.
     // Only the oldest matured callback may select and register a box.
+    internal PvpBonusSpawnPlan? IssueNextMaturedBonus()
+    {
+        if (phase != BattlePhase.Running || pvpBonusPlanner == null ||
+            maturedPvpBonuses.Count == 0)
+            return null;
+        if (manifest.PvpBonusMode == null)
+            throw new InvalidOperationException("Match lacks a trusted PvP bonus mode.");
+
+        var ownerId = maturedPvpBonuses[0].Request.OwnerPlayerId;
+        var context = new PvpBonusSpawnContext(
+            manifest.PvpBonusMode == MatchManifest.WarArenaPvpBonusMode,
+            manifest.PvpBonusMode == MatchManifest.FriendlyDeathMatchPvpBonusMode,
+            pvpGoldBonusesCollected, FirstTwoUsedWeaponsHaveLowAmmo(ownerId));
+        float total = pvpBonusPlanner.WeightTotal(ownerId, context);
+        var draw = new PvpBonusSpawnDraw(
+            combatRandom() * total,
+            Random.Shared.Next(pvpBonusPlanner.SpawnAreaCount),
+            new Vector3(combatRandom(), combatRandom(), combatRandom()));
+        return IssueNextMaturedBonus(context, draw);
+    }
+
     internal PvpBonusSpawnPlan? IssueNextMaturedBonus(
         PvpBonusSpawnContext context, PvpBonusSpawnDraw draw)
     {

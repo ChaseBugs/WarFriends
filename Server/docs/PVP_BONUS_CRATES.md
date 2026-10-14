@@ -1,8 +1,18 @@
 # Source PvP bonus crates
 
-This follows the active recovered 1.4.0 Client. The reviewed catalog and weight
-calculation are implemented; selection, delayed spawning, collection, bonus
-effects, durable rewards and normal Unity presentation remain incomplete.
+This follows the active recovered 1.4.0 Client. The reviewed catalog, weight
+calculation, and host selection planning are implemented. Automatic delayed
+spawning, physical collision/collection, durable rewards, and normal Unity
+presentation remain incomplete.
+
+The host can call `MatchEngine.IssueNextMaturedBonus()` after a delayed request
+matures. It derives mode, collected-Gold count, and the first two weapons'
+low-ammo condition from signed/live match state. The planner supplies the
+reviewed source weight total and map spawn-area count; the host draws the
+weighted value, area, and three position coordinates. A queued bonus card still
+forces its source prefab exactly once. This registers a falling box, but match
+ticks do not yet call the issuer or simulate the box's collision with the map.
+No live reward is granted merely because the plan exists.
 
 ## Source bindings
 
