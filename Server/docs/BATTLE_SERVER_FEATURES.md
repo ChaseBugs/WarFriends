@@ -49,9 +49,11 @@ Collected boxes now expose one source-indexed effect intent, with a stolen
 booby-trapped box replacing its original effect. No effect is executed yet.
 The recovered Kevlar crate's 0.1 maximum-health strength and ammo crate's
 one-clip-per-used-weapon reserve addition now have checked host calculations.
-An explicitly configured MatchEngine applies Health, Kevlar and ammo intents once
-to its player snapshot. Normal Worker setup, source-view progression, physics,
-events and all other effect execution remain open.
+An explicitly configured MatchEngine applies Health, Kevlar, ammo and the
+source-pinned 15%-maximum-health booby-trap Explosion once to its player
+snapshot. Lethal traps follow normal match termination and remain replay-safe.
+Normal Worker setup, source-view progression, box physics, Client events and
+the remaining effects remain open.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

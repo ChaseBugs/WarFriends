@@ -196,6 +196,40 @@ internal static class PvpBonusSpawnPlannerTests
               healedHealth == damagedHealth + manifest.Players[0].Combat!.MaxHealth * 0.1f &&
               replayCode == "bonus-applied" && engine.Snapshot().Players[0].Health == healedHealth,
             $"health crate uses negative Basic damage once: {damageResult}, {healthCode}, {replayCode}, {damagedHealth}, {healedHealth}");
+        Check(content.PvpBoobyTrap.Damage(1000f) == 150f,
+            "booby-trap damage comes from the pinned CardConstants row");
+        var fourth = Mature(7, 10);
+        enginePlanner.ArmBoobyTrap(Id(506), localId);
+        var trappedPlan = enginePlanner.PlanMatured(fourth, 0, context, draw);
+        var trapped = enginePlanner.ConfirmDestroyed(trappedPlan.Request.ReceiptId,
+            Id(507), manifest.Players[1].PlayerId);
+        Check(trapped.BoobyTrapped &&
+              engine.ApplyCollectedPvpBonus(trappedPlan.Request.ReceiptId) == "bonus-applied" &&
+              engine.Snapshot().Players[1].Health == 850f &&
+              engine.ApplyCollectedPvpBonus(trappedPlan.Request.ReceiptId) == "bonus-applied" &&
+              engine.Snapshot().Players[1].Health == 850f,
+            "stolen trapped crate damages the thief once through the player explosion path");
+
+        var lethalEngine = new MatchEngine(manifest, map, content, combatRandom: () => 1f);
+        lethalEngine.ConfigurePvpBonuses(content);
+        foreach (var player in manifest.Players) lethalEngine.Admit(player.PlayerId);
+        foreach (var player in manifest.Players)
+            lethalEngine.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                Ready = new ReadyCommand {ManifestHash = lethalEngine.ManifestHash}});
+        lethalEngine.Advance(60);
+        var lethalPlanner = lethalEngine.BonusPlanner;
+        lethalPlanner.ArmBoobyTrap(Id(508), localId);
+        var lethalPlan = lethalPlanner.PlanMatured(fourth, 0, context, draw);
+        lethalPlanner.ConfirmDestroyed(lethalPlan.Request.ReceiptId,
+            Id(509), manifest.Players[1].PlayerId);
+        lethalEngine.ApplyResolvedPlayerDamage(localId, manifest.Players[1].PlayerId,
+            new ResolvedPlayerDamage(950f, CombatDamageType.Basic, HasWeapon: false), 1f);
+        Check(lethalEngine.ApplyCollectedPvpBonus(lethalPlan.Request.ReceiptId) ==
+                  "bonus-applied" && lethalEngine.Terminal &&
+              lethalEngine.Snapshot().Players[1].Dead &&
+              lethalEngine.ApplyCollectedPvpBonus(lethalPlan.Request.ReceiptId) ==
+                  "bonus-applied",
+            "lethal booby trap ends the match and its box remains replay-safe after termination");
 
         var twoOwners = manifest with {
             Players = [manifest.Players[0], manifest.Players[1] with {PlayerLevel = 5}]

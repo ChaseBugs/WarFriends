@@ -17,6 +17,7 @@ public sealed class BattleCombatContent
     public PvpScoreStreakPolicy PvpScoreStreak { get; private init; } = null!;
     public PvpBonusCatalog PvpBonuses { get; private init; } = null!;
     public PvpBonusSpawnAreaCatalog PvpBonusSpawnAreas { get; private init; } = null!;
+    internal PvpBonusBoobyTrapPolicy PvpBoobyTrap { get; private init; } = null!;
     public RifleBindingCatalog Bindings { get; }
     public WeaponBindingGraphCatalog AllWeaponBindings { get; }
     public PlayerPoseCatalog Poses { get; }
@@ -246,6 +247,9 @@ public sealed class BattleCombatContent
         {PvpBonuses=PvpBonusCatalog.Load(
                 Path.Combine(directory, "recovered-pvp-bonus-catalog.json"),
                 manifest.SceneRevision, manifest.StatsRevision),
+            PvpBoobyTrap=PvpBonusBoobyTrapPolicy.Load(
+                Path.Combine(directory, "recovered-battle-content.json"),
+                manifest.StatsRevision),
             PvpScoreStreak=PvpScoreStreakPolicy.Load(
                 Path.Combine(directory, "recovered-pvp-score-streak-policy.json"),
                 manifest.SceneRevision, manifest.StatsRevision),

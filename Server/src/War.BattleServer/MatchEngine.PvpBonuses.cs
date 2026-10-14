@@ -5,6 +5,7 @@ namespace War.BattleServer;
 public sealed partial class MatchEngine
 {
     private PvpBonusSpawnPlanner? pvpBonusPlanner;
+    private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private readonly HashSet<string> appliedPvpBonusBoxes = new(StringComparer.Ordinal);
 
     internal PvpBonusSpawnPlanner BonusPlanner => pvpBonusPlanner ??
@@ -15,8 +16,10 @@ public sealed partial class MatchEngine
         if (phase != BattlePhase.Waiting || players.Any(player => player.Admitted) ||
             pvpBonusPlanner != null)
             throw new InvalidOperationException("PvP bonus authority must be bound once before admission.");
-        pvpBonusPlanner = new PvpBonusSpawnPlanner(content, manifest,
+        var planner = new PvpBonusSpawnPlanner(content, manifest,
             manifest.SceneMasterPlayerId ?? throw new InvalidDataException("Missing scene master."));
+        pvpBoobyTrap = content.PvpBoobyTrap;
+        pvpBonusPlanner = planner;
     }
 
     /// <summary>
@@ -26,18 +29,39 @@ public sealed partial class MatchEngine
     /// </summary>
     internal string ApplyCollectedPvpBonus(string boxId)
     {
-        if (phase != BattlePhase.Running || pvpBonusPlanner == null)
+        if (pvpBonusPlanner == null)
+            return "bonus-unavailable";
+        if (appliedPvpBonusBoxes.Contains(boxId)) return "bonus-applied";
+        if (phase != BattlePhase.Running)
             return "bonus-unavailable";
         PvpBonusEffectIntent intent;
         try { intent = pvpBonusPlanner.EffectIntent(boxId); }
         catch (InvalidDataException) { return "bonus-unavailable"; }
         catch (InvalidOperationException) { return "bonus-unavailable"; }
-        if (appliedPvpBonusBoxes.Contains(boxId)) return "bonus-applied";
         var recipient = Find(intent.RecipientPlayerId);
         if (recipient?.Admitted != true || recipient.Dead ||
             recipient.Definition.Combat == null || stateRevision == ulong.MaxValue)
             return "bonus-unavailable";
 
+        if (intent.Kind == PvpBonusEffectKind.BoobyTrap)
+        {
+            if (pvpBoobyTrap == null || recipient.DamageRevision == ulong.MaxValue ||
+                stateRevision > ulong.MaxValue - 3 || events.Count > MaximumRetainedEvents - 2)
+                return "bonus-unavailable";
+            var box = pvpBonusPlanner.BoxSnapshot(boxId);
+            float damage;
+            try { damage = pvpBoobyTrap.Damage(recipient.MaximumHealth); }
+            catch (InvalidDataException) { return "bonus-unavailable"; }
+            // KillStreakBonusBoobyTrap sets the earning player's enemy as
+            // damage owner, so the stolen recipient is damaged by that owner.
+            var hit = new ResolvedPlayerDamage(damage, CombatDamageType.Explosion,
+                HasWeapon: false);
+            var result = ApplyResolvedPlayerDamage(box.Plan.Request.OwnerPlayerId,
+                recipient.Definition.PlayerId, hit, combatRandom());
+            if (result?.Applied != true) return "bonus-unavailable";
+            appliedPvpBonusBoxes.Add(boxId);
+            return "bonus-applied";
+        }
         if (intent.Kind == PvpBonusEffectKind.Health)
         {
             if (recipient.DamageRevision == ulong.MaxValue) return "bonus-unavailable";

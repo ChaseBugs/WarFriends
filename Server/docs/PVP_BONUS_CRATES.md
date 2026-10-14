@@ -143,7 +143,7 @@ the host receipt as an opaque box identity until its Client protocol is wired.
 Only a collected host box exposes an effect intent. Its nine prefab indexes map
 to the nine recovered `KillStreakBonus` subclasses in source order; a stolen
 box with a consumed booby trap instead exposes `BoobyTrap` for the attacker.
-This intent does not apply health, ammo, damage, cards or currency.
+The intent alone does not mutate the match or award currency.
 The source `KillStreakBonusKevlar` sets `kevlarStrength` to 0.1 before
 `SetUpKevlar`, separate from the 0.2 Kevlar Up card. `PlayerKevlar` now exposes
 that crate maximum. `KillStreakBonusAddAmmo` adds each used weapon's clip size
@@ -152,9 +152,13 @@ arithmetic before a host mutation. An explicitly configured `MatchEngine` can
 now apply collected Health, Kevlar and ammo intents to its admitted player
 state once per box, rejecting invalid arithmetic before any slot changes.
 Health uses `PlayerDamage.Resolve` with negative Basic damage, so its recovered
-OnDamage dodge/immortality/tutorial gates remain in the path. The normal Worker
-does not configure this source view or route box collision/death yet; other
-effects remain closed.
+OnDamage dodge/immortality/tutorial gates remain in the path. The recovered
+`CardConstants.BoobyTrapDamage` row is 0.15 of the recipient's maximum health;
+the pinned combat sheet validates this value at load. A stolen trapped box now
+applies that Explosion damage through the existing player damage and terminal
+paths. A lethal result ends the match, while replay of the same box stays
+idempotent after termination. The normal Worker does not configure this source
+view or route box collision/death yet; other effects remain closed.
 
 ## Collection contract to implement next
 
