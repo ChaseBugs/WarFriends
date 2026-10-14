@@ -107,6 +107,15 @@ internal static class PvpBonusProgressCoordinatorTests
                   PvpPlayerDamageOwner.Player, CombatDamageType.Poison, false, 1f) == null &&
               fullHitScore.ScoreSnapshot("local").Score == 6,
             "failed score preparation leaves hit receipt free for corrected host evidence");
+        using var stagedHit = Create();
+        var candidateHit = stagedHit.PrepareConfirmedPlayerDamageCopy("local", "opponent",
+            Id(1014), PvpPlayerDamageOwner.Player, CombatDamageType.Shot,
+            victimWalking: false, confirmedMultiplier: 1f, out var stagedResult);
+        Check(stagedResult?.Score.Points == 6 &&
+              stagedHit.ScoreSnapshot("local").Score == 0 &&
+              stagedHit.Snapshot("local").Progress == 0 &&
+              candidateHit.ScoreSnapshot("local").Score == 6,
+            "host can stage score and streak before publishing an accepted damage mutation");
         try { ((IDictionary<int, int>)localScore.Counts)[0x10] = 0;
             throw new Exception("Published counts were mutable."); }
         catch (NotSupportedException) { checks++; }
@@ -197,6 +206,10 @@ internal static class PvpBonusProgressCoordinatorTests
         };
         using var eligibleView = PvpBonusProgressCoordinator.CreateForOnlineManifest(content, ranked, firstId);
         using var ineligibleView = PvpBonusProgressCoordinator.CreateForOnlineManifest(content, ranked, secondId);
+        using var namedView = PvpBonusProgressCoordinator.CreateForOnlineManifest(
+            content, ranked with {MatchId = "bazooka-decoy-blast"}, firstId);
+        Check(namedView.ScoreSnapshot(firstId).Score == 0,
+            "source progress accepts a signed named match ID used by normal Worker matches");
         ThreeKills(eligibleView, firstId, 60);
         ThreeKills(ineligibleView, secondId, 70);
         Check(eligibleView.AdvanceFrame(1, 0f, true).Players[0].Streak.BonusRequested &&

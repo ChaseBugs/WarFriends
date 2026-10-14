@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using War.Protocol;
 
 namespace War.BattleServer;
@@ -5,11 +8,22 @@ namespace War.BattleServer;
 public sealed partial class MatchEngine
 {
     private PvpBonusSpawnPlanner? pvpBonusPlanner;
+    private PvpBonusProgressCoordinator? pvpBonusProgress;
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private readonly HashSet<string> appliedPvpBonusBoxes = new(StringComparer.Ordinal);
 
     internal PvpBonusSpawnPlanner BonusPlanner => pvpBonusPlanner ??
         throw new InvalidOperationException("PvP bonus authority is not configured.");
+    internal PvpBonusProgressCoordinator BonusProgress => pvpBonusProgress ??
+        throw new InvalidOperationException("PvP bonus progress is not configured.");
+
+    private string PvpPlayerBulletHitReceiptId(ulong projectileKey, string victimId)
+    {
+        string identity = "pvp-player-hit/v1\n" + manifest.MatchId + "\n" +
+            projectileKey.ToString(CultureInfo.InvariantCulture) + "\n" + victimId;
+        byte[] digest = SHA256.HashData(Encoding.UTF8.GetBytes(identity));
+        return Convert.ToHexStringLower(digest)[..32];
+    }
 
     internal void ConfigurePvpBonuses(BattleCombatContent content)
     {
@@ -18,8 +32,11 @@ public sealed partial class MatchEngine
             throw new InvalidOperationException("PvP bonus authority must be bound once before admission.");
         var planner = new PvpBonusSpawnPlanner(content, manifest,
             manifest.SceneMasterPlayerId ?? throw new InvalidDataException("Missing scene master."));
+        var progress = PvpBonusProgressCoordinator.CreateForOnlineManifest(content,
+            manifest, manifest.SceneMasterPlayerId);
         pvpBoobyTrap = content.PvpBoobyTrap;
         pvpBonusPlanner = planner;
+        pvpBonusProgress = progress;
     }
 
     /// <summary>

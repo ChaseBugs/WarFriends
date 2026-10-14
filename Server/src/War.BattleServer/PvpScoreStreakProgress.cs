@@ -41,8 +41,8 @@ public sealed class PvpScoreStreakProgress
         if (!Guid.TryParseExact(receiptId, "N", out _) || receiptId != receiptId.ToLowerInvariant())
             throw new InvalidDataException("Invalid confirmed progress receipt identity.");
         catalog.PointsForConfirmedFlags(flags);
-        // These are the normal, CRATEBLOCKER and STREAKBOOST values bound in
-        // MainScene. The caller must resolve effect ownership/expiry on the host.
+        // MainScene serializes CRATEBLOCKER as zero, overriding its C# default
+        // of 0.8; STREAKBOOST is 1.25. The caller must resolve active effects.
         if (confirmedMultiplier is not (0f or 1f or 1.25f))
             throw new ArgumentOutOfRangeException(nameof(confirmedMultiplier));
         int multiplierBits = BitConverter.SingleToInt32Bits(confirmedMultiplier);

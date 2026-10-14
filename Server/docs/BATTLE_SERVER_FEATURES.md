@@ -27,8 +27,12 @@ The source player-damage callback now has a host-only flag classifier for
 `ArmyPlayerHit`. Poison and Immortal are excluded; Flame stays closed until
 its timer throttle is verified. The source-view coordinator now publishes
 classified damage, score and streak gain under one receipt, including silent
-receipts for excluded damage. MatchEngine damage callbacks remain unbound to
-this transition.
+receipts for excluded damage. Normal player-owned bullet impact now stages
+this score transition before damage publication, with a deterministic receipt
+bound to match, projectile and victim. Army-owned hits, death/combo flags,
+card multiplier lifetimes, frame advancement and actual crate issuance remain
+open. MainScene's serialized `CRATEBLOCKER` value is zero despite its C# class
+default of 0.8.
 The online crate gate now derives from the pinned Client `dropCreates`,
 `isNoob`, level display conversion and Constants row four. The two rank
 comparisons are intentionally different, and the policy rejects rank indexes
@@ -62,9 +66,9 @@ signed match has a source-view scene master and both player levels. MatchEngine
 applies Health, Kevlar, ammo and the source-pinned 15%-maximum-health
 booby-trap Explosion once to its player
 snapshot. Lethal traps follow normal match termination and remain replay-safe.
-Source-view progression, box physics, Client events and
+Source-view frame progression, box physics, Client events and
 the remaining effects remain open.
-Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
+Remaining MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, remaining effects, Backend rewards
 and Unity projection remain unbound.
 

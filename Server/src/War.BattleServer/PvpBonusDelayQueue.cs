@@ -137,7 +137,12 @@ public sealed class PvpBonusDelayQueue : IDisposable
 
     internal static void ValidateScope(string matchId, string ownerPlayerId)
     {
-        ValidateGuid(matchId);
+        // MatchManifest accepts operator-generated safe IDs as well as GUIDs.
+        // Only receipt IDs are required to be canonical GUIDs.
+        if (string.IsNullOrEmpty(matchId) || matchId.Length > 64 ||
+            matchId.Any(character => !char.IsAsciiLetterOrDigit(character) &&
+                character is not ('_' or '-')))
+            throw new InvalidDataException("Invalid confirmed bonus match identity.");
         if (string.IsNullOrWhiteSpace(ownerPlayerId) || ownerPlayerId.Length > 128 ||
             ownerPlayerId.Any(char.IsControl) || char.IsWhiteSpace(ownerPlayerId[0]) ||
             char.IsWhiteSpace(ownerPlayerId[^1]))

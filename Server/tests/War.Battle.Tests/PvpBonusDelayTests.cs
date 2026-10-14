@@ -26,6 +26,19 @@ internal static class PvpBonusDelayTests
             "oracle pins engine, GenerateNewBonus and original coroutine helper");
         Check(reference.RootElement.GetProperty("cases").GetArrayLength() == 8,
             "oracle covers speed, pause, end, ordering and manager destruction");
+        using (var namedMatch = new PvpBonusDelayQueue())
+        {
+            Check(namedMatch.ScheduleConfirmedBonus(Id(90), "bazooka-decoy-blast",
+                      "owner-1", 1, 1).MatchId == "bazooka-decoy-blast",
+                "bonus scope accepts the same safe named match IDs as MatchManifest");
+            foreach (string invalidMatch in new[] {"", "bad/id", new string('a', 65)})
+            {
+                try { namedMatch.ScheduleConfirmedBonus(Id(91), invalidMatch,
+                        "owner-1", 1, 1);
+                    throw new Exception("Malformed named bonus match was accepted."); }
+                catch (InvalidDataException) { checks++; }
+            }
+        }
         foreach (var sourceCase in reference.RootElement.GetProperty("cases").EnumerateArray())
         {
             string name = sourceCase.GetProperty("name").GetString()!;

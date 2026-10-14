@@ -1900,9 +1900,12 @@ public sealed partial class MatchEngine : IMatchRuntime
                 {
                     ApplyResolvedPlayerDamage(impact.OwnerId, impact.Hit.PlayerId,
                         pair.Value.Damage with { PartWeight = impact.Hit.PartWeight }, damageRoll!(),true,
-                        impact.Hit.SourceDestroyable);
+                        impact.Hit.SourceDestroyable,
+                        pvpBonusProgress == null ? null :
+                            PvpPlayerBulletHitReceiptId(pair.Key, impact.Hit.PlayerId));
                 }
                 catch (InvalidDataException) { End("invalid-combat-authority", "", false); }
+                catch (InvalidOperationException) { End("pvp-score-backpressure", "", false); }
                 if (Terminal) break;
             }
         }
@@ -2660,7 +2663,8 @@ public sealed partial class MatchEngine : IMatchRuntime
     // Only the host's projectile/hitbox simulation may call this. It is
     // deliberately absent from MatchCommand and cannot be used as an RPC relay.
     internal PlayerDamageResult? ApplyResolvedPlayerDamage(string attackerId, string victimId,
-        ResolvedPlayerDamage hit, float randomRoll,bool confirmedProjectileImpact=false,bool sourcePlayerBullet=false)
+        ResolvedPlayerDamage hit, float randomRoll,bool confirmedProjectileImpact=false,
+        bool sourcePlayerBullet=false,string? pvpPlayerDamageReceiptId=null)
     {
         if (phase != BattlePhase.Running) return null;
         var attacker = Find(attackerId);
@@ -2676,6 +2680,16 @@ public sealed partial class MatchEngine : IMatchRuntime
         var absorbed = PlayerKevlar.Absorb(result, victim.KevlarHealth,
             victim.KevlarMaximum, victim.MaximumHealth, combat.Immortal);
         result = absorbed.Player;
+        PvpBonusProgressCoordinator? preparedProgress = null;
+        if (pvpPlayerDamageReceiptId != null)
+        {
+            if (pvpBonusProgress == null || !confirmedProjectileImpact)
+                throw new InvalidDataException("PvP hit receipt lacks confirmed player projectile authority.");
+            preparedProgress = pvpBonusProgress.PrepareConfirmedPlayerDamageCopy(
+                attackerId, victimId, pvpPlayerDamageReceiptId,
+                PvpPlayerDamageOwner.Player, result.Type, victim.Route != null,
+                confirmedMultiplier: 1f, out _);
+        }
         if (confirmedProjectileImpact && attacker != victim && attacker.Definition.Fraction != victim.Definition.Fraction)
         {
             // Only this call site follows a one-shot flight impact. Direct
@@ -2688,6 +2702,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         victim.Health = result.Health;
         victim.KevlarHealth = absorbed.RemainingKevlar;
         victim.Dead = result.Dead;
+        if (preparedProgress != null) pvpBonusProgress = preparedProgress;
         UpdateDronePlayerTarget(victim);
         victim.DamageRevision++;
         stateRevision++;
