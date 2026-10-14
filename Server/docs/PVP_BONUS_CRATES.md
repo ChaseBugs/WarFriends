@@ -184,8 +184,11 @@ updates, retaining matured requests for a later host-issued box. It skips
 replayed ticks and stages the progress copy before its bounded request queue.
 The host can now issue the oldest matured request through the pinned selection
 and spawn-area planner; a rejected draw keeps it queued, while an accepted
-plan registers exactly one box. Automatic issuance awaits source mode flags
-and live gold/ammo analytics in the trusted match allocation.
+plan registers exactly one box. `MatchManifest.PvpBonusMode` now accepts only
+ordinary, War Arena or friendly DeathMatch from the trusted manifest, and an
+issue rejects mismatched mode flags before selection. Existing manifests may
+omit it; those matches cannot issue a matured box. Automatic issuance still
+awaits Backend mode projection and live gold/ammo analytics.
 Other army-owned damage, AI death/combo flags, verified walking state parity,
 card multiplier lifetimes, Client-visible crate spawning and effect delivery
 remain open.

@@ -56,6 +56,9 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
     public int? MissionIndex { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public string? SceneMasterPlayerId { get; init; }
+    // Backend/operator-owned source game type for PvP bonus selection.
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public string? PvpBonusMode { get; init; }
     // Optional Backend-owned selection projection, consumed before admission.
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public BattleAllocationProjection[]? Allocations { get; init; }
@@ -75,6 +78,9 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
     public const string BazookaCombatMode = "unscored-bazooka-combat";
     public const string GrenadeCombatMode = "unscored-grenade-combat";
     public const string CoopMissionMode = "unscored-coop-mission";
+    public const string OrdinaryPvpBonusMode = "ordinary";
+    public const string WarArenaPvpBonusMode = "war-arena";
+    public const string FriendlyDeathMatchPvpBonusMode = "friendly-deathmatch";
     private static readonly JsonSerializerOptions Json = new() { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
 
     public static MatchManifest Read(string path)
@@ -231,6 +237,11 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
                !ids.Contains(m.SceneMasterPlayerId) || m.Players.Any(p=>!p.PlayerLevel.HasValue || p.Combat==null))
                 throw new InvalidDataException("Scene-master barrel authority requires both signed levels and a live roster owner.");
         }
+        if (m.PvpBonusMode != null &&
+            (m.PvpBonusMode is not (OrdinaryPvpBonusMode or WarArenaPvpBonusMode or
+                FriendlyDeathMatchPvpBonusMode) ||
+             m.Mode is PrototypeMode or CoopMissionMode || m.SceneMasterPlayerId == null))
+            throw new InvalidDataException("PvP bonus mode requires a recognized online source view.");
         if (m.Allocations is { } allocations)
         {
             if (allocations.Length != m.Players.Length || allocations.Select(x => x.PlayerId).Distinct(StringComparer.Ordinal).Count() != allocations.Length)

@@ -36,8 +36,10 @@ now share that staged army-hit transition. Running MatchEngine advances the
 source streak and delay clocks once per accepted host update and retains
 matured requests without replay duplication. A host-only FIFO transition now
 uses the pinned selection and spawn-area planner to register one box, retaining
-the request when a draw is rejected. Automatic selection still needs trusted
-War Arena/friendly mode and live analytics in the allocation contract. Other
+the request when a draw is rejected. The signed manifest now accepts only
+ordinary, War Arena or friendly DeathMatch bonus modes; a mismatched host mode
+leaves its request queued. Automatic selection still needs Backend mode
+projection and live analytics. Other
 army-owned hits, AI death/combo flags, card multiplier lifetimes, Client-visible
 crate spawning and effect delivery remain open.
 MainScene's serialized `CRATEBLOCKER` value is zero despite its C# class

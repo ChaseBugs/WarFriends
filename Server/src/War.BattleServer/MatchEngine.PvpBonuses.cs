@@ -35,6 +35,13 @@ public sealed partial class MatchEngine
         if (phase != BattlePhase.Running || pvpBonusPlanner == null ||
             maturedPvpBonuses.Count == 0)
             return null;
+        if (manifest.PvpBonusMode == null)
+            throw new InvalidOperationException("Match lacks a trusted PvP bonus mode.");
+        bool isWarArena = manifest.PvpBonusMode == MatchManifest.WarArenaPvpBonusMode;
+        bool isFriendly = manifest.PvpBonusMode == MatchManifest.FriendlyDeathMatchPvpBonusMode;
+        if (context.IsWarArena != isWarArena ||
+            context.IsFriendlyDeathMatch != isFriendly)
+            throw new InvalidDataException("Bonus selection mode differs from the signed match.");
         var matured = maturedPvpBonuses[0];
         var plan = pvpBonusPlanner.PlanMatured(matured.Frame, matured.Index,
             context, draw);

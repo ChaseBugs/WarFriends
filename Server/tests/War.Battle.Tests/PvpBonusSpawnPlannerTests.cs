@@ -21,6 +21,16 @@ internal static class PvpBonusSpawnPlannerTests
             Players = [template.Players[0] with {PlayerLevel = 8},
                 template.Players[1] with {PlayerLevel = 8}]
         };
+        try
+        {
+            MatchManifest.Validate(manifest with {PvpBonusMode = "war arena"});
+            throw new Exception("Unknown bonus mode entered a signed manifest.");
+        }
+        catch (InvalidDataException) { checks++; }
+        Check(MatchManifest.Validate(manifest with {
+                  PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode
+              }).PvpBonusMode == MatchManifest.OrdinaryPvpBonusMode,
+            "ordinary bonus mode survives signed manifest validation");
         using var progress = PvpBonusProgressCoordinator.CreateForOnlineManifest(content, manifest, localId);
         var planner = new PvpBonusSpawnPlanner(content, manifest, localId);
         var context = new PvpBonusSpawnContext(false, false, 0, false);
@@ -204,7 +214,10 @@ internal static class PvpBonusSpawnPlannerTests
               projectileEngine.BonusProgress.Snapshot(localId).Progress == 7.5f &&
               projectileEngine.Snapshot().Players[1].Health == 990f,
             "host army projectile receipt publishes source army score and player damage");
-        var clockEngine = new MatchEngine(manifest, map, content,
+        var clockManifest = manifest with {
+            PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode
+        };
+        var clockEngine = new MatchEngine(clockManifest, map, content,
             combatRandom: () => 1f);
         foreach (var player in manifest.Players) clockEngine.Admit(player.PlayerId);
         foreach (var player in manifest.Players)
@@ -230,6 +243,15 @@ internal static class PvpBonusSpawnPlannerTests
         Check(clockEngine.MaturedBonusRequests.SequenceEqual(maturedInMatch),
             "replaying one match tick does not mature or duplicate a bonus request");
         clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(750), localId, 6);
+        try
+        {
+            clockEngine.IssueNextMaturedBonus(context with {IsWarArena = true}, draw);
+            throw new Exception("Untrusted Arena mode selected an ordinary PvP box.");
+        }
+        catch (InvalidDataException) { checks++; }
+        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
+              clockEngine.BonusPlanner.ActiveBoxCount == 0,
+            "a mode mismatch cannot consume the signed match's matured request");
         try
         {
             clockEngine.IssueNextMaturedBonus(context,
