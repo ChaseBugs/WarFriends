@@ -138,7 +138,7 @@ returns the original candidate, and a second claimant is rejected. A
 confirmed booby-trap card arms the earning fraction and is consumed only when
 an opposing recipient steals one of its boxes. Collection is still a candidate:
 there is no box physics solver, live MatchEngine callback, Client event,
-effect execution, or Backend currency/item grant yet. The replacement uses
+automatic effect dispatch, or Backend currency/item grant yet. The replacement uses
 the host receipt as an opaque box identity until its Client protocol is wired.
 Only a collected host box exposes an effect intent. Its nine prefab indexes map
 to the nine recovered `KillStreakBonus` subclasses in source order; a stolen
@@ -148,17 +148,20 @@ The source `KillStreakBonusKevlar` sets `kevlarStrength` to 0.1 before
 `SetUpKevlar`, separate from the 0.2 Kevlar Up card. `PlayerKevlar` now exposes
 that crate maximum. `KillStreakBonusAddAmmo` adds each used weapon's clip size
 to its reserve without a setter cap; `PvpBonusAmmoPolicy` validates that
-arithmetic before a host mutation. An explicitly configured `MatchEngine` can
-now apply collected Health, Kevlar and ammo intents to its admitted player
-state once per box, rejecting invalid arithmetic before any slot changes.
+arithmetic before a host mutation. A source-view `MatchEngine` now configures
+its crate registry during construction from the signed scene master and both
+player levels. It can apply collected Health, Kevlar and ammo intents to its
+admitted player state once per box, rejecting invalid arithmetic before any
+slot changes.
 Health uses `PlayerDamage.Resolve` with negative Basic damage, so its recovered
 OnDamage dodge/immortality/tutorial gates remain in the path. The recovered
 `CardConstants.BoobyTrapDamage` row is 0.15 of the recipient's maximum health;
 the pinned combat sheet validates this value at load. A stolen trapped box now
 applies that Explosion damage through the existing player damage and terminal
 paths. A lethal result ends the match, while replay of the same box stays
-idempotent after termination. The normal Worker does not configure this source
-view or route box collision/death yet; other effects remain closed.
+idempotent after termination. The normal Worker uses this construction path,
+but does not yet route score/delay maturity, box collision/death or Client
+events; other effects remain closed.
 
 ## Collection contract to implement next
 

@@ -1126,6 +1126,10 @@ public sealed partial class MatchEngine : IMatchRuntime
             {
                 barrels=new BarrelMatchSimulation(map,content.Barrels,content.BarrelPolicy,
                     content.BarrelOverlap,manifest);
+                // The same signed source-view owner and levels also scope the
+                // PvP crate registry. It cannot spawn without host-confirmed
+                // score, delay, collision and damage callbacks.
+                ConfigurePvpBonuses(content);
             }
             if(manifest.Mode==MatchManifest.GrenadeCombatMode)
             {

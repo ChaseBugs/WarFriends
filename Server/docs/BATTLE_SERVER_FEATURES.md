@@ -46,16 +46,19 @@ selection and one-use booby-trap interception on a stolen box. This is a
 collection candidate only; host physics, normal battle events, bonus effects,
 durable rewards and Unity projection are still required.
 Collected boxes now expose one source-indexed effect intent, with a stolen
-booby-trapped box replacing its original effect. No effect is executed yet.
+booby-trapped box replacing its original effect. The intent itself does not
+mutate a match; automatic dispatch is still open.
 The recovered Kevlar crate's 0.1 maximum-health strength and ammo crate's
 one-clip-per-used-weapon reserve addition now have checked host calculations.
-An explicitly configured MatchEngine applies Health, Kevlar, ammo and the
-source-pinned 15%-maximum-health booby-trap Explosion once to its player
+The normal Worker construction path now configures a crate registry when the
+signed match has a source-view scene master and both player levels. MatchEngine
+applies Health, Kevlar, ammo and the source-pinned 15%-maximum-health
+booby-trap Explosion once to its player
 snapshot. Lethal traps follow normal match termination and remain replay-safe.
-Normal Worker setup, source-view progression, box physics, Client events and
+Source-view progression, box physics, Client events and
 the remaining effects remain open.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
-capacity admission, crate selection/spawn/collection, effects, Backend rewards
+capacity admission, crate selection/spawn/collection, remaining effects, Backend rewards
 and Unity projection remain unbound.
 
 Bonus delay now has receipt-protected issuance, scoped owner ordinals and ordered

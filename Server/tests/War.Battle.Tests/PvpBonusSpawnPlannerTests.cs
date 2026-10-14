@@ -152,7 +152,6 @@ internal static class PvpBonusSpawnPlannerTests
             "source upper-endpoint fallthrough preserves history 9 but publishes actual prefab 8");
 
         var engine = new MatchEngine(manifest, map, content, combatRandom: () => 1f);
-        engine.ConfigurePvpBonuses(content);
         engine.Admit(localId);
         engine.Admit(manifest.Players[1].PlayerId);
         foreach (var player in manifest.Players)
@@ -211,7 +210,6 @@ internal static class PvpBonusSpawnPlannerTests
             "stolen trapped crate damages the thief once through the player explosion path");
 
         var lethalEngine = new MatchEngine(manifest, map, content, combatRandom: () => 1f);
-        lethalEngine.ConfigurePvpBonuses(content);
         foreach (var player in manifest.Players) lethalEngine.Admit(player.PlayerId);
         foreach (var player in manifest.Players)
             lethalEngine.Command(player.PlayerId, new MatchCommand {CommandId = 1,
