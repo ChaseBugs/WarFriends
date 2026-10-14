@@ -49,8 +49,10 @@ Four subclasses then change it:
   low ammo. A third low-ammo weapon does not trigger it. `Weapon.hasLowAmmo`
   additionally requires a reloadable weapon and checks total reserve plus clip
   against starting ammunition using the source LowAmmoRatio of 0.1. That
-  ammunition predicate still needs host integration; the catalog receives only
-  an already established first-two condition.
+  predicate now reads the first two signed equipped slots and their live host
+  reserve/clip values. The complete 66-weapon source graph supplies each
+  `reloadable` flag. A caller's conflicting low-ammo assertion cannot select a
+  box; live firing-to-threshold and Unity parity remain to be verified.
 
 `PvpBonusWeightContext` represents a host-established source perspective, not
 packet assertions. Gold's local level/analytics must not be replaced with the

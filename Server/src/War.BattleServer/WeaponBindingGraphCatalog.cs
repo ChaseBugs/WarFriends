@@ -13,7 +13,7 @@ public sealed class WeaponBindingGraphCatalog
     public int Count=>bindings.Count;
     public string Revision { get; }
     public sealed record Binding(string SourceId,int InventoryIndex,string SetupType,string PlayerWeaponType,
-        string WeaponType,int AnimationFamily,string AmmoSetupType,string BulletType,string BulletSource,
+        string WeaponType,int AnimationFamily,bool ReloadableWeapon,string AmmoSetupType,string BulletType,string BulletSource,
         string BulletGuid,long BulletFileId,string BulletRevision,string WeaponPath,string MuzzlePath);
     private WeaponBindingGraphCatalog(Dictionary<string,Binding> bindings,string revision)
     {this.bindings=bindings;Revision=revision;}
@@ -58,7 +58,9 @@ public sealed class WeaponBindingGraphCatalog
                 if(ammo.Length!=1 || components.Length is <3 or >12 || components.Distinct(StringComparer.Ordinal).Count()!=components.Length ||
                    !components.Contains(playerType,StringComparer.Ordinal) || !components.Contains(weaponType,StringComparer.Ordinal) ||
                    !components.Contains(ammo[0],StringComparer.Ordinal))throw new InvalidDataException("Incomplete weapon component binding.");
-                if(!result.TryAdd(id,new(id,index,setup,playerType,weaponType,animation,ammo[0],bulletType,bulletSource,guid,fileId,
+                bool reloadable=row.GetProperty("reloadable").GetBoolean();
+                _=row.GetProperty("infiniteAmmo").GetBoolean();
+                if(!result.TryAdd(id,new(id,index,setup,playerType,weaponType,animation,reloadable,ammo[0],bulletType,bulletSource,guid,fileId,
                     bulletHash,weaponPath,muzzlePath)))throw new InvalidDataException("Duplicate weapon binding.");
                 Add(playerTypes,playerType);Add(weaponTypes,weaponType);
             }

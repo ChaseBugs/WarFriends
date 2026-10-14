@@ -14,6 +14,14 @@ internal static class PvpBonusSpawnPlannerTests
         }
         string Id(int value) => value.ToString("x32");
         var content = BattleCombatContent.Load(Path.Combine(directory, "combat-content-manifest.json"));
+        Check(content.AllWeaponBindings.Get("Google2u.AssaultRifle_AK47").ReloadableWeapon &&
+              !content.AllWeaponBindings.Get("Google2u.LMG_Minigun").ReloadableWeapon,
+            "source weapon graph retains the reloadable flags used by ammo probability");
+        Check(PvpBonusAmmoPolicy.HasLowAmmo(true, 100, 0, 9) &&
+              !PvpBonusAmmoPolicy.HasLowAmmo(true, 100, 0, 10) &&
+              !PvpBonusAmmoPolicy.HasLowAmmo(false, 100, 0, 0) &&
+              !PvpBonusAmmoPolicy.HasLowAmmo(true, 0, 0, 0),
+            "source low-ammo threshold is strict and excludes non-reloadable weapons");
         var template = MatchManifest.Read(Path.Combine(directory, "local-rifle-match-template.json"));
         string localId = template.Players[0].PlayerId;
         var manifest = template with {
@@ -243,6 +251,18 @@ internal static class PvpBonusSpawnPlannerTests
         Check(clockEngine.MaturedBonusRequests.SequenceEqual(maturedInMatch),
             "replaying one match tick does not mature or duplicate a bonus request");
         clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(750), localId, 6);
+        Check(!clockEngine.FirstTwoUsedWeaponsHaveLowAmmo(localId),
+            "full starting ammunition is not a source low-ammo bonus condition");
+        try
+        {
+            clockEngine.IssueNextMaturedBonus(
+                context with {FirstTwoWeaponsHaveLowAmmo = true}, draw);
+            throw new Exception("Caller supplied an unproven low-ammo weight boost.");
+        }
+        catch (InvalidDataException) { checks++; }
+        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
+              clockEngine.BonusPlanner.ActiveBoxCount == 0,
+            "host ammunition mismatch preserves the matured box request");
         try
         {
             clockEngine.IssueNextMaturedBonus(context with {IsWarArena = true}, draw);

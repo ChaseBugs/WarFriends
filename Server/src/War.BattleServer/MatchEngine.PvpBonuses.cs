@@ -10,6 +10,7 @@ public sealed partial class MatchEngine
 {
     private PvpBonusSpawnPlanner? pvpBonusPlanner;
     private PvpBonusProgressCoordinator? pvpBonusProgress;
+    private WeaponBindingGraphCatalog? pvpBonusWeapons;
     private ulong pvpBonusFrameId;
     private sealed record MaturedBonus(PvpBonusProgressFrame Frame, int Index)
     {
@@ -27,6 +28,26 @@ public sealed partial class MatchEngine
         new ReadOnlyCollection<PvpBonusDelayedRequest>(
             maturedPvpBonuses.Select(bonus => bonus.Request).ToArray());
 
+    internal bool FirstTwoUsedWeaponsHaveLowAmmo(string ownerId)
+    {
+        if (pvpBonusWeapons == null)
+            throw new InvalidOperationException("PvP bonus weapon bindings are unavailable.");
+        var owner = Find(ownerId) ??
+            throw new InvalidDataException("PvP bonus owner is outside the match.");
+        var slots = owner.Definition.WeaponSlots ??
+            [new WeaponSlotManifest(0, 0, owner.Definition.Weapon,
+                owner.Definition.WeaponUpgrade ?? 0)];
+        foreach (var slot in slots.Take(2))
+        {
+            var binding = pvpBonusWeapons.Get(slot.Weapon.SourceId);
+            var weapon = owner.Weapons[slot.Slot];
+            if (PvpBonusAmmoPolicy.HasLowAmmo(binding.ReloadableWeapon,
+                slot.Weapon.ReserveAmmo, weapon.Reserve, weapon.Clip))
+                return true;
+        }
+        return false;
+    }
+
     // A host allocation must supply the source game mode and live analytics.
     // Only the oldest matured callback may select and register a box.
     internal PvpBonusSpawnPlan? IssueNextMaturedBonus(
@@ -43,6 +64,9 @@ public sealed partial class MatchEngine
             context.IsFriendlyDeathMatch != isFriendly)
             throw new InvalidDataException("Bonus selection mode differs from the signed match.");
         var matured = maturedPvpBonuses[0];
+        if (context.FirstTwoWeaponsHaveLowAmmo !=
+            FirstTwoUsedWeaponsHaveLowAmmo(matured.Request.OwnerPlayerId))
+            throw new InvalidDataException("Bonus ammo condition differs from host weapon state.");
         var plan = pvpBonusPlanner.PlanMatured(matured.Frame, matured.Index,
             context, draw);
         maturedPvpBonuses.RemoveAt(0);
@@ -100,6 +124,7 @@ public sealed partial class MatchEngine
         var progress = PvpBonusProgressCoordinator.CreateForOnlineManifest(content,
             manifest, manifest.SceneMasterPlayerId);
         pvpBoobyTrap = content.PvpBoobyTrap;
+        pvpBonusWeapons = content.AllWeaponBindings;
         pvpBonusPlanner = planner;
         pvpBonusProgress = progress;
     }
