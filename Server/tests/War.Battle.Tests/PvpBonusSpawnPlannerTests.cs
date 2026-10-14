@@ -229,6 +229,33 @@ internal static class PvpBonusSpawnPlannerTests
         clockEngine.Advance(153);
         Check(clockEngine.MaturedBonusRequests.SequenceEqual(maturedInMatch),
             "replaying one match tick does not mature or duplicate a bonus request");
+        clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(750), localId, 6);
+        try
+        {
+            clockEngine.IssueNextMaturedBonus(context,
+                new PvpBonusSpawnDraw(-1f, 0, Vector3.One));
+            throw new Exception("Rejected box draw consumed the live matured request.");
+        }
+        catch (ArgumentOutOfRangeException) { checks++; }
+        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
+              clockEngine.BonusPlanner.ActiveBoxCount == 0,
+            "invalid host selection leaves the oldest matured request available");
+        var issuedInMatch = clockEngine.IssueNextMaturedBonus(context, draw);
+        Check(issuedInMatch?.Request == maturedInMatch[0] &&
+              issuedInMatch.PrefabIndex == 6 &&
+              clockEngine.MaturedBonusRequests.Count == 0 &&
+              clockEngine.BonusPlanner.ActiveBoxCount == 1 &&
+              clockEngine.IssueNextMaturedBonus(context, draw) == null,
+            "a host-confirmed selection registers one box and consumes its live request once");
+        if (issuedInMatch == null)
+            throw new Exception("Live matured bonus was not issued.");
+        clockEngine.BonusPlanner.ConfirmDestroyed(issuedInMatch.Request.ReceiptId,
+            Id(751), null);
+        Check(clockEngine.ApplyCollectedPvpBonus(issuedInMatch.Request.ReceiptId) ==
+                  "bonus-applied" &&
+              clockEngine.Snapshot().Players[0].KevlarHealth ==
+                  manifest.Players[0].Combat!.MaxHealth * 0.1f,
+            "a box issued from the live streak clock reaches its verified Kevlar effect");
         var enginePlanner = engine.BonusPlanner;
         enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
         var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);

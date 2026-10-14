@@ -182,8 +182,13 @@ player damage; poison follow-up pulses remain excluded.
 MatchEngine now advances source progress and waits on accepted running host
 updates, retaining matured requests for a later host-issued box. It skips
 replayed ticks and stages the progress copy before its bounded request queue.
+The host can now issue the oldest matured request through the pinned selection
+and spawn-area planner; a rejected draw keeps it queued, while an accepted
+plan registers exactly one box. Automatic issuance awaits source mode flags
+and live gold/ammo analytics in the trusted match allocation.
 Other army-owned damage, AI death/combo flags, verified walking state parity,
-card multiplier lifetimes and actual crate issuance remain open.
+card multiplier lifetimes, Client-visible crate spawning and effect delivery
+remain open.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component
 serializes zero; the server retains the scene value.
 

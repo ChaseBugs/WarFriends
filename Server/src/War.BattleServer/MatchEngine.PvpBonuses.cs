@@ -11,7 +11,11 @@ public sealed partial class MatchEngine
     private PvpBonusSpawnPlanner? pvpBonusPlanner;
     private PvpBonusProgressCoordinator? pvpBonusProgress;
     private ulong pvpBonusFrameId;
-    private readonly List<PvpBonusDelayedRequest> maturedPvpBonuses = new();
+    private sealed record MaturedBonus(PvpBonusProgressFrame Frame, int Index)
+    {
+        internal PvpBonusDelayedRequest Request => Frame.MaturedRequests[Index];
+    }
+    private readonly List<MaturedBonus> maturedPvpBonuses = new();
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private readonly HashSet<string> appliedPvpBonusBoxes = new(StringComparer.Ordinal);
 
@@ -20,7 +24,23 @@ public sealed partial class MatchEngine
     internal PvpBonusProgressCoordinator BonusProgress => pvpBonusProgress ??
         throw new InvalidOperationException("PvP bonus progress is not configured.");
     internal IReadOnlyList<PvpBonusDelayedRequest> MaturedBonusRequests =>
-        new ReadOnlyCollection<PvpBonusDelayedRequest>(maturedPvpBonuses.ToArray());
+        new ReadOnlyCollection<PvpBonusDelayedRequest>(
+            maturedPvpBonuses.Select(bonus => bonus.Request).ToArray());
+
+    // A host allocation must supply the source game mode and live analytics.
+    // Only the oldest matured callback may select and register a box.
+    internal PvpBonusSpawnPlan? IssueNextMaturedBonus(
+        PvpBonusSpawnContext context, PvpBonusSpawnDraw draw)
+    {
+        if (phase != BattlePhase.Running || pvpBonusPlanner == null ||
+            maturedPvpBonuses.Count == 0)
+            return null;
+        var matured = maturedPvpBonuses[0];
+        var plan = pvpBonusPlanner.PlanMatured(matured.Frame, matured.Index,
+            context, draw);
+        maturedPvpBonuses.RemoveAt(0);
+        return plan;
+    }
 
     private void AdvancePvpBonusFrame(ulong elapsedTicks, bool justStarted)
     {
@@ -35,7 +55,8 @@ public sealed partial class MatchEngine
             out var frame);
         if (maturedPvpBonuses.Count > 256 - frame.MaturedRequests.Count)
             throw new InvalidOperationException("Unissued PvP bonus capacity exhausted.");
-        maturedPvpBonuses.AddRange(frame.MaturedRequests);
+        for (int index = 0; index < frame.MaturedRequests.Count; index++)
+            maturedPvpBonuses.Add(new MaturedBonus(frame, index));
         pvpBonusProgress = prepared;
         pvpBonusFrameId = nextFrame;
     }
