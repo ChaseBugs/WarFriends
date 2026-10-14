@@ -57,6 +57,7 @@ namespace War.Client
         private static bool SupportedKind(string kind)
         {
             return kind == "grenade" || kind == "grenade-molotov" ||
+                kind == "pvp-bonus-grenade" ||
                 kind == "card-rocket" || kind == "card-rocket-fake" ||
                 kind == "card-grenadier" ||
                 kind == "heavy-turret-bullet" ||

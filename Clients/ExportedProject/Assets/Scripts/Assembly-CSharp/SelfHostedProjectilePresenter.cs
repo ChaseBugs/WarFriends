@@ -78,7 +78,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		HashSet<ulong> present = new HashSet<ulong>();
 		foreach (BattleProjectileState state in snapshot.Projectiles)
 		{
-			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" && state.Kind != "heavy-turret-bullet" &&
+			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" &&
+                state.Kind != "pvp-bonus-grenade" && state.Kind != "heavy-turret-bullet" &&
                 state.Kind != "drone-bullet" && state.Kind != "drone-fake-bullet" &&
                 state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet" &&
                 state.Kind != "assault-helicopter-bullet" && state.Kind != "assault-helicopter-fake-bullet" &&
@@ -199,7 +200,12 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             return;
         }
 		if (item == null || item.Kind != MatchEventKind.Impact ||
-		    (item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner" && item.Reason != "card-rocket" && item.Reason != "card-rocket-fake" && item.Reason != "card-grenadier")) return;
+		    (item.Reason != "grenade" && item.Reason != "grenade-molotov" &&
+             item.Reason != "pvp-bonus-grenade" && item.Reason != "heavy-turret" &&
+             item.Reason != "drone" && item.Reason != "helicopter" &&
+             item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner" &&
+             item.Reason != "card-rocket" && item.Reason != "card-rocket-fake" &&
+             item.Reason != "card-grenadier")) return;
         if (item.Reason == "drone" || item.Reason == "helicopter" || item.Reason == "assault-helicopter")
         {
             Visual droneVisual;
@@ -383,6 +389,15 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             bullet = rocketWeapon == null ? null : rocketWeapon.bulletPrefab.gameObject;
         if (kind == "card-grenadier")
             bullet = grenadierWeapon == null ? null : grenadierWeapon.bulletPrefab.gameObject;
+        if (kind == "pvp-bonus-grenade")
+        {
+            KillStreakManager manager = Singleton<KillStreakManager>.instance;
+            Grenade grenade = manager == null ? null : manager.GetComponent<Grenade>();
+            if (grenade == null || grenade.bulletPrefab == null)
+                throw new System.InvalidOperationException(
+                    "Recovered KillStreak Manager grenade visual is absent.");
+            bullet = grenade.bulletPrefab.gameObject;
+        }
         if (kind == "drone-bullet" || kind == "drone-fake-bullet")
         {
             Drone drone = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone;

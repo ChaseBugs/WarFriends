@@ -139,10 +139,14 @@ internal static class LiveGrenadesBurstUdpTests
 
             IReadOnlyList<MatchEvent> attackerEvents;
             MatchReply attackerState;
+            bool sawHostProjectile = false;
             do
             {
                 await Task.Delay(100, timeout.Token);
                 attackerState = await attacker.PollAsync(timeout.Token);
+                sawHostProjectile |= attackerState.Snapshot.Projectiles.Any(row =>
+                    row.Kind == "pvp-bonus-grenade" &&
+                    row.OwnerPlayerId == attackerId);
                 attackerEvents = await ReadEvents(attacker, timeout.Token);
             }
             while (GrenadeEvents(attackerEvents, MatchEventKind.Impact).Length < 3);
@@ -154,6 +158,8 @@ internal static class LiveGrenadesBurstUdpTests
                   shots.Select(shot => shot.ProjectileId).SequenceEqual(
                       impacts.Select(impact => impact.ProjectileId)),
                 "all three host grenade flights publish matching shots and impacts");
+            Check(sawHostProjectile,
+                "SDK snapshot carries a live host-owned grenade pose for Unity");
             Check(attackerState.Snapshot.Players[1].Health < defenderHealth &&
                   defenderState.Snapshot.Players[1].Health ==
                       attackerState.Snapshot.Players[1].Health,

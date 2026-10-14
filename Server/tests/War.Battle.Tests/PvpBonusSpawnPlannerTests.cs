@@ -901,6 +901,15 @@ internal static class PvpBonusSpawnPlannerTests
             "shield HUD snap is distinct from ordinary cover shot position");
         Check(cardEngine.PendingPvpGrenadeFlights > 0,
             "card burst enters host grenade flight simulation");
+        var visibleCardGrenade = cardEngine.Snapshot().Projectiles.Single(row =>
+            row.Kind == "pvp-bonus-grenade");
+        Check(visibleCardGrenade.OwnerPlayerId == localId &&
+              visibleCardGrenade.ProjectileId > 0 &&
+              new Vector3(visibleCardGrenade.X, visibleCardGrenade.Y,
+                  visibleCardGrenade.Z) ==
+                  content.CardGrenadeOrigins.ForCover(map,
+                      manifest.Players[0].StartCover),
+            "host snapshot publishes the live card grenade visual pose");
         float cardEnemyHealth = cardEngine.Snapshot().Players[1].Health;
         var cardShots = new List<PvpBonusGrenadeDueShot>(
             cardEngine.ReadyPvpGrenadeShots);

@@ -272,7 +272,14 @@ empty enemy shields, retains a request replay receipt, and dispatches each
 due shot into the normal grenade flight/explosion path. A focused match now
 confirms all three flights collide and explode, with opponent health loss.
 Two signed UDP clients now confirm one card spend, safe request replay,
-three matching shot/impact events, and the same opponent health after damage.
+three matching shot/impact events, one live grenade pose in the SDK snapshot,
+and the same opponent health after damage. The Unity projectile presenter now
+copies the recovered KillStreak Manager grenade mesh without its gameplay or
+Photon components, follows the host projectile pose, and plays a medium
+explosion effect on the confirmed impact event. Rendered Play Mode parity is
+still unverified. The current presenter and SDK DLLs compiled in a disposable
+Unity 2018.3.0f2 project containing the Client scripts and Plugins; this was
+a script compilation check without the full scene/assets or Play Mode.
 The normal Unity `CardManager` sends this command and spends the card only
 after an accepted host reply; the portable SDK DLLs were refreshed. The host uses
 the `PlayerPoint` child shield's serialized `hudIndicator.snapTransform`

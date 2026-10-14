@@ -2937,6 +2937,19 @@ public sealed partial class MatchEngine : IMatchRuntime
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
             VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,VelocityZ=x.Value.Flight.Velocity.Z
         }));
+        snapshot.Projectiles.AddRange(pvpGrenadeFlights.OrderBy(pair => pair.Key)
+            .Select(pair => new BattleProjectileState
+            {
+                ProjectileId = pair.Key,
+                OwnerPlayerId = pair.Value.OwnerId,
+                Kind = "pvp-bonus-grenade",
+                X = pair.Value.Position.X,
+                Y = pair.Value.Position.Y,
+                Z = pair.Value.Position.Z,
+                VelocityX = pair.Value.Velocity.X,
+                VelocityY = pair.Value.Velocity.Y,
+                VelocityZ = pair.Value.Velocity.Z
+            }));
         snapshot.Projectiles.AddRange(grenadierFlights.OrderBy(row => row.Key)
             .Select(row =>
             {
