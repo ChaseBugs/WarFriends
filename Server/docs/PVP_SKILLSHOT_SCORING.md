@@ -127,3 +127,41 @@ schedules SpawnBonus after 1.5 seconds. Its probability selection excludes the
 shared last index and uses owner-specific queues. This policy does not implement
 frame precision, bonus selection, crate spawning, or an authoritative game
 clock. Those remain required before score progress can affect live gameplay.
+
+## Source progress state
+
+`PvpScoreStreakProgress` now provides the per-player gain and Update transition.
+It iterates matching score definitions in source order, retaining the float
+assignment boundary after each row. Its arithmetic is compared bit-for-bit to
+an isolated Unity 2018.3 Mono compilation of the original `AddSkillshot` and
+`Update` methods. The fixture covers 13 cases in both local/opponent branches:
+ordinary gain, booster, blocker, no-crate mode, exact/above threshold, decay
+before threshold, large progress, paused game, clamp, fractional arithmetic,
+and subnormal decay preserving the original negative-zero bits. The last case
+required a strict below-zero Clamp comparison instead of Math.Max.
+Only the three Update delta-time reads use a controlled clock; dependency stubs
+record GenerateNewBonus calls without spawning real objects. This is neither
+full Play Mode proof nor original Unity 5.2 Android precision proof.
+
+Confirmed gains have bounded immutable receipts. Repeating an old receipt
+returns the original progress result without restoring it over newer state;
+changed flags or multiplier fail. Public gain accepts only the MainScene values
+zero, one, and 1.25. Effect ownership and expiry must be established by the host
+before calling this method, never inferred from a Client packet.
+
+Frame IDs start at one and must be consecutive. The latest frame can replay
+only with identical delta-time bits and running state, without another decay
+or bonus request. Older/out-of-order frames are rejected. Running frames decay
+first, clamp to zero, then request at most one bonus only above 100. Paused
+frames do neither. Bonus ordinals count requests, not spawned/collected crates;
+no economy or achievement mutation follows from this state.
+The future spawn dispatcher must consume each match/player/bonus ordinal only
+once, since an exact frame replay deliberately returns its original result.
+
+Run `Server/scripts/AuditPvpProgress.ps1` to regenerate
+`unity-pvp-progress-reference.json`; run the Battle executable with
+`--pvp-progress-only` for source comparison and state/replay checks.
+This state is not yet wired into MatchEngine. Full eligible skill-shot
+callbacks, original manager lifetime, authoritative scaled frame clock,
+multiplier card leases/overlap order, the 1.5-second spawn schedule, crate
+selection/ownership/collection, and Unity projection remain required.

@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+PvP progress now has per-player source-ordered gains and decay/clamp/strict
+threshold transitions, compared to 13 isolated original-method Mono cases in
+both local/opponent branches. Gain receipts and consecutive frame replay guard
+against repeated awards/bonus requests. The state is not bound to MatchEngine;
+scaled game-frame timing, complete callbacks, card lease overlap, delayed
+bonus selection/spawn/collection and Unity projection remain open.
+
 PvP score-streak parameters now load as reviewed scene/content-bound policy:
 Restart's effective multiplayer ratio is 0.75 (the serialized 0.075 is
 overwritten), no-crate matches use zero, and MainScene decay is 1.1 per second.
