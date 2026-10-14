@@ -136,6 +136,8 @@ public sealed partial class MatchEngine
         if (Terminal) return;
         ApplyPvpBonusGrenadeDecoys(explosion, stage, owner);
         ApplyPvpBonusGrenadeHeavyTurrets(explosion, stage, owner);
+        ApplyPvpBonusGrenadeRepairDrones(explosion, stage, owner);
+        ApplyPvpBonusGrenadePassengers(explosion, stage, owner);
         ApplyPvpBonusGrenadeGroundVehicles(explosion, stage, owner);
         if (Terminal) return;
         foreach (var victim in players.Where(player => !player.Dead).ToArray())

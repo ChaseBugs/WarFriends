@@ -290,8 +290,10 @@ Decoy and a Heavy Turret through real host flights. Infantry and ground-vehicle
 bodies now use shared Army vitality; a nonlethal Tank blast keeps its vehicle
 registry in sync, and a lethal Assault blast records a direct player-grenade
 kill in terminal evidence. Allied units are excluded by the Manager weapon's
-`friendKill: 0`. Passengers, repair drones, air bodies, shields/barrels, and
-player-hit score credit are still open.
+`friendKill: 0`. Tank passengers and Transporter repair drones now use their
+own host poses, hitboxes, and health pools in the same explosion; deployed-unit
+fixtures exercise both without treating them as vehicle-body damage. Air
+bodies, shields/barrels, and player-hit score credit are still open.
 Unity Rigidbody bounce against other layers and exact Unity Update ordering
 still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*

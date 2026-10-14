@@ -832,7 +832,7 @@ internal static class PvpBonusSpawnPlannerTests
                 Players = manifest.Players.Select(player => player with {
                     EquippedArmyUnitIds = [unitId],
                     ArmyNormalUpgradeIndexes = [0],
-                    ArmySpecialUpgradeIndexes = [-1],
+                    ArmySpecialUpgradeIndexes = [unitId == "ID_UNIT-TRANSPORTER" ? 71 : -1],
                     ArmyEliteUpgradeIndexes = [-1],
                     ArmyHealthFactors = [new ArmyHealthFactors(1, 1)],
                     ArmyDamageScales = [1],
@@ -915,6 +915,49 @@ internal static class PvpBonusSpawnPlannerTests
         BlastEnemyArmy("ID_UNIT-ASSAULT", 680, vehicleBody: false,
             expectKill: true);
         BlastEnemyArmy("ID_UNIT-TANK", 690, vehicleBody: true);
+
+        void BlastEnemyVehiclePart(string unitId, int receiptBase,
+            Func<MatchEngine, ulong, (Vector3 Center, float Health)> selectPart,
+            Func<MatchEngine, ulong, float> remainingHealth)
+        {
+            var (match, currentTick) = BonusArmyMatch(unitId);
+            var vehicleId = match.ArmyEntityBatch(localId, 0, 0).Entities.First().EntityKey;
+            var part = selectPart(match, vehicleId);
+            var planner = match.BonusPlanner;
+            planner.EnqueueConfirmedBonus(Id(receiptBase), localId, 3);
+            var box = planner.PlanMatured(grenadeFrame, 0, context, draw);
+            planner.ConfirmDestroyed(box.Request.ReceiptId,
+                Id(receiptBase + 1), null, part.Center);
+            match.PlanCollectedPvpGrenades(box.Request.ReceiptId);
+            ulong nextTick = currentTick;
+            while (nextTick < 420 && !match.Terminal &&
+                   remainingHealth(match, vehicleId) == part.Health)
+                match.Advance(++nextTick);
+            Check(remainingHealth(match, vehicleId) < part.Health,
+                "host bonus grenade damages the separate " + unitId + " part");
+            float? bodyHealth = match.ArmyHealth(vehicleId);
+            if (bodyHealth != null)
+                Check(Math.Abs(match.Snapshot().Vehicles.Single(value =>
+                    value.EntityId == vehicleId).Health - bodyHealth.Value) < 0.01f,
+                    "vehicle body stays synchronized independently of its damaged part");
+        }
+
+        BlastEnemyVehiclePart("ID_UNIT-TANK", 700,
+            (match, vehicleId) => {
+                var passenger = match.VehiclePassengers(vehicleId).First(value => value.Active);
+                var collider = match.GroundVehicleShotTargets(localId).First(value =>
+                    value.EntityId == vehicleId && value.PassengerRole == passenger.Role);
+                return (collider.Hitbox.Center, passenger.Health);
+            },
+            (match, vehicleId) => match.VehiclePassengers(vehicleId).First().Health);
+        BlastEnemyVehiclePart("ID_UNIT-TRANSPORTER", 710,
+            (match, vehicleId) => {
+                var drone = match.TransporterRepairDrones(vehicleId).First(value => value.Active);
+                var collider = match.GroundVehicleShotTargets(localId).First(value =>
+                    value.EntityId == vehicleId && value.RepairDronePathIndex == drone.PathIndex);
+                return (collider.Hitbox.Center, drone.Health);
+            },
+            (match, vehicleId) => match.TransporterRepairDrones(vehicleId).First().Health);
         try
         {
             engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);
