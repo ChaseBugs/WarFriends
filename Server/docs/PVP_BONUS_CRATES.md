@@ -283,7 +283,11 @@ the quote to current player hitboxes through the recovered 0.7 player-radius
 coefficient and normal health/Kevlar transition. The Manager Grenade's
 `friendKill: 0` prevents damage to its owner and allies. An isolated
 owner-collected box fixture hits an opposing player and preserves owner health.
-Other DestroyableObject recipients and player-hit score credit are still open.
+The same host explosion now groups Decoy and Heavy Turret hitboxes by entity,
+damages each enemy owner once, and excludes friendly owners before applying
+damage. Separate card-deployment fixtures prove the bonus burst damages a
+Decoy and a Heavy Turret through real host flights. Other DestroyableObject
+recipients and player-hit score credit are still open.
 Unity Rigidbody bounce against other layers and exact Unity Update ordering
 still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*
@@ -316,7 +320,7 @@ The host now schedules the planned shots on ordered scaled battle frames. At
 after activation; a long frame still releases only one shot because each
 `WaitForSeconds` starts after its preceding launch. Active bursts and flights
 forbid skipped simulation ticks, and frame replay cannot emit a shot twice.
-Normal collection dispatch, Rigidbody bounce parity, non-player blast damage,
+Normal collection dispatch, Rigidbody bounce parity, remaining non-player blast damage,
 and score credit still need to be connected. The host currently supplies nominal tick
 delta; the unfinished SlowMotion bonus must scale it before claiming slowed
 coroutine parity.

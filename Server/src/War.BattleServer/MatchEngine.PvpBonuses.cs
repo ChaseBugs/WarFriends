@@ -77,7 +77,7 @@ public sealed partial class MatchEngine
         pvpGrenadeExplosions = new ReadOnlyCollection<PvpBonusGrenadeExplosionQuote>(explosions);
         foreach (var explosion in explosions)
         {
-            ApplyPvpBonusGrenadePlayerExplosion(explosion);
+            ApplyPvpBonusGrenadeExplosion(explosion);
             if (Terminal) return;
         }
         foreach (var flight in pvpGrenadeFlights.Values.ToArray())
@@ -120,7 +120,7 @@ public sealed partial class MatchEngine
         pvpGrenadeImpacts = new ReadOnlyCollection<GrenadeFlightImpact>(impacts);
     }
 
-    private void ApplyPvpBonusGrenadePlayerExplosion(
+    private void ApplyPvpBonusGrenadeExplosion(
         PvpBonusGrenadeExplosionQuote explosion)
     {
         if (phase != BattlePhase.Running || tick != explosion.ExplosionTick ||
@@ -132,6 +132,8 @@ public sealed partial class MatchEngine
         bool friendKill = pvpGrenadeCatalog?.GrenadeFriendKill ??
             throw new InvalidDataException("Bonus grenade weapon setup is missing.");
         var stage = explosion.ToExplosionStage();
+        ApplyPvpBonusGrenadeDecoys(explosion, stage, owner);
+        ApplyPvpBonusGrenadeHeavyTurrets(explosion, stage, owner);
         foreach (var victim in players.Where(player => !player.Dead).ToArray())
         {
             float roll = damageRoll();
@@ -151,6 +153,61 @@ public sealed partial class MatchEngine
             ApplyResolvedPlayerDamage(explosion.OwnerId,
                 victim.Definition.PlayerId, damage, roll);
             if (Terminal) return;
+        }
+    }
+
+    private void ApplyPvpBonusGrenadeDecoys(
+        PvpBonusGrenadeExplosionQuote explosion, GrenadeStage stage, Player owner)
+    {
+        if (decoySource == null) return;
+        // DestroyableObject.DoDamage rejects same-fraction weapon damage when
+        // the Manager Grenade's recovered friendKill field is zero.
+        foreach (var collider in DecoyShotTargets(owner))
+        {
+            var decoy = decoys.Snapshot().SingleOrDefault(item =>
+                item.EntityId == collider.EntityId) ??
+                throw new InvalidDataException("Bonus grenade Decoy target disappeared.");
+            var effect = GrenadeExplosion.ResolveArmy(explosion.Position,
+                decoy.Position, [collider.Hitbox], stage);
+            if (effect == null) continue;
+            if (!float.IsFinite(effect.RawDamage) ||
+                effect.RawDamage is <= 0f or > 10_000_000f ||
+                !decoys.TryDamage(decoy.EntityId, effect.RawDamage,
+                    out var changed, out bool destroyed) || changed == null)
+                throw new InvalidDataException("Bonus grenade Decoy damage is invalid.");
+            stateRevision++;
+            if (!destroyed) continue;
+            droneTargets.Disable(DroneDecoyId(decoy.EntityId));
+            Emit(MatchEventKind.DecoyDestroyed, explosion.OwnerId,
+                changed.OwnerPlayerId, decoy.EntityId, changed.Position, 0,
+                "pvp-bonus-grenade");
+        }
+    }
+
+    private void ApplyPvpBonusGrenadeHeavyTurrets(
+        PvpBonusGrenadeExplosionQuote explosion, GrenadeStage stage, Player owner)
+    {
+        if (heavyTurretSource == null) return;
+        var colliders = HeavyTurretShotTargets(owner);
+        foreach (var group in colliders.GroupBy(collider => collider.EntityId)
+                     .OrderBy(group => group.Key))
+        {
+            var turret = heavyTurrets.Snapshot().SingleOrDefault(item =>
+                item.EntityId == group.Key) ??
+                throw new InvalidDataException("Bonus grenade Heavy Turret target disappeared.");
+            var effect = GrenadeExplosion.ResolveArmy(explosion.Position,
+                turret.Position, group.Select(collider => collider.Hitbox).ToArray(), stage);
+            if (effect == null) continue;
+            if (!float.IsFinite(effect.RawDamage) ||
+                effect.RawDamage is <= 0f or > 10_000_000f ||
+                !heavyTurrets.TryDamage(group.Key, effect.RawDamage,
+                    out var changed, out bool destroyed) || changed == null)
+                throw new InvalidDataException("Bonus grenade Heavy Turret damage is invalid.");
+            stateRevision++;
+            Emit(destroyed ? MatchEventKind.HeavyTurretDestroyed :
+                MatchEventKind.HeavyTurretDamaged, explosion.OwnerId,
+                changed.OwnerPlayerId, group.Key, changed.Position,
+                changed.Health, "pvp-bonus-grenade");
         }
     }
 

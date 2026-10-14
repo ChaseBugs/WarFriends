@@ -754,6 +754,77 @@ internal static class PvpBonusSpawnPlannerTests
         Check(damageEngine.Snapshot().Players[1].Health < enemyHealthBefore &&
               damageEngine.Snapshot().Players[0].Health == ownerHealthBefore,
             "host collision applies bonus grenade blast to an enemy, not its owner");
+
+        MatchEngine BonusCardMatch(string cardId)
+        {
+            var cardManifest = manifest with {
+                Players = manifest.Players.Select(player =>
+                    player with {PlayerLevel = 22}).ToArray()
+            };
+            var match = new MatchEngine(cardManifest, map, content,
+                combatRandom: () => 1f);
+            match.ConfigureBattleAllocations([
+                new(localId, [cardId], [], [0], [-1], [-1]),
+                new(enemyId, [cardId], [], [0], [-1], [-1])]);
+            foreach (var player in cardManifest.Players)
+            {
+                match.Admit(player.PlayerId);
+                Check(match.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                    SelectCards = new SelectCardsCommand {CardIds = {cardId}}}).Code ==
+                    "cards-selected", "bonus target card selection uses trusted allocation");
+                match.Command(player.PlayerId, new MatchCommand {CommandId = 2,
+                    Ready = new ReadyCommand {ManifestHash = match.ManifestHash}});
+            }
+            match.Advance(60);
+            return match;
+        }
+
+        var decoyEngine = BonusCardMatch("CardDecoy");
+        Check(decoyEngine.Command(enemyId, new MatchCommand {CommandId = 3,
+            UseDecoy = new UseDecoyCommand {RequestId = Id(660)}}).Code ==
+            "decoy-spawned", "enemy deploys a host-owned Decoy before the bonus blast");
+        var initialDecoy = decoyEngine.Snapshot().Decoys.First();
+        var decoyPosition = new Vector3(initialDecoy.X, initialDecoy.Y, initialDecoy.Z);
+        var decoyPlanner = decoyEngine.BonusPlanner;
+        decoyPlanner.EnqueueConfirmedBonus(Id(661), localId, 3);
+        var decoyBox = decoyPlanner.PlanMatured(grenadeFrame, 0, context, draw);
+        decoyPlanner.ConfirmDestroyed(decoyBox.Request.ReceiptId,
+            Id(662), null, decoyPosition);
+        var decoyBurst = decoyEngine.PlanCollectedPvpGrenades(decoyBox.Request.ReceiptId);
+        Check(decoyBurst.Launches.Any(launch =>
+                launch.TargetId == "decoy:" + initialDecoy.EntityId),
+            "bonus grenade targets the nearby enemy Decoy from host registry");
+        for (ulong nextTick = 61; nextTick <= 180 && !decoyEngine.Terminal;
+             nextTick++)
+            decoyEngine.Advance(nextTick);
+        var remainingDecoy = decoyEngine.Snapshot().Decoys.SingleOrDefault(value =>
+            value.EntityId == initialDecoy.EntityId);
+        Check(remainingDecoy == null || remainingDecoy.Health < initialDecoy.Health,
+            "host bonus grenade explosion damages the enemy Decoy once per blast");
+
+        var turretEngine = BonusCardMatch("CardHeavyTurret");
+        Check(turretEngine.Command(enemyId, new MatchCommand {CommandId = 3,
+            UseHeavyTurret = new UseHeavyTurretCommand {RequestId = Id(670)}}).Code ==
+            "heavy-turret-spawned",
+            "enemy deploys a host-owned Heavy Turret before the bonus blast");
+        var initialTurret = turretEngine.Snapshot().HeavyTurrets.Single();
+        var turretPosition = new Vector3(initialTurret.X, initialTurret.Y, initialTurret.Z);
+        var turretPlanner = turretEngine.BonusPlanner;
+        turretPlanner.EnqueueConfirmedBonus(Id(671), localId, 3);
+        var turretBox = turretPlanner.PlanMatured(grenadeFrame, 0, context, draw);
+        turretPlanner.ConfirmDestroyed(turretBox.Request.ReceiptId,
+            Id(672), null, turretPosition);
+        var turretBurst = turretEngine.PlanCollectedPvpGrenades(turretBox.Request.ReceiptId);
+        Check(turretBurst.Launches.Any(launch =>
+                launch.TargetId == "heavy-turret:" + initialTurret.EntityId),
+            "bonus grenade targets the nearby enemy Heavy Turret");
+        for (ulong nextTick = 61; nextTick <= 180 && !turretEngine.Terminal;
+             nextTick++)
+            turretEngine.Advance(nextTick);
+        var remainingTurret = turretEngine.Snapshot().HeavyTurrets.SingleOrDefault(value =>
+            value.EntityId == initialTurret.EntityId);
+        Check(remainingTurret == null || remainingTurret.Health < initialTurret.Health,
+            "host bonus grenade explosion damages one Heavy Turret across its parts");
         try
         {
             engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);
