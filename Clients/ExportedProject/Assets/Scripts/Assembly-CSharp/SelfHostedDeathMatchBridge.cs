@@ -23,6 +23,10 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private HudScreen hud;
 	private bool localMinigunMotor;
 	private bool otherMinigunMotor;
+	private bool localBoostIcon;
+	private bool otherBoostIcon;
+	private bool localBlockIcon;
+	private bool otherBlockIcon;
 	private float grenadeSwipeStartedAt;
 	private SelfHostedProjectilePresenter projectilePresenter;
 	private SelfHostedDecoyPresenter decoyPresenter;
@@ -288,6 +292,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 				if (player == local) ApplyBazookaTarget(state.BazookaTargeting);
 			}
 		}
+		ApplyScoreCardIndicators(snapshot);
 		if (snapshot.Shields.Count > 0)
 		{
 			if (shieldPresenter == null)
@@ -314,6 +319,57 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 				Singleton<GameController>.instance.mainController.FinishGame();
 			}
 		}
+	}
+
+	private void ApplyScoreCardIndicators(MatchSnapshot snapshot)
+	{
+		if (local == null || other == null || local.playerProperties == null ||
+			other.playerProperties == null) return;
+
+		string localId = local.playerProperties.playerID;
+		string otherId = other.playerProperties.playerID;
+		ApplyScoreCardIcon(local, snapshot, "CardScorestreakBooster", localId,
+			"game-card-ico-streakboost-full", ref localBoostIcon);
+		ApplyScoreCardIcon(other, snapshot, "CardScorestreakBooster", otherId,
+			"game-card-ico-streakboost-full", ref otherBoostIcon);
+		ApplyScoreCardIcon(local, snapshot, "CardScoreStreakKiller", otherId,
+			"game-card-ico-crateblocker", ref localBlockIcon);
+		ApplyScoreCardIcon(other, snapshot, "CardScoreStreakKiller", localId,
+			"game-card-ico-crateblocker", ref otherBlockIcon);
+	}
+
+	private static void ApplyScoreCardIcon(PlayerController player,
+		MatchSnapshot snapshot, string cardId, string ownerId, string iconName,
+		ref bool visible)
+	{
+		CardIconIndicator indicator = player.cardIconIndicator;
+		if (indicator == null || indicator.hudObjectIndicator == null) return;
+
+		float remainingFraction = 0f;
+		if (snapshot.Phase == BattlePhase.Running)
+		{
+			foreach (BattleCardEffectState effect in snapshot.CardEffects)
+			{
+				if (effect.CardId != cardId || effect.OwnerPlayerId != ownerId ||
+					effect.ExpiresTick <= snapshot.ServerTick ||
+					effect.ExpiresTick <= effect.StartedTick) continue;
+				ulong remaining = effect.ExpiresTick - snapshot.ServerTick;
+				ulong duration = effect.ExpiresTick - effect.StartedTick;
+				remainingFraction = Mathf.Max(remainingFraction,
+					Mathf.Clamp01((float)remaining / duration));
+			}
+		}
+
+		bool active = remainingFraction > 0f;
+		if (active != visible)
+		{
+			// The recovered CardIconIndicator.UpdateIndicator sends a Photon RPC.
+			// Both peers already receive this host snapshot, so paint locally.
+			indicator.Show(iconName, active, local: true);
+			visible = active;
+		}
+		if (active)
+			indicator.hudObjectIndicator.SetProgress(iconName, remainingFraction);
 	}
 
 	private static void ApplyWeaponLock(PlayerController player, string playerId, MatchSnapshot snapshot)
@@ -413,6 +469,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 
 	private void OnDestroy()
 	{
+		HideScoreCardIndicators();
 		if (local != null && local.weaponInventory != null)
 			local.weaponInventory.SetSelfHostedWeaponLock(0f);
 		if (other != null && other.weaponInventory != null)
@@ -432,5 +489,19 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (assaultHelicopterPresenter != null) client.ArmyEntitiesReceived -= assaultHelicopterPresenter.Apply;
 		if (local != null && local.playerProperties != null) client.UnbindRifleView(local.playerProperties.playerID);
 		if (other != null && other.playerProperties != null) client.UnbindRifleView(other.playerProperties.playerID);
+	}
+
+	private void HideScoreCardIndicators()
+	{
+		if (local != null && local.cardIconIndicator != null)
+		{
+			if (localBoostIcon) local.cardIconIndicator.Show("game-card-ico-streakboost-full", false, local: true);
+			if (localBlockIcon) local.cardIconIndicator.Show("game-card-ico-crateblocker", false, local: true);
+		}
+		if (other != null && other.cardIconIndicator != null)
+		{
+			if (otherBoostIcon) other.cardIconIndicator.Show("game-card-ico-streakboost-full", false, local: true);
+			if (otherBlockIcon) other.cardIconIndicator.Show("game-card-ico-crateblocker", false, local: true);
+		}
 	}
 }

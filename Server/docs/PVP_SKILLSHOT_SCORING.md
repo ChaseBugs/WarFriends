@@ -159,9 +159,12 @@ two source card IDs. The Worker checks the authenticated owner, signed card
 selection and stock, records a retry-stable request receipt, spends the card,
 and then applies the host-owned multiplier. The normal Unity `CardManager`
 uses this command for both cards during a self-hosted match and does not run
-their Photon gameplay methods. Other skill-shot callback paths and the
-Client's timed card icon still need self-hosted authority/presentation before
-live score-streak gameplay is complete.
+their Photon gameplay methods. `SelfHostedDeathMatchBridge` now paints both
+players' original timed HUD icons from the host's card-effect snapshot using
+local NGUI calls; it never invokes the recovered icon methods that send Photon
+RPCs. This presentation has compiled in a disposable Unity project but still
+needs normal two-Client Play Mode observation. Other eligible skill-shot
+callbacks remain open before live score-streak gameplay is complete.
 
 During a running source Update, decay occurs first and the value is clamped to
 zero. Only `progress > 100` generates a bonus, subtracting 100 once; exactly 100

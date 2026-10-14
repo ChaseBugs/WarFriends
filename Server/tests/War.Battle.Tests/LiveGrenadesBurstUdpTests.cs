@@ -129,6 +129,27 @@ internal static class LiveGrenadesBurstUdpTests
                   block.Code == "score-card-active" &&
                   block.Snapshot.CardActivations == 2,
                 "two authenticated SDK peers activate their own source score cards");
+            var attackerCardView = await attacker.PollAsync(timeout.Token);
+            var defenderCardView = await defender.PollAsync(timeout.Token);
+            var attackerEffects = attackerCardView.Snapshot.CardEffects
+                .Where(effect => effect.CardId is "CardScorestreakBooster" or
+                    "CardScoreStreakKiller")
+                .OrderBy(effect => effect.CardId).ToArray();
+            var defenderEffects = defenderCardView.Snapshot.CardEffects
+                .Where(effect => effect.CardId is "CardScorestreakBooster" or
+                    "CardScoreStreakKiller")
+                .OrderBy(effect => effect.CardId).ToArray();
+            Check(attackerEffects.Length == 2 &&
+                  attackerEffects.SequenceEqual(defenderEffects) &&
+                  attackerEffects.Any(effect =>
+                      effect.CardId == "CardScorestreakBooster" &&
+                      effect.OwnerPlayerId == attackerId &&
+                      effect.ExpiresTick - effect.StartedTick == 1800) &&
+                  attackerEffects.Any(effect =>
+                      effect.CardId == "CardScoreStreakKiller" &&
+                      effect.OwnerPlayerId == defenderId &&
+                      effect.ExpiresTick - effect.StartedTick == 1800),
+                "both HUDs receive the same owner-bound 60-second icon leases");
             var boostReplay = await attacker.UseScoreMultiplierAsync(boostRequest,
                 "STREAKBOOST", timeout.Token);
             var boostConflict = await defender.UseScoreMultiplierAsync(boostRequest,
