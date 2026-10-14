@@ -646,6 +646,17 @@ internal static class PvpBonusSpawnPlannerTests
               changedSetupQuote.DeadRadius == 1.3f &&
               changedSetupQuote.HurtRadius == 2.2f,
             "bonus explosion reads the shared setup after collision, not launch");
+        var friendlyPose = engine.CombatPose(localId).Collision;
+        var friendlyOrigin = friendlyPose.Parts.First(part =>
+            part.Enabled && part.Active).Center;
+        var friendlyBlast = GrenadeExplosion.ResolvePlayer(friendlyOrigin,
+            friendlyPose, friendlyPose.RootPosition,
+            manifest.Players[0].Combat!, 1000f,
+            changedSetupQuote.ToExplosionStage(), false, false,
+            sameFraction: true, self: true, randomRoll: 1f,
+            friendKill: false);
+        Check(friendlyBlast is {Result.Applied: false},
+            "manager grenade's disabled friendKill prevents owner blast damage");
         try
         {
             PvpBonusGrenadeExplosionPolicy.AfterCollision(impactAtChangedSetup,
@@ -709,6 +720,40 @@ internal static class PvpBonusSpawnPlannerTests
                 $"{shot.FrameId}/{shot.Launch.ShotIndex}"))}, " +
             $"active={mostActiveGrenades}, impacts={confirmedGrenadeImpacts}, " +
             $"health={string.Join(',', engine.Snapshot().Players.Select(player => player.Health))}");
+
+        var damageEngine = new MatchEngine(manifest, map, content,
+            combatRandom: () => 1f);
+        foreach (var player in manifest.Players)
+            damageEngine.Admit(player.PlayerId);
+        foreach (var player in manifest.Players)
+            damageEngine.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                Ready = new ReadyCommand {ManifestHash = damageEngine.ManifestHash}});
+        damageEngine.Advance(60);
+        var damagePlanner = damageEngine.BonusPlanner;
+        damagePlanner.EnqueueConfirmedBonus(Id(650), localId, 3);
+        var damageBox = damagePlanner.PlanMatured(grenadeFrame, 0, context, draw);
+        string enemyId = manifest.Players[1].PlayerId;
+        var enemyPose = damageEngine.CombatPose(enemyId).Collision;
+        var blastOrigin = enemyPose.Parts.First(part => part.Enabled && part.Active).Center;
+        damagePlanner.ConfirmDestroyed(damageBox.Request.ReceiptId,
+            Id(651), null, blastOrigin);
+        var damageBurst = damageEngine.PlanCollectedPvpGrenades(
+            damageBox.Request.ReceiptId);
+        Check(damageBurst.Launches.Any(launch =>
+                launch.TargetId == "player:" + enemyId),
+            "owner-collected grenade box selects the nearby opposing player");
+        float enemyHealthBefore = damageEngine.Snapshot().Players[1].Health;
+        float ownerHealthBefore = damageEngine.Snapshot().Players[0].Health;
+        for (ulong nextTick = 61; nextTick <= 180 && !damageEngine.Terminal;
+             nextTick++)
+        {
+            damageEngine.Advance(nextTick);
+            if (damageEngine.Snapshot().Players[1].Health < enemyHealthBefore)
+                break;
+        }
+        Check(damageEngine.Snapshot().Players[1].Health < enemyHealthBefore &&
+              damageEngine.Snapshot().Players[0].Health == ownerHealthBefore,
+            "host collision applies bonus grenade blast to an enemy, not its owner");
         try
         {
             engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);

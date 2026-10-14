@@ -48,7 +48,7 @@ internal static class GrenadeExplosion
 
     internal static GrenadePlayerExplosion? ResolvePlayer(Vector3 origin,PlayerCollisionModel pose,
         Vector3 playerRoot,PlayerCombatManifest victim,float health,GrenadeStage stage,bool shieldBetween,
-        bool overtime,bool sameFraction,bool self,float randomRoll)
+        bool overtime,bool sameFraction,bool self,float randomRoll,bool friendKill=true)
     {
         if(!PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(playerRoot)||pose==null||pose.Role!="gameplay"||
            pose.PoseKind=="serialized-reference-only"||stage==null||stage.HurtRadius<=stage.DeadRadius)
@@ -68,7 +68,7 @@ internal static class GrenadeExplosion
             amount=(stage.MinimumDamage+(stage.ExplosionDamage-stage.MinimumDamage)*(fraction*fraction))*multiplier;
             kind=CombatDamageType.Shiver;
         }
-        var resolved=new ResolvedPlayerDamage(amount,kind,HasWeapon:true,FriendKill:true,
+        var resolved=new ResolvedPlayerDamage(amount,kind,HasWeapon:true,FriendKill:friendKill,
             PlayerCoefficient:stage.PlayerDamageRatio,PlayerOvertimeCoefficient:stage.OvertimePlayerDamageRatio,
             Overtime:overtime);
         return new(selected.Part.SourcePath,kind,amount,

@@ -8,7 +8,13 @@ internal sealed record PvpBonusGrenadeExplosionQuote(
     ulong ProjectileId, string OwnerId, Vector3 Position,
     ulong CollisionTick, ulong ExplosionTick,
     float DirectDamage, float ExplosionDamage, float DeadRadius,
-    float HurtRadius, float PlayerBehindShieldRatio);
+    float HurtRadius, float PlayerBehindShieldRatio)
+{
+    internal GrenadeStage ToExplosionStage() => new(
+        "KillStreakManager/Grenade", 0, 0, 0f,
+        ExplosionDamage, DirectDamage, DeadRadius, HurtRadius,
+        1f, 1f, PlayerBehindShieldRatio);
+}
 
 internal static class PvpBonusGrenadeExplosionPolicy
 {

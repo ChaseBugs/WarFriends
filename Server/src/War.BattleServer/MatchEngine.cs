@@ -1737,6 +1737,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvancePvpGrenadeFlights(); }
             catch (Exception error) when (error is InvalidDataException or InvalidOperationException)
             { End("invalid-pvp-grenade-authority", "", false); return; }
+            if (Terminal) return;
         }
         if(advanced&&phase==BattlePhase.Running&&
            (landMines.Snapshot().Count>0||timedMines.Snapshot().Count>0))

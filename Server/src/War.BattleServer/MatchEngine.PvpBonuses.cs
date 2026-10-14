@@ -64,6 +64,7 @@ public sealed partial class MatchEngine
 
         var impacts = new List<GrenadeFlightImpact>();
         var explosions = new List<PvpBonusGrenadeExplosionQuote>();
+        pvpGrenadeImpacts = Array.Empty<GrenadeFlightImpact>();
         // GrenadeAmmoBase.OnCollisionEnter arms a zero-second fuse. Its Update
         // reads the shared setup later, after this frame's burst mutations.
         foreach (var pending in pvpGrenadePendingExplosions)
@@ -73,6 +74,12 @@ public sealed partial class MatchEngine
                 pvpGrenadeCatalog ??
                     throw new InvalidDataException("Bonus grenade catalog is missing."), tick));
         pvpGrenadePendingExplosions.Clear();
+        pvpGrenadeExplosions = new ReadOnlyCollection<PvpBonusGrenadeExplosionQuote>(explosions);
+        foreach (var explosion in explosions)
+        {
+            ApplyPvpBonusGrenadePlayerExplosion(explosion);
+            if (Terminal) return;
+        }
         foreach (var flight in pvpGrenadeFlights.Values.ToArray())
         {
             var impact = flight.Advance(tick);
@@ -111,7 +118,40 @@ public sealed partial class MatchEngine
                 flight.Id, origin, 0, "pvp-bonus-grenade");
         }
         pvpGrenadeImpacts = new ReadOnlyCollection<GrenadeFlightImpact>(impacts);
-        pvpGrenadeExplosions = new ReadOnlyCollection<PvpBonusGrenadeExplosionQuote>(explosions);
+    }
+
+    private void ApplyPvpBonusGrenadePlayerExplosion(
+        PvpBonusGrenadeExplosionQuote explosion)
+    {
+        if (phase != BattlePhase.Running || tick != explosion.ExplosionTick ||
+            rifleCombat == null || damageRoll == null ||
+            Find(explosion.OwnerId)?.Admitted != true)
+            throw new InvalidDataException("Bonus grenade player damage lacks host authority.");
+
+        var owner = Find(explosion.OwnerId)!;
+        bool friendKill = pvpGrenadeCatalog?.GrenadeFriendKill ??
+            throw new InvalidDataException("Bonus grenade weapon setup is missing.");
+        var stage = explosion.ToExplosionStage();
+        foreach (var victim in players.Where(player => !player.Dead).ToArray())
+        {
+            float roll = damageRoll();
+            var pose = rifleCombat.Pose(victim.Definition.PlayerId).Collision;
+            var effect = GrenadeExplosion.ResolvePlayer(explosion.Position,
+                pose, victim.Position, CombatFor(victim), victim.Health,
+                stage, shieldBetween: false, overtime,
+                owner.Definition.Fraction == victim.Definition.Fraction,
+                owner == victim, roll, friendKill);
+            if (effect?.Result.Applied != true) continue;
+
+            var damage = new ResolvedPlayerDamage(effect.RawDamage, effect.Kind,
+                HasWeapon: true, FriendKill: friendKill,
+                PlayerCoefficient: stage.PlayerDamageRatio,
+                PlayerOvertimeCoefficient: stage.OvertimePlayerDamageRatio,
+                Overtime: overtime);
+            ApplyResolvedPlayerDamage(explosion.OwnerId,
+                victim.Definition.PlayerId, damage, roll);
+            if (Terminal) return;
+        }
     }
 
     private ShotCollision? TracePvpGrenade(string ownerId,
@@ -246,7 +286,7 @@ public sealed partial class MatchEngine
     /// <summary>
     /// Plans a collected grenade crate using the host's current shootable
     /// registries. No Client-declared target or random offset enters this path.
-    /// Projectile creation and damage remain separate, later steps.
+    /// The match tick later launches projectiles and resolves player blasts.
     /// </summary>
     internal PvpBonusGrenadeBurstPlan PlanCollectedPvpGrenades(string boxId)
     {

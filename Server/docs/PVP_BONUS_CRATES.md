@@ -271,15 +271,19 @@ Bonus projectiles now use host ballistic flight, a downward collision trace,
 the shared projectile capacity, and ordered battle ticks. MainScene's
 KillStreak Manager setup supplies a 45-degree throw angle and no distance
 cap; the confirmed collection position is the launch origin. The host emits
-shot and impact evidence, but does not apply explosion damage yet. Its
+shot and impact evidence. Its
 collision trace now uses the exact eight Static/DestroyableObject layers
 checked by `TagsAndLayers` and `GrenadeAmmoBase.OnCollisionEnter`, independent
 of the shooter's bullet mask. A collision arms the source's zero-second fuse;
 the next host tick records an immutable explosion quote using the *current*
 shared setup, including changes made by intervening fallback launches. The
 quote accepts only the source initial pair or one of the 43 reviewed fallback
-pairs until `CardGrenadesBurst` joins this shared state. It is
-still evidence only: no health or destroyable state changes from the quote.
+pairs until `CardGrenadesBurst` joins this shared state. The match now applies
+the quote to current player hitboxes through the recovered 0.7 player-radius
+coefficient and normal health/Kevlar transition. The Manager Grenade's
+`friendKill: 0` prevents damage to its owner and allies. An isolated
+owner-collected box fixture hits an opposing player and preserves owner health.
+Other DestroyableObject recipients and player-hit score credit are still open.
 Unity Rigidbody bounce against other layers and exact Unity Update ordering
 still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*
@@ -289,7 +293,7 @@ null `killStreakBonusBox2` inside its sort comparator, but the original APK
 assembly's iterator IL loads the captured `killStreakBonusBox` parameter in
 both distance calculations. The planner follows the original IL. Equal-distance
 ties retain host registry order as an explicit replacement choice; exact Mono
-sort tie parity remains unverified. This is not live grenade damage or pickup.
+sort tie parity remains unverified. The normal live pickup route is still absent.
 `MatchEngine.PlanCollectedPvpGrenades` now binds the plan to a host-confirmed
 collected Grenades box, its collection position, recipient rank, and signed scene-master
 view. It reads live player, army-root and Decoy targets from the existing
@@ -312,8 +316,8 @@ The host now schedules the planned shots on ordered scaled battle frames. At
 after activation; a long frame still releases only one shot because each
 `WaitForSeconds` starts after its preceding launch. Active bursts and flights
 forbid skipped simulation ticks, and frame replay cannot emit a shot twice.
-Normal collection dispatch, Rigidbody bounce parity and explosion damage
-still need to be connected. The host currently supplies nominal tick
+Normal collection dispatch, Rigidbody bounce parity, non-player blast damage,
+and score credit still need to be connected. The host currently supplies nominal tick
 delta; the unfinished SlowMotion bonus must scale it before claiming slowed
 coroutine parity.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component

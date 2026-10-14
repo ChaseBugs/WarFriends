@@ -18,7 +18,7 @@ public sealed record PvpBonusWeightContext(bool IsWarArena, bool IsFriendlyDeath
 public sealed class PvpBonusCatalog
 {
     private const string ReviewedSha256 =
-        "f6839ae6181e2e7617470995ad0cbe02122456c3ca948c788025427a6d1ab559";
+        "ee973a140c6e9dbd231ff53327dc68aea7e68934607f087420c7d321f8a2cacd";
     private const string ReviewedUnityReferenceSha256 =
         "d632a2a6d80a31453e9e570a95a23874d3e04bb777e811c0984b4c12568fb71f";
     private const string ReviewedSourceCodeSha256 =
@@ -57,6 +57,7 @@ public sealed class PvpBonusCatalog
     public float GrenadeHurtRadius { get; }
     public float GrenadeDeadRadius { get; }
     public float GrenadePlayerBehindShieldRatio { get; }
+    public bool GrenadeFriendKill { get; }
     public int RankCount { get; } = 43;
     private readonly IReadOnlyList<PvpBonusGrenadeDamageOverride> grenadeFallbackDamage;
 
@@ -66,7 +67,7 @@ public sealed class PvpBonusCatalog
         float grenadeInitialDirectDamage, float grenadeInitialExplosionDamage,
         float grenadeThrowAngle, float grenadeThrowDistance, float grenadeFuseSeconds,
         float grenadeHurtRadius, float grenadeDeadRadius,
-        float grenadePlayerBehindShieldRatio,
+        float grenadePlayerBehindShieldRatio, bool grenadeFriendKill,
         IReadOnlyList<PvpBonusGrenadeDamageOverride> grenadeFallbackDamage)
     {
         Rows = new ReadOnlyCollection<PvpBonusSource>(rows);
@@ -84,6 +85,7 @@ public sealed class PvpBonusCatalog
         GrenadeHurtRadius = grenadeHurtRadius;
         GrenadeDeadRadius = grenadeDeadRadius;
         GrenadePlayerBehindShieldRatio = grenadePlayerBehindShieldRatio;
+        GrenadeFriendKill = grenadeFriendKill;
         this.grenadeFallbackDamage = grenadeFallbackDamage;
     }
 
@@ -215,6 +217,9 @@ public sealed class PvpBonusCatalog
             rules.GetProperty("grenadeHurtRadius").GetSingle() != 2.2f ||
             rules.GetProperty("grenadeDeadRadius").GetSingle() != 1.3f ||
             rules.GetProperty("grenadePlayerBehindShieldRatio").GetSingle() != 1f ||
+            rules.GetProperty("grenadeFriendKill").GetBoolean() ||
+            !rules.GetProperty("grenadeInfiniteAmmo").GetBoolean() ||
+            rules.GetProperty("grenadeType").GetInt32() != 0 ||
             rules.GetProperty("cardUnlockLevel").GetSingle() != 6f ||
             rules.GetProperty("lowAmmoThreshold").GetSingle() != 0.1f ||
             rules.GetProperty("lowAmmoMultiplier").GetSingle() != 2f ||
@@ -250,7 +255,8 @@ public sealed class PvpBonusCatalog
             rules.GetProperty("grenadeFuseSeconds").GetSingle(),
             rules.GetProperty("grenadeHurtRadius").GetSingle(),
             rules.GetProperty("grenadeDeadRadius").GetSingle(),
-            rules.GetProperty("grenadePlayerBehindShieldRatio").GetSingle(), grenadeDamage);
+            rules.GetProperty("grenadePlayerBehindShieldRatio").GetSingle(),
+            rules.GetProperty("grenadeFriendKill").GetBoolean(), grenadeDamage);
     }
 
     private static IReadOnlyList<PvpBonusGrenadeDamageOverride> ValidateUnityBonusReference(string path)

@@ -60,6 +60,27 @@ def main():
     if (throw_angle, throw_distance, fuse_seconds, hurt_radius,
             dead_radius, behind_shield_ratio) != (45.0, 0.0, 0.0, 2.2, 1.3, 1.0):
         raise ValueError("Shared grenade flight/explosion setup changed")
+    grenade_path = ASSETS / "Scripts/Assembly-CSharp/Grenade.cs"
+    grenade_guid = re.search(
+        r"^guid: (\w+)$", grenade_path.with_suffix(".cs.meta").read_text(), re.M)[1]
+    manager_grenades = [block for block in scene.split("--- !u!")
+                        if block.startswith("114 &") and
+                        "guid: " + grenade_guid + "," in block and
+                        "m_GameObject: {fileID: " + manager_object_id + "}" in block]
+    if len(manager_grenades) != 1:
+        raise ValueError("Expected one KillStreak Manager Grenade component")
+    manager_grenade = manager_grenades[0]
+    def grenade_integer(field):
+        match = re.search(r"^  " + field + r": (\d+)$", manager_grenade, re.M)
+        if not match:
+            raise ValueError("Missing shared Grenade field " + field)
+        return int(match[1])
+    friend_kill = grenade_integer("friendKill")
+    infinite_ammo = grenade_integer("infiniteAmmo")
+    grenade_type = grenade_integer("grenadeTpe")
+    if (friend_kill, infinite_ammo, grenade_type) != (0, 1, 0) or not re.search(
+            r"^  shootOffset: \{x: 0, y: 0, z: 0\}$", manager_grenade, re.M):
+        raise ValueError("Shared Grenade component changed")
     binding = manager_blocks[0].split("  bonusesPrefabs:\n", 1)[1].split("  killStreakBonusBoxPrefab:", 1)[0]
     references = re.findall(r"fileID: (\d+), guid: (\w+)", binding)
     if len(references) != 9 or len(set(references)) != 9:
@@ -127,8 +148,8 @@ def main():
                 "grenadeCodeSha256": digest(grenade_code),
                 "grenadeSetupCodeSha256": {
                     name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes())
-                    for name in ("GrenadeAmmoBase", "GrenadeAmmo", "CardGrenadesBurst",
-                                 "TagsAndLayers")},
+                    for name in ("GrenadeAmmoBase", "GrenadeAmmo", "Grenade",
+                                 "CardGrenadesBurst", "TagsAndLayers")},
                 "probabilityCodeSha256": {name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes()) for name in code_names},
                 "rules": {"goldLowLevelProbability": keyed_value("Google2u.Constants", "GoldCrateLowLevelProbability"),
                           "goldLowLevelMinimum": keyed_value("Google2u.Constants", "GoldCrateLowLevelGoldMin"),
@@ -150,6 +171,9 @@ def main():
                           "grenadeHurtRadius": hurt_radius,
                           "grenadeDeadRadius": dead_radius,
                           "grenadePlayerBehindShieldRatio": behind_shield_ratio,
+                          "grenadeFriendKill": bool(friend_kill),
+                          "grenadeInfiniteAmmo": bool(infinite_ammo),
+                          "grenadeType": grenade_type,
                           "cardUnlockLevel": keyed_value("Google2u.CardConstants", "WarcardsUnlockLevel"),
                           "lowAmmoThreshold": bonus_value("LowAmmoRatio"),
                           "lowAmmoMultiplier": bonus_value("AmmoCrateOnLowAmmoRatio"),
