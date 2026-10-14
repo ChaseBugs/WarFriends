@@ -86,6 +86,15 @@ public sealed partial class MatchEngine
                     "card-sabotage", tick));
                 if (cardVictim != null)
                     sabotageCardVictims.Add(target.EntityId, cardVictim);
+                Emit(MatchEventKind.SabotageKillCredited, owner.Definition.PlayerId,
+                    victim.OwnerPlayerId, 0, new(victim.X, victim.Y, victim.Z), 0, "sabotage");
+                events[^1].SabotageKill = new SabotageKillPresentation
+                {
+                    VictimEntityKey = target.EntityId,
+                    UnitId = victim.UnitId,
+                    RequestId = requestId,
+                    BaseSkillShotFlags = War.Shared.SabotageKillPresentationPolicy.BaseFlags(victim.UnitId)
+                };
             }
             resultCode = "sabotage-applied";
         }

@@ -637,6 +637,7 @@ if(args is ["--sabotage-target-only"])
 
 int checks = 0;
 checks += SabotageTargetPolicyTests.Run();
+checks += SabotageKillCreditTests.Run();
 checks += MatchReplyTransferTests.Run();
 checks += await LiveReplyTransferUdpTests.Run();
 checks += await BackendAllocationClientTests.Run();

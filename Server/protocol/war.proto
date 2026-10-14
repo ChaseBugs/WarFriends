@@ -675,6 +675,15 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_HELICOPTER_FIRED = 40;
   MATCH_EVENT_KIND_ASSAULT_HELICOPTER_FIRED = 41;
   MATCH_EVENT_KIND_SHIELD_REGENERATED = 42;
+  MATCH_EVENT_KIND_SABOTAGE_KILL_CREDITED = 43;
+}
+message SabotageKillPresentation {
+  uint64 victim_entity_key = 1;
+  string unit_id = 2;
+  string request_id = 3;
+  // Recovered Kill/OneHitKill/VehicleDestroyed and optional TankDestroyed.
+  // Combo/revenge/slow-motion flags require separate host authority.
+  uint32 base_skill_shot_flags = 4;
 }
 message DroneShotPresentation {
   uint64 army_entity_key = 1;
@@ -723,6 +732,7 @@ message MatchEvent {
   float parachute_landing_x = 30;
   float parachute_landing_y = 31;
   float parachute_landing_z = 32;
+  SabotageKillPresentation sabotage_kill = 33;
 }
 message MatchEventBatch {
   string match_id = 1; string manifest_hash = 2;

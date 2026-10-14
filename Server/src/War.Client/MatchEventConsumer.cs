@@ -35,6 +35,10 @@ namespace War.Client
                     float.IsNaN(item.X) || float.IsInfinity(item.X) || float.IsNaN(item.Y) ||
                     float.IsInfinity(item.Y) || float.IsNaN(item.Z) || float.IsInfinity(item.Z))
                     throw new InvalidDataException("Invalid or stale match event.");
+                if (item.Kind == MatchEventKind.SabotageKillCredited
+                    ? !War.Shared.SabotageKillPresentationPolicy.Valid(item)
+                    : item.SabotageKill != null)
+                    throw new InvalidDataException("Invalid Sabotage kill attribution.");
                 if (item.Kind == MatchEventKind.AirSpawned || item.Kind == MatchEventKind.AirDespawned ||
                     item.Kind == MatchEventKind.DeployableSpawned || item.Kind == MatchEventKind.DeployableDespawned)
                     if (item.ProjectileId == 0 || !Guid.TryParseExact(item.ActorId, "N", out _))

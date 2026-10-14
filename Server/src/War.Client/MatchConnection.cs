@@ -607,6 +607,10 @@ namespace War.Client
                         throw new InvalidOperationException("Battle host returned unordered events.");
                 foreach(var row in batch.Events)
                 {
+                    if (row.Kind == MatchEventKind.SabotageKillCredited
+                        ? !War.Shared.SabotageKillPresentationPolicy.Valid(row)
+                        : row.SabotageKill != null)
+                        throw new InvalidOperationException("Battle host returned invalid Sabotage kill credit.");
                     bool hasCanopy = row.ParachuteEntityKey != 0;
                     if (hasCanopy && (row.Kind != MatchEventKind.ArmyDied ||
                         row.SourceCardId != "ELITEPARA" ||

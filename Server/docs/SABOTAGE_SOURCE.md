@@ -126,6 +126,17 @@ Use `--sabotage-worker-recovery-live` for fresh native Worker spool recovery.
 
 ## Implementation boundary
 
+The live event stream now carries a dedicated `SabotageKillCredited` event
+after confirmed death. Its actor/target identify attacker and victim owner;
+the typed payload binds victim entity, unit, source request, and recovered
+base skill-shot flags. Both UDP peers verify one identical credit per card
+request, including the card Drone. Portable SDK transport and callback
+consumption reject malformed attribution, unsupported victims, and forged
+flags before consuming the event cursor. Unity's existing `ArmyDied` event
+could not supply this ownership proof by itself. The normal Unity statistics
+callback is still unbound; combo/revenge/slow-motion and full source UI timing
+require their own host evidence before opening that callback.
+
 1. Compare the remaining `SkillShotManager` callbacks, current-weapon kill
    attribution, and durable statistics with the running recovered Client.
    The currently unavailable normal `Turret` type must enter the same source

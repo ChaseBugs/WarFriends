@@ -264,6 +264,16 @@ internal static class LiveSabotageUdpTests
 
             var attackerEvents = await Events(attacker);
             var defenderEvents = await Events(defender);
+            var attackerCredit = attackerEvents.Single(item => item.Kind == MatchEventKind.SabotageKillCredited);
+            var defenderCredit = defenderEvents.Single(item => item.Kind == MatchEventKind.SabotageKillCredited);
+            Check(attackerCredit.Equals(defenderCredit) &&
+                  War.Shared.SabotageKillPresentationPolicy.Valid(attackerCredit) &&
+                  attackerCredit.ActorId == attackerId && attackerCredit.TargetId == defenderId &&
+                  attackerCredit.SabotageKill.VictimEntityKey == target.EntityKey &&
+                  attackerCredit.SabotageKill.RequestId == requestId &&
+                  attackerCredit.SabotageKill.BaseSkillShotFlags ==
+                      (unitId == "ID_UNIT-TANK" ? 0x5210u : 0x1210u),
+                "both UDP peers receive one exact host-owned source kill attribution after retry");
             static bool IsSabotageEvent(MatchEvent gameEvent, string ownerId,
                 string targetUnitId) =>
                 gameEvent.Kind == MatchEventKind.CardEffectApplied &&
