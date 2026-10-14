@@ -1,4 +1,6 @@
 using System.Numerics;
+using System.Security.Cryptography;
+using System.Text.Json;
 using War.BattleServer;
 
 internal static class PvpBonusSpawnAreaTests
@@ -13,6 +15,18 @@ internal static class PvpBonusSpawnAreaTests
         }
 
         var content = BattleCombatContent.Load(Path.Combine(directory, "combat-content-manifest.json"));
+        byte[] unityBytes = File.ReadAllBytes(Path.Combine(directory,
+            "unity-pvp-bonus-spawn-areas-reference.json"));
+        Check(Convert.ToHexStringLower(SHA256.HashData(unityBytes)) ==
+              "9cf97a1caea83b0933240b001ee5a307fbe0a4c4d764ce1d3bcf9fa337e539d6",
+            "Unity collider reference retains its reviewed fixture bytes");
+        using var unityDocument = JsonDocument.Parse(unityBytes);
+        var unityRoot = unityDocument.RootElement;
+        Check(unityRoot.GetProperty("version").GetInt32() == 1 &&
+              unityRoot.GetProperty("unityVersion").GetString() == "2018.3.0f2" &&
+              unityRoot.GetProperty("areas").GetArrayLength() == 10,
+            "isolated Unity probe covers every recovered multiplayer source area");
+        var unityAreas = unityRoot.GetProperty("areas").EnumerateArray().ToArray();
         var expectedColliders = new[] {
             new[] {2111, 2094}, new[] {2745, 2744}, new[] {2166, 2155},
             new[] {2929, 2937}, new[] {2477, 2471}
@@ -25,6 +39,13 @@ internal static class PvpBonusSpawnAreaTests
                 "map spawn areas retain their source list order and collider identities");
             foreach (var area in areas)
             {
+                var original = unityAreas[index * 2 + area.Order];
+                Check(original.GetProperty("source").GetString() == map.Source &&
+                      original.GetProperty("colliderFileId").GetInt32() == area.ColliderFileId &&
+                      original.GetProperty("order").GetInt32() == area.Order &&
+                      Near(area.BoundsMin, original.GetProperty("minimum")) &&
+                      Near(area.BoundsMax, original.GetProperty("maximum")),
+                    "exported source box matches isolated Unity BoxCollider.bounds on all three axes");
                 Check(content.PvpBonusSpawnAreas.Position(map, area.Order, Vector3.Zero) == area.BoundsMin &&
                       content.PvpBonusSpawnAreas.Position(map, area.Order, Vector3.One) == area.BoundsMax,
                     "host draws sample all three BoxCollider.bounds axes, including endpoints");
@@ -61,5 +82,12 @@ internal static class PvpBonusSpawnAreaTests
         }
         finally { File.Delete(altered); }
         return checks;
+    }
+
+    private static bool Near(Vector3 actual, JsonElement reference)
+    {
+        var unity = new Vector3(reference[0].GetSingle(), reference[1].GetSingle(),
+            reference[2].GetSingle());
+        return Vector3.Distance(actual, unity) <= 0.00002f;
     }
 }

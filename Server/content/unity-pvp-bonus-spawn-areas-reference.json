@@ -1,0 +1,156 @@
+{
+    "version": 1,
+    "unityVersion": "2018.3.0f2",
+    "areas": [
+        {
+            "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+            "order": 0,
+            "colliderFileId": 2111,
+            "minimum": [
+                -1.8417212963104249,
+                4.408702850341797,
+                2.156863212585449
+            ],
+            "maximum": [
+                1.3583495616912842,
+                5.408702850341797,
+                3.0710620880126955
+            ]
+        },
+        {
+            "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+            "order": 1,
+            "colliderFileId": 2094,
+            "minimum": [
+                -1.5590953826904297,
+                4.408702850341797,
+                -3.0931363105773927
+            ],
+            "maximum": [
+                1.577352523803711,
+                5.408702850341797,
+                -2.1789374351501467
+            ]
+        },
+        {
+            "source": "Assets/Scenes/City_Multiplayer.unity",
+            "order": 0,
+            "colliderFileId": 2745,
+            "minimum": [
+                -1.2142834663391114,
+                4.390633583068848,
+                0.5445489883422852
+            ],
+            "maximum": [
+                1.327843189239502,
+                5.390633583068848,
+                2.0349302291870119
+            ]
+        },
+        {
+            "source": "Assets/Scenes/City_Multiplayer.unity",
+            "order": 1,
+            "colliderFileId": 2744,
+            "minimum": [
+                -1.1492338180541993,
+                4.390633583068848,
+                -1.7395820617675782
+            ],
+            "maximum": [
+                1.252974510192871,
+                5.390633583068848,
+                -0.3150501251220703
+            ]
+        },
+        {
+            "source": "Assets/Scenes/Desert_Multiplayer.unity",
+            "order": 0,
+            "colliderFileId": 2166,
+            "minimum": [
+                -26.138404846191408,
+                1.99263334274292,
+                -7.6092681884765629
+            ],
+            "maximum": [
+                -22.21343231201172,
+                2.99263334274292,
+                -6.695069313049316
+            ]
+        },
+        {
+            "source": "Assets/Scenes/Desert_Multiplayer.unity",
+            "order": 1,
+            "colliderFileId": 2155,
+            "minimum": [
+                -26.007495880126954,
+                1.99263334274292,
+                -10.46958065032959
+            ],
+            "maximum": [
+                -22.46938705444336,
+                2.99263334274292,
+                -9.55538272857666
+            ]
+        },
+        {
+            "source": "Assets/Scenes/Park_Multiplayer.unity",
+            "order": 0,
+            "colliderFileId": 2929,
+            "minimum": [
+                -2.063404083251953,
+                4.4026336669921879,
+                0.9777318239212036
+            ],
+            "maximum": [
+                1.8615684509277344,
+                5.4026336669921879,
+                1.8919304609298707
+            ]
+        },
+        {
+            "source": "Assets/Scenes/Park_Multiplayer.unity",
+            "order": 1,
+            "colliderFileId": 2937,
+            "minimum": [
+                -1.9324951171875,
+                4.4026336669921879,
+                -1.882581114768982
+            ],
+            "maximum": [
+                1.6056137084960938,
+                5.4026336669921879,
+                -0.9683824777603149
+            ]
+        },
+        {
+            "source": "Assets/Scenes/Snow_Multiplayer.unity",
+            "order": 0,
+            "colliderFileId": 2477,
+            "minimum": [
+                -2.1114540100097658,
+                4.588229656219482,
+                2.462055206298828
+            ],
+            "maximum": [
+                1.8135185241699219,
+                5.588229656219482,
+                3.376254081726074
+            ]
+        },
+        {
+            "source": "Assets/Scenes/Snow_Multiplayer.unity",
+            "order": 1,
+            "colliderFileId": 2471,
+            "minimum": [
+                -1.980544924736023,
+                4.588229656219482,
+                -3.5283284187316896
+            ],
+            "maximum": [
+                1.6953657865524293,
+                5.588229656219482,
+                -2.6141295433044435
+            ]
+        }
+    ]
+}

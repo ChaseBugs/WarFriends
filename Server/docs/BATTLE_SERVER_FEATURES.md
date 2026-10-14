@@ -28,9 +28,10 @@ comparisons are intentionally different, and the policy rejects rank indexes
 outside the recovered 0-42 range. Live source-view allocation remains open.
 All ten original multiplayer box spawn areas are now source-pinned by map
 digest and collider file ID, with their world AABBs loaded at combat-content
-startup. Host area/axis draws can resolve a source position; actual Unity
-`BoxCollider.bounds`, falling box physics, map contact and crate publication
-remain unverified.
+startup. An isolated Unity 2018.3 Editor probe matched all ten actual
+`BoxCollider.bounds` within 0.00002 world units. Host area/axis draws can
+resolve a source position; falling box physics, map contact and crate
+publication remain unverified.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

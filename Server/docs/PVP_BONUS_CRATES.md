@@ -98,9 +98,14 @@ has identity rotation and unit scale, so the exported world AABBs come from
 local BoxCollider bounds plus parent positions. `PvpBonusSpawnAreaCatalog`
 loads this reviewed artifact with the combat package, binds all five map
 hashes, and maps an explicit host area choice plus three unit draws to a world
-position. This is a geometry input, not a live crate spawn or proof of Unity
-physics. Actual Unity `BoxCollider.bounds`, random sampling, fall/contact,
-pool identity, host entity publication, and pickup still need runtime proof.
+position. `AuditPvpBonusSpawnAreas.ps1` rebuilt all ten source transform chains
+and colliders in an isolated Unity 2018.3 Editor project. Each actual Unity
+`BoxCollider.bounds` matched the exported source bounds within 0.00002 world
+units; the raw Unity results are pinned in
+`unity-pvp-bonus-spawn-areas-reference.json` and checked by the focused server
+test. This is a geometry input, not a live crate spawn or proof of falling box
+physics. Random sampling, fall/contact, pool identity, host entity publication,
+and pickup still need runtime proof.
 Regenerate/check with `python Server/tools/extract_pvp_bonus_spawn_areas.py
 --check`; focused server checks use `--pvp-bonus-spawn-areas-only`.
 
