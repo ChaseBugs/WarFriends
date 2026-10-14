@@ -5,6 +5,9 @@ namespace War.BattleServer;
 public sealed record PvpOwnerStreakFrame(string OwnerPlayerId, PvpScoreStreakFrame Streak);
 public sealed record PvpOwnerStreakSnapshot(string OwnerPlayerId, float Progress,
     int BonusesRequested, int GainReceiptCount);
+public sealed record PvpOwnerScoreSnapshot(string OwnerPlayerId, int Score,
+    IReadOnlyDictionary<int, int> Counts, int ReceiptCount);
+public sealed record PvpConfirmedSkillShot(PvpSkillShotScoreReceipt Score, float Progress);
 public sealed record PvpBonusProgressFrame(ulong FrameId,
     IReadOnlyList<PvpOwnerStreakFrame> Players, IReadOnlyList<PvpBonusDelayedRequest> MaturedRequests);
 
@@ -20,6 +23,8 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     private readonly string opponentOwnerId;
     private PvpScoreStreakProgress localProgress;
     private PvpScoreStreakProgress opponentProgress;
+    private PvpSkillShotScoreState localScore;
+    private PvpSkillShotScoreState opponentScore;
     private PvpBonusDelayQueue delays;
     private PvpBonusProgressFrame? lastFrame;
     private int lastDeltaBits;
@@ -28,7 +33,8 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
 
     public PvpBonusProgressCoordinator(PvpSkillShotScoreCatalog scores, PvpScoreStreakPolicy policy,
         string matchId, string localOwnerId, string opponentOwnerId, bool dropsCrates,
-        int maximumPending = 256, int maximumDelayReceipts = 4096)
+        int maximumPending = 256, int maximumDelayReceipts = 4096,
+        int maximumScoreReceipts = 4096, int maximumGainReceipts = 4096)
     {
         PvpBonusDelayQueue.ValidateScope(matchId, localOwnerId);
         PvpBonusDelayQueue.ValidateScope(matchId, opponentOwnerId);
@@ -38,8 +44,10 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         this.localOwnerId = localOwnerId;
         this.opponentOwnerId = opponentOwnerId;
         // ScoreManager.Restart sets one ratio for both AddSkillshot branches.
-        localProgress = new(scores, policy, dropsCrates);
-        opponentProgress = new(scores, policy, dropsCrates);
+        localProgress = new(scores, policy, dropsCrates, maximumGainReceipts);
+        opponentProgress = new(scores, policy, dropsCrates, maximumGainReceipts);
+        localScore = new(scores, maximumScoreReceipts);
+        opponentScore = new(scores, maximumScoreReceipts);
         delays = new(maximumPending, maximumDelayReceipts);
     }
 
@@ -47,11 +55,39 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     public int DelayReceiptCount { get { lock (gate) return delays.ReceiptCount; } }
 
     public float RecordConfirmedSkillShot(string ownerId, string receiptId, int flags, float confirmedMultiplier)
+        => RecordConfirmedSkillShotWithScore(ownerId, receiptId, flags, confirmedMultiplier).Progress;
+
+    public PvpConfirmedSkillShot RecordConfirmedSkillShotWithScore(string ownerId,
+        string receiptId, int flags, float confirmedMultiplier)
     {
         lock (gate)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            return ProgressFor(ownerId).RecordConfirmedSkillShot(receiptId, flags, confirmedMultiplier);
+            var progress = ProgressFor(ownerId);
+            var score = ScoreFor(ownerId);
+            var nextScore = score.PrepareConfirmedSkillShotCopy(receiptId, flags, out var scored);
+            var nextProgress = progress.PrepareConfirmedSkillShotCopy(receiptId, flags,
+                confirmedMultiplier, out float gained);
+            if (ownerId == localOwnerId)
+            {
+                localScore = nextScore;
+                localProgress = nextProgress;
+            }
+            else
+            {
+                opponentScore = nextScore;
+                opponentProgress = nextProgress;
+            }
+            return new(scored, gained);
+        }
+    }
+
+    public PvpOwnerScoreSnapshot ScoreSnapshot(string ownerId)
+    {
+        lock (gate)
+        {
+            var score = ScoreFor(ownerId);
+            return new(ownerId, score.Score, score.Counts, score.ReceiptCount);
         }
     }
 
@@ -116,6 +152,13 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     {
         if (ownerId == localOwnerId) return localProgress;
         if (ownerId == opponentOwnerId) return opponentProgress;
+        throw new InvalidDataException("Skill-shot owner is outside this source view.");
+    }
+
+    private PvpSkillShotScoreState ScoreFor(string ownerId)
+    {
+        if (ownerId == localOwnerId) return localScore;
+        if (ownerId == opponentOwnerId) return opponentScore;
         throw new InvalidDataException("Skill-shot owner is outside this source view.");
     }
 

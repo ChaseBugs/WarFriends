@@ -13,8 +13,10 @@ internal static class PvpBonusProgressCoordinatorTests
         var content = BattleCombatContent.Load(Path.Combine(directory, "combat-content-manifest.json"));
         string Id(int ordinal) => ordinal.ToString("x32");
         string matchId = Id(100);
-        PvpBonusProgressCoordinator Create(bool drops=true, int pending=256, int receipts=4096) =>
-            new(content.PvpScores, content.PvpScoreStreak, matchId, "local", "opponent", drops, pending, receipts);
+        PvpBonusProgressCoordinator Create(bool drops=true, int pending=256, int receipts=4096,
+            int scoreReceipts=4096, int gainReceipts=4096) =>
+            new(content.PvpScores, content.PvpScoreStreak, matchId, "local", "opponent", drops,
+                pending, receipts, scoreReceipts, gainReceipts);
         void ThreeKills(PvpBonusProgressCoordinator state, string owner, int firstReceipt)
         {
             for (int index = 0; index < 3; index++)
@@ -24,6 +26,42 @@ internal static class PvpBonusProgressCoordinatorTests
         using var normal = Create();
         ThreeKills(normal, "local", 1);
         ThreeKills(normal, "opponent", 4);
+        var localScore = normal.ScoreSnapshot("local");
+        Check(localScore.Score == 138 && localScore.ReceiptCount == 3 &&
+              localScore.Counts[0x1000] == 3 && localScore.Counts[0x10] == 3,
+            "confirmed skill shots publish score and source-row counts with progress");
+        var scoreReplay = normal.RecordConfirmedSkillShotWithScore("local", Id(1), 0x1210, 1f);
+        Check(scoreReplay.Score.ScoreAfter == 46 && scoreReplay.Progress == 34.5f &&
+              normal.ScoreSnapshot("local").Score == 138,
+            "one receipt replay returns its original score/progress without recounting");
+        try { normal.RecordConfirmedSkillShot("local", Id(1), 0x1210, 1.25f);
+            throw new Exception("Changed multiplier was accepted on score replay."); }
+        catch (InvalidDataException) { checks++; }
+        Check(normal.ScoreSnapshot("local").Score == 138 && normal.Snapshot("local").Progress == 103.5f,
+            "rejected progress replay does not rewrite score or progress");
+        try { normal.RecordConfirmedSkillShot("local", Id(9), 0x1210, float.NaN);
+            throw new Exception("Invalid multiplier awarded score."); }
+        catch (ArgumentOutOfRangeException) { checks++; }
+        Check(normal.ScoreSnapshot("local").ReceiptCount == 3 && normal.Snapshot("local").GainReceiptCount == 3,
+            "progress validation failure leaves the score ledger unchanged");
+        try { ((IDictionary<int, int>)localScore.Counts)[0x10] = 0;
+            throw new Exception("Published counts were mutable."); }
+        catch (NotSupportedException) { checks++; }
+        using var fullScore = Create(scoreReceipts:1);
+        using var fullGain = Create(gainReceipts:1);
+        foreach (var state in new[] {fullScore, fullGain})
+        {
+            state.RecordConfirmedSkillShot("local", Id(20), 0x1210, 1f);
+            var scoreBefore = state.ScoreSnapshot("local");
+            var progressBefore = state.Snapshot("local");
+            try { state.RecordConfirmedSkillShot("local", Id(21), 0x1210, 1f);
+                throw new Exception("Exhausted score or gain ledger accepted another shot."); }
+            catch (InvalidOperationException) { checks++; }
+            Check(state.ScoreSnapshot("local").Score == scoreBefore.Score &&
+                  state.ScoreSnapshot("local").ReceiptCount == scoreBefore.ReceiptCount &&
+                  state.Snapshot("local") == progressBefore,
+                "either receipt capacity failure leaves the score, counts and progress unchanged");
+        }
         var issued = normal.AdvanceFrame(1, 0f, true);
         Check(issued.Players.Select(player => player.OwnerPlayerId).SequenceEqual(new[] {"local","opponent"}) &&
               issued.Players.All(player => player.Streak is {BonusRequested:true,BonusOrdinal:1,Progress:3.5f}),

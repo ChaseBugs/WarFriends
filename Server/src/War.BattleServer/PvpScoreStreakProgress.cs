@@ -12,7 +12,7 @@ public sealed class PvpScoreStreakProgress
     private readonly PvpScoreStreakPolicy policy;
     private readonly float scoreRatio;
     private readonly int maximumReceipts;
-    private readonly Dictionary<string, SavedGain> receipts = new(StringComparer.Ordinal);
+    private Dictionary<string, SavedGain> receipts = new(StringComparer.Ordinal);
     private sealed record SavedGain(int Flags, int MultiplierBits, float ProgressAfter);
     private ulong lastFrame;
     private int lastDeltaBits;
@@ -103,6 +103,15 @@ public sealed class PvpScoreStreakProgress
         // read-only during preparation; the coordinator serializes all gains.
         var candidate = (PvpScoreStreakProgress)MemberwiseClone();
         result = candidate.AdvanceFrame(frameId, delta, running);
+        return candidate;
+    }
+
+    internal PvpScoreStreakProgress PrepareConfirmedSkillShotCopy(string receiptId,
+        int flags, float multiplier, out float result)
+    {
+        var candidate = (PvpScoreStreakProgress)MemberwiseClone();
+        candidate.receipts = new Dictionary<string, SavedGain>(receipts, StringComparer.Ordinal);
+        result = candidate.RecordConfirmedSkillShot(receiptId, flags, multiplier);
         return candidate;
     }
 

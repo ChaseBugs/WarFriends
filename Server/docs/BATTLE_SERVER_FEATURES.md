@@ -13,6 +13,9 @@ source view. Both use the original single ratio; candidate frame state is
 discarded on either owner's request/capacity failure, preserving thresholds,
 ordinals and existing timer aging. Same-frame maturity can release a pending
 slot for a new zero-age wait, and accepted frame replay cannot mint more issues.
+Confirmed skill-shot score, per-row counts and streak gain now also use one
+receipt and publish together for each owner. Either ledger's validation or
+capacity failure leaves both unchanged; score snapshots copy their counts.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

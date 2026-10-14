@@ -12,12 +12,12 @@ public sealed class PvpSkillShotScoreState
 {
     private readonly PvpSkillShotScoreCatalog catalog;
     private readonly int maximumReceipts;
-    private readonly Dictionary<int, int> counts = new();
-    private readonly Dictionary<string, PvpSkillShotScoreReceipt> receipts = new(StringComparer.Ordinal);
+    private Dictionary<int, int> counts = new();
+    private Dictionary<string, PvpSkillShotScoreReceipt> receipts = new(StringComparer.Ordinal);
 
     public int Score { get; private set; }
     public int ReceiptCount => receipts.Count;
-    public IReadOnlyDictionary<int, int> Counts { get; }
+    public IReadOnlyDictionary<int, int> Counts => new ReadOnlyDictionary<int, int>(new Dictionary<int, int>(counts));
 
     public PvpSkillShotScoreState(PvpSkillShotScoreCatalog catalog, int maximumReceipts = 4096)
     {
@@ -28,7 +28,16 @@ public sealed class PvpSkillShotScoreState
         this.maximumReceipts = maximumReceipts;
         foreach (var row in catalog.Rows)
             counts.Add(row.Flag, 0);
-        Counts = new ReadOnlyDictionary<int, int>(counts);
+    }
+
+    internal PvpSkillShotScoreState PrepareConfirmedSkillShotCopy(string receiptId, int flags,
+        out PvpSkillShotScoreReceipt result)
+    {
+        var candidate = (PvpSkillShotScoreState)MemberwiseClone();
+        candidate.counts = new Dictionary<int, int>(counts);
+        candidate.receipts = new Dictionary<string, PvpSkillShotScoreReceipt>(receipts, StringComparer.Ordinal);
+        result = candidate.RecordConfirmedSkillShot(receiptId, flags);
+        return candidate;
     }
 
     public PvpSkillShotScoreReceipt RecordConfirmedSkillShot(string receiptId, int flags)
