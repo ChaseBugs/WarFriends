@@ -164,3 +164,55 @@ Run `Server/scripts/AuditPvpSelection.ps1` for the Mono fixture and
 draw and capacity checks. Delayed spawning, source-manager perspective, actual
 random sampling, crate contacts, collection, effects and Backend rewards remain
 unbound.
+
+## Coroutine delay state
+
+`PvpBonusDelayQueue` now schedules confirmed request identities over ordered
+host scaled-frame deltas. It excludes the issue frame's delta, waits for 1.5
+scaled seconds, and returns matured requests in issuance order. Zero delta
+pauses the wait. It captures match/owner identity and a consecutive per-owner
+request ordinal, not an early probability snapshot: SpawnBonus evaluates owner,
+probabilities and map availability when its callback actually executes.
+
+Receipt replay does not create another wait. Changed match, owner, ordinal or
+issue frame fails; a new receipt cannot reissue a prior ordinal. Frame replay
+requires identical delta bits and cannot age newly scheduled work twice. Matured
+requests remain receipt-protected. Consumers must deduplicate by request receipt
+before selecting/spawning, because frame replay returns its original ready list.
+The default 256 pending requests and 4,096 issue receipts are explicit host
+safety bounds, not source production limits. Live capacity admission must be
+coordinated with score/progress publication so an exhausted queue cannot consume
+a bonus threshold without retaining its request.
+
+The source was exercised in **isolated Unity 2018.3 Play Mode**, using the exact
+GenerateNewBonus, Core_BaseScript.InvokeAfter/WaitAndCall, and the manager's
+GameEnded handler. A stub records the SpawnBonus callback; pool cleanup is
+recorded rather than executing real crate/scene destruction. The fixture stores
+every observed float frame delta and callback frame. The server replays those
+deltas and matches these eight traces:
+
+| Case | Callback frames after issuance | Observed result |
+| --- | ---: | --- |
+| 30 fps, scale one | 45 | 1.5 scaled seconds |
+| 60 fps, scale one | 90 | 1.5 scaled seconds |
+| 30 fps, scale 0.5 | 90 | Slower game clock |
+| 30 fps, scale two | 23 | First frame after 1.5 scaled seconds |
+| Pause for ten frames | 55 | Paused frames do not advance the wait |
+| GameEnded handler, manager alive, clock running | 45 | Existing pool cleanup does not cancel the wait |
+| Two requests in the same frame | 45 | Both callbacks, in original issuance order |
+| Manager component destroyed after five frames | None | No callback during the remaining observed window |
+
+The original GameEnded handler frees existing boxes, but does not stop the
+coroutine. Other game listeners may still change time scale, unload scenes or
+destroy the manager. Therefore this is not a claim that a normal ended match
+always spawns a late box. Dispose the host queue for actual manager destruction,
+not merely a game-end notification; lifetime/owner/map binding remains required.
+
+Run `Server/scripts/AuditPvpDelay.ps1` for the disposable Play Mode trace and
+`--pvp-delay-only` for frame-by-frame server comparisons and receipt/order/capacity
+checks. The measurement includes absolute engine clock values, so regeneration
+requires reviewing the new trace and its pinned test digest. These experiments
+do not verify the original Unity 5.2 Android runtime, arbitrary long-frame clock
+equivalence, full WarFriends Play Mode, live MatchEngine timing, physics,
+collection, effects or economy. No current code publishes a crate from this
+queue.

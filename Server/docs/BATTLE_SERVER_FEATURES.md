@@ -8,6 +8,14 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+Bonus delay now has receipt-protected issuance, scoped owner ordinals and ordered
+scaled-frame maturity, compared against eight isolated original-coroutine Unity
+Play Mode traces. These cover 30/60 fps, half/double speed, pause, same-frame FIFO,
+game-end cleanup with the manager alive and manager destruction. The issue frame
+is not counted twice. The queue remains unbound to MatchEngine; atomic capacity
+admission with progress, source manager/owner/map lifetime, actual spawn physics,
+collection, effects and Backend rewards are still required.
+
 Source bonus selection now has shared last-index exclusion, side-specific FIFO
 queue overrides, source -1 fallback, and bounded host receipts that prevent
 repeat draws/queue consumption. An original-prefix Mono probe covers 66 fixed
