@@ -11,6 +11,7 @@ public sealed partial class MatchEngine
     private PvpBonusSpawnPlanner? pvpBonusPlanner;
     private PvpBonusProgressCoordinator? pvpBonusProgress;
     private WeaponBindingGraphCatalog? pvpBonusWeapons;
+    private float pvpBonusLowAmmoThreshold;
     private int pvpGoldBonusesCollected;
     private ulong pvpBonusFrameId;
     private sealed record MaturedBonus(PvpBonusProgressFrame Frame, int Index)
@@ -43,7 +44,8 @@ public sealed partial class MatchEngine
             var binding = pvpBonusWeapons.Get(slot.Weapon.SourceId);
             var weapon = owner.Weapons[slot.Slot];
             if (PvpBonusAmmoPolicy.HasLowAmmo(binding.ReloadableWeapon,
-                slot.Weapon.ReserveAmmo, weapon.Reserve, weapon.Clip))
+                slot.Weapon.ReserveAmmo, weapon.Reserve, weapon.Clip,
+                pvpBonusLowAmmoThreshold))
                 return true;
         }
         return false;
@@ -128,6 +130,7 @@ public sealed partial class MatchEngine
             manifest, manifest.SceneMasterPlayerId);
         pvpBoobyTrap = content.PvpBoobyTrap;
         pvpBonusWeapons = content.AllWeaponBindings;
+        pvpBonusLowAmmoThreshold = content.PvpBonuses.LowAmmoThreshold;
         pvpGoldBonusesCollected = manifest.PvpGoldBonusesAtAdmission ?? 0;
         pvpBonusPlanner = planner;
         pvpBonusProgress = progress;

@@ -17,10 +17,11 @@ internal static class PvpBonusSpawnPlannerTests
         Check(content.AllWeaponBindings.Get("Google2u.AssaultRifle_AK47").ReloadableWeapon &&
               !content.AllWeaponBindings.Get("Google2u.LMG_Minigun").ReloadableWeapon,
             "source weapon graph retains the reloadable flags used by ammo probability");
-        Check(PvpBonusAmmoPolicy.HasLowAmmo(true, 100, 0, 9) &&
-              !PvpBonusAmmoPolicy.HasLowAmmo(true, 100, 0, 10) &&
-              !PvpBonusAmmoPolicy.HasLowAmmo(false, 100, 0, 0) &&
-              !PvpBonusAmmoPolicy.HasLowAmmo(true, 0, 0, 0),
+        float lowAmmoThreshold = content.PvpBonuses.LowAmmoThreshold;
+        Check(PvpBonusAmmoPolicy.HasLowAmmo(true, 100, 0, 9, lowAmmoThreshold) &&
+              !PvpBonusAmmoPolicy.HasLowAmmo(true, 100, 0, 10, lowAmmoThreshold) &&
+              !PvpBonusAmmoPolicy.HasLowAmmo(false, 100, 0, 0, lowAmmoThreshold) &&
+              !PvpBonusAmmoPolicy.HasLowAmmo(true, 0, 0, 0, lowAmmoThreshold),
             "source low-ammo threshold is strict and excludes non-reloadable weapons");
         var template = MatchManifest.Read(Path.Combine(directory, "local-rifle-match-template.json"));
         string localId = template.Players[0].PlayerId;

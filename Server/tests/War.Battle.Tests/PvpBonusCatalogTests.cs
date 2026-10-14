@@ -19,6 +19,18 @@ internal static class PvpBonusCatalogTests
         Check(catalog.Rows.Select(row => row.PrefabGuid).Distinct().Count() == 9 &&
               catalog.Rows.All(row => row.ComponentFileId == 11409266 && row.PrefabSha256.Length == 64),
             "all bonus rows retain distinct original prefab/component provenance");
+        Check(catalog.LowAmmoThreshold == 0.1f &&
+              catalog.GoldRewardRange(5) == new PvpBonusGoldRange(5, 10) &&
+              catalog.GoldRewardRange(6) == new PvpBonusGoldRange(4, 8) &&
+              catalog.GoldRewardRange(7) == new PvpBonusGoldRange(3, 7) &&
+              catalog.GoldRewardRange(8) == new PvpBonusGoldRange(3, 6),
+            "source Gold reward bounds use low-level interpolation and an exclusive upper draw");
+        foreach (int invalidLevel in new[] {0, 44})
+        {
+            try { catalog.GoldRewardRange(invalidLevel);
+                throw new Exception("Gold reward accepted an unsupported display level."); }
+            catch (ArgumentOutOfRangeException) { checks++; }
+        }
 
         byte[] referenceBytes = File.ReadAllBytes(Path.Combine(directory, "unity-pvp-bonus-reference.json"));
         Check(Convert.ToHexStringLower(SHA256.HashData(referenceBytes)) ==

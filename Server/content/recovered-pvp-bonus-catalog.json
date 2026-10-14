@@ -16,7 +16,12 @@
   },
   "rules": {
     "goldLowLevelProbability": 25.0,
+    "goldLowLevelMinimum": 5.0,
+    "goldLowLevelMaximum": 10.0,
+    "goldRegularMinimum": 3.0,
+    "goldRegularMaximum": 6.0,
     "cardUnlockLevel": 6.0,
+    "lowAmmoThreshold": 0.1,
     "lowAmmoMultiplier": 2.0,
     "rankCount": 43
   },

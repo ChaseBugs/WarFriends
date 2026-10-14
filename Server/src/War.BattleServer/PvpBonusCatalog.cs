@@ -7,6 +7,7 @@ namespace War.BattleServer;
 public sealed record PvpBonusSource(int Index, string Name, string PrefabGuid,
     long ComponentFileId, string PrefabPath, string PrefabSha256,
     float Probability, float ArenaProbability);
+public sealed record PvpBonusGoldRange(int Minimum, int MaximumExclusive);
 
 /// <summary>Host-established source perspective, never a Client probability request.</summary>
 public sealed record PvpBonusWeightContext(bool IsWarArena, bool IsFriendlyDeathMatch,
@@ -16,16 +17,36 @@ public sealed record PvpBonusWeightContext(bool IsWarArena, bool IsFriendlyDeath
 public sealed class PvpBonusCatalog
 {
     private const string ReviewedSha256 =
-        "929753faa48a632686dd90cf2cff10f173320464cb3c2331bef44dcf13325353";
+        "15dd2f0e05e2d3966d111e9ed2b9e065eadc6bc3e1cafe600e03d59254fd8755";
     private static readonly string[] SourceNames = ["KillStreakBonusGold",
         "KillStreakBonusAddHealth", "KillStreakBonusWarbucks", "KillStreakBonusGrenades",
         "KillStreakBonusSlowMotion", "KillStreakBonusTurret", "KillStreakBonusKevlar",
         "KillStreakBonusCard", "KillStreakBonusAddAmmo"];
     public IReadOnlyList<PvpBonusSource> Rows { get; }
+    public float LowAmmoThreshold { get; }
 
-    private PvpBonusCatalog(PvpBonusSource[] rows)
+    private PvpBonusCatalog(PvpBonusSource[] rows, float lowAmmoThreshold)
     {
         Rows = new ReadOnlyCollection<PvpBonusSource>(rows);
+        LowAmmoThreshold = lowAmmoThreshold;
+    }
+
+    public PvpBonusGoldRange GoldRewardRange(int displayLevel)
+    {
+        if (displayLevel is < 1 or > 43)
+            throw new ArgumentOutOfRangeException(nameof(displayLevel));
+        // The source casts each interpolated float to int before Random.Range.
+        int minimum = (int)InterpolateGoldAmount(displayLevel, 5f, 3f);
+        int maximum = (int)InterpolateGoldAmount(displayLevel, 10f, 6f);
+        return new(minimum, maximum);
+    }
+
+    private static float InterpolateGoldAmount(int displayLevel, float low, float high)
+    {
+        if (displayLevel <= 5) return low;
+        if (displayLevel >= 8) return high;
+        float fraction = (float)(displayLevel - 5) / 3f;
+        return (float)((1d - fraction) * low + (double)fraction * high);
     }
 
     public IReadOnlyList<float> WeightsForSourceContext(PvpBonusWeightContext context)
@@ -79,7 +100,12 @@ public sealed class PvpBonusCatalog
             root.GetProperty("sceneSha256").GetString() != sceneSha256 ||
             root.GetProperty("battleContentSha256").GetString() != contentSha256 ||
             rules.GetProperty("goldLowLevelProbability").GetSingle() != 25f ||
+            rules.GetProperty("goldLowLevelMinimum").GetSingle() != 5f ||
+            rules.GetProperty("goldLowLevelMaximum").GetSingle() != 10f ||
+            rules.GetProperty("goldRegularMinimum").GetSingle() != 3f ||
+            rules.GetProperty("goldRegularMaximum").GetSingle() != 6f ||
             rules.GetProperty("cardUnlockLevel").GetSingle() != 6f ||
+            rules.GetProperty("lowAmmoThreshold").GetSingle() != 0.1f ||
             rules.GetProperty("lowAmmoMultiplier").GetSingle() != 2f ||
             rules.GetProperty("rankCount").GetInt32() != 43)
             throw new InvalidDataException("PvP bonus catalog uses different source provenance.");
@@ -97,6 +123,6 @@ public sealed class PvpBonusCatalog
                 row.GetProperty("prefabSha256").GetString()!, row.GetProperty("probability").GetSingle(),
                 row.GetProperty("arenaProbability").GetSingle());
         }
-        return new PvpBonusCatalog(rows);
+        return new PvpBonusCatalog(rows, rules.GetProperty("lowAmmoThreshold").GetSingle());
     }
 }

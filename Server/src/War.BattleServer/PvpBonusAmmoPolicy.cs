@@ -9,14 +9,15 @@ internal static class PvpBonusAmmoPolicy
     // Weapon.hasLowAmmo uses the original starting reserve, not clip plus
     // reserve. Only reloadable weapons can qualify for the source weight boost.
     internal static bool HasLowAmmo(bool reloadableWeapon, int startingReserve,
-        int currentReserve, int currentClip)
+        int currentReserve, int currentClip, float sourceThreshold)
     {
         if (startingReserve < 0 || currentReserve < 0 || currentClip < 0 ||
-            (long)currentReserve + currentClip > int.MaxValue)
+            (long)currentReserve + currentClip > int.MaxValue ||
+            !float.IsFinite(sourceThreshold) || sourceThreshold is <= 0f or >= 1f)
             throw new InvalidDataException("Invalid source weapon ammunition state.");
         if (!reloadableWeapon || startingReserve == 0) return false;
         float fraction = (float)(currentReserve + currentClip) / startingReserve;
-        return fraction < 0.1f;
+        return fraction < sourceThreshold;
     }
 
     internal static int RefilledReserve(int currentReserve, int clipSize)

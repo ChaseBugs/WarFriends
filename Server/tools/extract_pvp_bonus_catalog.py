@@ -71,7 +71,8 @@ def main():
     bonus_bytes = bonus_path.read_bytes()
     bonus_names = re.findall(r'"(\w+)"', re.search(r"rowNames = new string\[8\]\s*\{(.*?)\}", bonus_bytes.decode("utf-8-sig"), re.S)[1])
     bonus_table = next(sheet for sheet in content["sheets"] if sheet["type"] == "Google2u.BonussesDefinitions")
-    ammo_ratio = bonus_table["rows"][bonus_names.index("AmmoCrateOnLowAmmoRatio")]["FLOATVALUE"]
+    def bonus_value(name):
+        return bonus_table["rows"][bonus_names.index(name)]["FLOATVALUE"]
     levels = next(sheet for sheet in content["sheets"] if sheet["type"] == "Google2u.Levels")["rows"]
     if [row["LEVEL"] for row in levels] != list(range(1, len(levels) + 1)):
         raise ValueError("Source rank display/index binding changed")
@@ -82,8 +83,14 @@ def main():
                 "cratesCodeSha256": digest(sheet_bytes), "bonusDefinitionsCodeSha256": digest(bonus_bytes),
                 "probabilityCodeSha256": {name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes()) for name in code_names},
                 "rules": {"goldLowLevelProbability": keyed_value("Google2u.Constants", "GoldCrateLowLevelProbability"),
+                          "goldLowLevelMinimum": keyed_value("Google2u.Constants", "GoldCrateLowLevelGoldMin"),
+                          "goldLowLevelMaximum": keyed_value("Google2u.Constants", "GoldCrateLowLevelGoldMax"),
+                          "goldRegularMinimum": bonus_value("AddGoldMin"),
+                          "goldRegularMaximum": bonus_value("AddGoldMax"),
                           "cardUnlockLevel": keyed_value("Google2u.CardConstants", "WarcardsUnlockLevel"),
-                          "lowAmmoMultiplier": ammo_ratio, "rankCount": len(levels)}, "rows": rows}
+                          "lowAmmoThreshold": bonus_value("LowAmmoRatio"),
+                          "lowAmmoMultiplier": bonus_value("AmmoCrateOnLowAmmoRatio"),
+                          "rankCount": len(levels)}, "rows": rows}
     data = (json.dumps(document, indent=2) + "\n").encode("utf-8")
     output = ROOT / "Server/content/recovered-pvp-bonus-catalog.json"
     if "--check" in sys.argv:

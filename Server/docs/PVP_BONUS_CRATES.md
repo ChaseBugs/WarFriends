@@ -45,6 +45,11 @@ Four subclasses then change it:
   scene master's nonnegative starting count, and issue rejects a conflicting
   count. Backend projection and trusted Gold reward/collection increments are
   still open. Do not silently force all Arena Gold to zero.
+  The source reward table is now pinned as well: `KillStreakBonusAddCredits`
+  interpolates minimum 5 to 3 and exclusive maximum 10 to 6 across display
+  levels five through eight, then truncates each bound before its integer
+  random draw. The Battle catalog exposes those ranges; no Gold wallet grant
+  or terminal reward receipt is published yet.
 - Warbucks: `IsAllowedMoneyBonus` closes friendly DeathMatch, with no extra cap.
 - Card: closes friendly DeathMatch and requires the supplied owner's
   `playerProperties.level` strictly above the source unlock value six. This is

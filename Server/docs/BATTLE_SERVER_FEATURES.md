@@ -41,7 +41,9 @@ ordinary, War Arena or friendly DeathMatch bonus modes; a mismatched host mode
 leaves its request queued. Automatic selection still needs Backend mode
 projection and trusted Gold reward collection. A bonus-enabled manifest now
 requires the scene master's durable Gold-box count at admission; the host
-rejects a conflicting selection count. The host also derives the first-two-weapon
+rejects a conflicting selection count. The recovered catalog now pins the
+level-dependent Gold reward draw bounds, while wallet delivery and durable
+receipt authority remain open. The host also derives the first-two-weapon
 low-ammo condition from signed slot order, current reserve/clip and the
 source-pinned reloadable flag, rejecting a mismatched selection assertion. Other
 army-owned hits, AI death/combo flags, card multiplier lifetimes, Client-visible
