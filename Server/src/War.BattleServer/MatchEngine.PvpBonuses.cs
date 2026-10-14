@@ -164,7 +164,8 @@ public sealed partial class MatchEngine
             // The original local recipient receives a random currency amount.
             // Keep the host-owned quote for later durable settlement. No
             // wallet balance, Gold analytics, or visible effect changes here.
-            _ = pvpBonusPlanner.QuoteCurrencyReward(boxId);
+            try { _ = pvpBonusPlanner.QuoteCurrencyReward(boxId); }
+            catch (InvalidOperationException) { return "bonus-unavailable"; }
             return "bonus-quoted";
         }
 

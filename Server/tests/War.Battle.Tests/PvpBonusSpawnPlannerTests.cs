@@ -418,6 +418,49 @@ internal static class PvpBonusSpawnPlannerTests
                   quote.BoxId == liveMoneyPlan.Request.ReceiptId).Kind ==
                   PvpBonusEffectKind.Warbucks,
             "live engine retains both Gold and Warbucks quotes by confirmed box ID");
+        clockEngine.Command(localId, new MatchCommand {CommandId = 2,
+            Forfeit = new ForfeitCommand()});
+        var quoteTerminal = clockEngine.TerminalEvidenceSnapshot();
+        Check(clockEngine.Snapshot().PvpCurrencyQuotes.Count == 0 &&
+              quoteTerminal.PvpCurrencyQuotes.Count == 2 &&
+              quoteTerminal.PvpCurrencyQuotes.All(quote => quote.RecipientLevelIndex == 8),
+            "currency quotes appear only in private terminal evidence with signed recipient ranks");
+        byte[] QuotePayload(MatchSnapshot snapshot) =>
+            Google.Protobuf.MessageExtensions.ToByteArray(snapshot);
+        MatchSnapshot ValidatedQuotePayload(MatchSnapshot snapshot)
+        {
+            byte[] payload = QuotePayload(snapshot);
+            return TerminalOutbox.ValidatePayload(payload, snapshot.MatchId,
+                War.Shared.TerminalResultDigest.Compute(payload));
+        }
+        Check(ValidatedQuotePayload(quoteTerminal).PvpCurrencyQuotes.Count == 2,
+            "terminal validator accepts both host-collected currency receipts");
+        string quoteSpool = Path.Combine(Path.GetTempPath(),
+            "war-pvp-quotes-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Check(new TerminalOutbox(quoteSpool).Publish(quoteTerminal),
+                "terminal outbox persists the first currency evidence record");
+            Check(new TerminalOutbox(quoteSpool).PendingPage().Single().Snapshot
+                  .PvpCurrencyQuotes.Count == 2,
+                "reopened terminal outbox retains both currency quotes");
+        }
+        finally { Directory.Delete(quoteSpool, recursive: true); }
+        void RejectChangedQuote(Action<MatchSnapshot> change)
+        {
+            var forged = quoteTerminal.Clone();
+            change(forged);
+            try { ValidatedQuotePayload(forged);
+                throw new Exception("Forged terminal currency quote was accepted."); }
+            catch (InvalidDataException) { checks++; }
+        }
+        RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes[0].RecipientPlayerId = Id(999));
+        RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes[0].BaseDraw = 10);
+        RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes[0].Amount++);
+        RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes[0].Currency = "premium");
+        RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes[0].RecipientLevelIndex = 43);
+        RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes.Add(
+            snapshot.PvpCurrencyQuotes[0].Clone()));
         var enginePlanner = engine.BonusPlanner;
         enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
         var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);

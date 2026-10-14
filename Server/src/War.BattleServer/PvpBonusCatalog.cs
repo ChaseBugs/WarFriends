@@ -27,37 +27,55 @@ public sealed class PvpBonusCatalog
         "KillStreakBonusAddHealth", "KillStreakBonusWarbucks", "KillStreakBonusGrenades",
         "KillStreakBonusSlowMotion", "KillStreakBonusTurret", "KillStreakBonusKevlar",
         "KillStreakBonusCard", "KillStreakBonusAddAmmo"];
+    // Mathf.Pow results from the digest-pinned Unity probe, indexed by the
+    // recipient's zero-based rank. The content loader checks every bit below
+    // against the generated probe before match traffic is admitted.
+    private static readonly int[] UnityWarbucksScaleBits = [
+        0x3F683DB6, 0x3F6FE7AF, 0x3F77D267, 0x3F800000, 0x3F843958,
+        0x3F88965F, 0x3F8D1843, 0x3F91C03B, 0x3F968F89, 0x3F9B8778,
+        0x3FA0A961, 0x3FA5F6A6, 0x3FAB70B5, 0x3FB11909, 0x3FB6F128,
+        0x3FBCFAA7, 0x3FC33725, 0x3FC9A853, 0x3FD04FEE, 0x3FD72FC0,
+        0x3FDE49A5, 0x3FE59F88, 0x3FED3363, 0x3FF50742, 0x3FFD1D42,
+        0x4002BBC8, 0x40070C38, 0x400B811A, 0x40101BA2, 0x4014DD0F,
+        0x4019C6A8, 0x401ED9C2, 0x402417BA, 0x402981FB, 0x402F19FB,
+        0x4034E13D, 0x403AD950, 0x404103CF, 0x40476266, 0x404DF6CC,
+        0x4054C2C8, 0x405BC82F, 0x406308E7
+    ];
     public IReadOnlyList<PvpBonusSource> Rows { get; }
     public float LowAmmoThreshold { get; }
     public float WarbucksScalingBase { get; }
     public PvpBonusWarbucksDrawRange WarbucksBaseDrawRange { get; } = new(500, 1500);
-    private readonly float[] warbucksScaleByLevel;
 
     private PvpBonusCatalog(PvpBonusSource[] rows, float lowAmmoThreshold,
-        float warbucksScalingBase, float[] warbucksScaleByLevel)
+        float warbucksScalingBase)
     {
         Rows = new ReadOnlyCollection<PvpBonusSource>(rows);
         LowAmmoThreshold = lowAmmoThreshold;
         WarbucksScalingBase = warbucksScalingBase;
-        this.warbucksScaleByLevel = warbucksScaleByLevel;
     }
 
     public int WarbucksRewardForBaseDraw(int ownerLevelIndex, int baseDraw)
+        => WarbucksAmountForRecipient(ownerLevelIndex, baseDraw);
+
+    internal static int WarbucksAmountForRecipient(int ownerLevelIndex, int baseDraw)
     {
         if (ownerLevelIndex is < 0 or > 42)
             throw new ArgumentOutOfRangeException(nameof(ownerLevelIndex));
-        if (baseDraw < WarbucksBaseDrawRange.Minimum ||
-            baseDraw >= WarbucksBaseDrawRange.MaximumExclusive)
+        if (baseDraw is < 500 or >= 1500)
             throw new ArgumentOutOfRangeException(nameof(baseDraw));
         // Unity's Mathf.Pow and .NET MathF.Pow differ at integer truncation
         // boundaries. Use the reviewed Unity result for each source rank.
-        double scaled = (double)warbucksScaleByLevel[ownerLevelIndex] * baseDraw;
+        float scale = BitConverter.Int32BitsToSingle(UnityWarbucksScaleBits[ownerLevelIndex]);
+        double scaled = (double)scale * baseDraw;
         if (!double.IsFinite(scaled) || scaled < 0d || scaled > int.MaxValue)
             throw new InvalidDataException("PvP Warbucks reward exceeds source integer authority.");
         return (int)scaled;
     }
 
     public PvpBonusGoldRange GoldRewardRange(int displayLevel)
+        => GoldRewardRangeForDisplayLevel(displayLevel);
+
+    internal static PvpBonusGoldRange GoldRewardRangeForDisplayLevel(int displayLevel)
     {
         if (displayLevel is < 1 or > 43)
             throw new ArgumentOutOfRangeException(nameof(displayLevel));
@@ -154,12 +172,12 @@ public sealed class PvpBonusCatalog
         }
         string unityReference = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!,
             "unity-pvp-bonus-reference.json");
-        float[] warbucksScales = LoadUnityWarbucksScales(unityReference);
+        ValidateUnityWarbucksScales(unityReference);
         return new PvpBonusCatalog(rows, rules.GetProperty("lowAmmoThreshold").GetSingle(),
-            rules.GetProperty("warbucksScalingBase").GetSingle(), warbucksScales);
+            rules.GetProperty("warbucksScalingBase").GetSingle());
     }
 
-    private static float[] LoadUnityWarbucksScales(string path)
+    private static void ValidateUnityWarbucksScales(string path)
     {
         byte[] bytes = File.ReadAllBytes(path);
         if (Convert.ToHexStringLower(SHA256.HashData(bytes)) != ReviewedUnityReferenceSha256)
@@ -171,22 +189,17 @@ public sealed class PvpBonusCatalog
             root.GetProperty("codeSha256").GetString() != ReviewedSourceCodeSha256)
             throw new InvalidDataException("PvP bonus Unity arithmetic has different provenance.");
         var samples = root.GetProperty("currencySamples");
-        if (samples.GetArrayLength() != 43)
+        if (samples.GetArrayLength() != UnityWarbucksScaleBits.Length)
             throw new InvalidDataException("Incomplete Unity Warbucks rank scales.");
-        var scales = new float[43];
-        for (int level = 0; level < scales.Length; level++)
+        for (int level = 0; level < UnityWarbucksScaleBits.Length; level++)
         {
             var sample = samples[level];
             string? amountsSha256 = sample.GetProperty("amountsSha256").GetString();
             if (sample.GetProperty("recipientLevelIndex").GetInt32() != level ||
+                sample.GetProperty("scaleBits").GetInt32() != UnityWarbucksScaleBits[level] ||
                 amountsSha256 is not {Length: 64} ||
                 amountsSha256.Any(character => !Uri.IsHexDigit(character) || char.IsUpper(character)))
                 throw new InvalidDataException("Invalid Unity Warbucks rank sample.");
-            float scale = BitConverter.Int32BitsToSingle(sample.GetProperty("scaleBits").GetInt32());
-            if (!float.IsFinite(scale) || scale <= 0f || scale >= 4f)
-                throw new InvalidDataException("Invalid Unity Warbucks rank scale.");
-            scales[level] = scale;
         }
-        return scales;
     }
 }

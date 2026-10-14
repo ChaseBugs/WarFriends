@@ -19,6 +19,7 @@ public sealed record PvpBonusCurrencyRewardQuote(string MatchId, string BoxId,
 /// </summary>
 internal sealed class PvpBonusSpawnPlanner
 {
+    private const int MaximumCurrencyQuotes = 256;
     private readonly object gate = new();
     private readonly string matchId;
     private readonly Dictionary<string, (PvpBonusSide Side, int Level)> owners;
@@ -118,6 +119,8 @@ internal sealed class PvpBonusSpawnPlanner
                     throw new InvalidDataException("Currency reward replay changed its authority.");
                 return previous;
             }
+            if (currencyQuotes.Count == MaximumCurrencyQuotes)
+                throw new InvalidOperationException("PvP currency quote capacity exhausted.");
 
             int recipientLevel = owners[intent.RecipientPlayerId].Level;
             int minimum;

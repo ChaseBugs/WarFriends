@@ -322,6 +322,7 @@ public sealed class TerminalOutbox
            snapshot.Players.Any(p=>usageByOwner[p.PlayerId]!=p.ConfirmedCardsPlayed))
             throw new InvalidDataException("Terminal card usage does not conserve player credits.");
         ValidateDirectArmyKills(snapshot);
+        ValidatePvpCurrencyQuotes(snapshot);
         if(hits>uint.MaxValue || kills>uint.MaxValue || spawns>uint.MaxValue || losses>uint.MaxValue ||
            snapshot.CardActivations>int.MaxValue || snapshot.ObjectiveCredits>int.MaxValue)
             throw new InvalidDataException("Terminal performance counters exceed their durable contract.");
@@ -329,6 +330,44 @@ public sealed class TerminalOutbox
             new BattleStatistics((uint)hits,(uint)kills,(uint)spawns,(uint)losses),
             snapshot.PerformanceDurationTicks,snapshot.RibbonIds.ToArray(),
             (int)snapshot.CardActivations,(int)snapshot.ObjectiveCredits));
+    }
+
+    private static void ValidatePvpCurrencyQuotes(MatchSnapshot snapshot)
+    {
+        if (snapshot.PvpCurrencyQuotes.Count > 256)
+            throw new InvalidDataException("Terminal PvP currency quote capacity exceeded.");
+
+        var playerIds = snapshot.Players.Select(player => player.PlayerId)
+            .ToHashSet(StringComparer.Ordinal);
+        string? previousBoxId = null;
+        foreach (var quote in snapshot.PvpCurrencyQuotes)
+        {
+            if (!Regex.IsMatch(quote.BoxId, @"\A[0-9a-f]{32}\z") ||
+                (previousBoxId != null &&
+                 string.CompareOrdinal(previousBoxId, quote.BoxId) >= 0) ||
+                !playerIds.Contains(quote.RecipientPlayerId) ||
+                quote.RecipientLevelIndex is < 0 or > 42)
+                throw new InvalidDataException("Invalid terminal PvP currency quote identity.");
+
+            if (quote.Currency == "gold")
+            {
+                var range = PvpBonusCatalog.GoldRewardRangeForDisplayLevel(
+                    quote.RecipientLevelIndex + 1);
+                if (quote.BaseDraw < range.Minimum ||
+                    quote.BaseDraw >= range.MaximumExclusive ||
+                    quote.Amount != quote.BaseDraw)
+                    throw new InvalidDataException("Invalid terminal Gold box amount.");
+            }
+            else if (quote.Currency == "warbucks")
+            {
+                if (quote.BaseDraw is < 500 or >= 1500 ||
+                    quote.Amount != PvpBonusCatalog.WarbucksAmountForRecipient(
+                        quote.RecipientLevelIndex, checked((int)quote.BaseDraw)))
+                    throw new InvalidDataException("Invalid terminal Warbucks box amount.");
+            }
+            else throw new InvalidDataException("Unknown terminal PvP currency.");
+            previousBoxId = quote.BoxId;
+        }
     }
 
     private static void ValidateDirectArmyKills(MatchSnapshot snapshot)

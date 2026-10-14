@@ -432,6 +432,17 @@ message MatchSnapshot {
   // Canopies outlive dead ELITEPARA soldiers for three host seconds. This
   // state repairs a reconnect after the death-event cursor has expired.
   repeated BattleLandedCanopyState landed_canopies = 35;
+  // Private terminal evidence only. These are host-drawn, collected-box
+  // quotes, not wallet grants or Client-visible rewards.
+  repeated BattlePvpCurrencyQuote pvp_currency_quotes = 36;
+}
+message BattlePvpCurrencyQuote {
+  string box_id = 1;
+  string recipient_player_id = 2;
+  string currency = 3;
+  uint32 base_draw = 4;
+  uint32 amount = 5;
+  int32 recipient_level_index = 6;
 }
 message BattleLandedCanopyState {
   uint64 entity_key = 1;

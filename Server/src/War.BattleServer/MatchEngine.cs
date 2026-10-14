@@ -2899,6 +2899,23 @@ public sealed partial class MatchEngine : IMatchRuntime
                     VictimSpawnRequestId=sabotageCardVictims.GetValueOrDefault(row.EntityKey)?.RequestId ?? "",
                     VictimSpawnTick=sabotageCardVictims.GetValueOrDefault(row.EntityKey)?.SpawnTick ?? 0
                 }));
+        if (includeTerminalEvidence)
+        {
+            foreach (var quote in CurrencyBonusQuotes)
+            {
+                int recipientLevel = Find(quote.RecipientPlayerId)?.Definition.PlayerLevel ??
+                    throw new InvalidDataException("Currency quote recipient lacks a signed rank.");
+                snapshot.PvpCurrencyQuotes.Add(new BattlePvpCurrencyQuote
+                {
+                    BoxId = quote.BoxId,
+                    RecipientPlayerId = quote.RecipientPlayerId,
+                    Currency = quote.Kind == PvpBonusEffectKind.Gold ? "gold" : "warbucks",
+                    BaseDraw = checked((uint)quote.BaseDraw),
+                    Amount = checked((uint)quote.Amount),
+                    RecipientLevelIndex = recipientLevel
+                });
+            }
+        }
         snapshot.Projectiles.AddRange(grenadeProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
         {
             ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,

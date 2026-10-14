@@ -185,7 +185,16 @@ confirmed Gold or Warbucks box and returns `bonus-quoted`. Its read-only
 future terminal settlement handoff. Calling the effect path before collection
 returns unavailable, and calling it again after quoting does not redraw.
 This quote is still match-local evidence, not a Backend wallet transaction;
-durable settlement, count updates and delivery remain open.
+count updates and delivery remain open. On a terminal transition, the Worker
+now copies the sorted quotes into a private protobuf result field and the
+durable terminal outbox. Public UDP snapshots omit it. Outbox validation
+requires unique ordered box IDs, an admitted recipient, a bounded rank, and
+the exact source Gold range or Unity-verified Warbucks amount. A reopened
+outbox retains the same rows. The terminal result remains unscored with
+`RewardEligible=false`; Backend must still compare each recorded recipient
+rank with the frozen match manifest and settle the wallet atomically before
+any quote becomes a grant. A Worker crash before terminal publication still
+produces an unscored host-crash result without these in-memory quotes.
 The source `KillStreakBonusKevlar` sets `kevlarStrength` to 0.1 before
 `SetUpKevlar`, separate from the 0.2 Kevlar Up card. `PlayerKevlar` now exposes
 that crate maximum. `KillStreakBonusAddAmmo` adds each used weapon's clip size
