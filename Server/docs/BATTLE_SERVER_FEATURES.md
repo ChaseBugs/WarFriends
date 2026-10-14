@@ -39,7 +39,9 @@ uses the pinned selection and spawn-area planner to register one box, retaining
 the request when a draw is rejected. The signed manifest now accepts only
 ordinary, War Arena or friendly DeathMatch bonus modes; a mismatched host mode
 leaves its request queued. Automatic selection still needs Backend mode
-projection and Gold analytics. The host now derives the first-two-weapon
+projection and trusted Gold reward collection. A bonus-enabled manifest now
+requires the scene master's durable Gold-box count at admission; the host
+rejects a conflicting selection count. The host also derives the first-two-weapon
 low-ammo condition from signed slot order, current reserve/clip and the
 source-pinned reloadable flag, rejecting a mismatched selection assertion. Other
 army-owned hits, AI death/combo flags, card multiplier lifetimes, Client-visible

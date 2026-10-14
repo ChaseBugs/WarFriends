@@ -35,10 +35,28 @@ internal static class PvpBonusSpawnPlannerTests
             throw new Exception("Unknown bonus mode entered a signed manifest.");
         }
         catch (InvalidDataException) { checks++; }
+        try
+        {
+            MatchManifest.Validate(manifest with {
+                PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode,
+                PvpGoldBonusesAtAdmission = -1
+            });
+            throw new Exception("Negative durable Gold-box count entered a match.");
+        }
+        catch (InvalidDataException) { checks++; }
         Check(MatchManifest.Validate(manifest with {
-                  PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode
+                  PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode,
+                  PvpGoldBonusesAtAdmission = 0
               }).PvpBonusMode == MatchManifest.OrdinaryPvpBonusMode,
             "ordinary bonus mode survives signed manifest validation");
+        try
+        {
+            MatchManifest.Validate(manifest with {
+                PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode
+            });
+            throw new Exception("PvP Gold selection accepted absent durable analytics.");
+        }
+        catch (InvalidDataException) { checks++; }
         using var progress = PvpBonusProgressCoordinator.CreateForOnlineManifest(content, manifest, localId);
         var planner = new PvpBonusSpawnPlanner(content, manifest, localId);
         var context = new PvpBonusSpawnContext(false, false, 0, false);
@@ -223,7 +241,8 @@ internal static class PvpBonusSpawnPlannerTests
               projectileEngine.Snapshot().Players[1].Health == 990f,
             "host army projectile receipt publishes source army score and player damage");
         var clockManifest = manifest with {
-            PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode
+            PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode,
+            PvpGoldBonusesAtAdmission = 0
         };
         var clockEngine = new MatchEngine(clockManifest, map, content,
             combatRandom: () => 1f);
@@ -263,6 +282,16 @@ internal static class PvpBonusSpawnPlannerTests
         Check(clockEngine.MaturedBonusRequests.Count == 1 &&
               clockEngine.BonusPlanner.ActiveBoxCount == 0,
             "host ammunition mismatch preserves the matured box request");
+        try
+        {
+            clockEngine.IssueNextMaturedBonus(
+                context with {GoldBonusesCollected = 3}, draw);
+            throw new Exception("Caller supplied a Gold-box count absent from player analytics.");
+        }
+        catch (InvalidDataException) { checks++; }
+        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
+              clockEngine.BonusPlanner.ActiveBoxCount == 0,
+            "Gold analytics mismatch cannot consume a source box request");
         try
         {
             clockEngine.IssueNextMaturedBonus(context with {IsWarArena = true}, draw);

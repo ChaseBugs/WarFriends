@@ -59,6 +59,9 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
     // Backend/operator-owned source game type for PvP bonus selection.
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public string? PvpBonusMode { get; init; }
+    // Scene master's durable PlayerAnalytics.data.goldBonuses at allocation.
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public int? PvpGoldBonusesAtAdmission { get; init; }
     // Optional Backend-owned selection projection, consumed before admission.
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public BattleAllocationProjection[]? Allocations { get; init; }
@@ -240,8 +243,11 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
         if (m.PvpBonusMode != null &&
             (m.PvpBonusMode is not (OrdinaryPvpBonusMode or WarArenaPvpBonusMode or
                 FriendlyDeathMatchPvpBonusMode) ||
-             m.Mode is PrototypeMode or CoopMissionMode || m.SceneMasterPlayerId == null))
+             m.Mode is PrototypeMode or CoopMissionMode || m.SceneMasterPlayerId == null ||
+             m.PvpGoldBonusesAtAdmission is null or < 0))
             throw new InvalidDataException("PvP bonus mode requires a recognized online source view.");
+        if (m.PvpBonusMode == null && m.PvpGoldBonusesAtAdmission != null)
+            throw new InvalidDataException("Gold-bonus analytics require a PvP bonus mode.");
         if (m.Allocations is { } allocations)
         {
             if (allocations.Length != m.Players.Length || allocations.Select(x => x.PlayerId).Distinct(StringComparer.Ordinal).Count() != allocations.Length)

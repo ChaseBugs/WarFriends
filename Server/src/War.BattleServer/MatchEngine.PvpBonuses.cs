@@ -11,6 +11,7 @@ public sealed partial class MatchEngine
     private PvpBonusSpawnPlanner? pvpBonusPlanner;
     private PvpBonusProgressCoordinator? pvpBonusProgress;
     private WeaponBindingGraphCatalog? pvpBonusWeapons;
+    private int pvpGoldBonusesCollected;
     private ulong pvpBonusFrameId;
     private sealed record MaturedBonus(PvpBonusProgressFrame Frame, int Index)
     {
@@ -67,6 +68,8 @@ public sealed partial class MatchEngine
         if (context.FirstTwoWeaponsHaveLowAmmo !=
             FirstTwoUsedWeaponsHaveLowAmmo(matured.Request.OwnerPlayerId))
             throw new InvalidDataException("Bonus ammo condition differs from host weapon state.");
+        if (context.GoldBonusesCollected != pvpGoldBonusesCollected)
+            throw new InvalidDataException("Gold-bonus count differs from signed player analytics.");
         var plan = pvpBonusPlanner.PlanMatured(matured.Frame, matured.Index,
             context, draw);
         maturedPvpBonuses.RemoveAt(0);
@@ -125,6 +128,7 @@ public sealed partial class MatchEngine
             manifest, manifest.SceneMasterPlayerId);
         pvpBoobyTrap = content.PvpBoobyTrap;
         pvpBonusWeapons = content.AllWeaponBindings;
+        pvpGoldBonusesCollected = manifest.PvpGoldBonusesAtAdmission ?? 0;
         pvpBonusPlanner = planner;
         pvpBonusProgress = progress;
     }

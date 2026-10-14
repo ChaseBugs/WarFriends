@@ -40,7 +40,11 @@ Four subclasses then change it:
   five it requires `data.goldBonuses < 3`. Allowed Gold uses local display level
   interpolation: 25 at level five or lower, the base weight at eight or higher,
   and the original float interpolation between. This also overrides Arena's
-  zero base for low local levels. Do not silently force all Arena Gold to zero.
+  zero base for low local levels. `goldBonuses` is durable PlayerAnalytics data,
+  not a per-match counter. A bonus-enabled signed manifest now requires the
+  scene master's nonnegative starting count, and issue rejects a conflicting
+  count. Backend projection and trusted Gold reward/collection increments are
+  still open. Do not silently force all Arena Gold to zero.
 - Warbucks: `IsAllowedMoneyBonus` closes friendly DeathMatch, with no extra cap.
 - Card: closes friendly DeathMatch and requires the supplied owner's
   `playerProperties.level` strictly above the source unlock value six. This is
