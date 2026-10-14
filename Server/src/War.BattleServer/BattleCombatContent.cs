@@ -17,6 +17,7 @@ public sealed class BattleCombatContent
     public PvpScoreStreakPolicy PvpScoreStreak { get; private init; } = null!;
     public PvpBonusCatalog PvpBonuses { get; private init; } = null!;
     public PvpBonusSpawnAreaCatalog PvpBonusSpawnAreas { get; private init; } = null!;
+    internal CardGrenadeOriginCatalog CardGrenadeOrigins { get; private init; } = null!;
     internal PvpBonusBoobyTrapPolicy PvpBoobyTrap { get; private init; } = null!;
     public RifleBindingCatalog Bindings { get; }
     public WeaponBindingGraphCatalog AllWeaponBindings { get; }
@@ -258,6 +259,8 @@ public sealed class BattleCombatContent
                 manifest.SceneRevision, manifest.StatsRevision),
             PvpBonusSpawnAreas=PvpBonusSpawnAreaCatalog.Load(
                 Path.Combine(directory, "recovered-pvp-bonus-spawn-areas.json"), maps),
+            CardGrenadeOrigins=CardGrenadeOriginCatalog.Load(
+                Path.Combine(directory, "recovered-card-grenade-origins.json"), maps),
             HelicopterGunnerExplosions=helicopterGunnerExplosions,
             CardUnitInitialPoints=cardUnitInitialPoints,
             AssaultHelicopterWeapons=assaultHelicopterWeapons,

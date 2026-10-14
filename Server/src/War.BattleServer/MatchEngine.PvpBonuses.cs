@@ -24,6 +24,7 @@ public sealed partial class MatchEngine
     private PvpBonusGrenadeBurstPolicy? pvpGrenadeBurstPolicy;
     private PvpBonusGrenadeBurstClock? pvpGrenadeClock;
     private CardGrenadesBurstPolicy? cardGrenadesBurstPolicy;
+    private CardGrenadeOriginCatalog? cardGrenadeOrigins;
     private readonly Dictionary<string, (string OwnerId, string Result)> cardGrenadeReceipts = new(StringComparer.Ordinal);
     private PvpBonusCatalog? pvpGrenadeCatalog;
     private IReadOnlyList<PvpBonusGrenadeDueShot> readyPvpGrenadeShots =
@@ -440,6 +441,7 @@ public sealed partial class MatchEngine
         pvpBoobyTrap = content.PvpBoobyTrap;
         pvpGrenadeBurstPolicy = new PvpBonusGrenadeBurstPolicy(content.PvpBonuses);
         cardGrenadesBurstPolicy = new CardGrenadesBurstPolicy(content.PvpBonuses);
+        cardGrenadeOrigins = content.CardGrenadeOrigins;
         pvpGrenadeClock = new PvpBonusGrenadeBurstClock(content.PvpBonuses);
         pvpGrenadeCatalog = content.PvpBonuses;
         pvpBonusWeapons = content.AllWeaponBindings;
@@ -517,6 +519,7 @@ public sealed partial class MatchEngine
             return replay.OwnerId == owner.Definition.PlayerId
                 ? replay.Result : "grenades-burst-request-conflict";
         if (cardReservations == null || cardGrenadesBurstPolicy == null ||
+            cardGrenadeOrigins == null ||
             pvpGrenadeClock == null || map == null || pvpBonusFrameId == 0 ||
             owner.Definition.PlayerLevel is not int level)
             return "grenades-burst-authority-unavailable";
@@ -530,9 +533,9 @@ public sealed partial class MatchEngine
             stateRevision > ulong.MaxValue - 4)
             return "event-backpressure";
 
-        // CardGrenadesBurst starts at the owner's current shield indicator.
-        // The recovered map binds its cover shot position; no packet position
-        // or opponent identity is trusted for this card.
+        // CardGrenadesBurst starts at the owner's shield HUD snap transform.
+        // The recovered scene binds that position separately from shotPosition;
+        // no packet position or opponent identity is trusted for this card.
         if (owner.Cover < 0 || owner.Cover >= map.Covers.Count ||
             map.Covers[owner.Cover].Fraction != owner.Definition.Fraction)
             return "grenades-burst-owner-unavailable";
@@ -549,7 +552,7 @@ public sealed partial class MatchEngine
         {
             plan = cardGrenadesBurstPolicy.Plan(requestId,
                 owner.Definition.PlayerId, owner.Definition.Fraction, level,
-                map.Covers[owner.Cover].ShotPosition, PvpGrenadeShootables(),
+                cardGrenadeOrigins.ForCover(map, owner.Cover), PvpGrenadeShootables(),
                 emptyEnemyShields, armyChoice);
         }
         catch (InvalidDataException)

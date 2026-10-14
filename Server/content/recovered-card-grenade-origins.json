@@ -1,0 +1,555 @@
+{
+  "client": "1.4.0",
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "origins": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 2682,
+          "shieldFileId": 2192,
+          "hudIndicatorFileId": 2673,
+          "snapTransformFileId": 701,
+          "shotPositionFileId": 710,
+          "position": [
+            -4.499210431892428,
+            0.6106904374746075,
+            2.3414488651307255
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 2440,
+          "shieldFileId": 2187,
+          "hudIndicatorFileId": 2315,
+          "snapTransformFileId": 733,
+          "shotPositionFileId": 742,
+          "position": [
+            -4.4844707068501615,
+            0.5916904971295659,
+            0.8320330005688599
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 2263,
+          "shieldFileId": 2186,
+          "hudIndicatorFileId": 2279,
+          "snapTransformFileId": 765,
+          "shotPositionFileId": 774,
+          "position": [
+            -4.547100365277629,
+            0.6146904994165736,
+            -0.6867092373948283
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 2686,
+          "shieldFileId": 2190,
+          "hudIndicatorFileId": 2650,
+          "snapTransformFileId": 684,
+          "shotPositionFileId": 693,
+          "position": [
+            -4.599389733046282,
+            0.6136904993171385,
+            -2.1958037591072332
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 2431,
+          "shieldFileId": 2188,
+          "hudIndicatorFileId": 2322,
+          "snapTransformFileId": 748,
+          "shotPositionFileId": 757,
+          "position": [
+            4.447307810216221,
+            0.6096903683979821,
+            -2.128539073614044
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 2222,
+          "shieldFileId": 2185,
+          "hudIndicatorFileId": 2244,
+          "snapTransformFileId": 782,
+          "shotPositionFileId": 791,
+          "position": [
+            4.447307810216221,
+            0.5946903683979821,
+            -0.6135390736140443
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 2199,
+          "shieldFileId": 2191,
+          "hudIndicatorFileId": 2670,
+          "snapTransformFileId": 797,
+          "shotPositionFileId": 806,
+          "position": [
+            4.447307810216221,
+            0.6136903683979821,
+            0.8934609263859558
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 2452,
+          "shieldFileId": 2189,
+          "hudIndicatorFileId": 2433,
+          "snapTransformFileId": 718,
+          "shotPositionFileId": 727,
+          "position": [
+            4.447307810216221,
+            0.6366903683979821,
+            2.4134609263859557
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "origins": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 2993,
+          "shieldFileId": 2812,
+          "hudIndicatorFileId": 2955,
+          "snapTransformFileId": 965,
+          "shotPositionFileId": 974,
+          "position": [
+            -4.3848655513028465,
+            0.6166905131988979,
+            2.480002991556506
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 2982,
+          "shieldFileId": 2817,
+          "hudIndicatorFileId": 3299,
+          "snapTransformFileId": 1170,
+          "shotPositionFileId": 1179,
+          "position": [
+            -4.437154906850162,
+            0.6256905756380395,
+            0.9709084505688621
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 3002,
+          "shieldFileId": 2813,
+          "hudIndicatorFileId": 2995,
+          "snapTransformFileId": 914,
+          "shotPositionFileId": 923,
+          "position": [
+            -4.499784565277629,
+            0.6246905755386044,
+            -0.547833787394826
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 3132,
+          "shieldFileId": 2816,
+          "hudIndicatorFileId": 3278,
+          "snapTransformFileId": 950,
+          "shotPositionFileId": 959,
+          "position": [
+            -4.552073933046282,
+            0.621690575240299,
+            -2.056928309107231
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 3303,
+          "shieldFileId": 2818,
+          "hudIndicatorFileId": 3339,
+          "snapTransformFileId": 995,
+          "shotPositionFileId": 1004,
+          "position": [
+            4.463623610216221,
+            0.6256904483979824,
+            -1.989663623614042
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 3333,
+          "shieldFileId": 2815,
+          "hudIndicatorFileId": 3269,
+          "snapTransformFileId": 980,
+          "shotPositionFileId": 989,
+          "position": [
+            4.476623610216221,
+            0.6356904483979824,
+            -0.477663623614042
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 2927,
+          "shieldFileId": 2814,
+          "hudIndicatorFileId": 3123,
+          "snapTransformFileId": 1185,
+          "shotPositionFileId": 1194,
+          "position": [
+            4.4946236102162205,
+            0.6317904483979824,
+            1.0323363763859579
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 3334,
+          "shieldFileId": 2811,
+          "hudIndicatorFileId": 2938,
+          "snapTransformFileId": 930,
+          "shotPositionFileId": 939,
+          "position": [
+            4.4946236102162205,
+            0.6256904483979824,
+            2.552336376385958
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "origins": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 2555,
+          "shieldFileId": 2237,
+          "hudIndicatorFileId": 2587,
+          "snapTransformFileId": 854,
+          "shotPositionFileId": 863,
+          "position": [
+            -28.485865551302847,
+            -1.8713094957502623,
+            -6.249997008443494
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 2249,
+          "shieldFileId": 2232,
+          "hudIndicatorFileId": 2372,
+          "snapTransformFileId": 803,
+          "shotPositionFileId": 812,
+          "position": [
+            -28.53815490685016,
+            -1.821309429234281,
+            -7.759091549431138
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 2790,
+          "shieldFileId": 2236,
+          "hudIndicatorFileId": 2539,
+          "snapTransformFileId": 778,
+          "shotPositionFileId": 787,
+          "position": [
+            -28.60078456527763,
+            -1.81130942823993,
+            -9.277833787394826
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 2665,
+          "shieldFileId": 2235,
+          "hudIndicatorFileId": 2514,
+          "snapTransformFileId": 761,
+          "shotPositionFileId": 770,
+          "position": [
+            -28.653073933046283,
+            -1.7413094212794717,
+            -10.786928309107232
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 2395,
+          "shieldFileId": 2233,
+          "hudIndicatorFileId": 2469,
+          "snapTransformFileId": 837,
+          "shotPositionFileId": 846,
+          "position": [
+            -19.60637638978378,
+            -1.7843095516020173,
+            -10.719663623614043
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 2758,
+          "shieldFileId": 2234,
+          "hudIndicatorFileId": 2476,
+          "snapTransformFileId": 818,
+          "shotPositionFileId": 827,
+          "position": [
+            -19.60637638978378,
+            -1.7773095516020176,
+            -9.204663623614044
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 2388,
+          "shieldFileId": 2239,
+          "hudIndicatorFileId": 2754,
+          "snapTransformFileId": 746,
+          "shotPositionFileId": 755,
+          "position": [
+            -19.60637638978378,
+            -1.7833095516020174,
+            -7.6976636236140425
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 2844,
+          "shieldFileId": 2238,
+          "hudIndicatorFileId": 2599,
+          "snapTransformFileId": 730,
+          "shotPositionFileId": 739,
+          "position": [
+            -19.60637638978378,
+            -1.7843095516020173,
+            -6.177663623614042
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "origins": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 3505,
+          "shieldFileId": 3063,
+          "hudIndicatorFileId": 3192,
+          "snapTransformFileId": 978,
+          "shotPositionFileId": 987,
+          "position": [
+            -4.410268129074548,
+            0.5785922530786045,
+            2.3364537825249325
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 3570,
+          "shieldFileId": 3062,
+          "hudIndicatorFileId": 3189,
+          "snapTransformFileId": 931,
+          "shotPositionFileId": 940,
+          "position": [
+            -4.463153506850163,
+            0.5886905997657186,
+            0.8279084005688608
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 3526,
+          "shieldFileId": 3065,
+          "hudIndicatorFileId": 3425,
+          "snapTransformFileId": 948,
+          "shotPositionFileId": 957,
+          "position": [
+            -4.52578316527763,
+            0.5986906007600697,
+            -0.6908338373948273
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 3582,
+          "shieldFileId": 3067,
+          "hudIndicatorFileId": 3501,
+          "snapTransformFileId": 916,
+          "shotPositionFileId": 925,
+          "position": [
+            -4.578072533046283,
+            0.6686906077205279,
+            -2.1999283591072323
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 3315,
+          "shieldFileId": 3068,
+          "hudIndicatorFileId": 3574,
+          "snapTransformFileId": 1019,
+          "shotPositionFileId": 1028,
+          "position": [
+            4.467317194040201,
+            0.6486904773979821,
+            -2.133124200638549
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 3415,
+          "shieldFileId": 3064,
+          "hudIndicatorFileId": 3405,
+          "snapTransformFileId": 1000,
+          "shotPositionFileId": 1009,
+          "position": [
+            4.468625010216219,
+            0.6326904773979821,
+            -0.6176636736140433
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 3508,
+          "shieldFileId": 3061,
+          "hudIndicatorFileId": 3157,
+          "snapTransformFileId": 963,
+          "shotPositionFileId": 972,
+          "position": [
+            4.468625010216219,
+            0.6266904773979821,
+            0.8893363263859567
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 3209,
+          "shieldFileId": 3066,
+          "hudIndicatorFileId": 3483,
+          "snapTransformFileId": 1039,
+          "shotPositionFileId": 1048,
+          "position": [
+            4.468625010216219,
+            0.6256904773979821,
+            2.4093363263859566
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "origins": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 3129,
+          "shieldFileId": 2568,
+          "hudIndicatorFileId": 2961,
+          "snapTransformFileId": 766,
+          "shotPositionFileId": 775,
+          "position": [
+            -4.421162962359003,
+            0.7116905974746074,
+            2.262235760608556
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 3107,
+          "shieldFileId": 2566,
+          "hudIndicatorFileId": 2678,
+          "snapTransformFileId": 816,
+          "shotPositionFileId": 825,
+          "position": [
+            -4.441471506850161,
+            0.6926906571295658,
+            0.752033100568861
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 3124,
+          "shieldFileId": 2564,
+          "hudIndicatorFileId": 2583,
+          "snapTransformFileId": 781,
+          "shotPositionFileId": 790,
+          "position": [
+            -4.452132347311374,
+            0.7156906594165735,
+            -0.7685098308544098
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 2612,
+          "shieldFileId": 2565,
+          "hudIndicatorFileId": 2608,
+          "snapTransformFileId": 1002,
+          "shotPositionFileId": 1011,
+          "position": [
+            -4.459448699532306,
+            0.7086906587205277,
+            -2.2791626449837614
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 3061,
+          "shieldFileId": 2567,
+          "hudIndicatorFileId": 2684,
+          "snapTransformFileId": 853,
+          "shotPositionFileId": 862,
+          "position": [
+            4.474307010216221,
+            0.831690528397982,
+            -2.208538973614043
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 2621,
+          "shieldFileId": 2570,
+          "hudIndicatorFileId": 3056,
+          "snapTransformFileId": 970,
+          "shotPositionFileId": 979,
+          "position": [
+            4.490307010216221,
+            0.816690528397982,
+            -0.6935389736140432
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 3113,
+          "shieldFileId": 2569,
+          "hudIndicatorFileId": 2984,
+          "snapTransformFileId": 801,
+          "shotPositionFileId": 810,
+          "position": [
+            4.490307010216221,
+            0.835690528397982,
+            0.8134610263859569
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 2991,
+          "shieldFileId": 2571,
+          "hudIndicatorFileId": 3127,
+          "snapTransformFileId": 899,
+          "shotPositionFileId": 908,
+          "position": [
+            4.490307010216221,
+            0.858690528397982,
+            2.3334610263859568
+          ]
+        }
+      ]
+    }
+  ]
+}

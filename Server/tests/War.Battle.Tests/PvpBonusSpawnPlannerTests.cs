@@ -891,8 +891,14 @@ internal static class PvpBonusSpawnPlannerTests
             cardEngine.Advance(cardTick);
         Check(cardEngine.ReadyPvpGrenadeShots.Count == 1 &&
             cardEngine.ReadyPvpGrenadeShots[0].CardFireOrigin ==
-                map.Covers[manifest.Players[0].StartCover].ShotPosition,
-            "first card shot uses the owner's source-bound cover origin");
+                content.CardGrenadeOrigins.ForCover(map,
+                    manifest.Players[0].StartCover),
+            "first card shot uses the serialized shield HUD snap origin");
+        Check(Vector3.Distance(
+                content.CardGrenadeOrigins.ForCover(map,
+                    manifest.Players[0].StartCover),
+                map.Covers[manifest.Players[0].StartCover].ShotPosition) > 0.1f,
+            "shield HUD snap is distinct from ordinary cover shot position");
         Check(cardEngine.PendingPvpGrenadeFlights > 0,
             "card burst enters host grenade flight simulation");
 
