@@ -1,5 +1,6 @@
 using System.Numerics;
 using War.BattleServer;
+using War.Protocol;
 
 internal static class PvpBonusSpawnPlannerTests
 {
@@ -149,6 +150,46 @@ internal static class PvpBonusSpawnPlannerTests
         Check(endpoint.SourceIndex == 9 && endpoint.PrefabIndex == 8 &&
               planner.LastSourceIndex == 9,
             "source upper-endpoint fallthrough preserves history 9 but publishes actual prefab 8");
+
+        var engine = new MatchEngine(manifest, map, content);
+        engine.ConfigurePvpBonuses(content);
+        engine.Admit(localId);
+        engine.Admit(manifest.Players[1].PlayerId);
+        foreach (var player in manifest.Players)
+            engine.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                Ready = new ReadyCommand {ManifestHash = engine.ManifestHash}});
+        engine.Advance(60);
+        var enginePlanner = engine.BonusPlanner;
+        enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
+        var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);
+        enginePlanner.ConfirmDestroyed(kevlarPlan.Request.ReceiptId, Id(501), null);
+        Check(kevlarPlan.PrefabIndex == 6 &&
+              engine.ApplyCollectedPvpBonus(kevlarPlan.Request.ReceiptId) == "bonus-applied" &&
+              engine.Snapshot().Players[0].KevlarHealth ==
+                  manifest.Players[0].Combat!.MaxHealth * 0.1f,
+            "collected Kevlar crate changes the admitted match player's armor");
+        ulong armorRevision = engine.Snapshot().Players[0].DamageRevision;
+        Check(engine.ApplyCollectedPvpBonus(kevlarPlan.Request.ReceiptId) == "bonus-applied" &&
+              engine.Snapshot().Players[0].DamageRevision == armorRevision,
+            "replaying a collected crate cannot refill Kevlar twice");
+        enginePlanner.EnqueueConfirmedBonus(Id(502), localId, 8);
+        var ammoPlan = enginePlanner.PlanMatured(third, 0, context, draw);
+        enginePlanner.ConfirmDestroyed(ammoPlan.Request.ReceiptId, Id(503), null);
+        int oldReserve = engine.Snapshot().Players[0].ReserveAmmo;
+        int clipSize = manifest.Players[0].Weapon.ClipSize;
+        Check(engine.ApplyCollectedPvpBonus(ammoPlan.Request.ReceiptId) == "bonus-applied" &&
+              engine.Snapshot().Players[0].ReserveAmmo == oldReserve + clipSize &&
+              engine.ApplyCollectedPvpBonus(ammoPlan.Request.ReceiptId) == "bonus-applied" &&
+              engine.Snapshot().Players[0].ReserveAmmo == oldReserve + clipSize,
+            "collected ammo crate increases reserve once, including on replay");
+        enginePlanner.EnqueueConfirmedBonus(Id(504), localId, 1);
+        var healthPlan = enginePlanner.PlanMatured(first, 0, context, draw);
+        enginePlanner.ConfirmDestroyed(healthPlan.Request.ReceiptId, Id(505), null);
+        float unchangedHealth = engine.Snapshot().Players[0].Health;
+        Check(engine.ApplyCollectedPvpBonus(healthPlan.Request.ReceiptId) ==
+                  "bonus-effect-pending" &&
+              engine.Snapshot().Players[0].Health == unchangedHealth,
+            "unverified health callback remains closed instead of inventing a direct heal");
 
         var twoOwners = manifest with {
             Players = [manifest.Players[0], manifest.Players[1] with {PlayerLevel = 5}]

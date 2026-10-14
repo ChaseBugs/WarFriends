@@ -59,6 +59,7 @@ internal sealed class PvpBonusSpawnPlanner
     }
 
     internal int LastSourceIndex { get { lock (gate) return selection.LastSourceIndex; } }
+    internal string MatchId => matchId;
     internal int QueuedCount(PvpBonusSide side) { lock (gate) return selection.QueuedCount(side); }
     internal int PlanCount { get { lock (gate) return plans.Count; } }
     internal int ActiveBoxCount { get { lock (gate) return boxes.ActiveCount; } }
