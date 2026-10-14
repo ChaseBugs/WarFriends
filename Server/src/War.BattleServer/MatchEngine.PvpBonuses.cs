@@ -25,6 +25,20 @@ public sealed partial class MatchEngine
         return Convert.ToHexStringLower(digest)[..32];
     }
 
+    // A real unit projectile supplies the owner, collision and unique shot ID.
+    // The source PlayerOnDamage callback credits the AIObject's owning player.
+    internal PlayerDamageResult? ApplyConfirmedArmyProjectilePlayerDamage(
+        BulletImpact impact, ResolvedPlayerDamage damage, float randomRoll)
+    {
+        string victimId = impact.Hit.PlayerId ??
+            throw new InvalidDataException("Army projectile has no player collision.");
+        string? receiptId = pvpBonusProgress == null ? null :
+            PvpHitReceiptId("army-projectile", impact.ProjectileId, victimId);
+        return ApplyResolvedPlayerDamage(impact.OwnerId, victimId, damage, randomRoll,
+            confirmedProjectileImpact: true, pvpPlayerDamageReceiptId: receiptId,
+            pvpDamageOwner: PvpPlayerDamageOwner.Army);
+    }
+
     internal void ConfigurePvpBonuses(BattleCombatContent content)
     {
         if (phase != BattlePhase.Waiting || players.Any(player => player.Admitted) ||

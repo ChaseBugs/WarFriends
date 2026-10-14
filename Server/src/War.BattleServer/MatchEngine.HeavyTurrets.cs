@@ -524,11 +524,11 @@ public sealed partial class MatchEngine
                 impact.Hit.Position,0,"heavy-turret");
             ApplyHeavyTurretEnvironmentImpact(impact,pair.Value.Damage);
             if(Terminal)return;
-            if(impact.Hit.PlayerId is {} playerId)
-                ApplyResolvedPlayerDamage(impact.OwnerId,playerId,
+            if(impact.Hit.PlayerId != null)
+                ApplyConfirmedArmyProjectilePlayerDamage(impact,
                     new ResolvedPlayerDamage(pair.Value.Damage,CombatDamageType.Shot,HasWeapon:true,FriendKill:false,
                         PartWeight:impact.Hit.PartWeight,PlayerCoefficient:heavyTurretSource!.PlayerDamageRatio,
-                        PlayerOvertimeCoefficient:heavyTurretSource.PlayerOvertimeDamageRatio,Overtime:overtime),1,true);
+                        PlayerOvertimeCoefficient:heavyTurretSource.PlayerOvertimeDamageRatio,Overtime:overtime),1);
             else if(impact.Hit is {DynamicDecoy:true,DynamicEntityId:ulong decoyId})
                 ApplyDecoyProjectileImpact(impact.OwnerId,decoyId,pair.Value.Damage,impact.Hit.PartWeight,impact.ProjectileId);
             else if(impact.Hit is {DynamicArmyInfantry:true,DynamicEntityId:ulong armyId})

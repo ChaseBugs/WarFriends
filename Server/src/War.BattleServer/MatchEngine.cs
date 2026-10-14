@@ -1369,15 +1369,19 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try{if(droneProjectiles.Count>0)AdvanceDroneProjectileFlights();}
             catch(InvalidDataException){End("invalid-drone-projectile-authority","",false);return;}
+            catch(InvalidOperationException){End("pvp-score-backpressure","",false);return;}
             if(Terminal)return;
             try{if(helicopterProjectiles.Count>0)AdvanceHelicopterProjectiles();}
             catch(InvalidDataException){End("invalid-helicopter-projectile-authority","",false);return;}
+            catch(InvalidOperationException){End("pvp-score-backpressure","",false);return;}
             if(Terminal)return;
             try{if(assaultHelicopterProjectiles.Count>0)AdvanceAssaultHelicopterProjectiles();}
             catch(InvalidDataException){End("invalid-assault-helicopter-projectile-authority","",false);return;}
+            catch(InvalidOperationException){End("pvp-score-backpressure","",false);return;}
             if(Terminal)return;
             try{AdvanceHeavyTurretProjectiles();AdvanceHeavyTurrets();}
             catch(InvalidDataException){End("invalid-heavy-turret-authority","",false);return;}
+            catch(InvalidOperationException){End("pvp-score-backpressure","",false);return;}
             if(Terminal)return;
         }
         if (phase == BattlePhase.Waiting && tick >= admissionDeadline) { End("admission-timeout", "", false); return; }

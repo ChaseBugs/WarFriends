@@ -187,6 +187,23 @@ internal static class PvpBonusSpawnPlannerTests
               engine.BonusProgress.ScoreSnapshot(localId).Score == 16 &&
               engine.BonusProgress.Snapshot(localId).Progress == 12f,
             "host-confirmed army impact credits the owning player's ArmyPlayerHit row");
+        var projectileEngine = new MatchEngine(manifest, map, content,
+            combatRandom: () => 1f);
+        foreach (var player in manifest.Players) projectileEngine.Admit(player.PlayerId);
+        foreach (var player in manifest.Players)
+            projectileEngine.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                Ready = new ReadyCommand {ManifestHash = projectileEngine.ManifestHash}});
+        projectileEngine.Advance(60);
+        var projectileImpact = new BulletImpact(601, localId,
+            new ShotCollision(1f, Vector3.One, "army-player", manifest.Players[1].PlayerId, 1f),
+            60);
+        var projectileHit = projectileEngine.ApplyConfirmedArmyProjectilePlayerDamage(
+            projectileImpact, new ResolvedPlayerDamage(10f, CombatDamageType.Shot), 1f);
+        Check(projectileHit is {Applied:true} &&
+              projectileEngine.BonusProgress.ScoreSnapshot(localId).Score == 10 &&
+              projectileEngine.BonusProgress.Snapshot(localId).Progress == 7.5f &&
+              projectileEngine.Snapshot().Players[1].Health == 990f,
+            "host army projectile receipt publishes source army score and player damage");
         var enginePlanner = engine.BonusPlanner;
         enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
         var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);

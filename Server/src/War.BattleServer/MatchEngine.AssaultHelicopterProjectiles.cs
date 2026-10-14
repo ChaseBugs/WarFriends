@@ -99,12 +99,12 @@ public sealed partial class MatchEngine
             ApplyHeavyTurretEnvironmentImpact(impact, projectile.Damage);
             if (Terminal) return;
             var hit = impact.Hit;
-            if (hit.PlayerId is { } player)
-                ApplyResolvedPlayerDamage(impact.OwnerId, player,
+            if (hit.PlayerId != null)
+                ApplyConfirmedArmyProjectilePlayerDamage(impact,
                     new(projectile.Damage, CombatDamageType.Shot, PartWeight: hit.PartWeight,
                         FriendKill: true, PlayerCoefficient: projectile.PlayerRatio,
                         PlayerOvertimeCoefficient: projectile.OvertimeRatio, Overtime: overtime),
-                    damageRoll?.Invoke() ?? 1, true);
+                    damageRoll?.Invoke() ?? 1);
             else if (hit is { DynamicDecoy: true, DynamicEntityId: ulong decoy })
                 ApplyDecoyProjectileImpact(impact.OwnerId, decoy, projectile.Damage,
                     hit.PartWeight, impact.ProjectileId);
