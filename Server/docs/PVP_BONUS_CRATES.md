@@ -149,11 +149,12 @@ The source `KillStreakBonusKevlar` sets `kevlarStrength` to 0.1 before
 that crate maximum. `KillStreakBonusAddAmmo` adds each used weapon's clip size
 to its reserve without a setter cap; `PvpBonusAmmoPolicy` validates that
 arithmetic before a host mutation. An explicitly configured `MatchEngine` can
-now apply collected Kevlar and ammo intents to its admitted player state once
-per box, rejecting invalid arithmetic before any slot changes. The normal
-Worker does not configure this source view or route box collision/death yet;
-other effects remain closed. The health crate uses `Heal` through negative Basic
-damage and its callbacks, so a direct health assignment would be premature.
+now apply collected Health, Kevlar and ammo intents to its admitted player
+state once per box, rejecting invalid arithmetic before any slot changes.
+Health uses `PlayerDamage.Resolve` with negative Basic damage, so its recovered
+OnDamage dodge/immortality/tutorial gates remain in the path. The normal Worker
+does not configure this source view or route box collision/death yet; other
+effects remain closed.
 
 ## Collection contract to implement next
 

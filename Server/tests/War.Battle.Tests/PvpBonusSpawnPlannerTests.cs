@@ -151,7 +151,7 @@ internal static class PvpBonusSpawnPlannerTests
               planner.LastSourceIndex == 9,
             "source upper-endpoint fallthrough preserves history 9 but publishes actual prefab 8");
 
-        var engine = new MatchEngine(manifest, map, content);
+        var engine = new MatchEngine(manifest, map, content, combatRandom: () => 1f);
         engine.ConfigurePvpBonuses(content);
         engine.Admit(localId);
         engine.Admit(manifest.Players[1].PlayerId);
@@ -185,11 +185,17 @@ internal static class PvpBonusSpawnPlannerTests
         enginePlanner.EnqueueConfirmedBonus(Id(504), localId, 1);
         var healthPlan = enginePlanner.PlanMatured(first, 0, context, draw);
         enginePlanner.ConfirmDestroyed(healthPlan.Request.ReceiptId, Id(505), null);
-        float unchangedHealth = engine.Snapshot().Players[0].Health;
-        Check(engine.ApplyCollectedPvpBonus(healthPlan.Request.ReceiptId) ==
-                  "bonus-effect-pending" &&
-              engine.Snapshot().Players[0].Health == unchangedHealth,
-            "unverified health callback remains closed instead of inventing a direct heal");
+        var damageResult = engine.ApplyResolvedPlayerDamage(manifest.Players[1].PlayerId, localId,
+            new ResolvedPlayerDamage(200f, CombatDamageType.Basic, HasWeapon: false), 1f);
+        float damagedHealth = engine.Snapshot().Players[0].Health;
+        var healthCode = engine.ApplyCollectedPvpBonus(healthPlan.Request.ReceiptId);
+        float healedHealth = engine.Snapshot().Players[0].Health;
+        var replayCode = engine.ApplyCollectedPvpBonus(healthPlan.Request.ReceiptId);
+        Check(damageResult is {Applied:true,Health:900f} &&
+              healthCode == "bonus-applied" &&
+              healedHealth == damagedHealth + manifest.Players[0].Combat!.MaxHealth * 0.1f &&
+              replayCode == "bonus-applied" && engine.Snapshot().Players[0].Health == healedHealth,
+            $"health crate uses negative Basic damage once: {damageResult}, {healthCode}, {replayCode}, {damagedHealth}, {healedHealth}");
 
         var twoOwners = manifest with {
             Players = [manifest.Players[0], manifest.Players[1] with {PlayerLevel = 5}]

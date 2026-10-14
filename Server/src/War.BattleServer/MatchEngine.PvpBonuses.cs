@@ -38,7 +38,29 @@ public sealed partial class MatchEngine
             recipient.Definition.Combat == null || stateRevision == ulong.MaxValue)
             return "bonus-unavailable";
 
-        if (intent.Kind == PvpBonusEffectKind.Kevlar)
+        if (intent.Kind == PvpBonusEffectKind.Health)
+        {
+            if (recipient.DamageRevision == ulong.MaxValue) return "bonus-unavailable";
+            float healing = recipient.MaximumHealth * 0.1f;
+            if (!float.IsFinite(healing) || healing <= 0)
+                return "bonus-unavailable";
+            PlayerDamageResult result;
+            try
+            {
+                // KillStreakBonusAddHealth calls Heal, which sends negative
+                // Basic damage through PlayerController.OnDamage. The normal
+                // resolver preserves its dodge, immortality and tutorial gates.
+                result = PlayerDamage.Resolve(CombatFor(recipient), recipient.Health,
+                    new ResolvedPlayerDamage(-healing, CombatDamageType.Basic,
+                        HasWeapon: false), sameFraction: false, self: false,
+                    randomRoll: combatRandom());
+            }
+            catch (InvalidDataException) { return "bonus-unavailable"; }
+            if (!result.Applied) return "bonus-unavailable";
+            recipient.Health = result.Health;
+            recipient.DamageRevision++;
+        }
+        else if (intent.Kind == PvpBonusEffectKind.Kevlar)
         {
             float maximum;
             try { maximum = PlayerKevlar.BonusCrateMaximum(recipient.MaximumHealth); }
