@@ -107,6 +107,17 @@ internal sealed class ShieldLifecycle
             throw new InvalidDataException("Invalid army shield explosion multiplier.");
         ApplyUnitShot(sourceDamage*multiplier,tick);
     }
+    internal void ApplyExplosionWithoutPlayerWeapon(float sourceDamage,ulong tick)
+    {
+        Time(tick);
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>100000000)
+            throw new InvalidDataException("Invalid bonus grenade shield damage.");
+        // The KillStreakManager's scene Grenade has no PlayerWeapon. Shield.DoDamage
+        // therefore applies the explosion coefficient without a weapon-level ratio.
+        if(Destroyed||isImmortal()||sourceDamage==0)return;
+        Health=Math.Max(0,Health-sourceDamage);
+        if(Health==0){Destroyed=true;destroyedTick=tick;}
+    }
     internal bool BeginOvertime(ulong tick,bool destroy)
     {
         Time(tick);

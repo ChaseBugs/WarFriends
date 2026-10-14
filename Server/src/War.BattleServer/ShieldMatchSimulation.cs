@@ -167,6 +167,22 @@ internal sealed class ShieldMatchSimulation
         if(row.Lifecycle.Health==before)return null;
         row.Revision++;return row.Snapshot();
     }
+    internal ShieldMutation? ApplyBonusGrenadeExplosion(
+        string dynamicOwner,int shooterFraction,float damage,ulong tick)
+    {
+        if(tick!=lastTick||shooterFraction is not (1 or 2)||
+           !float.IsFinite(damage)||damage<0)
+            throw new InvalidDataException("Invalid bonus grenade shield authority.");
+        if(!byOwner.TryGetValue(dynamicOwner,out var row)||row.Lifecycle.Destroyed)
+            return null;
+        if(row.Cover.Fraction==shooterFraction)return null;
+        float before=row.Lifecycle.Health;
+        row.Lifecycle.ApplyExplosionWithoutPlayerWeapon(
+            damage*policy.ExplosionCoefficient,tick);
+        if(row.Lifecycle.Health==before)return null;
+        row.Revision++;
+        return row.Snapshot();
+    }
     internal ShieldMutation? ApplyUnitExplosion(string dynamicOwner,int shooterFraction,float damage,ulong tick)
     {
         if(tick!=lastTick||shooterFraction is not (1 or 2)||!float.IsFinite(damage)||damage<0)

@@ -297,7 +297,13 @@ and Helicopter bodies now use the same host air-collider grouping and
 shared Army vitality as normal grenades, with deployed-unit blast fixtures.
 The Assault Helicopter body and separate front glass have source-based damage
 paths, but their moving flight/contact case still needs a successful live
-fixture. Shields/barrels and player-hit score credit are still open.
+fixture. Host map overlaps now damage enemy shields and trigger source barrel
+chains before character damage. The Manager scene weapon has no `PlayerWeapon`,
+so shield damage uses the recovered explosion coefficient without an inventory
+weapon ratio; `friendKill: 0` protects allied shields. A shield present in the
+saved overlap set also supplies the recovered player-behind-shield multiplier.
+Deployed map fixtures verify shield and barrel mutations. Player-hit score
+credit is still open.
 Unity Rigidbody bounce against other layers and exact Unity Update ordering
 still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*

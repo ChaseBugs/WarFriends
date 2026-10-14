@@ -984,6 +984,79 @@ internal static class PvpBonusSpawnPlannerTests
 
         BlastEnemyAirBody("ID_UNIT-DRONE", 720);
         BlastEnemyAirBody("ID_UNIT-HELICOPTER", 730);
+
+        MatchEngine BonusMapMatch(MatchManifest mapManifest)
+        {
+            var match = new MatchEngine(mapManifest, map, content,
+                combatRandom: () => 1f);
+            foreach (var player in mapManifest.Players)
+            {
+                match.Admit(player.PlayerId);
+                match.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                    Ready = new ReadyCommand {ManifestHash = match.ManifestHash}});
+            }
+            match.Advance(60);
+            return match;
+        }
+
+        void BlastMapTarget(MatchEngine match, int receiptBase, Vector3 position)
+        {
+            var planner = match.BonusPlanner;
+            planner.EnqueueConfirmedBonus(Id(receiptBase), localId, 3);
+            var box = planner.PlanMatured(grenadeFrame, 0, context, draw);
+            planner.ConfirmDestroyed(box.Request.ReceiptId,
+                Id(receiptBase + 1), null, position);
+            match.PlanCollectedPvpGrenades(box.Request.ReceiptId);
+            for (ulong nextTick = 61; nextTick <= 180 && !match.Terminal;
+                 nextTick++)
+                match.Advance(nextTick);
+        }
+
+        var shieldManifest = manifest with {
+            Players = manifest.Players.Select(player => player with {ShieldLevel = 0})
+                .ToArray()
+        };
+        var shieldRules = new ShieldMatchSimulation(map, content.Shields,
+            shieldManifest);
+        var friendlyCover = map.Covers.First(cover => cover.Fraction ==
+            manifest.Players[0].Fraction);
+        var enemyCover = map.Covers.First(cover => cover.Fraction ==
+            manifest.Players[1].Fraction);
+        string friendlyShieldOwner = friendlyCover.SourcePath + "/riot_shield";
+        string enemyShieldOwner = enemyCover.SourcePath + "/riot_shield";
+        Check(shieldRules.ApplyBonusGrenadeExplosion(friendlyShieldOwner,
+                manifest.Players[0].Fraction, 350f, 0) == null,
+            "Manager grenade friendKill=0 excludes the allied shield");
+        float isolatedShieldBefore = shieldRules.Snapshot().Single(value =>
+            value.CoverIndex == enemyCover.SourceIndex).Health;
+        var isolatedShieldHit = shieldRules.ApplyBonusGrenadeExplosion(
+            enemyShieldOwner, manifest.Players[0].Fraction, 350f, 0);
+        Check(isolatedShieldHit != null && Math.Abs(
+                isolatedShieldBefore - isolatedShieldHit.Health -
+                Math.Min(isolatedShieldBefore,
+                    350f * content.Shields.ExplosionCoefficient)) < 0.01f,
+            "scene Manager grenade applies the source shield explosion coefficient");
+        var shieldMatch = BonusMapMatch(shieldManifest);
+        float enemyShieldBefore = shieldMatch.Snapshot().Shields.Single(value =>
+            value.CoverIndex == enemyCover.SourceIndex).Health;
+        var shieldCollider = map.DynamicColliders.First(collider =>
+            collider.DynamicOwner == enemyCover.SourcePath + "/riot_shield");
+        BlastMapTarget(shieldMatch, 750, shieldCollider.TransformPosition);
+        Check(shieldMatch.Snapshot().Shields.Single(value =>
+                value.CoverIndex == enemyCover.SourceIndex).Health < enemyShieldBefore,
+            "host bonus grenade damages an opposing source shield");
+
+        var barrelManifest = manifest with {
+            Players = manifest.Players.Select(player => player with {PlayerLevel = 0})
+                .ToArray()
+        };
+        var barrelMatch = BonusMapMatch(barrelManifest);
+        var sourceBarrel = map.DynamicColliders.First(collider =>
+            barrelMatch.BarrelState.Any(barrel =>
+                barrel.ColliderIndex == collider.ColliderIndex));
+        BlastMapTarget(barrelMatch, 760, sourceBarrel.TransformPosition);
+        Check(barrelMatch.BarrelState.Any(barrel => barrel.Revision > 0),
+            "host bonus grenade enters the recovered barrel damage chain");
         try
         {
             engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);

@@ -132,6 +132,9 @@ public sealed partial class MatchEngine
         bool friendKill = pvpGrenadeCatalog?.GrenadeFriendKill ??
             throw new InvalidDataException("Bonus grenade weapon setup is missing.");
         var stage = explosion.ToExplosionStage();
+        bool shieldNearPlayer = ApplyPvpBonusGrenadeMapExplosion(explosion,
+            stage, owner);
+        if (Terminal) return;
         ApplyPvpBonusGrenadeInfantry(explosion, stage, owner);
         if (Terminal) return;
         ApplyPvpBonusGrenadeDecoys(explosion, stage, owner);
@@ -149,7 +152,7 @@ public sealed partial class MatchEngine
             var pose = rifleCombat.Pose(victim.Definition.PlayerId).Collision;
             var effect = GrenadeExplosion.ResolvePlayer(explosion.Position,
                 pose, victim.Position, CombatFor(victim), victim.Health,
-                stage, shieldBetween: false, overtime,
+                stage, shieldNearPlayer, overtime,
                 owner.Definition.Fraction == victim.Definition.Fraction,
                 owner == victim, roll, friendKill);
             if (effect?.Result.Applied != true) continue;
