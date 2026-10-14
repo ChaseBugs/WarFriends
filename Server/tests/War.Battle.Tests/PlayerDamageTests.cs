@@ -63,6 +63,13 @@ internal static class PlayerDamageTests
 
         Check(PlayerKevlar.CardMaximum(100) == 20,
             "Kevlar Up fills twenty percent of the current player maximum");
+        Check(PlayerKevlar.BonusCrateMaximum(100) == 10,
+            "recovered Kevlar crate fills ten percent of the current player maximum");
+        Check(PvpBonusAmmoPolicy.RefilledReserve(20, 7) == 27 &&
+              PvpBonusAmmoPolicy.RefilledReserve(0, 7) == 7,
+            "recovered ammo crate adds one clip to reserve without changing clip ammo");
+        Reject(() => PvpBonusAmmoPolicy.RefilledReserve(int.MaxValue, 7));
+        Reject(() => PvpBonusAmmoPolicy.RefilledReserve(-1, 7));
         var armoredHit = PlayerKevlar.Absorb(Hit(new ResolvedPlayerDamage(25,
             CombatDamageType.Basic, HasWeapon: false)), 20, 20, 100, false);
         Check(armoredHit.Player.Health == 95 && armoredHit.RemainingKevlar == 0 &&

@@ -47,6 +47,9 @@ collection candidate only; host physics, normal battle events, bonus effects,
 durable rewards and Unity projection are still required.
 Collected boxes now expose one source-indexed effect intent, with a stolen
 booby-trapped box replacing its original effect. No effect is executed yet.
+The recovered Kevlar crate's 0.1 maximum-health strength and ammo crate's
+one-clip-per-used-weapon reserve addition now have checked host calculations.
+Their actual MatchEngine mutations remain open.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

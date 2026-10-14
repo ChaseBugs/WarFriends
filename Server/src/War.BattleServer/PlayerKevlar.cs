@@ -6,14 +6,25 @@ internal sealed record KevlarDamageResult(PlayerDamageResult Player, float Remai
 internal static class PlayerKevlar
 {
     internal const float CardStrength = 0.2f;
+    internal const float BonusCrateStrength = 0.1f;
 
     internal static float CardMaximum(float playerMaximumHealth)
     {
+        return MaximumForStrength(playerMaximumHealth, CardStrength);
+    }
+
+    internal static float BonusCrateMaximum(float playerMaximumHealth)
+    {
+        return MaximumForStrength(playerMaximumHealth, BonusCrateStrength);
+    }
+
+    private static float MaximumForStrength(float playerMaximumHealth, float strength)
+    {
         if (!float.IsFinite(playerMaximumHealth) || playerMaximumHealth <= 0)
-            throw new InvalidDataException("Invalid player health for Kevlar Up.");
-        float maximum = playerMaximumHealth * CardStrength;
+            throw new InvalidDataException("Invalid player health for Kevlar.");
+        float maximum = playerMaximumHealth * strength;
         if (!float.IsFinite(maximum) || maximum <= 0 || maximum > 100_000_000)
-            throw new InvalidDataException("Invalid Kevlar Up maximum.");
+            throw new InvalidDataException("Invalid Kevlar maximum.");
         return maximum;
     }
 
