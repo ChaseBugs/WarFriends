@@ -251,10 +251,11 @@ sorts living visible opposing `GameShootableEntity` components by distance
 from the collected box, and fires at up to three within a strict three-unit
 radius, with 0.2 scaled seconds between shots. Missing targets become random
 box-centered X/Z offsets in [-1.5, 1.5]. The fallback grenade's source
-damage rows are 50 to 872, scaled by recipient rank/43; this damage and
-projectile flight are not implemented yet. `PvpBonusGrenadeBurstPolicy` now
-plans only the host-confirmed target positions and timing, drawing random
-offsets only for fallback shots. The source passes the *local current player*
+damage rows are 50 to 872, scaled by recipient rank/43. The planner now
+attaches the 43 bit-exact Unity-probed explosion and direct-damage pairs to
+fallback shots; targeted shots retain the prefab's `GrenadeAmmoSetup` values.
+Projectile flight, impact, and actual damage remain unimplemented. The planner
+draws random offsets only for fallback shots. The source passes the *local current player*
 fraction to `GetOpponents`; the planner keeps that perspective explicit until
 the self-hosted scene-owner callback is bound. The recovered C# displays a
 null `killStreakBonusBox2` inside its sort comparator, but the original APK

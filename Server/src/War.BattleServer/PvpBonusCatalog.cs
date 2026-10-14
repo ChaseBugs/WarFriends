@@ -20,9 +20,9 @@ public sealed class PvpBonusCatalog
     private const string ReviewedSha256 =
         "b8cf92b01f6228cf7b0e627cfd529854656e51cfcc78f3e8b8e57c0affaa0957";
     private const string ReviewedUnityReferenceSha256 =
-        "bf5adb198147574e57271ec438664db7af61bd43f4ad68e466126e13091e564c";
+        "d632a2a6d80a31453e9e570a95a23874d3e04bb777e811c0984b4c12568fb71f";
     private const string ReviewedSourceCodeSha256 =
-        "7ea7e1169d91fe906a5dddc70c12efe36aba168f68230c22581665a0f68c5f86";
+        "fd257c22671f0680333b8f456f72991a4560ba3d38d72f85d1da7a16c9f08309";
     private static readonly string[] SourceNames = ["KillStreakBonusGold",
         "KillStreakBonusAddHealth", "KillStreakBonusWarbucks", "KillStreakBonusGrenades",
         "KillStreakBonusSlowMotion", "KillStreakBonusTurret", "KillStreakBonusKevlar",
@@ -49,10 +49,13 @@ public sealed class PvpBonusCatalog
     public float GrenadeTargetDistance { get; }
     public float GrenadeFallbackDamageMinimum { get; }
     public float GrenadeFallbackDamageMaximum { get; }
+    public int RankCount { get; } = 43;
+    private readonly IReadOnlyList<PvpBonusGrenadeDamageOverride> grenadeFallbackDamage;
 
     private PvpBonusCatalog(PvpBonusSource[] rows, float lowAmmoThreshold,
         float warbucksScalingBase, int grenadeCount, float grenadeTargetDistance,
-        float grenadeFallbackDamageMinimum, float grenadeFallbackDamageMaximum)
+        float grenadeFallbackDamageMinimum, float grenadeFallbackDamageMaximum,
+        IReadOnlyList<PvpBonusGrenadeDamageOverride> grenadeFallbackDamage)
     {
         Rows = new ReadOnlyCollection<PvpBonusSource>(rows);
         LowAmmoThreshold = lowAmmoThreshold;
@@ -61,6 +64,14 @@ public sealed class PvpBonusCatalog
         GrenadeTargetDistance = grenadeTargetDistance;
         GrenadeFallbackDamageMinimum = grenadeFallbackDamageMinimum;
         GrenadeFallbackDamageMaximum = grenadeFallbackDamageMaximum;
+        this.grenadeFallbackDamage = grenadeFallbackDamage;
+    }
+
+    internal PvpBonusGrenadeDamageOverride GrenadeFallbackDamageForLevel(int level)
+    {
+        if (level < 0 || level >= grenadeFallbackDamage.Count)
+            throw new ArgumentOutOfRangeException(nameof(level));
+        return grenadeFallbackDamage[level];
     }
 
     public int WarbucksRewardForBaseDraw(int ownerLevelIndex, int baseDraw)
@@ -185,16 +196,16 @@ public sealed class PvpBonusCatalog
         }
         string unityReference = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!,
             "unity-pvp-bonus-reference.json");
-        ValidateUnityWarbucksScales(unityReference);
+        var grenadeDamage = ValidateUnityBonusReference(unityReference);
         return new PvpBonusCatalog(rows, rules.GetProperty("lowAmmoThreshold").GetSingle(),
             rules.GetProperty("warbucksScalingBase").GetSingle(),
             rules.GetProperty("grenadeCount").GetInt32(),
             rules.GetProperty("grenadeTargetDistance").GetSingle(),
             rules.GetProperty("grenadeFallbackDamageMinimum").GetSingle(),
-            rules.GetProperty("grenadeFallbackDamageMaximum").GetSingle());
+            rules.GetProperty("grenadeFallbackDamageMaximum").GetSingle(), grenadeDamage);
     }
 
-    private static void ValidateUnityWarbucksScales(string path)
+    private static IReadOnlyList<PvpBonusGrenadeDamageOverride> ValidateUnityBonusReference(string path)
     {
         byte[] bytes = File.ReadAllBytes(path);
         if (Convert.ToHexStringLower(SHA256.HashData(bytes)) != ReviewedUnityReferenceSha256)
@@ -218,5 +229,24 @@ public sealed class PvpBonusCatalog
                 amountsSha256.Any(character => !Uri.IsHexDigit(character) || char.IsUpper(character)))
                 throw new InvalidDataException("Invalid Unity Warbucks rank sample.");
         }
+        var grenadeSamples = root.GetProperty("grenadeSamples");
+        if (grenadeSamples.GetArrayLength() != UnityWarbucksScaleBits.Length)
+            throw new InvalidDataException("Incomplete Unity grenade damage samples.");
+        var damage = new PvpBonusGrenadeDamageOverride[grenadeSamples.GetArrayLength()];
+        for (int level = 0; level < damage.Length; level++)
+        {
+            var sample = grenadeSamples[level];
+            if (sample.GetProperty("recipientLevelIndex").GetInt32() != level)
+                throw new InvalidDataException("Unity grenade damage rank order changed.");
+            float explosion = BitConverter.Int32BitsToSingle(
+                sample.GetProperty("explosionBits").GetInt32());
+            float direct = BitConverter.Int32BitsToSingle(
+                sample.GetProperty("directBits").GetInt32());
+            if (!float.IsFinite(explosion) || !float.IsFinite(direct) ||
+                explosion < 50f || explosion > 872f || direct < 0f || direct > explosion)
+                throw new InvalidDataException("Invalid Unity grenade damage sample.");
+            damage[level] = new(explosion, direct);
+        }
+        return Array.AsReadOnly(damage);
     }
 }

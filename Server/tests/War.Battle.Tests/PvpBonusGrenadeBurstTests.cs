@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json;
 using War.BattleServer;
 
 internal static class PvpBonusGrenadeBurstTests
@@ -32,13 +33,15 @@ internal static class PvpBonusGrenadeBurstTests
             Target("non-main", 1, 0.1f, mainOwner: false)
         };
         var offsets = new Queue<float>([0.25f, -0.5f]);
-        var launches = policy.Plan(2, box, shootables, () => offsets.Dequeue());
+        var launches = policy.Plan(2, 0, box, shootables, () => offsets.Dequeue());
         Check(launches.Count == 3 && launches[0] ==
-                  new PvpBonusGrenadeLaunch(0, 1f, "close1", new Vector3(1f, 0f, 0f)) &&
+                  new PvpBonusGrenadeLaunch(0, 1f, "close1", new Vector3(1f, 0f, 0f), null) &&
               launches[1] ==
-                  new PvpBonusGrenadeLaunch(1, 1.2f, "close2", new Vector3(2f, 0f, 0f)) &&
+                  new PvpBonusGrenadeLaunch(1, 1.2f, "close2", new Vector3(2f, 0f, 0f), null) &&
               launches[2] ==
-                  new PvpBonusGrenadeLaunch(2, 1.4f, null, new Vector3(0.25f, 0f, -0.5f)) &&
+                  new PvpBonusGrenadeLaunch(2, 1.4f, null,
+                      new Vector3(0.25f, 0f, -0.5f),
+                      new PvpBonusGrenadeDamageOverride(50f, 5f)) &&
               offsets.Count == 0,
             "visible living opponents are nearest first; the strict-radius remainder falls around the box");
         try
@@ -49,13 +52,13 @@ internal static class PvpBonusGrenadeBurstTests
         catch (NotSupportedException) { checks++; }
 
         int unnecessaryDraws = 0;
-        var nearest = policy.Plan(2, box, [Target("third", 1, 2.5f),
+        var nearest = policy.Plan(2, 42, box, [Target("third", 1, 2.5f),
             Target("first", 1, 1f), Target("fourth", 1, 2.9f),
             Target("second", 1, 2f)], () => { unnecessaryDraws++; return 0f; });
         Check(nearest.Select(launch => launch.TargetId).SequenceEqual(
                   ["first", "second", "third"]) && unnecessaryDraws == 0,
             "three nearest eligible targets consume no fallback random draws");
-        var equalDistance = policy.Plan(2, box,
+        var equalDistance = policy.Plan(2, 3, box,
             [Target("registered-first", 1, 1f), Target("registered-second", 1, -1f)],
             () => 0f);
         Check(equalDistance[0].TargetId == "registered-first" &&
@@ -63,26 +66,45 @@ internal static class PvpBonusGrenadeBurstTests
             "equal-distance targets retain host registry order");
 
         int fallbackDraws = 0;
-        var allFallback = policy.Plan(2, box,
+        var allFallback = policy.Plan(2, 0, box,
             [Target("friend", 2, 1f), Target("dead", 1, 1f, alive: false)],
             () => { fallbackDraws++; return 0f; });
         Check(allFallback.Count == 3 && allFallback.All(launch => launch.TargetId == null) &&
               fallbackDraws == 6 && allFallback[2].DelayScaledSeconds == 1.4f,
             "three fallback grenades use two source draws each after the one-second delay");
 
+        using var reference = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "unity-pvp-bonus-reference.json")));
+        var damageSamples = reference.RootElement.GetProperty("grenadeSamples");
+        Check(damageSamples.GetArrayLength() == catalog.RankCount,
+            "Unity provides a fallback grenade damage sample for every rank");
+        for (int level = 0; level < catalog.RankCount; level++)
+        {
+            var sample = damageSamples[level];
+            var damage = policy.Plan(2, level, box, [], () => 0f)[0].DamageOverride!;
+            Check(sample.GetProperty("recipientLevelIndex").GetInt32() == level &&
+                  BitConverter.SingleToInt32Bits(damage.Explosion) ==
+                      sample.GetProperty("explosionBits").GetInt32() &&
+                  BitConverter.SingleToInt32Bits(damage.Direct) ==
+                      sample.GetProperty("directBits").GetInt32(),
+                $"rank {level} grenade fallback damage matches the Unity probe");
+        }
+
         void Reject(Action attempt)
         {
             try { attempt(); throw new Exception("Invalid grenade burst authority was accepted."); }
             catch (InvalidDataException) { checks++; }
         }
-        Reject(() => policy.Plan(0, box, shootables, () => 0f));
-        Reject(() => policy.Plan(2, new Vector3(float.NaN, 0f, 0f), shootables, () => 0f));
-        Reject(() => policy.Plan(2, box,
+        Reject(() => policy.Plan(0, 0, box, shootables, () => 0f));
+        Reject(() => policy.Plan(2, -1, box, shootables, () => 0f));
+        Reject(() => policy.Plan(2, 43, box, shootables, () => 0f));
+        Reject(() => policy.Plan(2, 0, new Vector3(float.NaN, 0f, 0f), shootables, () => 0f));
+        Reject(() => policy.Plan(2, 0, box,
             [Target("same", 1, 1f), Target("same", 1, 2f)], () => 0f));
-        Reject(() => policy.Plan(2, box, [Target("bad", 3, 1f)], () => 0f));
-        Reject(() => policy.Plan(2, box, [], () => 1.5001f));
-        Reject(() => policy.Plan(2, box, [], () => float.NaN));
-        Reject(() => policy.Plan(2, box,
+        Reject(() => policy.Plan(2, 0, box, [Target("bad", 3, 1f)], () => 0f));
+        Reject(() => policy.Plan(2, 0, box, [], () => 1.5001f));
+        Reject(() => policy.Plan(2, 0, box, [], () => float.NaN));
+        Reject(() => policy.Plan(2, 0, box,
             Enumerable.Range(1, 257).Select(index => Target("t" + index, 1, 1f)).ToArray(),
             () => 0f));
         return checks;

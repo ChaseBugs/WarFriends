@@ -1,7 +1,7 @@
 {
     "version": 2,
     "unityVersion": "2018.3.0f2",
-    "codeSha256": "7ea7e1169d91fe906a5dddc70c12efe36aba168f68230c22581665a0f68c5f86",
+    "codeSha256": "fd257c22671f0680333b8f456f72991a4560ba3d38d72f85d1da7a16c9f08309",
     "samples": [
         {
             "localDisplayLevel": 1,
@@ -3867,6 +3867,223 @@
             "recipientLevelIndex": 42,
             "scaleBits": 1080232167,
             "amountsSha256": "7cafbcbf6e8db59c06477d1282c1702079543042b7337a2e13f540badd2c802c"
+        }
+    ],
+    "grenadeSamples": [
+        {
+            "recipientLevelIndex": 0,
+            "explosionBits": 1112014848,
+            "directBits": 1084227584
+        },
+        {
+            "recipientLevelIndex": 1,
+            "explosionBits": 1116355465,
+            "directBits": 1088236559
+        },
+        {
+            "recipientLevelIndex": 2,
+            "explosionBits": 1118861074,
+            "directBits": 1091382287
+        },
+        {
+            "recipientLevelIndex": 3,
+            "explosionBits": 1121366683,
+            "directBits": 1093386774
+        },
+        {
+            "recipientLevelIndex": 4,
+            "explosionBits": 1123872292,
+            "directBits": 1095391261
+        },
+        {
+            "recipientLevelIndex": 5,
+            "explosionBits": 1125225687,
+            "directBits": 1097395749
+        },
+        {
+            "recipientLevelIndex": 6,
+            "explosionBits": 1126478491,
+            "directBits": 1099153942
+        },
+        {
+            "recipientLevelIndex": 7,
+            "explosionBits": 1127731295,
+            "directBits": 1100156185
+        },
+        {
+            "recipientLevelIndex": 8,
+            "explosionBits": 1128984100,
+            "directBits": 1101158429
+        },
+        {
+            "recipientLevelIndex": 9,
+            "explosionBits": 1130236904,
+            "directBits": 1102160672
+        },
+        {
+            "recipientLevelIndex": 10,
+            "explosionBits": 1131489709,
+            "directBits": 1103162916
+        },
+        {
+            "recipientLevelIndex": 11,
+            "explosionBits": 1132602297,
+            "directBits": 1104165160
+        },
+        {
+            "recipientLevelIndex": 12,
+            "explosionBits": 1133228699,
+            "directBits": 1105167403
+        },
+        {
+            "recipientLevelIndex": 13,
+            "explosionBits": 1133855101,
+            "directBits": 1106169647
+        },
+        {
+            "recipientLevelIndex": 14,
+            "explosionBits": 1134481503,
+            "directBits": 1107171890
+        },
+        {
+            "recipientLevelIndex": 15,
+            "explosionBits": 1135107905,
+            "directBits": 1107735195
+        },
+        {
+            "recipientLevelIndex": 16,
+            "explosionBits": 1135734308,
+            "directBits": 1108236317
+        },
+        {
+            "recipientLevelIndex": 17,
+            "explosionBits": 1136360710,
+            "directBits": 1108737439
+        },
+        {
+            "recipientLevelIndex": 18,
+            "explosionBits": 1136987112,
+            "directBits": 1109238560
+        },
+        {
+            "recipientLevelIndex": 19,
+            "explosionBits": 1137613514,
+            "directBits": 1109739682
+        },
+        {
+            "recipientLevelIndex": 20,
+            "explosionBits": 1138239917,
+            "directBits": 1110240804
+        },
+        {
+            "recipientLevelIndex": 21,
+            "explosionBits": 1138866319,
+            "directBits": 1110741926
+        },
+        {
+            "recipientLevelIndex": 22,
+            "explosionBits": 1139492721,
+            "directBits": 1111243047
+        },
+        {
+            "recipientLevelIndex": 23,
+            "explosionBits": 1140119124,
+            "directBits": 1111744170
+        },
+        {
+            "recipientLevelIndex": 24,
+            "explosionBits": 1140745526,
+            "directBits": 1112245291
+        },
+        {
+            "recipientLevelIndex": 25,
+            "explosionBits": 1141111308,
+            "directBits": 1112746413
+        },
+        {
+            "recipientLevelIndex": 26,
+            "explosionBits": 1141424509,
+            "directBits": 1113247535
+        },
+        {
+            "recipientLevelIndex": 27,
+            "explosionBits": 1141737710,
+            "directBits": 1113748656
+        },
+        {
+            "recipientLevelIndex": 28,
+            "explosionBits": 1142050911,
+            "directBits": 1114249778
+        },
+        {
+            "recipientLevelIndex": 29,
+            "explosionBits": 1142364113,
+            "directBits": 1114750901
+        },
+        {
+            "recipientLevelIndex": 30,
+            "explosionBits": 1142677313,
+            "directBits": 1115252021
+        },
+        {
+            "recipientLevelIndex": 31,
+            "explosionBits": 1142990514,
+            "directBits": 1115719003
+        },
+        {
+            "recipientLevelIndex": 32,
+            "explosionBits": 1143303716,
+            "directBits": 1115969565
+        },
+        {
+            "recipientLevelIndex": 33,
+            "explosionBits": 1143616917,
+            "directBits": 1116220126
+        },
+        {
+            "recipientLevelIndex": 34,
+            "explosionBits": 1143930118,
+            "directBits": 1116470687
+        },
+        {
+            "recipientLevelIndex": 35,
+            "explosionBits": 1144243319,
+            "directBits": 1116721247
+        },
+        {
+            "recipientLevelIndex": 36,
+            "explosionBits": 1144556520,
+            "directBits": 1116971808
+        },
+        {
+            "recipientLevelIndex": 37,
+            "explosionBits": 1144869721,
+            "directBits": 1117222369
+        },
+        {
+            "recipientLevelIndex": 38,
+            "explosionBits": 1145182922,
+            "directBits": 1117472930
+        },
+        {
+            "recipientLevelIndex": 39,
+            "explosionBits": 1145496124,
+            "directBits": 1117723491
+        },
+        {
+            "recipientLevelIndex": 40,
+            "explosionBits": 1145809325,
+            "directBits": 1117974052
+        },
+        {
+            "recipientLevelIndex": 41,
+            "explosionBits": 1146122525,
+            "directBits": 1118224612
+        },
+        {
+            "recipientLevelIndex": 42,
+            "explosionBits": 1146435727,
+            "directBits": 1118475174
         }
     ]
 }

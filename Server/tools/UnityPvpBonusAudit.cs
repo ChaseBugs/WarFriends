@@ -9,7 +9,12 @@ using UnityEngine;
 public static class UnityPvpBonusAudit
 {
     [Serializable] private sealed class Row {public string name;public float probability,arenaProbability;}
-    [Serializable] private sealed class Rules {public float goldLowLevelProbability,cardUnlockLevel,lowAmmoMultiplier,warbucksScalingBase;}
+    [Serializable] private sealed class Rules
+    {
+        public float goldLowLevelProbability,cardUnlockLevel,lowAmmoMultiplier,warbucksScalingBase;
+        public float grenadeFallbackDamageMinimum,grenadeFallbackDamageMaximum;
+        public int rankCount;
+    }
     [Serializable] private sealed class Catalog {public Rules rules;public Row[] rows;}
     [Serializable] private sealed class Sample
     {
@@ -23,12 +28,17 @@ public static class UnityPvpBonusAudit
         public int scaleBits;
         public string amountsSha256;
     }
+    [Serializable] private sealed class GrenadeSample
+    {
+        public int recipientLevelIndex,explosionBits,directBits;
+    }
     [Serializable] private sealed class Result
     {
         public int version=2;
         public string unityVersion,codeSha256;
         public Sample[] samples;
         public CurrencySample[] currencySamples;
+        public GrenadeSample[] grenadeSamples;
     }
     public static void Run()
     {
@@ -79,9 +89,21 @@ public static class UnityPvpBonusAudit
             currencySamples[level]=new CurrencySample{recipientLevelIndex=level,
                 scaleBits=BitConverter.ToInt32(BitConverter.GetBytes(scale),0),amountsSha256=digest};
         }
+        var grenadeSamples=new GrenadeSample[catalog.rules.rankCount];
+        for(int level=0;level<grenadeSamples.Length;level++)
+        {
+            float progress=(float)level/(float)catalog.rules.rankCount;
+            float explosion=Mathf.Lerp(catalog.rules.grenadeFallbackDamageMinimum,
+                catalog.rules.grenadeFallbackDamageMaximum,progress);
+            float direct=explosion*0.1f;
+            grenadeSamples[level]=new GrenadeSample{recipientLevelIndex=level,
+                explosionBits=BitConverter.ToInt32(BitConverter.GetBytes(explosion),0),
+                directBits=BitConverter.ToInt32(BitConverter.GetBytes(direct),0)};
+        }
         var result=new Result{unityVersion=Application.unityVersion,codeSha256=SourceBonusProvenance.CodeHash,
-            samples=samples.ToArray(),currencySamples=currencySamples};
+            samples=samples.ToArray(),currencySamples=currencySamples,
+            grenadeSamples=grenadeSamples};
         File.WriteAllText(output,JsonUtility.ToJson(result,true).Replace("\r\n","\n")+"\n",new UTF8Encoding(false));
-        Debug.Log("PVP_BONUS_SOURCE PASS: "+samples.Count+" original-method Mono contexts, 43000 Unity Mathf.Pow rewards");
+        Debug.Log("PVP_BONUS_SOURCE PASS: "+samples.Count+" original-method Mono contexts, 43000 Unity Mathf.Pow rewards, "+grenadeSamples.Length+" grenade damage ranks");
     }
 }

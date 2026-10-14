@@ -4,8 +4,9 @@ namespace War.BattleServer;
 
 public sealed record PvpBonusGrenadeTarget(string Id, int Fraction,
     bool HasMainEntityOwner, bool Alive, bool Visible, Vector3 Position);
+public sealed record PvpBonusGrenadeDamageOverride(float Explosion, float Direct);
 public sealed record PvpBonusGrenadeLaunch(int ShotIndex, float DelayScaledSeconds,
-    string? TargetId, Vector3 Position);
+    string? TargetId, Vector3 Position, PvpBonusGrenadeDamageOverride? DamageOverride);
 
 /// <summary>
 /// Plans the three targets of a collected grenade box. The caller supplies
@@ -16,21 +17,26 @@ internal sealed class PvpBonusGrenadeBurstPolicy
 {
     private readonly int grenadeCount;
     private readonly float targetDistance;
+    private readonly PvpBonusCatalog catalog;
 
     internal PvpBonusGrenadeBurstPolicy(PvpBonusCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        this.catalog = catalog;
         grenadeCount = catalog.GrenadeCount;
         targetDistance = catalog.GrenadeTargetDistance;
     }
 
     internal IReadOnlyList<PvpBonusGrenadeLaunch> Plan(int sourceViewFraction,
+        int recipientLevelIndex,
         Vector3 boxPosition, IReadOnlyList<PvpBonusGrenadeTarget> shootables,
         Func<float> nextFallbackOffset)
     {
         ArgumentNullException.ThrowIfNull(shootables);
         ArgumentNullException.ThrowIfNull(nextFallbackOffset);
-        if (sourceViewFraction is not (1 or 2) || !Finite(boxPosition) ||
+        if (sourceViewFraction is not (1 or 2) ||
+            recipientLevelIndex < 0 || recipientLevelIndex >= catalog.RankCount ||
+            !Finite(boxPosition) ||
             shootables.Count > 256)
             throw new InvalidDataException("Invalid grenade-box source view.");
 
@@ -67,10 +73,14 @@ internal sealed class PvpBonusGrenadeBurstPolicy
             if (Vector3.Distance(boxPosition, candidate.Target.Position) >= targetDistance)
                 continue;
             launches[shot] = new PvpBonusGrenadeLaunch(shot,
-                1f + shot * 0.2f, candidate.Target.Id, candidate.Target.Position);
+                1f + shot * 0.2f, candidate.Target.Id, candidate.Target.Position,
+                DamageOverride: null);
             shot++;
         }
 
+        // Only the source's fallback loop overrides GrenadeAmmoSetup damage.
+        // Targeted grenades retain the prefab's original setup.
+        var fallbackDamage = catalog.GrenadeFallbackDamageForLevel(recipientLevelIndex);
         while (shot < grenadeCount)
         {
             float x = nextFallbackOffset();
@@ -82,7 +92,7 @@ internal sealed class PvpBonusGrenadeBurstPolicy
             if (!Finite(destination))
                 throw new InvalidDataException("Grenade-box fallback lies outside host geometry.");
             launches[shot] = new PvpBonusGrenadeLaunch(shot,
-                1f + shot * 0.2f, null, destination);
+                1f + shot * 0.2f, null, destination, fallbackDamage);
             shot++;
         }
         return Array.AsReadOnly(launches);

@@ -49,12 +49,12 @@ internal static class PvpBonusCatalogTests
 
         byte[] referenceBytes = File.ReadAllBytes(Path.Combine(directory, "unity-pvp-bonus-reference.json"));
         Check(Convert.ToHexStringLower(SHA256.HashData(referenceBytes)) ==
-              "bf5adb198147574e57271ec438664db7af61bd43f4ad68e466126e13091e564c",
+              "d632a2a6d80a31453e9e570a95a23874d3e04bb777e811c0984b4c12568fb71f",
             "weight oracle uses the reviewed original-method Mono fixture");
         using var reference = JsonDocument.Parse(referenceBytes);
         Check(reference.RootElement.GetProperty("unityVersion").GetString() == "2018.3.0f2" &&
               reference.RootElement.GetProperty("codeSha256").GetString() ==
-                  "7ea7e1169d91fe906a5dddc70c12efe36aba168f68230c22581665a0f68c5f86",
+                  "fd257c22671f0680333b8f456f72991a4560ba3d38d72f85d1da7a16c9f08309",
             "weight oracle pins the engine and all recovered probability/interpolation/gate methods");
         Check(reference.RootElement.GetProperty("samples").GetArrayLength() == 192,
             "oracle covers the complete reviewed condition matrix");

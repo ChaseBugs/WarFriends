@@ -46,7 +46,7 @@ public class CratesRow {public float PROBABILITY,PROBABILITYARENA;}
 public class Crates {public Dictionary<string,CratesRow> rows=new Dictionary<string,CratesRow>();public CratesRow GetRow(string name){CratesRow row;return rows.TryGetValue(name,out row)?row:null;}}
 }
 '''
-    files = ["KillStreakBonus", "KillStreakBonusAddCredits", "KillStreakBonusAddMoney", "KillStreakBonusCard", "KillStreakBonusAddAmmo", "LevelManager", "PlayerAnalytics"]
+    files = ["KillStreakBonus", "KillStreakBonusAddCredits", "KillStreakBonusAddMoney", "KillStreakBonusCard", "KillStreakBonusAddAmmo", "KillStreakBonusGrenades", "LevelManager", "PlayerAnalytics"]
     identity = "\n".join(name + ":" + hashlib.sha256((scripts / (name + ".cs")).read_bytes()).hexdigest() for name in files)
     reference += 'public static class SourceBonusProvenance {public const string CodeHash="' + hashlib.sha256(identity.encode()).hexdigest() + '";}\n'
     (editor / "SourceBonusReference.cs").write_text(reference, encoding="utf-8")
