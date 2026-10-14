@@ -173,9 +173,11 @@ internal sealed class PvpBonusSpawnPlanner
     }
 
     internal PvpBonusBoxCollectionCandidate ConfirmDestroyed(string boxId,
-        string damageReceiptId, string? attackerPlayerId)
+        string damageReceiptId, string? attackerPlayerId,
+        Vector3? collectionPosition = null)
     {
-        lock (gate) return boxes.ConfirmDestroyed(boxId, damageReceiptId, attackerPlayerId);
+        lock (gate) return boxes.ConfirmDestroyed(boxId, damageReceiptId,
+            attackerPlayerId, collectionPosition);
     }
 
     internal void EnqueueConfirmedBonus(string receiptId, string ownerId, int sourceIndex)

@@ -538,11 +538,44 @@ internal static class PvpBonusSpawnPlannerTests
             throw new Exception("Uncollected grenade crate produced a burst.");
         }
         catch (InvalidOperationException) { checks++; }
+        try
+        {
+            enginePlanner.ConfirmDestroyed(grenadePlan.Request.ReceiptId,
+                Id(601), manifest.Players[1].PlayerId,
+                new Vector3(float.NaN, 0f, 0f));
+            throw new Exception("Invalid host collection position was accepted.");
+        }
+        catch (InvalidDataException) { checks++; }
+        Check(enginePlanner.BoxSnapshot(grenadePlan.Request.ReceiptId).Collection == null,
+            "invalid collection geometry leaves the grenade box uncollected");
+        var collectionPosition = grenadePlan.Position + new Vector3(0.75f, -0.25f, 0.5f);
         var grenadeCollection = enginePlanner.ConfirmDestroyed(
-            grenadePlan.Request.ReceiptId, Id(601), manifest.Players[1].PlayerId);
+            grenadePlan.Request.ReceiptId, Id(601), manifest.Players[1].PlayerId,
+            collectionPosition);
         Check(grenadeCollection.RecipientPlayerId == manifest.Players[1].PlayerId &&
+              grenadeCollection.CollectionPosition == collectionPosition &&
+              enginePlanner.ConfirmDestroyed(grenadePlan.Request.ReceiptId,
+                  Id(601), manifest.Players[1].PlayerId, collectionPosition) ==
+                  grenadeCollection &&
               grenadePlan.PrefabIndex == 3,
-            "host collection binds the grenade burst to the stolen recipient");
+            "host collection binds the grenade burst to its actual position and stolen recipient");
+        try
+        {
+            enginePlanner.ConfirmDestroyed(grenadePlan.Request.ReceiptId,
+                Id(601), manifest.Players[1].PlayerId, grenadePlan.Position);
+            throw new Exception("Collection replay changed the box position.");
+        }
+        catch (InvalidDataException) { checks++; }
+        enginePlanner.EnqueueConfirmedBonus(Id(602), localId, 3);
+        var unlocatedFrame = Mature(11, 17);
+        var unlocatedPlan = enginePlanner.PlanMatured(unlocatedFrame, 0, context, draw);
+        enginePlanner.ConfirmDestroyed(unlocatedPlan.Request.ReceiptId, Id(603), null);
+        try
+        {
+            engine.PlanCollectedPvpGrenades(unlocatedPlan.Request.ReceiptId);
+            throw new Exception("Grenade box without a collection position produced a burst.");
+        }
+        catch (InvalidOperationException) { checks++; }
         var hostShootables = engine.PvpGrenadeShootables();
         Check(hostShootables.Any(target => target.Id == "player:" + localId) &&
               hostShootables.Any(target => target.Id ==
@@ -562,7 +595,7 @@ internal static class PvpBonusSpawnPlannerTests
                       hostShootables.Any(target => target.Id == launch.TargetId)) &&
               burst.Launches.Where(launch => launch.TargetId == null)
                   .All(launch => launch.DamageOverride == expectedFallback &&
-                      launch.Position == grenadePlan.Position +
+                      launch.Position == collectionPosition +
                           new Vector3(1.5f, 0f, 1.5f)) &&
               hostCombatDraws - drawsBeforeGrenade == fallbackCount * 2 &&
               engine.ApplyCollectedPvpBonus(grenadePlan.Request.ReceiptId) ==

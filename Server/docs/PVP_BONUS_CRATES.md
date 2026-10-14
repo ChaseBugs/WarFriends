@@ -276,7 +276,7 @@ both distance calculations. The planner follows the original IL. Equal-distance
 ties retain host registry order as an explicit replacement choice; exact Mono
 sort tie parity remains unverified. This is not live grenade damage or pickup.
 `MatchEngine.PlanCollectedPvpGrenades` now binds the plan to a host-confirmed
-collected Grenades box, its saved position, recipient rank, and signed scene-master
+collected Grenades box, its collection position, recipient rank, and signed scene-master
 view. It reads live player, army-root and Decoy targets from the existing
 source-bucket host registry, plus separately deployed Heavy Turrets. The match
 engine itself draws each fallback X/Z offset from its combat RNG; callers cannot
@@ -287,6 +287,11 @@ Other source shootable types, exact cross-registry tie order, and Unity PRNG
 sequence parity still need verification before claiming complete target parity.
 The source captures its target list at activation before the one-second wait;
 normal collection dispatch must call the host planner at that same point.
+The collection receipt can now carry a finite host-confirmed world position.
+Grenade planning requires it and rejects a replay that changes it; using the
+spawn-area position as the launch origin is no longer implicit. Box Rigidbody
+falling and the lethal hit callback are still absent, so the live runtime does
+not yet produce that position autonomously.
 The host now schedules the planned shots on ordered scaled battle frames. At
 30 host ticks per second, a normal-rate burst releases at frames 30, 36 and 42
 after activation; a long frame still releases only one shot because each

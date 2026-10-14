@@ -180,7 +180,10 @@ public sealed partial class MatchEngine
         var sourceView = Find(sceneMasterId);
         if (sourceView == null)
             throw new InvalidDataException("Grenade source view is outside the match.");
-        var boxPosition = pvpBonusPlanner.BoxSnapshot(boxId).Plan.Position;
+        var collection = pvpBonusPlanner.BoxSnapshot(boxId).Collection;
+        var boxPosition = collection?.CollectionPosition ??
+            throw new InvalidOperationException(
+                "Grenade box lacks a host-confirmed collection position.");
         var launches = pvpGrenadeBurstPolicy.Plan(sourceView.Definition.Fraction,
             recipientLevel, boxPosition, PvpGrenadeShootables(), NextGrenadeFallbackOffset);
         var plan = new PvpBonusGrenadeBurstPlan(boxId, intent.RecipientPlayerId, launches);

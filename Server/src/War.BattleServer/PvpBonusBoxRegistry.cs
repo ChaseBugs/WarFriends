@@ -4,7 +4,8 @@ namespace War.BattleServer;
 
 public enum PvpBonusBoxPhase { Falling, Grounded, Collected }
 public sealed record PvpBonusBoxCollectionCandidate(string BoxId, string OwnerPlayerId,
-    string RecipientPlayerId, int PrefabIndex, bool Stolen, bool BoobyTrapped);
+    string RecipientPlayerId, int PrefabIndex, bool Stolen, bool BoobyTrapped,
+    Vector3? CollectionPosition);
 public sealed record PvpBonusBoxSnapshot(string BoxId, PvpBonusSpawnPlan Plan,
     PvpBonusBoxPhase Phase, PvpBonusBoxCollectionCandidate? Collection);
 public enum PvpBonusEffectKind
@@ -138,9 +139,15 @@ internal sealed class PvpBonusBoxRegistry
     }
 
     internal PvpBonusBoxCollectionCandidate ConfirmDestroyed(string boxId,
-        string damageReceiptId, string? attackerPlayerId)
+        string damageReceiptId, string? attackerPlayerId,
+        Vector3? collectionPosition = null)
     {
         ValidateReceipt(damageReceiptId);
+        if (collectionPosition is Vector3 position &&
+            (!float.IsFinite(position.X) || !float.IsFinite(position.Y) ||
+             !float.IsFinite(position.Z) ||
+             position.Length() > 10000f))
+            throw new InvalidDataException("Invalid host box collection position.");
         lock (gate)
         {
             var box = Find(boxId);
@@ -153,7 +160,8 @@ internal sealed class PvpBonusBoxRegistry
             if (box.Collection is { } previous)
             {
                 if (!damageReceipts.TryGetValue(damageReceiptId, out var priorBox) ||
-                    priorBox != boxId || previous.RecipientPlayerId != recipientId)
+                    priorBox != boxId || previous.RecipientPlayerId != recipientId ||
+                    previous.CollectionPosition != collectionPosition)
                     throw new InvalidDataException("Collected box cannot choose another winner.");
                 return previous;
             }
@@ -163,7 +171,8 @@ internal sealed class PvpBonusBoxRegistry
             bool stolen = fractions[recipientId] != fractions[ownerId];
             bool boobyTrapped = stolen && armedFractions.Contains(fractions[ownerId]);
             var candidate = new PvpBonusBoxCollectionCandidate(boxId, ownerId,
-                recipientId, box.Plan.PrefabIndex, stolen, boobyTrapped);
+                recipientId, box.Plan.PrefabIndex, stolen, boobyTrapped,
+                collectionPosition);
             damageReceipts.Add(damageReceiptId, boxId);
             boxes[boxId] = box with {Phase = PvpBonusBoxPhase.Collected, Collection = candidate};
             activeCount--;
