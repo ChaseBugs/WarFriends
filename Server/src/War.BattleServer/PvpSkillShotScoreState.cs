@@ -17,6 +17,7 @@ public sealed class PvpSkillShotScoreState
 
     public int Score { get; private set; }
     public int ReceiptCount => receipts.Count;
+    internal bool HasReceipt(string receiptId) => receipts.ContainsKey(receiptId);
     public IReadOnlyDictionary<int, int> Counts => new ReadOnlyDictionary<int, int>(new Dictionary<int, int>(counts));
 
     public PvpSkillShotScoreState(PvpSkillShotScoreCatalog catalog, int maximumReceipts = 4096)

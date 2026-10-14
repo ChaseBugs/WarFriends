@@ -62,6 +62,68 @@ internal static class PvpBonusProgressCoordinatorTests
                   state.Snapshot("local") == progressBefore,
                 "either receipt capacity failure leaves the score, counts and progress unchanged");
         }
+        using var deaths = Create();
+        var friendly = deaths.RecordConfirmedPlayerOwnedDeath("local", Id(30), 0x1210, 10f, false, 1f);
+        Check(friendly.Combo is {Streak:1,ComboFlag:0} && friendly.ScoredSkillShot == null &&
+              deaths.ScoreSnapshot("local").Score == 0 && deaths.Snapshot("local").Progress == 0,
+            "player-owned friendly death advances shared combo before the faction score filter");
+        var enemy = deaths.RecordConfirmedPlayerOwnedDeath("opponent", Id(31), 0x1210, 10.5f, true, 1f);
+        int doubleFlags = 0x1210 | 32;
+        Check(enemy.Combo is {Streak:2,ComboFlag:32} &&
+              enemy.ScoredSkillShot?.Score.Flags == doubleFlags &&
+              deaths.ScoreSnapshot("opponent").Score == content.PvpScores.PointsForConfirmedFlags(doubleFlags) &&
+              deaths.ScoreSnapshot("local").Score == 0,
+            "one source view shares combo history across owners and scores only the enemy death");
+        Check(deaths.RecordConfirmedPlayerOwnedDeath("opponent", Id(31), 0x1210, 10.5f, true, 1f) == enemy &&
+              deaths.ComboSnapshot() is {Streak:2,ReceiptCount:2},
+            "confirmed death replay cannot recount or advance shared combo");
+        try { deaths.RecordConfirmedPlayerOwnedDeath("opponent", Id(31), 0x1210, 10.5f, false, 1f);
+            throw new Exception("Changed enemy identity replay was accepted."); }
+        catch (InvalidDataException) { checks++; }
+        try { deaths.RecordConfirmedSkillShot("opponent", Id(31), doubleFlags, 1f);
+            throw new Exception("Death receipt was accepted through a direct skill shot."); }
+        catch (InvalidDataException) { checks++; }
+        var beforeInvalidDeath = deaths.ComboSnapshot();
+        try { deaths.RecordConfirmedPlayerOwnedDeath("local", Id(32), 0x1210 | 64, 10.6f, true, 1f);
+            throw new Exception("Untrusted precomposed combo flags were accepted."); }
+        catch (InvalidDataException) { checks++; }
+        Check(deaths.ComboSnapshot() == beforeInvalidDeath && deaths.ScoreSnapshot("local").Score == 0,
+            "rejected base flags do not change combo or score authority");
+        using var fullDeathScore = Create(scoreReceipts:1);
+        fullDeathScore.RecordConfirmedPlayerOwnedDeath("local", Id(40), 0x1210, 10f, true, 1f);
+        var beforeFullDeath = fullDeathScore.ComboSnapshot();
+        try { fullDeathScore.RecordConfirmedPlayerOwnedDeath("local", Id(41), 0x1210, 10.5f, true, 1f);
+            throw new Exception("Death advanced combo after score capacity failure."); }
+        catch (InvalidOperationException) { checks++; }
+        Check(fullDeathScore.ComboSnapshot() == beforeFullDeath &&
+              fullDeathScore.ScoreSnapshot("local").ReceiptCount == 1 &&
+              fullDeathScore.Snapshot("local").GainReceiptCount == 1,
+            "failed enemy score publication rolls back the shared combo and progress");
+        var laterFriendly = fullDeathScore.RecordConfirmedPlayerOwnedDeath("local", Id(41), 0x1210, 10.5f, false, 1f);
+        Check(laterFriendly.Combo.ComboFlag == 32 && fullDeathScore.ComboSnapshot().ReceiptCount == 2,
+            "rejected death receipt can be retried with actual host-confirmed friendly attribution");
+        using var fullDeathGain = Create(gainReceipts:1);
+        fullDeathGain.RecordConfirmedPlayerOwnedDeath("local", Id(50), 0x1210, 10f, true, 1f);
+        var gainComboBefore = fullDeathGain.ComboSnapshot();
+        var gainScoreBefore = fullDeathGain.ScoreSnapshot("local");
+        try { fullDeathGain.RecordConfirmedPlayerOwnedDeath("local", Id(51), 0x1210, 10.5f, true, 1f);
+            throw new Exception("Death advanced score after gain capacity failure."); }
+        catch (InvalidOperationException) { checks++; }
+        Check(fullDeathGain.ComboSnapshot() == gainComboBefore &&
+              fullDeathGain.ScoreSnapshot("local").Score == gainScoreBefore.Score &&
+              fullDeathGain.ScoreSnapshot("local").ReceiptCount == 1,
+            "failed streak publication rolls back shared combo and score");
+        var invalidTimeCombo = deaths.ComboSnapshot();
+        try { deaths.RecordConfirmedPlayerOwnedDeath("local", Id(52), 0x1210, float.NaN, false, 1f);
+            throw new Exception("Nonfinite source time advanced combo."); }
+        catch (ArgumentOutOfRangeException) { checks++; }
+        Check(deaths.ComboSnapshot() == invalidTimeCombo,
+            "invalid source clock leaves the shared death sequence unchanged");
+        using var directReceipt = Create();
+        directReceipt.RecordConfirmedSkillShot("opponent", Id(53), 0x1210, 1f);
+        try { directReceipt.RecordConfirmedPlayerOwnedDeath("local", Id(53), 0x1210, 10f, true, 1f);
+            throw new Exception("Another owner's direct receipt was reused for a death."); }
+        catch (InvalidDataException) { checks++; }
         var issued = normal.AdvanceFrame(1, 0f, true);
         Check(issued.Players.Select(player => player.OwnerPlayerId).SequenceEqual(new[] {"local","opponent"}) &&
               issued.Players.All(player => player.Streak is {BonusRequested:true,BonusOrdinal:1,Progress:3.5f}),

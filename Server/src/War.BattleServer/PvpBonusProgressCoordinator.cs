@@ -8,6 +8,9 @@ public sealed record PvpOwnerStreakSnapshot(string OwnerPlayerId, float Progress
 public sealed record PvpOwnerScoreSnapshot(string OwnerPlayerId, int Score,
     IReadOnlyDictionary<int, int> Counts, int ReceiptCount);
 public sealed record PvpConfirmedSkillShot(PvpSkillShotScoreReceipt Score, float Progress);
+public sealed record PvpConfirmedPlayerDeath(PvpKillComboResult Combo,
+    PvpConfirmedSkillShot? ScoredSkillShot);
+public sealed record PvpComboSnapshot(int Streak, float LastKillTime, int ReceiptCount);
 public sealed record PvpBonusProgressFrame(ulong FrameId,
     IReadOnlyList<PvpOwnerStreakFrame> Players, IReadOnlyList<PvpBonusDelayedRequest> MaturedRequests);
 
@@ -21,10 +24,15 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     private readonly string matchId;
     private readonly string localOwnerId;
     private readonly string opponentOwnerId;
+    private readonly PvpSkillShotScoreCatalog scores;
     private PvpScoreStreakProgress localProgress;
     private PvpScoreStreakProgress opponentProgress;
     private PvpSkillShotScoreState localScore;
     private PvpSkillShotScoreState opponentScore;
+    private PvpKillComboState combo;
+    private readonly Dictionary<string, ConfirmedDeathReceipt> deathReceipts = new(StringComparer.Ordinal);
+    private sealed record ConfirmedDeathReceipt(string OwnerId, int BaseFlags, int GameTimeBits,
+        bool IsEnemy, int MultiplierBits, PvpConfirmedPlayerDeath Result);
     private PvpBonusDelayQueue delays;
     private PvpBonusProgressFrame? lastFrame;
     private int lastDeltaBits;
@@ -34,13 +42,15 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     public PvpBonusProgressCoordinator(PvpSkillShotScoreCatalog scores, PvpScoreStreakPolicy policy,
         string matchId, string localOwnerId, string opponentOwnerId, bool dropsCrates,
         int maximumPending = 256, int maximumDelayReceipts = 4096,
-        int maximumScoreReceipts = 4096, int maximumGainReceipts = 4096)
+        int maximumScoreReceipts = 4096, int maximumGainReceipts = 4096,
+        int maximumComboReceipts = 4096)
     {
         PvpBonusDelayQueue.ValidateScope(matchId, localOwnerId);
         PvpBonusDelayQueue.ValidateScope(matchId, opponentOwnerId);
         if (localOwnerId == opponentOwnerId)
             throw new InvalidDataException("Source view requires distinct local/opponent owners.");
         this.matchId = matchId;
+        this.scores = scores;
         this.localOwnerId = localOwnerId;
         this.opponentOwnerId = opponentOwnerId;
         // ScoreManager.Restart sets one ratio for both AddSkillshot branches.
@@ -48,6 +58,7 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         opponentProgress = new(scores, policy, dropsCrates, maximumGainReceipts);
         localScore = new(scores, maximumScoreReceipts);
         opponentScore = new(scores, maximumScoreReceipts);
+        combo = new(scores, maximumComboReceipts);
         delays = new(maximumPending, maximumDelayReceipts);
     }
 
@@ -63,6 +74,8 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         lock (gate)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
+            if (deathReceipts.ContainsKey(receiptId))
+                throw new InvalidDataException("Death receipts must use the confirmed death transition.");
             var progress = ProgressFor(ownerId);
             var score = ScoreFor(ownerId);
             var nextScore = score.PrepareConfirmedSkillShotCopy(receiptId, flags, out var scored);
@@ -80,6 +93,75 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
             }
             return new(scored, gained);
         }
+    }
+
+    /// <summary>
+    /// A host-confirmed, non-network player-owned death. The source updates
+    /// its shared combo before testing whether the victim is an enemy.
+    /// </summary>
+    public PvpConfirmedPlayerDeath RecordConfirmedPlayerOwnedDeath(string ownerId,
+        string receiptId, int baseFlags, float gameTime, bool isEnemy,
+        float confirmedMultiplier)
+    {
+        lock (gate)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            var progress = ProgressFor(ownerId);
+            var score = ScoreFor(ownerId);
+            if ((baseFlags & (32 | 64 | 128)) != 0)
+                throw new InvalidDataException("Base death flags already contain a combo result.");
+            scores.PointsForConfirmedFlags(baseFlags);
+            if (confirmedMultiplier is not (0f or 1f or 1.25f))
+                throw new ArgumentOutOfRangeException(nameof(confirmedMultiplier));
+            int timeBits = BitConverter.SingleToInt32Bits(gameTime);
+            int multiplierBits = BitConverter.SingleToInt32Bits(confirmedMultiplier);
+            if (deathReceipts.TryGetValue(receiptId, out var previous))
+            {
+                if (previous.OwnerId != ownerId || previous.BaseFlags != baseFlags ||
+                    previous.GameTimeBits != timeBits || previous.IsEnemy != isEnemy ||
+                    previous.MultiplierBits != multiplierBits)
+                    throw new InvalidDataException("Confirmed death receipt changed its authority.");
+                return previous.Result;
+            }
+            if (localScore.HasReceipt(receiptId) || opponentScore.HasReceipt(receiptId))
+                throw new InvalidDataException("Death receipt was already used by a direct skill shot.");
+
+            var nextCombo = combo.PrepareConfirmedKillCopy(receiptId, gameTime, out var comboResult);
+            PvpConfirmedSkillShot? scoredShot = null;
+            PvpSkillShotScoreState? nextScore = null;
+            PvpScoreStreakProgress? nextProgress = null;
+            if (isEnemy)
+            {
+                int flags = baseFlags | comboResult.ComboFlag;
+                nextScore = score.PrepareConfirmedSkillShotCopy(receiptId, flags, out var scored);
+                nextProgress = progress.PrepareConfirmedSkillShotCopy(receiptId, flags,
+                    confirmedMultiplier, out float gained);
+                scoredShot = new(scored, gained);
+            }
+            var result = new PvpConfirmedPlayerDeath(comboResult, scoredShot);
+            deathReceipts.Add(receiptId, new(ownerId, baseFlags, timeBits, isEnemy,
+                multiplierBits, result));
+            combo = nextCombo;
+            if (nextScore != null && nextProgress != null)
+            {
+                if (ownerId == localOwnerId)
+                {
+                    localScore = nextScore;
+                    localProgress = nextProgress;
+                }
+                else
+                {
+                    opponentScore = nextScore;
+                    opponentProgress = nextProgress;
+                }
+            }
+            return result;
+        }
+    }
+
+    public PvpComboSnapshot ComboSnapshot()
+    {
+        lock (gate) return new(combo.Streak, combo.LastKillTime, combo.ReceiptCount);
     }
 
     public PvpOwnerScoreSnapshot ScoreSnapshot(string ownerId)

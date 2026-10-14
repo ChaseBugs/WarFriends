@@ -92,6 +92,15 @@ checks; the complete Battle suite also includes them.
 
 ## Source score-streak parameters and remaining authority
 
+`PvpBonusProgressCoordinator.RecordConfirmedPlayerOwnedDeath` joins the shared
+combo, each owner's score/count ledger, and ordered streak gain under one
+confirmed death receipt. It advances combo for a friendly player-owned death
+without awarding score, then includes that history on a later enemy death.
+Either score or progress capacity failure leaves the combo unchanged. The
+caller must establish the non-network callback, player ownership, base flags,
+victim faction, multiplier and scaled source game time from host evidence.
+Normal MatchEngine callbacks and Client presentation remain to be connected.
+
 `PvpScoreStreakPolicy` is now loaded with the combat package from the reviewed
 `recovered-pvp-score-streak-policy.json`. Its digest and the scene/content
 bindings are checked before content publication. The regeneration tool is

@@ -13,7 +13,7 @@ public sealed class PvpKillComboState
     private const int MultiKillFlag = 128;
     private readonly float comboWindow;
     private readonly int maximumReceipts;
-    private readonly Dictionary<string, SavedKill> receipts = new(StringComparer.Ordinal);
+    private Dictionary<string, SavedKill> receipts = new(StringComparer.Ordinal);
     private sealed record SavedKill(float GameTime, PvpKillComboResult Result);
 
     public int Streak { get; private set; }
@@ -27,6 +27,15 @@ public sealed class PvpKillComboState
             throw new ArgumentOutOfRangeException(nameof(maximumReceipts));
         comboWindow = catalog.ComboWindowSeconds;
         this.maximumReceipts = maximumReceipts;
+    }
+
+    internal PvpKillComboState PrepareConfirmedKillCopy(string receiptId, float gameTime,
+        out PvpKillComboResult result)
+    {
+        var candidate = (PvpKillComboState)MemberwiseClone();
+        candidate.receipts = new Dictionary<string, SavedKill>(receipts, StringComparer.Ordinal);
+        result = candidate.RecordConfirmedKill(receiptId, gameTime);
+        return candidate;
     }
 
     /// <summary>The receipt identifies one host-established death, not a Client command.</summary>

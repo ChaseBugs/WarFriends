@@ -16,6 +16,12 @@ slot for a new zero-age wait, and accepted frame replay cannot mint more issues.
 Confirmed skill-shot score, per-row counts and streak gain now also use one
 receipt and publish together for each owner. Either ledger's validation or
 capacity failure leaves both unchanged; score snapshots copy their counts.
+Host-confirmed player-owned deaths now stage the source view's shared combo
+before the faction score filter. Friendly deaths advance combo only; enemy
+deaths add the resulting combo flag and publish score and progress in the same
+transaction. Replay binds owner, base flags, source game time, faction and
+multiplier. This remains an unbound source-view state transition: it does not
+infer those inputs from Client packets or partial MatchEngine death events.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.
