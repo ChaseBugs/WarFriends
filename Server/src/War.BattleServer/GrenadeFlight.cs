@@ -15,14 +15,30 @@ internal sealed class GrenadeFlight
 
     internal GrenadeFlight(ulong id,string owner,GrenadeBinding binding,Vector3 from,Vector3 requestedTarget,ulong tick,
         Func<Vector3,Vector3,float,ShotCollision?> trace)
+        : this(id, owner, binding?.Angle ?? throw new InvalidDataException("Missing grenade binding."),
+            binding.ThrowDistance, from, requestedTarget, tick, trace)
     {
-        if(id==0||!Guid.TryParseExact(owner,"N",out _)||owner!=owner.ToLowerInvariant()||binding==null||
-           !PlayerHitbox.Finite(from)||!PlayerHitbox.Finite(requestedTarget)||Vector3.DistanceSquared(from,requestedTarget)<1e-10f||
+    }
+
+    // The KillStreak Manager owns a separate, infinite-ammo Grenade component.
+    // Its scene setup supplies the angle and distance without an equipped weapon.
+    internal GrenadeFlight(ulong id,string owner,float angle,float throwDistance,Vector3 from,Vector3 requestedTarget,ulong tick,
+        Func<Vector3,Vector3,float,ShotCollision?> trace,bool allowStationary=false)
+    {
+        if(id==0||!Guid.TryParseExact(owner,"N",out _)||owner!=owner.ToLowerInvariant()||
+           !float.IsFinite(angle)||angle is <=0 or >=90||!float.IsFinite(throwDistance)||throwDistance<0||
+           !PlayerHitbox.Finite(from)||!PlayerHitbox.Finite(requestedTarget)||
+           (!allowStationary&&Vector3.DistanceSquared(from,requestedTarget)<1e-10f)||
            tick>10_000_000||trace==null)throw new InvalidDataException("Invalid grenade launch.");
         this.id=id;this.owner=owner;this.tick=tick;this.trace=trace;Position=from;expires=checked(tick+15*MatchManifest.TickRate);
-        var direction=requestedTarget-from;if(binding.ThrowDistance>0&&direction.Length()>binding.ThrowDistance)
-            requestedTarget=from+Vector3.Normalize(direction)*binding.ThrowDistance;
-        Velocity=BallisticVelocity(from,requestedTarget,binding.Angle);
+        var direction=requestedTarget-from;if(throwDistance>0&&direction.Length()>throwDistance)
+            requestedTarget=from+Vector3.Normalize(direction)*throwDistance;
+        // Unity returns zero velocity when the requested target is exactly
+        // the spawn point. The recovered bonus fallback can draw that offset.
+        Vector3 planarOffset=requestedTarget-from;
+        planarOffset.Y=0;
+        Velocity=allowStationary&&planarOffset.LengthSquared()<1e-10f
+            ? Vector3.Zero : BallisticVelocity(from,requestedTarget,angle);
     }
     internal GrenadeFlightImpact? Advance(ulong nextTick)
     {

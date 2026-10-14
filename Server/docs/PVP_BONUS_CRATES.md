@@ -266,7 +266,14 @@ The checked-in bonus catalog now extracts the shared setup's 350/20 values
 from MainScene and pins the `GrenadeAmmoBase`, `GrenadeAmmo`, and
 `CardGrenadesBurst` source digests. The host clock initializes from that
 validated catalog instead of an independent constant.
-Projectile flight, impact, and actual damage remain unimplemented. The planner
+Bonus projectiles now use host ballistic flight, a downward collision trace,
+the shared projectile capacity, and ordered battle ticks. MainScene's
+KillStreak Manager setup supplies a 45-degree throw angle and no distance
+cap; the confirmed collection position is the launch origin. The host emits
+shot and impact evidence, but does not apply explosion damage yet. Normal
+PvP tracing currently uses the rifle world's generic bullet mask; the
+bonus Grenade component's exact mask and Unity Rigidbody physics still need
+parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*
 fraction to `GetOpponents`; the planner keeps that perspective explicit until
 the self-hosted scene-owner callback is bound. The recovered C# displays a
@@ -281,8 +288,8 @@ view. It reads live player, army-root and Decoy targets from the existing
 source-bucket host registry, plus separately deployed Heavy Turrets. The match
 engine itself draws each fallback X/Z offset from its combat RNG; callers cannot
 supply positions or offsets. It caches the first plan by box ID so replay cannot
-consume more random draws or switch recipients. This internal method does not
-create projectiles or grant an effect through the normal battle event path.
+consume more random draws or switch recipients. The planner only schedules
+the burst; match ticks create projectiles and publish shot/impact events.
 Other source shootable types, exact cross-registry tie order, and Unity PRNG
 sequence parity still need verification before claiming complete target parity.
 The source captures its target list at activation before the one-second wait;
@@ -295,10 +302,10 @@ not yet produce that position autonomously.
 The host now schedules the planned shots on ordered scaled battle frames. At
 30 host ticks per second, a normal-rate burst releases at frames 30, 36 and 42
 after activation; a long frame still releases only one shot because each
-`WaitForSeconds` starts after its preceding launch. Active bursts forbid skipped
-simulation ticks, and frame replay cannot emit a shot twice. These are due-shot
-intents only. Normal collection dispatch, projectile creation, collision and
-damage still need to be connected. The host currently supplies nominal tick
+`WaitForSeconds` starts after its preceding launch. Active bursts and flights
+forbid skipped simulation ticks, and frame replay cannot emit a shot twice.
+Normal collection dispatch, exact collision parity and explosion damage
+still need to be connected. The host currently supplies nominal tick
 delta; the unfinished SlowMotion bonus must scale it before claiming slowed
 coroutine parity.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component

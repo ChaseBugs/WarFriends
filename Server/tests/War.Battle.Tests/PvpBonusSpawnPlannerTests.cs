@@ -605,6 +605,13 @@ internal static class PvpBonusSpawnPlannerTests
                   grenadePlan.Request.ReceiptId)) &&
               hostCombatDraws - drawsBeforeGrenade == fallbackCount * 2,
             "replaying the collected box returns its first burst without new random draws");
+        var stationaryFallback = new GrenadeFlight(1, localId, 45f, 0f,
+            collectionPosition, collectionPosition, 1,
+            (from, direction, distance) => null, allowStationary: true);
+        Check(stationaryFallback.Velocity == Vector3.Zero &&
+              stationaryFallback.Advance(2) == null &&
+              stationaryFallback.Position.Y < collectionPosition.Y,
+            "a zero-offset bonus draw follows Unity's stationary launch and gravity");
         try
         {
             engine.Advance(62);
@@ -613,21 +620,42 @@ internal static class PvpBonusSpawnPlannerTests
         catch (InvalidOperationException) { checks++; }
         var healthBeforeBurst = engine.Snapshot().Players.Select(player => player.Health).ToArray();
         var dueShots = new List<PvpBonusGrenadeDueShot>();
+        int mostActiveGrenades = 0;
+        int confirmedGrenadeImpacts = 0;
+        bool checkedFlightFrameGuard = false;
         for (ulong nextTick = 61; nextTick <= 150; nextTick++)
         {
             engine.Advance(nextTick);
             dueShots.AddRange(engine.ReadyPvpGrenadeShots);
+            mostActiveGrenades = Math.Max(mostActiveGrenades,
+                engine.PendingPvpGrenadeFlights);
+            confirmedGrenadeImpacts += engine.PvpGrenadeImpacts.Count;
+            if (!checkedFlightFrameGuard && engine.PendingPvpGrenadeFlights > 0)
+            {
+                try
+                {
+                    engine.Advance(nextTick + 2);
+                    throw new Exception("An active bonus projectile skipped host frames.");
+                }
+                catch (InvalidOperationException) { checks++; }
+                checkedFlightFrameGuard = true;
+            }
         }
         Check(dueShots.Count == 3 &&
               dueShots.Select(shot => shot.Launch.ShotIndex).SequenceEqual([0, 1, 2]) &&
               dueShots[0].FrameId == 31 &&
               dueShots[1].FrameId - dueShots[0].FrameId == 6 &&
               dueShots[2].FrameId - dueShots[1].FrameId == 6 &&
+              mostActiveGrenades > 0 &&
+              confirmedGrenadeImpacts > 0 &&
+              checkedFlightFrameGuard &&
+              engine.PendingProjectileCount >= engine.PendingPvpGrenadeFlights &&
               engine.Snapshot().Players.Select(player => player.Health)
                   .SequenceEqual(healthBeforeBurst),
-            $"host scaled frames release three shots without impact damage: " +
+            $"host scaled frames launch and track three bonus grenades without unreviewed impact damage: " +
             $"due={string.Join(',', dueShots.Select(shot =>
                 $"{shot.FrameId}/{shot.Launch.ShotIndex}"))}, " +
+            $"active={mostActiveGrenades}, impacts={confirmedGrenadeImpacts}, " +
             $"health={string.Join(',', engine.Snapshot().Players.Select(player => player.Health))}");
         try
         {

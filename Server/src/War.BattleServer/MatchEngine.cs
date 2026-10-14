@@ -114,7 +114,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         armyProjectiles.Count+armyFlameBursts.Count+rocketFlights.Count+
         grenadierFlights.Count+
         vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
-        scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count+
+        scheduledBazookas.Count+grenadeProjectiles.Count+PendingPvpGrenadeFlights+heavyTurretProjectiles.Count+
         droneProjectiles.Count+helicopterProjectiles.Count+assaultHelicopterProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
@@ -1205,7 +1205,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             throw new InvalidOperationException("Pending card units require every simulation tick.");
         if (phase == BattlePhase.Running &&
             !players.Any(player => player.Reconnecting) &&
-            pvpGrenadeClock?.PendingCount > 0 && elapsed > 1)
+            (pvpGrenadeClock?.PendingCount > 0 || PendingPvpGrenadeFlights > 0) && elapsed > 1)
             throw new InvalidOperationException(
                 "An active grenade-box burst requires every simulation tick.");
         if (phase == BattlePhase.Running &&
@@ -1731,6 +1731,12 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try{foreach(var launch in grenadeCombat.Advance(tick,id=>{var actor=Find(id)!;return new(actor.Position,actor.Cover,actor.Route!=null);}))StartGrenadeProjectile(launch);}
             catch(InvalidDataException){End("invalid-projectile-authority","",false);return;}
+        }
+        if (advanced && phase == BattlePhase.Running && pvpBonusPlanner != null)
+        {
+            try { AdvancePvpGrenadeFlights(); }
+            catch (Exception error) when (error is InvalidDataException or InvalidOperationException)
+            { End("invalid-pvp-grenade-authority", "", false); return; }
         }
         if(advanced&&phase==BattlePhase.Running&&
            (landMines.Snapshot().Count>0||timedMines.Snapshot().Count>0))
