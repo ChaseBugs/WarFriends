@@ -7,6 +7,13 @@ public sealed record PvpBonusBoxCollectionCandidate(string BoxId, string OwnerPl
     string RecipientPlayerId, int PrefabIndex, bool Stolen, bool BoobyTrapped);
 public sealed record PvpBonusBoxSnapshot(string BoxId, PvpBonusSpawnPlan Plan,
     PvpBonusBoxPhase Phase, PvpBonusBoxCollectionCandidate? Collection);
+public enum PvpBonusEffectKind
+{
+    Gold, Health, Warbucks, Grenades, SlowMotion, Turret, Kevlar, Card, Ammo,
+    BoobyTrap
+}
+public sealed record PvpBonusEffectIntent(string BoxId, string RecipientPlayerId,
+    PvpBonusEffectKind Kind);
 
 /// <summary>
 /// Host-owned box identity and single-winner collection. A collection candidate
@@ -168,6 +175,33 @@ internal sealed class PvpBonusBoxRegistry
     internal PvpBonusBoxSnapshot Snapshot(string boxId)
     {
         lock (gate) return Find(boxId);
+    }
+
+    internal PvpBonusEffectIntent EffectIntent(string boxId)
+    {
+        lock (gate)
+        {
+            var collection = Find(boxId).Collection ??
+                throw new InvalidOperationException("Uncollected box has no bonus effect.");
+            // KillStreakBonusBox.ActivateBonus replaces a stolen crate's bonus
+            // with BoobyTrap when its earning fraction had an armed trap.
+            var kind = collection.BoobyTrapped
+                ? PvpBonusEffectKind.BoobyTrap
+                : collection.PrefabIndex switch
+                {
+                    0 => PvpBonusEffectKind.Gold,
+                    1 => PvpBonusEffectKind.Health,
+                    2 => PvpBonusEffectKind.Warbucks,
+                    3 => PvpBonusEffectKind.Grenades,
+                    4 => PvpBonusEffectKind.SlowMotion,
+                    5 => PvpBonusEffectKind.Turret,
+                    6 => PvpBonusEffectKind.Kevlar,
+                    7 => PvpBonusEffectKind.Card,
+                    8 => PvpBonusEffectKind.Ammo,
+                    _ => throw new InvalidDataException("Unknown collected bonus prefab.")
+                };
+            return new PvpBonusEffectIntent(boxId, collection.RecipientPlayerId, kind);
+        }
     }
 
     internal bool HasArmedBoobyTrap(string ownerPlayerId)

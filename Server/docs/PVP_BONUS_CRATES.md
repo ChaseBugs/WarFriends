@@ -140,6 +140,10 @@ an opposing recipient steals one of its boxes. Collection is still a candidate:
 there is no box physics solver, live MatchEngine callback, Client event,
 effect execution, or Backend currency/item grant yet. The replacement uses
 the host receipt as an opaque box identity until its Client protocol is wired.
+Only a collected host box exposes an effect intent. Its nine prefab indexes map
+to the nine recovered `KillStreakBonus` subclasses in source order; a stolen
+box with a consumed booby trap instead exposes `BoobyTrap` for the attacker.
+This intent does not apply health, ammo, damage, cards or currency.
 
 ## Collection contract to implement next
 

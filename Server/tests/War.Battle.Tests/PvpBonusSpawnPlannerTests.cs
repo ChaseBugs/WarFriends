@@ -76,6 +76,9 @@ internal static class PvpBonusSpawnPlannerTests
         Check(falling.Phase == PvpBonusBoxPhase.Falling && planner.ActiveBoxCount == 2 &&
               planner.BoxReceiptCount == 2,
             "accepted spawn plans also register host-owned falling boxes before selection commits");
+        try { planner.EffectIntent(falling.BoxId);
+            throw new Exception("Uncollected crate exposed an effect."); }
+        catch (InvalidOperationException) { checks++; }
         Check(planner.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded &&
               planner.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded,
             "repeated static contacts do not create another box or collection");
@@ -87,6 +90,10 @@ internal static class PvpBonusSpawnPlannerTests
               stolen.OwnerPlayerId == localId && stolen.RecipientPlayerId == manifest.Players[1].PlayerId &&
               planner.ActiveBoxCount == 1 && !planner.HasArmedBoobyTrap(localId),
             "opposing damage claims exactly one box and consumes its owner's booby trap");
+        Check(planner.EffectIntent(falling.BoxId) ==
+              new PvpBonusEffectIntent(falling.BoxId, manifest.Players[1].PlayerId,
+                  PvpBonusEffectKind.BoobyTrap),
+            "stolen trapped box replaces its original healing effect with booby-trap intent");
         planner.ArmBoobyTrap(Id(200), localId);
         Check(!planner.HasArmedBoobyTrap(localId),
             "replaying an already consumed card receipt cannot arm another trap");
@@ -106,6 +113,26 @@ internal static class PvpBonusSpawnPlannerTests
         Check(ownerFallback.RecipientPlayerId == localId && !ownerFallback.Stolen &&
               !ownerFallback.BoobyTrapped && planner.ActiveBoxCount == 0,
             "source null damage owner falls back to the box owner even before ground contact");
+        Check(planner.EffectIntent(airborne.BoxId).Kind == PvpBonusEffectKind.Ammo,
+            "untrapped collection retains its source prefab effect");
+
+        var effectRegistry = new PvpBonusBoxRegistry(content, manifest);
+        PvpBonusEffectKind[] expectedEffects = [PvpBonusEffectKind.Gold,
+            PvpBonusEffectKind.Health, PvpBonusEffectKind.Warbucks,
+            PvpBonusEffectKind.Grenades, PvpBonusEffectKind.SlowMotion,
+            PvpBonusEffectKind.Turret, PvpBonusEffectKind.Kevlar,
+            PvpBonusEffectKind.Card, PvpBonusEffectKind.Ammo];
+        for (int index = 0; index < expectedEffects.Length; index++)
+        {
+            var request = planned.Request with {ReceiptId = Id(400 + index)};
+            var sourcePlan = planned with {Request = request,
+                SourceIndex = index, PrefabIndex = index};
+            effectRegistry.Register(sourcePlan);
+            effectRegistry.ConfirmDestroyed(request.ReceiptId, Id(420 + index), null);
+            Check(effectRegistry.EffectIntent(request.ReceiptId) ==
+                  new PvpBonusEffectIntent(request.ReceiptId, localId, expectedEffects[index]),
+                "collected source bonus index maps to its recovered effect kind");
+        }
 
         var third = Mature(5, 7);
         var weights = content.PvpBonuses.WeightsForSourceContext(

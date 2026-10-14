@@ -69,6 +69,11 @@ internal sealed class PvpBonusSpawnPlanner
         lock (gate) return boxes.Snapshot(boxId);
     }
 
+    internal PvpBonusEffectIntent EffectIntent(string boxId)
+    {
+        lock (gate) return boxes.EffectIntent(boxId);
+    }
+
     internal PvpBonusBoxSnapshot ConfirmStaticContact(string boxId)
     {
         lock (gate) return boxes.ConfirmStaticContact(boxId);

@@ -45,6 +45,8 @@ collected phases, one terminal damage receipt, owner-or-attacker recipient
 selection and one-use booby-trap interception on a stolen box. This is a
 collection candidate only; host physics, normal battle events, bonus effects,
 durable rewards and Unity projection are still required.
+Collected boxes now expose one source-indexed effect intent, with a stolen
+booby-trapped box replacing its original effect. No effect is executed yet.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.
