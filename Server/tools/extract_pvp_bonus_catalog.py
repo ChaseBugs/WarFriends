@@ -43,6 +43,8 @@ def main():
         if match:
             prefab_paths[match[1]] = meta.with_suffix("")
     rows = []
+    grenade_count = None
+    grenade_distance = None
     for index, (file_id, guid) in enumerate(references):
         path = prefab_paths[guid]
         prefab_bytes = path.read_bytes()
@@ -52,6 +54,9 @@ def main():
         object_id = re.search(r"m_GameObject: \{fileID: (\d+)\}", component)[1]
         game_object = next(block for block in blocks if block.startswith("1 &" + object_id + "\n"))
         name = re.search(r"^  m_Name: (\w+)$", game_object, re.M)[1]
+        if name == "KillStreakBonusGrenades":
+            grenade_count = int(re.search(r"^  numberOfgrenades: (\d+)$", component, re.M)[1])
+            grenade_distance = int(re.search(r"^  maxDistance: (\d+)$", component, re.M)[1])
         values = probabilities[name]
         if set(values) != {"PROBABILITY", "PROBABILITYARENA"}:
             raise ValueError("Unknown source Crates fields")
@@ -61,6 +66,9 @@ def main():
                      "probability": values["PROBABILITY"], "arenaProbability": values["PROBABILITYARENA"]})
     if set(row["name"] for row in rows) != set(names):
         raise ValueError("Bonus prefabs and probability identities differ")
+    grenade_code = (ASSETS / "Scripts/Assembly-CSharp/KillStreakBonusGrenades.cs").read_bytes()
+    if grenade_count != 3 or grenade_distance != 3 or grenade_code.count(b"Random.Range(-1.5f, 1.5f)") != 2:
+        raise ValueError("Source grenade box burst or fallback spread changed")
     def keyed_value(sheet_type, key):
         table = next(sheet for sheet in content["sheets"] if sheet["type"] == sheet_type)
         values = [row["FLOATVALUE"] for row in table["rows"] if row.get("DBKEY") == key]
@@ -81,6 +89,7 @@ def main():
     document = {"version": 1, "sceneSha256": digest(scene_bytes),
                 "battleContentSha256": digest(content_bytes), "managerSha256": digest(manager_path.read_bytes()),
                 "cratesCodeSha256": digest(sheet_bytes), "bonusDefinitionsCodeSha256": digest(bonus_bytes),
+                "grenadeCodeSha256": digest(grenade_code),
                 "probabilityCodeSha256": {name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes()) for name in code_names},
                 "rules": {"goldLowLevelProbability": keyed_value("Google2u.Constants", "GoldCrateLowLevelProbability"),
                           "goldLowLevelMinimum": keyed_value("Google2u.Constants", "GoldCrateLowLevelGoldMin"),
@@ -90,6 +99,10 @@ def main():
                           "warbucksMinimum": bonus_value("AddWBMin"),
                           "warbucksMaximum": bonus_value("AddWBMax"),
                           "warbucksScalingBase": keyed_value("Google2u.Constants", "WarbucksScalingBase"),
+                          "grenadeCount": grenade_count,
+                          "grenadeTargetDistance": grenade_distance,
+                          "grenadeFallbackDamageMinimum": keyed_value("Google2u.CardConstants", "ClusterGrenadeDamageMin"),
+                          "grenadeFallbackDamageMaximum": keyed_value("Google2u.CardConstants", "ClusterGrenadeDamageMax"),
                           "cardUnlockLevel": keyed_value("Google2u.CardConstants", "WarcardsUnlockLevel"),
                           "lowAmmoThreshold": bonus_value("LowAmmoRatio"),
                           "lowAmmoMultiplier": bonus_value("AmmoCrateOnLowAmmoRatio"),

@@ -89,6 +89,10 @@ booby-trapped box replacing its original effect. The intent itself does not
 mutate a match; automatic dispatch is still open.
 The recovered Kevlar crate's 0.1 maximum-health strength and ammo crate's
 one-clip-per-used-weapon reserve addition now have checked host calculations.
+The Grenades crate is a three-shot burst rather than an inventory refill;
+its prefab count/radius, fallback damage rows, source target order and timed
+fallback positions now have a host-only planning policy. Its flight, damage
+and callback path remain open.
 The normal Worker construction path now configures a crate registry when the
 signed match has a source-view scene master and both player levels. MatchEngine
 applies Health, Kevlar, ammo and the source-pinned 15%-maximum-health

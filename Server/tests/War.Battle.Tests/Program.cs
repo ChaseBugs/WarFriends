@@ -318,6 +318,17 @@ if (args is ["--pvp-bonus-only"])
     return;
 }
 
+if (args is ["--pvp-bonus-grenade-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = PvpBonusGrenadeBurstTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} PvP grenade-box burst assertions");
+    return;
+}
+
 if (args is ["--pvp-progress-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -2929,6 +2940,7 @@ checks += PvpSkillShotScoreStateTests.Run(Path.Combine(contentRoot.FullName,"con
 checks += PvpScoreStreakPolicyTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpScoreStreakProgressTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += PvpBonusGrenadeBurstTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusSelectionTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusDelayTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusProgressCoordinatorTests.Run(Path.Combine(contentRoot.FullName,"content"));

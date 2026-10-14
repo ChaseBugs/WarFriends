@@ -245,6 +245,23 @@ awaits Backend mode projection and live gold/ammo analytics.
 Other army-owned damage, AI death/combo flags, verified walking state parity,
 card multiplier lifetimes, Client-visible crate spawning and effect delivery
 remain open.
+The Grenades prefab and recovered `KillStreakBonusGrenades` method specify a
+three-shot burst, not grenade inventory refill. It waits one scaled second,
+sorts living visible opposing `GameShootableEntity` components by distance
+from the collected box, and fires at up to three within a strict three-unit
+radius, with 0.2 scaled seconds between shots. Missing targets become random
+box-centered X/Z offsets in [-1.5, 1.5]. The fallback grenade's source
+damage rows are 50 to 872, scaled by recipient rank/43; this damage and
+projectile flight are not implemented yet. `PvpBonusGrenadeBurstPolicy` now
+plans only the host-confirmed target positions and timing, drawing random
+offsets only for fallback shots. The source passes the *local current player*
+fraction to `GetOpponents`; the planner keeps that perspective explicit until
+the self-hosted scene-owner callback is bound. The recovered C# displays a
+null `killStreakBonusBox2` inside its sort comparator, but the original APK
+assembly's iterator IL loads the captured `killStreakBonusBox` parameter in
+both distance calculations. The planner follows the original IL. Equal-distance
+ties retain host registry order as an explicit replacement choice; exact Mono
+sort tie parity remains unverified. This is not live grenade damage or pickup.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component
 serializes zero; the server retains the scene value.
 

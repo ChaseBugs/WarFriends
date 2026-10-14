@@ -18,7 +18,7 @@ public sealed record PvpBonusWeightContext(bool IsWarArena, bool IsFriendlyDeath
 public sealed class PvpBonusCatalog
 {
     private const string ReviewedSha256 =
-        "e2b8b7e890bea0001574f5cc942b078b4003cbbd252db54af9971049423d509f";
+        "b8cf92b01f6228cf7b0e627cfd529854656e51cfcc78f3e8b8e57c0affaa0957";
     private const string ReviewedUnityReferenceSha256 =
         "bf5adb198147574e57271ec438664db7af61bd43f4ad68e466126e13091e564c";
     private const string ReviewedSourceCodeSha256 =
@@ -45,13 +45,22 @@ public sealed class PvpBonusCatalog
     public float LowAmmoThreshold { get; }
     public float WarbucksScalingBase { get; }
     public PvpBonusWarbucksDrawRange WarbucksBaseDrawRange { get; } = new(500, 1500);
+    public int GrenadeCount { get; }
+    public float GrenadeTargetDistance { get; }
+    public float GrenadeFallbackDamageMinimum { get; }
+    public float GrenadeFallbackDamageMaximum { get; }
 
     private PvpBonusCatalog(PvpBonusSource[] rows, float lowAmmoThreshold,
-        float warbucksScalingBase)
+        float warbucksScalingBase, int grenadeCount, float grenadeTargetDistance,
+        float grenadeFallbackDamageMinimum, float grenadeFallbackDamageMaximum)
     {
         Rows = new ReadOnlyCollection<PvpBonusSource>(rows);
         LowAmmoThreshold = lowAmmoThreshold;
         WarbucksScalingBase = warbucksScalingBase;
+        GrenadeCount = grenadeCount;
+        GrenadeTargetDistance = grenadeTargetDistance;
+        GrenadeFallbackDamageMinimum = grenadeFallbackDamageMinimum;
+        GrenadeFallbackDamageMaximum = grenadeFallbackDamageMaximum;
     }
 
     public int WarbucksRewardForBaseDraw(int ownerLevelIndex, int baseDraw)
@@ -151,6 +160,10 @@ public sealed class PvpBonusCatalog
             rules.GetProperty("warbucksMinimum").GetSingle() != 500f ||
             rules.GetProperty("warbucksMaximum").GetSingle() != 1500f ||
             rules.GetProperty("warbucksScalingBase").GetSingle() != 1.033f ||
+            rules.GetProperty("grenadeCount").GetInt32() != 3 ||
+            rules.GetProperty("grenadeTargetDistance").GetSingle() != 3f ||
+            rules.GetProperty("grenadeFallbackDamageMinimum").GetSingle() != 50f ||
+            rules.GetProperty("grenadeFallbackDamageMaximum").GetSingle() != 872f ||
             rules.GetProperty("cardUnlockLevel").GetSingle() != 6f ||
             rules.GetProperty("lowAmmoThreshold").GetSingle() != 0.1f ||
             rules.GetProperty("lowAmmoMultiplier").GetSingle() != 2f ||
@@ -174,7 +187,11 @@ public sealed class PvpBonusCatalog
             "unity-pvp-bonus-reference.json");
         ValidateUnityWarbucksScales(unityReference);
         return new PvpBonusCatalog(rows, rules.GetProperty("lowAmmoThreshold").GetSingle(),
-            rules.GetProperty("warbucksScalingBase").GetSingle());
+            rules.GetProperty("warbucksScalingBase").GetSingle(),
+            rules.GetProperty("grenadeCount").GetInt32(),
+            rules.GetProperty("grenadeTargetDistance").GetSingle(),
+            rules.GetProperty("grenadeFallbackDamageMinimum").GetSingle(),
+            rules.GetProperty("grenadeFallbackDamageMaximum").GetSingle());
     }
 
     private static void ValidateUnityWarbucksScales(string path)
