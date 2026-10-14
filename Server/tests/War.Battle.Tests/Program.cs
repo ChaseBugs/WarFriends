@@ -285,6 +285,18 @@ if (args is ["--sabotage-http-live", var resultMongoUri])
     return;
 }
 
+if (args is ["--sabotage-worker-forward-live", var forwardMongoUri])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), forwardMongoUri,
+        useHttp: true, automaticForward: true);
+    Console.WriteLine($"PASS: {focused} automatic Worker SABOTAGE UDP/HTTP/Mongo assertions");
+    return;
+}
+
 if(args is ["--helicopter-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

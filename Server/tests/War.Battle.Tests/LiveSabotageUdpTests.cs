@@ -37,12 +37,17 @@ internal static class LiveSabotageUdpTests
     }
 
     internal static Task<int> RunCardDrone(string directory,
-        Func<TerminalOutbox.Evidence, CancellationToken, Task<int>> verifyBackend) =>
-        VerifyOneUnit(directory, "ID_UNIT-DRONE", true, verifyBackend);
+        Func<TerminalOutbox.Evidence, CancellationToken, Task<int>> verifyBackend,
+        Uri? automaticEndpoint = null, byte[]? controlKey = null,
+        Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null) =>
+        VerifyOneUnit(directory, "ID_UNIT-DRONE", true, verifyBackend,
+            automaticEndpoint, controlKey, readBackend);
 
     private static async Task<int> VerifyOneUnit(string directory, string unitId,
         bool cardSpawned = false,
-        Func<TerminalOutbox.Evidence, CancellationToken, Task<int>>? verifyBackend = null)
+        Func<TerminalOutbox.Evidence, CancellationToken, Task<int>>? verifyBackend = null,
+        Uri? automaticEndpoint = null, byte[]? controlKey = null,
+        Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null)
     {
         int checks = 0;
         void Check(bool condition, string description)
@@ -120,6 +125,8 @@ internal static class LiveSabotageUdpTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Battle:SigningKey"] = signingKey,
+                ["Battle:ControlKey"] = controlKey == null ? null : Convert.ToBase64String(controlKey),
+                ["Battle:BackendResultEndpoint"] = automaticEndpoint?.AbsoluteUri,
                 ["Battle:ServerId"] = manifest.ServerId,
                 ["Battle:Port"] = port.ToString(),
                 ["Battle:MatchManifestPath"] = manifestFile,
@@ -272,16 +279,34 @@ internal static class LiveSabotageUdpTests
             {
                 Check((await defender.ForfeitAsync(timeout.Token)).Code == "forfeited",
                     "the card Drone UDP match reaches a normal terminal state");
-                string resultFile = Path.Combine(outboxDirectory, manifest.MatchId + ".wfr");
-                while (!File.Exists(resultFile))
-                    await Task.Delay(100, timeout.Token);
-                var outbox = new TerminalOutbox(outboxDirectory);
                 TerminalOutbox.Evidence? saved = null;
-                while (saved == null)
+                if (readBackend != null)
                 {
-                    saved = outbox.PendingPage().SingleOrDefault(row =>
-                        row.Snapshot.MatchId == manifest.MatchId);
-                    if (saved == null) await Task.Delay(100, timeout.Token);
+                    while (saved == null)
+                    {
+                        saved = await readBackend(manifest.MatchId, timeout.Token);
+                        if (saved == null) await Task.Delay(100, timeout.Token);
+                    }
+                    string acknowledged = Path.Combine(outboxDirectory, manifest.MatchId + ".ack");
+                    while (!File.Exists(acknowledged))
+                        await Task.Delay(100, timeout.Token);
+                    var acknowledgedOutbox = new TerminalOutbox(outboxDirectory);
+                    Check(acknowledgedOutbox.Contains(manifest.MatchId, manifest.Digest(),
+                              [attackerId, defenderId]) && acknowledgedOutbox.PendingPage().Count == 0,
+                        "automatic Worker forwarding durably acknowledges the accepted card result");
+                }
+                else
+                {
+                    string resultFile = Path.Combine(outboxDirectory, manifest.MatchId + ".wfr");
+                    while (!File.Exists(resultFile))
+                        await Task.Delay(100, timeout.Token);
+                    var outbox = new TerminalOutbox(outboxDirectory);
+                    while (saved == null)
+                    {
+                        saved = outbox.PendingPage().SingleOrDefault(row =>
+                            row.Snapshot.MatchId == manifest.MatchId);
+                        if (saved == null) await Task.Delay(100, timeout.Token);
+                    }
                 }
                 var kill = saved.Snapshot.DirectArmyKills.Single();
                 Check(kill.EntityKey == target.EntityKey &&

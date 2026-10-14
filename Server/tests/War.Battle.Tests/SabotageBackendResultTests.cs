@@ -10,7 +10,7 @@ using System.Net.Http.Json;
 internal static class SabotageBackendResultTests
 {
     internal static async Task<int> Run(string contentDirectory, string mongoUri,
-        bool useHttp = false)
+        bool useHttp = false, bool automaticForward = false)
     {
         string database = "war_sabotage_live_" + Guid.NewGuid().ToString("N");
         var mongo = new MongoClient(mongoUri);
@@ -70,7 +70,7 @@ internal static class SabotageBackendResultTests
                         }
                     }
                     Check(await Accept(matchId, evidence.Digest,
-                        payload, cancellationToken) == "accepted",
+                        payload, cancellationToken) == (automaticForward ? "already-accepted" : "accepted"),
                         "Backend acceptance persists the real UDP card Drone result");
                     Check(await Accept(matchId, evidence.Digest,
                         payload, cancellationToken) == "already-accepted",
@@ -115,7 +115,14 @@ internal static class SabotageBackendResultTests
                     Check(stored!.Snapshot.SequenceEqual(payload),
                         "rejected result leaves the original Mongo authority unchanged");
                     return checks;
-                });
+                }, automaticForward ? httpHost!.Endpoint : null,
+                automaticForward ? httpHost!.ControlKey : null,
+                automaticForward ? async (matchId, cancellationToken) =>
+                {
+                    var stored = await results.Get(matchId, cancellationToken);
+                    return stored == null ? null : new TerminalOutbox.Evidence(
+                        War.Protocol.MatchSnapshot.Parser.ParseFrom(stored.Snapshot), stored.Digest);
+                } : null);
         }
         finally
         {

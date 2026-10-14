@@ -94,14 +94,19 @@ real Backend executable and uses `BackendResultForwarder` to submit the same
 UDP/outbox evidence through the production signed endpoint. It verifies first
 acceptance, exact replay, Mongo provenance/statistics reads, HTTP 401 for
 unsigned/wrong-key requests, and HTTP 400 for signed forged spawn provenance.
-Automatic Worker forwarding/ack scheduling for this card case and Unity
-statistics presentation remain unverified.
+The automatic-forward variant configures the real Worker's result endpoint
+and control key, waits for Mongo persistence without directly submitting the
+result, then checks durable `.ack` creation and an empty pending outbox.
+It reopens the acknowledged outbox to validate its match/roster binding.
+Worker delivery and acknowledgement for this card case are now verified;
+Unity statistics presentation and delivery during a Backend outage remain open.
 
 Run the optional live storage test against a disposable native Mongo instance:
 `dotnet run --project Server/tests/War.Battle.Tests -c Release -- --sabotage-backend-live mongodb://127.0.0.1:27017/`.
 It creates and removes its own randomly named test database; no Docker is used.
 For the signed HTTP variant, use `--sabotage-http-live` instead, against a
 native Mongo replica set and after building the Release Backend executable.
+Use `--sabotage-worker-forward-live` for the automatic Worker delivery/ack test.
 
 ## Implementation boundary
 

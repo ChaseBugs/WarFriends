@@ -59,7 +59,8 @@ internal sealed class BackendResultHttpTestHost : IDisposable
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(1) };
-            for (int attempt = 0; attempt < 100; attempt++)
+            var startup = Stopwatch.StartNew();
+            while (startup.Elapsed < TimeSpan.FromMinutes(3))
             {
                 if (process.HasExited)
                     throw new Exception("Backend stopped during startup: " + await host.errorOutput);
@@ -74,10 +75,12 @@ internal sealed class BackendResultHttpTestHost : IDisposable
             }
             throw new Exception("Backend result test host did not become ready.");
         }
-        catch
+        catch (Exception error)
         {
             host.Dispose();
-            throw;
+            string output = await host.standardOutput;
+            string errors = await host.errorOutput;
+            throw new Exception("Backend result test startup failed. " + output + errors, error);
         }
     }
 
