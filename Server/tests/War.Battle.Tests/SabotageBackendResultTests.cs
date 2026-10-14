@@ -7,11 +7,26 @@ using War.Shared;
 using System.Net;
 using System.Net.Http.Json;
 
+internal enum SabotageResultTestMode
+{
+    Storage,
+    SignedHttp,
+    AutomaticForward,
+    Http503Recovery,
+    ConnectionRecovery
+}
+
 internal static class SabotageBackendResultTests
 {
     internal static async Task<int> Run(string contentDirectory, string mongoUri,
-        bool useHttp = false, bool automaticForward = false, bool simulateOutage = false)
+        SabotageResultTestMode testMode = SabotageResultTestMode.Storage)
     {
+        bool useHttp = testMode != SabotageResultTestMode.Storage;
+        bool automaticForward = testMode is SabotageResultTestMode.AutomaticForward or
+            SabotageResultTestMode.Http503Recovery or SabotageResultTestMode.ConnectionRecovery;
+        bool simulateOutage = testMode is SabotageResultTestMode.Http503Recovery or
+            SabotageResultTestMode.ConnectionRecovery;
+        bool loseConnection = testMode == SabotageResultTestMode.ConnectionRecovery;
         string database = "war_sabotage_live_" + Guid.NewGuid().ToString("N");
         var mongo = new MongoClient(mongoUri);
         BackendResultHttpTestHost? httpHost = null;
@@ -28,7 +43,8 @@ internal static class SabotageBackendResultTests
                 httpHost = await BackendResultHttpTestHost.Start(
                     contentDirectory, mongoUri, database);
             if (simulateOutage)
-                outage = await ResultOutageProxy.Start(httpHost!.Endpoint);
+                outage = await ResultOutageProxy.Start(httpHost!.Endpoint,
+                    disconnect: loseConnection, loseAcknowledgement: loseConnection);
             using var http = new HttpClient();
             BackendResultForwarder? forwarder = httpHost == null ? null :
                 new BackendResultForwarder(http, httpHost.ControlKey, "local-1");
@@ -57,6 +73,9 @@ internal static class SabotageBackendResultTests
                     if (retainedPayload != null)
                         Check(payload.SequenceEqual(retainedPayload),
                             "Backend recovery stores the exact result retained during HTTP outage");
+                    if (loseConnection)
+                        Check(outage!.ResponseCodes.SequenceEqual(["accepted", "already-accepted"]),
+                            "lost commit response causes an exact replay before Worker acknowledgement");
                     if (httpHost != null)
                     {
                         using var unsigned = await http.PostAsJsonAsync(httpHost.Endpoint,

@@ -280,7 +280,8 @@ if (args is ["--sabotage-http-live", var resultMongoUri])
     while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
         root = root.Parent;
     if (root == null) throw new Exception("Recovered battle content artifact not found.");
-    int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), resultMongoUri, useHttp: true);
+    int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), resultMongoUri,
+        SabotageResultTestMode.SignedHttp);
     Console.WriteLine($"PASS: {focused} live SABOTAGE UDP/HTTP/Mongo assertions");
     return;
 }
@@ -292,7 +293,7 @@ if (args is ["--sabotage-worker-forward-live", var forwardMongoUri])
         root = root.Parent;
     if (root == null) throw new Exception("Recovered battle content artifact not found.");
     int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), forwardMongoUri,
-        useHttp: true, automaticForward: true);
+        SabotageResultTestMode.AutomaticForward);
     Console.WriteLine($"PASS: {focused} automatic Worker SABOTAGE UDP/HTTP/Mongo assertions");
     return;
 }
@@ -304,8 +305,20 @@ if (args is ["--sabotage-outage-live", var outageMongoUri])
         root = root.Parent;
     if (root == null) throw new Exception("Recovered battle content artifact not found.");
     int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), outageMongoUri,
-        useHttp: true, automaticForward: true, simulateOutage: true);
+        SabotageResultTestMode.Http503Recovery);
     Console.WriteLine($"PASS: {focused} SABOTAGE Backend-outage recovery assertions");
+    return;
+}
+
+if (args is ["--sabotage-connection-loss-live", var connectionMongoUri])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), connectionMongoUri,
+        SabotageResultTestMode.ConnectionRecovery);
+    Console.WriteLine($"PASS: {focused} SABOTAGE connection-loss and lost-ack assertions");
     return;
 }
 

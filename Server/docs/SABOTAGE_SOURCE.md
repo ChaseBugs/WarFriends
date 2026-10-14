@@ -102,8 +102,13 @@ Worker delivery and acknowledgement for this card case are now verified.
 The outage variant observes an actual HTTP 503 on the first Worker delivery,
 checks the durable pending result and absence from Mongo, restores forwarding,
 and verifies automatic retry, byte-identical Mongo evidence, and durable ack.
-This proves HTTP 503 recovery; connection-loss/process-restart recovery for
-this card case and Unity statistics presentation remain unverified.
+The connection-loss variant aborts the first delivery connection before
+Backend submission, then drops the first successful Backend response after
+its commit. It verifies retained evidence and the exact `accepted` then
+`already-accepted` response sequence before durable Worker acknowledgement.
+HTTP 503, abrupt connection loss, and lost commit-response recovery are now
+verified. Worker/process-restart recovery for this card case and Unity
+statistics presentation remain unverified.
 
 Run the optional live storage test against a disposable native Mongo instance:
 `dotnet run --project Server/tests/War.Battle.Tests -c Release -- --sabotage-backend-live mongodb://127.0.0.1:27017/`.
@@ -112,6 +117,7 @@ For the signed HTTP variant, use `--sabotage-http-live` instead, against a
 native Mongo replica set and after building the Release Backend executable.
 Use `--sabotage-worker-forward-live` for the automatic Worker delivery/ack test.
 Use `--sabotage-outage-live` for observed HTTP 503 retention and recovery.
+Use `--sabotage-connection-loss-live` for connection abort and lost commit-response replay.
 
 ## Implementation boundary
 

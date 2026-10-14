@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.Net;
 using System.Net.Sockets;
+using System.Collections.Concurrent;
+using System.Text.Json;
 
-/// <summary>Returns a real HTTP 503 until the test restores result delivery.</summary>
+/// <summary>Injects observed delivery failures before restoring signed forwarding.</summary>
 internal sealed class ResultOutageProxy : IAsyncDisposable
 {
     private readonly WebApplication app;
@@ -12,9 +14,13 @@ internal sealed class ResultOutageProxy : IAsyncDisposable
     private readonly TaskCompletionSource failureObserved =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int available;
+    private int responseDropped;
+    private readonly ConcurrentQueue<string> responseCodes = new();
     internal Uri Endpoint { get; }
+    internal string[] ResponseCodes => responseCodes.ToArray();
 
-    private ResultOutageProxy(WebApplication app, Uri endpoint, Uri backend)
+    private ResultOutageProxy(WebApplication app, Uri endpoint, Uri backend,
+        bool disconnect, bool loseAcknowledgement)
     {
         this.app = app;
         Endpoint = endpoint;
@@ -22,7 +28,8 @@ internal sealed class ResultOutageProxy : IAsyncDisposable
         {
             if (Volatile.Read(ref available) == 0)
             {
-                context.Response.StatusCode = 503;
+                if (disconnect) context.Abort();
+                else context.Response.StatusCode = 503;
                 failureObserved.TrySetResult();
                 return;
             }
@@ -37,13 +44,27 @@ internal sealed class ResultOutageProxy : IAsyncDisposable
             foreach (string header in new[] { "X-War-Control-Time", "X-War-Control-Mac" })
                 request.Headers.Add(header, context.Request.Headers[header].ToString());
             using var response = await http.SendAsync(request, context.RequestAborted);
+            byte[] responseBody = await response.Content.ReadAsByteArrayAsync(context.RequestAborted);
+            if (response.IsSuccessStatusCode)
+            {
+                using var json = JsonDocument.Parse(responseBody);
+                responseCodes.Enqueue(json.RootElement.GetProperty("code").GetString()!);
+                if (loseAcknowledgement && Interlocked.CompareExchange(ref responseDropped, 1, 0) == 0)
+                {
+                    // Backend has committed the result, but the Worker sees
+                    // a broken connection instead of the successful response.
+                    context.Abort();
+                    return;
+                }
+            }
             context.Response.StatusCode = (int)response.StatusCode;
             context.Response.ContentType = response.Content.Headers.ContentType?.ToString();
-            await response.Content.CopyToAsync(context.Response.Body, context.RequestAborted);
+            await context.Response.Body.WriteAsync(responseBody, context.RequestAborted);
         });
     }
 
-    internal static async Task<ResultOutageProxy> Start(Uri backend)
+    internal static async Task<ResultOutageProxy> Start(Uri backend,
+        bool disconnect = false, bool loseAcknowledgement = false)
     {
         var probe = new TcpListener(IPAddress.Loopback, 0);
         probe.Start();
@@ -52,7 +73,8 @@ internal sealed class ResultOutageProxy : IAsyncDisposable
         var builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
         var app = builder.Build();
-        var proxy = new ResultOutageProxy(app, new Uri($"http://127.0.0.1:{port}/result"), backend);
+        var proxy = new ResultOutageProxy(app, new Uri($"http://127.0.0.1:{port}/result"), backend,
+            disconnect, loseAcknowledgement);
         await app.StartAsync();
         return proxy;
     }
