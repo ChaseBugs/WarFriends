@@ -10,11 +10,13 @@ using System.Net.Http.Json;
 internal static class SabotageBackendResultTests
 {
     internal static async Task<int> Run(string contentDirectory, string mongoUri,
-        bool useHttp = false, bool automaticForward = false)
+        bool useHttp = false, bool automaticForward = false, bool simulateOutage = false)
     {
         string database = "war_sabotage_live_" + Guid.NewGuid().ToString("N");
         var mongo = new MongoClient(mongoUri);
         BackendResultHttpTestHost? httpHost = null;
+        ResultOutageProxy? outage = null;
+        byte[]? retainedPayload = null;
         try
         {
             var results = new BattleResultStore(mongoUri, database);
@@ -25,6 +27,8 @@ internal static class SabotageBackendResultTests
             if (useHttp)
                 httpHost = await BackendResultHttpTestHost.Start(
                     contentDirectory, mongoUri, database);
+            if (simulateOutage)
+                outage = await ResultOutageProxy.Start(httpHost!.Endpoint);
             using var http = new HttpClient();
             BackendResultForwarder? forwarder = httpHost == null ? null :
                 new BackendResultForwarder(http, httpHost.ControlKey, "local-1");
@@ -50,6 +54,9 @@ internal static class SabotageBackendResultTests
 
                     string matchId = evidence.Snapshot.MatchId;
                     byte[] payload = evidence.Snapshot.ToByteArray();
+                    if (retainedPayload != null)
+                        Check(payload.SequenceEqual(retainedPayload),
+                            "Backend recovery stores the exact result retained during HTTP outage");
                     if (httpHost != null)
                     {
                         using var unsigned = await http.PostAsJsonAsync(httpHost.Endpoint,
@@ -115,17 +122,29 @@ internal static class SabotageBackendResultTests
                     Check(stored!.Snapshot.SequenceEqual(payload),
                         "rejected result leaves the original Mongo authority unchanged");
                     return checks;
-                }, automaticForward ? httpHost!.Endpoint : null,
+                }, automaticForward ? outage?.Endpoint ?? httpHost!.Endpoint : null,
                 automaticForward ? httpHost!.ControlKey : null,
                 automaticForward ? async (matchId, cancellationToken) =>
                 {
                     var stored = await results.Get(matchId, cancellationToken);
                     return stored == null ? null : new TerminalOutbox.Evidence(
                         War.Protocol.MatchSnapshot.Parser.ParseFrom(stored.Snapshot), stored.Digest);
-                } : null);
+                } : null,
+                outage == null ? null : async (outbox, cancellationToken) =>
+                {
+                    await outage.WaitForFailedDelivery(cancellationToken);
+                    var pending = outbox.PendingPage().Single();
+                    retainedPayload = pending.Snapshot.ToByteArray();
+                    if (await results.Get(pending.Snapshot.MatchId, cancellationToken) != null ||
+                        !outbox.HasIdentity(pending.Snapshot.MatchId))
+                        throw new Exception("Failed HTTP delivery changed durable result authority.");
+                    outage.Restore();
+                    return 1;
+                });
         }
         finally
         {
+            if (outage != null) await outage.DisposeAsync();
             httpHost?.Dispose();
             await mongo.DropDatabaseAsync(database);
         }

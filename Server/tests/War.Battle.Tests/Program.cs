@@ -297,6 +297,18 @@ if (args is ["--sabotage-worker-forward-live", var forwardMongoUri])
     return;
 }
 
+if (args is ["--sabotage-outage-live", var outageMongoUri])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = await SabotageBackendResultTests.Run(Path.Combine(root.FullName, "content"), outageMongoUri,
+        useHttp: true, automaticForward: true, simulateOutage: true);
+    Console.WriteLine($"PASS: {focused} SABOTAGE Backend-outage recovery assertions");
+    return;
+}
+
 if(args is ["--helicopter-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

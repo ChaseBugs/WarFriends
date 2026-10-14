@@ -98,8 +98,12 @@ The automatic-forward variant configures the real Worker's result endpoint
 and control key, waits for Mongo persistence without directly submitting the
 result, then checks durable `.ack` creation and an empty pending outbox.
 It reopens the acknowledged outbox to validate its match/roster binding.
-Worker delivery and acknowledgement for this card case are now verified;
-Unity statistics presentation and delivery during a Backend outage remain open.
+Worker delivery and acknowledgement for this card case are now verified.
+The outage variant observes an actual HTTP 503 on the first Worker delivery,
+checks the durable pending result and absence from Mongo, restores forwarding,
+and verifies automatic retry, byte-identical Mongo evidence, and durable ack.
+This proves HTTP 503 recovery; connection-loss/process-restart recovery for
+this card case and Unity statistics presentation remain unverified.
 
 Run the optional live storage test against a disposable native Mongo instance:
 `dotnet run --project Server/tests/War.Battle.Tests -c Release -- --sabotage-backend-live mongodb://127.0.0.1:27017/`.
@@ -107,6 +111,7 @@ It creates and removes its own randomly named test database; no Docker is used.
 For the signed HTTP variant, use `--sabotage-http-live` instead, against a
 native Mongo replica set and after building the Release Backend executable.
 Use `--sabotage-worker-forward-live` for the automatic Worker delivery/ack test.
+Use `--sabotage-outage-live` for observed HTTP 503 retention and recovery.
 
 ## Implementation boundary
 

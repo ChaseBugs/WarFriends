@@ -39,15 +39,17 @@ internal static class LiveSabotageUdpTests
     internal static Task<int> RunCardDrone(string directory,
         Func<TerminalOutbox.Evidence, CancellationToken, Task<int>> verifyBackend,
         Uri? automaticEndpoint = null, byte[]? controlKey = null,
-        Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null) =>
+        Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null,
+        Func<TerminalOutbox, CancellationToken, Task<int>>? beforeDelivery = null) =>
         VerifyOneUnit(directory, "ID_UNIT-DRONE", true, verifyBackend,
-            automaticEndpoint, controlKey, readBackend);
+            automaticEndpoint, controlKey, readBackend, beforeDelivery);
 
     private static async Task<int> VerifyOneUnit(string directory, string unitId,
         bool cardSpawned = false,
         Func<TerminalOutbox.Evidence, CancellationToken, Task<int>>? verifyBackend = null,
         Uri? automaticEndpoint = null, byte[]? controlKey = null,
-        Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null)
+        Func<string, CancellationToken, Task<TerminalOutbox.Evidence?>>? readBackend = null,
+        Func<TerminalOutbox, CancellationToken, Task<int>>? beforeDelivery = null)
     {
         int checks = 0;
         void Check(bool condition, string description)
@@ -282,6 +284,13 @@ internal static class LiveSabotageUdpTests
                 TerminalOutbox.Evidence? saved = null;
                 if (readBackend != null)
                 {
+                    if (beforeDelivery != null)
+                    {
+                        string pending = Path.Combine(outboxDirectory, manifest.MatchId + ".wfr");
+                        while (!File.Exists(pending))
+                            await Task.Delay(100, timeout.Token);
+                        checks += await beforeDelivery(new TerminalOutbox(outboxDirectory), timeout.Token);
+                    }
                     while (saved == null)
                     {
                         saved = await readBackend(manifest.MatchId, timeout.Token);
