@@ -23,6 +23,8 @@ public sealed partial class MatchEngine
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private PvpBonusGrenadeBurstPolicy? pvpGrenadeBurstPolicy;
     private PvpBonusGrenadeBurstClock? pvpGrenadeClock;
+    private CardGrenadesBurstPolicy? cardGrenadesBurstPolicy;
+    private readonly Dictionary<string, (string OwnerId, string Result)> cardGrenadeReceipts = new(StringComparer.Ordinal);
     private PvpBonusCatalog? pvpGrenadeCatalog;
     private IReadOnlyList<PvpBonusGrenadeDueShot> readyPvpGrenadeShots =
         Array.Empty<PvpBonusGrenadeDueShot>();
@@ -100,8 +102,9 @@ public sealed partial class MatchEngine
             var owner = Find(shot.RecipientPlayerId);
             if (owner?.Admitted != true)
                 throw new InvalidDataException("PvP grenade owner is no longer admitted.");
-            var origin = pvpBonusPlanner?.BoxSnapshot(shot.BoxId).Collection?.CollectionPosition ??
-                throw new InvalidDataException("PvP grenade collection position is missing.");
+            var origin = shot.CardFireOrigin ??
+                pvpBonusPlanner?.BoxSnapshot(shot.BoxId).Collection?.CollectionPosition ??
+                throw new InvalidDataException("Grenade fire origin is missing.");
 
             // MainScene KillStreak Manager GrenadeAmmoSetup 41786 supplies
             // this flight; its spawnPoint is the box, not a weapon muzzle.
@@ -436,6 +439,7 @@ public sealed partial class MatchEngine
             manifest, manifest.SceneMasterPlayerId);
         pvpBoobyTrap = content.PvpBoobyTrap;
         pvpGrenadeBurstPolicy = new PvpBonusGrenadeBurstPolicy(content.PvpBonuses);
+        cardGrenadesBurstPolicy = new CardGrenadesBurstPolicy(content.PvpBonuses);
         pvpGrenadeClock = new PvpBonusGrenadeBurstClock(content.PvpBonuses);
         pvpGrenadeCatalog = content.PvpBonuses;
         pvpBonusWeapons = content.AllWeaponBindings;
@@ -500,6 +504,67 @@ public sealed partial class MatchEngine
                 turret.Health > 0f, true, turret.Position));
         }
         return targets.AsReadOnly();
+    }
+
+    private string UseGrenadesBurst(Player owner, string requestId)
+    {
+        if (!HasSelectedCard(owner, "CardGrenadesBurst"))
+            return "grenades-burst-not-selected";
+        if (!Guid.TryParseExact(requestId, "N", out _) ||
+            requestId != requestId.ToLowerInvariant())
+            return "invalid-grenades-burst-request";
+        if (cardGrenadeReceipts.TryGetValue(requestId, out var replay))
+            return replay.OwnerId == owner.Definition.PlayerId
+                ? replay.Result : "grenades-burst-request-conflict";
+        if (cardReservations == null || cardGrenadesBurstPolicy == null ||
+            pvpGrenadeClock == null || map == null || pvpBonusFrameId == 0 ||
+            owner.Definition.PlayerLevel is not int level)
+            return "grenades-burst-authority-unavailable";
+        string inventoryId = CardInventoryId(owner.Definition.PlayerId,
+            "CardGrenadesBurst", "CLUSTERGRENADE");
+        if (cardReservations.Remaining(owner.Definition.PlayerId, inventoryId) < 1)
+            return "grenades-burst-unavailable";
+        if (cardGrenadeReceipts.Count >= 256 ||
+            pvpGrenadeClock.PendingCount >= 256 ||
+            events.Count > MaximumRetainedEvents - 4 ||
+            stateRevision > ulong.MaxValue - 4)
+            return "event-backpressure";
+
+        // CardGrenadesBurst starts at the owner's current shield indicator.
+        // The recovered map binds its cover shot position; no packet position
+        // or opponent identity is trusted for this card.
+        if (owner.Cover < 0 || owner.Cover >= map.Covers.Count ||
+            map.Covers[owner.Cover].Fraction != owner.Definition.Fraction)
+            return "grenades-burst-owner-unavailable";
+        var occupied = players.Where(player => !player.Dead)
+            .Select(player => player.Route == null ? player.Cover : player.Destination)
+            .ToHashSet();
+        var emptyEnemyShields = map.Covers
+            .Where((cover, index) => cover.Fraction != owner.Definition.Fraction &&
+                !occupied.Contains(index))
+            .Select(cover => cover.Position).ToArray();
+
+        CardGrenadesBurstPlan plan;
+        try
+        {
+            plan = cardGrenadesBurstPolicy.Plan(requestId,
+                owner.Definition.PlayerId, owner.Definition.Fraction, level,
+                map.Covers[owner.Cover].ShotPosition, PvpGrenadeShootables(),
+                emptyEnemyShields, armyChoice);
+        }
+        catch (InvalidDataException)
+        {
+            return "grenades-burst-authority-unavailable";
+        }
+
+        var effect = new WarCardEffectRequest("CardGrenadesBurst",
+            plan.FireOrigin, 0, 1, "CLUSTERGRENADE");
+        if (!TryApplyCardEffect(requestId, owner.Definition.PlayerId, effect))
+            return "grenades-burst-unavailable";
+        pvpGrenadeClock.ScheduleCard(plan, pvpBonusFrameId);
+        const string result = "grenades-burst-active";
+        cardGrenadeReceipts.Add(requestId, (owner.Definition.PlayerId, result));
+        return result;
     }
 
     private float NextGrenadeFallbackOffset()

@@ -266,8 +266,14 @@ unoccupied enemy shield points for missing targets. The card's three shots
 wait 0.2 scaled seconds each; targeted shots retain the shared setup and
 fallback shots replace it with the same rank-bound pair as bonus boxes. The
 shared clock accepts both burst schedules and preserves card mutations for a
-later box shot. Card command admission, source snap-transform launch origin,
-normal match flight dispatch, and Client presentation remain unconnected.
+later box shot. The authenticated `UseGrenadesBurst` command now checks the
+selected `CLUSTERGRENADE` inventory identity, plans from host shootables and
+empty enemy shields, retains a request replay receipt, and dispatches each
+due shot into the normal grenade flight/explosion path. The host currently
+uses the recovered cover's `shotPosition` for the owner's fire origin and
+the cover transform for empty-shield targets. The serialized
+`hudIndicator.snapTransform` relation, exact visual origin parity, and Client
+presentation still need Unity comparison.
 The checked-in bonus catalog now extracts the shared setup's 350/20 values
 and its 45-degree throw, zero distance/fuse, 1.3/2.2 blast radii, and
 behind-shield ratio 1 from MainScene. It pins the `GrenadeAmmoBase`, `GrenadeAmmo`, and

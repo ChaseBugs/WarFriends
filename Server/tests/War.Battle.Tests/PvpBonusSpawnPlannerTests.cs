@@ -873,6 +873,29 @@ internal static class PvpBonusSpawnPlannerTests
             return match;
         }
 
+        var cardEngine = BonusCardMatch("CardGrenadesBurst");
+        var cardRequest = Id(659);
+        var cardCommand = new MatchCommand {CommandId = 3,
+            UseGrenadesBurst = new UseGrenadesBurstCommand {RequestId = cardRequest}};
+        var cardResult = cardEngine.Command(localId, cardCommand);
+        Check(cardResult.Code == "grenades-burst-active",
+            "selected Cluster Grenade card starts a host burst: " + cardResult.Code);
+        Check(cardEngine.Command(localId, new MatchCommand {CommandId = 4,
+            UseGrenadesBurst = new UseGrenadesBurstCommand {RequestId = cardRequest}}).Code ==
+            "grenades-burst-active", "card request replay does not consume another card");
+        Check(cardEngine.Command(enemyId, new MatchCommand {CommandId = 3,
+            UseGrenadesBurst = new UseGrenadesBurstCommand {RequestId = cardRequest}}).Code ==
+            "grenades-burst-request-conflict", "other player cannot replay card receipt");
+        for (ulong cardTick = 61; cardTick <= 75 &&
+             cardEngine.ReadyPvpGrenadeShots.Count == 0; cardTick++)
+            cardEngine.Advance(cardTick);
+        Check(cardEngine.ReadyPvpGrenadeShots.Count == 1 &&
+            cardEngine.ReadyPvpGrenadeShots[0].CardFireOrigin ==
+                map.Covers[manifest.Players[0].StartCover].ShotPosition,
+            "first card shot uses the owner's source-bound cover origin");
+        Check(cardEngine.PendingPvpGrenadeFlights > 0,
+            "card burst enters host grenade flight simulation");
+
         var decoyEngine = BonusCardMatch("CardDecoy");
         Check(decoyEngine.Command(enemyId, new MatchCommand {CommandId = 3,
             UseDecoy = new UseDecoyCommand {RequestId = Id(660)}}).Code ==

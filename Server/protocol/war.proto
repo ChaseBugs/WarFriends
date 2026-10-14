@@ -143,6 +143,7 @@ message UseKevlarUpCommand { string request_id = 1; }
 message UseShieldSpawnerCommand { string request_id = 1; }
 message UseBackstabCommand { string request_id = 1; }
 message UseSabotageCommand { string request_id = 1; }
+message UseGrenadesBurstCommand { string request_id = 1; }
 message UseRandomKevlarCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
@@ -189,6 +190,7 @@ message MatchCommand {
     UseBackstabCommand use_backstab = 49;
     UseRandomKevlarCommand use_random_kevlar = 50;
     UseSabotageCommand use_sabotage = 51;
+    UseGrenadesBurstCommand use_grenades_burst = 52;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.

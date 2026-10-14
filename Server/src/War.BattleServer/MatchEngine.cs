@@ -2221,6 +2221,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseBackstab(p,c.UseBackstab.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseSabotage)
             return UseSabotage(p,c.UseSabotage.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseGrenadesBurst)
+            return UseGrenadesBurst(p,c.UseGrenadesBurst.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseRandomKevlar)
             return UseRandomKevlar(p,c.UseRandomKevlar.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)

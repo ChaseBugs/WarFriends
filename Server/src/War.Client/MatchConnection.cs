@@ -100,6 +100,9 @@ namespace War.Client
         public Task<MatchReply> UseSabotageAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseSabotage=new UseSabotageCommand
                 {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseGrenadesBurstAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseGrenadesBurst=new UseGrenadesBurstCommand
+                {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseRandomKevlarAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseRandomKevlar=new UseRandomKevlarCommand
                 {RequestId=requestId}},false,false,ct);
