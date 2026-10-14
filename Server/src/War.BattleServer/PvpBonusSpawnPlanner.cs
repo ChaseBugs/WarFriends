@@ -7,6 +7,8 @@ public sealed record PvpBonusSpawnContext(bool IsWarArena, bool IsFriendlyDeathM
     int GoldBonusesCollected, bool FirstTwoWeaponsHaveLowAmmo);
 public sealed record PvpBonusSpawnPlan(PvpBonusDelayedRequest Request,
     int SourceIndex, int PrefabIndex, int AreaColliderFileId, Vector3 Position);
+public sealed record PvpBonusCurrencyRewardQuote(string MatchId, string BoxId,
+    string RecipientPlayerId, PvpBonusEffectKind Kind, int BaseDraw, int Amount);
 
 /// <summary>
 /// Makes a crate-spawn plan only after an accepted delay matures. The host
@@ -22,9 +24,12 @@ internal sealed class PvpBonusSpawnPlanner
     private readonly int localDisplayLevel;
     private readonly RecoveredBattleMap map;
     private readonly PvpBonusSpawnAreaCatalog areas;
+    private readonly PvpBonusCatalog bonusCatalog;
     private PvpBonusSelectionState selection;
     private readonly PvpBonusBoxRegistry boxes;
     private readonly Dictionary<string, SavedPlan> plans = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, PvpBonusCurrencyRewardQuote> currencyQuotes =
+        new(StringComparer.Ordinal);
     private sealed record SavedPlan(PvpBonusDelayedRequest Request,
         PvpBonusSpawnContext Context, PvpBonusSpawnPlan Result);
 
@@ -42,6 +47,7 @@ internal sealed class PvpBonusSpawnPlanner
             candidate.SourceHash == admitted.MapRevision)
             ?? throw new InvalidDataException("Bonus crate map differs from the admitted match.");
         areas = content.PvpBonusSpawnAreas;
+        bonusCatalog = content.PvpBonuses;
         _ = areas.ForMap(map);
         matchId = admitted.MatchId;
         owners = new Dictionary<string, (PvpBonusSide, int)>(StringComparer.Ordinal);
@@ -73,6 +79,48 @@ internal sealed class PvpBonusSpawnPlanner
     internal PvpBonusEffectIntent EffectIntent(string boxId)
     {
         lock (gate) return boxes.EffectIntent(boxId);
+    }
+
+    /// <summary>
+    /// Quotes a reward only for a collected host box. This is not a wallet
+    /// grant; Backend must commit the quote under the box receipt exactly once.
+    /// The host supplies the draw, never a Client packet.
+    /// </summary>
+    internal PvpBonusCurrencyRewardQuote QuoteCurrencyReward(string boxId, int baseDraw)
+    {
+        lock (gate)
+        {
+            var intent = boxes.EffectIntent(boxId);
+            if (intent.Kind is not (PvpBonusEffectKind.Gold or PvpBonusEffectKind.Warbucks))
+                throw new InvalidOperationException("Collected box has no currency reward.");
+            if (currencyQuotes.TryGetValue(boxId, out var previous))
+            {
+                if (previous.BaseDraw != baseDraw ||
+                    previous.RecipientPlayerId != intent.RecipientPlayerId ||
+                    previous.Kind != intent.Kind)
+                    throw new InvalidDataException("Currency reward replay changed its authority.");
+                return previous;
+            }
+
+            int recipientLevel = owners[intent.RecipientPlayerId].Level;
+            int amount;
+            if (intent.Kind == PvpBonusEffectKind.Gold)
+            {
+                var range = bonusCatalog.GoldRewardRange(recipientLevel + 1);
+                if (baseDraw < range.Minimum || baseDraw >= range.MaximumExclusive)
+                    throw new ArgumentOutOfRangeException(nameof(baseDraw));
+                amount = baseDraw;
+            }
+            else
+            {
+                amount = bonusCatalog.WarbucksRewardForBaseDraw(recipientLevel, baseDraw);
+            }
+
+            var quote = new PvpBonusCurrencyRewardQuote(matchId, boxId,
+                intent.RecipientPlayerId, intent.Kind, baseDraw, amount);
+            currencyQuotes.Add(boxId, quote);
+            return quote;
+        }
     }
 
     internal PvpBonusBoxSnapshot ConfirmStaticContact(string boxId)

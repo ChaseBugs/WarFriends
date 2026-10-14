@@ -42,8 +42,9 @@ leaves its request queued. Automatic selection still needs Backend mode
 projection and trusted Gold reward collection. A bonus-enabled manifest now
 requires the scene master's durable Gold-box count at admission; the host
 rejects a conflicting selection count. The recovered catalog now pins the
-level-dependent Gold draw bounds and the owner-level-scaled Warbucks draw,
-while wallet delivery and durable receipt authority remain open. The host
+level-dependent Gold draw bounds and the recipient-level-scaled Warbucks draw.
+A collected host box can now produce one recipient-bound currency quote;
+wallet delivery and durable receipt authority remain open. The host
 also derives the first-two-weapon
 low-ammo condition from signed slot order, current reserve/clip and the
 source-pinned reloadable flag, rejecting a mismatched selection assertion. Other

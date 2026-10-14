@@ -161,6 +161,13 @@ Only a collected host box exposes an effect intent. Its nine prefab indexes map
 to the nine recovered `KillStreakBonus` subclasses in source order; a stolen
 box with a consumed booby trap instead exposes `BoobyTrap` for the attacker.
 The intent alone does not mutate the match or award currency.
+`PvpBonusSpawnPlanner.QuoteCurrencyReward` now produces a receipt-bound amount
+only after host-confirmed collection of Gold or Warbucks. It uses the actual
+recipient's signed rank: the local recipient's display number for Gold and
+zero-based index for Warbucks. A changed draw cannot replace an existing
+quote, and an uncollected or booby-trapped box yields no currency quote.
+This quote is still match-local evidence, not a Backend wallet transaction;
+durable settlement, count updates and delivery remain open.
 The source `KillStreakBonusKevlar` sets `kevlarStrength` to 0.1 before
 `SetUpKevlar`, separate from the 0.2 Kevlar Up card. `PlayerKevlar` now exposes
 that crate maximum. `KillStreakBonusAddAmmo` adds each used weapon's clip size

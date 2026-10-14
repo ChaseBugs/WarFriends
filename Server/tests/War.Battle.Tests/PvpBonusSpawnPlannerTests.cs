@@ -132,6 +132,9 @@ internal static class PvpBonusSpawnPlannerTests
               new PvpBonusEffectIntent(falling.BoxId, manifest.Players[1].PlayerId,
                   PvpBonusEffectKind.BoobyTrap),
             "stolen trapped box replaces its original healing effect with booby-trap intent");
+        try { planner.QuoteCurrencyReward(falling.BoxId, 500);
+            throw new Exception("Booby-trapped box exposed a currency reward."); }
+        catch (InvalidOperationException) { checks++; }
         planner.ArmBoobyTrap(Id(200), localId);
         Check(!planner.HasArmedBoobyTrap(localId),
             "replaying an already consumed card receipt cannot arm another trap");
@@ -171,6 +174,43 @@ internal static class PvpBonusSpawnPlannerTests
                   new PvpBonusEffectIntent(request.ReceiptId, localId, expectedEffects[index]),
                 "collected source bonus index maps to its recovered effect kind");
         }
+
+        var currencyManifest = manifest with {
+            Players = [manifest.Players[0], manifest.Players[1] with {PlayerLevel = 3}]
+        };
+        var currencyPlanner = new PvpBonusSpawnPlanner(content, currencyManifest, localId);
+        currencyPlanner.EnqueueConfirmedBonus(Id(500), localId, 0);
+        var goldPlan = currencyPlanner.PlanMatured(first, 0, context, draw);
+        try { currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 8);
+            throw new Exception("Uncollected Gold box exposed a reward quote."); }
+        catch (InvalidOperationException) { checks++; }
+        currencyPlanner.ConfirmDestroyed(goldPlan.Request.ReceiptId, Id(501),
+            currencyManifest.Players[1].PlayerId);
+        try { currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 10);
+            throw new Exception("Gold quote accepted a draw outside the recipient's rank range."); }
+        catch (ArgumentOutOfRangeException) { checks++; }
+        var goldQuote = currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 8);
+        Check(goldQuote == new PvpBonusCurrencyRewardQuote(currencyManifest.MatchId,
+                  goldPlan.Request.ReceiptId, currencyManifest.Players[1].PlayerId,
+                  PvpBonusEffectKind.Gold, 8, 8) &&
+              currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 8) == goldQuote,
+            "stolen Gold box uses the recipient's display rank and replays one host quote");
+        try { currencyPlanner.QuoteCurrencyReward(goldPlan.Request.ReceiptId, 5);
+            throw new Exception("Gold reward replay changed its draw."); }
+        catch (InvalidDataException) { checks++; }
+
+        currencyPlanner.EnqueueConfirmedBonus(Id(502), localId, 2);
+        var moneyPlan = currencyPlanner.PlanMatured(second, 0, context, draw);
+        currencyPlanner.ConfirmDestroyed(moneyPlan.Request.ReceiptId, Id(503),
+            currencyManifest.Players[1].PlayerId);
+        var moneyQuote = currencyPlanner.QuoteCurrencyReward(moneyPlan.Request.ReceiptId, 500);
+        Check(moneyQuote.Kind == PvpBonusEffectKind.Warbucks &&
+              moneyQuote.RecipientPlayerId == currencyManifest.Players[1].PlayerId &&
+              moneyQuote.Amount == 500,
+            "Warbucks scaling uses the collected recipient's zero-based rank");
+        try { currencyPlanner.QuoteCurrencyReward(moneyPlan.Request.ReceiptId, 1500);
+            throw new Exception("Warbucks reward replay changed its draw."); }
+        catch (InvalidDataException) { checks++; }
 
         var third = Mature(5, 7);
         var weights = content.PvpBonuses.WeightsForSourceContext(
