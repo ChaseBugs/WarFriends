@@ -1,11 +1,13 @@
 using System.Collections.ObjectModel;
 
+using System.Numerics;
+
 namespace War.BattleServer;
 
 public sealed record PvpBonusGrenadeSharedDamage(float Explosion, float Direct);
 public sealed record PvpBonusGrenadeDueShot(string BoxId, string RecipientPlayerId,
     ulong FrameId, PvpBonusGrenadeLaunch Launch,
-    PvpBonusGrenadeSharedDamage SetupAtLaunch);
+    PvpBonusGrenadeSharedDamage SetupAtLaunch, Vector3? CardFireOrigin = null);
 
 /// <summary>
 /// Advances the recovered grenade-box coroutine on ordered scaled frames.
@@ -18,17 +20,23 @@ internal sealed class PvpBonusGrenadeBurstClock
     {
         internal PvpBonusGrenadeBurstPlan Plan { get; }
         internal ulong StartedFrame { get; }
+        internal double FirstWaitSeconds { get; }
+        internal Vector3? CardFireOrigin { get; }
         internal int NextShot { get; set; }
         internal double Elapsed { get; set; }
 
-        internal PendingBurst(PvpBonusGrenadeBurstPlan plan, ulong startedFrame)
+        internal PendingBurst(PvpBonusGrenadeBurstPlan plan, ulong startedFrame,
+            double firstWaitSeconds, Vector3? cardFireOrigin = null)
         {
             Plan = plan;
             StartedFrame = startedFrame;
+            FirstWaitSeconds = firstWaitSeconds;
+            CardFireOrigin = cardFireOrigin;
         }
     }
 
     private readonly List<PendingBurst> pending = new();
+    private readonly PvpBonusCatalog catalog;
     private ulong lastFrame;
     private int lastDeltaBits;
     private IReadOnlyList<PvpBonusGrenadeDueShot>? lastResult;
@@ -43,6 +51,7 @@ internal sealed class PvpBonusGrenadeBurstClock
     internal PvpBonusGrenadeBurstClock(PvpBonusCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        this.catalog = catalog;
         sharedDamage = new(catalog.GrenadeInitialExplosionDamage,
             catalog.GrenadeInitialDirectDamage);
     }
@@ -62,8 +71,53 @@ internal sealed class PvpBonusGrenadeBurstClock
         }
         if (pending.Count >= 256)
             throw new InvalidOperationException("Too many pending grenade-box bursts.");
-        pending.Add(new PendingBurst(plan, currentFrame));
+        pending.Add(new PendingBurst(plan, currentFrame, 1d));
     }
+
+    internal void ScheduleCard(CardGrenadesBurstPlan card, ulong currentFrame)
+    {
+        ArgumentNullException.ThrowIfNull(card);
+        if (currentFrame == 0 || currentFrame != lastFrame ||
+            card.Launches.Count != 3 ||
+            !Guid.TryParseExact(card.RequestId, "N", out _) ||
+            card.RequestId != card.RequestId.ToLowerInvariant() ||
+            !Guid.TryParseExact(card.OwnerPlayerId, "N", out _) ||
+            card.OwnerPlayerId != card.OwnerPlayerId.ToLowerInvariant() ||
+            card.OwnerLevel < 0 || card.OwnerLevel >= catalog.RankCount ||
+            !Finite(card.FireOrigin) ||
+            pending.Any(burst => burst.Plan.BoxId == card.RequestId))
+            throw new InvalidDataException("Invalid CardGrenadesBurst schedule.");
+        for (int index = 0; index < card.Launches.Count; index++)
+        {
+            var launch = card.Launches[index];
+            if (launch.ShotIndex != index ||
+                launch.DelayScaledSeconds != (index + 1) * 0.2f ||
+                !Finite(launch.Position) ||
+                (launch.TargetId != null && !ValidTargetId(launch.TargetId)) ||
+                (launch.TargetId == null) != (launch.DamageOverride != null) ||
+                (launch.DamageOverride is { } damage &&
+                 damage != catalog.GrenadeFallbackDamageForLevel(card.OwnerLevel)))
+                throw new InvalidDataException("CardGrenadesBurst shot order changed.");
+        }
+        if (pending.Count >= 256)
+            throw new InvalidOperationException("Too many pending grenade bursts.");
+        var burst = new PvpBonusGrenadeBurstPlan(card.RequestId,
+            card.OwnerPlayerId, Array.AsReadOnly(card.Launches.ToArray()));
+        pending.Add(new PendingBurst(burst, currentFrame, 0.2d,
+            card.FireOrigin));
+    }
+
+    private static bool Finite(Vector3 position) =>
+        float.IsFinite(position.X) && float.IsFinite(position.Y) &&
+        float.IsFinite(position.Z) &&
+        Math.Abs(position.X) <= 10_000f &&
+        Math.Abs(position.Y) <= 10_000f &&
+        Math.Abs(position.Z) <= 10_000f;
+
+    private static bool ValidTargetId(string targetId) =>
+        targetId.Length is >= 1 and <= 64 &&
+        targetId.All(character => char.IsAsciiLetterOrDigit(character) ||
+            character is '_' or '-' or ':');
 
     internal IReadOnlyList<PvpBonusGrenadeDueShot> AdvanceFrame(
         ulong frameId, float scaledDeltaSeconds)
@@ -87,7 +141,7 @@ internal sealed class PvpBonusGrenadeBurstClock
             if (burst.StartedFrame == frameId)
                 continue;
             burst.Elapsed += scaledDeltaSeconds;
-            double wait = burst.NextShot == 0 ? 1d : 0.2d;
+            double wait = burst.NextShot == 0 ? burst.FirstWaitSeconds : 0.2d;
             if (burst.Elapsed < wait)
                 continue;
 
@@ -95,7 +149,8 @@ internal sealed class PvpBonusGrenadeBurstClock
             if (launch.DamageOverride is { } damage)
                 sharedDamage = new(damage.Explosion, damage.Direct);
             dueShots.Add(new PvpBonusGrenadeDueShot(burst.Plan.BoxId,
-                burst.Plan.RecipientPlayerId, frameId, launch, sharedDamage));
+                burst.Plan.RecipientPlayerId, frameId, launch, sharedDamage,
+                burst.CardFireOrigin));
             burst.NextShot++;
             burst.Elapsed = 0;
             if (burst.NextShot == burst.Plan.Launches.Count)

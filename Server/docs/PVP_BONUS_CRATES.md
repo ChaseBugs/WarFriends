@@ -260,8 +260,14 @@ at explosion time. A previous or overlapping fallback burst can therefore
 change even a targeted shot's final explosion damage. The host burst clock now
 tracks the scene's initial 350/20 setup and applies fallback mutations in
 shot order; its launch snapshot is not a final impact-damage decision. The
-separate `CardGrenadesBurst` also uses this component and must join the shared
-state before cross-feature damage parity is complete.
+separate `CardGrenadesBurst` uses the same component. Its new source-order
+planner randomly selects up to three opposing shootables, then draws distinct
+unoccupied enemy shield points for missing targets. The card's three shots
+wait 0.2 scaled seconds each; targeted shots retain the shared setup and
+fallback shots replace it with the same rank-bound pair as bonus boxes. The
+shared clock accepts both burst schedules and preserves card mutations for a
+later box shot. Card command admission, source snap-transform launch origin,
+normal match flight dispatch, and Client presentation remain unconnected.
 The checked-in bonus catalog now extracts the shared setup's 350/20 values
 and its 45-degree throw, zero distance/fuse, 1.3/2.2 blast radii, and
 behind-shield ratio 1 from MainScene. It pins the `GrenadeAmmoBase`, `GrenadeAmmo`, and
@@ -278,7 +284,8 @@ of the shooter's bullet mask. A collision arms the source's zero-second fuse;
 the next host tick records an immutable explosion quote using the *current*
 shared setup, including changes made by intervening fallback launches. The
 quote accepts only the source initial pair or one of the 43 reviewed fallback
-pairs until `CardGrenadesBurst` joins this shared state. The match now applies
+pairs; card fallback shots use those same validated rows once their match
+dispatch is connected. The match now applies
 the quote to current player hitboxes through the recovered 0.7 player-radius
 coefficient and normal health/Kevlar transition. The Manager Grenade's
 `friendKill: 0` prevents damage to its owner and allies. An isolated

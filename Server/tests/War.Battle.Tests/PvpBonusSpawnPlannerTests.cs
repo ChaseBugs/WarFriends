@@ -80,6 +80,94 @@ internal static class PvpBonusSpawnPlannerTests
         var planned = planner.PlanMatured(first, 0, context, draw);
         var map = content.Maps.Single(item =>
             Path.GetFileNameWithoutExtension(item.Source) == manifest.MapId);
+        var cardGrenades = new CardGrenadesBurstPolicy(content.PvpBonuses);
+        var cardTargets = Enumerable.Range(0, 4).Select(index =>
+            new PvpBonusGrenadeTarget("army:" + index,
+                manifest.Players[1].Fraction, true, true, true,
+                new Vector3(index, 0, 0))).ToArray();
+        var duplicateDraws = new Queue<int>([0, 0, 0]);
+        var cardTargetsPlan = cardGrenades.Plan(Id(8000), localId,
+            manifest.Players[0].Fraction, 8, Vector3.Zero,
+            cardTargets, [], _ => duplicateDraws.Dequeue());
+        Check(cardTargetsPlan.Launches.Select(launch => launch.TargetId)
+                  .SequenceEqual(["army:0", "army:3", "army:2"]) &&
+              cardTargetsPlan.Launches.All(launch => launch.DamageOverride == null),
+            "CardGrenadesBurst preserves source random-index duplicate repair");
+
+        var emptyShields = new[] {new Vector3(10, 0, 0),
+            new Vector3(20, 0, 0), new Vector3(30, 0, 0)};
+        var shieldDraws = new Queue<int>([0, 1, 0]);
+        var cardFallbackPlan = cardGrenades.Plan(Id(8001), localId,
+            manifest.Players[0].Fraction, 8, Vector3.Zero,
+            cardTargets[..1], emptyShields,
+            _ => shieldDraws.Dequeue());
+        var cardDamage = content.PvpBonuses.GrenadeFallbackDamageForLevel(8);
+        Check(cardFallbackPlan.Launches[0].TargetId == "army:0" &&
+              cardFallbackPlan.Launches[1].Position == emptyShields[1] &&
+              cardFallbackPlan.Launches[2].Position == emptyShields[0] &&
+              cardFallbackPlan.Launches.Skip(1).All(launch =>
+                  launch.DamageOverride == cardDamage) &&
+              cardFallbackPlan.Launches.Select(launch => launch.DelayScaledSeconds)
+                  .SequenceEqual([0.2f, 0.4f, 0.6f]),
+            "CardGrenadesBurst uses distinct empty shields and 0.2-second launches");
+        try
+        {
+            cardGrenades.Plan(Id(8003), localId, manifest.Players[0].Fraction,
+                8, Vector3.Zero, cardTargets, [], _ => 99);
+            throw new Exception("Out-of-range card target draw was accepted.");
+        }
+        catch (InvalidDataException) { checks++; }
+        try
+        {
+            cardGrenades.Plan(Id(8004), localId, manifest.Players[0].Fraction,
+                8, Vector3.Zero, cardTargets[..1], [], _ => 0);
+            throw new Exception("Card burst used a missing enemy shield.");
+        }
+        catch (InvalidDataException) { checks++; }
+        var sharedClock = new PvpBonusGrenadeBurstClock(content.PvpBonuses);
+        sharedClock.AdvanceFrame(1, 0f);
+        try
+        {
+            sharedClock.ScheduleCard(cardFallbackPlan with {OwnerLevel = 9}, 1);
+            throw new Exception("Card fallback damage was accepted at another rank.");
+        }
+        catch (InvalidDataException) { checks++; }
+        try
+        {
+            sharedClock.ScheduleCard(cardFallbackPlan with {
+                FireOrigin = new Vector3(float.NaN, 0, 0)
+            }, 1);
+            throw new Exception("Invalid card launch origin reached the clock.");
+        }
+        catch (InvalidDataException) { checks++; }
+        sharedClock.ScheduleCard(cardFallbackPlan, 1);
+        var laterBox = new PvpBonusGrenadeBurstPlan(Id(8002), localId,
+            [new(0, 1f, "player:" + manifest.Players[1].PlayerId,
+                Vector3.One, null),
+             new(1, 1.2f, null, Vector3.One, null),
+             new(2, 1.4f, null, Vector3.One, null)]);
+        sharedClock.Schedule(laterBox, 1);
+        Check(sharedClock.AdvanceFrame(2, 0.2f).Single().CardFireOrigin == Vector3.Zero &&
+              sharedClock.AdvanceFrame(3, 0.2f).Single().Launch.ShotIndex == 1 &&
+              sharedClock.CurrentSharedDamage ==
+                  new PvpBonusGrenadeSharedDamage(cardDamage.Explosion, cardDamage.Direct) &&
+              sharedClock.AdvanceFrame(4, 0.2f).Single().Launch.ShotIndex == 2 &&
+              sharedClock.AdvanceFrame(5, 0.2f).Count == 0 &&
+              sharedClock.AdvanceFrame(6, 0.2f).Single().CardFireOrigin == null &&
+              sharedClock.AdvanceFrame(6, 0.2f).Single().SetupAtLaunch ==
+                  sharedClock.CurrentSharedDamage,
+            "card fallback changes the Manager setup inherited by a later box shot");
+        var callerLaunches = cardFallbackPlan.Launches.ToArray();
+        var isolatedClock = new PvpBonusGrenadeBurstClock(content.PvpBonuses);
+        isolatedClock.AdvanceFrame(1, 0f);
+        isolatedClock.ScheduleCard(cardFallbackPlan with {
+            RequestId = Id(8005), Launches = callerLaunches
+        }, 1);
+        Vector3 scheduledTarget = callerLaunches[0].Position;
+        callerLaunches[0] = callerLaunches[0] with {Position = new Vector3(99, 0, 99)};
+        Check(isolatedClock.AdvanceFrame(2, 0.2f).Single().Launch.Position ==
+                  scheduledTarget,
+            "scheduled card shots keep their validated target after caller mutation");
         Check(planned.Request == first.MaturedRequests[0] &&
               planned.SourceIndex == 1 && planned.PrefabIndex == 1 &&
               planned.AreaColliderFileId == content.PvpBonusSpawnAreas.ForMap(map)[0].ColliderFileId &&
