@@ -1,0 +1,3655 @@
+{
+    "version": 1,
+    "unityVersion": "2018.3.0f2",
+    "codeSha256": "7ea7e1169d91fe906a5dddc70c12efe36aba168f68230c22581665a0f68c5f86",
+    "samples": [
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 1,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1103626240,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 5,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1101004800,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1101004800,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1099257173,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1099257173,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1101004800,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1101004800,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1099257173,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1099257173,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 6,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1097859072,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1097859072,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1090868565,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1090868565,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1097859072,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1097859072,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1090868565,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1090868565,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 7,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 8,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 6,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                1092616192,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                1106247680,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                1084227584,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": false,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": false,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 0,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": false,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1103626240
+            ]
+        },
+        {
+            "localDisplayLevel": 43,
+            "ownerLevelIndex": 7,
+            "goldBonusesCollected": 3,
+            "arena": true,
+            "friendly": true,
+            "lowAmmo": true,
+            "weightBits": [
+                0,
+                1101004800,
+                0,
+                1101004800,
+                1108082688,
+                1108082688,
+                1092616192,
+                0,
+                1112014848
+            ]
+        }
+    ]
+}

@@ -45,3 +45,5 @@ Server/content/recovered-pvp-skillshot-scores.json text eol=lf
 Server/content/unity-pvp-combo-reference.json text eol=lf
 Server/content/recovered-pvp-score-streak-policy.json text eol=lf
 Server/content/unity-pvp-progress-reference.json text eol=lf
+Server/content/recovered-pvp-bonus-catalog.json text eol=lf
+Server/content/unity-pvp-bonus-reference.json text eol=lf

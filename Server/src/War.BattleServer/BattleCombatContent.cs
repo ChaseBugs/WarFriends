@@ -15,6 +15,7 @@ public sealed class BattleCombatContent
     public RifleStatCatalog Stats { get; }
     public PvpSkillShotScoreCatalog PvpScores { get; private init; } = null!;
     public PvpScoreStreakPolicy PvpScoreStreak { get; private init; } = null!;
+    public PvpBonusCatalog PvpBonuses { get; private init; } = null!;
     public RifleBindingCatalog Bindings { get; }
     public WeaponBindingGraphCatalog AllWeaponBindings { get; }
     public PlayerPoseCatalog Poses { get; }
@@ -241,7 +242,10 @@ public sealed class BattleCombatContent
             (bazookas==null?"WarFriends/mixed-combat/v5\n":"WarFriends/mixed-combat/v6\n")+revision+"\n"+shotguns.PackageRevision+"\n"+smgs.PackageRevision+"\n"+pistols.PackageRevision+"\n"+lmgs.PackageRevision+"\n"+minigun.PackageRevision+"\n"+snipers.PackageRevision+
             (bazookas==null?"":"\n"+bazookas.PackageRevision)))) : null;
         return new BattleCombatContent(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,decoys,landMines,heavyTurrets,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity,airWaypoints,droneWeapon,droneColliders,helicopterBodyColliders,airShotTargets,helicopterCrewPoints,droneProjectile,enemyShotTargets)
-        {PvpScoreStreak=PvpScoreStreakPolicy.Load(
+        {PvpBonuses=PvpBonusCatalog.Load(
+                Path.Combine(directory, "recovered-pvp-bonus-catalog.json"),
+                manifest.SceneRevision, manifest.StatsRevision),
+            PvpScoreStreak=PvpScoreStreakPolicy.Load(
                 Path.Combine(directory, "recovered-pvp-score-streak-policy.json"),
                 manifest.SceneRevision, manifest.StatsRevision),
             PvpScores=PvpSkillShotScoreCatalog.Load(

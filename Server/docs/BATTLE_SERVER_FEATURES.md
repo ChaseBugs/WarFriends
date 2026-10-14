@@ -8,6 +8,14 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The [source bonus crate catalog](PVP_BONUS_CRATES.md) now binds all nine MainScene
+prefabs in network index order to reviewed ordinary/Arena weights and source
+code provenance. Host-context weights preserve Gold's local-rank/cap override,
+the owner's card-unlock index, friendly-match exclusions and first-two low-ammo
+condition. Original-method Mono comparison covers 192 contexts. Weighted draw,
+last-index lifetime, queued overrides, delayed spawning, collection, effects,
+Backend rewards and Unity projection remain open.
+
 PvP progress now has per-player source-ordered gains and decay/clamp/strict
 threshold transitions, compared to 13 isolated original-method Mono cases in
 both local/opponent branches. Gain receipts and consecutive frame replay guard

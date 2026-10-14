@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "battleContentSha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "managerSha256": "62c6e7318e482478f35f3c4c7f2f00a83a1a9b19d52fff1c622e164363c88895",
+  "cratesCodeSha256": "0f5fefbd278c2503b86670aa12fd250e63f2b84a03fd6788067738471c9df291",
+  "bonusDefinitionsCodeSha256": "4ca729c58d9c7d9feed24dbe41d03074a992e43a8d89bf0fc6e6207995fbe2fc",
+  "probabilityCodeSha256": {
+    "KillStreakBonus": "0690d3f324ab52e5c1d19db4fc46410335d679099f285c69b6b8815fd7256997",
+    "KillStreakBonusAddCredits": "9417e8e8839acd36465d04357af3bf0e62966663f43725b1941a808fd1b122fd",
+    "KillStreakBonusAddMoney": "3c3242187da8d93cf80462c9e25ef9f1eccc9f74a261a42ef3ccf74802e668c3",
+    "KillStreakBonusAddAmmo": "354d5f5f623b14a12b844490ad522c22a37f3916fb44a8d11d03cbd80fd36c33",
+    "KillStreakBonusCard": "e307baf6b2f3d1a46b5b01c9f4704d74077c680e2911c3e5c80a929422481073",
+    "PlayerAnalytics": "de5b982a2325c4044bf717a19183378f54a60e831787eb82287e4d809e864744",
+    "LevelManager": "59524382c4d97406492fe42da3f8eb24d72c7e4314dfff6a5a05f027ef49f07d"
+  },
+  "rules": {
+    "goldLowLevelProbability": 25.0,
+    "cardUnlockLevel": 6.0,
+    "lowAmmoMultiplier": 2.0,
+    "rankCount": 43
+  },
+  "rows": [
+    {
+      "index": 0,
+      "name": "KillStreakBonusGold",
+      "prefabGuid": "f8db1bca69663e84289ded06d56dd659",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusGold.prefab",
+      "prefabSha256": "60641e431019de9f29a1be446641ba6493f18c552697b1e41ad9d1318cb9833a",
+      "probability": 10.0,
+      "arenaProbability": 0.0
+    },
+    {
+      "index": 1,
+      "name": "KillStreakBonusAddHealth",
+      "prefabGuid": "210cd2d62a418ae4c92af5fa9f2bbd21",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusAddHealth.prefab",
+      "prefabSha256": "500266fccda9c835a933b376490574bf3d68bc4703a364909be08dc00e2c77b7",
+      "probability": 20.0,
+      "arenaProbability": 20.0
+    },
+    {
+      "index": 2,
+      "name": "KillStreakBonusWarbucks",
+      "prefabGuid": "82e2622c693fad1498878a785accf53d",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusWarbucks.prefab",
+      "prefabSha256": "243e7ef1546c2920e2071e51640e40240fdc88e255ba33cdcfbd0fd2fe8ac7b6",
+      "probability": 30.0,
+      "arenaProbability": 0.0
+    },
+    {
+      "index": 3,
+      "name": "KillStreakBonusGrenades",
+      "prefabGuid": "8fa3d35b421af1943b984f82e400f5c7",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusGrenades.prefab",
+      "prefabSha256": "a9c00aed73d7511266a6c3e05731c68073cf849856da310a84fcd6fc7ca8e858",
+      "probability": 20.0,
+      "arenaProbability": 20.0
+    },
+    {
+      "index": 4,
+      "name": "KillStreakBonusSlowMotion",
+      "prefabGuid": "99a96f95ace15a549aa029c8802737ac",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusSlowMotion.prefab",
+      "prefabSha256": "2c735fae230cf74f047283203ed6a794114a5c9230ea286bfa1652b6e810938e",
+      "probability": 35.0,
+      "arenaProbability": 35.0
+    },
+    {
+      "index": 5,
+      "name": "KillStreakBonusTurret",
+      "prefabGuid": "d89f6f627054a494cbd9862fb8752513",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusTurret.prefab",
+      "prefabSha256": "9b1b720cdf11718fecac6b3c4cab991ec54de554517e4702238b0e403bc40a8f",
+      "probability": 35.0,
+      "arenaProbability": 35.0
+    },
+    {
+      "index": 6,
+      "name": "KillStreakBonusKevlar",
+      "prefabGuid": "ac8b905f5a7ce0c4a94b769453f4b52b",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusKevlar.prefab",
+      "prefabSha256": "b4b49b5b4a09d6c80ecdeb0f43209a68e49acdb74b0a8b387fbd6c243c3c5b8e",
+      "probability": 10.0,
+      "arenaProbability": 10.0
+    },
+    {
+      "index": 7,
+      "name": "KillStreakBonusCard",
+      "prefabGuid": "1284af9b0ba161e409486b928c19278e",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusCard.prefab",
+      "prefabSha256": "fa4e233da4c69c676b48074316d8eb52418b6cff140b6e29819497ad087a11bf",
+      "probability": 5.0,
+      "arenaProbability": 0.0
+    },
+    {
+      "index": 8,
+      "name": "KillStreakBonusAddAmmo",
+      "prefabGuid": "4253d98e2148db24cbdab745a1472a7d",
+      "componentFileId": 11409266,
+      "prefabPath": "GameObject/KillStreakBonusAddAmmo.prefab",
+      "prefabSha256": "4cb337b1b77652c6dcb2de8f1694622e370ad65fffa62ced12bfabd2d7568e2c",
+      "probability": 25.0,
+      "arenaProbability": 25.0
+    }
+  ]
+}
