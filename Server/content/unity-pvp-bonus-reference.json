@@ -1,5 +1,5 @@
 {
-    "version": 1,
+    "version": 2,
     "unityVersion": "2018.3.0f2",
     "codeSha256": "7ea7e1169d91fe906a5dddc70c12efe36aba168f68230c22581665a0f68c5f86",
     "samples": [
@@ -3650,6 +3650,223 @@
                 0,
                 1112014848
             ]
+        }
+    ],
+    "currencySamples": [
+        {
+            "recipientLevelIndex": 0,
+            "scaleBits": 1063796150,
+            "amountsSha256": "cb326622490973de8e7bc456e608f27b7375fd1bd9af84c7806eb8430ce075c8"
+        },
+        {
+            "recipientLevelIndex": 1,
+            "scaleBits": 1064298415,
+            "amountsSha256": "6369febc02e002d6333f20a843dd330275274ca9cff499c0a2e90214a11c382b"
+        },
+        {
+            "recipientLevelIndex": 2,
+            "scaleBits": 1064817255,
+            "amountsSha256": "db2b47b7dd1e4a155e5d81654269f626336640ae63f6c9ee195b15e0f80062b6"
+        },
+        {
+            "recipientLevelIndex": 3,
+            "scaleBits": 1065353216,
+            "amountsSha256": "fe0912a21d811311e4066b2ddb67b078bfd26c2661d50bf97c35c6a2eb9a0e5b"
+        },
+        {
+            "recipientLevelIndex": 4,
+            "scaleBits": 1065630040,
+            "amountsSha256": "4f999bf25786250dcae4e4d4a3896c7ea1b97dd025d45d0e4949c442248af69a"
+        },
+        {
+            "recipientLevelIndex": 5,
+            "scaleBits": 1065915999,
+            "amountsSha256": "44e48827e7422a763a307c00032ab1d253a9a459d7112fa1bf539f2811c68c83"
+        },
+        {
+            "recipientLevelIndex": 6,
+            "scaleBits": 1066211395,
+            "amountsSha256": "062fb85d78bef63969b996235db2df117a8cb8b84881d58686c6fe434d7f3557"
+        },
+        {
+            "recipientLevelIndex": 7,
+            "scaleBits": 1066516539,
+            "amountsSha256": "3e48c254b231ad54bad420f8cb2785ea42d6c7186657f73f7f7c869dd13654ae"
+        },
+        {
+            "recipientLevelIndex": 8,
+            "scaleBits": 1066831753,
+            "amountsSha256": "67f136d583f1d39725cb3b6e94fbda71b6ccdcb9f0f28f1b7008f00e2d23f4fe"
+        },
+        {
+            "recipientLevelIndex": 9,
+            "scaleBits": 1067157368,
+            "amountsSha256": "0de5906045bf5f3d2327375ceba8e540ae0c2892db0f0df4853678a3e007584f"
+        },
+        {
+            "recipientLevelIndex": 10,
+            "scaleBits": 1067493729,
+            "amountsSha256": "6eb24287849a57bb92bcf6bd09d947aeb73418e3d6a1de6f6f4d5f8b13453653"
+        },
+        {
+            "recipientLevelIndex": 11,
+            "scaleBits": 1067841190,
+            "amountsSha256": "8dfcd20941a0209c0cb08b6632e0df3327ad6aeca4a30d8a81286ea32abecd49"
+        },
+        {
+            "recipientLevelIndex": 12,
+            "scaleBits": 1068200117,
+            "amountsSha256": "98eab5761ac490449b87c57f1477d796ef2988ab9495bad7644d19f9c972b22f"
+        },
+        {
+            "recipientLevelIndex": 13,
+            "scaleBits": 1068570889,
+            "amountsSha256": "5948fe0e7b2205d207a32e08ce6f94f8c7b886970a4eb9bf909525102acae4fe"
+        },
+        {
+            "recipientLevelIndex": 14,
+            "scaleBits": 1068953896,
+            "amountsSha256": "0345e1773db79e4e208fdd29e9f0bcbc45516e90c7f03e76226fd75bb2d1748b"
+        },
+        {
+            "recipientLevelIndex": 15,
+            "scaleBits": 1069349543,
+            "amountsSha256": "2d3b8a7a5ed602132a534fcd758e1ee92a47d1582980a604fd8a4eb947f3cc05"
+        },
+        {
+            "recipientLevelIndex": 16,
+            "scaleBits": 1069758245,
+            "amountsSha256": "d3312370ed572b1084c86092fe5f64c09f5453c48ccc0ee89bc424a5a503b79d"
+        },
+        {
+            "recipientLevelIndex": 17,
+            "scaleBits": 1070180435,
+            "amountsSha256": "447f853fca0fd2f630c4138739b29c4f3013b5a0f6a4d6575d5950fb19f0d290"
+        },
+        {
+            "recipientLevelIndex": 18,
+            "scaleBits": 1070616558,
+            "amountsSha256": "00a431f6d4008c6377922356b61c6746feca7295107575f17db5c4e81c860c05"
+        },
+        {
+            "recipientLevelIndex": 19,
+            "scaleBits": 1071067072,
+            "amountsSha256": "97efb3d4830f55afc94fce7ae80515cb1af0d03f125f5fb80c8aba97f537fb29"
+        },
+        {
+            "recipientLevelIndex": 20,
+            "scaleBits": 1071532453,
+            "amountsSha256": "d3b9ce680c082052493ef357bc05f532cbbc23c6234ac501862dbe771b674bc3"
+        },
+        {
+            "recipientLevelIndex": 21,
+            "scaleBits": 1072013192,
+            "amountsSha256": "4f8955cbba351b427a810821138baa73cd1ae3ab47d95e32bc0227deeb407e55"
+        },
+        {
+            "recipientLevelIndex": 22,
+            "scaleBits": 1072509795,
+            "amountsSha256": "3a080425d27e6c3289d5676e86bc422ffc84976b1e75e1dd22467f557c3f04f6"
+        },
+        {
+            "recipientLevelIndex": 23,
+            "scaleBits": 1073022786,
+            "amountsSha256": "9bee4c058801c531379b14b71234189ab33857c87e33225ea23760f543fe2779"
+        },
+        {
+            "recipientLevelIndex": 24,
+            "scaleBits": 1073552706,
+            "amountsSha256": "fa135a2cd88aee92decbad64df261b15d8018bccc82c923ba44393fb5d523f82"
+        },
+        {
+            "recipientLevelIndex": 25,
+            "scaleBits": 1073920968,
+            "amountsSha256": "5986a32c138b43cc1a8103655a6ec3967327dd951f5705ff3c5f9d34950738d2"
+        },
+        {
+            "recipientLevelIndex": 26,
+            "scaleBits": 1074203704,
+            "amountsSha256": "9d24376ec7afb7323c24ecf595465818e704d2ca5388628cff55bb1b24c858a0"
+        },
+        {
+            "recipientLevelIndex": 27,
+            "scaleBits": 1074495770,
+            "amountsSha256": "5e6a149c80a06cc42ee967faa11cd57f5f6b55e8aad097c2942deb8fb9ec8f75"
+        },
+        {
+            "recipientLevelIndex": 28,
+            "scaleBits": 1074797474,
+            "amountsSha256": "016b8dd8bb655353bb54a9f68d3f9180ae521f6abff45a74b7ee0e0043f5cdfc"
+        },
+        {
+            "recipientLevelIndex": 29,
+            "scaleBits": 1075109135,
+            "amountsSha256": "098a5ec6ea8dca4bd67c58473f2d8565fb0e54648aea537893a637b1851e5fe8"
+        },
+        {
+            "recipientLevelIndex": 30,
+            "scaleBits": 1075431080,
+            "amountsSha256": "d2ac1567d8c7e82c2cecc40a4af328a3d98b451231f3da9bc632170db05aeffe"
+        },
+        {
+            "recipientLevelIndex": 31,
+            "scaleBits": 1075763650,
+            "amountsSha256": "22e82c69e1af696fed9526b2892a711b78c351459b4cdd678a0fc2b67691f693"
+        },
+        {
+            "recipientLevelIndex": 32,
+            "scaleBits": 1076107194,
+            "amountsSha256": "2a894e328d1ff8c1c207097f90719a2365593660fa65fba97e3abd30b7ab7797"
+        },
+        {
+            "recipientLevelIndex": 33,
+            "scaleBits": 1076462075,
+            "amountsSha256": "1dd2d71c1b9ba60e565463139bf276344e5c32325b14bd610552f2810b4e0d75"
+        },
+        {
+            "recipientLevelIndex": 34,
+            "scaleBits": 1076828667,
+            "amountsSha256": "c24a11b07c5ddce14b0f64cc08aeb7f4338a05d0afa25426967f50705d8746d7"
+        },
+        {
+            "recipientLevelIndex": 35,
+            "scaleBits": 1077207357,
+            "amountsSha256": "1c45d052db1e0eb6bd70da4bf42a40d1c7a299dbb6894d88d5274b581a71206c"
+        },
+        {
+            "recipientLevelIndex": 36,
+            "scaleBits": 1077598544,
+            "amountsSha256": "e66575fa014cab200f60841c22a9903ade6b57e6b4c0084fe885c8bf869dc0ed"
+        },
+        {
+            "recipientLevelIndex": 37,
+            "scaleBits": 1078002639,
+            "amountsSha256": "bec7c680c3d754db1ba7d3d048e2d76d4d85040f1fadd9a0315fd61712eb7d3d"
+        },
+        {
+            "recipientLevelIndex": 38,
+            "scaleBits": 1078420070,
+            "amountsSha256": "8f2e7790177978f9355c3a7f7e2ee9ed169d78428ee59016bc9e58c99fff23c2"
+        },
+        {
+            "recipientLevelIndex": 39,
+            "scaleBits": 1078851276,
+            "amountsSha256": "feab5b58a727182df2ca1e63d0259f9fc04104fd498aade8b23ff1c26e084cc6"
+        },
+        {
+            "recipientLevelIndex": 40,
+            "scaleBits": 1079296712,
+            "amountsSha256": "cd7599a573abcb2fcc8f9134a5624fbcce6106735e935d11f6ef76d3a3e82c94"
+        },
+        {
+            "recipientLevelIndex": 41,
+            "scaleBits": 1079756847,
+            "amountsSha256": "43017dfc160b7395abbdf2f150dbc485e9ec0c862c49f17478b67a02bef28adb"
+        },
+        {
+            "recipientLevelIndex": 42,
+            "scaleBits": 1080232167,
+            "amountsSha256": "7cafbcbf6e8db59c06477d1282c1702079543042b7337a2e13f540badd2c802c"
         }
     ]
 }

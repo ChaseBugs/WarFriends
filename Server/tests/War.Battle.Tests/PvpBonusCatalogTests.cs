@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text.Json;
 using War.BattleServer;
@@ -35,6 +36,7 @@ internal static class PvpBonusCatalogTests
               catalog.WarbucksScalingBase == 1.033f &&
               catalog.WarbucksRewardForBaseDraw(3, 500) == 500 &&
               catalog.WarbucksRewardForBaseDraw(3, 1499) == 1499 &&
+              catalog.WarbucksRewardForBaseDraw(4, 1000) == 1032 &&
               catalog.WarbucksRewardForBaseDraw(0, 500) < 500 &&
               catalog.WarbucksRewardForBaseDraw(42, 1499) > 1499,
             "source Warbucks box draws an exclusive base range then scales by owner rank");
@@ -47,7 +49,7 @@ internal static class PvpBonusCatalogTests
 
         byte[] referenceBytes = File.ReadAllBytes(Path.Combine(directory, "unity-pvp-bonus-reference.json"));
         Check(Convert.ToHexStringLower(SHA256.HashData(referenceBytes)) ==
-              "9d73938fe2f31bb86cb4ab39421f1e77a833772e3c32b25e384f866e8abd68e7",
+              "bf5adb198147574e57271ec438664db7af61bd43f4ad68e466126e13091e564c",
             "weight oracle uses the reviewed original-method Mono fixture");
         using var reference = JsonDocument.Parse(referenceBytes);
         Check(reference.RootElement.GetProperty("unityVersion").GetString() == "2018.3.0f2" &&
@@ -67,6 +69,25 @@ internal static class PvpBonusCatalogTests
             for (int index = 0; index < weights.Count; index++)
                 Check(BitConverter.SingleToInt32Bits(weights[index]) == expected[index].GetInt32(),
                     "original Mono weight bits: " + context + "/" + catalog.Rows[index].Name);
+        }
+        var currencySamples = reference.RootElement.GetProperty("currencySamples");
+        Check(reference.RootElement.GetProperty("version").GetInt32() == 2 &&
+              currencySamples.GetArrayLength() == 43,
+            "Unity reward oracle includes every recovered rank");
+        foreach (var sample in currencySamples.EnumerateArray())
+        {
+            int level = sample.GetProperty("recipientLevelIndex").GetInt32();
+            var amountBytes = new byte[1000 * sizeof(int)];
+            for (int index = 0; index < 1000; index++)
+            {
+                int draw = 500 + index;
+                int amount = catalog.WarbucksRewardForBaseDraw(level, draw);
+                BinaryPrimitives.WriteInt32LittleEndian(
+                    amountBytes.AsSpan(index * sizeof(int), sizeof(int)), amount);
+            }
+            Check(Convert.ToHexStringLower(SHA256.HashData(amountBytes)) ==
+                  sample.GetProperty("amountsSha256").GetString(),
+                "all 1,000 Unity Mathf.Pow rewards match for rank " + level);
         }
         var normal = new PvpBonusWeightContext(false, false, 8, 7, 0, false);
         var baseWeights = catalog.WeightsForSourceContext(normal);

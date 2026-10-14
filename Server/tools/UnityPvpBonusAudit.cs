@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using Google2u;
 using UnityEngine;
@@ -8,7 +9,7 @@ using UnityEngine;
 public static class UnityPvpBonusAudit
 {
     [Serializable] private sealed class Row {public string name;public float probability,arenaProbability;}
-    [Serializable] private sealed class Rules {public float goldLowLevelProbability,cardUnlockLevel,lowAmmoMultiplier;}
+    [Serializable] private sealed class Rules {public float goldLowLevelProbability,cardUnlockLevel,lowAmmoMultiplier,warbucksScalingBase;}
     [Serializable] private sealed class Catalog {public Rules rules;public Row[] rows;}
     [Serializable] private sealed class Sample
     {
@@ -16,7 +17,19 @@ public static class UnityPvpBonusAudit
         public bool arena,friendly,lowAmmo;
         public int[] weightBits;
     }
-    [Serializable] private sealed class Result {public int version=1;public string unityVersion,codeSha256;public Sample[] samples;}
+    [Serializable] private sealed class CurrencySample
+    {
+        public int recipientLevelIndex;
+        public int scaleBits;
+        public string amountsSha256;
+    }
+    [Serializable] private sealed class Result
+    {
+        public int version=2;
+        public string unityVersion,codeSha256;
+        public Sample[] samples;
+        public CurrencySample[] currencySamples;
+    }
     public static void Run()
     {
         string output=Environment.GetEnvironmentVariable("WAR_PVP_BONUS_OUTPUT");
@@ -53,8 +66,22 @@ public static class UnityPvpBonusAudit
             samples.Add(new Sample{localDisplayLevel=level,ownerLevelIndex=ownerLevel,arena=arena,friendly=friendly,
                 goldBonusesCollected=gold,lowAmmo=lowAmmo,weightBits=bits});
         }
-        var result=new Result{unityVersion=Application.unityVersion,codeSha256=SourceBonusProvenance.CodeHash,samples=samples.ToArray()};
+        var currencySamples=new CurrencySample[43];
+        for(int level=0;level<currencySamples.Length;level++)
+        {
+            float scale=Mathf.Pow(catalog.rules.warbucksScalingBase,level-3);
+            var amountBytes=new byte[1000*4];
+            for(int draw=500;draw<1500;draw++)
+                BitConverter.GetBytes((int)(scale*(float)draw)).CopyTo(amountBytes,(draw-500)*4);
+            string digest;
+            using(var hash=SHA256.Create())
+                digest=BitConverter.ToString(hash.ComputeHash(amountBytes)).Replace("-","").ToLowerInvariant();
+            currencySamples[level]=new CurrencySample{recipientLevelIndex=level,
+                scaleBits=BitConverter.ToInt32(BitConverter.GetBytes(scale),0),amountsSha256=digest};
+        }
+        var result=new Result{unityVersion=Application.unityVersion,codeSha256=SourceBonusProvenance.CodeHash,
+            samples=samples.ToArray(),currencySamples=currencySamples};
         File.WriteAllText(output,JsonUtility.ToJson(result,true).Replace("\r\n","\n")+"\n",new UTF8Encoding(false));
-        Debug.Log("PVP_BONUS_SOURCE PASS: "+samples.Count+" original-method Mono contexts");
+        Debug.Log("PVP_BONUS_SOURCE PASS: "+samples.Count+" original-method Mono contexts, 43000 Unity Mathf.Pow rewards");
     }
 }

@@ -57,6 +57,13 @@ Four subclasses then change it:
   minus three, then truncates to an integer. The catalog now validates this
   range and factor and exposes the calculated amount; wallet delivery and a
   durable reward receipt remain closed.
+  An isolated Unity 2018.3 probe evaluates all 43 ranks and all 1,000 possible
+  base draws. It found a real `MathF.Pow` mismatch at rank four/draw 1000:
+  Unity returns 1032, while the former .NET calculation returned 1033.
+  The host now loads the digest-pinned Unity scale for each rank and preserves
+  Mono's intermediate multiplication precision. All 43,000 amounts match that
+  probe. This establishes Unity 2018.3 arithmetic, not Android Unity 5.2
+  runtime parity or a durable wallet grant.
 - Card: closes friendly DeathMatch and requires the supplied owner's
   `playerProperties.level` strictly above the source unlock value six. This is
   the owner's zero-based rank index, unlike Gold's local display number.
@@ -88,7 +95,10 @@ Unity Play Mode, original Unity 5.2 Android, or source random sampling.
 Regenerate the catalog with `extract_pvp_bonus_catalog.py`; `--check` verifies
 the checked-in source artifact and is part of the Battle release checkpoint.
 Run `Server/scripts/AuditPvpBonus.ps1` for the isolated Mono fixture and
-`--pvp-bonus-only` for the Battle catalog/weight tests.
+`--pvp-bonus-only` for the Battle catalog/weight and exhaustive Warbucks
+arithmetic tests. The checked-in `unity-pvp-bonus-reference.json` must travel
+with the other combat content files because catalog startup validates its
+digest and reads its reviewed rank scales.
 
 `KillStreakManager.GenerateNewBonus` schedules spawning after 1.5 seconds.
 `SpawnBonus` first consumes an owner-fraction queue; otherwise its weighted
