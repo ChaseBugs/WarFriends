@@ -574,6 +574,30 @@ internal static class PvpBonusSpawnPlannerTests
             "replaying the collected box returns its first burst without new random draws");
         try
         {
+            engine.Advance(62);
+            throw new Exception("An active grenade burst skipped host frames.");
+        }
+        catch (InvalidOperationException) { checks++; }
+        var healthBeforeBurst = engine.Snapshot().Players.Select(player => player.Health).ToArray();
+        var dueShots = new List<PvpBonusGrenadeDueShot>();
+        for (ulong nextTick = 61; nextTick <= 150; nextTick++)
+        {
+            engine.Advance(nextTick);
+            dueShots.AddRange(engine.ReadyPvpGrenadeShots);
+        }
+        Check(dueShots.Count == 3 &&
+              dueShots.Select(shot => shot.Launch.ShotIndex).SequenceEqual([0, 1, 2]) &&
+              dueShots[0].FrameId == 31 &&
+              dueShots[1].FrameId - dueShots[0].FrameId == 6 &&
+              dueShots[2].FrameId - dueShots[1].FrameId == 6 &&
+              engine.Snapshot().Players.Select(player => player.Health)
+                  .SequenceEqual(healthBeforeBurst),
+            $"host scaled frames release three shots without impact damage: " +
+            $"due={string.Join(',', dueShots.Select(shot =>
+                $"{shot.FrameId}/{shot.Launch.ShotIndex}"))}, " +
+            $"health={string.Join(',', engine.Snapshot().Players.Select(player => player.Health))}");
+        try
+        {
             engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);
             throw new Exception("Non-grenade crate produced a grenade burst.");
         }

@@ -89,7 +89,8 @@ internal sealed class PvpBonusGrenadeBurstPolicy
         }
 
         // Only the source's fallback loop overrides GrenadeAmmoSetup damage.
-        // Targeted grenades retain the prefab's original setup.
+        // Targeted grenades retain the shared component's current setup;
+        // an earlier fallback burst may already have changed it.
         var fallbackDamage = catalog.GrenadeFallbackDamageForLevel(recipientLevelIndex);
         while (shot < grenadeCount)
         {

@@ -77,6 +77,31 @@ internal static class PvpBonusGrenadeBurstTests
               fallbackDraws == 6 && allFallback[2].DelayScaledSeconds == 1.4f,
             "three fallback grenades use two source draws each after the one-second delay");
 
+        var burst = new PvpBonusGrenadeBurstPlan("box", "recipient", allFallback);
+        var clock = new PvpBonusGrenadeBurstClock();
+        Check(clock.AdvanceFrame(1, 0f).Count == 0,
+            "a new grenade clock starts without firing");
+        clock.Schedule(burst, 1);
+        Check(clock.AdvanceFrame(2, 0.5f).Count == 0 &&
+              clock.AdvanceFrame(3, 0.49f).Count == 0,
+            "the first shot waits for one full scaled second");
+        var firstDue = clock.AdvanceFrame(4, 0.01f);
+        Check(firstDue.Count == 1 && firstDue[0].Launch.ShotIndex == 0 &&
+              firstDue[0].FrameId == 4 &&
+              ReferenceEquals(firstDue, clock.AdvanceFrame(4, 0.01f)),
+            "the first scheduled shot is emitted once and a frame replay is stable");
+        Check(clock.AdvanceFrame(5, 0.2f).Single().Launch.ShotIndex == 1 &&
+              clock.AdvanceFrame(6, 0.2f).Single().Launch.ShotIndex == 2 &&
+              clock.PendingCount == 0,
+            "later shots each wait another 0.2 scaled seconds");
+        var slowClock = new PvpBonusGrenadeBurstClock();
+        slowClock.AdvanceFrame(1, 0f);
+        slowClock.Schedule(burst, 1);
+        Check(slowClock.AdvanceFrame(2, 5f).Single().Launch.ShotIndex == 0 &&
+              slowClock.AdvanceFrame(3, 0f).Count == 0 &&
+              slowClock.AdvanceFrame(4, 0.2f).Single().Launch.ShotIndex == 1,
+            "a long frame cannot fire multiple coroutine shots at once");
+
         using var reference = JsonDocument.Parse(File.ReadAllBytes(
             Path.Combine(directory, "unity-pvp-bonus-reference.json")));
         var damageSamples = reference.RootElement.GetProperty("grenadeSamples");
@@ -111,6 +136,9 @@ internal static class PvpBonusGrenadeBurstTests
         Reject(() => policy.Plan(2, 0, box, [Target("bad", 3, 1f)], () => 0f));
         Reject(() => policy.Plan(2, 0, box, [], () => 1.5001f));
         Reject(() => policy.Plan(2, 0, box, [], () => float.NaN));
+        Reject(() => clock.AdvanceFrame(6, 0.3f));
+        Reject(() => clock.AdvanceFrame(8, 0.2f));
+        Reject(() => clock.AdvanceFrame(7, float.NaN));
         Reject(() => policy.Plan(2, 0, box,
             Enumerable.Range(1, 257).Select(index => Target("t" + index, 1, 1f)).ToArray(),
             () => 0f));

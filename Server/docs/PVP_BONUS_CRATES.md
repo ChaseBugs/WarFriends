@@ -278,6 +278,15 @@ Other source shootable types, exact cross-registry tie order, and Unity PRNG
 sequence parity still need verification before claiming complete target parity.
 The source captures its target list at activation before the one-second wait;
 normal collection dispatch must call the host planner at that same point.
+The host now schedules the planned shots on ordered scaled battle frames. At
+30 host ticks per second, a normal-rate burst releases at frames 30, 36 and 42
+after activation; a long frame still releases only one shot because each
+`WaitForSeconds` starts after its preceding launch. Active bursts forbid skipped
+simulation ticks, and frame replay cannot emit a shot twice. These are due-shot
+intents only. Normal collection dispatch, projectile creation, collision and
+damage still need to be connected. The host currently supplies nominal tick
+delta; the unfinished SlowMotion bonus must scale it before claiming slowed
+coroutine parity.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component
 serializes zero; the server retains the scene value.
 

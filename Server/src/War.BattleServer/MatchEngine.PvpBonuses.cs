@@ -21,6 +21,9 @@ public sealed partial class MatchEngine
     private readonly List<MaturedBonus> maturedPvpBonuses = new();
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private PvpBonusGrenadeBurstPolicy? pvpGrenadeBurstPolicy;
+    private readonly PvpBonusGrenadeBurstClock pvpGrenadeClock = new();
+    private IReadOnlyList<PvpBonusGrenadeDueShot> readyPvpGrenadeShots =
+        Array.Empty<PvpBonusGrenadeDueShot>();
     private readonly Dictionary<string, PvpBonusGrenadeBurstPlan> pvpGrenadeBurstPlans =
         new(StringComparer.Ordinal);
     private readonly HashSet<string> appliedPvpBonusBoxes = new(StringComparer.Ordinal);
@@ -34,6 +37,8 @@ public sealed partial class MatchEngine
     internal IReadOnlyList<PvpBonusDelayedRequest> MaturedBonusRequests =>
         new ReadOnlyCollection<PvpBonusDelayedRequest>(
             maturedPvpBonuses.Select(bonus => bonus.Request).ToArray());
+    internal IReadOnlyList<PvpBonusGrenadeDueShot> ReadyPvpGrenadeShots =>
+        readyPvpGrenadeShots;
 
     internal bool FirstTwoUsedWeaponsHaveLowAmmo(string ownerId)
     {
@@ -94,11 +99,13 @@ public sealed partial class MatchEngine
             (float)((double)elapsedTicks / MatchManifest.TickRate);
         var prepared = pvpBonusProgress.PrepareFrameCopy(nextFrame, delta, true,
             out var frame);
+        var dueGrenades = pvpGrenadeClock.AdvanceFrame(nextFrame, delta);
         if (maturedPvpBonuses.Count > 256 - frame.MaturedRequests.Count)
             throw new InvalidOperationException("Unissued PvP bonus capacity exhausted.");
         for (int index = 0; index < frame.MaturedRequests.Count; index++)
             maturedPvpBonuses.Add(new MaturedBonus(frame, index));
         pvpBonusProgress = prepared;
+        readyPvpGrenadeShots = dueGrenades;
         pvpBonusFrameId = nextFrame;
     }
 
@@ -152,8 +159,10 @@ public sealed partial class MatchEngine
         if (pvpGrenadeBurstPlans.TryGetValue(boxId, out var previous))
             return previous;
         if (phase != BattlePhase.Running || pvpBonusPlanner == null ||
-            pvpGrenadeBurstPolicy == null)
+            pvpGrenadeBurstPolicy == null || pvpBonusFrameId == 0)
             throw new InvalidOperationException("PvP grenade crate is unavailable.");
+        if (pvpGrenadeClock.PendingCount >= 256)
+            throw new InvalidOperationException("Too many pending grenade-box bursts.");
 
         var intent = pvpBonusPlanner.EffectIntent(boxId);
         if (intent.Kind != PvpBonusEffectKind.Grenades)
@@ -171,6 +180,7 @@ public sealed partial class MatchEngine
         var launches = pvpGrenadeBurstPolicy.Plan(sourceView.Definition.Fraction,
             recipientLevel, boxPosition, PvpGrenadeShootables(), NextGrenadeFallbackOffset);
         var plan = new PvpBonusGrenadeBurstPlan(boxId, intent.RecipientPlayerId, launches);
+        pvpGrenadeClock.Schedule(plan, pvpBonusFrameId);
         pvpGrenadeBurstPlans.Add(boxId, plan);
         return plan;
     }

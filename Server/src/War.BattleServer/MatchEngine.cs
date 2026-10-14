@@ -1205,6 +1205,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             throw new InvalidOperationException("Pending card units require every simulation tick.");
         if (phase == BattlePhase.Running &&
             !players.Any(player => player.Reconnecting) &&
+            pvpGrenadeClock.PendingCount > 0 && elapsed > 1)
+            throw new InvalidOperationException(
+                "An active grenade-box burst requires every simulation tick.");
+        if (phase == BattlePhase.Running &&
+            !players.Any(player => player.Reconnecting) &&
             bigMedkits.Count > 0 && elapsed > 1)
             throw new InvalidOperationException("Timed medikit healing requires every simulation tick.");
         if (phase == BattlePhase.Running &&
