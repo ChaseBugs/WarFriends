@@ -302,8 +302,12 @@ chains before character damage. The Manager scene weapon has no `PlayerWeapon`,
 so shield damage uses the recovered explosion coefficient without an inventory
 weapon ratio; `friendKill: 0` protects allied shields. A shield present in the
 saved overlap set also supplies the recovered player-behind-shield multiplier.
-Deployed map fixtures verify shield and barrel mutations. Player-hit score
-credit is still open.
+Deployed map fixtures verify shield and barrel mutations. A host-confirmed
+bonus blast on an opposing player now records `EnemyPlayerHit` through the
+existing PvP score coordinator with a projectile/victim receipt. This follows
+`SkillShotControllerPlayer.PlayerOnDamage`; the grenade's separate
+`ReportShotHit(null)` does not itself identify a hit target. A deployed blast
+fixture verifies both health loss and score credit.
 Unity Rigidbody bounce against other layers and exact Unity Update ordering
 still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*

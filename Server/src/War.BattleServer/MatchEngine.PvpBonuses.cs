@@ -162,8 +162,14 @@ public sealed partial class MatchEngine
                 PlayerCoefficient: stage.PlayerDamageRatio,
                 PlayerOvertimeCoefficient: stage.OvertimePlayerDamageRatio,
                 Overtime: overtime);
+            // PlayerOnDamage, not GrenadeAmmoBase.ReportShotHit(null),
+            // grants the source EnemyPlayerHit skillshot after actual damage.
+            string receiptId = PvpHitReceiptId("bonus-grenade",
+                explosion.ProjectileId, victim.Definition.PlayerId);
             ApplyResolvedPlayerDamage(explosion.OwnerId,
-                victim.Definition.PlayerId, damage, roll);
+                victim.Definition.PlayerId, damage, roll,
+                confirmedProjectileImpact: true,
+                pvpPlayerDamageReceiptId: receiptId);
             if (Terminal) return;
         }
     }

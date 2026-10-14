@@ -744,6 +744,8 @@ internal static class PvpBonusSpawnPlannerTests
             "owner-collected grenade box selects the nearby opposing player");
         float enemyHealthBefore = damageEngine.Snapshot().Players[1].Health;
         float ownerHealthBefore = damageEngine.Snapshot().Players[0].Health;
+        int scoreBefore = damageEngine.BonusProgress.ScoreSnapshot(localId).Score;
+        uint playerHitsBefore = damageEngine.Snapshot().Players[0].ConfirmedPlayerHits;
         for (ulong nextTick = 61; nextTick <= 180 && !damageEngine.Terminal;
              nextTick++)
         {
@@ -754,6 +756,10 @@ internal static class PvpBonusSpawnPlannerTests
         Check(damageEngine.Snapshot().Players[1].Health < enemyHealthBefore &&
               damageEngine.Snapshot().Players[0].Health == ownerHealthBefore,
             "host collision applies bonus grenade blast to an enemy, not its owner");
+        Check(damageEngine.BonusProgress.ScoreSnapshot(localId).Score == scoreBefore + 6 &&
+              damageEngine.Snapshot().Players[0].ConfirmedPlayerHits ==
+                  playerHitsBefore + 1,
+            "confirmed bonus blast credits exactly one enemy-player hit skillshot");
 
         MatchEngine BonusCardMatch(string cardId)
         {
