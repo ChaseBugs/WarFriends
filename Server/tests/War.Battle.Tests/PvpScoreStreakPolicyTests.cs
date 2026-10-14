@@ -24,6 +24,24 @@ internal static class PvpScoreStreakPolicyTests
             "decay uses the MainScene override rather than the C# default of one");
         Check(policy.BonusThreshold == 100 && policy.MaximumBonusesPerUpdate == 1,
             "strict threshold and one bonus per source Update are preserved as parameters");
+        Check(policy.MatchmakingEasyBotTillLevel == 4 &&
+              !policy.DropsCratesForOnlineView(3, 42) &&
+              !policy.DropsCratesForOnlineView(4, 4) &&
+              policy.DropsCratesForOnlineView(4, 5),
+            "local display rank five and opponent raw index above four use different source comparisons");
+        Check(!policy.DropsCratesForOnlineView(42, null) &&
+              policy.DropsCratesForOnlineView(42, 42) &&
+              !policy.DropsCratesForOnlineView(5, 4),
+            "missing opponent disables crates and the online gate is source-view specific");
+        foreach (Action invalid in new Action[] {
+            () => policy.DropsCratesForOnlineView(-1, 6),
+            () => policy.DropsCratesForOnlineView(43, 6),
+            () => policy.DropsCratesForOnlineView(6, -1),
+            () => policy.DropsCratesForOnlineView(6, 43) })
+        {
+            try { invalid(); throw new Exception("Out-of-catalog source rank accepted."); }
+            catch (ArgumentOutOfRangeException) { checks++; }
+        }
         foreach (var binding in new[] { (new string('0', 64), content), (scene, new string('0', 64)) })
         {
             try { PvpScoreStreakPolicy.Load(path, binding.Item1, binding.Item2); throw new Exception("Foreign policy binding accepted."); }

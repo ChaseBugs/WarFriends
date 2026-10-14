@@ -124,6 +124,25 @@ internal static class PvpBonusProgressCoordinatorTests
         try { directReceipt.RecordConfirmedPlayerOwnedDeath("local", Id(53), 0x1210, 10f, true, 1f);
             throw new Exception("Another owner's direct receipt was reused for a death."); }
         catch (InvalidDataException) { checks++; }
+        var template = MatchManifest.Read(Path.Combine(directory, "local-rifle-match-template.json"));
+        string firstId = template.Players[0].PlayerId;
+        string secondId = template.Players[1].PlayerId;
+        var ranked = template with {
+            MatchId = Id(100), SceneMasterPlayerId = firstId,
+            Players = [template.Players[0] with {PlayerLevel = 4},
+                template.Players[1] with {PlayerLevel = 5}]
+        };
+        using var eligibleView = PvpBonusProgressCoordinator.CreateForOnlineManifest(content, ranked, firstId);
+        using var ineligibleView = PvpBonusProgressCoordinator.CreateForOnlineManifest(content, ranked, secondId);
+        ThreeKills(eligibleView, firstId, 60);
+        ThreeKills(ineligibleView, secondId, 70);
+        Check(eligibleView.AdvanceFrame(1, 0f, true).Players[0].Streak.BonusRequested &&
+              !ineligibleView.AdvanceFrame(1, 0f, true).Players[0].Streak.BonusRequested,
+            "trusted roster ranks bind different original dropCreates values for the two Client views");
+        try { PvpBonusProgressCoordinator.CreateForOnlineManifest(content,
+                ranked with {Players = [ranked.Players[0] with {PlayerLevel = null}, ranked.Players[1]]}, firstId);
+            throw new Exception("Missing signed source rank enabled crate view."); }
+        catch (InvalidDataException) { checks++; }
         var issued = normal.AdvanceFrame(1, 0f, true);
         Check(issued.Players.Select(player => player.OwnerPlayerId).SequenceEqual(new[] {"local","opponent"}) &&
               issued.Players.All(player => player.Streak is {BonusRequested:true,BonusOrdinal:1,Progress:3.5f}),

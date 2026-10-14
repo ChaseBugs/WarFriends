@@ -20,6 +20,24 @@ public sealed record PvpBonusProgressFrame(ulong FrameId,
 /// </summary>
 public sealed class PvpBonusProgressCoordinator : IDisposable
 {
+    public static PvpBonusProgressCoordinator CreateForOnlineManifest(
+        BattleCombatContent content, MatchManifest manifest, string localOwnerId)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        var admitted = MatchManifest.Validate(manifest);
+        if (admitted.Mode is MatchManifest.PrototypeMode or MatchManifest.CoopMissionMode)
+            throw new InvalidDataException("This source view requires an online PvP match.");
+        content.ValidateAllocation(admitted);
+        var local = admitted.Players.SingleOrDefault(player => player.PlayerId == localOwnerId)
+            ?? throw new InvalidDataException("Local source-view owner is outside the admitted roster.");
+        var opponent = admitted.Players.Single(player => player.PlayerId != localOwnerId);
+        if (local.PlayerLevel is not int localLevel || opponent.PlayerLevel is not int opponentLevel)
+            throw new InvalidDataException("Online crate policy requires both signed player ranks.");
+        bool dropsCrates = content.PvpScoreStreak.DropsCratesForOnlineView(localLevel, opponentLevel);
+        return new(content.PvpScores, content.PvpScoreStreak, admitted.MatchId,
+            local.PlayerId, opponent.PlayerId, dropsCrates);
+    }
+
     private readonly object gate = new();
     private readonly string matchId;
     private readonly string localOwnerId;

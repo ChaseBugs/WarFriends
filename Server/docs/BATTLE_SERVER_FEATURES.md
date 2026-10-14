@@ -22,6 +22,10 @@ deaths add the resulting combo flag and publish score and progress in the same
 transaction. Replay binds owner, base flags, source game time, faction and
 multiplier. This remains an unbound source-view state transition: it does not
 infer those inputs from Client packets or partial MatchEngine death events.
+The online crate gate now derives from the pinned Client `dropCreates`,
+`isNoob`, level display conversion and Constants row four. The two rank
+comparisons are intentionally different, and the policy rejects rank indexes
+outside the recovered 0-42 range. Live source-view allocation remains open.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

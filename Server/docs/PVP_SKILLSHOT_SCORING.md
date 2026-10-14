@@ -117,8 +117,19 @@ For normal online matches `GameControllerOnline.dropCreates` requires the local
 player not to be `LevelManager.isNoob`, a present opponent, and the opponent's
 `playerProperties.level` strictly above `MatchmakingEasyBotTillLevel`.
 `LevelManager.isNoob` compares the local rank's display number to that same
-constant after its source integer cast. These different rank representations
-must be traced through allocation before a host crate gate is enabled.
+constant after its source integer cast. The recovered Constants row is four,
+and `GameLevel.displayNumber` is its zero-based index plus one. The pinned
+`PvpScoreStreakPolicy.DropsCratesForOnlineView` therefore requires a local
+index of at least four and an opponent index of at least five, with a present
+opponent. It checks the complete 0-42 source rank domain. The reviewed policy
+artifact now pins both Client methods and the Constants sheet. The allocator
+already carries signed zero-based `PlayerLevel` for both players, but the
+running MatchEngine still needs a per-view clock binding before this gate can
+enable crate progress. `PvpBonusProgressCoordinator.CreateForOnlineManifest`
+validates the host manifest and content, selects the local/opponent roster
+perspective, requires both rank indexes, and applies this gate to its single
+shared source-view ratio. It rejects co-op, prototype, missing rank, and
+unknown local-owner inputs.
 
 Each matching definition adds `(float)points * ratio * bonusMultiplier` to the
 player's progress. `CardScorestreakBooster` assigns its own player's multiplier;

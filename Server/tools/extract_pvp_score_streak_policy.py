@@ -12,6 +12,8 @@ def main():
     scene_bytes = (ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity").read_bytes()
     content_bytes = (ROOT / "Server/content/recovered-battle-content.json").read_bytes()
     manager_bytes = (ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ScoreManager.cs").read_bytes()
+    online_bytes = (ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerOnline.cs").read_bytes()
+    levels_bytes = (ROOT / "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/LevelManager.cs").read_bytes()
     scene = scene_bytes.decode("utf-8-sig")
     content = json.loads(content_bytes)
     if content["mainSceneSha256"] != hashlib.sha256(scene_bytes).hexdigest():
@@ -24,18 +26,34 @@ def main():
         raise ValueError("Expected one source Constants sheet")
     ratios = [row["FLOATVALUE"] for row in constants[0]["rows"]
               if row["DBKEY"] == "MultiPlayerScoreStreakRatio"]
+    easy_bot_levels = [row["FLOATVALUE"] for row in constants[0]["rows"]
+                       if row["DBKEY"] == "MatchmakingEasyBotTillLevel"]
     if len(ratios) != 1 or ratios[0] != 0.75 or float(matches[0]) != 1.1:
         raise ValueError("Reviewed PvP score-streak values changed")
+    if easy_bot_levels != [4.0]:
+        raise ValueError("Reviewed crate eligibility threshold changed")
     manager = manager_bytes.decode("utf-8-sig")
     for expression in ("Constants.rowIds.MultiPlayerScoreStreakRatio", "killStreakScoreRatio = 0f;",
                        "killStreakProgress > 100f", "killStreakProgress -= 100f;"):
         if expression not in manager:
             raise ValueError("Source score-streak transition changed")
+    online = online_bytes.decode("utf-8-sig")
+    levels = levels_bytes.decode("utf-8-sig")
+    for expression in ("!LevelManager.isNoob", "mOtherPlayerInstance != null",
+                       "mOtherPlayerInstance.playerProperties.level > (float)fLOATVALUE"):
+        if expression not in online:
+            raise ValueError("Source online crate eligibility changed")
+    for expression in ("displayNumber => index + 1", "instance.currentLevel.displayNumber <= num"):
+        if expression not in levels:
+            raise ValueError("Source level display conversion changed")
     document = {
         "version": 1,
         "sceneSha256": hashlib.sha256(scene_bytes).hexdigest(),
         "battleContentSha256": hashlib.sha256(content_bytes).hexdigest(),
         "scoreManagerSha256": hashlib.sha256(manager_bytes).hexdigest(),
+        "gameControllerOnlineSha256": hashlib.sha256(online_bytes).hexdigest(),
+        "levelManagerSha256": hashlib.sha256(levels_bytes).hexdigest(),
+        "matchmakingEasyBotTillLevel": 4,
         "multiplayerRatio": ratios[0],
         "progressLossPerSecond": float(matches[0]),
         "bonusThreshold": 100,
