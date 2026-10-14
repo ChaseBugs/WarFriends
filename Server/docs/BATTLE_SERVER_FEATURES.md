@@ -8,6 +8,8 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The shared PvP combo primitive now preserves the recovered pre-score-filter callback semantics and strict 0.9f window, with bounded retry-safe death receipts. An isolated Unity 2018.3 compilation of the original method supplies 22 comparison samples; these exposed promoted Mono comparison precision for large float clocks, which the .NET primitive now matches explicitly. Full eligible-death wiring, authoritative scaled clock/lifetime, live score/bonus transitions, and Unity statistics remain open.
+
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) now pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank. Live combo/score/progress/bonus authority and the normal Unity callback remain open; calling the original callback with base flags alone would authorize incomplete Client-side gameplay.
 
 Unity statistic integration now has an explicit host attribution prerequisite: `SabotageKillCredited` follows confirmed death and binds attacker/victim, entity/unit, card request, and source base flags. Real UDP tests verify identical single credits for all eight mechanical families and the card Drone; portable SDK validation blocks malformed credits before callbacks/cursor commits. The normal Unity statistic callback and complete combo/revenge/slow-motion authority remain open.

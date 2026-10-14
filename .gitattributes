@@ -42,3 +42,4 @@ Server/content/recovered-coop-boss-attack-timing.json text eol=lf
 Server/content/recovered-coop-boss-loadouts.json text eol=lf
 Server/content/coop-navmesh/*.asset binary
 Server/content/recovered-pvp-skillshot-scores.json text eol=lf
+Server/content/unity-pvp-combo-reference.json text eol=lf

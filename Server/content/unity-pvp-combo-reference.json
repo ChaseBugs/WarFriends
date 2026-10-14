@@ -1,0 +1,148 @@
+{
+    "version": 1,
+    "unityVersion": "2018.3.0f2",
+    "managerSha256": "82a21f9cfa209e8f27b30f6b8f2d61f1f4d510ea1b2429784d012d13dac8d0d8",
+    "skillSha256": "ec696c62cedcbfba0b7dbd9c109b976280d7c565cc80ebb3a5201ecd1844f720",
+    "cases": [
+        {
+            "name": "ordinary",
+            "steps": [
+                {
+                    "timeBits": 0,
+                    "streak": 1,
+                    "comboFlag": 0
+                },
+                {
+                    "timeBits": 1045220557,
+                    "streak": 2,
+                    "comboFlag": 32
+                },
+                {
+                    "timeBits": 1053609165,
+                    "streak": 3,
+                    "comboFlag": 64
+                },
+                {
+                    "timeBits": 1058642330,
+                    "streak": 4,
+                    "comboFlag": 128
+                }
+            ]
+        },
+        {
+            "name": "boundary",
+            "steps": [
+                {
+                    "timeBits": 1065353216,
+                    "streak": 1,
+                    "comboFlag": 0
+                },
+                {
+                    "timeBits": 1072902963,
+                    "streak": 1,
+                    "comboFlag": 0
+                },
+                {
+                    "timeBits": 1073741824,
+                    "streak": 2,
+                    "comboFlag": 32
+                },
+                {
+                    "timeBits": 1077512503,
+                    "streak": 3,
+                    "comboFlag": 64
+                }
+            ]
+        },
+        {
+            "name": "same_frame",
+            "steps": [
+                {
+                    "timeBits": 1073741824,
+                    "streak": 1,
+                    "comboFlag": 0
+                },
+                {
+                    "timeBits": 1073741824,
+                    "streak": 2,
+                    "comboFlag": 32
+                },
+                {
+                    "timeBits": 1073741824,
+                    "streak": 3,
+                    "comboFlag": 64
+                },
+                {
+                    "timeBits": 1073741824,
+                    "streak": 4,
+                    "comboFlag": 128
+                }
+            ]
+        },
+        {
+            "name": "large_clock",
+            "steps": [
+                {
+                    "timeBits": 1266679808,
+                    "streak": 1,
+                    "comboFlag": 0
+                },
+                {
+                    "timeBits": 1266679808,
+                    "streak": 2,
+                    "comboFlag": 32
+                },
+                {
+                    "timeBits": 1266679808,
+                    "streak": 3,
+                    "comboFlag": 64
+                }
+            ]
+        },
+        {
+            "name": "adjacent_large",
+            "steps": [
+                {
+                    "timeBits": 1266679807,
+                    "streak": 1,
+                    "comboFlag": 0
+                },
+                {
+                    "timeBits": 1266679807,
+                    "streak": 2,
+                    "comboFlag": 32
+                },
+                {
+                    "timeBits": 1266679808,
+                    "streak": 1,
+                    "comboFlag": 0
+                }
+            ]
+        },
+        {
+            "name": "paused_clock",
+            "steps": [
+                {
+                    "timeBits": 1084227584,
+                    "streak": 1,
+                    "comboFlag": 0
+                },
+                {
+                    "timeBits": 1084227584,
+                    "streak": 2,
+                    "comboFlag": 32
+                },
+                {
+                    "timeBits": 1084227584,
+                    "streak": 3,
+                    "comboFlag": 64
+                },
+                {
+                    "timeBits": 1086115021,
+                    "streak": 1,
+                    "comboFlag": 0
+                }
+            ]
+        }
+    ]
+}

@@ -32,7 +32,8 @@ bonus ownership/placement rules.
 Normal Unity callback integration remains closed until those transitions are
 host-owned. Invoking the original callback with only the new base credit
 would omit other source flags and let Client progress create bonuses. Future
-host progress must preserve per-row binary32 arithmetic and callback order;
+host progress must preserve per-row float storage, observed Mono intermediate
+precision, and callback order;
 the aggregate integer score must not replace that ordered float calculation.
 Match outcomes and currency rewards remain under their existing authority.
 
@@ -41,3 +42,35 @@ Run focused validation with
 `dotnet run --project Server/tests/War.Battle.Tests -c Release -- --pvp-scores-only`.
 Tests cover all source scores, base-card composition, unsupported flags,
 source mismatch, immutable rows, artifact damage, and live-content binding.
+
+## Shared kill-combo state
+
+`PvpKillComboState` now mirrors `SkillShotManager.RecieveKill` with a bounded
+replay ledger. Its source window is 0.9f; an exact repeat returns the original
+flag without advancing or rewinding current history. Malformed/nonfinite time,
+changed receipt time, reordered new callbacks, and exhausted receipt capacity
+fail before changing accepted state.
+
+The recovered controller calls this shared manager for a non-network,
+player-owned entity death **before** the friendly/opposing score filter.
+Therefore a friendly death can advance combo history without awarding points.
+An army-owned death takes a different branch. Player damage-hit and bonus-box
+callbacks do not call `RecieveKill`. Do not create independent per-player
+histories or count all generic damage events as eligible kills.
+
+The isolated original-method Unity 2018.3 Mono probe captured 22 samples. Only
+the two `Time.time` reads are replaced with controlled float inputs; the
+recovered calculation and enum are compiled directly. Large clock samples
+show Mono compares promoted operands rather than a rounded float sum. The
+server stores float times/window but explicitly compares in double, retaining
+the source float window value. All 22 source samples match.
+
+The primitive remains unbound to live combat until every eligible callback,
+manager lifetime, and authoritative scaled game clock are established. A
+receipt must identify one host-confirmed death, not merely a Client command
+that may kill several entities. This probe does not verify Unity Play Mode,
+the original Unity 5.2 Android runtime, or complete game statistics.
+
+Run `Server/scripts/AuditPvpCombo.ps1` to regenerate the isolated Mono fixture.
+Run `--pvp-combo-only` in the Battle test executable for source comparison,
+replay, clock corruption, and capacity validation.

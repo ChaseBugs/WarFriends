@@ -252,6 +252,17 @@ if(args is ["--barrel-only"])
     return;
 }
 
+if (args is ["--pvp-combo-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = PvpKillComboTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} source PvP combo assertions");
+    return;
+}
+
 if (args is ["--pvp-scores-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -2454,6 +2465,7 @@ var sdkServer = new IPEndPoint(IPAddress.Loopback, port);
 int proxyPort = ((IPEndPoint)proxy.Client.LocalEndPoint!).Port;
 bool dropped = false;
 int reorderPoll=0;
+var pollReorderCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 byte[]? delayedPollReply=null;
 bool injectUnconsumedReply=false;
 bool injectedUnconsumedReply=false;
@@ -2465,6 +2477,7 @@ int eventRepliesToDrop=0;
 int droppedEventReplies=0;
 bool reorderEventReplies=false;
 bool reorderedEventReplies=false;
+var eventReorderCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 byte[]? delayedEventReply=null;
 Task relay = Task.Run(async () =>
 {
@@ -2503,6 +2516,7 @@ Task relay = Task.Run(async () =>
                         delayedEventReply = null;
                         reorderEventReplies = false;
                         reorderedEventReplies = true;
+                        eventReorderCompleted.TrySetResult();
                         continue;
                     }
                 }
@@ -2529,7 +2543,9 @@ Task relay = Task.Run(async () =>
                         await proxy.SendAsync(datagram.Buffer,client,proxyStop.Token);
                         await proxy.SendAsync(delayedPollReply,client,proxyStop.Token);
                     }
-                    delayedPollReply=null;reorderPoll=3;continue;
+                    delayedPollReply=null;reorderPoll=3;
+                    pollReorderCompleted.TrySetResult();
+                    continue;
                 }
                 if (client != null) await proxy.SendAsync(datagram.Buffer, client, proxyStop.Token);
             }
@@ -2570,6 +2586,7 @@ try
     var reorderedPollReply=await sdkA.PollAsync(CancellationToken.None);
     Check(reorderedPollReply.Snapshot.Players[0].ShotsFired == 1,
         "SDK accepts the later poll reply without repeating the shot");
+    await pollReorderCompleted.Task.WaitAsync(TimeSpan.FromSeconds(2));
     Check(reorderPoll==3,
         "loss proxy delivered the newer poll reply before its delayed predecessor");
     Check((await sdkA.PollAsync(CancellationToken.None)).Snapshot.Players[0].ShotsFired == 1,
@@ -2659,6 +2676,7 @@ try
             eventConsumer.EventReceived += battleEvent => presentedEvents.Add(battleEvent.EventId);
             int receivedEvents = await twiceResumed.PollAndConsumeEventsAsync(
                 eventConsumer,CancellationToken.None);
+            await eventReorderCompleted.Task.WaitAsync(TimeSpan.FromSeconds(2));
             Check(droppedEventReplies == 3 && reorderedEventReplies && receivedEvents > 0,
                 "SDK recovers terminal events after three lost and two reordered live UDP replies");
             Check(presentedEvents.SequenceEqual(
@@ -2817,6 +2835,7 @@ checks += await GrenadeCatalogTests.RunTankUdp(Path.Combine(contentRoot.FullName
 checks += ArmyFlameBurstTests.Run();
 checks += CombatContentTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpSkillShotScoreTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += PvpKillComboTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyEntityPageTests.Run();
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += HelicopterBazookaTests.Run(Path.Combine(contentRoot.FullName,"content"));
