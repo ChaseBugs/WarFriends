@@ -172,6 +172,9 @@ public sealed partial class MatchEngine
                 pvpPlayerDamageReceiptId: receiptId);
             if (Terminal) return;
         }
+        ApplyHelicopterGunnerExplosion(explosion.OwnerId, explosion.Position,
+            stage.DeadRadius, stage.HurtRadius, stage.MinimumDamage,
+            stage.ExplosionDamage, halfDamage: false, friendKill: false);
     }
 
     private void ApplyPvpBonusGrenadeInfantry(

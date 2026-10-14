@@ -1005,6 +1005,31 @@ internal static class PvpBonusSpawnPlannerTests
         BlastEnemyAirBody("ID_UNIT-HELICOPTER", 730);
         BlastEnemyAirBody("ID_UNIT-ASSAULTHELI", 740);
 
+        var (gunnerMatch, gunnerTick) = BonusArmyMatch("ID_UNIT-HELICOPTER");
+        ulong gunnerHelicopterId = gunnerMatch.ArmyEntityBatch(localId, 0, 0)
+            .Entities.First().EntityKey;
+        var gunnerPart = gunnerMatch.GroundVehicleShotTargets(localId).First(part =>
+            part.EntityId == gunnerHelicopterId && part.HelicopterGunner);
+        float gunnerHealthBefore = gunnerMatch.HelicopterGunner(gunnerHelicopterId)!.Health;
+        gunnerMatch.ApplyHelicopterGunnerExplosion(enemyId,
+            gunnerPart.Hitbox.Center, 1.3f, 2.2f, 20f, 350f,
+            halfDamage: false, friendKill: false);
+        Check(gunnerMatch.HelicopterGunner(gunnerHelicopterId)?.Health ==
+                  gunnerHealthBefore,
+            "Manager grenade friendKill=0 protects the allied Helicopter gunner");
+        var gunnerPlanner = gunnerMatch.BonusPlanner;
+        gunnerPlanner.EnqueueConfirmedBonus(Id(745), localId, 3);
+        var gunnerBox = gunnerPlanner.PlanMatured(grenadeFrame, 0, context, draw);
+        gunnerPlanner.ConfirmDestroyed(gunnerBox.Request.ReceiptId,
+            Id(746), null, gunnerPart.Hitbox.Center);
+        gunnerMatch.PlanCollectedPvpGrenades(gunnerBox.Request.ReceiptId);
+        while (gunnerTick < 420 && !gunnerMatch.Terminal &&
+               gunnerMatch.HelicopterGunner(gunnerHelicopterId)?.Health == gunnerHealthBefore)
+            gunnerMatch.Advance(++gunnerTick);
+        Check(gunnerMatch.HelicopterGunner(gunnerHelicopterId)?.Health <
+                  gunnerHealthBefore,
+            "host bonus grenade damages the Helicopter's separate gunner");
+
         var (glassMatch, glassTick) = BonusArmyMatch("ID_UNIT-ASSAULTHELI");
         ulong glassAircraftId = glassMatch.ArmyEntityBatch(localId, 0, 0)
             .Entities.First().EntityKey;

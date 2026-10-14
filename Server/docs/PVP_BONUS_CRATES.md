@@ -298,6 +298,10 @@ shared Army vitality as normal grenades, with deployed-unit blast fixtures.
 The Assault Helicopter body and separate front glass now have successful
 moving-flight fixtures: both use a ground-level collected box after the
 aircraft descends into blast range, and the glass keeps its own health pool.
+The same bonus blast now reaches the Helicopter's independently owned gunner
+after player damage. A deployed flight fixture reduces gunner health, while a
+same-faction blast leaves it unchanged under the Manager grenade's
+`friendKill: 0`.
 Host map overlaps now damage enemy shields and trigger source barrel
 chains before character damage. The Manager scene weapon has no `PlayerWeapon`,
 so shield damage uses the recovered explosion coefficient without an inventory

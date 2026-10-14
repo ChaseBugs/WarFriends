@@ -261,13 +261,15 @@ public sealed partial class MatchEngine
     }
 
     internal void ApplyHelicopterGunnerExplosion(string shooterId,Vector3 origin,float deadRadius,
-        float hurtRadius,float minimumDamage,float explosionDamage,bool halfDamage)
+        float hurtRadius,float minimumDamage,float explosionDamage,bool halfDamage,
+        bool friendKill=true)
     {
         if(phase!=BattlePhase.Running||!PlayerHitbox.Finite(origin)||!float.IsFinite(deadRadius)||
            !float.IsFinite(hurtRadius)||deadRadius<0||hurtRadius<=deadRadius||hurtRadius>100||
            !float.IsFinite(minimumDamage)||!float.IsFinite(explosionDamage)||minimumDamage<0||
            explosionDamage<minimumDamage||explosionDamage>10_000_000)
             throw new InvalidDataException("Invalid trusted gunner explosion.");
+        if(!activeArmyEntities.Values.Any(row=>row.UnitId=="ID_UNIT-HELICOPTER"))return;
         if(groundVehicleWeapons==null||helicopterCrewPoints==null||helicopterGunnerExplosions==null||
            explosionPolicy==null)throw new InvalidDataException("Missing gunner explosion source.");
         var shooter=Find(shooterId)??throw new InvalidDataException("Unknown explosion shooter.");
@@ -275,6 +277,7 @@ public sealed partial class MatchEngine
             .OrderBy(r=>r.EntityKey))
         {
             if(!armyHelicopterGunners.TryGetValue(row.EntityKey,out var gunner))continue;
+            if(!friendKill && shooter.Definition.Fraction==row.OwnerFraction)continue;
             var state=gunner.Snapshot();
             if(!state.TurretEnabled)continue;
             if(state.SpawnTick>tick||row.HelicopterRotation==null)
