@@ -132,8 +132,12 @@ public sealed partial class MatchEngine
         bool friendKill = pvpGrenadeCatalog?.GrenadeFriendKill ??
             throw new InvalidDataException("Bonus grenade weapon setup is missing.");
         var stage = explosion.ToExplosionStage();
+        ApplyPvpBonusGrenadeInfantry(explosion, stage, owner);
+        if (Terminal) return;
         ApplyPvpBonusGrenadeDecoys(explosion, stage, owner);
         ApplyPvpBonusGrenadeHeavyTurrets(explosion, stage, owner);
+        ApplyPvpBonusGrenadeGroundVehicles(explosion, stage, owner);
+        if (Terminal) return;
         foreach (var victim in players.Where(player => !player.Dead).ToArray())
         {
             float roll = damageRoll();
@@ -153,6 +157,90 @@ public sealed partial class MatchEngine
             ApplyResolvedPlayerDamage(explosion.OwnerId,
                 victim.Definition.PlayerId, damage, roll);
             if (Terminal) return;
+        }
+    }
+
+    private void ApplyPvpBonusGrenadeInfantry(
+        PvpBonusGrenadeExplosionQuote explosion, GrenadeStage stage, Player owner)
+    {
+        var groups = GroundVehicleShotTargets(explosion.OwnerId, true)
+            .Where(target => target.ArmyInfantry)
+            .GroupBy(target => target.EntityId)
+            .OrderBy(group => group.Key);
+        foreach (var group in groups)
+        {
+            if (!activeArmyEntities.TryGetValue(group.Key, out var army) ||
+                !infantryAnimations.ContainsKey(group.Key))
+                throw new InvalidDataException("Bonus grenade infantry target disappeared.");
+            if (army.OwnerFraction == owner.Definition.Fraction) continue;
+            var position = new Vector3(army.X, army.Y, army.Z);
+            var effect = GrenadeExplosion.ResolveArmy(explosion.Position,
+                position, group.Select(target => target.Hitbox).ToArray(), stage);
+            if (effect == null) continue;
+            if (!float.IsFinite(effect.RawDamage) ||
+                effect.RawDamage is <= 0f or > 10_000_000f)
+                throw new InvalidDataException("Bonus grenade infantry damage is invalid.");
+            ApplyArmyHostDamage(group.Key, effect.RawDamage);
+            if (Terminal) return;
+            if (activeArmyEntities.ContainsKey(group.Key)) continue;
+            if (directArmyKills.Count >= 256)
+            {
+                End("source-kill-backpressure", "", false);
+                return;
+            }
+            directArmyKills.Add((group.Key, army.UnitId, army.OwnerPlayerId,
+                explosion.OwnerId, "player-grenade", tick));
+        }
+    }
+
+    private void ApplyPvpBonusGrenadeGroundVehicles(
+        PvpBonusGrenadeExplosionQuote explosion, GrenadeStage stage, Player owner)
+    {
+        if (vehicles == null) return;
+        if (groundVehicleWeapons == null)
+            throw new InvalidDataException("Bonus grenade vehicle source is missing.");
+        foreach (var vehicle in vehicles.Snapshot().OrderBy(item => item.EntityId))
+        {
+            if (!activeArmyEntities.TryGetValue(vehicle.EntityId, out var army) ||
+                army.UnitId != vehicle.UnitId ||
+                army.OwnerPlayerId != vehicle.OwnerPlayerId ||
+                !groundVehicleFacing.TryGetValue(vehicle.EntityId, out var facing))
+                throw new InvalidDataException("Bonus grenade vehicle lost host authority.");
+            var vehicleOwner = Find(vehicle.OwnerPlayerId) ??
+                throw new InvalidDataException("Bonus grenade vehicle owner disappeared.");
+            if (vehicleOwner.Definition.Fraction == owner.Definition.Fraction) continue;
+            var bodies = groundVehicleWeapons.PlaceBody(vehicle.UnitId,
+                vehicle.EntityId, vehicle.Position, facing,
+                vehicleOwner.Definition.Fraction);
+            var effect = GrenadeExplosion.ResolveArmy(explosion.Position,
+                vehicle.Position, bodies.Select(part => part.Hitbox).ToArray(), stage);
+            if (effect == null) continue;
+            if (!float.IsFinite(effect.RawDamage) ||
+                effect.RawDamage is <= 0f or > 10_000_000f)
+                throw new InvalidDataException("Bonus grenade vehicle damage is invalid.");
+            float before = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException("Bonus grenade vehicle has no shared health.");
+            ApplyArmyHostDamage(vehicle.EntityId, effect.RawDamage);
+            if (Terminal) return;
+            if (!activeArmyEntities.ContainsKey(vehicle.EntityId))
+            {
+                if (directArmyKills.Count >= 256)
+                {
+                    End("source-kill-backpressure", "", false);
+                    return;
+                }
+                directArmyKills.Add((vehicle.EntityId, vehicle.UnitId,
+                    vehicle.OwnerPlayerId, explosion.OwnerId, "player-grenade", tick));
+                continue;
+            }
+            float after = ArmyHealth(vehicle.EntityId) ??
+                throw new InvalidDataException("Bonus grenade vehicle health disappeared.");
+            float applied = before - after;
+            if (applied > 0f &&
+                (!vehicles.TryDamage(vehicle.EntityId, applied,
+                    out float registryApplied, out bool destroyed) || destroyed ||
+                 Math.Abs(applied - registryApplied) > 0.001f))
+                throw new InvalidDataException("Bonus grenade vehicle health diverged.");
         }
     }
 

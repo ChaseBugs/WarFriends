@@ -825,6 +825,96 @@ internal static class PvpBonusSpawnPlannerTests
             value.EntityId == initialTurret.EntityId);
         Check(remainingTurret == null || remainingTurret.Health < initialTurret.Health,
             "host bonus grenade explosion damages one Heavy Turret across its parts");
+
+        (MatchEngine Match, ulong Tick) BonusArmyMatch(string unitId)
+        {
+            var armyManifest = manifest with {
+                Players = manifest.Players.Select(player => player with {
+                    EquippedArmyUnitIds = [unitId],
+                    ArmyNormalUpgradeIndexes = [0],
+                    ArmySpecialUpgradeIndexes = [-1],
+                    ArmyEliteUpgradeIndexes = [-1],
+                    ArmyHealthFactors = [new ArmyHealthFactors(1, 1)],
+                    ArmyDamageScales = [1],
+                    ArmySpeedCoefficients = [1],
+                    ArmyAccuracyCoefficients = [1]
+                }).ToArray()
+            };
+            var match = new MatchEngine(armyManifest, map, content,
+                armyChoice: _ => 0, combatRandom: () => 1f);
+            foreach (var player in armyManifest.Players)
+            {
+                match.Admit(player.PlayerId);
+                match.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                    Ready = new ReadyCommand {ManifestHash = match.ManifestHash}});
+            }
+            match.Advance(60);
+            int option = match.ArmyBatch(enemyId).OptionIndexes.First();
+            Check(match.Command(enemyId, new MatchCommand {CommandId = 2,
+                DeployArmy = new DeployArmyCommand {OptionIndex = option}}).Code ==
+                "army-deploying", "opponent deploys a source army unit before bonus blast");
+            ulong tick = 60;
+            while (tick < 300 && !match.Terminal &&
+                   match.ArmyEntityBatch(localId, 0, 0).Entities.Count == 0)
+                match.Advance(++tick);
+            Check(match.ArmyEntityBatch(localId, 0, 0).Entities.Count > 0,
+                "deployed enemy unit reaches host vitality before bonus blast");
+            return (match, tick);
+        }
+
+        void BlastEnemyArmy(string unitId, int receiptBase,
+            bool vehicleBody, bool expectKill = false)
+        {
+            var (match, currentTick) = BonusArmyMatch(unitId);
+            var target = match.ArmyEntityBatch(localId, 0, 0).Entities.First();
+            var hitbox = match.GroundVehicleShotTargets(localId)
+                .First(part => part.EntityId == target.EntityKey &&
+                    (vehicleBody ? part.GroundVehicleBody : part.ArmyInfantry)).Hitbox;
+            if (expectKill)
+            {
+                float setupDamage = target.Health + target.Kevlar - 10f;
+                if (setupDamage > 0f)
+                    match.ApplyArmyHostDamage(target.EntityKey, setupDamage);
+            }
+            float healthBefore = match.ArmyHealth(target.EntityKey)!.Value;
+            var planner = match.BonusPlanner;
+            planner.EnqueueConfirmedBonus(Id(receiptBase), localId, 3);
+            var box = planner.PlanMatured(grenadeFrame, 0, context, draw);
+            planner.ConfirmDestroyed(box.Request.ReceiptId,
+                Id(receiptBase + 1), null, hitbox.Center);
+            var plannedBurst = match.PlanCollectedPvpGrenades(box.Request.ReceiptId);
+            Check(plannedBurst.Launches.Any(launch =>
+                    launch.TargetId == "army:" + target.EntityKey),
+                "bonus grenade includes the deployed enemy unit in host targets");
+            ulong nextTick = currentTick;
+            while (nextTick < 420 && !match.Terminal &&
+                   match.ArmyHealth(target.EntityKey) == healthBefore)
+                match.Advance(++nextTick);
+            float? healthAfter = match.ArmyHealth(target.EntityKey);
+            Check(healthAfter == null || healthAfter < healthBefore,
+                "host bonus grenade damages the deployed " + unitId);
+            if (vehicleBody && healthAfter != null)
+                Check(Math.Abs(match.Snapshot().Vehicles.Single(item =>
+                    item.EntityId == target.EntityKey).Health - healthAfter.Value) < 0.01f,
+                    "vehicle registry and shared vitality agree after bonus grenade damage");
+            if (expectKill)
+            {
+                Check(healthAfter == null,
+                    "source bonus blast kills the prepared enemy infantry");
+                match.Command(localId, new MatchCommand {CommandId = 2,
+                    Forfeit = new ForfeitCommand()});
+                Check(match.TerminalEvidenceSnapshot().DirectArmyKills.Any(kill =>
+                    kill.EntityKey == target.EntityKey &&
+                    kill.AttackerPlayerId == localId &&
+                    kill.VictimOwnerPlayerId == enemyId &&
+                    kill.Cause == "player-grenade"),
+                    "bonus grenade infantry death persists direct grenade-kill evidence");
+            }
+        }
+
+        BlastEnemyArmy("ID_UNIT-ASSAULT", 680, vehicleBody: false,
+            expectKill: true);
+        BlastEnemyArmy("ID_UNIT-TANK", 690, vehicleBody: true);
         try
         {
             engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);

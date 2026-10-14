@@ -286,8 +286,12 @@ owner-collected box fixture hits an opposing player and preserves owner health.
 The same host explosion now groups Decoy and Heavy Turret hitboxes by entity,
 damages each enemy owner once, and excludes friendly owners before applying
 damage. Separate card-deployment fixtures prove the bonus burst damages a
-Decoy and a Heavy Turret through real host flights. Other DestroyableObject
-recipients and player-hit score credit are still open.
+Decoy and a Heavy Turret through real host flights. Infantry and ground-vehicle
+bodies now use shared Army vitality; a nonlethal Tank blast keeps its vehicle
+registry in sync, and a lethal Assault blast records a direct player-grenade
+kill in terminal evidence. Allied units are excluded by the Manager weapon's
+`friendKill: 0`. Passengers, repair drones, air bodies, shields/barrels, and
+player-hit score credit are still open.
 Unity Rigidbody bounce against other layers and exact Unity Update ordering
 still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*
