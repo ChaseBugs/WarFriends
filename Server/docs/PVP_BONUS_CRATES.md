@@ -269,13 +269,16 @@ shared clock accepts both burst schedules and preserves card mutations for a
 later box shot. The authenticated `UseGrenadesBurst` command now checks the
 selected `CLUSTERGRENADE` inventory identity, plans from host shootables and
 empty enemy shields, retains a request replay receipt, and dispatches each
-due shot into the normal grenade flight/explosion path. The host now uses
+due shot into the normal grenade flight/explosion path. A focused match now
+confirms all three flights collide and explode, with opponent health loss.
+The normal Unity `CardManager` sends this command and spends the card only
+after an accepted host reply; the portable SDK DLLs were refreshed. The host uses
 the `PlayerPoint` child shield's serialized `hudIndicator.snapTransform`
 for the owner's fire origin. `recovered-card-grenade-origins.json` pins all
 40 component chains and world coordinates to the five scene hashes; the snap
 positions differ from the nearby `shotPosition` by about 0.168 units. Empty
 shield targets use the cover transform. Unity projectile/visual parity and
-Client presentation still need live comparison.
+Client projectile presentation still needs live comparison.
 The checked-in bonus catalog now extracts the shared setup's 350/20 values
 and its 45-degree throw, zero distance/fuse, 1.3/2.2 blast radii, and
 behind-shield ratio 1 from MainScene. It pins the `GrenadeAmmoBase`, `GrenadeAmmo`, and

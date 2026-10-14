@@ -901,6 +901,27 @@ internal static class PvpBonusSpawnPlannerTests
             "shield HUD snap is distinct from ordinary cover shot position");
         Check(cardEngine.PendingPvpGrenadeFlights > 0,
             "card burst enters host grenade flight simulation");
+        float cardEnemyHealth = cardEngine.Snapshot().Players[1].Health;
+        var cardShots = new List<PvpBonusGrenadeDueShot>(
+            cardEngine.ReadyPvpGrenadeShots);
+        int cardImpacts = cardEngine.PvpGrenadeImpacts.Count;
+        int cardExplosions = cardEngine.PvpGrenadeExplosions.Count;
+        for (ulong cardTick = cardEngine.Snapshot().ServerTick + 1;
+             cardTick <= 180 && !cardEngine.Terminal; cardTick++)
+        {
+            cardEngine.Advance(cardTick);
+            cardShots.AddRange(cardEngine.ReadyPvpGrenadeShots);
+            cardImpacts += cardEngine.PvpGrenadeImpacts.Count;
+            cardExplosions += cardEngine.PvpGrenadeExplosions.Count;
+        }
+        Check(cardShots.Count == 3 &&
+              cardShots.Select(shot => shot.Launch.ShotIndex)
+                  .SequenceEqual([0, 1, 2]) &&
+              cardImpacts == 3 && cardExplosions == 3,
+            $"card burst resolves all three host flights: " +
+            $"shots={cardShots.Count}, impacts={cardImpacts}, explosions={cardExplosions}");
+        Check(cardEngine.Snapshot().Players[1].Health < cardEnemyHealth,
+            "card grenade explosions damage the opposing player");
 
         var decoyEngine = BonusCardMatch("CardDecoy");
         Check(decoyEngine.Command(enemyId, new MatchCommand {CommandId = 3,

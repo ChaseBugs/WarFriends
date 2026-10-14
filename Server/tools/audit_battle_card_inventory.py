@@ -552,7 +552,14 @@ def direct_client_routes():
         "IsSupportedSelfHostedUnitCard(card)" not in use_card or
         "UseUnitCardResult(card.id)" not in body):
         raise ValueError("Normal Client unit-card route changed")
-    if (len(names) != 29 or
+    sdk_bridge = (ASSETS / "Scripts/Assembly-CSharp/SelfHostedBattleClient.cs").read_text(
+        encoding="utf-8-sig")
+    if ("card is CardGrenadesBurst" not in use_card or
+        "client.UseGrenadesBurstResult()" not in body or
+        'code == "grenades-burst-active"' not in source or
+        "connection.UseGrenadesBurstAsync(" not in sdk_bridge):
+        raise ValueError("Cluster Grenade Client command path is incomplete")
+    if (len(names) != 30 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
