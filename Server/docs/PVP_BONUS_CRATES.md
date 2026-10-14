@@ -271,6 +271,8 @@ selected `CLUSTERGRENADE` inventory identity, plans from host shootables and
 empty enemy shields, retains a request replay receipt, and dispatches each
 due shot into the normal grenade flight/explosion path. A focused match now
 confirms all three flights collide and explode, with opponent health loss.
+Two signed UDP clients now confirm one card spend, safe request replay,
+three matching shot/impact events, and the same opponent health after damage.
 The normal Unity `CardManager` sends this command and spends the card only
 after an accepted host reply; the portable SDK DLLs were refreshed. The host uses
 the `PlayerPoint` child shield's serialized `hudIndicator.snapTransform`
