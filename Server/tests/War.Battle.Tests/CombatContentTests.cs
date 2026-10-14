@@ -10066,8 +10066,10 @@ internal static class CombatContentTests
                   "accepted card activation retains its player owner on replay");
             Reject(()=>ownedCards.RecordCard(cardReceipt,secondCardOwner,"CardDecoy"));
             Reject(()=>ownedCards.RecordCard(cardReceipt,firstCardOwner,"CardLandmine"));
-            Check(WarCardSourceIdentityCatalog.All.Count==39&&
+            Check(WarCardSourceIdentityCatalog.All.Count==41&&
                   WarCardSourceIdentityCatalog.Resolve("CardHeavyTurret")=="HEAVYTURRET"&&
+                  WarCardSourceIdentityCatalog.Resolve("CardScorestreakBooster")=="STREAKBOOST"&&
+                  WarCardSourceIdentityCatalog.Resolve("CardScoreStreakKiller")=="CRATEBLOCKER"&&
                   WarCardSourceIdentityCatalog.Resolve("CardBackstab")=="BACKSTAB"&&
                   WarCardSourceIdentityCatalog.Resolve("CardSabotage")=="SABOTAGE"&&
                   WarCardSourceIdentityCatalog.Resolve("CardRandomKevlar")=="RANDOMKEVLAR"&&

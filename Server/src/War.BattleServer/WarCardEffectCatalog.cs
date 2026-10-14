@@ -41,7 +41,9 @@ public static class WarCardEffectCatalog
             ["CardAmmoThief"]=new("CardAmmoThief",WarCardEffectKind.Ammo,false,true),
             ["CardEmptyMag"]=new("CardEmptyMag",WarCardEffectKind.Ammo,false,true),
             ["CardHealthForSoldiers"]=new("CardHealthForSoldiers",WarCardEffectKind.Modifier,false,true),
-            ["CardHealthForMachines"]=new("CardHealthForMachines",WarCardEffectKind.Modifier,false,true)
+            ["CardHealthForMachines"]=new("CardHealthForMachines",WarCardEffectKind.Modifier,false,true),
+            ["CardScorestreakBooster"]=new("CardScorestreakBooster",WarCardEffectKind.Modifier,false,true),
+            ["CardScoreStreakKiller"]=new("CardScoreStreakKiller",WarCardEffectKind.Modifier,false,true)
         };
     public static bool TryGet(string cardId,out WarCardEffectDefinition definition)
         =>definitions.TryGetValue(cardId??"",out definition!);

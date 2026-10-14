@@ -2223,6 +2223,9 @@ public sealed partial class MatchEngine : IMatchRuntime
             return UseSabotage(p,c.UseSabotage.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseGrenadesBurst)
             return UseGrenadesBurst(p,c.UseGrenadesBurst.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseScoreMultiplier)
+            return UseScoreMultiplier(p,c.UseScoreMultiplier.RequestId,
+                c.UseScoreMultiplier.SourceCardId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseRandomKevlar)
             return UseRandomKevlar(p,c.UseRandomKevlar.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)

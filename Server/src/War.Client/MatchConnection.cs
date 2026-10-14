@@ -103,6 +103,10 @@ namespace War.Client
         public Task<MatchReply> UseGrenadesBurstAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseGrenadesBurst=new UseGrenadesBurstCommand
                 {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseScoreMultiplierAsync(string requestId,
+            string sourceCardId, CancellationToken ct) =>
+            Run(new MatchCommand {UseScoreMultiplier=new UseScoreMultiplierCommand
+                {RequestId=requestId,SourceCardId=sourceCardId}},false,false,ct);
         public Task<MatchReply> UseRandomKevlarAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseRandomKevlar=new UseRandomKevlarCommand
                 {RequestId=requestId}},false,false,ct);

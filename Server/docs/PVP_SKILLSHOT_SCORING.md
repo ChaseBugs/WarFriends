@@ -84,11 +84,12 @@ replays the original result without recounting or rewinding accumulated score.
 Changed flags, unknown bits, malformed identity, and full replay capacity fail
 without awarding anything. Consumers receive a read-only counter view.
 
-This is not yet the live ScoreManager replacement. Progress gain, per-frame
-decay, bonus multipliers, bonus generation, controller lifetime, and all eligible
-host callbacks still need integration. No Client-supplied flags or scores are
-authorized by this class. Run `--pvp-score-state-only` for the score/count ledger
-checks; the complete Battle suite also includes them.
+This ledger is not yet the complete live ScoreManager replacement. The
+coordinator and host-confirmed player-hit path now add progress with
+server-owned card multipliers, but other eligible callbacks and the normal
+Unity score presentation remain open. No Client-supplied flags or scores are
+authorized by this class. Run `--pvp-score-state-only` for its ledger checks;
+the complete Battle suite also includes them.
 
 ## Source score-streak parameters and remaining authority
 
@@ -98,7 +99,9 @@ confirmed death receipt. It advances combo for a friendly player-owned death
 without awarding score, then includes that history on a later enemy death.
 Either score or progress capacity failure leaves the combo unchanged. The
 caller must establish the non-network callback, player ownership, base flags,
-victim faction, multiplier and scaled source game time from host evidence.
+victim faction and scaled source game time from host evidence; its explicit
+multiplier remains a source-fixture input until that callback reaches the live
+host path.
 Normal MatchEngine callbacks and Client presentation remain to be connected.
 
 `PvpScoreStreakPolicy` is now loaded with the combat package from the reviewed
@@ -123,9 +126,9 @@ and `GameLevel.displayNumber` is its zero-based index plus one. The pinned
 index of at least four and an opponent index of at least five, with a present
 opponent. It checks the complete 0-42 source rank domain. The reviewed policy
 artifact now pins both Client methods and the Constants sheet. The allocator
-already carries signed zero-based `PlayerLevel` for both players, but the
-running MatchEngine still needs a per-view clock binding before this gate can
-enable crate progress. `PvpBonusProgressCoordinator.CreateForOnlineManifest`
+carries signed zero-based `PlayerLevel` for both players, and the running
+MatchEngine now advances this state with its host frame clock.
+`PvpBonusProgressCoordinator.CreateForOnlineManifest`
 validates the host manifest and content, selects the local/opponent roster
 perspective, requires both rank indexes, and applies this gate to its single
 shared source-view ratio. It rejects co-op, prototype, missing rank, and
@@ -138,24 +141,27 @@ field and restore one on removal; assuming multiplicative stacking would change
 the source behavior. MainScene's STREAKBOOST row sets 1.25 for 60 seconds.
 CRATEBLOCKER sets zero for 60 seconds, overriding its class default of 0.8;
 therefore using that default would incorrectly permit progress gain. These
-serialized card identities/parameters remain to be bound to host card authority.
+these serialized identities and parameters are now bound to the host's two
+score multiplier card commands.
 
 `PvpScoreMultiplierState` now holds the two source values and 60-second timers
 for a two-player match. STREAKBOOST targets its owner and CRATEBLOCKER targets
 the opponent. Card use assigns a value instead of multiplying the previous
 one; a card whose timer reached zero resets its target to one on the next
 Update, matching each recovered Card script. The state rejects unknown owners,
-unknown cards, repeated active uses, and malformed game deltas. This is a
-host-owned effect state, but it is not yet connected to `MatchEngine` card
-reservation, the live skill-shot callback, or the normal Unity controller.
+unknown cards, repeated active uses, and malformed game deltas.
 The coordinator advances a copy of those timers with each staged PvP frame.
 `MatchEngine.ApplyResolvedPlayerDamage` now prepares its host-confirmed hit
 score using the coordinator's current multiplier, with no multiplier argument
 at that live call site. A source-fixture overload still takes an explicit
-multiplier for isolated tests. Card reservation and consumption have not yet
-been wired to `ApplyConfirmedScoreCard`, and other skill-shot callback paths
-still need to consume host-owned multiplier state before live scoring can be
-called complete.
+multiplier for isolated tests. `UseScoreMultiplierCommand` accepts only the
+two source card IDs. The Worker checks the authenticated owner, signed card
+selection and stock, records a retry-stable request receipt, spends the card,
+and then applies the host-owned multiplier. The normal Unity `CardManager`
+uses this command for both cards during a self-hosted match and does not run
+their Photon gameplay methods. Other skill-shot callback paths and the
+Client's timed card icon still need self-hosted authority/presentation before
+live score-streak gameplay is complete.
 
 During a running source Update, decay occurs first and the value is clamped to
 zero. Only `progress > 100` generates a bonus, subtracting 100 once; exactly 100
@@ -198,7 +204,7 @@ once, since an exact frame replay deliberately returns its original result.
 Run `Server/scripts/AuditPvpProgress.ps1` to regenerate
 `unity-pvp-progress-reference.json`; run the Battle executable with
 `--pvp-progress-only` for source comparison and state/replay checks.
-This state is not yet wired into MatchEngine. Full eligible skill-shot
-callbacks, original manager lifetime, authoritative scaled frame clock,
-multiplier card leases/overlap order, the 1.5-second spawn schedule, crate
-selection/ownership/collection, and Unity projection remain required.
+The state is partially wired into MatchEngine: host-confirmed player hits and
+the running PvP frame clock now use it. Full eligible skill-shot callbacks,
+original manager lifetime, crate selection/ownership/collection, and Unity
+projection remain required.

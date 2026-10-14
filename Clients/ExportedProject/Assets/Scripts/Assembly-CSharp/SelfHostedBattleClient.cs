@@ -683,6 +683,17 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         Apply(reply);
         return reply.Clone();
     }
+    public async Task<MatchReply> UseScoreMultiplierResult(string sourceCardId)
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        if (sourceCardId != "STREAKBOOST" && sourceCardId != "CRATEBLOCKER")
+            throw new ArgumentException("Unknown score multiplier card.", "sourceCardId");
+        MatchReply reply = await connection.UseScoreMultiplierAsync(
+            Guid.NewGuid().ToString("N"), sourceCardId, lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
     public async Task<MatchReply> UseRandomKevlarResult()
     {
         if (!IsConnected || connection == null)

@@ -34,8 +34,8 @@ internal static class LiveGrenadesBurstUdpTests
                 player with { PlayerLevel = 22 }).ToArray(),
             Allocations =
             [
-                new(attackerId, ["CLUSTERGRENADE"], [], [0], [-1], [-1]),
-                new(defenderId, ["CLUSTERGRENADE"], [], [0], [-1], [-1])
+                new(attackerId, ["CLUSTERGRENADE", "STREAKBOOST"], [], [0], [-1], [-1]),
+                new(defenderId, ["CLUSTERGRENADE", "CRATEBLOCKER"], [], [0], [-1], [-1])
             ]
         };
         content.ValidateAllocation(manifest);
@@ -102,9 +102,9 @@ internal static class LiveGrenadesBurstUdpTests
                 "both signed clients enter the Cluster Grenade match");
 
             var attackerCards = await attacker.SelectCardsAsync(
-                ["CLUSTERGRENADE"], [], [], [], [], timeout.Token);
+                ["CLUSTERGRENADE", "STREAKBOOST"], [], [], [], [], timeout.Token);
             var defenderCards = await defender.SelectCardsAsync(
-                ["CLUSTERGRENADE"], [], [], [], [], timeout.Token);
+                ["CLUSTERGRENADE", "CRATEBLOCKER"], [], [], [], [], timeout.Token);
             Check(attackerCards.Code == "cards-selected" &&
                   defenderCards.Code == "cards-selected",
                 "both clients select their Backend-allocated card stock: " +
@@ -119,22 +119,41 @@ internal static class LiveGrenadesBurstUdpTests
             }
             while (state.Snapshot.Phase != BattlePhase.Running);
 
+            string boostRequest = new('a', 32);
+            string blockRequest = new('b', 32);
+            var boost = await attacker.UseScoreMultiplierAsync(boostRequest,
+                "STREAKBOOST", timeout.Token);
+            var block = await defender.UseScoreMultiplierAsync(blockRequest,
+                "CRATEBLOCKER", timeout.Token);
+            Check(boost.Code == "score-card-active" &&
+                  block.Code == "score-card-active" &&
+                  block.Snapshot.CardActivations == 2,
+                "two authenticated SDK peers activate their own source score cards");
+            var boostReplay = await attacker.UseScoreMultiplierAsync(boostRequest,
+                "STREAKBOOST", timeout.Token);
+            var boostConflict = await defender.UseScoreMultiplierAsync(boostRequest,
+                "STREAKBOOST", timeout.Token);
+            Check(boostReplay.Code == "score-card-active" &&
+                  boostConflict.Code == "score-card-request-conflict" &&
+                  boostConflict.Snapshot.CardActivations == 2,
+                "UDP replay and cross-player conflict cannot spend score cards twice");
+
             float defenderHealth = state.Snapshot.Players[1].Health;
             string requestId = new('c', 32);
             var used = await attacker.UseGrenadesBurstAsync(requestId,
                 timeout.Token);
             Check(used.Code == "grenades-burst-active" &&
-                  used.Snapshot.CardActivations == 1,
+                  used.Snapshot.CardActivations == 3,
                 "signed Cluster Grenade command spends one selected card");
             var replay = await attacker.UseGrenadesBurstAsync(requestId,
                 timeout.Token);
             Check(replay.Code == used.Code &&
-                  replay.Snapshot.CardActivations == 1,
+                  replay.Snapshot.CardActivations == 3,
                 "request replay does not spend another card");
             var conflict = await defender.UseGrenadesBurstAsync(requestId,
                 timeout.Token);
             Check(conflict.Code == "grenades-burst-request-conflict" &&
-                  conflict.Snapshot.CardActivations == 1,
+                  conflict.Snapshot.CardActivations == 3,
                 "the other player cannot claim the same card request");
 
             IReadOnlyList<MatchEvent> attackerEvents;

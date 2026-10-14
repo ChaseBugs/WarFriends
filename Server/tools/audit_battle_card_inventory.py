@@ -559,7 +559,13 @@ def direct_client_routes():
         'code == "grenades-burst-active"' not in source or
         "connection.UseGrenadesBurstAsync(" not in sdk_bridge):
         raise ValueError("Cluster Grenade Client command path is incomplete")
-    if (len(names) != 30 or
+    if ("card is CardScorestreakBooster" not in use_card or
+        "card is CardScoreStreakKiller" not in use_card or
+        "client.UseScoreMultiplierResult(card.id)" not in body or
+        'code == "score-card-active"' not in source or
+        "connection.UseScoreMultiplierAsync(" not in sdk_bridge):
+        raise ValueError("Score multiplier Client command path is incomplete")
+    if (len(names) != 32 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >

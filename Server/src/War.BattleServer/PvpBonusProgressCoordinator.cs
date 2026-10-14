@@ -98,6 +98,11 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         lock (gate) return multipliers.ForPlayer(ownerId);
     }
 
+    internal bool CanUseScoreCard(string ownerId, string cardId)
+    {
+        lock (gate) return !disposed && multipliers.CanUseCard(ownerId, cardId);
+    }
+
     internal void ApplyConfirmedScoreCard(string ownerId, string cardId)
     {
         lock (gate)

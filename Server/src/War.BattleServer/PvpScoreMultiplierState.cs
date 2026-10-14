@@ -45,6 +45,11 @@ public sealed class PvpScoreMultiplierState
     public float ForPlayer(string playerId) => multipliers.TryGetValue(playerId, out float value)
         ? value : throw new InvalidDataException("Multiplier target is outside the match.");
 
+    public bool CanUseCard(string ownerId, string cardId) =>
+        multipliers.ContainsKey(ownerId) &&
+        (cardId is StreakBoost or CrateBlocker) &&
+        !activeCards.ContainsKey(cardId + ":" + ownerId);
+
     public void UseCard(string ownerId, string cardId)
     {
         if (!multipliers.ContainsKey(ownerId))
@@ -53,7 +58,7 @@ public sealed class PvpScoreMultiplierState
             throw new InvalidDataException("Card has no reviewed score multiplier.");
 
         string targetId = cardId == StreakBoost ? ownerId : OpponentOf(ownerId);
-        if (activeCards.ContainsKey(cardId + ":" + ownerId))
+        if (!CanUseCard(ownerId, cardId))
             throw new InvalidOperationException("This card is already active for its owner.");
 
         activeCards.Add(cardId + ":" + ownerId, new CardTimer(ownerId, targetId, cardId));

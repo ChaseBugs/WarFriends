@@ -12,7 +12,7 @@ resolved through the component's MonoScript GUID and `.cs.meta`.
 A dash in the reviewed column means the server catalog has not
 pinned that class/ID pair. Disabled rows may lack a scene component.
 A direct Client route is only a dispatch path, not end-to-end proof.
-The dispatcher currently has 30 card classes and
+The dispatcher currently has 32 card classes and
 7 source-specific unit-card IDs. While connected to
 the self-hosted match, unsupported cards are rejected before the
 recovered Photon fallback; they need host commands before admission.
@@ -64,7 +64,7 @@ recovered Photon fallback; they need host commands before admission.
 | `TURRET` | 1 | `CardTurret` | no | no |
 | `RANDOMKEVLAR` | 1 | `CardRandomKevlar` | yes | yes |
 | `EXPLOSIVETIMING` | 1 | `CardRocketTiming` | no | no |
-| `STREAKBOOST` | 1 | `CardScorestreakBooster` | no | no |
+| `STREAKBOOST` | 1 | `CardScorestreakBooster` | yes | yes |
 | `DESTROYSHIELD` | 1 | `CardShieldDestroyer` | yes | yes |
 | `SHIELDSPAWNER` | 1 | `CardShieldsSpawner` | yes | yes |
 | `SHIELDSHEALTH` | 2 | `CardShieldsUp` | yes | yes |
@@ -75,7 +75,7 @@ recovered Photon fallback; they need host commands before admission.
 | `SICKNESS` | 1 | `CardSickness` | no | no |
 | `CRITICALS` | 1 | `CardCriticalInsurance` | no | no |
 | `SUPERSOLDIERS` | 1 | `CardHealthForSoldiers` | yes | yes |
-| `CRATEBLOCKER` | 1 | `CardScoreStreakKiller` | no | no |
+| `CRATEBLOCKER` | 1 | `CardScoreStreakKiller` | yes | yes |
 | `SHIELDGENERATOR` | 1 | `CardShieldGenerator` | yes | yes |
 | `PLAGUE` | 1 | `CardPoisonedArmy` | no | no |
 

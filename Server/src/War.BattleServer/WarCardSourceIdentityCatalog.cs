@@ -28,6 +28,8 @@ public static class WarCardSourceIdentityCatalog
             ["CardHeavyTurret"]=["HEAVYTURRET"],
             ["CardDecoy"]=["DECOY"],
             ["CardSlowdown"]=["SLOWDOWN"],
+            ["CardScorestreakBooster"]=["STREAKBOOST"],
+            ["CardScoreStreakKiller"]=["CRATEBLOCKER"],
             ["CardMineYourStep"]=["MINEENEMY"],
             ["CardShieldsUp"]=["SHIELDSHEALTH"],
             ["CardAirstrike"]=["AIRSTRIKE"],

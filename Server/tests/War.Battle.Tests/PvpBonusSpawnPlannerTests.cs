@@ -873,6 +873,57 @@ internal static class PvpBonusSpawnPlannerTests
             return match;
         }
 
+        var boostEngine = BonusCardMatch("STREAKBOOST");
+        var boostRequest = Id(656);
+        var boostCommand = new MatchCommand {CommandId = 3,
+            UseScoreMultiplier = new UseScoreMultiplierCommand
+            {
+                RequestId = boostRequest,
+                SourceCardId = PvpScoreMultiplierState.StreakBoost
+            }};
+        Check(boostEngine.Command(localId, boostCommand).Code == "score-card-active" &&
+              boostEngine.BonusProgress.ConfirmedMultiplierFor(localId) == 1.25f &&
+              boostEngine.BonusProgress.ConfirmedMultiplierFor(enemyId) == 1f,
+            "selected Streak Boost spends host inventory and buffs its owner");
+        Check(boostEngine.Command(localId, new MatchCommand {CommandId = 4,
+                  UseScoreMultiplier = boostCommand.UseScoreMultiplier}).Code ==
+                  "score-card-active" &&
+              boostEngine.Command(enemyId, new MatchCommand {CommandId = 3,
+                  UseScoreMultiplier = boostCommand.UseScoreMultiplier}).Code ==
+                  "score-card-request-conflict",
+            "card receipt replay cannot spend twice or cross player ownership");
+        Check(boostEngine.Command(localId, new MatchCommand {CommandId = 5,
+                  UseScoreMultiplier = new UseScoreMultiplierCommand
+                  {
+                      RequestId = Id(657), SourceCardId = "CRATEBLOCKER"
+                  }}).Code == "score-card-not-selected",
+            "one selected card cannot activate the other score effect");
+
+        var blockerEngine = BonusCardMatch("CRATEBLOCKER");
+        var blockerCommand = new MatchCommand {CommandId = 3,
+            UseScoreMultiplier = new UseScoreMultiplierCommand
+            {
+                RequestId = Id(658),
+                SourceCardId = PvpScoreMultiplierState.CrateBlocker
+            }};
+        Check(blockerEngine.Command(localId, blockerCommand).Code ==
+                  "score-card-active" &&
+              blockerEngine.BonusProgress.ConfirmedMultiplierFor(localId) == 1f &&
+              blockerEngine.BonusProgress.ConfirmedMultiplierFor(enemyId) == 0f,
+            "selected Crate Blocker targets the opponent's bonus progress");
+        Check(blockerEngine.Command(localId, new MatchCommand {CommandId = 4,
+                  UseScoreMultiplier = new UseScoreMultiplierCommand
+                  {
+                      RequestId = Id(660), SourceCardId = "CRATEBLOCKER"
+                  }}).Code == "score-card-already-active",
+            "another use while active cannot consume a second card");
+        for (ulong scoreTick = 61; scoreTick <= 1870; scoreTick++)
+            blockerEngine.Advance(scoreTick);
+        Check(blockerEngine.BonusProgress.ConfirmedMultiplierFor(enemyId) == 1f,
+            "host frame clock expires the score block after 60 seconds: " +
+            blockerEngine.BonusProgress.ConfirmedMultiplierFor(enemyId) + "/" +
+            blockerEngine.Snapshot().Phase + "/" + blockerEngine.Snapshot().ServerTick);
+
         var cardEngine = BonusCardMatch("CardGrenadesBurst");
         var cardRequest = Id(659);
         var cardCommand = new MatchCommand {CommandId = 3,
