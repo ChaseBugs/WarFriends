@@ -163,6 +163,15 @@ idempotent after termination. The normal Worker uses this construction path,
 but does not yet route score/delay maturity, box collision/death or Client
 events; other effects remain closed.
 
+`PvpPlayerHitSkillShotPolicy` now classifies the two confirmed player-damage
+branches of `SkillShotControllerPlayer.PlayerOnDamage`: a different player
+owner earns `EnemyPlayerHit` and, only when the victim's source state is
+Walking, `OnTheMove`; a hostile AIObject earns its owning player
+`ArmyPlayerHit`. Poison and Immortal return before those branches. Flame stays
+closed until its real-time six-hit throttle is reproduced. The policy requires
+host-proven damage ownership, faction and walking state; it does not yet
+mutate the match score or streak.
+
 ## Collection contract to implement next
 
 `KillStreakBonusBox.OnInstancied` sets health to one and clears `onGround`.

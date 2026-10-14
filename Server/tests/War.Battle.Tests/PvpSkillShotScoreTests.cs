@@ -29,6 +29,40 @@ internal static class PvpSkillShotScoreTests
             "source Sabotage base flags compose 46 points or 106 for a Tank");
         Check(scores.PointsForConfirmedFlags(0) == 0,
             "an empty source skill-shot flag set scores zero");
+        int standingHit = PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+            CombatDamageType.Shot, victimWalking: false);
+        int movingHit = PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+            CombatDamageType.Explosion, victimWalking: true);
+        Check(standingHit == PvpPlayerHitSkillShotPolicy.EnemyPlayerHit &&
+              scores.PointsForConfirmedFlags(standingHit) == 6,
+            "confirmed player-owned damage credits EnemyPlayerHit");
+        Check(movingHit == (PvpPlayerHitSkillShotPolicy.EnemyPlayerHit |
+                            PvpPlayerHitSkillShotPolicy.OnTheMove) &&
+              scores.PointsForConfirmedFlags(movingHit) == 10,
+            "a source-verified walking victim adds OnTheMove");
+        Check(PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+                  CombatDamageType.Poison, true) == 0 &&
+              PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+                  CombatDamageType.Immortal, true) == 0 &&
+              PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+                  CombatDamageType.Flame, true) == 0,
+            "source exclusions and unverified flame throttle cannot mint points");
+        int armyHit = PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
+            CombatDamageType.Shot, opposingFractions: true);
+        Check(armyHit == PvpPlayerHitSkillShotPolicy.ArmyPlayerHit &&
+              scores.PointsForConfirmedFlags(armyHit) == 10,
+            "enemy army damage credits its owning player's ArmyPlayerHit row");
+        Check(PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
+                  CombatDamageType.Explosion, opposingFractions: false) == 0 &&
+              PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
+                  CombatDamageType.Poison, opposingFractions: true) == 0 &&
+              PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
+                  CombatDamageType.Flame, opposingFractions: true) == 0,
+            "friendly and unverified army damage cannot mint source points");
+        try { PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+                (CombatDamageType)99, false);
+            throw new Exception("Unknown damage type produced a PvP skill shot."); }
+        catch (InvalidDataException) { checks++; }
         foreach (int invalid in new[] { -1, 1024, int.MaxValue })
         {
             try { scores.PointsForConfirmedFlags(invalid); throw new Exception("Unknown score flags accepted."); }

@@ -22,6 +22,11 @@ deaths add the resulting combo flag and publish score and progress in the same
 transaction. Replay binds owner, base flags, source game time, faction and
 multiplier. This remains an unbound source-view state transition: it does not
 infer those inputs from Client packets or partial MatchEngine death events.
+The source player-damage callback now has a host-only flag classifier for
+`EnemyPlayerHit`, walking-victim `OnTheMove`, and hostile-army
+`ArmyPlayerHit`. Poison and Immortal are excluded; Flame stays closed until
+its timer throttle is verified. MatchEngine score/streak publication remains
+unbound to this classifier.
 The online crate gate now derives from the pinned Client `dropCreates`,
 `isNoob`, level display conversion and Constants row four. The two rank
 comparisons are intentionally different, and the policy rejects rank indexes
