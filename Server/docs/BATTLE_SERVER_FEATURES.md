@@ -32,6 +32,13 @@ startup. An isolated Unity 2018.3 Editor probe matched all ten actual
 `BoxCollider.bounds` within 0.00002 world units. Host area/axis draws can
 resolve a source position; falling box physics, map contact and crate
 publication remain unverified.
+Matured delay receipts can now produce one atomic server-side bonus/placement
+plan using validated roster perspective, the reviewed selection history and
+source map areas. Replays do not redraw; invalid coordinates or weights do not
+consume FIFO overrides. The source's invalid endpoint index is retained for
+history but mapped to its actual prefab for prospective publication. The
+normal MatchEngine callback, authoritative dynamic weight inputs, box entity,
+physics, collection, rewards and Unity rendering remain open.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

@@ -15,10 +15,10 @@ public sealed class PvpBonusSelectionState
     private const int MaximumQueuedBonuses = 64;
     private readonly PvpBonusCatalog catalog;
     private readonly int maximumReceipts;
-    private readonly Queue<int> allies = new();
-    private readonly Queue<int> enemy = new();
-    private readonly Dictionary<string, SavedEnqueue> enqueues = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, SavedSelection> selections = new(StringComparer.Ordinal);
+    private Queue<int> allies = new();
+    private Queue<int> enemy = new();
+    private Dictionary<string, SavedEnqueue> enqueues = new(StringComparer.Ordinal);
+    private Dictionary<string, SavedSelection> selections = new(StringComparer.Ordinal);
     private sealed record SavedEnqueue(PvpBonusSide Side, int Index);
     private sealed record SavedSelection(PvpBonusSide Side, PvpBonusWeightContext Context, PvpBonusSelection Result);
 
@@ -95,6 +95,19 @@ public sealed class PvpBonusSelectionState
         if (queue.Count > 0) queue.Dequeue();
         LastSourceIndex = sourceIndex;
         return result;
+    }
+
+    internal PvpBonusSelectionState PrepareSelectionCopy(string receiptId, PvpBonusSide side,
+        PvpBonusWeightContext context, Func<float, float> hostDraw,
+        out PvpBonusSelection result)
+    {
+        var candidate = (PvpBonusSelectionState)MemberwiseClone();
+        candidate.allies = new Queue<int>(allies);
+        candidate.enemy = new Queue<int>(enemy);
+        candidate.enqueues = new Dictionary<string, SavedEnqueue>(enqueues, StringComparer.Ordinal);
+        candidate.selections = new Dictionary<string, SavedSelection>(selections, StringComparer.Ordinal);
+        result = candidate.SelectConfirmedBonus(receiptId, side, context, hostDraw);
+        return candidate;
     }
 
     public void ClearQueuesForGameStart()

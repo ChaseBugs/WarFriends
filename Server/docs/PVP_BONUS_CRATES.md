@@ -109,6 +109,22 @@ and pickup still need runtime proof.
 Regenerate/check with `python Server/tools/extract_pvp_bonus_spawn_areas.py
 --check`; focused server checks use `--pvp-bonus-spawn-areas-only`.
 
+`PvpBonusSpawnPlanner` now joins one matured host delay receipt with the
+source's shared selection history and one map position. It derives the
+owner's fraction and rank plus the local display rank from the validated
+match manifest; the serialized host actor must establish Arena/friendly mode,
+Gold count, first-two low ammunition and random draws. The planner copies
+selection queues and receipts before attempting placement, then publishes
+both together. A failed area or weighted draw leaves the queue and last index
+untouched; a repeated receipt returns the original plan. On the source's
+inclusive upper-endpoint fallthrough, the plan retains `SourceIndex=9` for
+future exclusion history and uses the actual prefab's valid index eight for
+publication. This explicit repair prevents an out-of-range prefab lookup in
+the replacement Client; it does not claim exact original RPC parity at that
+broken endpoint. The plan is not yet an entity, network event, physics body,
+collection result, or Backend reward. Run `--pvp-bonus-spawn-plan-only` for the
+focused transaction checks.
+
 ## Collection contract to implement next
 
 `KillStreakBonusBox.OnInstancied` sets health to one and clears `onGround`.
