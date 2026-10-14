@@ -147,6 +147,9 @@ message UseGrenadesBurstCommand { string request_id = 1; }
 // Only STREAKBOOST and CRATEBLOCKER are accepted. The host owns target,
 // multiplier and lifetime; the packet cannot assert them.
 message UseScoreMultiplierCommand { string request_id = 1; string source_card_id = 2; }
+// Four source CardIncreaseBonusChance identities. The host resolves the
+// referenced bonus prefab and queues it for the owner's next box selection.
+message QueueBonusCardCommand { string request_id = 1; string source_card_id = 2; }
 message UseRandomKevlarCommand { string request_id = 1; }
 // The host resolves unit, level, rows, and placement from this source Card.id.
 message UseUnitCardCommand { string request_id = 1; string source_card_id = 2; }
@@ -195,6 +198,7 @@ message MatchCommand {
     UseSabotageCommand use_sabotage = 51;
     UseGrenadesBurstCommand use_grenades_burst = 52;
     UseScoreMultiplierCommand use_score_multiplier = 53;
+    QueueBonusCardCommand queue_bonus_card = 54;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.

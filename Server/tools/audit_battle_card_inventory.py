@@ -527,6 +527,34 @@ def check_random_kevlar_source():
         raise ValueError("RANDOMKEVLAR soldier count or armor source changed")
 
 
+def check_queued_bonus_card_source():
+    scene = SCENE.read_text(encoding="utf-8-sig")
+    manager = re.search(r"(?m)^  bonusesPrefabs:\n((?:  - .*\n){9})", scene)
+    if manager is None:
+        raise ValueError("Nine source bonus prefabs are missing")
+    order = re.findall(r"guid: ([0-9a-f]{32})", manager.group(1))
+    expected = {
+        "HEALTHCRATE": (1, "210cd2d62a418ae4c92af5fa9f2bbd21"),
+        "TURRETCRATE": (5, "d89f6f627054a494cbd9862fb8752513"),
+        "KEVLARCRATE": (6, "ac8b905f5a7ce0c4a94b769453f4b52b"),
+        "AMMOCRATE": (8, "4253d98e2148db24cbdab745a1472a7d"),
+    }
+    catalog = (ROOT / "Server/src/War.BattleServer/QueuedBonusCardSourceCatalog.cs")
+    catalog_source = catalog.read_text(encoding="utf-8-sig")
+    for source_id, (index, guid) in expected.items():
+        block = next((item for item in re.split(r"(?m)^--- ", scene)
+                      if re.search(rf"(?m)^  id: {source_id}$", item)), None)
+        if (block is None or order[index] != guid or
+            f"forBonus: {{fileID: 11409266, guid: {guid}, type: 2}}" not in block or
+            f'["{source_id}"]' not in catalog_source or guid not in catalog_source):
+            raise ValueError(f"Queued bonus card lost source index: {source_id}")
+    card = (ASSETS / "Scripts/Assembly-CSharp/CardIncreaseBonusChance.cs")
+    behavior = card.read_text(encoding="utf-8-sig")
+    if ("bonusesPrefabs.IndexOf(forBonus)" not in behavior or
+        "EnqueueNewBonus(num, fraction)" not in behavior):
+        raise ValueError("Queued bonus card behavior changed")
+
+
 def direct_client_routes():
     source = CARD_MANAGER.read_text(encoding="utf-8-sig")
     use_card = source.split("public void UseCard(Card card)", 1)[1]
@@ -565,7 +593,12 @@ def direct_client_routes():
         'code == "score-card-active"' not in source or
         "connection.UseScoreMultiplierAsync(" not in sdk_bridge):
         raise ValueError("Score multiplier Client command path is incomplete")
-    if (len(names) != 32 or
+    if ("card is CardIncreaseBonusChance" not in use_card or
+        "client.QueueBonusCardResult(card.id)" not in body or
+        'code == "bonus-card-queued"' not in source or
+        "connection.QueueBonusCardAsync(" not in sdk_bridge):
+        raise ValueError("Queued bonus card Client command path is incomplete")
+    if (len(names) != 33 or
         "if (selfHosted != null && selfHosted.IsConnected)" not in use_card or
         "Self-hosted card is not supported yet" not in use_card or
         use_card.index("Self-hosted card is not supported yet") >
@@ -593,6 +626,7 @@ def render():
     check_shield_spawner_source()
     check_backstab_source()
     check_random_kevlar_source()
+    check_queued_bonus_card_source()
     classes = reviewed_classes()
     scene = scene_classes({row[0] for row in rows})
     routes, unit_card_ids = direct_client_routes()

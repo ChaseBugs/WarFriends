@@ -924,6 +924,61 @@ internal static class PvpBonusSpawnPlannerTests
             blockerEngine.BonusProgress.ConfirmedMultiplierFor(enemyId) + "/" +
             blockerEngine.Snapshot().Phase + "/" + blockerEngine.Snapshot().ServerTick);
 
+        Check(QueuedBonusCardSourceCatalog.IndexFor("HEALTHCRATE", content.PvpBonuses) == 1 &&
+              QueuedBonusCardSourceCatalog.IndexFor("TURRETCRATE", content.PvpBonuses) == 5 &&
+              QueuedBonusCardSourceCatalog.IndexFor("KEVLARCRATE", content.PvpBonuses) == 6 &&
+              QueuedBonusCardSourceCatalog.IndexFor("AMMOCRATE", content.PvpBonuses) == 8,
+            "four source card prefab references resolve to the reviewed bonus order");
+        var healthCardEngine = BonusCardMatch("HEALTHCRATE");
+        var healthRequest = Id(665);
+        var healthCommand = new MatchCommand {CommandId = 3,
+            QueueBonusCard = new QueueBonusCardCommand
+            {
+                RequestId = healthRequest, SourceCardId = "HEALTHCRATE"
+            }};
+        Check(healthCardEngine.Command(localId, new MatchCommand {CommandId = 3,
+                  QueueBonusCard = new QueueBonusCardCommand
+                  {
+                      RequestId = Id(663), SourceCardId = "UNKNOWNCRATE"
+                  }}).Code == "invalid-bonus-card-source" &&
+              healthCardEngine.Command(localId, new MatchCommand {CommandId = 4,
+                  QueueBonusCard = new QueueBonusCardCommand
+                  {
+                      RequestId = Id(664), SourceCardId = "AMMOCRATE"
+                  }}).Code == "bonus-card-not-selected" &&
+              healthCardEngine.BonusPlanner.QueuedCount(PvpBonusSide.Allies) == 0,
+            "packet aliases cannot choose another prefab or enqueue a box");
+        healthCommand.CommandId = 5;
+        Check(healthCardEngine.Command(localId, healthCommand).Code ==
+                  "bonus-card-queued" &&
+              healthCardEngine.BonusPlanner.QueuedCount(PvpBonusSide.Allies) == 1 &&
+              healthCardEngine.Snapshot().CardActivations == 1,
+            "selected Health Crate card queues one host-owned bonus and spends stock");
+        Check(healthCardEngine.Command(localId, new MatchCommand {CommandId = 6,
+                  QueueBonusCard = healthCommand.QueueBonusCard}).Code ==
+                  "bonus-card-queued" &&
+              healthCardEngine.Command(enemyId, new MatchCommand {CommandId = 3,
+                  QueueBonusCard = healthCommand.QueueBonusCard}).Code ==
+                  "bonus-card-request-conflict" &&
+              healthCardEngine.BonusPlanner.QueuedCount(PvpBonusSide.Allies) == 1,
+            "queued card replay cannot enqueue twice or cross ownership");
+        var forcedHealth = healthCardEngine.BonusPlanner.PlanMatured(first, 0,
+            context, draw);
+        Check(forcedHealth.PrefabIndex == 1 &&
+              forcedHealth.SourceIndex == 1 &&
+              healthCardEngine.BonusPlanner.QueuedCount(PvpBonusSide.Allies) == 0,
+            "the next matured box consumes the Health Crate card's exact prefab");
+        var fullQueueEngine = BonusCardMatch("HEALTHCRATE");
+        for (int queueItem = 0; queueItem < 64; queueItem++)
+            fullQueueEngine.BonusPlanner.EnqueueConfirmedBonus(Id(2000 + queueItem),
+                localId, 1);
+        Check(fullQueueEngine.Command(localId, new MatchCommand {CommandId = 3,
+                  QueueBonusCard = healthCommand.QueueBonusCard}).Code ==
+                  "bonus-queue-full" &&
+              fullQueueEngine.Snapshot().CardActivations == 0 &&
+              fullQueueEngine.BonusPlanner.QueuedCount(PvpBonusSide.Allies) == 64,
+            "a full next-box queue rejects before card inventory is spent");
+
         var cardEngine = BonusCardMatch("CardGrenadesBurst");
         var cardRequest = Id(659);
         var cardCommand = new MatchCommand {CommandId = 3,

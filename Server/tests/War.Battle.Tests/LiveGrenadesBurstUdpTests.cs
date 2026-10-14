@@ -34,7 +34,7 @@ internal static class LiveGrenadesBurstUdpTests
                 player with { PlayerLevel = 22 }).ToArray(),
             Allocations =
             [
-                new(attackerId, ["CLUSTERGRENADE", "STREAKBOOST"], [], [0], [-1], [-1]),
+                new(attackerId, ["CLUSTERGRENADE", "STREAKBOOST", "HEALTHCRATE"], [], [0], [-1], [-1]),
                 new(defenderId, ["CLUSTERGRENADE", "CRATEBLOCKER"], [], [0], [-1], [-1])
             ]
         };
@@ -102,7 +102,7 @@ internal static class LiveGrenadesBurstUdpTests
                 "both signed clients enter the Cluster Grenade match");
 
             var attackerCards = await attacker.SelectCardsAsync(
-                ["CLUSTERGRENADE", "STREAKBOOST"], [], [], [], [], timeout.Token);
+                ["CLUSTERGRENADE", "STREAKBOOST", "HEALTHCRATE"], [], [], [], [], timeout.Token);
             var defenderCards = await defender.SelectCardsAsync(
                 ["CLUSTERGRENADE", "CRATEBLOCKER"], [], [], [], [], timeout.Token);
             Check(attackerCards.Code == "cards-selected" &&
@@ -159,22 +159,35 @@ internal static class LiveGrenadesBurstUdpTests
                   boostConflict.Snapshot.CardActivations == 2,
                 "UDP replay and cross-player conflict cannot spend score cards twice");
 
+            string queuedRequest = new('d', 32);
+            var queued = await attacker.QueueBonusCardAsync(queuedRequest,
+                "HEALTHCRATE", timeout.Token);
+            var queuedReplay = await attacker.QueueBonusCardAsync(queuedRequest,
+                "HEALTHCRATE", timeout.Token);
+            var queuedConflict = await defender.QueueBonusCardAsync(queuedRequest,
+                "HEALTHCRATE", timeout.Token);
+            Check(queued.Code == "bonus-card-queued" &&
+                  queuedReplay.Code == "bonus-card-queued" &&
+                  queuedConflict.Code == "bonus-card-request-conflict" &&
+                  queuedConflict.Snapshot.CardActivations == 3,
+                "authenticated Health Crate queues once across UDP retries");
+
             float defenderHealth = state.Snapshot.Players[1].Health;
             string requestId = new('c', 32);
             var used = await attacker.UseGrenadesBurstAsync(requestId,
                 timeout.Token);
             Check(used.Code == "grenades-burst-active" &&
-                  used.Snapshot.CardActivations == 3,
+                  used.Snapshot.CardActivations == 4,
                 "signed Cluster Grenade command spends one selected card");
             var replay = await attacker.UseGrenadesBurstAsync(requestId,
                 timeout.Token);
             Check(replay.Code == used.Code &&
-                  replay.Snapshot.CardActivations == 3,
+                  replay.Snapshot.CardActivations == 4,
                 "request replay does not spend another card");
             var conflict = await defender.UseGrenadesBurstAsync(requestId,
                 timeout.Token);
             Check(conflict.Code == "grenades-burst-request-conflict" &&
-                  conflict.Snapshot.CardActivations == 3,
+                  conflict.Snapshot.CardActivations == 4,
                 "the other player cannot claim the same card request");
 
             IReadOnlyList<MatchEvent> attackerEvents;

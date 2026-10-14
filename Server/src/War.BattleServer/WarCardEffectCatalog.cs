@@ -1,6 +1,6 @@
 namespace War.BattleServer;
 
-public enum WarCardEffectKind { SpawnUnit, SpawnDeployable, Damage, Heal, Shield, Status, Ammo, Modifier }
+public enum WarCardEffectKind { SpawnUnit, SpawnDeployable, Damage, Heal, Shield, Status, Ammo, Modifier, BonusQueue }
 public sealed record WarCardEffectDefinition(string CardId,WarCardEffectKind Kind,bool RequiresTarget,bool ConsumesReservation);
 
 /// <summary>Explicit classification of recovered gameplay Card classes. Unlisted cards stay closed.</summary>
@@ -43,7 +43,8 @@ public static class WarCardEffectCatalog
             ["CardHealthForSoldiers"]=new("CardHealthForSoldiers",WarCardEffectKind.Modifier,false,true),
             ["CardHealthForMachines"]=new("CardHealthForMachines",WarCardEffectKind.Modifier,false,true),
             ["CardScorestreakBooster"]=new("CardScorestreakBooster",WarCardEffectKind.Modifier,false,true),
-            ["CardScoreStreakKiller"]=new("CardScoreStreakKiller",WarCardEffectKind.Modifier,false,true)
+            ["CardScoreStreakKiller"]=new("CardScoreStreakKiller",WarCardEffectKind.Modifier,false,true),
+            ["CardIncreaseBonusChance"]=new("CardIncreaseBonusChance",WarCardEffectKind.BonusQueue,false,true)
         };
     public static bool TryGet(string cardId,out WarCardEffectDefinition definition)
         =>definitions.TryGetValue(cardId??"",out definition!);

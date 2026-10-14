@@ -533,6 +533,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 					card is CardBackstab || card is CardSabotage ||
 				card is CardGrenadesBurst ||
 				card is CardScorestreakBooster || card is CardScoreStreakKiller ||
+				card is CardIncreaseBonusChance ||
 					card is CardRandomKevlar ||
 				IsSupportedSelfHostedUnitCard(card)))
 			{
@@ -600,6 +601,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			else if (card is CardGrenadesBurst) reply = await client.UseGrenadesBurstResult();
 			else if (card is CardScorestreakBooster || card is CardScoreStreakKiller)
 				reply = await client.UseScoreMultiplierResult(card.id);
+			else if (card is CardIncreaseBonusChance)
+				reply = await client.QueueBonusCardResult(card.id);
 			else if (card is CardRandomKevlar) reply = await client.UseRandomKevlarResult();
 			else if (card is CardHealingStorm) reply = await client.UseHealingStormResult();
 			else if (card is CardShieldsUp) reply = await client.UseShieldsUpResult();
@@ -654,6 +657,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		if (card is CardGrenadesBurst) return code == "grenades-burst-active";
 		if (card is CardScorestreakBooster || card is CardScoreStreakKiller)
 			return code == "score-card-active";
+		if (card is CardIncreaseBonusChance) return code == "bonus-card-queued";
 		if (card is CardRandomKevlar) return code == "random-kevlar-applied" || code == "random-kevlar-no-target";
 		if (card is CardHealingStorm) return code == "healing-storm-applied";
 		if (card is CardShieldsUp) return code == "shields-up-applied";

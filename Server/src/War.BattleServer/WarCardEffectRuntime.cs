@@ -37,7 +37,8 @@ public sealed class WarCardEffectRuntime
         bool existingOwner = ownerStacks.TryGetValue(ownerPlayerId, out var existingStack);
         WarCardEffectStack stack = existingStack ?? new WarCardEffectStack();
         if (!stack.TryApply(definition.CardId,
-                stackable: definition.Kind is WarCardEffectKind.Status or WarCardEffectKind.Modifier))
+                stackable: definition.Kind is WarCardEffectKind.Status or
+                    WarCardEffectKind.Modifier or WarCardEffectKind.BonusQueue))
             return false;
         if (!existingOwner) ownerStacks.Add(ownerPlayerId, stack);
         active.Add(effectId, new ActiveWarCardEffect(effectId, ownerPlayerId, definition,

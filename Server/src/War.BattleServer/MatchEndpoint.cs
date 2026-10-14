@@ -354,6 +354,12 @@ public sealed class MatchEndpoint
                             RequestId=command.UseScoreMultiplier.RequestId,
                             SourceCardId=command.UseScoreMultiplier.SourceCardId
                         };break;
+                    case MatchCommand.IntentOneofCase.QueueBonusCard:
+                        clean.QueueBonusCard=new QueueBonusCardCommand
+                        {
+                            RequestId=command.QueueBonusCard.RequestId,
+                            SourceCardId=command.QueueBonusCard.SourceCardId
+                        };break;
                     case MatchCommand.IntentOneofCase.UseRandomKevlar:
                         clean.UseRandomKevlar=new UseRandomKevlarCommand
                             {RequestId=command.UseRandomKevlar.RequestId};break;

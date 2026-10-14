@@ -2226,6 +2226,9 @@ public sealed partial class MatchEngine : IMatchRuntime
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseScoreMultiplier)
             return UseScoreMultiplier(p,c.UseScoreMultiplier.RequestId,
                 c.UseScoreMultiplier.SourceCardId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.QueueBonusCard)
+            return QueueBonusCard(p,c.QueueBonusCard.RequestId,
+                c.QueueBonusCard.SourceCardId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseRandomKevlar)
             return UseRandomKevlar(p,c.UseRandomKevlar.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseHealingStorm)

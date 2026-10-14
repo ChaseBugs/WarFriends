@@ -57,6 +57,18 @@ public sealed class PvpBonusSelectionState
         queue.Enqueue(sourceIndex);
     }
 
+    internal PvpBonusSelectionState PrepareEnqueueCopy(string receiptId,
+        PvpBonusSide side, int sourceIndex)
+    {
+        var candidate = (PvpBonusSelectionState)MemberwiseClone();
+        candidate.allies = new Queue<int>(allies);
+        candidate.enemy = new Queue<int>(enemy);
+        candidate.enqueues = new Dictionary<string, SavedEnqueue>(enqueues, StringComparer.Ordinal);
+        candidate.selections = new Dictionary<string, SavedSelection>(selections, StringComparer.Ordinal);
+        candidate.EnqueueConfirmedBonus(receiptId, side, sourceIndex);
+        return candidate;
+    }
+
     public PvpBonusSelection SelectConfirmedBonus(string receiptId, PvpBonusSide side,
         PvpBonusWeightContext context, Func<float, float> hostDraw)
     {

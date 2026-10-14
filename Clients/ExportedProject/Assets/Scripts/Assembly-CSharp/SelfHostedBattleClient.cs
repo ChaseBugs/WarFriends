@@ -694,6 +694,18 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         Apply(reply);
         return reply.Clone();
     }
+    public async Task<MatchReply> QueueBonusCardResult(string sourceCardId)
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        if (sourceCardId != "HEALTHCRATE" && sourceCardId != "TURRETCRATE" &&
+            sourceCardId != "KEVLARCRATE" && sourceCardId != "AMMOCRATE")
+            throw new ArgumentException("Unknown queued bonus card.", "sourceCardId");
+        MatchReply reply = await connection.QueueBonusCardAsync(
+            Guid.NewGuid().ToString("N"), sourceCardId, lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
     public async Task<MatchReply> UseRandomKevlarResult()
     {
         if (!IsConnected || connection == null)

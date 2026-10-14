@@ -50,6 +50,7 @@ internal sealed class PvpBonusSpawnPlanner
             ?? throw new InvalidDataException("Bonus crate map differs from the admitted match.");
         areas = content.PvpBonusSpawnAreas;
         bonusCatalog = content.PvpBonuses;
+        QueuedBonusCardSourceCatalog.Validate(bonusCatalog);
         _ = areas.ForMap(map);
         matchId = admitted.MatchId;
         owners = new Dictionary<string, (PvpBonusSide, int)>(StringComparer.Ordinal);
@@ -69,6 +70,8 @@ internal sealed class PvpBonusSpawnPlanner
     internal int LastSourceIndex { get { lock (gate) return selection.LastSourceIndex; } }
     internal string MatchId => matchId;
     internal int QueuedCount(PvpBonusSide side) { lock (gate) return selection.QueuedCount(side); }
+    internal int SourceIndexForQueuedCard(string sourceCardId) =>
+        QueuedBonusCardSourceCatalog.IndexFor(sourceCardId, bonusCatalog);
     internal int PlanCount { get { lock (gate) return plans.Count; } }
     internal int ActiveBoxCount { get { lock (gate) return boxes.ActiveCount; } }
     internal int BoxReceiptCount { get { lock (gate) return boxes.ReceiptCount; } }
@@ -187,6 +190,24 @@ internal sealed class PvpBonusSpawnPlanner
             if (!owners.TryGetValue(ownerId, out var owner))
                 throw new InvalidDataException("Queued bonus owner is outside the admitted roster.");
             selection.EnqueueConfirmedBonus(receiptId, owner.Side, sourceIndex);
+        }
+    }
+
+    internal bool TryEnqueueCardBonus(string receiptId, string ownerId,
+        int sourceIndex, Func<bool> spendCard)
+    {
+        ArgumentNullException.ThrowIfNull(spendCard);
+        lock (gate)
+        {
+            if (!owners.TryGetValue(ownerId, out var owner))
+                throw new InvalidDataException("Queued card owner is outside the roster.");
+            // Prepare the queue and its replay receipt before card inventory
+            // changes. If spending fails, discard the candidate unchanged.
+            var candidate = selection.PrepareEnqueueCopy(receiptId,
+                owner.Side, sourceIndex);
+            if (!spendCard()) return false;
+            selection = candidate;
+            return true;
         }
     }
 

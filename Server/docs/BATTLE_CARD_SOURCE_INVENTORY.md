@@ -12,7 +12,7 @@ resolved through the component's MonoScript GUID and `.cs.meta`.
 A dash in the reviewed column means the server catalog has not
 pinned that class/ID pair. Disabled rows may lack a scene component.
 A direct Client route is only a dispatch path, not end-to-end proof.
-The dispatcher currently has 32 card classes and
+The dispatcher currently has 33 card classes and
 7 source-specific unit-card IDs. While connected to
 the self-hosted match, unsupported cards are rejected before the
 recovered Photon fallback; they need host commands before admission.
@@ -50,9 +50,9 @@ recovered Photon fallback; they need host commands before admission.
 | `SMALLMEDKIT` | 1 | `CardHealMeNowSmall` | yes | yes |
 | `ELITEPARA` | 2 | `CardSpawnUnit` | yes | yes |
 | `VEHICLEHEALTH` | 1 | `CardHealthForMachines` | yes | yes |
-| `TURRETCRATE` | 1 | `CardIncreaseBonusChance` | no | no |
-| `HEALTHCRATE` | 1 | `CardIncreaseBonusChance` | no | no |
-| `KEVLARCRATE` | 1 | `CardIncreaseBonusChance` | no | no |
+| `TURRETCRATE` | 1 | `CardIncreaseBonusChance` | yes | yes |
+| `HEALTHCRATE` | 1 | `CardIncreaseBonusChance` | yes | yes |
+| `KEVLARCRATE` | 1 | `CardIncreaseBonusChance` | yes | yes |
 | `BULLETHARMLESS` | 1 | `CardBulletSponge` | yes | yes |
 | `AMMOBOX` | 2 | `CardAmmoBox` | yes | yes |
 | `BACKSTAB` | 1 | `CardBackstab` | yes | yes |
@@ -71,7 +71,7 @@ recovered Photon fallback; they need host commands before admission.
 | `SLOWDOWN` | 1 | `CardSlowdown` | yes | no |
 | `HEALINGSTORM` | 1 | `CardHealingStorm` | yes | yes |
 | `TRIGGERHAPPY` | 1 | `CardSoldiersShootout` | no | no |
-| `AMMOCRATE` | 1 | `CardIncreaseBonusChance` | no | no |
+| `AMMOCRATE` | 1 | `CardIncreaseBonusChance` | yes | yes |
 | `SICKNESS` | 1 | `CardSickness` | no | no |
 | `CRITICALS` | 1 | `CardCriticalInsurance` | no | no |
 | `SUPERSOLDIERS` | 1 | `CardHealthForSoldiers` | yes | yes |

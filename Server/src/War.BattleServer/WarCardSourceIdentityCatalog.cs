@@ -30,6 +30,8 @@ public static class WarCardSourceIdentityCatalog
             ["CardSlowdown"]=["SLOWDOWN"],
             ["CardScorestreakBooster"]=["STREAKBOOST"],
             ["CardScoreStreakKiller"]=["CRATEBLOCKER"],
+            ["CardIncreaseBonusChance"]=["HEALTHCRATE","TURRETCRATE",
+                "KEVLARCRATE","AMMOCRATE"],
             ["CardMineYourStep"]=["MINEENEMY"],
             ["CardShieldsUp"]=["SHIELDSHEALTH"],
             ["CardAirstrike"]=["AIRSTRIKE"],

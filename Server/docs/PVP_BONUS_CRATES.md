@@ -433,9 +433,23 @@ Invalid draw results leave the pending head and accepted state unchanged.
 `ClearQueuesForGameStart` reproduces the original queue clear without resetting
 the last index. It retains receipts so an old accepted enqueue cannot reappear
 after a clear. Queue size 64 per side and 4,096 combined mutation receipts are
-explicit host safety bounds, not recovered production limits. Source manager
-lifetime, replay scope, capacity handoff, and previous-game state still require
-binding before admission into live matches.
+explicit host safety bounds, not recovered production limits. Complete source
+manager lifetime, capacity handoff, and previous-game state still require
+binding before full live-crate parity.
+
+Four `CardIncreaseBonusChance` MainScene cards now use this queue through an
+authenticated `QueueBonusCardCommand`: HEALTHCRATE points to source prefab 1,
+TURRETCRATE to 5, KEVLARCRATE to 6, and AMMOCRATE to 8. The Worker resolves
+each exact prefab GUID against the reviewed bonus catalog, then prepares the
+queue receipt before spending the selected Backend-provisioned card. A full
+queue or rejected card leaves both stock and queue unchanged. A repeated
+request returns its original result, while another player cannot take it over.
+The normal Unity card button sends only the source card ID; it does not choose
+the bonus index or invoke the recovered Photon gameplay method. A host test
+proves that the next matured selection consumes the queued Health Crate, and
+two real UDP clients prove command replay and ownership. This does not by
+itself establish live score threshold, physical crate spawning, collection or
+reward delivery for every mode.
 
 The isolated Unity 2018.3 probe compiles the original SpawnBonus prefix up to
 the last-index assignment; only Random.Range is replaced by controlled draws.
