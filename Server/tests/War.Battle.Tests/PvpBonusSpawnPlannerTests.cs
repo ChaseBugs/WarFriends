@@ -249,7 +249,11 @@ internal static class PvpBonusSpawnPlannerTests
               planner.LastSourceIndex == 9,
             "source upper-endpoint fallthrough preserves history 9 but publishes actual prefab 8");
 
-        var engine = new MatchEngine(manifest, map, content, combatRandom: () => 1f);
+        int hostCombatDraws = 0;
+        var engine = new MatchEngine(manifest, map, content, combatRandom: () => {
+            hostCombatDraws++;
+            return 1f;
+        });
         engine.Admit(localId);
         engine.Admit(manifest.Players[1].PlayerId);
         foreach (var player in manifest.Players)
@@ -530,7 +534,7 @@ internal static class PvpBonusSpawnPlannerTests
         var grenadePlan = enginePlanner.PlanMatured(grenadeFrame, 0, context, draw);
         try
         {
-            engine.PlanCollectedPvpGrenades(grenadePlan.Request.ReceiptId, [], () => 0f);
+            engine.PlanCollectedPvpGrenades(grenadePlan.Request.ReceiptId);
             throw new Exception("Uncollected grenade crate produced a burst.");
         }
         catch (InvalidOperationException) { checks++; }
@@ -539,40 +543,38 @@ internal static class PvpBonusSpawnPlannerTests
         Check(grenadeCollection.RecipientPlayerId == manifest.Players[1].PlayerId &&
               grenadePlan.PrefabIndex == 3,
             "host collection binds the grenade burst to the stolen recipient");
-        try
-        {
-            engine.PlanCollectedPvpGrenades(grenadePlan.Request.ReceiptId,
-                [new PvpBonusGrenadeTarget("bad", 3, true, true, true, Vector3.Zero)],
-                () => 0f);
-            throw new Exception("Invalid host shootable produced a burst.");
-        }
-        catch (InvalidDataException) { checks++; }
-        int grenadeDraws = 0;
-        var nearOpponent = new PvpBonusGrenadeTarget("near-opponent",
-            manifest.Players[1].Fraction, true, true, true,
-            grenadePlan.Position + Vector3.UnitX);
-        var burst = engine.PlanCollectedPvpGrenades(grenadePlan.Request.ReceiptId,
-            [nearOpponent], () => { grenadeDraws++; return 0f; });
+        var hostShootables = engine.PvpGrenadeShootables();
+        Check(hostShootables.Any(target => target.Id == "player:" + localId) &&
+              hostShootables.Any(target => target.Id ==
+                  "player:" + manifest.Players[1].PlayerId),
+            "grenade targets include both players from the host shootable registry");
+        int drawsBeforeGrenade = hostCombatDraws;
+        var burst = engine.PlanCollectedPvpGrenades(grenadePlan.Request.ReceiptId);
         var expectedFallback = content.PvpBonuses.GrenadeFallbackDamageForLevel(8);
+        int fallbackCount = burst.Launches.Count(launch => launch.TargetId == null);
+        Check(fallbackCount > 0,
+            "the collected-box fixture exercises host-owned fallback random draws");
         Check(burst.BoxId == grenadePlan.Request.ReceiptId &&
               burst.RecipientPlayerId == manifest.Players[1].PlayerId &&
               burst.Launches.Count == 3 &&
-              burst.Launches[0].TargetId == "near-opponent" &&
-              burst.Launches[0].DamageOverride == null &&
-              burst.Launches[1].DamageOverride == expectedFallback &&
-              burst.Launches[2].DamageOverride == expectedFallback &&
-              grenadeDraws == 4 &&
+              burst.Launches.Where(launch => launch.TargetId != null)
+                  .All(launch => launch.DamageOverride == null &&
+                      hostShootables.Any(target => target.Id == launch.TargetId)) &&
+              burst.Launches.Where(launch => launch.TargetId == null)
+                  .All(launch => launch.DamageOverride == expectedFallback &&
+                      launch.Position == grenadePlan.Position +
+                          new Vector3(1.5f, 0f, 1.5f)) &&
+              hostCombatDraws - drawsBeforeGrenade == fallbackCount * 2 &&
               engine.ApplyCollectedPvpBonus(grenadePlan.Request.ReceiptId) ==
                   "bonus-effect-pending",
-            "collected grenade crate plans one targeted and two rank-bound fallback shots without claiming projectile damage");
+            "collected grenade crate plans only live host targets and rank-bound fallback shots");
         Check(ReferenceEquals(burst, engine.PlanCollectedPvpGrenades(
-                  grenadePlan.Request.ReceiptId, [], () => {
-                      grenadeDraws++; return 0f;
-                  })) && grenadeDraws == 4,
+                  grenadePlan.Request.ReceiptId)) &&
+              hostCombatDraws - drawsBeforeGrenade == fallbackCount * 2,
             "replaying the collected box returns its first burst without new random draws");
         try
         {
-            engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId, [], () => 0f);
+            engine.PlanCollectedPvpGrenades(ammoPlan.Request.ReceiptId);
             throw new Exception("Non-grenade crate produced a grenade burst.");
         }
         catch (InvalidDataException) { checks++; }

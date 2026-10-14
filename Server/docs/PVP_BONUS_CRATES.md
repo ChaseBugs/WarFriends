@@ -268,10 +268,16 @@ ties retain host registry order as an explicit replacement choice; exact Mono
 sort tie parity remains unverified. This is not live grenade damage or pickup.
 `MatchEngine.PlanCollectedPvpGrenades` now binds the plan to a host-confirmed
 collected Grenades box, its saved position, recipient rank, and signed scene-master
-view. It caches the first plan by box ID so replay cannot consume more random
-draws or switch recipients. The shootable registry and fallback draws must still
-come from host simulation; this internal method does not create projectiles or
-grant an effect through the normal battle event path.
+view. It reads live player, army-root and Decoy targets from the existing
+source-bucket host registry, plus separately deployed Heavy Turrets. The match
+engine itself draws each fallback X/Z offset from its combat RNG; callers cannot
+supply positions or offsets. It caches the first plan by box ID so replay cannot
+consume more random draws or switch recipients. This internal method does not
+create projectiles or grant an effect through the normal battle event path.
+Other source shootable types, exact cross-registry tie order, and Unity PRNG
+sequence parity still need verification before claiming complete target parity.
+The source captures its target list at activation before the one-second wait;
+normal collection dispatch must call the host planner at that same point.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component
 serializes zero; the server retains the scene value.
 

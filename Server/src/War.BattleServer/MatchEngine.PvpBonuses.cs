@@ -144,15 +144,11 @@ public sealed partial class MatchEngine
 
     /// <summary>
     /// Plans a collected grenade crate using the host's current shootable
-    /// registry. The caller must not pass Client-declared target positions.
+    /// registries. No Client-declared target or random offset enters this path.
     /// Projectile creation and damage remain separate, later steps.
     /// </summary>
-    internal PvpBonusGrenadeBurstPlan PlanCollectedPvpGrenades(string boxId,
-        IReadOnlyList<PvpBonusGrenadeTarget> hostShootables,
-        Func<float> nextHostFallbackOffset)
+    internal PvpBonusGrenadeBurstPlan PlanCollectedPvpGrenades(string boxId)
     {
-        ArgumentNullException.ThrowIfNull(hostShootables);
-        ArgumentNullException.ThrowIfNull(nextHostFallbackOffset);
         if (pvpGrenadeBurstPlans.TryGetValue(boxId, out var previous))
             return previous;
         if (phase != BattlePhase.Running || pvpBonusPlanner == null ||
@@ -173,10 +169,33 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Grenade source view is outside the match.");
         var boxPosition = pvpBonusPlanner.BoxSnapshot(boxId).Plan.Position;
         var launches = pvpGrenadeBurstPolicy.Plan(sourceView.Definition.Fraction,
-            recipientLevel, boxPosition, hostShootables, nextHostFallbackOffset);
+            recipientLevel, boxPosition, PvpGrenadeShootables(), NextGrenadeFallbackOffset);
         var plan = new PvpBonusGrenadeBurstPlan(boxId, intent.RecipientPlayerId, launches);
         pvpGrenadeBurstPlans.Add(boxId, plan);
         return plan;
+    }
+
+    internal IReadOnlyList<PvpBonusGrenadeTarget> PvpGrenadeShootables()
+    {
+        // The Drone target registry already preserves the source's owner-type
+        // buckets for players, deployed army roots, and Decoys. Heavy Turret
+        // has the same main shootable component but a separate host registry.
+        var targets = DroneTargetSnapshot().Select(target =>
+            new PvpBonusGrenadeTarget(target.Id, target.Fraction, true,
+                target.Alive, target.Visible, target.Position)).ToList();
+        foreach (var turret in heavyTurrets.Snapshot())
+        {
+            targets.Add(new PvpBonusGrenadeTarget(
+                "heavy-turret:" + turret.EntityId, turret.OwnerFraction, true,
+                turret.Health > 0f, true, turret.Position));
+        }
+        return targets.AsReadOnly();
+    }
+
+    private float NextGrenadeFallbackOffset()
+    {
+        float unitDraw = combatRandom();
+        return PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(unitDraw);
     }
 
     /// <summary>

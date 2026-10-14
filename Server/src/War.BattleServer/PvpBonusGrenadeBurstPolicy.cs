@@ -17,6 +17,14 @@ public sealed record PvpBonusGrenadeBurstPlan(string BoxId, string RecipientPlay
 /// </summary>
 internal sealed class PvpBonusGrenadeBurstPolicy
 {
+    internal static float FallbackOffsetFromUnitDraw(float unitDraw)
+    {
+        if (!float.IsFinite(unitDraw) || unitDraw is < 0f or > 1f)
+            throw new InvalidDataException("Host grenade random draw is outside [0, 1].");
+        // Unity's Random.Range(float, float) may include either endpoint.
+        return -1.5f + 3f * unitDraw;
+    }
+
     private readonly int grenadeCount;
     private readonly float targetDistance;
     private readonly PvpBonusCatalog catalog;
@@ -47,7 +55,7 @@ internal sealed class PvpBonusGrenadeBurstPolicy
         {
             if (target == null || target.Id is not {Length: >= 1 and <= 64} ||
                 target.Id.Any(character => !char.IsAsciiLetterOrDigit(character) &&
-                    character is not ('_' or '-')) ||
+                    character is not ('_' or '-' or ':')) ||
                 !identities.Add(target.Id) || target.Fraction is < 0 or > 2 ||
                 !Finite(target.Position))
                 throw new InvalidDataException("Invalid grenade-box shootable.");

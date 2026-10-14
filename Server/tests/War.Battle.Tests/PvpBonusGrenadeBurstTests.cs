@@ -22,6 +22,10 @@ internal static class PvpBonusGrenadeBurstTests
             "grenade count, strict target radius and fallback damage rows are source pinned");
 
         var policy = new PvpBonusGrenadeBurstPolicy(catalog);
+        Check(PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(0f) == -1.5f &&
+              PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(0.5f) == 0f &&
+              PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(1f) == 1.5f,
+            "host unit draws map to the source grenade offset interval");
         var box = Vector3.Zero;
         PvpBonusGrenadeTarget Target(string id, int fraction, float distance,
             bool alive = true, bool visible = true, bool mainOwner = true) =>
@@ -96,6 +100,9 @@ internal static class PvpBonusGrenadeBurstTests
             catch (InvalidDataException) { checks++; }
         }
         Reject(() => policy.Plan(0, 0, box, shootables, () => 0f));
+        Reject(() => PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(-0.01f));
+        Reject(() => PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(1.01f));
+        Reject(() => PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(float.NaN));
         Reject(() => policy.Plan(2, -1, box, shootables, () => 0f));
         Reject(() => policy.Plan(2, 43, box, shootables, () => 0f));
         Reject(() => policy.Plan(2, 0, new Vector3(float.NaN, 0f, 0f), shootables, () => 0f));
