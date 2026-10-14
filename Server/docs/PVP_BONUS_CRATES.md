@@ -295,9 +295,10 @@ own host poses, hitboxes, and health pools in the same explosion; deployed-unit
 fixtures exercise both without treating them as vehicle-body damage. Drone
 and Helicopter bodies now use the same host air-collider grouping and
 shared Army vitality as normal grenades, with deployed-unit blast fixtures.
-The Assault Helicopter body and separate front glass have source-based damage
-paths, but their moving flight/contact case still needs a successful live
-fixture. Host map overlaps now damage enemy shields and trigger source barrel
+The Assault Helicopter body and separate front glass now have successful
+moving-flight fixtures: both use a ground-level collected box after the
+aircraft descends into blast range, and the glass keeps its own health pool.
+Host map overlaps now damage enemy shields and trigger source barrel
 chains before character damage. The Manager scene weapon has no `PlayerWeapon`,
 so shield damage uses the recovered explosion coefficient without an inventory
 weapon ratio; `friendKill: 0` protects allied shields. A shield present in the

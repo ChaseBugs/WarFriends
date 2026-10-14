@@ -969,18 +969,31 @@ internal static class PvpBonusSpawnPlannerTests
         {
             var (match, currentTick) = BonusArmyMatch(unitId);
             var target = match.ArmyEntityBatch(localId, 0, 0).Entities.First();
+            if (unitId == "ID_UNIT-ASSAULTHELI")
+            {
+                while (currentTick < 400 && !match.Terminal &&
+                       match.GroundVehicleShotTargets(localId).First(part =>
+                           part.EntityId == target.EntityKey &&
+                           part.HelicopterBody).Hitbox.Center.Y > 1.8f)
+                    match.Advance(++currentTick);
+            }
             var airBody = match.GroundVehicleShotTargets(localId).First(part =>
                 part.EntityId == target.EntityKey &&
                 (part.DroneRoot || part.HelicopterBody));
+            if (unitId == "ID_UNIT-ASSAULTHELI")
+                Check(airBody.Hitbox.Center.Y <= 1.8f,
+                    "Assault Helicopter descends into bonus blast range");
             float healthBefore = match.ArmyHealth(target.EntityKey)!.Value;
             var planner = match.BonusPlanner;
             planner.EnqueueConfirmedBonus(Id(receiptBase), localId, 3);
             var box = planner.PlanMatured(grenadeFrame, 0, context, draw);
+            var boxPosition = airBody.Hitbox.Center;
+            if (unitId == "ID_UNIT-ASSAULTHELI") boxPosition.Y = 0.5f;
             planner.ConfirmDestroyed(box.Request.ReceiptId,
-                Id(receiptBase + 1), null, airBody.Hitbox.Center);
+                Id(receiptBase + 1), null, boxPosition);
             match.PlanCollectedPvpGrenades(box.Request.ReceiptId);
             ulong nextTick = currentTick;
-            while (nextTick < 420 && !match.Terminal &&
+            while (nextTick < 550 && !match.Terminal &&
                    match.ArmyHealth(target.EntityKey) == healthBefore)
                 match.Advance(++nextTick);
             float? healthAfter = match.ArmyHealth(target.EntityKey);
@@ -990,6 +1003,35 @@ internal static class PvpBonusSpawnPlannerTests
 
         BlastEnemyAirBody("ID_UNIT-DRONE", 720);
         BlastEnemyAirBody("ID_UNIT-HELICOPTER", 730);
+        BlastEnemyAirBody("ID_UNIT-ASSAULTHELI", 740);
+
+        var (glassMatch, glassTick) = BonusArmyMatch("ID_UNIT-ASSAULTHELI");
+        ulong glassAircraftId = glassMatch.ArmyEntityBatch(localId, 0, 0)
+            .Entities.First().EntityKey;
+        while (glassTick < 400 && !glassMatch.Terminal &&
+               glassMatch.GroundVehicleShotTargets(localId).First(part =>
+                   part.EntityId == glassAircraftId && part.AssaultGlass)
+                   .Hitbox.Center.Y > 1.8f)
+            glassMatch.Advance(++glassTick);
+        var glassCollider = glassMatch.GroundVehicleShotTargets(localId)
+            .First(part => part.EntityId == glassAircraftId && part.AssaultGlass);
+        Check(glassCollider.Hitbox.Center.Y <= 1.8f,
+            "Assault Helicopter glass descends into bonus blast range");
+        // The collected crate is on the ground below the moving glass.
+        var glassBoxPosition = glassCollider.Hitbox.Center;
+        glassBoxPosition.Y = 0.5f;
+        float glassHealthBefore = glassMatch.AssaultGlassHealth(glassAircraftId)!.Value;
+        var glassPlanner = glassMatch.BonusPlanner;
+        glassPlanner.EnqueueConfirmedBonus(Id(750), localId, 3);
+        var glassBox = glassPlanner.PlanMatured(grenadeFrame, 0, context, draw);
+        glassPlanner.ConfirmDestroyed(glassBox.Request.ReceiptId,
+            Id(751), null, glassBoxPosition);
+        glassMatch.PlanCollectedPvpGrenades(glassBox.Request.ReceiptId);
+        while (glassTick < 550 && !glassMatch.Terminal &&
+               glassMatch.AssaultGlassHealth(glassAircraftId) == glassHealthBefore)
+            glassMatch.Advance(++glassTick);
+        Check(glassMatch.AssaultGlassHealth(glassAircraftId) < glassHealthBefore,
+            "ground-launched bonus grenade damages the moving Assault Helicopter glass");
 
         MatchEngine BonusMapMatch(MatchManifest mapManifest)
         {
