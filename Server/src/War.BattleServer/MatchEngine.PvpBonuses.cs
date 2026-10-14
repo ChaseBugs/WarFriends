@@ -23,13 +23,17 @@ public sealed partial class MatchEngine
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private PvpBonusGrenadeBurstPolicy? pvpGrenadeBurstPolicy;
     private PvpBonusGrenadeBurstClock? pvpGrenadeClock;
+    private PvpBonusCatalog? pvpGrenadeCatalog;
     private IReadOnlyList<PvpBonusGrenadeDueShot> readyPvpGrenadeShots =
         Array.Empty<PvpBonusGrenadeDueShot>();
     private readonly Dictionary<string, PvpBonusGrenadeBurstPlan> pvpGrenadeBurstPlans =
         new(StringComparer.Ordinal);
     private readonly Dictionary<ulong, GrenadeFlight> pvpGrenadeFlights = new();
+    private readonly List<GrenadeFlightImpact> pvpGrenadePendingExplosions = new();
     private IReadOnlyList<GrenadeFlightImpact> pvpGrenadeImpacts =
         Array.Empty<GrenadeFlightImpact>();
+    private IReadOnlyList<PvpBonusGrenadeExplosionQuote> pvpGrenadeExplosions =
+        Array.Empty<PvpBonusGrenadeExplosionQuote>();
     private readonly HashSet<string> appliedPvpBonusBoxes = new(StringComparer.Ordinal);
 
     internal PvpBonusSpawnPlanner BonusPlanner => pvpBonusPlanner ??
@@ -44,23 +48,38 @@ public sealed partial class MatchEngine
     internal IReadOnlyList<PvpBonusGrenadeDueShot> ReadyPvpGrenadeShots =>
         readyPvpGrenadeShots;
     internal IReadOnlyList<GrenadeFlightImpact> PvpGrenadeImpacts => pvpGrenadeImpacts;
-    internal int PendingPvpGrenadeFlights => pvpGrenadeFlights.Count;
+    internal IReadOnlyList<PvpBonusGrenadeExplosionQuote> PvpGrenadeExplosions =>
+        pvpGrenadeExplosions;
+    internal int PendingPvpGrenadeFlights =>
+        pvpGrenadeFlights.Count + pvpGrenadePendingExplosions.Count;
 
     private void AdvancePvpGrenadeFlights()
     {
-        if (readyPvpGrenadeShots.Count == 0 && pvpGrenadeFlights.Count == 0)
+        if (readyPvpGrenadeShots.Count == 0 && PendingPvpGrenadeFlights == 0)
         {
             pvpGrenadeImpacts = Array.Empty<GrenadeFlightImpact>();
+            pvpGrenadeExplosions = Array.Empty<PvpBonusGrenadeExplosionQuote>();
             return;
         }
 
         var impacts = new List<GrenadeFlightImpact>();
+        var explosions = new List<PvpBonusGrenadeExplosionQuote>();
+        // GrenadeAmmoBase.OnCollisionEnter arms a zero-second fuse. Its Update
+        // reads the shared setup later, after this frame's burst mutations.
+        foreach (var pending in pvpGrenadePendingExplosions)
+            explosions.Add(PvpBonusGrenadeExplosionPolicy.AfterCollision(pending,
+                pvpGrenadeClock?.CurrentSharedDamage ??
+                    throw new InvalidDataException("Shared grenade setup is missing."),
+                pvpGrenadeCatalog ??
+                    throw new InvalidDataException("Bonus grenade catalog is missing."), tick));
+        pvpGrenadePendingExplosions.Clear();
         foreach (var flight in pvpGrenadeFlights.Values.ToArray())
         {
             var impact = flight.Advance(tick);
             if (impact == null) continue;
             pvpGrenadeFlights.Remove(flight.Id);
             impacts.Add(impact);
+            pvpGrenadePendingExplosions.Add(impact);
             Emit(MatchEventKind.Impact, impact.OwnerId,
                 impact.Collision.PlayerId ?? "", impact.ProjectileId,
                 impact.Position, 0, "pvp-bonus-grenade");
@@ -77,40 +96,38 @@ public sealed partial class MatchEngine
             var origin = pvpBonusPlanner?.BoxSnapshot(shot.BoxId).Collection?.CollectionPosition ??
                 throw new InvalidDataException("PvP grenade collection position is missing.");
 
-            // MainScene KillStreak Manager GrenadeAmmoSetup 41786 uses a 45
-            // degree angle and zero throw-distance limit. Its spawnPoint is
-            // set to the collected box, rather than the player's weapon muzzle.
-            const float sourceThrowAngle = 45f;
-            const float sourceThrowDistance = 0f;
+            // MainScene KillStreak Manager GrenadeAmmoSetup 41786 supplies
+            // this flight; its spawnPoint is the box, not a weapon muzzle.
+            var catalog = pvpGrenadeCatalog ??
+                throw new InvalidDataException("Bonus grenade catalog is missing.");
             Func<Vector3, Vector3, float, ShotCollision?> trace =
                 (from, direction, distance) => TracePvpGrenade(
-                    owner.Definition.PlayerId, owner.Definition.Fraction,
-                    from, direction, distance);
+                    owner.Definition.PlayerId, from, direction, distance);
             var flight = new GrenadeFlight(++projectileId, owner.Definition.PlayerId,
-                sourceThrowAngle, sourceThrowDistance, origin,
+                catalog.GrenadeThrowAngle, catalog.GrenadeThrowDistance, origin,
                 shot.Launch.Position, tick, trace, allowStationary: true);
             pvpGrenadeFlights.Add(flight.Id, flight);
             Emit(MatchEventKind.Shot, owner.Definition.PlayerId, "",
                 flight.Id, origin, 0, "pvp-bonus-grenade");
         }
         pvpGrenadeImpacts = new ReadOnlyCollection<GrenadeFlightImpact>(impacts);
+        pvpGrenadeExplosions = new ReadOnlyCollection<PvpBonusGrenadeExplosionQuote>(explosions);
     }
 
-    private ShotCollision? TracePvpGrenade(string ownerId, int ownerFraction,
+    private ShotCollision? TracePvpGrenade(string ownerId,
         Vector3 from, Vector3 direction, float distance)
     {
         if (rifleCombat != null)
         {
-            // Ordinary PvP uses this host world. The dedicated bonus Grenade
-            // collision mask still needs a source-parity audit.
-            return rifleCombat.TraceForArmy(ownerId, from, direction, distance);
+            var hit = rifleCombat.TraceForBazooka(ownerId, from, direction,
+                distance, PvpBonusGrenadeCollision.ExplosiveContactMask);
+            return PvpBonusGrenadeCollision.ExplosiveContact(hit);
         }
-        if (grenadeCombat == null || grenadeCatalog == null)
+        if (grenadeCombat == null)
             throw new InvalidDataException("PvP grenade collision world is missing.");
-        uint mask = ownerFraction == 1
-            ? grenadeCatalog.EnemiesBulletMask
-            : grenadeCatalog.AlliesBulletMask;
-        return grenadeCombat.Trace(ownerId, from, direction, distance, mask);
+        var grenadeHit = grenadeCombat.Trace(ownerId, from, direction,
+            distance, PvpBonusGrenadeCollision.ExplosiveContactMask);
+        return PvpBonusGrenadeCollision.ExplosiveContact(grenadeHit);
     }
 
     internal bool FirstTwoUsedWeaponsHaveLowAmmo(string ownerId)
@@ -218,6 +235,7 @@ public sealed partial class MatchEngine
         pvpBoobyTrap = content.PvpBoobyTrap;
         pvpGrenadeBurstPolicy = new PvpBonusGrenadeBurstPolicy(content.PvpBonuses);
         pvpGrenadeClock = new PvpBonusGrenadeBurstClock(content.PvpBonuses);
+        pvpGrenadeCatalog = content.PvpBonuses;
         pvpBonusWeapons = content.AllWeaponBindings;
         pvpBonusLowAmmoThreshold = content.PvpBonuses.LowAmmoThreshold;
         pvpGoldBonusesCollected = manifest.PvpGoldBonusesAtAdmission ?? 0;

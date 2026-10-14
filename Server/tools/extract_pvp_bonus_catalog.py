@@ -46,6 +46,20 @@ def main():
     initial_explosion_damage = obscured_fake_value("explodeDamageAmount")
     if (initial_direct_damage, initial_explosion_damage) != (20.0, 350.0):
         raise ValueError("Shared grenade setup damage changed")
+    def setup_number(field):
+        match = re.search(r"^  " + field + r": ([\d.]+)$", grenade_setup, re.M)
+        if not match:
+            raise ValueError("Missing shared grenade setup " + field)
+        return float(match[1])
+    throw_angle = setup_number("angle")
+    throw_distance = setup_number("throwDistance")
+    fuse_seconds = setup_number("explodeAfterTime")
+    hurt_radius = setup_number("hurtRadius")
+    dead_radius = setup_number("deadRadius")
+    behind_shield_ratio = setup_number("playerBehindShieldRatio")
+    if (throw_angle, throw_distance, fuse_seconds, hurt_radius,
+            dead_radius, behind_shield_ratio) != (45.0, 0.0, 0.0, 2.2, 1.3, 1.0):
+        raise ValueError("Shared grenade flight/explosion setup changed")
     binding = manager_blocks[0].split("  bonusesPrefabs:\n", 1)[1].split("  killStreakBonusBoxPrefab:", 1)[0]
     references = re.findall(r"fileID: (\d+), guid: (\w+)", binding)
     if len(references) != 9 or len(set(references)) != 9:
@@ -113,7 +127,8 @@ def main():
                 "grenadeCodeSha256": digest(grenade_code),
                 "grenadeSetupCodeSha256": {
                     name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes())
-                    for name in ("GrenadeAmmoBase", "GrenadeAmmo", "CardGrenadesBurst")},
+                    for name in ("GrenadeAmmoBase", "GrenadeAmmo", "CardGrenadesBurst",
+                                 "TagsAndLayers")},
                 "probabilityCodeSha256": {name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes()) for name in code_names},
                 "rules": {"goldLowLevelProbability": keyed_value("Google2u.Constants", "GoldCrateLowLevelProbability"),
                           "goldLowLevelMinimum": keyed_value("Google2u.Constants", "GoldCrateLowLevelGoldMin"),
@@ -129,6 +144,12 @@ def main():
                           "grenadeFallbackDamageMaximum": keyed_value("Google2u.CardConstants", "ClusterGrenadeDamageMax"),
                           "grenadeInitialDirectDamage": initial_direct_damage,
                           "grenadeInitialExplosionDamage": initial_explosion_damage,
+                          "grenadeThrowAngle": throw_angle,
+                          "grenadeThrowDistance": throw_distance,
+                          "grenadeFuseSeconds": fuse_seconds,
+                          "grenadeHurtRadius": hurt_radius,
+                          "grenadeDeadRadius": dead_radius,
+                          "grenadePlayerBehindShieldRatio": behind_shield_ratio,
                           "cardUnlockLevel": keyed_value("Google2u.CardConstants", "WarcardsUnlockLevel"),
                           "lowAmmoThreshold": bonus_value("LowAmmoRatio"),
                           "lowAmmoMultiplier": bonus_value("AmmoCrateOnLowAmmoRatio"),

@@ -612,6 +612,48 @@ internal static class PvpBonusSpawnPlannerTests
               stationaryFallback.Advance(2) == null &&
               stationaryFallback.Position.Y < collectionPosition.Y,
             "a zero-offset bonus draw follows Unity's stationary launch and gravity");
+        const uint sourceContactMask = (1u << 8) | (1u << 13) |
+            (1u << 22) | (1u << 23) | (1u << 24) |
+            (1u << 26) | (1u << 27) | (1u << 30);
+        var staticContact = new ShotCollision(1f, collectionPosition, "static",
+            null, 0f, Static: true, ColliderLayer: 13);
+        var destroyableContact = new ShotCollision(1f, collectionPosition,
+            "destroyable", null, 0f, ColliderLayer: 22,
+            SourceDestroyable: true);
+        var unrelatedContact = new ShotCollision(1f, collectionPosition,
+            "unrelated", null, 0f, ColliderLayer: 14);
+        Check(PvpBonusGrenadeCollision.ExplosiveContactMask == sourceContactMask &&
+              PvpBonusGrenadeCollision.ExplosiveContact(staticContact) == staticContact &&
+              PvpBonusGrenadeCollision.ExplosiveContact(destroyableContact) ==
+                  destroyableContact &&
+              PvpBonusGrenadeCollision.ExplosiveContact(unrelatedContact) == null &&
+              PvpBonusGrenadeCollision.ExplosiveContact(
+                  unrelatedContact with {ColliderLayer = 22}) != null,
+            "bonus grenade fuse follows source layer checks, including player layers");
+        var impactAtChangedSetup = new GrenadeFlightImpact(2, localId,
+            collectionPosition, staticContact, 5);
+        var sourceFallbackSetup = content.PvpBonuses.GrenadeFallbackDamageForLevel(8);
+        var changedSetupQuote = PvpBonusGrenadeExplosionPolicy.AfterCollision(
+            impactAtChangedSetup,
+            new PvpBonusGrenadeSharedDamage(sourceFallbackSetup.Explosion,
+                sourceFallbackSetup.Direct),
+            content.PvpBonuses, 6);
+        Check(changedSetupQuote.ExplosionDamage == sourceFallbackSetup.Explosion &&
+              changedSetupQuote.DirectDamage == sourceFallbackSetup.Direct &&
+              changedSetupQuote.ProjectileId == impactAtChangedSetup.ProjectileId &&
+              changedSetupQuote.CollisionTick == 5 &&
+              changedSetupQuote.ExplosionTick == 6 &&
+              changedSetupQuote.DeadRadius == 1.3f &&
+              changedSetupQuote.HurtRadius == 2.2f,
+            "bonus explosion reads the shared setup after collision, not launch");
+        try
+        {
+            PvpBonusGrenadeExplosionPolicy.AfterCollision(impactAtChangedSetup,
+                new PvpBonusGrenadeSharedDamage(700f, 70f),
+                content.PvpBonuses, 6);
+            throw new Exception("Unreviewed shared grenade damage became authority.");
+        }
+        catch (InvalidDataException) { checks++; }
         try
         {
             engine.Advance(62);
@@ -622,6 +664,7 @@ internal static class PvpBonusSpawnPlannerTests
         var dueShots = new List<PvpBonusGrenadeDueShot>();
         int mostActiveGrenades = 0;
         int confirmedGrenadeImpacts = 0;
+        var explosionQuotes = new List<PvpBonusGrenadeExplosionQuote>();
         bool checkedFlightFrameGuard = false;
         for (ulong nextTick = 61; nextTick <= 150; nextTick++)
         {
@@ -630,6 +673,7 @@ internal static class PvpBonusSpawnPlannerTests
             mostActiveGrenades = Math.Max(mostActiveGrenades,
                 engine.PendingPvpGrenadeFlights);
             confirmedGrenadeImpacts += engine.PvpGrenadeImpacts.Count;
+            explosionQuotes.AddRange(engine.PvpGrenadeExplosions);
             if (!checkedFlightFrameGuard && engine.PendingPvpGrenadeFlights > 0)
             {
                 try
@@ -648,6 +692,14 @@ internal static class PvpBonusSpawnPlannerTests
               dueShots[2].FrameId - dueShots[1].FrameId == 6 &&
               mostActiveGrenades > 0 &&
               confirmedGrenadeImpacts > 0 &&
+              explosionQuotes.Count == confirmedGrenadeImpacts &&
+              explosionQuotes.All(quote =>
+                  quote.ExplosionTick == quote.CollisionTick + 1 &&
+                  quote.DeadRadius == content.PvpBonuses.GrenadeDeadRadius &&
+                  quote.HurtRadius == content.PvpBonuses.GrenadeHurtRadius &&
+                  quote.PlayerBehindShieldRatio ==
+                      content.PvpBonuses.GrenadePlayerBehindShieldRatio &&
+                  quote.ExplosionDamage > 0f) &&
               checkedFlightFrameGuard &&
               engine.PendingProjectileCount >= engine.PendingPvpGrenadeFlights &&
               engine.Snapshot().Players.Select(player => player.Health)

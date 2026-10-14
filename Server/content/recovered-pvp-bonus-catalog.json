@@ -9,7 +9,8 @@
   "grenadeSetupCodeSha256": {
     "GrenadeAmmoBase": "99997d9d936f19883d9a04a718d976c13be5cfc5c3cb3a384213017e38599cc8",
     "GrenadeAmmo": "dd1bdc5172c7ab608dc5bd1c9aa63a61bffb04ead7ab65e6a7bf47d104581735",
-    "CardGrenadesBurst": "08d3d9237202954e3cbd21cc2daf47570f38b10d74b47796d2bbb438a2d89893"
+    "CardGrenadesBurst": "08d3d9237202954e3cbd21cc2daf47570f38b10d74b47796d2bbb438a2d89893",
+    "TagsAndLayers": "ed9c2c6eaa16a89dfd9daa628b8865ffd426613d57535c58d7335ec54303769f"
   },
   "probabilityCodeSha256": {
     "KillStreakBonus": "0690d3f324ab52e5c1d19db4fc46410335d679099f285c69b6b8815fd7256997",
@@ -35,6 +36,12 @@
     "grenadeFallbackDamageMaximum": 872.0,
     "grenadeInitialDirectDamage": 20.0,
     "grenadeInitialExplosionDamage": 350.0,
+    "grenadeThrowAngle": 45.0,
+    "grenadeThrowDistance": 0.0,
+    "grenadeFuseSeconds": 0.0,
+    "grenadeHurtRadius": 2.2,
+    "grenadeDeadRadius": 1.3,
+    "grenadePlayerBehindShieldRatio": 1.0,
     "cardUnlockLevel": 6.0,
     "lowAmmoThreshold": 0.1,
     "lowAmmoMultiplier": 2.0,

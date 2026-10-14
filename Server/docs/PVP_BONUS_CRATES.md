@@ -263,17 +263,25 @@ shot order; its launch snapshot is not a final impact-damage decision. The
 separate `CardGrenadesBurst` also uses this component and must join the shared
 state before cross-feature damage parity is complete.
 The checked-in bonus catalog now extracts the shared setup's 350/20 values
-from MainScene and pins the `GrenadeAmmoBase`, `GrenadeAmmo`, and
+and its 45-degree throw, zero distance/fuse, 1.3/2.2 blast radii, and
+behind-shield ratio 1 from MainScene. It pins the `GrenadeAmmoBase`, `GrenadeAmmo`, and
 `CardGrenadesBurst` source digests. The host clock initializes from that
 validated catalog instead of an independent constant.
 Bonus projectiles now use host ballistic flight, a downward collision trace,
 the shared projectile capacity, and ordered battle ticks. MainScene's
 KillStreak Manager setup supplies a 45-degree throw angle and no distance
 cap; the confirmed collection position is the launch origin. The host emits
-shot and impact evidence, but does not apply explosion damage yet. Normal
-PvP tracing currently uses the rifle world's generic bullet mask; the
-bonus Grenade component's exact mask and Unity Rigidbody physics still need
-parity review. The planner
+shot and impact evidence, but does not apply explosion damage yet. Its
+collision trace now uses the exact eight Static/DestroyableObject layers
+checked by `TagsAndLayers` and `GrenadeAmmoBase.OnCollisionEnter`, independent
+of the shooter's bullet mask. A collision arms the source's zero-second fuse;
+the next host tick records an immutable explosion quote using the *current*
+shared setup, including changes made by intervening fallback launches. The
+quote accepts only the source initial pair or one of the 43 reviewed fallback
+pairs until `CardGrenadesBurst` joins this shared state. It is
+still evidence only: no health or destroyable state changes from the quote.
+Unity Rigidbody bounce against other layers and exact Unity Update ordering
+still need parity review. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*
 fraction to `GetOpponents`; the planner keeps that perspective explicit until
 the self-hosted scene-owner callback is bound. The recovered C# displays a
@@ -304,7 +312,7 @@ The host now schedules the planned shots on ordered scaled battle frames. At
 after activation; a long frame still releases only one shot because each
 `WaitForSeconds` starts after its preceding launch. Active bursts and flights
 forbid skipped simulation ticks, and frame replay cannot emit a shot twice.
-Normal collection dispatch, exact collision parity and explosion damage
+Normal collection dispatch, Rigidbody bounce parity and explosion damage
 still need to be connected. The host currently supplies nominal tick
 delta; the unfinished SlowMotion bonus must scale it before claiming slowed
 coroutine parity.
