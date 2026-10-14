@@ -288,6 +288,13 @@ if (args is ["--pvp-bonus-spawn-areas-only"])
     return;
 }
 
+if (args is ["--pvp-score-multiplier-only"])
+{
+    int focused = PvpScoreMultiplierTests.Run();
+    Console.WriteLine($"PASS: {focused} PvP score multiplier assertions");
+    return;
+}
+
 if (args is ["--pvp-progress-transaction-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -2958,6 +2965,7 @@ checks += PvpBonusGrenadeBurstTests.Run(Path.Combine(contentRoot.FullName,"conte
 checks += PvpBonusSelectionTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusDelayTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusProgressCoordinatorTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += PvpScoreMultiplierTests.Run();
 checks += PvpBonusSpawnAreaTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusSpawnPlannerTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveGrenadesBurstUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));

@@ -140,6 +140,17 @@ CRATEBLOCKER sets zero for 60 seconds, overriding its class default of 0.8;
 therefore using that default would incorrectly permit progress gain. These
 serialized card identities/parameters remain to be bound to host card authority.
 
+`PvpScoreMultiplierState` now holds the two source values and 60-second timers
+for a two-player match. STREAKBOOST targets its owner and CRATEBLOCKER targets
+the opponent. Card use assigns a value instead of multiplying the previous
+one; a card whose timer reached zero resets its target to one on the next
+Update, matching each recovered Card script. The state rejects unknown owners,
+unknown cards, repeated active uses, and malformed game deltas. This is a
+host-owned effect state, but it is not yet connected to `MatchEngine` card
+reservation, the live skill-shot callback, or the normal Unity controller.
+The current coordinator still accepts a caller-supplied confirmed multiplier;
+that caller must not be treated as an untrusted packet source.
+
 During a running source Update, decay occurs first and the value is clamped to
 zero. Only `progress > 100` generates a bonus, subtracting 100 once; exactly 100
 does not qualify, and a large value is not drained with a loop. GenerateNewBonus
