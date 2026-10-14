@@ -32,9 +32,11 @@ this score transition before damage publication, with a deterministic receipt
 bound to match, projectile and victim. Live infantry projectile impacts now
 use the same staged transition for `ArmyPlayerHit`, in a separate receipt
 namespace. Real Drone, Helicopter, Assault Helicopter and Heavy Turret bullets
-now share that staged army-hit transition. Other army-owned hits, death/combo flags,
-card multiplier lifetimes, frame advancement and actual crate issuance remain
-open. MainScene's serialized `CRATEBLOCKER` value is zero despite its C# class
+now share that staged army-hit transition. Running MatchEngine advances the
+source streak and delay clocks once per accepted host update and retains
+matured requests without replay duplication. Other army-owned hits, AI death/combo flags,
+card multiplier lifetimes and actual crate issuance remain open.
+MainScene's serialized `CRATEBLOCKER` value is zero despite its C# class
 default of 0.8.
 The online crate gate now derives from the pinned Client `dropCreates`,
 `isNoob`, level display conversion and Constants row four. The two rank

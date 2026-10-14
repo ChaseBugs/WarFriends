@@ -179,8 +179,11 @@ or exhausted score receipt aborts the host hit without partial score or health.
 Live infantry, Drone, Helicopter, Assault Helicopter and Heavy Turret projectile
 collisions stage `ArmyPlayerHit` under a separate projectile receipt before
 player damage; poison follow-up pulses remain excluded.
-Other army-owned damage, death/combo flags, verified walking state parity, card
-multiplier lifetimes, source frame advancement and crate issuance remain open.
+MatchEngine now advances source progress and waits on accepted running host
+updates, retaining matured requests for a later host-issued box. It skips
+replayed ticks and stages the progress copy before its bounded request queue.
+Other army-owned damage, AI death/combo flags, verified walking state parity,
+card multiplier lifetimes and actual crate issuance remain open.
 The Client class default for `CRATEBLOCKER` is 0.8, but its MainScene component
 serializes zero; the server retains the scene value.
 

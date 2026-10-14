@@ -116,6 +116,16 @@ internal static class PvpBonusProgressCoordinatorTests
               stagedHit.Snapshot("local").Progress == 0 &&
               candidateHit.ScoreSnapshot("local").Score == 6,
             "host can stage score and streak before publishing an accepted damage mutation");
+        using var stagedFrame = Create();
+        ThreeKills(stagedFrame, "local", 1020);
+        var candidateFrame = stagedFrame.PrepareFrameCopy(1, 0f, true,
+            out var pendingFrame);
+        Check(pendingFrame.Players[0].Streak.BonusRequested &&
+              stagedFrame.PendingCount == 0 &&
+              candidateFrame.PendingCount == 1 &&
+              stagedFrame.Snapshot("local").BonusesRequested == 0 &&
+              candidateFrame.Snapshot("local").BonusesRequested == 1,
+            "host can stage a bonus frame without consuming the original request");
         try { ((IDictionary<int, int>)localScore.Counts)[0x10] = 0;
             throw new Exception("Published counts were mutable."); }
         catch (NotSupportedException) { checks++; }

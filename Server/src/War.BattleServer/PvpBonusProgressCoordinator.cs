@@ -345,6 +345,18 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         }
     }
 
+    internal PvpBonusProgressCoordinator PrepareFrameCopy(ulong frameId,
+        float scaledDelta, bool gameIsRunning, out PvpBonusProgressFrame frame)
+    {
+        lock (gate)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            var candidate = (PvpBonusProgressCoordinator)MemberwiseClone();
+            frame = candidate.AdvanceFrame(frameId, scaledDelta, gameIsRunning);
+            return candidate;
+        }
+    }
+
     private void AddRequest(List<PvpBonusDelayedRequest> requests, string ownerId,
         PvpScoreStreakFrame streak, ulong frameId)
     {

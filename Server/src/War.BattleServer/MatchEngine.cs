@@ -1415,10 +1415,17 @@ public sealed partial class MatchEngine : IMatchRuntime
             stateRevision++;
             return;
         }
-        if (phase == BattlePhase.Countdown && tick >= startTick)
+        bool justStarted = phase == BattlePhase.Countdown && tick >= startTick;
+        if (justStarted)
         {
             phase = BattlePhase.Running;
             if (performance.StartTick == 0) performance.Start(tick == 0 ? 1 : tick);
+        }
+        if (phase == BattlePhase.Running && advanced)
+        {
+            try { AdvancePvpBonusFrame(elapsed, justStarted); }
+            catch (InvalidOperationException) { End("pvp-bonus-backpressure", "", false); return; }
+            catch (InvalidDataException) { End("invalid-pvp-bonus-authority", "", false); return; }
         }
         if (phase == BattlePhase.Running && !overtime && tick >= endTick)
         {

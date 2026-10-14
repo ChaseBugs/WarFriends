@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 using System.Text;
 using War.Protocol;
@@ -9,6 +10,8 @@ public sealed partial class MatchEngine
 {
     private PvpBonusSpawnPlanner? pvpBonusPlanner;
     private PvpBonusProgressCoordinator? pvpBonusProgress;
+    private ulong pvpBonusFrameId;
+    private readonly List<PvpBonusDelayedRequest> maturedPvpBonuses = new();
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private readonly HashSet<string> appliedPvpBonusBoxes = new(StringComparer.Ordinal);
 
@@ -16,6 +19,26 @@ public sealed partial class MatchEngine
         throw new InvalidOperationException("PvP bonus authority is not configured.");
     internal PvpBonusProgressCoordinator BonusProgress => pvpBonusProgress ??
         throw new InvalidOperationException("PvP bonus progress is not configured.");
+    internal IReadOnlyList<PvpBonusDelayedRequest> MaturedBonusRequests =>
+        new ReadOnlyCollection<PvpBonusDelayedRequest>(maturedPvpBonuses.ToArray());
+
+    private void AdvancePvpBonusFrame(ulong elapsedTicks, bool justStarted)
+    {
+        if (pvpBonusProgress == null || elapsedTicks == 0) return;
+        if (pvpBonusFrameId == ulong.MaxValue)
+            throw new InvalidOperationException("PvP bonus frame identity exhausted.");
+
+        ulong nextFrame = pvpBonusFrameId + 1;
+        float delta = justStarted ? 0f :
+            (float)((double)elapsedTicks / MatchManifest.TickRate);
+        var prepared = pvpBonusProgress.PrepareFrameCopy(nextFrame, delta, true,
+            out var frame);
+        if (maturedPvpBonuses.Count > 256 - frame.MaturedRequests.Count)
+            throw new InvalidOperationException("Unissued PvP bonus capacity exhausted.");
+        maturedPvpBonuses.AddRange(frame.MaturedRequests);
+        pvpBonusProgress = prepared;
+        pvpBonusFrameId = nextFrame;
+    }
 
     private string PvpHitReceiptId(string source, ulong projectileKey, string victimId)
     {

@@ -204,6 +204,31 @@ internal static class PvpBonusSpawnPlannerTests
               projectileEngine.BonusProgress.Snapshot(localId).Progress == 7.5f &&
               projectileEngine.Snapshot().Players[1].Health == 990f,
             "host army projectile receipt publishes source army score and player damage");
+        var clockEngine = new MatchEngine(manifest, map, content,
+            combatRandom: () => 1f);
+        foreach (var player in manifest.Players) clockEngine.Admit(player.PlayerId);
+        foreach (var player in manifest.Players)
+            clockEngine.Command(player.PlayerId, new MatchCommand {CommandId = 1,
+                Ready = new ReadyCommand {ManifestHash = clockEngine.ManifestHash}});
+        clockEngine.Advance(60);
+        for (int index = 0; index < 3; index++)
+            clockEngine.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(700 + index), 0x1210, 1f);
+        clockEngine.Advance(61);
+        Check(clockEngine.BonusProgress.PendingCount == 1 &&
+              clockEngine.MaturedBonusRequests.Count == 0,
+            "a live match tick issues the source streak request without an early crate");
+        for (ulong nextTick = 62; nextTick <= 153; nextTick++)
+            clockEngine.Advance(nextTick);
+        var maturedInMatch = clockEngine.MaturedBonusRequests;
+        Check(maturedInMatch.Count == 1 &&
+              maturedInMatch[0].OwnerPlayerId == localId &&
+              maturedInMatch[0].BonusOrdinal == 1 &&
+              clockEngine.BonusProgress.PendingCount == 0,
+            "the match clock retains a matured source request for later crate issuance");
+        clockEngine.Advance(153);
+        Check(clockEngine.MaturedBonusRequests.SequenceEqual(maturedInMatch),
+            "replaying one match tick does not mature or duplicate a bonus request");
         var enginePlanner = engine.BonusPlanner;
         enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
         var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);
