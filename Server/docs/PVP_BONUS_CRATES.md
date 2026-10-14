@@ -125,6 +125,20 @@ broken endpoint. The plan is not yet an entity, network event, physics body,
 collection result, or Backend reward. Run `--pvp-bonus-spawn-plan-only` for the
 focused transaction checks.
 
+`PvpBonusBoxRegistry` now admits a plan as a host-owned falling box only when
+its owner, source/published prefab indexes and selected position bind the
+admitted match and reviewed spawn area. Each box reserves room for its final
+damage receipt. A confirmed static contact makes it grounded; confirmed lethal
+damage can collect it even while airborne, as the source `OnDeath` has no
+`onGround` gate. The damage owner's fraction chooses the recipient; a null
+damage owner falls back to the earning owner. One matching damage receipt
+returns the original candidate, and a second claimant is rejected. A
+confirmed booby-trap card arms the earning fraction and is consumed only when
+an opposing recipient steals one of its boxes. Collection is still a candidate:
+there is no box physics solver, live MatchEngine callback, Client event,
+effect execution, or Backend currency/item grant yet. The replacement uses
+the host receipt as an opaque box identity until its Client protocol is wired.
+
 ## Collection contract to implement next
 
 `KillStreakBonusBox.OnInstancied` sets health to one and clears `onGround`.

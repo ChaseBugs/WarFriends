@@ -37,8 +37,13 @@ plan using validated roster perspective, the reviewed selection history and
 source map areas. Replays do not redraw; invalid coordinates or weights do not
 consume FIFO overrides. The source's invalid endpoint index is retained for
 history but mapped to its actual prefab for prospective publication. The
-normal MatchEngine callback, authoritative dynamic weight inputs, box entity,
-physics, collection, rewards and Unity rendering remain open.
+normal MatchEngine callback, authoritative dynamic weight inputs, physical box,
+physics, collection settlement, rewards and Unity rendering remain open.
+Spawn plans can now enter a bounded host box registry with falling/grounded/
+collected phases, one terminal damage receipt, owner-or-attacker recipient
+selection and one-use booby-trap interception on a stolen box. This is a
+collection candidate only; host physics, normal battle events, bonus effects,
+durable rewards and Unity projection are still required.
 Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
 capacity admission, crate selection/spawn/collection, effects, Backend rewards
 and Unity projection remain unbound.

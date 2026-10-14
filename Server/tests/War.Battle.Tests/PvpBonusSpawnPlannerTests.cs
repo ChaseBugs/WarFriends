@@ -72,6 +72,45 @@ internal static class PvpBonusSpawnPlannerTests
               planner.QueuedCount(PvpBonusSide.Allies) == 0 && planner.LastSourceIndex == 8,
             "accepted queued override bypasses weights and consumes one FIFO item");
 
+        var boxes = new PvpBonusBoxRegistry(content, manifest);
+        var falling = boxes.Register(planned);
+        Check(falling.Phase == PvpBonusBoxPhase.Falling && boxes.ActiveCount == 1 &&
+              boxes.ReceiptCount == 1,
+            "a reviewed spawn plan creates one host-owned falling box with a reserved terminal slot");
+        Check(boxes.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded &&
+              boxes.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Grounded,
+            "repeated static contacts do not create another box or collection");
+        boxes.ArmBoobyTrap(Id(200), localId);
+        Check(boxes.HasArmedBoobyTrap(localId) && boxes.ReceiptCount == 2,
+            "confirmed card effect arms the earning fraction before collection");
+        var stolen = boxes.ConfirmDestroyed(falling.BoxId, Id(201), manifest.Players[1].PlayerId);
+        Check(stolen is {Stolen:true,BoobyTrapped:true} &&
+              stolen.OwnerPlayerId == localId && stolen.RecipientPlayerId == manifest.Players[1].PlayerId &&
+              boxes.ActiveCount == 0 && !boxes.HasArmedBoobyTrap(localId),
+            "opposing damage claims exactly one box and consumes its owner's booby trap");
+        boxes.ArmBoobyTrap(Id(200), localId);
+        Check(!boxes.HasArmedBoobyTrap(localId),
+            "replaying an already consumed card receipt cannot arm another trap");
+        Check(boxes.ConfirmDestroyed(falling.BoxId, Id(201), manifest.Players[1].PlayerId) == stolen &&
+              boxes.Register(planned).Collection == stolen && boxes.ReceiptCount == 3,
+            "damage and spawn replay return their original terminal result without a second grant");
+        try { boxes.Register(planned with {Position = Vector3.Zero});
+            throw new Exception("Changed source area position reused a box receipt."); }
+        catch (InvalidDataException) { checks++; }
+        try { boxes.ArmBoobyTrap(Id(200), manifest.Players[1].PlayerId);
+            throw new Exception("Trap receipt changed its owner."); }
+        catch (InvalidDataException) { checks++; }
+        try { boxes.ConfirmDestroyed(falling.BoxId, Id(202), localId);
+            throw new Exception("Collected box chose another winner."); }
+        catch (InvalidDataException) { checks++; }
+        Check(boxes.ConfirmStaticContact(falling.BoxId).Phase == PvpBonusBoxPhase.Collected,
+            "late static contact cannot resurrect a collected box");
+        var airborne = boxes.Register(forced);
+        var ownerFallback = boxes.ConfirmDestroyed(airborne.BoxId, Id(203), null);
+        Check(ownerFallback.RecipientPlayerId == localId && !ownerFallback.Stolen &&
+              !ownerFallback.BoobyTrapped && boxes.ActiveCount == 0,
+            "source null damage owner falls back to the box owner even before ground contact");
+
         var third = Mature(5, 7);
         var weights = content.PvpBonuses.WeightsForSourceContext(
             new(false, false, 9, 8, 0, false));
