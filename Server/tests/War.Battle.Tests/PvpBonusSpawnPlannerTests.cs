@@ -14,6 +14,25 @@ internal static class PvpBonusSpawnPlannerTests
         }
         string Id(int value) => value.ToString("x32");
         var content = BattleCombatContent.Load(Path.Combine(directory, "combat-content-manifest.json"));
+        foreach (var sourceMap in content.Maps)
+        {
+            foreach (var area in content.PvpBonusSpawnAreas.ForMap(sourceMap))
+            {
+                Vector3 center = (area.BoundsMin + area.BoundsMax) / 2f;
+                MapHit? landing = PvpBonusLandingProbe.FindStaticSurface(sourceMap, center);
+                Check(landing != null && landing.Distance >= 0 &&
+                      landing.Position.Y <= center.Y &&
+                      landing.Layer is 13 or 30,
+                    "reviewed box area center has source-static geometry below it");
+            }
+        }
+        try
+        {
+            PvpBonusLandingProbe.FindStaticSurface(content.Maps[0],
+                new Vector3(float.NaN, 0, 0));
+            throw new Exception("Non-finite bonus spawn entered the landing probe.");
+        }
+        catch (ArgumentOutOfRangeException) { checks++; }
         Check(content.AllWeaponBindings.Get("Google2u.AssaultRifle_AK47").ReloadableWeapon &&
               !content.AllWeaponBindings.Get("Google2u.LMG_Minigun").ReloadableWeapon,
             "source weapon graph retains the reloadable flags used by ammo probability");
@@ -84,6 +103,16 @@ internal static class PvpBonusSpawnPlannerTests
             "only a matured host delay can enter the spawn planning stage");
         var draw = new PvpBonusSpawnDraw(0f, 0, new Vector3(0.5f));
         var planned = planner.PlanMatured(first, 0, context, draw);
+        Check(planned.StaticSurfaceCandidate is {Layer: 13 or 30} &&
+              planned.StaticSurfaceCandidate.Position.Y <= planned.Position.Y,
+            "registered box plan retains a source-static landing candidate");
+        try
+        {
+            var forgedRegistry = new PvpBonusBoxRegistry(content, manifest);
+            forgedRegistry.Register(planned with {StaticSurfaceCandidate = null});
+            throw new Exception("A forged landing candidate entered the host box registry.");
+        }
+        catch (InvalidDataException) { checks++; }
         var map = content.Maps.Single(item =>
             Path.GetFileNameWithoutExtension(item.Source) == manifest.MapId);
         var cardGrenades = new CardGrenadesBurstPolicy(content.PvpBonuses);

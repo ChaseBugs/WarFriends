@@ -83,6 +83,9 @@ internal sealed class PvpBonusBoxRegistry
                 item.ColliderFileId == plan.AreaColliderFileId);
             if (area == null || !Inside(plan.Position, area))
                 throw new InvalidDataException("Spawn plan lies outside its reviewed map area.");
+            if (plan.StaticSurfaceCandidate !=
+                PvpBonusLandingProbe.FindStaticSurface(map, plan.Position))
+                throw new InvalidDataException("Box landing candidate differs from map geometry.");
             if (boxes.TryGetValue(request.ReceiptId, out var previous))
             {
                 if (previous.Plan != plan)

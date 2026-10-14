@@ -7,7 +7,8 @@ public sealed record PvpBonusSpawnDraw(float WeightedValue, int AreaOrder, Vecto
 public sealed record PvpBonusSpawnContext(bool IsWarArena, bool IsFriendlyDeathMatch,
     int GoldBonusesCollected, bool FirstTwoWeaponsHaveLowAmmo);
 public sealed record PvpBonusSpawnPlan(PvpBonusDelayedRequest Request,
-    int SourceIndex, int PrefabIndex, int AreaColliderFileId, Vector3 Position);
+    int SourceIndex, int PrefabIndex, int AreaColliderFileId, Vector3 Position,
+    MapHit? StaticSurfaceCandidate);
 public sealed record PvpBonusCurrencyRewardQuote(string MatchId, string BoxId,
     string RecipientPlayerId, PvpBonusEffectKind Kind, int BaseDraw, int Amount);
 
@@ -262,8 +263,10 @@ internal sealed class PvpBonusSpawnPlanner
             // Source may fall through at the inclusive upper endpoint: it
             // retains prefab 8 but emits invalid index 9. Keep source history
             // at 9, while publishing only the actual prefab's valid index.
+            var landingCandidate = PvpBonusLandingProbe.FindStaticSurface(map, position);
             var plan = new PvpBonusSpawnPlan(request, chosen.SourceIndex,
-                chosen.Prefab.Index, sourceAreas[draw.AreaOrder].ColliderFileId, position);
+                chosen.Prefab.Index, sourceAreas[draw.AreaOrder].ColliderFileId,
+                position, landingCandidate);
             // Admit the actual box before committing the queue/last-index copy.
             // Full box capacity leaves the matured request retriable on replay.
             boxes.Register(plan);

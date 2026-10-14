@@ -14,6 +14,16 @@ forces its source prefab exactly once. This registers a falling box, but match
 ticks do not yet call the issuer or simulate the box's collision with the map.
 No live reward is granted merely because the plan exists.
 
+The original `KillStreakBonusBox` prefab has a gravity-enabled Rigidbody and
+BoxCollider. Its `onGround` flag changes only after a collision with source
+static layer 13 or terrain layer 30. `PvpBonusLandingProbe` now queries those
+exact layers in the recovered map geometry beneath a planned spawn position.
+All ten reviewed spawn-area centers (two on each of five PvP maps) have a
+static hit below them. Each accepted spawn plan now retains that optional
+static-surface candidate. This establishes a useful landing target for the
+next physics step; a downward ray is not the box collider's contact manifold,
+so the probe does not set `onGround` or authorize collection.
+
 ## Source bindings
 
 `MainScene.KillStreakManager.bonusesPrefabs` has nine entries. Its order differs
@@ -250,8 +260,9 @@ and spawn-area planner; a rejected draw keeps it queued, while an accepted
 plan registers exactly one box. `MatchManifest.PvpBonusMode` now accepts only
 ordinary, War Arena or friendly DeathMatch from the trusted manifest, and an
 issue rejects mismatched mode flags before selection. Existing manifests may
-omit it; those matches cannot issue a matured box. Automatic issuance still
-awaits Backend mode projection and live gold/ammo analytics.
+omit it; those matches cannot issue a matured box. The host now derives the
+live gold/ammo selection inputs itself; automatic issuance still awaits the
+physical box and Client presentation path.
 Other army-owned damage, AI death/combo flags, verified walking state parity,
 card multiplier lifetimes, Client-visible crate spawning and effect delivery
 remain open.
