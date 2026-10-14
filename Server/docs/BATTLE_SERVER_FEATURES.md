@@ -25,8 +25,10 @@ infer those inputs from Client packets or partial MatchEngine death events.
 The source player-damage callback now has a host-only flag classifier for
 `EnemyPlayerHit`, walking-victim `OnTheMove`, and hostile-army
 `ArmyPlayerHit`. Poison and Immortal are excluded; Flame stays closed until
-its timer throttle is verified. MatchEngine score/streak publication remains
-unbound to this classifier.
+its timer throttle is verified. The source-view coordinator now publishes
+classified damage, score and streak gain under one receipt, including silent
+receipts for excluded damage. MatchEngine damage callbacks remain unbound to
+this transition.
 The online crate gate now derives from the pinned Client `dropCreates`,
 `isNoob`, level display conversion and Constants row four. The two rank
 comparisons are intentionally different, and the policy rejects rank indexes

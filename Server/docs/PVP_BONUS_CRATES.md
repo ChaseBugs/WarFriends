@@ -170,7 +170,13 @@ Walking, `OnTheMove`; a hostile AIObject earns its owning player
 `ArmyPlayerHit`. Poison and Immortal return before those branches. Flame stays
 closed until its real-time six-hit throttle is reproduced. The policy requires
 host-proven damage ownership, faction and walking state; it does not yet
-mutate the match score or streak.
+read those facts from `MatchEngine` callbacks. `PvpBonusProgressCoordinator`
+can now accept such confirmed damage through one receipt: it calculates the
+source flags, then publishes score and streak gain together. Poison, Immortal,
+unverified Flame, self damage and friendly army damage retain an unscored
+receipt so replay cannot convert them into points. The normal damage callback
+has not been bound to this coordinator, so live score and crate issuance are
+still open.
 
 ## Collection contract to implement next
 

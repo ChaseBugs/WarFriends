@@ -14,9 +14,10 @@ internal static class PvpBonusProgressCoordinatorTests
         string Id(int ordinal) => ordinal.ToString("x32");
         string matchId = Id(100);
         PvpBonusProgressCoordinator Create(bool drops=true, int pending=256, int receipts=4096,
-            int scoreReceipts=4096, int gainReceipts=4096) =>
+            int scoreReceipts=4096, int gainReceipts=4096, int hitReceipts=4096) =>
             new(content.PvpScores, content.PvpScoreStreak, matchId, "local", "opponent", drops,
-                pending, receipts, scoreReceipts, gainReceipts);
+                pending, receipts, scoreReceipts, gainReceipts,
+                maximumHitReceipts: hitReceipts);
         void ThreeKills(PvpBonusProgressCoordinator state, string owner, int firstReceipt)
         {
             for (int index = 0; index < 3; index++)
@@ -34,6 +35,9 @@ internal static class PvpBonusProgressCoordinatorTests
         Check(scoreReplay.Score.ScoreAfter == 46 && scoreReplay.Progress == 34.5f &&
               normal.ScoreSnapshot("local").Score == 138,
             "one receipt replay returns its original score/progress without recounting");
+        try { normal.RecordConfirmedSkillShot("opponent", Id(1), 0x1210, 1f);
+            throw new Exception("Another owner reused a direct skill-shot receipt."); }
+        catch (InvalidDataException) { checks++; }
         try { normal.RecordConfirmedSkillShot("local", Id(1), 0x1210, 1.25f);
             throw new Exception("Changed multiplier was accepted on score replay."); }
         catch (InvalidDataException) { checks++; }
@@ -44,6 +48,65 @@ internal static class PvpBonusProgressCoordinatorTests
         catch (ArgumentOutOfRangeException) { checks++; }
         Check(normal.ScoreSnapshot("local").ReceiptCount == 3 && normal.Snapshot("local").GainReceiptCount == 3,
             "progress validation failure leaves the score ledger unchanged");
+        using var hits = Create();
+        var standingHit = hits.RecordConfirmedPlayerDamage("local", "opponent", Id(1000),
+            PvpPlayerDamageOwner.Player, CombatDamageType.Shot, false, 1f);
+        var walkingHit = hits.RecordConfirmedPlayerDamage("local", "opponent", Id(1001),
+            PvpPlayerDamageOwner.Player, CombatDamageType.Explosion, true, 1f);
+        var armyHit = hits.RecordConfirmedPlayerDamage("opponent", "local", Id(1002),
+            PvpPlayerDamageOwner.Army, CombatDamageType.Shot, true, 1f);
+        Check(standingHit?.Score is {Flags:65536,Points:6,ScoreAfter:6} &&
+              walkingHit?.Score is {Flags:196608,Points:10,ScoreAfter:16} &&
+              armyHit?.Score is {Flags:524288,Points:10,ScoreAfter:10} &&
+              hits.Snapshot("local").Progress == 12f,
+            "confirmed source damage publishes score and streak gain in one transition");
+        Check(hits.RecordConfirmedPlayerDamage("local", "opponent", Id(1001),
+                  PvpPlayerDamageOwner.Player, CombatDamageType.Explosion, true, 1f) == walkingHit &&
+              hits.ScoreSnapshot("local").ReceiptCount == 2,
+            "host hit replay does not grant points or progress twice");
+        var suppressed = hits.RecordConfirmedPlayerDamage("local", "opponent", Id(1003),
+            PvpPlayerDamageOwner.Player, CombatDamageType.Poison, true, 1f);
+        Check(suppressed == null && hits.ScoreSnapshot("local").Score == 16 &&
+              hits.RecordConfirmedPlayerDamage("local", "opponent", Id(1003),
+                  PvpPlayerDamageOwner.Player, CombatDamageType.Poison, true, 1f) == null,
+            "source-excluded damage retains an unscored replay receipt");
+        try { hits.RecordConfirmedPlayerDamage("local", "opponent", Id(1003),
+                PvpPlayerDamageOwner.Player, CombatDamageType.Shot, true, 1f);
+            throw new Exception("Suppressed hit receipt changed into scoring damage."); }
+        catch (InvalidDataException) { checks++; }
+        try { hits.RecordConfirmedSkillShot("local", Id(1003), 65536, 1f);
+            throw new Exception("Suppressed hit receipt entered the direct score route."); }
+        catch (InvalidDataException) { checks++; }
+        Check(hits.RecordConfirmedPlayerDamage("local", "local", Id(1004),
+                  PvpPlayerDamageOwner.Player, CombatDamageType.Shot, false, 1f) == null &&
+              hits.RecordConfirmedPlayerDamage("opponent", "opponent", Id(1005),
+                  PvpPlayerDamageOwner.Army, CombatDamageType.Shot, false, 1f) == null,
+            "self and friendly-army callbacks reserve receipts without scoring");
+        try { hits.RecordConfirmedPlayerDamage("local", "local", Id(1006),
+                PvpPlayerDamageOwner.Player, (CombatDamageType)99, false, 1f);
+            throw new Exception("Invalid self-damage type acquired a silent receipt."); }
+        catch (InvalidDataException) { checks++; }
+        using var fullHits = Create(hitReceipts: 1);
+        fullHits.RecordConfirmedPlayerDamage("local", "opponent", Id(1010),
+            PvpPlayerDamageOwner.Player, CombatDamageType.Poison, false, 1f);
+        try { fullHits.RecordConfirmedPlayerDamage("local", "opponent", Id(1011),
+                PvpPlayerDamageOwner.Player, CombatDamageType.Shot, false, 1f);
+            throw new Exception("Full hit receipt ledger awarded score."); }
+        catch (InvalidOperationException) { checks++; }
+        Check(fullHits.ScoreSnapshot("local").Score == 0 &&
+              fullHits.Snapshot("local").Progress == 0,
+            "hit receipt capacity failure preserves score and streak state");
+        using var fullHitScore = Create(scoreReceipts: 1);
+        fullHitScore.RecordConfirmedPlayerDamage("local", "opponent", Id(1012),
+            PvpPlayerDamageOwner.Player, CombatDamageType.Shot, false, 1f);
+        try { fullHitScore.RecordConfirmedPlayerDamage("local", "opponent", Id(1013),
+                PvpPlayerDamageOwner.Player, CombatDamageType.Shot, false, 1f);
+            throw new Exception("Full score ledger accepted a hit."); }
+        catch (InvalidOperationException) { checks++; }
+        Check(fullHitScore.RecordConfirmedPlayerDamage("local", "opponent", Id(1013),
+                  PvpPlayerDamageOwner.Player, CombatDamageType.Poison, false, 1f) == null &&
+              fullHitScore.ScoreSnapshot("local").Score == 6,
+            "failed score preparation leaves hit receipt free for corrected host evidence");
         try { ((IDictionary<int, int>)localScore.Counts)[0x10] = 0;
             throw new Exception("Published counts were mutable."); }
         catch (NotSupportedException) { checks++; }

@@ -13,6 +13,7 @@ public sealed record PvpConfirmedPlayerDeath(PvpKillComboResult Combo,
 public sealed record PvpComboSnapshot(int Streak, float LastKillTime, int ReceiptCount);
 public sealed record PvpBonusProgressFrame(ulong FrameId,
     IReadOnlyList<PvpOwnerStreakFrame> Players, IReadOnlyList<PvpBonusDelayedRequest> MaturedRequests);
+internal enum PvpPlayerDamageOwner { Player, Army }
 
 /// <summary>
 /// Atomic progress/delay transitions for one source view of a match. This is
@@ -49,8 +50,13 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     private PvpSkillShotScoreState opponentScore;
     private PvpKillComboState combo;
     private readonly Dictionary<string, ConfirmedDeathReceipt> deathReceipts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ConfirmedHitReceipt> hitReceipts = new(StringComparer.Ordinal);
+    private readonly int maximumHitReceipts;
     private sealed record ConfirmedDeathReceipt(string OwnerId, int BaseFlags, int GameTimeBits,
         bool IsEnemy, int MultiplierBits, PvpConfirmedPlayerDeath Result);
+    private sealed record ConfirmedHitReceipt(string OwnerId, string VictimId,
+        PvpPlayerDamageOwner DamageOwner, CombatDamageType DamageType,
+        bool VictimWalking, int MultiplierBits, PvpConfirmedSkillShot? Result);
     private PvpBonusDelayQueue delays;
     private PvpBonusProgressFrame? lastFrame;
     private int lastDeltaBits;
@@ -61,7 +67,7 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         string matchId, string localOwnerId, string opponentOwnerId, bool dropsCrates,
         int maximumPending = 256, int maximumDelayReceipts = 4096,
         int maximumScoreReceipts = 4096, int maximumGainReceipts = 4096,
-        int maximumComboReceipts = 4096)
+        int maximumComboReceipts = 4096, int maximumHitReceipts = 4096)
     {
         PvpBonusDelayQueue.ValidateScope(matchId, localOwnerId);
         PvpBonusDelayQueue.ValidateScope(matchId, opponentOwnerId);
@@ -71,6 +77,9 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         this.scores = scores;
         this.localOwnerId = localOwnerId;
         this.opponentOwnerId = opponentOwnerId;
+        if (maximumHitReceipts is < 1 or > 4096)
+            throw new ArgumentOutOfRangeException(nameof(maximumHitReceipts));
+        this.maximumHitReceipts = maximumHitReceipts;
         // ScoreManager.Restart sets one ratio for both AddSkillshot branches.
         localProgress = new(scores, policy, dropsCrates, maximumGainReceipts);
         opponentProgress = new(scores, policy, dropsCrates, maximumGainReceipts);
@@ -92,8 +101,11 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         lock (gate)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            if (deathReceipts.ContainsKey(receiptId))
-                throw new InvalidDataException("Death receipts must use the confirmed death transition.");
+            if (deathReceipts.ContainsKey(receiptId) || hitReceipts.ContainsKey(receiptId))
+                throw new InvalidDataException("Receipt belongs to another confirmed source transition.");
+            if ((ownerId == localOwnerId && opponentScore.HasReceipt(receiptId)) ||
+                (ownerId == opponentOwnerId && localScore.HasReceipt(receiptId)))
+                throw new InvalidDataException("Confirmed skill-shot receipt belongs to another owner.");
             var progress = ProgressFor(ownerId);
             var score = ScoreFor(ownerId);
             var nextScore = score.PrepareConfirmedSkillShotCopy(receiptId, flags, out var scored);
@@ -110,6 +122,82 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
                 opponentProgress = nextProgress;
             }
             return new(scored, gained);
+        }
+    }
+
+    /// <summary>
+    /// One host-confirmed damage callback. The duel roster establishes the
+    /// owner/victim factions; no packet supplies a score flag or multiplier.
+    /// Suppressed callbacks still reserve their receipt against later forgery.
+    /// </summary>
+    internal PvpConfirmedSkillShot? RecordConfirmedPlayerDamage(string ownerId,
+        string victimId, string receiptId, PvpPlayerDamageOwner damageOwner,
+        CombatDamageType damageType, bool victimWalking, float confirmedMultiplier)
+    {
+        lock (gate)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (!Guid.TryParseExact(receiptId, "N", out _) ||
+                receiptId != receiptId.ToLowerInvariant() ||
+                ownerId is null || victimId is null ||
+                (ownerId != localOwnerId && ownerId != opponentOwnerId) ||
+                (victimId != localOwnerId && victimId != opponentOwnerId) ||
+                !Enum.IsDefined(damageOwner) || !Enum.IsDefined(damageType))
+                throw new InvalidDataException("Invalid host player-damage evidence.");
+            if (confirmedMultiplier is not (0f or 1f or 1.25f))
+                throw new ArgumentOutOfRangeException(nameof(confirmedMultiplier));
+            int multiplierBits = BitConverter.SingleToInt32Bits(confirmedMultiplier);
+            if (hitReceipts.TryGetValue(receiptId, out var previous))
+            {
+                if (previous.OwnerId != ownerId || previous.VictimId != victimId ||
+                    previous.DamageOwner != damageOwner || previous.DamageType != damageType ||
+                    previous.VictimWalking != victimWalking ||
+                    previous.MultiplierBits != multiplierBits)
+                    throw new InvalidDataException("Confirmed hit replay changed its evidence.");
+                return previous.Result;
+            }
+            if (deathReceipts.ContainsKey(receiptId) ||
+                localScore.HasReceipt(receiptId) || opponentScore.HasReceipt(receiptId))
+                throw new InvalidDataException("Hit receipt belongs to another source transition.");
+            if (hitReceipts.Count == maximumHitReceipts)
+                throw new InvalidOperationException("Confirmed hit receipt capacity exhausted.");
+
+            int flags = damageOwner switch
+            {
+                PvpPlayerDamageOwner.Player => ownerId == victimId ? 0 :
+                    PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(damageType, victimWalking),
+                PvpPlayerDamageOwner.Army =>
+                    PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
+                        damageType, ownerId != victimId),
+                _ => throw new InvalidDataException("Unknown damage owner.")
+            };
+            PvpConfirmedSkillShot? result = null;
+            PvpSkillShotScoreState? nextScore = null;
+            PvpScoreStreakProgress? nextProgress = null;
+            if (flags != 0)
+            {
+                nextScore = ScoreFor(ownerId).PrepareConfirmedSkillShotCopy(
+                    receiptId, flags, out var scored);
+                nextProgress = ProgressFor(ownerId).PrepareConfirmedSkillShotCopy(
+                    receiptId, flags, confirmedMultiplier, out float gained);
+                result = new(scored, gained);
+            }
+            hitReceipts.Add(receiptId, new(ownerId, victimId, damageOwner,
+                damageType, victimWalking, multiplierBits, result));
+            if (nextScore != null && nextProgress != null)
+            {
+                if (ownerId == localOwnerId)
+                {
+                    localScore = nextScore;
+                    localProgress = nextProgress;
+                }
+                else
+                {
+                    opponentScore = nextScore;
+                    opponentProgress = nextProgress;
+                }
+            }
+            return result;
         }
     }
 
@@ -141,7 +229,8 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
                     throw new InvalidDataException("Confirmed death receipt changed its authority.");
                 return previous.Result;
             }
-            if (localScore.HasReceipt(receiptId) || opponentScore.HasReceipt(receiptId))
+            if (hitReceipts.ContainsKey(receiptId) ||
+                localScore.HasReceipt(receiptId) || opponentScore.HasReceipt(receiptId))
                 throw new InvalidDataException("Death receipt was already used by a direct skill shot.");
 
             var nextCombo = combo.PrepareConfirmedKillCopy(receiptId, gameTime, out var comboResult);
