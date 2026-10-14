@@ -2,8 +2,10 @@ using System.Collections.ObjectModel;
 
 namespace War.BattleServer;
 
+public sealed record PvpBonusGrenadeSharedDamage(float Explosion, float Direct);
 public sealed record PvpBonusGrenadeDueShot(string BoxId, string RecipientPlayerId,
-    ulong FrameId, PvpBonusGrenadeLaunch Launch);
+    ulong FrameId, PvpBonusGrenadeLaunch Launch,
+    PvpBonusGrenadeSharedDamage SetupAtLaunch);
 
 /// <summary>
 /// Advances the recovered grenade-box coroutine on ordered scaled frames.
@@ -30,8 +32,20 @@ internal sealed class PvpBonusGrenadeBurstClock
     private ulong lastFrame;
     private int lastDeltaBits;
     private IReadOnlyList<PvpBonusGrenadeDueShot>? lastResult;
+    // The catalog extracts MainScene component 41786, the KillStreak
+    // Manager's shared GrenadeAmmoSetup. GrenadeAmmoBase stores a reference
+    // to it, so an earlier projectile reads its latest damage at explosion.
+    private PvpBonusGrenadeSharedDamage sharedDamage;
 
     internal int PendingCount => pending.Count;
+    internal PvpBonusGrenadeSharedDamage CurrentSharedDamage => sharedDamage;
+
+    internal PvpBonusGrenadeBurstClock(PvpBonusCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        sharedDamage = new(catalog.GrenadeInitialExplosionDamage,
+            catalog.GrenadeInitialDirectDamage);
+    }
 
     internal void Schedule(PvpBonusGrenadeBurstPlan plan, ulong currentFrame)
     {
@@ -67,7 +81,7 @@ internal sealed class PvpBonusGrenadeBurstClock
             throw new InvalidDataException("Grenade-box frames must be consecutive.");
 
         var dueShots = new List<PvpBonusGrenadeDueShot>();
-        for (int index = pending.Count - 1; index >= 0; index--)
+        for (int index = 0; index < pending.Count; index++)
         {
             var burst = pending[index];
             if (burst.StartedFrame == frameId)
@@ -78,16 +92,20 @@ internal sealed class PvpBonusGrenadeBurstClock
                 continue;
 
             var launch = burst.Plan.Launches[burst.NextShot];
+            if (launch.DamageOverride is { } damage)
+                sharedDamage = new(damage.Explosion, damage.Direct);
             dueShots.Add(new PvpBonusGrenadeDueShot(burst.Plan.BoxId,
-                burst.Plan.RecipientPlayerId, frameId, launch));
+                burst.Plan.RecipientPlayerId, frameId, launch, sharedDamage));
             burst.NextShot++;
             burst.Elapsed = 0;
             if (burst.NextShot == burst.Plan.Launches.Count)
+            {
                 pending.RemoveAt(index);
+                index--;
+            }
         }
-        // Reverse iteration removes completed bursts safely. Publish due
-        // launches in the order their boxes were admitted to the host.
-        dueShots.Reverse();
+        // A forward pass publishes simultaneous launches in box admission
+        // order, including their shared setup mutation order.
         lastResult = new ReadOnlyCollection<PvpBonusGrenadeDueShot>(dueShots);
         lastFrame = frameId;
         lastDeltaBits = deltaBits;

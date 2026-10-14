@@ -25,6 +25,27 @@ def main():
     manager_blocks = [block for block in scene.split("--- !u!") if "guid: " + manager_guid + "," in block]
     if len(manager_blocks) != 1:
         raise ValueError("Expected one MainScene KillStreakManager")
+    manager_object_id = re.search(r"m_GameObject: \{fileID: (\d+)\}", manager_blocks[0])[1]
+    grenade_setup_path = ASSETS / "Scripts/Assembly-CSharp/GrenadeAmmoSetup.cs"
+    grenade_setup_guid = re.search(
+        r"^guid: (\w+)$", grenade_setup_path.with_suffix(".cs.meta").read_text(), re.M)[1]
+    grenade_setups = [block for block in scene.split("--- !u!")
+                      if block.startswith("114 &") and
+                      "guid: " + grenade_setup_guid + "," in block and
+                      "m_GameObject: {fileID: " + manager_object_id + "}" in block]
+    if len(grenade_setups) != 1:
+        raise ValueError("Expected one shared KillStreak Manager grenade setup")
+    grenade_setup = grenade_setups[0]
+    def obscured_fake_value(field):
+        match = re.search(r"^  " + field + r":\n(?:(?!^  \w+:).)*?^    fakeValue: ([\d.]+)$",
+                          grenade_setup, re.M | re.S)
+        if not match:
+            raise ValueError("Missing shared grenade setup " + field)
+        return float(match[1])
+    initial_direct_damage = obscured_fake_value("damageAmount")
+    initial_explosion_damage = obscured_fake_value("explodeDamageAmount")
+    if (initial_direct_damage, initial_explosion_damage) != (20.0, 350.0):
+        raise ValueError("Shared grenade setup damage changed")
     binding = manager_blocks[0].split("  bonusesPrefabs:\n", 1)[1].split("  killStreakBonusBoxPrefab:", 1)[0]
     references = re.findall(r"fileID: (\d+), guid: (\w+)", binding)
     if len(references) != 9 or len(set(references)) != 9:
@@ -90,6 +111,9 @@ def main():
                 "battleContentSha256": digest(content_bytes), "managerSha256": digest(manager_path.read_bytes()),
                 "cratesCodeSha256": digest(sheet_bytes), "bonusDefinitionsCodeSha256": digest(bonus_bytes),
                 "grenadeCodeSha256": digest(grenade_code),
+                "grenadeSetupCodeSha256": {
+                    name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes())
+                    for name in ("GrenadeAmmoBase", "GrenadeAmmo", "CardGrenadesBurst")},
                 "probabilityCodeSha256": {name: digest((ASSETS / ("Scripts/Assembly-CSharp/" + name + ".cs")).read_bytes()) for name in code_names},
                 "rules": {"goldLowLevelProbability": keyed_value("Google2u.Constants", "GoldCrateLowLevelProbability"),
                           "goldLowLevelMinimum": keyed_value("Google2u.Constants", "GoldCrateLowLevelGoldMin"),
@@ -103,6 +127,8 @@ def main():
                           "grenadeTargetDistance": grenade_distance,
                           "grenadeFallbackDamageMinimum": keyed_value("Google2u.CardConstants", "ClusterGrenadeDamageMin"),
                           "grenadeFallbackDamageMaximum": keyed_value("Google2u.CardConstants", "ClusterGrenadeDamageMax"),
+                          "grenadeInitialDirectDamage": initial_direct_damage,
+                          "grenadeInitialExplosionDamage": initial_explosion_damage,
                           "cardUnlockLevel": keyed_value("Google2u.CardConstants", "WarcardsUnlockLevel"),
                           "lowAmmoThreshold": bonus_value("LowAmmoRatio"),
                           "lowAmmoMultiplier": bonus_value("AmmoCrateOnLowAmmoRatio"),

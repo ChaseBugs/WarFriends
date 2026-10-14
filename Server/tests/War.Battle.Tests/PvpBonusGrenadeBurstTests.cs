@@ -18,8 +18,10 @@ internal static class PvpBonusGrenadeBurstTests
         var catalog = content.PvpBonuses;
         Check(catalog.GrenadeCount == 3 && catalog.GrenadeTargetDistance == 3f &&
               catalog.GrenadeFallbackDamageMinimum == 50f &&
-              catalog.GrenadeFallbackDamageMaximum == 872f,
-            "grenade count, strict target radius and fallback damage rows are source pinned");
+              catalog.GrenadeFallbackDamageMaximum == 872f &&
+              catalog.GrenadeInitialDirectDamage == 20f &&
+              catalog.GrenadeInitialExplosionDamage == 350f,
+            "grenade count, radius, fallback rows and shared scene setup are source pinned");
 
         var policy = new PvpBonusGrenadeBurstPolicy(catalog);
         Check(PvpBonusGrenadeBurstPolicy.FallbackOffsetFromUnitDraw(0f) == -1.5f &&
@@ -78,9 +80,11 @@ internal static class PvpBonusGrenadeBurstTests
             "three fallback grenades use two source draws each after the one-second delay");
 
         var burst = new PvpBonusGrenadeBurstPlan("box", "recipient", allFallback);
-        var clock = new PvpBonusGrenadeBurstClock();
+        var clock = new PvpBonusGrenadeBurstClock(catalog);
         Check(clock.AdvanceFrame(1, 0f).Count == 0,
             "a new grenade clock starts without firing");
+        Check(clock.CurrentSharedDamage == new PvpBonusGrenadeSharedDamage(350f, 20f),
+            "the shared grenade setup starts with MainScene explosion and direct damage");
         clock.Schedule(burst, 1);
         Check(clock.AdvanceFrame(2, 0.5f).Count == 0 &&
               clock.AdvanceFrame(3, 0.49f).Count == 0,
@@ -88,13 +92,35 @@ internal static class PvpBonusGrenadeBurstTests
         var firstDue = clock.AdvanceFrame(4, 0.01f);
         Check(firstDue.Count == 1 && firstDue[0].Launch.ShotIndex == 0 &&
               firstDue[0].FrameId == 4 &&
+              firstDue[0].SetupAtLaunch == new PvpBonusGrenadeSharedDamage(50f, 5f) &&
               ReferenceEquals(firstDue, clock.AdvanceFrame(4, 0.01f)),
             "the first scheduled shot is emitted once and a frame replay is stable");
         Check(clock.AdvanceFrame(5, 0.2f).Single().Launch.ShotIndex == 1 &&
               clock.AdvanceFrame(6, 0.2f).Single().Launch.ShotIndex == 2 &&
-              clock.PendingCount == 0,
+              clock.PendingCount == 0 &&
+              clock.CurrentSharedDamage == new PvpBonusGrenadeSharedDamage(50f, 5f),
             "later shots each wait another 0.2 scaled seconds");
-        var slowClock = new PvpBonusGrenadeBurstClock();
+        var targetedLaunches = policy.Plan(2, 42, box,
+            [Target("a", 1, 1f), Target("b", 1, 1.5f), Target("c", 1, 2f)],
+            () => throw new Exception("A targeted shot drew a fallback offset."));
+        clock.Schedule(new PvpBonusGrenadeBurstPlan("later-box", "recipient",
+            targetedLaunches), 6);
+        Check(clock.AdvanceFrame(7, 1f).Single().SetupAtLaunch ==
+              new PvpBonusGrenadeSharedDamage(50f, 5f),
+            "a later targeted burst inherits the shared setup changed by the earlier fallback");
+        var overlappingClock = new PvpBonusGrenadeBurstClock(catalog);
+        overlappingClock.AdvanceFrame(1, 0f);
+        overlappingClock.Schedule(new PvpBonusGrenadeBurstPlan("target-box",
+            "recipient", targetedLaunches), 1);
+        var targetedFirst = overlappingClock.AdvanceFrame(2, 1f).Single();
+        overlappingClock.Schedule(burst, 2);
+        overlappingClock.AdvanceFrame(3, 1f);
+        Check(targetedFirst.SetupAtLaunch ==
+                  new PvpBonusGrenadeSharedDamage(350f, 20f) &&
+              overlappingClock.CurrentSharedDamage ==
+                  new PvpBonusGrenadeSharedDamage(50f, 5f),
+            "a later fallback can change shared damage while an earlier projectile is in flight");
+        var slowClock = new PvpBonusGrenadeBurstClock(catalog);
         slowClock.AdvanceFrame(1, 0f);
         slowClock.Schedule(burst, 1);
         Check(slowClock.AdvanceFrame(2, 5f).Single().Launch.ShotIndex == 0 &&
@@ -136,9 +162,9 @@ internal static class PvpBonusGrenadeBurstTests
         Reject(() => policy.Plan(2, 0, box, [Target("bad", 3, 1f)], () => 0f));
         Reject(() => policy.Plan(2, 0, box, [], () => 1.5001f));
         Reject(() => policy.Plan(2, 0, box, [], () => float.NaN));
-        Reject(() => clock.AdvanceFrame(6, 0.3f));
-        Reject(() => clock.AdvanceFrame(8, 0.2f));
-        Reject(() => clock.AdvanceFrame(7, float.NaN));
+        Reject(() => clock.AdvanceFrame(7, 0.3f));
+        Reject(() => clock.AdvanceFrame(9, 0.2f));
+        Reject(() => clock.AdvanceFrame(8, float.NaN));
         Reject(() => policy.Plan(2, 0, box,
             Enumerable.Range(1, 257).Select(index => Target("t" + index, 1, 1f)).ToArray(),
             () => 0f));

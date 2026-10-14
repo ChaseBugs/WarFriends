@@ -21,7 +21,7 @@ public sealed partial class MatchEngine
     private readonly List<MaturedBonus> maturedPvpBonuses = new();
     private PvpBonusBoobyTrapPolicy? pvpBoobyTrap;
     private PvpBonusGrenadeBurstPolicy? pvpGrenadeBurstPolicy;
-    private readonly PvpBonusGrenadeBurstClock pvpGrenadeClock = new();
+    private PvpBonusGrenadeBurstClock? pvpGrenadeClock;
     private IReadOnlyList<PvpBonusGrenadeDueShot> readyPvpGrenadeShots =
         Array.Empty<PvpBonusGrenadeDueShot>();
     private readonly Dictionary<string, PvpBonusGrenadeBurstPlan> pvpGrenadeBurstPlans =
@@ -99,7 +99,9 @@ public sealed partial class MatchEngine
             (float)((double)elapsedTicks / MatchManifest.TickRate);
         var prepared = pvpBonusProgress.PrepareFrameCopy(nextFrame, delta, true,
             out var frame);
-        var dueGrenades = pvpGrenadeClock.AdvanceFrame(nextFrame, delta);
+        var dueGrenades = (pvpGrenadeClock ??
+            throw new InvalidOperationException("PvP grenade clock is missing."))
+            .AdvanceFrame(nextFrame, delta);
         if (maturedPvpBonuses.Count > 256 - frame.MaturedRequests.Count)
             throw new InvalidOperationException("Unissued PvP bonus capacity exhausted.");
         for (int index = 0; index < frame.MaturedRequests.Count; index++)
@@ -142,6 +144,7 @@ public sealed partial class MatchEngine
             manifest, manifest.SceneMasterPlayerId);
         pvpBoobyTrap = content.PvpBoobyTrap;
         pvpGrenadeBurstPolicy = new PvpBonusGrenadeBurstPolicy(content.PvpBonuses);
+        pvpGrenadeClock = new PvpBonusGrenadeBurstClock(content.PvpBonuses);
         pvpBonusWeapons = content.AllWeaponBindings;
         pvpBonusLowAmmoThreshold = content.PvpBonuses.LowAmmoThreshold;
         pvpGoldBonusesCollected = manifest.PvpGoldBonusesAtAdmission ?? 0;
@@ -159,7 +162,8 @@ public sealed partial class MatchEngine
         if (pvpGrenadeBurstPlans.TryGetValue(boxId, out var previous))
             return previous;
         if (phase != BattlePhase.Running || pvpBonusPlanner == null ||
-            pvpGrenadeBurstPolicy == null || pvpBonusFrameId == 0)
+            pvpGrenadeBurstPolicy == null || pvpGrenadeClock == null ||
+            pvpBonusFrameId == 0)
             throw new InvalidOperationException("PvP grenade crate is unavailable.");
         if (pvpGrenadeClock.PendingCount >= 256)
             throw new InvalidOperationException("Too many pending grenade-box bursts.");

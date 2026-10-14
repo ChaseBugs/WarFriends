@@ -254,9 +254,18 @@ box-centered X/Z offsets in [-1.5, 1.5]. The fallback grenade's source
 damage rows are 50 to 872, scaled by recipient rank/43. The planner now
 attaches the 43 bit-exact Unity-probed explosion and direct-damage pairs to
 fallback shots; targeted shots retain the `GrenadeAmmoSetup` values already on
-the shared `KillStreakManager` grenade component. A previous fallback burst can
-have changed that shared setup, so targeted shots do not necessarily use the
-initial prefab values.
+the shared `KillStreakManager` grenade component. `GrenadeAmmoBase.LoadAmmoSetup`
+stores a reference to that setup and `GrenadeAmmo.CreateExplosionInfo` reads it
+at explosion time. A previous or overlapping fallback burst can therefore
+change even a targeted shot's final explosion damage. The host burst clock now
+tracks the scene's initial 350/20 setup and applies fallback mutations in
+shot order; its launch snapshot is not a final impact-damage decision. The
+separate `CardGrenadesBurst` also uses this component and must join the shared
+state before cross-feature damage parity is complete.
+The checked-in bonus catalog now extracts the shared setup's 350/20 values
+from MainScene and pins the `GrenadeAmmoBase`, `GrenadeAmmo`, and
+`CardGrenadesBurst` source digests. The host clock initializes from that
+validated catalog instead of an independent constant.
 Projectile flight, impact, and actual damage remain unimplemented. The planner
 draws random offsets only for fallback shots. The source passes the *local current player*
 fraction to `GetOpponents`; the planner keeps that perspective explicit until

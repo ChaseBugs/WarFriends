@@ -6,6 +6,11 @@
   "cratesCodeSha256": "0f5fefbd278c2503b86670aa12fd250e63f2b84a03fd6788067738471c9df291",
   "bonusDefinitionsCodeSha256": "4ca729c58d9c7d9feed24dbe41d03074a992e43a8d89bf0fc6e6207995fbe2fc",
   "grenadeCodeSha256": "7a3ac469486e5220d18e3be54664484d2b207b2e8374e6e2dd9f085f176c3e4c",
+  "grenadeSetupCodeSha256": {
+    "GrenadeAmmoBase": "99997d9d936f19883d9a04a718d976c13be5cfc5c3cb3a384213017e38599cc8",
+    "GrenadeAmmo": "dd1bdc5172c7ab608dc5bd1c9aa63a61bffb04ead7ab65e6a7bf47d104581735",
+    "CardGrenadesBurst": "08d3d9237202954e3cbd21cc2daf47570f38b10d74b47796d2bbb438a2d89893"
+  },
   "probabilityCodeSha256": {
     "KillStreakBonus": "0690d3f324ab52e5c1d19db4fc46410335d679099f285c69b6b8815fd7256997",
     "KillStreakBonusAddCredits": "9417e8e8839acd36465d04357af3bf0e62966663f43725b1941a808fd1b122fd",
@@ -28,6 +33,8 @@
     "grenadeTargetDistance": 3,
     "grenadeFallbackDamageMinimum": 50.0,
     "grenadeFallbackDamageMaximum": 872.0,
+    "grenadeInitialDirectDamage": 20.0,
+    "grenadeInitialExplosionDamage": 350.0,
     "cardUnlockLevel": 6.0,
     "lowAmmoThreshold": 0.1,
     "lowAmmoMultiplier": 2.0,
