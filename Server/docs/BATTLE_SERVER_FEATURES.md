@@ -8,6 +8,15 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+Progress and delayed bonus issuance now publish atomically for a two-owner
+source view. Both use the original single ratio; candidate frame state is
+discarded on either owner's request/capacity failure, preserving thresholds,
+ordinals and existing timer aging. Same-frame maturity can release a pending
+slot for a new zero-age wait, and accepted frame replay cannot mint more issues.
+Normal MatchEngine score/death callbacks, source-view lifetime/clock, whole-match
+capacity admission, crate selection/spawn/collection, effects, Backend rewards
+and Unity projection remain unbound.
+
 Bonus delay now has receipt-protected issuance, scoped owner ordinals and ordered
 scaled-frame maturity, compared against eight isolated original-coroutine Unity
 Play Mode traces. These cover 30/60 fps, half/double speed, pause, same-frame FIFO,

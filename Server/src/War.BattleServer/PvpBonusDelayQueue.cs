@@ -14,9 +14,9 @@ public sealed class PvpBonusDelayQueue : IDisposable
     private const double DelaySeconds = 1.5;
     private readonly int maximumPending;
     private readonly int maximumReceipts;
-    private readonly Dictionary<string, PvpBonusDelayedRequest> receipts = new(StringComparer.Ordinal);
-    private readonly Dictionary<(string MatchId, string Owner), int> lastOrdinals = new();
-    private readonly List<PendingBonus> pending = new();
+    private Dictionary<string, PvpBonusDelayedRequest> receipts = new(StringComparer.Ordinal);
+    private Dictionary<(string MatchId, string Owner), int> lastOrdinals = new();
+    private List<PendingBonus> pending = new();
     private sealed record PendingBonus(PvpBonusDelayedRequest Request, double Elapsed);
     private ulong lastFrame;
     private ulong latestIssueFrame;
@@ -42,11 +42,7 @@ public sealed class PvpBonusDelayQueue : IDisposable
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         ValidateGuid(receiptId);
-        ValidateGuid(matchId);
-        if (string.IsNullOrWhiteSpace(ownerPlayerId) || ownerPlayerId.Length > 128 ||
-            ownerPlayerId.Any(char.IsControl) || char.IsWhiteSpace(ownerPlayerId[0]) ||
-            char.IsWhiteSpace(ownerPlayerId[^1]))
-            throw new InvalidDataException("Invalid confirmed bonus owner identity.");
+        ValidateScope(matchId, ownerPlayerId);
         if (bonusOrdinal < 1) throw new ArgumentOutOfRangeException(nameof(bonusOrdinal));
         var request = new PvpBonusDelayedRequest(receiptId, matchId, ownerPlayerId, bonusOrdinal, issueFrame);
         if (receipts.TryGetValue(receiptId, out var previous))
@@ -106,6 +102,46 @@ public sealed class PvpBonusDelayQueue : IDisposable
         lastFrame = frameId;
         lastDeltaBits = deltaBits;
         return lastFrameResult;
+    }
+
+    internal PvpBonusDelayQueue PrepareFrameCopy(ulong frameId, float delta,
+        IReadOnlyList<PvpBonusDelayedRequest> requests, out IReadOnlyList<PvpBonusDelayedRequest> ready)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        if (requests.Count > 2)
+            throw new InvalidDataException("One source view has at most two new bonus requests per Update.");
+        if (requests.Count > 0 && lastFrameResult != null && frameId == lastFrame)
+            throw new InvalidDataException("A replayed delay frame cannot introduce new bonus requests.");
+        var candidate = (PvpBonusDelayQueue)MemberwiseClone();
+        candidate.pending = new List<PendingBonus>(pending);
+        if (requests.Count > 0)
+        {
+            // Copy bounded ledgers only when this frame will write them. Quiet
+            // frames need only a pending-timer copy, not every historical receipt.
+            candidate.receipts = new Dictionary<string, PvpBonusDelayedRequest>(receipts, StringComparer.Ordinal);
+            candidate.lastOrdinals = new Dictionary<(string MatchId, string Owner), int>(lastOrdinals);
+        }
+        ready = candidate.AdvanceFrame(frameId, delta);
+        foreach (var request in requests)
+        {
+            if (request.IssueFrame != frameId)
+                throw new InvalidDataException("Staged request must belong to this source Update.");
+            // New waits start with zero elapsed time. Aging existing waits first
+            // gives the same final state, without running any callback yet, and
+            // lets a maturing wait release capacity for this frame's new request.
+            candidate.ScheduleConfirmedBonus(request.ReceiptId, request.MatchId,
+                request.OwnerPlayerId, request.BonusOrdinal, request.IssueFrame);
+        }
+        return candidate;
+    }
+
+    internal static void ValidateScope(string matchId, string ownerPlayerId)
+    {
+        ValidateGuid(matchId);
+        if (string.IsNullOrWhiteSpace(ownerPlayerId) || ownerPlayerId.Length > 128 ||
+            ownerPlayerId.Any(char.IsControl) || char.IsWhiteSpace(ownerPlayerId[0]) ||
+            char.IsWhiteSpace(ownerPlayerId[^1]))
+            throw new InvalidDataException("Invalid confirmed bonus owner identity.");
     }
 
     public void Dispose()

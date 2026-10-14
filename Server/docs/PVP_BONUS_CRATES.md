@@ -216,3 +216,38 @@ do not verify the original Unity 5.2 Android runtime, arbitrary long-frame clock
 equivalence, full WarFriends Play Mode, live MatchEngine timing, physics,
 collection, effects or economy. No current code publishes a crate from this
 queue.
+
+## Atomic progress-to-delay publication
+
+`PvpBonusProgressCoordinator` now owns both progress states and the delay queue
+for one match/source view. It applies one source `dropsCrates` ratio to both
+players, as ScoreManager.Restart does. Local progress is processed before
+opponent progress; the resulting waits retain that order.
+
+The coordinator prepares frame-only progress copies, a private pending-timer
+copy, and new issue identities before publishing any of them. Gain receipt
+ledgers are read-only while a frame is prepared; delay receipt/ordinal ledgers
+are copied only on frames that will write new requests. A private lock protects
+gains, preparation and publication, and callers receive immutable snapshots,
+not mutable access to the underlying states.
+
+Any validation or capacity rejection discards the whole candidate frame:
+neither owner's decay/threshold subtraction/ordinal nor existing timer aging
+is consumed. An existing wait that matures in this frame can release space for
+a new zero-age wait. Preparing that maturity before staging issuance is
+equivalent here because no callback runs during preparation and new waits do
+not count their issue-frame delta. Delivery becomes visible only after both
+progress states and the queue are published together.
+
+Accepted replay requires identical frame delta bits and running state and
+returns the original frame, without new host identities or another timer.
+Failed frames remain unaccepted and can be retried with authoritative inputs.
+Stopping score updates still permits existing waits to mature when the game
+clock advances; actual manager destruction disposes the queue.
+
+Run `--pvp-progress-transaction-only` for joint issuance, shared ratio, immutable
+delivery order, retry, two-owner capacity failure, replacement at a full queue,
+and receipt-exhaustion rollback checks. This is still not connected to normal
+MatchEngine death callbacks, score/count publication or Unity presentation.
+Source-view/manager lifetime, whole-match capacity admission, frame-clock binding,
+selection, spawn/collection/effect authority and Backend rewards remain open.

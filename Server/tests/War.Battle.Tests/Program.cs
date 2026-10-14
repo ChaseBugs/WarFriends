@@ -252,6 +252,17 @@ if(args is ["--barrel-only"])
     return;
 }
 
+if (args is ["--pvp-progress-transaction-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = PvpBonusProgressCoordinatorTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} joint PvP progress/delay assertions");
+    return;
+}
+
 if (args is ["--pvp-delay-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -2898,6 +2909,7 @@ checks += PvpScoreStreakProgressTests.Run(Path.Combine(contentRoot.FullName,"con
 checks += PvpBonusCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusSelectionTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusDelayTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += PvpBonusProgressCoordinatorTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyEntityPageTests.Run();
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += HelicopterBazookaTests.Run(Path.Combine(contentRoot.FullName,"content"));

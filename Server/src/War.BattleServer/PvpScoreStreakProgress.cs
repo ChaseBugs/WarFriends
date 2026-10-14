@@ -96,6 +96,16 @@ public sealed class PvpScoreStreakProgress
         return result;
     }
 
+    internal PvpScoreStreakProgress PrepareFrameCopy(ulong frameId, float delta,
+        bool running, out PvpScoreStreakFrame result)
+    {
+        // AdvanceFrame changes only scalar frame state. Its receipt ledger is
+        // read-only during preparation; the coordinator serializes all gains.
+        var candidate = (PvpScoreStreakProgress)MemberwiseClone();
+        result = candidate.AdvanceFrame(frameId, delta, running);
+        return candidate;
+    }
+
     internal static float AddSourceGain(float progress, int points, float ratio, float multiplier)
     {
         // Mono carries intermediate float arithmetic at promoted precision;
