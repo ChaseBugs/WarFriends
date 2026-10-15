@@ -37,6 +37,7 @@ public sealed class ArmyWeaponBindingCatalog
     private readonly IReadOnlyDictionary<string,ArmyWeaponCadence> cadences;
     private readonly IReadOnlyDictionary<string,ArmyShotgunFalloff> shotgunFalloffs;
     private readonly IReadOnlyDictionary<string,float> slowBulletCheckDistances;
+    private readonly IReadOnlyDictionary<string,float> projectileSpeeds;
     public string Revision { get; }
     public string GunSnapPath { get; }
     public Vector3 GunSnapPosition { get; }
@@ -55,7 +56,7 @@ public sealed class ArmyWeaponBindingCatalog
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
         Dictionary<string,ArmyWeaponCadence> cadences,Dictionary<string,ArmyShotgunFalloff> shotgunFalloffs,
-        Dictionary<string,float> slowBulletCheckDistances,
+        Dictionary<string,float> slowBulletCheckDistances,Dictionary<string,float> projectileSpeeds,
         ArmyCommandoPoison commandoPoison,ArmySwatSpecialSpeed swatSpecialSpeed,
         ArmyParatrooperKevlar paratrooperKevlar,ArmyShotgunnerWalkingFire shotgunnerWalkingFire,
         ArmyWarperRelocation warperRelocation,float sniperProjectileSpeed,
@@ -69,7 +70,12 @@ public sealed class ArmyWeaponBindingCatalog
      SniperProjectileSpeed=sniperProjectileSpeed;
      SniperCollisionCheckDistance=sniperCollisionCheckDistance;
      SniperCriticalAmount=sniperCriticalAmount;
-     this.shotgunFalloffs=shotgunFalloffs;this.slowBulletCheckDistances=slowBulletCheckDistances;}
+     this.shotgunFalloffs=shotgunFalloffs;this.slowBulletCheckDistances=slowBulletCheckDistances;
+     this.projectileSpeeds=projectileSpeeds;}
+
+    public float ProjectileSpeed(string unitId)
+        =>projectileSpeeds.TryGetValue(unitId,out float speed)
+            ?speed:throw new ArgumentOutOfRangeException(nameof(unitId));
 
     public float SlowBulletCheckDistance(string unitId)
         =>slowBulletCheckDistances.TryGetValue(unitId,out float distance)
@@ -255,6 +261,7 @@ public sealed class ArmyWeaponBindingCatalog
         var cadences=new Dictionary<string,ArmyWeaponCadence>(StringComparer.Ordinal);
         var shotgunFalloffs=new Dictionary<string,ArmyShotgunFalloff>(StringComparer.Ordinal);
         var slowBulletCheckDistances=new Dictionary<string,float>(StringComparer.Ordinal);
+        var projectileSpeeds=new Dictionary<string,float>(StringComparer.Ordinal);
         foreach(var family in families.EnumerateArray())
         {
             Exact(family,"unitId","behaviorType","behaviorFileId","attackWindup","attackCadence","shotgunFalloff","inventory");
@@ -314,31 +321,39 @@ public sealed class ArmyWeaponBindingCatalog
                 throw new InvalidDataException("Invalid source Commando dual inventory.");
             if(sniper&&(familyMuzzles.Count!=1||firstWeaponType!=10||
                inventory[0].GetProperty("asset").GetString()!="GameObject/SniperRifleEnemy.prefab"||
-               familyMuzzles[0].Path.StartsWith("SniperRifleEnemy/",StringComparison.Ordinal)==false||
-               inventory[0].GetProperty("projectile").GetProperty("speed").GetSingle()!=10f||
-               inventory[0].GetProperty("projectile").GetProperty("checkDistance").GetSingle()!=1f))
+               familyMuzzles[0].Path.StartsWith("SniperRifleEnemy/",StringComparison.Ordinal)==false))
                 throw new InvalidDataException("Invalid source card Sniper rifle binding.");
-            // These five source weapons instantiate BulletSlow. The shotgun
-            // families instantiate BulletShotGun and use a different flight.
-            float expectedCheckDistance = unit switch
+            // All inventory entries for one family share the same recovered
+            // runtime setup. Flamethrower has pulses instead of a projectile.
+            (float? expectedSpeed,float? expectedCheckDistance) = unit switch
             {
-                "ID_UNIT-SNIPER" => 1f,
+                "ID_UNIT-SNIPER" or "ID_UNIT-SHOTGUNNER" or
+                "ID_UNIT-WARPER" => ((float?)10f,(float?)1f),
                 "ID_UNIT-PARATROOPER" or "ID_UNIT-SWAT" or
-                "ID_UNIT-MINIGUNNER" or "ID_UNIT-COMMANDO" => .35f,
-                _ => 0f
+                "ID_UNIT-MINIGUNNER" or "ID_UNIT-COMMANDO" => ((float?)5f,(float?).35f),
+                "ID_UNIT-FLAMETHROWER" => (null,null),
+                _ => throw new InvalidDataException("Unknown source soldier weapon family.")
             };
-            if(expectedCheckDistance>0f)
+            foreach(var weapon in inventory.EnumerateArray())
             {
-                foreach(var weapon in inventory.EnumerateArray())
+                var projectile=weapon.GetProperty("projectile");
+                if(expectedSpeed is null)
                 {
-                    var projectile=weapon.GetProperty("projectile");
-                    Exact(projectile,"speed","checkDistance");
-                    if(projectile.GetProperty("speed").GetSingle()!=(sniper?10f:5f)||
-                       projectile.GetProperty("checkDistance").GetSingle()!=expectedCheckDistance)
-                        throw new InvalidDataException("Invalid source slow bullet binding.");
+                    if(projectile.ValueKind!=JsonValueKind.Null)
+                        throw new InvalidDataException("Flamethrower has no source projectile.");
+                    continue;
                 }
-                slowBulletCheckDistances.Add(unit,expectedCheckDistance);
+                Exact(projectile,"speed","checkDistance");
+                if(projectile.GetProperty("speed").GetSingle()!=expectedSpeed.Value||
+                   projectile.GetProperty("checkDistance").GetSingle()!=expectedCheckDistance!.Value)
+                    throw new InvalidDataException("Invalid source soldier projectile setup.");
             }
+            if(expectedSpeed is float speed)projectileSpeeds.Add(unit,speed);
+            // Shotgunner and Warper instantiate BulletShotGun. Only BulletSlow
+            // families use this collision continuation margin.
+            if(unit is "ID_UNIT-SNIPER" or "ID_UNIT-PARATROOPER" or
+                "ID_UNIT-SWAT" or "ID_UNIT-MINIGUNNER" or "ID_UNIT-COMMANDO")
+                slowBulletCheckDistances.Add(unit,expectedCheckDistance!.Value);
             result.Add(unit,familyMuzzles.ToArray());
             windups.Add(unit,new(unit,seconds,rule,clipAsset,clipHash,clipLength));
             var cadence=family.GetProperty("attackCadence");
@@ -379,7 +394,7 @@ public sealed class ArmyWeaponBindingCatalog
                 throw new InvalidDataException("Unexpected Rusher shotgun falloff.");
         }
         if(!result.ContainsKey("ID_UNIT-SNIPER")||shotgunFalloffs.Count!=2||
-           slowBulletCheckDistances.Count!=5)
+           slowBulletCheckDistances.Count!=5||projectileSpeeds.Count!=7)
             throw new InvalidDataException("Incomplete soldier weapon binding set.");
         var sniperBullet=root.GetProperty("sniperRuntimeBullet");
         Exact(sniperBullet,"asset","sha256","prefabSpeed","prefabDistanceToCheck",
@@ -395,7 +410,7 @@ public sealed class ArmyWeaponBindingCatalog
            !Hash(sniperBullet.GetProperty("sha256").GetString())||
            sniperBullet.GetProperty("prefabSpeed").GetSingle()!=80f||
            sniperBullet.GetProperty("prefabDistanceToCheck").GetSingle()!=.6f||
-           sniperSpeed!=10f||
+           sniperSpeed!=projectileSpeeds["ID_UNIT-SNIPER"]||
            sniperCollisionCheckDistance!=1f||
            criticalAmount!=2f||
            !Hash(sniperBullet.GetProperty("rifleSha256").GetString())||
@@ -413,7 +428,7 @@ public sealed class ArmyWeaponBindingCatalog
            !Hash(sniperBullet.GetProperty("gunSha256").GetString()))
             throw new InvalidDataException("Invalid source Sniper runtime bullet.");
         return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,
-            slowBulletCheckDistances,
+            slowBulletCheckDistances,projectileSpeeds,
             poison,swatSpecialSpeed,kevlar,walking,warper,sniperSpeed,
             sniperCollisionCheckDistance,criticalAmount);
     }

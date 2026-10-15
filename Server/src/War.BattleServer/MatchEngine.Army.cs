@@ -3577,7 +3577,7 @@ public sealed partial class MatchEngine
                     flameId,flameOrigin,0,"army-flame");
                 continue;
             }
-            float? projectileSpeed = InfantryProjectileSpeed(behavior, army.SourceCardId,
+            float? projectileSpeed = InfantryProjectileSpeed(behavior, army.UnitId,
                 weaponBindings);
             if(!projectileSpeed.HasValue)continue;
             var entityPosition=new Vector3(army.X,army.Y,army.Z);
@@ -3649,18 +3649,17 @@ public sealed partial class MatchEngine
         return damage;
     }
 
-    private static float? InfantryProjectileSpeed(string behavior, string sourceCardId,
+    private static float? InfantryProjectileSpeed(string behavior, string unitId,
         ArmyWeaponBindingCatalog bindings)
     {
         // The recovered weapons use different projectile families. An unknown
         // behavior has no host-authorized flight, even if it requested a shot.
         return behavior switch
         {
-            "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper" => 10f,
+            "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper" or
             "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
-            "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner" => 5f,
-            "SoldierBehaviourSniper" =>
-                bindings.SniperProjectileSpeed,
+            "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner" or
+            "SoldierBehaviourSniper" => bindings.ProjectileSpeed(unitId),
             _ => null
         };
     }

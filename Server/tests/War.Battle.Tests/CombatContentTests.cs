@@ -9109,6 +9109,17 @@ internal static class CombatContentTests
               content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-SHOTGUNNER")==0f&&
               content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-WARPER")==0f,
               "only BulletSlow soldier weapons use the source collision continuation");
+        Check(content.ArmyWeapons.ProjectileSpeed("ID_UNIT-SNIPER")==10f&&
+              content.ArmyWeapons.ProjectileSpeed("ID_UNIT-SHOTGUNNER")==10f&&
+              content.ArmyWeapons.ProjectileSpeed("ID_UNIT-WARPER")==10f&&
+              content.ArmyWeapons.ProjectileSpeed("ID_UNIT-PARATROOPER")==5f&&
+              content.ArmyWeapons.ProjectileSpeed("ID_UNIT-SWAT")==5f&&
+              content.ArmyWeapons.ProjectileSpeed("ID_UNIT-MINIGUNNER")==5f&&
+              content.ArmyWeapons.ProjectileSpeed("ID_UNIT-COMMANDO")==5f,
+              "all seven projectile soldier families use their recovered weapon speed");
+        try { _=content.ArmyWeapons.ProjectileSpeed("ID_UNIT-FLAMETHROWER");
+            throw new Exception("Flamethrower gained an invented projectile speed."); }
+        catch(ArgumentOutOfRangeException) { count++; }
         var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
         Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsMinigunner"&&
               minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,
@@ -9196,6 +9207,15 @@ internal static class CombatContentTests
         {
             var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
             modified["families"]![0]!["attackWindup"]!["seconds"]=0f;
+            File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
+            string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
+            Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
+        }
+        finally {if(File.Exists(weaponBindingTemp))File.Delete(weaponBindingTemp);}
+        try
+        {
+            var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
+            modified["families"]![1]!["inventory"]![0]!["projectile"]!["speed"]=5f;
             File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
             string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
             Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
