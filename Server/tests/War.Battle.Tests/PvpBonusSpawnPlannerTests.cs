@@ -481,75 +481,37 @@ internal static class PvpBonusSpawnPlannerTests
         Check(clockEngine.BonusProgress.PendingCount == 1 &&
               clockEngine.MaturedBonusRequests.Count == 0,
             "a live match tick issues the source streak request without an early crate");
-        for (ulong nextTick = 62; nextTick <= 153; nextTick++)
-            clockEngine.Advance(nextTick);
-        var maturedInMatch = clockEngine.MaturedBonusRequests;
-        Check(maturedInMatch.Count == 1 &&
-              maturedInMatch[0].OwnerPlayerId == localId &&
-              maturedInMatch[0].BonusOrdinal == 1 &&
-              clockEngine.BonusProgress.PendingCount == 0,
-            "the match clock retains a matured source request for later crate issuance");
-        clockEngine.Advance(153);
-        Check(clockEngine.MaturedBonusRequests.SequenceEqual(maturedInMatch),
-            "replaying one match tick does not mature or duplicate a bonus request");
         clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(750), localId, 6);
         Check(!clockEngine.FirstTwoUsedWeaponsHaveLowAmmo(localId),
             "full starting ammunition is not a source low-ammo bonus condition");
-        try
+        ulong firstBoxTick = 0;
+        for (ulong nextTick = 62; nextTick <= 153; nextTick++)
         {
-            clockEngine.IssueNextMaturedBonus(
-                context with {FirstTwoWeaponsHaveLowAmmo = true}, draw);
-            throw new Exception("Caller supplied an unproven low-ammo weight boost.");
+            clockEngine.Advance(nextTick);
+            if (firstBoxTick == 0 && clockEngine.BonusPlanner.ActiveBoxCount > 0)
+                firstBoxTick = nextTick;
         }
-        catch (InvalidDataException) { checks++; }
-        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
-              clockEngine.BonusPlanner.ActiveBoxCount == 0,
-            "host ammunition mismatch preserves the matured box request");
-        try
-        {
-            clockEngine.IssueNextMaturedBonus(
-                context with {GoldBonusesCollected = 3}, draw);
-            throw new Exception("Caller supplied a Gold-box count absent from player analytics.");
-        }
-        catch (InvalidDataException) { checks++; }
-        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
-              clockEngine.BonusPlanner.ActiveBoxCount == 0,
-            "Gold analytics mismatch cannot consume a source box request");
-        try
-        {
-            clockEngine.IssueNextMaturedBonus(context with {IsWarArena = true}, draw);
-            throw new Exception("Untrusted Arena mode selected an ordinary PvP box.");
-        }
-        catch (InvalidDataException) { checks++; }
-        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
-              clockEngine.BonusPlanner.ActiveBoxCount == 0,
-            "a mode mismatch cannot consume the signed match's matured request");
-        try
-        {
-            clockEngine.IssueNextMaturedBonus(context,
-                new PvpBonusSpawnDraw(-1f, 0, Vector3.One));
-            throw new Exception("Rejected box draw consumed the live matured request.");
-        }
-        catch (ArgumentOutOfRangeException) { checks++; }
-        Check(clockEngine.MaturedBonusRequests.Count == 1 &&
-              clockEngine.BonusPlanner.ActiveBoxCount == 0,
-            "invalid host selection leaves the oldest matured request available");
-        var issuedInMatch = clockEngine.IssueNextMaturedBonus();
-        Check(issuedInMatch?.Request == maturedInMatch[0] &&
+        var issuedInMatch = clockEngine.BonusPlanner.ActiveBoxesSnapshot().Single().Plan;
+        Check(issuedInMatch.Request.OwnerPlayerId == localId &&
+              issuedInMatch.Request.BonusOrdinal == 1 &&
               issuedInMatch.PrefabIndex == 6 &&
+              clockEngine.BonusProgress.PendingCount == 0 &&
               clockEngine.MaturedBonusRequests.Count == 0 &&
-              clockEngine.BonusPlanner.ActiveBoxCount == 1 &&
+              clockEngine.BonusPlanner.QueuedCount(PvpBonusSide.Allies) == 0 &&
+              firstBoxTick is >= 105 and <= 108,
+            "the source wait automatically issues and consumes one queued Kevlar crate");
+        clockEngine.Advance(153);
+        Check(clockEngine.BonusPlanner.ActiveBoxCount == 1 &&
               clockEngine.IssueNextMaturedBonus() == null,
-            "host-owned context and draws register one queued box and consume its live request once");
-        if (issuedInMatch == null)
-            throw new Exception("Live matured bonus was not issued.");
+            "replaying one match tick does not issue a second crate");
         var issuedRow = clockEngine.Snapshot().PvpBonusBoxes.Single();
+        var issuedBox = clockEngine.BonusPlanner.BoxSnapshot(issuedInMatch.Request.ReceiptId);
         Check(issuedRow.BoxId == issuedInMatch.Request.ReceiptId &&
               issuedRow.OwnerPlayerId == localId &&
               issuedRow.PrefabIndex == issuedInMatch.PrefabIndex &&
-              issuedRow.Phase == (int)PvpBonusBoxPhase.Falling &&
-              issuedRow.Y == issuedInMatch.Position.Y,
-            "public battle snapshot includes the host-owned falling crate");
+              issuedRow.Phase == (int)issuedBox.Phase &&
+              issuedRow.Y == issuedBox.Position.Y,
+            "public battle snapshot includes the host-owned live crate pose");
         var wireSnapshot = MatchSnapshot.Parser.ParseFrom(
             clockEngine.Snapshot().ToByteArray());
         War.Client.BattlePvpBonusBoxPolicy.Validate(wireSnapshot);
@@ -573,9 +535,9 @@ internal static class PvpBonusSpawnPlannerTests
         catch (InvalidOperationException) { checks++; }
         clockEngine.Advance(154);
         Check(clockEngine.BonusPlanner.BoxSnapshot(issuedInMatch.Request.ReceiptId)
-                  .Position.Y < issuedInMatch.Position.Y &&
-              clockEngine.Snapshot().PvpBonusBoxes.Single().Y < issuedRow.Y,
-            "a normal running match tick advances its host-owned falling box");
+                  .Position.Y <= issuedBox.Position.Y &&
+              clockEngine.Snapshot().PvpBonusBoxes.Single().Y <= issuedRow.Y,
+            "a normal running match tick preserves or advances its crate pose");
         clockEngine.BonusPlanner.ConfirmDestroyed(issuedInMatch.Request.ReceiptId,
             Id(751), null);
         Check(clockEngine.Snapshot().PvpBonusBoxes.Count == 0,
@@ -670,6 +632,53 @@ internal static class PvpBonusSpawnPlannerTests
         RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes[0].RecipientLevelIndex = 43);
         RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes.Add(
             snapshot.PvpCurrencyQuotes[0].Clone()));
+        MatchEngine RunningBonusMatch(int matchNumber, Func<float> randomDraw)
+        {
+            var match = new MatchEngine(clockManifest with {MatchId = Id(matchNumber)},
+                map, content, combatRandom: randomDraw);
+            foreach (var participant in manifest.Players)
+                match.Admit(participant.PlayerId);
+            foreach (var participant in manifest.Players)
+                match.Command(participant.PlayerId, new MatchCommand
+                {
+                    CommandId = 1,
+                    Ready = new ReadyCommand {ManifestHash = match.ManifestHash}
+                });
+            match.Advance(60);
+            return match;
+        }
+
+        var simultaneous = RunningBonusMatch(8700, () => 0.5f);
+        foreach (var participant in manifest.Players)
+            for (int index = 0; index < 3; index++)
+                simultaneous.BonusProgress.RecordConfirmedSkillShot(
+                    participant.PlayerId, Id(8800 + participant.Fraction * 10 + index),
+                    0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            simultaneous.Advance(nextTick);
+        Check(simultaneous.BonusPlanner.PlanCount == 2 &&
+              simultaneous.BonusPlanner.ActiveBoxCount == 2 &&
+              simultaneous.MaturedBonusRequests.Count == 0 &&
+              simultaneous.Snapshot().PvpBonusBoxes.Select(box => box.OwnerPlayerId)
+                  .Distinct(StringComparer.Ordinal).Count() == 2,
+            "same-frame waits automatically issue one crate for each owner");
+        simultaneous.Advance(153);
+        Check(simultaneous.BonusPlanner.PlanCount == 2,
+            "replaying the maturity tick cannot issue another crate");
+
+        var invalidDrawMatch = RunningBonusMatch(8701, () => float.NaN);
+        for (int index = 0; index < 3; index++)
+            invalidDrawMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(8900 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153 && !invalidDrawMatch.Terminal;
+             nextTick++)
+            invalidDrawMatch.Advance(nextTick);
+        Check(invalidDrawMatch.Terminal &&
+              invalidDrawMatch.Snapshot().TerminalReason ==
+                  "invalid-pvp-bonus-authority" &&
+              invalidDrawMatch.BonusPlanner.ActiveBoxCount == 0 &&
+              invalidDrawMatch.MaturedBonusRequests.Count == 1,
+            "invalid host random input aborts without publishing a crate");
         var enginePlanner = engine.BonusPlanner;
         enginePlanner.EnqueueConfirmedBonus(Id(500), localId, 6);
         var kevlarPlan = enginePlanner.PlanMatured(second, 0, context, draw);

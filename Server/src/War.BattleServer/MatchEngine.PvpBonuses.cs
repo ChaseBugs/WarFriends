@@ -372,12 +372,26 @@ public sealed partial class MatchEngine
             manifest.PvpBonusMode == MatchManifest.WarArenaPvpBonusMode,
             manifest.PvpBonusMode == MatchManifest.FriendlyDeathMatchPvpBonusMode,
             pvpGoldBonusesCollected, FirstTwoUsedWeaponsHaveLowAmmo(ownerId));
-        float total = pvpBonusPlanner.WeightTotal(ownerId, context);
+        float weightedValue = 0f;
+        if (!pvpBonusPlanner.HasQueuedBonus(ownerId))
+        {
+            float total = pvpBonusPlanner.WeightTotal(ownerId, context);
+            weightedValue = NextBonusUnitDraw() * total;
+        }
         var draw = new PvpBonusSpawnDraw(
-            combatRandom() * total,
+            weightedValue,
             Random.Shared.Next(pvpBonusPlanner.SpawnAreaCount),
-            new Vector3(combatRandom(), combatRandom(), combatRandom()));
+            new Vector3(NextBonusUnitDraw(), NextBonusUnitDraw(),
+                NextBonusUnitDraw()));
         return IssueNextMaturedBonus(context, draw);
+    }
+
+    private float NextBonusUnitDraw()
+    {
+        float value = combatRandom();
+        if (!float.IsFinite(value) || value < 0f || value > 1f)
+            throw new InvalidDataException("Invalid host bonus random draw.");
+        return value;
     }
 
     internal PvpBonusSpawnPlan? IssueNextMaturedBonus(
@@ -427,6 +441,13 @@ public sealed partial class MatchEngine
         pvpBonusProgress = prepared;
         readyPvpGrenadeShots = dueGrenades;
         pvpBonusFrameId = nextFrame;
+        if (manifest.PvpBonusMode != null)
+        {
+            // InvokeAfter may finish multiple waits in one frame. Publish each
+            // accepted box in the same FIFO order as the source callbacks.
+            while (maturedPvpBonuses.Count > 0)
+                IssueNextMaturedBonus();
+        }
     }
 
     private string PvpHitReceiptId(string source, ulong projectileKey, string victimId)

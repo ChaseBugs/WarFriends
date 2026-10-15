@@ -71,6 +71,15 @@ internal sealed class PvpBonusSpawnPlanner
     internal int LastSourceIndex { get { lock (gate) return selection.LastSourceIndex; } }
     internal string MatchId => matchId;
     internal int QueuedCount(PvpBonusSide side) { lock (gate) return selection.QueuedCount(side); }
+    internal bool HasQueuedBonus(string ownerId)
+    {
+        lock (gate)
+        {
+            if (!owners.TryGetValue(ownerId, out var owner))
+                throw new InvalidDataException("Bonus owner is outside the admitted roster.");
+            return selection.QueuedCount(owner.Side) > 0;
+        }
+    }
     internal int SourceIndexForQueuedCard(string sourceCardId) =>
         QueuedBonusCardSourceCatalog.IndexFor(sourceCardId, bonusCatalog);
     internal int SpawnAreaCount => areas.ForMap(map).Count;

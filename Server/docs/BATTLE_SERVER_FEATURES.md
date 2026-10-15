@@ -33,13 +33,15 @@ bound to match, projectile and victim. Live infantry projectile impacts now
 use the same staged transition for `ArmyPlayerHit`, in a separate receipt
 namespace. Real Drone, Helicopter, Assault Helicopter and Heavy Turret bullets
 now share that staged army-hit transition. Running MatchEngine advances the
-source streak and delay clocks once per accepted host update and retains
-matured requests without replay duplication. A host-only FIFO transition now
-uses the pinned selection and spawn-area planner to register one box, retaining
-the request when a draw is rejected. The signed manifest now accepts only
+source streak and delay clocks once per accepted host update. Signed-mode
+matches now drain matured requests in source FIFO order through the pinned
+selection and spawn-area planner; replay cannot duplicate a box and a rejected
+issue retains its request. Queued cards skip the weighted random draw. The
+signed manifest accepts only
 ordinary, War Arena or friendly DeathMatch bonus modes; a mismatched host mode
-leaves its request queued. Automatic selection still needs Backend mode
-projection and a Client-visible crate lifecycle. A bonus-enabled manifest now
+leaves its request queued. Normal Backend allocation still needs to project
+the mode and scene-master analytics; shooting and collection remain open. A
+bonus-enabled manifest now
 requires the scene master's durable Gold-box count at admission; the host
 rejects a conflicting selection count. The recovered catalog now pins the
 level-dependent Gold draw bounds and the recipient-level-scaled Warbucks draw.
@@ -82,7 +84,7 @@ selection history and source map areas. Replays do not redraw; invalid
 coordinates, weights or full box capacity do not consume FIFO overrides. The
 source's invalid endpoint index is retained for
 history but mapped to its actual prefab for prospective publication. The
-normal automatic issuer, shootable Client box, full physics, collection
+normal Backend allocation, shootable Client box, full physics, collection
 settlement and rewards remain open.
 Accepted spawn plans enter a bounded host box registry with falling/grounded/
 collected phases, one terminal damage receipt, owner-or-attacker recipient

@@ -1,17 +1,20 @@
 # Source PvP bonus crates
 
 This follows the active recovered 1.4.0 Client. The reviewed catalog, weight
-calculation, host selection planning, and a read-only Unity box presentation
-are implemented. Automatic delayed spawning, bullet collision/collection and
-durable rewards remain incomplete.
+calculation, host selection planning, automatic delayed issuance for signed
+bonus-mode matches, and a read-only Unity box presentation are implemented.
+Bullet collision/collection and durable rewards remain incomplete.
 
 The host can call `MatchEngine.IssueNextMaturedBonus()` after a delayed request
 matures. It derives mode, collected-Gold count, and the first two weapons'
 low-ammo condition from signed/live match state. The planner supplies the
 reviewed source weight total and map spawn-area count; the host draws the
 weighted value, area, and three position coordinates. A queued bonus card still
-forces its source prefab exactly once. This registers a falling box, but match
-ticks do not yet call the issuer or resolve its dynamic collisions.
+forces its source prefab exactly once. A running match now drains matured waits
+in source callback order, registers each falling box and publishes it in the
+snapshot. Queued cards bypass the weighted random draw as in the Client.
+Matches without a signed bonus mode do not auto-issue. Box dynamic collisions
+remain open.
 No live reward is granted merely because the plan exists.
 
 The original `KillStreakBonusBox` prefab has a gravity-enabled Rigidbody and
@@ -273,18 +276,18 @@ Live infantry, Drone, Helicopter, Assault Helicopter and Heavy Turret projectile
 collisions stage `ArmyPlayerHit` under a separate projectile receipt before
 player damage; poison follow-up pulses remain excluded.
 MatchEngine now advances source progress and waits on accepted running host
-updates, retaining matured requests for a later host-issued box. It skips
-replayed ticks and stages the progress copy before its bounded request queue.
-The host can now issue the oldest matured request through the pinned selection
-and spawn-area planner; a rejected draw keeps it queued, while an accepted
-plan registers exactly one box. `MatchManifest.PvpBonusMode` now accepts only
+updates, then automatically drains matured requests through the pinned
+selection and spawn-area planner. It skips replayed ticks and stages the
+progress copy before its bounded request queue. A rejected issue retains the
+oldest request; an accepted plan registers exactly one box.
+`MatchManifest.PvpBonusMode` now accepts only
 ordinary, War Arena or friendly DeathMatch from the trusted manifest, and an
 issue rejects mismatched mode flags before selection. Existing manifests may
-omit it; those matches cannot issue a matured box. The host now derives the
-live gold/ammo selection inputs itself; automatic issuance still awaits the
-shootable box and collection path.
+omit it; those matches do not auto-issue. The host derives live gold/ammo
+selection inputs itself. Backend mode/analytics projection, a shootable box
+and collection still await integration.
 Other army-owned damage, AI death/combo flags, verified walking state parity,
-card multiplier lifetimes, normal crate issuance and effect delivery
+card multiplier lifetimes, normal Backend crate allocation and effect delivery
 remain open.
 The Grenades prefab and recovered `KillStreakBonusGrenades` method specify a
 three-shot burst, not grenade inventory refill. It waits one scaled second,
@@ -510,8 +513,9 @@ boundary must handle this observed source defect before selection is connected.
 
 Run `Server/scripts/AuditPvpSelection.ps1` for the Mono fixture and
 `--pvp-selection-only` for source comparison, queue ordering, replay, corrupted
-draw and capacity checks. Automatic delayed spawning, Client crate projection,
-dynamic contacts, collection, effects and Backend rewards remain unbound.
+draw and capacity checks. The signed-mode host now connects delayed issuance
+to Client crate projection; dynamic contacts, collection, effects and Backend
+rewards remain unbound.
 
 ## Coroutine delay state
 
@@ -562,8 +566,9 @@ checks. The measurement includes absolute engine clock values, so regeneration
 requires reviewing the new trace and its pinned test digest. These experiments
 do not verify the original Unity 5.2 Android runtime, arbitrary long-frame clock
 equivalence, full WarFriends Play Mode, live MatchEngine timing, physics,
-collection, effects or economy. No current code publishes a crate from this
-queue.
+collection, effects or economy. The signed-mode MatchEngine now publishes a
+crate from this queue; normal Backend allocation does not yet project that
+mode and the scene master's durable Gold analytics.
 
 ## Atomic progress-to-delay publication
 
