@@ -168,7 +168,8 @@ internal static class BattleManifestSnapshotTests
                 x.CardsPlayedSeparately.Count!=0))
                 throw new Exception("Durable result read did not project validated source card statistics.");
             var armyStats=await resultStore.GetArmyStats(match,CancellationToken.None);
-            if(armyStats==null || armyStats.Count!=2 || armyStats.Any(x=>x.Units.Count!=0))
+            if(armyStats==null || armyStats.Count!=2 || armyStats.Any(x=>
+                x.Units.Count!=0 || x.UnitsDeployed!=0 || x.UnitsSpawned!=0))
                 throw new Exception("Durable result read did not project validated source army statistics.");
             var outcomeStats=await resultStore.GetOutcomeStats(match,CancellationToken.None);
             if(outcomeStats==null || outcomeStats.Count!=2 ||

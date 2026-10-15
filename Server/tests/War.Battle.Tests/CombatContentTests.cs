@@ -17736,8 +17736,10 @@ internal static class CombatContentTests
         var armyStats=BattleArmyStatsProjection.FromPayload(armyTerminalPayload,armyTerminal.MatchId,
             War.Shared.TerminalResultDigest.Compute(armyTerminalPayload));
         Check(armyStats[0].Units.Single()==new BattleArmyUnitStats("ID_UNIT-ASSAULT",1,2,2)&&
-              armyStats[1].Units.Single()==new BattleArmyUnitStats("ID_UNIT-HELICOPTER",1,1,1),
-              "validated terminal result projects accepted, planned and realized counts by source unit ID");
+              armyStats[1].Units.Single()==new BattleArmyUnitStats("ID_UNIT-HELICOPTER",1,1,1)&&
+              armyStats[0] is {UnitsDeployed:1,UnitsSpawned:2}&&
+              armyStats[1] is {UnitsDeployed:1,UnitsSpawned:1},
+              "validated terminal result projects source deployment totals separately from realized spawns");
         var paratrooperManifest=detached with {MatchId="paratrooper-kevlar",Players=detached.Players.Select((p,i)=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-PARATROOPER"],NewArmyUnitIds=null,

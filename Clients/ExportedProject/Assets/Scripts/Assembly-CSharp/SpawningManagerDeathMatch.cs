@@ -839,10 +839,9 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 				autoDeployProgress = 0f;
 				mCurrentDefinition = definition;
 				mCoolDown = (baseCoolDown + definition.coolDown) * mCoolDownMultiplier;
-				if (clicked)
-					StatsManager.instance.matchStats.DeployUnit(
-						definition.armyUnit.behaviour.indexInLevelsManager,
-						definition.numberOfEnemies, true);
+				StatsManager.instance.matchStats.DeployUnit(
+					definition.armyUnit.behaviour.indexInLevelsManager,
+					definition.numberOfEnemies, clicked);
 			}
 			await mSelfHosted.RefreshArmy();
 		}
