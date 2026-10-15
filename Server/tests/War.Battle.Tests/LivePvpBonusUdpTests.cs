@@ -12,7 +12,12 @@ using War.Protocol;
 
 internal static class LivePvpBonusUdpTests
 {
-    internal static async Task<int> Run(string directory)
+    internal static Task<int> Run(string directory) => RunScenario(directory, false);
+
+    internal static Task<int> RunShotgun(string directory) =>
+        RunScenario(directory, true);
+
+    private static async Task<int> RunScenario(string directory, bool shotgun)
     {
         int checks = 0;
         void Check(bool condition, string description)
@@ -21,22 +26,33 @@ internal static class LivePvpBonusUdpTests
             checks++;
         }
 
+        string shotgunManifestPath = Path.Combine(directory,
+            "shotgun-content-manifest.json");
         var content = BattleCombatContent.Load(
-            Path.Combine(directory, "combat-content-manifest.json"));
+            Path.Combine(directory, "combat-content-manifest.json"),
+            shotgun ? shotgunManifestPath : null);
         var template = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
         string firstId = template.Players[0].PlayerId;
         string secondId = template.Players[1].PlayerId;
+        var shotgunWeapon = shotgun ? content.Shotguns!.CreateManifest(
+            "Google2u.Shotgun_SPAS", 35) : null;
         var manifest = template with
         {
             MatchId = Guid.NewGuid().ToString("N"),
+            Mode = shotgun ? MatchManifest.ShotgunCombatMode : template.Mode,
+            CatalogRevision = shotgun ? content.ShotgunRevision! :
+                template.CatalogRevision,
+            DurationSeconds = shotgun ? 120 : template.DurationSeconds,
             SceneMasterPlayerId = firstId,
             PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode,
             PvpGoldBonusesAtAdmission = 0,
             Players = template.Players.Select(player => player with
             {
                 PlayerLevel = 8,
-                Combat = player.Combat! with { MaxHealth = 10_000 }
+                Combat = player.Combat! with { MaxHealth = 100_000 },
+                Weapon = shotgun ? shotgunWeapon! : player.Weapon,
+                WeaponUpgrade = shotgun ? 35 : player.WeaponUpgrade
             }).ToArray()
         };
         var map = content.Maps.Single(item =>
@@ -55,7 +71,10 @@ internal static class LivePvpBonusUdpTests
             bool right = Vector3.Dot(Vector3.UnitY,
                 Vector3.Cross(Vector3.Transform(Vector3.UnitZ,
                     targetCover.Rotation), direction)) > 0;
-            string clip = right ? "player_fire_right3" : "player_fire_left3";
+            string clip = shotgun ?
+                (right ? "player_fire_right_shotgun" :
+                    "player_fire_left_shotgun") :
+                (right ? "player_fire_right3" : "player_fire_left3");
             return content.Poses.SampleAimed(clip, .15, false,
                 aim.BodyRotation, null).Place(targetCover.Position,
                 targetCover.Rotation).Collision.Parts[1].Center;
@@ -107,7 +126,9 @@ internal static class LivePvpBonusUdpTests
                 ["Battle:MatchManifestPath"] = manifestPath,
                 ["Battle:CombatContentManifestPath"] = Path.Combine(
                     directory, "combat-content-manifest.json"),
-                ["Battle:ResultOutboxPath"] = outboxPath
+                ["Battle:ResultOutboxPath"] = outboxPath,
+                ["Battle:ShotgunContentManifestPath"] = shotgun ?
+                    shotgunManifestPath : null
             }).Build();
         using var worker = new NetworkWorker(config,
             NullLogger<NetworkWorker>.Instance);
@@ -115,7 +136,7 @@ internal static class LivePvpBonusUdpTests
         {
             await worker.StartAsync(CancellationToken.None);
             using var timeout = new CancellationTokenSource(
-                TimeSpan.FromSeconds(35));
+                TimeSpan.FromSeconds(shotgun ? 100 : 35));
             using var first = new MatchConnection(Grant(firstId, 87101));
             using var second = new MatchConnection(Grant(secondId, 87102));
             Check((await first.ConnectAsync(timeout.Token)).Code == "admitted",
@@ -136,7 +157,7 @@ internal static class LivePvpBonusUdpTests
             int attempts = 0;
             while (firstView.Snapshot.PvpBonusBoxes.Count == 0 &&
                    firstView.Snapshot.Phase == BattlePhase.Running &&
-                   attempts++ < 50)
+                   attempts++ < (shotgun ? 190 : 50))
             {
                 await first.FireAsync(target.X, target.Y, target.Z,
                     timeout.Token);

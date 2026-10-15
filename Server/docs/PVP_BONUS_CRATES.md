@@ -62,7 +62,9 @@ select the box as an additional real pellet target: its `DestroyableObject`
 owner is the box's neutral `IFraction`, so either player's cone may include it.
 An in-process match now verifies a normal SPAS Fire command whose main pellet
 misses the box while an extra real pellet collects it and applies Kevlar.
-Two-peer shotgun UDP collection and rendered Unity aiming remain open.
+Two authenticated UDP peers also verify source-triggered issuance, shared box
+identity and shotgun collection on both snapshots. Rendered Unity aiming
+remains open.
 
 ## Source bindings
 

@@ -89,7 +89,8 @@ layer to runtime destroyable layer eight. Host raycasts and Unity aiming now
 use that layer; source shotgun overlap also selects boxes as extra-pellet
 candidates. An in-process SPAS match proves that an extra real pellet can
 collect the box and apply Kevlar while the main pellet misses. Two-peer
-shotgun UDP and rendered Unity aiming remain unverified.
+shotgun UDP verifies source-triggered issuance and collection on both
+snapshots. Rendered Unity aiming remains unverified.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
 selection history and source map areas. Replays do not redraw; invalid

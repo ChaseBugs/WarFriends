@@ -275,6 +275,18 @@ if (args is ["--pvp-bonus-udp-only"])
     return;
 }
 
+if (args is ["--pvp-bonus-shotgun-udp-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName,
+        "content/combat-content-manifest.json"))) root = root.Parent;
+    if (root == null) throw new Exception("Recovered battle content artifact not found.");
+    int focused = await LivePvpBonusUdpTests.RunShotgun(
+        Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} live shotgun bonus UDP assertions");
+    return;
+}
+
 if (args is ["--live-grenades-burst-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -2981,6 +2993,7 @@ checks += PvpScoreMultiplierTests.Run();
 checks += PvpBonusSpawnAreaTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PvpBonusSpawnPlannerTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LivePvpBonusUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += await LivePvpBonusUdpTests.RunShotgun(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveGrenadesBurstUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyEntityPageTests.Run();
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
