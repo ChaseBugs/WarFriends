@@ -13,6 +13,7 @@ using War.Shared;
 internal static class BattleManifestSnapshotTests
 {
     private const uint MaximumTerminalCrateCollections = 2048;
+    private const uint MaximumTerminalScorestreaks = 4096;
 
     public static async Task Run(string uri)
     {
@@ -86,6 +87,8 @@ internal static class BattleManifestSnapshotTests
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCratesStolen=1),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCratesCollected=
                     MaximumTerminalCrateCollections + 1),
+                new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedScorestreaksGained=
+                    MaximumTerminalScorestreaks + 1),
                 new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
                     {OptionIndex=0,UnitId="ID_UNIT-ASSAULT",Deployments=1,PlannedSpawns=2,ConfirmedSpawns=1})),
                 new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
@@ -116,6 +119,8 @@ internal static class BattleManifestSnapshotTests
             terminal.Players[0].ConfirmedCratesCollected = 2;
             terminal.Players[0].ConfirmedCratesStolen = 1;
             terminal.Players[1].ConfirmedCratesCollected = 1;
+            terminal.Players[0].ConfirmedScorestreaksGained = 2;
+            terminal.Players[1].ConfirmedScorestreaksGained = 1;
             terminal.PvpCurrencyQuotes.Add(new BattlePvpCurrencyQuote {
                 BoxId = new string('d', 32), RecipientPlayerId = players[1],
                 Currency = "gold", BaseDraw = 4, Amount = 4,
@@ -185,6 +190,15 @@ internal static class BattleManifestSnapshotTests
                 crateStats[1] is not { CratesCollected: 1, CratesStolen: 0 })
             {
                 throw new Exception("Durable result read lost validated crate statistics.");
+            }
+            var scorestreakStats = await resultStore.GetScorestreakStats(match, CancellationToken.None);
+            if (scorestreakStats == null || scorestreakStats.Count != 2 ||
+                scorestreakStats[0] is not { ScorestreaksGained: 2 } ||
+                scorestreakStats[1] is not { ScorestreaksGained: 1 } ||
+                scorestreakStats[0].PlayerId != players[0] ||
+                scorestreakStats[1].PlayerId != players[1])
+            {
+                throw new Exception("Durable result read lost spawned scorestreak statistics.");
             }
             var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
                 new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));

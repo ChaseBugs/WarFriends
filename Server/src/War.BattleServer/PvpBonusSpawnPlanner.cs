@@ -99,6 +99,18 @@ internal sealed class PvpBonusSpawnPlanner
         }
     }
     internal int PlanCount { get { lock (gate) return plans.Count; } }
+    internal int SpawnedCount(string ownerPlayerId)
+    {
+        lock (gate)
+        {
+            if (!owners.ContainsKey(ownerPlayerId))
+            {
+                throw new InvalidDataException("Bonus owner is outside the admitted roster.");
+            }
+
+            return plans.Values.Count(plan => plan.Request.OwnerPlayerId == ownerPlayerId);
+        }
+    }
     internal int ActiveBoxCount { get { lock (gate) return boxes.ActiveCount; } }
     internal int BoxReceiptCount { get { lock (gate) return boxes.ReceiptCount; } }
     internal IReadOnlyList<PvpBonusCurrencyRewardQuote> CurrencyQuotes

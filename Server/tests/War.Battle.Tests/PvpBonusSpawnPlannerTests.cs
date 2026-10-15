@@ -5,6 +5,8 @@ using War.Protocol;
 
 internal static class PvpBonusSpawnPlannerTests
 {
+    private const uint MaximumTerminalScorestreaks = 4096;
+
     internal static int Run(string directory)
     {
         int checks = 0;
@@ -665,16 +667,21 @@ internal static class PvpBonusSpawnPlannerTests
               quoteTerminal.PvpCurrencyQuotes.All(quote => quote.RecipientLevelIndex == 8),
             "currency quotes appear only in private terminal evidence with signed recipient ranks");
         Check(clockEngine.Snapshot().Players.All(player =>
-                  player.ConfirmedCratesCollected == 0 && player.ConfirmedCratesStolen == 0) &&
+                  player.ConfirmedCratesCollected == 0 && player.ConfirmedCratesStolen == 0 &&
+                  player.ConfirmedScorestreaksGained == 0) &&
               quoteTerminal.Players.Single(player => player.PlayerId == localId)
                   .ConfirmedCratesCollected == 2 &&
               quoteTerminal.Players.Single(player => player.PlayerId == localId)
                   .ConfirmedCratesStolen == 0 &&
+              quoteTerminal.Players.Single(player => player.PlayerId == localId)
+                  .ConfirmedScorestreaksGained == 3 &&
               quoteTerminal.Players.Single(player => player.PlayerId != localId)
                   .ConfirmedCratesCollected == 1 &&
               quoteTerminal.Players.Single(player => player.PlayerId != localId)
-                  .ConfirmedCratesStolen == 1,
-            "private terminal counters conserve accepted owner and stolen crate collections");
+                  .ConfirmedCratesStolen == 1 &&
+              quoteTerminal.Players.Single(player => player.PlayerId != localId)
+                  .ConfirmedScorestreaksGained == 0,
+            "private terminal counters separate spawned scorestreaks from collected crates");
         byte[] QuotePayload(MatchSnapshot snapshot) =>
             Google.Protobuf.MessageExtensions.ToByteArray(snapshot);
         MatchSnapshot ValidatedQuotePayload(MatchSnapshot snapshot)
@@ -693,6 +700,23 @@ internal static class PvpBonusSpawnPlannerTests
               crateStats.Single(player => player.PlayerId != localId) ==
                   new BattleCrateMatchStats(manifest.Players[1].PlayerId, 1, 1),
             "Backend crate projection reads only validated host terminal counters");
+        var scorestreakStats = BattleScorestreakStatsProjection.FromPayload(cratePayload,
+            quoteTerminal.MatchId, War.Shared.TerminalResultDigest.Compute(cratePayload));
+        Check(scorestreakStats.Single(player => player.PlayerId == localId).ScorestreaksGained == 3 &&
+              scorestreakStats.Single(player => player.PlayerId != localId).ScorestreaksGained == 0,
+            "Backend scorestreak projection counts owner-spawned boxes, not collections");
+        var forgedScorestreak = quoteTerminal.Clone();
+        forgedScorestreak.Players.Single(player => player.PlayerId == localId)
+            .ConfirmedScorestreaksGained = MaximumTerminalScorestreaks + 1;
+        try
+        {
+            ValidatedQuotePayload(forgedScorestreak);
+            throw new Exception("Oversized scorestreak count entered terminal evidence.");
+        }
+        catch (InvalidDataException)
+        {
+            checks++;
+        }
         PvpBonusCurrencyManifestValidator.Validate(quoteTerminal, clockManifest);
         checks++;
         var changedRankTerminal = quoteTerminal.Clone();

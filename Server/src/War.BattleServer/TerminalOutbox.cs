@@ -9,6 +9,7 @@ namespace War.BattleServer;
 public sealed class TerminalOutbox
 {
     private const uint MaximumCrateCollections = 2048;
+    private const uint MaximumSpawnedScorestreaks = 4096;
     private static readonly byte[] Magic="WFR1"u8.ToArray();
     private static readonly TimeSpan AcknowledgementRetention=TimeSpan.FromDays(30);
     private readonly string directory;
@@ -276,6 +277,7 @@ public sealed class TerminalOutbox
                p.ConfirmedPlayerBulletHits>p.ConfirmedEnemyHits ||
                p.ConfirmedCratesCollected > MaximumCrateCollections ||
                p.ConfirmedCratesStolen > p.ConfirmedCratesCollected ||
+               p.ConfirmedScorestreaksGained > MaximumSpawnedScorestreaks ||
                p.ConfirmedCardsPlayed>4096 ||
                p.ConfirmedEnemyHits>1_000_000) ||
            snapshot.Players.Any(p=>!Guid.TryParseExact(p.PlayerId,"N",out _)) ||

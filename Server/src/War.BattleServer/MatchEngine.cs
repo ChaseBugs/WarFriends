@@ -3230,6 +3230,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             ConfirmedPlayerBulletHits=includeTerminalEvidence ? p.ConfirmedPlayerBulletHits : 0,
             ConfirmedCratesCollected = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Collected),
             ConfirmedCratesStolen = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Stolen),
+            ConfirmedScorestreaksGained = includeTerminalEvidence && pvpBonusPlanner != null
+                ? checked((uint)pvpBonusPlanner.SpawnedCount(p.Definition.PlayerId)) : 0,
             Reconnecting=p.Reconnecting,ReconnectAttempts=p.ReconnectAttempts,
             ReconnectDeadlineHostTick=p.ReconnectDeadlineHostTick,
             ConfirmedArmySpawns=p.ConfirmedArmySpawns,ConfirmedArmyLosses=p.ConfirmedArmyLosses,
