@@ -72,8 +72,10 @@ player grenades and the KillStreak Manager grenade burst now use that same
 host-owned distance and damage path. A grenade projectile receipt prevents a
 second collection; a blast outside the hurt radius leaves the box untouched.
 Focused host tests confirm a nearby grenade blast lets an opposing shooter
-steal a Kevlar box. A full thrown-grenade-to-box trajectory still needs a
-separate live match proof.
+steal a Kevlar box. A bonus-enabled host match now also verifies a normal M320
+throw command, projectile flight, grenade impact, box removal and Kevlar
+delivery. A two-peer UDP grenade-box encounter and rendered Unity aiming
+remain unverified.
 
 ## Source bindings
 

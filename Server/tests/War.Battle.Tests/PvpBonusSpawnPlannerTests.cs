@@ -775,6 +775,72 @@ internal static class PvpBonusSpawnPlannerTests
         Check(grenadeBoxMatch.Snapshot().StateRevision == grenadeRevision,
             "replaying the grenade explosion cannot collect the same box twice");
 
+        var grenadeContent = BattleCombatContent.Load(
+            Path.Combine(directory, "combat-content-manifest.json"),
+            grenadeManifestPath: Path.Combine(directory,
+                "grenade-content-manifest.json"));
+        var launcherWeapon = grenadeContent.Grenades!.CreateManifest(
+            "Google2u.GrenadeLauncher_M320", 0);
+        var launcherManifest = clockManifest with
+        {
+            MatchId = Id(8696),
+            Mode = MatchManifest.GrenadeCombatMode,
+            CatalogRevision = grenadeContent.GrenadeRevision!,
+            Players = clockManifest.Players.Select(player => player with
+            {
+                Weapon = launcherWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var launcherBoxMatch = new MatchEngine(launcherManifest, map,
+            grenadeContent, combatRandom: () => 1f);
+        foreach (var participant in launcherManifest.Players)
+            launcherBoxMatch.Admit(participant.PlayerId);
+        foreach (var participant in launcherManifest.Players)
+            launcherBoxMatch.Command(participant.PlayerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = launcherBoxMatch.ManifestHash }
+            });
+        launcherBoxMatch.Advance(60);
+        launcherBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86961), localId, 6);
+        for (int index = 0; index < 3; index++)
+            launcherBoxMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86962 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            launcherBoxMatch.Advance(nextTick);
+        var launcherBox = launcherBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var launcherThrow = launcherBoxMatch.Command(localId, new MatchCommand
+        {
+            CommandId = 2,
+            GrenadeThrow = new GrenadeThrowCommand
+            {
+                TargetX = launcherBox.Position.X,
+                TargetY = launcherBox.Position.Y,
+                TargetZ = launcherBox.Position.Z
+            }
+        });
+        for (ulong nextTick = 154; nextTick <= 500 && !launcherBoxMatch.Terminal;
+             nextTick++)
+        {
+            launcherBoxMatch.Advance(nextTick);
+            if (launcherBoxMatch.BonusPlanner.BoxSnapshot(launcherBox.BoxId).Phase ==
+                PvpBonusBoxPhase.Collected) break;
+        }
+        var launcherImpacts = launcherBoxMatch.EventBatch(localId, 0).Events
+            .Where(item => item.Kind == MatchEventKind.Impact).ToArray();
+        Check(launcherThrow.Code == "grenade-throwing" &&
+              launcherImpacts.Any(item => item.Reason == "grenade") &&
+              launcherBoxMatch.BonusPlanner.BoxSnapshot(launcherBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              launcherBoxMatch.Snapshot().PvpBonusBoxes.Count == 0 &&
+              launcherBoxMatch.Snapshot().Players[0].KevlarHealth ==
+                  launcherManifest.Players[0].Combat!.MaxHealth * 0.1f,
+            $"normal M320 throw flies, explodes and collects a live box: " +
+            $"command={launcherThrow.Code}, impacts={launcherImpacts.Length}, " +
+            $"box={launcherBox.Position}, phase=" +
+            launcherBoxMatch.BonusPlanner.BoxSnapshot(launcherBox.BoxId).Phase);
+
         var firedBoxMatch = RunningBonusMatch(8699, () => 1f);
         firedBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86990), localId, 6);
         for (int index = 0; index < 3; index++)

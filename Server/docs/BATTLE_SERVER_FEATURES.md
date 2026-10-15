@@ -94,7 +94,9 @@ snapshots. Rendered Unity aiming remains unverified.
 Normal player grenades and KillStreak Manager grenade bursts now damage active
 boxes through the source destroyable overlap and one-HP registry. A focused
 host blast proves out-of-range exclusion, stolen-recipient effect delivery and
-receipt replay; a full thrown-grenade trajectory remains unverified.
+receipt replay. A bonus-enabled host match now proves normal M320 throw, projectile
+impact, box removal and Kevlar delivery. Two-peer grenade-box UDP and rendered
+Unity aiming remain unverified.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
 selection history and source map areas. Replays do not redraw; invalid
