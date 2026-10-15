@@ -1024,7 +1024,7 @@ internal static class PvpBonusSpawnPlannerTests
                 ArmySpecialUpgradeIndexes = [-1],
                 ArmyEliteUpgradeIndexes = [-1],
                 ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)],
-                ArmyDamageScales = [1f],
+                ArmyDamageScales = [player.PlayerId == grenadeAttacker ? .0001f : 1f],
                 ArmySpeedCoefficients = [1f],
                 ArmyAccuracyCoefficients = [1f]
             }).ToArray()
@@ -1060,13 +1060,21 @@ internal static class PvpBonusSpawnPlannerTests
         int flameBoxHits = flameBoxMatch.ApplyArmyFlameBonusBoxes(
             flameSoldier.EntityKey, flameOrigin, Vector3.UnitZ, 869256);
         Check(flameBoxHits == 1 &&
-              flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health < 1f,
+              flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health is > 0f and < 1f,
             "source Flamethrower damages its own faction's neutral-fraction bonus box");
+        float firstPulseHealth = flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health;
         ulong flameBoxRevision = flameBoxMatch.Snapshot().StateRevision;
         Check(flameBoxMatch.ApplyArmyFlameBonusBoxes(flameSoldier.EntityKey,
                   flameOrigin, Vector3.UnitZ, 869256) == 0 &&
-              flameBoxMatch.Snapshot().StateRevision == flameBoxRevision,
+              flameBoxMatch.Snapshot().StateRevision == flameBoxRevision &&
+              flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health == firstPulseHealth,
             "replaying one Flame pulse cannot damage or collect the same box twice");
+        for (ulong nextTick = 154; nextTick <= 164; nextTick++)
+            flameBoxMatch.Advance(nextTick);
+        Check(flameBoxMatch.ApplyArmyFlameBonusBoxes(flameSoldier.EntityKey,
+                  flameOrigin, Vector3.UnitZ, 869256) == 1 &&
+              flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health < firstPulseHealth,
+            "the next source Flame pulse has its own damage receipt");
 
         var grenadeContent = BattleCombatContent.Load(
             Path.Combine(directory, "combat-content-manifest.json"),
