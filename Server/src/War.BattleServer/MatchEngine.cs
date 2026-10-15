@@ -3034,6 +3034,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                     Kind = "army-bullet",
                     ArmyUnitId = launch.UnitId,
                     ArmySourceCardId = launch.SourceCardId,
+                    ArmyPoison = launch.UnitId == "ID_UNIT-COMMANDO" &&
+                        launch.PoisonRatio > 0,
                     X = flight.Position.X, Y = flight.Position.Y,
                     Z = flight.Position.Z,
                     VelocityX = flight.Velocity.X,

@@ -79,7 +79,8 @@ namespace War.Client
         private static bool ValidArmyIdentity(BattleProjectileState row)
         {
             if (row.Kind != "army-bullet")
-                return row.ArmyUnitId.Length == 0 && row.ArmySourceCardId.Length == 0;
+                return row.ArmyUnitId.Length == 0 && row.ArmySourceCardId.Length == 0 &&
+                    !row.ArmyPoison;
 
             string unitId = row.ArmyUnitId;
             if (!unitId.StartsWith("ID_UNIT-", StringComparison.Ordinal) ||
@@ -91,6 +92,7 @@ namespace War.Client
                 char character = unitId[index];
                 if (character < 'A' || character > 'Z') return false;
             }
+            if (row.ArmyPoison && unitId != "ID_UNIT-COMMANDO") return false;
             return row.ArmySourceCardId.Length == 0 ||
                 CardUnitSourceIdentity.Matches(row.ArmySourceCardId, unitId);
         }

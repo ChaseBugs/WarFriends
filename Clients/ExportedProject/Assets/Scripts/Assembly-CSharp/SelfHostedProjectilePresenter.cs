@@ -74,6 +74,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 RegisterInfantryBullet("ID_UNIT-MINIGUNNER", "ELITEMINIGUN", "shotReal", entry.behaviour);
             if (entry.behaviour is SoldierBehaviourSniper)
                 RegisterInfantryBullet("ID_UNIT-SNIPER", "ELITESNIPER", "shotSniper", entry.behaviour);
+            if (entry.behaviour is SoldierBehaviourCommando)
+                RegisterInfantryBullet("ID_UNIT-COMMANDO", "", "shotReal", entry.behaviour);
         }
         if (rocketWeapon == null)
             throw new System.InvalidOperationException("Recovered Rocket soldier is absent.");
@@ -88,13 +90,14 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
     {
         EnemyBasicInventory inventory = behaviour.GetComponent<EnemyBasicInventory>();
         if (inventory == null || inventory.weapons == null || inventory.weapons.Count == 0 ||
-            inventory.weapons[0].weapon == null || inventory.cardWeapons == null ||
-            inventory.cardWeapons.Count == 0 || inventory.cardWeapons[0].weapon == null)
+            inventory.weapons[0].weapon == null ||
+            (cardId.Length != 0 && (inventory.cardWeapons == null ||
+                inventory.cardWeapons.Count == 0 || inventory.cardWeapons[0].weapon == null)))
             throw new System.InvalidOperationException("Recovered infantry weapons are absent: " + unitId);
         infantryBullets[unitId] = new InfantryBulletSource
         {
             NormalWeapon = inventory.weapons[0].weapon,
-            CardWeapon = inventory.cardWeapons[0].weapon,
+            CardWeapon = cardId.Length == 0 ? null : inventory.cardWeapons[0].weapon,
             CardId = cardId,
             TrailSprite = trailSprite
         };
@@ -135,7 +138,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 			if (!active.TryGetValue(state.ProjectileId, out visual))
 			{
 				visual = Create(state.OwnerPlayerId, state.ProjectileId, state.Kind,
-                    state.WeaponSourceId, state.ArmyUnitId, state.ArmySourceCardId);
+                    state.WeaponSourceId, state.ArmyUnitId, state.ArmySourceCardId,
+                    state.ArmyPoison);
 				active.Add(state.ProjectileId, visual);
 			}
 			Vector3 hostPosition = new Vector3(state.X, state.Y, state.Z);
@@ -160,7 +164,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             if (state.Kind == "army-bullet" && visual.Trail == null &&
                 velocity.sqrMagnitude > 0.000001f)
                 ConfigureInfantryTrail(visual, state.ArmyUnitId,
-                    state.ArmySourceCardId, velocity.magnitude);
+                    state.ArmySourceCardId, state.ArmyPoison, velocity.magnitude);
 		}
 		// An MTU-bounded snapshot may omit still-flying presentation rounds.
 		// Impact events can retire them immediately; absence is authoritative
@@ -375,7 +379,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
     }
 
     private void ConfigureInfantryTrail(Visual visual, string unitId,
-        string sourceCardId, float speed)
+        string sourceCardId, bool poison, float speed)
     {
         InfantryBulletSource source;
         if (!infantryBullets.TryGetValue(unitId, out source) ||
@@ -391,7 +395,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         visual.Trail.SetWidth(setup.GetTrailWidth());
         visual.Trail.trailLength = setup.GetTrailSize() * 2f;
         visual.Trail.disapearTime = setup.GetTrailSize() / speed;
-        if (Application.isPlaying) visual.Trail.SetSprite(source.TrailSprite);
+        if (Application.isPlaying)
+            visual.Trail.SetSprite(poison ? "shotPoison" : source.TrailSprite);
     }
 
     private static void ConfigureAirTrail(Visual visual, string kind, int assaultGunIndex,
@@ -430,7 +435,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
     }
 
 	private Visual Create(string ownerId, ulong projectileId, string kind,
-        string sourceId = null, string armyUnitId = null, string armySourceCardId = null)
+        string sourceId = null, string armyUnitId = null, string armySourceCardId = null,
+        bool armyPoison = false)
 	{
 		PlayerController owner = local != null && local.playerProperties != null && local.playerProperties.playerID == ownerId ? local : other;
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
@@ -459,10 +465,13 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         {
             InfantryBulletSource source;
             if (!infantryBullets.TryGetValue(armyUnitId, out source) ||
-                (armySourceCardId.Length != 0 && armySourceCardId != source.CardId))
+                (armySourceCardId.Length != 0 && armySourceCardId != source.CardId) ||
+                (armyPoison && armyUnitId != "ID_UNIT-COMMANDO"))
                 throw new System.InvalidOperationException("Unknown infantry bullet source.");
             ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;
-            bullet = pool == null || pool.bulletSlow == null ? null : pool.bulletSlow.gameObject;
+            bullet = pool == null ? null : armyPoison ?
+                pool.bulletPoison == null ? null : pool.bulletPoison.gameObject :
+                pool.bulletSlow == null ? null : pool.bulletSlow.gameObject;
             if (bullet == null)
                 throw new System.InvalidOperationException("Recovered infantry bullet visual is absent.");
         }

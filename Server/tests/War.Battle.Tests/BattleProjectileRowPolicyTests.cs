@@ -107,6 +107,19 @@ internal static class BattleProjectileRowPolicyTests
         unrelatedIdentity.Projectiles[0].ArmyUnitId = "ID_UNIT-SWAT";
         Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(unrelatedIdentity),
             "unrelated projectile cannot carry infantry metadata");
+        var poisonIdentity = new MatchSnapshot();
+        poisonIdentity.Projectiles.Add(Row(1, "army-bullet"));
+        poisonIdentity.Projectiles[0].ArmyUnitId = "ID_UNIT-COMMANDO";
+        poisonIdentity.Projectiles[0].ArmyPoison = true;
+        BattleProjectileRowPolicy.ValidateSnapshot(poisonIdentity);
+        Check(true, "Commando poison bullet retains its source visual identity");
+        poisonIdentity.Projectiles[0].ArmyUnitId = "ID_UNIT-SWAT";
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(poisonIdentity),
+            "other infantry cannot claim a poison bullet");
+        unrelatedIdentity.Projectiles[0].ArmyUnitId = "";
+        unrelatedIdentity.Projectiles[0].ArmyPoison = true;
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(unrelatedIdentity),
+            "unrelated projectile cannot claim a poison bullet");
 
         var badShotgun = new MatchSnapshot();
         badShotgun.Projectiles.Add(Row(1, "shotgun-bullet"));

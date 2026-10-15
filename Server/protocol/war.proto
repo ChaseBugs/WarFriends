@@ -520,6 +520,8 @@ message BattleProjectileState {
   // Launch-time infantry identity survives the shooter's later death.
   string army_unit_id = 11;
   string army_source_card_id = 12;
+  // Commando's source BulletPoison selection, frozen at launch.
+  bool army_poison = 13;
 }
 // A scan starts with a new nonzero client-generated scan_id and zero cursor.
 // Retried starts reuse the same frozen host rows; later pages do not race

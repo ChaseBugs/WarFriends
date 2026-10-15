@@ -22,6 +22,7 @@ public static class SelfHostedInfantryProjectileRenderAudit
             var pool = roots.SelectMany(root =>
                 root.GetComponentsInChildren<ObjectPoolDatabase>(true)).Single();
             Require(pool.bulletSlow != null, "source BulletSlow is absent");
+            Require(pool.bulletPoison != null, "source BulletPoison is absent");
 
             player.playerProperties.playerID = new string('a', 32);
             host = new GameObject("SelfHostedSwatProjectileRenderAudit");
@@ -48,13 +49,24 @@ public static class SelfHostedInfantryProjectileRenderAudit
                         X = 1 + index, Y = 2, Z = 3, VelocityZ = 5
                     });
             }
+            for (int poison = 0; poison < 2; poison++)
+                snapshot.Projectiles.Add(new BattleProjectileState
+                {
+                    ProjectileId = (ulong)(79 + poison),
+                    OwnerPlayerId = player.playerProperties.playerID,
+                    Kind = "army-bullet", ArmyUnitId = "ID_UNIT-COMMANDO",
+                    ArmyPoison = poison == 1,
+                    X = 5, Y = 2, Z = 3, VelocityZ = 5
+                });
             presenter.Apply(snapshot);
             foreach (var projectile in snapshot.Projectiles)
             {
                 var visual = GameObject.Find("SelfHostedProjectile_" + projectile.ProjectileId);
                 Require(visual != null, "infantry shot has no visual");
+                var sourceBullet = projectile.ArmyPoison ?
+                    (BulletBase)pool.bulletPoison : pool.bulletSlow;
                 Require(visual.GetComponentsInChildren<MeshFilter>(true)
-                    .Select(filter => filter.sharedMesh).SequenceEqual(pool.bulletSlow
+                    .Select(filter => filter.sharedMesh).SequenceEqual(sourceBullet
                         .GetComponentsInChildren<MeshFilter>(true)
                         .Select(filter => filter.sharedMesh)), "infantry bullet mesh differs from source");
                 Require(visual.GetComponent<LineTrailRenderer>() != null,
@@ -76,7 +88,7 @@ public static class SelfHostedInfantryProjectileRenderAudit
             foreach (var projectile in snapshot.Projectiles)
                 Require(GameObject.Find("SelfHostedProjectile_" + projectile.ProjectileId) == null,
                     "completed infantry shot remains visible");
-            Debug.Log("UNITY_INFANTRY_PROJECTILE_RENDER_PASSED families=4 normal=True card=True sourceMesh=True trail=True impact=True removal=True");
+            Debug.Log("UNITY_INFANTRY_PROJECTILE_RENDER_PASSED families=5 normal=True card=True poison=True sourceMesh=True trail=True impact=True removal=True");
             EditorApplication.Exit(0);
         }
         catch (Exception error)
