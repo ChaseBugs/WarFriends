@@ -570,6 +570,44 @@ public sealed partial class MatchEngine
             boxId, ownerId, damage * impact.Collision.PartWeight);
     }
 
+    internal int ApplyArmyFlameBonusBoxes(ulong sourceEntityKey, Vector3 origin,
+        Vector3 forward, ulong flameProjectileId)
+    {
+        if (phase != BattlePhase.Running ||
+            !activeArmyEntities.TryGetValue(sourceEntityKey, out var source) ||
+            source.UnitId != "ID_UNIT-FLAMETHROWER" || flameProjectileId == 0 ||
+            !PlayerHitbox.Finite(origin) || !PlayerHitbox.Finite(forward) ||
+            forward.LengthSquared() < 1e-10f)
+            throw new InvalidDataException("Invalid army flame bonus-box pulse.");
+
+        if (pvpBonusPlanner == null) return 0;
+        float sourceDamage = ArmyDamage(sourceEntityKey) ??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if (!float.IsFinite(sourceDamage) || sourceDamage < 0f ||
+            sourceDamage > 10_000_000f)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        string attackerId = source.OwnerPlayerId;
+        int hits = 0;
+        foreach (var box in pvpBonusPlanner.ActiveBoxesSnapshot())
+        {
+            // KillStreakBonusBox implements IFraction with fraction None.
+            // FlameAmmo therefore accepts boxes dropped by either team.
+            var hit = ArmyFlameBurst.ResolveParts(origin, forward,
+                [PvpBonusShotHitbox.For(box)], sourceDamage);
+            if (hit == null || hit.RawDamage <= 0f) continue;
+            float oldHealth = box.Health;
+            // One FlameAmmo shot has six pulses. The tick distinguishes them,
+            // while a repeated call in the same tick keeps one receipt.
+            string pulseSource = "army-flame-box-" + tick.ToString(CultureInfo.InvariantCulture);
+            ApplyConfirmedPvpBonusDamage(pulseSource, flameProjectileId,
+                box.BoxId, attackerId, hit.RawDamage);
+            var updatedBox = pvpBonusPlanner.BoxSnapshot(box.BoxId);
+            if (updatedBox.Health < oldHealth || updatedBox.Phase == PvpBonusBoxPhase.Collected)
+                hits++;
+        }
+        return hits;
+    }
+
     // A real unit projectile supplies the owner, collision and unique shot ID.
     // The source PlayerOnDamage callback credits the AIObject's owning player.
     internal PlayerDamageResult? ApplyConfirmedArmyProjectilePlayerDamage(

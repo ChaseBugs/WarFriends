@@ -1014,6 +1014,60 @@ internal static class PvpBonusSpawnPlannerTests
         Check(armyBulletMatch.Snapshot().StateRevision == armyBulletRevision,
             "replayed army projectile impact cannot collect the box again");
 
+        var flameBoxManifest = clockManifest with
+        {
+            MatchId = Id(86925),
+            Players = clockManifest.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-FLAMETHROWER"],
+                ArmyNormalUpgradeIndexes = [0],
+                ArmySpecialUpgradeIndexes = [-1],
+                ArmyEliteUpgradeIndexes = [-1],
+                ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)],
+                ArmyDamageScales = [1f],
+                ArmySpeedCoefficients = [1f],
+                ArmyAccuracyCoefficients = [1f]
+            }).ToArray()
+        };
+        var flameBoxMatch = new MatchEngine(flameBoxManifest, map, content,
+            combatRandom: () => 1f, armyChoice: _ => 0);
+        foreach (var participant in flameBoxManifest.Players)
+            flameBoxMatch.Admit(participant.PlayerId);
+        foreach (var participant in flameBoxManifest.Players)
+            flameBoxMatch.Command(participant.PlayerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = flameBoxMatch.ManifestHash }
+            });
+        flameBoxMatch.Advance(60);
+        int flameOption = flameBoxMatch.ArmyBatch(grenadeAttacker).OptionIndexes[0];
+        Check(flameBoxMatch.Command(grenadeAttacker, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = flameOption }
+        }).Code == "army-deploying", "opponent deploys the source Flamethrower");
+        flameBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(869251), grenadeAttacker, 6);
+        for (int index = 0; index < 3; index++)
+            flameBoxMatch.BonusProgress.RecordConfirmedSkillShot(grenadeAttacker,
+                Id(869252 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            flameBoxMatch.Advance(nextTick);
+        var flameBox = flameBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var flameSoldier = flameBoxMatch.ArmyEntityBatch(grenadeAttacker, 0, 0)
+            .Entities.Single(entity => entity.OwnerPlayerId == grenadeAttacker &&
+                entity.UnitId == "ID_UNIT-FLAMETHROWER");
+        Vector3 flameOrigin = flameBox.Position - Vector3.UnitZ;
+        int flameBoxHits = flameBoxMatch.ApplyArmyFlameBonusBoxes(
+            flameSoldier.EntityKey, flameOrigin, Vector3.UnitZ, 869256);
+        Check(flameBoxHits == 1 &&
+              flameBoxMatch.BonusPlanner.BoxSnapshot(flameBox.BoxId).Health < 1f,
+            "source Flamethrower damages its own faction's neutral-fraction bonus box");
+        ulong flameBoxRevision = flameBoxMatch.Snapshot().StateRevision;
+        Check(flameBoxMatch.ApplyArmyFlameBonusBoxes(flameSoldier.EntityKey,
+                  flameOrigin, Vector3.UnitZ, 869256) == 0 &&
+              flameBoxMatch.Snapshot().StateRevision == flameBoxRevision,
+            "replaying one Flame pulse cannot damage or collect the same box twice");
+
         var grenadeContent = BattleCombatContent.Load(
             Path.Combine(directory, "combat-content-manifest.json"),
             grenadeManifestPath: Path.Combine(directory,

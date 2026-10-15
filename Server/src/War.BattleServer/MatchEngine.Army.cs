@@ -3885,6 +3885,8 @@ public sealed partial class MatchEngine
             if(!Terminal)ApplyArmyFlameDecoyPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameHeavyTurretPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameShieldPulse(burst.EntityKey,origin,forward,burst.ProjectileId);
+            if(!Terminal)ApplyArmyFlameBonusBoxes(burst.EntityKey,origin,forward,
+                burst.ProjectileId);
             if(burst.Finished)armyFlameBursts.Remove(pair.Key);
             if(Terminal)return;
         }
