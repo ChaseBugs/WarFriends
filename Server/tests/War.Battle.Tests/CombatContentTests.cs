@@ -11571,10 +11571,10 @@ internal static class CombatContentTests
                 (_,_,_)=>null);
             Reject(()=>unadvancedFlight.Advance(13));
             var slowSniperFlight = new ArmyProjectileFlight(11, 77,
-                Vector3.Zero, Vector3.UnitX, 30, 10,
+                Vector3.Zero, Vector3.UnitX * 4f, 30, 10,
                 (from, direction, range) =>
                 {
-                    float distanceToPlayer = 1.8f - from.X;
+                    float distanceToPlayer = 4.8f - from.X;
                     return distanceToPlayer >= 0 && distanceToPlayer <= range
                         ? new ShotCollision(distanceToPlayer,
                             from + direction * distanceToPlayer,
@@ -11582,11 +11582,16 @@ internal static class CombatContentTests
                         : null;
                 }, extraCollisionDistance: 1f);
             Check(slowSniperFlight.Advance(11) == null &&
-                  !slowSniperFlight.Finished &&
-                  slowSniperFlight.Advance(12)?.Collision.PlayerId ==
+                  slowSniperFlight.Advance(12) == null &&
+                  slowSniperFlight.Advance(13) == null &&
+                  slowSniperFlight.Advance(14) == null &&
+                  Math.Abs(slowSniperFlight.Position.X - 3f) < .001f &&
+                  slowSniperFlight.Advance(15) == null &&
+                  slowSniperFlight.Advance(16) == null &&
+                  slowSniperFlight.Advance(17)?.Collision.PlayerId ==
                       shotIntent.TargetPlayerId &&
                   slowSniperFlight.Finished,
-                "slow Sniper collision checking reaches a player behind its aim point");
+                "slow Sniper checks its source-timed continuation behind the aim point");
             var ordinaryFlight = new ArmyProjectileFlight(12, 77,
                 Vector3.Zero, Vector3.UnitX, 30, 10,
                 (_, _, _) => null);
