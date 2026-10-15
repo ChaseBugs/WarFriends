@@ -140,7 +140,8 @@ internal sealed class BulletFlight
             (bonusBoxHit &&
              (!Guid.TryParseExact(hit.BonusBoxId, "N", out _) ||
               hit.BonusBoxId != hit.BonusBoxId.ToLowerInvariant() ||
-              hit.ColliderLayer != 0 || !hit.SourceDestroyable || hit.Static ||
+              hit.ColliderLayer != PvpBonusShotHitbox.RuntimeLayer ||
+              !hit.SourceDestroyable || hit.Static ||
               hit.DynamicOwner != null || hit.ColliderIndex != null ||
               HasDynamicPartIdentity(hit))) ||
             (sceneHit && HasDynamicPartIdentity(hit)) ||

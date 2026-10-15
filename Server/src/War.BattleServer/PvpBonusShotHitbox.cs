@@ -4,12 +4,15 @@ namespace War.BattleServer;
 
 /// <summary>
 /// The source box's root scale and BoxCollider size form a 0.4834973-unit
-/// cube on Unity's Default layer. It can be shot while falling or grounded.
+/// cube. DestroyableObject.Awake changes the prefab's serialized Default
+/// layer to the source destroyable-entity layer (8) at runtime.
+/// It can be shot while falling or grounded.
 /// The source root rotation permutes cube axes, so its world box has the same
 /// dimensions as this axis-aligned host collider.
 /// </summary>
 internal static class PvpBonusShotHitbox
 {
+    internal const int RuntimeLayer = 8;
     private const float Side = 0.4834973f;
     private const string SourcePath =
         "Assets/GameObject/KillStreakBonusBox.prefab#6584216";

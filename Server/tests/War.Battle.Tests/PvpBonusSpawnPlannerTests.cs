@@ -277,15 +277,36 @@ internal static class PvpBonusSpawnPlannerTests
             bonusBoxes: motionRegistry.ActiveSnapshot);
         Vector3 shotOrigin = landed.Position + Vector3.UnitX * 2f;
         Vector3 shotDirection = -Vector3.UnitX;
-        var boxHit = boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f, 1u);
+        const uint boxBulletMask = 1u << PvpBonusShotHitbox.RuntimeLayer;
+        var boxHit = boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f,
+            boxBulletMask);
         Check(boxHit?.BonusBoxId == landed.BoxId &&
-              boxHit.ColliderLayer == 0 && boxHit.SourceDestroyable &&
+              boxHit.ColliderLayer == 8 && boxHit.SourceDestroyable &&
               boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f, 0u) == null,
-            "player ray hits only the active source Default-layer box collider");
+            "player ray hits only the active source runtime layer-8 box collider");
+        var shotgunBoxCandidates = boxWorld.OverlapEnemy(localId,
+            landed.Position + Vector3.UnitX * 2f, 3f, boxBulletMask);
+        Check(shotgunBoxCandidates.Count == 1 &&
+              shotgunBoxCandidates[0].MainEntityId == landed.BoxId &&
+              shotgunBoxCandidates[0].Enemy,
+            "source shotgun sphere includes the destroyable box for either fraction");
+        var shotguns = ShotgunCatalog.Load(Path.Combine(directory,
+            "shotgun-content-manifest.json"));
+        var shotgun = shotguns.Bindings[0];
+        var shotgunStage = shotguns.Stage(shotgun.SourceId, 0);
+        var shotgunPlan = ShotgunShotPlanner.Plan(shotgun.Rule(shotgunStage),
+            shotOrigin, landed.Position - Vector3.UnitX,
+            shotgunBoxCandidates);
+        Check(shotgunPlan.RealPellets.Count >= 2 &&
+              shotgunPlan.RealPellets.Any(pellet => !pellet.Main &&
+                  pellet.EntityId == shotgunBoxCandidates[0].EntityId &&
+                  pellet.Target == landed.Position),
+            "shotgun cone adds a real pellet aimed at the source box center");
         var boxFlight = new BulletFlight(9200, localId,
             new BulletFlightDefinition(100f, 0f, true), shotOrigin,
             landed.Position, 1,
-            (from, ray, range) => boxWorld.Raycast(localId, from, ray, range, 1u));
+            (from, ray, range) => boxWorld.Raycast(localId, from, ray, range,
+                boxBulletMask));
         var boxImpact = boxFlight.Advance(2);
         Check(boxImpact?.Hit.BonusBoxId == landed.BoxId,
             "real bullet flight accepts the box as a distinct collision owner");
@@ -301,7 +322,8 @@ internal static class PvpBonusSpawnPlannerTests
             Id(9202), localId, boxDamagedHealth);
         Check(lethalCollection?.RecipientPlayerId == localId &&
               motionRegistry.Snapshot(landed.BoxId).Phase == PvpBonusBoxPhase.Collected &&
-              boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f, 1u) == null,
+              boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f,
+                  boxBulletMask) == null,
             "only cumulative lethal bullet damage collects and removes the box");
         try
         {
@@ -582,7 +604,8 @@ internal static class PvpBonusSpawnPlannerTests
              new(manifest.Players[1].PlayerId, distantOpponent)],
             bonusBoxes: clockEngine.BonusPlanner.ActiveBoxesSnapshot);
         var liveBoxHit = liveBoxWorld.Raycast(localId,
-            liveBox.Position + Vector3.UnitX * 2f, -Vector3.UnitX, 4f, 1u);
+            liveBox.Position + Vector3.UnitX * 2f, -Vector3.UnitX, 4f,
+            boxBulletMask);
         Check(liveBoxHit?.BonusBoxId == liveBox.BoxId,
             "player bullet trace selects the issued live-match bonus box");
         var confirmedBoxImpact = new BulletImpact(751, localId, liveBoxHit!,
@@ -599,7 +622,7 @@ internal static class PvpBonusSpawnPlannerTests
         clockEngine.ApplyPlayerBulletBonusImpact(confirmedBoxImpact, 2f);
         Check(clockEngine.Snapshot().StateRevision == collectedRevision &&
               liveBoxWorld.Raycast(localId, liveBox.Position + Vector3.UnitX * 2f,
-                  -Vector3.UnitX, 4f, 1u) == null,
+                  -Vector3.UnitX, 4f, boxBulletMask) == null,
             "replaying a bullet cannot recollect or keep a destroyed box shootable");
         clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(752), localId, 0);
         var liveGoldPlan = clockEngine.BonusPlanner.PlanMatured(second, 0, context, draw);

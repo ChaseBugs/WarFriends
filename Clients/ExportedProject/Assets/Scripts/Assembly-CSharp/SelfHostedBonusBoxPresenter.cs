@@ -49,6 +49,9 @@ public sealed class SelfHostedBonusBoxPresenter : MonoBehaviour
 			throw new InvalidOperationException("The recovered bonus box visual is incomplete.");
 
 		GameObject visual = new GameObject("SelfHostedBonusBox_" + box.BoxId);
+		// DestroyableObject.Awake moves the original prefab to runtime layer 8.
+		// This visual has no damage component, so preserve that layer explicitly.
+		visual.layer = 8;
 		visual.transform.rotation = visualSource.transform.rotation;
 		visual.transform.localScale = visualSource.transform.localScale;
 		visual.AddComponent<MeshFilter>().sharedMesh = sourceMesh.sharedMesh;

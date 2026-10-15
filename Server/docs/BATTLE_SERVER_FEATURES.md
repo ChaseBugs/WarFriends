@@ -84,6 +84,10 @@ PhysX timing and rendered Unity aiming remain unverified. An in-process
 two-participant Fire command verifies crate collection and Kevlar delivery;
 two authenticated UDP peers now verify host-issued crates, shared identities,
 normal shooting and removal on both snapshots.
+The recovered `DestroyableObject.Awake` changes boxes from serialized Default
+layer to runtime destroyable layer eight. Host raycasts and Unity aiming now
+use that layer; source shotgun overlap also selects boxes as extra-pellet
+candidates. Live shotgun box collection still needs a full match proof.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
 selection history and source map areas. Replays do not redraw; invalid

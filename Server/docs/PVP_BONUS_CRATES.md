@@ -44,7 +44,7 @@ Rigidbody, damage or reward scripts. Server damage alone decides collection.
 The latest collider change compiled in a disposable Unity 2018.3 project. Rendered Play Mode,
 original Android Unity 5.2 and two-peer box display remain unverified.
 
-The host treats an active box as a distinct layer-zero bullet hitbox, separate
+The host treats an active box as a distinct runtime layer-eight bullet hitbox, separate
 from player and army target IDs. Player-owned bullets reduce its source one HP;
 only lethal cumulative damage confirms collection, including in the air.
 Projectile receipts prevent repeated damage or duplicate collection. An
@@ -54,6 +54,13 @@ UDP Worker proof now covers two authenticated peers, source-triggered box
 issuance, shared box identities, shooting one box and its disappearance on
 both peers. Rendered Unity aiming, shotgun cones and explosive/army damage
 paths remain unverified.
+
+The serialized prefab starts on layer zero, but its `DestroyableObject.Awake`
+sets the GameObject to destroyable-entity layer eight. The host and the local
+Unity aiming collider now use that runtime layer. Source shotgun overlap can
+select the box as an additional real pellet target: its `DestroyableObject`
+owner is the box's neutral `IFraction`, so either player's cone may include it.
+The overlap and pellet plan are tested; live shotgun collection is still open.
 
 ## Source bindings
 

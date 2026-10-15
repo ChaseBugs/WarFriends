@@ -111,7 +111,8 @@ internal sealed class ShotCollisionWorld
                              target.ArmyInfantry||target.Decoy||target.HeavyTurret||target.HelicopterGunner||
                              target.GrenadierGrenade));
             }
-        if (bonusBoxes != null && (mapLayerMask & 1u) != 0)
+        if (bonusBoxes != null &&
+            (mapLayerMask & (1u << PvpBonusShotHitbox.RuntimeLayer)) != 0)
         {
             foreach (var box in bonusBoxes())
             {
@@ -123,7 +124,8 @@ internal sealed class ShotCollisionWorld
                     nearest = new ShotCollision(distance.Value,
                         origin + direction * distance.Value,
                         hitbox.SourcePath, null, 1f,
-                        ColliderLayer: 0, SourceDestroyable: true,
+                        ColliderLayer: PvpBonusShotHitbox.RuntimeLayer,
+                        SourceDestroyable: true,
                         BonusBoxId: box.BoxId);
                 }
             }
@@ -220,6 +222,25 @@ internal sealed class ShotCollisionWorld
                     Encoding.UTF8.GetBytes(collider))),identity,target.Hitbox.Center,true));
                 if(result.Count>128)throw new InvalidDataException("Shotgun overlap exceeded source candidate bound.");
             }
+        if (bonusBoxes != null &&
+            (layerMask & (1u << PvpBonusShotHitbox.RuntimeLayer)) != 0)
+        {
+            foreach (var box in bonusBoxes())
+            {
+                var hitbox = PvpBonusShotHitbox.For(box);
+                if (!hitbox.OverlapsSphere(origin, radius)) continue;
+                // BulletShotGun selects destroyable colliders in the sphere.
+                // The box's DestroyableObject owns its IFraction component,
+                // whose fraction is None, so either player may select it.
+                string identity = box.BoxId + ":" + hitbox.SourcePath;
+                result.Add(new ShotgunCollider(Convert.ToHexStringLower(
+                    SHA256.HashData(Encoding.UTF8.GetBytes(identity))),
+                    box.BoxId, hitbox.Center, true));
+                if (result.Count > 128)
+                    throw new InvalidDataException(
+                        "Shotgun overlap exceeded source candidate bound.");
+            }
+        }
         return result.AsReadOnly();
     }
 }
