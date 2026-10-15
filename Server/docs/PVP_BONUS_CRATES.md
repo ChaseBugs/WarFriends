@@ -12,8 +12,10 @@ bazooka flight tracing and applies the source dead/hurt radius falloff at the
 confirmed impact. A positive hit destroys the one-HP box through the same
 receipt-bound collection path as a player bullet. Focused host tests cover
 range, opposing-player collection, replay, and a normal RPG hold, flight,
-impact and collection against a live box. A two-peer RPG flight fixture
-against a live box is still needed.
+impact and collection against a live box. A two-peer UDP fixture now earns a
+box from confirmed rifle hits, switches to RPG, and verifies both peers see
+the host RPG impact and box removal. The fixture does not yet prove every
+randomly selected bonus effect or visual presentation.
 
 The host can call `MatchEngine.IssueNextMaturedBonus()` after a delayed request
 matures. It derives mode, collected-Gold count, and the first two weapons'

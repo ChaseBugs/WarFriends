@@ -17,7 +17,11 @@ internal static class LivePvpBonusUdpTests
     internal static Task<int> RunShotgun(string directory) =>
         RunScenario(directory, true);
 
-    private static async Task<int> RunScenario(string directory, bool shotgun)
+    internal static Task<int> RunBazooka(string directory) =>
+        RunScenario(directory, false, true);
+
+    private static async Task<int> RunScenario(string directory, bool shotgun,
+        bool bazooka = false)
     {
         int checks = 0;
         void Check(bool condition, string description)
@@ -28,22 +32,32 @@ internal static class LivePvpBonusUdpTests
 
         string shotgunManifestPath = Path.Combine(directory,
             "shotgun-content-manifest.json");
-        var content = BattleCombatContent.Load(
-            Path.Combine(directory, "combat-content-manifest.json"),
-            shotgun ? shotgunManifestPath : null);
+        string ContentPath(string weapon) => Path.Combine(directory,
+            weapon + "-content-manifest.json");
+        var content = bazooka
+            ? BattleCombatContent.Load(ContentPath("combat"), ContentPath("shotgun"),
+                ContentPath("smg"), ContentPath("pistol"), ContentPath("lmg"),
+                ContentPath("minigun"), ContentPath("sniper"),
+                ContentPath("bazooka"))
+            : BattleCombatContent.Load(ContentPath("combat"),
+                shotgun ? shotgunManifestPath : null);
         var template = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
         string firstId = template.Players[0].PlayerId;
         string secondId = template.Players[1].PlayerId;
         var shotgunWeapon = shotgun ? content.Shotguns!.CreateManifest(
             "Google2u.Shotgun_SPAS", 35) : null;
+        var bazookaWeapon = bazooka ? content.Bazookas!.CreateManifest(
+            "Google2u.Bazooka_RPG7", 0) : null;
         var manifest = template with
         {
             MatchId = Guid.NewGuid().ToString("N"),
-            Mode = shotgun ? MatchManifest.ShotgunCombatMode : template.Mode,
-            CatalogRevision = shotgun ? content.ShotgunRevision! :
+            Mode = bazooka ? MatchManifest.MixedCombatMode :
+                shotgun ? MatchManifest.ShotgunCombatMode : template.Mode,
+            CatalogRevision = bazooka ? content.MixedRevision! :
+                shotgun ? content.ShotgunRevision! :
                 template.CatalogRevision,
-            DurationSeconds = shotgun ? 120 : template.DurationSeconds,
+            DurationSeconds = shotgun || bazooka ? 120 : template.DurationSeconds,
             SceneMasterPlayerId = firstId,
             PvpBonusMode = MatchManifest.OrdinaryPvpBonusMode,
             PvpGoldBonusesAtAdmission = 0,
@@ -52,7 +66,10 @@ internal static class LivePvpBonusUdpTests
                 PlayerLevel = 8,
                 Combat = player.Combat! with { MaxHealth = 100_000 },
                 Weapon = shotgun ? shotgunWeapon! : player.Weapon,
-                WeaponUpgrade = shotgun ? 35 : player.WeaponUpgrade
+                WeaponUpgrade = shotgun ? 35 : player.WeaponUpgrade,
+                WeaponSlots = bazooka ?
+                    [new WeaponSlotManifest(0, 11, player.Weapon, 0),
+                     new WeaponSlotManifest(2, 3, bazookaWeapon!, 0)] : null
             }).ToArray()
         };
         var map = content.Maps.Single(item =>
@@ -127,8 +144,14 @@ internal static class LivePvpBonusUdpTests
                 ["Battle:CombatContentManifestPath"] = Path.Combine(
                     directory, "combat-content-manifest.json"),
                 ["Battle:ResultOutboxPath"] = outboxPath,
-                ["Battle:ShotgunContentManifestPath"] = shotgun ?
-                    shotgunManifestPath : null
+                ["Battle:ShotgunContentManifestPath"] = shotgun || bazooka ?
+                    shotgunManifestPath : null,
+                ["Battle:SmgContentManifestPath"] = bazooka ? ContentPath("smg") : null,
+                ["Battle:PistolContentManifestPath"] = bazooka ? ContentPath("pistol") : null,
+                ["Battle:LmgContentManifestPath"] = bazooka ? ContentPath("lmg") : null,
+                ["Battle:MinigunContentManifestPath"] = bazooka ? ContentPath("minigun") : null,
+                ["Battle:SniperContentManifestPath"] = bazooka ? ContentPath("sniper") : null,
+                ["Battle:BazookaContentManifestPath"] = bazooka ? ContentPath("bazooka") : null
             }).Build();
         using var worker = new NetworkWorker(config,
             NullLogger<NetworkWorker>.Instance);
@@ -136,7 +159,7 @@ internal static class LivePvpBonusUdpTests
         {
             await worker.StartAsync(CancellationToken.None);
             using var timeout = new CancellationTokenSource(
-                TimeSpan.FromSeconds(shotgun ? 100 : 35));
+                TimeSpan.FromSeconds(shotgun || bazooka ? 100 : 35));
             using var first = new MatchConnection(Grant(firstId, 87101));
             using var second = new MatchConnection(Grant(secondId, 87102));
             Check((await first.ConnectAsync(timeout.Token)).Code == "admitted",
@@ -174,24 +197,53 @@ internal static class LivePvpBonusUdpTests
                 $"hits={firstView.Snapshot.Players[0].ConfirmedPlayerHits}, " +
                 $"health={firstView.Snapshot.Players[1].Health}");
             var box = firstView.Snapshot.PvpBonusBoxes[0];
+            ulong shotsBeforeBazooka = firstView.Snapshot.Players[0].ShotsFired;
             var secondView = await second.PollAsync(timeout.Token);
             Check(secondView.Snapshot.PvpBonusBoxes.Select(item => item.BoxId)
                       .SequenceEqual(firstView.Snapshot.PvpBonusBoxes.Select(item => item.BoxId)),
                 "both UDP peers receive the same bonus box identities");
 
-            for (int attempt = 0; attempt < 35; attempt++)
+            if (bazooka)
+            {
+                var selected = await first.SwitchWeaponAsync(2, timeout.Token);
+                Check(selected.Code == "weapon-selected",
+                    "first UDP peer equips the source RPG slot");
+            }
+            for (int attempt = 0; attempt < (bazooka ? 7 : 35); attempt++)
             {
                 firstView = await first.PollAsync(timeout.Token);
                 var activeBox = firstView.Snapshot.PvpBonusBoxes.FirstOrDefault(
                     item => item.BoxId == box.BoxId);
                 if (activeBox == null) break;
                 box = activeBox;
-                await first.FireAsync(box.X, box.Y, box.Z, timeout.Token);
-                await second.FireAsync(box.X, box.Y, box.Z, timeout.Token);
-                await Task.Delay(250, timeout.Token);
+                if (bazooka)
+                {
+                    await first.BazookaHoldAsync(true, box.X, box.Y, box.Z,
+                        timeout.Token);
+                    await Task.Delay(11_000, timeout.Token);
+                }
+                else
+                {
+                    await first.FireAsync(box.X, box.Y, box.Z, timeout.Token);
+                    await second.FireAsync(box.X, box.Y, box.Z, timeout.Token);
+                    await Task.Delay(250, timeout.Token);
+                }
             }
             firstView = await first.PollAsync(timeout.Token);
             secondView = await second.PollAsync(timeout.Token);
+            if (bazooka)
+            {
+                var firstEvents = await ReadEvents(first, timeout.Token);
+                var secondEvents = await ReadEvents(second, timeout.Token);
+                var bazookaImpacts = firstEvents.Where(item =>
+                    item.Kind == MatchEventKind.Impact &&
+                    item.Reason == "bazooka" &&
+                    item.ActorId == firstId).ToArray();
+                Check(firstView.Snapshot.Players[0].ShotsFired > shotsBeforeBazooka &&
+                      bazookaImpacts.Length > 0 &&
+                      secondEvents.Any(item => bazookaImpacts.Contains(item)),
+                    "both UDP peers receive the host RPG flight and impact");
+            }
             Check(firstView.Snapshot.PvpBonusBoxes.All(item => item.BoxId != box.BoxId) &&
                   secondView.Snapshot.PvpBonusBoxes.All(item => item.BoxId != box.BoxId),
                 "both UDP peers observe host-confirmed box collection");
@@ -202,5 +254,23 @@ internal static class LivePvpBonusUdpTests
             File.Delete(manifestPath);
         }
         return checks;
+    }
+
+    private static async Task<IReadOnlyList<MatchEvent>> ReadEvents(
+        MatchConnection connection, CancellationToken cancellationToken)
+    {
+        var events = new List<MatchEvent>();
+        ulong cursor = 0;
+        while (true)
+        {
+            var page = await connection.PollEventsAsync(cursor, cancellationToken);
+            if (page.Code != "events")
+                throw new Exception("Bonus event cursor failed: " + page.Code);
+            events.AddRange(page.Events);
+            if (page.Events.Count == 0 ||
+                page.Events[^1].EventId == page.LatestEventId)
+                return events;
+            cursor = page.Events[^1].EventId;
+        }
     }
 }
