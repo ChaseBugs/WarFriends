@@ -892,8 +892,23 @@ internal static class PvpBonusSpawnPlannerTests
             cardRocketBox.Position + Vector3.UnitX * 2f, cardRocketMissile);
         Check(cardRocketMatch.BonusPlanner.BoxSnapshot(cardRocketBox.BoxId).Health == 1f,
             "card Rocket blast beyond the source radius leaves the box intact");
-        cardRocketMatch.ApplyCardRocketBonusBoxes(grenadeAttacker, 86946,
-            cardRocketBox.Position, cardRocketMissile);
+        var fallingCardRocket = new CardRocketMissileFlight(86946, 1,
+            cardRocketMissile,
+            cardRocketBox.Position + Vector3.UnitY * 2f,
+            cardRocketBox.Position - Vector3.UnitY * 2f,
+            153, false,
+            (from, direction, range) => cardRocketTrace.TraceForArmyExplosive(
+                localId, from, direction, range));
+        CardRocketMissileImpact? cardRocketImpact = null;
+        for (ulong nextTick = 154; nextTick <= 300 &&
+             cardRocketImpact == null; nextTick++)
+            cardRocketImpact = fallingCardRocket.Advance(nextTick);
+        Check(cardRocketImpact is { IsFake: false } &&
+              cardRocketImpact.Collision?.BonusBoxId == cardRocketBox.BoxId,
+            "real card Rocket flight impacts the live box collider");
+        cardRocketMatch.ApplyCardRocketBonusBoxes(grenadeAttacker,
+            cardRocketImpact!.ProjectileId, cardRocketImpact.Position,
+            cardRocketMissile);
         Check(cardRocketMatch.BonusPlanner.BoxSnapshot(cardRocketBox.BoxId).Phase ==
                   PvpBonusBoxPhase.Collected &&
               cardRocketMatch.Snapshot().Players[1].KevlarHealth ==
@@ -901,7 +916,7 @@ internal static class PvpBonusSpawnPlannerTests
             "host card Rocket blast destroys a box for the opposing owner");
         ulong cardRocketRevision = cardRocketMatch.Snapshot().StateRevision;
         cardRocketMatch.ApplyCardRocketBonusBoxes(grenadeAttacker, 86946,
-            cardRocketBox.Position, cardRocketMissile);
+            cardRocketImpact.Position, cardRocketMissile);
         Check(cardRocketMatch.Snapshot().StateRevision == cardRocketRevision,
             "replaying card Rocket blast cannot collect a box again");
 
