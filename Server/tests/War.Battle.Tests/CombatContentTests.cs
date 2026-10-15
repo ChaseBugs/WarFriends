@@ -11761,6 +11761,21 @@ internal static class CombatContentTests
             Check(fastMissFlight.Finished &&
                   Math.Abs(fastMissFlight.Position.X-8f)<.001f,
                 "a missed fast pellet flies twice its capped aim distance");
+            int fakeTraceCalls=0;
+            var fakeShotgunFlight=new ArmyProjectileFlight(26,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (_,_,_) =>
+                {
+                    fakeTraceCalls++;
+                    return new ShotCollision(0f,Vector3.Zero,"player/body",
+                        shotIntent.TargetPlayerId,.5f);
+                },shotgunFakePellet:true);
+            for(ulong flightTick=11;flightTick<=18;flightTick++)
+                Check(fakeShotgunFlight.Advance(flightTick)==null,
+                    "fake shotgun trails never return damage collisions");
+            Check(fakeShotgunFlight.Finished && fakeTraceCalls==0 &&
+                  Math.Abs(fakeShotgunFlight.Position.X-8f)<.001f,
+                "fake shotgun trail reaches twice the aim distance at source speed");
             Reject(() => new ArmyProjectileFlight(25,77,
                 Vector3.Zero,Vector3.UnitX*4f,30,10,
                 (_,_,_) => new ShotCollision(1.9f,new Vector3(2f,0,0),
