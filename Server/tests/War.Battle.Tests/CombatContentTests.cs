@@ -12137,6 +12137,13 @@ internal static class CombatContentTests
               grenadierAim.Target.RusherPointFileId == grenadierPointId &&
               PlayerHitbox.Finite(grenadierAim.Target.Position),
             "arrived card Grenadier selects a host-owned opposing player target");
+        int grenadierShieldId = content.PlayerShotTargets.Gameplay.Single(target =>
+            target.Type == 2).TransformFileId;
+        Check(grenadierAim?.Target.TargetFileId == grenadierShieldId &&
+              Vector3.Distance(grenadierAim.Target.Position,
+                  grenadierCardMatch.CombatPose(decoyOpponent)
+                      .BodyTarget(grenadierShieldId).Position) < .0001f,
+            "card Grenadier aims at the player's attached Shield shot target");
         MatchEngine.CardGrenadierShotIntent? grenadierIntent = null;
         ulong grenadierStartTick = grenadierCardMatch.Snapshot().ServerTick;
         for (ulong grenadierTick = grenadierStartTick + 1;
@@ -15751,6 +15758,15 @@ internal static class CombatContentTests
               Vector3.Distance(normalSniperMatch.MovingPlayerVelocity(helicopterOwner),
                   playerVelocity) < .0001f,
             "moving-target lead uses the player's observed position change per tick");
+        int shieldAimId = content.PlayerShotTargets.Gameplay.Single(target =>
+            target.Type == 2).TransformFileId;
+        var movingShieldAim = normalSniperMatch.CardSniperTarget(
+            normalSniper.EntityKey);
+        Vector3 currentShieldAim = normalSniperMatch.CombatPose(helicopterOwner)
+            .BodyTarget(shieldAimId).Position;
+        Check(movingShieldAim?.TargetFileId == shieldAimId &&
+              Vector3.Distance(movingShieldAim.Position, currentShieldAim) < .0001f,
+            "Sniper follows the moving player's attached Shield shot target");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
