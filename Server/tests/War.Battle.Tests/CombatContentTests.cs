@@ -15743,6 +15743,8 @@ internal static class CombatContentTests
         }).Code == "army-deploying", "special-upgraded Sniper deployment is accepted");
         BattleArmyEntityState? criticalSniper = null;
         (string OwnerPlayerId, int OwnerFraction, float Damage)? criticalSniperLaunch = null;
+        ulong criticalSniperProjectileId = 0;
+        ulong criticalSniperShotTick = 0;
         for (ulong shotTick = 61; shotTick < 1000 &&
              !criticalSniperMatch.Terminal && criticalSniperLaunch == null; shotTick++)
         {
@@ -15752,6 +15754,8 @@ internal static class CombatContentTests
             foreach (var projectile in criticalSniperMatch.Snapshot().Projectiles)
             {
                 if (projectile.ArmyUnitId != "ID_UNIT-SNIPER") continue;
+                criticalSniperProjectileId = projectile.ProjectileId;
+                criticalSniperShotTick = shotTick;
                 criticalSniperLaunch = criticalSniperMatch.ArmyProjectileLaunch(projectile.ProjectileId);
             }
         }
@@ -15759,6 +15763,48 @@ internal static class CombatContentTests
               Math.Abs(criticalShot.Damage -
                   criticalSniperMatch.ArmyDamage(criticalSniper.EntityKey)!.Value * 2f) < .001f,
             "ordinary special Sniper rolls a host-owned critical for twice its composed source damage");
+        int criticalOpponentCover = criticalSniperMatch.Snapshot().Players
+            .Single(player => player.PlayerId == helicopterOwner).CoverIndex;
+        float criticalShieldBefore = criticalSniperMatch.Snapshot().Shields
+            .Single(shield => shield.CoverIndex == criticalOpponentCover).Health;
+        float criticalPlayerHealthBefore = criticalSniperMatch.Snapshot().Players
+            .Single(player => player.PlayerId == helicopterOwner).Health;
+        MatchEvent? criticalSniperImpact = null;
+        MatchEvent? criticalSniperShieldEvent = null;
+        ulong criticalEventCursor = 0;
+        for (ulong impactTick = criticalSniperShotTick + 1;
+             impactTick < criticalSniperShotTick + 200 &&
+             !criticalSniperMatch.Terminal && criticalSniperShieldEvent == null;
+             impactTick++)
+        {
+            criticalSniperMatch.Advance(impactTick);
+            var eventPage = criticalSniperMatch.EventBatch(soldierOwner,
+                criticalEventCursor);
+            foreach (var row in eventPage.Events)
+            {
+                criticalEventCursor = row.EventId;
+                if (row.ProjectileId != criticalSniperProjectileId) continue;
+                if (row.Kind == MatchEventKind.Impact && row.Reason == "army")
+                    criticalSniperImpact = row;
+                if (row.Kind == MatchEventKind.ShieldDamaged &&
+                    row.TargetId == helicopterOwner)
+                    criticalSniperShieldEvent = row;
+            }
+        }
+        float criticalShieldAfter = criticalSniperMatch.Snapshot().Shields
+            .Single(shield => shield.CoverIndex == criticalOpponentCover).Health;
+        float expectedCriticalShieldHealth = criticalShieldBefore -
+            criticalSniperLaunch!.Value.Damage *
+                content.Shields.UnitToShieldCoefficient;
+        Check(criticalSniperImpact is { TargetId: "" } &&
+              criticalSniperShieldEvent != null &&
+              Math.Abs(criticalSniperShieldEvent.Health -
+                  criticalShieldAfter) < .001f &&
+              Math.Abs(criticalShieldAfter - expectedCriticalShieldHealth) < .001f &&
+              criticalSniperMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).Health ==
+                  criticalPlayerHealthBefore,
+            "ordinary Sniper critical shot applies its doubled damage to the shield without bypassing it");
         content.ValidateAllocation(flameManifest);
         var stormMatch = new MatchEngine(flameManifest with
         {
