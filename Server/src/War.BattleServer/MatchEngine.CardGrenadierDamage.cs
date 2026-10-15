@@ -19,6 +19,9 @@ public sealed partial class MatchEngine
             attacker.Definition.Fraction);
         if (Terminal)
             return;
+        ApplyCardGrenadierBonusBoxes(launch.OwnerPlayerId,
+            explosion.ProjectileId, explosion.Position, launch.Damage,
+            launch.Setup);
         ApplyCardGrenadierArmyDamage(explosion, launch,
             attacker.Definition.Fraction);
         if (Terminal)

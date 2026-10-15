@@ -882,7 +882,7 @@ internal static class PvpBonusSpawnPlannerTests
         var cardRocketTrace = new RifleMatchSimulation(clockManifest, map, content);
         cardRocketTrace.ConfigureBonusBoxTargets(
             cardRocketMatch.BonusPlanner.ActiveBoxesSnapshot);
-        var cardRocketContact = cardRocketTrace.TraceForCardRocket(localId,
+        var cardRocketContact = cardRocketTrace.TraceForArmyExplosive(localId,
             cardRocketBox.Position + Vector3.UnitY, -Vector3.UnitY, 2f);
         Check(cardRocketContact?.BonusBoxId == cardRocketBox.BoxId,
             "card Rocket flight can hit the active layer-eight box collider");
@@ -904,6 +904,45 @@ internal static class PvpBonusSpawnPlannerTests
             cardRocketBox.Position, cardRocketMissile);
         Check(cardRocketMatch.Snapshot().StateRevision == cardRocketRevision,
             "replaying card Rocket blast cannot collect a box again");
+
+        var cardGrenadierMatch = RunningBonusMatch(8693, () => 1f);
+        cardGrenadierMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86931), localId, 6);
+        for (int index = 0; index < 3; index++)
+            cardGrenadierMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86932 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            cardGrenadierMatch.Advance(nextTick);
+        var cardGrenadierBox = cardGrenadierMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var cardGrenadierStats = content.Army.CardBaseStats("GREATGRENADIER", 22,
+            content.BarrelPolicy.MaxDisplayLevel);
+        var cardGrenadierTrace = new RifleMatchSimulation(clockManifest, map, content);
+        cardGrenadierTrace.ConfigureBonusBoxTargets(
+            cardGrenadierMatch.BonusPlanner.ActiveBoxesSnapshot);
+        var cardGrenadierContact = cardGrenadierTrace.TraceForArmyExplosive(localId,
+            cardGrenadierBox.Position + Vector3.UnitY, -Vector3.UnitY, 2f);
+        Check(cardGrenadierContact?.BonusBoxId == cardGrenadierBox.BoxId,
+            "card Grenadier flight can contact the active box collider");
+        cardGrenadierMatch.ApplyCardGrenadierBonusBoxes(grenadeAttacker, 86935,
+            cardGrenadierBox.Position + Vector3.UnitX *
+                (cardGrenadierStats.Grenadier!.OuterRadius + 1f),
+            cardGrenadierStats.Grenade!, cardGrenadierStats.Grenadier);
+        Check(cardGrenadierMatch.BonusPlanner.BoxSnapshot(cardGrenadierBox.BoxId)
+                  .Health == 1f,
+            "card Grenadier blast beyond its source radius leaves the box intact");
+        cardGrenadierMatch.ApplyCardGrenadierBonusBoxes(grenadeAttacker, 86936,
+            cardGrenadierBox.Position, cardGrenadierStats.Grenade!,
+            cardGrenadierStats.Grenadier);
+        Check(cardGrenadierMatch.BonusPlanner.BoxSnapshot(cardGrenadierBox.BoxId)
+                  .Phase == PvpBonusBoxPhase.Collected &&
+              cardGrenadierMatch.Snapshot().Players[1].KevlarHealth ==
+                  clockManifest.Players[1].Combat!.MaxHealth * 0.1f,
+            "host card Grenadier blast destroys a box for the opposing owner");
+        ulong cardGrenadierRevision = cardGrenadierMatch.Snapshot().StateRevision;
+        cardGrenadierMatch.ApplyCardGrenadierBonusBoxes(grenadeAttacker, 86936,
+            cardGrenadierBox.Position, cardGrenadierStats.Grenade!,
+            cardGrenadierStats.Grenadier);
+        Check(cardGrenadierMatch.Snapshot().StateRevision == cardGrenadierRevision,
+            "replaying card Grenadier blast cannot collect a box again");
 
         var grenadeContent = BattleCombatContent.Load(
             Path.Combine(directory, "combat-content-manifest.json"),

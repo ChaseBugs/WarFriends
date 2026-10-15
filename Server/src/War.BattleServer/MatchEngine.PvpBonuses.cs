@@ -541,6 +541,23 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyCardGrenadierBonusBoxes(string ownerId,
+        ulong projectileId, Vector3 position, ArmyGrenadeDamageStats damage,
+        ArmyCardGrenadierRuntime setup)
+    {
+        if (pvpBonusPlanner == null) return;
+        foreach (var box in pvpBonusPlanner.ActiveBoxesSnapshot())
+        {
+            // GrenadeAmmoEnemy inherits GrenadeAmmo's MissileExplode path.
+            // The box uses the full radius, unlike a player hitbox.
+            var effect = CardGrenadierExplosionDamage.ResolveArmy(position,
+                box.Position, [PvpBonusShotHitbox.For(box)], damage, setup);
+            if (effect == null || effect.RawDamage <= 0f) continue;
+            ApplyConfirmedPvpBonusDamage("card-grenadier-box", projectileId,
+                box.BoxId, ownerId, effect.RawDamage);
+        }
+    }
+
     // A real unit projectile supplies the owner, collision and unique shot ID.
     // The source PlayerOnDamage callback credits the AIObject's owning player.
     internal PlayerDamageResult? ApplyConfirmedArmyProjectilePlayerDamage(

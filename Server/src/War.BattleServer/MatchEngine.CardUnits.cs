@@ -1683,7 +1683,7 @@ public sealed partial class MatchEngine
                     "Card Grenadier lost its source explosion authority.");
             var flight = new CardGrenadierFlight(id, intent.EntityKey,
                 setup, muzzle, velocity, tick,
-                (from, direction, range) => rifleCombat.TraceForArmy(
+                (from, direction, range) => rifleCombat.TraceForArmyExplosive(
                     ownerId, from, direction, range));
             grenadierFlights.Add(id, flight);
             grenadierLaunches.Add(id, new(ownerId, damage, setup,
@@ -2022,7 +2022,7 @@ public sealed partial class MatchEngine
             var flight = new CardRocketMissileFlight(id, intent.EntityKey,
                 missile, intent.MuzzlePosition, intent.TargetPosition,
                 tick, !intent.IsReal,
-                (from, direction, range) => rifleCombat.TraceForCardRocket(
+                (from, direction, range) => rifleCombat.TraceForArmyExplosive(
                     ownerId, from, direction, range));
             rocketFlights.Add(id, flight);
             rocketLaunches.Add(id, new CardRocketLaunchAuthority(ownerId,

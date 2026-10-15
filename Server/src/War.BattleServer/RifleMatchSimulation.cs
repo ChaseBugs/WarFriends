@@ -358,7 +358,7 @@ internal sealed class RifleMatchSimulation
         return world.Raycast(owner,origin,direction,range,
             content.Bindings.BulletMask(actor.Definition.Fraction));
     }
-    internal ShotCollision? TraceForCardRocket(string owner,Vector3 origin,
+    internal ShotCollision? TraceForArmyExplosive(string owner,Vector3 origin,
         Vector3 direction,float range)
     {
         var actor=actors.Single(a=>a.Definition.PlayerId==owner);

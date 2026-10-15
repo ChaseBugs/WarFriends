@@ -12,6 +12,12 @@ card damage with the prefab's 0.8/1.2-unit radii. Focused checks cover flight
 collision, blast range, opposing-owner collection, and replay. A normal
 deployed Rocket shot into a box and two-peer presentation remain unverified.
 
+The source Grenadier soldier inherits `GrenadeAmmo.MissileExplode`. Its
+physical grenade now sees the same active box collider, and the host applies
+the recovered card grenade's full object blast radius and damage. Focused
+checks cover contact, range, opposing-owner collection, and replay. A normal
+deployed Grenadier throw into a box remains to be verified.
+
 The recovered `Missile.TryKill` sends RPG impacts through
 `Explosion.MissileExplode`. The host now includes active box colliders in
 bazooka flight tracing and applies the source dead/hurt radius falloff at the
