@@ -44,7 +44,7 @@ Rigidbody, damage or reward scripts. Server damage alone decides collection.
 The latest collider change compiled in a disposable Unity 2018.3 project. Rendered Play Mode,
 original Android Unity 5.2 and two-peer box display remain unverified.
 
-The host treats an active box as a distinct runtime layer-eight bullet hitbox, separate
+The host treats an active box as a distinct runtime layer-eight hitbox, separate
 from player and army target IDs. Player-owned bullets reduce its source one HP;
 only lethal cumulative damage confirms collection, including in the air.
 Projectile receipts prevent repeated damage or duplicate collection. An
@@ -52,8 +52,8 @@ in-process two-participant match now verifies a normal Fire command, bullet
 travel, lethal collection, snapshot removal and the Kevlar effect. Two-peer
 UDP Worker proof now covers two authenticated peers, source-triggered box
 issuance, shared box identities, shooting one box and its disappearance on
-both peers. Rendered Unity aiming and explosive/army damage paths remain
-unverified.
+both peers. Rendered Unity aiming and army damage paths remain unverified;
+grenade damage has only focused host-blast proof below.
 
 The serialized prefab starts on layer zero, but its `DestroyableObject.Awake`
 sets the GameObject to destroyable-entity layer eight. The host and the local
@@ -65,6 +65,15 @@ misses the box while an extra real pellet collects it and applies Kevlar.
 Two authenticated UDP peers also verify source-triggered issuance, shared box
 identity and shotgun collection on both snapshots. Rendered Unity aiming
 remains open.
+
+The recovered `Explosion.MissileExplode` includes the box in its destroyable
+overlap and uses the closest box-collider point for the lethal radius. Normal
+player grenades and the KillStreak Manager grenade burst now use that same
+host-owned distance and damage path. A grenade projectile receipt prevents a
+second collection; a blast outside the hurt radius leaves the box untouched.
+Focused host tests confirm a nearby grenade blast lets an opposing shooter
+steal a Kevlar box. A full thrown-grenade-to-box trajectory still needs a
+separate live match proof.
 
 ## Source bindings
 

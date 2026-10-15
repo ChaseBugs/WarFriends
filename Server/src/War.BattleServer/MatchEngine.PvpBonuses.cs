@@ -139,6 +139,9 @@ public sealed partial class MatchEngine
         bool shieldNearPlayer = ApplyPvpBonusGrenadeMapExplosion(explosion,
             stage, owner);
         if (Terminal) return;
+        ApplyGrenadeBonusBoxes(explosion.OwnerId, explosion.ProjectileId,
+            explosion.Position, stage);
+        if (Terminal) return;
         ApplyPvpBonusGrenadeInfantry(explosion, stage, owner);
         if (Terminal) return;
         ApplyPvpBonusGrenadeDecoys(explosion, stage, owner);
@@ -462,6 +465,13 @@ public sealed partial class MatchEngine
     {
         string boxId = impact.Hit.BonusBoxId ??
             throw new InvalidDataException("Player bullet has no bonus box identity.");
+        ApplyConfirmedPvpBonusDamage("bonus-box", impact.ProjectileId,
+            boxId, impact.OwnerId, damage);
+    }
+
+    private void ApplyConfirmedPvpBonusDamage(string source, ulong projectileId,
+        string boxId, string attackerId, float damage)
+    {
         var planner = pvpBonusPlanner ??
             throw new InvalidDataException("Bonus box collision has no host registry.");
         var box = planner.BoxSnapshot(boxId);
@@ -472,14 +482,31 @@ public sealed partial class MatchEngine
         // The recovered box starts at one HP and OnDeath has no onGround gate.
         // Its current transform, not the bullet's surface contact, supplies
         // the collection position used by effects such as the grenade burst.
-        string receiptId = PvpHitReceiptId("bonus-box", impact.ProjectileId, boxId);
-        var collection = planner.ApplyBulletDamage(boxId, receiptId,
-            impact.OwnerId, damage);
+        string receiptId = PvpHitReceiptId(source, projectileId, boxId);
+        var collection = planner.ApplyConfirmedDamage(boxId, receiptId,
+            attackerId, damage);
         if (planner.BoxSnapshot(boxId).Health == box.Health)
             return;
         stateRevision++;
         if (collection != null)
             _ = ApplyCollectedPvpBonus(boxId);
+    }
+
+    internal void ApplyGrenadeBonusBoxes(string ownerId, ulong projectileId,
+        Vector3 position, GrenadeStage stage)
+    {
+        if (pvpBonusPlanner == null) return;
+        foreach (var box in pvpBonusPlanner.ActiveBoxesSnapshot())
+        {
+            // Explosion.MissileExplode uses the box's layer-eight collider in
+            // its full hurt-radius sphere, then ClosestPointOnBounds for the
+            // lethal radius. ResolveArmy follows those source calculations.
+            var effect = GrenadeExplosion.ResolveArmy(position, box.Position,
+                [PvpBonusShotHitbox.For(box)], stage);
+            if (effect == null || effect.RawDamage <= 0f) continue;
+            ApplyConfirmedPvpBonusDamage("grenade-box", projectileId,
+                box.BoxId, ownerId, effect.RawDamage);
+        }
     }
 
     // A real unit projectile supplies the owner, collision and unique shot ID.

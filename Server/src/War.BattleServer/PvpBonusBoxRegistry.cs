@@ -223,12 +223,12 @@ internal sealed class PvpBonusBoxRegistry
         }
     }
 
-    internal PvpBonusBoxCollectionCandidate? ApplyBulletDamage(string boxId,
+    internal PvpBonusBoxCollectionCandidate? ApplyConfirmedDamage(string boxId,
         string damageReceiptId, string attackerPlayerId, float damage)
     {
         ValidateReceipt(damageReceiptId);
         if (!float.IsFinite(damage) || damage <= 0 || damage > 10_000_000)
-            throw new InvalidDataException("Invalid host bonus box bullet damage.");
+            throw new InvalidDataException("Invalid host bonus box damage.");
         lock (gate)
         {
             var box = Find(boxId);

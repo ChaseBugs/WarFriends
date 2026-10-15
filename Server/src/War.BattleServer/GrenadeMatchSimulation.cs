@@ -24,10 +24,14 @@ internal sealed class GrenadeMatchSimulation
     private readonly Func<string,bool>? dynamicColliderEnabled;private readonly Func<int,bool>? indexedColliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;private ulong? lastTick;
     private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
+    private Func<IReadOnlyList<PvpBonusBoxSnapshot>>? bonusBoxes;
     private Func<IReadOnlyList<DynamicShotTarget>>? visibilityTargets;
     private GrenadeShotTargetCatalog? shotTargets;
     internal void ConfigureDynamicTargets(Func<string,IReadOnlyList<DynamicShotTarget>> provider)
         =>dynamicTargets=provider??throw new ArgumentNullException(nameof(provider));
+    internal void ConfigureBonusBoxTargets(
+        Func<IReadOnlyList<PvpBonusBoxSnapshot>> provider)
+        =>bonusBoxes=provider??throw new ArgumentNullException(nameof(provider));
     internal void ConfigureVisibilityTargets(Func<IReadOnlyList<DynamicShotTarget>> provider)
         =>visibilityTargets=provider??throw new ArgumentNullException(nameof(provider));
     internal void ConfigureShotTargets(GrenadeShotTargetCatalog catalog)
@@ -186,7 +190,7 @@ internal sealed class GrenadeMatchSimulation
             actor.Definition.Fraction == 1 ? 23 : 22));
         var world = new ShotCollisionWorld(map, players,
             dynamicColliderEnabled, indexedColliderEnabled,
-            runtimeLayer, dynamicTargets);
+            runtimeLayer, dynamicTargets, bonusBoxes);
         return world.Raycast(owner, origin, direction, range, mask);
     }
     internal bool HelicopterCanSee(HelicopterSightRay ray)

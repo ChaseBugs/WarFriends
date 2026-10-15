@@ -218,10 +218,10 @@ internal sealed class PvpBonusSpawnPlanner
             attackerPlayerId, collectionPosition);
     }
 
-    internal PvpBonusBoxCollectionCandidate? ApplyBulletDamage(string boxId,
+    internal PvpBonusBoxCollectionCandidate? ApplyConfirmedDamage(string boxId,
         string damageReceiptId, string attackerPlayerId, float damage)
     {
-        lock (gate) return boxes.ApplyBulletDamage(boxId, damageReceiptId,
+        lock (gate) return boxes.ApplyConfirmedDamage(boxId, damageReceiptId,
             attackerPlayerId, damage);
     }
 

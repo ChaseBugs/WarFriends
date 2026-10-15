@@ -1138,6 +1138,9 @@ public sealed partial class MatchEngine : IMatchRuntime
                     shields==null?null:shields.ColliderEnabled,barrels==null?null:barrels.ColliderEnabled,
                 barrels==null?null:barrels.RuntimeLayer);damageRoll=this.combatRandom;
                 grenadeCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
+                grenadeCombat.ConfigureBonusBoxTargets(() =>
+                    pvpBonusPlanner?.ActiveBoxesSnapshot() ??
+                    Array.Empty<PvpBonusBoxSnapshot>());
                 grenadeCombat.ConfigureVisibilityTargets(HelicopterVisibilityTargets);
                 grenadeCombat.ConfigureShotTargets(content.GrenadeShotTargets??
                     throw new InvalidDataException("Grenade shot-target source is absent."));
@@ -1795,6 +1798,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                     pair.Value.Binding.Effect==RecoveredGrenadeEffect.Molotov?"grenade-molotov":"grenade");
                 try{ApplyGrenadeExplosion(pair.Value,impact);}
                 catch(InvalidDataException){End("invalid-combat-authority","",false);break;}
+                catch(InvalidOperationException){End("pvp-bonus-backpressure","",false);break;}
                 if(Terminal)break;
             }
             if(Terminal)return;
@@ -2672,6 +2676,9 @@ public sealed partial class MatchEngine : IMatchRuntime
                 if(Terminal)return;
             }
         }
+        ApplyGrenadeBonusBoxes(impact.OwnerId, impact.ProjectileId,
+            impact.Position, projectile.Stage);
+        if (Terminal) return;
         ApplyPlayerGrenadeInfantryExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
         ApplyPlayerGrenadeDecoyExplosion(impact.OwnerId,impact.Position,projectile.Stage);

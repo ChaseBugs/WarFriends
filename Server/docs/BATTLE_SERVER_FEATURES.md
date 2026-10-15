@@ -91,14 +91,18 @@ candidates. An in-process SPAS match proves that an extra real pellet can
 collect the box and apply Kevlar while the main pellet misses. Two-peer
 shotgun UDP verifies source-triggered issuance and collection on both
 snapshots. Rendered Unity aiming remains unverified.
+Normal player grenades and KillStreak Manager grenade bursts now damage active
+boxes through the source destroyable overlap and one-HP registry. A focused
+host blast proves out-of-range exclusion, stolen-recipient effect delivery and
+receipt replay; a full thrown-grenade trajectory remains unverified.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
 selection history and source map areas. Replays do not redraw; invalid
 coordinates, weights or full box capacity do not consume FIFO overrides. The
 source's invalid endpoint index is retained for
 history but mapped to its actual prefab for prospective publication. The
-normal Backend allocation, shootable Client box, full physics, collection
-settlement and rewards remain open.
+normal Backend allocation, rendered Unity aiming, full physics, durable
+collection settlement and rewards remain open.
 Accepted spawn plans enter a bounded host box registry with falling/grounded/
 collected phases, one terminal damage receipt, owner-or-attacker recipient
 selection and one-use booby-trap interception on a stolen box. This is a

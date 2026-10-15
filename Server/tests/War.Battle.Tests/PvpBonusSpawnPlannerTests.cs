@@ -310,15 +310,15 @@ internal static class PvpBonusSpawnPlannerTests
         var boxImpact = boxFlight.Advance(2);
         Check(boxImpact?.Hit.BonusBoxId == landed.BoxId,
             "real bullet flight accepts the box as a distinct collision owner");
-        Check(motionRegistry.ApplyBulletDamage(landed.BoxId, Id(9201),
+        Check(motionRegistry.ApplyConfirmedDamage(landed.BoxId, Id(9201),
                   localId, 0.4f) == null &&
               motionRegistry.Snapshot(landed.BoxId).Health > 0.5f,
             "a sublethal bullet reduces the original one-HP box without collection");
         float boxDamagedHealth = motionRegistry.Snapshot(landed.BoxId).Health;
-        motionRegistry.ApplyBulletDamage(landed.BoxId, Id(9201), localId, 0.4f);
+        motionRegistry.ApplyConfirmedDamage(landed.BoxId, Id(9201), localId, 0.4f);
         Check(motionRegistry.Snapshot(landed.BoxId).Health == boxDamagedHealth,
             "replaying a sublethal bullet cannot subtract box health twice");
-        var lethalCollection = motionRegistry.ApplyBulletDamage(landed.BoxId,
+        var lethalCollection = motionRegistry.ApplyConfirmedDamage(landed.BoxId,
             Id(9202), localId, boxDamagedHealth);
         Check(lethalCollection?.RecipientPlayerId == localId &&
               motionRegistry.Snapshot(landed.BoxId).Phase == PvpBonusBoxPhase.Collected &&
@@ -724,6 +724,56 @@ internal static class PvpBonusSpawnPlannerTests
             match.Advance(60);
             return match;
         }
+
+        var grenadeBoxMatch = RunningBonusMatch(8697, () => 1f);
+        grenadeBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86971), localId, 6);
+        for (int index = 0; index < 3; index++)
+            grenadeBoxMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86972 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            grenadeBoxMatch.Advance(nextTick);
+        var grenadeBox = grenadeBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var grenadeCatalog = GrenadeCatalog.Load(Path.Combine(directory,
+            "grenade-content-manifest.json"));
+        var grenadeStage = grenadeCatalog.Stage("Google2u.Grenade_FRAG", 0);
+        var grenadeWeapon = grenadeCatalog.CreateManifest(
+            "Google2u.Grenade_FRAG", 0);
+        var grenadeManifest = clockManifest with
+        {
+            Mode = MatchManifest.GrenadeCombatMode,
+            Players = clockManifest.Players.Select(player => player with
+            {
+                Weapon = grenadeWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var grenadeTrace = new GrenadeMatchSimulation(grenadeManifest, map,
+            grenadeCatalog);
+        grenadeTrace.ConfigureBonusBoxTargets(
+            grenadeBoxMatch.BonusPlanner.ActiveBoxesSnapshot);
+        var grenadeBoxContact = grenadeTrace.Trace(localId,
+            grenadeBox.Position + Vector3.UnitY, -Vector3.UnitY, 2f,
+            1u << PvpBonusShotHitbox.RuntimeLayer);
+        Check(grenadeBoxContact?.BonusBoxId == grenadeBox.BoxId,
+            "live grenade trajectory can collide with the source box layer");
+        string grenadeAttacker = clockManifest.Players[1].PlayerId;
+        grenadeBoxMatch.ApplyGrenadeBonusBoxes(grenadeAttacker, 86976,
+            grenadeBox.Position + Vector3.UnitX * (grenadeStage.HurtRadius + 1f),
+            grenadeStage);
+        Check(grenadeBoxMatch.BonusPlanner.BoxSnapshot(grenadeBox.BoxId).Health == 1f,
+            "grenade blast outside the source hurt radius cannot damage a box");
+        grenadeBoxMatch.ApplyGrenadeBonusBoxes(grenadeAttacker, 86977,
+            grenadeBox.Position, grenadeStage);
+        Check(grenadeBoxMatch.BonusPlanner.BoxSnapshot(grenadeBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              grenadeBoxMatch.Snapshot().Players[1].KevlarHealth ==
+                  clockManifest.Players[1].Combat!.MaxHealth * 0.1f,
+            "host grenade blast destroys a box and grants its effect to the shooter");
+        ulong grenadeRevision = grenadeBoxMatch.Snapshot().StateRevision;
+        grenadeBoxMatch.ApplyGrenadeBonusBoxes(grenadeAttacker, 86977,
+            grenadeBox.Position, grenadeStage);
+        Check(grenadeBoxMatch.Snapshot().StateRevision == grenadeRevision,
+            "replaying the grenade explosion cannot collect the same box twice");
 
         var firedBoxMatch = RunningBonusMatch(8699, () => 1f);
         firedBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86990), localId, 6);
