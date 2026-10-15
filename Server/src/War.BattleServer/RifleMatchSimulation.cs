@@ -362,7 +362,7 @@ internal sealed class RifleMatchSimulation
     {
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
             p.Definition.Fraction==1?23:22)),
-            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets,bonusBoxTargets);
         return world.Raycast(owner,origin,direction,range,mask);
     }
     internal bool DroneCanSee(Vector3 position,Vector3 target)

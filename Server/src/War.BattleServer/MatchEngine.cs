@@ -2581,6 +2581,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                 if(Terminal)return;
             }
         }
+        ApplyBazookaBonusBoxes(impact.OwnerId, impact.ProjectileId, impact.Position,
+            projectile.Stage, projectile.Binding, projectile.HalfDamage);
         // Barrels may produce their own deaths. Snapshot after those chains so
         // this ledger records only the player's bazooka blast transitions.
         var armyBeforeBazookaBlast=activeArmyEntities.Values.ToArray();

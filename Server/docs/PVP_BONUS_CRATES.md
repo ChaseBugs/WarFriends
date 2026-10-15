@@ -3,8 +3,16 @@
 This follows the active recovered 1.4.0 Client. The reviewed catalog, weight
 calculation, host selection planning, automatic delayed issuance for signed
 bonus-mode matches, and a read-only Unity box presentation are implemented.
-Player-bullet collision and lethal collection are implemented. Other damage
-paths, full effect delivery and durable rewards remain incomplete.
+Player-bullet, grenade, and bazooka blast collection are implemented. Other
+damage paths, full effect delivery and durable rewards remain incomplete.
+
+The recovered `Missile.TryKill` sends RPG impacts through
+`Explosion.MissileExplode`. The host now includes active box colliders in
+bazooka flight tracing and applies the source dead/hurt radius falloff at the
+confirmed impact. A positive hit destroys the one-HP box through the same
+receipt-bound collection path as a player bullet. This has focused host tests
+for range, opposing-player collection and replay; a two-peer RPG flight
+fixture against a live box is still needed.
 
 The host can call `MatchEngine.IssueNextMaturedBonus()` after a delayed request
 matures. It derives mode, collected-Gold count, and the first two weapons'

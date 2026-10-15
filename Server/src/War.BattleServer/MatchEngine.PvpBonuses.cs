@@ -509,6 +509,22 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyBazookaBonusBoxes(string ownerId, ulong projectileId,
+        Vector3 position, BazookaStage stage, BazookaBinding binding, bool halfDamage)
+    {
+        if (pvpBonusPlanner == null) return;
+        foreach (var box in pvpBonusPlanner.ActiveBoxesSnapshot())
+        {
+            // Missile.TryKill sends the box's layer-eight collider through
+            // Explosion.MissileExplode, including the closest-bounds test.
+            var effect = BazookaExplosion.ResolveArmy(position, box.Position,
+                [PvpBonusShotHitbox.For(box)], stage, binding, halfDamage);
+            if (effect == null || effect.RawDamage <= 0f) continue;
+            ApplyConfirmedPvpBonusDamage("bazooka-box", projectileId,
+                box.BoxId, ownerId, effect.RawDamage);
+        }
+    }
+
     // A real unit projectile supplies the owner, collision and unique shot ID.
     // The source PlayerOnDamage callback credits the AIObject's owning player.
     internal PlayerDamageResult? ApplyConfirmedArmyProjectilePlayerDamage(

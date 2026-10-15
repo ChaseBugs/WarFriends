@@ -775,6 +775,36 @@ internal static class PvpBonusSpawnPlannerTests
         Check(grenadeBoxMatch.Snapshot().StateRevision == grenadeRevision,
             "replaying the grenade explosion cannot collect the same box twice");
 
+        var bazookaBoxMatch = RunningBonusMatch(8698, () => 1f);
+        bazookaBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86981), localId, 6);
+        for (int index = 0; index < 3; index++)
+            bazookaBoxMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86982 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            bazookaBoxMatch.Advance(nextTick);
+        var bazookaBox = bazookaBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var bazookaCatalog = BazookaCatalog.Load(Path.Combine(directory,
+            "bazooka-content-manifest.json"));
+        var bazookaStage = bazookaCatalog.Stage("Google2u.Bazooka_RPG7", 0);
+        var bazookaBinding = bazookaCatalog.Binding("Google2u.Bazooka_RPG7");
+        bazookaBoxMatch.ApplyBazookaBonusBoxes(grenadeAttacker, 86985,
+            bazookaBox.Position + Vector3.UnitX * (bazookaBinding.HurtRadius + 1f),
+            bazookaStage, bazookaBinding, false);
+        Check(bazookaBoxMatch.BonusPlanner.BoxSnapshot(bazookaBox.BoxId).Health == 1f,
+            "bazooka blast outside the source hurt radius cannot damage a box");
+        bazookaBoxMatch.ApplyBazookaBonusBoxes(grenadeAttacker, 86986,
+            bazookaBox.Position, bazookaStage, bazookaBinding, false);
+        Check(bazookaBoxMatch.BonusPlanner.BoxSnapshot(bazookaBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              bazookaBoxMatch.Snapshot().Players[1].KevlarHealth ==
+                  clockManifest.Players[1].Combat!.MaxHealth * 0.1f,
+            "host bazooka blast destroys a box and grants its effect to the shooter");
+        ulong bazookaRevision = bazookaBoxMatch.Snapshot().StateRevision;
+        bazookaBoxMatch.ApplyBazookaBonusBoxes(grenadeAttacker, 86986,
+            bazookaBox.Position, bazookaStage, bazookaBinding, false);
+        Check(bazookaBoxMatch.Snapshot().StateRevision == bazookaRevision,
+            "replaying the bazooka explosion cannot collect the same box twice");
+
         var grenadeContent = BattleCombatContent.Load(
             Path.Combine(directory, "combat-content-manifest.json"),
             grenadeManifestPath: Path.Combine(directory,
