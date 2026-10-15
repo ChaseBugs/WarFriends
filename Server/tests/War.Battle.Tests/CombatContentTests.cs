@@ -15635,6 +15635,45 @@ internal static class CombatContentTests
               normalSniperMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
             "ordinary Sniper projectile damages the opposing shield without bypassing it");
+        MatchEvent? destroyedSniperShield = null;
+        ulong sniperShieldEventCursor = 0;
+        var sniperShotIds = new HashSet<ulong>();
+        int sniperShieldDamageEvents = 0;
+        while (normalSniperTick < 1100 && !normalSniperMatch.Terminal &&
+               destroyedSniperShield == null)
+        {
+            if (normalSniperTick % 90 == 0)
+            {
+                normalSniperMatch.ArmyBatch(soldierOwner);
+                normalSniperMatch.ArmyBatch(helicopterOwner);
+            }
+            normalSniperMatch.Advance(++normalSniperTick);
+            var shieldEvents = normalSniperMatch.EventBatch(soldierOwner,
+                sniperShieldEventCursor);
+            foreach (var row in shieldEvents.Events)
+            {
+                sniperShieldEventCursor = row.EventId;
+                if (row.Kind == MatchEventKind.Shot &&
+                    row.ActorId == soldierOwner && row.Reason == "army")
+                    sniperShotIds.Add(row.ProjectileId);
+                if (row.Kind == MatchEventKind.ShieldDamaged &&
+                    row.TargetId == helicopterOwner)
+                    sniperShieldDamageEvents++;
+                if (row.Kind == MatchEventKind.ShieldDestroyed &&
+                    row.TargetId == helicopterOwner)
+                    destroyedSniperShield = row;
+            }
+        }
+        Check(destroyedSniperShield != null &&
+              sniperShieldDamageEvents >= 2 &&
+              sniperShotIds.Contains(destroyedSniperShield.ProjectileId) &&
+              destroyedSniperShield.ProjectileId != normalSniperProjectileId &&
+              normalSniperMatch.Snapshot().Shields.Single(shield =>
+                  shield.CoverIndex == opponentCoverIndex) is
+                  { Destroyed: true, Health: 0 } &&
+              normalSniperMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
+            "repeated ordinary Sniper impacts destroy the opposing shield without bypass damage");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
