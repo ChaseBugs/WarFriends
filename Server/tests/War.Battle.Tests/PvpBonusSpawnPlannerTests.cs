@@ -929,8 +929,28 @@ internal static class PvpBonusSpawnPlannerTests
         Check(cardGrenadierMatch.BonusPlanner.BoxSnapshot(cardGrenadierBox.BoxId)
                   .Health == 1f,
             "card Grenadier blast beyond its source radius leaves the box intact");
-        cardGrenadierMatch.ApplyCardGrenadierBonusBoxes(grenadeAttacker, 86936,
-            cardGrenadierBox.Position, cardGrenadierStats.Grenade!,
+        bool touchedGrenadierBox = false;
+        var fallingCardGrenade = new CardGrenadierFlight(86936, 1,
+            cardGrenadierStats.Grenadier,
+            cardGrenadierBox.Position + Vector3.UnitY,
+            -Vector3.UnitY, 153,
+            (from, direction, range) =>
+            {
+                var hit = cardGrenadierTrace.TraceForArmyExplosive(localId,
+                    from, direction, range);
+                touchedGrenadierBox |= hit?.BonusBoxId == cardGrenadierBox.BoxId;
+                return hit;
+            });
+        CardGrenadierExplosion? cardGrenadierExplosion = null;
+        for (ulong nextTick = 154; nextTick <= 400 &&
+             cardGrenadierExplosion == null; nextTick++)
+            cardGrenadierExplosion = fallingCardGrenade.Advance(nextTick);
+        Check(touchedGrenadierBox && fallingCardGrenade.FirstContactTick.HasValue &&
+              cardGrenadierExplosion != null,
+            "card Grenadier grenade touches the box and completes its source fuse");
+        cardGrenadierMatch.ApplyCardGrenadierBonusBoxes(grenadeAttacker,
+            cardGrenadierExplosion!.ProjectileId,
+            cardGrenadierExplosion.Position, cardGrenadierStats.Grenade!,
             cardGrenadierStats.Grenadier);
         Check(cardGrenadierMatch.BonusPlanner.BoxSnapshot(cardGrenadierBox.BoxId)
                   .Phase == PvpBonusBoxPhase.Collected &&
@@ -939,7 +959,7 @@ internal static class PvpBonusSpawnPlannerTests
             "host card Grenadier blast destroys a box for the opposing owner");
         ulong cardGrenadierRevision = cardGrenadierMatch.Snapshot().StateRevision;
         cardGrenadierMatch.ApplyCardGrenadierBonusBoxes(grenadeAttacker, 86936,
-            cardGrenadierBox.Position, cardGrenadierStats.Grenade!,
+            cardGrenadierExplosion.Position, cardGrenadierStats.Grenade!,
             cardGrenadierStats.Grenadier);
         Check(cardGrenadierMatch.Snapshot().StateRevision == cardGrenadierRevision,
             "replaying card Grenadier blast cannot collect a box again");

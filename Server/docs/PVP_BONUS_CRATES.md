@@ -16,6 +16,8 @@ The source Grenadier soldier inherits `GrenadeAmmo.MissileExplode`. Its
 physical grenade now sees the same active box collider, and the host applies
 the recovered card grenade's full object blast radius and damage. Focused
 checks cover contact, range, opposing-owner collection, and replay. A normal
+grenade flight also contacts the live box, completes its source fuse, and
+collects it with the resulting blast in the focused host simulation. A normal
 deployed Grenadier throw into a box remains to be verified.
 
 The recovered `Missile.TryKill` sends RPG impacts through
