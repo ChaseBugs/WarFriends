@@ -80,8 +80,10 @@ box mesh, team material and local aiming collider without attaching Photon or
 reward scripts. Player-bullet raycasts now select distinct box IDs, and the host
 requires cumulative lethal damage to the source one-HP box before collecting it.
 Projectile receipts prevent replay. Other dynamic collisions, rotation, bounce,
-PhysX timing and two-peer UDP shooting remain unverified. An in-process
-two-participant Fire command now verifies crate collection and Kevlar delivery.
+PhysX timing and rendered Unity aiming remain unverified. An in-process
+two-participant Fire command verifies crate collection and Kevlar delivery;
+two authenticated UDP peers now verify host-issued crates, shared identities,
+normal shooting and removal on both snapshots.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
 selection history and source map areas. Replays do not redraw; invalid

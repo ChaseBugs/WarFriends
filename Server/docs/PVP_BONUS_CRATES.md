@@ -50,7 +50,10 @@ only lethal cumulative damage confirms collection, including in the air.
 Projectile receipts prevent repeated damage or duplicate collection. An
 in-process two-participant match now verifies a normal Fire command, bullet
 travel, lethal collection, snapshot removal and the Kevlar effect. Two-peer
-UDP aiming, shotgun cones and explosive/army damage paths remain unverified.
+UDP Worker proof now covers two authenticated peers, source-triggered box
+issuance, shared box identities, shooting one box and its disappearance on
+both peers. Rendered Unity aiming, shotgun cones and explosive/army damage
+paths remain unverified.
 
 ## Source bindings
 
