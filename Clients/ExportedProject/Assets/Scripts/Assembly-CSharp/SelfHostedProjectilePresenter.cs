@@ -28,6 +28,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         public Weapon CardWeapon;
         public string CardId;
         public string TrailSprite;
+        public bool Shotgun;
     }
 
 	private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
@@ -76,6 +77,10 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 RegisterInfantryBullet("ID_UNIT-SNIPER", "ELITESNIPER", "shotSniper", entry.behaviour);
             if (entry.behaviour is SoldierBehaviourCommando)
                 RegisterInfantryBullet("ID_UNIT-COMMANDO", "", "shotReal", entry.behaviour);
+            if (entry.behaviour is SoldierBehaviourShotgunner)
+                RegisterInfantryBullet("ID_UNIT-SHOTGUNNER", "", "", entry.behaviour, true);
+            if (entry.behaviour is SoldierBehaviourWarper)
+                RegisterInfantryBullet("ID_UNIT-WARPER", "", "", entry.behaviour, true);
         }
         if (rocketWeapon == null)
             throw new System.InvalidOperationException("Recovered Rocket soldier is absent.");
@@ -86,7 +91,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	}
 
     private void RegisterInfantryBullet(string unitId, string cardId, string trailSprite,
-        LevelBehaviour behaviour)
+        LevelBehaviour behaviour, bool shotgun = false)
     {
         EnemyBasicInventory inventory = behaviour.GetComponent<EnemyBasicInventory>();
         if (inventory == null || inventory.weapons == null || inventory.weapons.Count == 0 ||
@@ -94,12 +99,20 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             (cardId.Length != 0 && (inventory.cardWeapons == null ||
                 inventory.cardWeapons.Count == 0 || inventory.cardWeapons[0].weapon == null)))
             throw new System.InvalidOperationException("Recovered infantry weapons are absent: " + unitId);
+        if (shotgun)
+        {
+            var source = inventory.weapons[0].weapon.bulletPrefab as BulletShotGun;
+            if (source == null || source.bulletPrefab == null ||
+                !(inventory.weapons[0].weapon.ammoSetup is ShotGunBulletSetup))
+                throw new System.InvalidOperationException("Recovered infantry pellet is absent: " + unitId);
+        }
         infantryBullets[unitId] = new InfantryBulletSource
         {
             NormalWeapon = inventory.weapons[0].weapon,
             CardWeapon = cardId.Length == 0 ? null : inventory.cardWeapons[0].weapon,
             CardId = cardId,
-            TrailSprite = trailSprite
+            TrailSprite = trailSprite,
+            Shotgun = shotgun
         };
     }
 
@@ -395,8 +408,10 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         visual.Trail.SetWidth(setup.GetTrailWidth());
         visual.Trail.trailLength = setup.GetTrailSize() * 2f;
         visual.Trail.disapearTime = setup.GetTrailSize() / speed;
-        if (Application.isPlaying)
-            visual.Trail.SetSprite(poison ? "shotPoison" : source.TrailSprite);
+        string sprite = source.Shotgun ? setup.realShotTexture :
+            poison ? "shotPoison" : source.TrailSprite;
+        if (Application.isPlaying && !string.IsNullOrEmpty(sprite))
+            visual.Trail.SetSprite(sprite);
     }
 
     private static void ConfigureAirTrail(Visual visual, string kind, int assaultGunIndex,
@@ -469,9 +484,18 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 (armyPoison && armyUnitId != "ID_UNIT-COMMANDO"))
                 throw new System.InvalidOperationException("Unknown infantry bullet source.");
             ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;
-            bullet = pool == null ? null : armyPoison ?
-                pool.bulletPoison == null ? null : pool.bulletPoison.gameObject :
-                pool.bulletSlow == null ? null : pool.bulletSlow.gameObject;
+            if (source.Shotgun)
+            {
+                var shotgun = source.NormalWeapon.bulletPrefab as BulletShotGun;
+                bullet = shotgun == null || shotgun.bulletPrefab == null ? null :
+                    shotgun.bulletPrefab.gameObject;
+            }
+            else if (pool == null)
+                bullet = null;
+            else if (armyPoison)
+                bullet = pool.bulletPoison == null ? null : pool.bulletPoison.gameObject;
+            else
+                bullet = pool.bulletSlow == null ? null : pool.bulletSlow.gameObject;
             if (bullet == null)
                 throw new System.InvalidOperationException("Recovered infantry bullet visual is absent.");
         }

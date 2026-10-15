@@ -58,13 +58,40 @@ public static class SelfHostedInfantryProjectileRenderAudit
                     ArmyPoison = poison == 1,
                     X = 5, Y = 2, Z = 3, VelocityZ = 5
                 });
+            snapshot.Projectiles.Add(new BattleProjectileState
+            {
+                ProjectileId = 81, OwnerPlayerId = player.playerProperties.playerID,
+                Kind = "army-bullet", ArmyUnitId = "ID_UNIT-SHOTGUNNER",
+                X = 6, Y = 2, Z = 3, VelocityZ = 10
+            });
+            snapshot.Projectiles.Add(new BattleProjectileState
+            {
+                ProjectileId = 82, OwnerPlayerId = player.playerProperties.playerID,
+                Kind = "army-bullet", ArmyUnitId = "ID_UNIT-WARPER",
+                X = 7, Y = 2, Z = 3, VelocityZ = 10
+            });
             presenter.Apply(snapshot);
             foreach (var projectile in snapshot.Projectiles)
             {
                 var visual = GameObject.Find("SelfHostedProjectile_" + projectile.ProjectileId);
                 Require(visual != null, "infantry shot has no visual");
-                var sourceBullet = projectile.ArmyPoison ?
-                    (BulletBase)pool.bulletPoison : pool.bulletSlow;
+                BulletBase sourceBullet;
+                if (projectile.ArmyUnitId == "ID_UNIT-SHOTGUNNER" ||
+                    projectile.ArmyUnitId == "ID_UNIT-WARPER")
+                {
+                    Type behaviourType = projectile.ArmyUnitId == "ID_UNIT-SHOTGUNNER" ?
+                        typeof(SoldierBehaviourShotgunner) : typeof(SoldierBehaviourWarper);
+                    var behaviour = behaviours.levelBehaviours.Single(entry =>
+                        entry.behaviour.GetType() == behaviourType).behaviour;
+                    var inventory = behaviour.GetComponent<EnemyBasicInventory>();
+                    var shotgun = inventory.weapons[0].weapon.bulletPrefab as BulletShotGun;
+                    Require(shotgun != null && shotgun.bulletPrefab != null,
+                        "source infantry pellet is absent");
+                    sourceBullet = shotgun.bulletPrefab;
+                }
+                else
+                    sourceBullet = projectile.ArmyPoison ?
+                        (BulletBase)pool.bulletPoison : pool.bulletSlow;
                 Require(visual.GetComponentsInChildren<MeshFilter>(true)
                     .Select(filter => filter.sharedMesh).SequenceEqual(sourceBullet
                         .GetComponentsInChildren<MeshFilter>(true)
@@ -88,7 +115,7 @@ public static class SelfHostedInfantryProjectileRenderAudit
             foreach (var projectile in snapshot.Projectiles)
                 Require(GameObject.Find("SelfHostedProjectile_" + projectile.ProjectileId) == null,
                     "completed infantry shot remains visible");
-            Debug.Log("UNITY_INFANTRY_PROJECTILE_RENDER_PASSED families=5 normal=True card=True poison=True sourceMesh=True trail=True impact=True removal=True");
+            Debug.Log("UNITY_INFANTRY_PROJECTILE_RENDER_PASSED families=7 normal=True card=True poison=True pellet=True sourceMesh=True trail=True impact=True removal=True");
             EditorApplication.Exit(0);
         }
         catch (Exception error)
