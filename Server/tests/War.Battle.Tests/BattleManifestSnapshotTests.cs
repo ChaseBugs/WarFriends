@@ -12,6 +12,8 @@ using War.Shared;
 
 internal static class BattleManifestSnapshotTests
 {
+    private const uint MaximumTerminalCrateCollections = 2048;
+
     public static async Task Run(string uri)
     {
         string database="war_manifest_snapshot_test_"+Guid.NewGuid().ToString("N");
@@ -81,6 +83,9 @@ internal static class BattleManifestSnapshotTests
                 new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=0;}),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCardsPlayed=1),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedEnemyHits=1_000_001),
+                new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCratesStolen=1),
+                new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCratesCollected=
+                    MaximumTerminalCrateCollections + 1),
                 new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
                     {OptionIndex=0,UnitId="ID_UNIT-ASSAULT",Deployments=1,PlannedSpawns=2,ConfirmedSpawns=1})),
                 new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
@@ -108,6 +113,9 @@ internal static class BattleManifestSnapshotTests
             if(await resultStore.Get(match,CancellationToken.None)!=null ||
                (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
                 throw new Exception("Rejected performance evidence changed durable result or pair authority.");
+            terminal.Players[0].ConfirmedCratesCollected = 2;
+            terminal.Players[0].ConfirmedCratesStolen = 1;
+            terminal.Players[1].ConfirmedCratesCollected = 1;
             terminal.PvpCurrencyQuotes.Add(new BattlePvpCurrencyQuote {
                 BoxId = new string('d', 32), RecipientPlayerId = players[1],
                 Currency = "gold", BaseDraw = 4, Amount = 4,
@@ -173,7 +181,8 @@ internal static class BattleManifestSnapshotTests
             var crateStats = await resultStore.GetCrateStats(match, CancellationToken.None);
             if (crateStats == null || crateStats.Count != 2 ||
                 crateStats[0].PlayerId != players[0] || crateStats[1].PlayerId != players[1] ||
-                crateStats.Any(player => player.CratesCollected != 0 || player.CratesStolen != 0))
+                crateStats[0] is not { CratesCollected: 2, CratesStolen: 1 } ||
+                crateStats[1] is not { CratesCollected: 1, CratesStolen: 0 })
             {
                 throw new Exception("Durable result read lost validated crate statistics.");
             }
