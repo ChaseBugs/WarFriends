@@ -16,6 +16,7 @@ internal sealed class ArmyProjectileFlight
     private readonly Vector3 origin;
     private readonly float aimDistance;
     private readonly float slowCollisionMargin;
+    private readonly ShotCollision? preflightStaticHit;
     private readonly ulong startTick;
     private readonly Func<Vector3,Vector3,float,ShotCollision?> trace;
     private ulong tick;
@@ -39,7 +40,27 @@ internal sealed class ArmyProjectileFlight
         // hitting the surface behind the projectile's rendered start point.
         direction=Vector3.Normalize(target-origin);
         this.origin=origin;
-        aimDistance=Vector3.Distance(origin,target);
+        float requestedDistance=Vector3.Distance(origin,target);
+        // BulletSlow.Fire limits a shot to 50 units before its preflight ray.
+        float checkedDistance=MathF.Min(requestedDistance,50f);
+        if(extraCollisionDistance>0f && checkedDistance>.2f)
+        {
+            Vector3 rayOrigin=origin+direction*.1f;
+            ShotCollision? launchHit=trace(rayOrigin,direction,checkedDistance-.2f);
+            if(launchHit!=null)
+            {
+                if(!float.IsFinite(launchHit.Distance) || launchHit.Distance<0f ||
+                   launchHit.Distance>checkedDistance-.2f+.002f ||
+                   !PlayerHitbox.Finite(launchHit.Position) ||
+                   Vector3.Distance(rayOrigin+direction*launchHit.Distance,
+                       launchHit.Position)>.02f)
+                    throw new InvalidDataException("Invalid slow bullet preflight collision.");
+                checkedDistance=Vector3.Distance(origin,launchHit.Position);
+                if(launchHit.Static)
+                    preflightStaticHit=launchHit;
+            }
+        }
+        aimDistance=checkedDistance;
         slowCollisionMargin=extraCollisionDistance;
         startTick=tick;
         this.position=origin+direction*.1f;
@@ -68,7 +89,11 @@ internal sealed class ArmyProjectileFlight
             throw new InvalidDataException("Army projectile ticks must be contiguous.");
         tick=nextTick;
         if(slowCollisionMargin>0)
+        {
+            if(preflightStaticHit!=null)
+                return AdvancePreflightStaticHit();
             return AdvanceSlowBullet();
+        }
         var delta=target-position;
         float distance=delta.Length();
         if(!float.IsFinite(distance)){finished=true;throw new InvalidDataException("Invalid army projectile distance.");}
@@ -86,6 +111,20 @@ internal sealed class ArmyProjectileFlight
         position+=direction*step;
         if(distance<=step+.0001f){position=target;finished=true;}
         return null;
+    }
+
+    private ArmyProjectileImpact? AdvancePreflightStaticHit()
+    {
+        // A launch ray that meets static scenery makes AnimateShot skip later
+        // collision checks. Unity reports the cached hit when that tween ends.
+        float duration=aimDistance/speed;
+        float elapsed=(float)(tick-startTick)/MatchManifest.TickRate;
+        float travelled=aimDistance*MathF.Min(1f,elapsed/duration);
+        position=origin+direction*travelled;
+        if(elapsed<duration)return null;
+        position=preflightStaticHit!.Position;
+        finished=true;
+        return new(id,entityKey,preflightStaticHit,tick);
     }
 
     private ArmyProjectileImpact? AdvanceSlowBullet()

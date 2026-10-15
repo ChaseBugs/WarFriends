@@ -11631,6 +11631,40 @@ internal static class CombatContentTests
             Check(lateSlowFlight.Advance(19)?.Collision.PlayerId==
                   shotIntent.TargetPlayerId && lateSlowFlight.Finished,
                 "the last BulletSlow tween can still hit a player beyond the aim");
+            int staticTraceCalls=0;
+            var staticPreflight=new ArmyProjectileFlight(17,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (from,direction,range) =>
+                {
+                    staticTraceCalls++;
+                    return new ShotCollision(1.9f,new Vector3(2f,0,0),
+                        "scene/wall",null,0f,Static:true);
+                },extraCollisionDistance:1f);
+            Check(staticTraceCalls==1 && staticPreflight.Advance(11)==null &&
+                  staticPreflight.Advance(12)?.Collision.Static==true &&
+                  staticPreflight.Finished && staticTraceCalls==1,
+                "a static launch-ray hit is cached until its source tween ends");
+            int movingTraceCalls=0;
+            var movingPreflight=new ArmyProjectileFlight(18,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (from,direction,range) =>
+                {
+                    movingTraceCalls++;
+                    return movingTraceCalls==1
+                        ? new ShotCollision(1.9f,new Vector3(2f,0,0),
+                            "player/body",shotIntent.TargetPlayerId,.5f)
+                        : null;
+                },extraCollisionDistance:1f);
+            Check(movingTraceCalls==1 && movingPreflight.Advance(11)==null &&
+                  movingPreflight.Advance(12)==null &&
+                  Math.Abs(movingPreflight.Position.X-1f)<.001f &&
+                  !movingPreflight.Finished,
+                "a moving launch-ray hit shortens the aim but still needs a live collision");
+            Reject(() => new ArmyProjectileFlight(19,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (_,_,_) => new ShotCollision(1.9f,new Vector3(0,2,0),
+                    "scene/wall",null,0f,Static:true),
+                extraCollisionDistance:1f));
             var ordinaryFlight = new ArmyProjectileFlight(12, 77,
                 Vector3.Zero, Vector3.UnitX, 30, 10,
                 (_, _, _) => null);
