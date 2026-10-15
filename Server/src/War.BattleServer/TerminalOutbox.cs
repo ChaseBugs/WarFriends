@@ -8,6 +8,7 @@ namespace War.BattleServer;
 /// <summary>Crash-readable local spool for unscored terminal evidence.</summary>
 public sealed class TerminalOutbox
 {
+    private const uint MaximumCrateCollections = 2048;
     private static readonly byte[] Magic="WFR1"u8.ToArray();
     private static readonly TimeSpan AcknowledgementRetention=TimeSpan.FromDays(30);
     private readonly string directory;
@@ -273,6 +274,8 @@ public sealed class TerminalOutbox
            snapshot.Players.Any(p=>p.ConfirmedArmyLosses>p.ConfirmedArmySpawns ||
                p.ConfirmedPlayerHits>p.ConfirmedEnemyHits ||
                p.ConfirmedPlayerBulletHits>p.ConfirmedEnemyHits ||
+               p.ConfirmedCratesCollected > MaximumCrateCollections ||
+               p.ConfirmedCratesStolen > p.ConfirmedCratesCollected ||
                p.ConfirmedCardsPlayed>4096 ||
                p.ConfirmedEnemyHits>1_000_000) ||
            snapshot.Players.Any(p=>!Guid.TryParseExact(p.PlayerId,"N",out _)) ||

@@ -303,6 +303,9 @@ message BattlePlayerState {
   bool movement_frozen = 46;
   float kevlar_health = 47;
   float kevlar_max_health = 48;
+  // Private terminal-only counters derived from host collection receipts.
+  uint32 confirmed_crates_collected = 49;
+  uint32 confirmed_crates_stolen = 50;
 }
 message BattleArmyUsage {
   int32 option_index = 1; string unit_id = 2; uint32 deployments = 3;

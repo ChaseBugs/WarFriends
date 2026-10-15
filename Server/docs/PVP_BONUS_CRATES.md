@@ -524,8 +524,14 @@ The host now derives each player's collected and stolen counts from retained
 terminal box receipts. A collection increments the recipient's collected count;
 it increments stolen only when the recipient's fraction differs from the box
 owner's fraction. Identical damage replay leaves both counts unchanged. These
-validated counters are available to MatchEngine, but terminal MatchStats and
-Backend settlement do not yet consume them.
+validated counters are available to MatchEngine.
+
+Private terminal evidence now projects these counters per player as
+`confirmed_crates_collected` and `confirmed_crates_stolen`. The terminal
+validator bounds each count and rejects stolen counts above collected counts.
+`BattleCrateStatsProjection` maps a validated ended-match payload to the
+recovered collected/stolen MatchStats fields. Backend settlement does not yet
+consume that projection, and ordinary UDP snapshots leave both counters zero.
 
 While falling, OnCollisionEnter may destroy a `destroyableByBonusBox` object
 with weaponless Basic damage, null owner and immortality ignored. A static

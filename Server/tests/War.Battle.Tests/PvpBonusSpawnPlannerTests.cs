@@ -664,6 +664,17 @@ internal static class PvpBonusSpawnPlannerTests
               quoteTerminal.PvpCurrencyQuotes.Count == 2 &&
               quoteTerminal.PvpCurrencyQuotes.All(quote => quote.RecipientLevelIndex == 8),
             "currency quotes appear only in private terminal evidence with signed recipient ranks");
+        Check(clockEngine.Snapshot().Players.All(player =>
+                  player.ConfirmedCratesCollected == 0 && player.ConfirmedCratesStolen == 0) &&
+              quoteTerminal.Players.Single(player => player.PlayerId == localId)
+                  .ConfirmedCratesCollected == 2 &&
+              quoteTerminal.Players.Single(player => player.PlayerId == localId)
+                  .ConfirmedCratesStolen == 0 &&
+              quoteTerminal.Players.Single(player => player.PlayerId != localId)
+                  .ConfirmedCratesCollected == 1 &&
+              quoteTerminal.Players.Single(player => player.PlayerId != localId)
+                  .ConfirmedCratesStolen == 1,
+            "private terminal counters conserve accepted owner and stolen crate collections");
         byte[] QuotePayload(MatchSnapshot snapshot) =>
             Google.Protobuf.MessageExtensions.ToByteArray(snapshot);
         MatchSnapshot ValidatedQuotePayload(MatchSnapshot snapshot)
@@ -674,6 +685,14 @@ internal static class PvpBonusSpawnPlannerTests
         }
         Check(ValidatedQuotePayload(quoteTerminal).PvpCurrencyQuotes.Count == 2,
             "terminal validator accepts both host-collected currency receipts");
+        byte[] cratePayload = QuotePayload(quoteTerminal);
+        var crateStats = BattleCrateStatsProjection.FromPayload(cratePayload,
+            quoteTerminal.MatchId, War.Shared.TerminalResultDigest.Compute(cratePayload));
+        Check(crateStats.Single(player => player.PlayerId == localId) ==
+                  new BattleCrateMatchStats(localId, 2, 0) &&
+              crateStats.Single(player => player.PlayerId != localId) ==
+                  new BattleCrateMatchStats(manifest.Players[1].PlayerId, 1, 1),
+            "Backend crate projection reads only validated host terminal counters");
         PvpBonusCurrencyManifestValidator.Validate(quoteTerminal, clockManifest);
         checks++;
         var changedRankTerminal = quoteTerminal.Clone();
@@ -713,6 +732,8 @@ internal static class PvpBonusSpawnPlannerTests
         RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes[0].RecipientLevelIndex = 43);
         RejectChangedQuote(snapshot => snapshot.PvpCurrencyQuotes.Add(
             snapshot.PvpCurrencyQuotes[0].Clone()));
+        RejectChangedQuote(snapshot => snapshot.Players[1].ConfirmedCratesStolen = 2);
+        RejectChangedQuote(snapshot => snapshot.Players[0].ConfirmedCratesCollected = 2049);
         MatchEngine RunningBonusMatch(int matchNumber, Func<float> randomDraw)
         {
             var match = new MatchEngine(clockManifest with {MatchId = Id(matchNumber)},

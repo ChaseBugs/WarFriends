@@ -3181,6 +3181,12 @@ public sealed partial class MatchEngine : IMatchRuntime
                 return row;
             }));
         if(players.Any(p=>p.Reconnecting))snapshot.PauseHostTick=hostTick;
+        var crateStatsByPlayer = players.ToDictionary(
+            player => player.Definition.PlayerId,
+            player => includeTerminalEvidence && pvpBonusPlanner != null
+                ? pvpBonusPlanner.CollectionStats(player.Definition.PlayerId)
+                : new PvpBonusCollectionStats(0, 0),
+            StringComparer.Ordinal);
         snapshot.Players.AddRange(players.Select(p => new BattlePlayerState
         {
             PlayerId = p.Definition.PlayerId, Admitted = p.Admitted, Ready = p.Ready,
@@ -3194,6 +3200,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             ConfirmedPlayerHits = p.ConfirmedPlayerHits, ConfirmedPlayerKills = p.ConfirmedPlayerKills,
             ConfirmedEnemyHits = p.ConfirmedEnemyHits,
             ConfirmedPlayerBulletHits=includeTerminalEvidence ? p.ConfirmedPlayerBulletHits : 0,
+            ConfirmedCratesCollected = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Collected),
+            ConfirmedCratesStolen = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Stolen),
             Reconnecting=p.Reconnecting,ReconnectAttempts=p.ReconnectAttempts,
             ReconnectDeadlineHostTick=p.ReconnectDeadlineHostTick,
             ConfirmedArmySpawns=p.ConfirmedArmySpawns,ConfirmedArmyLosses=p.ConfirmedArmyLosses,
