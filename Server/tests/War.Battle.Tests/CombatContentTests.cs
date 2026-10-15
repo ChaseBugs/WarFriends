@@ -11752,6 +11752,15 @@ internal static class CombatContentTests
                   fastPlayer==shotIntent.TargetPlayerId &&
                   Math.Abs(fastMovingFlight.Position.X-(2f+2f/30f+.1f))<.001f,
                 "fast shotgun pellet predicts a moving destroyable from its launch hit");
+            var lateralFastFlight=new ArmyProjectileFlight(27,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (_,_,_) => new ShotCollision(1.9f,new Vector3(2f,0,0),
+                    "player/body",shotIntent.TargetPlayerId,.5f,
+                    SourceDestroyable:true),
+                fastBullet:true,targetVelocity:_=>Vector3.UnitZ);
+            Check(lateralFastFlight.Velocity.Z>0f &&
+                  Math.Abs(lateralFastFlight.Velocity.Length()-30f)<.001f,
+                "fast pellet snapshot velocity follows the predicted lateral tween");
             var fastMissFlight=new ArmyProjectileFlight(24,77,
                 Vector3.Zero,Vector3.UnitX*4f,30,10,
                 (_,_,_)=>null,fastBullet:true,targetVelocity:_=>Vector3.Zero);

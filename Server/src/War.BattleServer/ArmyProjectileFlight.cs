@@ -21,6 +21,7 @@ internal sealed class ArmyProjectileFlight
     private readonly bool shotgunFakePellet;
     private readonly ShotCollision? fastImpact;
     private readonly float fastDuration;
+    private readonly Vector3 fastVelocity;
     private readonly ulong startTick;
     private readonly Func<Vector3,Vector3,float,ShotCollision?> trace;
     private ulong tick;
@@ -100,6 +101,7 @@ internal sealed class ArmyProjectileFlight
             fastImpact=launchHit;
             this.target=visualEnd;
             fastDuration=Vector3.Distance(origin,visualEnd)/speed;
+            fastVelocity=(visualEnd-origin)/fastDuration;
             position=origin;
             return;
         }
@@ -137,7 +139,7 @@ internal sealed class ArmyProjectileFlight
 
     internal Vector3 Position=>position;
     internal float Speed=>speed;
-    internal Vector3 Velocity=>direction*speed;
+    internal Vector3 Velocity=>fastBullet?fastVelocity:direction*speed;
     internal bool Finished=>finished;
 
     internal ArmyProjectileImpact? Advance(ulong nextTick)
