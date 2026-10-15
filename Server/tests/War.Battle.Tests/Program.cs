@@ -612,6 +612,25 @@ if(args is ["--rifle-udp-only"])
     return;
 }
 
+if (args is ["--rifle-engine-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(
+        root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+
+    if (root == null)
+    {
+        throw new FileNotFoundException("Recovered battle content artifact not found.");
+    }
+
+    int assertions = LiveRifleTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {assertions} focused live rifle engine assertions");
+    return;
+}
+
 if(args is ["--army-pages-only"])
 {
     int focused = ArmyEntityPageTests.Run();

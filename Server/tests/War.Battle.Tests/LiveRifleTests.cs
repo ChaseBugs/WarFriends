@@ -417,6 +417,17 @@ internal static class LiveRifleTests
         MatchCommand Ready()=>new() {CommandId=1,Ready=new() {ManifestHash=engine.ManifestHash}};
         engine.Command(one,Ready());engine.Command(two,Ready());engine.Advance(60);
         engine.Advance(60); // Repeated host observation does not double-step animation.
+        try
+        {
+            engine.Advance(62);
+            throw new Exception("Live rifle accepted a skipped simulation tick.");
+        }
+        catch (InvalidOperationException)
+        {
+            count++;
+        }
+        Check(engine.Snapshot().ServerTick == 60,
+            "rejected live-rifle gap leaves the simulation clock unchanged");
         MatchCommand Fire(ulong id,Vector3 target)=>new() {CommandId=id,Fire=new() {TargetX=target.X,TargetY=target.Y,TargetZ=target.Z}};
         var command=Fire(2,engine.CombatPose(two).Collision.Parts[1].Center);
         var scheduled=engine.Command(one,command);

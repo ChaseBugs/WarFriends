@@ -1229,9 +1229,31 @@ public sealed partial class MatchEngine : IMatchRuntime
             cardEffects.Snapshot().Any(effect =>
                 effect.Definition.CardId == "CardBelovedEnemy") && elapsed > 1)
             throw new InvalidOperationException("Slowed movement requires every simulation tick.");
+        bool isReconnecting = phase == BattlePhase.Running &&
+            players.Any(player => player.Reconnecting);
+        ulong simulationTick = checked(tick + elapsed);
+        if (!Terminal && !isReconnecting && simulationTick > tick + 1)
+        {
+            if (projectiles.Count != 0 || shotgunFakeProjectiles.Count != 0 ||
+                bazookaProjectiles.Count != 0 || scheduledBazookas.Count != 0 ||
+                grenadeProjectiles.Count != 0 || rocketFlights.Count != 0 ||
+                grenadierFlights.Count != 0)
+            {
+                throw new InvalidOperationException(
+                    "Active projectiles require every simulation tick.");
+            }
+
+            if ((rifleCombat != null || grenadeCombat != null) &&
+                phase == BattlePhase.Running)
+            {
+                throw new InvalidOperationException(
+                    "Live combat playback requires every simulation tick.");
+            }
+        }
+
         hostTick=nextTick;
         if (Terminal) return; // Preserve the exact terminal tick and result projection.
-        if (phase == BattlePhase.Running && players.Any(player => player.Reconnecting))
+        if (isReconnecting)
         {
             if (elapsed > 0) stateRevision++;
             var expiredPlayers = players.Where(player => player.Reconnecting &&
@@ -1254,9 +1276,6 @@ public sealed partial class MatchEngine : IMatchRuntime
             }
             return;
         }
-        ulong simulationTick=checked(tick+elapsed);
-        if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0||rocketFlights.Count!=0||grenadierFlights.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
-        if ((rifleCombat!=null||grenadeCombat!=null) && phase==BattlePhase.Running && simulationTick>tick+1) throw new InvalidOperationException("Live combat playback requires every simulation tick.");
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;

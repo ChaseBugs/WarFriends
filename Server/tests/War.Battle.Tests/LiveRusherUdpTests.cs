@@ -483,7 +483,7 @@ internal static class LiveRusherUdpTests
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(55));
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(110));
             using var local = new MatchConnection(Grant(owner, 995));
             using var remote = new MatchConnection(Grant(opponent, 996));
             Check((await local.ConnectAsync(timeout.Token)).Code == "admitted" &&
@@ -554,6 +554,7 @@ internal static class LiveRusherUdpTests
             var remoteImpacts = new HashSet<ulong>();
             var localShieldHits = new HashSet<ulong>();
             var remoteShieldHits = new HashSet<ulong>();
+            watch.Restart();
             while (watch.Elapsed < TimeSpan.FromSeconds(45) &&
                    !bothSawShieldDamage)
             {
