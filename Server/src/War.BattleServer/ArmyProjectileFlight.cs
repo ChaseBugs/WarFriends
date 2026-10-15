@@ -19,19 +19,28 @@ internal sealed class ArmyProjectileFlight
     private bool finished;
 
     internal ArmyProjectileFlight(ulong id,ulong entityKey,Vector3 origin,Vector3 target,
-        float speed,ulong tick,Func<Vector3,Vector3,float,ShotCollision?> trace)
+        float speed,ulong tick,Func<Vector3,Vector3,float,ShotCollision?> trace,
+        float extraCollisionDistance=0)
     {
         if(id==0 || entityKey==0 || !PlayerHitbox.Finite(origin) ||
            !PlayerHitbox.Finite(target) || Vector3.DistanceSquared(origin,target)<1e-8f ||
            !float.IsFinite(speed) || speed is <.01f or >10000 ||
-           tick>10_000_000 || trace==null)
+           tick>10_000_000 || trace==null ||
+           !float.IsFinite(extraCollisionDistance) ||
+           extraCollisionDistance is <0 or >5)
             throw new InvalidDataException("Invalid army projectile launch.");
         this.id=id;this.entityKey=entityKey;
         // BulletSlow.Fire starts its collision ray 0.1 units in front of the
         // visual muzzle. This keeps a muzzle beside scenery from immediately
         // hitting the surface behind the projectile's rendered start point.
         direction=Vector3.Normalize(target-origin);
-        this.position=origin+direction*.1f;this.target=target;
+        this.position=origin+direction*.1f;
+        // BulletSlow with collision checking travels beyond its aim point.
+        // The caller supplies the validated runtime distanceToCheck margin.
+        Vector3 collisionEnd=target+direction*extraCollisionDistance;
+        if(!PlayerHitbox.Finite(collisionEnd))
+            throw new InvalidDataException("Army projectile collision path left scene bounds.");
+        this.target=collisionEnd;
         this.speed=speed;this.tick=tick;this.trace=trace;
     }
 

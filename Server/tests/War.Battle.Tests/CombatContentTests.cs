@@ -9074,8 +9074,9 @@ internal static class CombatContentTests
                   "Assets/AnimationClip/player_look_right3.anim"&&
               content.ArmyWeapons.CadenceTicks("ID_UNIT-SNIPER")==11&&
                content.ArmyWeapons.SniperProjectileSpeed==10f &&
+               content.ArmyWeapons.SniperCollisionCheckDistance==1f &&
                content.ArmyWeapons.SniperPredictionSpeed==10f,
-               "card Sniper uses the rifle ammo speed after BulletSlow setup");
+               "card Sniper uses the rifle ammo speed and collision margin after BulletSlow setup");
         var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
         Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsMinigunner"&&
               minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,
@@ -11569,6 +11570,34 @@ internal static class CombatContentTests
             var unadvancedFlight=new ArmyProjectileFlight(10,77,new(0,0,0),new(2,0,0),30,10,
                 (_,_,_)=>null);
             Reject(()=>unadvancedFlight.Advance(13));
+            var slowSniperFlight = new ArmyProjectileFlight(11, 77,
+                Vector3.Zero, Vector3.UnitX, 30, 10,
+                (from, direction, range) =>
+                {
+                    float distanceToPlayer = 1.8f - from.X;
+                    return distanceToPlayer >= 0 && distanceToPlayer <= range
+                        ? new ShotCollision(distanceToPlayer,
+                            from + direction * distanceToPlayer,
+                            "player/body", shotIntent.TargetPlayerId, .5f)
+                        : null;
+                }, extraCollisionDistance: 1f);
+            Check(slowSniperFlight.Advance(11) == null &&
+                  !slowSniperFlight.Finished &&
+                  slowSniperFlight.Advance(12)?.Collision.PlayerId ==
+                      shotIntent.TargetPlayerId &&
+                  slowSniperFlight.Finished,
+                "slow Sniper collision checking reaches a player behind its aim point");
+            var ordinaryFlight = new ArmyProjectileFlight(12, 77,
+                Vector3.Zero, Vector3.UnitX, 30, 10,
+                (_, _, _) => null);
+            Check(ordinaryFlight.Advance(11) == null && ordinaryFlight.Finished,
+                "army flights without the source slow-bullet margin stop at their aim point");
+            Reject(() => new ArmyProjectileFlight(13, 77,
+                Vector3.Zero, Vector3.UnitX, 30, 10,
+                (_, _, _) => null, extraCollisionDistance: float.NaN));
+            Reject(() => new ArmyProjectileFlight(14, 77,
+                new Vector3(9998, 0, 0), new Vector3(10000, 0, 0),
+                30, 10, (_, _, _) => null, extraCollisionDistance: 1f));
             var invalidShot=JsonNode.Parse(File.ReadAllText(armyPath))!;
             invalidShot["families"]![6]!["baseShot"]!["probabilityOfRealShot"]=1.5;
             File.WriteAllText(armyTemp,invalidShot.ToJsonString());
