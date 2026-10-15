@@ -11794,7 +11794,7 @@ internal static class CombatContentTests
         };
         MatchEngine ReadyCardMatch(string matchId, string sourceCardId = "HEAVYDRONE",
             RecoveredBattleMap? sourceMap = null,
-            string? opponentCardId = null)
+            string? opponentCardId = null, bool withBonusBox = false)
         {
             RecoveredBattleMap battleMap = sourceMap ?? park;
             string otherCard = opponentCardId ?? sourceCardId;
@@ -11803,12 +11803,19 @@ internal static class CombatContentTests
                 MatchId = matchId,
                 MapId = Path.GetFileNameWithoutExtension(battleMap.Source),
                 MapRevision = battleMap.SourceHash,
+                PvpBonusMode = withBonusBox ?
+                    MatchManifest.OrdinaryPvpBonusMode : null,
+                PvpGoldBonusesAtAdmission = withBonusBox ? 0 : null,
                 Players = decoyManifest.Players.Select(player => player with
                 {
                     StartCover = battleMap.Covers.First(cover =>
                         cover.Main && cover.Fraction == player.Fraction).SourceIndex
                 }).ToArray()
-            }, content: content, armyChoice: _ => 0);
+            }, content: content, armyChoice: _ => 0,
+                combatRandom: withBonusBox ? () => 0f : null,
+                bonusAreaChoice: withBonusBox ? _ => 1 : null,
+                bonusPositionDraw: withBonusBox ?
+                    () => new Vector3(1f, .5f, 0f) : null);
             match.ConfigureBattleAllocations([
                 new(decoyPlayer, [sourceCardId], [], [0], [133], [-1]),
                 new(decoyOpponent, [otherCard], [], [0], [-1], [-1])
@@ -12465,6 +12472,73 @@ internal static class CombatContentTests
               !snowGrenadierMatch.CardGrenadierWalking(
                   snowGrenadier.EntityKey),
             "Snow Grenadier waits for its five-second source point retry");
+        var rocketBoxMatch = ReadyCardMatch("host-card-rocket-box", "BIGROCKET",
+            withBonusBox: true);
+        rocketBoxMatch.BonusPlanner.EnqueueConfirmedBonus(
+            "c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4", decoyPlayer, 6);
+        for (int hit = 0; hit < 3; hit++)
+            rocketBoxMatch.BonusProgress.RecordConfirmedSkillShot(decoyPlayer,
+                new string((char)('1' + hit), 32), 0x1210, 1f);
+        for (ulong simulationTick = 61; simulationTick <= 153; simulationTick++)
+            rocketBoxMatch.Advance(simulationTick);
+        var rocketBox = rocketBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        Check(rocketBox.Plan.SourceIndex == 6 &&
+              rocketBox.Plan.AreaColliderFileId ==
+                  content.PvpBonusSpawnAreas.ForMap(park)[1].ColliderFileId,
+            "host issues the queued Kevlar box in the selected source area");
+        Check(rocketBoxMatch.TryScheduleCardUnit(
+                  new string('5', 32), decoyPlayer,
+                  "BIGROCKET"),
+            $"host deploys a Rocket soldier after the box appears: " +
+            $"phase={rocketBoxMatch.Snapshot().Phase}, " +
+            $"cards={rocketBoxMatch.Snapshot().CardActivations}, " +
+            $"selected={rocketBoxMatch.Snapshot().Players[0].CardsSelected}, " +
+            $"events={rocketBoxMatch.EventBatch(decoyPlayer, 0).LatestEventId}, " +
+            $"box={rocketBox.Phase}");
+        bool rocketBoxCollected = false;
+        int realRocketImpacts = 0;
+        float nearestRocketDistance = float.PositiveInfinity;
+        float nearestRocketFlightDistance = float.PositiveInfinity;
+        Vector3 nearestRocketFlightPosition = Vector3.Zero;
+        for (ulong simulationTick = 154; simulationTick < 1800 &&
+             !rocketBoxMatch.Terminal && !rocketBoxCollected; simulationTick++)
+        {
+            rocketBoxMatch.Advance(simulationTick);
+            foreach (var projectile in rocketBoxMatch.Snapshot().Projectiles
+                         .Where(row => row.Kind == "card-rocket"))
+            {
+                Vector3 position = new(projectile.X, projectile.Y, projectile.Z);
+                float distance = Vector3.Distance(position, rocketBox.Position);
+                if (distance < nearestRocketFlightDistance)
+                {
+                    nearestRocketFlightDistance = distance;
+                    nearestRocketFlightPosition = position;
+                }
+            }
+            foreach (var impact in rocketBoxMatch.CardRocketImpacts()
+                         .Where(impact => !impact.IsFake))
+            {
+                realRocketImpacts++;
+                nearestRocketDistance = Math.Min(nearestRocketDistance,
+                    Vector3.Distance(impact.Position, rocketBox.Position));
+            }
+            rocketBoxCollected = rocketBoxMatch.BonusPlanner
+                .BoxSnapshot(rocketBox.BoxId).Phase == PvpBonusBoxPhase.Collected;
+            if (simulationTick % 60 == 0)
+            {
+                rocketBoxMatch.EventBatch(decoyPlayer, 0);
+                rocketBoxMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        Check(rocketBoxCollected && realRocketImpacts > 0 &&
+              rocketBoxMatch.Snapshot().Players[0].KevlarHealth > 0f,
+            $"deployed Rocket soldier collects a live box: " +
+            $"box={rocketBox.Position}, realImpacts={realRocketImpacts}, " +
+            $"nearestImpact={nearestRocketDistance}, " +
+            $"nearestFlight={nearestRocketFlightDistance}, " +
+            $"flightPosition={nearestRocketFlightPosition}, " +
+            $"phase={rocketBoxMatch.BonusPlanner.BoxSnapshot(rocketBox.BoxId).Phase}");
+
         var rocketCardMatch = ReadyCardMatch("host-card-rocket-setup", "BIGROCKET");
         const string rocketSetupRequest = "d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5";
         Check(rocketCardMatch.TryScheduleCardUnit(rocketSetupRequest,

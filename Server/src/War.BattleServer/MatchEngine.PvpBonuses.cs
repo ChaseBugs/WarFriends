@@ -383,9 +383,10 @@ public sealed partial class MatchEngine
         }
         var draw = new PvpBonusSpawnDraw(
             weightedValue,
-            Random.Shared.Next(pvpBonusPlanner.SpawnAreaCount),
-            new Vector3(NextBonusUnitDraw(), NextBonusUnitDraw(),
-                NextBonusUnitDraw()));
+            bonusAreaChoice(pvpBonusPlanner.SpawnAreaCount),
+            bonusPositionDraw?.Invoke() ??
+                new Vector3(NextBonusUnitDraw(), NextBonusUnitDraw(),
+                    NextBonusUnitDraw()));
         return IssueNextMaturedBonus(context, draw);
     }
 

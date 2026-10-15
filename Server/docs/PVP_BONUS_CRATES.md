@@ -10,8 +10,9 @@ The source Rocket soldier's real missile also uses `MissileExplode`. Its
 host flight now sees active box colliders, and the blast applies the pinned
 card damage with the prefab's 0.8/1.2-unit radii. Focused checks cover flight
 collision through a real host missile, blast range, opposing-owner collection,
-and replay. A normal
-deployed Rocket shot into a box and two-peer presentation remain unverified.
+and replay. A signed Park match now issues a queued Kevlar box from a source
+spawn area, deploys the Rocket card, and observes a real automatic missile
+collect the box and grant Kevlar. Two-peer presentation remains unverified.
 
 The source Grenadier soldier inherits `GrenadeAmmo.MissileExplode`. Its
 physical grenade now sees the same active box collider, and the host applies

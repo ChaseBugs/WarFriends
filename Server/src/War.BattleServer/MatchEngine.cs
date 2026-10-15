@@ -1037,12 +1037,17 @@ public sealed partial class MatchEngine : IMatchRuntime
     public string ManifestHash { get; }
     public bool Terminal => phase is BattlePhase.Ended or BattlePhase.Aborted;
     private readonly Func<int,int> armyChoice;
+    private readonly Func<int,int> bonusAreaChoice;
+    private readonly Func<Vector3>? bonusPositionDraw;
     private readonly Func<float> combatRandom;
     public MatchEngine(MatchManifest definition, RecoveredBattleMap? map = null,
-        BattleCombatContent? content=null,Func<int,int>? armyChoice=null,Func<float>? combatRandom=null)
+        BattleCombatContent? content=null,Func<int,int>? armyChoice=null,Func<float>? combatRandom=null,
+        Func<int,int>? bonusAreaChoice=null,Func<Vector3>? bonusPositionDraw=null)
     {
         this.armyChoice=armyChoice??Random.Shared.Next;
         this.combatRandom=combatRandom??Random.Shared.NextSingle;
+        this.bonusAreaChoice=bonusAreaChoice??Random.Shared.Next;
+        this.bonusPositionDraw=bonusPositionDraw;
         manifest = MatchManifest.Validate(definition);
         if (content!=null) content.ValidateAllocation(manifest);
         else if (manifest.Players.Any(p=>p.WeaponUpgrade.HasValue)) throw new InvalidDataException("Source-bound upgrades require a verified combat package.");
