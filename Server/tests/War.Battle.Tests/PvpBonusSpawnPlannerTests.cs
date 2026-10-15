@@ -871,6 +871,40 @@ internal static class PvpBonusSpawnPlannerTests
             $"impacts={liveBazookaImpacts.Length}, box={liveBazookaBox.Position}, " +
             $"phase={liveBazookaMatch.BonusPlanner.BoxSnapshot(liveBazookaBox.BoxId).Phase}");
 
+        var cardRocketMatch = RunningBonusMatch(8694, () => 1f);
+        cardRocketMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86941), localId, 6);
+        for (int index = 0; index < 3; index++)
+            cardRocketMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86942 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            cardRocketMatch.Advance(nextTick);
+        var cardRocketBox = cardRocketMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var cardRocketTrace = new RifleMatchSimulation(clockManifest, map, content);
+        cardRocketTrace.ConfigureBonusBoxTargets(
+            cardRocketMatch.BonusPlanner.ActiveBoxesSnapshot);
+        var cardRocketContact = cardRocketTrace.TraceForCardRocket(localId,
+            cardRocketBox.Position + Vector3.UnitY, -Vector3.UnitY, 2f);
+        Check(cardRocketContact?.BonusBoxId == cardRocketBox.BoxId,
+            "card Rocket flight can hit the active layer-eight box collider");
+        var cardRocketMissile = content.Army.CardBaseStats("BIGROCKET", 22,
+            content.BarrelPolicy.MaxDisplayLevel).Rocket!;
+        cardRocketMatch.ApplyCardRocketBonusBoxes(grenadeAttacker, 86945,
+            cardRocketBox.Position + Vector3.UnitX * 2f, cardRocketMissile);
+        Check(cardRocketMatch.BonusPlanner.BoxSnapshot(cardRocketBox.BoxId).Health == 1f,
+            "card Rocket blast beyond the source radius leaves the box intact");
+        cardRocketMatch.ApplyCardRocketBonusBoxes(grenadeAttacker, 86946,
+            cardRocketBox.Position, cardRocketMissile);
+        Check(cardRocketMatch.BonusPlanner.BoxSnapshot(cardRocketBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              cardRocketMatch.Snapshot().Players[1].KevlarHealth ==
+                  clockManifest.Players[1].Combat!.MaxHealth * 0.1f,
+            "host card Rocket blast destroys a box for the opposing owner");
+        ulong cardRocketRevision = cardRocketMatch.Snapshot().StateRevision;
+        cardRocketMatch.ApplyCardRocketBonusBoxes(grenadeAttacker, 86946,
+            cardRocketBox.Position, cardRocketMissile);
+        Check(cardRocketMatch.Snapshot().StateRevision == cardRocketRevision,
+            "replaying card Rocket blast cannot collect a box again");
+
         var grenadeContent = BattleCombatContent.Load(
             Path.Combine(directory, "combat-content-manifest.json"),
             grenadeManifestPath: Path.Combine(directory,

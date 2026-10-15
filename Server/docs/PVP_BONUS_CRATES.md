@@ -6,6 +6,12 @@ bonus-mode matches, and a read-only Unity box presentation are implemented.
 Player-bullet, grenade, and bazooka blast collection are implemented. Other
 damage paths, full effect delivery and durable rewards remain incomplete.
 
+The source Rocket soldier's real missile also uses `MissileExplode`. Its
+host flight now sees active box colliders, and the blast applies the pinned
+card damage with the prefab's 0.8/1.2-unit radii. Focused checks cover flight
+collision, blast range, opposing-owner collection, and replay. A normal
+deployed Rocket shot into a box and two-peer presentation remain unverified.
+
 The recovered `Missile.TryKill` sends RPG impacts through
 `Explosion.MissileExplode`. The host now includes active box colliders in
 bazooka flight tracing and applies the source dead/hurt radius falloff at the

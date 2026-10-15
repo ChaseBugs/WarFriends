@@ -525,6 +525,22 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyCardRocketBonusBoxes(string ownerId, ulong projectileId,
+        Vector3 position, ArmyCardRocketRuntime missile)
+    {
+        if (pvpBonusPlanner == null) return;
+        foreach (var box in pvpBonusPlanner.ActiveBoxesSnapshot())
+        {
+            // The Rocket soldier's real missile also calls MissileExplode.
+            // Its prefab radii and card damage differ from the player's RPG.
+            var effect = CardRocketExplosion.ResolveArmy(position, box.Position,
+                [PvpBonusShotHitbox.For(box)], missile);
+            if (effect == null || effect.RawDamage <= 0f) continue;
+            ApplyConfirmedPvpBonusDamage("card-rocket-box", projectileId,
+                box.BoxId, ownerId, effect.RawDamage);
+        }
+    }
+
     // A real unit projectile supplies the owner, collision and unique shot ID.
     // The source PlayerOnDamage callback credits the AIObject's owning player.
     internal PlayerDamageResult? ApplyConfirmedArmyProjectilePlayerDamage(

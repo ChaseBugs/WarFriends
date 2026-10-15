@@ -358,6 +358,13 @@ internal sealed class RifleMatchSimulation
         return world.Raycast(owner,origin,direction,range,
             content.Bindings.BulletMask(actor.Definition.Fraction));
     }
+    internal ShotCollision? TraceForCardRocket(string owner,Vector3 origin,
+        Vector3 direction,float range)
+    {
+        var actor=actors.Single(a=>a.Definition.PlayerId==owner);
+        return TraceForBazooka(owner,origin,direction,range,
+            content.Bindings.BulletMask(actor.Definition.Fraction));
+    }
     internal ShotCollision? TraceForBazooka(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
     {
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,

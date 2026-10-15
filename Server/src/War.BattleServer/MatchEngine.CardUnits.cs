@@ -2022,7 +2022,7 @@ public sealed partial class MatchEngine
             var flight = new CardRocketMissileFlight(id, intent.EntityKey,
                 missile, intent.MuzzlePosition, intent.TargetPosition,
                 tick, !intent.IsReal,
-                (from, direction, range) => rifleCombat.TraceForArmy(
+                (from, direction, range) => rifleCombat.TraceForCardRocket(
                     ownerId, from, direction, range));
             rocketFlights.Add(id, flight);
             rocketLaunches.Add(id, new CardRocketLaunchAuthority(ownerId,
@@ -2104,6 +2104,8 @@ public sealed partial class MatchEngine
                 }
             }
         }
+        ApplyCardRocketBonusBoxes(launch.OwnerPlayerId,
+            impact.ProjectileId, impact.Position, launch.Missile);
         ApplyCardRocketAssaultGlassExplosion(impact, launch,
             attacker.Definition.Fraction);
         if (Terminal)
