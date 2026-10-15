@@ -1,4 +1,5 @@
 using System.Numerics;
+using Google.Protobuf;
 using War.BattleServer;
 using War.Protocol;
 
@@ -542,12 +543,43 @@ internal static class PvpBonusSpawnPlannerTests
             "host-owned context and draws register one queued box and consume its live request once");
         if (issuedInMatch == null)
             throw new Exception("Live matured bonus was not issued.");
+        var issuedRow = clockEngine.Snapshot().PvpBonusBoxes.Single();
+        Check(issuedRow.BoxId == issuedInMatch.Request.ReceiptId &&
+              issuedRow.OwnerPlayerId == localId &&
+              issuedRow.PrefabIndex == issuedInMatch.PrefabIndex &&
+              issuedRow.Phase == (int)PvpBonusBoxPhase.Falling &&
+              issuedRow.Y == issuedInMatch.Position.Y,
+            "public battle snapshot includes the host-owned falling crate");
+        var wireSnapshot = MatchSnapshot.Parser.ParseFrom(
+            clockEngine.Snapshot().ToByteArray());
+        War.Client.BattlePvpBonusBoxPolicy.Validate(wireSnapshot);
+        Check(wireSnapshot.PvpBonusBoxes.Single().BoxId == issuedRow.BoxId,
+            "protobuf roundtrip preserves a validated active bonus box");
+        var forgedSnapshot = clockEngine.Snapshot().Clone();
+        forgedSnapshot.PvpBonusBoxes[0].OwnerPlayerId = Id(9999);
+        try
+        {
+            War.Client.BattlePvpBonusBoxPolicy.Validate(forgedSnapshot);
+            throw new Exception("Client accepted a box owned outside the match.");
+        }
+        catch (InvalidOperationException) { checks++; }
+        forgedSnapshot = clockEngine.Snapshot().Clone();
+        forgedSnapshot.PvpBonusBoxes[0].Phase = 2;
+        try
+        {
+            War.Client.BattlePvpBonusBoxPolicy.Validate(forgedSnapshot);
+            throw new Exception("Client accepted a terminal box in the active list.");
+        }
+        catch (InvalidOperationException) { checks++; }
         clockEngine.Advance(154);
         Check(clockEngine.BonusPlanner.BoxSnapshot(issuedInMatch.Request.ReceiptId)
-                  .Position.Y < issuedInMatch.Position.Y,
+                  .Position.Y < issuedInMatch.Position.Y &&
+              clockEngine.Snapshot().PvpBonusBoxes.Single().Y < issuedRow.Y,
             "a normal running match tick advances its host-owned falling box");
         clockEngine.BonusPlanner.ConfirmDestroyed(issuedInMatch.Request.ReceiptId,
             Id(751), null);
+        Check(clockEngine.Snapshot().PvpBonusBoxes.Count == 0,
+            "collected crate disappears from the reconnect snapshot");
         Check(clockEngine.ApplyCollectedPvpBonus(issuedInMatch.Request.ReceiptId) ==
                   "bonus-applied" &&
               clockEngine.Snapshot().Players[0].KevlarHealth ==

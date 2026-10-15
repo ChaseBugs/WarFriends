@@ -445,6 +445,17 @@ message MatchSnapshot {
   // Private terminal evidence only. These are host-drawn, collected-box
   // quotes, not wallet grants or Client-visible rewards.
   repeated BattlePvpCurrencyQuote pvp_currency_quotes = 36;
+  // Active host-owned bonus boxes. Reconnect rebuilds their visual state from
+  // this list; collected boxes disappear after their terminal host receipt.
+  repeated BattlePvpBonusBoxState pvp_bonus_boxes = 37;
+}
+message BattlePvpBonusBoxState {
+  string box_id = 1;
+  string owner_player_id = 2;
+  int32 prefab_index = 3;
+  float x = 4; float y = 5; float z = 6;
+  // 0 falling, 1 grounded. Collected boxes are omitted from this list.
+  int32 phase = 7;
 }
 message BattlePvpCurrencyQuote {
   string box_id = 1;

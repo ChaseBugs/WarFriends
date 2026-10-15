@@ -71,16 +71,19 @@ startup. An isolated Unity 2018.3 Editor probe matched all ten actual
 `BoxCollider.bounds` within 0.00002 world units. Host area/axis draws can
 resolve a source position. Plans now retain a verified source-static surface
 candidate, and registered boxes advance vertically under source gravity until
-first contact. Dynamic collisions, rotation, bounce, PhysX timing, and crate
-publication remain unverified.
+first contact. Active boxes now travel in ordered protobuf match snapshots
+and rebuild after reconnect. The SDK validates owner, identity, pose, source
+prefab index and active phase; the Unity DeathMatch bridge copies the recovered
+box mesh and team material without attaching Photon or reward scripts. Dynamic
+collisions, rotation, bounce, PhysX timing and live pickup remain unverified.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
 selection history and source map areas. Replays do not redraw; invalid
 coordinates, weights or full box capacity do not consume FIFO overrides. The
 source's invalid endpoint index is retained for
 history but mapped to its actual prefab for prospective publication. The
-normal MatchEngine callback, Client-visible physical box, full physics,
-collection settlement, rewards and Unity rendering remain open.
+normal automatic issuer, shootable Client box, full physics, collection
+settlement and rewards remain open.
 Accepted spawn plans enter a bounded host box registry with falling/grounded/
 collected phases, one terminal damage receipt, owner-or-attacker recipient
 selection and one-use booby-trap interception on a stolen box. This is a

@@ -65,6 +65,12 @@ internal sealed class PvpBonusBoxRegistry
     internal int ActiveCount { get { lock (gate) return activeCount; } }
     internal int ReceiptCount { get { lock (gate) return boxes.Count +
         damageReceipts.Count + trapReceipts.Count; } }
+    internal IReadOnlyList<PvpBonusBoxSnapshot> ActiveSnapshot()
+    {
+        lock (gate)
+            return boxes.Values.Where(box => box.Phase != PvpBonusBoxPhase.Collected)
+                .OrderBy(box => box.BoxId, StringComparer.Ordinal).ToArray();
+    }
 
     internal PvpBonusBoxSnapshot Register(PvpBonusSpawnPlan plan)
     {

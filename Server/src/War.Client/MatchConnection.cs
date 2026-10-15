@@ -808,6 +808,7 @@ namespace War.Client
                     throw new InvalidOperationException("Battle host returned an incompatible snapshot.");
                 BattleProjectileRowPolicy.ValidateSnapshot(snapshot);
                 BattleLandedCanopyPolicy.Validate(snapshot);
+                BattlePvpBonusBoxPolicy.Validate(snapshot);
                 ulong priorVehicle = 0;
                 foreach (var vehicle in snapshot.Vehicles)
                 {

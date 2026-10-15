@@ -30,6 +30,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private float grenadeSwipeStartedAt;
 	private SelfHostedProjectilePresenter projectilePresenter;
 	private SelfHostedDecoyPresenter decoyPresenter;
+	private SelfHostedBonusBoxPresenter bonusBoxPresenter;
 	private SelfHostedLandMinePresenter landMinePresenter;
 	private SelfHostedHeavyTurretPresenter heavyTurretPresenter;
 	private SelfHostedDronePresenter dronePresenter;
@@ -65,6 +66,10 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
             Singleton<LevelBehaviourManager>.instance);
 		decoyPresenter = gameObject.AddComponent<SelfHostedDecoyPresenter>();
 		decoyPresenter.Configure(client.LocalPlayerId);
+		bonusBoxPresenter = gameObject.AddComponent<SelfHostedBonusBoxPresenter>();
+		KillStreakManager bonusManager = UnityEngine.Object.FindObjectOfType<KillStreakManager>();
+		bonusBoxPresenter.Configure(bonusManager == null ? null :
+			bonusManager.killStreakBonusBoxPrefab, client.LocalPlayerId);
 		MineAmmo mineVisual = local.weaponInventory == null || local.weaponInventory.landMine == null ? null :
 			local.weaponInventory.landMine.bulletPrefab as MineAmmo;
 		landMinePresenter = gameObject.AddComponent<SelfHostedLandMinePresenter>();
@@ -305,6 +310,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		}
 		if (projectilePresenter != null) projectilePresenter.Apply(snapshot);
 		if (decoyPresenter != null) decoyPresenter.Apply(snapshot);
+		if (bonusBoxPresenter != null) bonusBoxPresenter.Apply(snapshot);
 		if (landMinePresenter != null) landMinePresenter.Apply(snapshot);
 		if (heavyTurretPresenter != null) heavyTurretPresenter.Apply(snapshot);
 		if (groundVehiclePresenter != null) groundVehiclePresenter.Apply(snapshot);

@@ -1,9 +1,9 @@
 # Source PvP bonus crates
 
 This follows the active recovered 1.4.0 Client. The reviewed catalog, weight
-calculation, and host selection planning are implemented. Automatic delayed
-spawning, physical collision/collection, durable rewards, and normal Unity
-presentation remain incomplete.
+calculation, host selection planning, and a read-only Unity box presentation
+are implemented. Automatic delayed spawning, bullet collision/collection and
+durable rewards remain incomplete.
 
 The host can call `MatchEngine.IssueNextMaturedBonus()` after a delayed request
 matures. It derives mode, collected-Gold count, and the first two weapons'
@@ -11,7 +11,7 @@ low-ammo condition from signed/live match state. The planner supplies the
 reviewed source weight total and map spawn-area count; the host draws the
 weighted value, area, and three position coordinates. A queued bonus card still
 forces its source prefab exactly once. This registers a falling box, but match
-ticks do not yet call the issuer or simulate the box's collision with the map.
+ticks do not yet call the issuer or resolve its dynamic collisions.
 No live reward is granted merely because the plan exists.
 
 The original `KillStreakBonusBox` prefab has a gravity-enabled Rigidbody and
@@ -28,6 +28,19 @@ so a failed calculation cannot move only part of a frame. This is a bounded
 first-contact model: a downward center ray does not reproduce the entire
 PhysX contact manifold, dynamic-object impacts, rotation or bounce. Grounding
 does not collect a box or authorize its reward.
+
+Active falling/grounded boxes now appear in `MatchSnapshot.pvp_bonus_boxes` in
+stable box-ID order. Each row contains the admitted owner, source prefab index,
+host position and phase; collected boxes disappear. `War.Client` checks the
+bounded list, identity, owner, coordinates, prefab and phase before presenting
+it. `SelfHostedBonusBoxPresenter` copies only the recovered box mesh and team
+material, follows the server position and removes stale visuals after
+collection or reconnect. It attaches no Photon, Rigidbody, damage or reward
+scripts. This is a visual projection, not proof that normal gameplay issues
+a crate or that a player can shoot one yet.
+The revised SDK and presenter compiled in a disposable Unity 2018.3 project;
+rendered Play Mode, original Android Unity 5.2 and two-peer box display remain
+unverified.
 
 ## Source bindings
 
@@ -176,8 +189,9 @@ future exclusion history and uses the actual prefab's valid index eight for
 publication. This explicit repair prevents an out-of-range prefab lookup in
 the replacement Client; it does not claim exact original RPC parity at that
 broken endpoint. The registered host box has vertical motion and first-static-
-contact state, but is not yet a Client-visible entity or a complete physics
-body and grants no reward. Run `--pvp-bonus-spawn-plan-only` for the
+contact state and a read-only Client visual, but is not yet a shootable Client
+entity or a complete physics body and grants no reward. Run
+`--pvp-bonus-spawn-plan-only` for the
 focused transaction checks.
 
 `PvpBonusBoxRegistry` now admits a plan as a host-owned falling box only when
@@ -268,9 +282,9 @@ ordinary, War Arena or friendly DeathMatch from the trusted manifest, and an
 issue rejects mismatched mode flags before selection. Existing manifests may
 omit it; those matches cannot issue a matured box. The host now derives the
 live gold/ammo selection inputs itself; automatic issuance still awaits the
-physical box and Client presentation path.
+shootable box and collection path.
 Other army-owned damage, AI death/combo flags, verified walking state parity,
-card multiplier lifetimes, Client-visible crate spawning and effect delivery
+card multiplier lifetimes, normal crate issuance and effect delivery
 remain open.
 The Grenades prefab and recovered `KillStreakBonusGrenades` method specify a
 three-shot burst, not grenade inventory refill. It waits one scaled second,

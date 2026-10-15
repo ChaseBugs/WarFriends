@@ -3188,6 +3188,18 @@ public sealed partial class MatchEngine : IMatchRuntime
             Kind=(int)e.Definition.Kind, X=e.Target.X, Y=e.Target.Y, Z=e.Target.Z,
             StartedTick=e.StartedTick, ExpiresTick=e.Lease.ExpiresTick
         }));
+        if (!Terminal && pvpBonusPlanner != null)
+            snapshot.PvpBonusBoxes.AddRange(pvpBonusPlanner.ActiveBoxesSnapshot()
+                .Select(box => new BattlePvpBonusBoxState
+                {
+                    BoxId = box.BoxId,
+                    OwnerPlayerId = box.Plan.Request.OwnerPlayerId,
+                    PrefabIndex = box.Plan.PrefabIndex,
+                    X = box.Position.X,
+                    Y = box.Position.Y,
+                    Z = box.Position.Z,
+                    Phase = (int)box.Phase
+                }));
         foreach (var row in objectives.OrderBy(x => x.Key, StringComparer.Ordinal))
             foreach (var pair in row.Value.TargetSnapshot().OrderBy(x => x.Key))
                 snapshot.ObjectiveProgress.Add(new BattleObjectiveProgress

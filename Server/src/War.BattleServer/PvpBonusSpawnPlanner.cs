@@ -106,6 +106,10 @@ internal sealed class PvpBonusSpawnPlanner
     {
         lock (gate) return boxes.Snapshot(boxId);
     }
+    internal IReadOnlyList<PvpBonusBoxSnapshot> ActiveBoxesSnapshot()
+    {
+        lock (gate) return boxes.ActiveSnapshot();
+    }
 
     internal void AdvanceFalling(float elapsedSeconds)
     {
