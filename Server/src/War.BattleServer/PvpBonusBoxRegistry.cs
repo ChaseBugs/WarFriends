@@ -9,6 +9,7 @@ public sealed record PvpBonusBoxCollectionCandidate(string BoxId, string OwnerPl
 public sealed record PvpBonusBoxSnapshot(string BoxId, PvpBonusSpawnPlan Plan,
     PvpBonusBoxPhase Phase, PvpBonusBoxCollectionCandidate? Collection,
     Vector3 Position, float VerticalVelocity, float Health);
+public sealed record PvpBonusCollectionStats(int Collected, int Stolen);
 public enum PvpBonusEffectKind
 {
     Gold, Health, Warbucks, Grenades, SlowMotion, Turret, Kevlar, Card, Ammo,
@@ -72,6 +73,25 @@ internal sealed class PvpBonusBoxRegistry
         lock (gate)
             return boxes.Values.Where(box => box.Phase != PvpBonusBoxPhase.Collected)
                 .OrderBy(box => box.BoxId, StringComparer.Ordinal).ToArray();
+    }
+
+    internal PvpBonusCollectionStats CollectionStats(string playerId)
+    {
+        lock (gate)
+        {
+            if (!fractions.ContainsKey(playerId))
+                throw new InvalidDataException("Bonus collection player is outside the match.");
+            int collected = 0;
+            int stolen = 0;
+            foreach (var box in boxes.Values)
+            {
+                var winner = box.Collection;
+                if (winner?.RecipientPlayerId != playerId) continue;
+                collected++;
+                if (winner.Stolen) stolen++;
+            }
+            return new PvpBonusCollectionStats(collected, stolen);
+        }
     }
 
     internal PvpBonusBoxSnapshot Register(PvpBonusSpawnPlan plan)

@@ -644,6 +644,13 @@ public sealed partial class MatchEngine
         pvpBonusProgress = progress;
     }
 
+    internal PvpBonusCollectionStats PvpBonusCollectionStats(string playerId)
+    {
+        return (pvpBonusPlanner ??
+            throw new InvalidOperationException("Match has no PvP bonus authority."))
+            .CollectionStats(playerId);
+    }
+
     /// <summary>
     /// Plans a collected grenade crate using the host's current shootable
     /// registries. No Client-declared target or random offset enters this path.

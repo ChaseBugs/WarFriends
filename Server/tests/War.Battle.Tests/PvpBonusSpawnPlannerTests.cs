@@ -371,6 +371,10 @@ internal static class PvpBonusSpawnPlannerTests
         Check(ownerFallback.RecipientPlayerId == localId && !ownerFallback.Stolen &&
               !ownerFallback.BoobyTrapped && planner.ActiveBoxCount == 0,
             "source null damage owner falls back to the box owner even before ground contact");
+        Check(planner.CollectionStats(localId) == new PvpBonusCollectionStats(1, 0) &&
+              planner.CollectionStats(manifest.Players[1].PlayerId) ==
+                  new PvpBonusCollectionStats(1, 1),
+            "owner collection and opposing theft have separate source counters");
         Check(planner.EffectIntent(airborne.BoxId).Kind == PvpBonusEffectKind.Ammo,
             "untrapped collection retains its source prefab effect");
 
@@ -769,11 +773,19 @@ internal static class PvpBonusSpawnPlannerTests
               grenadeBoxMatch.Snapshot().Players[1].KevlarHealth ==
                   clockManifest.Players[1].Combat!.MaxHealth * 0.1f,
             "host grenade blast destroys a box and grants its effect to the shooter");
+        Check(grenadeBoxMatch.PvpBonusCollectionStats(grenadeAttacker) == new
+                  PvpBonusCollectionStats(1, 1) &&
+              grenadeBoxMatch.PvpBonusCollectionStats(localId) == new
+                  PvpBonusCollectionStats(0, 0),
+            "confirmed opposing collection credits its recipient and stolen count");
         ulong grenadeRevision = grenadeBoxMatch.Snapshot().StateRevision;
         grenadeBoxMatch.ApplyGrenadeBonusBoxes(grenadeAttacker, 86977,
             grenadeBox.Position, grenadeStage);
         Check(grenadeBoxMatch.Snapshot().StateRevision == grenadeRevision,
             "replaying the grenade explosion cannot collect the same box twice");
+        Check(grenadeBoxMatch.PvpBonusCollectionStats(grenadeAttacker) == new
+                  PvpBonusCollectionStats(1, 1),
+            "replaying a collected box cannot duplicate source crate statistics");
 
         var bazookaBoxMatch = RunningBonusMatch(8698, () => 1f);
         bazookaBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86981), localId, 6);

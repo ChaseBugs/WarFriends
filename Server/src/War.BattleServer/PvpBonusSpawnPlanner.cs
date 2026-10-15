@@ -120,6 +120,11 @@ internal sealed class PvpBonusSpawnPlanner
         lock (gate) return boxes.ActiveSnapshot();
     }
 
+    internal PvpBonusCollectionStats CollectionStats(string playerId)
+    {
+        lock (gate) return boxes.CollectionStats(playerId);
+    }
+
     internal void AdvanceFalling(float elapsedSeconds)
     {
         lock (gate) boxes.AdvanceFalling(elapsedSeconds);

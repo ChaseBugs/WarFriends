@@ -520,6 +520,13 @@ activation have their own local reward counters. Preserve these distinct events
 when projecting host statistics rather than inferring collection from a shot
 request or a progress threshold.
 
+The host now derives each player's collected and stolen counts from retained
+terminal box receipts. A collection increments the recipient's collected count;
+it increments stolen only when the recipient's fraction differs from the box
+owner's fraction. Identical damage replay leaves both counts unchanged. These
+validated counters are available to MatchEngine, but terminal MatchStats and
+Backend settlement do not yet consume them.
+
 While falling, OnCollisionEnter may destroy a `destroyableByBonusBox` object
 with weaponless Basic damage, null owner and immortality ignored. A static
 collision marks the box on-ground/alive. The host currently approximates the
