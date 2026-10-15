@@ -11625,12 +11625,30 @@ internal static class CombatContentTests
                             "player/body",shotIntent.TargetPlayerId,.5f)
                         : null;
                 }, extraCollisionDistance: 1f);
-            for(ulong flightTick=11;flightTick<=18;flightTick++)
+            for(ulong flightTick=11;flightTick<=21;flightTick++)
                 Check(lateSlowFlight.Advance(flightTick)==null,
-                    "the late collision does not occur during the two earlier source tweens");
-            Check(lateSlowFlight.Advance(19)?.Collision.PlayerId==
-                  shotIntent.TargetPlayerId && lateSlowFlight.Finished,
-                "the last BulletSlow tween can still hit a player beyond the aim");
+                    "the final visual tween cannot hit a player beyond the check window");
+            Check(lateSlowFlight.Finished &&
+                  Math.Abs(lateSlowFlight.Position.X-9f)<.001f,
+                "the unchecked final BulletSlow tween still reaches its source endpoint");
+            int firstPhaseTraceCalls=0;
+            var firstPhaseFlight=new ArmyProjectileFlight(20,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (from,direction,range) =>
+                {
+                    firstPhaseTraceCalls++;
+                    return firstPhaseTraceCalls==1 ? null :
+                        new ShotCollision(.5f,from+direction*.5f,
+                            "player/body",shotIntent.TargetPlayerId,.5f);
+                },extraCollisionDistance:1f);
+            Check(firstPhaseTraceCalls==1 &&
+                  firstPhaseFlight.Advance(11)==null &&
+                  firstPhaseFlight.Advance(12)==null &&
+                  firstPhaseFlight.Advance(13)==null &&
+                  firstPhaseTraceCalls==1 &&
+                  firstPhaseFlight.Advance(14)?.Collision.PlayerId==
+                      shotIntent.TargetPlayerId,
+                "BulletSlow defers dynamic collision checks until the first tween ends");
             int staticTraceCalls=0;
             var staticPreflight=new ArmyProjectileFlight(17,77,
                 Vector3.Zero,Vector3.UnitX*4f,30,10,

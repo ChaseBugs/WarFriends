@@ -132,7 +132,7 @@ internal sealed class ArmyProjectileFlight
         // BulletBase spends aimDistance / speed seconds travelling to the
         // point one check margin before its aim. BulletSlow then checks the
         // next two margins over three margins / speed seconds. A miss starts
-        // one final aim-distance tween at ordinary projectile speed.
+        // one final visual tween. That last tween has no collision checks.
         float firstDuration=aimDistance/speed;
         float firstEnd=MathF.Max(0,aimDistance-slowCollisionMargin);
         float continuationDuration=3*slowCollisionMargin/speed;
@@ -155,20 +155,25 @@ internal sealed class ArmyProjectileFlight
             throw new InvalidDataException("Army projectile collision path left scene bounds.");
         }
         float step=Vector3.Distance(position,next);
-        if(step>0)
+        // The launch ray owns the first tween. BulletSlow begins CheckHit at
+        // TryKill, then stops checking in OnCheckingAnimationFinished. Its
+        // frame ray reaches two delta-time units beyond the moved distance.
+        bool checksCollision=elapsed>=firstDuration && elapsed<=secondEndTime;
+        if(step>0 && checksCollision)
         {
-            var hit=trace(position,direction,step+.002f);
+            float checkRange=step+2f/MatchManifest.TickRate;
+            var hit=trace(position,direction,checkRange);
             if(hit!=null)
             {
                 if(!float.IsFinite(hit.Distance) || hit.Distance<0 ||
-                   hit.Distance>step+.002f || !PlayerHitbox.Finite(hit.Position))
+                   hit.Distance>checkRange+.002f || !PlayerHitbox.Finite(hit.Position))
                     throw new InvalidDataException("Army projectile trace returned invalid impact.");
                 position=hit.Position;
                 finished=true;
                 return new(id,entityKey,hit,tick);
             }
-            position=next;
         }
+        position=next;
         if(elapsed>=secondEndTime+aimDistance/speed)
         {
             position=target;
