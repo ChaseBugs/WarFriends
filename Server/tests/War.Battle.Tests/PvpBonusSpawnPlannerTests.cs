@@ -756,6 +756,93 @@ internal static class PvpBonusSpawnPlannerTests
             $"shot={shotResult}, phase={firedBoxMatch.BonusPlanner.BoxSnapshot(firedBox.BoxId).Phase}, " +
             $"terminal={firedBoxMatch.Terminal}, target={firedBox.Position}");
 
+        var shotgunContent = BattleCombatContent.Load(
+            Path.Combine(directory, "combat-content-manifest.json"),
+            Path.Combine(directory, "shotgun-content-manifest.json"));
+        const string shotgunSource = "Google2u.Shotgun_SPAS";
+        var shotgunWeapon = shotgunContent.Shotguns!.CreateManifest(shotgunSource, 35);
+        var shotgunManifest = clockManifest with
+        {
+            MatchId = Id(8698),
+            Mode = MatchManifest.ShotgunCombatMode,
+            CatalogRevision = shotgunContent.ShotgunRevision!,
+            Players = clockManifest.Players.Select(player => player with
+            {
+                Weapon = shotgunWeapon,
+                WeaponUpgrade = 35
+            }).ToArray()
+        };
+        var shotgunBoxMatch = new MatchEngine(shotgunManifest, map,
+            shotgunContent, combatRandom: () => 1f);
+        foreach (var participant in shotgunManifest.Players)
+            shotgunBoxMatch.Admit(participant.PlayerId);
+        foreach (var participant in shotgunManifest.Players)
+            shotgunBoxMatch.Command(participant.PlayerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = shotgunBoxMatch.ManifestHash }
+            });
+        shotgunBoxMatch.Advance(60);
+        shotgunBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86981), localId, 6);
+        for (int index = 0; index < 3; index++)
+            shotgunBoxMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86982 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            shotgunBoxMatch.Advance(nextTick);
+        var shotgunBox = shotgunBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var liveShotgunBinding = shotgunContent.Shotguns.Binding(shotgunSource);
+        Vector3 shotgunMuzzle = shotgunBoxMatch.CombatPose(localId)
+            .Muzzle(shotgunSource).Position + liveShotgunBinding.ShotOffset;
+        Vector3 boxDirection = Vector3.Normalize(shotgunBox.Position - shotgunMuzzle);
+        Vector3 sideways = Vector3.Normalize(Vector3.Cross(boxDirection,
+            Vector3.UnitY));
+        Vector3 shotgunAim = shotgunBox.Position + sideways * 0.5f;
+        var shotgunWorld = new ShotCollisionWorld(map,
+            [new(localId, shotgunBoxMatch.CombatPose(localId).Collision, 23, 1),
+             new(shotgunManifest.Players[1].PlayerId,
+                 shotgunBoxMatch.CombatPose(shotgunManifest.Players[1].PlayerId)
+                     .Collision, 22, 2)],
+            bonusBoxes: shotgunBoxMatch.BonusPlanner.ActiveBoxesSnapshot);
+        var liveShotgunCandidates = shotgunWorld.OverlapEnemy(localId,
+            shotgunMuzzle, liveShotgunBinding.Geometry.Radius,
+            shotgunContent.Bindings.BulletMask(1));
+        var liveShotgunPlan = ShotgunShotPlanner.Plan(liveShotgunBinding.Rule(
+                shotgunContent.Shotguns.Stage(shotgunSource, 35)),
+            shotgunMuzzle, shotgunAim, liveShotgunCandidates);
+        Check(liveShotgunPlan.RealPellets.Any(pellet => !pellet.Main &&
+                  pellet.Target == shotgunBox.Position),
+            $"live shotgun muzzle selects a bonus-box extra pellet: " +
+            $"distance={Vector3.Distance(shotgunMuzzle, shotgunBox.Position)}, " +
+            $"candidates={liveShotgunCandidates.Count}, " +
+            $"pellets={liveShotgunPlan.RealPellets.Count}");
+        Vector3 mainDirection = Vector3.Normalize(shotgunAim - shotgunMuzzle);
+        var mainHit = shotgunWorld.Raycast(localId, shotgunMuzzle,
+            mainDirection, Vector3.Distance(shotgunMuzzle, shotgunAim),
+            shotgunContent.Bindings.BulletMask(1));
+        Check(mainHit?.BonusBoxId != shotgunBox.BoxId,
+            "shotgun main pellet misses the box so only an extra pellet can collect it");
+        var shotgunFire = shotgunBoxMatch.Command(localId, new MatchCommand
+        {
+            CommandId = 2,
+            Fire = new FireCommand
+            {
+                TargetX = shotgunAim.X,
+                TargetY = shotgunAim.Y,
+                TargetZ = shotgunAim.Z
+            }
+        });
+        for (ulong nextTick = 154; nextTick <= 180 && !shotgunBoxMatch.Terminal;
+             nextTick++)
+            shotgunBoxMatch.Advance(nextTick);
+        Check(shotgunFire.Code == "shot-scheduled" &&
+              shotgunBoxMatch.BonusPlanner.BoxSnapshot(shotgunBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              shotgunBoxMatch.Snapshot().Players[0].KevlarHealth ==
+                  shotgunManifest.Players[0].Combat!.MaxHealth * 0.1f,
+            $"live shotgun extra pellet collects the host bonus box: " +
+            $"fire={shotgunFire.Code}, " +
+            $"phase={shotgunBoxMatch.BonusPlanner.BoxSnapshot(shotgunBox.BoxId).Phase}");
+
         var simultaneous = RunningBonusMatch(8700, () => 0.5f);
         foreach (var participant in manifest.Players)
             for (int index = 0; index < 3; index++)
