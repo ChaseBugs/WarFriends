@@ -26,7 +26,8 @@ internal static class BattleProjectileRowPolicyTests
                 ProjectileId = id,
                 OwnerPlayerId = new string('a', 32),
                 Kind = kind,
-                ArmyUnitId = kind == "army-bullet" ? "ID_UNIT-SWAT" : "",
+                ArmyUnitId = kind == "army-bullet" ? "ID_UNIT-SWAT" :
+                    kind == "army-fake-bullet" ? "ID_UNIT-SHOTGUNNER" : "",
                 WeaponSourceId = kind.StartsWith("shotgun-", StringComparison.Ordinal) ?
                     "Google2u.Shotgun_SPAS" : "",
                 X = 1, Y = 2, Z = 3,
@@ -37,7 +38,7 @@ internal static class BattleProjectileRowPolicyTests
         var emittedKinds = new[]
         {
             "grenade", "grenade-molotov", "pvp-bonus-grenade", "card-rocket",
-            "card-grenadier", "army-bullet",
+            "card-grenadier", "army-bullet", "army-fake-bullet",
             "card-rocket-fake", "heavy-turret-bullet",
             "helicopter-bullet", "helicopter-fake-bullet",
             "assault-helicopter-bullet", "assault-helicopter-fake-bullet",
@@ -120,6 +121,14 @@ internal static class BattleProjectileRowPolicyTests
         unrelatedIdentity.Projectiles[0].ArmyPoison = true;
         Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(unrelatedIdentity),
             "unrelated projectile cannot claim a poison bullet");
+        var fakeArmy = new MatchSnapshot();
+        fakeArmy.Projectiles.Add(Row(1, "army-fake-bullet"));
+        fakeArmy.Projectiles[0].ArmyUnitId = "ID_UNIT-WARPER";
+        BattleProjectileRowPolicy.ValidateSnapshot(fakeArmy);
+        Check(true, "Warper fake pellet uses its own source family");
+        fakeArmy.Projectiles[0].ArmyUnitId = "ID_UNIT-SWAT";
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(fakeArmy),
+            "non-shotgun infantry cannot claim a fake pellet");
 
         var badShotgun = new MatchSnapshot();
         badShotgun.Projectiles.Add(Row(1, "shotgun-bullet"));

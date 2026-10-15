@@ -140,7 +140,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet" &&
                 state.Kind != "card-rocket" && state.Kind != "card-rocket-fake" &&
                 state.Kind != "card-grenadier" &&
-                !(state.Kind == "army-bullet" &&
+                !((state.Kind == "army-bullet" || state.Kind == "army-fake-bullet") &&
                   infantryBullets.ContainsKey(state.ArmyUnitId))) continue;
 			if (!ValidCoordinate(state.X) || !ValidCoordinate(state.Y) || !ValidCoordinate(state.Z) ||
                 !ValidCoordinate(state.VelocityX) || !ValidCoordinate(state.VelocityY) ||
@@ -174,10 +174,12 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             if (IsShotgunShot(state.Kind) && visual.Trail == null && velocity.sqrMagnitude > 0.000001f)
                 ConfigureShotgunTrail(visual, state.OwnerPlayerId, state.WeaponSourceId,
                     state.Kind == "shotgun-fake-bullet", velocity.magnitude);
-            if (state.Kind == "army-bullet" && visual.Trail == null &&
+            if ((state.Kind == "army-bullet" || state.Kind == "army-fake-bullet") &&
+                visual.Trail == null &&
                 velocity.sqrMagnitude > 0.000001f)
                 ConfigureInfantryTrail(visual, state.ArmyUnitId,
-                    state.ArmySourceCardId, state.ArmyPoison, velocity.magnitude);
+                    state.ArmySourceCardId, state.ArmyPoison,
+                    state.Kind == "army-fake-bullet", velocity.magnitude);
 		}
 		// An MTU-bounded snapshot may omit still-flying presentation rounds.
 		// Impact events can retire them immediately; absence is authoritative
@@ -392,7 +394,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
     }
 
     private void ConfigureInfantryTrail(Visual visual, string unitId,
-        string sourceCardId, bool poison, float speed)
+        string sourceCardId, bool poison, bool fake, float speed)
     {
         InfantryBulletSource source;
         if (!infantryBullets.TryGetValue(unitId, out source) ||
@@ -405,10 +407,10 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 
         visual.Trail = visual.Root.AddComponent<LineTrailRenderer>();
         if (Application.isPlaying) visual.Trail.Reset();
-        visual.Trail.SetWidth(setup.GetTrailWidth());
-        visual.Trail.trailLength = setup.GetTrailSize() * 2f;
+        visual.Trail.SetWidth(fake ? setup.GetTrailFakeWidth() : setup.GetTrailWidth());
+        visual.Trail.trailLength = setup.GetTrailSize() * (fake ? 1f : 2f);
         visual.Trail.disapearTime = setup.GetTrailSize() / speed;
-        string sprite = source.Shotgun ? setup.realShotTexture :
+        string sprite = fake ? setup.fakeShotTexture : source.Shotgun ? setup.realShotTexture :
             poison ? "shotPoison" : source.TrailSprite;
         if (Application.isPlaying && !string.IsNullOrEmpty(sprite))
             visual.Trail.SetSprite(sprite);
@@ -476,12 +478,13 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             bullet = rocketWeapon == null ? null : rocketWeapon.bulletPrefab.gameObject;
         if (kind == "card-grenadier")
             bullet = grenadierWeapon == null ? null : grenadierWeapon.bulletPrefab.gameObject;
-        if (kind == "army-bullet")
+        if (kind == "army-bullet" || kind == "army-fake-bullet")
         {
             InfantryBulletSource source;
             if (!infantryBullets.TryGetValue(armyUnitId, out source) ||
                 (armySourceCardId.Length != 0 && armySourceCardId != source.CardId) ||
-                (armyPoison && armyUnitId != "ID_UNIT-COMMANDO"))
+                (armyPoison && armyUnitId != "ID_UNIT-COMMANDO") ||
+                (kind == "army-fake-bullet" && !source.Shotgun))
                 throw new System.InvalidOperationException("Unknown infantry bullet source.");
             ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;
             if (source.Shotgun)

@@ -3031,7 +3031,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                 {
                     ProjectileId = row.Key,
                     OwnerPlayerId = launch.OwnerPlayerId,
-                    Kind = "army-bullet",
+                    Kind = launch.Fake ? "army-fake-bullet" : "army-bullet",
                     ArmyUnitId = launch.UnitId,
                     ArmySourceCardId = launch.SourceCardId,
                     ArmyPoison = launch.UnitId == "ID_UNIT-COMMANDO" &&

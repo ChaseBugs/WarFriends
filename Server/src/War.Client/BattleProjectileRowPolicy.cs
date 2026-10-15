@@ -62,7 +62,7 @@ namespace War.Client
                 kind == "pvp-bonus-grenade" ||
                 kind == "card-rocket" || kind == "card-rocket-fake" ||
                 kind == "card-grenadier" ||
-                kind == "army-bullet" ||
+                kind == "army-bullet" || kind == "army-fake-bullet" ||
                 kind == "heavy-turret-bullet" ||
                 kind == "helicopter-bullet" || kind == "helicopter-fake-bullet" ||
                 kind == "assault-helicopter-bullet" ||
@@ -78,7 +78,7 @@ namespace War.Client
 
         private static bool ValidArmyIdentity(BattleProjectileState row)
         {
-            if (row.Kind != "army-bullet")
+            if (row.Kind != "army-bullet" && row.Kind != "army-fake-bullet")
                 return row.ArmyUnitId.Length == 0 && row.ArmySourceCardId.Length == 0 &&
                     !row.ArmyPoison;
 
@@ -93,6 +93,9 @@ namespace War.Client
                 if (character < 'A' || character > 'Z') return false;
             }
             if (row.ArmyPoison && unitId != "ID_UNIT-COMMANDO") return false;
+            if (row.Kind == "army-fake-bullet" &&
+                unitId != "ID_UNIT-SHOTGUNNER" && unitId != "ID_UNIT-WARPER")
+                return false;
             return row.ArmySourceCardId.Length == 0 ||
                 CardUnitSourceIdentity.Matches(row.ArmySourceCardId, unitId);
         }

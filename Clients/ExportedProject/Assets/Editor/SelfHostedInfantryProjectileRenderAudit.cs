@@ -70,6 +70,18 @@ public static class SelfHostedInfantryProjectileRenderAudit
                 Kind = "army-bullet", ArmyUnitId = "ID_UNIT-WARPER",
                 X = 7, Y = 2, Z = 3, VelocityZ = 10
             });
+            snapshot.Projectiles.Add(new BattleProjectileState
+            {
+                ProjectileId = 83, OwnerPlayerId = player.playerProperties.playerID,
+                Kind = "army-fake-bullet", ArmyUnitId = "ID_UNIT-SHOTGUNNER",
+                X = 6, Y = 2, Z = 3, VelocityZ = 10
+            });
+            snapshot.Projectiles.Add(new BattleProjectileState
+            {
+                ProjectileId = 84, OwnerPlayerId = player.playerProperties.playerID,
+                Kind = "army-fake-bullet", ArmyUnitId = "ID_UNIT-WARPER",
+                X = 7, Y = 2, Z = 3, VelocityZ = 10
+            });
             presenter.Apply(snapshot);
             foreach (var projectile in snapshot.Projectiles)
             {
@@ -88,6 +100,13 @@ public static class SelfHostedInfantryProjectileRenderAudit
                     Require(shotgun != null && shotgun.bulletPrefab != null,
                         "source infantry pellet is absent");
                     sourceBullet = shotgun.bulletPrefab;
+                    var setup = inventory.weapons[0].weapon.ammoSetup as ShotGunBulletSetup;
+                    Require(setup != null, "source infantry shotgun setup is absent");
+                    var trail = visual.GetComponent<LineTrailRenderer>();
+                    float expectedLength = setup.GetTrailSize() *
+                        (projectile.Kind == "army-fake-bullet" ? 1f : 2f);
+                    Require(trail != null && Mathf.Abs(trail.trailLength - expectedLength) < .001f,
+                        "infantry pellet has the wrong real or fake trail length");
                 }
                 else
                     sourceBullet = projectile.ArmyPoison ?
@@ -115,7 +134,7 @@ public static class SelfHostedInfantryProjectileRenderAudit
             foreach (var projectile in snapshot.Projectiles)
                 Require(GameObject.Find("SelfHostedProjectile_" + projectile.ProjectileId) == null,
                     "completed infantry shot remains visible");
-            Debug.Log("UNITY_INFANTRY_PROJECTILE_RENDER_PASSED families=7 normal=True card=True poison=True pellet=True sourceMesh=True trail=True impact=True removal=True");
+            Debug.Log("UNITY_INFANTRY_PROJECTILE_RENDER_PASSED families=7 normal=True card=True poison=True pellet=True fake=True sourceMesh=True trail=True impact=True removal=True");
             EditorApplication.Exit(0);
         }
         catch (Exception error)

@@ -17170,6 +17170,15 @@ internal static class CombatContentTests
         }
         Check(walkingShot&&observedWalkingPose,
               "special Shotgunner fires while its source walking clip supplies three moving explosion colliders");
+        var shotgunFlights = walkingShotgunnerMatch.Snapshot().Projectiles
+            .Where(row => row.ArmyUnitId == "ID_UNIT-SHOTGUNNER").ToArray();
+        Check(shotgunFlights.Count(row => row.Kind == "army-bullet") == 1 &&
+              shotgunFlights.Count(row => row.Kind == "army-fake-bullet") == 4 &&
+              shotgunFlights.All(row => row.OwnerPlayerId == soldierOwner &&
+                  !row.ArmyPoison && MathF.Abs(new Vector3(row.VelocityX,
+                      row.VelocityY, row.VelocityZ).Length() - 10f) < .001f) &&
+              shotgunFlights.Select(row => row.ProjectileId).Distinct().Count() == 5,
+            "deployed Shotgunner publishes one damaging round and four source-count fake flights");
         var walkingLive=walkingShotgunnerMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
         float walkingHealthBefore=walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value;
         float sourceDroneHealth=content.Army.ComposeTransporterRepairDrone(0,71,null,new(1,1)).MaximumHealth;
@@ -17268,17 +17277,24 @@ internal static class CombatContentTests
                   x.ArmySpawnComponentFileId==liveWarper.SpawnComponentFileId&&
                   x.ArmyReservationFileId==liveWarper.ReservationFileId&&x.Reason=="warper"),
               "live Warper publishes ordered source-bound transparent and normal-material events");
-        bool postShotRestart=false;ulong? scheduledRestart=null,restartedAt=null;
+        bool postShotRestart=false,observedWarperFakeBurst=false;
+        ulong? scheduledRestart=null,restartedAt=null;
         while(warperTick<1200)
         {
             warperMatch.Advance(++warperTick);
+            var warperFlights=warperMatch.Snapshot().Projectiles
+                .Where(row=>row.ArmyUnitId=="ID_UNIT-WARPER").ToArray();
+            if(warperFlights.Length==5)
+                observedWarperFakeBurst|=
+                    warperFlights.Count(row=>row.Kind=="army-bullet")==1&&
+                    warperFlights.Count(row=>row.Kind=="army-fake-bullet")==4;
             scheduledRestart??=warperMatch.WarperRestartTick(liveWarper.EntityKey);
             if(warperMatch.WarperRelocationCandidate(liveWarper.EntityKey)!=null)
             {postShotRestart=true;restartedAt=warperTick;break;}
         }
-        Check(postShotRestart&&scheduledRestart==restartedAt&&
+        Check(postShotRestart&&observedWarperFakeBurst&&scheduledRestart==restartedAt&&
               warperMatch.RusherMotionCandidate(liveWarper.EntityKey)==null,
-              "live Warper re-enters server-owned relocation one second after Rusher shooting starts");
+              "live Warper publishes its one-plus-four burst and relocates after shooting starts");
         var rusherManifest=detached with {MatchId="rusher-slots",Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER","ID_UNIT-SWAT","ID_UNIT-FLAMETHROWER"],

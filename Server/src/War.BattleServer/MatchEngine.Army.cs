@@ -473,7 +473,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyPoisonEffect> armyPoisons=[];
     private sealed record ArmyProjectileAuthority(ulong EntityKey,
         string OwnerPlayerId, int OwnerFraction, float Damage, float PoisonRatio,
-        string UnitId, string SourceCardId);
+        string UnitId, string SourceCardId, bool Fake);
     private readonly Dictionary<ulong,ArmyProjectileAuthority> armyProjectileAuthority=[];
     internal (string OwnerPlayerId, int OwnerFraction, float Damage)? ArmyProjectileLaunch(
         ulong projectileId)
@@ -3593,23 +3593,32 @@ public sealed partial class MatchEngine
                     entityPosition, intent.TargetPosition - entityPosition,
                     muzzleIndex);
             }
+            bool shotgun = behavior is "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper";
             if(!weaponBindings.TryProjectileDamage(army.UnitId,ArmyDamage(intent.EntityKey)??0,
                 origin,intent.TargetPosition,out float launchDamage))
             {
-                if(EventCapacityForShot())
-                {
-                    if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army projectile identity exhausted.");
-                    ulong missId=++projectileId;
-                    Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
-                        missId,origin,0,"army-shotgun-cone-miss");
-                }
+                if(!shotgun || PendingProjectileCount>MaximumProjectiles-4 ||
+                   !EventCapacityForShot())continue;
+                if(projectileId>ulong.MaxValue-5)
+                    throw new InvalidDataException("Army projectile identity exhausted.");
+                Vector3[] missedFakeTargets=PlanShotgunFakeTargets(origin,intent.TargetPosition);
+                ulong missId=++projectileId;
+                LaunchShotgunFakeFlights(intent.EntityKey,army.OwnerPlayerId,
+                    army.OwnerFraction,army.UnitId,army.SourceCardId,origin,
+                    projectileSpeed.Value,missedFakeTargets);
+                Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
+                    missId,origin,0,"army-shotgun-cone-miss");
                 continue;
             }
             int poisonEvents=behavior=="SoldierBehaviourCommando"&&armySpecial.ContainsKey(intent.EntityKey)
                 ?ArmyPoisonEffect.PulseCount:0;
-            if(PendingProjectileCount>=MaximumProjectiles ||
+            int projectileCount = shotgun ? 5 : 1;
+            if(PendingProjectileCount>MaximumProjectiles-projectileCount ||
                !EventCapacityForShot(1,poisonEvents))continue;
-            if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army projectile identity exhausted.");
+            if(projectileId>ulong.MaxValue-(ulong)projectileCount)
+                throw new InvalidDataException("Army projectile identity exhausted.");
+            Vector3[] fakeTargets = shotgun ?
+                PlanShotgunFakeTargets(origin,intent.TargetPosition) : [];
             ulong id=++projectileId;
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
@@ -3618,10 +3627,47 @@ public sealed partial class MatchEngine
             armyProjectileAuthority.Add(id,new ArmyProjectileAuthority(intent.EntityKey,
                 army.OwnerPlayerId,army.OwnerFraction,launchDamage,
                 armySpecial.GetValueOrDefault(intent.EntityKey),
-                army.UnitId,army.SourceCardId));
+                army.UnitId,army.SourceCardId,false));
+            LaunchShotgunFakeFlights(intent.EntityKey,army.OwnerPlayerId,
+                army.OwnerFraction,army.UnitId,army.SourceCardId,origin,
+                projectileSpeed.Value,fakeTargets);
             Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
                 id,origin,0,"army");
         }
+    }
+
+    private void LaunchShotgunFakeFlights(ulong entityKey,string ownerPlayerId,
+        int ownerFraction,string unitId,string sourceCardId,Vector3 origin,
+        float speed,IReadOnlyList<Vector3> targets)
+    {
+        foreach(Vector3 target in targets)
+        {
+            ulong fakeId=++projectileId;
+            var flight=new ArmyProjectileFlight(fakeId,entityKey,origin,target,speed,tick,
+                (from,direction,range)=>null);
+            armyProjectiles.Add(fakeId,flight);
+            armyProjectileAuthority.Add(fakeId,new ArmyProjectileAuthority(
+                entityKey,ownerPlayerId,ownerFraction,0,0,unitId,sourceCardId,true));
+        }
+    }
+
+    private Vector3[] PlanShotgunFakeTargets(Vector3 origin,Vector3 target)
+    {
+        // Both recovered Rusher shotguns have shotOnlyMainBullet enabled.
+        // BulletShotGun.Fire adds four fake trails with this source offset bound.
+        float distance=Vector3.Distance(origin,target);
+        float spread=Math.Clamp(distance/2f,0f,1f)*.25f;
+        var targets=new Vector3[4];
+        for(int index=0;index<targets.Length;index++)
+        {
+            float angle=NextArmyFloat()*2f*MathF.PI;
+            float height=NextArmyFloat()*2f-1f;
+            float radius=MathF.Sqrt(1f-height*height);
+            var direction=new Vector3(radius*MathF.Cos(angle),height,
+                radius*MathF.Sin(angle));
+            targets[index]=target+direction*spread;
+        }
+        return targets;
     }
 
     private void AdvanceArmyProjectiles()
@@ -3637,6 +3683,12 @@ public sealed partial class MatchEngine
             {
                 armyProjectiles.Remove(pair.Key);
                 armyProjectileAuthority.Remove(pair.Key);
+            }
+            if(launch.Fake)
+            {
+                if(impact!=null)
+                    throw new InvalidDataException("Cosmetic army pellet returned a collision.");
+                continue;
             }
             if(impact==null)continue;
             Player shooter=Find(launch.OwnerPlayerId)??
