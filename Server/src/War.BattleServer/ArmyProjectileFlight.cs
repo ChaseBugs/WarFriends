@@ -17,6 +17,9 @@ internal sealed class ArmyProjectileFlight
     private readonly float aimDistance;
     private readonly float slowCollisionMargin;
     private readonly ShotCollision? preflightStaticHit;
+    private readonly bool fastBullet;
+    private readonly ShotCollision? fastImpact;
+    private readonly float fastDuration;
     private readonly ulong startTick;
     private readonly Func<Vector3,Vector3,float,ShotCollision?> trace;
     private ulong tick;
@@ -25,14 +28,16 @@ internal sealed class ArmyProjectileFlight
 
     internal ArmyProjectileFlight(ulong id,ulong entityKey,Vector3 origin,Vector3 target,
         float speed,ulong tick,Func<Vector3,Vector3,float,ShotCollision?> trace,
-        float extraCollisionDistance=0)
+        float extraCollisionDistance=0,bool fastBullet=false,
+        Func<ShotCollision,Vector3>? targetVelocity=null)
     {
         if(id==0 || entityKey==0 || !PlayerHitbox.Finite(origin) ||
            !PlayerHitbox.Finite(target) || Vector3.DistanceSquared(origin,target)<1e-8f ||
            !float.IsFinite(speed) || speed is <.01f or >10000 ||
            tick>10_000_000 || trace==null ||
            !float.IsFinite(extraCollisionDistance) ||
-           extraCollisionDistance is <0 or >5)
+           extraCollisionDistance is <0 or >5 ||
+           (fastBullet && (extraCollisionDistance!=0 || targetVelocity==null)))
             throw new InvalidDataException("Invalid army projectile launch.");
         this.id=id;this.entityKey=entityKey;
         // BulletSlow.Fire starts its collision ray 0.1 units in front of the
@@ -43,6 +48,47 @@ internal sealed class ArmyProjectileFlight
         float requestedDistance=Vector3.Distance(origin,target);
         // BulletSlow.Fire limits a shot to 50 units before its preflight ray.
         float checkedDistance=MathF.Min(requestedDistance,50f);
+        this.fastBullet=fastBullet;
+        startTick=tick;
+        this.speed=speed;this.tick=tick;this.trace=trace;
+        if(fastBullet)
+        {
+            // BulletShotGun creates a fast BulletSlow for its one real pellet.
+            // Its launch ray is unbounded and its hit is cached immediately.
+            ShotCollision? launchHit=trace(origin+direction*.1f,direction,10000f);
+            Vector3 visualEnd=origin+direction*(checkedDistance*2f);
+            if(launchHit!=null)
+            {
+                if(!float.IsFinite(launchHit.Distance)||launchHit.Distance<0f||
+                   launchHit.Distance>10000f||!PlayerHitbox.Finite(launchHit.Position)||
+                   Vector3.Distance(origin+direction*(launchHit.Distance+.1f),
+                       launchHit.Position)>.02f)
+                    throw new InvalidDataException("Invalid fast bullet preflight collision.");
+                if(launchHit.Static)
+                    visualEnd=launchHit.Position;
+                else
+                {
+                    visualEnd=origin+direction*checkedDistance;
+                    if(launchHit.SourceDestroyable)
+                    {
+                        Vector3 velocity=targetVelocity!(launchHit);
+                        if(!PlayerHitbox.Finite(velocity)||velocity.Length()>1000f)
+                            throw new InvalidDataException("Invalid fast bullet target velocity.");
+                        float flightTime=Vector3.Distance(origin,launchHit.Position)/speed+.1f;
+                        visualEnd=launchHit.Position+velocity*flightTime;
+                        launchHit=launchHit with {Position=visualEnd};
+                    }
+                }
+            }
+            if(!PlayerHitbox.Finite(visualEnd)||
+               Vector3.Distance(origin,visualEnd)<.01f)
+                throw new InvalidDataException("Invalid fast bullet endpoint.");
+            fastImpact=launchHit;
+            this.target=visualEnd;
+            fastDuration=Vector3.Distance(origin,visualEnd)/speed;
+            position=origin;
+            return;
+        }
         if(extraCollisionDistance>0f && checkedDistance>.2f)
         {
             Vector3 rayOrigin=origin+direction*.1f;
@@ -62,7 +108,6 @@ internal sealed class ArmyProjectileFlight
         }
         aimDistance=checkedDistance;
         slowCollisionMargin=extraCollisionDistance;
-        startTick=tick;
         this.position=origin+direction*.1f;
         // BulletSlow first checks two margins beyond its initial tween. When
         // that check misses, OnCheckingAnimationFinished sends it one more
@@ -74,7 +119,6 @@ internal sealed class ArmyProjectileFlight
         if(finalDistance<.1f || !PlayerHitbox.Finite(collisionEnd))
             throw new InvalidDataException("Army projectile collision path left scene bounds.");
         this.target=collisionEnd;
-        this.speed=speed;this.tick=tick;this.trace=trace;
     }
 
     internal Vector3 Position=>position;
@@ -88,6 +132,8 @@ internal sealed class ArmyProjectileFlight
         if(nextTick!=tick+1 || nextTick>10_000_000)
             throw new InvalidDataException("Army projectile ticks must be contiguous.");
         tick=nextTick;
+        if(fastBullet)
+            return AdvanceFastBullet();
         if(slowCollisionMargin>0)
         {
             if(preflightStaticHit!=null)
@@ -111,6 +157,16 @@ internal sealed class ArmyProjectileFlight
         position+=direction*step;
         if(distance<=step+.0001f){position=target;finished=true;}
         return null;
+    }
+
+    private ArmyProjectileImpact? AdvanceFastBullet()
+    {
+        float elapsed=(float)(tick-startTick)/MatchManifest.TickRate;
+        float progress=MathF.Min(1f,elapsed/fastDuration);
+        position=Vector3.Lerp(origin,target,progress);
+        if(progress<1f)return null;
+        finished=true;
+        return fastImpact==null?null:new(id,entityKey,fastImpact,tick);
     }
 
     private ArmyProjectileImpact? AdvancePreflightStaticHit()

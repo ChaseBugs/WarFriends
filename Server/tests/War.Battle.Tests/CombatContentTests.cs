@@ -11727,6 +11727,46 @@ internal static class CombatContentTests
                 (_,_,_) => new ShotCollision(1.9f,new Vector3(0,2,0),
                     "scene/wall",null,0f,Static:true),
                 extraCollisionDistance:1f));
+            int fastTraceCalls=0;
+            var fastStaticFlight=new ArmyProjectileFlight(22,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (from,direction,range) =>
+                {
+                    fastTraceCalls++;
+                    return new ShotCollision(1.9f,new Vector3(2f,0,0),
+                        "scene/wall",null,0f,Static:true);
+                },fastBullet:true,targetVelocity:_=>Vector3.Zero);
+            Check(fastTraceCalls==1 && fastStaticFlight.Advance(11)==null &&
+                  fastStaticFlight.Advance(12)?.Collision.Static==true &&
+                  fastTraceCalls==1 && fastStaticFlight.Finished,
+                "fast shotgun pellet caches a static launch hit until visual arrival");
+            var fastMovingFlight=new ArmyProjectileFlight(23,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (_,_,_) => new ShotCollision(1.9f,new Vector3(2f,0,0),
+                    "player/body",shotIntent.TargetPlayerId,.5f,
+                    SourceDestroyable:true),
+                fastBullet:true,targetVelocity:_=>Vector3.UnitX);
+            Check(fastMovingFlight.Advance(11)==null &&
+                  fastMovingFlight.Advance(12)==null &&
+                  fastMovingFlight.Advance(13) is {Collision.PlayerId:var fastPlayer} &&
+                  fastPlayer==shotIntent.TargetPlayerId &&
+                  Math.Abs(fastMovingFlight.Position.X-(2f+2f/30f+.1f))<.001f,
+                "fast shotgun pellet predicts a moving destroyable from its launch hit");
+            var fastMissFlight=new ArmyProjectileFlight(24,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (_,_,_)=>null,fastBullet:true,targetVelocity:_=>Vector3.Zero);
+            for(ulong flightTick=11;flightTick<=18;flightTick++)
+                Check(fastMissFlight.Advance(flightTick)==null,
+                    "a missed fast pellet cannot invent a later collision");
+            Check(fastMissFlight.Finished &&
+                  Math.Abs(fastMissFlight.Position.X-8f)<.001f,
+                "a missed fast pellet flies twice its capped aim distance");
+            Reject(() => new ArmyProjectileFlight(25,77,
+                Vector3.Zero,Vector3.UnitX*4f,30,10,
+                (_,_,_) => new ShotCollision(1.9f,new Vector3(2f,0,0),
+                    "player/body",shotIntent.TargetPlayerId,.5f,
+                    SourceDestroyable:true),
+                fastBullet:true,targetVelocity:_=>new Vector3(float.NaN,0,0)));
             var ordinaryFlight = new ArmyProjectileFlight(12, 77,
                 Vector3.Zero, Vector3.UnitX, 30, 10,
                 (_, _, _) => null);

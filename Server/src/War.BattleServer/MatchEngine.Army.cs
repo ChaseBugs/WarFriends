@@ -3615,7 +3615,9 @@ public sealed partial class MatchEngine
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
                 (from,direction,range)=>rifleCombat.TraceForArmyDamage(intent.OwnerPlayerId,from,direction,range),
-                weaponBindings.SlowBulletCheckDistance(army.UnitId));
+                weaponBindings.SlowBulletCheckDistance(army.UnitId),
+                fastBullet:shotgun,
+                targetVelocity:shotgun?ArmyFastBulletTargetVelocity:null);
             armyProjectiles.Add(id,flight);
             armyProjectileAuthority.Add(id,new ArmyProjectileAuthority(intent.EntityKey,
                 army.OwnerPlayerId,army.OwnerFraction,launchDamage,
@@ -3662,6 +3664,30 @@ public sealed partial class MatchEngine
             "SoldierBehaviourSniper" => bindings.ProjectileSpeed(unitId),
             _ => null
         };
+    }
+
+    private Vector3 ArmyFastBulletTargetVelocity(ShotCollision hit)
+    {
+        // DestroyableObject.velocity is the target's observed root movement.
+        // Stationary scene objects, Decoys, and turrets retain zero velocity.
+        string? playerId=hit.PlayerId??hit.DynamicOwner;
+        if(playerId!=null && Find(playerId) is { } player)
+            return player.Route==null?Vector3.Zero:player.MoveVelocity;
+        if(hit.DynamicEntityId is not ulong entityId)return Vector3.Zero;
+        if(groundVehicleVelocities.TryGetValue(entityId,out Vector3 vehicleVelocity))
+            return vehicleVelocity;
+        if(armyDronePaths.TryGetValue(entityId,out var drone))
+            return drone.Velocity*MatchManifest.TickRate;
+        if(armyHelicopterPaths.TryGetValue(entityId,out var helicopter))
+            return helicopter.Velocity*MatchManifest.TickRate;
+        if(armyAssaultHelicopterPaths.TryGetValue(entityId,out var assault))
+            return assault.Velocity*MatchManifest.TickRate;
+        if(rusherMotionCandidates.TryGetValue(entityId,out var infantry))
+        {
+            Vector2 forward=infantry.PlanarDirection;
+            return new Vector3(forward.X,0f,forward.Y)*infantry.PlanarSpeed;
+        }
+        return Vector3.Zero;
     }
 
     private static Vector3 InfantryMuzzleOrigin(ArmyRusherShotIntent intent,
