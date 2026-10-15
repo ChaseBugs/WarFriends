@@ -21,6 +21,9 @@ checks cover contact, range, opposing-owner collection, and replay. A normal
 grenade flight also contacts the live box, completes its source fuse, and
 collects it with the resulting blast in the focused host simulation. A normal
 deployed Grenadier throw into a box remains to be verified.
+An actual Park Grenadier deployment also confirms that automatic blasts
+outside the recovered radius leave a host-issued box at one HP and grant no
+Kevlar; this is a negative range test, not a collection proof.
 
 The recovered `Missile.TryKill` sends RPG impacts through
 `Explosion.MissileExplode`. The host now includes active box colliders in

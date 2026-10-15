@@ -12472,6 +12472,62 @@ internal static class CombatContentTests
               !snowGrenadierMatch.CardGrenadierWalking(
                   snowGrenadier.EntityKey),
             "Snow Grenadier waits for its five-second source point retry");
+        var grenadierBoxMatch = ReadyCardMatch(
+            "host-card-grenadier-box", "GREATGRENADIER",
+            withBonusBox: true);
+        grenadierBoxMatch.BonusPlanner.EnqueueConfirmedBonus(
+            new string('4', 32), decoyPlayer, 6);
+        for (int hit = 0; hit < 3; hit++)
+            grenadierBoxMatch.BonusProgress.RecordConfirmedSkillShot(decoyPlayer,
+                new string((char)('6' + hit), 32), 0x1210, 1f);
+        for (ulong simulationTick = 61; simulationTick <= 153; simulationTick++)
+            grenadierBoxMatch.Advance(simulationTick);
+        var grenadierBox = grenadierBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        Check(grenadierBoxMatch.TryScheduleCardUnit(new string('9', 32),
+                  decoyPlayer, "GREATGRENADIER"),
+            "host deploys a Grenadier soldier after issuing the box");
+        int grenadierBoxExplosions = 0;
+        float nearestGrenadierBlast = float.PositiveInfinity;
+        Vector3 nearestGrenadierBlastPosition = Vector3.Zero;
+        bool grenadierBoxCollected = false;
+        for (ulong simulationTick = 154; simulationTick < 1800 &&
+             !grenadierBoxMatch.Terminal && !grenadierBoxCollected;
+             simulationTick++)
+        {
+            grenadierBoxMatch.Advance(simulationTick);
+            foreach (var explosion in grenadierBoxMatch.CardGrenadierExplosions())
+            {
+                grenadierBoxExplosions++;
+                float distance = Vector3.Distance(explosion.Position,
+                    grenadierBox.Position);
+                if (distance < nearestGrenadierBlast)
+                {
+                    nearestGrenadierBlast = distance;
+                    nearestGrenadierBlastPosition = explosion.Position;
+                }
+            }
+            grenadierBoxCollected = grenadierBoxMatch.BonusPlanner
+                .BoxSnapshot(grenadierBox.BoxId).Phase == PvpBonusBoxPhase.Collected;
+            if (simulationTick % 60 == 0)
+            {
+                grenadierBoxMatch.EventBatch(decoyPlayer, 0);
+                grenadierBoxMatch.EventBatch(decoyOpponent, 0);
+            }
+        }
+        float grenadierOuterRadius = content.Army.CardBaseStats(
+            "GREATGRENADIER", 22,
+            content.BarrelPolicy.MaxDisplayLevel).Grenadier!.OuterRadius;
+        Check(!grenadierBoxCollected && grenadierBoxExplosions > 0 &&
+              nearestGrenadierBlast > grenadierOuterRadius &&
+              grenadierBoxMatch.BonusPlanner.BoxSnapshot(grenadierBox.BoxId)
+                  .Health == 1f &&
+              grenadierBoxMatch.Snapshot().Players[0].KevlarHealth == 0f,
+            $"deployed Grenadier cannot collect an out-of-range box: " +
+            $"box={grenadierBox.Position}, " +
+            $"explosions={grenadierBoxExplosions}, nearest={nearestGrenadierBlast}, " +
+            $"blastPosition={nearestGrenadierBlastPosition}, " +
+            $"phase={grenadierBoxMatch.BonusPlanner.BoxSnapshot(grenadierBox.BoxId).Phase}");
+
         var rocketBoxMatch = ReadyCardMatch("host-card-rocket-box", "BIGROCKET",
             withBonusBox: true);
         rocketBoxMatch.BonusPlanner.EnqueueConfirmedBonus(
