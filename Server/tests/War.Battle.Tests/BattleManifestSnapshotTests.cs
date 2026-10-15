@@ -170,6 +170,13 @@ internal static class BattleManifestSnapshotTests
             if(bulletHits==null || bulletHits.Count!=2 ||
                bulletHits[0] is not {ConfirmedBulletHits:1} || bulletHits[1] is not {ConfirmedBulletHits:0})
                 throw new Exception("Durable result read lost player-owned bullet contact evidence.");
+            var crateStats = await resultStore.GetCrateStats(match, CancellationToken.None);
+            if (crateStats == null || crateStats.Count != 2 ||
+                crateStats[0].PlayerId != players[0] || crateStats[1].PlayerId != players[1] ||
+                crateStats.Any(player => player.CratesCollected != 0 || player.CratesStolen != 0))
+            {
+                throw new Exception("Durable result read lost validated crate statistics.");
+            }
             var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
                 new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));
             if(await resumedAcceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted" ||

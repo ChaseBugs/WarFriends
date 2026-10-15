@@ -153,6 +153,18 @@ public sealed class BattleResultStore
         var result=await Get(matchId,ct);
         return result==null ? null : BattleBulletHitEvidenceProjection.FromPayload(result.Snapshot,result.MatchId,result.Digest);
     }
+    /// <summary>Reads host-confirmed crate counts from a completed battle result.</summary>
+    public async Task<IReadOnlyList<BattleCrateMatchStats>?> GetCrateStats(
+        string matchId, CancellationToken cancellationToken)
+    {
+        BattleResultDocument? result = await Get(matchId, cancellationToken);
+        if (result == null)
+        {
+            return null;
+        }
+
+        return BattleCrateStatsProjection.FromPayload(result.Snapshot, result.MatchId, result.Digest);
+    }
     public async Task<IReadOnlyList<BattleDirectArmyKillEvidence>?> GetDirectArmyKillEvidence(string matchId,CancellationToken ct)
     {
         var result=await Get(matchId,ct);
