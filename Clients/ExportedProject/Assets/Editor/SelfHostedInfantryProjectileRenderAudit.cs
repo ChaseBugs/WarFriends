@@ -5,7 +5,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using War.Protocol;
 
-public static class SelfHostedSwatProjectileRenderAudit
+public static class SelfHostedInfantryProjectileRenderAudit
 {
     public static void Run()
     {
@@ -29,34 +29,40 @@ public static class SelfHostedSwatProjectileRenderAudit
             presenter.Configure(player, player, behaviours);
 
             var snapshot = new MatchSnapshot();
-            snapshot.Projectiles.Add(new BattleProjectileState
+            var families = new[]
             {
-                ProjectileId = 71, OwnerPlayerId = player.playerProperties.playerID,
-                Kind = "army-bullet", ArmyUnitId = "ID_UNIT-SWAT",
-                ArmySourceCardId = "ELITESWAT", X = 1, Y = 2, Z = 3,
-                VelocityZ = 5
-            });
-            snapshot.Projectiles.Add(new BattleProjectileState
+                new { UnitId = "ID_UNIT-SWAT", CardId = "ELITESWAT" },
+                new { UnitId = "ID_UNIT-PARATROOPER", CardId = "ELITEPARA" },
+                new { UnitId = "ID_UNIT-MINIGUNNER", CardId = "ELITEMINIGUN" },
+                new { UnitId = "ID_UNIT-SNIPER", CardId = "ELITESNIPER" }
+            };
+            for (int index = 0; index < families.Length; index++)
             {
-                ProjectileId = 72, OwnerPlayerId = player.playerProperties.playerID,
-                Kind = "army-bullet", ArmyUnitId = "ID_UNIT-SWAT",
-                X = 2, Y = 2, Z = 3, VelocityZ = 5
-            });
+                for (int card = 0; card < 2; card++)
+                    snapshot.Projectiles.Add(new BattleProjectileState
+                    {
+                        ProjectileId = (ulong)(71 + index * 2 + card),
+                        OwnerPlayerId = player.playerProperties.playerID,
+                        Kind = "army-bullet", ArmyUnitId = families[index].UnitId,
+                        ArmySourceCardId = card == 0 ? families[index].CardId : "",
+                        X = 1 + index, Y = 2, Z = 3, VelocityZ = 5
+                    });
+            }
             presenter.Apply(snapshot);
-            foreach (ulong projectileId in new ulong[] { 71, 72 })
+            foreach (var projectile in snapshot.Projectiles)
             {
-                var visual = GameObject.Find("SelfHostedProjectile_" + projectileId);
-                Require(visual != null, "SWAT shot has no visual");
+                var visual = GameObject.Find("SelfHostedProjectile_" + projectile.ProjectileId);
+                Require(visual != null, "infantry shot has no visual");
                 Require(visual.GetComponentsInChildren<MeshFilter>(true)
                     .Select(filter => filter.sharedMesh).SequenceEqual(pool.bulletSlow
                         .GetComponentsInChildren<MeshFilter>(true)
-                        .Select(filter => filter.sharedMesh)), "SWAT bullet mesh differs from source");
+                        .Select(filter => filter.sharedMesh)), "infantry bullet mesh differs from source");
                 Require(visual.GetComponent<LineTrailRenderer>() != null,
-                    "SWAT shot has no source-configured trail");
+                    "infantry shot has no source-configured trail");
                 Require(visual.GetComponentsInChildren<Collider>(true).Length == 0 &&
                     visual.GetComponentsInChildren<Rigidbody>(true).Length == 0 &&
                     visual.GetComponentsInChildren<BulletBase>(true).Length == 0,
-                    "SWAT visual contains gameplay or collision components");
+                    "infantry visual contains gameplay or collision components");
             }
 
             presenter.ApplyEvent(new MatchEvent
@@ -64,12 +70,13 @@ public static class SelfHostedSwatProjectileRenderAudit
                 Kind = MatchEventKind.Impact, ProjectileId = 71, Reason = "army"
             });
             Require(GameObject.Find("SelfHostedProjectile_71") == null,
-                "host impact did not retire the SWAT shot");
+                "host impact did not retire the infantry shot");
 
             presenter.Apply(new MatchSnapshot());
-            Require(GameObject.Find("SelfHostedProjectile_72") == null,
-                "completed SWAT shot remains visible");
-            Debug.Log("UNITY_SWAT_PROJECTILE_RENDER_PASSED normal=True card=True sourceMesh=True trail=True impact=True removal=True");
+            foreach (var projectile in snapshot.Projectiles)
+                Require(GameObject.Find("SelfHostedProjectile_" + projectile.ProjectileId) == null,
+                    "completed infantry shot remains visible");
+            Debug.Log("UNITY_INFANTRY_PROJECTILE_RENDER_PASSED families=4 normal=True card=True sourceMesh=True trail=True impact=True removal=True");
             EditorApplication.Exit(0);
         }
         catch (Exception error)
@@ -89,6 +96,6 @@ public static class SelfHostedSwatProjectileRenderAudit
 
     private static void Require(bool condition, string message)
     {
-        if (!condition) throw new InvalidOperationException("SWAT render audit: " + message);
+        if (!condition) throw new InvalidOperationException("Infantry render audit: " + message);
     }
 }
