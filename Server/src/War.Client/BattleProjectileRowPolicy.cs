@@ -60,6 +60,7 @@ namespace War.Client
                 kind == "pvp-bonus-grenade" ||
                 kind == "card-rocket" || kind == "card-rocket-fake" ||
                 kind == "card-grenadier" ||
+                kind == "army-bullet" ||
                 kind == "heavy-turret-bullet" ||
                 kind == "helicopter-bullet" || kind == "helicopter-fake-bullet" ||
                 kind == "assault-helicopter-bullet" ||

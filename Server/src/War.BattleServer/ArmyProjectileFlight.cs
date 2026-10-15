@@ -11,6 +11,7 @@ internal sealed class ArmyProjectileFlight
     private readonly ulong id;
     private readonly ulong entityKey;
     private readonly float speed;
+    private readonly Vector3 direction;
     private readonly Vector3 target;
     private readonly Func<Vector3,Vector3,float,ShotCollision?> trace;
     private ulong tick;
@@ -29,12 +30,14 @@ internal sealed class ArmyProjectileFlight
         // BulletSlow.Fire starts its collision ray 0.1 units in front of the
         // visual muzzle. This keeps a muzzle beside scenery from immediately
         // hitting the surface behind the projectile's rendered start point.
-        this.position=origin+Vector3.Normalize(target-origin)*.1f;this.target=target;
+        direction=Vector3.Normalize(target-origin);
+        this.position=origin+direction*.1f;this.target=target;
         this.speed=speed;this.tick=tick;this.trace=trace;
     }
 
     internal Vector3 Position=>position;
     internal float Speed=>speed;
+    internal Vector3 Velocity=>direction*speed;
     internal bool Finished=>finished;
 
     internal ArmyProjectileImpact? Advance(ulong nextTick)

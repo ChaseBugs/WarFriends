@@ -3020,6 +3020,25 @@ public sealed partial class MatchEngine : IMatchRuntime
                     VelocityZ = flight.Velocity.Z
                 };
             }));
+        snapshot.Projectiles.AddRange(armyProjectiles.OrderBy(row => row.Key)
+            .Select(row =>
+            {
+                if (!armyProjectileAuthority.TryGetValue(row.Key, out var launch))
+                    throw new InvalidDataException(
+                        "Army projectile snapshot lost its launch authority.");
+                var flight = row.Value;
+                return new BattleProjectileState
+                {
+                    ProjectileId = row.Key,
+                    OwnerPlayerId = launch.OwnerPlayerId,
+                    Kind = "army-bullet",
+                    X = flight.Position.X, Y = flight.Position.Y,
+                    Z = flight.Position.Z,
+                    VelocityX = flight.Velocity.X,
+                    VelocityY = flight.Velocity.Y,
+                    VelocityZ = flight.Velocity.Z
+                };
+            }));
         snapshot.Projectiles.AddRange(projectiles.OrderBy(x=>x.Key)
             .Where(x=>x.Value.WeaponSourceId.StartsWith("Google2u.Shotgun_",StringComparison.Ordinal))
             .Select(x=>new BattleProjectileState

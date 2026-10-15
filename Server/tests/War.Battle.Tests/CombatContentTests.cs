@@ -14125,6 +14125,13 @@ internal static class CombatContentTests
               launch.OwnerPlayerId == decoyPlayer && launch.OwnerFraction == 1 &&
               launch.Damage == swatCardStats.Combat.Damage,
             "card SWAT projectile retains its card-row damage and owner at launch");
+        var swatProjectile = firingSwatMatch.Snapshot().Projectiles.Single(row =>
+            row.ProjectileId == swatShot!.ProjectileId);
+        Check(swatProjectile.Kind == "army-bullet" &&
+              swatProjectile.OwnerPlayerId == decoyPlayer &&
+              new Vector3(swatProjectile.VelocityX,
+                  swatProjectile.VelocityY, swatProjectile.VelocityZ).Length() > 0,
+            "card SWAT shot publishes its owner and moving flight");
         var arrivedSwat = firingSwatMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.FirstOrDefault(row =>
                 firingSwatMatch.CardSwatAttacking(row.EntityKey));
@@ -14160,6 +14167,9 @@ internal static class CombatContentTests
         Check(swatFlightFinished && !firingSwatMatch.Terminal &&
               (swatImpact == null || swatImpact.Reason == "army"),
             "card SWAT shot keeps its launch authority after soldier death until impact or expiry");
+        Check(!firingSwatMatch.Snapshot().Projectiles.Any(row =>
+                  row.ProjectileId == swatShot.ProjectileId),
+            "finished army bullets leave the projectile snapshot");
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([
