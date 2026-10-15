@@ -633,6 +633,16 @@ if(args is ["--rusher-only"])
     return;
 }
 
+if(args is ["--normal-sniper-udp-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new Exception("Recovered battle content artifact not found.");
+    int focused=await LiveRusherUdpTests.RunNormalSniperOnly(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} ordinary Sniper UDP assertions");
+    return;
+}
+
 if(args is ["--combat-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

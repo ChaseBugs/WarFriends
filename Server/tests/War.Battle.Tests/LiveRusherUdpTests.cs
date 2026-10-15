@@ -11,6 +11,18 @@ using War.Protocol;
 
 internal static class LiveRusherUdpTests
 {
+    internal static Task<int> RunNormalSniperOnly(string directory)
+    {
+        var content = BattleCombatContent.Load(Path.Combine(directory,
+            "combat-content-manifest.json"));
+        var map = content.Maps.Single(value => value.Source.EndsWith(
+            "Park_Multiplayer.unity", StringComparison.Ordinal));
+        var left = map.Covers.First(cover => cover.Main && cover.Fraction == 1);
+        var right = map.Covers.First(cover => cover.Main && cover.Fraction == 2);
+        var weapon = content.Stats.CreateManifest("Google2u.AssaultRifle_AK47", 0);
+        return RunNormalSniper(directory, content, map, left, right, weapon);
+    }
+
     internal static async Task<int> Run(string directory)
     {
         int checks=0;
@@ -402,7 +414,7 @@ internal static class LiveRusherUdpTests
         string owner = new('1', 32);
         string opponent = new('2', 32);
         ParticipantManifest Player(string id, int fraction, int cover) =>
-            new(id, weapon, fraction, cover, 1, new(100000), 0, 0, 0)
+            new(id, weapon, fraction, cover, 1, new(100000), 0, 1, 0)
             {
                 EquippedArmyUnitIds = ["ID_UNIT-SNIPER"],
                 ArmyNormalUpgradeIndexes = [0],
@@ -487,6 +499,10 @@ internal static class LiveRusherUdpTests
             } while (state.Snapshot.Phase != BattlePhase.Running);
 
             var hand = await local.PollArmyAsync(timeout.Token);
+            var initialOpponent = state.Snapshot.Players.Single(player =>
+                player.PlayerId == opponent);
+            float initialShieldHealth = state.Snapshot.Shields.Single(shield =>
+                shield.CoverIndex == initialOpponent.CoverIndex).Health;
             int option = hand.OptionIndexes.First();
             Check(hand.Code == "army-offers" &&
                   (await local.DeployArmyAsync(option, timeout.Token)).Code == "army-deploying",
@@ -528,6 +544,62 @@ internal static class LiveRusherUdpTests
             }
             Check(localSawFlight && remoteSawFlight && scanReplayed,
                 "both UDP peers and a replayed scan retain one ordinary Sniper flight");
+
+            bool bothSawShieldDamage = false;
+            ulong localEventCursor = 0;
+            ulong remoteEventCursor = 0;
+            var localShots = new HashSet<ulong>();
+            var remoteShots = new HashSet<ulong>();
+            var localImpacts = new HashSet<ulong>();
+            var remoteImpacts = new HashSet<ulong>();
+            var localShieldHits = new HashSet<ulong>();
+            var remoteShieldHits = new HashSet<ulong>();
+            while (watch.Elapsed < TimeSpan.FromSeconds(45) &&
+                   !bothSawShieldDamage)
+            {
+                await Task.Delay(75, timeout.Token);
+                var localPoll = local.PollAsync(timeout.Token);
+                var remotePoll = remote.PollAsync(timeout.Token);
+                var localEvents = local.PollEventsAsync(localEventCursor, timeout.Token);
+                var remoteEvents = remote.PollEventsAsync(remoteEventCursor, timeout.Token);
+                await Task.WhenAll(localPoll, remotePoll, localEvents, remoteEvents);
+
+                foreach (var row in localEvents.Result.Events)
+                {
+                    localEventCursor = row.EventId;
+                    if (row.Kind == MatchEventKind.Shot && row.ActorId == owner &&
+                        row.Reason == "army") localShots.Add(row.ProjectileId);
+                    if (row.Kind == MatchEventKind.Impact && row.Reason == "army")
+                        localImpacts.Add(row.ProjectileId);
+                    if (row.Kind == MatchEventKind.ShieldDamaged &&
+                        row.TargetId == opponent) localShieldHits.Add(row.ProjectileId);
+                }
+                foreach (var row in remoteEvents.Result.Events)
+                {
+                    remoteEventCursor = row.EventId;
+                    if (row.Kind == MatchEventKind.Shot && row.ActorId == owner &&
+                        row.Reason == "army") remoteShots.Add(row.ProjectileId);
+                    if (row.Kind == MatchEventKind.Impact && row.Reason == "army")
+                        remoteImpacts.Add(row.ProjectileId);
+                    if (row.Kind == MatchEventKind.ShieldDamaged &&
+                        row.TargetId == opponent) remoteShieldHits.Add(row.ProjectileId);
+                }
+                float ShieldHealth(MatchReply reply) => reply.Snapshot.Shields
+                    .Single(shield => shield.CoverIndex == initialOpponent.CoverIndex).Health;
+                bool sharedDamagingShot = localShieldHits.Any(id =>
+                    remoteShieldHits.Contains(id) &&
+                    localShots.Contains(id) && remoteShots.Contains(id) &&
+                    localImpacts.Contains(id) && remoteImpacts.Contains(id));
+                bothSawShieldDamage = sharedDamagingShot &&
+                    ShieldHealth(localPoll.Result) < initialShieldHealth &&
+                    ShieldHealth(localPoll.Result) == ShieldHealth(remotePoll.Result) &&
+                    localPoll.Result.Snapshot.Players.Single(player =>
+                        player.PlayerId == opponent).Health == initialOpponent.Health &&
+                    remotePoll.Result.Snapshot.Players.Single(player =>
+                        player.PlayerId == opponent).Health == initialOpponent.Health;
+            }
+            Check(bothSawShieldDamage,
+                "both UDP peers receive the ordinary Sniper's shield damage without player damage");
         }
         finally
         {
