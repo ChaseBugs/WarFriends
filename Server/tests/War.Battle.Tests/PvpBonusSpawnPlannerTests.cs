@@ -702,6 +702,37 @@ internal static class PvpBonusSpawnPlannerTests
             return match;
         }
 
+        var firedBoxMatch = RunningBonusMatch(8699, () => 1f);
+        firedBoxMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86990), localId, 6);
+        for (int index = 0; index < 3; index++)
+            firedBoxMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86991 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            firedBoxMatch.Advance(nextTick);
+        var firedBox = firedBoxMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        string shotResult = firedBoxMatch.Command(localId, new MatchCommand
+        {
+            CommandId = 2,
+            Fire = new FireCommand
+            {
+                TargetX = firedBox.Position.X,
+                TargetY = firedBox.Position.Y,
+                TargetZ = firedBox.Position.Z
+            }
+        }).Code;
+        for (ulong nextTick = 154; nextTick <= 180 && !firedBoxMatch.Terminal;
+             nextTick++)
+            firedBoxMatch.Advance(nextTick);
+        Check(shotResult == "shot-scheduled" &&
+              firedBoxMatch.BonusPlanner.BoxSnapshot(firedBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              firedBoxMatch.Snapshot().PvpBonusBoxes.Count == 0 &&
+              firedBoxMatch.Snapshot().Players[0].KevlarHealth ==
+                  manifest.Players[0].Combat!.MaxHealth * 0.1f,
+            "normal Fire command shoots and collects a host-issued bonus box: " +
+            $"shot={shotResult}, phase={firedBoxMatch.BonusPlanner.BoxSnapshot(firedBox.BoxId).Phase}, " +
+            $"terminal={firedBoxMatch.Terminal}, target={firedBox.Position}");
+
         var simultaneous = RunningBonusMatch(8700, () => 0.5f);
         foreach (var participant in manifest.Players)
             for (int index = 0; index < 3; index++)

@@ -47,9 +47,10 @@ original Android Unity 5.2 and two-peer box display remain unverified.
 The host treats an active box as a distinct layer-zero bullet hitbox, separate
 from player and army target IDs. Player-owned bullets reduce its source one HP;
 only lethal cumulative damage confirms collection, including in the air.
-Projectile receipts prevent repeated damage or duplicate collection. Normal
-two-peer Fire-command aiming, shotgun cones and explosive/army damage paths
-remain unverified.
+Projectile receipts prevent repeated damage or duplicate collection. An
+in-process two-participant match now verifies a normal Fire command, bullet
+travel, lethal collection, snapshot removal and the Kevlar effect. Two-peer
+UDP aiming, shotgun cones and explosive/army damage paths remain unverified.
 
 ## Source bindings
 
