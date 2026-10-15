@@ -15534,7 +15534,7 @@ internal static class CombatContentTests
                 ArmyDamageScales = [1f],
                 ArmySpeedCoefficients = [1f],
                 ArmyAccuracyCoefficients = [1f],
-                ShieldLevel = 0
+                ShieldLevel = 1
             }).ToArray()
         };
         content.ValidateAllocation(normalSniperManifest);
@@ -15609,6 +15609,10 @@ internal static class CombatContentTests
             "ordinary Sniper publishes a source-speed noncritical host projectile");
         float healthBeforeSniperImpact = normalSniperMatch.Snapshot().Players
             .Single(player => player.PlayerId == helicopterOwner).Health;
+        int opponentCoverIndex = normalSniperMatch.Snapshot().Players
+            .Single(player => player.PlayerId == helicopterOwner).CoverIndex;
+        float shieldBeforeSniperImpact = normalSniperMatch.Snapshot().Shields
+            .Single(shield => shield.CoverIndex == opponentCoverIndex).Health;
         MatchEvent? normalSniperImpact = null;
         while (normalSniperTick < 1100 && !normalSniperMatch.Terminal &&
                normalSniperImpact == null)
@@ -15618,10 +15622,17 @@ internal static class CombatContentTests
                 .Events.FirstOrDefault(row => row.Kind == MatchEventKind.Impact &&
                     row.ProjectileId == normalSniperProjectileId);
         }
+        bool normalSniperDamagedShield = normalSniperMatch.EventBatch(soldierOwner, 0)
+            .Events.Any(row => row.Kind == MatchEventKind.ShieldDamaged &&
+                row.ProjectileId == normalSniperProjectileId);
+        float shieldAfterSniperImpact = normalSniperMatch.Snapshot().Shields
+            .Single(shield => shield.CoverIndex == opponentCoverIndex).Health;
         Check(normalSniperImpact is { Reason: "army", TargetId: "" } &&
+              normalSniperDamagedShield &&
+              shieldAfterSniperImpact < shieldBeforeSniperImpact &&
               normalSniperMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
-            "ordinary Sniper projectile collides with map geometry without inventing player damage");
+            "ordinary Sniper projectile damages the opposing shield without bypassing it");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
