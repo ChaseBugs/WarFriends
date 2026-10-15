@@ -1380,6 +1380,29 @@ prestart.Advance(60);
 Check(prestart.Snapshot() is {Phase:BattlePhase.Aborted,TerminalReason:"prestart-disconnect",
       WinnerPlayerId:"",RewardEligible:false},
       "one idle countdown peer cancels before play without fabricating a win");
+var countdownForfeit = new MatchEngine(definition with { MatchId = "countdown-forfeit" });
+Check(countdownForfeit.Admit(a) && countdownForfeit.Admit(b),
+    "countdown forfeit fixture admits both players");
+countdownForfeit.Command(a, Ready(1, countdownForfeit.ManifestHash));
+countdownForfeit.Command(b, Ready(1, countdownForfeit.ManifestHash));
+var cancelledCountdown = countdownForfeit.Command(a, new MatchCommand
+{
+    CommandId = 2,
+    Forfeit = new ForfeitCommand()
+});
+Check(cancelledCountdown.Code == "forfeited" &&
+      cancelledCountdown.Snapshot is
+      {
+          Phase: BattlePhase.Aborted,
+          TerminalReason: "cancelled-before-start",
+          WinnerPlayerId: "",
+          RewardEligible: false
+      }, "countdown forfeit cancels play without awarding a win");
+Check(countdownForfeit.Command(a, new MatchCommand
+{
+    CommandId = 2,
+    Forfeit = new ForfeitCommand()
+}).Equals(cancelledCountdown), "countdown forfeit retry replays the same terminal result");
 var idle = new MatchEngine(definition);
 idle.Admit(a); idle.Admit(b); idle.Command(a, Ready(1, idle.ManifestHash)); idle.Command(b, Ready(1, idle.ManifestHash));
 idle.Advance(299); idle.Command(a, Poll()); idle.Advance(300);

@@ -2203,8 +2203,17 @@ public sealed partial class MatchEngine : IMatchRuntime
         }
         if (c.IntentCase == MatchCommand.IntentOneofCase.Forfeit)
         {
-            if (phase == BattlePhase.Waiting) End("cancelled-before-start", "", false);
-            else End("forfeit", players.Single(x => x != p).Definition.PlayerId, true);
+            if (phase is BattlePhase.Waiting or BattlePhase.Countdown)
+            {
+                // The recovered Client cancels a match before play starts.
+                // A ready peer has not yet earned a battle outcome.
+                End("cancelled-before-start", "", false);
+            }
+            else
+            {
+                End("forfeit", players.Single(player => player != p).Definition.PlayerId, true);
+            }
+
             return "forfeited";
         }
         if (phase != BattlePhase.Running) return "not-running";
