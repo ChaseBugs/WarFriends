@@ -43,10 +43,12 @@ internal sealed class ArmyProjectileFlight
         slowCollisionMargin=extraCollisionDistance;
         startTick=tick;
         this.position=origin+direction*.1f;
-        // BulletSlow with collision checking travels beyond its aim point.
-        // The caller supplies the validated runtime distanceToCheck margin.
+        // BulletSlow first checks two margins beyond its initial tween. When
+        // that check misses, OnCheckingAnimationFinished sends it one more
+        // full aim distance before the pooled bullet is destroyed.
         float finalDistance=extraCollisionDistance==0 ? aimDistance :
-            MathF.Max(0,aimDistance-extraCollisionDistance)+2*extraCollisionDistance;
+            MathF.Max(0,aimDistance-extraCollisionDistance)+
+            2*extraCollisionDistance+aimDistance;
         Vector3 collisionEnd=origin+direction*finalDistance;
         if(finalDistance<.1f || !PlayerHitbox.Finite(collisionEnd))
             throw new InvalidDataException("Army projectile collision path left scene bounds.");
@@ -90,15 +92,23 @@ internal sealed class ArmyProjectileFlight
     {
         // BulletBase spends aimDistance / speed seconds travelling to the
         // point one check margin before its aim. BulletSlow then checks the
-        // next two margins over three margins / speed seconds.
+        // next two margins over three margins / speed seconds. A miss starts
+        // one final aim-distance tween at ordinary projectile speed.
         float firstDuration=aimDistance/speed;
         float firstEnd=MathF.Max(0,aimDistance-slowCollisionMargin);
         float continuationDuration=3*slowCollisionMargin/speed;
+        float secondEnd=firstEnd+2*slowCollisionMargin;
+        float secondEndTime=firstDuration+continuationDuration;
         float elapsed=(float)(tick-startTick)/MatchManifest.TickRate;
-        float travelled=elapsed<=firstDuration ?
-            firstEnd*MathF.Min(1,elapsed/firstDuration) :
-            firstEnd+2*slowCollisionMargin*MathF.Min(1,
+        float travelled;
+        if(elapsed<=firstDuration)
+            travelled=firstEnd*MathF.Min(1,elapsed/firstDuration);
+        else if(elapsed<=secondEndTime)
+            travelled=firstEnd+2*slowCollisionMargin*MathF.Min(1,
                 (elapsed-firstDuration)/continuationDuration);
+        else
+            travelled=secondEnd+aimDistance*MathF.Min(1,
+                (elapsed-secondEndTime)/(aimDistance/speed));
         Vector3 next=origin+direction*MathF.Max(.1f,travelled);
         if(!PlayerHitbox.Finite(next))
         {
@@ -120,7 +130,7 @@ internal sealed class ArmyProjectileFlight
             }
             position=next;
         }
-        if(elapsed>=firstDuration+continuationDuration)
+        if(elapsed>=secondEndTime+aimDistance/speed)
         {
             position=target;
             finished=true;

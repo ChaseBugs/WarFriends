@@ -11600,6 +11600,37 @@ internal static class CombatContentTests
                       shotIntent.TargetPlayerId &&
                   slowSniperFlight.Finished,
                 "slow Sniper checks its source-timed continuation behind the aim point");
+            var missedSlowFlight = new ArmyProjectileFlight(15, 77,
+                Vector3.Zero, Vector3.UnitX * 4f, 30, 10,
+                (_, _, _) => null, extraCollisionDistance: 1f);
+            for(ulong flightTick=11;flightTick<=21;flightTick++)
+            {
+                Check(missedSlowFlight.Advance(flightTick)==null,
+                    "a missed slow bullet does not invent an impact");
+                if(flightTick<21)
+                    Check(!missedSlowFlight.Finished,
+                        "a missed slow bullet keeps its final source tween alive");
+            }
+            Check(missedSlowFlight.Finished &&
+                  Math.Abs(missedSlowFlight.Position.X-9f)<.001f,
+                "a missed slow bullet finishes one aim distance after the margin check");
+            var lateSlowFlight = new ArmyProjectileFlight(16, 77,
+                Vector3.Zero, Vector3.UnitX * 4f, 30, 10,
+                (from, direction, range) =>
+                {
+                    float distanceToPlayer=7f-from.X;
+                    return distanceToPlayer>=0f && distanceToPlayer<=range
+                        ? new ShotCollision(distanceToPlayer,
+                            from+direction*distanceToPlayer,
+                            "player/body",shotIntent.TargetPlayerId,.5f)
+                        : null;
+                }, extraCollisionDistance: 1f);
+            for(ulong flightTick=11;flightTick<=18;flightTick++)
+                Check(lateSlowFlight.Advance(flightTick)==null,
+                    "the late collision does not occur during the two earlier source tweens");
+            Check(lateSlowFlight.Advance(19)?.Collision.PlayerId==
+                  shotIntent.TargetPlayerId && lateSlowFlight.Finished,
+                "the last BulletSlow tween can still hit a player beyond the aim");
             var ordinaryFlight = new ArmyProjectileFlight(12, 77,
                 Vector3.Zero, Vector3.UnitX, 30, 10,
                 (_, _, _) => null);
