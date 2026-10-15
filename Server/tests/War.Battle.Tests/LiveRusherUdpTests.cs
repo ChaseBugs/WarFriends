@@ -147,6 +147,7 @@ internal static class LiveRusherUdpTests
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
         checks+=await RunCommando(directory,content,map,left,right,weapon);
+        checks+=await RunShotgunner(directory,content,map,left,right,weapon);
         return checks;
     }
 
@@ -252,6 +253,137 @@ internal static class LiveRusherUdpTests
                   "live special Commando hit stacks its own immediate plus four one-second poison pulses");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
+        return checks;
+    }
+
+    private static async Task<int> RunShotgunner(string directory,BattleCombatContent content,
+        RecoveredBattleMap map,CoverNode left,CoverNode right,WeaponManifest weapon)
+    {
+        int checks=0;
+        void Check(bool condition,string message)
+        {
+            if(!condition)throw new Exception(message);
+            checks++;
+        }
+        string owner=new('e',32),opponent=new('f',32);
+        ParticipantManifest Player(string id,int fraction,int cover)=>
+            new(id,weapon,fraction,cover,1,new(100000),0,0,0)
+            {
+                EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER"],
+                ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],
+                ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
+                ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],
+                ArmyAccuracyCoefficients=[2f]
+            };
+        var manifest=new MatchManifest("shotgunner-pellets-udp","local-1",
+            "Park_Multiplayer",map.SourceHash,content.Revision,
+            MatchManifest.RifleCombatMode,10,60,120,
+            [Player(owner,1,left.SourceIndex),Player(opponent,2,right.SourceIndex)])
+            {SceneMasterPlayerId=owner};
+        string file=Path.Combine(Path.GetTempPath(),
+            "war-shotgunner-udp-"+Guid.NewGuid().ToString("N")+".json");
+        File.WriteAllText(file,JsonSerializer.Serialize(manifest));
+        using var probe=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
+        int port=((IPEndPoint)probe.Client.LocalEndPoint!).Port;
+        probe.Close();
+        string key=Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var tokens=new MatchTokens(key);
+        var config=new ConfigurationBuilder().AddInMemoryCollection(
+            new Dictionary<string,string?>
+            {
+                ["Battle:SigningKey"]=key,["Battle:ServerId"]=manifest.ServerId,
+                ["Battle:Port"]=port.ToString(),["Battle:MatchManifestPath"]=file,
+                ["Battle:ResultOutboxPath"]=Path.Combine(Path.GetTempPath(),
+                    "war-shotgunner-outbox-"+Guid.NewGuid().ToString("N")),
+                ["Battle:CombatContentManifestPath"]=Path.Combine(directory,
+                    "combat-content-manifest.json")
+            }).Build();
+        MatchConnectionGrant Grant(string playerId,ulong session)
+        {
+            long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var admission=new MatchAdmission
+            {
+                MatchId=manifest.MatchId,ServerId=manifest.ServerId,
+                PlayerId=playerId,SessionId=session,ManifestHash=manifest.Digest(),
+                IssuedUnixSeconds=now,ExpiresUnixSeconds=now+120
+            };
+            return new(){Host="127.0.0.1",Port=(uint)port,PlayerId=playerId,
+                SessionId=session,MatchId=admission.MatchId,
+                ManifestHash=admission.ManifestHash,
+                ExpiresUnixSeconds=admission.ExpiresUnixSeconds,
+                Ticket=tokens.Sign(admission),
+                SessionKey=ByteString.CopyFrom(tokens.SessionKey(admission))};
+        }
+        using var worker=new NetworkWorker(config,NullLogger<NetworkWorker>.Instance);
+        try
+        {
+            await worker.StartAsync(CancellationToken.None);
+            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            using var a=new MatchConnection(Grant(owner,993));
+            using var b=new MatchConnection(Grant(opponent,994));
+            Check((await a.ConnectAsync(timeout.Token)).Code=="admitted"&&
+                  (await b.ConnectAsync(timeout.Token)).Code=="admitted",
+                  "two signed UDP peers admit the Shotgunner match");
+            await a.ReadyAsync(timeout.Token);
+            await b.ReadyAsync(timeout.Token);
+            MatchReply state;
+            do
+            {
+                await Task.Delay(100,timeout.Token);
+                state=await a.PollAsync(timeout.Token);
+            } while(state.Snapshot.Phase!=BattlePhase.Running);
+            var hand=await a.PollArmyAsync(timeout.Token);
+            int option=hand.OptionIndexes.First();
+            Check((await a.DeployArmyAsync(option,timeout.Token)).Code=="army-deploying",
+                  "the host deploys the recovered Shotgunner family");
+
+            bool ownerSawBurst=false,opponentSawBurst=false,scanReplayed=false;
+            var watch=System.Diagnostics.Stopwatch.StartNew();
+            while(watch.Elapsed<TimeSpan.FromSeconds(35) &&
+                  (!ownerSawBurst||!opponentSawBurst||!scanReplayed))
+            {
+                await Task.Delay(75,timeout.Token);
+                var ownerPoll=a.PollAsync(timeout.Token);
+                var remotePoll=b.PollAsync(timeout.Token);
+                await Task.WhenAll(ownerPoll,remotePoll);
+                var local=ownerPoll.Result;
+                var remote=remotePoll.Result;
+                var rows=remote.Snapshot.Projectiles
+                    .Where(row=>row.OwnerPlayerId==owner&&
+                        row.ArmyUnitId=="ID_UNIT-SHOTGUNNER").ToArray();
+                if(rows.Length!=5)continue;
+                opponentSawBurst=true;
+                ownerSawBurst|=local.Snapshot.Projectiles
+                    .Where(row=>row.OwnerPlayerId==owner&&
+                        row.ArmyUnitId=="ID_UNIT-SHOTGUNNER")
+                    .Select(row=>row.ProjectileId)
+                    .SequenceEqual(rows.Select(row=>row.ProjectileId));
+                Check(rows.Count(row=>row.Kind=="army-bullet")==1&&
+                      rows.Count(row=>row.Kind=="army-fake-bullet")==4&&
+                      rows.All(row=>!row.ArmyPoison&&row.ArmySourceCardId.Length==0&&
+                          MathF.Abs(MathF.Sqrt(row.VelocityX*row.VelocityX+
+                              row.VelocityY*row.VelocityY+
+                              row.VelocityZ*row.VelocityZ)-10f)<.001f),
+                      "remote SDK receives one real and four harmless source-speed pellets");
+                ulong scanId=BitConverter.ToUInt64(Guid.NewGuid().ToByteArray(),0);
+                if(scanId==0)scanId=1;
+                var first=await b.PollProjectilesAsync(scanId,0,timeout.Token);
+                var replay=await b.PollProjectilesAsync(scanId,0,timeout.Token);
+                scanReplayed|=first.Code=="projectiles"&&!first.HasMore&&
+                    first.ActiveCount==5&&first.Projectiles.Count==5&&
+                    first.Projectiles.Select(row=>row.ProjectileId)
+                        .SequenceEqual(rows.Select(row=>row.ProjectileId))&&
+                    first.ToByteArray().SequenceEqual(replay.ToByteArray());
+            }
+            Check(ownerSawBurst&&opponentSawBurst&&scanReplayed,
+                  $"both UDP peers and a replayed full scan see the same five host pellets: " +
+                  $"owner={ownerSawBurst}, opponent={opponentSawBurst}, scan={scanReplayed}");
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken.None);
+            File.Delete(file);
+        }
         return checks;
     }
 }
