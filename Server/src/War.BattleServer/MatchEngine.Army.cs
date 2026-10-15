@@ -472,7 +472,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
     private readonly Dictionary<ulong,ArmyPoisonEffect> armyPoisons=[];
     private sealed record ArmyProjectileAuthority(ulong EntityKey,
-        string OwnerPlayerId, int OwnerFraction, float Damage, float PoisonRatio);
+        string OwnerPlayerId, int OwnerFraction, float Damage, float PoisonRatio,
+        string UnitId, string SourceCardId);
     private readonly Dictionary<ulong,ArmyProjectileAuthority> armyProjectileAuthority=[];
     internal (string OwnerPlayerId, int OwnerFraction, float Damage)? ArmyProjectileLaunch(
         ulong projectileId)
@@ -3616,7 +3617,8 @@ public sealed partial class MatchEngine
             armyProjectiles.Add(id,flight);
             armyProjectileAuthority.Add(id,new ArmyProjectileAuthority(intent.EntityKey,
                 army.OwnerPlayerId,army.OwnerFraction,launchDamage,
-                armySpecial.GetValueOrDefault(intent.EntityKey)));
+                armySpecial.GetValueOrDefault(intent.EntityKey),
+                army.UnitId,army.SourceCardId));
             Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
                 id,origin,0,"army");
         }

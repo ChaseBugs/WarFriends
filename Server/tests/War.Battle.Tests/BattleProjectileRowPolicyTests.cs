@@ -26,6 +26,7 @@ internal static class BattleProjectileRowPolicyTests
                 ProjectileId = id,
                 OwnerPlayerId = new string('a', 32),
                 Kind = kind,
+                ArmyUnitId = kind == "army-bullet" ? "ID_UNIT-SWAT" : "",
                 WeaponSourceId = kind.StartsWith("shotgun-", StringComparison.Ordinal) ?
                     "Google2u.Shotgun_SPAS" : "",
                 X = 1, Y = 2, Z = 3,
@@ -88,6 +89,24 @@ internal static class BattleProjectileRowPolicyTests
             "out-of-bounds velocity is rejected");
         RejectChanged(row => row.ProjectileId = 0,
             "zero projectile identity is rejected");
+
+        var armyIdentity = new MatchSnapshot();
+        armyIdentity.Projectiles.Add(Row(1, "army-bullet"));
+        armyIdentity.Projectiles[0].ArmySourceCardId = "ELITESWAT";
+        BattleProjectileRowPolicy.ValidateSnapshot(armyIdentity);
+        Check(true, "card army bullet retains its matching source identity");
+        armyIdentity.Projectiles[0].ArmySourceCardId = "ELITESNIPER";
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(armyIdentity),
+            "card bullet cannot claim a different infantry family");
+        armyIdentity.Projectiles[0].ArmySourceCardId = "";
+        armyIdentity.Projectiles[0].ArmyUnitId = "ID_UNIT-";
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(armyIdentity),
+            "army bullet requires a unit identity");
+        var unrelatedIdentity = new MatchSnapshot();
+        unrelatedIdentity.Projectiles.Add(Row(1, "grenade"));
+        unrelatedIdentity.Projectiles[0].ArmyUnitId = "ID_UNIT-SWAT";
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(unrelatedIdentity),
+            "unrelated projectile cannot carry infantry metadata");
 
         var badShotgun = new MatchSnapshot();
         badShotgun.Projectiles.Add(Row(1, "shotgun-bullet"));

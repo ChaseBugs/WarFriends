@@ -14129,6 +14129,8 @@ internal static class CombatContentTests
             row.ProjectileId == swatShot!.ProjectileId);
         Check(swatProjectile.Kind == "army-bullet" &&
               swatProjectile.OwnerPlayerId == decoyPlayer &&
+              swatProjectile.ArmyUnitId == "ID_UNIT-SWAT" &&
+              swatProjectile.ArmySourceCardId == "ELITESWAT" &&
               new Vector3(swatProjectile.VelocityX,
                   swatProjectile.VelocityY, swatProjectile.VelocityZ).Length() > 0,
             "card SWAT shot publishes its owner and moving flight");

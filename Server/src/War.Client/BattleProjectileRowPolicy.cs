@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using War.Protocol;
+using War.Shared;
 
 namespace War.Client
 {
@@ -48,6 +49,7 @@ namespace War.Client
                 !SupportedKind(row.Kind) ||
                 (IsShotgun(row.Kind) ? !ValidShotgunSource(row.WeaponSourceId) :
                     !string.IsNullOrEmpty(row.WeaponSourceId)) ||
+                !ValidArmyIdentity(row) ||
                 !FiniteCoordinate(row.X) || !FiniteCoordinate(row.Y) || !FiniteCoordinate(row.Z) ||
                 !FiniteCoordinate(row.VelocityX) || !FiniteCoordinate(row.VelocityY) ||
                 !FiniteCoordinate(row.VelocityZ))
@@ -72,6 +74,25 @@ namespace War.Client
         private static bool IsShotgun(string kind)
         {
             return kind == "shotgun-bullet" || kind == "shotgun-fake-bullet";
+        }
+
+        private static bool ValidArmyIdentity(BattleProjectileState row)
+        {
+            if (row.Kind != "army-bullet")
+                return row.ArmyUnitId.Length == 0 && row.ArmySourceCardId.Length == 0;
+
+            string unitId = row.ArmyUnitId;
+            if (!unitId.StartsWith("ID_UNIT-", StringComparison.Ordinal) ||
+                unitId.Length == "ID_UNIT-".Length ||
+                unitId.Length > 48)
+                return false;
+            for (int index = "ID_UNIT-".Length; index < unitId.Length; index++)
+            {
+                char character = unitId[index];
+                if (character < 'A' || character > 'Z') return false;
+            }
+            return row.ArmySourceCardId.Length == 0 ||
+                CardUnitSourceIdentity.Matches(row.ArmySourceCardId, unitId);
         }
 
         private static bool ValidShotgunSource(string value)

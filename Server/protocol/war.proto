@@ -517,6 +517,9 @@ message BattleProjectileState {
   float velocity_x = 7; float velocity_y = 8; float velocity_z = 9;
   // Exact server-owned source weapon for shotgun visuals across slot switches.
   string weapon_source_id = 10;
+  // Launch-time infantry identity survives the shooter's later death.
+  string army_unit_id = 11;
+  string army_source_card_id = 12;
 }
 // A scan starts with a new nonzero client-generated scan_id and zero cursor.
 // Retried starts reuse the same frozen host rows; later pages do not race
