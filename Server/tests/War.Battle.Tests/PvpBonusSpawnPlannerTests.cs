@@ -882,7 +882,7 @@ internal static class PvpBonusSpawnPlannerTests
         var cardRocketTrace = new RifleMatchSimulation(clockManifest, map, content);
         cardRocketTrace.ConfigureBonusBoxTargets(
             cardRocketMatch.BonusPlanner.ActiveBoxesSnapshot);
-        var cardRocketContact = cardRocketTrace.TraceForArmyExplosive(localId,
+        var cardRocketContact = cardRocketTrace.TraceForArmyDamage(localId,
             cardRocketBox.Position + Vector3.UnitY, -Vector3.UnitY, 2f);
         Check(cardRocketContact?.BonusBoxId == cardRocketBox.BoxId,
             "card Rocket flight can hit the active layer-eight box collider");
@@ -897,7 +897,7 @@ internal static class PvpBonusSpawnPlannerTests
             cardRocketBox.Position + Vector3.UnitY * 2f,
             cardRocketBox.Position - Vector3.UnitY * 2f,
             153, false,
-            (from, direction, range) => cardRocketTrace.TraceForArmyExplosive(
+            (from, direction, range) => cardRocketTrace.TraceForArmyDamage(
                 localId, from, direction, range));
         CardRocketMissileImpact? cardRocketImpact = null;
         for (ulong nextTick = 154; nextTick <= 300 &&
@@ -933,7 +933,7 @@ internal static class PvpBonusSpawnPlannerTests
         var cardGrenadierTrace = new RifleMatchSimulation(clockManifest, map, content);
         cardGrenadierTrace.ConfigureBonusBoxTargets(
             cardGrenadierMatch.BonusPlanner.ActiveBoxesSnapshot);
-        var cardGrenadierContact = cardGrenadierTrace.TraceForArmyExplosive(localId,
+        var cardGrenadierContact = cardGrenadierTrace.TraceForArmyDamage(localId,
             cardGrenadierBox.Position + Vector3.UnitY, -Vector3.UnitY, 2f);
         Check(cardGrenadierContact?.BonusBoxId == cardGrenadierBox.BoxId,
             "card Grenadier flight can contact the active box collider");
@@ -951,7 +951,7 @@ internal static class PvpBonusSpawnPlannerTests
             -Vector3.UnitY, 153,
             (from, direction, range) =>
             {
-                var hit = cardGrenadierTrace.TraceForArmyExplosive(localId,
+                var hit = cardGrenadierTrace.TraceForArmyDamage(localId,
                     from, direction, range);
                 touchedGrenadierBox |= hit?.BonusBoxId == cardGrenadierBox.BoxId;
                 return hit;
@@ -978,6 +978,41 @@ internal static class PvpBonusSpawnPlannerTests
             cardGrenadierStats.Grenadier);
         Check(cardGrenadierMatch.Snapshot().StateRevision == cardGrenadierRevision,
             "replaying card Grenadier blast cannot collect a box again");
+
+        var armyBulletMatch = RunningBonusMatch(8692, () => 1f);
+        armyBulletMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86921), localId, 6);
+        for (int index = 0; index < 3; index++)
+            armyBulletMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86922 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            armyBulletMatch.Advance(nextTick);
+        var armyBulletBox = armyBulletMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var armyBulletTrace = new RifleMatchSimulation(clockManifest, map, content);
+        armyBulletTrace.ConfigureBonusBoxTargets(
+            armyBulletMatch.BonusPlanner.ActiveBoxesSnapshot);
+        var armyBullet = new ArmyProjectileFlight(86926, 1,
+            armyBulletBox.Position + Vector3.UnitY,
+            armyBulletBox.Position - Vector3.UnitY, 10f, 153,
+            (from, direction, range) => armyBulletTrace.TraceForArmyDamage(
+                grenadeAttacker, from, direction, range));
+        ArmyProjectileImpact? armyBoxImpact = null;
+        for (ulong nextTick = 154; nextTick <= 165 &&
+             armyBoxImpact == null; nextTick++)
+            armyBoxImpact = armyBullet.Advance(nextTick);
+        Check(armyBoxImpact?.Collision.BonusBoxId == armyBulletBox.BoxId,
+            "real army bullet flight hits the active bonus box collider");
+        armyBulletMatch.ApplyArmyProjectileBonusImpact(armyBoxImpact!,
+            grenadeAttacker, 2f);
+        Check(armyBulletMatch.BonusPlanner.BoxSnapshot(armyBulletBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              armyBulletMatch.Snapshot().Players[1].KevlarHealth ==
+                  clockManifest.Players[1].Combat!.MaxHealth * 0.1f,
+            "army projectile box hit credits the soldier's opposing player owner");
+        ulong armyBulletRevision = armyBulletMatch.Snapshot().StateRevision;
+        armyBulletMatch.ApplyArmyProjectileBonusImpact(armyBoxImpact!,
+            grenadeAttacker, 2f);
+        Check(armyBulletMatch.Snapshot().StateRevision == armyBulletRevision,
+            "replayed army projectile impact cannot collect the box again");
 
         var grenadeContent = BattleCombatContent.Load(
             Path.Combine(directory, "combat-content-manifest.json"),

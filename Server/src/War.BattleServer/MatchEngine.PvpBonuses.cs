@@ -559,6 +559,17 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyArmyProjectileBonusImpact(ArmyProjectileImpact impact,
+        string ownerId, float damage)
+    {
+        string boxId = impact.Collision.BonusBoxId ??
+            throw new InvalidDataException("Army projectile has no bonus box collision.");
+        // The soldier's confirmed shot carries its signed player owner. The
+        // box's OnDeath credits that owner fraction, not the spawned entity ID.
+        ApplyConfirmedPvpBonusDamage("army-box", impact.ProjectileId,
+            boxId, ownerId, damage * impact.Collision.PartWeight);
+    }
+
     // A real unit projectile supplies the owner, collision and unique shot ID.
     // The source PlayerOnDamage callback credits the AIObject's owning player.
     internal PlayerDamageResult? ApplyConfirmedArmyProjectilePlayerDamage(

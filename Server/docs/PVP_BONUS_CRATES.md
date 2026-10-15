@@ -6,6 +6,13 @@ bonus-mode matches, and a read-only Unity box presentation are implemented.
 Player-bullet, grenade, and bazooka blast collection are implemented. Other
 damage paths, full effect delivery and durable rewards remain incomplete.
 
+Host-owned infantry projectiles now use the source layer-eight box collider
+for damaging flight while their separate visibility probes remain unchanged.
+A confirmed soldier bullet applies its launch damage through the soldier's
+player owner, so an opposing army can steal a box. Focused flight, collection,
+and replay checks pass; a normal deployed infantry shot into a box is still
+unverified.
+
 The source Rocket soldier's real missile also uses `MissileExplode`. Its
 host flight now sees active box colliders, and the blast applies the pinned
 card damage with the prefab's 0.8/1.2-unit radii. Focused checks cover flight

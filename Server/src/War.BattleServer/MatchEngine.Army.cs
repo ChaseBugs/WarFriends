@@ -3612,7 +3612,7 @@ public sealed partial class MatchEngine
             ulong id=++projectileId;
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
-                (from,direction,range)=>rifleCombat.TraceForArmy(intent.OwnerPlayerId,from,direction,range));
+                (from,direction,range)=>rifleCombat.TraceForArmyDamage(intent.OwnerPlayerId,from,direction,range));
             armyProjectiles.Add(id,flight);
             armyProjectileAuthority.Add(id,new ArmyProjectileAuthority(intent.EntityKey,
                 army.OwnerPlayerId,army.OwnerFraction,launchDamage,
@@ -3643,7 +3643,18 @@ public sealed partial class MatchEngine
                shooter.Definition.Fraction!=launch.OwnerFraction)
                 throw new InvalidDataException("Army projectile changed its launch owner.");
             Emit(MatchEventKind.Impact,impact.EntityKey.ToString(),
-                impact.Collision.PlayerId??"",impact.ProjectileId,impact.Collision.Position,0,"army");
+                impact.Collision.PlayerId??impact.Collision.BonusBoxId??"",
+                impact.ProjectileId,impact.Collision.Position,0,"army");
+            if (impact.Collision.BonusBoxId != null)
+            {
+                try { ApplyArmyProjectileBonusImpact(impact, launch.OwnerPlayerId,
+                    launch.Damage); }
+                catch (InvalidDataException)
+                { End("invalid-pvp-bonus-authority", "", false); return; }
+                catch (InvalidOperationException)
+                { End("pvp-bonus-backpressure", "", false); return; }
+                if (Terminal) return;
+            }
             if(impact.Collision.DynamicOwner!=null && shields!=null)
             {
                 try
