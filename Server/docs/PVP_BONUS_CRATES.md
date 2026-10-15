@@ -20,9 +20,14 @@ static layer 13 or terrain layer 30. `PvpBonusLandingProbe` now queries those
 exact layers in the recovered map geometry beneath a planned spawn position.
 All ten reviewed spawn-area centers (two on each of five PvP maps) have a
 static hit below them. Each accepted spawn plan now retains that optional
-static-surface candidate. This establishes a useful landing target for the
-next physics step; a downward ray is not the box collider's contact manifold,
-so the probe does not set `onGround` or authorize collection.
+static-surface candidate. Registered boxes now advance under the pinned
+`-9.81` source gravity on running host ticks. The server stops the vertical
+motion at the candidate surface plus half of the source cube height and marks
+the box grounded. It prepares all falling-box updates before publishing any,
+so a failed calculation cannot move only part of a frame. This is a bounded
+first-contact model: a downward center ray does not reproduce the entire
+PhysX contact manifold, dynamic-object impacts, rotation or bounce. Grounding
+does not collect a box or authorize its reward.
 
 ## Source bindings
 
@@ -150,17 +155,17 @@ and colliders in an isolated Unity 2018.3 Editor project. Each actual Unity
 `BoxCollider.bounds` matched the exported source bounds within 0.00002 world
 units; the raw Unity results are pinned in
 `unity-pvp-bonus-spawn-areas-reference.json` and checked by the focused server
-test. This is a geometry input, not a live crate spawn or proof of falling box
-physics. Random sampling, fall/contact, pool identity, host entity publication,
-and pickup still need runtime proof.
+test. This is a geometry input, not a live crate spawn or proof of full PhysX
+parity. Pool identity, host entity publication, dynamic contacts, and pickup
+still need runtime proof.
 Regenerate/check with `python Server/tools/extract_pvp_bonus_spawn_areas.py
 --check`; focused server checks use `--pvp-bonus-spawn-areas-only`.
 
 `PvpBonusSpawnPlanner` now joins one matured host delay receipt with the
 source's shared selection history and one map position. It derives the
 owner's fraction and rank plus the local display rank from the validated
-match manifest; the serialized host actor must establish Arena/friendly mode,
-Gold count, first-two low ammunition and random draws. The planner copies
+match manifest. The host derives Arena/friendly mode, Gold count and first-two
+low ammunition, then supplies its own random draws. The planner copies
 selection queues and receipts before attempting placement, registers the
 host-owned box, then publishes the plan and selection together. A failed area,
 weighted draw, or full box registry leaves the queue and last index untouched;
@@ -170,8 +175,9 @@ inclusive upper-endpoint fallthrough, the plan retains `SourceIndex=9` for
 future exclusion history and uses the actual prefab's valid index eight for
 publication. This explicit repair prevents an out-of-range prefab lookup in
 the replacement Client; it does not claim exact original RPC parity at that
-broken endpoint. The registered host box is not yet a network entity or physics
-body, and it grants no reward. Run `--pvp-bonus-spawn-plan-only` for the
+broken endpoint. The registered host box has vertical motion and first-static-
+contact state, but is not yet a Client-visible entity or a complete physics
+body and grants no reward. Run `--pvp-bonus-spawn-plan-only` for the
 focused transaction checks.
 
 `PvpBonusBoxRegistry` now admits a plan as a host-owned falling box only when
@@ -389,9 +395,10 @@ The source captures its target list at activation before the one-second wait;
 normal collection dispatch must call the host planner at that same point.
 The collection receipt can now carry a finite host-confirmed world position.
 Grenade planning requires it and rejects a replay that changes it; using the
-spawn-area position as the launch origin is no longer implicit. Box Rigidbody
-falling and the lethal hit callback are still absent, so the live runtime does
-not yet produce that position autonomously.
+spawn-area position as the launch origin is no longer implicit. The host now
+tracks vertical box position, but the lethal hit callback and Client-visible
+collection are still absent, so runtime does not produce a confirmed pickup
+position autonomously.
 The host now schedules the planned shots on ordered scaled battle frames. At
 30 host ticks per second, a normal-rate burst releases at frames 30, 36 and 42
 after activation; a long frame still releases only one shot because each
@@ -429,10 +436,10 @@ request or a progress threshold.
 
 While falling, OnCollisionEnter may destroy a `destroyableByBonusBox` object
 with weaponless Basic damage, null owner and immortality ignored. A static
-collision marks the box on-ground/alive. Spawn-area geometry, falling contacts,
-these damage callbacks and recipient fallback require host simulation evidence
-before the crate entity is admitted. No current SDK event or catalog test proves
-that gameplay path.
+collision marks the box on-ground/alive. The host currently approximates the
+first static contact from a downward source-map probe; dynamic impacts, the
+damage callback, and Client presentation still need simulation evidence.
+No current SDK event or catalog test proves the full gameplay path.
 
 ## Verified selection state
 
@@ -489,9 +496,8 @@ boundary must handle this observed source defect before selection is connected.
 
 Run `Server/scripts/AuditPvpSelection.ps1` for the Mono fixture and
 `--pvp-selection-only` for source comparison, queue ordering, replay, corrupted
-draw and capacity checks. Delayed spawning, source-manager perspective, actual
-random sampling, crate contacts, collection, effects and Backend rewards remain
-unbound.
+draw and capacity checks. Automatic delayed spawning, Client crate projection,
+dynamic contacts, collection, effects and Backend rewards remain unbound.
 
 ## Coroutine delay state
 

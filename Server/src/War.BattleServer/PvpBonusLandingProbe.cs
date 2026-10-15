@@ -23,6 +23,7 @@ internal static class PvpBonusLandingProbe
             throw new ArgumentOutOfRangeException(nameof(spawnPosition));
 
         return map.Raycast(spawnPosition, -Vector3.UnitY,
-            MaximumProbeDistance, StaticLayerMask);
+            MaximumProbeDistance, StaticLayerMask,
+            dynamicEnabled: _ => false);
     }
 }

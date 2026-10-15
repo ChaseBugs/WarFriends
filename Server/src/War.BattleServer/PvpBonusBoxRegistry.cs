@@ -7,7 +7,8 @@ public sealed record PvpBonusBoxCollectionCandidate(string BoxId, string OwnerPl
     string RecipientPlayerId, int PrefabIndex, bool Stolen, bool BoobyTrapped,
     Vector3? CollectionPosition);
 public sealed record PvpBonusBoxSnapshot(string BoxId, PvpBonusSpawnPlan Plan,
-    PvpBonusBoxPhase Phase, PvpBonusBoxCollectionCandidate? Collection);
+    PvpBonusBoxPhase Phase, PvpBonusBoxCollectionCandidate? Collection,
+    Vector3 Position, float VerticalVelocity);
 public enum PvpBonusEffectKind
 {
     Gold, Health, Warbucks, Grenades, SlowMotion, Turret, Kevlar, Card, Ammo,
@@ -99,7 +100,7 @@ internal sealed class PvpBonusBoxRegistry
             if (activeCount == maximumActiveBoxes || ReservedReceipts + 2 > maximumReceipts)
                 throw new InvalidOperationException("Bonus box capacity exhausted.");
             var result = new PvpBonusBoxSnapshot(request.ReceiptId, plan,
-                PvpBonusBoxPhase.Falling, null);
+                PvpBonusBoxPhase.Falling, null, plan.Position, 0);
             boxes.Add(result.BoxId, result);
             activeCount++;
             return result;
@@ -113,9 +114,30 @@ internal sealed class PvpBonusBoxRegistry
             var box = Find(boxId);
             if (box.Phase != PvpBonusBoxPhase.Falling)
                 return box;
-            var grounded = box with {Phase = PvpBonusBoxPhase.Grounded};
+            var grounded = box with
+            {
+                Phase = PvpBonusBoxPhase.Grounded,
+                VerticalVelocity = 0
+            };
             boxes[boxId] = grounded;
             return grounded;
+        }
+    }
+
+    internal void AdvanceFalling(float elapsedSeconds)
+    {
+        if (!float.IsFinite(elapsedSeconds) || elapsedSeconds < 0)
+            throw new ArgumentOutOfRangeException(nameof(elapsedSeconds));
+        lock (gate)
+        {
+            var updates = new List<PvpBonusBoxSnapshot>();
+            foreach (var previous in boxes.Values)
+            {
+                if (previous.Phase == PvpBonusBoxPhase.Falling)
+                    updates.Add(PvpBonusFallMotion.Advance(previous, elapsedSeconds));
+            }
+            foreach (var updated in updates)
+                boxes[updated.BoxId] = updated;
         }
     }
 

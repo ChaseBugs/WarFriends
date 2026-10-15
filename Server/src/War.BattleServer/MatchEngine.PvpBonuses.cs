@@ -421,6 +421,7 @@ public sealed partial class MatchEngine
             .AdvanceFrame(nextFrame, delta);
         if (maturedPvpBonuses.Count > 256 - frame.MaturedRequests.Count)
             throw new InvalidOperationException("Unissued PvP bonus capacity exhausted.");
+        pvpBonusPlanner?.AdvanceFalling(delta);
         for (int index = 0; index < frame.MaturedRequests.Count; index++)
             maturedPvpBonuses.Add(new MaturedBonus(frame, index));
         pvpBonusProgress = prepared;

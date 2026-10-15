@@ -22,7 +22,8 @@ internal static class PvpBonusSpawnPlannerTests
                 MapHit? landing = PvpBonusLandingProbe.FindStaticSurface(sourceMap, center);
                 Check(landing != null && landing.Distance >= 0 &&
                       landing.Position.Y <= center.Y &&
-                      landing.Layer is 13 or 30,
+                      (landing.Layer is 13 or 30) &&
+                      landing.DynamicOwner == null,
                     "reviewed box area center has source-static geometry below it");
             }
         }
@@ -237,6 +238,38 @@ internal static class PvpBonusSpawnPlannerTests
         Check(falling.Phase == PvpBonusBoxPhase.Falling && planner.ActiveBoxCount == 2 &&
               planner.BoxReceiptCount == 2,
             "accepted spawn plans also register host-owned falling boxes before selection commits");
+        var motionRegistry = new PvpBonusBoxRegistry(content, manifest);
+        motionRegistry.Register(planned);
+        try
+        {
+            motionRegistry.AdvanceFalling(float.MaxValue);
+            throw new Exception("Overflowing fall step changed box authority.");
+        }
+        catch (InvalidDataException) { checks++; }
+        Check(motionRegistry.Snapshot(planned.Request.ReceiptId).Position == planned.Position,
+            "rejected fall frame leaves the registered box at its previous pose");
+        motionRegistry.AdvanceFalling(0.1f);
+        var descending = motionRegistry.Snapshot(planned.Request.ReceiptId);
+        Check(descending.Phase == PvpBonusBoxPhase.Falling &&
+              descending.Position.Y < planned.Position.Y &&
+              descending.VerticalVelocity < 0,
+            "host gravity moves the registered crate downward before static contact");
+        motionRegistry.AdvanceFalling(10f);
+        var landed = motionRegistry.Snapshot(planned.Request.ReceiptId);
+        Check(landed.Phase == PvpBonusBoxPhase.Grounded &&
+              landed.VerticalVelocity == 0 &&
+              landed.Position.Y > landed.Plan.StaticSurfaceCandidate!.Position.Y &&
+              motionRegistry.ActiveCount == 1,
+            "host motion grounds a crate on its reviewed source-static surface");
+        motionRegistry.AdvanceFalling(1f);
+        Check(motionRegistry.Snapshot(planned.Request.ReceiptId) == landed,
+            "later ticks do not move a grounded crate or collect it");
+        try
+        {
+            motionRegistry.AdvanceFalling(float.NaN);
+            throw new Exception("Non-finite box frame moved host authority.");
+        }
+        catch (ArgumentOutOfRangeException) { checks++; }
         try { planner.EffectIntent(falling.BoxId);
             throw new Exception("Uncollected crate exposed an effect."); }
         catch (InvalidOperationException) { checks++; }
@@ -509,6 +542,10 @@ internal static class PvpBonusSpawnPlannerTests
             "host-owned context and draws register one queued box and consume its live request once");
         if (issuedInMatch == null)
             throw new Exception("Live matured bonus was not issued.");
+        clockEngine.Advance(154);
+        Check(clockEngine.BonusPlanner.BoxSnapshot(issuedInMatch.Request.ReceiptId)
+                  .Position.Y < issuedInMatch.Position.Y,
+            "a normal running match tick advances its host-owned falling box");
         clockEngine.BonusPlanner.ConfirmDestroyed(issuedInMatch.Request.ReceiptId,
             Id(751), null);
         Check(clockEngine.ApplyCollectedPvpBonus(issuedInMatch.Request.ReceiptId) ==

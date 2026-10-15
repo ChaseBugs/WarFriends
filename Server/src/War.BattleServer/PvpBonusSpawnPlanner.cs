@@ -107,6 +107,11 @@ internal sealed class PvpBonusSpawnPlanner
         lock (gate) return boxes.Snapshot(boxId);
     }
 
+    internal void AdvanceFalling(float elapsedSeconds)
+    {
+        lock (gate) boxes.AdvanceFalling(elapsedSeconds);
+    }
+
     internal PvpBonusEffectIntent EffectIntent(string boxId)
     {
         lock (gate) return boxes.EffectIntent(boxId);

@@ -39,7 +39,7 @@ uses the pinned selection and spawn-area planner to register one box, retaining
 the request when a draw is rejected. The signed manifest now accepts only
 ordinary, War Arena or friendly DeathMatch bonus modes; a mismatched host mode
 leaves its request queued. Automatic selection still needs Backend mode
-projection and trusted Gold reward collection. A bonus-enabled manifest now
+projection and a Client-visible crate lifecycle. A bonus-enabled manifest now
 requires the scene master's durable Gold-box count at admission; the host
 rejects a conflicting selection count. The recovered catalog now pins the
 level-dependent Gold draw bounds and the recipient-level-scaled Warbucks draw.
@@ -69,7 +69,9 @@ All ten original multiplayer box spawn areas are now source-pinned by map
 digest and collider file ID, with their world AABBs loaded at combat-content
 startup. An isolated Unity 2018.3 Editor probe matched all ten actual
 `BoxCollider.bounds` within 0.00002 world units. Host area/axis draws can
-resolve a source position; falling box physics, map contact and crate
+resolve a source position. Plans now retain a verified source-static surface
+candidate, and registered boxes advance vertically under source gravity until
+first contact. Dynamic collisions, rotation, bounce, PhysX timing, and crate
 publication remain unverified.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
@@ -77,8 +79,8 @@ selection history and source map areas. Replays do not redraw; invalid
 coordinates, weights or full box capacity do not consume FIFO overrides. The
 source's invalid endpoint index is retained for
 history but mapped to its actual prefab for prospective publication. The
-normal MatchEngine callback, authoritative dynamic weight inputs, physical box,
-physics, collection settlement, rewards and Unity rendering remain open.
+normal MatchEngine callback, Client-visible physical box, full physics,
+collection settlement, rewards and Unity rendering remain open.
 Accepted spawn plans enter a bounded host box registry with falling/grounded/
 collected phases, one terminal damage receipt, owner-or-attacker recipient
 selection and one-use booby-trap interception on a stolen box. This is a
