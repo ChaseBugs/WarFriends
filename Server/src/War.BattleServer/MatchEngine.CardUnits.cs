@@ -1099,9 +1099,9 @@ public sealed partial class MatchEngine
             shieldProbability *= .5f;
         int mask = SoldierStationaryTargetMask(aimForward,
             origin - opponent.Position, shieldProbability, NextArmyFloat);
-        bool shieldAvailable = shields?.Snapshot().Any(row =>
-            row.CoverIndex == opponent.Cover && !row.Destroyed) ?? false;
-        if (mask == 2 && shieldAvailable)
+        // GetShotTargets(Shield) keeps the source aim transform even when
+        // its shield collider is destroyed. Collision decides what the shot hits.
+        if (mask == 2)
         {
             var shield = playerShotTargets.Gameplay.Single(row => row.Type == 2);
             return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
@@ -1486,9 +1486,8 @@ public sealed partial class MatchEngine
         if (opponent.Route != null) shieldProbability *= .5f;
         int mask = SoldierStationaryTargetMask(aimForward,
             origin - opponent.Position, shieldProbability, NextArmyFloat);
-        bool shieldAvailable = shields?.Snapshot().Any(row =>
-            row.CoverIndex == opponent.Cover && !row.Destroyed) ?? false;
-        if (mask == 2 && shieldAvailable)
+        // The Client selects the Shield shot target independently of its health.
+        if (mask == 2)
         {
             var shield = playerShotTargets.Gameplay.Single(row => row.Type == 2);
             return new CardGrenadierAim(new ArmyRusherTarget(entityKey,

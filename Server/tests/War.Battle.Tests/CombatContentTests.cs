@@ -15690,6 +15690,12 @@ internal static class CombatContentTests
               normalSniperMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
             "repeated ordinary Sniper impacts destroy the opposing shield without bypass damage");
+        var targetAfterShieldDestruction = normalSniperMatch.CardSniperTarget(
+            normalSniper.EntityKey);
+        Check(targetAfterShieldDestruction?.TargetFileId ==
+                  content.PlayerShotTargets.Gameplay.Single(target =>
+                      target.Type == 2).TransformFileId,
+            "Sniper retains the source Shield aim transform after its collider is destroyed");
         MatchEvent? shotAfterShieldDestroyed = null;
         var shotsAfterShieldDestroyed = new HashSet<ulong>();
         bool sniperTransferredPoint = false;
