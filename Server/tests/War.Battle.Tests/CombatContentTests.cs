@@ -9050,6 +9050,7 @@ internal static class CombatContentTests
               content.ArmyWeapons.CadenceTicks("ID_UNIT-WARPER")==7,
               "Rusher batches enforce each strict source weapon cadence at 30 Hz");
         Check(content.ArmyWeapons.MuzzleCount("ID_UNIT-SNIPER")==1&&
+                  content.ArmyWeapons.SniperCriticalAmount==2f&&
               content.ArmyWeapons.Muzzle("ID_UNIT-SNIPER").Path.StartsWith("SniperRifleEnemy/",StringComparison.Ordinal)&&
               content.ArmyWeapons.WindupTicks("ID_UNIT-SNIPER")==32&&
               content.ArmyWeapons.Windup("ID_UNIT-SNIPER").Rule=="corner-uncover-plus-0.05"&&
@@ -9348,13 +9349,15 @@ internal static class CombatContentTests
                   ArmySpawnPointSelector.Collection("MechBehaviour")=="spawnPointsCollection" &&
                   content.Army.Families.Count(f=>!f.IsSoldier && f.BehaviorType!="MechBehaviour")==7,
                   "vehicle families bind their recovered map spawn collections without using infantry routes");
-            Check(content.Army.Families.Count(f=>f.BaseShot!=null)==7 &&
+            Check(content.Army.Families.Count(f=>f.BaseShot!=null)==8 &&
                   content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourSwat").BaseShot==
                       new ArmyBaseShotStats(.5f,1,4,1f,6f) &&
                   content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourShotgunner").BaseShot==
                       new ArmyBaseShotStats(1f,1,4,1f,5f) &&
+                  content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourSniper").BaseShot==
+                      new ArmyBaseShotStats(1f,1,4,2f,6f) &&
                   content.Army.Families.Single(f=>f.BehaviorType=="HelicopterBehaviour").BaseShot==null,
-                  "six source-inherited Rusher families and Minigunner bind their serialized base shot definitions");
+                  "Rusher, Minigunner, and Sniper families bind their serialized base shot definitions");
             Check(content.Army.Families.Count(f=>f.VehicleShot!=null)==7 &&
                   content.Army.Families.Single(f=>f.UnitId=="ID_UNIT-HELICOPTER").VehicleShot==
                       new ArmyVehicleShotStats(5f,1f,0,0,0f,0f,0) &&
@@ -15584,13 +15587,72 @@ internal static class CombatContentTests
                   new Vector3(arrivedSniper.X, arrivedSniper.Y, arrivedSniper.Z)) > .1f &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) ==
                   normalSniper.EntityKey &&
-              normalSniperMatch.CardSniperAttack(normalSniper.EntityKey) == null,
-            "ordinary Sniper reaches its reserved Corner without opening unverified fire");
+              normalSniperMatch.CardSniperAttack(normalSniper.EntityKey) != null,
+            "ordinary Sniper reaches its reserved Corner and starts source shot timing");
+        (string OwnerPlayerId, int OwnerFraction, float Damage)? normalSniperLaunch = null;
+        while (normalSniperTick < 1000 && !normalSniperMatch.Terminal &&
+               normalSniperLaunch == null)
+        {
+            normalSniperMatch.Advance(++normalSniperTick);
+            foreach (var projectile in normalSniperMatch.Snapshot().Projectiles)
+            {
+                if (projectile.ArmyUnitId != "ID_UNIT-SNIPER") continue;
+                normalSniperLaunch = normalSniperMatch.ArmyProjectileLaunch(projectile.ProjectileId);
+            }
+        }
+        Check(normalSniperLaunch is { } normalSniperShot &&
+              normalSniperShot.OwnerPlayerId == soldierOwner &&
+              Math.Abs(normalSniperShot.Damage - normalSniperMatch.ArmyDamage(normalSniper.EntityKey)!.Value) < .001f,
+            "ordinary Sniper publishes a source-speed noncritical host projectile");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
               normalSniperMatch.CardEnemyPoint(normalSniper.EntityKey) == null,
             "ordinary Sniper death releases its source Corner reservation");
+        var criticalSniperManifest = normalSniperManifest with
+        {
+            MatchId = "normal-sniper-critical-shot",
+            Players = normalSniperManifest.Players.Select((player, index) =>
+                index == 0 ? player with { ArmySpecialUpgradeIndexes = [96] } : player)
+                .ToArray()
+        };
+        content.ValidateAllocation(criticalSniperManifest);
+        var criticalSniperMatch = new MatchEngine(criticalSniperManifest,
+            content: content, armyChoice: _ => 0);
+        criticalSniperMatch.Admit(soldierOwner);
+        criticalSniperMatch.Admit(helicopterOwner);
+        foreach (string playerId in new[] { soldierOwner, helicopterOwner })
+            criticalSniperMatch.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = criticalSniperMatch.ManifestHash }
+            });
+        criticalSniperMatch.Advance(60);
+        int criticalSniperOption = criticalSniperMatch.ArmyBatch(soldierOwner)
+            .OptionIndexes.First();
+        Check(criticalSniperMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = criticalSniperOption }
+        }).Code == "army-deploying", "special-upgraded Sniper deployment is accepted");
+        BattleArmyEntityState? criticalSniper = null;
+        (string OwnerPlayerId, int OwnerFraction, float Damage)? criticalSniperLaunch = null;
+        for (ulong shotTick = 61; shotTick < 1000 &&
+             !criticalSniperMatch.Terminal && criticalSniperLaunch == null; shotTick++)
+        {
+            criticalSniperMatch.Advance(shotTick);
+            criticalSniper ??= criticalSniperMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                .Entities.SingleOrDefault();
+            foreach (var projectile in criticalSniperMatch.Snapshot().Projectiles)
+            {
+                if (projectile.ArmyUnitId != "ID_UNIT-SNIPER") continue;
+                criticalSniperLaunch = criticalSniperMatch.ArmyProjectileLaunch(projectile.ProjectileId);
+            }
+        }
+        Check(criticalSniper != null && criticalSniperLaunch is { } criticalShot &&
+              Math.Abs(criticalShot.Damage -
+                  criticalSniperMatch.ArmyDamage(criticalSniper.EntityKey)!.Value * 2f) < .001f,
+            "ordinary special Sniper rolls a host-owned critical for twice its composed source damage");
         content.ValidateAllocation(flameManifest);
         var stormMatch = new MatchEngine(flameManifest with
         {

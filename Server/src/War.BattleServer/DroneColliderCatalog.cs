@@ -6,7 +6,7 @@ namespace War.BattleServer;
 public sealed record DroneCollider(int ComponentFileId,int SerializedLayer,bool RootOwned,PlayerHitbox Hitbox);
 public sealed class DroneColliderCatalog
 {
-    public const string VerifiedInventoryRevision="c4db78dd2bca17f2ed36dca3512d374ec685cd2909ec9d3eae5950a9920f43cd";
+    public const string VerifiedInventoryRevision="b5199c611d5c3d5bcdd313197543ff9c262619560374c2d79449266eec8b25f1";
     // dronePrototype.prefab root DestroyableObject serializes shotCoeficient: 1.
     public const float FlameCoefficient=1f;
     public string Revision=>VerifiedInventoryRevision;

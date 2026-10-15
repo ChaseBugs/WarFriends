@@ -448,6 +448,7 @@ public sealed partial class MatchEngine
     }
     private readonly Dictionary<ulong,float> armyDamage=[];
     private readonly Dictionary<ulong,float> armySpecial=[];
+    private readonly Dictionary<ulong,float> sniperCriticalProbabilities=[];
     private readonly Dictionary<ulong,float> armySpeed=[];
     private readonly Dictionary<ulong,ArmyBaseShotStats> armyShots=[];
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyVehicleShots=[];
@@ -2183,6 +2184,14 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Commando poison ratio is outside its recovered combat domain.");
             if(specialValue>0)armySpecial.Add(entityKey,specialValue);
         }
+        if (family.BehaviorType == "SoldierBehaviourSniper")
+        {
+            // SoldierBehaviourSniper.ApplyWeaponsSetup copies the composed
+            // SPECIAL value into AmmoSetup.criticalProbability.
+            if (specialValue < 0f || specialValue > 1f)
+                throw new InvalidDataException("Sniper critical chance is outside its source domain.");
+            sniperCriticalProbabilities.Add(entityKey, specialValue);
+        }
         if(family.BehaviorType=="SoldierBehaviourShotgunner"&&special.HasValue)
         {
             if(specialValue<=0||specialValue>10)
@@ -3591,6 +3600,8 @@ public sealed partial class MatchEngine
                     missId,origin,0,"army-shotgun-cone-miss");
                 continue;
             }
+            if (behavior == "SoldierBehaviourSniper")
+                launchDamage = SniperDamageAfterCritical(army, launchDamage);
             int poisonEvents=behavior=="SoldierBehaviourCommando"&&armySpecial.ContainsKey(intent.EntityKey)
                 ?ArmyPoisonEffect.PulseCount:0;
             int projectileCount = shotgun ? 5 : 1;
@@ -3617,6 +3628,26 @@ public sealed partial class MatchEngine
         }
     }
 
+    private float SniperDamageAfterCritical(BattleArmyEntityState sniper, float baseDamage)
+    {
+        float chance = 0f;
+        if (sniper.SourceCardId.Length == 0 &&
+            !sniperCriticalProbabilities.TryGetValue(sniper.EntityKey, out chance))
+            throw new InvalidDataException("Normal Sniper lost its composed critical chance.");
+
+        // Ammo.LoadAmmoSetup draws even when probability is zero. The elite
+        // card has no special upgrade; the ordinary soldier uses its trusted
+        // upgrade lanes. The validated SniperRifleEnemy prefab supplies the
+        // critical damage multiplier.
+        bool critical = NextArmyFloat() < chance;
+        float multiplier = armyWeapons?.SniperCriticalAmount ??
+            throw new InvalidDataException("Sniper lost its source critical setup.");
+        float damage = critical ? baseDamage * multiplier : baseDamage;
+        if (!float.IsFinite(damage) || damage < 0f || damage > 10_000_000f)
+            throw new InvalidDataException("Sniper critical damage exceeded host bounds.");
+        return damage;
+    }
+
     private static float? InfantryProjectileSpeed(string behavior, string sourceCardId,
         ArmyWeaponBindingCatalog bindings)
     {
@@ -3627,7 +3658,7 @@ public sealed partial class MatchEngine
             "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper" => 10f,
             "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
             "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner" => 5f,
-            "SoldierBehaviourSniper" when sourceCardId == "ELITESNIPER" =>
+            "SoldierBehaviourSniper" =>
                 bindings.SniperProjectileSpeed,
             _ => null
         };
@@ -3645,9 +3676,8 @@ public sealed partial class MatchEngine
 
         bool cardParatrooper = behavior == "SoldierBehaviourParachuter" &&
             army.SourceCardId == "ELITEPARA";
-        bool cardSniper = behavior == "SoldierBehaviourSniper" &&
-            army.SourceCardId == "ELITESNIPER";
-        if ((!cardParatrooper && !cardSniper) ||
+        bool sniper = behavior == "SoldierBehaviourSniper";
+        if ((!cardParatrooper && !sniper) ||
             !PlayerHitbox.Finite(sampledOrigin) ||
             Vector3.Distance(sampledOrigin, entityPosition) > 5f)
         {
@@ -4288,6 +4318,7 @@ public sealed partial class MatchEngine
         droneLastIntents.Remove(entityKey);
         armyDamage.Remove(entityKey);
         armySpecial.Remove(entityKey);
+        sniperCriticalProbabilities.Remove(entityKey);
         armySpeed.Remove(entityKey);
         armyShots.Remove(entityKey);
         armyVehicleShots.Remove(entityKey);

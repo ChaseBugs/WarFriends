@@ -18,7 +18,9 @@ RUSHER_TYPES = {
     "SoldierBehaviourParachuter", "SoldierBehaviourShotgunner",
     "SoldierBehaviourSwat", "SoldierBehaviourWarper",
 }
-INFANTRY_SHOOTER_TYPES = RUSHER_TYPES | {"SoldierBehaviourMinigunner"}
+INFANTRY_SHOOTER_TYPES = RUSHER_TYPES | {
+    "SoldierBehaviourMinigunner", "SoldierBehaviourSniper",
+}
 
 
 def field(block, name):
@@ -189,12 +191,14 @@ def main():
                 "sendUnitsBaseCooldown": values["SendUnitsCoolDown"],
                 "infantryAgent": infantry_agent,
                 "families": families}
-    serialized = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"
+    # This hashed artifact is checked out with CRLF on both Windows and Linux.
+    serialized = (json.dumps(artifact, indent=2, ensure_ascii=False) + "\n")
+    encoded = serialized.replace("\n", "\r\n").encode("utf-8")
     if sys.argv[1:] == ["--check"]:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != serialized:
+        if not OUTPUT.exists() or OUTPUT.read_bytes() != encoded:
             raise ValueError("army deployment artifact is stale")
     elif not sys.argv[1:]:
-        OUTPUT.write_text(serialized, encoding="utf-8")
+        OUTPUT.write_bytes(encoded)
     else:
         raise ValueError("usage: extract_army_deployment.py [--check]")
     print(f"{len(families)} families, {option_id} runtime options; {OUTPUT}")

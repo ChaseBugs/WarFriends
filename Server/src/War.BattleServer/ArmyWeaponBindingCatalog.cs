@@ -48,19 +48,22 @@ public sealed class ArmyWeaponBindingCatalog
     public ArmyWarperRelocation WarperRelocation { get; }
     public float SniperProjectileSpeed { get; }
     public float SniperPredictionSpeed => SniperProjectileSpeed;
+    public float SniperCriticalAmount { get; }
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
         Dictionary<string,ArmyWeaponCadence> cadences,Dictionary<string,ArmyShotgunFalloff> shotgunFalloffs,
         ArmyCommandoPoison commandoPoison,ArmySwatSpecialSpeed swatSpecialSpeed,
         ArmyParatrooperKevlar paratrooperKevlar,ArmyShotgunnerWalkingFire shotgunnerWalkingFire,
-        ArmyWarperRelocation warperRelocation,float sniperProjectileSpeed)
+        ArmyWarperRelocation warperRelocation,float sniperProjectileSpeed,
+        float sniperCriticalAmount)
     {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
      LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;
      CommandoPoison=commandoPoison;SwatSpecialSpeed=swatSpecialSpeed;ParatrooperKevlar=paratrooperKevlar;
      ShotgunnerWalkingFire=shotgunnerWalkingFire;
      WarperRelocation=warperRelocation;
      SniperProjectileSpeed=sniperProjectileSpeed;
+     SniperCriticalAmount=sniperCriticalAmount;
      this.shotgunFalloffs=shotgunFalloffs;}
 
     public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
@@ -349,8 +352,10 @@ public sealed class ArmyWeaponBindingCatalog
         var sniperBullet=root.GetProperty("sniperRuntimeBullet");
         Exact(sniperBullet,"asset","sha256","prefabSpeed","prefabDistanceToCheck",
             "runtimeSpeed","runtimeDistanceToCheck","behaviorSource","behaviorSha256",
-            "bulletSource","bulletSha256","gunSource","gunSha256");
+            "bulletSource","bulletSha256","gunSource","gunSha256",
+            "criticalAmount","rifleSha256","ammoSource","ammoSha256");
         float sniperSpeed=sniperBullet.GetProperty("runtimeSpeed").GetSingle();
+        float criticalAmount=sniperBullet.GetProperty("criticalAmount").GetSingle();
         if(sniperBullet.GetProperty("asset").GetString()!=
                "Assets/GameObject/BulletSlow.prefab"||
            !Hash(sniperBullet.GetProperty("sha256").GetString())||
@@ -358,6 +363,11 @@ public sealed class ArmyWeaponBindingCatalog
            sniperBullet.GetProperty("prefabDistanceToCheck").GetSingle()!=.6f||
            sniperSpeed!=10f||
            sniperBullet.GetProperty("runtimeDistanceToCheck").GetSingle()!=1f||
+           criticalAmount!=2f||
+           !Hash(sniperBullet.GetProperty("rifleSha256").GetString())||
+           sniperBullet.GetProperty("ammoSource").GetString()!=
+               "Assets/Scripts/Assembly-CSharp/Ammo.cs"||
+           !Hash(sniperBullet.GetProperty("ammoSha256").GetString())||
            sniperBullet.GetProperty("behaviorSource").GetString()!=
                "Assets/Scripts/Assembly-CSharp/SoldierBehaviourSniper.cs"||
            !Hash(sniperBullet.GetProperty("behaviorSha256").GetString())||
@@ -369,7 +379,7 @@ public sealed class ArmyWeaponBindingCatalog
            !Hash(sniperBullet.GetProperty("gunSha256").GetString()))
             throw new InvalidDataException("Invalid source Sniper runtime bullet.");
         return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,
-            poison,swatSpecialSpeed,kevlar,walking,warper,sniperSpeed);
+            poison,swatSpecialSpeed,kevlar,walking,warper,sniperSpeed,criticalAmount);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);

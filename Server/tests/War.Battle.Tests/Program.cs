@@ -73,6 +73,31 @@ if(args is ["--queue-live",var queueMongoUri])
 if(args is ["--manifest-snapshot-only",var snapshotMongoUri])
 {await BattleManifestSnapshotTests.Run(snapshotMongoUri);return;}
 
+if(args is ["--content-revisions"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))
+        root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Battle content root missing.");
+
+    string directory=Path.Combine(root.FullName,"content");
+    string manifest=Path.Combine(directory,"combat-content-manifest.json");
+    string shotgun=Path.Combine(directory,"shotgun-content-manifest.json");
+    var content=BattleCombatContent.Load(manifest,shotgun,
+        Path.Combine(directory,"smg-content-manifest.json"),
+        Path.Combine(directory,"pistol-content-manifest.json"),
+        Path.Combine(directory,"lmg-content-manifest.json"),
+        Path.Combine(directory,"minigun-content-manifest.json"),
+        Path.Combine(directory,"sniper-content-manifest.json"),
+        Path.Combine(directory,"bazooka-content-manifest.json"));
+    var rifles=BattleRifleManifestCatalog.Load(manifest);
+    var shotguns=BattleShotgunManifestCatalog.Load(shotgun,rifles);
+    Console.WriteLine("rifle="+rifles.PackageRevision);
+    Console.WriteLine("shotgun="+shotguns.PackageRevision);
+    Console.WriteLine("mixed="+content.MixedRevision);
+    return;
+}
+
 if(args is ["--allocator-mixed-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

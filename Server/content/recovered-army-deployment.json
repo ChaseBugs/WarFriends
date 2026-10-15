@@ -116,6 +116,13 @@
       "spawnPointMask": 1,
       "maxGeneratedCount": 4,
       "baseSpeed": 0.9,
+      "baseShot": {
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 1,
+        "fireBatchSizeMax": 4,
+        "minShootTime": 2.0,
+        "maxShootTime": 6.0
+      },
       "movementSpeed": 0.9,
       "isSoldier": true,
       "isAir": false,

@@ -95,10 +95,11 @@ def main():
   if isinstance(value,list):
    for v in value:validate(v)
  validate(artifact)
- serialized=json.dumps(artifact,indent=2)+'\n'
+ # This hashed artifact is checked out with CRLF on both Windows and Linux.
+ serialized=(json.dumps(artifact,indent=2)+'\n').replace('\n','\r\n').encode('utf-8')
  if sys.argv[1:]==['--check']:
-  if not OUTPUT.exists() or OUTPUT.read_text()!=serialized:raise ValueError('air geometry inventory is stale')
- elif not sys.argv[1:]:OUTPUT.write_text(serialized)
+  if not OUTPUT.exists() or OUTPUT.read_bytes()!=serialized:raise ValueError('air geometry inventory is stale')
+ elif not sys.argv[1:]:OUTPUT.write_bytes(serialized)
  else:raise ValueError('usage: extract_air_unit_geometry.py [--check]')
  for u in artifact['units']:print(u['unitId'],len(u['hierarchy']),'transforms',len(u['colliders']),'colliders',len(u['shootables']),'shootables')
 if __name__=='__main__':main()

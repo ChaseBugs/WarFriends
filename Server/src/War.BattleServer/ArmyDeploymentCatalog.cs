@@ -974,7 +974,8 @@ public sealed class ArmyDeploymentCatalog
             var entry=entries[i];
             bool rusher=RusherTypes.Contains(entry.GetProperty("behaviorType").GetString()??"");
             bool infantryShooter=rusher ||
-                (entry.GetProperty("behaviorType").GetString()??"")=="SoldierBehaviourMinigunner";
+                (entry.GetProperty("behaviorType").GetString()??"") is
+                    "SoldierBehaviourMinigunner" or "SoldierBehaviourSniper";
             bool vehicle=!entry.GetProperty("isSoldier").GetBoolean() &&
                 (entry.GetProperty("behaviorType").GetString()??"")!="MechBehaviour";
             if(rusher)rusherCount++;

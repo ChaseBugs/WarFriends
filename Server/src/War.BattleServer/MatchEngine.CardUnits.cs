@@ -104,7 +104,7 @@ public sealed partial class MatchEngine
         if (!sniperAttacks.ContainsKey(entityKey))
             return null;
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-            entity.SourceCardId != "ELITESNIPER" ||
+            !IsSniper(entity) ||
             cardEnemyPoints?.Find(entityKey) is not { } corner ||
             enemyMuzzles == null || assaulterWeapon == null ||
             armyWeapons == null)
@@ -920,11 +920,15 @@ public sealed partial class MatchEngine
     private void InitializeNormalSniper(ulong entityKey)
     {
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-            entity.UnitId != "ID_UNIT-SNIPER" || entity.SourceCardId.Length != 0)
-            throw new InvalidDataException("Normal Sniper lacks its source spawn authority.");
+            entity.UnitId != "ID_UNIT-SNIPER" || entity.SourceCardId.Length != 0 ||
+            !armyShots.ContainsKey(entityKey))
+            throw new InvalidDataException("Normal Sniper lacks its source shot and spawn authority.");
 
-        // The ordinary deployment has source-backed spawn and navigation,
-        // but its attack timing is not bound yet. Keep combat closed.
+        // The ordinary deployment composes its upgrade rows before entering
+        // the shared Sniper point and attack lifecycle. The elite card instead
+        // uses its separately recovered row-zero fallback.
+        if (!rusherShotCounts.TryAdd(entityKey, 0))
+            throw new InvalidDataException("Normal Sniper shot counter already exists.");
         TryAssignSniperPoint(entity);
     }
 
@@ -1012,8 +1016,7 @@ public sealed partial class MatchEngine
                 !sniperCornerChangeTicks.TryAdd(entityKey,
                     checked(tick + (ulong)waitSeconds * MatchManifest.TickRate)))
                 throw new InvalidDataException("Card Sniper lost its Corner clock.");
-            if (entity.SourceCardId == "ELITESNIPER")
-                StartCardSniperAttack(entityKey);
+            StartCardSniperAttack(entityKey);
         }
     }
 
@@ -1112,7 +1115,7 @@ public sealed partial class MatchEngine
         foreach (var (entityKey, attack) in sniperAttacks.OrderBy(row => row.Key))
         {
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "ELITESNIPER" ||
+                !IsSniper(entity) ||
                 !snipersAtPoint.Contains(entityKey) || sniperWalks.ContainsKey(entityKey))
                 throw new InvalidDataException("Card Sniper attack lost its arrived soldier.");
             if (attack.Phase == ArmyRusherAttackPhase.Ready)

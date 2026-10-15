@@ -15,7 +15,7 @@ public sealed record CoopCardRows(
 public sealed class CoopCardRowCatalog
 {
     public const string Revision =
-        "4ff393135eac2d8b94be50b9400c02924317bed25e8752cffc7afb96cc6af249";
+        "70dc7c72567798c346f69e281c72df2c7869faead8db680e5d0601a2b06b86e0";
 
     private static readonly HashSet<string> ExpectedUnits = new(StringComparer.Ordinal)
     {

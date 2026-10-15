@@ -188,6 +188,17 @@ def sniper_runtime_bullet(scene_text, families):
     rifle_text=(ROOT/"Clients/ExportedProject/Assets"/rifle["asset"]).read_text(encoding="utf-8-sig")
     if "  speedMultiplayer: 1\n" not in rifle_text:
         raise ValueError("Sniper rifle speed multiplier changed")
+    critical_amount=re.search(
+        r"^  criticalAmount:\r?\n(?:^    .*\r?\n)*?^    fakeValue: ([0-9.]+)$",
+        rifle_text,re.M)
+    ammo_source=SCRIPTS/"Ammo.cs"
+    ammo_text=ammo_source.read_text(encoding="utf-8-sig")
+    if not critical_amount or float(critical_amount.group(1))!=2 or \
+       "UnityEngine.Random.value < (float)setup.criticalProbability" not in ammo_text or \
+       "ammoDamageAmount = (float)setup.damageAmount * (float)setup.criticalAmount;" not in ammo_text or \
+       "mWeapons[0].ammoSetup.criticalProbability = base.soldierBehaviourDefinititon.special;" not in \
+           source.read_text(encoding="utf-8-sig"):
+        raise ValueError("Sniper source critical damage changed")
     bullet_source=SCRIPTS/"BulletBase.cs"
     gun_source=SCRIPTS/"Gun.cs"
     if "speed = bulletSetup.bulletSpeed;" not in bullet_source.read_text(encoding="utf-8-sig") or \
@@ -198,6 +209,11 @@ def sniper_runtime_bullet(scene_text, families):
             "sha256":hashlib.sha256(data).hexdigest(),"prefabSpeed":80.0,
             "prefabDistanceToCheck":.6,"runtimeSpeed":rifle["projectile"]["speed"],
             "runtimeDistanceToCheck":rifle["projectile"]["checkDistance"],
+            "criticalAmount":float(critical_amount.group(1)),
+            "rifleSha256":hashlib.sha256((ROOT/"Clients/ExportedProject/Assets"/
+                                         rifle["asset"]).read_bytes()).hexdigest(),
+            "ammoSource":ammo_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "ammoSha256":hashlib.sha256(ammo_source.read_bytes()).hexdigest(),
             "behaviorSource":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
             "behaviorSha256":hashlib.sha256(source.read_bytes()).hexdigest(),
             "bulletSource":bullet_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
@@ -330,7 +346,11 @@ def main():
                        "behaviorSource":parachuter_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                        "behaviorSha256":hashlib.sha256(parachuter_source.read_bytes()).hexdigest(),
                        "kevlarSource":kevlar_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
-                       "kevlarSha256":hashlib.sha256(kevlar_source.read_bytes()).hexdigest()}
+                       # Git may check this recovered script out with CRLF on
+                       # Windows. Hash its source text with stable LF bytes.
+                       "kevlarSha256":hashlib.sha256(
+                           kevlar_source.read_bytes().replace(b"\r\n", b"\n")
+                       ).hexdigest()}
     shotgunner_source=SCRIPTS/"SoldierBehaviourShotgunner.cs"
     enemy_source=SCRIPTS/"EnemyController.cs"
     shotgunner_text=shotgunner_source.read_text(encoding="utf-8-sig")
