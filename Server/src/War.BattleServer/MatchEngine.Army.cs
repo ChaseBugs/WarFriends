@@ -3563,36 +3563,12 @@ public sealed partial class MatchEngine
                     flameId,flameOrigin,0,"army-flame");
                 continue;
             }
-            float? projectileSpeed=behavior switch
-            {
-                "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper"=>10f,
-                "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
-                "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner"=>5f,
-                "SoldierBehaviourSniper" when army.SourceCardId=="ELITESNIPER"=>
-                    weaponBindings.SniperProjectileSpeed,
-                _=>null
-            };
+            float? projectileSpeed = InfantryProjectileSpeed(behavior, army.SourceCardId,
+                weaponBindings);
             if(!projectileSpeed.HasValue)continue;
             var entityPosition=new Vector3(army.X,army.Y,army.Z);
-            Vector3 origin;
-            if (intent.MuzzleOverride is Vector3 sampledOrigin)
-            {
-                bool cardParatrooper = behavior == "SoldierBehaviourParachuter" &&
-                    army.SourceCardId == "ELITEPARA";
-                bool cardSniper = behavior == "SoldierBehaviourSniper" &&
-                    army.SourceCardId == "ELITESNIPER";
-                if ((!cardParatrooper && !cardSniper) ||
-                    !PlayerHitbox.Finite(sampledOrigin) ||
-                    Vector3.Distance(sampledOrigin, entityPosition) > 5f)
-                    throw new InvalidDataException("Invalid card soldier muzzle sample.");
-                origin = sampledOrigin;
-            }
-            else
-            {
-                origin = weaponBindings.RestMuzzleOrigin(army.UnitId,
-                    entityPosition, intent.TargetPosition - entityPosition,
-                    muzzleIndex);
-            }
+            Vector3 origin = InfantryMuzzleOrigin(intent, army, behavior,
+                weaponBindings, entityPosition, muzzleIndex);
             bool shotgun = behavior is "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper";
             if(!weaponBindings.TryProjectileDamage(army.UnitId,ArmyDamage(intent.EntityKey)??0,
                 origin,intent.TargetPosition,out float launchDamage))
@@ -3634,6 +3610,46 @@ public sealed partial class MatchEngine
             Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
                 id,origin,0,"army");
         }
+    }
+
+    private static float? InfantryProjectileSpeed(string behavior, string sourceCardId,
+        ArmyWeaponBindingCatalog bindings)
+    {
+        // The recovered weapons use different projectile families. An unknown
+        // behavior has no host-authorized flight, even if it requested a shot.
+        return behavior switch
+        {
+            "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper" => 10f,
+            "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
+            "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner" => 5f,
+            "SoldierBehaviourSniper" when sourceCardId == "ELITESNIPER" =>
+                bindings.SniperProjectileSpeed,
+            _ => null
+        };
+    }
+
+    private static Vector3 InfantryMuzzleOrigin(ArmyRusherShotIntent intent,
+        BattleArmyEntityState army, string behavior, ArmyWeaponBindingCatalog bindings,
+        Vector3 entityPosition, int muzzleIndex)
+    {
+        if (intent.MuzzleOverride is not Vector3 sampledOrigin)
+        {
+            return bindings.RestMuzzleOrigin(army.UnitId, entityPosition,
+                intent.TargetPosition - entityPosition, muzzleIndex);
+        }
+
+        bool cardParatrooper = behavior == "SoldierBehaviourParachuter" &&
+            army.SourceCardId == "ELITEPARA";
+        bool cardSniper = behavior == "SoldierBehaviourSniper" &&
+            army.SourceCardId == "ELITESNIPER";
+        if ((!cardParatrooper && !cardSniper) ||
+            !PlayerHitbox.Finite(sampledOrigin) ||
+            Vector3.Distance(sampledOrigin, entityPosition) > 5f)
+        {
+            throw new InvalidDataException("Invalid card soldier muzzle sample.");
+        }
+
+        return sampledOrigin;
     }
 
     private void LaunchShotgunFakeFlights(ulong entityKey,string ownerPlayerId,
