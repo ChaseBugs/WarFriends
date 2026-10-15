@@ -15726,6 +15726,25 @@ internal static class CombatContentTests
               normalSniperMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
             "after shield destruction, Sniper transfers a Corner and cover still blocks its next projectile");
+        Check(normalSniperMatch.Command(helicopterOwner,
+            new MatchCommand { CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = -1 } }).Code == "moving",
+            "opponent can move after the ordinary Sniper destroys its shield");
+        normalSniperMatch.Advance(++normalSniperTick);
+        var firstMovingPlayer = normalSniperMatch.Snapshot().Players.Single(player =>
+            player.PlayerId == helicopterOwner);
+        normalSniperMatch.Advance(++normalSniperTick);
+        var secondMovingPlayer = normalSniperMatch.Snapshot().Players.Single(player =>
+            player.PlayerId == helicopterOwner);
+        Vector3 playerVelocity = new(
+            secondMovingPlayer.PositionX - firstMovingPlayer.PositionX,
+            secondMovingPlayer.PositionY - firstMovingPlayer.PositionY,
+            secondMovingPlayer.PositionZ - firstMovingPlayer.PositionZ);
+        playerVelocity *= MatchManifest.TickRate;
+        Check(firstMovingPlayer.Moving && secondMovingPlayer.Moving &&
+              Vector3.Distance(normalSniperMatch.MovingPlayerVelocity(helicopterOwner),
+                  playerVelocity) < .0001f,
+            "moving-target lead uses the player's observed position change per tick");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&

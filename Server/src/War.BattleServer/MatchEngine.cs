@@ -997,6 +997,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         public ulong LastCommand;
         public int Cover = -1;
         public Vector3 Position;
+        public Vector3 MoveVelocity;
         public Vector3[]? Route;
         public ulong MoveStart;
         public ulong MoveEnd;
@@ -2782,6 +2783,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     private static bool Coordinate(float n) => float.IsFinite(n) && Math.Abs(n) <= 10000;
     private void AdvanceMovement(Player p)
     {
+        Vector3 previousPosition = p.Position;
         try
         {
         if (p.Route == null) return;
@@ -2806,7 +2808,13 @@ public sealed partial class MatchEngine : IMatchRuntime
         }
         p.Position = p.Route[^1];
         }
-        finally { UpdateDronePlayerTarget(p); }
+        finally
+        {
+            // GameShootableEntity.velocity uses the position change from the last frame.
+            // Keep that same observed velocity for soldier and turret aim prediction.
+            p.MoveVelocity = (p.Position - previousPosition) * MatchManifest.TickRate;
+            UpdateDronePlayerTarget(p);
+        }
     }
     private static ulong Ticks(double seconds) => checked((ulong)Math.Ceiling(seconds * MatchManifest.TickRate));
     private void Reload(Player p)

@@ -245,16 +245,13 @@ public sealed partial class MatchEngine
     private float HeavyTurretBulletSpeed(string targetKind)=>heavyTurretSource!.EffectiveBulletSpeed*(targetKind=="player"?.5f:1f);
     private Vector3 HeavyTurretPlayerVelocity(Player player)
     {
-        if(player.Route==null)return Vector3.Zero;
-        if(tick<=player.MoveStart||tick>=player.MoveEnd)return Vector3.Zero;
-        float traveled=(float)(tick-player.MoveStart)/MatchManifest.TickRate*player.Definition.MovementSpeed;
-        for(int i=1;i<player.Route.Length;i++)
-        {
-            var delta=player.Route[i]-player.Route[i-1];float length=delta.Length();
-            if(length>0&&traveled<=length)return delta/length*player.Definition.MovementSpeed;
-            traveled-=length;
-        }
-        return Vector3.Zero;
+        return player.Route == null ? Vector3.Zero : player.MoveVelocity;
+    }
+    internal Vector3 MovingPlayerVelocity(string playerId)
+    {
+        Player player = Find(playerId) ??
+            throw new InvalidDataException("Moving player velocity target disappeared.");
+        return HeavyTurretPlayerVelocity(player);
     }
     private int Choose(int count)
     {int choice=armyChoice(count);if(choice<0||choice>=count)throw new InvalidDataException("Heavy Turret target selection escaped its source set.");return choice;}
