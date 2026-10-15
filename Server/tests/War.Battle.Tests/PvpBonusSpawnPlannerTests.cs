@@ -805,6 +805,72 @@ internal static class PvpBonusSpawnPlannerTests
         Check(bazookaBoxMatch.Snapshot().StateRevision == bazookaRevision,
             "replaying the bazooka explosion cannot collect the same box twice");
 
+        var bazookaContent = BattleCombatContent.Load(
+            Path.Combine(directory, "combat-content-manifest.json"),
+            bazookaManifestPath: Path.Combine(directory,
+                "bazooka-content-manifest.json"));
+        var liveBazookaWeapon = bazookaContent.Bazookas!.CreateManifest(
+            "Google2u.Bazooka_RPG7", 0);
+        var liveBazookaManifest = clockManifest with
+        {
+            MatchId = Id(8695),
+            Mode = MatchManifest.BazookaCombatMode,
+            CatalogRevision = bazookaContent.BazookaRevision!,
+            Players = clockManifest.Players.Select(player => player with
+            {
+                Weapon = liveBazookaWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var liveBazookaMatch = new MatchEngine(liveBazookaManifest, map,
+            bazookaContent, combatRandom: () => 1f);
+        foreach (var participant in liveBazookaManifest.Players)
+            liveBazookaMatch.Admit(participant.PlayerId);
+        foreach (var participant in liveBazookaManifest.Players)
+            liveBazookaMatch.Command(participant.PlayerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = liveBazookaMatch.ManifestHash }
+            });
+        liveBazookaMatch.Advance(60);
+        liveBazookaMatch.BonusPlanner.EnqueueConfirmedBonus(Id(86951), localId, 6);
+        for (int index = 0; index < 3; index++)
+            liveBazookaMatch.BonusProgress.RecordConfirmedSkillShot(localId,
+                Id(86952 + index), 0x1210, 1f);
+        for (ulong nextTick = 61; nextTick <= 153; nextTick++)
+            liveBazookaMatch.Advance(nextTick);
+        var liveBazookaBox = liveBazookaMatch.BonusPlanner.ActiveBoxesSnapshot().Single();
+        var liveBazookaHold = liveBazookaMatch.Command(localId, new MatchCommand
+        {
+            CommandId = 2,
+            BazookaHold = new BazookaHoldCommand
+            {
+                Pressed = true,
+                TargetX = liveBazookaBox.Position.X,
+                TargetY = liveBazookaBox.Position.Y,
+                TargetZ = liveBazookaBox.Position.Z
+            }
+        });
+        for (ulong nextTick = 154; nextTick <= 500 && !liveBazookaMatch.Terminal;
+             nextTick++)
+        {
+            liveBazookaMatch.Advance(nextTick);
+            if (liveBazookaMatch.BonusPlanner.BoxSnapshot(liveBazookaBox.BoxId).Phase ==
+                PvpBonusBoxPhase.Collected) break;
+        }
+        var liveBazookaImpacts = liveBazookaMatch.EventBatch(localId, 0).Events
+            .Where(item => item.Kind == MatchEventKind.Impact &&
+                item.Reason == "bazooka").ToArray();
+        Check(liveBazookaHold.Code == "bazooka-targeting" &&
+              liveBazookaImpacts.Length == 1 &&
+              liveBazookaMatch.BonusPlanner.BoxSnapshot(liveBazookaBox.BoxId).Phase ==
+                  PvpBonusBoxPhase.Collected &&
+              liveBazookaMatch.Snapshot().Players[0].KevlarHealth ==
+                  liveBazookaManifest.Players[0].Combat!.MaxHealth * 0.1f,
+            $"normal RPG flight collects a live box: command={liveBazookaHold.Code}, " +
+            $"impacts={liveBazookaImpacts.Length}, box={liveBazookaBox.Position}, " +
+            $"phase={liveBazookaMatch.BonusPlanner.BoxSnapshot(liveBazookaBox.BoxId).Phase}");
+
         var grenadeContent = BattleCombatContent.Load(
             Path.Combine(directory, "combat-content-manifest.json"),
             grenadeManifestPath: Path.Combine(directory,

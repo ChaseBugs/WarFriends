@@ -10,9 +10,10 @@ The recovered `Missile.TryKill` sends RPG impacts through
 `Explosion.MissileExplode`. The host now includes active box colliders in
 bazooka flight tracing and applies the source dead/hurt radius falloff at the
 confirmed impact. A positive hit destroys the one-HP box through the same
-receipt-bound collection path as a player bullet. This has focused host tests
-for range, opposing-player collection and replay; a two-peer RPG flight
-fixture against a live box is still needed.
+receipt-bound collection path as a player bullet. Focused host tests cover
+range, opposing-player collection, replay, and a normal RPG hold, flight,
+impact and collection against a live box. A two-peer RPG flight fixture
+against a live box is still needed.
 
 The host can call `MatchEngine.IssueNextMaturedBonus()` after a delayed request
 matures. It derives mode, collected-Gold count, and the first two weapons'
