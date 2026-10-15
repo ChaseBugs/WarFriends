@@ -3,7 +3,8 @@
 This follows the active recovered 1.4.0 Client. The reviewed catalog, weight
 calculation, host selection planning, automatic delayed issuance for signed
 bonus-mode matches, and a read-only Unity box presentation are implemented.
-Bullet collision/collection and durable rewards remain incomplete.
+Player-bullet collision and lethal collection are implemented. Other damage
+paths, full effect delivery and durable rewards remain incomplete.
 
 The host can call `MatchEngine.IssueNextMaturedBonus()` after a delayed request
 matures. It derives mode, collected-Gold count, and the first two weapons'
@@ -13,8 +14,8 @@ weighted value, area, and three position coordinates. A queued bonus card still
 forces its source prefab exactly once. A running match now drains matured waits
 in source callback order, registers each falling box and publishes it in the
 snapshot. Queued cards bypass the weighted random draw as in the Client.
-Matches without a signed bonus mode do not auto-issue. Box dynamic collisions
-remain open.
+Matches without a signed bonus mode do not auto-issue. Non-bullet dynamic
+collisions remain open.
 No live reward is granted merely because the plan exists.
 
 The original `KillStreakBonusBox` prefab has a gravity-enabled Rigidbody and
@@ -36,14 +37,19 @@ Active falling/grounded boxes now appear in `MatchSnapshot.pvp_bonus_boxes` in
 stable box-ID order. Each row contains the admitted owner, source prefab index,
 host position and phase; collected boxes disappear. `War.Client` checks the
 bounded list, identity, owner, coordinates, prefab and phase before presenting
-it. `SelfHostedBonusBoxPresenter` copies only the recovered box mesh and team
-material, follows the server position and removes stale visuals after
-collection or reconnect. It attaches no Photon, Rigidbody, damage or reward
-scripts. This is a visual projection, not proof that normal gameplay issues
-a crate or that a player can shoot one yet.
-The revised SDK and presenter compiled in a disposable Unity 2018.3 project;
-rendered Play Mode, original Android Unity 5.2 and two-peer box display remain
-unverified.
+it. `SelfHostedBonusBoxPresenter` copies the recovered box mesh, team material
+and source-sized BoxCollider for local aiming, follows the server position and
+removes stale visuals after collection or reconnect. It attaches no Photon,
+Rigidbody, damage or reward scripts. Server damage alone decides collection.
+The latest collider change compiled in a disposable Unity 2018.3 project. Rendered Play Mode,
+original Android Unity 5.2 and two-peer box display remain unverified.
+
+The host treats an active box as a distinct layer-zero bullet hitbox, separate
+from player and army target IDs. Player-owned bullets reduce its source one HP;
+only lethal cumulative damage confirms collection, including in the air.
+Projectile receipts prevent repeated damage or duplicate collection. Normal
+two-peer Fire-command aiming, shotgun cones and explosive/army damage paths
+remain unverified.
 
 ## Source bindings
 

@@ -44,8 +44,9 @@ public sealed class SelfHostedBonusBoxPresenter : MonoBehaviour
 		if (visualSource == null)
 			throw new InvalidOperationException("The recovered bonus box visual is unavailable.");
 		MeshFilter sourceMesh = visualSource.GetComponent<MeshFilter>();
-		if (sourceMesh == null || sourceMesh.sharedMesh == null)
-			throw new InvalidOperationException("The recovered bonus box mesh is unavailable.");
+		BoxCollider sourceCollider = visualSource.GetComponent<BoxCollider>();
+		if (sourceMesh == null || sourceMesh.sharedMesh == null || sourceCollider == null)
+			throw new InvalidOperationException("The recovered bonus box visual is incomplete.");
 
 		GameObject visual = new GameObject("SelfHostedBonusBox_" + box.BoxId);
 		visual.transform.rotation = visualSource.transform.rotation;
@@ -54,6 +55,11 @@ public sealed class SelfHostedBonusBoxPresenter : MonoBehaviour
 		MeshRenderer renderer = visual.AddComponent<MeshRenderer>();
 		renderer.sharedMaterial = box.OwnerPlayerId == localPlayerId ?
 			visualSource.blueMat : visualSource.redMat;
+		// Local aiming may hit this collider. No Client damage or reward script is
+		// attached; the Worker resolves the same source-sized box independently.
+		BoxCollider aimCollider = visual.AddComponent<BoxCollider>();
+		aimCollider.center = sourceCollider.center;
+		aimCollider.size = sourceCollider.size;
 		return visual;
 	}
 

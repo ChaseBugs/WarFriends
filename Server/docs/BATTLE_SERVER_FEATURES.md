@@ -40,7 +40,7 @@ issue retains its request. Queued cards skip the weighted random draw. The
 signed manifest accepts only
 ordinary, War Arena or friendly DeathMatch bonus modes; a mismatched host mode
 leaves its request queued. Normal Backend allocation still needs to project
-the mode and scene-master analytics; shooting and collection remain open. A
+the mode and scene-master analytics; normal two-peer shooting proof remains open. A
 bonus-enabled manifest now
 requires the scene master's durable Gold-box count at admission; the host
 rejects a conflicting selection count. The recovered catalog now pins the
@@ -76,8 +76,11 @@ candidate, and registered boxes advance vertically under source gravity until
 first contact. Active boxes now travel in ordered protobuf match snapshots
 and rebuild after reconnect. The SDK validates owner, identity, pose, source
 prefab index and active phase; the Unity DeathMatch bridge copies the recovered
-box mesh and team material without attaching Photon or reward scripts. Dynamic
-collisions, rotation, bounce, PhysX timing and live pickup remain unverified.
+box mesh, team material and local aiming collider without attaching Photon or
+reward scripts. Player-bullet raycasts now select distinct box IDs, and the host
+requires cumulative lethal damage to the source one-HP box before collecting it.
+Projectile receipts prevent replay. Other dynamic collisions, rotation, bounce,
+PhysX timing and normal two-peer shooting remain unverified.
 Matured delay receipts can now produce one atomic server-side bonus/placement
 plan and register its host box using validated roster perspective, the reviewed
 selection history and source map areas. Replays do not redraw; invalid

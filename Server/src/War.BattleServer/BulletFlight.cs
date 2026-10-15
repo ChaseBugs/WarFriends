@@ -128,14 +128,21 @@ internal sealed class BulletFlight
     {
         bool playerHit = hit.PlayerId != null;
         bool dynamicEntityHit = hit.DynamicEntityId != null;
-        bool sceneHit = !playerHit && !dynamicEntityHit;
+        bool bonusBoxHit = hit.BonusBoxId != null;
+        bool sceneHit = !playerHit && !dynamicEntityHit && !bonusBoxHit;
 
         if ((playerHit &&
-             (hit.PartWeight <= 0 || hit.Static || dynamicEntityHit ||
+             (hit.PartWeight <= 0 || hit.Static || dynamicEntityHit || bonusBoxHit ||
               hit.ColliderIndex != null || hit.DynamicOwner != null)) ||
             (dynamicEntityHit &&
-             (hit.Static || hit.DynamicOwner != null ||
+             (bonusBoxHit || hit.Static || hit.DynamicOwner != null ||
               hit.ColliderIndex != null)) ||
+            (bonusBoxHit &&
+             (!Guid.TryParseExact(hit.BonusBoxId, "N", out _) ||
+              hit.BonusBoxId != hit.BonusBoxId.ToLowerInvariant() ||
+              hit.ColliderLayer != 0 || !hit.SourceDestroyable || hit.Static ||
+              hit.DynamicOwner != null || hit.ColliderIndex != null ||
+              HasDynamicPartIdentity(hit))) ||
             (sceneHit && HasDynamicPartIdentity(hit)) ||
             (hit.DynamicPartId is <= 0) ||
             (hit.DynamicRepairDronePathIndex is < 0 or > 1) ||

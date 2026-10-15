@@ -7,7 +7,7 @@ namespace War.BattleServer;
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose,int Layer=-1,int Fraction=0);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
     string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false,bool DroneRoot=false,bool AssaultGlass=false,bool GrenadierGrenade=false);
-internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false,int? ColliderLayer=null,bool SourceDestroyable=false,Vector3? SurfaceNormal=null,bool DynamicGrenadierGrenade=false);
+internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false,int? ColliderLayer=null,bool SourceDestroyable=false,Vector3? SurfaceNormal=null,bool DynamicGrenadierGrenade=false,string? BonusBoxId=null);
 
 // Input poses come exclusively from host animation/pose authority. This class has
 // no network adapter and no client-submitted target player or damage parameter.
@@ -19,12 +19,15 @@ internal sealed class ShotCollisionWorld
     private readonly Func<int,bool>? colliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;
     private readonly Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
+    private readonly Func<IReadOnlyList<PvpBonusBoxSnapshot>>? bonusBoxes;
     internal ShotCollisionWorld(RecoveredBattleMap? map, IEnumerable<CollisionPlayer> players,
         Func<string,bool>? dynamicEnabled=null,Func<int,bool>? colliderEnabled=null,
-        Func<int,int,int>? runtimeLayer=null,Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets=null)
+        Func<int,int,int>? runtimeLayer=null,Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets=null,
+        Func<IReadOnlyList<PvpBonusBoxSnapshot>>? bonusBoxes=null)
     {
         this.map = map;this.dynamicEnabled=dynamicEnabled;this.colliderEnabled=colliderEnabled;
         this.runtimeLayer=runtimeLayer;this.dynamicTargets=dynamicTargets;
+        this.bonusBoxes=bonusBoxes;
         this.players = players.Take(3).ToArray();
         if (this.players.Length != 2 || this.players.Any(p => p == null || p.Pose == null || p.Pose.Role != "gameplay" ||
             !Guid.TryParseExact(p.PlayerId, "N", out _) || p.PlayerId != p.PlayerId.ToLowerInvariant() ||
@@ -108,6 +111,23 @@ internal sealed class ShotCollisionWorld
                              target.ArmyInfantry||target.Decoy||target.HeavyTurret||target.HelicopterGunner||
                              target.GrenadierGrenade));
             }
+        if (bonusBoxes != null && (mapLayerMask & 1u) != 0)
+        {
+            foreach (var box in bonusBoxes())
+            {
+                var hitbox = PvpBonusShotHitbox.For(box);
+                float? distance = hitbox.Raycast(origin, direction, range);
+                if (distance.HasValue &&
+                    (nearest == null || distance.Value < nearest.Distance))
+                {
+                    nearest = new ShotCollision(distance.Value,
+                        origin + direction * distance.Value,
+                        hitbox.SourcePath, null, 1f,
+                        ColliderLayer: 0, SourceDestroyable: true,
+                        BonusBoxId: box.BoxId);
+                }
+            }
+        }
         return nearest;
     }
     internal IReadOnlyList<ShotgunCollider> OverlapEnemy(string shooterId,Vector3 origin,float radius,

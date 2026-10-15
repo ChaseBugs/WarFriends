@@ -265,6 +265,44 @@ internal static class PvpBonusSpawnPlannerTests
         motionRegistry.AdvanceFalling(1f);
         Check(motionRegistry.Snapshot(planned.Request.ReceiptId) == landed,
             "later ticks do not move a grounded crate or collect it");
+        var distantShooter = content.Poses.SampleBlended("idle", 0, true,
+            "idle", 0, true, 0).Place(new Vector3(100, 0, 100),
+                Quaternion.Identity).Collision;
+        var distantOpponent = content.Poses.SampleBlended("idle", 0, true,
+            "idle", 0, true, 0).Place(new Vector3(110, 0, 100),
+                Quaternion.Identity).Collision;
+        var boxWorld = new ShotCollisionWorld(null,
+            [new(localId, distantShooter),
+             new(manifest.Players[1].PlayerId, distantOpponent)],
+            bonusBoxes: motionRegistry.ActiveSnapshot);
+        Vector3 shotOrigin = landed.Position + Vector3.UnitX * 2f;
+        Vector3 shotDirection = -Vector3.UnitX;
+        var boxHit = boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f, 1u);
+        Check(boxHit?.BonusBoxId == landed.BoxId &&
+              boxHit.ColliderLayer == 0 && boxHit.SourceDestroyable &&
+              boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f, 0u) == null,
+            "player ray hits only the active source Default-layer box collider");
+        var boxFlight = new BulletFlight(9200, localId,
+            new BulletFlightDefinition(100f, 0f, true), shotOrigin,
+            landed.Position, 1,
+            (from, ray, range) => boxWorld.Raycast(localId, from, ray, range, 1u));
+        var boxImpact = boxFlight.Advance(2);
+        Check(boxImpact?.Hit.BonusBoxId == landed.BoxId,
+            "real bullet flight accepts the box as a distinct collision owner");
+        Check(motionRegistry.ApplyBulletDamage(landed.BoxId, Id(9201),
+                  localId, 0.4f) == null &&
+              motionRegistry.Snapshot(landed.BoxId).Health > 0.5f,
+            "a sublethal bullet reduces the original one-HP box without collection");
+        float boxDamagedHealth = motionRegistry.Snapshot(landed.BoxId).Health;
+        motionRegistry.ApplyBulletDamage(landed.BoxId, Id(9201), localId, 0.4f);
+        Check(motionRegistry.Snapshot(landed.BoxId).Health == boxDamagedHealth,
+            "replaying a sublethal bullet cannot subtract box health twice");
+        var lethalCollection = motionRegistry.ApplyBulletDamage(landed.BoxId,
+            Id(9202), localId, boxDamagedHealth);
+        Check(lethalCollection?.RecipientPlayerId == localId &&
+              motionRegistry.Snapshot(landed.BoxId).Phase == PvpBonusBoxPhase.Collected &&
+              boxWorld.Raycast(localId, shotOrigin, shotDirection, 4f, 1u) == null,
+            "only cumulative lethal bullet damage collects and removes the box");
         try
         {
             motionRegistry.AdvanceFalling(float.NaN);
@@ -538,15 +576,31 @@ internal static class PvpBonusSpawnPlannerTests
                   .Position.Y <= issuedBox.Position.Y &&
               clockEngine.Snapshot().PvpBonusBoxes.Single().Y <= issuedRow.Y,
             "a normal running match tick preserves or advances its crate pose");
-        clockEngine.BonusPlanner.ConfirmDestroyed(issuedInMatch.Request.ReceiptId,
-            Id(751), null);
+        var liveBox = clockEngine.BonusPlanner.BoxSnapshot(issuedInMatch.Request.ReceiptId);
+        var liveBoxWorld = new ShotCollisionWorld(null,
+            [new(localId, distantShooter),
+             new(manifest.Players[1].PlayerId, distantOpponent)],
+            bonusBoxes: clockEngine.BonusPlanner.ActiveBoxesSnapshot);
+        var liveBoxHit = liveBoxWorld.Raycast(localId,
+            liveBox.Position + Vector3.UnitX * 2f, -Vector3.UnitX, 4f, 1u);
+        Check(liveBoxHit?.BonusBoxId == liveBox.BoxId,
+            "player bullet trace selects the issued live-match bonus box");
+        var confirmedBoxImpact = new BulletImpact(751, localId, liveBoxHit!,
+            clockEngine.Snapshot().ServerTick);
+        clockEngine.ApplyPlayerBulletBonusImpact(confirmedBoxImpact, 2f);
         Check(clockEngine.Snapshot().PvpBonusBoxes.Count == 0,
             "collected crate disappears from the reconnect snapshot");
         Check(clockEngine.ApplyCollectedPvpBonus(issuedInMatch.Request.ReceiptId) ==
                   "bonus-applied" &&
               clockEngine.Snapshot().Players[0].KevlarHealth ==
                   manifest.Players[0].Combat!.MaxHealth * 0.1f,
-            "a box issued from the live streak clock reaches its verified Kevlar effect");
+            "host-confirmed bullet collection applies the source Kevlar effect");
+        ulong collectedRevision = clockEngine.Snapshot().StateRevision;
+        clockEngine.ApplyPlayerBulletBonusImpact(confirmedBoxImpact, 2f);
+        Check(clockEngine.Snapshot().StateRevision == collectedRevision &&
+              liveBoxWorld.Raycast(localId, liveBox.Position + Vector3.UnitX * 2f,
+                  -Vector3.UnitX, 4f, 1u) == null,
+            "replaying a bullet cannot recollect or keep a destroyed box shootable");
         clockEngine.BonusPlanner.EnqueueConfirmedBonus(Id(752), localId, 0);
         var liveGoldPlan = clockEngine.BonusPlanner.PlanMatured(second, 0, context, draw);
         Check(clockEngine.ApplyCollectedPvpBonus(liveGoldPlan.Request.ReceiptId) ==

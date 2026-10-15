@@ -1150,6 +1150,9 @@ public sealed partial class MatchEngine : IMatchRuntime
                     barrels==null?null:barrels.RuntimeLayer,this.combatRandom);
                 rifleCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
                 rifleCombat.ConfigurePlayerShotTargets(PlayerShotTargets);
+                rifleCombat.ConfigureBonusBoxTargets(() =>
+                    pvpBonusPlanner?.ActiveBoxesSnapshot() ??
+                    Array.Empty<PvpBonusBoxSnapshot>());
                 rifleCombat.ConfigureVisibilityTargets(HelicopterVisibilityTargets);
                 ConfigureVisualVolley((id,owner,target,at)=>rifleCombat.PrepareVisualVolley(
                     id,owner,target,at,this.combatRandom),this.combatRandom);
@@ -1810,9 +1813,19 @@ public sealed partial class MatchEngine : IMatchRuntime
                 Emit(MatchEventKind.Impact,impact.OwnerId,
                     impact.Hit.DynamicHelicopterGunner?
                         "army:"+impact.Hit.DynamicEntityId!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture):
-                        impact.Hit.PlayerId??"",
+                        impact.Hit.PlayerId??impact.Hit.BonusBoxId??"",
                     impact.ProjectileId,impact.Hit.Position,0,
                     impact.Hit.DynamicHelicopterGunner?"helicopter-gunner":"");
+            }
+            if (impact?.Hit.BonusBoxId != null)
+            {
+                try { ApplyPlayerBulletBonusImpact(impact,
+                    pair.Value.Damage.Amount * impact.Hit.PartWeight); }
+                catch (InvalidDataException)
+                { End("invalid-pvp-bonus-authority", "", false); break; }
+                catch (InvalidOperationException)
+                { End("pvp-bonus-backpressure", "", false); break; }
+                if (Terminal) break;
             }
             if(impact?.Hit.DynamicOwner!=null && shields!=null)
             {

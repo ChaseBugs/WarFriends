@@ -458,6 +458,30 @@ public sealed partial class MatchEngine
         return Convert.ToHexStringLower(digest)[..32];
     }
 
+    internal void ApplyPlayerBulletBonusImpact(BulletImpact impact, float damage)
+    {
+        string boxId = impact.Hit.BonusBoxId ??
+            throw new InvalidDataException("Player bullet has no bonus box identity.");
+        var planner = pvpBonusPlanner ??
+            throw new InvalidDataException("Bonus box collision has no host registry.");
+        var box = planner.BoxSnapshot(boxId);
+        if (box.Phase == PvpBonusBoxPhase.Collected) return;
+        if (stateRevision == ulong.MaxValue)
+            throw new InvalidDataException("Bonus box state revision is exhausted.");
+
+        // The recovered box starts at one HP and OnDeath has no onGround gate.
+        // Its current transform, not the bullet's surface contact, supplies
+        // the collection position used by effects such as the grenade burst.
+        string receiptId = PvpHitReceiptId("bonus-box", impact.ProjectileId, boxId);
+        var collection = planner.ApplyBulletDamage(boxId, receiptId,
+            impact.OwnerId, damage);
+        if (planner.BoxSnapshot(boxId).Health == box.Health)
+            return;
+        stateRevision++;
+        if (collection != null)
+            _ = ApplyCollectedPvpBonus(boxId);
+    }
+
     // A real unit projectile supplies the owner, collision and unique shot ID.
     // The source PlayerOnDamage callback credits the AIObject's owning player.
     internal PlayerDamageResult? ApplyConfirmedArmyProjectilePlayerDamage(

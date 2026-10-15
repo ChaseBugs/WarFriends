@@ -8,7 +8,7 @@ public sealed record PvpBonusBoxCollectionCandidate(string BoxId, string OwnerPl
     Vector3? CollectionPosition);
 public sealed record PvpBonusBoxSnapshot(string BoxId, PvpBonusSpawnPlan Plan,
     PvpBonusBoxPhase Phase, PvpBonusBoxCollectionCandidate? Collection,
-    Vector3 Position, float VerticalVelocity);
+    Vector3 Position, float VerticalVelocity, float Health);
 public enum PvpBonusEffectKind
 {
     Gold, Health, Warbucks, Grenades, SlowMotion, Turret, Kevlar, Card, Ammo,
@@ -33,6 +33,8 @@ internal sealed class PvpBonusBoxRegistry
     private readonly Dictionary<string, int> fractions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PvpBonusBoxSnapshot> boxes = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> damageReceipts = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (string BoxId, string AttackerId, float Damage)>
+        nonlethalHits = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> trapReceipts = new(StringComparer.Ordinal);
     private readonly HashSet<int> armedFractions = new();
     private int activeCount;
@@ -64,7 +66,7 @@ internal sealed class PvpBonusBoxRegistry
 
     internal int ActiveCount { get { lock (gate) return activeCount; } }
     internal int ReceiptCount { get { lock (gate) return boxes.Count +
-        damageReceipts.Count + trapReceipts.Count; } }
+        damageReceipts.Count + nonlethalHits.Count + trapReceipts.Count; } }
     internal IReadOnlyList<PvpBonusBoxSnapshot> ActiveSnapshot()
     {
         lock (gate)
@@ -100,13 +102,14 @@ internal sealed class PvpBonusBoxRegistry
                 return previous;
             }
             if (trapReceipts.ContainsKey(request.ReceiptId) ||
-                damageReceipts.ContainsKey(request.ReceiptId))
+                damageReceipts.ContainsKey(request.ReceiptId) ||
+                nonlethalHits.ContainsKey(request.ReceiptId))
                 throw new InvalidDataException("Box receipt conflicts with another host mutation.");
             // Reserve its eventual terminal damage receipt at spawn admission.
             if (activeCount == maximumActiveBoxes || ReservedReceipts + 2 > maximumReceipts)
                 throw new InvalidOperationException("Bonus box capacity exhausted.");
             var result = new PvpBonusBoxSnapshot(request.ReceiptId, plan,
-                PvpBonusBoxPhase.Falling, null, plan.Position, 0);
+                PvpBonusBoxPhase.Falling, null, plan.Position, 0, 1f);
             boxes.Add(result.BoxId, result);
             activeCount++;
             return result;
@@ -154,7 +157,8 @@ internal sealed class PvpBonusBoxRegistry
         {
             if (!fractions.TryGetValue(ownerPlayerId, out int fraction))
                 throw new InvalidDataException("Booby trap owner is outside the match.");
-            if (boxes.ContainsKey(receiptId) || damageReceipts.ContainsKey(receiptId))
+            if (boxes.ContainsKey(receiptId) || damageReceipts.ContainsKey(receiptId) ||
+                nonlethalHits.ContainsKey(receiptId))
                 throw new InvalidDataException("Booby trap receipt conflicts with box authority.");
             if (trapReceipts.TryGetValue(receiptId, out string? previous))
             {
@@ -186,7 +190,9 @@ internal sealed class PvpBonusBoxRegistry
             string recipientId = attackerPlayerId ?? ownerId;
             if (!fractions.ContainsKey(recipientId))
                 throw new InvalidDataException("Box damage owner is outside the admitted roster.");
-            if (boxes.ContainsKey(damageReceiptId) || trapReceipts.ContainsKey(damageReceiptId))
+            if (boxes.ContainsKey(damageReceiptId) ||
+                trapReceipts.ContainsKey(damageReceiptId) ||
+                nonlethalHits.ContainsKey(damageReceiptId))
                 throw new InvalidDataException("Damage receipt conflicts with box authority.");
             if (box.Collection is { } previous)
             {
@@ -205,10 +211,63 @@ internal sealed class PvpBonusBoxRegistry
                 recipientId, box.Plan.PrefabIndex, stolen, boobyTrapped,
                 collectionPosition);
             damageReceipts.Add(damageReceiptId, boxId);
-            boxes[boxId] = box with {Phase = PvpBonusBoxPhase.Collected, Collection = candidate};
+            boxes[boxId] = box with
+            {
+                Phase = PvpBonusBoxPhase.Collected,
+                Collection = candidate,
+                Health = 0f
+            };
             activeCount--;
             if (boobyTrapped) armedFractions.Remove(fractions[ownerId]);
             return candidate;
+        }
+    }
+
+    internal PvpBonusBoxCollectionCandidate? ApplyBulletDamage(string boxId,
+        string damageReceiptId, string attackerPlayerId, float damage)
+    {
+        ValidateReceipt(damageReceiptId);
+        if (!float.IsFinite(damage) || damage <= 0 || damage > 10_000_000)
+            throw new InvalidDataException("Invalid host bonus box bullet damage.");
+        lock (gate)
+        {
+            var box = Find(boxId);
+            if (!fractions.ContainsKey(attackerPlayerId))
+                throw new InvalidDataException("Bonus box shooter is outside the match.");
+            if (nonlethalHits.TryGetValue(damageReceiptId, out var previous))
+            {
+                if (previous.BoxId != boxId ||
+                    previous.AttackerId != attackerPlayerId ||
+                    previous.Damage != damage)
+                    throw new InvalidDataException("Box damage replay changed its authority.");
+                return null;
+            }
+            if (box.Phase == PvpBonusBoxPhase.Collected)
+            {
+                if (damageReceipts.TryGetValue(damageReceiptId, out var priorBox) &&
+                    priorBox == boxId &&
+                    box.Collection?.RecipientPlayerId == attackerPlayerId)
+                    return box.Collection;
+                return null;
+            }
+            if (damageReceipts.ContainsKey(damageReceiptId) ||
+                boxes.ContainsKey(damageReceiptId) ||
+                trapReceipts.ContainsKey(damageReceiptId))
+                throw new InvalidDataException("Box damage receipt conflicts with host authority.");
+            if (!float.IsFinite(box.Health) || box.Health <= 0 || box.Health > 1)
+                throw new InvalidDataException("Active bonus box has invalid health.");
+            if (damage >= box.Health)
+                return ConfirmDestroyed(boxId, damageReceiptId, attackerPlayerId,
+                    box.Position);
+            if (ReservedReceipts + 1 > maximumReceipts)
+                throw new InvalidOperationException("Bonus box damage receipt capacity exhausted.");
+            float remaining = box.Health - damage;
+            if (!float.IsFinite(remaining) || remaining <= 0)
+                throw new InvalidDataException("Invalid nonlethal box health.");
+            nonlethalHits.Add(damageReceiptId,
+                (boxId, attackerPlayerId, damage));
+            boxes[boxId] = box with {Health = remaining};
+            return null;
         }
     }
 
@@ -258,7 +317,8 @@ internal sealed class PvpBonusBoxRegistry
         boxes.TryGetValue(boxId, out var box)
             ? box : throw new InvalidDataException("Unknown host bonus box.");
 
-    private int ReservedReceipts => boxes.Count * 2 + trapReceipts.Count;
+    private int ReservedReceipts => boxes.Count * 2 +
+        nonlethalHits.Count + trapReceipts.Count;
 
     private static bool Inside(Vector3 position, PvpBonusSpawnArea area) =>
         float.IsFinite(position.X) && float.IsFinite(position.Y) && float.IsFinite(position.Z) &&
