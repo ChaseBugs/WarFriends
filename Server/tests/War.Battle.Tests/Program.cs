@@ -249,6 +249,34 @@ if(args is ["--shotgun-udp-only"])
     return;
 }
 
+if(args is ["--shotgun-overtime-udp-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/shotgun-content-manifest.json")))
+        root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Shotgun content root missing.");
+    int focused=await LiveShotgunTests.RunOvertimeUdp(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused live shotgun overtime UDP assertions");
+    return;
+}
+
+if(args is ["--shotgun-sequence-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/shotgun-content-manifest.json")))
+        root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Shotgun content root missing.");
+    string directory=Path.Combine(root.FullName,"content");
+    Console.WriteLine("Shotgun sequence: simulation");
+    int focused=LiveShotgunTests.Run(directory);
+    Console.WriteLine("Shotgun sequence: ordinary UDP");
+    focused+=await LiveShotgunTests.RunUdp(directory);
+    Console.WriteLine("Shotgun sequence: overtime UDP");
+    focused+=await LiveShotgunTests.RunOvertimeUdp(directory);
+    Console.WriteLine($"PASS: {focused} focused shotgun sequence assertions");
+    return;
+}
+
 if(args is ["--shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

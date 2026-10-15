@@ -186,7 +186,10 @@ internal static class LiveShotgunTests
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(18));
+            // The full content suite can leave the process briefly CPU-bound.
+            // This deadline covers the whole live exchange, including overtime
+            // and event paging, rather than just the four-second match clock.
+            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(45));
             using var a=new MatchConnection(Grant(one,941));using var b=new MatchConnection(Grant(two,942));
             Check((await a.ConnectAsync(timeout.Token)).Code=="admitted" &&
                   (await b.ConnectAsync(timeout.Token)).Code=="admitted",
