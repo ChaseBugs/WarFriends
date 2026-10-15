@@ -15533,7 +15533,8 @@ internal static class CombatContentTests
                 ArmyHealthFactors = [new(1f, 1f)],
                 ArmyDamageScales = [1f],
                 ArmySpeedCoefficients = [1f],
-                ArmyAccuracyCoefficients = [1f]
+                ArmyAccuracyCoefficients = [1f],
+                ShieldLevel = 0
             }).ToArray()
         };
         content.ValidateAllocation(normalSniperManifest);
@@ -15590,6 +15591,7 @@ internal static class CombatContentTests
               normalSniperMatch.CardSniperAttack(normalSniper.EntityKey) != null,
             "ordinary Sniper reaches its reserved Corner and starts source shot timing");
         (string OwnerPlayerId, int OwnerFraction, float Damage)? normalSniperLaunch = null;
+        ulong normalSniperProjectileId = 0;
         while (normalSniperTick < 1000 && !normalSniperMatch.Terminal &&
                normalSniperLaunch == null)
         {
@@ -15597,6 +15599,7 @@ internal static class CombatContentTests
             foreach (var projectile in normalSniperMatch.Snapshot().Projectiles)
             {
                 if (projectile.ArmyUnitId != "ID_UNIT-SNIPER") continue;
+                normalSniperProjectileId = projectile.ProjectileId;
                 normalSniperLaunch = normalSniperMatch.ArmyProjectileLaunch(projectile.ProjectileId);
             }
         }
@@ -15604,6 +15607,21 @@ internal static class CombatContentTests
               normalSniperShot.OwnerPlayerId == soldierOwner &&
               Math.Abs(normalSniperShot.Damage - normalSniperMatch.ArmyDamage(normalSniper.EntityKey)!.Value) < .001f,
             "ordinary Sniper publishes a source-speed noncritical host projectile");
+        float healthBeforeSniperImpact = normalSniperMatch.Snapshot().Players
+            .Single(player => player.PlayerId == helicopterOwner).Health;
+        MatchEvent? normalSniperImpact = null;
+        while (normalSniperTick < 1100 && !normalSniperMatch.Terminal &&
+               normalSniperImpact == null)
+        {
+            normalSniperMatch.Advance(++normalSniperTick);
+            normalSniperImpact = normalSniperMatch.EventBatch(soldierOwner, 0)
+                .Events.FirstOrDefault(row => row.Kind == MatchEventKind.Impact &&
+                    row.ProjectileId == normalSniperProjectileId);
+        }
+        Check(normalSniperImpact is { Reason: "army", TargetId: "" } &&
+              normalSniperMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
+            "ordinary Sniper projectile collides with map geometry without inventing player damage");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
