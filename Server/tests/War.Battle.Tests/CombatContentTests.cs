@@ -15674,6 +15674,42 @@ internal static class CombatContentTests
               normalSniperMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
             "repeated ordinary Sniper impacts destroy the opposing shield without bypass damage");
+        MatchEvent? shotAfterShieldDestroyed = null;
+        var shotsAfterShieldDestroyed = new HashSet<ulong>();
+        bool sniperTransferredPoint = false;
+        while (normalSniperTick < 1800 && !normalSniperMatch.Terminal &&
+               shotAfterShieldDestroyed == null)
+        {
+            if (normalSniperTick % 90 == 0)
+            {
+                normalSniperMatch.ArmyBatch(soldierOwner);
+                normalSniperMatch.ArmyBatch(helicopterOwner);
+            }
+            normalSniperMatch.Advance(++normalSniperTick);
+            sniperTransferredPoint |= normalSniperMatch.CardEnemyPoint(
+                normalSniper.EntityKey)?.ComponentFileId is int currentPoint &&
+                    currentPoint != normalSniperPoint;
+            var laterEvents = normalSniperMatch.EventBatch(soldierOwner,
+                sniperShieldEventCursor);
+            foreach (var row in laterEvents.Events)
+            {
+                sniperShieldEventCursor = row.EventId;
+                if (row.Kind == MatchEventKind.Shot && row.ActorId == soldierOwner &&
+                    row.Reason == "army" && row.Tick > destroyedSniperShield!.Tick)
+                    shotsAfterShieldDestroyed.Add(row.ProjectileId);
+                if (row.Kind == MatchEventKind.Impact && row.Reason == "army" &&
+                    row.Tick > destroyedSniperShield!.Tick)
+                    shotAfterShieldDestroyed = row;
+            }
+        }
+        Check(shotAfterShieldDestroyed is { TargetId: "" } &&
+              shotsAfterShieldDestroyed.Contains(shotAfterShieldDestroyed.ProjectileId) &&
+              sniperTransferredPoint &&
+              normalSniperMatch.CardSniperAtPoint(normalSniper.EntityKey) &&
+              normalSniperMatch.CardSniperAttack(normalSniper.EntityKey) != null &&
+              normalSniperMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
+            "after shield destruction, Sniper transfers a Corner and cover still blocks its next projectile");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
