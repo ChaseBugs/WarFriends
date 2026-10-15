@@ -207,11 +207,25 @@ internal static class LiveRusherUdpTests
                   "live Commando deployment uses its trusted family-only offer");
             ulong cursor=0;var shots=new List<MatchEvent>();bool impact=false,damaged=false;
             var poisonByProjectile=new Dictionary<ulong,List<ulong>>();
+            var poisonFlights = new HashSet<ulong>();
             while(shots.Count<3||!impact||!damaged||!poisonByProjectile.Values.Any(x=>x.Count==5))
             {
                 await Task.Delay(100,timeout.Token);
                 var snapshot=await b.PollAsync(timeout.Token);
                 damaged=snapshot.Snapshot.Players.Single(x=>x.PlayerId==two).Health<100000;
+                foreach (var projectile in snapshot.Snapshot.Projectiles.Where(row =>
+                    row.Kind == "army-bullet" && row.OwnerPlayerId == one))
+                {
+                    Check(projectile.ArmyUnitId == "ID_UNIT-COMMANDO" &&
+                          projectile.ArmySourceCardId.Length == 0 &&
+                          projectile.ArmyPoison &&
+                          MathF.Abs(MathF.Sqrt(
+                              projectile.VelocityX * projectile.VelocityX +
+                              projectile.VelocityY * projectile.VelocityY +
+                              projectile.VelocityZ * projectile.VelocityZ) - 5f) < .001f,
+                        "special Commando publishes its source poison bullet at speed five");
+                    poisonFlights.Add(projectile.ProjectileId);
+                }
                 var events=await b.PollEventsAsync(cursor,timeout.Token);
                 foreach(var row in events.Events)
                 {
@@ -231,6 +245,8 @@ internal static class LiveRusherUdpTests
             Check(Distance(shots[0],shots[1])>.1f&&Distance(shots[0],shots[2])<.001f&&impact&&damaged,
                   "live Commando alternates source right/left muzzles and applies speed-five projectile damage");
             var completePoison=poisonByProjectile.Values.First(x=>x.Count==5);
+            Check(poisonByProjectile.Keys.Any(poisonFlights.Contains),
+                  "a host-published poison flight owns the later five-pulse receipt");
             Check(completePoison.Zip(completePoison.Skip(1),(aTick,bTick)=>bTick-aTick)
                       .All(delta=>delta==MatchManifest.TickRate),
                   "live special Commando hit stacks its own immediate plus four one-second poison pulses");
