@@ -15627,9 +15627,11 @@ internal static class CombatContentTests
                 row.ProjectileId == normalSniperProjectileId);
         float shieldAfterSniperImpact = normalSniperMatch.Snapshot().Shields
             .Single(shield => shield.CoverIndex == opponentCoverIndex).Health;
+        float expectedSniperShieldHealth = shieldBeforeSniperImpact -
+            normalSniperLaunch!.Value.Damage * content.Shields.UnitToShieldCoefficient;
         Check(normalSniperImpact is { Reason: "army", TargetId: "" } &&
               normalSniperDamagedShield &&
-              shieldAfterSniperImpact < shieldBeforeSniperImpact &&
+              Math.Abs(shieldAfterSniperImpact - expectedSniperShieldHealth) < .001f &&
               normalSniperMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).Health == healthBeforeSniperImpact,
             "ordinary Sniper projectile damages the opposing shield without bypassing it");
