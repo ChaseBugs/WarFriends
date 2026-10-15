@@ -8356,6 +8356,30 @@ internal static class CombatContentTests
                   idleTarget.Position)>1f,
               "Rusher moving target follows the sampled animated rig and host root placement");
         var referencePose=content.Poses.SampleBlended("T_pose",0,true,"T_pose",0,true,0);
+        // An exposed idle source pose can be struck by a Body-targeted soldier
+        // shot. This does not assume a hit from the target alone: the recovered
+        // enabled collider and the actual flight ray must intersect.
+        var exposedPose=content.Poses.SampleBlended("idle",.2,false,"idle",.2,false,0)
+            .Place(Vector3.Zero,Quaternion.Identity);
+        var exposedOrigin=new Vector3(-4f,.4f,0f);
+        var exposedAim=exposedPose.BodyTarget(firstBody.TransformFileId).Position;
+        var exposedDirection=Vector3.Normalize(exposedAim-exposedOrigin);
+        var exposedHit=exposedPose.Collision.Raycast(exposedOrigin,exposedDirection,5f);
+        Check(exposedHit is {Weight:>0f} && exposedHit.Position.X>exposedAim.X,
+            "Unity-sampled exposed idle Body aim intersects a live player hit part beyond the target");
+        var exposedFlight=new ArmyProjectileFlight(21,77,exposedOrigin,exposedAim,5f,10,
+            (from,direction,range) =>
+            {
+                var hit=exposedPose.Collision.Raycast(from,direction,range);
+                return hit==null ? null : new ShotCollision(hit.Distance,hit.Position,
+                    hit.PartPath,"22222222222222222222222222222222",hit.Weight);
+            },extraCollisionDistance:.35f);
+        ArmyProjectileImpact? exposedImpact=null;
+        for(ulong flightTick=11;flightTick<=60 && exposedImpact==null;flightTick++)
+            exposedImpact=exposedFlight.Advance(flightTick);
+        Check(exposedImpact?.Collision.PlayerId=="22222222222222222222222222222222" &&
+              exposedFlight.Finished,
+            "source Body aim and slow-bullet continuation can produce a direct exposed-player impact");
         var headTarget=content.PlayerShotTargets.Gameplay.Single(t=>t.Type==8);
         Check(Vector3.Distance(content.Poses.SampleBlended("run",.25,true,"run",.25,true,0)
                 .BodyTarget(headTarget.TransformFileId).Position,referencePose.BodyTarget(headTarget.TransformFileId).Position)>.001f,
