@@ -148,6 +148,7 @@ internal static class LiveRusherUdpTests
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
         checks+=await RunCommando(directory,content,map,left,right,weapon);
         checks+=await RunShotgunner(directory,content,map,left,right,weapon);
+        checks+=await RunNormalSniper(directory,content,map,left,right,weapon);
         return checks;
     }
 
@@ -378,6 +379,155 @@ internal static class LiveRusherUdpTests
             Check(ownerSawBurst&&opponentSawBurst&&scanReplayed,
                   $"both UDP peers and a replayed full scan see the same five host pellets: " +
                   $"owner={ownerSawBurst}, opponent={opponentSawBurst}, scan={scanReplayed}");
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken.None);
+            File.Delete(file);
+        }
+        return checks;
+    }
+
+    private static async Task<int> RunNormalSniper(string directory,
+        BattleCombatContent content, RecoveredBattleMap map,
+        CoverNode left, CoverNode right, WeaponManifest weapon)
+    {
+        int checks = 0;
+        void Check(bool condition, string message)
+        {
+            if (!condition) throw new Exception(message);
+            checks++;
+        }
+
+        string owner = new('1', 32);
+        string opponent = new('2', 32);
+        ParticipantManifest Player(string id, int fraction, int cover) =>
+            new(id, weapon, fraction, cover, 1, new(100000), 0, 0, 0)
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-SNIPER"],
+                ArmyNormalUpgradeIndexes = [0],
+                ArmySpecialUpgradeIndexes = [-1],
+                ArmyEliteUpgradeIndexes = [-1],
+                ArmyHealthFactors = [new(1f, 1f)],
+                ArmyDamageScales = [1f],
+                ArmySpeedCoefficients = [1f],
+                ArmyAccuracyCoefficients = [1f]
+            };
+        var manifest = new MatchManifest("normal-sniper-udp", "local-1",
+            "Park_Multiplayer", map.SourceHash, content.Revision,
+            MatchManifest.RifleCombatMode, 10, 60, 120,
+            [Player(owner, 1, left.SourceIndex),
+             Player(opponent, 2, right.SourceIndex)])
+            { SceneMasterPlayerId = owner };
+        string file = Path.Combine(Path.GetTempPath(),
+            "war-normal-sniper-udp-" + Guid.NewGuid().ToString("N") + ".json");
+        File.WriteAllText(file, JsonSerializer.Serialize(manifest));
+
+        using var probe = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)probe.Client.LocalEndPoint!).Port;
+        probe.Close();
+        string signingKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var tokens = new MatchTokens(signingKey);
+        var config = new ConfigurationBuilder().AddInMemoryCollection(
+            new Dictionary<string, string?>
+            {
+                ["Battle:SigningKey"] = signingKey,
+                ["Battle:ServerId"] = manifest.ServerId,
+                ["Battle:Port"] = port.ToString(),
+                ["Battle:MatchManifestPath"] = file,
+                ["Battle:ResultOutboxPath"] = Path.Combine(Path.GetTempPath(),
+                    "war-normal-sniper-outbox-" + Guid.NewGuid().ToString("N")),
+                ["Battle:CombatContentManifestPath"] = Path.Combine(directory,
+                    "combat-content-manifest.json")
+            }).Build();
+        MatchConnectionGrant Grant(string playerId, ulong session)
+        {
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var admission = new MatchAdmission
+            {
+                MatchId = manifest.MatchId,
+                ServerId = manifest.ServerId,
+                PlayerId = playerId,
+                SessionId = session,
+                ManifestHash = manifest.Digest(),
+                IssuedUnixSeconds = now,
+                ExpiresUnixSeconds = now + 120
+            };
+            return new()
+            {
+                Host = "127.0.0.1",
+                Port = (uint)port,
+                PlayerId = playerId,
+                SessionId = session,
+                MatchId = admission.MatchId,
+                ManifestHash = admission.ManifestHash,
+                ExpiresUnixSeconds = admission.ExpiresUnixSeconds,
+                Ticket = tokens.Sign(admission),
+                SessionKey = ByteString.CopyFrom(tokens.SessionKey(admission))
+            };
+        }
+
+        using var worker = new NetworkWorker(config, NullLogger<NetworkWorker>.Instance);
+        try
+        {
+            await worker.StartAsync(CancellationToken.None);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(55));
+            using var local = new MatchConnection(Grant(owner, 995));
+            using var remote = new MatchConnection(Grant(opponent, 996));
+            Check((await local.ConnectAsync(timeout.Token)).Code == "admitted" &&
+                  (await remote.ConnectAsync(timeout.Token)).Code == "admitted",
+                "both signed UDP peers enter the ordinary Sniper match");
+            await local.ReadyAsync(timeout.Token);
+            await remote.ReadyAsync(timeout.Token);
+            MatchReply state;
+            do
+            {
+                await Task.Delay(100, timeout.Token);
+                state = await local.PollAsync(timeout.Token);
+            } while (state.Snapshot.Phase != BattlePhase.Running);
+
+            var hand = await local.PollArmyAsync(timeout.Token);
+            int option = hand.OptionIndexes.First();
+            Check(hand.Code == "army-offers" &&
+                  (await local.DeployArmyAsync(option, timeout.Token)).Code == "army-deploying",
+                "the Worker accepts a source-backed ordinary Sniper option");
+
+            bool localSawFlight = false;
+            bool remoteSawFlight = false;
+            bool scanReplayed = false;
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            while (watch.Elapsed < TimeSpan.FromSeconds(45) &&
+                   (!localSawFlight || !remoteSawFlight || !scanReplayed))
+            {
+                await Task.Delay(75, timeout.Token);
+                var localPoll = local.PollAsync(timeout.Token);
+                var remotePoll = remote.PollAsync(timeout.Token);
+                await Task.WhenAll(localPoll, remotePoll);
+                var flight = remotePoll.Result.Snapshot.Projectiles.FirstOrDefault(row =>
+                    row.OwnerPlayerId == owner && row.ArmyUnitId == "ID_UNIT-SNIPER" &&
+                    row.ArmySourceCardId.Length == 0);
+                if (flight == null) continue;
+
+                remoteSawFlight = true;
+                localSawFlight |= localPoll.Result.Snapshot.Projectiles.Any(row =>
+                    row.ProjectileId == flight.ProjectileId);
+                float speed = MathF.Sqrt(flight.VelocityX * flight.VelocityX +
+                    flight.VelocityY * flight.VelocityY +
+                    flight.VelocityZ * flight.VelocityZ);
+                Check(flight.Kind == "army-bullet" && !flight.ArmyPoison &&
+                      MathF.Abs(speed - content.ArmyWeapons.SniperProjectileSpeed) < .001f,
+                    "remote SDK accepts the ordinary Sniper's source-speed bullet");
+
+                ulong scanId = BitConverter.ToUInt64(Guid.NewGuid().ToByteArray(), 0);
+                if (scanId == 0) scanId = 1;
+                var first = await remote.PollProjectilesAsync(scanId, 0, timeout.Token);
+                var replay = await remote.PollProjectilesAsync(scanId, 0, timeout.Token);
+                scanReplayed |= first.Code == "projectiles" && !first.HasMore &&
+                    first.Projectiles.Any(row => row.ProjectileId == flight.ProjectileId) &&
+                    first.ToByteArray().SequenceEqual(replay.ToByteArray());
+            }
+            Check(localSawFlight && remoteSawFlight && scanReplayed,
+                "both UDP peers and a replayed scan retain one ordinary Sniper flight");
         }
         finally
         {
