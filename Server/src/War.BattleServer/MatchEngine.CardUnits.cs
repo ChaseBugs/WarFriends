@@ -1036,6 +1036,28 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card Sniper attack started twice.");
     }
 
+    // SoldierBehaviour.PickPlayerOpponent uses Random.value <= shieldProb.
+    // TurretWeaponBasic uses < instead, so its equal-value branch stays in
+    // HeavyTurretStationaryTargetMask rather than changing both families.
+    internal static int SoldierStationaryTargetMask(Vector3 aimForward,
+        Vector3 towardSoldier, float shieldProbability, Func<float> random)
+    {
+        if (!PlayerHitbox.Finite(aimForward) ||
+            !PlayerHitbox.Finite(towardSoldier) ||
+            aimForward.LengthSquared() == 0 ||
+            towardSoldier.LengthSquared() == 0 ||
+            !float.IsFinite(shieldProbability) ||
+            shieldProbability is < 0 or > 1)
+            throw new InvalidDataException("Invalid soldier target selection authority.");
+        float facing = Vector3.Dot(Vector3.Normalize(aimForward),
+            Vector3.Normalize(towardSoldier));
+        if (facing < MathF.Cos(50 * MathF.PI / 180)) return 2;
+        float value = random();
+        if (!float.IsFinite(value) || value is < 0 or >= 1)
+            throw new InvalidDataException("Invalid soldier target random value.");
+        return value <= shieldProbability ? 2 : 9;
+    }
+
     internal ArmyRusherTarget? CardSniperTarget(ulong entityKey)
     {
         if (rifleCombat == null || playerShotTargets == null || map == null ||
@@ -1075,7 +1097,7 @@ public sealed partial class MatchEngine
         float shieldProbability = armyCatalog!.ShieldHitProbability(entity.UnitId);
         if (opponent.Route != null)
             shieldProbability *= .5f;
-        int mask = HeavyTurretStationaryTargetMask(aimForward,
+        int mask = SoldierStationaryTargetMask(aimForward,
             origin - opponent.Position, shieldProbability, NextArmyFloat);
         bool shieldAvailable = shields?.Snapshot().Any(row =>
             row.CoverIndex == opponent.Cover && !row.Destroyed) ?? false;
@@ -1462,7 +1484,7 @@ public sealed partial class MatchEngine
             map.Covers[opponent.Cover].Rotation);
         float shieldProbability = armyCatalog.ShieldHitProbability(entity.UnitId);
         if (opponent.Route != null) shieldProbability *= .5f;
-        int mask = HeavyTurretStationaryTargetMask(aimForward,
+        int mask = SoldierStationaryTargetMask(aimForward,
             origin - opponent.Position, shieldProbability, NextArmyFloat);
         bool shieldAvailable = shields?.Snapshot().Any(row =>
             row.CoverIndex == opponent.Cover && !row.Destroyed) ?? false;

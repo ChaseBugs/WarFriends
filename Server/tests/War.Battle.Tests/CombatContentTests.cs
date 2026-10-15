@@ -8385,6 +8385,22 @@ internal static class CombatContentTests
         Reject(()=>MatchEngine.HeavyTurretStationaryTargetMask(Vector3.Zero,Vector3.UnitZ,0,()=>0));
         Reject(()=>MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,Vector3.UnitZ,float.NaN,()=>0));
         Reject(()=>MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,Vector3.UnitZ,0,()=>float.NaN));
+        Check(MatchEngine.SoldierStationaryTargetMask(Vector3.UnitZ,
+                  Vector3.UnitZ, 0, () => 0) == 2 &&
+              MatchEngine.SoldierStationaryTargetMask(Vector3.UnitZ,
+                  Vector3.UnitZ, .5f, () => .5f) == 2 &&
+              MatchEngine.SoldierStationaryTargetMask(Vector3.UnitZ,
+                  Vector3.UnitZ, .5f, () => .500001f) == 9 &&
+              MatchEngine.SoldierStationaryTargetMask(Vector3.UnitZ,
+                  -Vector3.UnitZ, 0,
+                  () => throw new Exception("side branch drew random")) == 2,
+            "soldier Shield selection includes the source equality boundary while Turret does not");
+        Reject(() => MatchEngine.SoldierStationaryTargetMask(Vector3.Zero,
+            Vector3.UnitZ, .5f, () => 0));
+        Reject(() => MatchEngine.SoldierStationaryTargetMask(Vector3.UnitZ,
+            Vector3.UnitZ, float.NaN, () => 0));
+        Reject(() => MatchEngine.SoldierStationaryTargetMask(Vector3.UnitZ,
+            Vector3.UnitZ, .5f, () => float.NaN));
         var shieldTarget=content.PlayerShotTargets.Gameplay.Single(t=>t.Type==2);
         Check(Vector3.Distance(referencePose.BodyTarget(shieldTarget.TransformFileId).Position,
                   shieldTarget.ReferencePosition)<.0002f&&
