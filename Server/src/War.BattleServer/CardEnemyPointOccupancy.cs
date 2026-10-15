@@ -3,8 +3,9 @@ using System.Numerics;
 namespace War.BattleServer;
 
 /// <summary>
-/// Owns card-soldier EnemyPoints separately from ordinary shield-linked
-/// Rusher slots. A point remains occupied until its soldier dies or leaves it.
+/// Owns source EnemyPoints for card soldiers and ordinary Snipers, separately
+/// from shield-linked Rusher slots. A point remains occupied until its soldier
+/// dies or transfers to another point.
 /// </summary>
 internal sealed class CardEnemyPointOccupancy
 {

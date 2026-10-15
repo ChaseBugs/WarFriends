@@ -15518,6 +15518,79 @@ internal static class CombatContentTests
             ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
             ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f],ShieldLevel=0
         }).ToArray()};
+        var normalSniperManifest = detached with
+        {
+            MatchId = "normal-sniper-point-movement",
+            Players = detached.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-SNIPER"],
+                ArmyNormalUpgradeIndexes = [0],
+                ArmySpecialUpgradeIndexes = [-1],
+                ArmyEliteUpgradeIndexes = [-1],
+                ArmyHealthFactors = [new(1f, 1f)],
+                ArmyDamageScales = [1f],
+                ArmySpeedCoefficients = [1f],
+                ArmyAccuracyCoefficients = [1f]
+            }).ToArray()
+        };
+        content.ValidateAllocation(normalSniperManifest);
+        var normalSniperMatch = new MatchEngine(normalSniperManifest,
+            content: content, armyChoice: _ => 0);
+        normalSniperMatch.Admit(soldierOwner);
+        normalSniperMatch.Admit(helicopterOwner);
+        foreach (string playerId in new[] { soldierOwner, helicopterOwner })
+            normalSniperMatch.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = normalSniperMatch.ManifestHash }
+            });
+        normalSniperMatch.Advance(60);
+        int normalSniperOption = normalSniperMatch.ArmyBatch(soldierOwner)
+            .OptionIndexes.First();
+        Check(normalSniperMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = normalSniperOption }
+        }).Code == "army-deploying", "ordinary Sniper deployment is accepted");
+        BattleArmyEntityState? normalSniper = null;
+        ulong normalSniperTick = 60;
+        while (normalSniper == null && normalSniperTick < 100)
+        {
+            normalSniperMatch.Advance(++normalSniperTick);
+            normalSniper = normalSniperMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                .Entities.SingleOrDefault();
+        }
+        Check(normalSniper != null &&
+              normalSniperMatch.CardEnemyPoint(normalSniper.EntityKey) != null &&
+              normalSniperMatch.CardSniperWalking(normalSniper.EntityKey),
+            "ordinary Sniper reserves a source Corner and begins its host route");
+        Vector3 normalSniperStart = new(normalSniper!.X, normalSniper.Y, normalSniper.Z);
+        bool normalSniperArrived = false;
+        while (normalSniperTick < 700 && !normalSniperMatch.Terminal)
+        {
+            normalSniperMatch.Advance(++normalSniperTick);
+            if (normalSniperMatch.CardSniperAtPoint(normalSniper.EntityKey))
+            {
+                normalSniperArrived = true;
+                break;
+            }
+        }
+        var arrivedSniper = normalSniperMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+            .Entities.Single();
+        int normalSniperPoint = normalSniperMatch.CardEnemyPoint(normalSniper.EntityKey)!
+            .ComponentFileId;
+        Check(normalSniperArrived &&
+              Vector3.Distance(normalSniperStart,
+                  new Vector3(arrivedSniper.X, arrivedSniper.Y, arrivedSniper.Z)) > .1f &&
+              normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) ==
+                  normalSniper.EntityKey &&
+              normalSniperMatch.CardSniperAttack(normalSniper.EntityKey) == null,
+            "ordinary Sniper reaches its reserved Corner without opening unverified fire");
+        Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
+                  arrivedSniper.MaxHealth + 1f) &&
+              normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
+              normalSniperMatch.CardEnemyPoint(normalSniper.EntityKey) == null,
+            "ordinary Sniper death releases its source Corner reservation");
         content.ValidateAllocation(flameManifest);
         var stormMatch = new MatchEngine(flameManifest with
         {

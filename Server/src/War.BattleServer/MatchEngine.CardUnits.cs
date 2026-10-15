@@ -914,14 +914,29 @@ public sealed partial class MatchEngine
         armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
         if (!rusherShotCounts.TryAdd(entity.EntityKey, 0))
             throw new InvalidDataException("Card Sniper shot counter already exists.");
-        TryAssignCardSniperPoint(entity);
+        TryAssignSniperPoint(entity);
     }
 
-    private void TryAssignCardSniperPoint(BattleArmyEntityState entity)
+    private void InitializeNormalSniper(ulong entityKey)
+    {
+        if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.UnitId != "ID_UNIT-SNIPER" || entity.SourceCardId.Length != 0)
+            throw new InvalidDataException("Normal Sniper lacks its source spawn authority.");
+
+        // The ordinary deployment has source-backed spawn and navigation,
+        // but its attack timing is not bound yet. Keep combat closed.
+        TryAssignSniperPoint(entity);
+    }
+
+    private static bool IsSniper(BattleArmyEntityState entity) =>
+        entity.UnitId == "ID_UNIT-SNIPER" &&
+        entity.SourceCardId is "" or "ELITESNIPER";
+
+    private void TryAssignSniperPoint(BattleArmyEntityState entity)
     {
         if (cardEnemyPoints == null || armyCatalog == null ||
-            entity.SourceCardId != "ELITESNIPER")
-            throw new InvalidDataException("Card Sniper has no source point authority.");
+            !IsSniper(entity))
+            throw new InvalidDataException("Sniper has no source point authority.");
         Player owner = Find(entity.OwnerPlayerId) ??
             throw new InvalidDataException("Card Sniper owner left the match.");
         Player opponent = players.Single(player => player != owner);
@@ -963,9 +978,9 @@ public sealed partial class MatchEngine
             if (tick < dueTick)
                 continue;
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "ELITESNIPER")
-                throw new InvalidDataException("Card Sniper retry lost its soldier.");
-            TryAssignCardSniperPoint(entity);
+                !IsSniper(entity))
+                throw new InvalidDataException("Sniper retry lost its soldier.");
+            TryAssignSniperPoint(entity);
         }
     }
 
@@ -975,7 +990,7 @@ public sealed partial class MatchEngine
             .OrderBy(row => row.Key).ToArray())
         {
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "ELITESNIPER" ||
+                !IsSniper(entity) ||
                 cardEnemyPoints?.Find(entityKey)?.ComponentFileId !=
                     walk.PointFileId)
                 throw new InvalidDataException("Card Sniper walk lost its point.");
@@ -984,7 +999,8 @@ public sealed partial class MatchEngine
             entity.Y = walk.Position.Y;
             entity.Z = walk.Position.Z;
             entity.PositionTick = tick;
-            cardUnitCombat?.UpdatePose(entity);
+            if (entity.SourceCardId == "ELITESNIPER")
+                cardUnitCombat?.UpdatePose(entity);
             if (!walk.Arrived)
                 continue;
 
@@ -996,7 +1012,8 @@ public sealed partial class MatchEngine
                 !sniperCornerChangeTicks.TryAdd(entityKey,
                     checked(tick + (ulong)waitSeconds * MatchManifest.TickRate)))
                 throw new InvalidDataException("Card Sniper lost its Corner clock.");
-            StartCardSniperAttack(entityKey);
+            if (entity.SourceCardId == "ELITESNIPER")
+                StartCardSniperAttack(entityKey);
         }
     }
 
@@ -1184,6 +1201,7 @@ public sealed partial class MatchEngine
             var walk = new CardSoldierWalkState(next.ComponentFileId, route,
                 armyCatalog.InfantryAgent, speed);
 
+            // Both spawn paths use the same recovered Sniper point mask.
             cardEnemyPoints.Transfer(entityKey, "ELITESNIPER", next,
                 opponent.Position);
             sniperCornerChangeTicks.Remove(entityKey);
@@ -1194,6 +1212,19 @@ public sealed partial class MatchEngine
             sniperLastShotTicks.Remove(entityKey);
             sniperWalks.Add(entityKey, walk);
         }
+    }
+
+    private void ReleaseNormalSniperPoint(ulong entityKey)
+    {
+        sniperPointRetryTicks.Remove(entityKey);
+        sniperWalks.Remove(entityKey);
+        snipersAtPoint.Remove(entityKey);
+        sniperCornerChangeTicks.Remove(entityKey);
+        sniperAttacks.Remove(entityKey);
+        sniperShotTargets.Remove(entityKey);
+        sniperExposeTicks.Remove(entityKey);
+        sniperLastShotTicks.Remove(entityKey);
+        cardEnemyPoints?.Release(entityKey);
     }
 
     private void AdvanceCardSwatPointRetries()

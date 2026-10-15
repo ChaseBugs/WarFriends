@@ -516,7 +516,7 @@ public sealed partial class MatchEngine
             {
                 (clip,facing)=CardParatrooperInfantryPose(key,clips);
             }
-            else if(army.SourceCardId=="ELITESNIPER")
+            else if(army.UnitId=="ID_UNIT-SNIPER")
             {
                 (clip,facing)=CardSniperInfantryPose(key,army,clips);
             }
@@ -3112,6 +3112,11 @@ public sealed partial class MatchEngine
     private void InitializeStationaryArmyCombat(ulong entityKey,string unitId)
     {
         var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if (family.BehaviorType == "SoldierBehaviourSniper")
+        {
+            InitializeNormalSniper(entityKey);
+            return;
+        }
         if(family.BehaviorType!="SoldierBehaviourMinigunner")return;
         if(!activeArmyEntities.TryGetValue(entityKey,out var army)||map==null||
            armyMinigunnerPoints==null||armyNavMeshConnectivity==null)
@@ -4326,6 +4331,8 @@ public sealed partial class MatchEngine
             minigunnerOwner!=entityKey||!occupiedMinigunnerPoints.Remove(minigunnerPoint)))
             throw new InvalidDataException("Minigunner point release lost its host entity proof.");
         rusherShotCounts.Remove(entityKey);
+        if (row.UnitId == "ID_UNIT-SNIPER")
+            ReleaseNormalSniperPoint(entityKey);
         owner.ConfirmedArmyLosses=checked(owner.ConfirmedArmyLosses+1);
         if(rusherSlotByEntity.Remove(entityKey,out int rusherSlot) &&
            (!occupiedRusherSlots.TryGetValue(rusherSlot,out ulong occupant) ||
