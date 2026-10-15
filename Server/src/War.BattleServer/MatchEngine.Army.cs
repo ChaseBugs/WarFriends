@@ -3615,8 +3615,7 @@ public sealed partial class MatchEngine
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
                 (from,direction,range)=>rifleCombat.TraceForArmyDamage(intent.OwnerPlayerId,from,direction,range),
-                behavior == "SoldierBehaviourSniper" ?
-                    armyWeapons!.SniperCollisionCheckDistance : 0f);
+                weaponBindings.SlowBulletCheckDistance(army.UnitId));
             armyProjectiles.Add(id,flight);
             armyProjectileAuthority.Add(id,new ArmyProjectileAuthority(intent.EntityKey,
                 army.OwnerPlayerId,army.OwnerFraction,launchDamage,

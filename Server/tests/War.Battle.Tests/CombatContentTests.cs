@@ -9077,6 +9077,14 @@ internal static class CombatContentTests
                content.ArmyWeapons.SniperCollisionCheckDistance==1f &&
                content.ArmyWeapons.SniperPredictionSpeed==10f,
                "card Sniper uses the rifle ammo speed and collision margin after BulletSlow setup");
+        Check(content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-SNIPER")==1f&&
+              content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-PARATROOPER")==.35f&&
+              content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-SWAT")==.35f&&
+              content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-MINIGUNNER")==.35f&&
+              content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-COMMANDO")==.35f&&
+              content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-SHOTGUNNER")==0f&&
+              content.ArmyWeapons.SlowBulletCheckDistance("ID_UNIT-WARPER")==0f,
+              "only BulletSlow soldier weapons use the source collision continuation");
         var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
         Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsMinigunner"&&
               minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,
