@@ -15772,6 +15772,70 @@ internal static class CombatContentTests
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&
               normalSniperMatch.CardEnemyPoint(normalSniper.EntityKey) == null,
             "ordinary Sniper death releases its source Corner reservation");
+        bool bodyAimUnlocked = false;
+        var bodySniperMatch = new MatchEngine(normalSniperManifest with
+        {
+            MatchId = "normal-sniper-body-impact"
+        }, content: content, armyChoice: count =>
+            bodyAimUnlocked && count == 1_000_000 ? 500_000 : 0);
+        bodySniperMatch.Admit(soldierOwner);
+        bodySniperMatch.Admit(helicopterOwner);
+        foreach (string playerId in new[] { soldierOwner, helicopterOwner })
+            bodySniperMatch.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = bodySniperMatch.ManifestHash }
+            });
+        bodySniperMatch.Advance(60);
+        int bodySniperOption = bodySniperMatch.ArmyBatch(soldierOwner)
+            .OptionIndexes.First();
+        Check(bodySniperMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = bodySniperOption }
+        }).Code == "army-deploying", "body-aim Sniper deployment is accepted");
+        bodyAimUnlocked = true;
+        BattleArmyEntityState? bodySniper = null;
+        ulong bodySniperTick = 60;
+        while (bodySniperTick < 800 && !bodySniperMatch.Terminal &&
+               (bodySniper == null || !bodySniperMatch.CardSniperAtPoint(
+                   bodySniper.EntityKey)))
+        {
+            bodySniperMatch.Advance(++bodySniperTick);
+            bodySniper = bodySniperMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                .Entities.SingleOrDefault();
+        }
+        var bodySniperTarget = bodySniperMatch.CardSniperTarget(bodySniper!.EntityKey);
+        Check(bodySniperTarget != null &&
+              bodySniperTarget.TargetFileId != shieldAimId,
+            "ordinary Sniper can select a player body target above source shield probability");
+        Check(bodySniperMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            MoveCover = new MoveCoverCommand { Direction = -1 }
+        }).Code == "moving", "body-aim Sniper opponent starts moving");
+        bodySniperMatch.Advance(++bodySniperTick);
+        bodySniperMatch.Advance(++bodySniperTick);
+        var movingBodyTarget = bodySniperMatch.CardSniperTarget(bodySniper.EntityKey);
+        Vector3 currentMovingBody = bodySniperMatch.CombatPose(helicopterOwner)
+            .MovingTarget!.Position;
+        var currentBodySniper = bodySniperMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+            .Entities.Single(entity => entity.EntityKey == bodySniper.EntityKey);
+        Vector3 bodySniperPosition = new(currentBodySniper.X,
+            currentBodySniper.Y, currentBodySniper.Z);
+        Vector3 bodySniperMuzzle = content.ArmyWeapons.RestMuzzleOrigin(
+            "ID_UNIT-SNIPER", bodySniperPosition,
+            currentMovingBody - bodySniperPosition);
+        float bodySniperFlySeconds = Vector3.Distance(bodySniperMuzzle,
+            currentMovingBody) / content.ArmyWeapons.SniperPredictionSpeed + .2f;
+        Vector3 expectedMovingBodyAim = currentMovingBody +
+            bodySniperFlySeconds *
+            bodySniperMatch.MovingPlayerVelocity(helicopterOwner);
+        int movingBodyTargetId = content.PlayerShotTargets.Gameplay.Single(
+            target => target.Type == 16).TransformFileId;
+        Check(movingBodyTarget?.TargetFileId == movingBodyTargetId &&
+              Vector3.Distance(movingBodyTarget.Position, expectedMovingBodyAim) < .02f,
+            "ordinary Sniper predicts the Moving shot target using source Gun flight time");
         var criticalSniperManifest = normalSniperManifest with
         {
             MatchId = "normal-sniper-critical-shot",
