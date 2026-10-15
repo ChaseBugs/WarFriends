@@ -11780,8 +11780,13 @@ internal static class CombatContentTests
                         shotIntent.TargetPlayerId,.5f);
                 },shotgunFakePellet:true);
             for(ulong flightTick=11;flightTick<=18;flightTick++)
+            {
                 Check(fakeShotgunFlight.Advance(flightTick)==null,
                     "fake shotgun trails never return damage collisions");
+                if(flightTick==14)
+                    Check(Math.Abs(fakeShotgunFlight.Position.X-4f)<.001f,
+                        "fake shotgun trail follows the source tween halfway through");
+            }
             Check(fakeShotgunFlight.Finished && fakeTraceCalls==0 &&
                   Math.Abs(fakeShotgunFlight.Position.X-8f)<.001f,
                 "fake shotgun trail reaches twice the aim distance at source speed");

@@ -22,6 +22,7 @@ internal sealed class ArmyProjectileFlight
     private readonly ShotCollision? fastImpact;
     private readonly float fastDuration;
     private readonly Vector3 fastVelocity;
+    private readonly float fakeDuration;
     private readonly ulong startTick;
     private readonly Func<Vector3,Vector3,float,ShotCollision?> trace;
     private ulong tick;
@@ -63,6 +64,7 @@ internal sealed class ArmyProjectileFlight
             this.target=origin+direction*(checkedDistance*2f);
             if(!PlayerHitbox.Finite(this.target))
                 throw new InvalidDataException("Fake shotgun pellet left scene bounds.");
+            fakeDuration=Vector3.Distance(origin,this.target)/speed;
             position=origin;
             return;
         }
@@ -150,6 +152,8 @@ internal sealed class ArmyProjectileFlight
         tick=nextTick;
         if(fastBullet)
             return AdvanceFastBullet();
+        if(shotgunFakePellet)
+            return AdvanceFakeShotgunPellet();
         if(slowCollisionMargin>0)
         {
             if(preflightStaticHit!=null)
@@ -183,6 +187,17 @@ internal sealed class ArmyProjectileFlight
         if(progress<1f)return null;
         finished=true;
         return fastImpact==null?null:new(id,entityKey,fastImpact,tick);
+    }
+
+    private ArmyProjectileImpact? AdvanceFakeShotgunPellet()
+    {
+        // BulletBase.AnimateShot uses one linear tween from the muzzle to
+        // twice the aim distance. Its fake duration is twice distance/speed.
+        float elapsed=(float)(tick-startTick)/MatchManifest.TickRate;
+        float progress=MathF.Min(1f,elapsed/fakeDuration);
+        position=Vector3.Lerp(origin,target,progress);
+        finished=progress>=1f;
+        return null;
     }
 
     private ArmyProjectileImpact? AdvancePreflightStaticHit()
