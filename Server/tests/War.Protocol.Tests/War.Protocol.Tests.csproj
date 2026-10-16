@@ -1,6 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedCoopDepartureState.cs"
+             Link="ClientSource/SelfHostedCoopDepartureState.cs" />
     <ProjectReference Include="..\..\src\War.Infrastructure\War.Infrastructure.csproj" />
   </ItemGroup>
 

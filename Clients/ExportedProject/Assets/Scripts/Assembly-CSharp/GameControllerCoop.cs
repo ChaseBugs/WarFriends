@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class GameControllerCoop : GameControllerOnline
 {
+    private const float PeerDeactivationDelaySeconds = 3f;
+    private SelfHostedCoopPeerBridge _selfHostedPeerBridge;
+
 	public override string loadingWaitingCards => Localization.Localize("ID_WAITINGFORFRIENDCARDS");
 
 	public override string loadingWaiting => Localization.Localize("ID_WAITINGFORFRIEND");
@@ -203,7 +206,45 @@ public class GameControllerCoop : GameControllerOnline
 			SignalStartCameraAnimationFinished();
 			yield return new WaitForSeconds(0.8f);
 		}
+        BindSelfHostedPeerPresentation();
 	}
+
+    private void BindSelfHostedPeerPresentation()
+    {
+        if (!PhotonConnectionManager.IsSelfHostedActive || _selfHostedPeerBridge != null)
+        {
+            return;
+        }
+
+        SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+        if (client == null || mOtherPlayerInstance == null || mOtherPlayerInstance.playerProperties == null)
+        {
+            throw new System.InvalidOperationException("Self-hosted co-op peer presentation is not initialized.");
+        }
+
+        _selfHostedPeerBridge = gameObject.AddComponent<SelfHostedCoopPeerBridge>();
+        _selfHostedPeerBridge.Configure(client, mOtherPlayerInstance.playerProperties.playerID,
+            PresentSelfHostedPeerDeparture);
+    }
+
+    private void PresentSelfHostedPeerDeparture()
+    {
+        // Reuse the source notification, point release and real-time deactivation order.
+        DisalblePlayerAndResumeGame(mOtherPlayerInstance.playerNetworkId,
+            PeerDeactivationDelaySeconds, GameController.GameEndReason.Forfeit);
+    }
+
+    protected override void Reset()
+    {
+        if (_selfHostedPeerBridge != null)
+        {
+            _selfHostedPeerBridge.enabled = false;
+            Destroy(_selfHostedPeerBridge);
+            _selfHostedPeerBridge = null;
+        }
+
+        base.Reset();
+    }
 
 	private void SignalStartCameraAnimationFinished()
 	{

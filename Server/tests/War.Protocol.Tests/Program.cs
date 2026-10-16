@@ -6,6 +6,7 @@ using War.Protocol.Transport;
 using War.Shared;
 
 int checks = 0;
+checks += CoopDeparturePresentationTests.Run();
 checks += await BattleMatchControlClientTests.Run();
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); checks++; }
 Check(new MatchQueueRequest().CalculateSize()==0,"canonical matchmaking request is empty");

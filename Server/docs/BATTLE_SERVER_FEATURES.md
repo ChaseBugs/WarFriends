@@ -1357,3 +1357,10 @@ departed ally from success rows. Runtime tests complete host-confirmed kill
 objectives and source timeout after departure. Normal Unity co-op presentation,
 Worker admission and durable per-player settlement remain incomplete; see the
 updated [runtime boundary](COOP_SURVIVOR_MISSION.md#runtime-command-integration).
+
+B22 normal co-op startup now binds a peer-presentation bridge to main-thread
+host snapshots. A confirmed remote departure invokes the recovered partner-left
+notification, point release and delayed deactivation once; loading, KIA and
+terminal states do not infer a departure. The exact Unity predicate is linked
+into protocol tests. Full co-op input/AI presentation, local exit, settlement
+and two-Client gameplay remain open. See [the presentation scope](COOP_PEER_PRESENTATION.md).

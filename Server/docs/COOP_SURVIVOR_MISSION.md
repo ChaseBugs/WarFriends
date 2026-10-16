@@ -65,10 +65,11 @@ an explicit master role that differs from roster order. Cancellation tests
 cover both departures, immutable replay and rejection of conflicting departure
 history.
 
-Normal Unity co-op partner notifications, spectator presentation, and durable
-per-player settlement remain unconnected. This is runtime command integration,
-not two-Client gameplay verification. No combat, reward or Worker admission
-gate is opened by this change.
+The later [peer presentation integration](COOP_PEER_PRESENTATION.md) connects
+normal co-op startup to the recovered remote partner-left callback. Local
+departed-player exit/spectator presentation and durable per-player settlement
+remain unconnected. This is not two-Client gameplay verification. No combat,
+reward or Worker admission gate is opened by these changes.
 The shared SDK schema contains the new field; this checkpoint does not replace
 the owner's installed Unity plugin binaries or claim that their normal co-op
 controllers consume it yet.
