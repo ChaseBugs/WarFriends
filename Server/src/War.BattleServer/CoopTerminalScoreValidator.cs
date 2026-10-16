@@ -86,6 +86,7 @@ internal static class CoopTerminalScoreValidator
                 break;
             case "forfeit":
                 if (snapshot.Phase != BattlePhase.Ended ||
+                    !snapshot.Coop.Started ||
                     remaining.Length >= roster.Length)
                     throw new InvalidDataException(
                         "Co-op forfeit did not remove a participant.");

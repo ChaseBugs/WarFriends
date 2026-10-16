@@ -2850,6 +2850,7 @@ internal static class CombatContentTests
             Navigation = infantryNavigation,
             Content = content
         };
+        CoopPrestartCancellationTests.Run(volleySources);
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
         CoopDiagnosticRoundLifetimeTests.Run(volleySources, alliedShotWorld);
 

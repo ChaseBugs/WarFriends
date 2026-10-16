@@ -1330,3 +1330,11 @@ origins remain intact. The native comparison explicitly reports 53 differing
 frames and about 84.99 degrees maximum error after the known tween stage.
 This is presentation consistency, not native steering or collision completion.
 See [the facing estimate boundary](COOP_INFANTRY_FACING.md).
+
+B25 co-op Forfeit commands before mission start now produce immutable
+`Aborted/cancelled-before-start` evidence, matching loading cancellation rather
+than a played forfeit. The terminal validator rejects a prestart snapshot
+relabelled `Ended/forfeit`; tests cover waiting, one-ready, exact replay and a
+mission genuinely started at tick zero. Command dispatch now uses short
+domain handlers. Running-mission peer departure/spectating/survivor continuation
+remain explicitly open in [the cancellation report](COOP_PRESTART_CANCELLATION.md).
