@@ -26,6 +26,13 @@ public sealed partial class MatchEngine
             ? PvpArmyKillSkillShotPolicy.RevengeKill : 0;
     }
 
+    internal ulong? ArmyRevengeExpiry(ulong entityKey, string damagedPlayerId)
+    {
+        return _armyRevengeWindows.TryGetValue(entityKey, out var window) &&
+               window.PlayerId == damagedPlayerId
+            ? window.ExpiresAtTick : null;
+    }
+
     private sealed record ArmyBlastSnapshot(
         IReadOnlyList<BattleArmyEntityState> Entities,
         IReadOnlyDictionary<ulong, int> RunnerFlags,

@@ -71,10 +71,12 @@ Live Shotgunner projectile-hit-to-bullet and projectile-hit-to-mine fixtures
 verify the score and private terminal count; an unmarked bullet kill stays at
 zero. The recovered `Burn` and `Poison` callbacks also retain the weapon's
 entity owner. Host flame damage and Commando poison pulses now refresh
-that entity's revenge marker while it remains alive; a live Flamethrower
-hit followed by that player's mine kill verifies match score and the private
-terminal count. Poison revenge, vehicle damage, grenade/Bazooka revenge,
-and exact Unity frame ordering still need live coverage.
+that entity's revenge marker while it remains alive. A live Flamethrower hit
+followed by that player's mine kill verifies match score and the private
+terminal count. A Commando fixture now proves that one poison pulse advances
+the marker with no new bullet hit, then the same player's mine kill records
+one private revenge count. Vehicle damage, grenade/Bazooka revenge, and exact
+Unity frame ordering still need live coverage.
 
 ## Runtime boundary
 

@@ -473,6 +473,15 @@ public sealed partial class MatchEngine
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
     private readonly Dictionary<ulong,ArmyPoisonEffect> armyPoisons=[];
+    // A detached host view lets combat tests distinguish a poison pulse from a new bullet hit.
+    internal IReadOnlyList<(ulong ProjectileId, int Remaining)>
+        ArmyPoisonProgress(ulong entityKey)
+    {
+        return armyPoisons.Values.Where(effect => effect.EntityKey == entityKey)
+            .OrderBy(effect => effect.ProjectileId)
+            .Select(effect => (effect.ProjectileId, effect.Remaining))
+            .ToArray();
+    }
     private sealed record ArmyProjectileAuthority(ulong EntityKey,
         string OwnerPlayerId, int OwnerFraction, float Damage, float PoisonRatio,
         string UnitId, string SourceCardId, bool Fake);

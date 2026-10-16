@@ -18389,6 +18389,75 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains one flame-sourced revenge count");
+        var poisonRevengeManifest = flameRevengeManifest with
+        {
+            Players = flameRevengeManifest.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-COMMANDO"],
+                ArmySpecialUpgradeIndexes = [71]
+            }).ToArray()
+        };
+        var (poisonRevengeMatch, poisonRevengeVictim, poisonRevengeTick, _) =
+            PrepareRevengeVictim("army-poison-player-mine-revenge", poisonRevengeManifest);
+        Check(poisonRevengeMatch.ArmyPoisonProgress(poisonRevengeVictim.EntityKey).Count > 0,
+            "a real Commando bullet starts the selected poison special effect");
+        ulong poisonOwnerCursor = poisonRevengeMatch.EventBatch(soldierOwner, 0).LatestEventId;
+        ulong poisonVictimCursor = poisonRevengeMatch.EventBatch(helicopterOwner, 0).LatestEventId;
+        bool poisonRefreshedRevenge = false;
+        ulong poisonFirstHitTick = poisonRevengeTick;
+        while (poisonRevengeTick < poisonFirstHitTick + 120 &&
+               !poisonRevengeMatch.Terminal)
+        {
+            var poisonBeforeTick = poisonRevengeMatch.ArmyPoisonProgress(
+                poisonRevengeVictim.EntityKey).ToDictionary(effect =>
+                effect.ProjectileId, effect => effect.Remaining);
+            ulong? expiryBeforeTick = poisonRevengeMatch.ArmyRevengeExpiry(
+                poisonRevengeVictim.EntityKey, helicopterOwner);
+            uint hitsBeforeTick = poisonRevengeMatch.Snapshot().Players.Single(player =>
+                player.PlayerId == soldierOwner).ConfirmedPlayerHits;
+            poisonRevengeMatch.Advance(++poisonRevengeTick);
+            poisonOwnerCursor = poisonRevengeMatch.EventBatch(
+                soldierOwner, poisonOwnerCursor).LatestEventId;
+            poisonVictimCursor = poisonRevengeMatch.EventBatch(
+                helicopterOwner, poisonVictimCursor).LatestEventId;
+            var poisonAfterTick = poisonRevengeMatch.ArmyPoisonProgress(
+                poisonRevengeVictim.EntityKey).ToDictionary(effect =>
+                effect.ProjectileId, effect => effect.Remaining);
+            bool poisonPulse = poisonBeforeTick.Any(effect =>
+                poisonAfterTick.GetValueOrDefault(effect.Key) < effect.Value);
+            uint hitsAfterTick = poisonRevengeMatch.Snapshot().Players.Single(player =>
+                player.PlayerId == soldierOwner).ConfirmedPlayerHits;
+            ulong? expiryAfterTick = poisonRevengeMatch.ArmyRevengeExpiry(
+                poisonRevengeVictim.EntityKey, helicopterOwner);
+            if (poisonPulse &&
+                hitsBeforeTick == hitsAfterTick && expiryAfterTick > expiryBeforeTick)
+            {
+                poisonRefreshedRevenge = true;
+                break;
+            }
+        }
+        Check(poisonRefreshedRevenge,
+            "a live Commando poison pulse extends revenge without another direct projectile hit");
+        var poisonRevengeBody = poisonRevengeMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == poisonRevengeVictim.EntityKey &&
+                target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
+        Check(poisonRevengeMatch.TryRegisterLandMine(new string('e', 32), helicopterOwner,
+                poisonRevengeBody.Hitbox.Center, poisonRevengeVictim.Health + 100f),
+            "host mine overlaps the Commando that applied the verified poison pulse");
+        poisonRevengeMatch.Advance(++poisonRevengeTick);
+        Check(poisonRevengeMatch.ArmyHealth(poisonRevengeVictim.EntityKey) == null &&
+              poisonRevengeMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "player mine kill credits the same Commando's refreshed poison revenge marker");
+        poisonRevengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(poisonRevengeMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
+            "private terminal evidence retains one poison-sourced revenge count");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

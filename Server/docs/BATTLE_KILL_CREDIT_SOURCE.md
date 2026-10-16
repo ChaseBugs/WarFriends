@@ -87,8 +87,10 @@ bullet or mine kill each verify one private revenge count; an unmarked bullet
 kill verifies zero. Source `Burn` and `Poison` damage retain the weapon's
 army-entity owner; the host refreshes its revenge marker only while that
 entity is live. A Flamethrower hit followed by that player's mine kill now
-verifies one revenge score and private terminal count. Poison and vehicle
-damage still need live revenge proof; grenade/Bazooka revenge has no live
-fixture yet.
+verifies one revenge score and private terminal count. A Commando fixture
+isolates a poison pulse with no concurrent bullet hit, observes its revenge
+deadline advance, then verifies the same player's mine kill and private count.
+Vehicle damage still needs live revenge proof; grenade/Bazooka revenge has no
+live fixture yet.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.
