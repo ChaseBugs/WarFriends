@@ -131,13 +131,14 @@ internal static class BazookaCatalogTests
              ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]}]};
         content.ValidateAllocation(repairAllocation);
         (MatchEngine Match,BattleArmyEntityState Victim,DynamicShotTarget[] Bodies) AirTarget(
-            string matchId,string unit)
+            string matchId,string unit,float healthScale=1f)
         {
             var manifest=repairAllocation with {MatchId=matchId,
                 SceneMasterPlayerId=one,
                 Players=[repairAllocation.Players[0] with {PlayerLevel=8},
                     repairAllocation.Players[1] with
-                    {PlayerLevel=8,EquippedArmyUnitIds=[unit],ArmySpecialUpgradeIndexes=[-1]}]};
+                    {PlayerLevel=8,EquippedArmyUnitIds=[unit],ArmySpecialUpgradeIndexes=[-1],
+                     ArmyHealthFactors=[new ArmyHealthFactors(healthScale,healthScale)]}]};
             content.ValidateAllocation(manifest);
             var match=new MatchEngine(manifest,map,content,armyChoice:_=>0);
             match.Admit(one);match.Admit(two);
@@ -343,6 +344,60 @@ internal static class BazookaCatalogTests
                 catch(InvalidDataException){checks++;}
             }
         }
+        const float OneHitHelicopterHealthScale = 0.01f;
+        var (oneHitMatch, oneHitVictim, _) = AirTarget(
+            "bazooka-one-hit-helicopter", "ID_UNIT-HELICOPTER", OneHitHelicopterHealthScale);
+        Check(oneHitVictim.Health == oneHitVictim.MaxHealth,
+            "one-hit Bazooka victim begins at full host-authored health");
+        ulong oneHitTick = oneHitMatch.Snapshot().ServerTick;
+        ulong oneHitCommandId = 2;
+        while (oneHitMatch.ArmyHealth(oneHitVictim.EntityKey) != null &&
+               oneHitTick < 2500 && !oneHitMatch.Terminal)
+        {
+            if (oneHitTick % 240 == 0)
+            {
+                var currentBody = oneHitMatch.GroundVehicleShotTargets(one)
+                    .First(target => target.EntityId == oneHitVictim.EntityKey && target.HelicopterBody);
+                Vector3 aim = currentBody.Hitbox.Center;
+                oneHitMatch.Command(one, new MatchCommand
+                {
+                    CommandId = oneHitCommandId++,
+                    BazookaHold = new BazookaHoldCommand
+                    {
+                        Pressed = true,
+                        TargetX = aim.X,
+                        TargetY = aim.Y,
+                        TargetZ = aim.Z
+                    }
+                });
+            }
+            oneHitMatch.Advance(++oneHitTick);
+        }
+        Check(oneHitMatch.ArmyHealth(oneHitVictim.EntityKey) == null &&
+              oneHitMatch.Snapshot().Players.Single(player => player.PlayerId == one)
+                  .ShotsFired > 0,
+            "normal Bazooka hold and missile flight destroy a full-health Helicopter");
+        var oneHitBazookaScore = oneHitMatch.BonusProgress.ScoreSnapshot(one);
+        Check(oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
+              oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
+              oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 0,
+            "one lethal Bazooka blast credits OneHitKill and ExplosiveKill without HeadShot");
+        if (!oneHitMatch.Terminal)
+        {
+            oneHitMatch.Command(one, new MatchCommand
+            {
+                CommandId = oneHitCommandId++,
+                Forfeit = new ForfeitCommand()
+            });
+        }
+        var oneHitBazookaTerminal = oneHitMatch.TerminalEvidenceSnapshot();
+        Check(oneHitBazookaTerminal.DirectArmyKills.Single() is
+                  { Cause: "player-bazooka", EntityKey: var oneHitVictimKey } &&
+              oneHitVictimKey == oneHitVictim.EntityKey &&
+              oneHitBazookaTerminal.Players.Single(player => player.PlayerId == one)
+                  .ConfirmedSkillShotCounts.Single(row =>
+                      row.Flag == PvpArmyKillSkillShotPolicy.OneHitKill).Count == 1,
+            "private terminal evidence retains the Bazooka victim and one-hit count");
         var infantryAllocation=repairAllocation with {MatchId="bazooka-infantry-blast"};
         var infantryMatch=new MatchEngine(infantryAllocation,map,content,armyChoice:_=>0);
         infantryMatch.Admit(one);infantryMatch.Admit(two);

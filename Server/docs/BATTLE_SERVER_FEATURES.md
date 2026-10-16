@@ -199,7 +199,9 @@ weapon families and conditional kill flags remain open. A live rifle headshot
 against low-health infantry now confirms one lethal bullet contact and one
 private `OneHitKill` count. A live host-placed mine now kills a full-health
 Helicopter and retains one private one-hit count without awarding `HeadShot`;
-the normal Client card-to-mine command path remains open.
+the normal Client card-to-mine command path remains open. A normal Bazooka
+hold, flight, and first lethal blast now prove the same one-hit condition
+against a low-maximum-health Helicopter and preserve private terminal counts.
 
 The player-bullet infantry death path also derives `HeadShot` from the pinned
 head collider path and weight, reflecting the Client's `Shot` plus part-index

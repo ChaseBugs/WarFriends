@@ -37,8 +37,10 @@ A separate live host mine now destroys one full-health Helicopter with its
 first blast. The match records `OneHitKill` and `ExplosiveKill`, never
 `HeadShot`, and preserves the mine victim and one-hit count in private terminal
 evidence. This uses host mine placement; the normal Client card-to-mine
-command path remains a separate integration boundary. Bazooka one-hit proof
-remains open.
+command path remains a separate integration boundary. A normal player
+Bazooka hold and missile flight also destroy a low-maximum-health Helicopter
+from full root health in one blast. `OneHitKill` and `ExplosiveKill` reach match
+score and private terminal evidence, while `HeadShot` stays absent.
 
 `EnemyController` marks `isHeadShot` only when a `Shot` death arrived through
 `DestroyableObjectpart` index one. The pinned infantry pose distinguishes that

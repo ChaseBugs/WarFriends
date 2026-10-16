@@ -27,7 +27,9 @@ lethal bullet contact, `OneHitKill`, and its private terminal count. A live
 host-placed mine now destroys a full-health Helicopter and retains one
 `OneHitKill` in private terminal evidence. The normal Client card-to-mine
 command path remains open.
-Bazooka full-health deaths remain unverified.
+A normal player Bazooka hold and missile flight also kill a Helicopter from
+full, host-authored low maximum health in one blast. The private terminal
+result retains one `OneHitKill` with `ExplosiveKill` and no `HeadShot`.
 
 Confirmed player-bullet infantry deaths now add the source `HeadShot` flag
 only when the host collision has the pinned head sphere's path and damage
