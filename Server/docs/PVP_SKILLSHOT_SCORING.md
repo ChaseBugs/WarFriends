@@ -23,7 +23,10 @@ full health before one host-confirmed lethal damage callback, matching
 `DestroyableObject.DoDamage`. A live bonus-grenade burst awards that flag to
 one full-health infantry and withholds it from three weakened infantry.
 A live rifle headshot against host-authored low-health infantry confirms one
-lethal bullet contact, `OneHitKill`, and its private terminal count. Mine and
+lethal bullet contact, `OneHitKill`, and its private terminal count. A live
+host-placed mine now destroys a full-health Helicopter and retains one
+`OneHitKill` in private terminal evidence. The normal Client card-to-mine
+command path remains open.
 Bazooka full-health deaths remain unverified.
 
 Confirmed player-bullet infantry deaths now add the source `HeadShot` flag

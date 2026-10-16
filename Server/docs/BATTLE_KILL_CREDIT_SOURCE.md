@@ -31,8 +31,14 @@ Damaged roots do not receive it; a live collected-grenade burst now kills one
 full-health and three previously weakened infantry, awarding one one-hit row.
 Sabotage retains its explicit source `isOneHit` assertion. A live player rifle
 headshot against a host-authored low-health infantry also confirms one lethal
-bullet contact, one `OneHitKill`, and the private terminal count. Mine and
-Bazooka full-health death paths still need live one-hit proof.
+bullet contact, one `OneHitKill`, and the private terminal count.
+
+A separate live host mine now destroys one full-health Helicopter with its
+first blast. The match records `OneHitKill` and `ExplosiveKill`, never
+`HeadShot`, and preserves the mine victim and one-hit count in private terminal
+evidence. This uses host mine placement; the normal Client card-to-mine
+command path remains a separate integration boundary. Bazooka one-hit proof
+remains open.
 
 `EnemyController` marks `isHeadShot` only when a `Shot` death arrived through
 `DestroyableObjectpart` index one. The pinned infantry pose distinguishes that

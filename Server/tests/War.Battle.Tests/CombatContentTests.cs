@@ -16975,6 +16975,66 @@ internal static class CombatContentTests
                   {DirectBulletKills:0,DirectGrenadeKills:0,DirectMineKills:1,
                    DirectMineVehiclesDestroyed:1,DirectMineTanksDestroyed:0},
             "validated mine kill projects its separate source Kill and VehicleDestroyed candidates");
+        var fullHealthMineManifest = flameHelicopterManifest with
+        {
+            MatchId = "full-health-helicopter-mine"
+        };
+        var fullHealthMineMatch = new MatchEngine(fullHealthMineManifest, content: content, armyChoice: _ => 0);
+        fullHealthMineMatch.Admit(soldierOwner);
+        fullHealthMineMatch.Admit(helicopterOwner);
+        fullHealthMineMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = fullHealthMineMatch.ManifestHash }
+        });
+        fullHealthMineMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = fullHealthMineMatch.ManifestHash }
+        });
+        fullHealthMineMatch.Advance(60);
+        int fullHealthHelicopterOption = fullHealthMineMatch.ArmyBatch(helicopterOwner)
+            .OptionIndexes.First();
+        Check(fullHealthMineMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = fullHealthHelicopterOption }
+        }).Code == "army-deploying", "mine victim deploys from the signed Helicopter roster");
+        for (ulong mineTick = 61; mineTick <= 75; mineTick++)
+        {
+            fullHealthMineMatch.Advance(mineTick);
+        }
+        var fullHealthHelicopter = fullHealthMineMatch.ArmyEntityBatch(helicopterOwner, 0, 0)
+            .Entities.Single(entity => entity.OwnerPlayerId == helicopterOwner);
+        Check(fullHealthHelicopter.Health == fullHealthHelicopter.MaxHealth,
+            "mine victim retains full root health before the first blast");
+        var fullHealthBody = fullHealthMineMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(target => target.EntityId == fullHealthHelicopter.EntityKey && target.HelicopterBody);
+        const float LethalMineDamageMargin = 100f;
+        Check(fullHealthMineMatch.TryRegisterLandMine(new string('a', 32), soldierOwner,
+                fullHealthBody.Hitbox.Center, fullHealthHelicopter.Health + LethalMineDamageMargin),
+            "host-owned lethal mine overlaps a full-health opposing Helicopter body");
+        fullHealthMineMatch.Advance(76);
+        Check(fullHealthMineMatch.ArmyHealth(fullHealthHelicopter.EntityKey) == null,
+            "one host mine blast destroys the full-health Helicopter");
+        var fullHealthMineScore = fullHealthMineMatch.BonusProgress.ScoreSnapshot(soldierOwner);
+        Check(fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
+              fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
+              fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 0,
+            "confirmed full-health mine death credits OneHitKill with ExplosiveKill");
+        fullHealthMineMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            Forfeit = new ForfeitCommand()
+        });
+        var fullHealthMineTerminal = fullHealthMineMatch.TerminalEvidenceSnapshot();
+        Check(fullHealthMineTerminal.DirectArmyKills.Single() is
+                  { Cause: "player-mine", EntityKey: var mineVictimKey } &&
+              mineVictimKey == fullHealthHelicopter.EntityKey &&
+              fullHealthMineTerminal.Players.Single(player => player.PlayerId == soldierOwner)
+                  .ConfirmedSkillShotCounts.Single(row =>
+                      row.Flag == PvpArmyKillSkillShotPolicy.OneHitKill).Count == 1,
+            "private terminal evidence retains the full-health mine victim and one-hit count");
         var unsupportedMineResult=flameHelicopterMatch.TerminalEvidenceSnapshot();
         var mechOption=ArmyOptionIdentityCatalog.All.First(option=>option.UnitId=="ID_UNIT-MECH");
         var unsupportedMineUsage=unsupportedMineResult.Players

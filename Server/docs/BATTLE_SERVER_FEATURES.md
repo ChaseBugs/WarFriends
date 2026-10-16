@@ -197,7 +197,9 @@ before one lethal host damage callback, following `DestroyableObject.DoDamage`. 
 burst confirms one full-health infantry earns the flag while three weakened infantry do not. Other
 weapon families and conditional kill flags remain open. A live rifle headshot
 against low-health infantry now confirms one lethal bullet contact and one
-private `OneHitKill` count.
+private `OneHitKill` count. A live host-placed mine now kills a full-health
+Helicopter and retains one private one-hit count without awarding `HeadShot`;
+the normal Client card-to-mine command path remains open.
 
 The player-bullet infantry death path also derives `HeadShot` from the pinned
 head collider path and weight, reflecting the Client's `Shot` plus part-index
