@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -36,6 +37,9 @@ public static class UnityCoopObstacleVolleyPoseExport
     private static int _lastFrame = -1;
     private static int _roundInvocations;
     private static bool _observedReturnToCrawl;
+    private static readonly FieldInfo CrawlDeadlineField = typeof(SoldierAnimationController).GetField(
+        "mTimeToHideToCrawl", BindingFlags.Instance | BindingFlags.NonPublic);
+    private static float _deadlineBeforeShot;
 
     static UnityCoopObstacleVolleyPoseExport()
     {
@@ -112,6 +116,7 @@ public static class UnityCoopObstacleVolleyPoseExport
             }
             _lastFrame = Time.frameCount;
             int tick = Samples.Count;
+            _deadlineBeforeShot = (float)CrawlDeadlineField.GetValue(_controller);
             if (_roundTicks.Contains(tick))
             {
                 _controller.ShootFromCrawl(RoundHideSeconds, ShotSpeed, Weapon.WeaponType.Riffle);
@@ -201,6 +206,9 @@ public static class UnityCoopObstacleVolleyPoseExport
             tick,
             unityFrame = Time.frameCount,
             seconds = Time.time - _startedTime,
+            scaledTime = Time.time,
+            deadlineBeforeShot = _deadlineBeforeShot,
+            deadlineAfterShot = (float)CrawlDeadlineField.GetValue(_controller),
             roundInvoked = _roundTicks.Contains(tick),
             muzzle = Values(_root.InverseTransformPoint(_muzzle.position)),
             states = _animation.Cast<AnimationState>().Where(state => state.enabled)
@@ -253,7 +261,7 @@ public static class UnityCoopObstacleVolleyPoseExport
         File.WriteAllText(RequireEnvironment("WAR_COOP_OBSTACLE_POSE_OUTPUT"),
             JsonConvert.SerializeObject(new
             {
-                version = 2,
+                version = 3,
                 client = "1.4.0",
                 unity = Application.unityVersion,
                 prefabSha256 = Hash(EnemyPath),

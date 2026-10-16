@@ -6,7 +6,7 @@ using War.BattleServer;
 /// <summary>Binds actual controller frame observations to the recovered rig and host volley plan.</summary>
 internal static class CoopObstacleVolleyObservationTests
 {
-    private const string ReviewedSha256 = "f156748b15b84d6554fa19c9cce1af05089e6ef15c45971eb3761e6dfa1a398d";
+    private const string ReviewedSha256 = "7a4cc573e5f56587e5424231be13774f5afcd30716c6e2f14843f395af4fb9bb";
     private const int ColliderPartCount = 3;
     private const float QuaternionTolerance = 0.0001f;
     private const double FrameTimeTolerance = 0.00001;
@@ -27,6 +27,7 @@ internal static class CoopObstacleVolleyObservationTests
         Require(samples.GetArrayLength() == plan.RootElement.GetProperty("captureFrames").GetInt32(),
             "The complete planned frame window is required.");
         ValidateFrames(samples, root.GetProperty("captureRate").GetInt32());
+        CoopObstacleCrawlReturnClockTests.CompareUnityFrames(samples);
         VerifyRoundResets(samples, plan.RootElement.GetProperty("roundTicks"));
         Require(root.GetProperty("observedReturnToCrawl").GetBoolean() && HasCrawlPlayback(samples),
             "The actual controller must replay crawl after firing.");

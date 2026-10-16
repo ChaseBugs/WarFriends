@@ -1,10 +1,10 @@
 {
-  "version": 2,
+  "version": 3,
   "client": "1.4.0",
   "unity": "2018.3.0f2",
   "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
-  "exporterSha256": "643b774ea831efd7faacd99370dfafdf3ec258304af34a8716949515f7e57545",
+  "exporterSha256": "d730459877ae31eeaf703dc45100aa8a9a9388df216689d55417142e07fda427",
   "clips": [
     {
       "name": "stand_up_begin",
@@ -29,6 +29,9 @@
       "tick": 0,
       "unityFrame": 2,
       "seconds": 0.0,
+      "scaledTime": 0.02,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -125,6 +128,9 @@
       "tick": 1,
       "unityFrame": 3,
       "seconds": 0.0333333351,
+      "scaledTime": 0.0533333346,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.08619499,
@@ -221,6 +227,9 @@
       "tick": 2,
       "unityFrame": 4,
       "seconds": 0.06666668,
+      "scaledTime": 0.08666667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.05142784,
@@ -311,6 +320,9 @@
       "tick": 3,
       "unityFrame": 5,
       "seconds": 0.100000009,
+      "scaledTime": 0.120000005,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.0230712891,
@@ -401,6 +413,9 @@
       "tick": 4,
       "unityFrame": 6,
       "seconds": 0.13333334,
+      "scaledTime": 0.153333336,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         -0.00344848633,
@@ -491,6 +506,9 @@
       "tick": 5,
       "unityFrame": 7,
       "seconds": 0.166666672,
+      "scaledTime": 0.186666667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         -0.0204525,
@@ -581,6 +599,9 @@
       "tick": 6,
       "unityFrame": 8,
       "seconds": 0.200000018,
+      "scaledTime": 0.220000014,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         -0.0331954956,
@@ -671,6 +692,9 @@
       "tick": 7,
       "unityFrame": 9,
       "seconds": 0.233333334,
+      "scaledTime": 0.25333333,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.0662593842,
@@ -761,6 +785,9 @@
       "tick": 8,
       "unityFrame": 10,
       "seconds": 0.266666681,
+      "scaledTime": 0.2866667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.07772827,
@@ -851,6 +878,9 @@
       "tick": 9,
       "unityFrame": 11,
       "seconds": 0.3,
+      "scaledTime": 0.320000023,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.0862140656,
@@ -941,6 +971,9 @@
       "tick": 10,
       "unityFrame": 12,
       "seconds": 0.333333343,
+      "scaledTime": 0.353333354,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
       "roundInvoked": false,
       "muzzle": [
         0.08399773,
@@ -1031,6 +1064,9 @@
       "tick": 11,
       "unityFrame": 13,
       "seconds": 0.366666675,
+      "scaledTime": 0.3866667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": true,
       "muzzle": [
         0.0866241455,
@@ -1121,6 +1157,9 @@
       "tick": 12,
       "unityFrame": 14,
       "seconds": 0.4,
+      "scaledTime": 0.420000017,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.07772827,
@@ -1211,6 +1250,9 @@
       "tick": 13,
       "unityFrame": 15,
       "seconds": 0.433333337,
+      "scaledTime": 0.453333348,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.0862140656,
@@ -1301,6 +1343,9 @@
       "tick": 14,
       "unityFrame": 16,
       "seconds": 0.466666669,
+      "scaledTime": 0.486666679,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.08399773,
@@ -1391,6 +1436,9 @@
       "tick": 15,
       "unityFrame": 17,
       "seconds": 0.50000006,
+      "scaledTime": 0.520000041,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.0866241455,
@@ -1481,6 +1529,9 @@
       "tick": 16,
       "unityFrame": 18,
       "seconds": 0.533333361,
+      "scaledTime": 0.553333342,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.08750343,
@@ -1571,6 +1622,9 @@
       "tick": 17,
       "unityFrame": 19,
       "seconds": 0.5666667,
+      "scaledTime": 0.5866667,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.0838050842,
@@ -1661,6 +1715,9 @@
       "tick": 18,
       "unityFrame": 20,
       "seconds": 0.6,
+      "scaledTime": 0.62,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.07776451,
@@ -1751,6 +1808,9 @@
       "tick": 19,
       "unityFrame": 21,
       "seconds": 0.6333334,
+      "scaledTime": 0.653333366,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.07262421,
@@ -1841,6 +1901,9 @@
       "tick": 20,
       "unityFrame": 22,
       "seconds": 0.666666746,
+      "scaledTime": 0.6866667,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.07032013,
@@ -1931,6 +1994,9 @@
       "tick": 21,
       "unityFrame": 23,
       "seconds": 0.700000048,
+      "scaledTime": 0.72,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
       "roundInvoked": false,
       "muzzle": [
         0.07073212,
@@ -2021,6 +2087,9 @@
       "tick": 22,
       "unityFrame": 24,
       "seconds": 0.7333334,
+      "scaledTime": 0.7533334,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": true,
       "muzzle": [
         0.07131195,
@@ -2111,6 +2180,9 @@
       "tick": 23,
       "unityFrame": 25,
       "seconds": 0.7666667,
+      "scaledTime": 0.7866667,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07772827,
@@ -2201,6 +2273,9 @@
       "tick": 24,
       "unityFrame": 26,
       "seconds": 0.8000001,
+      "scaledTime": 0.820000052,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.0862140656,
@@ -2291,6 +2366,9 @@
       "tick": 25,
       "unityFrame": 27,
       "seconds": 0.8333334,
+      "scaledTime": 0.853333354,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.08399773,
@@ -2381,6 +2459,9 @@
       "tick": 26,
       "unityFrame": 28,
       "seconds": 0.866666734,
+      "scaledTime": 0.8866667,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.0866241455,
@@ -2471,6 +2552,9 @@
       "tick": 27,
       "unityFrame": 29,
       "seconds": 0.9000001,
+      "scaledTime": 0.9200001,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.08750343,
@@ -2561,6 +2645,9 @@
       "tick": 28,
       "unityFrame": 30,
       "seconds": 0.9333334,
+      "scaledTime": 0.9533334,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.0838050842,
@@ -2651,6 +2738,9 @@
       "tick": 29,
       "unityFrame": 31,
       "seconds": 0.966666758,
+      "scaledTime": 0.986666739,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07776451,
@@ -2741,6 +2831,9 @@
       "tick": 30,
       "unityFrame": 32,
       "seconds": 1.00000012,
+      "scaledTime": 1.0200001,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07262421,
@@ -2831,6 +2924,9 @@
       "tick": 31,
       "unityFrame": 33,
       "seconds": 1.03333342,
+      "scaledTime": 1.0533334,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07032013,
@@ -2921,6 +3017,9 @@
       "tick": 32,
       "unityFrame": 34,
       "seconds": 1.06666672,
+      "scaledTime": 1.0866667,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07073212,
@@ -3011,6 +3110,9 @@
       "tick": 33,
       "unityFrame": 35,
       "seconds": 1.1,
+      "scaledTime": 1.12,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07131195,
@@ -3101,6 +3203,9 @@
       "tick": 34,
       "unityFrame": 36,
       "seconds": 1.13333344,
+      "scaledTime": 1.15333343,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07131195,
@@ -3191,6 +3296,9 @@
       "tick": 35,
       "unityFrame": 37,
       "seconds": 1.16666675,
+      "scaledTime": 1.18666673,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07131195,
@@ -3281,6 +3389,9 @@
       "tick": 36,
       "unityFrame": 38,
       "seconds": 1.2,
+      "scaledTime": 1.22,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
       "roundInvoked": false,
       "muzzle": [
         0.07131195,
@@ -3371,6 +3482,9 @@
       "tick": 37,
       "unityFrame": 39,
       "seconds": 1.23333347,
+      "scaledTime": 1.25333345,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.0153675079,
@@ -3461,6 +3575,9 @@
       "tick": 38,
       "unityFrame": 40,
       "seconds": 1.26666677,
+      "scaledTime": 1.28666675,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         -0.000162124634,
@@ -3551,6 +3668,9 @@
       "tick": 39,
       "unityFrame": 41,
       "seconds": 1.30000007,
+      "scaledTime": 1.32,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         -0.00407981873,
@@ -3641,6 +3761,9 @@
       "tick": 40,
       "unityFrame": 42,
       "seconds": 1.33333337,
+      "scaledTime": 1.35333335,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.006580353,
@@ -3731,6 +3854,9 @@
       "tick": 41,
       "unityFrame": 43,
       "seconds": 1.36666679,
+      "scaledTime": 1.38666677,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.03147888,
@@ -3821,6 +3947,9 @@
       "tick": 42,
       "unityFrame": 44,
       "seconds": 1.4000001,
+      "scaledTime": 1.42000008,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.0601940155,
@@ -3911,6 +4040,9 @@
       "tick": 43,
       "unityFrame": 45,
       "seconds": 1.4333334,
+      "scaledTime": 1.45333338,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.08257675,
@@ -4001,6 +4133,9 @@
       "tick": 44,
       "unityFrame": 46,
       "seconds": 1.46666682,
+      "scaledTime": 1.4866668,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.09880257,
@@ -4091,6 +4226,9 @@
       "tick": 45,
       "unityFrame": 47,
       "seconds": 1.50000012,
+      "scaledTime": 1.5200001,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.104692459,
@@ -4181,6 +4319,9 @@
       "tick": 46,
       "unityFrame": 48,
       "seconds": 1.53333342,
+      "scaledTime": 1.5533334,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.102491379,
@@ -4271,6 +4412,9 @@
       "tick": 47,
       "unityFrame": 49,
       "seconds": 1.56666672,
+      "scaledTime": 1.5866667,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.101945877,
@@ -4361,6 +4505,9 @@
       "tick": 48,
       "unityFrame": 50,
       "seconds": 1.60000014,
+      "scaledTime": 1.62000012,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.102235794,
@@ -4451,6 +4598,9 @@
       "tick": 49,
       "unityFrame": 51,
       "seconds": 1.63333344,
+      "scaledTime": 1.65333343,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.1026268,
@@ -4541,6 +4691,9 @@
       "tick": 50,
       "unityFrame": 52,
       "seconds": 1.66666675,
+      "scaledTime": 1.68666673,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.102874756,
@@ -4631,6 +4784,9 @@
       "tick": 51,
       "unityFrame": 53,
       "seconds": 1.7,
+      "scaledTime": 1.72,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.102916718,
@@ -4721,6 +4877,9 @@
       "tick": 52,
       "unityFrame": 54,
       "seconds": 1.73333347,
+      "scaledTime": 1.75333345,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -4811,6 +4970,9 @@
       "tick": 53,
       "unityFrame": 55,
       "seconds": 1.76666677,
+      "scaledTime": 1.78666675,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -4901,6 +5063,9 @@
       "tick": 54,
       "unityFrame": 56,
       "seconds": 1.80000007,
+      "scaledTime": 1.82,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -4991,6 +5156,9 @@
       "tick": 55,
       "unityFrame": 57,
       "seconds": 1.83333349,
+      "scaledTime": 1.85333347,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5081,6 +5249,9 @@
       "tick": 56,
       "unityFrame": 58,
       "seconds": 1.86666679,
+      "scaledTime": 1.88666677,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5171,6 +5342,9 @@
       "tick": 57,
       "unityFrame": 59,
       "seconds": 1.9000001,
+      "scaledTime": 1.92000008,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5261,6 +5435,9 @@
       "tick": 58,
       "unityFrame": 60,
       "seconds": 1.9333334,
+      "scaledTime": 1.95333338,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5351,6 +5528,9 @@
       "tick": 59,
       "unityFrame": 61,
       "seconds": 1.96666682,
+      "scaledTime": 1.9866668,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5441,6 +5621,9 @@
       "tick": 60,
       "unityFrame": 62,
       "seconds": 2.00000024,
+      "scaledTime": 2.02000022,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5531,6 +5714,9 @@
       "tick": 61,
       "unityFrame": 63,
       "seconds": 2.03333354,
+      "scaledTime": 2.05333352,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5621,6 +5807,9 @@
       "tick": 62,
       "unityFrame": 64,
       "seconds": 2.06666684,
+      "scaledTime": 2.08666682,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5711,6 +5900,9 @@
       "tick": 63,
       "unityFrame": 65,
       "seconds": 2.10000014,
+      "scaledTime": 2.12000012,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5801,6 +5993,9 @@
       "tick": 64,
       "unityFrame": 66,
       "seconds": 2.13333344,
+      "scaledTime": 2.15333343,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5891,6 +6086,9 @@
       "tick": 65,
       "unityFrame": 67,
       "seconds": 2.16666675,
+      "scaledTime": 2.18666673,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -5981,6 +6179,9 @@
       "tick": 66,
       "unityFrame": 68,
       "seconds": 2.2,
+      "scaledTime": 2.22,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6071,6 +6272,9 @@
       "tick": 67,
       "unityFrame": 69,
       "seconds": 2.23333359,
+      "scaledTime": 2.25333357,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6161,6 +6365,9 @@
       "tick": 68,
       "unityFrame": 70,
       "seconds": 2.266667,
+      "scaledTime": 2.28666687,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6251,6 +6458,9 @@
       "tick": 69,
       "unityFrame": 71,
       "seconds": 2.30000019,
+      "scaledTime": 2.32000017,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6341,6 +6551,9 @@
       "tick": 70,
       "unityFrame": 72,
       "seconds": 2.33333349,
+      "scaledTime": 2.35333347,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6431,6 +6644,9 @@
       "tick": 71,
       "unityFrame": 73,
       "seconds": 2.36666679,
+      "scaledTime": 2.38666677,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6521,6 +6737,9 @@
       "tick": 72,
       "unityFrame": 74,
       "seconds": 2.4,
+      "scaledTime": 2.42,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6611,6 +6830,9 @@
       "tick": 73,
       "unityFrame": 75,
       "seconds": 2.4333334,
+      "scaledTime": 2.45333338,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6701,6 +6923,9 @@
       "tick": 74,
       "unityFrame": 76,
       "seconds": 2.4666667,
+      "scaledTime": 2.48666668,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6791,6 +7016,9 @@
       "tick": 75,
       "unityFrame": 77,
       "seconds": 2.50000024,
+      "scaledTime": 2.52000022,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6881,6 +7109,9 @@
       "tick": 76,
       "unityFrame": 78,
       "seconds": 2.53333354,
+      "scaledTime": 2.55333352,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -6971,6 +7202,9 @@
       "tick": 77,
       "unityFrame": 79,
       "seconds": 2.56666684,
+      "scaledTime": 2.58666682,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -7061,6 +7295,9 @@
       "tick": 78,
       "unityFrame": 80,
       "seconds": 2.60000014,
+      "scaledTime": 2.62000012,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -7151,6 +7388,9 @@
       "tick": 79,
       "unityFrame": 81,
       "seconds": 2.63333344,
+      "scaledTime": 2.65333343,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -7241,6 +7481,9 @@
       "tick": 80,
       "unityFrame": 82,
       "seconds": 2.66666675,
+      "scaledTime": 2.68666673,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,
@@ -7331,6 +7574,9 @@
       "tick": 81,
       "unityFrame": 83,
       "seconds": 2.7,
+      "scaledTime": 2.72,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
       "roundInvoked": false,
       "muzzle": [
         0.103105545,

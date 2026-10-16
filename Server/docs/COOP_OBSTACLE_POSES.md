@@ -92,6 +92,17 @@ The content suite checks exact equality, the next representable float, repeated
 round resets, one-shot consumption, and both callback orders when a new round
 and expired Update share a frame. Those orders intentionally differ: a shot
 before Update postpones return, whereas Update before the shot emits return.
-The runtime does not yet use this clock. Its actual PlayerLoop phase and absolute
-scaled-time origin still require Unity comparison before live pose selection
-can use the event. This foundation does not open collision authority.
+Version three records absolute `Time.time` and the actual private controller
+deadline before and after each editor callback. The server timer now matches
+both fields exactly across all 82 real Play Mode frames, including both round
+resets and the single consumed return event. The observed last deadline is
+`1.25333333`; return occurs at `1.25333345` in relative frame 37. The event also
+coincides with actual `stand_up_crawl` playback. The initial controller call and
+round callbacks occur in the editor callback, after that frame's normal Update;
+the comparison replays that recorded ordering explicitly.
+
+The runtime does not yet use this clock. This comparison proves the isolated
+controller's timer with explicit absolute source times, not the live gameplay
+callback order or the host's scaled-time origin. Both still require integration
+before live pose selection can consume the event. Collision authority stays
+closed.

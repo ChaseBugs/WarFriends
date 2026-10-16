@@ -10,7 +10,7 @@ internal sealed record CoopObstaclePoseClock(ulong ElapsedTick,
 /// <summary>Selects diagnostic obstacle poses; sampled colliders are not complete hit authority.</summary>
 internal sealed class CoopObstaclePoseCatalog
 {
-    private const string ReviewedSha256 = "f156748b15b84d6554fa19c9cce1af05089e6ef15c45971eb3761e6dfa1a398d";
+    private const string ReviewedSha256 = "7a4cc573e5f56587e5424231be13774f5afcd30716c6e2f14843f395af4fb9bb";
     private const string CrawlClip = "stand_up_crawl";
     private const string BeginClip = "stand_up_begin";
     private const string FireClip = "rifle_shot_loop";
@@ -44,7 +44,7 @@ internal sealed class CoopObstaclePoseCatalog
         }
         using JsonDocument document = JsonDocument.Parse(bytes);
         JsonElement root = document.RootElement;
-        if (root.GetProperty("version").GetInt32() != 2 ||
+        if (root.GetProperty("version").GetInt32() != 3 ||
             root.GetProperty("prefabSha256").GetString() != clips.SourceSha256 ||
             root.GetProperty("captureRate").GetInt32() != MatchManifest.TickRate)
         {

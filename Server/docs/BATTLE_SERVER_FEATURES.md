@@ -1171,5 +1171,7 @@ regression, protocol checks and the native Mongo/UDP smoke pass; see
 B22 now also isolates the recovered single-precision crawl-return deadline.
 Tests preserve strict expiry, per-round replacement and the different results
 of shot-before-Update versus Update-before-shot. This is a source timer
-foundation, not live pose integration: absolute scaled time and PlayerLoop phase
-still require Unity comparison. Co-op collision and damage remain incomplete.
+foundation, not live pose integration. Version-three Unity observations now
+prove exact deadline parity across all 82 isolated controller frames, including
+the return event. Live gameplay callback ordering and the host's scaled-time
+origin still require integration. Co-op collision and damage remain incomplete.

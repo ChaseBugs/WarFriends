@@ -1,9 +1,46 @@
+using System.Text.Json;
 using War.BattleServer;
 
 /// <summary>Checks strict return deadlines, repeated rounds and source callback ordering.</summary>
 internal static class CoopObstacleCrawlReturnClockTests
 {
     private const float HideAfterSeconds = 0.5f;
+    private const float InitialHideSeconds = 1f;
+
+    internal static void CompareUnityFrames(JsonElement samples)
+    {
+        var clock = new CoopObstacleCrawlReturnClock();
+        int returnEvents = 0;
+        foreach (JsonElement frame in samples.EnumerateArray())
+        {
+            int tick = frame.GetProperty("tick").GetInt32();
+            float scaledTime = frame.GetProperty("scaledTime").GetSingle();
+            if (tick == 0)
+            {
+                clock.RecordShot(scaledTime, InitialHideSeconds);
+            }
+            else if (clock.Update(scaledTime))
+            {
+                returnEvents++;
+                Require(frame.GetProperty("states").EnumerateArray().Any(state =>
+                    state.GetProperty("name").GetString() == "stand_up_crawl"),
+                    "The float return event must coincide with actual Unity crawl playback.");
+            }
+
+            Require(clock.Deadline == frame.GetProperty("deadlineBeforeShot").GetSingle(),
+                "The server deadline before the callback must equal the recovered controller field.");
+            if (frame.GetProperty("roundInvoked").GetBoolean())
+            {
+                clock.RecordShot(scaledTime, HideAfterSeconds);
+            }
+
+            Require(clock.Deadline == frame.GetProperty("deadlineAfterShot").GetSingle(),
+                "Every source round must publish the same single-precision deadline.");
+        }
+
+        Require(returnEvents == 1, "The complete Unity volley must consume exactly one crawl return.");
+        Console.WriteLine("PASS: float crawl timer matches every actual Unity controller deadline");
+    }
 
     internal static void Run()
     {
