@@ -259,8 +259,14 @@ selection, launch visibility, projectile collision, and blast damage now
 consume the same mode-independent player view. Live grenade-mode Buggy and
 Tank missiles damage the opposing player; a later player mine kill credits
 each vehicle's own confirmed revenge marker. Humvee and Transporter use the
-shared path but still need live grenade-mode player-hit fixtures. Air attacks
-and full cross-weapon parity remain open. An older M320 Tank fixture now earns
+shared path. A typed grenade-mode Humvee command now launches from its source
+muzzle, and its shot hits map cover without inventing player damage. A typed
+Transporter command emits real and fake rounds from separate source muzzles.
+The grenade-mode normal vehicle flight no longer falls back to a fabricated
+target collision when `RifleMatchSimulation` is absent. Confirmed Humvee or
+Transporter player hits now mark the source vehicle for revenge, but neither
+has a live grenade-mode player-hit fixture yet. Air attacks and full
+cross-weapon parity remain open. An older M320 Tank fixture now earns
 `RevengeKill` as well as its explosion and vehicle flags because the live Tank
 damages its eventual killer before the grenade lands; its expected score is
 114 rather than the former passive-Tank score of 104.

@@ -2583,6 +2583,26 @@ public sealed partial class MatchEngine
         }
     }
 
+    private void ApplyGroundVehiclePlayerHit(
+        ulong vehicleId, string ownerPlayerId, string victimPlayerId, float damage)
+    {
+        Player owner = Find(ownerPlayerId) ??
+            throw new InvalidDataException("Vehicle projectile owner disappeared.");
+        Player victim = Find(victimPlayerId) ??
+            throw new InvalidDataException("Vehicle projectile victim disappeared.");
+        PlayerDamageResult? result = ApplyResolvedPlayerDamage(
+            ownerPlayerId, victimPlayerId,
+            new ResolvedPlayerDamage(damage, CombatDamageType.Shot, HasWeapon: false),
+            damageRoll?.Invoke() ?? 1f, false);
+
+        if (result is { Applied: true } &&
+            owner.Definition.Fraction != victim.Definition.Fraction &&
+            activeArmyEntities.ContainsKey(vehicleId))
+        {
+            MarkArmyRevenge(vehicleId, victimPlayerId);
+        }
+    }
+
     private Vector3 CurrentPlayerBodyPosition(string playerId,Vector3 origin)
     {
         if(!HasArmyCombatView||playerShotTargets==null)

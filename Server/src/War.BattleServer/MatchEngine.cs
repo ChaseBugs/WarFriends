@@ -871,7 +871,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             float shotSpeed=groundVehicleShotSpeed.TryGetValue(entityId,out float selectedSpeed)
                 ?selectedSpeed:attack.ShotSpeed;
             if(activeArmyEntities.TryGetValue(entityId,out var army)&&groundVehicleWeapons!=null&&
-               groundVehicleFacing.TryGetValue(entityId,out var facing)&&rifleCombat!=null)
+               groundVehicleFacing.TryGetValue(entityId,out var facing)&&HasArmyCombatView)
             {
                 if(target.ArmyEntityId is ulong infantryId&&activeArmyEntities.ContainsKey(infantryId))
                 {
@@ -886,7 +886,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                 }
                 origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,source.Position,
                     target.Position-source.Position);
-                trace=(from,direction,distance)=>rifleCombat.TraceForArmy(target.Owner,from,direction,distance);
+                trace=(from,direction,distance)=>TraceArmyVisibility(
+                    target.Owner,from,direction,distance);
             }
             else trace=(from,direction,distance)=>
             {
@@ -1415,9 +1416,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                     float? trustedVehicleDamage=ArmyDamage(impact.VehicleId)??vehicleDamage?.Invoke(impact.VehicleId);
                     if (target.Target == impact.Collision.PlayerId &&
                         trustedVehicleDamage is >0 && float.IsFinite(trustedVehicleDamage.Value))
-                        ApplyResolvedPlayerDamage(owner, target.Target,
-                            new ResolvedPlayerDamage(trustedVehicleDamage.Value, CombatDamageType.Shot, HasWeapon: false),
-                            damageRoll?.Invoke()??1f, false);
+                        ApplyGroundVehiclePlayerHit(impact.VehicleId, owner,
+                            target.Target, trustedVehicleDamage.Value);
                     else if(impact.Collision is {DynamicArmyInfantry:true,DynamicEntityId:ulong infantryId}&&
                             trustedVehicleDamage is >0&&float.IsFinite(trustedVehicleDamage.Value))
                         ApplyArmyProjectileImpact(owner,infantryId,trustedVehicleDamage.Value,

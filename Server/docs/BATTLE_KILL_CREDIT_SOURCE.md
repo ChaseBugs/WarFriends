@@ -112,6 +112,12 @@ The grenade-mode collision view now also supports a live Shotgunner projectile
 hit and source-entity revenge marker. Tank and Buggy target, visibility, and
 missile damage now use that view too. Each has a live grenade-mode missile
 hit followed by a player mine kill that scores the vehicle's own revenge
-marker. Humvee, Transporter, and air attack parity still need live proof.
+marker. Humvee and Transporter direct player-hit parity and air attack parity
+still need live proof.
+Confirmed Humvee and Transporter projectile player damage now marks the exact
+source vehicle for the same revenge window. A typed grenade-mode Humvee shot
+is blocked by map cover without forged player damage; a typed Transporter
+split volley emits real and fake shots from its separate source muzzles.
+Direct player-hit and subsequent revenge-kill fixtures remain open for both.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.
