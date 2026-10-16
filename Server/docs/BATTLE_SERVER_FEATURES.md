@@ -1185,3 +1185,11 @@ actual 82-frame controller reference, and the runtime checks later-round clock
 origins against the previous emitted round. Preparation and crawl-return frames
 do not expose a firing muzzle. This replaces the stale initial-queue-only
 sampling for obstacle rounds; it does not open collision or damage authority.
+
+B22 moving-root investigation now reproduces competing native navigation and
+source firing-tween writes in Unity. The 60-frame source-route probe disproves
+the fixed final firing rotation after movement. Moving windups retain this
+uncertainty after the path ends; rounds and local muzzle clocks continue, but
+fixed-root world muzzle/origin and collider candidates remain absent. The
+general moving-root model is still required. See
+[the experiment and implementation boundary](COOP_OBSTACLE_ROOT_TURNS.md).

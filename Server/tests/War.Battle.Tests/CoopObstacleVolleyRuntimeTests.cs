@@ -167,7 +167,14 @@ internal static class CoopObstacleVolleyRuntimeTests
             "A source-ready obstacle shot must start during same-segment movement.");
         Check(runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
             "An unverified moving-shot posture must remain outside collision authority.");
+        CoopObstacleTurnPlanExport.WriteIfRequested(sources, runtime, enemyId);
         VerifyMovementContinues(runtime, enemyId, clock.NextShotTick);
+        AdvanceUntilCompleted(runtime, enemyId);
+        IReadOnlyList<CoopInfantryRoundIntent> movingRounds = runtime.InfantryRoundIntents(enemyId);
+        Check(!runtime.IsObstacleRepositioning(enemyId) && movingRounds.Count > 0 &&
+            movingRounds.All(round => round.ObservedLocalMuzzle != null &&
+                round.ObservedWorldLaunchOrigin == null) && runtime.PlaceObstacleVolleyHitboxes(enemyId).Count == 0,
+            "A moving volley must still emit rounds without publishing a fixed, unverified world root.");
         Console.WriteLine($"PASS: co-op moving obstacle shot at tick {clock.NextShotTick}");
         return true;
     }

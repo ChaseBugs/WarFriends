@@ -140,3 +140,9 @@ reference checks muzzle availability and every available local position within
 checks each later emitted round's clip seconds against its previous round.
 Corner firing retains its separate queue path. These are diagnostic origins;
 moving-root parity and complete authoritative collision remain unverified.
+
+The subsequent [native moving-root probe](COOP_OBSTACLE_ROOT_TURNS.md) proves
+that navigation can overwrite the completed firing tween. Windups started
+during movement therefore retain an explicit uncertain-root marker, including
+after movement stops; fixed-root world origins and collider candidates remain
+unavailable for that volley. Local firing-clock samples remain diagnostic.

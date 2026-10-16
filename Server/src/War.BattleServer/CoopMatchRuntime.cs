@@ -65,6 +65,7 @@ internal sealed record CoopInfantryShotWindup(
     internal ulong? NextEligibleTick { get; init; }
     internal bool TargetWasWalking { get; init; }
     internal bool CallbackAimReady { get; init; }
+    internal bool HasNavigationRotationConflict { get; init; }
 }
 
 internal sealed record CoopInfantryRoundIntent(
@@ -1641,7 +1642,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             assaulterWeapon!.WeaponPrefabGuid,
             assaulterWeapon.CadenceSeconds)
         {
-            TargetWasWalking = participants[target.PlayerId].Route != null
+            TargetWasWalking = participants[target.PlayerId].Route != null,
+            // Native agent rotation continues after the source firing tween; a fixed target is not its live root.
+            HasNavigationRotationConflict = arrival.State == CoopInfantryPointState.ObstacleHiding &&
+                IsObstacleRepositioning(target.EnemyEntityId)
         };
     }
 
@@ -1761,7 +1765,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             Vector3? observedWorldOrigin = null;
             CoopInfantryPointState pointState =
                 infantryPointArrivals[entityId].State;
-            if (observedMuzzle != null &&
+            if (observedMuzzle != null && !windup.HasNavigationRotationConflict &&
                 CoopAssaulterShotRotation.FinalRotationReached(
                     pointState, tick - windup.StartTick))
             {
@@ -3599,7 +3603,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         if (phase != BattlePhase.Running || assaulterQueue == null ||
             !infantryShotWindups.TryGetValue(enemyId,
                 out CoopInfantryShotWindup? windup) ||
-            windup.CallbackStartedTick != tick ||
+            windup.CallbackStartedTick != tick || windup.HasNavigationRotationConflict ||
             !infantryPointArrivals.TryGetValue(enemyId,
                 out CoopInfantryPointArrival? arrival))
             return null;

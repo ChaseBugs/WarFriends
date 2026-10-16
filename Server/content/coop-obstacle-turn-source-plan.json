@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "asset": "Assets/NavMeshData/NavMesh_7.asset",
+  "sourceTick": 383,
+  "enemySha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "start": [
+    -21.60964,
+    -2.4179418,
+    -5.87218
+  ],
+  "end": [
+    -21.579058,
+    -2.2777555,
+    -5.5265884
+  ],
+  "startRotation": [
+    0,
+    0,
+    0,
+    1
+  ],
+  "targetRotation": [
+    0,
+    0.881169,
+    0,
+    0.4728014
+  ],
+  "speed": 0.9
+}

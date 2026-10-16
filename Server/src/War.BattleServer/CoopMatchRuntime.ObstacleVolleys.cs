@@ -28,7 +28,8 @@ internal sealed partial class CoopMatchRuntime
     {
         if (_obstaclePoseCatalog == null || phase != BattlePhase.Running || IsObstacleRepositioning(entityId) ||
             !infantryShotWindups.TryGetValue(entityId, out CoopInfantryShotWindup? windup) ||
-            windup.AnimationClip != "stand_up_begin" || tick < windup.StartTick ||
+            windup.AnimationClip != "stand_up_begin" || windup.HasNavigationRotationConflict ||
+            tick < windup.StartTick ||
             !CoopAssaulterShotRotation.FinalRotationReached(CoopInfantryPointState.ObstacleHiding,
                 tick - windup.StartTick))
         {

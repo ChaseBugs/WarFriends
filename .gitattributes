@@ -55,3 +55,6 @@ Server/content/unity-pvp-delay-reference.json text eol=lf
 Server/content/coop-obstacle-volley-unity-reference.json text eol=crlf
 Server/content/coop-obstacle-volley-source-plan.json text eol=crlf
 Server/tools/UnityCoopObstacleVolleyPoseExport.cs text eol=lf
+Server/tools/UnityCoopObstacleTurnExport.cs text eol=lf
+Server/content/coop-obstacle-turn-source-plan.json text eol=crlf
+Server/content/coop-obstacle-turn-unity-reference.json text eol=crlf
