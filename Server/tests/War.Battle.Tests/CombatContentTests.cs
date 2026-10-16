@@ -7349,6 +7349,22 @@ internal static class CombatContentTests
         count += VerifyMissionCatalog(directory, content);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
         void Reject(Action action) { try { action(); } catch (InvalidDataException) { count++;return; } throw new Exception("Invalid combat allocation accepted."); }
+        var sourceWeaponPose = content.Poses.SampleBlended("idle", 0, true,
+            "idle", 0, true, 0);
+        var placedWeaponPose = sourceWeaponPose.Place(new Vector3(3, 0, -2),
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI));
+        foreach (var binding in content.AllWeaponBindings.AllBindings)
+        {
+            var root = sourceWeaponPose.WeaponRoot(binding.SourceId);
+            var placedRoot = placedWeaponPose.WeaponRoot(binding.SourceId);
+            Vector3 expected = placedRoot.RootPosition + Vector3.Transform(
+                root.Position - root.RootPosition,
+                placedRoot.RootRotation * Quaternion.Inverse(root.RootRotation));
+            Check(root.SourcePath == binding.WeaponPath &&
+                  Vector3.Distance(placedRoot.Position, expected) < 0.0001f,
+                "source weapon root follows the validated player rig: " + binding.SourceId);
+        }
+        Reject(() => sourceWeaponPose.WeaponRoot("unknown-weapon"));
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
         var firstAssaultMuzzle = content.AssaultHelicopterWeapons.Muzzle(

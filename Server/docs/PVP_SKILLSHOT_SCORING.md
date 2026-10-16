@@ -38,6 +38,14 @@ one; body hits and explosion deaths do not qualify. A real animated-infantry
 ray verifies the classifier, and a live player `Fire` sequence confirms one
 infantry headshot in match score and private terminal evidence.
 
+The recovered `SkillShotController` awards `LongShot` only for `Shot` damage
+when the victim root is more than `longShotKillDistance` from the current
+weapon transform; MainScene sets that distance to 6. The server now binds all
+66 recovered weapon-root paths to its validated player rig and can pose their
+current transforms on demand. This is position evidence only. `LongShot` scoring still
+needs the source threshold bound to published content and a confirmed death
+comparison at the same animation time as the Client callback.
+
 ## Runtime boundary
 
 This catalog supplies trusted score data and composition. Confirmed host

@@ -11,6 +11,8 @@ public sealed class WeaponBindingGraphCatalog
 {
     private readonly IReadOnlyDictionary<string,Binding> bindings;
     public int Count=>bindings.Count;
+    internal IReadOnlyList<Binding> AllBindings => bindings.Values
+        .OrderBy(binding => binding.InventoryIndex).ToArray();
     public string Revision { get; }
     public sealed record Binding(string SourceId,int InventoryIndex,string SetupType,string PlayerWeaponType,
         string WeaponType,int AnimationFamily,bool ReloadableWeapon,string AmmoSetupType,string BulletType,string BulletSource,

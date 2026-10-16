@@ -10,6 +10,30 @@ public sealed partial class PlayerPoseCatalog
     private Dictionary<string,int> rigIndex=new(StringComparer.Ordinal);
     private readonly Dictionary<string,RigLocalTransform[][]> rigFrames=new(StringComparer.Ordinal);
     private RigPart[] rigParts=[];
+    private readonly Dictionary<string,(int Node,string Path)> weaponRoots =
+        new(StringComparer.Ordinal);
+
+    internal void AttachWeaponRoots(WeaponBindingGraphCatalog bindings)
+    {
+        if (bindings.Count != 66 || weaponRoots.Count != 0 || rigIndex.Count != 144)
+        {
+            throw new InvalidDataException("Invalid weapon-root pose binding.");
+        }
+
+        foreach (var binding in bindings.AllBindings)
+        {
+            if (!rigIndex.TryGetValue(binding.WeaponPath, out int node) ||
+                !weaponRoots.TryAdd(binding.SourceId, (node, binding.WeaponPath)))
+            {
+                throw new InvalidDataException("Weapon root is absent from the recovered player rig.");
+            }
+        }
+
+        if (weaponRoots.Count != 66)
+        {
+            throw new InvalidDataException("Incomplete weapon-root pose binding.");
+        }
+    }
     private int bodyNode,upperNode;
     private Dictionary<string,(int Node,string Path)> extraMuzzles=new(StringComparer.Ordinal);
     private (int Node,string Path)? movingShotTarget;
@@ -285,7 +309,8 @@ public sealed partial class PlayerPoseCatalog
                 source.RootRotation,source.RootPosition,source.RootRotation);
             bodies.Add(body.TransformFileId,reference.Place(world[0].Position,world[0].Rotation));
         }
-        return new(collision,muzzles,moving,bodies);
+        return new(collision, muzzles, new PlayerAimPoseDetails(
+            moving, bodies, new WeaponRootPoseSource(world, weaponRoots)));
     }
     private static float Max(Vector3 v)=>Math.Max(v.X,Math.Max(v.Y,v.Z));
     private static Vector3 Scale(Matrix4x4 m)

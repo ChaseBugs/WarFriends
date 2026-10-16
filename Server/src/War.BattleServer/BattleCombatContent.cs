@@ -98,6 +98,7 @@ public sealed class BattleCombatContent
         var allWeaponBindings=WeaponBindingGraphCatalog.Load(Path.Combine(directory,"recovered-all-weapon-bindings.json"),manifest.AllWeaponBindingsRevision,manifest.SceneRevision,Path.Combine(directory,"recovered-battle-content.json"));
         var poses=PlayerPoseCatalog.Load(Path.Combine(directory,"recovered-player-poses.json"),manifest.SceneRevision,bindings);
         if (poses.Revision!=manifest.PosesRevision) throw new InvalidDataException("Combat pose revision mismatch.");
+        poses.AttachWeaponRoots(allWeaponBindings);
         var maps=RecoveredBattleMap.Load(Path.Combine(directory,"recovered-battle-content.json"));
         var decoys=DecoySourceCatalog.Load(Path.Combine(directory,"recovered-decoy-source.json"),manifest.DecoyRevision,maps);
         var landMines=LandMineSourceCatalog.Load(Path.Combine(directory,"recovered-landmine-source.json"),manifest.LandMineRevision,maps);
