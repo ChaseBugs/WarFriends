@@ -5,6 +5,7 @@
   "sheetCodeSha256": "ca0bacbf176b3cd2f59748c0e28e3d612354c6bd37911b89180e27731c61e2aa",
   "skillCodeSha256": "ec696c62cedcbfba0b7dbd9c109b976280d7c565cc80ebb3a5201ecd1844f720",
   "comboWindowSeconds": 0.9,
+  "longShotDistance": 6.0,
   "rows": [
     {
       "flag": 1,

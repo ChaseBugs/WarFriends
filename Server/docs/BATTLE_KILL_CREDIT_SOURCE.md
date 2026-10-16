@@ -62,7 +62,7 @@ VehicleDestroyed, ExplosiveKill, 44 source points, and private terminal counts. 
 death checks the Tank-specific flag and 104 points; a live collected-grenade burst kills four
 infantry and earns one DoubleKill, one TripleKill, and one MultiKill while conserving private
 direct-kill evidence. The source combo flags are applied when its host-time window is met. Headshot,
-other contextual flags, long-shot, revenge, environmental flags, exact scaled time, and full
+other contextual flags, revenge, environmental flags, exact scaled time, and full
 cross-cause callback order remain open. These counts remain incomplete for Client MatchStats and
 Backend settlement.
 

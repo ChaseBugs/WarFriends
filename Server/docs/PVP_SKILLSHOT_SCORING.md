@@ -40,11 +40,12 @@ infantry headshot in match score and private terminal evidence.
 
 The recovered `SkillShotController` awards `LongShot` only for `Shot` damage
 when the victim root is more than `longShotKillDistance` from the current
-weapon transform; MainScene sets that distance to 6. The server now binds all
-66 recovered weapon-root paths to its validated player rig and can pose their
-current transforms on demand. This is position evidence only. `LongShot` scoring still
-needs the source threshold bound to published content and a confirmed death
-comparison at the same animation time as the Client callback.
+weapon transform. MainScene sets that distance to 6, now pinned in the score
+artifact. The host binds all 66 recovered weapon-root paths to the validated
+player rig and compares the victim and fired weapon roots at the confirmed
+bullet-death tick. Equality with six does not qualify. A live player `Fire`
+headshot earns one `LongShot` in match score and private terminal evidence;
+mine and Bazooka explosion deaths do not.
 
 ## Runtime boundary
 

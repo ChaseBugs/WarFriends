@@ -15398,7 +15398,10 @@ internal static class CombatContentTests
         Check(bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
               bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] == 1 &&
               bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.TankDestroyed] == 0 &&
-              bulletKillScore.Score == 40 &&
+              bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.LongShot] is 0 or 1 &&
+              bulletKillScore.Score == 40 +
+                  content.PvpScores.PointsForConfirmedFlags(PvpArmyKillSkillShotPolicy.LongShot) *
+                  bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.LongShot] &&
               droneShotMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == decoyOpponent).ConfirmedSkillShotCounts.Count == 0 &&
               droneShotMatch.TerminalEvidenceSnapshot().Players.Single(player =>
@@ -17036,7 +17039,8 @@ internal static class CombatContentTests
         var fullHealthMineScore = fullHealthMineMatch.BonusProgress.ScoreSnapshot(soldierOwner);
         Check(fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
               fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
-              fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 0,
+              fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 0 &&
+              fullHealthMineScore.Counts[PvpArmyKillSkillShotPolicy.LongShot] == 0,
             "confirmed full-health mine death credits OneHitKill with ExplosiveKill");
         fullHealthMineMatch.Command(soldierOwner, new MatchCommand
         {
@@ -18132,6 +18136,7 @@ internal static class CombatContentTests
         Check(liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 1 &&
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
+              liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.LongShot] == 1 &&
               liveHeadshotMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).ConfirmedEnemyHits == 1,
             "one lethal player Fire head contact credits Kill, HeadShot, and OneHitKill");
@@ -18148,8 +18153,10 @@ internal static class CombatContentTests
               liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.HeadShot).Count == 1 &&
               liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
-                  row.Flag == PvpArmyKillSkillShotPolicy.OneHitKill).Count == 1,
-            "terminal evidence retains headshot and one-hit counts without exposing them to peers");
+                  row.Flag == PvpArmyKillSkillShotPolicy.OneHitKill).Count == 1 &&
+              liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.LongShot).Count == 1,
+            "terminal evidence retains headshot, one-hit, and long-shot counts privately");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

@@ -380,7 +380,8 @@ internal static class BazookaCatalogTests
         var oneHitBazookaScore = oneHitMatch.BonusProgress.ScoreSnapshot(one);
         Check(oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
               oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
-              oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 0,
+              oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 0 &&
+              oneHitBazookaScore.Counts[PvpArmyKillSkillShotPolicy.LongShot] == 0,
             "one lethal Bazooka blast credits OneHitKill and ExplosiveKill without HeadShot");
         if (!oneHitMatch.Terminal)
         {

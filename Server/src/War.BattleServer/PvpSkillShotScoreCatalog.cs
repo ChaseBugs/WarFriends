@@ -11,13 +11,16 @@ public sealed record PvpSkillShotScore(int Flag, string Name,
 public sealed class PvpSkillShotScoreCatalog
 {
     private const string ReviewedSha256 =
-        "8e98335020a543c18d02213b7caeb84a9d1e57616c5074dfc876c448c6455c7d";
+        "7358effb84b956ee67b29cb4faa48e80703af73e48d4c9651494b97c5f2fcbc4";
+    private const float ReviewedLongShotDistance = 6f;
     private static readonly int[] SourceFlags =
         [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 2048, 4096,
          65536, 131072, 8192, 262144, 32768, 16384, 524288];
     private readonly int knownFlags;
     public IReadOnlyList<PvpSkillShotScore> Rows { get; }
     public float ComboWindowSeconds => 0.9f;
+    /// <summary>Reviewed MainScene distance for the source LongShot flag.</summary>
+    public float LongShotDistance => ReviewedLongShotDistance;
 
     private PvpSkillShotScoreCatalog(PvpSkillShotScore[] rows)
     {
@@ -45,11 +48,12 @@ public sealed class PvpSkillShotScoreCatalog
         using var document = JsonDocument.Parse(bytes);
         var root = document.RootElement;
         RequireFields(root, "version", "sceneSha256", "battleContentSha256",
-            "sheetCodeSha256", "skillCodeSha256", "comboWindowSeconds", "rows");
+            "sheetCodeSha256", "skillCodeSha256", "comboWindowSeconds", "longShotDistance", "rows");
         if (root.GetProperty("version").GetInt32() != 1 ||
             root.GetProperty("sceneSha256").GetString() != sceneSha256 ||
             root.GetProperty("battleContentSha256").GetString() != battleContentSha256 ||
-            root.GetProperty("comboWindowSeconds").GetSingle() != 0.9f)
+            root.GetProperty("comboWindowSeconds").GetSingle() != 0.9f ||
+            root.GetProperty("longShotDistance").GetSingle() != ReviewedLongShotDistance)
             throw new InvalidDataException("PvP scores use different source provenance.");
         var source = root.GetProperty("rows");
         if (source.GetArrayLength() != SourceFlags.Length)

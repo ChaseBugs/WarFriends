@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+using System.Numerics;
 using War.BattleServer;
 
 internal static class PvpSkillShotScoreTests
@@ -19,8 +20,25 @@ internal static class PvpSkillShotScoreTests
         string path = Path.Combine(directory, "recovered-pvp-skillshot-scores.json");
         var scores = PvpSkillShotScoreCatalog.Load(path, scene, contentDigest);
         int[] expectedPoints = [10, 2, 4, 2, 6, 10, 20, 50, 2, 20, 10, 20, 6, 4, 4, 4, 10, 60, 10];
-        Check(scores.Rows.Count == 19 && scores.ComboWindowSeconds == 0.9f,
-            "PvP scoring retains every active source row and serialized combo window");
+        Check(scores.Rows.Count == 19 && scores.ComboWindowSeconds == 0.9f &&
+              scores.LongShotDistance == 6f,
+            "PvP scoring retains source rows, combo window, and long-shot distance");
+        Check(PvpArmyKillSkillShotPolicy.ConfirmedLongShotFlag(
+                  new Vector3(6, 0, 0), Vector3.Zero, scores.LongShotDistance) == 0 &&
+              PvpArmyKillSkillShotPolicy.ConfirmedLongShotFlag(
+                  new Vector3(6.01f, 0, 0), Vector3.Zero, scores.LongShotDistance) ==
+                  PvpArmyKillSkillShotPolicy.LongShot,
+            "LongShot requires source Shot distance strictly beyond six units");
+        try
+        {
+            PvpArmyKillSkillShotPolicy.ConfirmedLongShotFlag(
+                new Vector3(float.NaN, 0, 0), Vector3.Zero, scores.LongShotDistance);
+            throw new Exception("Nonfinite long-shot authority was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+            checks++;
+        }
         for (int index = 0; index < expectedPoints.Length; index++)
             Check(scores.PointsForConfirmedFlags(scores.Rows[index].Flag) == expectedPoints[index],
                 "source multiplayer score for " + scores.Rows[index].Name);

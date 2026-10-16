@@ -56,6 +56,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     private Func<ulong, string, Vector3, ulong, PreparedVolley>? prepareVolley;
     private Func<float>? damageRoll;
     private readonly RifleMatchSimulation? rifleCombat;
+    private readonly float _longShotDistance;
     private readonly ShieldMatchSimulation? shields;
     private readonly BarrelMatchSimulation? barrels;
     private readonly ExplosionSourceCatalog? explosionPolicy;
@@ -1079,6 +1080,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         manifest = MatchManifest.Validate(definition);
         if (content!=null) content.ValidateAllocation(manifest);
         else if (manifest.Players.Any(p=>p.WeaponUpgrade.HasValue)) throw new InvalidDataException("Source-bound upgrades require a verified combat package.");
+        _longShotDistance = content?.PvpScores.LongShotDistance ?? 0f;
         ManifestHash = manifest.Digest();
         players = manifest.Players.Select(p => new Player(p)).ToArray();
         if(manifest.Players[0].EquippedArmyUnitIds!=null)
@@ -1983,13 +1985,23 @@ public sealed partial class MatchEngine : IMatchRuntime
                         PvpBonusProgressCoordinator? scoredKill = null;
                         if (pvpBonusProgress != null)
                         {
+                            string weaponSource = pair.Value.WeaponSourceId.Length == 0
+                                ? shooter.Weapon.SourceId : pair.Value.WeaponSourceId;
+                            Vector3 victimRoot = new(armyBeforeImpact.X,
+                                armyBeforeImpact.Y, armyBeforeImpact.Z);
+                            Vector3 weaponRoot = (rifleCombat ?? throw new InvalidDataException(
+                                    "Player-owned shot lacks a current weapon pose."))
+                                .Pose(shooter.Definition.PlayerId)
+                                .WeaponRoot(weaponSource).Position;
                             int flags = PvpArmyKillSkillShotPolicy.BaseFlags(
                                 armyCatalog ?? throw new InvalidDataException(
                                     "Player-owned kill lacks a recovered army catalog."),
                                 armyBeforeImpact.UnitId) |
                                 PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
                                     armyBeforeImpact.Health, armyBeforeImpact.MaxHealth) |
-                                PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(impact.Hit);
+                                PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(impact.Hit) |
+                                PvpArmyKillSkillShotPolicy.ConfirmedLongShotFlag(
+                                    victimRoot, weaponRoot, _longShotDistance);
                             string receiptId = PvpHitReceiptId("player-bullet-army-kill",
                                 pair.Key, vehicleId.ToString(CultureInfo.InvariantCulture));
                             scoredKill = pvpBonusProgress.PrepareConfirmedPlayerOwnedDeathCopy(

@@ -2,7 +2,18 @@
 
 import hashlib
 import json
+import re
 import extract_coop_skillshot_scores as source
+
+
+def long_shot_distance(scene):
+    start = scene.index("  skillShotItemDefinitions:\n")
+    nearby = scene[start - 200:start]
+    match = re.search(
+        r"^  longShotKillDistance: (\d+(?:\.\d+)?)$", nearby, re.M)
+    if not match or float(match.group(1)) != 6.0:
+        raise ValueError("MainScene long-shot distance differs from the reviewed source")
+    return float(match.group(1))
 
 
 def main():
@@ -35,6 +46,7 @@ def main():
         "sheetCodeSha256": hashlib.sha256(sheet_bytes).hexdigest(),
         "skillCodeSha256": hashlib.sha256(flag_bytes).hexdigest(),
         "comboWindowSeconds": source.combo_window(scene),
+        "longShotDistance": long_shot_distance(scene),
         "rows": rows,
     }
     path = source.ROOT / "Server/content/recovered-pvp-skillshot-scores.json"

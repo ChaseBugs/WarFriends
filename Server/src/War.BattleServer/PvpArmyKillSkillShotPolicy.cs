@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace War.BattleServer;
 
 /// <summary>Source base flags for a player-owned opposing army-entity death.</summary>
@@ -9,6 +11,31 @@ internal static class PvpArmyKillSkillShotPolicy
     internal const int ExplosiveKill = 8192;
     internal const int OneHitKill = 16;
     internal const int HeadShot = 1;
+    internal const int LongShot = 4;
+
+    /// <summary>
+    /// The Client compares the victim and current weapon transform only for
+    /// a player-owned Shot death. Equality with the scene distance is short.
+    /// </summary>
+    internal static int ConfirmedLongShotFlag(
+        Vector3 victimRoot, Vector3 weaponRoot, float sourceDistance)
+    {
+        if (!PlayerHitbox.Finite(victimRoot) ||
+            !PlayerHitbox.Finite(weaponRoot) ||
+            !float.IsFinite(sourceDistance) || sourceDistance <= 0f)
+        {
+            throw new InvalidDataException("Long-shot distance lacks finite host positions.");
+        }
+
+        float squaredDistance = Vector3.DistanceSquared(victimRoot, weaponRoot);
+        float squaredThreshold = sourceDistance * sourceDistance;
+        if (!float.IsFinite(squaredDistance) || !float.IsFinite(squaredThreshold))
+        {
+            throw new InvalidDataException("Long-shot distance exceeds the host float range.");
+        }
+
+        return squaredDistance > squaredThreshold ? LongShot : 0;
+    }
 
     /// <summary>
     /// The recovered EnemyController marks a shot death as a headshot only
