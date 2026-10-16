@@ -234,6 +234,22 @@ internal static class PvpBonusProgressCoordinatorTests
                 "either receipt capacity failure leaves the score, counts and progress unchanged");
         }
         using var deaths = Create();
+        using var stagedDeaths = Create();
+        var preparedDeathState = stagedDeaths.PrepareConfirmedPlayerOwnedDeathCopy(
+            "local", Id(29), 0x1210, 9f, true, out var preparedDeath);
+        Check(stagedDeaths.ComboSnapshot().ReceiptCount == 0 &&
+              stagedDeaths.ScoreSnapshot("local").Score == 0 &&
+              preparedDeathState.ComboSnapshot() is {Streak:1,ReceiptCount:1} &&
+              preparedDeathState.ScoreSnapshot("local").Score == 46 &&
+              preparedDeath.ScoredSkillShot?.Score.ScoreAfter == 46,
+            "staged player death leaves the published combo and score unchanged");
+        var replayedDeathState = preparedDeathState.PrepareConfirmedPlayerOwnedDeathCopy(
+            "local", Id(29), 0x1210, 9f, true, out var replayedDeath);
+        Check(replayedDeath == preparedDeath &&
+              replayedDeathState.ComboSnapshot().ReceiptCount == 1 &&
+              replayedDeathState.ScoreSnapshot("local").ReceiptCount == 1 &&
+              stagedDeaths.ComboSnapshot().ReceiptCount == 0,
+            "a staged death replay keeps its original result without publishing twice");
         var friendly = deaths.RecordConfirmedPlayerOwnedDeath("local", Id(30), 0x1210, 10f, false, 1f);
         Check(friendly.Combo is {Streak:1,ComboFlag:0} && friendly.ScoredSkillShot == null &&
               deaths.ScoreSnapshot("local").Score == 0 && deaths.Snapshot("local").Progress == 0,

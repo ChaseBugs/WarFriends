@@ -104,6 +104,14 @@ multiplier remains a source-fixture input until that callback reaches the live
 host path.
 Normal MatchEngine callbacks and Client presentation remain to be connected.
 
+The coordinator can now prepare a detached confirmed-death transition with its
+complete combo, death-replay receipt, score, and streak progress. The host may
+publish that candidate only after its source death proof succeeds. A focused
+test verifies that preparation and replay leave the currently published state
+unchanged. This is a prerequisite for live death wiring, not evidence that the
+normal match currently awards combo flags: friendly deaths and the source
+scaled clock must be bound in callback order first.
+
 `PvpScoreStreakPolicy` is now loaded with the combat package from the reviewed
 `recovered-pvp-score-streak-policy.json`. Its digest and the scene/content
 bindings are checked before content publication. The regeneration tool is

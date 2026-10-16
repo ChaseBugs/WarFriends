@@ -50,7 +50,7 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     private PvpSkillShotScoreState localScore;
     private PvpSkillShotScoreState opponentScore;
     private PvpKillComboState combo;
-    private readonly Dictionary<string, ConfirmedDeathReceipt> deathReceipts = new(StringComparer.Ordinal);
+    private Dictionary<string, ConfirmedDeathReceipt> deathReceipts = new(StringComparer.Ordinal);
     private Dictionary<string, ConfirmedHitReceipt> hitReceipts = new(StringComparer.Ordinal);
     private Dictionary<string, PvpFlameHitThrottle> flameByVictim = new(StringComparer.Ordinal);
     private readonly int maximumHitReceipts;
@@ -354,6 +354,24 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
                 }
             }
             return result;
+        }
+    }
+
+    /// <summary>Prepares a complete death, combo, score, and progress transition for host publication.</summary>
+    internal PvpBonusProgressCoordinator PrepareConfirmedPlayerOwnedDeathCopy(
+        string ownerId, string receiptId, int baseFlags, float gameTime,
+        bool isEnemy, out PvpConfirmedPlayerDeath result)
+    {
+        lock (gate)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            var candidate = (PvpBonusProgressCoordinator)MemberwiseClone();
+            candidate.deathReceipts = new Dictionary<string, ConfirmedDeathReceipt>(
+                deathReceipts, StringComparer.Ordinal);
+            float multiplier = multipliers.ForPlayer(ownerId);
+            result = candidate.RecordConfirmedPlayerOwnedDeath(
+                ownerId, receiptId, baseFlags, gameTime, isEnemy, multiplier);
+            return candidate;
         }
     }
 
