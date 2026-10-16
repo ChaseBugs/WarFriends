@@ -1373,3 +1373,11 @@ has fourteen protocol checks; Unity Mono covers the early recovery branch with
 a real loopback receiver. Rendered exit, admitted co-op response-loss recovery,
 shared terminal presentation and durable settlement remain open. See the
 [local confirmation boundary](COOP_PEER_PRESENTATION.md#confirmed-local-departure).
+
+B22/B20 departure recovery now has a real two-SDK UDP endpoint fixture: every
+automatic Forfeit reply is suppressed until timeout, then exact pending-command
+replay recovers the original receipt while the master continues. Read-only
+runtime reconnect eligibility now prevents the router from issuing a departed
+peer a replacement grant merely because its old receipt session remains.
+Normal Worker co-op admission, Unity response-loss presentation and per-player
+settlement remain open. See [the replay boundary](COOP_DEPARTURE_REPLAY.md).

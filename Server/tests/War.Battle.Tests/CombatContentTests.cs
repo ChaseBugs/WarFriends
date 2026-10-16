@@ -2858,6 +2858,7 @@ internal static class CombatContentTests
         };
         CoopPrestartCancellationTests.Run(volleySources);
         CoopSurvivorRuntimeTests.Run(volleySources);
+        CoopDepartureUdpTests.Run(volleySources).GetAwaiter().GetResult();
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
         CoopDiagnosticRoundLifetimeTests.Run(volleySources, alliedShotWorld);
 

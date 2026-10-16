@@ -72,6 +72,7 @@ public sealed class MatchEndpoint
     public IEnumerable<KeyValuePair<ulong,IPEndPoint>> ActiveSessionEndpoints =>
         sessions.Select(pair=>new KeyValuePair<ulong,IPEndPoint>(pair.Key,pair.Value.Endpoint));
     public bool CanReconnect(string playerId) => !Expired && !match.Terminal &&
+        match.CanResume(playerId) &&
         generations.ContainsKey(playerId) && sessions.Values.Any(s=>s.PlayerId==playerId);
     public bool CancelBeforeStart() => !Expired && match.CancelBeforeStart();
     public void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations) => match.ConfigureBattleAllocations(allocations);

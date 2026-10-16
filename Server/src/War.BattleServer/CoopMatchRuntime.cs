@@ -722,10 +722,16 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         return true;
     }
 
-    public bool Resume(string playerId)
+    /// <summary>Keeps departed peers in receipt history without authorizing a replacement session.</summary>
+    public bool CanResume(string playerId)
     {
         return !Terminal && participants.TryGetValue(playerId, out Participant? participant) &&
             participant.Admitted && !participant.Departed;
+    }
+
+    public bool Resume(string playerId)
+    {
+        return CanResume(playerId);
     }
 
     public bool CancelBeforeStart()

@@ -1214,6 +1214,13 @@ public sealed partial class MatchEngine : IMatchRuntime
         stateRevision++;
         return true;
     }
+
+    /// <summary>Checks reconnect eligibility without advancing presence or changing pause ownership.</summary>
+    public bool CanResume(string playerId)
+    {
+        return !Terminal && players.Any(player => player.Definition.PlayerId == playerId && player.Admitted);
+    }
+
     public bool Resume(string id)
     {
         var p = Find(id);

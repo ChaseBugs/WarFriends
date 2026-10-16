@@ -66,6 +66,12 @@ loopback UDP receiver. Recovery completes immediately, sends no datagram and
 preserves the frozen running snapshot. This tests the early confirmation
 branch, not lost-response recovery over an admitted co-op Worker session.
 
+The separate [two-SDK UDP fixture](COOP_DEPARTURE_REPLAY.md) now verifies lost
+departure receipt recovery against the actual authenticated endpoint/runtime.
+It preserves the original session for receipt replay while denying a new
+reconnect grant. Normal Worker co-op admission and Unity response-loss UI are
+still outside that proof.
+
 The disposable Unity 2018.3.0f2 run passed all nine checks and completed
 its shutdown. The audited controller, bridge and predicate source hashes match
 the active Client files. The new scripts retain explicit valid 32-character

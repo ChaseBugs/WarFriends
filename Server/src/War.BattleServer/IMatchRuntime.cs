@@ -14,6 +14,7 @@ internal interface IMatchRuntime
     bool Terminal { get; }
     bool HasPlayer(string playerId);
     bool Admit(string playerId);
+    bool CanResume(string playerId);
     bool Resume(string playerId);
     bool CancelBeforeStart();
     bool AbortForHostShutdown();
