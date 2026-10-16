@@ -21,13 +21,21 @@ different enemy point is a separate branch, outside same-segment repositioning.
 
 ## Implemented runtime transitions
 
-`CoopObstacleVolleyClock` owns crawling/pending state and strict fixed-tick
-shot/position deadlines. Invalid fractions, backward mutation time and deadline
+`CoopObstacleVolleyClock` now starts at obstacle arrival and owns crawling/pending
+state and strict fixed-tick shot/position deadlines. Invalid fractions, backward mutation time and deadline
 overflow leave its state unchanged. `CoopMatchRuntime.ObstacleVolleys.cs` binds
 accepted preparation and last-round completion; the windup and clock use the
 same cooldown draw. First-target diagnostics remain immutable history.
 
-After a supported first volley, target selection now consults that clock again.
+Target selection consults that same clock through initial repositioning and
+every subsequent volley. The old unchanged-point first-shot restriction is no
+longer an eligibility condition: moving within the reserved obstacle segment
+does not cancel or refresh the source shot deadline.
+The early-reposition fixture now checks two pre-shot position changes, no early
+shot, preparation at the original deadline, same-tick replay stability, emitted
+rounds and the resulting source cooldown. Initial and later repositioning use
+one clock instead of separate pre-first-shot fallback logic. Collider authority
+remains closed for unverified moving poses.
 A new volley refreshes target, stand-up/fire timing and local round sequence,
 while match-wide projectile IDs remain monotonic. Completed volley clocks are
 reused rather than reset to the initial arrival deadline.

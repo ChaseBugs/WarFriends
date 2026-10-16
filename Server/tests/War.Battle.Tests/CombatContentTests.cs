@@ -3807,12 +3807,8 @@ internal static class CombatContentTests
         if (thirdReposition == null ||
             thirdReposition <= earlyReposition.FirstShootEligibleTick)
             throw new Exception("Obstacle fixture lacks a shot-before-move gate.");
-        earlyRepositionRuntime.Advance(thirdReposition.Value);
-        if (earlyRepositionRuntime.NextObstacleRepositionTick(
-                earlyRepositionEnemy.EntityId) != null ||
-            earlyRepositionRuntime.EnemyDestination(
-                earlyRepositionEnemy.EntityId) != secondObstacle)
-            throw new Exception("Obstacle moved through its unmodeled shot state.");
+        CoopObstacleVolleyRuntimeTests.VerifyFirstShotAfterReposition(
+            earlyRepositionRuntime, earlyRepositionEnemy.EntityId, earlyReposition);
 
         int cornerSpawnIndex = assaultCandidates.ToList().FindIndex(point =>
             point.ComponentFileId == 1694);
@@ -4293,7 +4289,8 @@ internal static class CombatContentTests
         changingTargetRuntime.Advance(changingNextShot);
         CoopCornerShotAttempt? changedTargetAttempt = changingTargetRuntime
             .CornerLatestShotAttempt(changingTargetEnemyId);
-        if (cornerTargetChoices != 2 ||
+        // Other source-ready enemies may choose players in the same runtime; assert this corner's own history below.
+        if (cornerTargetChoices < 2 ||
             changedTargetAttempt?.Tick != changingNextShot ||
             changedTargetAttempt.PlayerId != secondPlayer ||
             changingTargetRuntime.CornerFirstShotAttempt(
@@ -4301,7 +4298,10 @@ internal static class CombatContentTests
             changingTargetRuntime.InfantryFirstPlayerTarget(
                 changingTargetEnemyId)?.PlayerId != firstPlayer)
             throw new Exception(
-                "Co-op corner reused its first player instead of selecting a new target.");
+                $"Co-op corner target mismatch: choices={cornerTargetChoices}, " +
+                $"attempt={changedTargetAttempt?.Tick}/{changedTargetAttempt?.PlayerId}, " +
+                $"expected={changingNextShot}/{secondPlayer}, " +
+                $"first={changingTargetRuntime.CornerFirstShotAttempt(changingTargetEnemyId)?.PlayerId}.");
         CoopInfantryShotWindup? changedTargetWindup = changingTargetRuntime
             .InfantryShotWindup(changingTargetEnemyId);
         if (changedTargetAttempt.Exposed &&

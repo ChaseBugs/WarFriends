@@ -1213,8 +1213,12 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                     nextCornerChangeTicks[entityId] =
                         firstCornerChangeTick.Value;
                 if (firstRepositionTick.HasValue)
+                {
                     nextObstacleRepositionTicks[entityId] =
                         firstRepositionTick.Value;
+                    _obstacleVolleyClocks[entityId] = new CoopObstacleVolleyClock(
+                        firstShootEligibleTick, firstRepositionTick.Value);
+                }
                 arrived.Add(entityId);
             }
             else if (path.HasArrived(tick))
@@ -1280,22 +1284,17 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         foreach ((ulong entityId, ulong repositionTick)
             in nextObstacleRepositionTicks.ToArray())
         {
-            if (tick < repositionTick ||
-                !infantryPointArrivals.TryGetValue(entityId,
-                    out CoopInfantryPointArrival? arrival))
-                continue;
-            _obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? volleyClock);
-            if (volleyClock != null && volleyClock.Decide(tick) != CoopObstacleAction.Reposition)
+            if (tick < repositionTick || !infantryPointArrivals.ContainsKey(entityId))
             {
-                // Preserve overdue movement while firing, and let a simultaneous shot run first.
                 continue;
             }
-            if (volleyClock == null && (tick >= arrival.FirstShootEligibleTick ||
-                infantryFirstTargets.ContainsKey(entityId)))
+            if (!_obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? volleyClock))
             {
-                // ObstacleHidingUpdate checks the shot first. Its later
-                // position draws need the firing/animation state machine.
-                nextObstacleRepositionTicks.Remove(entityId);
+                throw new InvalidDataException("Obstacle arrival has no source shot and position clock.");
+            }
+            if (volleyClock.Decide(tick) != CoopObstacleAction.Reposition)
+            {
+                // Preserve overdue movement while firing, and let a simultaneous shot run first.
                 continue;
             }
             BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
@@ -1303,18 +1302,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             if (enemy == null)
                 continue;
 
-            ulong nextPositionTick;
-            if (volleyClock != null)
-            {
-                volleyClock.Reposition(tick, chooseInfantryRepositionFraction());
-                nextPositionTick = volleyClock.NextPositionTick;
-                // Completed firing poses cannot describe the subsequent crawl to a new position.
-                infantryShotWindups.Remove(entityId);
-            }
-            else
-            {
-                nextPositionTick = NextObstacleRepositionTickAfter(tick);
-            }
+            volleyClock.Reposition(tick, chooseInfantryRepositionFraction());
+            ulong nextPositionTick = volleyClock.NextPositionTick;
+            // Completed firing poses cannot describe the subsequent crawl to a new position.
+            infantryShotWindups.Remove(entityId);
             obstacleRepositionStartedTicks.TryAdd(entityId, tick);
             CoopAssignedEnemyDestination? destination =
                 enemyDestinations.RegenerateObstaclePosition(entityId);
@@ -1341,16 +1332,6 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             movingObstacleRepositions.Add(entityId);
             stateRevision++;
         }
-    }
-
-    private ulong NextObstacleRepositionTickAfter(ulong startTick)
-    {
-        float fraction = chooseInfantryRepositionFraction();
-        if (!float.IsFinite(fraction) || fraction is < 0 or >= 1)
-            throw new InvalidDataException(
-                "Co-op infantry reposition choice must be in [0, 1).");
-        // ObstacleHidingUpdate draws 2–6 seconds after SetFinalTarget.
-        return FirstTickAfterDelay(startTick, 2f + 4f * fraction);
     }
 
     private ulong FirstInfantryShotEligibleTick(

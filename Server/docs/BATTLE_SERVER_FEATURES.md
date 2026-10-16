@@ -1128,7 +1128,8 @@ The next B22 obstacle-infantry slice is recorded in
 [COOP_OBSTACLE_VOLLEYS.md](COOP_OBSTACLE_VOLLEYS.md). The source requires shoot-first priority, post-preparation movement deadlines
 and source post-batch cooldown together. The current supported first-volley path
 now repeats through the shared clock and resumes overdue same-segment movement;
-initial reposition-before-first-shot and collision authority remain open.
+initial reposition-before-first-shot now retains its original shot deadline;
+collision authority remains open.
 Registration remains closed.
 
 B22 now has a source-bound `CoopObstacleVolleyClock` foundation with shoot-first
@@ -1139,7 +1140,7 @@ cooldown draw with the windup. Combat-content regression reports 26,368 checks
 passing, including both binding invariants. Subsequent runtime work now uses
 that clock for repeated selection and same-segment repositioning, preserving
 first-target history and unique projectile IDs. Actual collision/damage and
-complete initial movement coverage remain open; registration stays closed.
+complete moving-pose coverage remain open; registration stays closed.
 
 A dedicated B22 runtime fixture now verifies the legal post-volley movement
 window with real source batch/cooldown bounds: no early movement, firing-windup
@@ -1200,3 +1201,12 @@ first seven frames match actual Unity tween writes and enabled state. Stationary
 obstacle snapshots now publish the interpolated root rather than retaining spawn
 rotation. Moving volleys retain their native navigation conflict; the tween
 stage alone does not establish their complete live rotation or hit authority.
+
+B22 now initializes the shared shot/position clock at obstacle arrival. First
+shots remain eligible after any initial same-segment repositioning; the old
+unchanged-position-only first-shot gate and separate fallback timer are removed.
+The regression advances two early moves, checks the original first-shot deadline
+and same-tick replay, then verifies actual round emission and source cooldown.
+The corner retarget regression now checks its own actor history without assuming
+that no other source-ready enemy may select a player. Moving-pose and damage
+authority remain incomplete.

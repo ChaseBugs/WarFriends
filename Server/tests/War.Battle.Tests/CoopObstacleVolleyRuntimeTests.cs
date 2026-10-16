@@ -62,6 +62,31 @@ internal static class CoopObstacleVolleyRuntimeTests
         VerifyMovingShotCase(sources);
     }
 
+    internal static void VerifyFirstShotAfterReposition(CoopMatchRuntime runtime, ulong enemyId,
+        CoopInfantryPointArrival arrival)
+    {
+        runtime.Advance(arrival.FirstShootEligibleTick - 1);
+        Check(runtime.InfantryShotWindup(enemyId) == null,
+            "Early position changes must preserve the original first-shot deadline.");
+        runtime.Advance(arrival.FirstShootEligibleTick);
+        CoopInfantryShotWindup? windup = runtime.InfantryShotWindup(enemyId);
+        Check(windup?.StartTick == arrival.FirstShootEligibleTick &&
+            runtime.ObstacleVolleyState(enemyId)?.HasPendingShot == true,
+            "An enemy that repositions first must still prepare its first shot at the source deadline.");
+        runtime.Advance(arrival.FirstShootEligibleTick);
+        Check(runtime.InfantryShotWindup(enemyId) == windup,
+            "Replaying the initial shot tick must not prepare a duplicate volley.");
+        AdvanceUntilCompleted(runtime, enemyId);
+        IReadOnlyList<CoopInfantryRoundIntent> rounds = runtime.InfantryRoundIntents(enemyId);
+        CoopObstacleVolleySnapshot clock = runtime.ObstacleVolleyState(enemyId)!;
+        Check(rounds.Count > 0 && clock.IsCrawling && !clock.HasPendingShot &&
+            clock.NextShotTick > rounds[^1].Tick,
+            "The early-reposition enemy must emit its first volley and retain the source cooldown.");
+        Check(runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
+            "Scheduling the previously missing first shot must not fabricate collision authority.");
+        Console.WriteLine("PASS: first co-op obstacle volley after pre-shot repositioning");
+    }
+
     private static void VerifyMovingShotCase(Sources sources)
     {
         Sources movingSources = sources with { SpawnIndex = SelectLongObstacleSpawn(sources) };

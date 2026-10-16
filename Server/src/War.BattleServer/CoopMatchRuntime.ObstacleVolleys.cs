@@ -74,21 +74,11 @@ internal sealed partial class CoopMatchRuntime
         {
             return;
         }
-        if (!arrival.FirstRepositionTick.HasValue)
-        {
-            throw new InvalidDataException("Obstacle volley has no source position deadline.");
-        }
         if (!_obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? clock))
         {
-            clock = new CoopObstacleVolleyClock(arrival.FirstShootEligibleTick,
-                arrival.FirstRepositionTick.Value);
-            clock.BeginShot(tick, chooseInfantryRepositionFraction());
-            _obstacleVolleyClocks.Add(entityId, clock);
+            throw new InvalidDataException("Obstacle arrival has no source volley clock.");
         }
-        else
-        {
-            clock.BeginShot(tick, chooseInfantryRepositionFraction());
-        }
+        clock.BeginShot(tick, chooseInfantryRepositionFraction());
         nextObstacleRepositionTicks[entityId] = clock.NextPositionTick;
         BeginObstacleCrawlClock(entityId);
     }
@@ -99,11 +89,11 @@ internal sealed partial class CoopMatchRuntime
         {
             return false;
         }
-        if (_obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? clock))
+        if (!_obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? clock))
         {
-            return clock.Decide(tick) == CoopObstacleAction.Shoot;
+            throw new InvalidDataException("Obstacle arrival has no source volley clock.");
         }
-        return arrival.HasUnchangedObstaclePointForFirstShot && !infantryFirstTargets.ContainsKey(entityId);
+        return clock.Decide(tick) == CoopObstacleAction.Shoot;
     }
 
     private ulong CompleteInfantryVolleyClock(BattleCoopEnemySpawn enemy)
