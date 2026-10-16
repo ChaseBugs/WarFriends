@@ -1978,6 +1978,7 @@ internal static class PvpBonusSpawnPlannerTests
                     match.ApplyArmyHostDamage(target.EntityKey, setupDamage);
             }
             float healthBefore = match.ArmyHealth(target.EntityKey)!.Value;
+            var scoreBeforeBlast = match.BonusProgress.ScoreSnapshot(localId);
             var planner = match.BonusPlanner;
             planner.EnqueueConfirmedBonus(Id(receiptBase), localId, 3);
             var box = planner.PlanMatured(grenadeFrame, 0, context, draw);
@@ -2002,14 +2003,25 @@ internal static class PvpBonusSpawnPlannerTests
             {
                 Check(healthAfter == null,
                     "source bonus blast kills the prepared enemy infantry");
+                var scoreAfterBlast = match.BonusProgress.ScoreSnapshot(localId);
+                int newKills = scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.Kill] -
+                    scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.Kill];
+                int newExplosionKills =
+                    scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] -
+                    scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill];
+                Check(newKills > 0 && newExplosionKills == newKills &&
+                      scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] ==
+                          scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed],
+                    "collected bonus grenades credit each confirmed infantry explosion death");
                 match.Command(localId, new MatchCommand {CommandId = 2,
                     Forfeit = new ForfeitCommand()});
-                Check(match.TerminalEvidenceSnapshot().DirectArmyKills.Any(kill =>
-                    kill.EntityKey == target.EntityKey &&
-                    kill.AttackerPlayerId == localId &&
-                    kill.VictimOwnerPlayerId == enemyId &&
-                    kill.Cause == "player-grenade"),
-                    "bonus grenade infantry death persists direct grenade-kill evidence");
+                var terminalKills = match.TerminalEvidenceSnapshot().DirectArmyKills
+                    .Where(kill => kill.AttackerPlayerId == localId &&
+                                   kill.VictimOwnerPlayerId == enemyId &&
+                                   kill.Cause == "player-grenade").ToArray();
+                Check(terminalKills.Length == newKills &&
+                      terminalKills.Any(kill => kill.EntityKey == target.EntityKey),
+                    "bonus grenade score count matches private direct-kill evidence");
             }
         }
 

@@ -2759,6 +2759,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         ApplyGrenadeBonusBoxes(impact.OwnerId, impact.ProjectileId,
             impact.Position, projectile.Stage);
         if (Terminal) return;
+        int firstGrenadeKillIndex = directArmyKills.Count;
         ApplyPlayerGrenadeInfantryExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
         ApplyPlayerGrenadeDecoyExplosion(impact.OwnerId,impact.Position,projectile.Stage);
@@ -2775,6 +2776,9 @@ public sealed partial class MatchEngine : IMatchRuntime
         if(Terminal)return;
         ApplyPlayerGrenadeAirBodyExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
+        ScoreConfirmedGrenadeArmyKills(
+            firstGrenadeKillIndex, impact.OwnerId, impact.ProjectileId);
+        if (Terminal) return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();var effect=GrenadeExplosion.ResolvePlayer(impact.Position,

@@ -142,6 +142,7 @@ public sealed partial class MatchEngine
         ApplyGrenadeBonusBoxes(explosion.OwnerId, explosion.ProjectileId,
             explosion.Position, stage);
         if (Terminal) return;
+        int firstGrenadeKillIndex = directArmyKills.Count;
         ApplyPvpBonusGrenadeInfantry(explosion, stage, owner);
         if (Terminal) return;
         ApplyPvpBonusGrenadeDecoys(explosion, stage, owner);
@@ -152,6 +153,9 @@ public sealed partial class MatchEngine
         if (Terminal) return;
         ApplyPvpBonusGrenadeAssaultGlass(explosion, stage, owner);
         ApplyPvpBonusGrenadeAirBodies(explosion, stage, owner);
+        if (Terminal) return;
+        ScoreConfirmedGrenadeArmyKills(
+            firstGrenadeKillIndex, explosion.OwnerId, explosion.ProjectileId);
         if (Terminal) return;
         foreach (var victim in players.Where(player => !player.Dead).ToArray())
         {

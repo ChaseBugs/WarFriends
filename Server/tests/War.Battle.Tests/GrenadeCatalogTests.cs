@@ -703,8 +703,9 @@ internal static class GrenadeCatalogTests
                    DirectGrenadeVehiclesDestroyed:1,DirectGrenadeTanksDestroyed:1},
             "opposing Tank grenade death projects one cause-preserving vehicle and Tank kill candidate");
         var naturalTankAllocation=tankAllocation with {MatchId="grenade-natural-tank",
-            Players=[tankAllocation.Players[0] with {Weapon=launcherWeapon},
-                     tankAllocation.Players[1]]};
+            SceneMasterPlayerId=one,
+            Players=[tankAllocation.Players[0] with {Weapon=launcherWeapon,PlayerLevel=8},
+                     tankAllocation.Players[1] with {PlayerLevel=8}]};
         combat.ValidateAllocation(naturalTankAllocation);
         var naturalTankMatch=new MatchEngine(naturalTankAllocation,map,combat,armyChoice:_=>0);
         naturalTankMatch.Admit(one);
@@ -738,6 +739,10 @@ internal static class GrenadeCatalogTests
         var naturalTankBody=naturalTankMatch.GroundVehicleShotTargets(one)
             .First(target=>target.GroundVehicleBody&&target.EntityId==naturalTank.EntityKey);
         var naturalTankAim=naturalTankBody.Hitbox.Center;
+        float damageNeeded = naturalTankMatch.ArmyHealth(naturalTank.EntityKey)!.Value - 1f;
+        Check(naturalTankMatch.ApplyArmyHostDamage(naturalTank.EntityKey, damageNeeded) &&
+              naturalTankMatch.ArmyHealth(naturalTank.EntityKey) is > 0f and < 2f,
+            "trusted setup leaves the live Tank one M320 blast from death");
         float naturalTankBefore=naturalTankMatch.ArmyHealth(naturalTank.EntityKey)!.Value;
         Check(naturalTankMatch.Command(one,new(){CommandId=2,GrenadeThrow=new()
             {TargetX=naturalTankAim.X,TargetY=naturalTankAim.Y,TargetZ=naturalTankAim.Z}})
@@ -759,6 +764,20 @@ internal static class GrenadeCatalogTests
               (naturalTankAfter==null||naturalTankAfter<naturalTankBefore)&&
               tankBodySynchronized,
             "normal M320 flight reaches the deployed Tank's host damage path");
+        var grenadeScore = naturalTankMatch.BonusProgress.ScoreSnapshot(one);
+        Check(naturalTankAfter == null &&
+              grenadeScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
+              grenadeScore.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] == 1 &&
+              grenadeScore.Counts[PvpArmyKillSkillShotPolicy.TankDestroyed] == 1 &&
+              grenadeScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
+              grenadeScore.Score == 104,
+            "normal M320 Tank death credits one source explosion and Tank skill shot");
+        naturalTankMatch.Command(one,new(){CommandId=3,Forfeit=new()});
+        Check(naturalTankMatch.TerminalEvidenceSnapshot().Players
+                  .Single(player => player.PlayerId == one)
+                  .ConfirmedSkillShotCounts.Single(row =>
+                      row.Flag == PvpArmyKillSkillShotPolicy.ExplosiveKill).Count == 1,
+            "private terminal evidence retains the confirmed M320 explosion kill");
         var transporterAllocation=tankAllocation with {MatchId="grenade-repair-drone",
             Players=[tankAllocation.Players[0],tankAllocation.Players[1] with
             {EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],ArmySpecialUpgradeIndexes=[71]}]};
