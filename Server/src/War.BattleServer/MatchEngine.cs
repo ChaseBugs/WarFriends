@@ -1927,6 +1927,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                     uint enemyHitsBefore=shooter.ConfirmedEnemyHits;
                     activeArmyEntities.TryGetValue(vehicleId,out var armyBeforeImpact);
                     rusherMotionCandidates.TryGetValue(vehicleId, out var motionBeforeImpact);
+                    int revengeBeforeImpact = ConfirmedArmyRevengeFlag(
+                        vehicleId, impact.OwnerId);
                     bool immortalDroneRootContact=impact.Hit.SourceDestroyable&&
                         impact.Hit.DynamicPartId==6544804&&
                         activeArmyEntities.TryGetValue(vehicleId,out var contactedDrone)&&
@@ -2003,6 +2005,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                                 PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(impact.Hit) |
                                 PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(
                                     impact.Hit.DynamicArmyInfantry ? motionBeforeImpact : null) |
+                                revengeBeforeImpact |
                                 PvpArmyKillSkillShotPolicy.ConfirmedLongShotFlag(
                                     victimRoot, weaponRoot, _longShotDistance);
                             string receiptId = PvpHitReceiptId("player-bullet-army-kill",

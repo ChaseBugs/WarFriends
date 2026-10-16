@@ -5,6 +5,27 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private const ulong RevengeWindowTicks = 5 * MatchManifest.TickRate;
+    private readonly Dictionary<ulong, (string PlayerId, ulong ExpiresAtTick)> _armyRevengeWindows = new();
+
+    private void MarkArmyRevenge(ulong entityKey, string damagedPlayerId)
+    {
+        if (!activeArmyEntities.TryGetValue(entityKey, out var army) ||
+            army.OwnerPlayerId == damagedPlayerId)
+        {
+            throw new InvalidDataException("Army revenge lacks an opposing live damage owner.");
+        }
+
+        _armyRevengeWindows[entityKey] = (damagedPlayerId, checked(tick + RevengeWindowTicks));
+    }
+
+    private int ConfirmedArmyRevengeFlag(ulong entityKey, string attackerPlayerId)
+    {
+        return _armyRevengeWindows.TryGetValue(entityKey, out var window) &&
+               window.PlayerId == attackerPlayerId && tick < window.ExpiresAtTick
+            ? PvpArmyKillSkillShotPolicy.RevengeKill : 0;
+    }
+
     private sealed record ArmyBlastSnapshot(
         IReadOnlyList<BattleArmyEntityState> Entities,
         IReadOnlyDictionary<ulong, int> RunnerFlags);

@@ -3818,6 +3818,10 @@ public sealed partial class MatchEngine
                     pvpPlayerDamageReceiptId:pvpBonusProgress==null?null:
                         PvpHitReceiptId("army-projectile",impact.ProjectileId,proof.VictimPlayerId),
                     pvpDamageOwner:PvpPlayerDamageOwner.Army);
+                if (result is { Applied: true })
+                {
+                    MarkArmyRevenge(impact.EntityKey, proof.VictimPlayerId);
+                }
                 if(result is {Applied:true,Dead:false}&&launch.PoisonRatio>0)
                 {
                     float pulse=launch.Damage/ArmyPoisonEffect.PulseCount*launch.PoisonRatio;
@@ -4404,6 +4408,7 @@ public sealed partial class MatchEngine
         armyVehicleShots.Remove(entityKey);
         infantryAnimations.Remove(entityKey);
         rusherMotionCandidates.Remove(entityKey);
+        _armyRevengeWindows.Remove(entityKey);
         warperRelocations.Remove(entityKey);
         warperRestartTicks.Remove(entityKey);
         rusherSteering.Remove(entityKey);

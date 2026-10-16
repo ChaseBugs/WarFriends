@@ -76,4 +76,13 @@ before entity removal and checks the death-event identity. A live moving
 Shotgunner mine death also retains one private count. Other infantry movement
 modes remain open.
 
+The recovered player damage callback marks the exact `MainGameEntity` that
+damaged the local player for five scaled seconds. A player-owned kill of that
+entity within the window adds `RevengeKill`. The host now binds a confirmed
+army projectile hit to its live entity and damaged player, then checks that
+window before removing a player-bullet victim. A live Shotgunner hit followed
+by that player's bullet kill verifies one private revenge count; a kill without
+prior army damage verifies zero. Army flame/poison, vehicle weapons, and
+player-owned blast deaths still need their respective revenge attribution.
+
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.

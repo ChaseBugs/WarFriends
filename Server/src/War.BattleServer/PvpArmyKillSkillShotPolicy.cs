@@ -14,6 +14,7 @@ internal static class PvpArmyKillSkillShotPolicy
     internal const int HeadShot = 1;
     internal const int LongShot = 4;
     internal const int Runner = 2;
+    internal const int RevengeKill = 0x800;
 
     /// <summary>
     /// The recovered EnemyController requires a walking AI state and a

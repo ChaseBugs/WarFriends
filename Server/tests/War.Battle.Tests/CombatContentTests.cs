@@ -18160,6 +18160,7 @@ internal static class CombatContentTests
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.LongShot] == 1 &&
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.Runner] == 1 &&
+              liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 0 &&
               liveHeadshotMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).ConfirmedEnemyHits == 1,
             "one lethal player Fire head contact credits Kill, HeadShot, and OneHitKill");
@@ -18185,9 +18186,12 @@ internal static class CombatContentTests
         var runningMineManifest = walkingShotgunnerManifest with
         {
             MatchId = "running-shotgunner-mine",
+            SceneMasterPlayerId = helicopterOwner,
             Players = walkingShotgunnerManifest.Players.Select(player => player with
             {
-                ArmyHealthFactors = [new ArmyHealthFactors(0.01f, 0.01f)]
+                ArmyHealthFactors = [new ArmyHealthFactors(0.01f, 0.01f)],
+                ShieldLevel = 0,
+                PlayerLevel = 8
             }).ToArray()
         };
         var runningMineMatch = new MatchEngine(runningMineManifest, content: content, armyChoice: _ => 0);
@@ -18225,7 +18229,7 @@ internal static class CombatContentTests
         Check(mineShotgunner != null && runningMineTick < 400,
             "host route publishes a running infantry victim before mine placement");
         var movingBody = runningMineMatch.GroundVehicleShotTargets(helicopterOwner)
-            .Single(target => target.EntityId == mineShotgunner!.EntityKey &&
+            .First(target => target.EntityId == mineShotgunner!.EntityKey &&
                 target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
         Check(runningMineMatch.TryRegisterLandMine(new string('b', 32), helicopterOwner,
                 movingBody.Hitbox.Center, mineShotgunner!.Health + 100f),
@@ -18244,6 +18248,90 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.Runner).Count == 1,
             "private terminal evidence retains the explosion victim's Runner count");
+        var revengeManifest = runningMineManifest with
+        {
+            MatchId = "army-shot-player-revenge",
+            DurationSeconds = 180,
+            IdleSeconds = 120
+        };
+        var revengeMatch = new MatchEngine(revengeManifest, content: content, armyChoice: _ => 0);
+        revengeMatch.Admit(soldierOwner);
+        revengeMatch.Admit(helicopterOwner);
+        foreach (string playerId in new[] { soldierOwner, helicopterOwner })
+        {
+            revengeMatch.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = revengeMatch.ManifestHash }
+            });
+        }
+        revengeMatch.Advance(60);
+        int revengeOption = revengeMatch.ArmyBatch(soldierOwner).OptionIndexes
+            .OrderBy(index => content.Army.Option(index).Count).First();
+        revengeMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = revengeOption }
+        });
+        ulong revengeTick = 60;
+        BattleArmyEntityState? revengeVictim = null;
+        int observedRevengeShots = 0;
+        int observedRealRevengeShots = 0;
+        uint playerHitsBeforeArmyShot = revengeMatch.Snapshot().Players.Single(player =>
+            player.PlayerId == soldierOwner).ConfirmedPlayerHits;
+        while (revengeTick < 1500 && !revengeMatch.Terminal)
+        {
+            revengeMatch.Advance(++revengeTick);
+            observedRevengeShots += revengeMatch.RusherShotIntents.Count;
+            observedRealRevengeShots += revengeMatch.RusherShotIntents.Count(shot => shot.IsReal);
+            revengeVictim = revengeMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                .Entities.SingleOrDefault();
+            uint confirmedPlayerHits = revengeMatch.Snapshot().Players.Single(player =>
+                player.PlayerId == soldierOwner).ConfirmedPlayerHits;
+            if (revengeVictim != null && confirmedPlayerHits > playerHitsBeforeArmyShot)
+            {
+                break;
+            }
+        }
+        uint confirmedRevengeHits = revengeMatch.Snapshot().Players.Single(player =>
+            player.PlayerId == soldierOwner).ConfirmedPlayerHits;
+        Check(revengeVictim != null && !revengeMatch.Terminal && revengeTick < 1500 &&
+              observedRealRevengeShots > 0,
+            "a live army projectile damages its opposing player before the revenge kill: " +
+            $"tick={revengeTick}, hits={confirmedRevengeHits}, " +
+            $"shots={observedRevengeShots}, real={observedRealRevengeShots}, " +
+            $"projectiles={revengeMatch.Snapshot().Projectiles.Count}, terminal={revengeMatch.Terminal}");
+        ulong revengeCommandId = 2;
+        while (revengeMatch.ArmyHealth(revengeVictim!.EntityKey) != null &&
+               revengeTick < 1500 && !revengeMatch.Terminal)
+        {
+            if (revengeTick % 12 == 0)
+            {
+                var head = revengeMatch.GroundVehicleShotTargets(helicopterOwner)
+                    .Single(target => target.EntityId == revengeVictim.EntityKey &&
+                        target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyHeadSourcePath);
+                Vector3 center = head.Hitbox.Center;
+                revengeMatch.Command(helicopterOwner, new MatchCommand
+                {
+                    CommandId = revengeCommandId++,
+                    Fire = new FireCommand { TargetX = center.X, TargetY = center.Y, TargetZ = center.Z }
+                });
+            }
+            revengeMatch.Advance(++revengeTick);
+        }
+        Check(revengeMatch.ArmyHealth(revengeVictim.EntityKey) == null &&
+              revengeMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "a player bullet kill credits RevengeKill after that army victim damaged the player");
+        revengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = revengeCommandId++,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(revengeMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
+            "private terminal evidence retains one source-backed army revenge kill");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
