@@ -244,13 +244,38 @@ public class GameControllerCoop : GameControllerOnline
         }
 
         _selfHostedOutcomeBridge = gameObject.AddComponent<SelfHostedCoopOutcomeBridge>();
-        _selfHostedOutcomeBridge.Configure(SelfHostedBattleClient.Active, PresentSelfHostedOutcome);
+        _selfHostedOutcomeBridge.Configure(SelfHostedBattleClient.Active, PresentSelfHostedOutcome,
+            PresentSelfHostedLocalKia, PresentSelfHostedPeerKia);
     }
 
     private void PresentSelfHostedOutcome(War.Client.ClientGameEndReason reason)
     {
         // Reuse the received source finish order; star persistence remains owned by server settlement.
         FinishGameMultiplayerRPC((byte)reason);
+    }
+
+    private void PresentSelfHostedLocalKia()
+    {
+        if (!gameIsRunning || mMainController.mainController != this)
+        {
+            return;
+        }
+
+        // Preserve the source peer KIA order without inventing an unconfirmed DamageInfo owner.
+        mMainPlayerController.Killed -= OnPlayerControllerKilled;
+        mMainController.gameEndReason = GameController.GameEndReason.Kia;
+        PlayerController.currentPlayer.networkStatus.matchState = PlayerNetworkStatus.MatchState.GameFinished;
+        Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<GameOverScreen>.instance);
+        StartCoroutine(StartSpectate());
+    }
+
+    private void PresentSelfHostedPeerKia()
+    {
+        if (gameIsRunning)
+        {
+            DisalblePlayerAndResumeGame(mOtherPlayerInstance.playerNetworkId,
+                PeerDeactivationDelaySeconds, GameController.GameEndReason.Kia);
+        }
     }
 
     protected override void Reset()
@@ -291,6 +316,11 @@ public class GameControllerCoop : GameControllerOnline
 
 	private void OtherPlayerInstanceOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo damageInfo)
 	{
+        if (PhotonConnectionManager.IsSelfHostedActive)
+        {
+            return;
+        }
+
 		if (Singleton<GameController>.instance.mainController == this && !Singleton<PhotonConnectionManager>.instance.isMasterClient)
 		{
 			PlayerController player = (PlayerController)gameMainEntity;
@@ -311,6 +341,12 @@ public class GameControllerCoop : GameControllerOnline
 
 	private void OnPlayerControllerKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo arg3)
 	{
+        if (PhotonConnectionManager.IsSelfHostedActive)
+        {
+            // Confirmed co-op vitality selects spectator or shared failure presentation.
+            return;
+        }
+
 		base.mMainPlayerController.Killed -= OnPlayerControllerKilled;
 		if (gameIsRunning && Singleton<GameController>.instance.mainController == this && !Singleton<PhotonConnectionManager>.instance.isMasterClient)
 		{

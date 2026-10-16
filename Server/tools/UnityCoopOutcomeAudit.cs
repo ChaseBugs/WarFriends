@@ -27,8 +27,8 @@ public static class UnityCoopOutcomeAudit
             VerifyMalformedResults();
             VerifyBridgeLifecycle();
             File.WriteAllText(Path.Combine(Application.dataPath, "../coop-outcome-unity-audit.json"),
-                "{\"schemaVersion\":2,\"checks\":15,\"scope\":\"edit-mode SDK projection and event bridge\"}\n");
-            Debug.Log("PASS: 15 co-op projection and event bridge checks; no rendered result UI or rewards applied.");
+                "{\"schemaVersion\":3,\"checks\":23,\"scope\":\"edit-mode SDK projection and event bridge\"}\n");
+            Debug.Log("PASS: 23 co-op projection and event bridge checks; no rendered result UI or rewards applied.");
             EditorApplication.Exit(0);
         }
         catch (Exception failure)
@@ -47,6 +47,8 @@ public static class UnityCoopOutcomeAudit
             typeof(SelfHostedBattleClient).GetProperty("LocalPlayerId").SetValue(client, MasterId, null);
             VerifySubscribedDelivery(owner, client);
             VerifyImmediateReplay(owner, client);
+            VerifyLocalKiaAndSharedFinish(owner, client);
+            VerifyRemoteKia(owner, client);
         }
         finally
         {
@@ -92,6 +94,93 @@ public static class UnityCoopOutcomeAudit
         Require(callbacks == 1, "Re-enable must retain successful delivery history.");
         InvokeLifecycle(bridge, "OnDisable");
         UnityEngine.Object.DestroyImmediate(bridge);
+    }
+
+    private static void VerifyLocalKiaAndSharedFinish(GameObject owner, SelfHostedBattleClient client)
+    {
+        typeof(SelfHostedBattleClient).GetProperty("LocalPlayerId").SetValue(client, PeerId, null);
+        Publish(client, CreateRunningBridgeSnapshot(false));
+        int localKia = 0;
+        int peerKia = 0;
+        int finishes = 0;
+        SelfHostedCoopOutcomeBridge bridge = owner.AddComponent<SelfHostedCoopOutcomeBridge>();
+        bridge.Configure(client, reason => finishes++, () =>
+        {
+            localKia++;
+            bridge.ApplySnapshot(CreateRunningBridgeSnapshot(true));
+        }, () => peerKia++);
+        Require(localKia == 0 && peerKia == 0, "A living roster must not show KIA.");
+        InvokeLifecycle(bridge, "OnDisable");
+        Publish(client, CreateRunningBridgeSnapshot(true));
+        Require(localKia == 0, "Disabled KIA presentation must not receive death.");
+        InvokeLifecycle(bridge, "OnEnable");
+        Require(localKia == 1 && peerKia == 0 && finishes == 0,
+            "A missed peer KIA must replay once without reentrant presentation or shared finish.");
+        Publish(client, CreateRunningBridgeSnapshot(true));
+        Require(localKia == 1, "Repeated KIA polls must not restart the spectator coroutine.");
+        MatchSnapshot success = CreateBridgeSnapshot();
+        SetPeerKia(success);
+        Publish(client, success);
+        Publish(client, CreateRunningBridgeSnapshot(true));
+        Require(finishes == 1 && localKia == 1, "Shared finish must supersede spectator presentation once.");
+        InvokeLifecycle(bridge, "OnDisable");
+        UnityEngine.Object.DestroyImmediate(bridge);
+    }
+
+    private static void VerifyRemoteKia(GameObject owner, SelfHostedBattleClient client)
+    {
+        typeof(SelfHostedBattleClient).GetProperty("LocalPlayerId").SetValue(client, MasterId, null);
+        Publish(client, CreateRunningBridgeSnapshot(false));
+        int localKia = 0;
+        int peerKia = 0;
+        SelfHostedCoopOutcomeBridge bridge = owner.AddComponent<SelfHostedCoopOutcomeBridge>();
+        bridge.Configure(client, reason => { }, () => localKia++, () => peerKia++);
+        VerifyMalformedKia(bridge);
+        MatchSnapshot foreign = CreateRunningBridgeSnapshot(true);
+        foreign.MatchId = "another-match";
+        bridge.ApplySnapshot(foreign);
+        Require(localKia == 0 && peerKia == 0, "Another match must not trigger peer KIA.");
+        Publish(client, CreateRunningBridgeSnapshot(true));
+        Publish(client, CreateRunningBridgeSnapshot(true));
+        Require(localKia == 0 && peerKia == 1, "The master must receive only one partner-died notification.");
+        InvokeLifecycle(bridge, "OnDisable");
+        UnityEngine.Object.DestroyImmediate(bridge);
+    }
+
+    private static void VerifyMalformedKia(SelfHostedCoopOutcomeBridge bridge)
+    {
+        MatchSnapshot malformed = CreateRunningBridgeSnapshot(true);
+        malformed.Players[1].ClearCoopDeathTick();
+        try
+        {
+            bridge.ApplySnapshot(malformed);
+        }
+        catch (Exception failure)
+        {
+            if (failure.GetType().FullName == "System.IO.InvalidDataException")
+            {
+                return;
+            }
+
+            throw;
+        }
+
+        throw new Exception("A missing source death tick must not select KIA presentation.");
+    }
+
+    private static MatchSnapshot CreateRunningBridgeSnapshot(bool hasPeerKia)
+    {
+        MatchSnapshot snapshot = CreateBridgeSnapshot();
+        SetUnsuccessful(snapshot, "");
+        snapshot.Coop.Failed = false;
+        snapshot.Phase = BattlePhase.Running;
+        snapshot.EndTick = 0;
+        if (hasPeerKia)
+        {
+            SetPeerKia(snapshot);
+        }
+
+        return snapshot;
     }
 
     private static MatchSnapshot CreateBridgeSnapshot()

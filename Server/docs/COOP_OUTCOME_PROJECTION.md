@@ -79,7 +79,9 @@ order. It does not call local `MissionSuccess` to recompute or persist host
 stars. The main controller still enters its original GameOver/Beanstalk end
 request and optimistic statistics path; its durable co-op settlement response
 is not implemented here and a fully completed result screen is not claimed.
-Private KIA/spectator presentation is also separate.
+Private KIA/spectator presentation now has its own callbacks through this
+bridge; see [the confirmed KIA connection](COOP_KIA_PRESENTATION.md). Its rendered
+GUI and attribution remain unverified.
 
 The native audit proves Editor-mode compilation and event delivery, not Play
 Mode, rendered GUI or two normal Clients completing a mission. Worker co-op

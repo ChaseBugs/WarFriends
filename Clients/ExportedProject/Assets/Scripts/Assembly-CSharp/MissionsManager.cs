@@ -188,6 +188,12 @@ public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.M
 
 	private void CurrentPlayerOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo damageInfo)
 	{
+        if (PhotonConnectionManager.IsSelfHostedActive && Singleton<GameController>.instance.isCoop)
+        {
+            // A local physics callback cannot end the host's shared co-op mission.
+            return;
+        }
+
 		Singleton<GameController>.instance.mainPlayerController.Killed -= CurrentPlayerOnKilled;
 		if (Singleton<GameController>.instance.isMission)
 		{

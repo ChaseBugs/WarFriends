@@ -1422,3 +1422,12 @@ projection and actual adapter event delivery. Static asset audits retain zero
 missing scripts/broken references and the same seventeen unmatched NGUI sprite
 selections. Rendered result UI, private KIA/spectator behavior, the end-request
 response/settlement and normal Worker co-op admission remain unverified/open.
+
+B22/B30 now route host-confirmed nonmaster KIA through the recovered local
+GameOver/spectator callback, and notify the living master through the source
+partner-died/deactivation path. Local physics death callbacks no longer end a
+self-hosted co-op mission. Match/manifest binding, death-tick validation, replay,
+reentrancy and later shared finish are covered by 23 Unity Mono Editor checks.
+These are event/callback checks, not rendered GUI or normal co-op gameplay.
+See [confirmed KIA presentation](COOP_KIA_PRESENTATION.md) for the remaining
+attribution, rendering, admission and settlement boundaries.
