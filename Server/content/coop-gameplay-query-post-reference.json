@@ -1,0 +1,7668 @@
+{
+  "version": 5,
+  "proceduralLookEnabled": true,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
+  "exporterSha256": "d7e1b919fd71528ececb9d07d4c3abe5906b1c75e6393367ceb76723a1efaf06",
+  "clips": [
+    {
+      "name": "stand_up_begin",
+      "sha256": "0a4e37ccbb678a4f5fe6253d31ba2e7ea4b1108abadf390364d32054ef0d3d6c"
+    },
+    {
+      "name": "rifle_shot_loop",
+      "sha256": "760fe9311ce35c5d57069a1c70547af1f6d29a869c1ad9361126db022a769776"
+    },
+    {
+      "name": "stand_up_crawl",
+      "sha256": "d95dcc35f5d52d841142ce6e6e8f89fb9b9c81c8234476750f2823b79d5cbb47"
+    }
+  ],
+  "planSha256": "018b3e4183e50a62b87d66af37492a5864398e26c674341b187d9c11b50f376d",
+  "captureRate": 30,
+  "samplePhase": "EditorApplication.update; controller uses normal MonoBehaviour.Update",
+  "roundInvocations": 2,
+  "observedReturnToCrawl": true,
+  "samples": [
+    {
+      "tick": 0,
+      "unityFrame": 2,
+      "seconds": 0.0,
+      "scaledTime": 0.02,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.5000001,
+          "normalizedTime": 1.0,
+          "weight": 1.0
+        },
+        {
+          "name": "stand_up_begin",
+          "time": 0.0,
+          "normalizedTime": 0.0,
+          "weight": 0.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 1,
+      "unityFrame": 3,
+      "seconds": 0.0333333351,
+      "scaledTime": 0.0533333346,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.08619499,
+        0.2749381,
+        0.202841759
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.5333335,
+          "normalizedTime": 1.0666666,
+          "weight": 0.3333333
+        },
+        {
+          "name": "stand_up_begin",
+          "time": 0.0333333351,
+          "normalizedTime": 0.125000015,
+          "weight": 0.6666667
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.0006713867,
+            0.1566422,
+            -0.004919052
+          ],
+          "rotation": [
+            -0.179197386,
+            0.16153191,
+            0.71824193,
+            -0.6526288
+          ],
+          "size": [
+            0.183923528,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00223350525,
+            0.07116151,
+            -0.00356197357
+          ],
+          "rotation": [
+            -0.179197386,
+            0.16153191,
+            0.71824193,
+            -0.6526288
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0415058136,
+            0.349910259,
+            0.0362911224
+          ],
+          "rotation": [
+            -0.470269054,
+            0.381626129,
+            0.6860782,
+            -0.403119951
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130124882,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 2,
+      "unityFrame": 4,
+      "seconds": 0.06666668,
+      "scaledTime": 0.08666667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.05142784,
+        0.277832985,
+        0.2136631
+      ],
+      "states": [
+        {
+          "name": "stand_up_begin",
+          "time": 0.06666667,
+          "normalizedTime": 0.25000003,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.000577926636,
+            0.1624589,
+            -0.007900238
+          ],
+          "rotation": [
+            -0.2311899,
+            0.209372967,
+            0.697463632,
+            -0.645181239
+          ],
+          "size": [
+            0.183923587,
+            0.1678069,
+            0.216061935
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00231170654,
+            0.07694745,
+            -0.006464958
+          ],
+          "rotation": [
+            -0.2311899,
+            0.209372967,
+            0.697463632,
+            -0.645181239
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000076,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.03384781,
+            0.360760927,
+            0.0374622345
+          ],
+          "rotation": [
+            -0.5002978,
+            0.409215778,
+            0.6494502,
+            -0.4005738
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300839,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 3,
+      "unityFrame": 5,
+      "seconds": 0.100000009,
+      "scaledTime": 0.120000005,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0230712891,
+        0.272574425,
+        0.220680237
+      ],
+      "states": [
+        {
+          "name": "stand_up_begin",
+          "time": 0.100000009,
+          "normalizedTime": 0.37500003,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.0016002655,
+            0.162837744,
+            -0.011341095
+          ],
+          "rotation": [
+            -0.277333379,
+            0.255330145,
+            0.674217761,
+            -0.6350774
+          ],
+          "size": [
+            0.183923572,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.002380371,
+            0.07732582,
+            -0.009254456
+          ],
+          "rotation": [
+            -0.277333379,
+            0.255330145,
+            0.674217761,
+            -0.6350774
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0265140533,
+            0.36744,
+            0.0358638763
+          ],
+          "rotation": [
+            -0.520863,
+            0.433470279,
+            0.6165398,
+            -0.400854647
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130049244,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 4,
+      "unityFrame": 6,
+      "seconds": 0.13333334,
+      "scaledTime": 0.153333336,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        -0.00344848633,
+        0.265677929,
+        0.224841118
+      ],
+      "states": [
+        {
+          "name": "stand_up_begin",
+          "time": 0.13333334,
+          "normalizedTime": 0.50000006,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00240516663,
+            0.162624836,
+            -0.0155506134
+          ],
+          "rotation": [
+            -0.325939059,
+            0.306125075,
+            0.6449394,
+            -0.619761646
+          ],
+          "size": [
+            0.183923572,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00246047974,
+            0.077142,
+            -0.0123968124
+          ],
+          "rotation": [
+            -0.325939059,
+            0.306125075,
+            0.6449394,
+            -0.619761646
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0175628662,
+            0.375641584,
+            0.0294981
+          ],
+          "rotation": [
+            -0.5369781,
+            0.46203956,
+            0.577345,
+            -0.406014323
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.13008444,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 5,
+      "unityFrame": 7,
+      "seconds": 0.166666672,
+      "scaledTime": 0.186666667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        -0.0204525,
+        0.259741068,
+        0.227503777
+      ],
+      "states": [
+        {
+          "name": "stand_up_begin",
+          "time": 0.166666672,
+          "normalizedTime": 0.62500006,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.002565384,
+            0.162569046,
+            -0.0197200775
+          ],
+          "rotation": [
+            -0.3716303,
+            0.354508668,
+            0.6144313,
+            -0.598906338
+          ],
+          "size": [
+            0.183923528,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00254058838,
+            0.07712555,
+            -0.0156364441
+          ],
+          "rotation": [
+            -0.3716303,
+            0.354508668,
+            0.6144313,
+            -0.598906338
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.009645462,
+            0.3840952,
+            0.0176382065
+          ],
+          "rotation": [
+            -0.5433025,
+            0.493331045,
+            0.5367676,
+            -0.416326642
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130078658,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 6,
+      "unityFrame": 8,
+      "seconds": 0.200000018,
+      "scaledTime": 0.220000014,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        -0.0331954956,
+        0.256911516,
+        0.226335526
+      ],
+      "states": [
+        {
+          "name": "stand_up_begin",
+          "time": 0.200000018,
+          "normalizedTime": 0.75000006,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.002286911,
+            0.163678646,
+            -0.0238332748
+          ],
+          "rotation": [
+            -0.412008315,
+            0.399942756,
+            0.582706749,
+            -0.5751068
+          ],
+          "size": [
+            0.1839235,
+            0.167806834,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00261688232,
+            0.07829118,
+            -0.01872158
+          ],
+          "rotation": [
+            -0.412008315,
+            0.399942756,
+            0.582706749,
+            -0.5751068
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.004940033,
+            0.392904758,
+            -0.0006980896
+          ],
+          "rotation": [
+            -0.538734138,
+            0.529678762,
+            0.4949674,
+            -0.429201573
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130099818,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 7,
+      "unityFrame": 9,
+      "seconds": 0.233333334,
+      "scaledTime": 0.25333333,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0662593842,
+        0.263940573,
+        0.222457886
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop - Queued Clone",
+          "time": 0.0,
+          "normalizedTime": 0.0,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00326347351,
+            0.173771143,
+            -0.00490570068
+          ],
+          "rotation": [
+            -0.481565684,
+            0.464058429,
+            0.545777142,
+            -0.504848361
+          ],
+          "size": [
+            0.183923617,
+            0.167806983,
+            0.216061965
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007566452,
+            0.08835459,
+            -0.003252983
+          ],
+          "rotation": [
+            -0.481565684,
+            0.464058429,
+            0.545777142,
+            -0.504848361
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1000001,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.012052536,
+            0.4092052,
+            -0.005926132
+          ],
+          "rotation": [
+            -0.455209166,
+            0.524820268,
+            0.5369818,
+            -0.478538722
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000308,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 8,
+      "unityFrame": 10,
+      "seconds": 0.266666681,
+      "scaledTime": 0.2866667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07772827,
+        0.277760267,
+        0.2097807
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop - Queued Clone",
+          "time": 0.0333333351,
+          "normalizedTime": 0.0909085944,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.005220413,
+            0.173811913,
+            -0.0065870285
+          ],
+          "rotation": [
+            -0.485599041,
+            0.461523622,
+            0.539525747,
+            -0.5100015
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007980347,
+            0.0883383751,
+            -0.00461006165
+          ],
+          "rotation": [
+            -0.485599041,
+            0.461523622,
+            0.539525747,
+            -0.5100015
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.005701065,
+            0.409249783,
+            -0.003742218
+          ],
+          "rotation": [
+            -0.4671237,
+            0.515622854,
+            0.5377976,
+            -0.476133019
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 9,
+      "unityFrame": 11,
+      "seconds": 0.3,
+      "scaledTime": 0.320000023,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0862140656,
+        0.2970388,
+        0.179020882
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop - Queued Clone",
+          "time": 0.06666667,
+          "normalizedTime": 0.181817189,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00769424438,
+            0.1737032,
+            -0.0123538971
+          ],
+          "rotation": [
+            -0.480782837,
+            0.465169638,
+            0.528315067,
+            -0.522827268
+          ],
+          "size": [
+            0.183923528,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.008968353,
+            0.08830023,
+            -0.0076675415
+          ],
+          "rotation": [
+            -0.480782837,
+            0.465169638,
+            0.528315067,
+            -0.522827268
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.0009860992,
+            0.4087453,
+            -0.008435249
+          ],
+          "rotation": [
+            -0.476113975,
+            0.5069683,
+            0.5387106,
+            -0.47548908
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000144,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 10,
+      "unityFrame": 12,
+      "seconds": 0.333333343,
+      "scaledTime": 0.353333354,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 1.02,
+      "roundInvoked": false,
+      "muzzle": [
+        0.08399773,
+        0.298181772,
+        0.161423683
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop - Queued Clone",
+          "time": 0.100000009,
+          "normalizedTime": 0.272725761,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008155823,
+            0.173437834,
+            -0.0190496445
+          ],
+          "rotation": [
+            -0.470185667,
+            0.4760464,
+            0.5225498,
+            -0.5284382
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0101470947,
+            0.08825207,
+            -0.0115203857
+          ],
+          "rotation": [
+            -0.470185667,
+            0.4760464,
+            0.5225498,
+            -0.5284382
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.000379562378,
+            0.407701731,
+            -0.0148935318
+          ],
+          "rotation": [
+            -0.4782619,
+            0.5053919,
+            0.5445697,
+            -0.468282223
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 11,
+      "unityFrame": 13,
+      "seconds": 0.366666675,
+      "scaledTime": 0.3866667,
+      "deadlineBeforeShot": 1.02,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": true,
+      "muzzle": [
+        0.06626701,
+        0.263942242,
+        0.222455978
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.0,
+          "normalizedTime": 0.0,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00326347351,
+            0.173771858,
+            -0.00490283966
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007566452,
+            0.0883553,
+            -0.00325107574
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.012052536,
+            0.4092059,
+            -0.005924225
+          ],
+          "rotation": [
+            -0.4552023,
+            0.524815857,
+            0.536989033,
+            -0.4785418
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 12,
+      "unityFrame": 14,
+      "seconds": 0.4,
+      "scaledTime": 0.420000017,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07772827,
+        0.277760267,
+        0.2097807
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.0333333351,
+          "normalizedTime": 0.0909085944,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.005220413,
+            0.173811913,
+            -0.0065870285
+          ],
+          "rotation": [
+            -0.485599041,
+            0.461523622,
+            0.539525747,
+            -0.5100015
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007980347,
+            0.0883383751,
+            -0.00461006165
+          ],
+          "rotation": [
+            -0.485599041,
+            0.461523622,
+            0.539525747,
+            -0.5100015
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.005701065,
+            0.409249783,
+            -0.003742218
+          ],
+          "rotation": [
+            -0.4671237,
+            0.515622854,
+            0.5377976,
+            -0.476133019
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 13,
+      "unityFrame": 15,
+      "seconds": 0.433333337,
+      "scaledTime": 0.453333348,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0862140656,
+        0.2970388,
+        0.179020882
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.06666667,
+          "normalizedTime": 0.181817189,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00769424438,
+            0.1737032,
+            -0.0123538971
+          ],
+          "rotation": [
+            -0.480782837,
+            0.465169638,
+            0.528315067,
+            -0.522827268
+          ],
+          "size": [
+            0.183923528,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.008968353,
+            0.08830023,
+            -0.0076675415
+          ],
+          "rotation": [
+            -0.480782837,
+            0.465169638,
+            0.528315067,
+            -0.522827268
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.0009860992,
+            0.4087453,
+            -0.008435249
+          ],
+          "rotation": [
+            -0.476113975,
+            0.5069683,
+            0.5387106,
+            -0.47548908
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000144,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 14,
+      "unityFrame": 16,
+      "seconds": 0.466666669,
+      "scaledTime": 0.486666679,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.08399773,
+        0.298181772,
+        0.161423683
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.100000009,
+          "normalizedTime": 0.272725761,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008155823,
+            0.173437834,
+            -0.0190496445
+          ],
+          "rotation": [
+            -0.470185667,
+            0.4760464,
+            0.5225498,
+            -0.5284382
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0101470947,
+            0.08825207,
+            -0.0115203857
+          ],
+          "rotation": [
+            -0.470185667,
+            0.4760464,
+            0.5225498,
+            -0.5284382
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.000379562378,
+            0.407701731,
+            -0.0148935318
+          ],
+          "rotation": [
+            -0.4782619,
+            0.5053919,
+            0.5445697,
+            -0.468282223
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 15,
+      "unityFrame": 17,
+      "seconds": 0.50000006,
+      "scaledTime": 0.520000041,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0866241455,
+        0.2870593,
+        0.159516335
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.13333334,
+          "normalizedTime": 0.363634378,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00769042969,
+            0.1732471,
+            -0.0240068436
+          ],
+          "rotation": [
+            -0.463943422,
+            0.48401472,
+            0.523245931,
+            -0.5260228
+          ],
+          "size": [
+            0.1839235,
+            0.167806879,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0111312866,
+            0.08820319,
+            -0.01546669
+          ],
+          "rotation": [
+            -0.463943422,
+            0.48401472,
+            0.523245931,
+            -0.5260228
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.004465103,
+            0.406616926,
+            -0.0168638229
+          ],
+          "rotation": [
+            -0.480972975,
+            0.503433,
+            0.5535429,
+            -0.456958026
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000308,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 16,
+      "unityFrame": 18,
+      "seconds": 0.533333361,
+      "scaledTime": 0.553333342,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.08750343,
+        0.2783091,
+        0.161421776
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.166666672,
+          "normalizedTime": 0.454542965,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00744247437,
+            0.17317009,
+            -0.0266952515
+          ],
+          "rotation": [
+            -0.46209076,
+            0.486816317,
+            0.524260342,
+            -0.5240545
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0115413666,
+            0.0881724358,
+            -0.0179862976
+          ],
+          "rotation": [
+            -0.46209076,
+            0.486816317,
+            0.524260342,
+            -0.5240545
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00603103638,
+            0.406164646,
+            -0.01812172
+          ],
+          "rotation": [
+            -0.483131975,
+            0.502448,
+            0.5560931,
+            -0.452648222
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000338,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 17,
+      "unityFrame": 19,
+      "seconds": 0.5666667,
+      "scaledTime": 0.5866667,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0838050842,
+        0.273205757,
+        0.168001175
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.200000018,
+          "normalizedTime": 0.5454515,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008043289,
+            0.173252821,
+            -0.0258951187
+          ],
+          "rotation": [
+            -0.465587467,
+            0.482932746,
+            0.5228514,
+            -0.52595675
+          ],
+          "size": [
+            0.183923453,
+            0.167806789,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.01124382,
+            0.08817768,
+            -0.01757431
+          ],
+          "rotation": [
+            -0.465587467,
+            0.482932746,
+            0.5228514,
+            -0.52595675
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00242614746,
+            0.406738043,
+            -0.0192890167
+          ],
+          "rotation": [
+            -0.484755784,
+            0.501579344,
+            0.5488739,
+            -0.460616618
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000263,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 18,
+      "unityFrame": 20,
+      "seconds": 0.6,
+      "scaledTime": 0.62,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07776451,
+        0.269158363,
+        0.177680969
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.233333349,
+          "normalizedTime": 0.6363601,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008676529,
+            0.173414946,
+            -0.02314663
+          ],
+          "rotation": [
+            -0.472433329,
+            0.47537908,
+            0.522124946,
+            -0.5274534
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0105037689,
+            0.08819842,
+            -0.0159292221
+          ],
+          "rotation": [
+            -0.472433329,
+            0.47537908,
+            0.522124946,
+            -0.5274534
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.00281333923,
+            0.4077196,
+            -0.01982212
+          ],
+          "rotation": [
+            -0.485990733,
+            0.5006338,
+            0.536814749,
+            -0.4743512
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000234,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 19,
+      "unityFrame": 21,
+      "seconds": 0.6333334,
+      "scaledTime": 0.653333366,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07262421,
+        0.263499975,
+        0.19072628
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.266666681,
+          "normalizedTime": 0.727268755,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008274078,
+            0.173604965,
+            -0.0180740356
+          ],
+          "rotation": [
+            -0.479674,
+            0.46774596,
+            0.525912046,
+            -0.5239686
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.009544373,
+            0.08823776,
+            -0.0127754211
+          ],
+          "rotation": [
+            -0.479674,
+            0.46774596,
+            0.525912046,
+            -0.5239686
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.00527763367,
+            0.408666134,
+            -0.0169734955
+          ],
+          "rotation": [
+            -0.4865223,
+            0.500173032,
+            0.525614,
+            -0.486675233
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 20,
+      "unityFrame": 22,
+      "seconds": 0.666666746,
+      "scaledTime": 0.6866667,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07032013,
+        0.2555821,
+        0.205225945
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.3,
+          "normalizedTime": 0.818177342,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00642395,
+            0.173746109,
+            -0.0115833282
+          ],
+          "rotation": [
+            -0.483645856,
+            0.4636689,
+            0.534444451,
+            -0.5152349
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.008590698,
+            0.08829188,
+            -0.008403778
+          ],
+          "rotation": [
+            -0.483645856,
+            0.4636689,
+            0.534444451,
+            -0.5152349
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.00263595581,
+            0.4093697,
+            -0.0111913681
+          ],
+          "rotation": [
+            -0.484279066,
+            0.5007354,
+            0.5195422,
+            -0.49478665
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000085,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 21,
+      "unityFrame": 23,
+      "seconds": 0.700000048,
+      "scaledTime": 0.72,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 0.886666656,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07073212,
+        0.24542284,
+        0.217675209
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.333333343,
+          "normalizedTime": 0.9090859,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.004348755,
+            0.1737895,
+            -0.0063495636
+          ],
+          "rotation": [
+            -0.484185517,
+            0.4628834,
+            0.542427,
+            -0.507026851
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007860184,
+            0.08833861,
+            -0.00459861755
+          ],
+          "rotation": [
+            -0.484185517,
+            0.4628834,
+            0.542427,
+            -0.507026851
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00178718567,
+            0.409693,
+            -0.00554657
+          ],
+          "rotation": [
+            -0.481188446,
+            0.502056837,
+            0.517276168,
+            -0.498820841
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000114,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 22,
+      "unityFrame": 24,
+      "seconds": 0.7333334,
+      "scaledTime": 0.7533334,
+      "deadlineBeforeShot": 0.886666656,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": true,
+      "muzzle": [
+        0.07772827,
+        0.277760267,
+        0.2097807
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.0333333351,
+          "normalizedTime": 0.0909085944,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.005220413,
+            0.173811913,
+            -0.0065870285
+          ],
+          "rotation": [
+            -0.485599041,
+            0.461523622,
+            0.539525747,
+            -0.5100015
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007980347,
+            0.0883383751,
+            -0.00461006165
+          ],
+          "rotation": [
+            -0.485599041,
+            0.461523622,
+            0.539525747,
+            -0.5100015
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.005701065,
+            0.409249783,
+            -0.003742218
+          ],
+          "rotation": [
+            -0.4671237,
+            0.515622854,
+            0.5377976,
+            -0.476133019
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 23,
+      "unityFrame": 25,
+      "seconds": 0.7666667,
+      "scaledTime": 0.7866667,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0862140656,
+        0.2970388,
+        0.179020882
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.06666667,
+          "normalizedTime": 0.181817189,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00769424438,
+            0.1737032,
+            -0.0123538971
+          ],
+          "rotation": [
+            -0.480782837,
+            0.465169638,
+            0.528315067,
+            -0.522827268
+          ],
+          "size": [
+            0.183923528,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.008968353,
+            0.08830023,
+            -0.0076675415
+          ],
+          "rotation": [
+            -0.480782837,
+            0.465169638,
+            0.528315067,
+            -0.522827268
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.0009860992,
+            0.4087453,
+            -0.008435249
+          ],
+          "rotation": [
+            -0.476113975,
+            0.5069683,
+            0.5387106,
+            -0.47548908
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000144,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 24,
+      "unityFrame": 26,
+      "seconds": 0.8000001,
+      "scaledTime": 0.820000052,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.08399773,
+        0.298181772,
+        0.161423683
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.100000009,
+          "normalizedTime": 0.272725761,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008155823,
+            0.173437834,
+            -0.0190496445
+          ],
+          "rotation": [
+            -0.470185667,
+            0.4760464,
+            0.5225498,
+            -0.5284382
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0101470947,
+            0.08825207,
+            -0.0115203857
+          ],
+          "rotation": [
+            -0.470185667,
+            0.4760464,
+            0.5225498,
+            -0.5284382
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.000379562378,
+            0.407701731,
+            -0.0148935318
+          ],
+          "rotation": [
+            -0.4782619,
+            0.5053919,
+            0.5445697,
+            -0.468282223
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 25,
+      "unityFrame": 27,
+      "seconds": 0.8333334,
+      "scaledTime": 0.853333354,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0866241455,
+        0.2870593,
+        0.159516335
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.13333334,
+          "normalizedTime": 0.363634378,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00769042969,
+            0.1732471,
+            -0.0240068436
+          ],
+          "rotation": [
+            -0.463943422,
+            0.48401472,
+            0.523245931,
+            -0.5260228
+          ],
+          "size": [
+            0.1839235,
+            0.167806879,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0111312866,
+            0.08820319,
+            -0.01546669
+          ],
+          "rotation": [
+            -0.463943422,
+            0.48401472,
+            0.523245931,
+            -0.5260228
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.004465103,
+            0.406616926,
+            -0.0168638229
+          ],
+          "rotation": [
+            -0.480972975,
+            0.503433,
+            0.5535429,
+            -0.456958026
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000308,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 26,
+      "unityFrame": 28,
+      "seconds": 0.866666734,
+      "scaledTime": 0.8866667,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.08750343,
+        0.2783091,
+        0.161421776
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.166666672,
+          "normalizedTime": 0.454542965,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00744247437,
+            0.17317009,
+            -0.0266952515
+          ],
+          "rotation": [
+            -0.46209076,
+            0.486816317,
+            0.524260342,
+            -0.5240545
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0115413666,
+            0.0881724358,
+            -0.0179862976
+          ],
+          "rotation": [
+            -0.46209076,
+            0.486816317,
+            0.524260342,
+            -0.5240545
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00603103638,
+            0.406164646,
+            -0.01812172
+          ],
+          "rotation": [
+            -0.483131975,
+            0.502448,
+            0.5560931,
+            -0.452648222
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000338,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 27,
+      "unityFrame": 29,
+      "seconds": 0.9000001,
+      "scaledTime": 0.9200001,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0838050842,
+        0.273205757,
+        0.168001175
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.200000018,
+          "normalizedTime": 0.5454515,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008043289,
+            0.173252821,
+            -0.0258951187
+          ],
+          "rotation": [
+            -0.465587467,
+            0.482932746,
+            0.5228514,
+            -0.52595675
+          ],
+          "size": [
+            0.183923453,
+            0.167806789,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.01124382,
+            0.08817768,
+            -0.01757431
+          ],
+          "rotation": [
+            -0.465587467,
+            0.482932746,
+            0.5228514,
+            -0.52595675
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00242614746,
+            0.406738043,
+            -0.0192890167
+          ],
+          "rotation": [
+            -0.484755784,
+            0.501579344,
+            0.5488739,
+            -0.460616618
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000263,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 28,
+      "unityFrame": 30,
+      "seconds": 0.9333334,
+      "scaledTime": 0.9533334,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07776451,
+        0.269158363,
+        0.177680969
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.233333349,
+          "normalizedTime": 0.6363601,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008676529,
+            0.173414946,
+            -0.02314663
+          ],
+          "rotation": [
+            -0.472433329,
+            0.47537908,
+            0.522124946,
+            -0.5274534
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.0105037689,
+            0.08819842,
+            -0.0159292221
+          ],
+          "rotation": [
+            -0.472433329,
+            0.47537908,
+            0.522124946,
+            -0.5274534
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.00281333923,
+            0.4077196,
+            -0.01982212
+          ],
+          "rotation": [
+            -0.485990733,
+            0.5006338,
+            0.536814749,
+            -0.4743512
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000234,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 29,
+      "unityFrame": 31,
+      "seconds": 0.966666758,
+      "scaledTime": 0.986666739,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07262421,
+        0.263499975,
+        0.19072628
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.266666681,
+          "normalizedTime": 0.727268755,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008274078,
+            0.173604965,
+            -0.0180740356
+          ],
+          "rotation": [
+            -0.479674,
+            0.46774596,
+            0.525912046,
+            -0.5239686
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.009544373,
+            0.08823776,
+            -0.0127754211
+          ],
+          "rotation": [
+            -0.479674,
+            0.46774596,
+            0.525912046,
+            -0.5239686
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.00527763367,
+            0.408666134,
+            -0.0169734955
+          ],
+          "rotation": [
+            -0.4865223,
+            0.500173032,
+            0.525614,
+            -0.486675233
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 30,
+      "unityFrame": 32,
+      "seconds": 1.00000012,
+      "scaledTime": 1.0200001,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07032013,
+        0.2555821,
+        0.205225945
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.3,
+          "normalizedTime": 0.818177342,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00642395,
+            0.173746109,
+            -0.0115833282
+          ],
+          "rotation": [
+            -0.483645856,
+            0.4636689,
+            0.534444451,
+            -0.5152349
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.008590698,
+            0.08829188,
+            -0.008403778
+          ],
+          "rotation": [
+            -0.483645856,
+            0.4636689,
+            0.534444451,
+            -0.5152349
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            -0.00263595581,
+            0.4093697,
+            -0.0111913681
+          ],
+          "rotation": [
+            -0.484279066,
+            0.5007354,
+            0.5195422,
+            -0.49478665
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000085,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 31,
+      "unityFrame": 33,
+      "seconds": 1.03333342,
+      "scaledTime": 1.0533334,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07073212,
+        0.24542284,
+        0.217675209
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.333333343,
+          "normalizedTime": 0.9090859,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.004348755,
+            0.1737895,
+            -0.0063495636
+          ],
+          "rotation": [
+            -0.484185517,
+            0.4628834,
+            0.542427,
+            -0.507026851
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007860184,
+            0.08833861,
+            -0.00459861755
+          ],
+          "rotation": [
+            -0.484185517,
+            0.4628834,
+            0.542427,
+            -0.507026851
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00178718567,
+            0.409693,
+            -0.00554657
+          ],
+          "rotation": [
+            -0.481188446,
+            0.502056837,
+            0.517276168,
+            -0.498820841
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000114,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 32,
+      "unityFrame": 34,
+      "seconds": 1.06666672,
+      "scaledTime": 1.0866667,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07131195,
+        0.2388351,
+        0.223169327
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.366666675,
+          "normalizedTime": 0.9999945,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00326347351,
+            0.173771858,
+            -0.00490283966
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007566452,
+            0.0883553,
+            -0.00325107574
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00447464,
+            0.409729958,
+            -0.003982544
+          ],
+          "rotation": [
+            -0.478553116,
+            0.504482269,
+            0.515980661,
+            -0.5002487
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 33,
+      "unityFrame": 35,
+      "seconds": 1.1,
+      "scaledTime": 1.12,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07131195,
+        0.2388351,
+        0.223169327
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.400000036,
+          "normalizedTime": 1.090903,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00326347351,
+            0.173771858,
+            -0.00490283966
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007566452,
+            0.0883553,
+            -0.00325107574
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00447464,
+            0.409729958,
+            -0.003982544
+          ],
+          "rotation": [
+            -0.478553116,
+            0.504482269,
+            0.515980661,
+            -0.5002487
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 34,
+      "unityFrame": 36,
+      "seconds": 1.13333344,
+      "scaledTime": 1.15333343,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07131195,
+        0.2388351,
+        0.223169327
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.433333367,
+          "normalizedTime": 1.18181169,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00326347351,
+            0.173771858,
+            -0.00490283966
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007566452,
+            0.0883553,
+            -0.00325107574
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00447464,
+            0.409729958,
+            -0.003982544
+          ],
+          "rotation": [
+            -0.478553116,
+            0.504482269,
+            0.515980661,
+            -0.5002487
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 35,
+      "unityFrame": 37,
+      "seconds": 1.16666675,
+      "scaledTime": 1.18666673,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07131195,
+        0.2388351,
+        0.223169327
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.4666667,
+          "normalizedTime": 1.27272022,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00326347351,
+            0.173771858,
+            -0.00490283966
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007566452,
+            0.0883553,
+            -0.00325107574
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00447464,
+            0.409729958,
+            -0.003982544
+          ],
+          "rotation": [
+            -0.478553116,
+            0.504482269,
+            0.515980661,
+            -0.5002487
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 36,
+      "unityFrame": 38,
+      "seconds": 1.2,
+      "scaledTime": 1.22,
+      "deadlineBeforeShot": 1.25333333,
+      "deadlineAfterShot": 1.25333333,
+      "roundInvoked": false,
+      "muzzle": [
+        0.07131195,
+        0.2388351,
+        0.223169327
+      ],
+      "states": [
+        {
+          "name": "rifle_shot_loop",
+          "time": 0.5,
+          "normalizedTime": 1.36362886,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00326347351,
+            0.173771858,
+            -0.00490283966
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.007566452,
+            0.0883553,
+            -0.00325107574
+          ],
+          "rotation": [
+            -0.481569678,
+            0.464060515,
+            0.545776248,
+            -0.5048433
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.00447464,
+            0.409729958,
+            -0.003982544
+          ],
+          "rotation": [
+            -0.478553116,
+            0.504482269,
+            0.515980661,
+            -0.5002487
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 37,
+      "unityFrame": 39,
+      "seconds": 1.23333347,
+      "scaledTime": 1.25333345,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0153675079,
+        0.2782309,
+        0.20382309
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.0,
+          "normalizedTime": 0.0,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.008825302,
+            0.1645248,
+            -0.0455131531
+          ],
+          "rotation": [
+            -0.361526847,
+            0.386677027,
+            0.580675542,
+            -0.6185427
+          ],
+          "size": [
+            0.183923468,
+            0.1678068,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00624465942,
+            0.07984233,
+            -0.0337018967
+          ],
+          "rotation": [
+            -0.361526847,
+            0.386677027,
+            0.580675542,
+            -0.6185427
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0142421722,
+            0.398619652,
+            -0.059515
+          ],
+          "rotation": [
+            -0.4278385,
+            0.5440597,
+            0.5154766,
+            -0.5052102
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000055,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 38,
+      "unityFrame": 40,
+      "seconds": 1.26666677,
+      "scaledTime": 1.28666675,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        -0.000162124634,
+        0.2753198,
+        0.214813232
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.0333333351,
+          "normalizedTime": 0.0666666552,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00394821167,
+            0.164899826,
+            -0.0328207
+          ],
+          "rotation": [
+            -0.3620569,
+            0.382113248,
+            0.5905737,
+            -0.6116591
+          ],
+          "size": [
+            0.183923483,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00269317627,
+            0.07998085,
+            -0.02259922
+          ],
+          "rotation": [
+            -0.3620569,
+            0.382113248,
+            0.5905737,
+            -0.6116591
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0221557617,
+            0.39875555,
+            -0.0269498825
+          ],
+          "rotation": [
+            -0.46075356,
+            0.527774751,
+            0.534720957,
+            -0.4724761
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000174,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 39,
+      "unityFrame": 41,
+      "seconds": 1.30000007,
+      "scaledTime": 1.32,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        -0.00407981873,
+        0.2650056,
+        0.21640873
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.06666667,
+          "normalizedTime": 0.13333331,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00384902954,
+            0.152398586,
+            -0.0265398026
+          ],
+          "rotation": [
+            -0.344328582,
+            0.3480034,
+            0.6149895,
+            -0.6181579
+          ],
+          "size": [
+            0.183923423,
+            0.167806774,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.002784729,
+            0.06718063,
+            -0.0191898346
+          ],
+          "rotation": [
+            -0.344328582,
+            0.3480034,
+            0.6149895,
+            -0.6181579
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.02511406,
+            0.382906675,
+            0.00156211853
+          ],
+          "rotation": [
+            -0.488598615,
+            0.489700019,
+            0.57181,
+            -0.441019952
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130004749,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 40,
+      "unityFrame": 42,
+      "seconds": 1.33333337,
+      "scaledTime": 1.35333335,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.006580353,
+        0.259726763,
+        0.219550133
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.100000009,
+          "normalizedTime": 0.199999958,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00340461731,
+            0.143576384,
+            -0.0205822
+          ],
+          "rotation": [
+            -0.31589222,
+            0.309710234,
+            0.6403588,
+            -0.6278792
+          ],
+          "size": [
+            0.183923528,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00276184082,
+            0.0582025051,
+            -0.01527977
+          ],
+          "rotation": [
+            -0.31589222,
+            0.309710234,
+            0.6403588,
+            -0.6278792
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0304641724,
+            0.3673334,
+            0.023106575
+          ],
+          "rotation": [
+            -0.502822042,
+            0.4571395,
+            0.60510546,
+            -0.41477865
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130152687,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 41,
+      "unityFrame": 43,
+      "seconds": 1.36666679,
+      "scaledTime": 1.38666677,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.03147888,
+        0.257241249,
+        0.221398354
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.13333334,
+          "normalizedTime": 0.266666621,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00235366821,
+            0.138695717,
+            -0.0149126053
+          ],
+          "rotation": [
+            -0.277439535,
+            0.2655637,
+            0.6675397,
+            -0.637882352
+          ],
+          "size": [
+            0.183923453,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00261116028,
+            0.0532338619,
+            -0.0112419128
+          ],
+          "rotation": [
+            -0.277439535,
+            0.2655637,
+            0.6675397,
+            -0.637882352
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.03847313,
+            0.353801,
+            0.0373449326
+          ],
+          "rotation": [
+            -0.5014504,
+            0.426840961,
+            0.639996946,
+            -0.395927042
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130172014,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 42,
+      "unityFrame": 44,
+      "seconds": 1.4000001,
+      "scaledTime": 1.42000008,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.0601940155,
+        0.2558086,
+        0.219194412
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.166666672,
+          "normalizedTime": 0.333333284,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.00115013123,
+            0.137948513,
+            -0.00995636
+          ],
+          "rotation": [
+            -0.236330926,
+            0.220937669,
+            0.6909168,
+            -0.6465045
+          ],
+          "size": [
+            0.183923468,
+            0.1678068,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.002325058,
+            0.0524520874,
+            -0.007457733
+          ],
+          "rotation": [
+            -0.236330926,
+            0.220937669,
+            0.6909168,
+            -0.6465045
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0452899933,
+            0.344412327,
+            0.0440626144
+          ],
+          "rotation": [
+            -0.490386248,
+            0.400855929,
+            0.6705997,
+            -0.3861763
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130034029,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 43,
+      "unityFrame": 45,
+      "seconds": 1.4333334,
+      "scaledTime": 1.45333338,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.08257675,
+        0.256193876,
+        0.211918831
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.200000018,
+          "normalizedTime": 0.399999917,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            -0.000507354736,
+            0.139660835,
+            -0.00695228577
+          ],
+          "rotation": [
+            -0.1985858,
+            0.182565108,
+            0.7073659,
+            -0.6533507
+          ],
+          "size": [
+            0.183923483,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00231552124,
+            0.05416131,
+            -0.00499153137
+          ],
+          "rotation": [
+            -0.1985858,
+            0.182565108,
+            0.7073659,
+            -0.6533507
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.04796028,
+            0.339574337,
+            0.04389572
+          ],
+          "rotation": [
+            -0.475665838,
+            0.380758,
+            0.6925026,
+            -0.386272281
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130073786,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 44,
+      "unityFrame": 46,
+      "seconds": 1.46666682,
+      "scaledTime": 1.4866668,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.09880257,
+        0.259167433,
+        0.2021389
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.233333349,
+          "normalizedTime": 0.466666579,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.000467300415,
+            0.142344713,
+            -0.00527477264
+          ],
+          "rotation": [
+            -0.166110814,
+            0.154338792,
+            0.720065951,
+            -0.6558139
+          ],
+          "size": [
+            0.1839235,
+            0.167806879,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00234031677,
+            0.056874752,
+            -0.003209114
+          ],
+          "rotation": [
+            -0.166110814,
+            0.154338792,
+            0.720065951,
+            -0.6558139
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0491943359,
+            0.3371997,
+            0.03958416
+          ],
+          "rotation": [
+            -0.458114028,
+            0.3685541,
+            0.7071029,
+            -0.3928171
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1301211,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 45,
+      "unityFrame": 47,
+      "seconds": 1.50000012,
+      "scaledTime": 1.5200001,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.104692459,
+        0.264922857,
+        0.196082115
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.266666681,
+          "normalizedTime": 0.533333242,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.00113296509,
+            0.146630287,
+            -0.00444889069
+          ],
+          "rotation": [
+            -0.150477767,
+            0.141304836,
+            0.725959539,
+            -0.656027555
+          ],
+          "size": [
+            0.1839235,
+            0.167806834,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00226211548,
+            0.0611848831,
+            -0.002254486
+          ],
+          "rotation": [
+            -0.150477767,
+            0.141304836,
+            0.725959539,
+            -0.656027555
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.04761505,
+            0.339129925,
+            0.03555298
+          ],
+          "rotation": [
+            -0.449174881,
+            0.3646726,
+            0.7102599,
+            -0.400982678
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130158857,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 46,
+      "unityFrame": 48,
+      "seconds": 1.53333342,
+      "scaledTime": 1.5533334,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.102491379,
+        0.26959753,
+        0.195475578
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.3,
+          "normalizedTime": 0.5999999,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.149786711,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06433344,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0446491241,
+            0.341966867,
+            0.03447056
+          ],
+          "rotation": [
+            -0.452412218,
+            0.3655563,
+            0.705878437,
+            -0.404261857
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130169049,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 47,
+      "unityFrame": 49,
+      "seconds": 1.56666672,
+      "scaledTime": 1.5866667,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.101945877,
+        0.2703805,
+        0.195214272
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.333333343,
+          "normalizedTime": 0.666666567,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.00118637085,
+            0.14991498,
+            -0.00412368774
+          ],
+          "rotation": [
+            -0.151566476,
+            0.140368849,
+            0.7260793,
+            -0.655845344
+          ],
+          "size": [
+            0.1839235,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151566476,
+            0.140368849,
+            0.7260793,
+            -0.655845344
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0439929962,
+            0.3420918,
+            0.0337667465
+          ],
+          "rotation": [
+            -0.453075647,
+            0.366841942,
+            0.7040784,
+            -0.405491769
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130160809,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 48,
+      "unityFrame": 50,
+      "seconds": 1.60000014,
+      "scaledTime": 1.62000012,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.102235794,
+        0.270185232,
+        0.195272446
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.366666675,
+          "normalizedTime": 0.7333332,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.0011806488,
+            0.149915218,
+            -0.00412082672
+          ],
+          "rotation": [
+            -0.151563555,
+            0.14033252,
+            0.7260666,
+            -0.6558678
+          ],
+          "size": [
+            0.183923483,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151563555,
+            0.14033252,
+            0.7260666,
+            -0.6558678
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0440998077,
+            0.342134,
+            0.033618927
+          ],
+          "rotation": [
+            -0.452755541,
+            0.367608577,
+            0.703604639,
+            -0.405976653
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130151331,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 49,
+      "unityFrame": 51,
+      "seconds": 1.63333344,
+      "scaledTime": 1.65333343,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.1026268,
+        0.269767523,
+        0.195391655
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.400000036,
+          "normalizedTime": 0.799999833,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0446109772,
+            0.3420093,
+            0.0338525772
+          ],
+          "rotation": [
+            -0.452035367,
+            0.3677878,
+            0.7041124,
+            -0.405736059
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130143955,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 50,
+      "unityFrame": 52,
+      "seconds": 1.66666675,
+      "scaledTime": 1.68666673,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.102874756,
+        0.269531,
+        0.195446014
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.433333367,
+          "normalizedTime": 0.8666665,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.00114059448,
+            0.1499176,
+            -0.00409507751
+          ],
+          "rotation": [
+            -0.151540309,
+            0.140041485,
+            0.7259654,
+            -0.656047344
+          ],
+          "size": [
+            0.183923468,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151540309,
+            0.140041485,
+            0.7259654,
+            -0.656047344
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0450515747,
+            0.341872454,
+            0.03413582
+          ],
+          "rotation": [
+            -0.451599568,
+            0.3676736,
+            0.7047357,
+            -0.4052428
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141452,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 51,
+      "unityFrame": 53,
+      "seconds": 1.7,
+      "scaledTime": 1.72,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.102916718,
+        0.269424677,
+        0.19553566
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.4666667,
+          "normalizedTime": 0.933333158,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.00113487244,
+            0.149917841,
+            -0.00409221649
+          ],
+          "rotation": [
+            -0.151537359,
+            0.140005156,
+            0.725952744,
+            -0.656069756
+          ],
+          "size": [
+            0.183923438,
+            0.167806774,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151537359,
+            0.140005156,
+            0.725952744,
+            -0.656069756
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.0452003479,
+            0.341815,
+            0.03432083
+          ],
+          "rotation": [
+            -0.4516415,
+            0.3675577,
+            0.7049691,
+            -0.4048956
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141452,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 52,
+      "unityFrame": 54,
+      "seconds": 1.73333347,
+      "scaledTime": 1.75333345,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.5,
+          "normalizedTime": 0.9999998,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 53,
+      "unityFrame": 55,
+      "seconds": 1.76666677,
+      "scaledTime": 1.78666675,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.533333361,
+          "normalizedTime": 1.06666648,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 54,
+      "unityFrame": 56,
+      "seconds": 1.80000007,
+      "scaledTime": 1.82,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.5666667,
+          "normalizedTime": 1.13333309,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 55,
+      "unityFrame": 57,
+      "seconds": 1.83333349,
+      "scaledTime": 1.85333347,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.6,
+          "normalizedTime": 1.19999981,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 56,
+      "unityFrame": 58,
+      "seconds": 1.86666679,
+      "scaledTime": 1.88666677,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.6333334,
+          "normalizedTime": 1.26666641,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 57,
+      "unityFrame": 59,
+      "seconds": 1.9000001,
+      "scaledTime": 1.92000008,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.6666667,
+          "normalizedTime": 1.33333313,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 58,
+      "unityFrame": 60,
+      "seconds": 1.9333334,
+      "scaledTime": 1.95333338,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.700000048,
+          "normalizedTime": 1.39999974,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 59,
+      "unityFrame": 61,
+      "seconds": 1.96666682,
+      "scaledTime": 1.9866668,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.733333349,
+          "normalizedTime": 1.46666634,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 60,
+      "unityFrame": 62,
+      "seconds": 2.00000024,
+      "scaledTime": 2.02000022,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.7666667,
+          "normalizedTime": 1.53333306,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 61,
+      "unityFrame": 63,
+      "seconds": 2.03333354,
+      "scaledTime": 2.05333352,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.8000001,
+          "normalizedTime": 1.59999967,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 62,
+      "unityFrame": 64,
+      "seconds": 2.06666684,
+      "scaledTime": 2.08666682,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.8333334,
+          "normalizedTime": 1.66666639,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 63,
+      "unityFrame": 65,
+      "seconds": 2.10000014,
+      "scaledTime": 2.12000012,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.866666734,
+          "normalizedTime": 1.733333,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 64,
+      "unityFrame": 66,
+      "seconds": 2.13333344,
+      "scaledTime": 2.15333343,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.900000036,
+          "normalizedTime": 1.79999971,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 65,
+      "unityFrame": 67,
+      "seconds": 2.16666675,
+      "scaledTime": 2.18666673,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.9333334,
+          "normalizedTime": 1.86666632,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 66,
+      "unityFrame": 68,
+      "seconds": 2.2,
+      "scaledTime": 2.22,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 0.9666667,
+          "normalizedTime": 1.93333292,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 67,
+      "unityFrame": 69,
+      "seconds": 2.23333359,
+      "scaledTime": 2.25333357,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.0,
+          "normalizedTime": 1.99999964,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 68,
+      "unityFrame": 70,
+      "seconds": 2.266667,
+      "scaledTime": 2.28666687,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.03333342,
+          "normalizedTime": 2.06666636,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 69,
+      "unityFrame": 71,
+      "seconds": 2.30000019,
+      "scaledTime": 2.32000017,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.06666672,
+          "normalizedTime": 2.133333,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 70,
+      "unityFrame": 72,
+      "seconds": 2.33333349,
+      "scaledTime": 2.35333347,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.1,
+          "normalizedTime": 2.19999957,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 71,
+      "unityFrame": 73,
+      "seconds": 2.36666679,
+      "scaledTime": 2.38666677,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.13333344,
+          "normalizedTime": 2.26666617,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 72,
+      "unityFrame": 74,
+      "seconds": 2.4,
+      "scaledTime": 2.42,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.16666675,
+          "normalizedTime": 2.333333,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 73,
+      "unityFrame": 75,
+      "seconds": 2.4333334,
+      "scaledTime": 2.45333338,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.2,
+          "normalizedTime": 2.39999962,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 74,
+      "unityFrame": 76,
+      "seconds": 2.4666667,
+      "scaledTime": 2.48666668,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.23333335,
+          "normalizedTime": 2.46666622,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 75,
+      "unityFrame": 77,
+      "seconds": 2.50000024,
+      "scaledTime": 2.52000022,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.26666677,
+          "normalizedTime": 2.53333282,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 76,
+      "unityFrame": 78,
+      "seconds": 2.53333354,
+      "scaledTime": 2.55333352,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.30000007,
+          "normalizedTime": 2.59999943,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 77,
+      "unityFrame": 79,
+      "seconds": 2.56666684,
+      "scaledTime": 2.58666682,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.33333337,
+          "normalizedTime": 2.66666627,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 78,
+      "unityFrame": 80,
+      "seconds": 2.60000014,
+      "scaledTime": 2.62000012,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.36666679,
+          "normalizedTime": 2.73333287,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 79,
+      "unityFrame": 81,
+      "seconds": 2.63333344,
+      "scaledTime": 2.65333343,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.4000001,
+          "normalizedTime": 2.79999948,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 80,
+      "unityFrame": 82,
+      "seconds": 2.66666675,
+      "scaledTime": 2.68666673,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.4333334,
+          "normalizedTime": 2.866666,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    },
+    {
+      "tick": 81,
+      "unityFrame": 83,
+      "seconds": 2.7,
+      "scaledTime": 2.72,
+      "deadlineBeforeShot": 0.0,
+      "deadlineAfterShot": 0.0,
+      "roundInvoked": false,
+      "muzzle": [
+        0.103105545,
+        0.269143581,
+        0.195699692
+      ],
+      "states": [
+        {
+          "name": "stand_up_crawl",
+          "time": 1.4666667,
+          "normalizedTime": 2.93333268,
+          "weight": 1.0
+        }
+      ],
+      "parts": [
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "box",
+          "center": [
+            0.001159668,
+            0.14991641,
+            -0.00410747528
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "kind": "sphere",
+          "center": [
+            -0.00219535828,
+            0.06446314,
+            -0.00217628479
+          ],
+          "rotation": [
+            -0.151551962,
+            0.140187025,
+            0.726016045,
+            -0.6559576
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
+        },
+        {
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "kind": "sphere",
+          "center": [
+            0.045331955,
+            0.3417828,
+            0.03436947
+          ],
+          "rotation": [
+            -0.451690257,
+            0.367707223,
+            0.705016553,
+            -0.404622346
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
+        }
+      ]
+    }
+  ]
+}

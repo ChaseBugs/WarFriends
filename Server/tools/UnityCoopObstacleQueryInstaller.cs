@@ -29,6 +29,12 @@ public static class UnityCoopObstacleQueryInstaller
 
         if (rig.GetComponent<UnityCoopObstacleQueryProbe>() == null)
         {
+            if (Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_EMISSION_PHASE") == "update")
+            {
+                UnityCoopObstacleQueryProbe.ReadGameplayTick = () => UnityCoopObstacleVolleyPoseExport.GameplayTick;
+                UnityCoopObstacleQueryProbe.EmitGameplayRound = UnityCoopObstacleVolleyPoseExport.EmitGameplayRound;
+            }
+
             rig.AddComponent<UnityCoopObstacleQueryProbe>();
         }
 

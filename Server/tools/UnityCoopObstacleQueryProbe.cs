@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -8,6 +9,12 @@ using UnityEngine;
 [DefaultExecutionOrder(0)]
 public sealed class UnityCoopObstacleQueryProbe : MonoBehaviour
 {
+    /// <summary>Supplies the editor-owned clock without a runtime reference to an editor assembly.</summary>
+    public static Func<int> ReadGameplayTick { private get; set; }
+
+    /// <summary>Invokes source OnShot behavior after capturing the current firing transforms.</summary>
+    public static Action<int> EmitGameplayRound { private get; set; }
+
     private const string OutputVariable = "WAR_COOP_OBSTACLE_QUERY_OUTPUT";
     private const int MaximumSamples = 240;
     private const float RayOffset = 2f;
@@ -15,20 +22,52 @@ public sealed class UnityCoopObstacleQueryProbe : MonoBehaviour
     private readonly List<object> _samples = new List<object>();
     private Collider[] _colliders;
     private string _outputPath;
+    private Transform _muzzle;
+    private Animation _animation;
 
     private void Awake()
     {
         _outputPath = Environment.GetEnvironmentVariable(OutputVariable);
         _colliders = GetComponentsInChildren<Collider>(true);
+        _muzzle = GetComponentsInChildren<Transform>(true)
+            .Single(node => node.name == "MachinegunMuzzleFlash" && node.parent.name == "HK416");
+        _animation = GetComponentInChildren<Animation>(true);
     }
 
     private void Update()
     {
+        int tick = ReadGameplayTick == null ? -1 : ReadGameplayTick();
+        if (ReadGameplayTick != null && tick < 0)
+        {
+            return;
+        }
+
         if (_samples.Count >= MaximumSamples)
         {
             throw new InvalidOperationException("The collider query probe exceeded its sample bound.");
         }
 
+        List<object> queries = CaptureQueries();
+        _samples.Add(new
+        {
+            tick,
+            unityFrame = Time.frameCount,
+            scaledTime = Time.time,
+            muzzle = Values(transform.InverseTransformPoint(_muzzle.position)),
+            states = _animation.Cast<AnimationState>().Where(state => state.enabled)
+                .Select(state => new { state.name, state.time, state.normalizedTime, state.weight }).ToArray(),
+            queries
+        });
+        if (EmitGameplayRound != null)
+        {
+            EmitGameplayRound(tick);
+        }
+
+        Persist();
+    }
+
+    private List<object> CaptureQueries()
+    {
         var queries = new List<object>();
         foreach (Collider collider in _colliders)
         {
@@ -63,13 +102,19 @@ public sealed class UnityCoopObstacleQueryProbe : MonoBehaviour
             });
         }
 
-        _samples.Add(new { unityFrame = Time.frameCount, scaledTime = Time.time, queries });
+        return queries;
+    }
+
+    private void Persist()
+    {
         // Persist each bounded sample because the existing exporter owns process termination.
         File.WriteAllText(_outputPath, JsonConvert.SerializeObject(new
         {
-            version = 1,
+            version = EmitGameplayRound == null ? 1 : 2,
             unity = Application.unityVersion,
-            samplePhase = "MonoBehaviour.Update order 0; rounds remain editor-driven",
+            samplePhase = EmitGameplayRound == null
+                ? "MonoBehaviour.Update order 0; rounds remain editor-driven"
+                : "MonoBehaviour.Update order 0; capture before source ShootFromCrawl",
             autoSyncTransforms = Physics.autoSyncTransforms,
             queriesHitTriggers = Physics.queriesHitTriggers,
             rayDirection = Values(Vector3.forward),

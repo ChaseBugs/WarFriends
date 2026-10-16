@@ -71,3 +71,48 @@ nonzero procedural look and pooled state still need their own source proof.
 Current runtime obstacle poses remain diagnostic and collision authority stays
 closed. Existing timer and editor-phase comparisons remain valid within their
 documented scope.
+
+## Gameplay emission capture
+
+The subsequent capture sets `WAR_COOP_OBSTACLE_EMISSION_PHASE=update`.
+The runtime observer calls the editor bridge after recording collider queries,
+muzzle position and enabled animation states. The bridge invokes the actual
+recovered `ShootFromCrawl(0.5f, 1f, Riffle)` at source-relative ticks 11 and 22;
+the editor callback suppresses its own round emissions. The initial preparation
+still runs in the initializing editor callback. This remains an isolated rig,
+not the full `EnemyController` or a complete match.
+
+`coop-gameplay-query-unity-reference.json` uses query schema two and
+`coop-gameplay-query-post-reference.json` uses post schema five. The latter
+pins the changed exporter digest; previous schema-four artifacts retain their
+historical exporter binding from commit `9ab148846` and earlier. They must not
+be silently regenerated with the newer exporter and called byte-identical.
+
+The final Unity process reports all 82 post frames and no compiler error or
+exception. Its 81 Update frames provide 243 combat queries with no native/host
+hit or distance mismatch at the 0.00002 tolerance. All 243 centers are exactly
+equal to the preceding post frame, while 136 differ from the same post frame.
+The .NET content fixture also verifies every muzzle against the preceding
+sample and runs the actual host `PlayerHitbox.Raycast` against native distances.
+This verifies geometry at observed transforms; it does not verify that the
+current runtime pose selector chooses those transforms.
+
+The first round changes from a queued animation clone to the ordinary loop.
+At query tick 12 the ordinary loop is at time zero. At query tick 23, following
+the next reset, it is already at approximately 0.0333333 seconds. Therefore a
+uniform subtraction from every reset clock does not reproduce this trace.
+Likewise, the controller can change enabled state to crawl before Update while
+the transforms still hold the preceding animation sample. Reconstruct both
+state transitions and transform sampling before opening damage authority.
+
+```powershell
+python Server/tools/analyze_coop_query_phase.py `
+  Server/content/coop-gameplay-query-unity-reference.json `
+  --post-observation Server/content/coop-gameplay-query-post-reference.json
+dotnet run --project Server/tests/War.Battle.Tests -- --combat-content-only
+```
+
+The gameplay pair's raw SHA-256 bindings are enforced by
+`CoopGameplayQueryObservationTests`; the baseline catalog still requires its
+original schema-four neutral-look proof. No production authority gate changes
+as a result of these observations.

@@ -96,8 +96,8 @@ def analyze(observation, combat_only=False):
     }
 
 
-def compare_phases(observation, post_observation):
-    post_frames = {sample["unityFrame"]: sample for sample in post_observation["samples"]}
+def compare_phases(observation, post_observation, frame_lag=0):
+    post_frames = {sample["unityFrame"] + frame_lag: sample for sample in post_observation["samples"]}
     comparisons = 0
     changed = 0
     maximum_error = 0.0
@@ -122,12 +122,13 @@ def main():
     parser.add_argument("--post-observation", type=Path)
     arguments = parser.parse_args()
     observation = json.loads(arguments.observation.read_text(encoding="utf-8-sig"))
-    if observation["version"] != 1 or not 1 <= len(observation["samples"]) <= 240:
+    if observation["version"] not in (1, 2) or not 1 <= len(observation["samples"]) <= 240:
         raise ValueError("Unsupported or empty query observation.")
     result = {"allColliders": analyze(observation), "combatParts": analyze(observation, combat_only=True)}
     if arguments.post_observation:
         post_observation = json.loads(arguments.post_observation.read_text(encoding="utf-8-sig"))
         result["phaseComparison"] = compare_phases(observation, post_observation)
+        result["previousPostFrameComparison"] = compare_phases(observation, post_observation, frame_lag=1)
     print(json.dumps(result, indent=2))
 
 

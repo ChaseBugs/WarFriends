@@ -1268,3 +1268,10 @@ queries match same-phase analytic intersections, but 139 centers differ from
 the existing editor-phase capture. This proves that gameplay sampling needs a
 separate clock before collision authority can open. The reproducible capture
 and limitations are in [the query-phase report](COOP_OBSTACLE_QUERY_PHASE.md).
+
+B22 now also captures actual source shot resets inside gameplay Update. All
+243 combat centers match the preceding post frame exactly; the host ray
+primitive is compared directly with native Unity queries. First queued-clone
+replacement and subsequent loop resets advance differently, so uniform clock
+offsets are insufficient. Runtime pose selection and damage authority remain
+incomplete; see the gameplay-emission section of the same report.

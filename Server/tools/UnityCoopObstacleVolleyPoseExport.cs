@@ -42,6 +42,28 @@ public static class UnityCoopObstacleVolleyPoseExport
         "mTimeToHideToCrawl", BindingFlags.Instance | BindingFlags.NonPublic);
     private static float _deadlineBeforeShot;
 
+    /// <summary>Exposes the next source-relative frame after the editor initializes playback.</summary>
+    public static int GameplayTick
+    {
+        get { return _animation == null ? -1 : Samples.Count; }
+    }
+
+    /// <summary>Resets the shot animation after the gameplay observer records the firing pose.</summary>
+    public static void EmitGameplayRound(int tick)
+    {
+        _deadlineBeforeShot = (float)CrawlDeadlineField.GetValue(_controller);
+        if (_roundTicks.Contains(tick))
+        {
+            _controller.ShootFromCrawl(RoundHideSeconds, ShotSpeed, Weapon.WeaponType.Riffle);
+            _roundInvocations++;
+        }
+    }
+
+    private static bool UsesGameplayEmission
+    {
+        get { return Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_EMISSION_PHASE") == "update"; }
+    }
+
     static UnityCoopObstacleVolleyPoseExport()
     {
         if (SessionState.GetBool(SessionKey, false))
@@ -55,6 +77,15 @@ public static class UnityCoopObstacleVolleyPoseExport
     {
         RequireEnvironment("WAR_COOP_OBSTACLE_POSE_PLAN");
         RequireEnvironment("WAR_COOP_OBSTACLE_POSE_OUTPUT");
+        string emissionPhase = Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_EMISSION_PHASE");
+        if (!string.IsNullOrEmpty(emissionPhase) && emissionPhase != "update")
+        {
+            throw new InvalidOperationException("WAR_COOP_OBSTACLE_EMISSION_PHASE must be unset or update.");
+        }
+        if (UsesGameplayEmission)
+        {
+            RequireEnvironment("WAR_COOP_OBSTACLE_QUERY_OUTPUT");
+        }
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(EnemyPath);
         GameObject enemy = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
@@ -117,11 +148,9 @@ public static class UnityCoopObstacleVolleyPoseExport
             }
             _lastFrame = Time.frameCount;
             int tick = Samples.Count;
-            _deadlineBeforeShot = (float)CrawlDeadlineField.GetValue(_controller);
-            if (_roundTicks.Contains(tick))
+            if (!UsesGameplayEmission)
             {
-                _controller.ShootFromCrawl(RoundHideSeconds, ShotSpeed, Weapon.WeaponType.Riffle);
-                _roundInvocations++;
+                EmitGameplayRound(tick);
             }
             if (tick > _roundTicks.Max() + (int)_plan["captureRate"] * RoundHideSeconds &&
                 _animation.IsPlaying(CrawlClip) && _animation[CrawlClip].normalizedTime > 0)
@@ -267,7 +296,7 @@ public static class UnityCoopObstacleVolleyPoseExport
         File.WriteAllText(RequireEnvironment("WAR_COOP_OBSTACLE_POSE_OUTPUT"),
             JsonConvert.SerializeObject(new
             {
-                version = ObservationVersion,
+                version = UsesGameplayEmission ? 5 : ObservationVersion,
                 proceduralLookEnabled = !_controller.disableLookRot,
                 client = "1.4.0",
                 unity = Application.unityVersion,
