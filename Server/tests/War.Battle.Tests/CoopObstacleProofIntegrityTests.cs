@@ -5,6 +5,7 @@ internal static class CoopObstacleProofIntegrityTests
 {
     private const string BaselineName = "coop-obstacle-volley-unity-reference.json";
     private const string NeutralName = "coop-obstacle-volley-neutral-look-reference.json";
+    private const string PreparationName = "coop-gameplay-preparation-post-reference.json";
 
     internal static void Run(string directory, BattleCombatContent content)
     {
@@ -12,10 +13,12 @@ internal static class CoopObstacleProofIntegrityTests
         Directory.CreateDirectory(temporary);
         string baselinePath = Path.Combine(temporary, BaselineName);
         string neutralPath = Path.Combine(temporary, NeutralName);
+        string preparationPath = Path.Combine(temporary, PreparationName);
         try
         {
             File.Copy(Path.Combine(directory, BaselineName), baselinePath);
             File.Copy(Path.Combine(directory, NeutralName), neutralPath);
+            File.Copy(Path.Combine(directory, PreparationName), preparationPath);
             _ = CoopObstaclePoseCatalog.Load(baselinePath, content.EnemyPoses);
             File.Delete(neutralPath);
             RequireFailure(() => CoopObstaclePoseCatalog.Load(baselinePath, content.EnemyPoses),
@@ -24,15 +27,24 @@ internal static class CoopObstacleProofIntegrityTests
             File.AppendAllText(neutralPath, " ");
             RequireFailure(() => CoopObstaclePoseCatalog.Load(baselinePath, content.EnemyPoses),
                 typeof(InvalidDataException));
+            File.Copy(Path.Combine(directory, NeutralName), neutralPath, true);
+            File.Delete(preparationPath);
+            RequireFailure(() => CoopObstaclePoseCatalog.Load(baselinePath, content.EnemyPoses),
+                typeof(FileNotFoundException));
+            File.Copy(Path.Combine(directory, PreparationName), preparationPath);
+            File.AppendAllText(preparationPath, " ");
+            RequireFailure(() => CoopObstaclePoseCatalog.Load(baselinePath, content.EnemyPoses),
+                typeof(InvalidDataException));
         }
         finally
         {
             File.Delete(neutralPath);
             File.Delete(baselinePath);
+            File.Delete(preparationPath);
             Directory.Delete(temporary);
         }
 
-        Console.WriteLine("PASS: obstacle catalog rejects missing or changed neutral-look proof");
+        Console.WriteLine("PASS: obstacle catalog rejects missing or changed look and gameplay preparation proofs");
     }
 
     private static void RequireFailure(Action action, Type expectedException)

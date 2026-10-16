@@ -151,3 +151,70 @@ existing counted assertions plus the new gameplay selector comparisons. Native
 smoke builds the solution with zero warnings/errors, passes 1,037 protocol
 checks and 74 real MongoDB/HTTP/protobuf/UDP checks, and verifies durable
 evidence across Worker restarts. These do not prove full Unity co-op gameplay.
+
+## Preparation inside gameplay Update
+
+The next isolated capture also sets
+`WAR_COOP_OBSTACLE_PREPARATION_PHASE=update`. After initialization primes the
+fully completed crawl, the first observer Update records relative tick zero
+and invokes the actual recovered preparation animation method. Rounds still
+run at relative ticks 11 and 22. The raw post observation uses schema six:
+its initial editor setup sample is tick minus one, followed by ticks zero
+through 80. The paired query observation has 81 samples, starting at zero.
+
+This follows the animation-call phase in recovered `EnemyController.PrepareToShoot`:
+the obstacle branch calls `ShootFromCrawl(1f)` during Update, then schedules
+the firing callback for `GetStandUpFromCrawlLength(...) + 0.05f`. This probe
+does not execute the complete controller, target selection, Photon RPC, root
+tween or delayed firing callback. It invokes the same animation method and
+uses the already source-backed round schedule; those distinctions remain open.
+
+The completed run reports 82 post frames with no compiler error or runtime
+exception. All 243 combat queries match native ray results within 0.00002
+world units, and their centers exactly equal the preceding post sample.
+Compared with editor preparation, relative query tick two differs by about
+0.0034 to 0.0040 world units across the three combat shapes. Every later
+shared combat-center sample agrees. The auxiliary colliders still have 32
+distance differences outside that tolerance and do not become combat authority.
+
+The host now uses the reviewed gameplay-preparation blend frame by default.
+`CoopObstaclePreparationPhase.EditorCallback` preserves the historical isolated
+proof explicitly; it is an internal test clock choice, not a Client option.
+Startup requires the new post observation, checks its bounded size, raw SHA-256,
+schema and source prefab binding before constructing collider lookup state.
+Missing or modified preparation proof is tested at the actual loading boundary.
+
+The old and new preparation scenarios compare 486 complete selected combat
+shapes and every available firing muzzle, while retaining native host-ray
+comparisons. Run just these comparisons with:
+
+```powershell
+dotnet run --project Server/tests/War.Battle.Tests -- --coop-gameplay-query-only
+```
+
+Raw SHA-256 bindings:
+
+| File | SHA-256 |
+| --- | --- |
+| Gameplay preparation query | `8a1c0a49fd0f6d83faabd0d3a9039384a12e0812817092910cf251b2c419effe` |
+| Gameplay preparation post | `46a8d4893f4adc0fc6aca4eb8af2063619dc76e47045192269054369cee71156` |
+
+The first attempt encountered repeated Package Manager exit code 101 and local
+server connection failure before observation started. Only that owned Unity
+process was stopped. The successful retry used the documented Unity 2018.3
+[`-noUpm` option](https://docs.unity3d.com/cn/2018.3/Manual/CommandLineArguments.html)
+on the disposable project. It required a full script recompile; no active
+Client assets or owner Unity processes were changed. Schema-four and schema-five
+captures retain their historical exporter digests; the new schema-six post
+capture binds the current exporter source.
+
+This closes the isolated initial-preparation phase discrepancy. Full controller
+execution, moving roots, pooled state, procedural look input, normal Unity
+match play and complete live co-op damage remain unverified. Collision
+authority remains closed for these obstacle candidates.
+
+Validation after this integration: both focused preparation scenarios pass;
+the full content executable exits zero with 26,368 counted assertions and the
+additional pose/proof checks. Native smoke also exits zero: solution build has
+zero warnings/errors, 1,037 protocol checks and 74 live integration checks pass,
+including durable evidence replay across Worker restarts.

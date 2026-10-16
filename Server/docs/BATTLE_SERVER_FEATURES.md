@@ -1283,3 +1283,11 @@ the controller return. The observation fixture compares complete selected
 shapes and firing muzzle positions with every recorded gameplay frame.
 Moving roots, full-controller preparation and live damage authority remain
 open; historical editor-phase proofs keep their separate selector.
+
+B22's initial animation preparation now has a separate gameplay Update capture.
+It revealed a 3-4 mm initial blend discrepancy, now corrected in the default
+host gameplay selector. Both preparation scenarios compare 486 complete combat
+shapes and firing muzzle positions; catalog loading requires the pinned new
+preparation proof. The new `--coop-gameplay-query-only` command runs these
+comparisons separately. Full controller preparation, moving roots and live
+co-op authority remain incomplete; see the preparation section of the query report.

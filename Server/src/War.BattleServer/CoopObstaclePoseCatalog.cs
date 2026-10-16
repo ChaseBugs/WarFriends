@@ -4,8 +4,15 @@ using System.Text.Json;
 
 namespace War.BattleServer;
 
+internal enum CoopObstaclePreparationPhase
+{
+    GameplayUpdate,
+    EditorCallback
+}
+
 internal sealed record CoopObstaclePoseClock(ulong ElapsedTick,
-    IReadOnlyList<ulong> EmittedRoundTicks, ulong? CrawlReturnTick = null);
+    IReadOnlyList<ulong> EmittedRoundTicks, ulong? CrawlReturnTick = null,
+    CoopObstaclePreparationPhase PreparationPhase = CoopObstaclePreparationPhase.GameplayUpdate);
 
 /// <summary>Selects diagnostic obstacle poses; sampled colliders are not complete hit authority.</summary>
 internal sealed partial class CoopObstaclePoseCatalog
@@ -21,13 +28,15 @@ internal sealed partial class CoopObstaclePoseCatalog
     private const int MaximumPrefixLength = 128;
     private readonly EnemyPoseCatalog _clips;
     private readonly IReadOnlyList<PlayerHitbox> _blendFrame;
+    private readonly IReadOnlyList<PlayerHitbox> _gameplayBlendFrame;
     private readonly ulong _firstQueuedFireTick;
 
     private CoopObstaclePoseCatalog(EnemyPoseCatalog clips, IReadOnlyList<PlayerHitbox> blendFrame,
-        ulong firstQueuedFireTick)
+        IReadOnlyList<PlayerHitbox> gameplayBlendFrame, ulong firstQueuedFireTick)
     {
         _clips = clips;
         _blendFrame = blendFrame;
+        _gameplayBlendFrame = gameplayBlendFrame;
         _firstQueuedFireTick = firstQueuedFireTick;
     }
 
@@ -56,7 +65,8 @@ internal sealed partial class CoopObstaclePoseCatalog
             frame.GetProperty("states").EnumerateArray().Any(state =>
                 state.GetProperty("name").GetString() == FireClip + " - Queued Clone"))
             .GetProperty("tick").GetInt32();
-        return new CoopObstaclePoseCatalog(clips, ReadBlendFrame(samples[(int)BlendFrameTick], clips), firstFire);
+        return new CoopObstaclePoseCatalog(clips, ReadBlendFrame(samples[(int)BlendFrameTick], clips),
+            ReadGameplayBlendFrame(path, clips), firstFire);
     }
 
     internal IReadOnlyList<PlayerHitbox> Place(CoopObstaclePoseClock clock, Vector3 rootPosition,
@@ -67,7 +77,7 @@ internal sealed partial class CoopObstaclePoseCatalog
         rootRotation = Quaternion.Normalize(rootRotation);
         if (clock.ElapsedTick == BlendFrameTick)
         {
-            return PlaceBlendFrame(rootPosition, rootRotation, prefix);
+            return PlaceBlendFrame(_blendFrame, rootPosition, rootRotation, prefix);
         }
         if (clock.ElapsedTick == 0)
         {
@@ -107,6 +117,10 @@ internal sealed partial class CoopObstaclePoseCatalog
     {
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(clock.EmittedRoundTicks);
+        if (!Enum.IsDefined(clock.PreparationPhase))
+        {
+            throw new InvalidDataException("Unknown obstacle preparation phase.");
+        }
         if (clock.EmittedRoundTicks.Count > MaximumVolleyRounds)
         {
             throw new InvalidDataException("Obstacle volley exceeds the recovered round cap.");
@@ -165,9 +179,10 @@ internal sealed partial class CoopObstaclePoseCatalog
         return Array.AsReadOnly(accepted.ToArray());
     }
 
-    private IReadOnlyList<PlayerHitbox> PlaceBlendFrame(Vector3 position, Quaternion rotation, string prefix)
+    private static IReadOnlyList<PlayerHitbox> PlaceBlendFrame(IReadOnlyList<PlayerHitbox> parts,
+        Vector3 position, Quaternion rotation, string prefix)
     {
-        return _blendFrame.Select(shape => new PlayerHitbox(prefix + shape.SourcePath, shape.Kind, shape.Weight,
+        return parts.Select(shape => new PlayerHitbox(prefix + shape.SourcePath, shape.Kind, shape.Weight,
             position + Vector3.Transform(shape.Center, rotation), shape.Size,
             Quaternion.Normalize(rotation * shape.Rotation), shape.Radius, Vector3.Zero, 0,
             shape.Enabled, shape.Active)).ToArray();

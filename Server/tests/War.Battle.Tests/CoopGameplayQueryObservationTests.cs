@@ -12,32 +12,46 @@ internal static class CoopGameplayQueryObservationTests
 
     internal static void Run(string directory, BattleCombatContent content)
     {
-        using JsonDocument queryDocument = Read(directory, "coop-gameplay-query-unity-reference.json");
-        using JsonDocument postDocument = Read(directory, "coop-gameplay-query-post-reference.json");
+        RunObservation(directory, content, new Scenario("coop-gameplay-query-unity-reference.json",
+            "coop-gameplay-query-post-reference.json", 5, 1));
+    }
+
+    internal static void RunPreparation(string directory, BattleCombatContent content)
+    {
+        RunObservation(directory, content, new Scenario("coop-gameplay-preparation-query-reference.json",
+            "coop-gameplay-preparation-post-reference.json", 6, 0));
+    }
+
+    private static void RunObservation(string directory, BattleCombatContent content, Scenario scenario)
+    {
+        using JsonDocument queryDocument = Read(directory, scenario.QueryFile);
+        using JsonDocument postDocument = Read(directory, scenario.PostFile);
         JsonElement observation = queryDocument.RootElement;
         JsonElement samples = observation.GetProperty("samples");
         JsonElement postSamples = postDocument.RootElement.GetProperty("samples");
         Require(observation.GetProperty("version").GetInt32() == 2 &&
-            postDocument.RootElement.GetProperty("version").GetInt32() == 5,
+            postDocument.RootElement.GetProperty("version").GetInt32() == scenario.PostVersion,
             "The paired observations must use gameplay round emission.");
         Require(samples.GetArrayLength() == ExpectedFrames && postSamples.GetArrayLength() == ExpectedFrames + 1,
             "The observer must capture every frame after editor initialization.");
         int compared = 0;
         ulong[] rounds = [11, 22];
         ulong crawlReturn = postSamples.EnumerateArray().First(frame =>
-            frame.GetProperty("tick").GetUInt64() > rounds[^1] &&
+            frame.GetProperty("tick").GetInt64() > (long)rounds[^1] &&
             frame.GetProperty("states").EnumerateArray().Any(state =>
                 state.GetProperty("name").GetString() == "stand_up_crawl"))
             .GetProperty("tick").GetUInt64();
         foreach (JsonElement sample in samples.EnumerateArray())
         {
             int tick = sample.GetProperty("tick").GetInt32();
-            JsonElement previous = postSamples[tick - 1];
+            JsonElement previous = postSamples[tick - scenario.FirstTick];
             Require(previous.GetProperty("unityFrame").GetInt32() + 1 ==
                 sample.GetProperty("unityFrame").GetInt32(), "Query and previous post frames must be contiguous.");
             compared += CompareParts(sample, previous, observation);
             var clock = new CoopObstaclePoseClock((ulong)tick,
-                rounds.Where(round => round <= (ulong)tick).ToArray(), crawlReturn);
+                rounds.Where(round => round <= (ulong)tick).ToArray(), crawlReturn,
+                scenario.PostVersion == 6 ? CoopObstaclePreparationPhase.GameplayUpdate
+                    : CoopObstaclePreparationPhase.EditorCallback);
             VerifySelectedPose(content, clock, sample, previous);
             Require(Vector3.Distance(Vector(sample.GetProperty("muzzle")),
                 Vector(previous.GetProperty("muzzle"))) <= DistanceTolerance,
@@ -45,7 +59,8 @@ internal static class CoopGameplayQueryObservationTests
         }
 
         Require(compared == ExpectedFrames * ExpectedParts, "Every body and head query must be compared.");
-        Console.WriteLine($"PASS: {compared} native gameplay queries match host rays and previous sampled poses");
+        Console.WriteLine($"PASS: {compared} native gameplay queries match host rays and previous sampled poses " +
+            $"from {scenario.QueryFile}");
     }
 
     private static void VerifySelectedPose(BattleCombatContent content, CoopObstaclePoseClock clock,
@@ -109,9 +124,18 @@ internal static class CoopGameplayQueryObservationTests
 
     private static JsonDocument Read(string directory, string fileName)
     {
-        string expectedHash = fileName == "coop-gameplay-query-unity-reference.json"
-            ? "156f9bbba88ebd3b2da95f5ef3f239927f2526c2c8c033af64c103af309ea999"
-            : "bb884d964c361cf12108c7a82c4cfdfcd075efe77f92dfcaf388849d2a0c8c79";
+        string expectedHash = fileName switch
+        {
+            "coop-gameplay-query-unity-reference.json" =>
+                "156f9bbba88ebd3b2da95f5ef3f239927f2526c2c8c033af64c103af309ea999",
+            "coop-gameplay-query-post-reference.json" =>
+                "bb884d964c361cf12108c7a82c4cfdfcd075efe77f92dfcaf388849d2a0c8c79",
+            "coop-gameplay-preparation-query-reference.json" =>
+                "8a1c0a49fd0f6d83faabd0d3a9039384a12e0812817092910cf251b2c419effe",
+            "coop-gameplay-preparation-post-reference.json" =>
+                "46a8d4893f4adc0fc6aca4eb8af2063619dc76e47045192269054369cee71156",
+            _ => throw new InvalidDataException("Unknown gameplay observation file.")
+        };
         byte[] bytes = File.ReadAllBytes(Path.Combine(directory, fileName));
         Require(Convert.ToHexStringLower(SHA256.HashData(bytes)) == expectedHash,
             "The gameplay observation must match the reviewed Unity capture.");
@@ -130,4 +154,6 @@ internal static class CoopGameplayQueryObservationTests
             throw new InvalidDataException(message);
         }
     }
+
+    private sealed record Scenario(string QueryFile, string PostFile, int PostVersion, int FirstTick);
 }

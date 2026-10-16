@@ -45,12 +45,17 @@ public static class UnityCoopObstacleVolleyPoseExport
     /// <summary>Exposes the next source-relative frame after the editor initializes playback.</summary>
     public static int GameplayTick
     {
-        get { return _animation == null ? -1 : Samples.Count; }
+        get { return _animation == null ? -1 : Samples.Count - (UsesGameplayPreparation ? 1 : 0); }
     }
 
     /// <summary>Resets the shot animation after the gameplay observer records the firing pose.</summary>
     public static void EmitGameplayRound(int tick)
     {
+        if (UsesGameplayPreparation && tick == 0)
+        {
+            _controller.ShootFromCrawl(InitialHideSeconds, ShotSpeed, Weapon.WeaponType.Riffle);
+            _startedTime = Time.time;
+        }
         _deadlineBeforeShot = (float)CrawlDeadlineField.GetValue(_controller);
         if (_roundTicks.Contains(tick))
         {
@@ -62,6 +67,24 @@ public static class UnityCoopObstacleVolleyPoseExport
     private static bool UsesGameplayEmission
     {
         get { return Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_EMISSION_PHASE") == "update"; }
+    }
+
+    private static bool UsesGameplayPreparation
+    {
+        get { return Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_PREPARATION_PHASE") == "update"; }
+    }
+
+    private static int ObservationSchemaVersion
+    {
+        get
+        {
+            if (UsesGameplayPreparation)
+            {
+                return 6;
+            }
+
+            return UsesGameplayEmission ? 5 : ObservationVersion;
+        }
     }
 
     static UnityCoopObstacleVolleyPoseExport()
@@ -85,6 +108,12 @@ public static class UnityCoopObstacleVolleyPoseExport
         if (UsesGameplayEmission)
         {
             RequireEnvironment("WAR_COOP_OBSTACLE_QUERY_OUTPUT");
+        }
+        string preparationPhase = Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_PREPARATION_PHASE");
+        if ((!string.IsNullOrEmpty(preparationPhase) && preparationPhase != "update") ||
+            (UsesGameplayPreparation && !UsesGameplayEmission))
+        {
+            throw new InvalidOperationException("Gameplay preparation requires gameplay round emission.");
         }
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(EnemyPath);
@@ -157,7 +186,7 @@ public static class UnityCoopObstacleVolleyPoseExport
             {
                 _observedReturnToCrawl = true;
             }
-            CaptureFrame(tick);
+            CaptureFrame(UsesGameplayPreparation ? tick - 1 : tick);
             if (Samples.Count >= (int)_plan["captureFrames"])
             {
                 Finish();
@@ -203,7 +232,10 @@ public static class UnityCoopObstacleVolleyPoseExport
         _controller.Resume();
         _controller.enabled = true;
         PrimeCrawl();
-        _controller.ShootFromCrawl(InitialHideSeconds, ShotSpeed, Weapon.WeaponType.Riffle);
+        if (!UsesGameplayPreparation)
+        {
+            _controller.ShootFromCrawl(InitialHideSeconds, ShotSpeed, Weapon.WeaponType.Riffle);
+        }
         _startedTime = Time.time;
     }
 
@@ -296,7 +328,7 @@ public static class UnityCoopObstacleVolleyPoseExport
         File.WriteAllText(RequireEnvironment("WAR_COOP_OBSTACLE_POSE_OUTPUT"),
             JsonConvert.SerializeObject(new
             {
-                version = UsesGameplayEmission ? 5 : ObservationVersion,
+                version = ObservationSchemaVersion,
                 proceduralLookEnabled = !_controller.disableLookRot,
                 client = "1.4.0",
                 unity = Application.unityVersion,

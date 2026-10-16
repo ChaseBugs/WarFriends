@@ -950,6 +950,7 @@ internal static class CombatContentTests
         CoopObstaclePoseCatalogTests.Run(directory, content);
         CoopObstaclePoseCatalogTests.Run(directory, content, "coop-obstacle-volley-neutral-look-reference.json");
         CoopGameplayQueryObservationTests.Run(directory, content);
+        CoopGameplayQueryObservationTests.RunPreparation(directory, content);
         CoopObstacleProofIntegrityTests.Run(directory, content);
         CoopObstacleCrawlReturnClockTests.Run();
         CoopObstacleTurnObservationTests.Run(directory, content);

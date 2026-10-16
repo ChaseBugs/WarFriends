@@ -929,6 +929,12 @@ if(args is ["--combat-content-only"])
     return;
 }
 
+if (args is ["--coop-gameplay-query-only"])
+{
+    CoopGameplayQueryTestRunner.Run();
+    return;
+}
+
 if(args is ["--sabotage-target-only"])
 {
     Console.WriteLine($"PASS: {SabotageTargetPolicyTests.Run()} Sabotage target assertions");

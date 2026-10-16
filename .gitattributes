@@ -64,3 +64,5 @@ Server/tools/UnityCoopObstacleQueryProbe.cs text eol=lf
 Server/tools/UnityCoopObstacleQueryInstaller.cs text eol=lf
 Server/content/coop-gameplay-query-unity-reference.json text eol=crlf
 Server/content/coop-gameplay-query-post-reference.json text eol=crlf
+Server/content/coop-gameplay-preparation-query-reference.json text eol=crlf
+Server/content/coop-gameplay-preparation-post-reference.json text eol=crlf
