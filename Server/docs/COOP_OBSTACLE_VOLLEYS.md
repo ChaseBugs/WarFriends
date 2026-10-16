@@ -66,7 +66,14 @@ so the transition remains readable.
 A clean Release build passed with zero warnings/errors, followed by 15 focused
 clock assertions (`--coop-obstacle-clock-only`). The test also participates in
 the full Battle test entry point, which has not been rerun for this addition.
-The clock is not yet consumed by `CoopMatchRuntime`; the existing first-volley
-and reposition guards remain. Next work must replace those together, bind actual
-last-round completion, preserve first-target diagnostics, and verify movement,
-repeated volley identity and collision posture before opening any damage path.
+The clock now binds accepted obstacle shot preparation and actual last-round
+completion in `CoopMatchRuntime.ObstacleVolleys.cs`. Its post-batch delay uses
+one shared source draw with the windup's `NextEligibleTick`. Runtime snapshots
+expose an immutable diagnostic clock view; path reset, death and terminal cleanup
+remove the stored state. First-target diagnostics remain unchanged.
+
+The focused combat-content suite passed 26,368 checks, including the new runtime
+preparation/completion invariants. The first-volley selection and reposition
+guards still remain. Next work must replace those together, verify repeated
+volley identities and movement, then compare collision posture before opening
+any damage path. Co-op registration remains closed.

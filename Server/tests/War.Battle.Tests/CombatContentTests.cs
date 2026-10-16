@@ -3275,6 +3275,13 @@ internal static class CombatContentTests
                 .Length + 0.05f) * MatchManifest.TickRate);
         CoopInfantryShotWindup? crawlWindup = arrivalRuntime
             .InfantryShotWindup(arrivalEnemy.EntityId);
+        CoopObstacleVolleySnapshot? preparedObstacle = arrivalRuntime.ObstacleVolleyState(arrivalEnemy.EntityId);
+        if (preparedObstacle == null || !preparedObstacle.HasPendingShot || preparedObstacle.IsCrawling ||
+            preparedObstacle.NextPositionTick != firstShootTick + 90)
+        {
+            throw new Exception("Obstacle preparation lost its source 2-3-second position clock.");
+        }
+
         if (arrivalRuntime.ObserveIdleAssaulterMuzzle(
                 arrivalEnemy.EntityId) != null ||
             arrivalRuntime.PlanDiagnosticWalkingTargetAtCover(
@@ -3629,6 +3636,14 @@ internal static class CombatContentTests
         if (completedBatch?.CompletedTick != lastRoundTick ||
             completedBatch.NextEligibleTick != expectedNextShot)
             throw new Exception("Co-op rifle missed its source batch end.");
+        CoopObstacleVolleySnapshot? completedObstacle = arrivalRuntime.ObstacleVolleyState(arrivalEnemy.EntityId);
+        if (completedObstacle == null || completedObstacle.HasPendingShot || !completedObstacle.IsCrawling ||
+            completedObstacle.NextShotTick != expectedNextShot ||
+            completedObstacle.NextPositionTick != preparedObstacle.NextPositionTick)
+        {
+            throw new Exception("The final obstacle round did not publish one conserved volley clock.");
+        }
+
         arrivalRuntime.Advance(afterBatch);
         if (arrivalRuntime.InfantryRoundIntents(
                 arrivalEnemy.EntityId).Count != expectedBatchCount)

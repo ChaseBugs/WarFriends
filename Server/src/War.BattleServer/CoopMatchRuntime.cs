@@ -101,7 +101,7 @@ internal sealed record CoopWalkingShotStartAim(
 /// cannot accept combat commands until host AI and player controls are wired.
 /// Registration remains closed while this runtime is incomplete.
 /// </summary>
-internal sealed class CoopMatchRuntime : IMatchRuntime
+internal sealed partial class CoopMatchRuntime : IMatchRuntime
 {
     private const float CornerHideAfterSeconds = 0.7f;
     private const float CornerHideAfterRoundSeconds = 0.5f;
@@ -1106,6 +1106,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerFirstShotAttempts.Remove(enemy.EntityId);
         cornerLatestShotAttempts.Remove(enemy.EntityId);
         cornerNoTargetRetryTicks.Remove(enemy.EntityId);
+        _obstacleVolleyClocks.Remove(enemy.EntityId);
         infantryShotWindups.Remove(enemy.EntityId);
         infantryRoundIntents.Remove(enemy.EntityId);
         nextCornerChangeTicks.Remove(enemy.EntityId);
@@ -1332,19 +1333,23 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private ulong FirstInfantryShotEligibleTick(
         BattleCoopEnemySpawn enemy, ulong reachedTick)
     {
+        ObstacleShotDelay delay = DrawInfantryShotDelay(enemy);
+        float seconds = delay.MinimumSeconds +
+            (delay.MaximumSeconds - delay.MinimumSeconds) * delay.Fraction;
+        return FirstTickAfterDelay(reachedTick, seconds);
+    }
+
+    private ObstacleShotDelay DrawInfantryShotDelay(BattleCoopEnemySpawn enemy)
+    {
         ArmyBaseShotStats shot = enemy.CardUnit
             ? combat.CardShot(enemy.Behaviour, enemy.CardProgress)
             : combat.OrdinaryShot(enemy.Behaviour, enemy.Level);
         float fraction = chooseInfantryShotFraction();
-        if (!float.IsFinite(fraction) || fraction is < 0 or >= 1)
-            throw new InvalidDataException(
-                "Co-op infantry shot choice must be in [0, 1).");
-
-        float delaySeconds = shot.MinShootTime +
-            (shot.MaxShootTime - shot.MinShootTime) * fraction;
-        // EnemyController checks mTime > mNextShootTime. At fixed 30 Hz,
-        // eligibility starts on the first tick strictly after the delay.
-        return FirstTickAfterDelay(reachedTick, delaySeconds);
+        if (!float.IsFinite(fraction) || fraction < 0 || fraction >= 1)
+        {
+            throw new InvalidDataException("Co-op infantry shot choice must be in [0, 1).");
+        }
+        return new ObstacleShotDelay(shot.MinShootTime, shot.MaxShootTime, fraction);
     }
 
     private ulong FirstInfantryRepositionTick(ulong reachedTick)
@@ -1422,6 +1427,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 if (!exposed)
                     continue;
             }
+            BeginObstacleVolleyClock(entityId, arrival);
             infantryFirstTargets.TryAdd(entityId, plan);
             infantryFirstPlacedTargets.TryAdd(entityId, placedTarget);
             if (enemyPoses != null)
@@ -1774,8 +1780,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 infantryShotWindups[entityId] = windup with
                 {
                     CompletedTick = tick,
-                    NextEligibleTick = FirstInfantryShotEligibleTick(
-                        shootingEnemy, tick)
+                    NextEligibleTick = CompleteInfantryVolleyClock(shootingEnemy)
                 };
             }
             if (real && diagnosticWorld != null)
@@ -2785,6 +2790,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             cornerFirstShotAttempts.Remove(entityId);
             cornerLatestShotAttempts.Remove(entityId);
             cornerNoTargetRetryTicks.Remove(entityId);
+            _obstacleVolleyClocks.Remove(entityId);
             infantryShotWindups.Remove(entityId);
             infantryRoundIntents.Remove(entityId);
             nextCornerChangeTicks.Remove(entityId);
@@ -3904,6 +3910,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         cornerFirstShotAttempts.Clear();
         cornerLatestShotAttempts.Clear();
         cornerNoTargetRetryTicks.Clear();
+        _obstacleVolleyClocks.Clear();
         infantryShotWindups.Clear();
         infantryRoundIntents.Clear();
         diagnosticFlights.Clear();

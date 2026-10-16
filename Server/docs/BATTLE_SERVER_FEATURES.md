@@ -1133,5 +1133,8 @@ rules. This investigation changes no combat authority or registration status.
 
 B22 now has a source-bound `CoopObstacleVolleyClock` foundation with shoot-first
 priority, pending/crawling state and both position/shot clocks. A clean build
-and 15 focused timing/invalid-input assertions pass. Runtime consumption is
-still pending; this does not enable repeated co-op volleys or registration.
+and 15 focused timing/invalid-input assertions pass. The runtime now binds first
+obstacle preparation and last-round completion to that clock, sharing its source
+cooldown draw with the windup. Combat-content regression reports 26,368 checks
+passing, including both binding invariants. Repeated selection and reposition
+integration remain pending; this does not enable repeated volleys or registration.
