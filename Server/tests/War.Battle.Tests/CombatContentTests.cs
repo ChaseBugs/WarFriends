@@ -17990,7 +17990,10 @@ internal static class CombatContentTests
             {
                 ArmySpecialUpgradeIndexes = [-1],
                 ShieldLevel = 0,
-                PlayerLevel = 8
+                PlayerLevel = 8,
+                ArmyHealthFactors = player.PlayerId == soldierOwner
+                    ? [new ArmyHealthFactors(0.01f, 0.01f)]
+                    : [new ArmyHealthFactors(1f, 1f)]
             }).ToArray()
         };
         var liveHeadshotMatch = new MatchEngine(liveHeadshotManifest, content: content, armyChoice: _ => 0);
@@ -18022,6 +18025,8 @@ internal static class CombatContentTests
             headshotVictim = liveHeadshotMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities.SingleOrDefault();
         }
         Check(headshotVictim != null, "live headshot target deploys as one source infantry entity");
+        Check(headshotVictim!.Health == headshotVictim.MaxHealth,
+            "one-hit infantry starts at its full host-authored health");
         ulong headshotCommandId = 2;
         while (liveHeadshotMatch.ArmyHealth(headshotVictim!.EntityKey) != null &&
                headshotTick < 1500 && !liveHeadshotMatch.Terminal)
@@ -18049,8 +18054,11 @@ internal static class CombatContentTests
             "normal player Fire commands kill the deployed source infantry");
         var liveHeadshotScore = liveHeadshotMatch.BonusProgress.ScoreSnapshot(helicopterOwner);
         Check(liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 1 &&
-              liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1,
-            "lethal player Fire head contact credits one private HeadShot skill-shot row");
+              liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
+              liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
+              liveHeadshotMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedEnemyHits == 1,
+            "one lethal player Fire head contact credits Kill, HeadShot, and OneHitKill");
         liveHeadshotMatch.Command(helicopterOwner, new MatchCommand
         {
             CommandId = headshotCommandId++,
@@ -18062,8 +18070,10 @@ internal static class CombatContentTests
             .Single(player => player.PlayerId == helicopterOwner);
         Check(liveHeadshotPublic.ConfirmedSkillShotCounts.Count == 0 &&
               liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
-                  row.Flag == PvpArmyKillSkillShotPolicy.HeadShot).Count == 1,
-            "terminal evidence retains the host-confirmed headshot without exposing private counts to peers");
+                  row.Flag == PvpArmyKillSkillShotPolicy.HeadShot).Count == 1 &&
+              liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.OneHitKill).Count == 1,
+            "terminal evidence retains headshot and one-hit counts without exposing them to peers");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

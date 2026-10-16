@@ -195,7 +195,9 @@ Client presentation remain open.
 The confirmed player-owned army death scorer now derives `OneHitKill` from the root's full health
 before one lethal host damage callback, following `DestroyableObject.DoDamage`. A live bonus-grenade
 burst confirms one full-health infantry earns the flag while three weakened infantry do not. Other
-weapon families and conditional kill flags remain open.
+weapon families and conditional kill flags remain open. A live rifle headshot
+against low-health infantry now confirms one lethal bullet contact and one
+private `OneHitKill` count.
 
 The player-bullet infantry death path also derives `HeadShot` from the pinned
 head collider path and weight, reflecting the Client's `Shot` plus part-index

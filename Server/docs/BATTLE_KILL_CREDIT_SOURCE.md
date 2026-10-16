@@ -29,8 +29,10 @@ before one lethal damage callback. Confirmed player bullet, grenade, mine, and
 Bazooka army deaths now add `OneHitKill` from the host's prior root health.
 Damaged roots do not receive it; a live collected-grenade burst now kills one
 full-health and three previously weakened infantry, awarding one one-hit row.
-Sabotage retains its explicit source `isOneHit` assertion. Normal rifle,
-mine, and Bazooka full-health death paths still need live one-hit proof.
+Sabotage retains its explicit source `isOneHit` assertion. A live player rifle
+headshot against a host-authored low-health infantry also confirms one lethal
+bullet contact, one `OneHitKill`, and the private terminal count. Mine and
+Bazooka full-health death paths still need live one-hit proof.
 
 `EnemyController` marks `isHeadShot` only when a `Shot` death arrived through
 `DestroyableObjectpart` index one. The pinned infantry pose distinguishes that
