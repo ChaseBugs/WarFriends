@@ -1338,3 +1338,11 @@ relabelled `Ended/forfeit`; tests cover waiting, one-ready, exact replay and a
 mission genuinely started at tick zero. Command dispatch now uses short
 domain handlers. Running-mission peer departure/spectating/survivor continuation
 remain explicitly open in [the cancellation report](COOP_PRESTART_CANCELLATION.md).
+
+B22/B25 now have an internal survivor mission transition that retains the
+original objective, deadline, AI spawning and frozen starting-owner score
+eligibility after one peer leaves. Source-catalog tests cover all four mission
+types, late host-confirmed attribution and rejection of former loading owners.
+Normal runtime Forfeit, peer deactivation, spectator presentation and per-player
+terminal settlement remain open; this does not enable survivor gameplay.
+See [the survivor mission boundary](COOP_SURVIVOR_MISSION.md).

@@ -11,6 +11,7 @@ public sealed class CoopMissionEngine
 {
     private readonly HashSet<string> participants = new(StringComparer.Ordinal);
     private readonly HashSet<string> ready = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _startedParticipants = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> participantScores = new(StringComparer.Ordinal);
     private readonly Dictionary<string, (ulong LastTick, int Count)> playerKillStreaks =
         new(StringComparer.Ordinal);
@@ -69,6 +70,7 @@ public sealed class CoopMissionEngine
         lastReadyTick = tick;
         if (participants.Count == 2 && ready.Count == 2)
         {
+            _startedParticipants.UnionWith(participants);
             objective.Start(tick);
             spawns.Start(tick);
         }
@@ -85,6 +87,22 @@ public sealed class CoopMissionEngine
             objective.Fail();
             spawns.Finish();
         }
+        return true;
+    }
+
+    /// <summary>Preserves a running mission when the host deactivates one peer and retains a survivor.</summary>
+    internal bool ContinueAfterPeerDeparture(string playerId)
+    {
+        if (!Started || Outcome != MissionOutcome.InProgress || participants.Count != 2 ||
+            !participants.Contains(playerId))
+        {
+            return false;
+        }
+
+        // GameControllerCoop disables a departing peer without ending the master's mission.
+        // The runtime must separately remove that player's inputs, targeting and presentation.
+        participants.Remove(playerId);
+        ready.Remove(playerId);
         return true;
     }
 
@@ -147,10 +165,14 @@ public sealed class CoopMissionEngine
     internal bool ConfirmAttributedAiDeath(ulong entityId, string creditedPlayerId,
         CoopEnemyKillCredit credit, CoopSkillShotScoreCatalog scores, ulong tick)
     {
-        if (missionType != "Score" || !participants.Contains(creditedPlayerId) ||
+        // Peer deactivation does not erase ownership of host-confirmed attacks or deployed units.
+        // Only the frozen starting roster is eligible; the caller still proves the combat event.
+        if (missionType != "Score" || !_startedParticipants.Contains(creditedPlayerId) ||
             !Started || Outcome != MissionOutcome.InProgress ||
             tick < StartTick || tick >= DeadlineTick)
+        {
             return false;
+        }
 
         ArgumentNullException.ThrowIfNull(scores);
         int nextStreak = 0;

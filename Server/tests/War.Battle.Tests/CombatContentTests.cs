@@ -84,6 +84,7 @@ internal static class CombatContentTests
             Path.Combine(directory, "recovered-coop-skillshot-scores.json"),
             content.Stats.SceneRevision, content.Stats.Revision);
         int coopAssertions = VerifyCoopMissionEngine(catalog, skillShots);
+        CoopSurvivorMissionTests.Run(catalog, skillShots);
         int allocationAssertions = VerifyCoopAllocation(
             directory, catalog, content);
         int skillShotAssertions = VerifyCoopSkillShotScores(skillShots);
