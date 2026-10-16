@@ -115,6 +115,12 @@ public sealed class CoopEnemyCombatCatalog
             normalUpgradeIndex, null, null);
     }
 
+    /// <summary>Returns the validated ArmyUpgrades player damage ratios for a recovered behavior.</summary>
+    internal ArmyPlayerDamagePolicy GetPlayerDamagePolicy(string behaviour)
+    {
+        return army.PlayerDamagePolicy(UnitIdFor(behaviour));
+    }
+
     internal ArmyBaseShotStats CardShot(string behaviour, float progress)
     {
         return cards.Shot(UnitIdFor(behaviour), progress);

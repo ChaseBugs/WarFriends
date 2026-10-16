@@ -53,9 +53,10 @@ internal static class CoopAssaulterRoundProof
 internal static class CoopAssaulterPlayerDamagePolicy
 {
     internal static ResolvedPlayerDamage FromImpact(
-        CoopAssaulterPlayerImpactPlan impact)
+        CoopAssaulterPlayerImpactPlan impact, CoopEnemyCombatCatalog combat)
     {
         ArgumentNullException.ThrowIfNull(impact);
+        ArgumentNullException.ThrowIfNull(combat);
         if (impact.ProjectileId == 0 || impact.EnemyEntityId == 0 ||
             !Guid.TryParseExact(impact.PlayerId, "N", out _) ||
             impact.PlayerId != impact.PlayerId.ToLowerInvariant() ||
@@ -68,10 +69,13 @@ internal static class CoopAssaulterPlayerDamagePolicy
 
         // Ammo.DoDamage calls DestroyableObject.Shoot with the unit's weapon.
         // Shoot applies the hit part's shot coefficient before OnDamage.
-        // PlayerDamage applies that coefficient through PartWeight and then
-        // applies the player's no-damage chance from its signed definition.
+        // DestroyableObjectPlayer then applies the weapon's source ArmyUpgrades player ratio.
+        // Keep both coefficients separate so PlayerDamage preserves the recovered multiplication order.
+        ArmyPlayerDamagePolicy policy = combat.GetPlayerDamagePolicy("Assaulter");
         return new ResolvedPlayerDamage(impact.SourceDamage,
-            CombatDamageType.Shot, PartWeight: impact.PartWeight);
+            CombatDamageType.Shot, PartWeight: impact.PartWeight,
+            PlayerCoefficient: policy.PlayerDamageRatio,
+            PlayerOvertimeCoefficient: policy.OvertimePlayerDamageRatio);
     }
 }
 

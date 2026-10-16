@@ -2988,26 +2988,42 @@ internal static class CombatContentTests
                 arrivalEnemy, enemyCombat, content.Poses) != null)
             throw new Exception("Diagnostic player impact lost source ownership.");
         ResolvedPlayerDamage plannedDamage =
-            CoopAssaulterPlayerDamagePolicy.FromImpact(playerPlan);
+            CoopAssaulterPlayerDamagePolicy.FromImpact(playerPlan, enemyCombat);
+        // Ammo.DoDamage addresses the collided object even when the AI selected the other admitted ally.
+        string otherTargetPlayer = bodyHit.PlayerId == firstPlayer ? secondPlayer : firstPlayer;
+        CoopAssaulterPlayerImpactPlan? crossfirePlan = CoopAssaulterPlayerImpactPlanner.FromDiagnostic(
+            playerResult, sourcePlayerRound with { TargetPlayerId = otherTargetPlayer },
+            arrivalEnemy, enemyCombat, content.Poses);
+        if (crossfirePlan?.PlayerId != bodyHit.PlayerId || crossfirePlan.PlayerId == otherTargetPlayer ||
+            crossfirePlan.PartPath != playerPlan.PartPath || crossfirePlan.SourceDamage != playerPlan.SourceDamage)
+        {
+            throw new Exception("Co-op source damage must follow the actual collided ally rather than the aim target.");
+        }
         PlayerDamageResult expectedHit = PlayerDamage.Resolve(
             new PlayerCombatManifest(1000), 1000, plannedDamage,
             sameFraction: false, self: false, randomRoll: 1f);
-        float sourceShotDamage = expectedSourceDamage * bodyHit.PartWeight;
+        ArmyPlayerDamagePolicy sourcePlayerPolicy = content.Army.PlayerDamagePolicy(
+            enemyCombat.UnitIdFor("Assaulter"));
+        float sourceShotDamage = expectedSourceDamage * bodyHit.PartWeight * sourcePlayerPolicy.PlayerDamageRatio;
         PlayerDamageResult avoidedHit = PlayerDamage.Resolve(
             new PlayerCombatManifest(1000, NoDamageChance: 1), 1000,
             plannedDamage, sameFraction: false, self: false, randomRoll: 0f);
         if (plannedDamage.Type != CombatDamageType.Shot ||
             !plannedDamage.HasWeapon ||
             plannedDamage.PartWeight != bodyHit.PartWeight ||
+            plannedDamage.PlayerCoefficient != sourcePlayerPolicy.PlayerDamageRatio ||
+            plannedDamage.PlayerOvertimeCoefficient != sourcePlayerPolicy.OvertimePlayerDamageRatio ||
             expectedHit.Damage != sourceShotDamage ||
             expectedHit.Health != 1000 - sourceShotDamage ||
             avoidedHit.Health != 1000 ||
             MathF.Abs(avoidedHit.Damage) > 0.0001f)
-            throw new Exception("Co-op unit shot lost the Client's part damage coefficient.");
+        {
+            throw new Exception("Co-op unit shot lost the Client's part or player damage coefficient.");
+        }
         try
         {
             CoopAssaulterPlayerDamagePolicy.FromImpact(playerPlan with
-                { SourceDamage = float.NaN });
+                { SourceDamage = float.NaN }, enemyCombat);
             throw new Exception("Invalid co-op unit damage was accepted.");
         }
         catch (InvalidDataException) { }

@@ -1238,3 +1238,10 @@ completed-result eviction and remain bounded by 64 active plus 64 completed
 entries. Actual host fixtures verify death, re-emission rejection, later-volley
 retention and history eviction. Impact plans remain diagnostic; damage authority
 is still incomplete.
+
+B22 diagnostic Assaulter player damage now requires the validated Army source
+policy and applies the recovered 0.5 player ratio after part weighting, with
+the separate overtime ratio retained. The previous conversion defaulted to one.
+Regression checks cover resolved health, no-damage refund and collided-ally
+identity independent of the intended aim target. Shield damage remains on its
+own unit-to-shield policy; this does not open live co-op damage authority.

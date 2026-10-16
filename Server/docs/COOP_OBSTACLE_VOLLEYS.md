@@ -84,6 +84,27 @@ volleys and actual completed-history eviction, checking origin conservation and
 the bounded record count on every tick. This repairs diagnostic provenance;
 it does not authorize player or shield damage or open co-op registration.
 
+## Player damage coefficients
+
+`SoldierBehaviour.ApplyWeaponsSetup` copies the family's
+`UpgradeSlots.playerDamageRatio` and overtime ratio into the weapon AmmoSetup.
+`DestroyableObject.Shoot` applies the hit-part coefficient, then
+`DestroyableObjectPlayer.DoDamage` multiplies by the appropriate weapon player
+ratio. The recovered Assaulter ArmyUpgrades row supplies 0.5 for both ratios.
+
+The diagnostic player damage conversion now requires the validated combat
+catalog and carries both source ratios into `ResolvedPlayerDamage` instead of
+silently selecting its default coefficient of one. The common resolver retains
+the existing part/player multiplication order and no-damage refund behavior.
+Shield impacts keep their separate source unit-to-shield coefficient.
+
+The regression checks the final damage/health calculation against the direct
+Army catalog projection, including part weight and no-damage refund. It also
+preserves actual collided-player identity when the AI's intended target is the
+other admitted ally, matching Ammo.DoDamage. These are trusted host planning
+inputs; no client-supplied hit or price can authorize damage. Live co-op damage
+remains closed until the collision gates are complete.
+
 ## Implemented runtime transitions
 
 `CoopObstacleVolleyClock` now starts at obstacle arrival and owns crawling/pending
