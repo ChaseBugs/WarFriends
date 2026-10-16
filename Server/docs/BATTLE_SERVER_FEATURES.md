@@ -262,14 +262,25 @@ each vehicle's own confirmed revenge marker. Humvee and Transporter use the
 shared path. A typed grenade-mode Humvee command now launches from its source
 muzzle, and its shot hits map cover without inventing player damage. A typed
 Transporter command emits real and fake rounds from separate source muzzles.
-Authenticated Humvee and Transporter attacks were also checked in all five
-recovered maps while the defender moved to another cover. Those starting
-positions produced no player damage; they do not establish direct-hit parity.
+The initial visibility guard for automatic Humvee and Transporter attacks uses the recovered
+`TurretSeesEnemy` visibility mask, offset, and first ordered `AllIn` target
+instead of requiring a bullet ray to hit the nearest player body point.
+All ten map/vehicle combinations launch real projectiles and reach host
+collisions while the defender changes cover, without a client vehicle-attack
+command. Reverting the visibility change makes that regression test fail
+because automatic fire never starts. This proves automatic firing and flight,
+not direct player-hit parity. Rechecking primary visibility after the aim tween
+and complete fire-time player shield/body/moving target selection and prediction
+from `TurretWeaponBasic.Fire` and `TransporterTurret.StartShooting` remain open.
+Run this regression with
+`dotnet run --project Server/tests/War.Battle.Tests -c Release -- --grenade-vehicles-only`.
 The grenade-mode normal vehicle flight no longer falls back to a fabricated
 target collision when `RifleMatchSimulation` is absent. Confirmed Humvee or
 Transporter player hits now mark the source vehicle for revenge, but neither
 has a live grenade-mode player-hit fixture yet. Air attacks and full
-cross-weapon parity remain open. An older M320 Tank fixture now earns
+cross-weapon parity remain open: `MatchEngine.DroneCanSee` still requires
+`RifleMatchSimulation` even though the grenade mode supplies a separate pose world.
+An older M320 Tank fixture now earns
 `RevengeKill` as well as its explosion and vehicle flags because the live Tank
 damages its eventual killer before the grenade lands; its expected score is
 114 rather than the former passive-Tank score of 104.

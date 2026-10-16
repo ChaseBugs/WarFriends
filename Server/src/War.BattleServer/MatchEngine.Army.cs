@@ -2525,11 +2525,12 @@ public sealed partial class MatchEngine
             turret.MaxShotRotation,turret.AimTime);}
         catch(InvalidDataException){return false;}
         var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,vehicle.Position,aim.Direction);
-        var delta=target-muzzle;float range=delta.Length();
-        if(!float.IsFinite(range)||range<.001f)return false;
-        var visible=TraceArmyVisibility(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
-        if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)
+        // TurretSeesEnemy checks static visibility to the first AllIn target.
+        // A bullet collision against the nearest body point is a different gate.
+        if (VisibleVehicleTurretTarget("player:" + opponent.Definition.PlayerId, muzzle) == null)
+        {
             return false;
+        }
         vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
         groundVehicleShotSpeed[entityKey]=army.UnitId=="ID_UNIT-TRANSPORTER"?attack.ShotSpeed:
             GroundVehicleAimPolicy.PlayerProjectileSpeed(turret,attack.ShotSpeed);
@@ -2627,7 +2628,7 @@ public sealed partial class MatchEngine
         return ArmyBodyShotTarget(playerId, body.TransformFileId);
     }
 
-    private DroneTargetDetails? VisibleCannonTarget(string targetId, Vector3 sightOrigin)
+    private DroneTargetDetails? VisibleVehicleTurretTarget(string targetId, Vector3 sightOrigin)
     {
         var candidate = DroneTargetSnapshot().FirstOrDefault(row =>
             row.Id == targetId && row.Alive && row.Visible);
@@ -2736,7 +2737,7 @@ public sealed partial class MatchEngine
         string targetId = target.DecoyId is ulong decoyId
             ? "decoy:" + decoyId.ToString(CultureInfo.InvariantCulture)
             : "player:" + target.Target;
-        var visibleTarget = VisibleCannonTarget(targetId, origin);
+        var visibleTarget = VisibleVehicleTurretTarget(targetId, origin);
         if (visibleTarget == null)
         {
             return;
@@ -2843,7 +2844,7 @@ public sealed partial class MatchEngine
         string targetId = target.DecoyId is ulong decoyId
             ? "decoy:" + decoyId.ToString(CultureInfo.InvariantCulture)
             : "player:" + target.Target;
-        var visibleTarget = VisibleCannonTarget(targetId, origin);
+        var visibleTarget = VisibleVehicleTurretTarget(targetId, origin);
         if (visibleTarget == null)
         {
             return;

@@ -783,6 +783,24 @@ if(args is ["--bazooka-only"])
     Console.WriteLine($"PASS: {focused} focused bazooka assertions");return;
 }
 
+if (args is ["--grenade-vehicles-only"])
+{
+    var vehicleContentRoot = new DirectoryInfo(AppContext.BaseDirectory);
+    while (vehicleContentRoot != null &&
+        !File.Exists(Path.Combine(vehicleContentRoot.FullName, "content/grenade-content-manifest.json")))
+    {
+        vehicleContentRoot = vehicleContentRoot.Parent;
+    }
+
+    if (vehicleContentRoot == null)
+    {
+        throw new Exception("Recovered grenade content artifact not found.");
+    }
+
+    GrenadeVehicleFlightTests.Run(Path.Combine(vehicleContentRoot.FullName, "content"));
+    return;
+}
+
 if(args is ["--grenade-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

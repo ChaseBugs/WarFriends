@@ -6,6 +6,8 @@ using War.Protocol;
 // current scene collisions for authenticated Humvee and Transporter attacks.
 internal static class GrenadeVehicleFlightTests
 {
+    private const ulong AutomaticFlightEndTick = 1100;
+
     private static readonly string DefenderId = new('a', 32);
     private static readonly string VehicleOwnerId = new('b', 32);
 
@@ -20,38 +22,62 @@ internal static class GrenadeVehicleFlightTests
         int checks = 0;
         VerifyHumveeFlight(content, map, ref checks);
         VerifyTransporterFlight(content, map, ref checks);
-        VerifyMovingTargetsAcrossScenes(content, ref checks);
+        VerifyAutomaticAttacksAcrossScenes(content, ref checks);
 
         Console.WriteLine($"PASS: {checks} grenade-mode vehicle flight assertions");
         return checks;
     }
 
-    private static void VerifyMovingTargetsAcrossScenes(
+    private static void VerifyAutomaticAttacksAcrossScenes(
         BattleCombatContent content, ref int checks)
     {
         foreach (RecoveredBattleMap map in content.Maps)
         {
             foreach (string unitId in new[] { "ID_UNIT-HUMVEE", "ID_UNIT-TRANSPORTER" })
             {
-                var (match, vehicle, tick) = PrepareVehicle(content, map, unitId, ref checks);
+                var (match, _, tick) = PrepareVehicle(content, map, unitId, ref checks);
                 var move = match.Command(DefenderId, new MatchCommand
                 {
                     CommandId = 2,
                     MoveCover = new MoveCoverCommand { Direction = 1 }
                 });
                 Check(move.Code == "moving", "Defender changes cover during vehicle fire.", ref checks);
-                StartAttack(match, vehicle, ref checks);
-                while (tick < 1100 && !match.Terminal)
-                {
-                    match.Advance(++tick);
-                }
-
-                BattlePlayerState defender = match.Snapshot().Players.Single(player =>
-                    player.PlayerId == DefenderId);
-                Check(defender.Health == defender.MaxHealth,
-                    $"{unitId} cannot invent player damage behind {map.Source} cover.", ref checks);
+                VerifyAutomaticFlight(match, tick, ref checks);
             }
         }
+    }
+
+    private static void VerifyAutomaticFlight(MatchEngine match, ulong tick, ref int checks)
+    {
+        ulong cursor = match.EventBatch(VehicleOwnerId, 0).LatestEventId;
+        var shotIds = new HashSet<ulong>();
+        int impactCount = 0;
+        while (tick < AutomaticFlightEndTick && !match.Terminal)
+        {
+            match.Advance(++tick);
+            var page = match.EventBatch(VehicleOwnerId, cursor);
+            foreach (MatchEvent battleEvent in page.Events)
+            {
+                if (battleEvent.Kind == MatchEventKind.Shot &&
+                    battleEvent.Reason is "vehicle" or "transporter")
+                {
+                    shotIds.Add(battleEvent.ProjectileId);
+                }
+
+                if (battleEvent.Kind == MatchEventKind.Impact &&
+                    shotIds.Contains(battleEvent.ProjectileId))
+                {
+                    impactCount++;
+                }
+            }
+
+            cursor = page.LatestEventId;
+        }
+
+        Check(shotIds.Count > 0,
+            "Source visibility allows automatic real vehicle fire without a client attack command.", ref checks);
+        Check(impactCount > 0,
+            "An automatically launched vehicle projectile reaches a host collision.", ref checks);
     }
 
     private static (MatchEngine Match, BattleArmyEntityState Vehicle, ulong Tick)

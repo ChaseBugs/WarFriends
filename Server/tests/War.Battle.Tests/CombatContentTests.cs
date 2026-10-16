@@ -19787,7 +19787,8 @@ internal static class CombatContentTests
             transporterCursor=page.Events[^1].EventId;
         }
         var splitShots=transporterEvents.Where(e=>e.Reason is "transporter" or "transporter-fake").ToArray();
-        Check(splitShots.Length is >=4 and <=6&&splitShots.Select(e=>MathF.Round(e.X,3)).Distinct().Count()>=2&&
+        // Automatic target acquisition can start another batch during this observation window.
+        Check(splitShots.Length>=4&&splitShots.Select(e=>MathF.Round(e.X,3)).Distinct().Count()>=2&&
               splitShots.Select(e=>e.Tick).Distinct().Count()>=3,
               "live Transporter publishes its split batch from both recovered muzzles over independent cadences");
         float transporterMaximum=transporterEntity.MaxHealth;
