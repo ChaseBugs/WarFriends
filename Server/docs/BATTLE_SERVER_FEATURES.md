@@ -1262,3 +1262,9 @@ Catalog startup requires the reviewed neutral-look proof and rejects missing or
 changed data. Nonzero look input, pooled residual state, gameplay query phase,
 moving roots and authoritative damage remain unverified. See
 [the paired observation boundary](COOP_OBSTACLE_POSES.md).
+
+B22 now has a native Update-phase collider query observation: 243 body/head
+queries match same-phase analytic intersections, but 139 centers differ from
+the existing editor-phase capture. This proves that gameplay sampling needs a
+separate clock before collision authority can open. The reproducible capture
+and limitations are in [the query-phase report](COOP_OBSTACLE_QUERY_PHASE.md).

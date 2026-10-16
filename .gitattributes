@@ -59,3 +59,6 @@ Server/tools/UnityCoopObstacleVolleyPoseExport.cs text eol=lf
 Server/tools/UnityCoopObstacleTurnExport.cs text eol=lf
 Server/content/coop-obstacle-turn-source-plan.json text eol=crlf
 Server/content/coop-obstacle-turn-unity-reference.json text eol=crlf
+Server/content/coop-obstacle-query-unity-reference.json text eol=crlf
+Server/tools/UnityCoopObstacleQueryProbe.cs text eol=lf
+Server/tools/UnityCoopObstacleQueryInstaller.cs text eol=lf
