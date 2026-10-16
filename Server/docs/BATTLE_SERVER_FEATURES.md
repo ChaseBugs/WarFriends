@@ -1170,8 +1170,11 @@ regression, protocol checks and the native Mongo/UDP smoke pass; see
 
 B22 now also isolates the recovered single-precision crawl-return deadline.
 Tests preserve strict expiry, per-round replacement and the different results
-of shot-before-Update versus Update-before-shot. This is a source timer
-foundation, not live pose integration. Version-three Unity observations now
+of shot-before-Update versus Update-before-shot. Version-three Unity observations
 prove exact deadline parity across all 82 isolated controller frames, including
-the return event. Live gameplay callback ordering and the host's scaled-time
-origin still require integration. Co-op collision and damage remain incomplete.
+the return event. Source script execution orders now bind runtime timer Update
+before enemy round emission. Per-enemy preparation/round deadlines produce the
+live diagnostic crawl pose, with zero-origin fixed-step time documented as
+reconstruction policy. The fixture checks strict expiry and repeated-tick
+stability. Client clock synchronization, transform-sampling parity, co-op
+collision and damage remain incomplete.

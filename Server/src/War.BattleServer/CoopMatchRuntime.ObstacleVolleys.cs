@@ -6,7 +6,6 @@ namespace War.BattleServer;
 internal sealed partial class CoopMatchRuntime
 {
     private const float SourceRoundHideSeconds = 0.5f;
-    private const ulong EarliestObservedCrawlDelayTicks = MatchManifest.TickRate / 2;
     private readonly CoopObstaclePoseCatalog? _obstaclePoseCatalog;
     private readonly Dictionary<ulong, CoopObstacleVolleyClock> _obstacleVolleyClocks = [];
 
@@ -42,14 +41,14 @@ internal sealed partial class CoopMatchRuntime
             return [];
         }
         IReadOnlyList<CoopInfantryRoundIntent> rounds = InfantryRoundIntents(entityId);
-        if (windup.CompletedTick.HasValue && rounds.Count > 0 &&
-            tick >= checked(rounds[^1].Tick + EarliestObservedCrawlDelayTicks))
+        if (!_obstacleCrawlStates.TryGetValue(entityId, out ObstacleCrawlState? crawl) ||
+            crawl.HasInterruptedReturn)
         {
-            // A floating Unity timer decides the actual return frame. Do not guess it for live hitboxes.
             return [];
         }
         ulong[] offsets = rounds.Select(round => round.Tick - windup.StartTick).ToArray();
-        var clock = new CoopObstaclePoseClock(tick - windup.StartTick, offsets);
+        ulong? returnOffset = crawl.ReturnTick.HasValue ? crawl.ReturnTick.Value - windup.StartTick : null;
+        var clock = new CoopObstaclePoseClock(tick - windup.StartTick, offsets, returnOffset);
         var position = new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ);
         return _obstaclePoseCatalog.Place(clock, position, windup.FinalRootRotation, $"coop/{entityId}/");
     }
@@ -90,6 +89,7 @@ internal sealed partial class CoopMatchRuntime
             clock.BeginShot(tick, chooseInfantryRepositionFraction());
         }
         nextObstacleRepositionTicks[entityId] = clock.NextPositionTick;
+        BeginObstacleCrawlClock(entityId);
     }
 
     private bool IsObstacleShotReady(ulong entityId, CoopInfantryPointArrival arrival)

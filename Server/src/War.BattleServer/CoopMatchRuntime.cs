@@ -793,6 +793,8 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             AdvanceDroneFlights();
             AdvanceAssaultHelicopterFlights();
             AdvanceTransportHelicopterFlights();
+            // Source executionOrder -3 updates the animation timer before EnemyController (0) emits rounds.
+            AdvanceObstacleCrawlClocks();
             AdvanceInfantryPaths();
             SettleCornerInfantryRoots();
             AdvanceObstacleRepositions();
@@ -1108,6 +1110,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts.Remove(enemy.EntityId);
         cornerNoTargetRetryTicks.Remove(enemy.EntityId);
         _obstacleVolleyClocks.Remove(enemy.EntityId);
+        _obstacleCrawlStates.Remove(enemy.EntityId);
         infantryShotWindups.Remove(enemy.EntityId);
         infantryRoundIntents.Remove(enemy.EntityId);
         nextCornerChangeTicks.Remove(enemy.EntityId);
@@ -1786,6 +1789,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 tick, real, aimPosition, observedMuzzle,
                 observedWorldOrigin, projectileId, windup.PlayerId,
                 windup.TargetTransformFileId, sourceTarget.Type == 2));
+            RecordObstacleCrawlRound(entityId);
             if (rounds.Count == windup.Batch.Count)
             {
                 // SoldierBehaviour.Shooting calls EndShooting after its
@@ -2810,6 +2814,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             cornerLatestShotAttempts.Remove(entityId);
             cornerNoTargetRetryTicks.Remove(entityId);
             _obstacleVolleyClocks.Remove(entityId);
+            _obstacleCrawlStates.Remove(entityId);
             infantryShotWindups.Remove(entityId);
             infantryRoundIntents.Remove(entityId);
             nextCornerChangeTicks.Remove(entityId);
@@ -3930,6 +3935,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts.Clear();
         cornerNoTargetRetryTicks.Clear();
         _obstacleVolleyClocks.Clear();
+        _obstacleCrawlStates.Clear();
         infantryShotWindups.Clear();
         infantryRoundIntents.Clear();
         diagnosticFlights.Clear();

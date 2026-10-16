@@ -67,14 +67,12 @@ callback resets time after that frame's transform sample.
 
 `CoopMatchRuntime` now exposes these candidates only after the source stationary
 root turn, when the source cooldown guarantees a completed prior crawl. Moving
-roots and interrupted crawl remain unavailable. After the last round, it closes
-the candidate window before the earliest observed half-second crawl return;
-it does not invent a generic float-timer boundary. The general selector accepts
-an explicit observed return event, but the live runtime does not produce that
-event yet. All Assaulter candidates remain unplaced for collision authority.
+roots and interrupted crawl remain unavailable. The runtime now emits the
+float-timed return event and selects the source crawl clip from that tick.
+All Assaulter candidates remain unplaced for collision authority.
 
-Still required: align real gameplay callback/sampling phases; implement the live
-crawl-return clock; compare moving roots, turning and repeated-volley posture in
+Still required: align real gameplay transform-sampling phases;
+compare moving roots, turning and repeated-volley posture in
 Unity; then prove complete collision and damage routing. Before opening co-op,
 include the accepted pose catalog in its authoritative content identity. The
 stationary diagnostic reference does not open any of those gates.
@@ -101,8 +99,26 @@ coincides with actual `stand_up_crawl` playback. The initial controller call and
 round callbacks occur in the editor callback, after that frame's normal Update;
 the comparison replays that recorded ordering explicitly.
 
-The runtime does not yet use this clock. This comparison proves the isolated
-controller's timer with explicit absolute source times, not the live gameplay
-callback order or the host's scaled-time origin. Both still require integration
-before live pose selection can consume the event. Collision authority stays
-closed.
+## Runtime integration and time origin
+
+Recovered `SoldierAnimationController.cs.meta` specifies execution order `-3`;
+`EnemyController.cs.meta` and `SoldierBehaviour.cs.meta` specify `0`. Animation
+Update therefore processes return before the enemy's same-frame
+`ShootingFromWeapon -> SoldierBehaviour.Shooting -> EnemyController.OnShot`
+callback. Preparation calls `ShootFromCrawl(1f)`; each rifle round calls it with
+`0.5f`. The runtime now preserves this ordering and these deadlines per enemy.
+
+The self-hosted fixed-step simulation explicitly uses `(float)(tick / 30d)`
+seconds from match tick zero. This is reconstruction policy, not recovered
+Unity process uptime; it does not force the observed relative frame 37 or a
+constant fifteen-tick delay into every volley. Float equality may postpone the
+return by one tick. Death, path reset and match cleanup remove the timer state.
+New volleys replace it. A shot interrupting an already started return closes
+diagnostic pose selection because that blend is not yet reconstructed.
+
+The runtime fixture verifies the first strictly later float time, no early
+return, actual crawl-clip selection, repeated-tick stability and retained
+unplaced collision status. The 82-frame comparison proves the isolated
+controller timer; normal gameplay transform sampling and host/Client clock
+synchronization remain separate unverified integration work. Collision
+authority stays closed.

@@ -6,6 +6,8 @@ using War.Protocol;
 internal static class CoopObstacleVolleyRuntimeTests
 {
     private const ulong MaximumFixtureTick = 2000;
+    private const float RoundHideSeconds = 0.5f;
+    private const float CrawlCenterTolerance = 0.00002f;
 
     internal sealed record Sources
     {
@@ -44,6 +46,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         CoopObstacleVolleySnapshot clock = runtime.ObstacleVolleyState(enemyId)!;
         ulong moveTick = Math.Max(prepared.NextPositionTick, completed.CompletedTick!.Value + 1);
         Check(moveTick < clock.NextShotTick, "The fixture must leave a movement window before its next shot.");
+        VerifyCrawlReturn(runtime, enemyId, sources.Content);
         runtime.Advance(moveTick - 1);
         Check(runtime.ObstacleRepositionStartedTick(enemyId) == null,
             "The completed volley must not move before its source position deadline.");
@@ -60,6 +63,38 @@ internal static class CoopObstacleVolleyRuntimeTests
         Sources movingSources = sources with { SpawnIndex = SelectLongObstacleSpawn(sources) };
         Check(TryMovingShot(movingSources, 0.1875f, 0f),
             "The pinned source fractions must produce a shot during obstacle repositioning.");
+    }
+
+    private static void VerifyCrawlReturn(CoopMatchRuntime runtime, ulong enemyId, BattleCombatContent content)
+    {
+        ulong lastRound = runtime.InfantryRoundIntents(enemyId)[^1].Tick;
+        float deadline = (float)(lastRound / (double)MatchManifest.TickRate) + RoundHideSeconds;
+        ulong returnTick = lastRound + 1;
+        while ((float)(returnTick / (double)MatchManifest.TickRate) <= deadline)
+        {
+            returnTick++;
+        }
+
+        runtime.Advance(returnTick - 1);
+        Check(runtime.ObstacleCrawlReturnTick(enemyId) == null,
+            "The live source float deadline must not expire early or at equality.");
+        runtime.Advance(returnTick);
+        Check(runtime.ObstacleCrawlReturnTick(enemyId) == returnTick,
+            "The first strictly later host float time must consume the return event.");
+        BattleCoopEnemySpawn enemy = runtime.Snapshot().Coop.EnemySpawns.Single(row => row.EntityId == enemyId);
+        CoopInfantryShotWindup windup = runtime.InfantryShotWindup(enemyId)!;
+        IReadOnlyList<PlayerHitbox> expected = content.EnemyPoses.Place("stand_up_crawl",
+            new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ), windup.FinalRootRotation, 0f,
+            $"coop/{enemyId}/");
+        IReadOnlyList<PlayerHitbox> actual = runtime.PlaceObstacleVolleyHitboxes(enemyId);
+        Check(actual.Count == expected.Count && actual.Zip(expected).All(pair =>
+            pair.First.SourcePath == pair.Second.SourcePath &&
+            Vector3.Distance(pair.First.Center, pair.Second.Center) < CrawlCenterTolerance),
+            "The consumed live return must select the source crawl clip at its start.");
+        runtime.Advance(returnTick);
+        Check(runtime.ObstacleCrawlReturnTick(enemyId) == returnTick &&
+            runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
+            "Repeated observation must preserve the event without opening collision authority.");
     }
 
     private static int SelectLongObstacleSpawn(Sources sources)
