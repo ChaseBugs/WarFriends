@@ -105,5 +105,6 @@ An actual two-round host schedule now drives the recovered Unity animation
 controller, with 82 observed frames of muzzle and all three collider parts.
 The source per-round `ShootFromCrawl` call resets the fire loop and later returns
 to crawling; the queue-only muzzle artifact does not contain that lifecycle.
-The new reference is validated but not consumed by gameplay pose authority.
+The new reference now supplies diagnostic stationary collider candidates and
+has a source-frame selector, but it is not gameplay hit authority.
 See [the observation, reproduction steps and limits](COOP_OBSTACLE_POSES.md).

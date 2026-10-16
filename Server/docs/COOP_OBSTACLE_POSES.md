@@ -26,7 +26,10 @@ animation method as source OnShot at the recorded host ticks and observes
 frames from `EditorApplication.update` without manually sampling each frame.
 
 The 82-frame Unity 2018.3 run records muzzle position and the body box, body
-sphere and head sphere centers/rotations relative to the root. Both scheduled
+sphere and head sphere centers/rotations relative to the root. Version two also
+records actual box size, sphere radius and collider activity. The source head
+radius varies slightly during animation, so the blend frame retains measured
+dimensions rather than borrowing them from another pose. Both scheduled
 calls reset the fire-loop clock to zero. The next-frame muzzle differs by about
 0.049 and 0.042 world units from the prior primed queue-only observation.
 A crawl replay is observed from relative tick 37 in this capture. That observed
@@ -54,8 +57,24 @@ exporter's LF rule preserves its recorded source digest across checkouts.
    digest, host-plan digest, recovered rig binding, frame count/time order,
    finite/unit collider data, round resets and observed crawl playback.
 
-The reference is not yet used by `CoopMatchRuntime` for muzzle or hitbox
-placement. Still required: align source shot callback/sampling phases; reproduce
-per-round resets and crawl return in host pose selection; compare moving roots,
-turning and repeated-volley posture in Unity; then prove complete collision and
-damage routing. A matching stationary observation alone cannot open those gates.
+`CoopObstaclePoseCatalog` now selects diagnostic collider candidates from the
+source clip clock plus the measured first blend frame. A complete-crawl start,
+stand-up, queued fire, per-round reset and explicitly supplied crawl-return event
+reproduce all 82 observed frames. Tests compare 246 colliders after translated
+and rotated placement, including centers, orientations, dimensions and activity.
+The callback-tick sample uses the previous loop clock because the captured
+callback resets time after that frame's transform sample.
+
+`CoopMatchRuntime` now exposes these candidates only after the source stationary
+root turn, when the source cooldown guarantees a completed prior crawl. Moving
+roots and interrupted crawl remain unavailable. After the last round, it closes
+the candidate window before the earliest observed half-second crawl return;
+it does not invent a generic float-timer boundary. The general selector accepts
+an explicit observed return event, but the live runtime does not produce that
+event yet. All Assaulter candidates remain unplaced for collision authority.
+
+Still required: align real gameplay callback/sampling phases; implement the live
+crawl-return clock; compare moving roots, turning and repeated-volley posture in
+Unity; then prove complete collision and damage routing. Before opening co-op,
+include the accepted pose catalog in its authoritative content identity. The
+stationary diagnostic reference does not open any of those gates.

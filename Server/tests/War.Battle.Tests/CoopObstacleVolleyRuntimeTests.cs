@@ -31,6 +31,11 @@ internal static class CoopObstacleVolleyRuntimeTests
         ulong enemyId = runtime.Snapshot().Coop.EnemySpawns.First().EntityId;
         AdvanceUntilPrepared(runtime, enemyId, () => hasReachedObstacle = true);
         shotFraction = 0.999f;
+        ulong preparedTick = runtime.InfantryShotWindup(enemyId)!.StartTick;
+        runtime.Advance(preparedTick + 6);
+        Check(runtime.PlaceObstacleVolleyHitboxes(enemyId).Count == 3 &&
+            runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
+            "The runtime may expose source pose candidates without promoting them to hit authority.");
         CoopObstacleVolleySnapshot prepared = runtime.ObstacleVolleyState(enemyId)!;
         AdvanceUntilCompleted(runtime, enemyId);
         CoopInfantryShotWindup completed = runtime.InfantryShotWindup(enemyId)!;

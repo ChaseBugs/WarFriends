@@ -1,10 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "client": "1.4.0",
   "unity": "2018.3.0f2",
   "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
-  "exporterSha256": "350e3d6704e3fe330911cb75934dca315af2f8c1df2f18cae681df562de6e0f9",
+  "exporterSha256": "643b774ea831efd7faacd99370dfafdf3ec258304af34a8716949515f7e57545",
   "clips": [
     {
       "name": "stand_up_begin",
@@ -63,7 +63,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -78,7 +86,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -93,7 +109,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -135,7 +159,15 @@
             0.16153191,
             0.71824193,
             -0.6526288
-          ]
+          ],
+          "size": [
+            0.183923528,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -150,7 +182,15 @@
             0.16153191,
             0.71824193,
             -0.6526288
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -165,7 +205,15 @@
             0.381626129,
             0.6860782,
             -0.403119951
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130124882,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -201,7 +249,15 @@
             0.209372967,
             0.697463632,
             -0.645181239
-          ]
+          ],
+          "size": [
+            0.183923587,
+            0.1678069,
+            0.216061935
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -216,7 +272,15 @@
             0.209372967,
             0.697463632,
             -0.645181239
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000076,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -231,7 +295,15 @@
             0.409215778,
             0.6494502,
             -0.4005738
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300839,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -267,7 +339,15 @@
             0.255330145,
             0.674217761,
             -0.6350774
-          ]
+          ],
+          "size": [
+            0.183923572,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -282,7 +362,15 @@
             0.255330145,
             0.674217761,
             -0.6350774
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -297,7 +385,15 @@
             0.433470279,
             0.6165398,
             -0.400854647
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130049244,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -333,7 +429,15 @@
             0.306125075,
             0.6449394,
             -0.619761646
-          ]
+          ],
+          "size": [
+            0.183923572,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -348,7 +452,15 @@
             0.306125075,
             0.6449394,
             -0.619761646
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -363,7 +475,15 @@
             0.46203956,
             0.577345,
             -0.406014323
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.13008444,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -399,7 +519,15 @@
             0.354508668,
             0.6144313,
             -0.598906338
-          ]
+          ],
+          "size": [
+            0.183923528,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -414,7 +542,15 @@
             0.354508668,
             0.6144313,
             -0.598906338
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -429,7 +565,15 @@
             0.493331045,
             0.5367676,
             -0.416326642
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130078658,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -465,7 +609,15 @@
             0.399942756,
             0.582706749,
             -0.5751068
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806834,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -480,7 +632,15 @@
             0.399942756,
             0.582706749,
             -0.5751068
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -495,7 +655,15 @@
             0.529678762,
             0.4949674,
             -0.429201573
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130099818,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -531,7 +699,15 @@
             0.464058429,
             0.545777142,
             -0.504848361
-          ]
+          ],
+          "size": [
+            0.183923617,
+            0.167806983,
+            0.216061965
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -546,7 +722,15 @@
             0.464058429,
             0.545777142,
             -0.504848361
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1000001,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -561,7 +745,15 @@
             0.524820268,
             0.5369818,
             -0.478538722
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000308,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -597,7 +789,15 @@
             0.461523622,
             0.539525747,
             -0.5100015
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -612,7 +812,15 @@
             0.461523622,
             0.539525747,
             -0.5100015
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -627,7 +835,15 @@
             0.515622854,
             0.5377976,
             -0.476133019
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -663,7 +879,15 @@
             0.465169638,
             0.528315067,
             -0.522827268
-          ]
+          ],
+          "size": [
+            0.183923528,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -678,7 +902,15 @@
             0.465169638,
             0.528315067,
             -0.522827268
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -693,7 +925,15 @@
             0.5069683,
             0.5387106,
             -0.47548908
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000144,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -729,7 +969,15 @@
             0.4760464,
             0.5225498,
             -0.5284382
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -744,7 +992,15 @@
             0.4760464,
             0.5225498,
             -0.5284382
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -759,7 +1015,15 @@
             0.5053919,
             0.5445697,
             -0.468282223
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -795,7 +1059,15 @@
             0.48401472,
             0.523245931,
             -0.5260228
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806879,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -810,7 +1082,15 @@
             0.48401472,
             0.523245931,
             -0.5260228
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -825,7 +1105,15 @@
             0.503433,
             0.5535429,
             -0.456958026
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000308,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -861,7 +1149,15 @@
             0.461523622,
             0.539525747,
             -0.5100015
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -876,7 +1172,15 @@
             0.461523622,
             0.539525747,
             -0.5100015
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -891,7 +1195,15 @@
             0.515622854,
             0.5377976,
             -0.476133019
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -927,7 +1239,15 @@
             0.465169638,
             0.528315067,
             -0.522827268
-          ]
+          ],
+          "size": [
+            0.183923528,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -942,7 +1262,15 @@
             0.465169638,
             0.528315067,
             -0.522827268
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -957,7 +1285,15 @@
             0.5069683,
             0.5387106,
             -0.47548908
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000144,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -993,7 +1329,15 @@
             0.4760464,
             0.5225498,
             -0.5284382
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1008,7 +1352,15 @@
             0.4760464,
             0.5225498,
             -0.5284382
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1023,7 +1375,15 @@
             0.5053919,
             0.5445697,
             -0.468282223
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1059,7 +1419,15 @@
             0.48401472,
             0.523245931,
             -0.5260228
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806879,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1074,7 +1442,15 @@
             0.48401472,
             0.523245931,
             -0.5260228
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1089,7 +1465,15 @@
             0.503433,
             0.5535429,
             -0.456958026
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000308,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1125,7 +1509,15 @@
             0.486816317,
             0.524260342,
             -0.5240545
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1140,7 +1532,15 @@
             0.486816317,
             0.524260342,
             -0.5240545
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1155,7 +1555,15 @@
             0.502448,
             0.5560931,
             -0.452648222
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000338,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1191,7 +1599,15 @@
             0.482932746,
             0.5228514,
             -0.52595675
-          ]
+          ],
+          "size": [
+            0.183923453,
+            0.167806789,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1206,7 +1622,15 @@
             0.482932746,
             0.5228514,
             -0.52595675
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1221,7 +1645,15 @@
             0.501579344,
             0.5488739,
             -0.460616618
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000263,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1257,7 +1689,15 @@
             0.47537908,
             0.522124946,
             -0.5274534
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1272,7 +1712,15 @@
             0.47537908,
             0.522124946,
             -0.5274534
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1287,7 +1735,15 @@
             0.5006338,
             0.536814749,
             -0.4743512
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000234,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1323,7 +1779,15 @@
             0.46774596,
             0.525912046,
             -0.5239686
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1338,7 +1802,15 @@
             0.46774596,
             0.525912046,
             -0.5239686
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1353,7 +1825,15 @@
             0.500173032,
             0.525614,
             -0.486675233
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1389,7 +1869,15 @@
             0.4636689,
             0.534444451,
             -0.5152349
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1404,7 +1892,15 @@
             0.4636689,
             0.534444451,
             -0.5152349
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1419,7 +1915,15 @@
             0.5007354,
             0.5195422,
             -0.49478665
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000085,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1455,7 +1959,15 @@
             0.4628834,
             0.542427,
             -0.507026851
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1470,7 +1982,15 @@
             0.4628834,
             0.542427,
             -0.507026851
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1485,7 +2005,15 @@
             0.502056837,
             0.517276168,
             -0.498820841
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000114,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1521,7 +2049,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1536,7 +2072,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1551,7 +2095,15 @@
             0.504482269,
             0.515980661,
             -0.5002487
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1587,7 +2139,15 @@
             0.461523622,
             0.539525747,
             -0.5100015
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1602,7 +2162,15 @@
             0.461523622,
             0.539525747,
             -0.5100015
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1617,7 +2185,15 @@
             0.515622854,
             0.5377976,
             -0.476133019
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1653,7 +2229,15 @@
             0.465169638,
             0.528315067,
             -0.522827268
-          ]
+          ],
+          "size": [
+            0.183923528,
+            0.1678069,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1668,7 +2252,15 @@
             0.465169638,
             0.528315067,
             -0.522827268
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1683,7 +2275,15 @@
             0.5069683,
             0.5387106,
             -0.47548908
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000144,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1719,7 +2319,15 @@
             0.4760464,
             0.5225498,
             -0.5284382
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1734,7 +2342,15 @@
             0.4760464,
             0.5225498,
             -0.5284382
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1749,7 +2365,15 @@
             0.5053919,
             0.5445697,
             -0.468282223
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000129,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1785,7 +2409,15 @@
             0.48401472,
             0.523245931,
             -0.5260228
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806879,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1800,7 +2432,15 @@
             0.48401472,
             0.523245931,
             -0.5260228
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1815,7 +2455,15 @@
             0.503433,
             0.5535429,
             -0.456958026
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000308,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1851,7 +2499,15 @@
             0.486816317,
             0.524260342,
             -0.5240545
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1866,7 +2522,15 @@
             0.486816317,
             0.524260342,
             -0.5240545
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1881,7 +2545,15 @@
             0.502448,
             0.5560931,
             -0.452648222
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000338,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1917,7 +2589,15 @@
             0.482932746,
             0.5228514,
             -0.52595675
-          ]
+          ],
+          "size": [
+            0.183923453,
+            0.167806789,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1932,7 +2612,15 @@
             0.482932746,
             0.5228514,
             -0.52595675
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -1947,7 +2635,15 @@
             0.501579344,
             0.5488739,
             -0.460616618
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000263,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -1983,7 +2679,15 @@
             0.47537908,
             0.522124946,
             -0.5274534
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806864,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -1998,7 +2702,15 @@
             0.47537908,
             0.522124946,
             -0.5274534
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2013,7 +2725,15 @@
             0.5006338,
             0.536814749,
             -0.4743512
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000234,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2049,7 +2769,15 @@
             0.46774596,
             0.525912046,
             -0.5239686
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2064,7 +2792,15 @@
             0.46774596,
             0.525912046,
             -0.5239686
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2079,7 +2815,15 @@
             0.500173032,
             0.525614,
             -0.486675233
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2115,7 +2859,15 @@
             0.4636689,
             0.534444451,
             -0.5152349
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2130,7 +2882,15 @@
             0.4636689,
             0.534444451,
             -0.5152349
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2145,7 +2905,15 @@
             0.5007354,
             0.5195422,
             -0.49478665
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000085,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2181,7 +2949,15 @@
             0.4628834,
             0.542427,
             -0.507026851
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2196,7 +2972,15 @@
             0.4628834,
             0.542427,
             -0.507026851
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2211,7 +2995,15 @@
             0.502056837,
             0.517276168,
             -0.498820841
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000114,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2247,7 +3039,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2262,7 +3062,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2277,7 +3085,15 @@
             0.504482269,
             0.515980661,
             -0.5002487
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2313,7 +3129,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2328,7 +3152,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2343,7 +3175,15 @@
             0.504482269,
             0.515980661,
             -0.5002487
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2379,7 +3219,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2394,7 +3242,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2409,7 +3265,15 @@
             0.504482269,
             0.515980661,
             -0.5002487
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2445,7 +3309,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2460,7 +3332,15 @@
             0.464060515,
             0.545776248,
             -0.5048433
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2475,7 +3355,15 @@
             0.504482269,
             0.515980661,
             -0.5002487
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1300001,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2511,7 +3399,15 @@
             0.386677027,
             0.580675542,
             -0.6185427
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.1678068,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2526,7 +3422,15 @@
             0.386677027,
             0.580675542,
             -0.6185427
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2541,7 +3445,15 @@
             0.5440597,
             0.5154766,
             -0.5052102
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000055,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2577,7 +3489,15 @@
             0.382113248,
             0.5905737,
             -0.6116591
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2592,7 +3512,15 @@
             0.382113248,
             0.5905737,
             -0.6116591
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2607,7 +3535,15 @@
             0.527774751,
             0.534720957,
             -0.4724761
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130000174,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2643,7 +3579,15 @@
             0.3480034,
             0.6149895,
             -0.6181579
-          ]
+          ],
+          "size": [
+            0.183923423,
+            0.167806774,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2658,7 +3602,15 @@
             0.3480034,
             0.6149895,
             -0.6181579
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2673,7 +3625,15 @@
             0.489700019,
             0.57181,
             -0.441019952
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130004749,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2709,7 +3669,15 @@
             0.309710234,
             0.6403588,
             -0.6278792
-          ]
+          ],
+          "size": [
+            0.183923528,
+            0.167806864,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2724,7 +3692,15 @@
             0.309710234,
             0.6403588,
             -0.6278792
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2739,7 +3715,15 @@
             0.4571395,
             0.60510546,
             -0.41477865
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130152687,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2775,7 +3759,15 @@
             0.2655637,
             0.6675397,
             -0.637882352
-          ]
+          ],
+          "size": [
+            0.183923453,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2790,7 +3782,15 @@
             0.2655637,
             0.6675397,
             -0.637882352
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2805,7 +3805,15 @@
             0.426840961,
             0.639996946,
             -0.395927042
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130172014,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2841,7 +3849,15 @@
             0.220937669,
             0.6909168,
             -0.6465045
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.1678068,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2856,7 +3872,15 @@
             0.220937669,
             0.6909168,
             -0.6465045
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2871,7 +3895,15 @@
             0.400855929,
             0.6705997,
             -0.3861763
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130034029,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2907,7 +3939,15 @@
             0.182565108,
             0.7073659,
             -0.6533507
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2922,7 +3962,15 @@
             0.182565108,
             0.7073659,
             -0.6533507
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -2937,7 +3985,15 @@
             0.380758,
             0.6925026,
             -0.386272281
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130073786,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -2973,7 +4029,15 @@
             0.154338792,
             0.720065951,
             -0.6558139
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806879,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -2988,7 +4052,15 @@
             0.154338792,
             0.720065951,
             -0.6558139
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3003,7 +4075,15 @@
             0.3685541,
             0.7071029,
             -0.3928171
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.1301211,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3039,7 +4119,15 @@
             0.141304836,
             0.725959539,
             -0.656027555
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806834,
+            0.21606189
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3054,7 +4142,15 @@
             0.141304836,
             0.725959539,
             -0.656027555
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000046,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3069,7 +4165,15 @@
             0.3646726,
             0.7102599,
             -0.400982678
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130158857,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3105,7 +4209,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3120,7 +4232,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3135,7 +4255,15 @@
             0.3655563,
             0.705878437,
             -0.404261857
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130169049,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3171,7 +4299,15 @@
             0.140368849,
             0.7260793,
             -0.655845344
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.167806834,
+            0.21606186
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3186,7 +4322,15 @@
             0.140368849,
             0.7260793,
             -0.655845344
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000039,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3201,7 +4345,15 @@
             0.366841942,
             0.7040784,
             -0.405491769
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130160809,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3237,7 +4389,15 @@
             0.14033252,
             0.7260666,
             -0.6558678
-          ]
+          ],
+          "size": [
+            0.183923483,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3252,7 +4412,15 @@
             0.14033252,
             0.7260666,
             -0.6558678
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3267,7 +4435,15 @@
             0.367608577,
             0.703604639,
             -0.405976653
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130151331,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3303,7 +4479,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3318,7 +4502,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3333,7 +4525,15 @@
             0.3677878,
             0.7041124,
             -0.405736059
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130143955,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3369,7 +4569,15 @@
             0.140041485,
             0.7259654,
             -0.656047344
-          ]
+          ],
+          "size": [
+            0.183923468,
+            0.167806819,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3384,7 +4592,15 @@
             0.140041485,
             0.7259654,
             -0.656047344
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3399,7 +4615,15 @@
             0.3676736,
             0.7047357,
             -0.4052428
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141452,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3435,7 +4659,15 @@
             0.140005156,
             0.725952744,
             -0.656069756
-          ]
+          ],
+          "size": [
+            0.183923438,
+            0.167806774,
+            0.216061816
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3450,7 +4682,15 @@
             0.140005156,
             0.725952744,
             -0.656069756
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000016,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3465,7 +4705,15 @@
             0.3675577,
             0.7049691,
             -0.4048956
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141452,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3501,7 +4749,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3516,7 +4772,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3531,7 +4795,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3567,7 +4839,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3582,7 +4862,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3597,7 +4885,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3633,7 +4929,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3648,7 +4952,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3663,7 +4975,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3699,7 +5019,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3714,7 +5042,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3729,7 +5065,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3765,7 +5109,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3780,7 +5132,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3795,7 +5155,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3831,7 +5199,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3846,7 +5222,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3861,7 +5245,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3897,7 +5289,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3912,7 +5312,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3927,7 +5335,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -3963,7 +5379,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -3978,7 +5402,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -3993,7 +5425,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4029,7 +5469,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4044,7 +5492,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4059,7 +5515,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4095,7 +5559,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4110,7 +5582,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4125,7 +5605,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4161,7 +5649,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4176,7 +5672,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4191,7 +5695,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4227,7 +5739,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4242,7 +5762,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4257,7 +5785,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4293,7 +5829,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4308,7 +5852,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4323,7 +5875,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4359,7 +5919,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4374,7 +5942,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4389,7 +5965,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4425,7 +6009,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4440,7 +6032,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4455,7 +6055,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4491,7 +6099,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4506,7 +6122,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4521,7 +6145,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4557,7 +6189,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4572,7 +6212,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4587,7 +6235,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4623,7 +6279,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4638,7 +6302,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4653,7 +6325,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4689,7 +6369,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4704,7 +6392,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4719,7 +6415,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4755,7 +6459,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4770,7 +6482,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4785,7 +6505,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4821,7 +6549,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4836,7 +6572,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4851,7 +6595,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4887,7 +6639,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4902,7 +6662,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4917,7 +6685,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -4953,7 +6729,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -4968,7 +6752,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -4983,7 +6775,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -5019,7 +6819,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -5034,7 +6842,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -5049,7 +6865,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -5085,7 +6909,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -5100,7 +6932,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -5115,7 +6955,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -5151,7 +6999,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -5166,7 +7022,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -5181,7 +7045,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -5217,7 +7089,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -5232,7 +7112,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -5247,7 +7135,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -5283,7 +7179,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -5298,7 +7202,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -5313,7 +7225,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -5349,7 +7269,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -5364,7 +7292,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -5379,7 +7315,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     },
@@ -5415,7 +7359,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.1839235,
+            0.1678068,
+            0.216061831
+          ],
+          "radius": 0.0,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
@@ -5430,7 +7382,15 @@
             0.140187025,
             0.726016045,
             -0.6559576
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.100000024,
+          "enabled": true,
+          "active": true
         },
         {
           "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
@@ -5445,7 +7405,15 @@
             0.367707223,
             0.705016553,
             -0.404622346
-          ]
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "radius": 0.130141437,
+          "enabled": true,
+          "active": true
         }
       ]
     }

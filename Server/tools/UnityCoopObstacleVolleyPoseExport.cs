@@ -211,9 +211,37 @@ public static class UnityCoopObstacleVolleyPoseExport
                 kind = part is BoxCollider ? "box" : "sphere",
                 center = Values(_root.InverseTransformPoint(part.transform.TransformPoint(
                     part is BoxCollider ? ((BoxCollider)part).center : ((SphereCollider)part).center))),
-                rotation = Values(Quaternion.Inverse(_root.rotation) * part.transform.rotation)
+                rotation = Values(Quaternion.Inverse(_root.rotation) * part.transform.rotation),
+                size = Values(ColliderSize(part)),
+                radius = ColliderRadius(part),
+                enabled = part.enabled,
+                active = part.gameObject.activeInHierarchy
             }).ToArray()
         });
+    }
+
+    private static Vector3 ColliderSize(Collider part)
+    {
+        BoxCollider box = part as BoxCollider;
+        if (box == null)
+        {
+            return Vector3.zero;
+        }
+        Vector3 scale = part.transform.lossyScale;
+        scale = new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+        return Vector3.Scale(box.size, scale);
+    }
+
+    private static float ColliderRadius(Collider part)
+    {
+        SphereCollider sphere = part as SphereCollider;
+        if (sphere == null)
+        {
+            return 0;
+        }
+        Vector3 scale = part.transform.lossyScale;
+        float largest = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+        return sphere.radius * largest;
     }
 
     private static void Finish()
@@ -225,7 +253,7 @@ public static class UnityCoopObstacleVolleyPoseExport
         File.WriteAllText(RequireEnvironment("WAR_COOP_OBSTACLE_POSE_OUTPUT"),
             JsonConvert.SerializeObject(new
             {
-                version = 1,
+                version = 2,
                 client = "1.4.0",
                 unity = Application.unityVersion,
                 prefabSha256 = Hash(EnemyPath),

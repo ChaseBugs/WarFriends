@@ -1154,5 +1154,16 @@ The B22 obstacle pose investigation now captures the actual recovered animation
 controller with the real host round ticks 11 and 22. Its 82-frame source-bound
 reference includes muzzle and three collider parts, per-round loop resets and
 return to crawl. The previous queue-only reference omits those callbacks; the
-new reference is not yet used for host pose selection or damage. Sampling-phase
+new reference now supports diagnostic stationary pose selection, while damage
+and live crawl-return timing remain closed. Sampling-phase
 and moving-root parity remain open. [Details](COOP_OBSTACLE_POSES.md).
+
+B22's new obstacle pose selector reproduces 82 actual controller frames and 246
+colliders, including the measured initial blend, per-round fire reset and
+explicit crawl-return event. Version-two observations include dimensions and
+activity. Stationary candidates reach the runtime after its source turn and
+only with sufficient prior-crawl time; moving/interrupted/ambiguous return
+frames stay unavailable. The collision frame still marks all such candidates
+unplaced, so this does not authorize damage or open co-op registration. Content
+regression, protocol checks and the native Mongo/UDP smoke pass; see
+[the detailed pose boundary](COOP_OBSTACLE_POSES.md).

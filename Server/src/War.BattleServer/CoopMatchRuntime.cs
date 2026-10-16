@@ -365,6 +365,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         if (playerWeaponContent != null)
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
+        _obstaclePoseCatalog = playerWeaponContent?.CoopObstaclePoses;
         enemyMuzzles = playerWeaponContent?.CoopEnemyMuzzles;
         cornerQueuePoses = playerWeaponContent?.CoopCornerQueuePoses;
         assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;
@@ -2306,9 +2307,9 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 transportHelicopterCrew.TryGetValue(enemy.EntityId,
                     out HelicopterCrewState? crew) &&
                 crew.Snapshot().Count > 0;
-            bool unverifiedCorner = enemy.Behaviour == "Assaulter" &&
+            bool unverifiedInfantryPose = enemy.Behaviour == "Assaulter" &&
                 enemy.SpawnTick != tick && placed.Count != 0;
-            if (placed.Count == 0 || unverifiedCorner || hasUnplacedCrew ||
+            if (placed.Count == 0 || unverifiedInfantryPose || hasUnplacedCrew ||
                 (enemy.Behaviour == "DeployHeli" && enemy.GunnerHealth > 0))
                 unplaced.Add(enemy.EntityId);
         }
@@ -2331,6 +2332,8 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             parts = PlaceCornerCoverBackHitboxes(enemy.EntityId);
         if (parts.Count == 0)
             parts = PlaceCornerQueuedIdleHitboxes(enemy.EntityId);
+        if (parts.Count == 0)
+            parts = PlaceObstacleVolleyHitboxes(enemy.EntityId);
         return parts.Select(part => new DynamicShotTarget(enemy.EntityId,
             0, 23, part, ArmyInfantry: true)).ToArray();
     }
