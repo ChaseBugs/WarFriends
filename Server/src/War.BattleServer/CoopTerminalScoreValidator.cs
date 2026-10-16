@@ -97,6 +97,7 @@ internal static class CoopTerminalScoreValidator
         if (snapshot.Coop.Started)
         {
             ValidateDepartedParticipants(snapshot, manifest);
+            ValidateTerminalVitality(snapshot, manifest);
             if (snapshot.Coop.DeadlineTick !=
                     snapshot.StartTick + durationTicks ||
                 snapshot.EndTick > snapshot.Coop.DeadlineTick)
@@ -105,7 +106,8 @@ internal static class CoopTerminalScoreValidator
         }
         else if (snapshot.StartTick != 0 ||
                  snapshot.Coop.DeadlineTick != 0 ||
-                 snapshot.Coop.EnemySpawns.Count != 0)
+                 snapshot.Coop.EnemySpawns.Count != 0 ||
+                 snapshot.Players.Any(player => player.Dead || player.HasCoopDeathTick || player.DamageRevision != 0))
         {
             throw new InvalidDataException(
                 "Prestart co-op terminal evidence contains mission play.");
@@ -114,12 +116,7 @@ internal static class CoopTerminalScoreValidator
         switch (snapshot.TerminalReason)
         {
             case "mission-failed":
-                if (snapshot.Phase != BattlePhase.Ended ||
-                    !snapshot.Coop.Started ||
-                    snapshot.EndTick != snapshot.Coop.DeadlineTick ||
-                    snapshot.Coop.ParticipantIds.Count == 0)
-                    throw new InvalidDataException(
-                        "Co-op timeout differs from the source deadline.");
+                ValidateMissionFailure(snapshot);
                 break;
             case "forfeit":
                 if (snapshot.Phase != BattlePhase.Ended ||
@@ -199,12 +196,31 @@ internal static class CoopTerminalScoreValidator
         ValidateObjective(snapshot, rule);
         ValidateParticipantScores(snapshot, manifest, rule);
 
-        ValidateSuccessVitality(snapshot, manifest);
+        ValidateTerminalVitality(snapshot, manifest);
         ValidateMasterSuccessScore(snapshot, rule, durationTicks);
         ValidatePeerCompletion(snapshot);
     }
 
-    private static void ValidateSuccessVitality(MatchSnapshot snapshot, MatchManifest manifest)
+    private static void ValidateMissionFailure(MatchSnapshot snapshot)
+    {
+        if (snapshot.Phase != BattlePhase.Ended || !snapshot.Coop.Started ||
+            snapshot.Coop.ParticipantIds.Count == 0)
+        {
+            throw new InvalidDataException("Co-op failure did not finish a started mission.");
+        }
+
+        BattlePlayerState master = snapshot.Players.Single(
+            player => player.PlayerId == snapshot.Coop.SceneMasterPlayerId);
+        bool masterKilled = master.Dead && master.HasCoopDeathTick &&
+            master.CoopDeathTick == snapshot.EndTick && snapshot.EndTick < snapshot.Coop.DeadlineTick;
+        bool objectiveExpired = !master.Dead && snapshot.EndTick == snapshot.Coop.DeadlineTick;
+        if (!masterKilled && !objectiveExpired)
+        {
+            throw new InvalidDataException("Co-op failure lacks the source deadline or exact master-death boundary.");
+        }
+    }
+
+    private static void ValidateTerminalVitality(MatchSnapshot snapshot, MatchManifest manifest)
     {
         for (int index = 0; index < manifest.Players.Length; index++)
         {
@@ -215,7 +231,10 @@ internal static class CoopTerminalScoreValidator
                 player.MaxHealth != definition.Combat!.MaxHealth ||
                 !float.IsFinite(player.Health) ||
                 player.Health > player.MaxHealth ||
-                player.Dead != (player.Health <= 0))
+                player.Dead != (player.Health <= 0) || player.Dead != player.HasCoopDeathTick ||
+                player.DamageRevision > CoopMatchRuntime.MaximumPlayerDamageReceipts ||
+                (player.Dead && (player.DamageRevision == 0 || player.CoopDeathTick < snapshot.StartTick ||
+                    player.CoopDeathTick > snapshot.EndTick)))
             {
                 throw new InvalidDataException("Invalid co-op terminal player vitality.");
             }

@@ -1389,3 +1389,12 @@ marker, including connected KIA spectators. New protobuf role/completion fields
 and terminal validation reject swapped roles, invented peer stars and mismatched
 anchors. Role-aware Unity result UI and durable progression are still open.
 See [the source role contract](COOP_SCENE_ROLES.md).
+
+B22/B25 now stop an unfinished mission on a host-confirmed scene-master KIA;
+peer KIA remains a spectator state and releases its source cover. Optional
+`coop_death_tick` preserves actual tick-zero deaths and binds early failure to
+the exact master-death boundary. Missing timestamps, peer-only death and invalid
+damage history cannot authorize that terminal shape. Tests retain immutable
+impact replay and source no-target retry coverage under a reachable alive-master
+fixture. Normal rendered KIA/result UI and combat/settlement gates remain open.
+See [the master-KIA contract](COOP_MASTER_KIA.md).

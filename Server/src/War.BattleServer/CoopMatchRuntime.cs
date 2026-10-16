@@ -127,6 +127,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         public Vector3 MovementVelocity;
         public float Health = definition.Combat!.MaxHealth;
         public bool Dead;
+        public ulong? DeathTick;
         public bool HasMoved;
         public ulong DamageRevision;
         public CoopPlayerWeaponState? Weapons;
@@ -176,7 +177,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         CoopInfantryPlayerTargetPlan Plan,
         CoopInfantryPlayerShotTarget Placed);
     private readonly Dictionary<ulong, PlayerDamageReceipt> playerDamageReceipts = [];
-    private const int MaximumPlayerDamageReceipts = 65_536;
+    internal const int MaximumPlayerDamageReceipts = 65_536;
     private CoopPlayerShotCollisionWorld? diagnosticWorld;
     private readonly Dictionary<ulong, ulong> nextCornerChangeTicks = [];
     private readonly Dictionary<ulong, ulong> obstacleRepositionStartedTicks = [];
@@ -3027,7 +3028,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         int target = participant.CoverIndex + direction;
         while (target >= alliedFirstCover && target <= alliedLastCover)
         {
-            if (!participants.Values.Any(other => other != participant && !other.Departed &&
+            if (!participants.Values.Any(other => other != participant && !other.Departed && !other.Dead &&
                     (other.CoverIndex == target || other.DestinationIndex == target)))
                 break;
             target += direction;
@@ -3158,12 +3159,25 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         stateRevision++;
         if (result.Dead)
         {
-            // GameControllerCoop.OnPlayerControllerKilled enters spectator
-            // presentation. The surviving ally can still finish the mission.
-            participant.Route = null;
-            participant.DestinationIndex = -1;
+            HandleHostPlayerDeath(participant);
         }
         return result;
+    }
+
+    private void HandleHostPlayerDeath(Participant participant)
+    {
+        participant.DeathTick = tick;
+        participant.Route = null;
+        participant.DestinationIndex = -1;
+        participant.MoveEndTick = 0;
+        participant.MovementVelocity = Vector3.Zero;
+
+        // MissionsManager.CurrentPlayerOnKilled ends the master's mission.
+        // GameControllerCoop instead keeps a non-master KIA peer in spectator presentation.
+        if (participant.PlayerId == GetSourceAuthorityPlayer().PlayerId && mission.FailAfterMasterDeath(tick))
+        {
+            End(BattlePhase.Ended, "mission-failed");
+        }
     }
 
     internal ShieldMutation? ApplyHostShieldShot(
@@ -3409,6 +3423,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 PositionY = participant.Position.Y,
                 PositionZ = participant.Position.Z
             };
+            if (participant.DeathTick.HasValue)
+            {
+                playerState.CoopDeathTick = participant.DeathTick.Value;
+            }
             playerState.RiflePose = participant.Route == null
                 ? StationaryPlayerPose(participant)
                 : MovingPlayerPose(participant);

@@ -319,6 +319,8 @@ message BattlePlayerState {
   repeated BattleSkillShotCount skill_shot_counts = 55;
   // A co-op peer left this mission; admission history and vitality remain intact.
   bool coop_departed = 56;
+  // Source-backed co-op host death time. Presence distinguishes an actual tick-zero death from no death.
+  optional uint64 coop_death_tick = 57;
 }
 message BattleSkillShotCount {
   uint32 flag = 1;

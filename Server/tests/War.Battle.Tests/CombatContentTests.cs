@@ -2860,6 +2860,7 @@ internal static class CombatContentTests
         };
         CoopPrestartCancellationTests.Run(volleySources);
         CoopSceneRoleTests.Run(volleySources);
+        CoopMasterDeathTests.Run(volleySources);
         CoopSurvivorRuntimeTests.Run(volleySources);
         CoopDepartureUdpTests.Run(volleySources).GetAwaiter().GetResult();
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
@@ -4383,15 +4384,17 @@ internal static class CombatContentTests
             .Coop.EnemySpawns.Single().EntityId;
         ulong noTargetShotTick = cornerArrival.FirstShootEligibleTick;
         noTargetRuntime.Advance(noTargetShotTick - 1);
-        foreach ((string playerId, ulong hitId) in new[]
-            { (firstPlayer, 1UL), (secondPlayer, 2UL) })
+        // Both dead would end the mission. Keep its master alive but in the unsampled movement-start frame.
+        PlayerDamageResult? noTargetPeerDeath = noTargetRuntime.ApplyHostPlayerDamage(
+            1, secondPlayer, new ResolvedPlayerDamage(1_000_000,
+                CombatDamageType.Basic, HasWeapon: false), 1f, noTargetShotTick - 1);
+        if (noTargetPeerDeath?.Dead != true || noTargetRuntime.Command(firstPlayer, new MatchCommand
+            {
+                CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = 1, TargetCoverIndex = 2 }
+            }).Code != "moving")
         {
-            PlayerDamageResult? hit = noTargetRuntime.ApplyHostPlayerDamage(
-                hitId, playerId, new ResolvedPlayerDamage(1_000_000,
-                    CombatDamageType.Basic, HasWeapon: false), 1f,
-                noTargetShotTick - 1);
-            if (hit?.Dead != true)
-                throw new Exception("Co-op no-target fixture failed to remove a player.");
+            throw new Exception("Co-op no-target fixture requires a living master entering the released peer cover.");
         }
         noTargetRuntime.Advance(noTargetShotTick);
         ulong noTargetRetry = noTargetRuntime.CornerNoTargetRetryTick(
@@ -4408,11 +4411,11 @@ internal static class CombatContentTests
             noTargetRetry)
             throw new Exception("Co-op corner retried an absent target early.");
         noTargetRuntime.Advance(noTargetRetry);
-        if (noTargetRuntime.CornerNoTargetRetryTick(noTargetEnemyId) !=
-            noTargetRetry +
-                (ulong)Math.Floor(cornerDelay * MatchManifest.TickRate) + 1)
+        CoopCornerShotAttempt? recoveredTarget = noTargetRuntime.CornerLatestShotAttempt(noTargetEnemyId);
+        if (noTargetRuntime.CornerNoTargetRetryTick(noTargetEnemyId) != null ||
+            recoveredTarget?.Tick != noTargetRetry || recoveredTarget.PlayerId != firstPlayer)
             throw new Exception(
-                "Co-op corner did not renew the absent-target delay.");
+                "Co-op corner did not resume target selection at the exact retry after the master's pose returned.");
 
         CoopMatchRuntime rejectedRuntime =
             CreateReadyCornerRuntime(rejectedDestinations);

@@ -9,6 +9,7 @@ namespace War.BattleServer;
 /// </summary>
 public sealed class CoopMissionEngine
 {
+    private const ulong MaximumHostTick = 10_000_000;
     private readonly HashSet<string> participants = new(StringComparer.Ordinal);
     private readonly HashSet<string> ready = new(StringComparer.Ordinal);
     private readonly HashSet<string> _startedParticipants = new(StringComparer.Ordinal);
@@ -63,7 +64,7 @@ public sealed class CoopMissionEngine
 
     public bool MarkReady(string playerId, ulong tick)
     {
-        if (!participants.Contains(playerId) || Started || tick > 10_000_000 ||
+        if (!participants.Contains(playerId) || Started || tick > MaximumHostTick ||
             lastReadyTick.HasValue && tick < lastReadyTick.Value)
             return false;
         ready.Add(playerId);
@@ -103,6 +104,20 @@ public sealed class CoopMissionEngine
         // The runtime must separately remove that player's inputs, targeting and presentation.
         participants.Remove(playerId);
         ready.Remove(playerId);
+        return true;
+    }
+
+    /// <summary>Closes an unfinished objective when the host confirms the source master's death.</summary>
+    internal bool FailAfterMasterDeath(ulong tick)
+    {
+        if (!Started || Outcome != MissionOutcome.InProgress || tick > MaximumHostTick ||
+            tick < StartTick || tick >= DeadlineTick)
+        {
+            return false;
+        }
+
+        objective.Fail();
+        spawns.Finish();
         return true;
     }
 

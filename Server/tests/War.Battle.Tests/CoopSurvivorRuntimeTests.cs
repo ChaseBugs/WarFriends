@@ -10,7 +10,7 @@ internal static class CoopSurvivorRuntimeTests
         VerifyMovingDeparture(sources);
         VerifySurvivorSuccess(sources);
         VerifySurvivorTimeout(sources);
-        VerifyNoLivingSurvivor(sources);
+        VerifyForfeitAfterMasterKia(sources);
         VerifyMasterDeparture(sources);
         VerifyExplicitMasterRole(sources);
         Console.WriteLine("PASS: co-op moving departure, survivor success and timeout evidence");
@@ -88,7 +88,7 @@ internal static class CoopSurvivorRuntimeTests
             sources.Combat, spawnPoints: sources.Spawns);
     }
 
-    private static void VerifyNoLivingSurvivor(CoopObstacleVolleyRuntimeTests.Sources sources)
+    private static void VerifyForfeitAfterMasterKia(CoopObstacleVolleyRuntimeTests.Sources sources)
     {
         CoopMatchRuntime runtime = Start(sources);
         string survivorId = sources.Manifest.Players[0].PlayerId;
@@ -101,8 +101,9 @@ internal static class CoopSurvivorRuntimeTests
             CommandId = 2,
             Forfeit = new ForfeitCommand()
         });
-        Require(reply.Code == "forfeit" && runtime.Terminal && reply.Snapshot.TerminalReason == "forfeit",
-            "A dead spectator must not count as a living survivor and keep an abandoned mission running.");
+        Require(reply.Code == "match-terminal" && runtime.Terminal &&
+            reply.Snapshot.TerminalReason == "mission-failed",
+            "Master KIA must already end the mission before a later peer Forfeit can change its outcome.");
         runtime.TerminalEvidenceSnapshot();
     }
 

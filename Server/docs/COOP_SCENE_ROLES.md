@@ -65,8 +65,9 @@ depending on the earlier incorrect slot assumption.
 This is source-backed result data, not Backend progression settlement or a
 normal Unity result-screen proof. The source SDK regenerates the added fields;
 the owner's installed Unity plugin binaries are not replaced here. Normal
-Worker co-op admission, role-aware result UI, heroic progression and master-KIA
-lifecycle integration remain separate unfinished work. No combat or economy
+Worker co-op admission, role-aware result UI and heroic progression remain
+unfinished. [Master-KIA lifecycle](COOP_MASTER_KIA.md) now closes unfinished
+missions at the host-confirmed death tick. No combat or economy
 gate is opened by these metadata changes.
 
 Windows verification: the focused combat-content executable exits zero with
