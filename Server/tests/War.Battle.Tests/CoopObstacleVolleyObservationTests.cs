@@ -6,7 +6,7 @@ using War.BattleServer;
 /// <summary>Binds actual controller frame observations to the recovered rig and host volley plan.</summary>
 internal static class CoopObstacleVolleyObservationTests
 {
-    private const string ReviewedSha256 = "7a4cc573e5f56587e5424231be13774f5afcd30716c6e2f14843f395af4fb9bb";
+    private const string ReviewedSha256 = "100b40b541d9d311a1ad7298ca11bd263a3f21d7cb2791d0d342004fcd240d26";
     private const int ColliderPartCount = 3;
     private const float QuaternionTolerance = 0.0001f;
     private const double FrameTimeTolerance = 0.00001;

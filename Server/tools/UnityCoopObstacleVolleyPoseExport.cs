@@ -20,6 +20,7 @@ public static class UnityCoopObstacleVolleyPoseExport
     private const string WeaponPath = "Assets/GameObject/AssaultRifleEnemy.prefab";
     private const string ProbeName = "ObstacleVolleyPoseProbe";
     private const string CrawlClip = "stand_up_crawl";
+    private const int ObservationVersion = 4;
     private const int MaximumStripPasses = 5;
     private const int MaximumFrames = 240;
     private const float InitialHideSeconds = 1f;
@@ -163,7 +164,12 @@ public static class UnityCoopObstacleVolleyPoseExport
         _muzzle = enemy.GetComponentsInChildren<Transform>(true)
             .Single(node => node.name == "MachinegunMuzzleFlash" && node.parent.name == "HK416");
         _parts = FindCollisionParts(enemy);
-        _controller.disableLookRot = true;
+        string lookMode = Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_POSE_LOOK") ?? "disabled";
+        if (lookMode != "enabled" && lookMode != "disabled")
+        {
+            throw new InvalidOperationException("WAR_COOP_OBSTACLE_POSE_LOOK must be enabled or disabled.");
+        }
+        _controller.disableLookRot = lookMode == "disabled";
         _controller.ForceInScreen();
         _controller.Resume();
         _controller.enabled = true;
@@ -261,7 +267,8 @@ public static class UnityCoopObstacleVolleyPoseExport
         File.WriteAllText(RequireEnvironment("WAR_COOP_OBSTACLE_POSE_OUTPUT"),
             JsonConvert.SerializeObject(new
             {
-                version = 3,
+                version = ObservationVersion,
+                proceduralLookEnabled = !_controller.disableLookRot,
                 client = "1.4.0",
                 unity = Application.unityVersion,
                 prefabSha256 = Hash(EnemyPath),

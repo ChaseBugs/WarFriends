@@ -1254,3 +1254,11 @@ without suppressing duplicate-file errors, resolving NETSDK1152 while retaining
 required assemblies. Windows solution build also passes. Production-host,
 Linux MongoDB smoke, normal Unity/Android play and complete game modes remain
 unverified. See [reproduction and scope](BATTLE_LINUX_VALIDATION.md).
+
+B22 obstacle pose verification now includes a paired Unity run with default
+neutral procedural look enabled. Both 82-frame records agree exactly on recorded
+geometry, timers and animation state; selector comparisons cover 492 colliders.
+Catalog startup requires the reviewed neutral-look proof and rejects missing or
+changed data. Nonzero look input, pooled residual state, gameplay query phase,
+moving roots and authoritative damage remain unverified. See
+[the paired observation boundary](COOP_OBSTACLE_POSES.md).

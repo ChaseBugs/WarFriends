@@ -1,10 +1,11 @@
 {
-  "version": 3,
+  "version": 4,
+  "proceduralLookEnabled": false,
   "client": "1.4.0",
   "unity": "2018.3.0f2",
   "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
-  "exporterSha256": "d730459877ae31eeaf703dc45100aa8a9a9388df216689d55417142e07fda427",
+  "exporterSha256": "cfe67051ec9dab734d74020d85426408a50d016761bbd5e4194dbf12eb79db66",
   "clips": [
     {
       "name": "stand_up_begin",

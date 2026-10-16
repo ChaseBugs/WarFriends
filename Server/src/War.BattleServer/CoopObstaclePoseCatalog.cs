@@ -10,7 +10,7 @@ internal sealed record CoopObstaclePoseClock(ulong ElapsedTick,
 /// <summary>Selects diagnostic obstacle poses; sampled colliders are not complete hit authority.</summary>
 internal sealed class CoopObstaclePoseCatalog
 {
-    private const string ReviewedSha256 = "7a4cc573e5f56587e5424231be13774f5afcd30716c6e2f14843f395af4fb9bb";
+    private const string ReviewedSha256 = "100b40b541d9d311a1ad7298ca11bd263a3f21d7cb2791d0d342004fcd240d26";
     private const string CrawlClip = "stand_up_crawl";
     private const string BeginClip = "stand_up_begin";
     private const string FireClip = "rifle_shot_loop";
@@ -44,12 +44,13 @@ internal sealed class CoopObstaclePoseCatalog
         }
         using JsonDocument document = JsonDocument.Parse(bytes);
         JsonElement root = document.RootElement;
-        if (root.GetProperty("version").GetInt32() != 3 ||
+        if (root.GetProperty("version").GetInt32() != CoopObstacleNeutralLookProof.ObservationVersion ||
             root.GetProperty("prefabSha256").GetString() != clips.SourceSha256 ||
             root.GetProperty("captureRate").GetInt32() != MatchManifest.TickRate)
         {
             throw new InvalidDataException("Obstacle observation does not bind the source rig and clock.");
         }
+        CoopObstacleNeutralLookProof.Validate(path, root);
         JsonElement samples = root.GetProperty("samples");
         ulong firstFire = (ulong)samples.EnumerateArray().First(frame =>
             frame.GetProperty("states").EnumerateArray().Any(state =>

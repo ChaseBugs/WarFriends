@@ -9,10 +9,11 @@ internal static class CoopObstaclePoseCatalogTests
     private const float DimensionTolerance = 0.000002f;
     private const float RotationTolerance = 0.000001f;
 
-    internal static void Run(string directory, BattleCombatContent content)
+    internal static void Run(string directory, BattleCombatContent content,
+        string referenceFileName = "coop-obstacle-volley-unity-reference.json")
     {
         using JsonDocument observation = JsonDocument.Parse(File.ReadAllBytes(
-            Path.Combine(directory, "coop-obstacle-volley-unity-reference.json")));
+            Path.Combine(directory, referenceFileName)));
         using JsonDocument plan = JsonDocument.Parse(File.ReadAllBytes(
             Path.Combine(directory, "coop-obstacle-volley-source-plan.json")));
         JsonElement samples = observation.RootElement.GetProperty("samples");
@@ -36,7 +37,8 @@ internal static class CoopObstaclePoseCatalogTests
             compared += placed.Count;
         }
         VerifyInvalidClocks(content.CoopObstaclePoses);
-        Console.WriteLine($"PASS: {compared} controller collider poses, dimensions and source reset clocks");
+        Console.WriteLine($"PASS: {compared} controller collider poses, dimensions and source reset clocks " +
+            $"from {referenceFileName}");
     }
 
     private static void CompareParts(IReadOnlyList<PlayerHitbox> placed, JsonElement expected,

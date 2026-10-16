@@ -20,8 +20,9 @@ the last round. This is a diagnostic fixture; it is never accepted as a command.
 
 `UnityCoopObstacleVolleyPoseExport` retains only the recovered animation
 controller on the source enemy/rifle rig. The controller uses normal Play Mode
-Update, forced visibility and disabled procedural look. Native NavMeshAgents
-are disabled; the root remains stationary. The tool calls the same public
+Update and forced visibility. The baseline disables procedural look; a paired
+run enables the source default neutral look. Native NavMeshAgents are disabled;
+the root remains stationary. The tool calls the same public
 animation method as source OnShot at the recorded host ticks and observes
 frames from `EditorApplication.update` without manually sampling each frame.
 
@@ -53,9 +54,29 @@ exporter's LF rule preserves its recorded source digest across checkouts.
    Run Unity with `-batchmode -projectPath <copy> -executeMethod
    UnityCoopObstacleVolleyPoseExport.Run -logFile <log>`. Omit `-quit`; the tool
    exits after Play Mode capture. Check both exit code and its export marker.
+   Run once with `WAR_COOP_OBSTACLE_POSE_LOOK=disabled` for the baseline and once
+   with `enabled` for the paired neutral-look reference, using separate outputs.
 4. The combat-content suite validates the committed observation's complete
    digest, host-plan digest, recovered rig binding, frame count/time order,
    finite/unit collider data, round resets and observed crawl playback.
+
+## Default neutral procedural look
+
+Version four records whether the actual controller's procedural look is enabled.
+The two 82-frame source runs use the same rig, clips, plan, exporter and frame
+phase. Their recorded muzzle positions, collider parts/dimensions/activity,
+animation states and float timer values match exactly. The pose selector is
+compared against both runs, covering 492 placed colliders in total.
+
+`CoopObstacleNeutralLookProof` makes the paired observation a required catalog
+input. It validates the complete reviewed digest and matching source/frame
+fields; missing or changed proof rejects actual pose-catalog loading. Tests
+exercise both failures through `CoopObstaclePoseCatalog.Load`.
+
+This proves only the fresh controller's default neutral look with no LookAt or
+upper-body command. It does not prove residual pooled-object state, nonzero
+look input, actual gameplay raycast sampling phases or moving roots. Those gates
+remain open; no Assaulter collider has been promoted into damage authority.
 
 `CoopObstaclePoseCatalog` now selects diagnostic collider candidates from the
 source clip clock plus the measured first blend frame. A complete-crawl start,
