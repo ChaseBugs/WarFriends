@@ -4328,7 +4328,9 @@ public sealed partial class MatchEngine
                     int flags = PvpArmyKillSkillShotPolicy.ExplosionFlags(
                         armyCatalog ?? throw new InvalidDataException(
                             "Player explosion lacks a recovered army catalog."),
-                        army.UnitId);
+                        army.UnitId) |
+                        PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
+                            army.Health, army.MaxHealth);
                     string receiptId = PvpHitReceiptId(cause, army.EntityKey, attackerPlayerId);
                     scoredDeaths = scoredDeaths.PrepareConfirmedPlayerOwnedDeathCopy(
                         attackerPlayerId, receiptId, flags, PlayerOwnedDeathGameTime,

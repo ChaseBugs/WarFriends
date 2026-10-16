@@ -54,7 +54,9 @@ public sealed partial class MatchEngine
                 int flags = PvpArmyKillSkillShotPolicy.ExplosionFlags(
                     armyCatalog ?? throw new InvalidDataException(
                         "Grenade death lacks a recovered army catalog."),
-                    army.UnitId);
+                    army.UnitId) |
+                    PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
+                        army.Health, army.MaxHealth);
                 string receiptId = PvpHitReceiptId("player-grenade-army-kill",
                     projectileKey, army.EntityKey.ToString(CultureInfo.InvariantCulture));
                 candidate = candidate.PrepareConfirmedPlayerOwnedDeathCopy(

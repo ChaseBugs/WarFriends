@@ -24,6 +24,14 @@ The recovered `Missile.TryKill` supplies its `owner` and weapon to the same `Exp
 
 For a confirmed player-bullet army death, the host records the source base Kill flag, VehicleDestroyed for a non-soldier family, and TankDestroyed for the Tank family in match-local PvP score and streak authority. The normal peer snapshot omits private skill-shot counts; the signed terminal result includes them. A live Drone death checks one Kill and VehicleDestroyed row and the source score of 40 points. Tests compare all 24 family classifications against the deployment catalog.
 
+`DestroyableObject.DoDamage` marks `isOneHit` when its root had full health
+before one lethal damage callback. Confirmed player bullet, grenade, mine, and
+Bazooka army deaths now add `OneHitKill` from the host's prior root health.
+Damaged roots do not receive it; a live collected-grenade burst now kills one
+full-health and three previously weakened infantry, awarding one one-hit row.
+Sabotage retains its explicit source `isOneHit` assertion. Normal rifle,
+mine, and Bazooka full-health death paths still need live one-hit proof.
+
 Confirmed player-owned mine, Bazooka, and grenade blasts add the source ExplosiveKill flag to those
 same base flags. The blast death recorder stages every combo/score transition before publishing its
 direct-kill batch. Normal M320 and collected bonus grenades compare ordered `ArmyDied` events and
@@ -34,8 +42,8 @@ VehicleDestroyed, ExplosiveKill, 44 source points, and private terminal counts. 
 death checks the Tank-specific flag and 104 points; a live collected-grenade burst kills four
 infantry and earns one DoubleKill, one TripleKill, and one MultiKill while conserving private
 direct-kill evidence. The source combo flags are applied when its host-time window is met. Headshot,
-contextual one-hit, long-shot, revenge, environmental flags, exact scaled time, and full cross-cause
-callback order remain open. These counts remain incomplete for Client MatchStats and Backend
-settlement.
+other contextual flags, long-shot, revenge, environmental flags, exact scaled time, and full
+cross-cause callback order remain open. These counts remain incomplete for Client MatchStats and
+Backend settlement.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.

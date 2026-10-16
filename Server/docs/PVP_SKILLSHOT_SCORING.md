@@ -18,6 +18,12 @@ For confirmed Sabotage base flags, `Kill` contributes 20 points,
 `TankDestroyed`, producing 106. These are source base contributions; combo,
 revenge, and slow-motion evidence can add other recovered rows.
 
+Normal player-owned army deaths now add `OneHitKill` only when the root had
+full health before one host-confirmed lethal damage callback, matching
+`DestroyableObject.DoDamage`. A live bonus-grenade burst awards that flag to
+one full-health infantry and withholds it from three weakened infantry.
+Normal rifle, mine, and Bazooka full-health deaths remain unverified.
+
 ## Runtime boundary
 
 This catalog supplies trusted score data and composition. Confirmed host

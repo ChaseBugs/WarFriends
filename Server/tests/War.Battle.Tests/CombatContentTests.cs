@@ -15405,6 +15405,11 @@ internal static class CombatContentTests
         Reject(() => TerminalOutbox.ValidatePayload(forgedSabotageBytes,
             droneShotMatch.MatchId,
             TerminalResultDigest.Compute(forgedSabotageBytes)));
+        Check(PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(100f, 100f) ==
+              PvpArmyKillSkillShotPolicy.OneHitKill &&
+              PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(99f, 100f) == 0,
+            "confirmed lethal army damage awards OneHitKill only from full prior health");
+        Reject(() => PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(float.NaN, 100f));
         foreach(var family in content.Army.Families)
         {
             int expectedBaseFlags = PvpArmyKillSkillShotPolicy.Kill |

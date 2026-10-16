@@ -1985,20 +1985,29 @@ internal static class PvpBonusSpawnPlannerTests
                 "opponent starts a second source infantry deployment for a live combo: " +
                 secondDeployment);
             while (currentTick < nextDeployTick + SpawnTimeoutTicks && !match.Terminal &&
-                   match.ArmyEntityBatch(localId, 0, 0).Entities.Count < 2)
+                   match.ArmyBatch(enemyId).PendingCount > 0)
             {
                 match.Advance(++currentTick);
             }
 
-            Check(match.ArmyEntityBatch(localId, 0, 0).Entities.Count >= 2,
-                "both opposing infantry units have host vitality before the bonus burst");
+            Check(match.ArmyBatch(enemyId).PendingCount == 0 &&
+                  match.ArmyEntityBatch(localId, 0, 0).Entities.Count >= 2,
+                "both opposing infantry deployments finish before the bonus burst");
         }
 
-        void PrepareInfantryForBonusBlast(MatchEngine match)
+        void PrepareInfantryForBonusBlast(MatchEngine match,
+            ulong fullHealthEntityKey)
         {
             const float RemainingHealth = 10f;
             foreach (var infantry in match.ArmyEntityBatch(localId, 0, 0).Entities)
             {
+                if (infantry.EntityKey == fullHealthEntityKey)
+                {
+                    Check(infantry.Health == infantry.MaxHealth,
+                        "the selected one-hit infantry target still has full root health");
+                    continue;
+                }
+
                 float setupDamage = infantry.Health + infantry.Kevlar - RemainingHealth;
                 if (setupDamage > 0f)
                 {
@@ -2008,9 +2017,12 @@ internal static class PvpBonusSpawnPlannerTests
         }
 
         void CheckBonusInfantryKillScores(MatchEngine match,
-            PvpOwnerScoreSnapshot scoreBeforeBlast, ulong firstEntityKey)
+            PvpOwnerScoreSnapshot scoreBeforeBlast, ulong firstEntityKey,
+            int expectedKills)
         {
             const int TripleKillThreshold = 3;
+            Check(expectedKills >= TripleKillThreshold,
+                "both source infantry deployments provide a multi-kill target set");
             Check(match.ArmyHealth(firstEntityKey) == null,
                 "source bonus blast kills the prepared enemy infantry");
             var scoreAfterBlast = match.BonusProgress.ScoreSnapshot(localId);
@@ -2019,9 +2031,11 @@ internal static class PvpBonusSpawnPlannerTests
             int newExplosionKills =
                 scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] -
                 scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill];
-            Check(newKills >= 2 && newExplosionKills == newKills &&
+            Check(newKills == expectedKills && newExplosionKills == newKills &&
                   scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] ==
-                      scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed],
+                      scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] &&
+                  scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] -
+                      scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1,
                 "collected bonus grenades credit multiple confirmed infantry deaths: " +
                 $"kills={newKills}, explosions={newExplosionKills}, " +
                 $"remaining={match.ArmyEntityBatch(localId, 0, 0).Entities.Count}");
@@ -2061,8 +2075,11 @@ internal static class PvpBonusSpawnPlannerTests
                     (vehicleBody ? part.GroundVehicleBody : part.ArmyInfantry)).Hitbox;
             if (expectKill)
             {
-                PrepareInfantryForBonusBlast(match);
+                PrepareInfantryForBonusBlast(match, target.EntityKey);
             }
+            int infantryBeforeBlast = expectKill
+                ? match.ArmyEntityBatch(localId, 0, 0).Entities.Count
+                : 0;
             float healthBefore = match.ArmyHealth(target.EntityKey)!.Value;
             var scoreBeforeBlast = match.BonusProgress.ScoreSnapshot(localId);
             var planner = match.BonusPlanner;
@@ -2077,9 +2094,9 @@ internal static class PvpBonusSpawnPlannerTests
             if (expectKill)
             {
                 var liveInfantry = match.ArmyEntityBatch(localId, 0, 0).Entities;
-                Check(liveInfantry.All(infantry => plannedBurst.Launches.Any(launch =>
-                        launch.TargetId == "army:" + infantry.EntityKey)),
-                    "the source bonus burst targets both live infantry units");
+                Check(liveInfantry.Count(infantry => plannedBurst.Launches.Any(launch =>
+                        launch.TargetId == "army:" + infantry.EntityKey)) >= 2,
+                    "the three-shot source burst targets multiple live infantry units");
             }
             ulong nextTick = currentTick;
             while (nextTick < currentTick + BlastTimeoutTicks && !match.Terminal &&
@@ -2096,7 +2113,8 @@ internal static class PvpBonusSpawnPlannerTests
                     "vehicle registry and shared vitality agree after bonus grenade damage");
             if (expectKill)
             {
-                CheckBonusInfantryKillScores(match, scoreBeforeBlast, target.EntityKey);
+                CheckBonusInfantryKillScores(match, scoreBeforeBlast,
+                    target.EntityKey, infantryBeforeBlast);
             }
         }
 
