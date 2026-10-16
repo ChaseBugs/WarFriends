@@ -1314,3 +1314,11 @@ and rotation before each OnShot. A bounded source clock replaces the previous
 unchanged initial-queue sampling and rejects mismatched or invalid histories.
 Full controller/Gun, moving roots, corner colliders and live co-op remain open.
 See [the corner callback report](COOP_CORNER_CALLBACKS.md).
+
+B22 root composition now has 59 native before/after frames: six tween writes,
+including its disabling completion frame, followed by 53 preserved external
+root frames. The stationary publication path uses the tested composition
+boundary and invalid-input rejection preserves its first Start update. This
+does not reconstruct the Worker's missing native navigation orientation input;
+moving origins and collision stay unavailable. See the root composition phase
+in [the moving-root report](COOP_OBSTACLE_ROOT_TURNS.md).

@@ -124,6 +124,10 @@ public static class UnityCoopObstacleTurnExport
         actor.transform.rotation = Rotation(_plan["startRotation"]);
         _turn = TweenRotation.Begin(actor, TurnSeconds, Rotation(_plan["targetRotation"]));
         _turn.ignoreTimeScale = false;
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_TURN_PHASE_OUTPUT")))
+        {
+            actor.AddComponent<UnityCoopObstacleTurnPhaseProbe>().Initialize(_agent);
+        }
         _startTime = Time.time;
     }
 
@@ -132,10 +136,11 @@ public static class UnityCoopObstacleTurnExport
         File.WriteAllText(RequireEnvironment("WAR_COOP_OBSTACLE_TURN_OUTPUT"),
             JsonConvert.SerializeObject(new
             {
-                version = 1,
+                version = 2,
                 unity = Application.unityVersion,
                 planSha256 = Hash(RequireEnvironment("WAR_COOP_OBSTACLE_TURN_PLAN")),
                 exporterSha256 = Hash("Assets/Editor/UnityCoopObstacleTurnExport.cs"),
+                phaseProbeSha256 = Hash("Assets/UnityCoopObstacleTurnPhaseProbe.cs"),
                 navMeshSha256 = Hash((string)_plan["asset"]),
                 tweenSha256 = Hash("Assets/Plugins/Assembly-CSharp-firstpass/TweenRotation.cs"),
                 captureRate = CaptureRate,

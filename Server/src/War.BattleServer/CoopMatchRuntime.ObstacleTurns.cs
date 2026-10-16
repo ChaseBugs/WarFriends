@@ -1,3 +1,4 @@
+using System.Numerics;
 using War.Protocol;
 
 namespace War.BattleServer;
@@ -34,10 +35,10 @@ internal sealed partial class CoopMatchRuntime
                 continue;
             }
 
-            tween.AdvanceFrame(ScaledFrameSeconds);
             if (windup.HasNavigationRotationConflict)
             {
                 // The source tween alone does not determine the root after native navigation writes.
+                tween.AdvanceFrame(ScaledFrameSeconds);
                 continue;
             }
 
@@ -45,12 +46,16 @@ internal sealed partial class CoopMatchRuntime
                 row.Health > 0 && row.DeathTick == 0);
             if (enemy == null)
             {
+                tween.AdvanceFrame(ScaledFrameSeconds);
                 continue;
             }
 
+            var rootBeforeUpdate = new Quaternion(enemy.CurrentRotation.X, enemy.CurrentRotation.Y,
+                enemy.CurrentRotation.Z, enemy.CurrentRotation.W);
+            Quaternion root = CoopShotRootComposition.AfterFrame(tween, rootBeforeUpdate, ScaledFrameSeconds);
             enemy.CurrentRotation = new BattleJointRotation
             {
-                X = tween.Rotation.X, Y = tween.Rotation.Y, Z = tween.Rotation.Z, W = tween.Rotation.W
+                X = root.X, Y = root.Y, Z = root.Z, W = root.W
             };
             enemy.PoseTick = tick;
             stateRevision++;

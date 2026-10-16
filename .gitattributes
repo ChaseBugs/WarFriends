@@ -71,4 +71,7 @@ Server/content/coop-callback-muzzle-unity-reference.json text eol=crlf
 Server/content/coop-corner-callback-unity-reference.json text eol=crlf
 Server/tools/UnityCoopCornerCallbackProbe.cs text eol=lf
 Server/tools/UnityCoopCornerCallbackExport.cs text eol=lf
+Server/tools/UnityCoopObstacleTurnPhaseProbe.cs text eol=lf
+Server/content/coop-moving-root-phase-unity-reference.json text eol=crlf
+Server/content/coop-moving-root-phase-post-reference.json text eol=crlf
 Server/tools/UnityCoopDelayedShotProbe.cs text eol=lf

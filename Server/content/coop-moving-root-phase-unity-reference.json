@@ -1,0 +1,1541 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "phase": "Update order -10 after Start; LateUpdate after ordinary TweenRotation.Update",
+  "samples": [
+    {
+      "tick": 1,
+      "unityFrame": 3,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.2150983,
+      "beforeRotation": [
+        0.0,
+        0.0316671133,
+        0.0,
+        0.9994985
+      ],
+      "afterRotation": [
+        0.0,
+        0.209256485,
+        0.0,
+        0.977860868
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": true,
+      "tweenEnabledAfter": true
+    },
+    {
+      "tick": 2,
+      "unityFrame": 4,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0783484,
+      "beforeRotation": [
+        0.0,
+        0.200195074,
+        0.0,
+        0.9797561
+      ],
+      "afterRotation": [
+        0.0,
+        0.5134192,
+        0.0,
+        0.858137965
+      ],
+      "velocity": [
+        0.0293540936,
+        0.02582073,
+        0.3317928
+      ],
+      "tweenEnabledBefore": true,
+      "tweenEnabledAfter": true
+    },
+    {
+      "tick": 3,
+      "unityFrame": 5,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0043193,
+      "beforeRotation": [
+        0.0,
+        0.486278147,
+        0.0,
+        0.873804152
+      ],
+      "afterRotation": [
+        0.0,
+        0.7627239,
+        0.0,
+        0.6467242
+      ],
+      "velocity": [
+        0.0587081872,
+        0.05164146,
+        0.6635999
+      ],
+      "tweenEnabledBefore": true,
+      "tweenEnabledAfter": true
+    },
+    {
+      "tick": 4,
+      "unityFrame": 6,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0047079,
+      "beforeRotation": [
+        0.0,
+        0.7288059,
+        0.0,
+        0.684720337
+      ],
+      "afterRotation": [
+        0.0,
+        0.8660447,
+        0.0,
+        0.499966681
+      ],
+      "velocity": [
+        0.07925033,
+        -0.02828121,
+        0.8957147
+      ],
+      "tweenEnabledBefore": true,
+      "tweenEnabledAfter": true
+    },
+    {
+      "tick": 5,
+      "unityFrame": 7,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.004866,
+      "beforeRotation": [
+        0.0,
+        0.8341675,
+        0.0,
+        0.5515113
+      ],
+      "afterRotation": [
+        0.0,
+        0.8811691,
+        0.0,
+        0.4728014
+      ],
+      "velocity": [
+        0.07547378,
+        -0.0299763661,
+        0.8525991
+      ],
+      "tweenEnabledBefore": true,
+      "tweenEnabledAfter": true
+    },
+    {
+      "tick": 6,
+      "unityFrame": 8,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0054722,
+      "beforeRotation": [
+        0.0,
+        0.8507055,
+        0.0,
+        0.5256427
+      ],
+      "afterRotation": [
+        0.0,
+        0.8811691,
+        0.0,
+        0.4728014
+      ],
+      "velocity": [
+        0.07164001,
+        -0.0347971879,
+        0.80965513
+      ],
+      "tweenEnabledBefore": true,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 7,
+      "unityFrame": 9,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0051654,
+      "beforeRotation": [
+        0.0,
+        0.8514898,
+        0.0,
+        0.5243711
+      ],
+      "afterRotation": [
+        0.0,
+        0.8514898,
+        0.0,
+        0.5243711
+      ],
+      "velocity": [
+        0.06786346,
+        -0.0425720178,
+        0.7665824
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 8,
+      "unityFrame": 10,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0048084,
+      "beforeRotation": [
+        0.0,
+        0.8215624,
+        0.0,
+        0.570118666
+      ],
+      "afterRotation": [
+        0.0,
+        0.8215624,
+        0.0,
+        0.570118666
+      ],
+      "velocity": [
+        0.0640296862,
+        -0.04017591,
+        0.7234096
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 9,
+      "unityFrame": 11,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0053219,
+      "beforeRotation": [
+        0.0,
+        0.791877031,
+        0.0,
+        0.6106807
+      ],
+      "afterRotation": [
+        0.0,
+        0.791877031,
+        0.0,
+        0.6106807
+      ],
+      "velocity": [
+        0.06019592,
+        -0.03777265,
+        0.6801509
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 10,
+      "unityFrame": 12,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0048555,
+      "beforeRotation": [
+        0.0,
+        0.7627946,
+        0.0,
+        0.646640956
+      ],
+      "afterRotation": [
+        0.0,
+        0.7627946,
+        0.0,
+        0.646640956
+      ],
+      "velocity": [
+        0.05636215,
+        -0.03536224,
+        0.6367063
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 11,
+      "unityFrame": 13,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0058851,
+      "beforeRotation": [
+        0.0,
+        0.734575,
+        0.0,
+        0.678527534
+      ],
+      "afterRotation": [
+        0.0,
+        0.734575,
+        0.0,
+        0.678527534
+      ],
+      "velocity": [
+        0.0524711572,
+        -0.0329446755,
+        0.5930614
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 12,
+      "unityFrame": 14,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0202178,
+      "beforeRotation": [
+        0.0,
+        0.707399666,
+        0.0,
+        0.706813753
+      ],
+      "afterRotation": [
+        0.0,
+        0.707399666,
+        0.0,
+        0.706813753
+      ],
+      "velocity": [
+        0.048580166,
+        -0.0305056553,
+        0.5491876
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 13,
+      "unityFrame": 15,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0060476,
+      "beforeRotation": [
+        0.0,
+        0.681390047,
+        0.0,
+        0.7319205
+      ],
+      "afterRotation": [
+        0.0,
+        0.681390047,
+        0.0,
+        0.7319205
+      ],
+      "velocity": [
+        0.0446891747,
+        -0.0280451756,
+        0.5050134
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 14,
+      "unityFrame": 16,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0055715,
+      "beforeRotation": [
+        0.0,
+        0.6566216,
+        0.0,
+        0.7542202
+      ],
+      "afterRotation": [
+        0.0,
+        0.6566216,
+        0.0,
+        0.7542202
+      ],
+      "velocity": [
+        0.0407409631,
+        -0.0255775433,
+        0.460510224
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 15,
+      "unityFrame": 17,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0066133,
+      "beforeRotation": [
+        0.0,
+        0.633136153,
+        0.0,
+        0.774040461
+      ],
+      "afterRotation": [
+        0.0,
+        0.633136153,
+        0.0,
+        0.774040461
+      ],
+      "velocity": [
+        0.03679275,
+        -0.0230813,
+        0.415592164
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 16,
+      "unityFrame": 18,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0050599,
+      "beforeRotation": [
+        0.0,
+        0.610951,
+        0.0,
+        0.7916685
+      ],
+      "afterRotation": [
+        0.0,
+        0.610951,
+        0.0,
+        0.7916685
+      ],
+      "velocity": [
+        0.0327301,
+        -0.0205636,
+        0.3701305
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 17,
+      "unityFrame": 19,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0054184,
+      "beforeRotation": [
+        0.0,
+        0.590068,
+        0.0,
+        0.8073535
+      ],
+      "afterRotation": [
+        0.0,
+        0.590068,
+        0.0,
+        0.8073535
+      ],
+      "velocity": [
+        0.0286674481,
+        -0.01798868,
+        0.3239822
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 18,
+      "unityFrame": 20,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0054119,
+      "beforeRotation": [
+        0.0,
+        0.5704803,
+        0.0,
+        0.821311355
+      ],
+      "afterRotation": [
+        0.0,
+        0.5704803,
+        0.0,
+        0.821311355
+      ],
+      "velocity": [
+        0.0244903546,
+        -0.0153779974,
+        0.276875466
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 19,
+      "unityFrame": 21,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0054609,
+      "beforeRotation": [
+        0.0,
+        0.5521837,
+        0.0,
+        0.8337225
+      ],
+      "afterRotation": [
+        0.0,
+        0.5521837,
+        0.0,
+        0.8337225
+      ],
+      "velocity": [
+        0.02019882,
+        -0.0126886358,
+        0.228352532
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 20,
+      "unityFrame": 22,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0051847,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0157356244,
+        -0.009856223,
+        0.177555069
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 21,
+      "unityFrame": 23,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0057141,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 22,
+      "unityFrame": 24,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0055247,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 23,
+      "unityFrame": 25,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0054317,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 24,
+      "unityFrame": 26,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0288161,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 25,
+      "unityFrame": 27,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.01178,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 26,
+      "unityFrame": 28,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0056617,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 27,
+      "unityFrame": 29,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0058804,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 28,
+      "unityFrame": 30,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0061569,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 29,
+      "unityFrame": 31,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0062894,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 30,
+      "unityFrame": 32,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0059958,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 31,
+      "unityFrame": 33,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0055385,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 32,
+      "unityFrame": 34,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0183598,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 33,
+      "unityFrame": 35,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0067526,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 34,
+      "unityFrame": 36,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0065488,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 35,
+      "unityFrame": 37,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0071574,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 36,
+      "unityFrame": 38,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.006432,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 37,
+      "unityFrame": 39,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0061185,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 38,
+      "unityFrame": 40,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0059348,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 39,
+      "unityFrame": 41,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0064263,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 40,
+      "unityFrame": 42,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0064489,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 41,
+      "unityFrame": 43,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.006904,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 42,
+      "unityFrame": 44,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0060312,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 43,
+      "unityFrame": 45,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0070065,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 44,
+      "unityFrame": 46,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0069405,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 45,
+      "unityFrame": 47,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0079519,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 46,
+      "unityFrame": 48,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0041637,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 47,
+      "unityFrame": 49,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0069713,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 48,
+      "unityFrame": 50,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0071875,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 49,
+      "unityFrame": 51,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0066294,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 50,
+      "unityFrame": 52,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0051808,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 51,
+      "unityFrame": 53,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.007124,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 52,
+      "unityFrame": 54,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0070242,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 53,
+      "unityFrame": 55,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0067443,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 54,
+      "unityFrame": 56,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0069324,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 55,
+      "unityFrame": 57,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0073221,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 56,
+      "unityFrame": 58,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0043104,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 57,
+      "unityFrame": 59,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0245598,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 58,
+      "unityFrame": 60,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0044211,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    },
+    {
+      "tick": 59,
+      "unityFrame": 61,
+      "deltaSeconds": 0.0333333351,
+      "smoothDeltaSeconds": 0.0333333351,
+      "unscaledDeltaSeconds": 0.0040195,
+      "beforeRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "afterRotation": [
+        0.0,
+        0.5351987,
+        0.0,
+        0.844726264
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tweenEnabledBefore": false,
+      "tweenEnabledAfter": false
+    }
+  ]
+}
