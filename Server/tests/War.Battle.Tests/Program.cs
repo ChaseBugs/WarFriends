@@ -912,6 +912,12 @@ if(args is ["--write-mixed-template",var mixedOutputPath])
     Console.WriteLine("PASS: wrote source-validated local mixed match template");return;
 }
 
+if (args is ["--coop-obstacle-clock-only"])
+{
+    CoopObstacleVolleyClockTests.Run();
+    return;
+}
+
 if(args is ["--combat-content-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -3216,6 +3222,7 @@ checks += await LiveRusherUdpTests.Run(Path.Combine(contentRoot.FullName,"conten
 checks += LiveRifleTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveRifleTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += RifleStatTests.Run(contentFile);
+checks += CoopObstacleVolleyClockTests.Run();
 checks += PlayerAimTests.RunUnityReference(Path.Combine(contentRoot.FullName,"content/recovered-aim-reference.json"));
 checks += RifleCoverTests.RunUnityQueue(Path.Combine(contentRoot.FullName,"content/unity-animation-queue-reference.json"));
 checks += RigBlendTests.Run(Path.Combine(contentRoot.FullName,"content/recovered-rig-blend-reference.json"));

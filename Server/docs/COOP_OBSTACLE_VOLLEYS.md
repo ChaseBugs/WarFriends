@@ -53,3 +53,20 @@ on a shared deadline; call order alone cannot establish that invariant.
 
 No runtime behavior changed in this investigation. Existing source evidence does
 not supply a reason to bypass posture or manufacture player-hit damage.
+
+## Implemented clock foundation
+
+`CoopObstacleVolleyClock` now models shoot-first decisions, crawling/pending
+flags, strict fixed-tick deadlines, the post-preparation 2–3 second position
+delay, the subsequent 2–6 second delay, and the recovered post-batch shot bounds.
+Invalid random fractions, backward mutation time and overflowing deadlines
+leave state unchanged. `ObstacleShotDelay` groups the three source delay inputs
+so the transition remains readable.
+
+A clean Release build passed with zero warnings/errors, followed by 15 focused
+clock assertions (`--coop-obstacle-clock-only`). The test also participates in
+the full Battle test entry point, which has not been rerun for this addition.
+The clock is not yet consumed by `CoopMatchRuntime`; the existing first-volley
+and reposition guards remain. Next work must replace those together, bind actual
+last-round completion, preserve first-target diagnostics, and verify movement,
+repeated volley identity and collision posture before opening any damage path.
