@@ -3648,9 +3648,45 @@ internal static class CombatContentTests
         if (arrivalRuntime.InfantryRoundIntents(
                 arrivalEnemy.EntityId).Count != expectedBatchCount)
             throw new Exception("Co-op rifle exceeded its source batch size.");
-        arrivalRuntime.Advance(afterBatch + 1);
+        ulong lastFirstVolleyProjectile = arrivalRuntime.InfantryRoundIntents(arrivalEnemy.EntityId)
+            .Max(round => round.ProjectileId);
+        arrivalRuntime.Advance(expectedNextShot - 1);
+        if (arrivalRuntime.ObstacleVolleyState(arrivalEnemy.EntityId)?.HasPendingShot != false)
+        {
+            throw new Exception("Obstacle repeated its volley before the source cooldown.");
+        }
+        ulong expectedPostVolleyMove = Math.Max(preparedObstacle.NextPositionTick, lastRoundTick + 1);
+        if (expectedPostVolleyMove < expectedNextShot &&
+            arrivalRuntime.ObstacleRepositionStartedTick(arrivalEnemy.EntityId) != expectedPostVolleyMove)
+        {
+            throw new Exception("An overdue obstacle reposition did not resume after its completed volley.");
+        }
+        arrivalRuntime.Advance(expectedNextShot);
+        CoopInfantryShotWindup? secondObstacleVolley = arrivalRuntime.InfantryShotWindup(arrivalEnemy.EntityId);
+        if (secondObstacleVolley == null || secondObstacleVolley.StartTick != expectedNextShot ||
+            arrivalRuntime.ObstacleVolleyState(arrivalEnemy.EntityId)?.HasPendingShot != true ||
+            arrivalRuntime.InfantryFirstPlayerTarget(arrivalEnemy.EntityId) != targetPlan)
+        {
+            throw new Exception("Obstacle did not begin its second volley while preserving first-target evidence.");
+        }
+        ulong secondObstacleRoundTick = secondObstacleVolley.CallbackTick + 1;
+        arrivalRuntime.Advance(secondObstacleRoundTick);
+        IReadOnlyList<CoopInfantryRoundIntent> secondObstacleRounds =
+            arrivalRuntime.InfantryRoundIntents(arrivalEnemy.EntityId);
+        if (secondObstacleRounds.Count != 1 || secondObstacleRounds[0].ProjectileId <= lastFirstVolleyProjectile)
+        {
+            throw new Exception("Repeated obstacle rounds must retain unique match projectile identities.");
+        }
+        arrivalRuntime.Advance(secondObstacleRoundTick);
+        if (arrivalRuntime.InfantryRoundIntents(arrivalEnemy.EntityId).Count != 1)
+        {
+            throw new Exception("Replaying the second volley tick emitted another round.");
+        }
+        ulong obstacleDeathTick = secondObstacleRoundTick + 1;
+        arrivalRuntime.Advance(obstacleDeathTick);
         if (!arrivalRuntime.ApplyHostEnemyDamage(arrivalEnemy.EntityId,
-                heldEnemy.Health, afterBatch + 1) ||
+                heldEnemy.Health, obstacleDeathTick) ||
+            arrivalRuntime.ObstacleVolleyState(arrivalEnemy.EntityId) != null ||
             arrivalRuntime.InfantryPointArrival(arrivalEnemy.EntityId) != null ||
             arrivalRuntime.InfantryFirstPlayerTarget(
                 arrivalEnemy.EntityId) != null ||

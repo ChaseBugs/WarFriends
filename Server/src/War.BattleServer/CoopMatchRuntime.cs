@@ -1274,12 +1274,18 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         foreach ((ulong entityId, ulong repositionTick)
             in nextObstacleRepositionTicks.ToArray())
         {
-            if (tick != repositionTick ||
+            if (tick < repositionTick ||
                 !infantryPointArrivals.TryGetValue(entityId,
                     out CoopInfantryPointArrival? arrival))
                 continue;
-            if (tick >= arrival.FirstShootEligibleTick ||
-                infantryFirstTargets.ContainsKey(entityId))
+            _obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? volleyClock);
+            if (volleyClock != null && volleyClock.Decide(tick) != CoopObstacleAction.Reposition)
+            {
+                // Preserve overdue movement while firing, and let a simultaneous shot run first.
+                continue;
+            }
+            if (volleyClock == null && (tick >= arrival.FirstShootEligibleTick ||
+                infantryFirstTargets.ContainsKey(entityId)))
             {
                 // ObstacleHidingUpdate checks the shot first. Its later
                 // position draws need the firing/animation state machine.
@@ -1291,14 +1297,25 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             if (enemy == null)
                 continue;
 
+            ulong nextPositionTick;
+            if (volleyClock != null)
+            {
+                volleyClock.Reposition(tick, chooseInfantryRepositionFraction());
+                nextPositionTick = volleyClock.NextPositionTick;
+                // Completed firing poses cannot describe the subsequent crawl to a new position.
+                infantryShotWindups.Remove(entityId);
+            }
+            else
+            {
+                nextPositionTick = NextObstacleRepositionTickAfter(tick);
+            }
             obstacleRepositionStartedTicks.TryAdd(entityId, tick);
             CoopAssignedEnemyDestination? destination =
                 enemyDestinations.RegenerateObstaclePosition(entityId);
             if (destination == null)
                 throw new InvalidDataException(
                     "Co-op obstacle reposition lost its reserved point.");
-            nextObstacleRepositionTicks[entityId] =
-                NextObstacleRepositionTickAfter(tick);
+            nextObstacleRepositionTicks[entityId] = nextPositionTick;
             Vector3 start = new(enemy.CurrentX, enemy.CurrentY,
                 enemy.CurrentZ);
             int missionIndex = manifest.MissionIndex!.Value;
@@ -1386,13 +1403,12 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         foreach ((ulong entityId, CoopInfantryPointArrival arrival)
             in infantryPointArrivals)
         {
-            bool obstacleShot = arrival.HasUnchangedObstaclePointForFirstShot;
+            bool obstacleShot = IsObstacleShotReady(entityId, arrival);
             bool cornerShot = arrival.State ==
                 CoopInfantryPointState.CornerHiding &&
                 CornerReadyToShoot(entityId);
             if ((!obstacleShot && !cornerShot) ||
-                tick < arrival.FirstShootEligibleTick ||
-                (obstacleShot && infantryFirstTargets.ContainsKey(entityId)))
+                tick < arrival.FirstShootEligibleTick)
                 continue;
             ChosenPlayerTarget? chosen = ChoosePlayerTarget(
                 entityId, cornerShot);

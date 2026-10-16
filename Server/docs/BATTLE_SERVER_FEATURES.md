@@ -1125,16 +1125,18 @@ actual bot gameplay and the remaining local Photon object lifecycle are still
 open. See [local-room source evidence](LOCAL_OFFLINE_ROOM_SOURCE.md).
 
 The next B22 obstacle-infantry slice is recorded in
-[COOP_OBSTACLE_VOLLEYS.md](COOP_OBSTACLE_VOLLEYS.md). Current first-target and
-reposition guards prevent subsequent obstacle volleys. The recovered Client
-requires shoot-first priority, post-preparation movement deadlines and source
-post-batch cooldown together; lifting only the repeat guard would omit those
-rules. This investigation changes no combat authority or registration status.
+[COOP_OBSTACLE_VOLLEYS.md](COOP_OBSTACLE_VOLLEYS.md). The source requires shoot-first priority, post-preparation movement deadlines
+and source post-batch cooldown together. The current supported first-volley path
+now repeats through the shared clock and resumes overdue same-segment movement;
+initial reposition-before-first-shot and collision authority remain open.
+Registration remains closed.
 
 B22 now has a source-bound `CoopObstacleVolleyClock` foundation with shoot-first
 priority, pending/crawling state and both position/shot clocks. A clean build
 and 15 focused timing/invalid-input assertions pass. The runtime now binds first
 obstacle preparation and last-round completion to that clock, sharing its source
 cooldown draw with the windup. Combat-content regression reports 26,368 checks
-passing, including both binding invariants. Repeated selection and reposition
-integration remain pending; this does not enable repeated volleys or registration.
+passing, including both binding invariants. Subsequent runtime work now uses
+that clock for repeated selection and same-segment repositioning, preserving
+first-target history and unique projectile IDs. Actual collision/damage and
+complete initial movement coverage remain open; registration stays closed.

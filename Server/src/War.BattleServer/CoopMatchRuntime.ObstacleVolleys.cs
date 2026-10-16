@@ -26,11 +26,31 @@ internal sealed partial class CoopMatchRuntime
         {
             throw new InvalidDataException("Obstacle volley has no source position deadline.");
         }
-        var clock = new CoopObstacleVolleyClock(arrival.FirstShootEligibleTick,
-            arrival.FirstRepositionTick.Value);
-        // ObstacleHidingUpdate draws this delay after accepted shot preparation.
-        clock.BeginShot(tick, chooseInfantryRepositionFraction());
-        _obstacleVolleyClocks.Add(entityId, clock);
+        if (!_obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? clock))
+        {
+            clock = new CoopObstacleVolleyClock(arrival.FirstShootEligibleTick,
+                arrival.FirstRepositionTick.Value);
+            clock.BeginShot(tick, chooseInfantryRepositionFraction());
+            _obstacleVolleyClocks.Add(entityId, clock);
+        }
+        else
+        {
+            clock.BeginShot(tick, chooseInfantryRepositionFraction());
+        }
+        nextObstacleRepositionTicks[entityId] = clock.NextPositionTick;
+    }
+
+    private bool IsObstacleShotReady(ulong entityId, CoopInfantryPointArrival arrival)
+    {
+        if (arrival.State != CoopInfantryPointState.ObstacleHiding)
+        {
+            return false;
+        }
+        if (_obstacleVolleyClocks.TryGetValue(entityId, out CoopObstacleVolleyClock? clock))
+        {
+            return clock.Decide(tick) == CoopObstacleAction.Shoot;
+        }
+        return arrival.HasUnchangedObstaclePointForFirstShot && !infantryFirstTargets.ContainsKey(entityId);
     }
 
     private ulong CompleteInfantryVolleyClock(BattleCoopEnemySpawn enemy)
