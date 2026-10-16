@@ -16777,8 +16777,10 @@ internal static class CombatContentTests
                   mine.EntityId==metalDroneMineId),
             "Drone's source metal root does not trigger a Land Mine on the normal host tick");
         var flameHelicopterManifest=flameManifest with {MatchId="army-flame-helicopter",
-            Players=[flameManifest.Players[0],flameManifest.Players[1] with
+            SceneMasterPlayerId=soldierOwner,
+            Players=[flameManifest.Players[0] with {PlayerLevel=8},flameManifest.Players[1] with
             {
+                PlayerLevel=8,
                 EquippedArmyUnitIds=["ID_UNIT-HELICOPTER"],ArmyNormalUpgradeIndexes=[0],
                 ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
                 ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
@@ -16928,6 +16930,12 @@ internal static class CombatContentTests
         flameHelicopterMatch.Advance(79);
         Check(flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)==null,
             "source-scaled mine blast destroys the opposing Helicopter on a normal tick");
+        var mineScore = flameHelicopterMatch.BonusProgress.ScoreSnapshot(soldierOwner);
+        Check(mineScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
+              mineScore.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] == 1 &&
+              mineScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
+              mineScore.Score == 44,
+            "confirmed player mine death credits source explosion and vehicle flags");
         if(!flameHelicopterMatch.Terminal)
             flameHelicopterMatch.Command(soldierOwner,new(){CommandId=3,Forfeit=new()});
         Check(flameHelicopterMatch.TerminalEvidenceSnapshot().DirectArmyKills.Single(row=>
@@ -16936,6 +16944,11 @@ internal static class CombatContentTests
                    VictimOwnerPlayerId:var mineVictim}&&
               mineAttacker==soldierOwner&&mineVictim==helicopterOwner,
             "terminal evidence keeps the authenticated mine owner and exact destroyed unit");
+        Check(flameHelicopterMatch.TerminalEvidenceSnapshot().Players
+                  .Single(player => player.PlayerId == soldierOwner)
+                  .ConfirmedSkillShotCounts.Single(row =>
+                      row.Flag == PvpArmyKillSkillShotPolicy.ExplosiveKill).Count == 1,
+            "private terminal evidence keeps the confirmed mine explosion flag");
         var mineTerminalBytes=Google.Protobuf.MessageExtensions.ToByteArray(
             flameHelicopterMatch.TerminalEvidenceSnapshot());
         var mineTerminalDigest=War.Shared.TerminalResultDigest.Compute(mineTerminalBytes);

@@ -4315,9 +4315,34 @@ public sealed partial class MatchEngine
             End("source-kill-backpressure","",false);
             return;
         }
+
+        PvpBonusProgressCoordinator? scoredDeaths = pvpBonusProgress;
+        if (scoredDeaths != null)
+        {
+            try
+            {
+                foreach (var army in enemyDeaths)
+                {
+                    int flags = PvpArmyKillSkillShotPolicy.ExplosionFlags(
+                        armyCatalog ?? throw new InvalidDataException(
+                            "Player explosion lacks a recovered army catalog."),
+                        army.UnitId);
+                    string receiptId = PvpHitReceiptId(cause, army.EntityKey, attackerPlayerId);
+                    scoredDeaths = scoredDeaths.PrepareConfirmedSkillShotCopy(
+                        attackerPlayerId, receiptId, flags, out _);
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                End("pvp-score-backpressure", "", false);
+                return;
+            }
+        }
+
         foreach(var army in enemyDeaths)
             directArmyKills.Add((army.EntityKey,army.UnitId,army.OwnerPlayerId,
                 attackerPlayerId,cause,tick));
+        pvpBonusProgress = scoredDeaths;
     }
 
     // Called only after host combat/AI establishes a death. There is no UDP

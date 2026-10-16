@@ -133,9 +133,11 @@ internal static class BazookaCatalogTests
         (MatchEngine Match,BattleArmyEntityState Victim,DynamicShotTarget[] Bodies) AirTarget(
             string matchId,string unit)
         {
-            var manifest=repairAllocation with {MatchId=matchId,Players=
-                [repairAllocation.Players[0],repairAllocation.Players[1] with
-                    {EquippedArmyUnitIds=[unit],ArmySpecialUpgradeIndexes=[-1]}]};
+            var manifest=repairAllocation with {MatchId=matchId,
+                SceneMasterPlayerId=one,
+                Players=[repairAllocation.Players[0] with {PlayerLevel=8},
+                    repairAllocation.Players[1] with
+                    {PlayerLevel=8,EquippedArmyUnitIds=[unit],ArmySpecialUpgradeIndexes=[-1]}]};
             content.ValidateAllocation(manifest);
             var match=new MatchEngine(manifest,map,content,armyChoice:_=>0);
             match.Admit(one);match.Admit(two);
@@ -298,9 +300,19 @@ internal static class BazookaCatalogTests
             {
                 Check(flightMatch.ArmyHealth(flightTarget.EntityKey)==null,
                     "normal player Bazooka blast destroys the low-health opposing Helicopter");
+                var bazookaScore = flightMatch.BonusProgress.ScoreSnapshot(one);
+                Check(bazookaScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
+                      bazookaScore.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] == 1 &&
+                      bazookaScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
+                      bazookaScore.Score == 44,
+                    "confirmed player Bazooka death credits source explosion and vehicle flags");
                 if(!flightMatch.Terminal)
                     flightMatch.Command(one,new(){CommandId=commandId++,Forfeit=new()});
                 var terminal=flightMatch.TerminalEvidenceSnapshot();
+                Check(terminal.Players.Single(player => player.PlayerId == one)
+                          .ConfirmedSkillShotCounts.Single(row =>
+                              row.Flag == PvpArmyKillSkillShotPolicy.ExplosiveKill).Count == 1,
+                    "private terminal evidence keeps the confirmed Bazooka explosion flag");
                 var bytes=terminal.ToByteArray();
                 var digest=War.Shared.TerminalResultDigest.Compute(bytes);
                 Check(TerminalOutbox.ValidatePayload(bytes,flightMatch.MatchId,digest)

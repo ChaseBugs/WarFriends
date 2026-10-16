@@ -6,6 +6,7 @@ internal static class PvpArmyKillSkillShotPolicy
     internal const int Kill = 4096;
     internal const int VehicleDestroyed = 512;
     internal const int TankDestroyed = 16384;
+    internal const int ExplosiveKill = 8192;
 
     /// <summary>Classifies the recovered victim family without optional kill conditions.</summary>
     internal static int BaseFlags(ArmyDeploymentCatalog catalog, string unitId)
@@ -30,5 +31,11 @@ internal static class PvpArmyKillSkillShotPolicy
         }
 
         return flags;
+    }
+
+    /// <summary>Adds the source explosion flag for a player-owned blast death.</summary>
+    internal static int ExplosionFlags(ArmyDeploymentCatalog catalog, string unitId)
+    {
+        return BaseFlags(catalog, unitId) | ExplosiveKill;
     }
 }
