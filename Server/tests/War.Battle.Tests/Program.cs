@@ -1082,6 +1082,36 @@ checks += ShotgunPlannerTests.Run();
 checks += ShotgunOverlapTests.Run();
 MatchCommand Fire(ulong id) => new() { CommandId = id, Fire = new FireCommand { TargetX = 1, TargetY = 2, TargetZ = 3 } };
 MatchCommand Poll() => new() { Poll = new PollMatch() };
+var objectiveMatch = new MatchEngine(definition with { MatchId = "objective-replay-boundary" });
+Check(objectiveMatch.Admit(a) && objectiveMatch.Admit(b) &&
+      objectiveMatch.TryRegisterObjectiveState(a, new Dictionary<BattleObjectiveKind, int>
+      {
+          [BattleObjectiveKind.DestroyCrates] = 2
+      }) &&
+      objectiveMatch.TryRegisterObjectiveState(b, new Dictionary<BattleObjectiveKind, int>
+      {
+          [BattleObjectiveKind.DestroyCrates] = 2
+      }) &&
+      objectiveMatch.TryRegisterInteractable(new BattleInteractable(
+          700, BattleObjectiveKind.DestroyCrates, 1)),
+    "objective replay fixture binds both players and one source interactable");
+objectiveMatch.Command(a, Ready(1, objectiveMatch.ManifestHash));
+objectiveMatch.Command(b, Ready(1, objectiveMatch.ManifestHash));
+objectiveMatch.Advance(60);
+const string objectiveEventId = "55555555555555555555555555555555";
+Check(objectiveMatch.TryRecordObjective(objectiveEventId, 700, a, 1),
+    "first source objective event advances its owner");
+var firstObjectiveSnapshot = objectiveMatch.Snapshot();
+Check(objectiveMatch.TryRecordObjective(objectiveEventId, 700, a, 1) &&
+      objectiveMatch.Snapshot().StateRevision == firstObjectiveSnapshot.StateRevision &&
+      objectiveMatch.Snapshot().LatestEventId == firstObjectiveSnapshot.LatestEventId &&
+      objectiveMatch.Snapshot().ObjectiveCredits == 1,
+    "identical objective replay adds no revision, event or performance credit");
+Reject(() => objectiveMatch.TryRecordObjective(objectiveEventId, 700, b, 1),
+    "one objective receipt cannot be replayed by another player");
+Check(objectiveMatch.Snapshot().ObjectiveCredits == 1 &&
+      objectiveMatch.Snapshot().StateRevision == firstObjectiveSnapshot.StateRevision,
+    "conflicting objective replay leaves host authority unchanged");
 var match = new MatchEngine(definition);
 Check(match.Command(a, Fire(1)).Code == "not-admitted", "no pre-admission command");
 Check(!match.Admit(new string('c', 32)), "outsider admission");

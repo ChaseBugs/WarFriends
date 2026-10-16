@@ -6,7 +6,10 @@ public sealed record BattleInteractable(int EntityId, BattleObjectiveKind Object
 /// can advance objectives; event IDs remain idempotent in the objective state.</summary>
 public sealed class BattleInteractableRegistry
 {
+    private const int MaximumEventReceipts = 4096;
     private readonly Dictionary<int, BattleInteractable> entries = new();
+    private readonly Dictionary<string, (int EntityId, string PlayerId, int Amount)> eventReceipts =
+        new(StringComparer.Ordinal);
     private readonly int capacity;
     public BattleInteractableRegistry(int capacity = 512)
     {
@@ -24,10 +27,50 @@ public sealed class BattleInteractableRegistry
     }
     public bool TryRecord(string eventId, int entityId, string playerId, BattleObjectiveState state, int amount)
     {
+        return TryRecord(eventId, entityId, playerId, state, amount, out _);
+    }
+
+    public bool IsReplay(string eventId, int entityId, string playerId, int amount)
+    {
+        if (!Guid.TryParseExact(eventId, "N", out _) ||
+            eventId != eventId.ToLowerInvariant())
+        {
+            return false;
+        }
+
+        if (!eventReceipts.TryGetValue(eventId, out var previous))
+        {
+            return false;
+        }
+
+        if (previous.EntityId != entityId || previous.PlayerId != playerId ||
+            previous.Amount != amount)
+        {
+            throw new InvalidDataException("Objective event replay changed its authority.");
+        }
+
+        return true;
+    }
+
+    public bool TryRecord(string eventId, int entityId, string playerId,
+        BattleObjectiveState state, int amount, out bool applied)
+    {
+        applied = false;
+        if (IsReplay(eventId, entityId, playerId, amount))
+        {
+            return true;
+        }
+
         if (!entries.TryGetValue(entityId, out var interactable) ||
-            !Guid.TryParseExact(playerId, "N", out _) || state is null) return false;
+            !Guid.TryParseExact(playerId, "N", out _) ||
+            playerId != playerId.ToLowerInvariant() || state is null ||
+            !Guid.TryParseExact(eventId, "N", out _) ||
+            eventId != eventId.ToLowerInvariant() ||
+            eventReceipts.Count >= MaximumEventReceipts) return false;
         if (amount < 1 || amount > interactable.RequiredAmount) return false;
         state.RecordEvent(eventId, interactable.ObjectiveKind, amount);
+        eventReceipts.Add(eventId, (entityId, playerId, amount));
+        applied = true;
         return true;
     }
     public IReadOnlyCollection<BattleInteractable> Snapshot() => entries.Values.OrderBy(x => x.EntityId).ToArray();

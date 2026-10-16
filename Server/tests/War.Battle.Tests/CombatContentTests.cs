@@ -9907,6 +9907,13 @@ internal static class CombatContentTests
                   interactables.TryRecord("55555555555555555555555555555555",700,
                       "44444444444444444444444444444444",objectiveState,1)&&objectiveState.Progress(BattleObjectiveKind.DestroyCrates)==1,
                   "registered interactables advance objectives through idempotent source event IDs");
+            Reject(() => interactables.TryRecord("55555555555555555555555555555555",700,
+                "66666666666666666666666666666666",objectiveState,1));
+            Reject(() => interactables.TryRecord("55555555555555555555555555555555",700,
+                "44444444444444444444444444444444",objectiveState,2));
+            Check(!interactables.TryRecord("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",700,
+                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",objectiveState,1),
+                "objective ownership requires a canonical roster identity");
             Check(BattleEventFactory.Spawn(1,700,Vector3.Zero,"deployable").Kind=="spawn:deployable"&&
                   BattleEventFactory.Objective(2,700,Vector3.Zero,BattleObjectiveKind.DestroyCrates).Kind=="objective:DestroyCrates"&&
                   BattleEventFactory.Effect(3,701,Vector3.Zero,WarCardEffectKind.Shield).Kind=="effect:Shield",
@@ -10955,10 +10962,21 @@ internal static class CombatContentTests
                   objectives.Progress(BattleObjectiveKind.GainSkillshots)==0,
                   "battle objectives apply bounded authoritative progress and never exceed their target");
             Reject(()=>objectives.Record(BattleObjectiveKind.Collect,1));
+            Reject(()=>new BattleObjectiveState(new Dictionary<BattleObjectiveKind,int>
+                {{(BattleObjectiveKind)99,1}}));
             Check(objectives.RecordEvent("55555555555555555555555555555555",BattleObjectiveKind.GainSkillshots,1)==1&&
                   objectives.RecordEvent("55555555555555555555555555555555",BattleObjectiveKind.GainSkillshots,1)==1&&
                   objectives.Progress(BattleObjectiveKind.GainSkillshots)==1,
                   "objective event replay is idempotent across duplicate network deliveries");
+            Check(objectives.RecordEvent("66666666666666666666666666666666",
+                      BattleObjectiveKind.GainSkillshots,1)==2&&
+                  objectives.RecordEvent("55555555555555555555555555555555",
+                      BattleObjectiveKind.GainSkillshots,1)==1,
+                  "late objective replay returns the original result after newer progress");
+            Reject(()=>objectives.RecordEvent("55555555555555555555555555555555",
+                BattleObjectiveKind.DestroyCrates,1));
+            Reject(()=>objectives.RecordEvent("55555555555555555555555555555555",
+                BattleObjectiveKind.GainSkillshots,2));
             var credits=new BattleCreditLedger();
             Check(credits.RecordHit("66666666666666666666666666666666")&&
                   !credits.RecordHit("66666666666666666666666666666666")&&credits.RecordKill("77777777777777777777777777777777")&&

@@ -1,35 +1,93 @@
 namespace War.BattleServer;
 
-public enum BattleObjectiveKind { DestroyCrates, DestroyEnemyCrates, GainSkillshots, Collect }
+public enum BattleObjectiveKind
+{
+    DestroyCrates,
+    DestroyEnemyCrates,
+    GainSkillshots,
+    Collect
+}
+
+/// <summary>Tracks bounded objective progress and exact event replays for one player.</summary>
 public sealed class BattleObjectiveState
 {
     private const int MaximumEvents = 4096;
-    private readonly Dictionary<BattleObjectiveKind,int> progress=[];
-    private readonly HashSet<string> events=[];
-    private readonly IReadOnlyDictionary<BattleObjectiveKind,int> targets;
-    public BattleObjectiveState(IReadOnlyDictionary<BattleObjectiveKind,int> targets)
+    private const int MaximumEventAmount = 1000;
+    private const int MaximumTarget = 100000;
+
+    private readonly Dictionary<BattleObjectiveKind, int> progress = new();
+    private readonly Dictionary<string, (BattleObjectiveKind Kind, int Amount, int Result)> events =
+        new(StringComparer.Ordinal);
+    private readonly IReadOnlyDictionary<BattleObjectiveKind, int> targets;
+
+    /// <summary>Creates the match-owned progress lanes from validated targets.</summary>
+    public BattleObjectiveState(IReadOnlyDictionary<BattleObjectiveKind, int> targets)
     {
-        if(targets==null||targets.Count==0||targets.Any(x=>x.Key<BattleObjectiveKind.DestroyCrates||x.Value<1||x.Value>100000))
+        if (targets == null || targets.Count == 0 || targets.Any(target =>
+            !Enum.IsDefined(target.Key) || target.Value is < 1 or > MaximumTarget))
+        {
             throw new InvalidDataException("Invalid battle objective targets.");
-        this.targets=new Dictionary<BattleObjectiveKind,int>(targets);
-        foreach(var key in targets.Keys)progress[key]=0;
+        }
+
+        this.targets = new Dictionary<BattleObjectiveKind, int>(targets);
+        foreach (BattleObjectiveKind kind in targets.Keys)
+        {
+            progress.Add(kind, 0);
+        }
     }
-    public int Record(BattleObjectiveKind kind,int amount)
+
+    /// <summary>Applies one trusted progress increment up to its target.</summary>
+    public int Record(BattleObjectiveKind kind, int amount)
     {
-        if(amount<1||amount>1000||!targets.ContainsKey(kind))throw new InvalidDataException("Invalid objective event.");
-        int next=Math.Min(targets[kind],checked(progress[kind]+amount));progress[kind]=next;return next;
+        if (amount is < 1 or > MaximumEventAmount || !targets.TryGetValue(kind, out int target))
+        {
+            throw new InvalidDataException("Invalid objective event.");
+        }
+
+        int next = Math.Min(target, checked(progress[kind] + amount));
+        progress[kind] = next;
+        return next;
     }
-    public int RecordEvent(string eventId,BattleObjectiveKind kind,int amount)
+
+    /// <summary>Applies an event once and returns its original result on replay.</summary>
+    public int RecordEvent(string eventId, BattleObjectiveKind kind, int amount)
     {
-        if(!Guid.TryParseExact(eventId,"N",out _))throw new InvalidDataException("Invalid objective event ID.");
-        if(events.Contains(eventId))return progress.GetValueOrDefault(kind);
-        if (events.Count >= MaximumEvents) throw new InvalidDataException("Objective event capacity exhausted.");
-        int value=Record(kind,amount);events.Add(eventId);return value;
+        if (!Guid.TryParseExact(eventId, "N", out _) ||
+            eventId != eventId.ToLowerInvariant())
+        {
+            throw new InvalidDataException("Invalid objective event ID.");
+        }
+
+        if (events.TryGetValue(eventId, out var previous))
+        {
+            if (previous.Kind != kind || previous.Amount != amount)
+            {
+                throw new InvalidDataException("Objective event replay changed its kind or amount.");
+            }
+
+            return previous.Result;
+        }
+
+        if (events.Count >= MaximumEvents)
+        {
+            throw new InvalidDataException("Objective event capacity exhausted.");
+        }
+
+        int value = Record(kind, amount);
+        events.Add(eventId, (kind, amount, value));
+        return value;
     }
-    public bool Complete(BattleObjectiveKind kind)=>targets.TryGetValue(kind,out var target)&&progress[kind]>=target;
-    public int Progress(BattleObjectiveKind kind)=>progress.GetValueOrDefault(kind);
-    public IReadOnlyDictionary<BattleObjectiveKind,int> ProgressSnapshot() =>
-        new Dictionary<BattleObjectiveKind,int>(progress);
-    public IReadOnlyDictionary<BattleObjectiveKind,int> TargetSnapshot() =>
-        new Dictionary<BattleObjectiveKind,int>(targets);
+
+    public bool Complete(BattleObjectiveKind kind)
+    {
+        return targets.TryGetValue(kind, out int target) && progress[kind] >= target;
+    }
+
+    public int Progress(BattleObjectiveKind kind) => progress.GetValueOrDefault(kind);
+
+    public IReadOnlyDictionary<BattleObjectiveKind, int> ProgressSnapshot() =>
+        new Dictionary<BattleObjectiveKind, int>(progress);
+
+    public IReadOnlyDictionary<BattleObjectiveKind, int> TargetSnapshot() =>
+        new Dictionary<BattleObjectiveKind, int>(targets);
 }

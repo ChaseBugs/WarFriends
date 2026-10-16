@@ -666,9 +666,35 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     internal bool TryRecordObjective(string eventId, int entityId, string playerId, int amount)
     {
-        if (Find(playerId)?.Admitted != true || !objectives.TryGetValue(playerId, out var state)) return false;
-        if (!interactables.TryRecord(eventId, entityId, playerId, state, amount)) return false;
-        performance.RecordObjective(eventId);
+        if (phase != BattlePhase.Running || Find(playerId)?.Admitted != true ||
+            !objectives.TryGetValue(playerId, out var state))
+        {
+            return false;
+        }
+
+        if (interactables.IsReplay(eventId, entityId, playerId, amount))
+        {
+            return true;
+        }
+
+        if (!performance.CanRecordObjective(eventId) ||
+            stateRevision == ulong.MaxValue || lastEventId == ulong.MaxValue ||
+            events.Count >= MaximumRetainedEvents)
+        {
+            return false;
+        }
+
+        if (!interactables.TryRecord(eventId, entityId, playerId, state, amount,
+            out bool applied) || !applied)
+        {
+            return false;
+        }
+
+        if (!performance.RecordObjective(eventId))
+        {
+            throw new InvalidOperationException("Objective credit lost its reserved event identity.");
+        }
+
         stateRevision++;
         Emit(MatchEventKind.ObjectiveProgress, playerId, "", (ulong)entityId,
             Vector3.Zero, amount, eventId);

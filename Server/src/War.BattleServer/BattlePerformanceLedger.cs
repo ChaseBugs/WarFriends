@@ -68,6 +68,13 @@ public sealed class BattlePerformanceLedger
     }
     internal bool TryRollbackCard(string eventId)=>cards.Remove(eventId);
     public bool RecordObjective(string eventId) => Record(objectives, eventId);
+    public bool CanRecordObjective(string eventId)
+    {
+        return Guid.TryParseExact(eventId, "N", out _) &&
+            eventId == eventId.ToLowerInvariant() &&
+            !objectives.Contains(eventId) &&
+            cards.Count + objectives.Count < capacity;
+    }
     public ulong DurationTicks => EndTick == 0 ? 0 : EndTick - StartTick;
 
     private bool Record(HashSet<string> set, string eventId)
