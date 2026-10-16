@@ -2601,6 +2601,23 @@ public sealed partial class MatchEngine
         return pose.BodyTarget(body.TransformFileId).Position;
     }
 
+    private Vector3? SelectCannonPlayerTarget(string playerId, Vector3 turretPosition)
+    {
+        // Tank and Buggy cannon prefabs both serialize playerShieldProbability as 1.
+        const float CannonShieldProbability = 1f;
+        var candidate = DroneTargetSnapshot().FirstOrDefault(row =>
+            row.Id == "player:" + playerId && row.Alive);
+        if (candidate == null)
+        {
+            return null;
+        }
+
+        var details = ResolveDroneShotTarget(candidate);
+        var selected = HelicopterTurretShotTargetPolicy.Select(
+            turretPosition, details, CannonShieldProbability, NextArmyFloat);
+        return selected?.Position;
+    }
+
     private (Vector3 Position,GroundVehicleAim Aim,ulong EntityId,string Owner)?
         SelectCannonDecoy(int ownerFraction,Vector3 vehiclePosition,
             Vector3 facing,GroundVehicleTurret turret,out bool decoyPresent)
@@ -2673,14 +2690,19 @@ public sealed partial class MatchEngine
            !tankCannonDamage.TryGetValue(entityKey,out float damage))return;
         var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons.Single();
         var binding=weapon.Missile??throw new InvalidDataException("Tank cannon lacks missile binding.");
-        Vector3 CurrentTarget()=>target.DecoyId!=null?target.Position:
-            CurrentPlayerBodyPosition(target.Target,vehicle.Position);
-        Vector3 position=CurrentTarget();
+        Vector3? selectedPosition = target.DecoyId != null
+            ? target.Position
+            : SelectCannonPlayerTarget(target.Target, vehicle.Position);
+        if (selectedPosition == null)
+        {
+            return;
+        }
+        Vector3 position = selectedPosition.Value;
         var origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,
             position-vehicle.Position);
         if(projectileId==ulong.MaxValue)throw new InvalidDataException("Tank projectile identity exhausted.");
         ulong id=++projectileId;
-        var flight=new TankMissileFlight(id,entityKey,binding,origin,CurrentTarget,tick,
+        var flight=new TankMissileFlight(id,entityKey,binding,origin,()=>position,tick,
             (from,direction,range)=>rifleCombat.TraceForArmy(target.Owner,from,direction,range));
         tankProjectiles.Add(id,new(flight,target.Owner,target.Target,damage,binding));
         Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"tank-cannon");stateRevision++;
@@ -2777,12 +2799,20 @@ public sealed partial class MatchEngine
            !buggyCannonTargets.TryGetValue(entityKey,out var target))return;
         var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons[weaponIndex];
         var binding=weapon.Missile??throw new InvalidDataException("Buggy cannon lacks missile binding.");
+        Vector3? selectedPosition = target.DecoyId != null
+            ? target.Position
+            : SelectCannonPlayerTarget(target.Target, vehicle.Position);
+        if (selectedPosition == null)
+        {
+            return;
+        }
+        Vector3 position = selectedPosition.Value;
         var origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",weaponIndex,
-            vehicle.Position,target.Position-vehicle.Position);
+            vehicle.Position,position-vehicle.Position);
         if(projectileId==ulong.MaxValue)throw new InvalidDataException("Buggy projectile identity exhausted.");
         ulong id=++projectileId;int sign=buggyCurveCounter++%2==0?-1:1;
         var flight=new BuggyMissileFlight(id,entityKey,binding,
-            armyVehicleShots[entityKey].ShotSpeed,origin,target.Position,tick,NextArmyFloat(),NextArmyFloat(),sign,
+            armyVehicleShots[entityKey].ShotSpeed,origin,position,tick,NextArmyFloat(),NextArmyFloat(),sign,
             (from,direction,range)=>rifleCombat.TraceForArmy(target.Owner,from,direction,range));
         buggyProjectiles.Add(id,new(flight,target.Owner,target.Target,attack.DamagePerMissile,binding));
         Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"buggy-cannon");stateRevision++;

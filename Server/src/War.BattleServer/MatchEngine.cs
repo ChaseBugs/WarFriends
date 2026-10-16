@@ -1353,6 +1353,36 @@ public sealed partial class MatchEngine : IMatchRuntime
                             PassengerWorldPosition(vehicleId,passenger.Binding),passenger.Health,
                             "vehicle-passenger-respawn:"+passenger.Binding.Role);
                     }
+        // Vehicle missiles can damage shields this tick, so update shield time first.
+        if (shields != null)
+        {
+            try
+            {
+                var regeneratingFractions = cardEffects.Snapshot()
+                    .Where(effect => effect.Definition.CardId == "CardShieldGenerator" &&
+                                     effect.Lease.ActiveAt(tick))
+                    .Select(effect => Find(effect.OwnerPlayerId)?.Definition.Fraction ?? 0)
+                    .Where(fraction => fraction is 1 or 2).Distinct().ToArray();
+                var occupiedCovers = players.Where(player => player.Admitted && !player.Dead)
+                    .Select(player => player.Route != null ? player.Destination : player.Cover)
+                    .Where(index => map != null && index >= 0 && index < map.Covers.Count)
+                    .Select(index => map!.Covers[index].SourceIndex).ToArray();
+                shields.SetCardRegeneration(regeneratingFractions, occupiedCovers);
+                var before = shields.Snapshot().ToDictionary(shield => shield.CoverIndex);
+                foreach (var changed in shields.Advance(tick))
+                {
+                    stateRevision++;
+                    var eventKind = before[changed.CoverIndex].Destroyed
+                        ? MatchEventKind.ShieldRepaired : MatchEventKind.ShieldRegenerated;
+                    EmitShield(eventKind, "", changed, 0);
+                }
+            }
+            catch (InvalidDataException)
+            {
+                End("invalid-shield-authority", "", false);
+                return;
+            }
+        }
         if(advanced&&phase==BattlePhase.Running){AdvanceBuggyProjectiles();AdvanceTankProjectiles();}
         if (advanced && vehicles != null)
             foreach (var vehicle in vehicles.Snapshot())
@@ -1405,31 +1435,6 @@ public sealed partial class MatchEngine : IMatchRuntime
         }
         if (advanced && coopMission != null && coopMission.AdvanceClock(tick)) stateRevision++;
         foreach (var player in players) player.Status.Expire(tick);
-        if(shields!=null)
-        {
-            try
-            {
-                var regeneratingFractions = cardEffects.Snapshot()
-                    .Where(effect => effect.Definition.CardId == "CardShieldGenerator" &&
-                                     effect.Lease.ActiveAt(tick))
-                    .Select(effect => Find(effect.OwnerPlayerId)?.Definition.Fraction ?? 0)
-                    .Where(fraction => fraction is 1 or 2).Distinct().ToArray();
-                var occupiedCovers = players.Where(player => player.Admitted && !player.Dead)
-                    .Select(player => player.Route != null ? player.Destination : player.Cover)
-                    .Where(index => map != null && index >= 0 && index < map.Covers.Count)
-                    .Select(index => map!.Covers[index].SourceIndex).ToArray();
-                shields.SetCardRegeneration(regeneratingFractions, occupiedCovers);
-                var before = shields.Snapshot().ToDictionary(shield => shield.CoverIndex);
-                foreach (var changed in shields.Advance(tick))
-                {
-                    stateRevision++;
-                    var eventKind = before[changed.CoverIndex].Destroyed
-                        ? MatchEventKind.ShieldRepaired : MatchEventKind.ShieldRegenerated;
-                    EmitShield(eventKind, "", changed, 0);
-                }
-            }
-            catch(InvalidDataException){End("invalid-shield-authority","",false);return;}
-        }
         if(advanced&&phase==BattlePhase.Running)
         {
             try{if(droneProjectiles.Count>0)AdvanceDroneProjectileFlights();}

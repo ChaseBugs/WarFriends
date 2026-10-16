@@ -237,9 +237,13 @@ poison pulse from bullet hits, observes its marker refresh, and confirms a
 private mine-revenge count. Tank and Buggy cannon targeting now honors the
 recovered disabled visibility requirement for primary player targets. Missile
 impacts retain their source vehicle identity when confirmed player damage
-marks a live vehicle for revenge. A Park match verifies Buggy missile damage,
-mine death, score and private revenge count. Tank missile-to-death and live
-grenade/Bazooka revenge remain open.
+marks a live vehicle for revenge. Both cannon prefabs serialize shield-target
+probability `1`; the host selects a posed target when each weapon fires and
+holds the Tank target during straight flight. Advancing shields before vehicle
+projectile damage prevents a stale-tick abort. Park matches verify live Tank
+and Buggy missile damage followed by player mine deaths, with one score and
+private revenge count for each. The Client's pre-fire static sight check and
+live grenade/Bazooka revenge remain open.
 
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank, before any combo. Selected live death callbacks now update combo, score, progress, and eligible bonus authority; complete callback coverage and normal Unity presentation remain open.
 

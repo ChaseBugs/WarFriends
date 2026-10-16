@@ -18499,6 +18499,61 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains the Buggy missile revenge count");
+        var tankShieldManifest = buggyRevengeManifest with
+        {
+            Players = buggyRevengeManifest.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-TANK"]
+            }).ToArray()
+        };
+        var (tankShieldMatch, tankVictim, tankTick, _) = PrepareRevengeVictim(
+            "tank-shield-revenge", tankShieldManifest, () => 0f);
+        ulong tankEventCursor = 0;
+        var tankImpacts = new List<MatchEvent>();
+        var tankShots = new List<MatchEvent>();
+        var tankShieldHits = new List<MatchEvent>();
+        while (tankEventCursor < tankShieldMatch.EventBatch(soldierOwner, tankEventCursor).LatestEventId)
+        {
+            var page = tankShieldMatch.EventBatch(soldierOwner, tankEventCursor);
+            tankImpacts.AddRange(page.Events.Where(battleEvent =>
+                battleEvent.Kind == MatchEventKind.Impact && battleEvent.Reason == "tank-cannon"));
+            tankShots.AddRange(page.Events.Where(battleEvent =>
+                battleEvent.Kind == MatchEventKind.Shot && battleEvent.Reason == "tank-cannon"));
+            tankShieldHits.AddRange(page.Events.Where(battleEvent =>
+                battleEvent.Kind is MatchEventKind.ShieldDamaged or MatchEventKind.ShieldDestroyed));
+            if (page.Events.Count == 0)
+            {
+                break;
+            }
+            tankEventCursor = page.Events[^1].EventId;
+        }
+        var tankTargetPlayer = tankShieldMatch.Snapshot().Players.Single(player =>
+            player.PlayerId == helicopterOwner);
+        Check(tankVictim.UnitId == "ID_UNIT-TANK" && tankShots.Count > 0 &&
+              tankImpacts.Any(impact =>
+                  tankShieldHits.Any(shield => shield.ProjectileId == impact.ProjectileId)) &&
+              tankTargetPlayer.Health < tankTargetPlayer.MaxHealth &&
+              tankShieldMatch.ArmyRevengeExpiry(tankVictim.EntityKey, helicopterOwner) > tankTick,
+            "live Tank cannon splash damages the shield and player before marking its own vehicle");
+        var tankBody = tankShieldMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == tankVictim.EntityKey && target.GroundVehicleBody);
+        Check(tankShieldMatch.TryRegisterLandMine(new string('1', 32), helicopterOwner,
+                tankBody.Hitbox.Center, tankVictim.Health + 100f),
+            "host mine overlaps the Tank whose cannon damaged the player");
+        tankShieldMatch.Advance(++tankTick);
+        Check(tankShieldMatch.ArmyHealth(tankVictim.EntityKey) == null &&
+              tankShieldMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "player mine kill credits the Tank's confirmed cannon revenge marker");
+        tankShieldMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(tankShieldMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
+            "private terminal evidence retains the Tank missile revenge count");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
@@ -18902,16 +18957,24 @@ internal static class CombatContentTests
               staleMatch.Command(soldierOwner,new MatchCommand{CommandId=4,
                   DeployArmy=new DeployArmyCommand{OptionIndex=29}}).Code=="army-not-offered",
               "pending tank reserves Park's last car capacity before its spawn tick");
-        staleMatch.Advance(nextCarTick+1);
+        ulong gunnerRespawnTick = staleMatch.Snapshot().Vehicles
+            .Single(vehicle => vehicle.EntityId == firstCar.EntityKey).Parts
+            .Single(part => part.PartId == "crew:gunner").RespawnTick;
+        staleMatch.Advance(nextCarTick + 1);
         Check(staleMatch.ArmyBatch(soldierOwner).Code=="army-unavailable" &&
               staleMatch.Command(soldierOwner,new MatchCommand{CommandId=4,
                   DeployArmy=new DeployArmyCommand{OptionIndex=29}}).Code=="army-not-offered",
               "spawn retains the unavailable offer state and replays the prior rejection");
-        for(ulong t=nextCarTick+2;t<1500&&!staleMatch.Terminal;t++)
+        for (ulong currentTick = nextCarTick + 2;
+             currentTick <= gunnerRespawnTick + 1 && !staleMatch.Terminal;
+             currentTick++)
         {
-            staleMatch.Advance(t);
-            if(t%90==0)
-            {staleMatch.ArmyEntityBatch(soldierOwner,0,0);staleMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+            staleMatch.Advance(currentTick);
+            if (currentTick % 90 == 0)
+            {
+                staleMatch.ArmyEntityBatch(soldierOwner, 0, 0);
+                staleMatch.ArmyEntityBatch(helicopterOwner, 0, 0);
+            }
         }
         var parkedVehicles=staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
         var liveTank=parkedVehicles.Single(x=>x.UnitId=="ID_UNIT-TANK");

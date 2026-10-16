@@ -77,10 +77,14 @@ terminal count. A Commando fixture now proves that one poison pulse advances
 the marker with no new bullet hit, then the same player's mine kill records
 one private revenge count. The recovered Tank and Buggy cannon turrets do not
 require a visible primary target; the host now honors that source setting.
-Their missile impacts carry the source vehicle ID into confirmed player damage.
-A live Buggy cannon hit followed by that player's mine kill verifies one
-revenge score and private terminal count. Tank missile-to-revenge death,
-grenade/Bazooka revenge, and exact Unity frame ordering remain open.
+Both prefab cannon components serialize `playerShieldProbability` as `1`, and
+the host selects a posed shield or moving target when each weapon fires. Their
+missile impacts carry the source vehicle ID into confirmed player damage.
+Live Tank and Buggy cannon hits followed by that player's mine kill each
+verify one revenge score and private terminal count. The shield advances
+before vehicle missile damage so a Tank shield impact cannot abort on a stale
+tick. Grenade/Bazooka revenge, the Client's pre-fire static sight check, and
+exact Unity frame ordering remain open.
 
 ## Runtime boundary
 
