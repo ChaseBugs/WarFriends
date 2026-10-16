@@ -1346,3 +1346,14 @@ types, late host-confirmed attribution and rejection of former loading owners.
 Normal runtime Forfeit, peer deactivation, spectator presentation and per-player
 terminal settlement remain open; this does not enable survivor gameplay.
 See [the survivor mission boundary](COOP_SURVIVOR_MISSION.md).
+
+B22/B25 now route authenticated running Forfeit through survivor continuation
+for a non-master when another living ally remains; source master departure
+still ends the shared mission. Protobuf `coop_departed` separates departure
+from death and admission history; gameplay commands, targeting, collision and
+cover occupancy exclude that peer while exact command receipts remain intact.
+Terminal evidence binds departure flags to the active roster and excludes the
+departed ally from success rows. Runtime tests complete host-confirmed kill
+objectives and source timeout after departure. Normal Unity co-op presentation,
+Worker admission and durable per-player settlement remain incomplete; see the
+updated [runtime boundary](COOP_SURVIVOR_MISSION.md#runtime-command-integration).

@@ -81,9 +81,19 @@ internal sealed partial class CoopMatchRuntime
 
     private string ApplyForfeit(Participant participant)
     {
+        bool hasLivingSurvivor = participants.Values.Any(other => other != participant &&
+            other.Admitted && other.Ready && !other.Dead && !other.Departed);
+        bool isSceneMaster = participant.PlayerId == GetSourceAuthorityPlayer().PlayerId;
+        if (!isSceneMaster && hasLivingSurvivor && mission.ContinueAfterPeerDeparture(participant.PlayerId))
+        {
+            DeactivateDepartingPeer(participant);
+            return "forfeit";
+        }
+
         mission.Leave(participant.PlayerId);
         if (mission.Started)
         {
+            DeactivateDepartingPeer(participant);
             End(BattlePhase.Ended, "forfeit");
         }
         else
@@ -93,6 +103,27 @@ internal sealed partial class CoopMatchRuntime
         }
 
         return "forfeit";
+    }
+
+    private static void DeactivateDepartingPeer(Participant participant)
+    {
+        // Source DisalblePlayerAndResumeGame clears currentPlayerPoint and networkStatus.active.
+        // Keep admission, vitality and command receipts as history; this is not a combat death.
+        participant.Departed = true;
+        participant.Ready = false;
+        participant.Route = null;
+        participant.DestinationIndex = -1;
+        participant.MoveEndTick = 0;
+        participant.MovementVelocity = System.Numerics.Vector3.Zero;
+        participant.ShotTimeline = null;
+        participant.ShotPoseReadyTick = 0;
+    }
+
+    private Participant GetSourceAuthorityPlayer()
+    {
+        // Older isolated allocations omit the explicit role and use their established first-roster master.
+        string masterId = manifest.SceneMasterPlayerId ?? manifest.Players[0].PlayerId;
+        return participants[masterId];
     }
 
     private string ApplyWeaponSelection(Participant participant, MatchCommand command)

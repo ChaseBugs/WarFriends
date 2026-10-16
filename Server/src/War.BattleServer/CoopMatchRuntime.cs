@@ -115,6 +115,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         public string PlayerId => Definition.PlayerId;
         public bool Admitted;
         public bool Ready;
+        public bool Departed;
         public ulong LastCommandId;
         public int CoverIndex;
         public int DestinationIndex = -1;
@@ -633,7 +634,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         Vector3? sniperOpponent = null;
         if (enemyDestinations.RequiresSniperTarget(enemy.Behaviour))
         {
-            Participant sourceHost = participants[manifest.Players[0].PlayerId];
+            Participant sourceHost = GetSourceAuthorityPlayer();
             if (!sourceHost.Admitted || !sourceHost.Ready || sourceHost.Dead)
                 return null;
             sniperOpponent = sourceHost.Position;
@@ -724,7 +725,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     public bool Resume(string playerId)
     {
         return !Terminal && participants.TryGetValue(playerId, out Participant? participant) &&
-            participant.Admitted;
+            participant.Admitted && !participant.Departed;
     }
 
     public bool CancelBeforeStart()
@@ -785,7 +786,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             AdvanceDiagnosticFlights();
             if (alliedShields != null && alliedShields.Advance(tick,
                 participants.Values
-                    .Where(participant => !participant.Dead &&
+                    .Where(participant => participant.Admitted && participant.Ready && !participant.Dead &&
                         participant.Route == null)
                     .Select(participant => participant.CoverIndex).ToArray()))
                 stateRevision++;
@@ -1030,10 +1031,8 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         Vector3? sniperOpponent = null;
         if (enemyDestinations?.RequiresSniperTarget(behaviour) == true)
         {
-            // The recovered Photon master uses its local currentPlayer in
-            // PlayerController.GetEnemyOf. Signed roster order owns that
-            // master role in this self-hosted co-op runtime.
-            Participant sourceHost = participants[manifest.Players[0].PlayerId];
+            // Source GetEnemyOf uses the scene master's current player, not a departing client's player.
+            Participant sourceHost = GetSourceAuthorityPlayer();
             if (sourceHost.Admitted && sourceHost.Ready && !sourceHost.Dead)
                 sniperOpponent = sourceHost.Position;
         }
@@ -2444,6 +2443,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         foreach (Participant player in manifest.Players.Select(
             definition => participants[definition.PlayerId]))
         {
+            if (player.Departed)
+            {
+                continue;
+            }
             SettledWeaponPose? settled = PlaceSettledWeaponPose(player);
             if (settled == null)
                 return null;
@@ -2470,6 +2473,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         foreach (Participant player in manifest.Players.Select(
             definition => participants[definition.PlayerId]))
         {
+            if (player.Departed)
+            {
+                continue;
+            }
             PlayerAimPose? pose = player.Route == null
                 ? PlaceSettledWeaponPose(player)?.Pose
                 : SampleMovingWeaponPose(player)?.Pose;
@@ -2763,7 +2770,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     {
         if (mission.MissionType != "Score" || credit == null ||
             !participants.TryGetValue(credit.PlayerId, out Participant? player) ||
-            !player.Admitted || !player.Ready ||
+            !player.Admitted || (!player.Ready && !player.Departed) ||
             !Enum.IsDefined(credit.KillCredit))
             return false;
         return ApplyHostEnemyDamage(entityId, damage, impactTick, credit);
@@ -2980,6 +2987,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 ? receipt.Reply.Clone() : Reply(command.CommandId, "command-conflict");
         if (Terminal)
             return Reply(command.CommandId, "match-terminal");
+        if (participant.Departed)
+        {
+            return Reply(command.CommandId, "coop-peer-departed");
+        }
         if (command.CommandId != participant.LastCommandId + 1)
             return Reply(command.CommandId, "command-order");
 
@@ -3010,7 +3021,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         int target = participant.CoverIndex + direction;
         while (target >= alliedFirstCover && target <= alliedLastCover)
         {
-            if (!participants.Values.Any(other => other != participant &&
+            if (!participants.Values.Any(other => other != participant && !other.Departed &&
                     (other.CoverIndex == target || other.DestinationIndex == target)))
                 break;
             target += direction;
@@ -3231,7 +3242,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     {
         if (!Terminal || mission.Outcome != MissionOutcome.Succeeded ||
             !participants.TryGetValue(playerId, out Participant? player) ||
-            !player.Admitted || player.Dead)
+            !player.Admitted || player.Departed || player.Dead)
             return null;
         float healthRatio = Math.Clamp(player.Health /
             player.Definition.Combat!.MaxHealth, 0f, 1f);
@@ -3363,6 +3374,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 PlayerId = participant.PlayerId,
                 Admitted = participant.Admitted,
                 Ready = participant.Ready,
+                CoopDeparted = participant.Departed,
                 LastCommandId = participant.LastCommandId,
                 ActiveWeaponSlot = weapon?.Slot ?? 0,
                 ClipAmmo = weapon?.Clip ?? 0,

@@ -36,14 +36,14 @@ reply strings retain their existing order and behavior.
 
 ## Remaining running-mission behavior
 
-This change does not complete co-op participant departure. The current runtime
-still ends the shared mission when an ally forfeits during Running. Recovered
-`FinishGameCoopClient -> DisalblePlayerAndResumeGame` can instead disable a
+The later [survivor runtime integration](COOP_SURVIVOR_MISSION.md) now keeps a
+started mission running when one ally forfeits and another living ally remains.
+Recovered `FinishGameCoopClient -> DisalblePlayerAndResumeGame` disables the
 departing peer while the master continues; its KIA path also supports spectating.
-Dedicated Worker ownership, per-player departure/spectator state, survivor
-targeting, shared result membership and normal Client UI need a separate
-integration. The started-forfeit fixture records the current checkpoint,
-not a claim that this remaining behavior matches every recovered peer role.
+Dedicated Worker ownership, normal Client departure/spectator presentation,
+and durable per-player settlement still need integration. The started-forfeit
+fixture now verifies continuation after the first departure and terminal
+forfeit after the last active departure; normal Client UI remains unverified.
 
 Normal Worker co-op admission, Client loading/cancel UI and full battle-mode
 completion remain unverified. This runtime and validator correction does not

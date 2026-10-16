@@ -65,14 +65,32 @@ internal static class CoopPrestartCancellationTests
             SendReadyCommand(runtime, player.PlayerId);
         }
 
-        string playerId = sources.Manifest.Players[0].PlayerId;
         Require(runtime.Snapshot().Coop.Started, "Both ready allies must actually start the mission.");
-        runtime.Command(playerId, CreateForfeitCommand(2));
+        string playerId = sources.Manifest.Players[1].PlayerId;
+        MatchCommand departure = CreateForfeitCommand(2);
+        MatchReply departed = runtime.Command(playerId, departure);
+        MatchSnapshot running = departed.Snapshot;
+        BattlePlayerState inactive = running.Players.Single(player => player.PlayerId == playerId);
+        Require(departed.Code == "forfeit" && running.Phase == BattlePhase.Running &&
+            running.Coop.ParticipantIds.Count == 1 && inactive.CoopDeparted &&
+            !inactive.Ready && !inactive.Dead && inactive.Health == inactive.MaxHealth &&
+            !runtime.Resume(playerId),
+            "One departing peer must deactivate without killing the survivor's running mission.");
+        Require(runtime.Command(playerId, departure.Clone()).ToByteArray().AsSpan()
+            .SequenceEqual(departed.ToByteArray()), "Departure retries must return the original response.");
+        Require(runtime.Command(playerId, CreateForfeitCommand(3)).Code == "coop-peer-departed",
+            "A departed peer must not submit a new gameplay mutation.");
+        string survivorId = sources.Manifest.Players[0].PlayerId;
+        runtime.Command(survivorId, CreateForfeitCommand(2));
         MatchSnapshot terminal = runtime.TerminalEvidenceSnapshot();
         Require(terminal.Phase == BattlePhase.Ended && terminal.TerminalReason == "forfeit" &&
-            terminal.Coop.Started && terminal.WinnerPlayerId.Length == 0 && !terminal.RewardEligible,
-            "This checkpoint's started-forfeit path must retain its existing unscored terminal contract.");
+            terminal.Coop.Started && terminal.Coop.ParticipantIds.Count == 0 &&
+            terminal.WinnerPlayerId.Length == 0 && !terminal.RewardEligible,
+            "The final active departure must end the mission without a winner or reward.");
         Validate(sources, terminal);
+        MatchSnapshot forged = terminal.Clone();
+        forged.Players[0].CoopDeparted = false;
+        RequireInvalid(() => Validate(sources, forged));
     }
 
     private static void VerifyFrozenReplay(CoopMatchRuntime runtime, string playerId,

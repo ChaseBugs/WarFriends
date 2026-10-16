@@ -317,6 +317,8 @@ message BattlePlayerState {
   float kill_streak_progress = 54;
   // Public end-of-match breakdown, separate from private terminal evidence.
   repeated BattleSkillShotCount skill_shot_counts = 55;
+  // A co-op peer left this mission; admission history and vitality remain intact.
+  bool coop_departed = 56;
 }
 message BattleSkillShotCount {
   uint32 flag = 1;

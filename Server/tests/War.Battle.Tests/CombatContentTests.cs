@@ -2554,6 +2554,11 @@ internal static class CombatContentTests
             movementRuntime.Snapshot().Players.Single(player =>
                 player.PlayerId == secondPlayer).MoveEndTick <= movingPlayer.MoveEndTick)
             throw new Exception("The second ally must acquire a shield after it is released.");
+        if (movementRuntime.Command(secondPlayer, new MatchCommand { CommandId = 4,
+                Forfeit = new ForfeitCommand() }).Code != "forfeit" ||
+            movementRuntime.Snapshot().Phase != BattlePhase.Running ||
+            movementRuntime.Snapshot().Players.Single(player => player.PlayerId == secondPlayer).Moving)
+            throw new Exception("A departing client must stop moving while the master's mission continues.");
         if (movementRuntime.Command(firstPlayer, new MatchCommand { CommandId = 3,
                 Forfeit = new ForfeitCommand() }).Code != "forfeit" ||
             movementRuntime.Snapshot().Players.Any(player => player.Moving))
@@ -2852,6 +2857,7 @@ internal static class CombatContentTests
             Content = content
         };
         CoopPrestartCancellationTests.Run(volleySources);
+        CoopSurvivorRuntimeTests.Run(volleySources);
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
         CoopDiagnosticRoundLifetimeTests.Run(volleySources, alliedShotWorld);
 

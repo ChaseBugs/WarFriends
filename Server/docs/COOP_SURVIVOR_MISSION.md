@@ -31,11 +31,51 @@ use confirmed source-scheduled AI spawns rather than client score assertions.
 The focused combat-content executable passes its existing 26,368 counted
 assertions and this additional fixture.
 
-This is an internal mission foundation, not a playable survivor feature.
-Normal `CoopMatchRuntime` Forfeit still ends a started mission. Before routing
-that command to continuation, the runtime must deactivate inputs, targeting,
-cover and shield ownership, retain already emitted attack provenance, project
-peer-specific terminal/spectator state, and connect the normal Client's partner
-notifications and presentation. Result validation and durable settlement must
-distinguish a departed ally from the survivor's later terminal outcome. No
-combat, reward or Worker admission gate is opened by this change.
+## Runtime command integration
+
+The recovered `FinishGame` caller distinguishes roles: the master sends
+`FinishGameMultiplayerRPC`, while the client sends `FinishGameCoopClient`.
+The authenticated runtime Forfeit command therefore continues a started
+mission only for a non-master departure with an admitted, ready, living ally
+remaining. Master departure still ends the shared mission. The signed
+`SceneMasterPlayerId` owns this distinction; older isolated allocations without
+that optional field retain their established first-roster master default.
+Departure sets `coop_departed`
+on the protobuf player snapshot and clears readiness, motion, destination and
+shot-pose state. Admission history, position, vitality and command receipts stay
+intact. Exact retries return the frozen original reply; a new command receives
+`coop-peer-departed`. Polling remains available for observation, while Resume
+cannot reactivate a departed peer. The final active departure ends the mission.
+
+Target selection and collision exclude the departed peer. The survivor may
+acquire its former cover, and the absent player no longer occupies a shield
+for regeneration. Already emitted flight evidence remains intact. Trusted
+Score attribution may retain a departed starting owner; new weapon actions
+still require readiness. Source master-relative sniper positioning uses that
+same signed master identity. No automatic master migration is invented.
+
+Terminal validation binds the active mission roster to departure flags in the
+complete signed player history. Survivor success includes only living,
+non-departed success rows; timeout retains the original source deadline and
+the smaller active roster. A forged departed-player success row is rejected.
+`CoopSurvivorRuntimeTests` drives actual commands through moving departure,
+released-cover acquisition, protobuf round trip, host-confirmed enemy kills,
+survivor success and timeout, a dead remaining spectator, master departure and
+an explicit master role that differs from roster order. Cancellation tests
+cover both departures, immutable replay and rejection of conflicting departure
+history.
+
+Normal Unity co-op partner notifications, spectator presentation, and durable
+per-player settlement remain unconnected. This is runtime command integration,
+not two-Client gameplay verification. No combat, reward or Worker admission
+gate is opened by this change.
+The shared SDK schema contains the new field; this checkpoint does not replace
+the owner's installed Unity plugin binaries or claim that their normal co-op
+controllers consume it yet.
+
+Windows verification: the focused combat-content executable exits zero with
+26,368 counted assertions plus the mission/runtime fixtures. Sequential native
+smoke builds with zero warnings/errors, passes 1,037 protocol checks and 74 live
+MongoDB/HTTP/protobuf/UDP checks, and preserves pending evidence and acknowledged
+tombstones across Worker restarts. These checks do not establish normal Unity
+co-op presentation or a new Linux runtime result.

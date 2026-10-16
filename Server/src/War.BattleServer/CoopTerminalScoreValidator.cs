@@ -60,6 +60,7 @@ internal static class CoopTerminalScoreValidator
 
         if (snapshot.Coop.Started)
         {
+            ValidateDepartedParticipants(snapshot, manifest);
             if (snapshot.Coop.DeadlineTick !=
                     snapshot.StartTick + durationTicks ||
                 snapshot.EndTick > snapshot.Coop.DeadlineTick)
@@ -80,7 +81,7 @@ internal static class CoopTerminalScoreValidator
                 if (snapshot.Phase != BattlePhase.Ended ||
                     !snapshot.Coop.Started ||
                     snapshot.EndTick != snapshot.Coop.DeadlineTick ||
-                    !remaining.SequenceEqual(roster))
+                    remaining.Length == 0)
                     throw new InvalidDataException(
                         "Co-op timeout differs from the source deadline.");
                 break;
@@ -168,12 +169,10 @@ internal static class CoopTerminalScoreValidator
             snapshot.Coop.DeadlineTick != snapshot.StartTick + durationTicks ||
             snapshot.EndTick < snapshot.StartTick ||
             snapshot.Players.Count != 2 ||
-            snapshot.Coop.ParticipantIds.Count != 2 ||
-            !snapshot.Coop.ParticipantIds.SequenceEqual(
-                manifest.Players.Select(player => player.PlayerId)
-                    .Order(StringComparer.Ordinal)))
+            snapshot.Coop.ParticipantIds.Count is < 1 or > 2)
             throw new InvalidDataException("Co-op success differs from source mission.");
 
+        ValidateDepartedParticipants(snapshot, manifest);
         ValidateBossState(snapshot, rule, missions, bossSources);
         ValidateParticipantStarts(snapshot, manifest, rule, missions,
             bossSources, spawnPoints);
@@ -192,13 +191,13 @@ internal static class CoopTerminalScoreValidator
             ParticipantManifest definition = manifest.Players[index];
             BattlePlayerState player = snapshot.Players[index];
             if (player.PlayerId != definition.PlayerId ||
-                !player.Admitted || !player.Ready ||
+                !player.Admitted || player.Ready == player.CoopDeparted ||
                 player.MaxHealth != definition.Combat!.MaxHealth ||
                 !float.IsFinite(player.Health) ||
                 player.Health > player.MaxHealth ||
                 player.Dead != (player.Health <= 0))
                 throw new InvalidDataException("Invalid co-op terminal player vitality.");
-            if (player.Dead)
+            if (player.Dead || player.CoopDeparted)
                 continue;
             float healthRatio = Math.Clamp(
                 player.Health / player.MaxHealth, 0f, 1f);
@@ -215,6 +214,43 @@ internal static class CoopTerminalScoreValidator
         if (expectedScores.Count == 0 ||
             snapshot.Coop.SuccessScores.Count != expectedScores.Count)
             throw new InvalidDataException("Co-op success has an invalid score roster.");
+    }
+
+    private static void ValidateDepartedParticipants(MatchSnapshot snapshot, MatchManifest manifest)
+    {
+        if (snapshot.Players.Count != manifest.Players.Length)
+        {
+            throw new InvalidDataException("Co-op participant history is incomplete.");
+        }
+
+        var activeIds = new List<string>();
+        for (int index = 0; index < manifest.Players.Length; index++)
+        {
+            BattlePlayerState player = snapshot.Players[index];
+            if (player.PlayerId != manifest.Players[index].PlayerId || !player.Admitted ||
+                player.Ready == player.CoopDeparted ||
+                (player.CoopDeparted && (player.Moving || player.MoveEndTick != 0)))
+            {
+                throw new InvalidDataException("Co-op departure differs from participant history.");
+            }
+
+            if (!player.CoopDeparted)
+            {
+                activeIds.Add(player.PlayerId);
+            }
+        }
+
+        activeIds.Sort(StringComparer.Ordinal);
+        if (!snapshot.Coop.ParticipantIds.SequenceEqual(activeIds))
+        {
+            throw new InvalidDataException("Co-op active roster differs from departure history.");
+        }
+
+        string masterId = manifest.SceneMasterPlayerId ?? manifest.Players[0].PlayerId;
+        if (snapshot.TerminalReason is "mission-success" or "mission-failed" && !activeIds.Contains(masterId))
+        {
+            throw new InvalidDataException("A departed scene master cannot continue a source co-op mission.");
+        }
     }
 
     private static void ValidateParticipantScores(MatchSnapshot snapshot,
