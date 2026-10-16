@@ -88,3 +88,27 @@ Editor mode explicitly advances the score notification coroutine and samples
 the text tween. This proves live UDP-to-HUD value delivery; it does not prove
 normal frame scheduling, final result navigation, two running Unity processes,
 or Android presentation. No combat outcome becomes reward-eligible here.
+
+## Play Mode notification clock
+
+`SelfHostedScoreClockAudit.Run` passed in Unity 2018.3 Play Mode on 2026-10-17.
+It invokes recovered `ScoreManager.Start` once and then leaves its actual
+notification coroutine and NGUI text tween to Unity frame scheduling. After an
+accepted 56-point snapshot, the total reaches `56` and the gain reaches `+56`
+without manually advancing the coroutine or sampling the tween.
+
+The test uses an empty scene, inactive controller/HUD wiring and a disabled
+unrelated gameplay Update; it does not initialize MainScene or receive UDP.
+Its real-frame scheduling proof complements the separate live UDP Editor and
+MainScene binding audits. These independent checks do not replace a combined
+normal boot, complete battle/result-screen, two-Unity-client or Android run.
+
+## Recovered result summary prefab
+
+The MainScene Edit Mode audit now also instantiates the existing
+`RibbonsContent.skillshotGuiRecordPrefab` and runs its production
+`MultiplayerSkillshotSpecial` formatter with the accepted terminal totals.
+All six scene checks pass: the summary model and its actual labels retain
+56 local points and zero opponent points. No scene or prefab is saved.
+This verifies the total-score result row, not the full per-flag table, pooled
+screen initialization, GameOver navigation, or Backend response lifecycle.

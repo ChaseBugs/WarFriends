@@ -84,6 +84,7 @@ public static class SelfHostedScoreHudAudit
                 "The scene's production event subscription updates its actual NGUI labels.");
             Check(hud.GetComponent<TweenAnimator>().allTweens.Count > 0,
                 "The production HUD initializes its recovered score animations.");
+            VerifyResultSummary(scene, scores);
             Debug.Log("PASS: " + _checks + " MainScene score HUD assertions");
             EditorApplication.Exit(0);
         }
@@ -91,6 +92,26 @@ public static class SelfHostedScoreHudAudit
         {
             Debug.LogException(exception);
             EditorApplication.Exit(1);
+        }
+    }
+
+    private static void VerifyResultSummary(UnityEngine.SceneManagement.Scene scene, ScoreManager scores)
+    {
+        RibbonsContent content = scene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<RibbonsContent>(true))
+            .First(item => item.skillshotGuiRecordPrefab != null);
+        SkillshotGuiRecord summary = UnityEngine.Object.Instantiate(content.skillshotGuiRecordPrefab);
+        try
+        {
+            summary.MultiplayerSkillshotSpecial(scores.score, scores.opponentScore);
+            Check(summary.isSpecial && summary.plScore == ExpectedScore && summary.opScore == 0,
+                "The recovered result summary retains the host's final participant totals.");
+            Check(summary.playerScore.text == "56" && summary.opponentScore.text == "0",
+                "The recovered result prefab displays both final score labels.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(summary.gameObject);
         }
     }
 

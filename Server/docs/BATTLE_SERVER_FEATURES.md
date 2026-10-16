@@ -26,13 +26,15 @@ existing behavior. See [score HUD integration](SELF_HOSTED_SCORE_HUD.md).
 The controlled Drone/Sabotage sequence verifies 56 points and terminal counters;
 the real Sabotage UDP fixture checks peer/replay score consistency. An isolated
 Unity component audit checks actual NGUI label output and callback ordering.
-A separate MainScene Edit Mode audit passes four checks using the real score
-singleton, serialized HUD references, production event subscription and score
-Tween setup. A subsequent live rifle Worker/Unity Editor run verified a
+A separate MainScene Edit Mode audit passes six checks using the real score
+singleton, serialized HUD references, production event subscription, score
+Tween setup and actual result-summary prefab labels. A subsequent live rifle Worker/Unity Editor run verified a
 positive host score (six points) through the production adapter into the same
 scene manager and NGUI total/gain labels. The Editor audit explicitly advances
-the notification coroutine and samples the tween; normal frame scheduling and
-final result navigation remain unverified.
+the notification coroutine and samples the tween. A separate isolated Play Mode
+audit now verifies the recovered notification coroutine and NGUI text tween on
+real Unity frames without manual stepping. Combined normal MainScene scheduling,
+final result navigation and two-Unity-client play remain unverified.
 This does not prove normal MainScene rendering, two-device Unity gameplay,
 Android behavior or complete skill-shot popup/statistics integration. B32 remains partial.
 
