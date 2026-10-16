@@ -58,8 +58,9 @@ public sealed partial class MatchEngine
                 "card-sabotage-army-kill", target.EntityId, requestId);
             try
             {
-                scoredKill = pvpBonusProgress.PrepareConfirmedSkillShotCopy(
-                    owner.Definition.PlayerId, scoreReceiptId, flags, out _);
+                scoredKill = pvpBonusProgress.PrepareConfirmedPlayerOwnedDeathCopy(
+                    owner.Definition.PlayerId, scoreReceiptId, flags,
+                    PlayerOwnedDeathGameTime, true, out _);
             }
             catch (InvalidOperationException)
             {

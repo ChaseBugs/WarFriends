@@ -772,6 +772,9 @@ internal static class GrenadeCatalogTests
               grenadeScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
               grenadeScore.Score == 104,
             "normal M320 Tank death credits one source explosion and Tank skill shot");
+        Check(naturalTankMatch.BonusProgress.ComboSnapshot() is
+              { Streak: 1, ReceiptCount: 1 },
+            "the normal M320 Tank death advances the live shared kill combo");
         naturalTankMatch.Command(one,new(){CommandId=3,Forfeit=new()});
         Check(naturalTankMatch.TerminalEvidenceSnapshot().Players
                   .Single(player => player.PlayerId == one)

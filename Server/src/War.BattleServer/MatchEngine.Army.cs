@@ -4306,10 +4306,11 @@ public sealed partial class MatchEngine
         if(cause is not ("player-mine" or "player-bazooka"))
             throw new InvalidDataException("Unsupported direct player explosion cause.");
 
-        var enemyDeaths=beforeBlast
-            .Where(army=>army.OwnerFraction!=attackerFraction&&
-                !activeArmyEntities.ContainsKey(army.EntityKey))
+        var allDeaths=beforeBlast
+            .Where(army=>!activeArmyEntities.ContainsKey(army.EntityKey))
             .OrderBy(army=>army.EntityKey).ToArray();
+        var enemyDeaths=allDeaths.Where(army=>army.OwnerFraction!=attackerFraction)
+            .ToArray();
         if(directArmyKills.Count+enemyDeaths.Length>256)
         {
             End("source-kill-backpressure","",false);
@@ -4321,15 +4322,16 @@ public sealed partial class MatchEngine
         {
             try
             {
-                foreach (var army in enemyDeaths)
+                foreach (var army in allDeaths)
                 {
                     int flags = PvpArmyKillSkillShotPolicy.ExplosionFlags(
                         armyCatalog ?? throw new InvalidDataException(
                             "Player explosion lacks a recovered army catalog."),
                         army.UnitId);
                     string receiptId = PvpHitReceiptId(cause, army.EntityKey, attackerPlayerId);
-                    scoredDeaths = scoredDeaths.PrepareConfirmedSkillShotCopy(
-                        attackerPlayerId, receiptId, flags, out _);
+                    scoredDeaths = scoredDeaths.PrepareConfirmedPlayerOwnedDeathCopy(
+                        attackerPlayerId, receiptId, flags, PlayerOwnedDeathGameTime,
+                        army.OwnerFraction != attackerFraction, out _);
                 }
             }
             catch (InvalidOperationException)

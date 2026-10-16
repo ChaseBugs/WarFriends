@@ -1,38 +1,58 @@
 using System.Globalization;
+using War.Protocol;
 
 namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
-    // Grenade damage can kill several entities. Stage all score rows before
-    // publishing them so one exhausted receipt ledger cannot score half a blast.
-    private void ScoreConfirmedGrenadeArmyKills(
-        int firstKillIndex, string attackerPlayerId, ulong projectileKey)
+    private float PlayerOwnedDeathGameTime =>
+        hostTick / (float)MatchManifest.TickRate;
+
+    // Source RecieveKill advances its shared combo before the faction filter.
+    private void RecordConfirmedGrenadeArmyDeaths(
+        IReadOnlyList<BattleArmyEntityState> beforeBlast, int firstKillIndex,
+        string attackerPlayerId, ulong projectileKey)
     {
         if (pvpBonusProgress == null)
         {
             return;
         }
 
+        var deaths = beforeBlast
+            .Where(army => !activeArmyEntities.ContainsKey(army.EntityKey))
+            .OrderBy(army => army.EntityKey)
+            .ToArray();
+        var directKills = directArmyKills.Skip(firstKillIndex).ToDictionary(
+            kill => kill.EntityKey);
+        int attackerFraction = players.Single(player =>
+            player.Definition.PlayerId == attackerPlayerId).Definition.Fraction;
         PvpBonusProgressCoordinator candidate = pvpBonusProgress;
+
         try
         {
-            for (int index = firstKillIndex; index < directArmyKills.Count; index++)
+            foreach (var army in deaths)
             {
-                var kill = directArmyKills[index];
-                if (kill.Cause != "player-grenade" || kill.AttackerId != attackerPlayerId)
+                bool isEnemy = army.OwnerFraction != attackerFraction;
+                bool hasDirectKill = directKills.TryGetValue(
+                    army.EntityKey, out var directKill);
+                if (isEnemy != hasDirectKill ||
+                    (hasDirectKill && (directKill.Cause != "player-grenade" ||
+                        directKill.AttackerId != attackerPlayerId ||
+                        directKill.UnitId != army.UnitId)))
                 {
-                    throw new InvalidDataException("Grenade kill score lacks matching host evidence.");
+                    throw new InvalidDataException(
+                        "Grenade death differs from its direct-kill evidence.");
                 }
 
                 int flags = PvpArmyKillSkillShotPolicy.ExplosionFlags(
                     armyCatalog ?? throw new InvalidDataException(
-                        "Grenade kill lacks a recovered army catalog."),
-                    kill.UnitId);
+                        "Grenade death lacks a recovered army catalog."),
+                    army.UnitId);
                 string receiptId = PvpHitReceiptId("player-grenade-army-kill",
-                    projectileKey, kill.EntityKey.ToString(CultureInfo.InvariantCulture));
-                candidate = candidate.PrepareConfirmedSkillShotCopy(
-                    attackerPlayerId, receiptId, flags, out _);
+                    projectileKey, army.EntityKey.ToString(CultureInfo.InvariantCulture));
+                candidate = candidate.PrepareConfirmedPlayerOwnedDeathCopy(
+                    attackerPlayerId, receiptId, flags, PlayerOwnedDeathGameTime,
+                    isEnemy, out _);
             }
         }
         catch (InvalidOperationException)

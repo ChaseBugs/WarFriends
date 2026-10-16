@@ -1967,17 +1967,18 @@ public sealed partial class MatchEngine : IMatchRuntime
                         CreditPlayerBulletHit(shooter,ref creditedBulletHit);
                     }
                     if(impact.Hit.SourceDestroyable&&armyBeforeImpact!=null&&
-                       !activeArmyEntities.ContainsKey(vehicleId)&&
-                       armyBeforeImpact.OwnerFraction!=shooter.Definition.Fraction)
+                       !activeArmyEntities.ContainsKey(vehicleId))
                     {
+                        bool enemyDeath = armyBeforeImpact.OwnerFraction !=
+                            shooter.Definition.Fraction;
                         // ConfirmArmyDeath removes a lethal target and returns false;
                         // Weapon.ReportShotHit still receives that exact collider.
-                        if(shooter.ConfirmedEnemyHits==enemyHitsBefore)
+                        if(enemyDeath&&shooter.ConfirmedEnemyHits==enemyHitsBefore)
                         {
                             shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
                             CreditPlayerBulletHit(shooter,ref creditedBulletHit);
                         }
-                        if(directArmyKills.Count>=256)
+                        if(enemyDeath&&directArmyKills.Count>=256)
                         {End("source-kill-backpressure","",false);break;}
                         PvpBonusProgressCoordinator? scoredKill = null;
                         if (pvpBonusProgress != null)
@@ -1988,11 +1989,15 @@ public sealed partial class MatchEngine : IMatchRuntime
                                 armyBeforeImpact.UnitId);
                             string receiptId = PvpHitReceiptId("player-bullet-army-kill",
                                 pair.Key, vehicleId.ToString(CultureInfo.InvariantCulture));
-                            scoredKill = pvpBonusProgress.PrepareConfirmedSkillShotCopy(
-                                shooter.Definition.PlayerId, receiptId, flags, out _);
+                            scoredKill = pvpBonusProgress.PrepareConfirmedPlayerOwnedDeathCopy(
+                                shooter.Definition.PlayerId, receiptId, flags,
+                                PlayerOwnedDeathGameTime, enemyDeath, out _);
                         }
-                        directArmyKills.Add((vehicleId,armyBeforeImpact.UnitId,
-                            armyBeforeImpact.OwnerPlayerId,shooter.Definition.PlayerId,"player-bullet",tick));
+                        if (enemyDeath)
+                        {
+                            directArmyKills.Add((vehicleId,armyBeforeImpact.UnitId,
+                                armyBeforeImpact.OwnerPlayerId,shooter.Definition.PlayerId,"player-bullet",tick));
+                        }
                         if (scoredKill != null)
                         {
                             pvpBonusProgress = scoredKill;
@@ -2759,6 +2764,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         ApplyGrenadeBonusBoxes(impact.OwnerId, impact.ProjectileId,
             impact.Position, projectile.Stage);
         if (Terminal) return;
+        var armyBeforeGrenadeBlast = activeArmyEntities.Values.ToArray();
         int firstGrenadeKillIndex = directArmyKills.Count;
         ApplyPlayerGrenadeInfantryExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
@@ -2776,7 +2782,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         if(Terminal)return;
         ApplyPlayerGrenadeAirBodyExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
-        ScoreConfirmedGrenadeArmyKills(
+        RecordConfirmedGrenadeArmyDeaths(armyBeforeGrenadeBlast,
             firstGrenadeKillIndex, impact.OwnerId, impact.ProjectileId);
         if (Terminal) return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())

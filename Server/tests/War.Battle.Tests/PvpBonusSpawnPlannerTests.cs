@@ -2013,6 +2013,8 @@ internal static class PvpBonusSpawnPlannerTests
                       scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] ==
                           scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed],
                     "collected bonus grenades credit each confirmed infantry explosion death");
+                Check(match.BonusProgress.ComboSnapshot().ReceiptCount == newKills,
+                    "each live bonus-grenade infantry death enters the shared combo once");
                 match.Command(localId, new MatchCommand {CommandId = 2,
                     Forfeit = new ForfeitCommand()});
                 var terminalKills = match.TerminalEvidenceSnapshot().DirectArmyKills

@@ -20,8 +20,10 @@ revenge, and slow-motion evidence can add other recovered rows.
 
 ## Runtime boundary
 
-This catalog supplies trusted score data and composition; it does not yet
-publish live score or grant bonuses. The recovered `SkillShotManager` first
+This catalog supplies trusted score data and composition. Confirmed host
+damage and selected player-owned deaths now publish score and streak progress;
+the remaining callback families and Client presentation are incomplete. The
+recovered `SkillShotManager` first
 resolves kill-combo flags, then calls `ScoreManager.AddSkillshot` in scene
 definition order. That call increments the local/opponent count and score,
 then adds each row's float contribution to kill-streak progress. `Update`
@@ -99,18 +101,21 @@ confirmed death receipt. It advances combo for a friendly player-owned death
 without awarding score, then includes that history on a later enemy death.
 Either score or progress capacity failure leaves the combo unchanged. The
 caller must establish the non-network callback, player ownership, base flags,
-victim faction and scaled source game time from host evidence; its explicit
-multiplier remains a source-fixture input until that callback reaches the live
-host path.
-Normal MatchEngine callbacks and Client presentation remain to be connected.
+victim faction and scaled source game time from host evidence. Live bullet,
+normal/bonus grenade, mine, Bazooka, and Sabotage army deaths now use this
+transition. Grenade and other blast paths include confirmed friendly deaths
+in the shared combo without scoring them. The host uses its monotonic frame
+clock divided by the manifest tick rate for these transitions; exact Unity
+`Time.time` scaling and all callback ordering across unrelated causes remain
+unverified. Client presentation remains open.
 
 The coordinator can now prepare a detached confirmed-death transition with its
 complete combo, death-replay receipt, score, and streak progress. The host may
 publish that candidate only after its source death proof succeeds. A focused
 test verifies that preparation and replay leave the currently published state
-unchanged. This is a prerequisite for live death wiring, not evidence that the
-normal match currently awards combo flags: friendly deaths and the source
-scaled clock must be bound in callback order first.
+unchanged. Live death paths publish the prepared state only after host death
+evidence; focused match tests verify a normal M320 and bonus grenade each
+advance the shared combo once per confirmed army death.
 
 `PvpScoreStreakPolicy` is now loaded with the combat package from the reviewed
 `recovered-pvp-score-streak-policy.json`. Its digest and the scene/content
