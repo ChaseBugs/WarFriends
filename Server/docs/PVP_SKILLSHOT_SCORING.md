@@ -67,9 +67,9 @@ show Mono compares promoted operands rather than a rounded float sum. The
 server stores float times/window but explicitly compares in double, retaining
 the source float window value. All 22 source samples match.
 
-The primitive remains unbound to live combat until every eligible callback,
-manager lifetime, and authoritative scaled game clock are established. A
-receipt must identify one host-confirmed death, not merely a Client command
+The primitive is connected to selected host-confirmed army deaths. Complete
+eligible-callback coverage, manager lifetime, and scaled-time parity remain
+open. A receipt identifies one host-confirmed death, not a Client command
 that may kill several entities. This probe does not verify Unity Play Mode,
 the original Unity 5.2 Android runtime, or complete game statistics.
 
@@ -104,9 +104,11 @@ caller must establish the non-network callback, player ownership, base flags,
 victim faction and scaled source game time from host evidence. Live bullet,
 normal/bonus grenade, mine, Bazooka, and Sabotage army deaths now use this
 transition. Grenade and other blast paths include confirmed friendly deaths
-in the shared combo without scoring them. The host uses its monotonic frame
-clock divided by the manifest tick rate for these transitions; exact Unity
-`Time.time` scaling and all callback ordering across unrelated causes remain
+in the shared combo without scoring them. The host uses simulation ticks
+divided by the manifest tick rate; those ticks stop during a self-hosted
+reconnect, matching the recovered Client's `TimeManager.Pause` dialog path.
+The client also changes `Time.timeScale` for SlowMotion, which the Worker has
+not implemented. Exact scaled-time and cross-cause callback order remain
 unverified. Client presentation remains open.
 
 The coordinator can now prepare a detached confirmed-death transition with its

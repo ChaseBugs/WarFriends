@@ -1446,11 +1446,13 @@ Check(countdownForfeit.Command(a, new MatchCommand
 var idle = new MatchEngine(definition);
 idle.Admit(a); idle.Admit(b); idle.Command(a, Ready(1, idle.ManifestHash)); idle.Command(b, Ready(1, idle.ManifestHash));
 idle.Advance(299); idle.Command(a, Poll()); idle.Advance(300);
+float pausedComboTime = idle.PlayerOwnedDeathGameTime;
 Check(idle.Snapshot().Players[1] is {Reconnecting:true,ReconnectAttempts:1,ReconnectDeadlineHostTick:1200} &&
       idle.Snapshot().ServerTick==300 && idle.Snapshot().PauseHostTick==300,
       "first idle peer starts recovered 30-second grace and pauses simulation");
 idle.Advance(1199);
 Check(idle.Snapshot().ServerTick==300 && idle.Snapshot().PauseHostTick==1199 &&
+      idle.PlayerOwnedDeathGameTime == pausedComboTime &&
       idle.Command(a,Poll()).Code=="state", "reconnect grace advances wall time without simulation");
 idle.Advance(1200);
 Check(idle.Snapshot().WinnerPlayerId == a && idle.Snapshot().TerminalReason == "opponent-disconnected",
@@ -1495,10 +1497,14 @@ staged.Admit(a);staged.Admit(b);
 staged.Command(a,Ready(1,staged.ManifestHash));staged.Command(b,Ready(1,staged.ManifestHash));
 staged.Advance(59);staged.Command(a,Poll());staged.Command(b,Poll());staged.Advance(60);
 staged.Advance(118);staged.Command(a,Poll());staged.Advance(119);
+float comboTimeBeforeResume = staged.PlayerOwnedDeathGameTime;
 Check(staged.Snapshot().Players[1] is {ReconnectAttempts:1,ReconnectDeadlineHostTick:1019} &&
       staged.Command(a,new MatchCommand {CommandId=2,Reload=new ReloadCommand()}).Code=="reconnecting" &&
       staged.Resume(b),"first reconnect grace pauses mutations until the peer resumes");
-staged.Advance(120);staged.Command(a,Poll());staged.Advance(178);staged.Command(a,Poll());staged.Advance(179);
+staged.Advance(120);
+Check(staged.PlayerOwnedDeathGameTime > comboTimeBeforeResume,
+      "confirmed-death game time resumes with the battle simulation");
+staged.Command(a,Poll());staged.Advance(178);staged.Command(a,Poll());staged.Advance(179);
 Check(staged.Snapshot().Players[1] is {ReconnectAttempts:2,ReconnectDeadlineHostTick:779},
       "second disconnect uses recovered 20-second window");
 staged.Advance(200);Check(staged.Resume(b),"second reconnect succeeds before deadline");

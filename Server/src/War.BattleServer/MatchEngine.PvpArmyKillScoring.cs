@@ -5,8 +5,10 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
-    private float PlayerOwnedDeathGameTime =>
-        hostTick / (float)MatchManifest.TickRate;
+    // The recovered reconnect dialog pauses Unity Time.time. The simulation
+    // tick also pauses while the host reconnect deadline continues advancing.
+    internal float PlayerOwnedDeathGameTime =>
+        tick / (float)MatchManifest.TickRate;
 
     // Source RecieveKill advances its shared combo before the faction filter.
     private void RecordConfirmedGrenadeArmyDeaths(
