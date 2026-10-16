@@ -18,27 +18,13 @@ internal static class CoopTerminalScoreValidator
         ArgumentNullException.ThrowIfNull(missions);
         ArgumentNullException.ThrowIfNull(combat);
         MatchManifest manifest = MatchManifest.Validate(allocation);
-        if (manifest.Mode != MatchManifest.CoopMissionMode ||
-            manifest.MissionIndex is not int missionIndex ||
-            manifest.CatalogRevision != missions.SourceSha256 ||
-            snapshot.MatchId != manifest.MatchId ||
-            snapshot.ManifestHash != manifest.Digest() ||
-            snapshot.Coop == null ||
-            snapshot.RewardEligible ||
-            snapshot.WinnerPlayerId.Length != 0 ||
-            snapshot.Coop.Completed ||
-            !snapshot.Coop.Failed ||
-            snapshot.Coop.SuccessScores.Count != 0 ||
-            snapshot.EndTick != snapshot.ServerTick ||
-            snapshot.ServerTick > 10_000_000 ||
-            snapshot.StartTick > snapshot.EndTick)
-            throw new InvalidDataException("Invalid co-op non-success envelope.");
-
+        int missionIndex = ValidateNonSuccessEnvelope(snapshot, manifest, missions);
         MissionRule rule = missions.Get(missionIndex);
         ulong durationTicks = checked((ulong)rule.TimeSeconds *
             MatchManifest.TickRate);
         if (manifest.DurationSeconds != rule.TimeSeconds ||
             snapshot.Coop.MissionIndex != rule.Index ||
+            snapshot.Coop.SceneMasterPlayerId != CoopSceneRoles.GetMasterPlayerId(manifest) ||
             snapshot.Coop.MissionType != rule.MissionType ||
             snapshot.Coop.ObjectiveTarget != rule.Objective.GetValueOrDefault() ||
             snapshot.Coop.ObjectiveScore is < 0 or > 1_000_000_000 ||
@@ -58,6 +44,56 @@ internal static class CoopTerminalScoreValidator
                 "Co-op non-success has invalid participant identities.");
         ValidateParticipantScores(snapshot, manifest, rule);
 
+        ValidateNonSuccessLifecycle(snapshot, manifest, durationTicks);
+
+        ValidateParticipantStarts(snapshot, manifest, rule, missions,
+            bossSources, spawnPoints);
+        if (!snapshot.Coop.Started)
+            return;
+        if (rule.MissionType == "KillOpponent")
+            ValidateBossState(snapshot, rule, missions, bossSources);
+        else if (snapshot.Coop.Boss != null)
+            throw new InvalidDataException(
+                "Non-boss co-op failure contains a boss.");
+        Dictionary<string, HashSet<SpawnOrigin>> origins =
+            SourceSpawnOrigins(rule, missions, bossSources, spawnPoints);
+        ValidateEnemyLedger(snapshot, rule, combat, origins);
+        int confirmedDeaths = CountConfirmedEnemyDeaths(snapshot);
+        int expectedKillCount = rule.MissionType == "KillXEnemies"
+            ? confirmedDeaths : 0;
+        if (snapshot.Coop.EnemyKills != expectedKillCount)
+            throw new InvalidDataException(
+                "Co-op failure kill count differs from host deaths.");
+    }
+
+    private static int ValidateNonSuccessEnvelope(
+        MatchSnapshot snapshot, MatchManifest manifest, MissionCatalog missions)
+    {
+        if (manifest.Mode != MatchManifest.CoopMissionMode ||
+            manifest.MissionIndex is not int missionIndex ||
+            manifest.CatalogRevision != missions.SourceSha256 ||
+            snapshot.MatchId != manifest.MatchId ||
+            snapshot.ManifestHash != manifest.Digest() ||
+            snapshot.Coop == null ||
+            snapshot.RewardEligible ||
+            snapshot.WinnerPlayerId.Length != 0 ||
+            snapshot.Coop.Completed ||
+            !snapshot.Coop.Failed ||
+            snapshot.Coop.SuccessScores.Count != 0 ||
+            snapshot.Coop.PeerCompletionPlayerIds.Count != 0 ||
+            snapshot.EndTick != snapshot.ServerTick ||
+            snapshot.ServerTick > 10_000_000 ||
+            snapshot.StartTick > snapshot.EndTick)
+        {
+            throw new InvalidDataException("Invalid co-op non-success envelope.");
+        }
+
+        return missionIndex;
+    }
+
+    private static void ValidateNonSuccessLifecycle(
+        MatchSnapshot snapshot, MatchManifest manifest, ulong durationTicks)
+    {
         if (snapshot.Coop.Started)
         {
             ValidateDepartedParticipants(snapshot, manifest);
@@ -81,14 +117,14 @@ internal static class CoopTerminalScoreValidator
                 if (snapshot.Phase != BattlePhase.Ended ||
                     !snapshot.Coop.Started ||
                     snapshot.EndTick != snapshot.Coop.DeadlineTick ||
-                    remaining.Length == 0)
+                    snapshot.Coop.ParticipantIds.Count == 0)
                     throw new InvalidDataException(
                         "Co-op timeout differs from the source deadline.");
                 break;
             case "forfeit":
                 if (snapshot.Phase != BattlePhase.Ended ||
                     !snapshot.Coop.Started ||
-                    remaining.Length >= roster.Length)
+                    snapshot.Coop.ParticipantIds.Count >= manifest.Players.Length)
                     throw new InvalidDataException(
                         "Co-op forfeit did not remove a participant.");
                 break;
@@ -108,25 +144,6 @@ internal static class CoopTerminalScoreValidator
                 throw new InvalidDataException(
                     "Unknown co-op non-success reason.");
         }
-
-        ValidateParticipantStarts(snapshot, manifest, rule, missions,
-            bossSources, spawnPoints);
-        if (!snapshot.Coop.Started)
-            return;
-        if (rule.MissionType == "KillOpponent")
-            ValidateBossState(snapshot, rule, missions, bossSources);
-        else if (snapshot.Coop.Boss != null)
-            throw new InvalidDataException(
-                "Non-boss co-op failure contains a boss.");
-        Dictionary<string, HashSet<SpawnOrigin>> origins =
-            SourceSpawnOrigins(rule, missions, bossSources, spawnPoints);
-        ValidateEnemyLedger(snapshot, rule, combat, origins);
-        int confirmedDeaths = CountConfirmedEnemyDeaths(snapshot);
-        int expectedKillCount = rule.MissionType == "KillXEnemies"
-            ? confirmedDeaths : 0;
-        if (snapshot.Coop.EnemyKills != expectedKillCount)
-            throw new InvalidDataException(
-                "Co-op failure kill count differs from host deaths.");
     }
 
     internal static void ValidateSuccess(
@@ -182,10 +199,13 @@ internal static class CoopTerminalScoreValidator
         ValidateObjective(snapshot, rule);
         ValidateParticipantScores(snapshot, manifest, rule);
 
-        float remainingTimeRatio =
-            (float)(snapshot.Coop.DeadlineTick - snapshot.EndTick) /
-            durationTicks;
-        var expectedScores = new List<CoopMissionSuccessScore>();
+        ValidateSuccessVitality(snapshot, manifest);
+        ValidateMasterSuccessScore(snapshot, rule, durationTicks);
+        ValidatePeerCompletion(snapshot);
+    }
+
+    private static void ValidateSuccessVitality(MatchSnapshot snapshot, MatchManifest manifest)
+    {
         for (int index = 0; index < manifest.Players.Length; index++)
         {
             ParticipantManifest definition = manifest.Players[index];
@@ -196,29 +216,46 @@ internal static class CoopTerminalScoreValidator
                 !float.IsFinite(player.Health) ||
                 player.Health > player.MaxHealth ||
                 player.Dead != (player.Health <= 0))
+            {
                 throw new InvalidDataException("Invalid co-op terminal player vitality.");
-            if (player.Dead || player.CoopDeparted)
-                continue;
-            float healthRatio = Math.Clamp(
-                player.Health / player.MaxHealth, 0f, 1f);
-            CoopMissionSuccessScore expected = CoopMissionScorePolicy.Calculate(
-                rule, healthRatio, remainingTimeRatio);
-            expectedScores.Add(expected);
-            int scoreIndex = expectedScores.Count - 1;
-            if (scoreIndex >= snapshot.Coop.SuccessScores.Count ||
-                snapshot.Coop.SuccessScores[scoreIndex].PlayerId != player.PlayerId ||
-                snapshot.Coop.SuccessScores[scoreIndex].Score != expected.Score ||
-                snapshot.Coop.SuccessScores[scoreIndex].Stars != expected.Stars)
-                throw new InvalidDataException("Co-op success score differs from host state.");
+            }
         }
-        if (expectedScores.Count == 0 ||
-            snapshot.Coop.SuccessScores.Count != expectedScores.Count)
+    }
+
+    private static void ValidateMasterSuccessScore(MatchSnapshot snapshot, MissionRule rule, ulong durationTicks)
+    {
+        BattlePlayerState master = snapshot.Players.Single(
+            player => player.PlayerId == snapshot.Coop.SceneMasterPlayerId);
+        if (master.Dead || master.CoopDeparted || snapshot.Coop.SuccessScores.Count != 1)
+        {
             throw new InvalidDataException("Co-op success has an invalid score roster.");
+        }
+
+        float healthRatio = Math.Clamp(master.Health / master.MaxHealth, 0f, 1f);
+        float remainingTimeRatio = (float)(snapshot.Coop.DeadlineTick - snapshot.EndTick) / durationTicks;
+        CoopMissionSuccessScore expected = CoopMissionScorePolicy.Calculate(rule, healthRatio, remainingTimeRatio);
+        BattleCoopPlayerScore actual = snapshot.Coop.SuccessScores[0];
+        if (actual.PlayerId != master.PlayerId || actual.Score != expected.Score || actual.Stars != expected.Stars)
+        {
+            throw new InvalidDataException("Co-op master success score differs from host state.");
+        }
+    }
+
+    private static void ValidatePeerCompletion(MatchSnapshot snapshot)
+    {
+        string[] completedPeers = snapshot.Players
+            .Where(player => player.PlayerId != snapshot.Coop.SceneMasterPlayerId && !player.CoopDeparted)
+            .Select(player => player.PlayerId).ToArray();
+        if (!snapshot.Coop.PeerCompletionPlayerIds.SequenceEqual(completedPeers))
+        {
+            throw new InvalidDataException("Co-op peer completion differs from the source role and active history.");
+        }
     }
 
     private static void ValidateDepartedParticipants(MatchSnapshot snapshot, MatchManifest manifest)
     {
-        if (snapshot.Players.Count != manifest.Players.Length)
+        if (snapshot.Players.Count != manifest.Players.Length ||
+            snapshot.Coop.SceneMasterPlayerId != CoopSceneRoles.GetMasterPlayerId(manifest))
         {
             throw new InvalidDataException("Co-op participant history is incomplete.");
         }
@@ -246,7 +283,7 @@ internal static class CoopTerminalScoreValidator
             throw new InvalidDataException("Co-op active roster differs from departure history.");
         }
 
-        string masterId = manifest.SceneMasterPlayerId ?? manifest.Players[0].PlayerId;
+        string masterId = CoopSceneRoles.GetMasterPlayerId(manifest);
         if (snapshot.TerminalReason is "mission-success" or "mission-failed" && !activeIds.Contains(masterId))
         {
             throw new InvalidDataException("A departed scene master cannot continue a source co-op mission.");
@@ -317,10 +354,11 @@ internal static class CoopTerminalScoreValidator
                 "Co-op terminal start roster is incomplete.");
         for (int index = 0; index < anchors.Count; index++)
         {
-            CoopPlayerAnchor expected = anchors[index];
+            string playerId = manifest.Players[index].PlayerId;
+            CoopPlayerAnchor expected = anchors[CoopSceneRoles.GetMainPositionIndex(manifest, playerId)];
             BattleCoopParticipantStart actual =
                 snapshot.Coop.ParticipantStarts[index];
-            // The signed first player replaces Photon master ownership.
+            // Source position ownership follows the master role, not the storage index of this record.
             if (actual.PlayerId != manifest.Players[index].PlayerId ||
                 actual.DefendComponentFileId != expected.ComponentFileId ||
                 actual.X != expected.Position.X ||

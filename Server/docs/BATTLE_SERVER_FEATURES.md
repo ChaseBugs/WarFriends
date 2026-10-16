@@ -1381,3 +1381,11 @@ runtime reconnect eligibility now prevents the router from issuing a departed
 peer a replacement grant merely because its old receipt session remains.
 Normal Worker co-op admission, Unity response-loss presentation and per-player
 settlement remain open. See [the replay boundary](COOP_DEPARTURE_REPLAY.md).
+
+B22 now binds source start anchors and success ownership to the signed scene
+master independently of roster order. Only that master's `success_scores` row
+contains stars/highscore; active peers receive the separate source completion
+marker, including connected KIA spectators. New protobuf role/completion fields
+and terminal validation reject swapped roles, invented peer stars and mismatched
+anchors. Role-aware Unity result UI and durable progression are still open.
+See [the source role contract](COOP_SCENE_ROLES.md).

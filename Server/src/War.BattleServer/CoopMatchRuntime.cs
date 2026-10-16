@@ -457,10 +457,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             .ToArray();
         if (mainPositions.Length != manifest.Players.Length)
             throw new InvalidDataException("Co-op scene lacks both allied main positions.");
-        // Photon master used mainPositions[0]. In the self-hosted match, the
-        // signed roster order replaces that room-owned assignment.
+        // GetMainPlayerPoint assigns the first allied main point to the master, even if stored second.
         playerStarts = manifest.Players
-            .Select((player, index) => (player.PlayerId, Position: mainPositions[index]))
+            .Select(player => (player.PlayerId,
+                Position: mainPositions[CoopSceneRoles.GetMainPositionIndex(manifest, player.PlayerId)]))
             .ToDictionary(entry => entry.PlayerId, entry => entry.Position,
                 StringComparer.Ordinal);
         this.combat = combat ?? throw new ArgumentNullException(nameof(combat));
@@ -3242,11 +3242,13 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             BossArsenal.Definition(slot).SourceId);
     }
 
-    // Per-player success presentation from frozen host vitality and clock.
+    // Source MissionSuccess computes stars/highscore only on the scene master.
+    // The peer's MissionSuccessCoopClient only sets its distinct completion flag.
     // Backend reward settlement must still verify the terminal evidence.
     internal CoopMissionSuccessScore? HostSuccessScore(string playerId)
     {
         if (!Terminal || mission.Outcome != MissionOutcome.Succeeded ||
+            playerId != CoopSceneRoles.GetMasterPlayerId(manifest) ||
             !participants.TryGetValue(playerId, out Participant? player) ||
             !player.Admitted || player.Departed || player.Dead)
             return null;
@@ -3285,6 +3287,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             Coop = new BattleCoopState
             {
                 MissionIndex = mission.MissionIndex,
+                SceneMasterPlayerId = CoopSceneRoles.GetMasterPlayerId(manifest),
                 MissionType = mission.MissionType,
                 ObjectiveTarget = mission.ObjectiveTarget,
                 EnemyKills = mission.EnemyKills,
@@ -3311,6 +3314,12 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         }
         if (Terminal && mission.Outcome == MissionOutcome.Succeeded)
         {
+            foreach (Participant peer in participants.Values.Where(player =>
+                player.PlayerId != snapshot.Coop.SceneMasterPlayerId && player.Admitted && !player.Departed))
+            {
+                // A KIA peer may still be spectating when MissionSucceededRPC delivers this source flag.
+                snapshot.Coop.PeerCompletionPlayerIds.Add(peer.PlayerId);
+            }
             foreach (ParticipantManifest rosterPlayer in manifest.Players)
             {
                 CoopMissionSuccessScore? score =

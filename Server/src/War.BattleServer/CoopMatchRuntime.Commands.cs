@@ -121,8 +121,7 @@ internal sealed partial class CoopMatchRuntime
 
     private Participant GetSourceAuthorityPlayer()
     {
-        // Older isolated allocations omit the explicit role and use their established first-roster master.
-        string masterId = manifest.SceneMasterPlayerId ?? manifest.Players[0].PlayerId;
+        string masterId = CoopSceneRoles.GetMasterPlayerId(manifest);
         return participants[masterId];
     }
 

@@ -610,18 +610,21 @@ message BattleCoopState {
   // Host-created enemy identity, source-scene placement, vitality, and
   // current Drone/Helicopter flight pose. Other AI movement and player-hit routing remain open.
   repeated BattleCoopEnemySpawn enemy_spawns = 15;
-  // The signed roster's first player takes the source master position;
-  // the second takes the other main allied defend position.
+  // The signed scene master takes the first main position; its peer takes the second.
   repeated BattleCoopParticipantStart participant_starts = 16;
   // BotMission's source boss is separate from ordinary AI spawn records.
   BattleCoopBossState boss = 17;
-  // Terminal success presentation from host health and remaining mission time.
+  // Terminal master-only success score from host health and remaining mission time.
   // This is not a wallet or progression settlement receipt.
   repeated BattleCoopPlayerScore success_scores = 18;
   // Shared, host-confirmed skill-shot points for a Score mission.
   int32 objective_score = 19;
   // Each ally's contribution replaces the Client's Photon score-delta relay.
   repeated BattleCoopParticipantScore participant_scores = 20;
+  // Explicit signed role, with the legacy first-roster fallback resolved by the host.
+  string scene_master_player_id = 21;
+  // Source MissionSuccessCoopClient completion flag; no peer stars or wallet entitlement is implied.
+  repeated string peer_completion_player_ids = 22;
 }
 message BattleCoopParticipantScore {
   string player_id = 1; int32 score = 2;

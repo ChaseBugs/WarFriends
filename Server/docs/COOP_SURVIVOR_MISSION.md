@@ -55,8 +55,9 @@ still require readiness. Source master-relative sniper positioning uses that
 same signed master identity. No automatic master migration is invented.
 
 Terminal validation binds the active mission roster to departure flags in the
-complete signed player history. Survivor success includes only living,
-non-departed success rows; timeout retains the original source deadline and
+complete signed player history. Survivor success now uses the
+[source master-only star row and separate peer completion](COOP_SCENE_ROLES.md);
+timeout retains the original source deadline and
 the smaller active roster. A forged departed-player success row is rejected.
 `CoopSurvivorRuntimeTests` drives actual commands through moving departure,
 released-cover acquisition, protobuf round trip, host-confirmed enemy kills,

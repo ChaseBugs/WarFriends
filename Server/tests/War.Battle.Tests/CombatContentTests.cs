@@ -1631,6 +1631,8 @@ internal static class CombatContentTests
         MissionMapRule bossMap = catalog.MapForMission(4);
         MatchManifest bossAllocation = shieldAllocation with
         {
+            // This fixture's first actor is its master; reversed storage is exercised by CoopSceneRoleTests.
+            Players = shieldAllocation.Players.Reverse().ToArray(),
             MissionIndex = 4,
             MapId = bossMap.Scene,
             MapRevision = bossMap.SceneSha256,
@@ -2857,6 +2859,7 @@ internal static class CombatContentTests
             Content = content
         };
         CoopPrestartCancellationTests.Run(volleySources);
+        CoopSceneRoleTests.Run(volleySources);
         CoopSurvivorRuntimeTests.Run(volleySources);
         CoopDepartureUdpTests.Run(volleySources).GetAwaiter().GetResult();
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
@@ -4890,7 +4893,8 @@ internal static class CombatContentTests
         MatchSnapshot survived = surviveRuntime.TerminalEvidenceSnapshot();
         if (!surviveRuntime.Terminal || !survived.Coop.Completed ||
             survived.EndTick != survived.Coop.DeadlineTick ||
-            survived.Coop.SuccessScores.Count != 2)
+            survived.Coop.SuccessScores.Count != 1 ||
+            survived.Coop.PeerCompletionPlayerIds.Count != 1)
             throw new Exception("Survive mission must succeed at the source deadline.");
         CoopTerminalScoreValidator.ValidateSuccess(
             survived, surviveAllocation, catalog, enemyCombat, spawnPoints: spawnPoints);
