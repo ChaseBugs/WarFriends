@@ -33,6 +33,25 @@ No wallet, mission record or star progression is mutated by the SDK.
 
 ## Validation and remaining connection
 
+### Scene delivery preparation
+
+`CoopOutcomeDelivery` binds the shared finish callback to one match ID, manifest
+hash and local player. It validates source co-op outcomes before invoking the
+callback, ignores unrelated matches and PvP states, and suppresses both repeated
+delivery and synchronous reentrancy during scene reset. Running and aborted
+states do not call the finish callback. A previously departed local peer does
+not reopen its scene when the surviving master later finishes.
+
+Only a successful callback marks delivery complete. An exception propagates and
+permits a later retry; the future presenter must therefore make any partial
+scene changes safe to retry. This helper assumes the adapter's serialized Unity
+main-thread delivery and does not implement concurrent callback dispatch.
+
+Ten additional protocol scenarios check identity isolation, replay, reentrancy,
+callback failure, malformed result recovery, running/PvP exclusion and departed
+peer exclusion. This is portable SDK preparation: neither active Client DLLs
+nor its scene/result callbacks are changed by this addition.
+
 Protocol tests add ten outcome cases for success, personal departure, abort,
 and malformed winner/role/star/completion/death data. The existing real runtime
 fixtures now call the public SDK projection for master KIA, both role orders,

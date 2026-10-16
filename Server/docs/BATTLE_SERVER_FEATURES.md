@@ -1406,3 +1406,10 @@ It validates role, vitality, clock and completion consistency and does not write
 stars or rewards. Real runtime fixtures call the SDK projection. Active Unity
 DLL installation and the normal result-screen callback bridge remain unfinished.
 See [the outcome projection boundary](COOP_OUTCOME_PROJECTION.md).
+
+B22/B30 SDK scene delivery now binds the shared result to one match, manifest
+and local player, suppresses duplicate/reentrant finish callbacks, and keeps
+callback failures visible and retryable. Running missions, PvP and already
+departed peers cannot enter this shared finish path. Ten protocol scenarios
+cover these delivery boundaries. This remains SDK preparation; active Unity
+installation and source result-screen callback integration are still open.

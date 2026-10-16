@@ -72,7 +72,7 @@ internal static class CoopOutcomeProjectionTests
             "A host abort must remain a cancelled presentation rather than an invented win or loss.");
     }
 
-    private static MatchSnapshot CreateSuccess()
+    internal static MatchSnapshot CreateSuccess()
     {
         var snapshot = new MatchSnapshot
         {
