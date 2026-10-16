@@ -61,6 +61,29 @@ the actual mission scheduler, with no injected destination-only occupants in
 this case. This checks multiple actors in the Desert fixture's single Worker
 simulation; it does not claim multithreaded mutation or complete five-map play.
 
+## Emitted projectile evidence lifetime
+
+An emitted `BulletSlow` has its own flight lifecycle; `EnemyController.OnDeath`
+stops future shooting and releases the point without destroying previously
+spawned bullets. The old diagnostic impact lookup incorrectly searched only
+the shooter's current volley list. Death, retargeting or a later volley cleared
+that list and made an already emitted projectile lose its original target and
+muzzle evidence.
+
+Tracked flights now retain their immutable `CoopInfantryRoundIntent` by the
+global projectile ID. Impact planning resolves that launch record independently
+of current AI state and verifies its enemy identity. Duplicate tracking cannot
+replace it. Death and walking resets keep emitted records; match cleanup clears
+them. A completed record retires with its result-history eviction, so at most
+64 active plus 64 completed origins remain.
+
+Runtime fixtures emit real source rounds against the recovered scene, kill
+the shooter after launch and verify that the bullet/evidence survive while a
+dead actor cannot emit again. A separate live-actor run advances through later
+volleys and actual completed-history eviction, checking origin conservation and
+the bounded record count on every tick. This repairs diagnostic provenance;
+it does not authorize player or shield damage or open co-op registration.
+
 ## Implemented runtime transitions
 
 `CoopObstacleVolleyClock` now starts at obstacle arrival and owns crawling/pending

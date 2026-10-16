@@ -2813,7 +2813,7 @@ internal static class CombatContentTests
                 stoppedEnemy.EntityId).Count != 0)
             throw new Exception("Dead infantry kept moving after its host-confirmed death.");
 
-        CoopObstacleVolleyRuntimeTests.Run(new CoopObstacleVolleyRuntimeTests.Sources
+        var volleySources = new CoopObstacleVolleyRuntimeTests.Sources
         {
             Manifest = coop,
             Missions = catalog,
@@ -2824,7 +2824,9 @@ internal static class CombatContentTests
             Masks = enemyPointMasks,
             Navigation = infantryNavigation,
             Content = content
-        });
+        };
+        CoopObstacleVolleyRuntimeTests.Run(volleySources);
+        CoopDiagnosticRoundLifetimeTests.Run(volleySources, alliedShotWorld);
 
         var arrivalDestinations = new CoopEnemyDestinationState(
             enemyMap, enemyPointMasks, enemyCombat,

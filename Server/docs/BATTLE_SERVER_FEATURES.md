@@ -1230,3 +1230,11 @@ actors: every observed tick retains unique destination ownership while at least
 two enemies change points, and a released point is reclaimed by another actor.
 This extends the Desert host regression beyond a single actor; it does not close
 native navigation, Client presentation or authoritative combat gates.
+
+B22 tracked projectiles now freeze launch evidence independently of the
+shooter's current volley. Shooter death, retargeting and subsequent volleys no
+longer orphan an emitted bullet's target/muzzle binding. Records retire with
+completed-result eviction and remain bounded by 64 active plus 64 completed
+entries. Actual host fixtures verify death, re-emission rejection, later-volley
+retention and history eviction. Impact plans remain diagnostic; damage authority
+is still incomplete.

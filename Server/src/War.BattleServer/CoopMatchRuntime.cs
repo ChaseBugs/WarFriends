@@ -2598,16 +2598,6 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     internal IReadOnlyList<CoopDiagnosticFlightResult>
         DiagnosticFlightResults() => diagnosticFlightResults.ToArray();
 
-    private CoopInfantryRoundIntent? FindDiagnosticRound(
-        CoopDiagnosticFlightResult result)
-    {
-        return infantryRoundIntents.TryGetValue(result.EnemyEntityId,
-            out List<CoopInfantryRoundIntent>? rounds)
-            ? rounds.SingleOrDefault(round =>
-                round.ProjectileId == result.ProjectileId)
-            : null;
-    }
-
     /// <summary>
     /// Inspects a completed diagnostic hit without changing shield health.
     /// Collision coverage must be completed before this can become authority.
@@ -2689,10 +2679,21 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             enemyEntityId, roundIndex, world);
         if (flight == null)
             return false;
-        if (diagnosticFlights.Count >= 64)
+        if (_diagnosticRoundOrigins.ContainsKey(flight.Id))
+        {
+            return false;
+        }
+        if (diagnosticFlights.Count >= MaximumDiagnosticFlights)
+        {
             throw new InvalidOperationException(
                 "Too many diagnostic co-op bullets are active.");
-        return diagnosticFlights.TryAdd(flight.Id, flight);
+        }
+        if (!diagnosticFlights.TryAdd(flight.Id, flight))
+        {
+            return false;
+        }
+        _diagnosticRoundOrigins.Add(flight.Id, infantryRoundIntents[enemyEntityId][roundIndex]);
+        return true;
     }
 
     private void AdvanceDiagnosticFlights()
@@ -2717,8 +2718,11 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         string outcome, BulletImpact? impact)
     {
         diagnosticFlights.Remove(id);
-        if (diagnosticFlightResults.Count == 64)
+        if (diagnosticFlightResults.Count == MaximumDiagnosticResults)
+        {
+            _diagnosticRoundOrigins.Remove(diagnosticFlightResults[0].ProjectileId);
             diagnosticFlightResults.RemoveAt(0);
+        }
         diagnosticFlightResults.Add(new CoopDiagnosticFlightResult(id,
             flight.EnemyEntityId!.Value, tick, outcome, impact));
     }
@@ -3936,6 +3940,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         infantryShotWindups.Clear();
         infantryRoundIntents.Clear();
         diagnosticFlights.Clear();
+        _diagnosticRoundOrigins.Clear();
         diagnosticFlightResults.Clear();
         nextCornerChangeTicks.Clear();
         obstacleRepositionStartedTicks.Clear();
