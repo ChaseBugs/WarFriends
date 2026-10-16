@@ -2648,11 +2648,14 @@ public sealed partial class MatchEngine
                 turret.MaxShotRotation,turret.AimTime);}catch(InvalidDataException){return;}
             var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,aim.Direction);
             var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
-            if(decoy==null)
+            if (decoy == null && turret.NeedToSeePrimaryTarget)
             {
-                var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
-                if(visible?.PlayerId!=opponent.Definition.PlayerId&&
-                   visible?.DynamicOwner!=opponent.Definition.PlayerId)return;
+                var visible = rifleCombat.TraceForArmy(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
+                if (visible?.PlayerId != opponent.Definition.PlayerId &&
+                    visible?.DynamicOwner != opponent.Definition.PlayerId)
+                {
+                    return;
+                }
             }
             tankCannonTargets[entityKey]=(army.OwnerPlayerId,decoy?.Owner??opponent.Definition.PlayerId,
                 target,decoy?.EntityId);
@@ -2747,11 +2750,14 @@ public sealed partial class MatchEngine
                 turret.MaxShotRotation,turret.AimTime);}catch(InvalidDataException){return;}
             var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,aim.Direction);
             var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
-            if(decoy==null)
+            if (decoy == null && turret.NeedToSeePrimaryTarget)
             {
-                var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
-                if(visible?.PlayerId!=opponent.Definition.PlayerId&&
-                   visible?.DynamicOwner!=opponent.Definition.PlayerId)return;
+                var visible = rifleCombat.TraceForArmy(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
+                if (visible?.PlayerId != opponent.Definition.PlayerId &&
+                    visible?.DynamicOwner != opponent.Definition.PlayerId)
+                {
+                    return;
+                }
             }
             buggyCannonTargets[entityKey]=(army.OwnerPlayerId,decoy?.Owner??opponent.Definition.PlayerId,
                 target,decoy?.EntityId);

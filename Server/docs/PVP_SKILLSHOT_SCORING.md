@@ -75,10 +75,12 @@ that entity's revenge marker while it remains alive. A live Flamethrower hit
 followed by that player's mine kill verifies match score and the private
 terminal count. A Commando fixture now proves that one poison pulse advances
 the marker with no new bullet hit, then the same player's mine kill records
-one private revenge count. Tank and Buggy cannon missile impacts now carry
-the source vehicle ID into confirmed player damage and mark that live vehicle
-for revenge. A live missile-hit-to-vehicle-death fixture is still needed;
-grenade/Bazooka revenge and exact Unity frame ordering also remain open.
+one private revenge count. The recovered Tank and Buggy cannon turrets do not
+require a visible primary target; the host now honors that source setting.
+Their missile impacts carry the source vehicle ID into confirmed player damage.
+A live Buggy cannon hit followed by that player's mine kill verifies one
+revenge score and private terminal count. Tank missile-to-revenge death,
+grenade/Bazooka revenge, and exact Unity frame ordering remain open.
 
 ## Runtime boundary
 

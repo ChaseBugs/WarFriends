@@ -8645,6 +8645,11 @@ internal static class CombatContentTests
         var transporterShot=content.Army.ComposeVehicleShot("ID_UNIT-TRANSPORTER",0,null,null);
         var buggyCannon=content.Army.ComposeBuggyCannon(0,null,null);
         var tankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,null,null,1,1);
+        Check(!content.GroundVehicleWeapons.For("ID_UNIT-TANK").Roles.Single(role =>
+                  role.Role == "cannon").NeedToSeePrimaryTarget &&
+              !content.GroundVehicleWeapons.For("ID_UNIT-BUGGY").Roles.Single(role =>
+                  role.Role == "cannon").NeedToSeePrimaryTarget,
+            "recovered Tank and Buggy cannons do not require visible primary targets");
         var specialTankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,51,null,2,.7f);
         var transporterRepair=content.Army.ComposeTransporterRepairDrone(0,71,null,new(1,1));
         Check(humveeShot==new ArmyVehicleShotStats(14f,.85f,4,5,1.5f,1.8f,0)&&
@@ -18249,7 +18254,8 @@ internal static class CombatContentTests
                   row.Flag == PvpArmyKillSkillShotPolicy.Runner).Count == 1,
             "private terminal evidence retains the explosion victim's Runner count");
         (MatchEngine Match, BattleArmyEntityState Victim, ulong Tick, int RealShots)
-            PrepareRevengeVictim(string matchId, MatchManifest sourceManifest)
+            PrepareRevengeVictim(string matchId, MatchManifest sourceManifest,
+                Func<float>? combatRandom = null)
         {
             const int RevengeScenarioRandomSeed = 731;
             var manifest = sourceManifest with
@@ -18259,8 +18265,9 @@ internal static class CombatContentTests
                 IdleSeconds = 120
             };
             var random = new Random(RevengeScenarioRandomSeed);
+            Func<float> selectedRoll = combatRandom ?? random.NextSingle;
             var match = new MatchEngine(manifest, content: content,
-                armyChoice: _ => 0, combatRandom: random.NextSingle);
+                armyChoice: _ => 0, combatRandom: selectedRoll);
             match.Admit(soldierOwner);
             match.Admit(helicopterOwner);
             foreach (string playerId in new[] { soldierOwner, helicopterOwner })
@@ -18458,6 +18465,40 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains one poison-sourced revenge count");
+        var buggyRevengeManifest = flameRevengeManifest with
+        {
+            SceneMasterPlayerId = soldierOwner,
+            Players = flameRevengeManifest.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-BUGGY"],
+                ArmySpecialUpgradeIndexes = [-1]
+            }).ToArray()
+        };
+        var (buggyRevengeMatch, buggyVictim, buggyTick, _) = PrepareRevengeVictim(
+            "buggy-missile-revenge", buggyRevengeManifest, () => 0f);
+        Check(buggyVictim.UnitId == "ID_UNIT-BUGGY",
+            "the confirmed cannon hit belongs to the live Buggy");
+        Check(buggyRevengeMatch.ArmyRevengeExpiry(buggyVictim.EntityKey, helicopterOwner) > buggyTick,
+            "a live Buggy cannon missile marks its own vehicle after damaging the opposing player");
+        var revengeBuggyBody = buggyRevengeMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == buggyVictim.EntityKey && target.GroundVehicleBody);
+        Check(buggyRevengeMatch.TryRegisterLandMine(new string('f', 32), helicopterOwner,
+                revengeBuggyBody.Hitbox.Center, buggyVictim.Health + 100f),
+            "host mine overlaps the Buggy whose cannon damaged the player");
+        buggyRevengeMatch.Advance(++buggyTick);
+        Check(buggyRevengeMatch.ArmyHealth(buggyVictim.EntityKey) == null &&
+              buggyRevengeMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "player mine kill credits the Buggy's confirmed cannon revenge marker");
+        buggyRevengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(buggyRevengeMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
+            "private terminal evidence retains the Buggy missile revenge count");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

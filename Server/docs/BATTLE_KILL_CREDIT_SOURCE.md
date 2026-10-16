@@ -90,10 +90,11 @@ entity is live. A Flamethrower hit followed by that player's mine kill now
 verifies one revenge score and private terminal count. A Commando fixture
 isolates a poison pulse with no concurrent bullet hit, observes its revenge
 deadline advance, then verifies the same player's mine kill and private count.
-Tank and Buggy missile impact handling now retains the source vehicle ID and
-marks it after confirmed damage to an opposing player, only while that vehicle
-is still live. The current vehicle placement fixture did not produce a player
-hit, so missile-hit-to-revenge-death proof remains open. Grenade/Bazooka
-revenge has no live fixture yet.
+Tank and Buggy cannon targeting now follows the source's disabled primary
+visibility requirement. Their missile impacts retain the source vehicle ID
+and mark it after confirmed damage to an opposing player, only while that
+vehicle is still live. A Park match verifies a live Buggy missile hit, a mine
+kill of the same Buggy, and one private `RevengeKill` count. Tank
+missile-to-revenge death and grenade/Bazooka revenge still lack live fixtures.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.
