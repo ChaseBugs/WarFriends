@@ -18002,6 +18002,28 @@ internal static class CombatContentTests
         }
         Check(walkingShot&&observedWalkingPose,
               "special Shotgunner fires while its source walking clip supplies three moving explosion colliders");
+        Check(PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(
+                  walkingShotgunnerMatch.RusherMotionCandidate(walkingEntity!.EntityKey)) ==
+                  PvpArmyKillSkillShotPolicy.Runner,
+            "published walking Shotgunner speed satisfies the recovered Runner gate");
+        var sourceMotion = walkingShotgunnerMatch.RusherMotionCandidate(walkingEntity.EntityKey)!;
+        var stalledMotion = new ArmyRusherArrivalState(
+            walkingShotgunnerMatch.RusherWalkingRoute(walkingEntity.EntityKey)!,
+            content.Army.InfantryAgent, sourceMotion.ConfiguredSpeed);
+        stalledMotion.AdvanceTick();
+        Vector3 stalledPosition = stalledMotion.Position;
+        stalledMotion.RecordPublishedMovement(stalledPosition, stalledPosition);
+        Check(PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(stalledMotion) == 0,
+            "walking state alone cannot credit Runner while the agent is blocked");
+        Vector3 normalStep = Vector3.UnitX * stalledMotion.ConfiguredSpeed / MatchManifest.TickRate;
+        stalledMotion.RecordPublishedMovement(stalledPosition,
+            stalledPosition + normalStep * 0.5f);
+        Check(PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(stalledMotion) == 0,
+            "accelerating below the configured speed threshold cannot credit Runner");
+        stalledMotion.RecordPublishedMovement(stalledPosition, stalledPosition + normalStep);
+        Check(PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(stalledMotion) ==
+              PvpArmyKillSkillShotPolicy.Runner,
+            "one published full-speed walking tick satisfies the source Runner threshold");
         var shotgunFlights = walkingShotgunnerMatch.Snapshot().Projectiles
             .Where(row => row.ArmyUnitId == "ID_UNIT-SHOTGUNNER").ToArray();
         Check(shotgunFlights.Count(row => row.Kind == "army-bullet") == 1 &&
@@ -18137,6 +18159,7 @@ internal static class CombatContentTests
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
               liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.LongShot] == 1 &&
+              liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.Runner] == 1 &&
               liveHeadshotMatch.Snapshot().Players.Single(player =>
                   player.PlayerId == helicopterOwner).ConfirmedEnemyHits == 1,
             "one lethal player Fire head contact credits Kill, HeadShot, and OneHitKill");
@@ -18155,8 +18178,10 @@ internal static class CombatContentTests
               liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.OneHitKill).Count == 1 &&
               liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
-                  row.Flag == PvpArmyKillSkillShotPolicy.LongShot).Count == 1,
-            "terminal evidence retains headshot, one-hit, and long-shot counts privately");
+                  row.Flag == PvpArmyKillSkillShotPolicy.LongShot).Count == 1 &&
+              liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.Runner).Count == 1,
+            "terminal evidence retains source shot and movement counts privately");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

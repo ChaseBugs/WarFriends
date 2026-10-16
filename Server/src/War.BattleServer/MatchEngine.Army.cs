@@ -3449,6 +3449,7 @@ public sealed partial class MatchEngine
                !float.IsFinite(position.Z) || Math.Abs(position.X)>10000 ||
                Math.Abs(position.Y)>10000 || Math.Abs(position.Z)>10000)
                 throw new InvalidDataException("Rusher motion produced an invalid host position.");
+            state.RecordPublishedMovement(new Vector3(army.X, army.Y, army.Z), position);
             army.X=position.X;army.Y=position.Y;army.Z=position.Z;
             army.PositionTick=tick;
         }

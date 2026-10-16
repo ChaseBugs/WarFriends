@@ -47,6 +47,16 @@ bullet-death tick. Equality with six does not qualify. A live player `Fire`
 headshot earns one `LongShot` in match score and private terminal evidence;
 mine and Bazooka explosion deaths do not.
 
+For `EnemyController`, the Client awards `Runner` when its AI state is `Walk`
+and `agent.velocity.sqrMagnitude` exceeds 90% of the configured agent speed
+squared. The host now measures each Rusher's published three-dimensional
+movement in the death tick and compares it with its configured speed for
+confirmed player-bullet deaths. A blocked or still accelerating walker earns
+no `Runner`. A live player `Fire` kill of a moving Shotgunner records one
+`Runner` in private terminal evidence. Explosion deaths, other infantry
+movement states, and the Client's exact NavMeshAgent velocity remain outside
+this proof.
+
 ## Runtime boundary
 
 This catalog supplies trusted score data and composition. Confirmed host

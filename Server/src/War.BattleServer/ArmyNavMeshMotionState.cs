@@ -19,6 +19,7 @@ public sealed class ArmyNavMeshMotionState
 
     public Vector3 Position { get; private set; }
     public float Speed => speed;
+    internal float MaximumSpeed => maximumSpeed;
     public float Traveled => traveled;
     public float Length => cumulative[^1];
     public bool Arrived => PlanarDistance(Position,points[^1])<.04f;

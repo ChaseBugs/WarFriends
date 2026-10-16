@@ -1926,6 +1926,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                     var shooter=Find(impact.OwnerId)??throw new InvalidDataException("Bullet owner disappeared.");
                     uint enemyHitsBefore=shooter.ConfirmedEnemyHits;
                     activeArmyEntities.TryGetValue(vehicleId,out var armyBeforeImpact);
+                    rusherMotionCandidates.TryGetValue(vehicleId, out var motionBeforeImpact);
                     bool immortalDroneRootContact=impact.Hit.SourceDestroyable&&
                         impact.Hit.DynamicPartId==6544804&&
                         activeArmyEntities.TryGetValue(vehicleId,out var contactedDrone)&&
@@ -2000,6 +2001,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                                 PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
                                     armyBeforeImpact.Health, armyBeforeImpact.MaxHealth) |
                                 PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(impact.Hit) |
+                                PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(
+                                    impact.Hit.DynamicArmyInfantry ? motionBeforeImpact : null) |
                                 PvpArmyKillSkillShotPolicy.ConfirmedLongShotFlag(
                                     victimRoot, weaponRoot, _longShotDistance);
                             string receiptId = PvpHitReceiptId("player-bullet-army-kill",

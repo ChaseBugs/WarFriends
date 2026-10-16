@@ -21,6 +21,9 @@ public sealed class ArmyRusherArrivalState
     public Vector2 PlanarDirection => Phase==ArmyRusherTravelPhase.Walking ?
         motion!.PlanarDirection : Vector2.Zero;
     internal float PlanarSpeed => Phase==ArmyRusherTravelPhase.Walking ? motion!.Speed : 0;
+    internal float ConfiguredSpeed => Phase==ArmyRusherTravelPhase.Walking ?
+        motion!.MaximumSpeed : 0;
+    internal float PublishedVelocitySquared { get; private set; }
     public bool InitialShotDelayElapsed => Phase==ArmyRusherTravelPhase.Rusher &&
         ticksSinceArrival>SettleTicks;
     internal int RejectedMotionTicks { get; private set; }
@@ -83,5 +86,21 @@ public sealed class ArmyRusherArrivalState
         if(checkpoint.HasValue)motion!.Restore(checkpoint.Value);
         Position=before;Phase=phase;settleStart=start;ticksSinceArrival=ticks;
         return false;
+    }
+
+    internal void RecordPublishedMovement(Vector3 previous, Vector3 current)
+    {
+        if (!PlayerHitbox.Finite(previous) || !PlayerHitbox.Finite(current))
+        {
+            throw new InvalidDataException("Rusher movement lacks finite host positions.");
+        }
+
+        float distanceSquared = Vector3.DistanceSquared(previous, current);
+        float tickRateSquared = MatchManifest.TickRate * MatchManifest.TickRate;
+        PublishedVelocitySquared = distanceSquared * tickRateSquared;
+        if (!float.IsFinite(PublishedVelocitySquared))
+        {
+            throw new InvalidDataException("Rusher movement exceeds the host float range.");
+        }
     }
 }

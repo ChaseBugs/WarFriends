@@ -5,6 +5,7 @@ namespace War.BattleServer;
 /// <summary>Source base flags for a player-owned opposing army-entity death.</summary>
 internal static class PvpArmyKillSkillShotPolicy
 {
+    private const float RunningSpeedSquaredRatio = 0.9f;
     internal const int Kill = 4096;
     internal const int VehicleDestroyed = 512;
     internal const int TankDestroyed = 16384;
@@ -12,6 +13,29 @@ internal static class PvpArmyKillSkillShotPolicy
     internal const int OneHitKill = 16;
     internal const int HeadShot = 1;
     internal const int LongShot = 4;
+    internal const int Runner = 2;
+
+    /// <summary>
+    /// The recovered EnemyController requires a walking AI state and a
+    /// NavMeshAgent velocity above ninety percent of its configured speed.
+    /// </summary>
+    internal static int ConfirmedRunnerFlag(ArmyRusherArrivalState? motion)
+    {
+        if (motion == null || motion.Phase != ArmyRusherTravelPhase.Walking)
+        {
+            return 0;
+        }
+
+        float speedSquared = motion.ConfiguredSpeed * motion.ConfiguredSpeed;
+        if (!float.IsFinite(speedSquared) || speedSquared <= 0f ||
+            !float.IsFinite(motion.PublishedVelocitySquared))
+        {
+            throw new InvalidDataException("Walking Rusher lacks finite speed authority.");
+        }
+
+        return motion.PublishedVelocitySquared > speedSquared * RunningSpeedSquaredRatio
+            ? Runner : 0;
+    }
 
     /// <summary>
     /// The Client compares the victim and current weapon transform only for
