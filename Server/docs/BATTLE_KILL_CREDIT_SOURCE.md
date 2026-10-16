@@ -32,6 +32,14 @@ full-health and three previously weakened infantry, awarding one one-hit row.
 Sabotage retains its explicit source `isOneHit` assertion. Normal rifle,
 mine, and Bazooka full-health death paths still need live one-hit proof.
 
+`EnemyController` marks `isHeadShot` only when a `Shot` death arrived through
+`DestroyableObjectpart` index one. The pinned infantry pose distinguishes that
+head sphere from the body by its source path and 1.5 damage weight. Confirmed
+player-bullet deaths now add `HeadShot` only for that trusted head collider;
+body hits and explosion deaths do not. A real animated-infantry collision test
+proves the head/body distinction, while a lethal player `Fire` headshot still
+needs live end-to-end verification.
+
 Confirmed player-owned mine, Bazooka, and grenade blasts add the source ExplosiveKill flag to those
 same base flags. The blast death recorder stages every combo/score transition before publishing its
 direct-kill batch. Normal M320 and collected bonus grenades compare ordered `ArmyDied` events and

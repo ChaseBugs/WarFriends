@@ -24,6 +24,13 @@ full health before one host-confirmed lethal damage callback, matching
 one full-health infantry and withholds it from three weakened infantry.
 Normal rifle, mine, and Bazooka full-health deaths remain unverified.
 
+Confirmed player-bullet infantry deaths now add the source `HeadShot` flag
+only when the host collision has the pinned head sphere's path and damage
+weight. The recovered `EnemyController` requires a `Shot` death on part index
+one; body hits and explosion deaths do not qualify. A real animated-infantry
+ray verifies the classifier, but a lethal player `Fire` headshot still needs
+end-to-end proof.
+
 ## Runtime boundary
 
 This catalog supplies trusted score data and composition. Confirmed host

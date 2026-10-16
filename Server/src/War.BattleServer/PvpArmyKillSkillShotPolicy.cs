@@ -8,6 +8,41 @@ internal static class PvpArmyKillSkillShotPolicy
     internal const int TankDestroyed = 16384;
     internal const int ExplosiveKill = 8192;
     internal const int OneHitKill = 16;
+    internal const int HeadShot = 1;
+
+    /// <summary>
+    /// The recovered EnemyController marks a shot death as a headshot only
+    /// when its DestroyableObjectpart has index one.
+    /// </summary>
+    internal static int ConfirmedShotHeadFlag(ShotCollision hit)
+    {
+        ArgumentNullException.ThrowIfNull(hit);
+        if (!hit.DynamicArmyInfantry)
+        {
+            return 0;
+        }
+
+        if (!hit.SourceDestroyable || hit.ColliderLayer is not (22 or 23))
+        {
+            throw new InvalidDataException(
+                "Infantry shot lacks its source destroyable collider.");
+        }
+
+        if (hit.SourcePath == EnemyPoseCatalog.ArmyHeadSourcePath &&
+            hit.PartWeight == 1.5f)
+        {
+            return HeadShot;
+        }
+
+        if (hit.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath &&
+            hit.PartWeight == 1f)
+        {
+            return 0;
+        }
+
+        throw new InvalidDataException(
+            "Infantry shot differs from its pinned body and head colliders.");
+    }
 
     /// <summary>
     /// A confirmed lethal damage callback gets OneHitKill when the root

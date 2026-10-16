@@ -17969,6 +17969,18 @@ internal static class CombatContentTests
               Math.Abs(walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value-
                   (projectileHealthBefore-15))<.001f,
               "animated infantry enters the shared opposing projectile world and applies its trusted head multiplier");
+        Check(PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(infantryHit!) ==
+              PvpArmyKillSkillShotPolicy.HeadShot &&
+              PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(infantryHit! with
+              {
+                  SourcePath = EnemyPoseCatalog.ArmyBodySourcePath,
+                  PartWeight = 1f
+              }) == 0,
+            "pinned live infantry collider identity distinguishes head and body shot flags");
+        Reject(() => PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(infantryHit! with
+        {
+            PartWeight = 1f
+        }));
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

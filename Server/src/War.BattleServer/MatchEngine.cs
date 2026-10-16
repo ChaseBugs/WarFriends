@@ -1988,7 +1988,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                                     "Player-owned kill lacks a recovered army catalog."),
                                 armyBeforeImpact.UnitId) |
                                 PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
-                                    armyBeforeImpact.Health, armyBeforeImpact.MaxHealth);
+                                    armyBeforeImpact.Health, armyBeforeImpact.MaxHealth) |
+                                PvpArmyKillSkillShotPolicy.ConfirmedShotHeadFlag(impact.Hit);
                             string receiptId = PvpHitReceiptId("player-bullet-army-kill",
                                 pair.Key, vehicleId.ToString(CultureInfo.InvariantCulture));
                             scoredKill = pvpBonusProgress.PrepareConfirmedPlayerOwnedDeathCopy(
