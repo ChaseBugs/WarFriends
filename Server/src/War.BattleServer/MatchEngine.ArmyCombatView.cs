@@ -45,6 +45,35 @@ public sealed partial class MatchEngine
         return positions[targetIndex];
     }
 
+    private Vector3 ArmyBodyShotTarget(string playerId, int transformFileId)
+    {
+        if (rifleCombat != null)
+        {
+            return rifleCombat.Pose(playerId).BodyTarget(transformFileId).Position;
+        }
+
+        return GrenadePlayerShotTarget(playerId, transformFileId);
+    }
+
+    private ShotCollision? TraceArmyVisibility(
+        string ownerPlayerId, Vector3 origin, Vector3 direction, float range)
+    {
+        if (rifleCombat != null)
+        {
+            return rifleCombat.TraceForArmy(ownerPlayerId, origin, direction, range);
+        }
+
+        if (grenadeCombat == null || _armyBulletBindings == null)
+        {
+            throw new InvalidDataException("Army visibility lacks player collision authority.");
+        }
+
+        Player owner = Find(ownerPlayerId) ??
+            throw new InvalidDataException("Army visibility owner disappeared.");
+        uint mask = _armyBulletBindings.BulletMask(owner.Definition.Fraction);
+        return grenadeCombat.TraceForArmy(ownerPlayerId, origin, direction, range, mask);
+    }
+
     private ShotCollision? TraceArmyShot(
         string ownerPlayerId, Vector3 origin, Vector3 direction, float range)
     {

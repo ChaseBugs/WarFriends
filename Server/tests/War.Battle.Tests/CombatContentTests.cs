@@ -18629,6 +18629,34 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains the Buggy missile revenge count");
+        var grenadeBuggyManifest = buggyRevengeManifest with
+        {
+            Mode = MatchManifest.GrenadeCombatMode,
+            CatalogRevision = grenadeRevengeContent.GrenadeRevision!,
+            Players = buggyRevengeManifest.Players.Select(player => player with
+            {
+                Weapon = grenadeRevengeWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var (grenadeBuggyMatch, grenadeBuggyVictim, grenadeBuggyTick, _) =
+            PrepareRevengeVictim("grenade-mode-buggy-revenge",
+                grenadeBuggyManifest, () => 0f, grenadeRevengeContent);
+        Check(grenadeBuggyVictim.UnitId == "ID_UNIT-BUGGY" &&
+              grenadeBuggyMatch.ArmyRevengeExpiry(
+                  grenadeBuggyVictim.EntityKey, helicopterOwner) > grenadeBuggyTick,
+            "a live Buggy missile damages the opposing player in grenade weapon mode");
+        var grenadeBuggyBody = grenadeBuggyMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == grenadeBuggyVictim.EntityKey &&
+                target.GroundVehicleBody);
+        Check(grenadeBuggyMatch.TryRegisterLandMine(new string('2', 32), helicopterOwner,
+                grenadeBuggyBody.Hitbox.Center, grenadeBuggyVictim.Health + 100f),
+            "host mine overlaps the grenade-mode Buggy that damaged the player");
+        grenadeBuggyMatch.Advance(++grenadeBuggyTick);
+        Check(grenadeBuggyMatch.ArmyHealth(grenadeBuggyVictim.EntityKey) == null &&
+              grenadeBuggyMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "a live grenade-mode Buggy kill credits its confirmed revenge marker");
         var tankShieldManifest = buggyRevengeManifest with
         {
             Players = buggyRevengeManifest.Players.Select(player => player with
@@ -18684,6 +18712,34 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains the Tank missile revenge count");
+        var grenadeTankManifest = tankShieldManifest with
+        {
+            Mode = MatchManifest.GrenadeCombatMode,
+            CatalogRevision = grenadeRevengeContent.GrenadeRevision!,
+            Players = tankShieldManifest.Players.Select(player => player with
+            {
+                Weapon = grenadeRevengeWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var (grenadeTankMatch, grenadeTankVictim, grenadeTankTick, _) =
+            PrepareRevengeVictim("grenade-mode-tank-revenge",
+                grenadeTankManifest, () => 0f, grenadeRevengeContent);
+        Check(grenadeTankVictim.UnitId == "ID_UNIT-TANK" &&
+              grenadeTankMatch.ArmyRevengeExpiry(
+                  grenadeTankVictim.EntityKey, helicopterOwner) > grenadeTankTick,
+            "a live Tank missile damages the opposing player in grenade weapon mode");
+        var grenadeTankBody = grenadeTankMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == grenadeTankVictim.EntityKey &&
+                target.GroundVehicleBody);
+        Check(grenadeTankMatch.TryRegisterLandMine(new string('3', 32), helicopterOwner,
+                grenadeTankBody.Hitbox.Center, grenadeTankVictim.Health + 100f),
+            "host mine overlaps the grenade-mode Tank that damaged the player");
+        grenadeTankMatch.Advance(++grenadeTankTick);
+        Check(grenadeTankMatch.ArmyHealth(grenadeTankVictim.EntityKey) == null &&
+              grenadeTankMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "a live grenade-mode Tank kill credits its confirmed revenge marker");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

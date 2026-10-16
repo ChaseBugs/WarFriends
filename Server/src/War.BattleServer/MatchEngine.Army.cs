@@ -2438,7 +2438,7 @@ public sealed partial class MatchEngine
     // AttackerRusher, and reaches the all-opponents fallback only when neither exists.
     private bool TryBeginAutomaticGroundVehicleAttack(ulong entityKey)
     {
-        if(phase!=BattlePhase.Running||vehicles==null||rifleCombat==null||playerShotTargets==null||groundVehicleWeapons==null||
+        if(phase!=BattlePhase.Running||vehicles==null||!HasArmyCombatView||playerShotTargets==null||groundVehicleWeapons==null||
            !activeArmyEntities.TryGetValue(entityKey,out var army)||
            army.UnitId is not ("ID_UNIT-TANK" or "ID_UNIT-HUMVEE" or "ID_UNIT-TRANSPORTER")||
            !(army.UnitId=="ID_UNIT-TANK"?PassengerActive(entityKey,"turret"):
@@ -2450,7 +2450,6 @@ public sealed partial class MatchEngine
         var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Vehicle owner disappeared.");
         var opponent=players.Single(p=>p!=owner);
         if(!opponent.Admitted||opponent.Dead)return false;
-        var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
         var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
         var opposingDecoys=decoys.Snapshot().Where(x=>x.OwnerFraction!=army.OwnerFraction)
             .OrderBy(x=>x.EntityId).ToArray();
@@ -2471,7 +2470,7 @@ public sealed partial class MatchEngine
                 vehicle.Position,decoyAim.Direction);
             var decoyDelta=decoyTarget-decoyMuzzle;float decoyRange=decoyDelta.Length();
             if(!float.IsFinite(decoyRange)||decoyRange<.001f)return false;
-            var visibleDecoy=rifleCombat.TraceForArmy(army.OwnerPlayerId,decoyMuzzle,
+            var visibleDecoy=TraceArmyVisibility(army.OwnerPlayerId,decoyMuzzle,
                 decoyDelta/decoyRange,decoyRange+.05f);
             if(visibleDecoy is not {DynamicDecoy:true,DynamicEntityId:var hitId}||hitId!=selected.EntityId)
                 return false;
@@ -2502,7 +2501,7 @@ public sealed partial class MatchEngine
                     vehicle.Position,candidateAim.Direction);
                 var candidateDelta=part.Center-candidateMuzzle;float candidateRange=candidateDelta.Length();
                 if(!float.IsFinite(candidateRange)||candidateRange<.001f)continue;
-                var hit=rifleCombat.TraceForArmy(army.OwnerPlayerId,candidateMuzzle,
+                var hit=TraceArmyVisibility(army.OwnerPlayerId,candidateMuzzle,
                     candidateDelta/candidateRange,candidateRange+.05f);
                 if(!turret.NeedToSeePrimaryTarget||hit is {DynamicArmyInfantry:true,DynamicEntityId:var hitId}&&
                    hitId==candidate.Key)visibleUnits.Add((candidate.Key,part.Center,candidateAim));
@@ -2519,14 +2518,8 @@ public sealed partial class MatchEngine
         }
         if(army.UnitId!="ID_UNIT-TRANSPORTER"&&
            !GroundVehicleAimPolicy.CanFallbackToPlayer(turret,false,matchingUnit))return false;
-        Vector3 target;
-        if(opponent.Route!=null&&pose.MovingTarget!=null)target=pose.MovingTarget.Position;
-        else
-        {
-            var body=playerShotTargets.Nearest(1,vehicle.Position,
-                row=>pose.BodyTarget(row.TransformFileId).Position);
-            target=pose.BodyTarget(body.TransformFileId).Position;
-        }
+        Vector3 target = CurrentPlayerBodyPosition(
+            opponent.Definition.PlayerId, vehicle.Position);
         GroundVehicleAim aim;
         try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
             turret.MaxShotRotation,turret.AimTime);}
@@ -2534,7 +2527,7 @@ public sealed partial class MatchEngine
         var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,vehicle.Position,aim.Direction);
         var delta=target-muzzle;float range=delta.Length();
         if(!float.IsFinite(range)||range<.001f)return false;
-        var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
+        var visible=TraceArmyVisibility(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
         if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)
             return false;
         vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
@@ -2568,7 +2561,7 @@ public sealed partial class MatchEngine
             scheduledTransporterShots.Remove(shot);
             if(!activeArmyEntities.TryGetValue(shot.VehicleId,out var army)||vehicles==null||
                !vehicles.TryGet(shot.VehicleId,out var vehicle)||vehicle==null||groundVehicleWeapons==null||
-               rifleCombat==null||!groundVehicleFacing.TryGetValue(shot.VehicleId,out _))continue;
+               !HasArmyCombatView||!groundVehicleFacing.TryGetValue(shot.VehicleId,out _))continue;
             var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary").Weapons[shot.WeaponIndex];
             Vector3 origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",shot.WeaponIndex,
                 vehicle.Position,shot.TargetPosition-vehicle.Position);
@@ -2584,7 +2577,7 @@ public sealed partial class MatchEngine
                         transporterShotStats[shot.VehicleId].ShotSpeed;
                     vehicleProjectiles.Add(id,new VehicleProjectileFlight(id,shot.VehicleId,origin,
                         shot.TargetPosition,speed,tick,(from,direction,range)=>
-                            rifleCombat.TraceForArmy(shot.Owner,from,direction,range)));
+                            TraceArmyVisibility(shot.Owner,from,direction,range)));
                 }
             }
         }
@@ -2592,20 +2585,33 @@ public sealed partial class MatchEngine
 
     private Vector3 CurrentPlayerBodyPosition(string playerId,Vector3 origin)
     {
-        if(rifleCombat==null||playerShotTargets==null)
+        if(!HasArmyCombatView||playerShotTargets==null)
             throw new InvalidDataException("Vehicle target pose authority disappeared.");
         var player=Find(playerId)??throw new InvalidDataException("Vehicle target player disappeared.");
-        var pose=rifleCombat.Pose(playerId);
-        if(player.Route!=null&&pose.MovingTarget!=null)return pose.MovingTarget.Position;
-        var body=playerShotTargets.Nearest(1,origin,row=>pose.BodyTarget(row.TransformFileId).Position);
-        return pose.BodyTarget(body.TransformFileId).Position;
+        if (player.Route != null)
+        {
+            if (rifleCombat?.Pose(playerId).MovingTarget is { } moving)
+            {
+                return moving.Position;
+            }
+
+            if (grenadeCombat != null)
+            {
+                int movingId = playerShotTargets.Gameplay.Single(row => row.Type == 16).TransformFileId;
+                return GrenadePlayerShotTarget(playerId, movingId);
+            }
+        }
+
+        var body=playerShotTargets.Nearest(1,origin,
+            row => ArmyBodyShotTarget(playerId, row.TransformFileId));
+        return ArmyBodyShotTarget(playerId, body.TransformFileId);
     }
 
     private DroneTargetDetails? VisibleCannonTarget(string targetId, Vector3 sightOrigin)
     {
         var candidate = DroneTargetSnapshot().FirstOrDefault(row =>
             row.Id == targetId && row.Alive && row.Visible);
-        if (candidate == null || rifleCombat == null)
+        if (candidate == null || !HasArmyCombatView)
         {
             return null;
         }
@@ -2620,7 +2626,7 @@ public sealed partial class MatchEngine
 
         var sightRay = HelicopterTurretSightRay.ForAimedShot(
             sightOrigin, firstTarget.Position);
-        return rifleCombat.HelicopterCanSee(sightRay) ? details : null;
+        return HelicopterVisibilityRay(sightRay) ? details : null;
     }
 
     private Vector3? SelectCannonPlayerTarget(
@@ -2660,7 +2666,7 @@ public sealed partial class MatchEngine
 
     private void AdvanceTankCannon(ulong entityKey)
     {
-        if(!tankCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||rifleCombat==null||
+        if(!tankCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||!HasArmyCombatView||
            playerShotTargets==null||groundVehicleWeapons==null||!activeArmyEntities.TryGetValue(entityKey,out var army)||
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !groundVehicleFacing.TryGetValue(entityKey,out var facing))return;
@@ -2682,7 +2688,7 @@ public sealed partial class MatchEngine
             var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
             if (decoy == null && turret.NeedToSeePrimaryTarget)
             {
-                var visible = rifleCombat.TraceForArmy(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
+                var visible = TraceArmyVisibility(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
                 if (visible?.PlayerId != opponent.Definition.PlayerId &&
                     visible?.DynamicOwner != opponent.Definition.PlayerId)
                 {
@@ -2699,7 +2705,7 @@ public sealed partial class MatchEngine
 
     private void LaunchTankMissile(ulong entityKey,VehicleAttackState attack)
     {
-        if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot()||vehicles==null||rifleCombat==null||
+        if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot()||vehicles==null||!HasArmyCombatView||
            groundVehicleWeapons==null||!vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !activeArmyEntities.TryGetValue(entityKey,out var army)||!tankCannonTargets.TryGetValue(entityKey,out var target)||
            !tankCannonDamage.TryGetValue(entityKey,out float damage))return;
@@ -2726,7 +2732,7 @@ public sealed partial class MatchEngine
         if(projectileId==ulong.MaxValue)throw new InvalidDataException("Tank projectile identity exhausted.");
         ulong id=++projectileId;
         var flight=new TankMissileFlight(id,entityKey,binding,origin,()=>position,tick,
-            (from,direction,range)=>rifleCombat.TraceForArmy(target.Owner,from,direction,range));
+            (from,direction,range)=>TraceArmyVisibility(target.Owner,from,direction,range));
         tankProjectiles.Add(id,new(flight,target.Owner,target.Target,damage,binding));
         Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"tank-cannon");stateRevision++;
     }
@@ -2762,7 +2768,7 @@ public sealed partial class MatchEngine
 
     private void AdvanceBuggyCannon(ulong entityKey)
     {
-        if(!buggyCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||rifleCombat==null||
+        if(!buggyCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||!HasArmyCombatView||
            playerShotTargets==null||groundVehicleWeapons==null||
            !activeArmyEntities.TryGetValue(entityKey,out var army)||
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
@@ -2776,19 +2782,8 @@ public sealed partial class MatchEngine
             var decoy=SelectCannonDecoy(owner.Definition.Fraction,vehicle.Position,facing,turret,
                 out bool decoyPresent);
             if(decoyPresent&&decoy==null)return;
-            Vector3 target;
-            if(decoy!=null)target=decoy.Value.Position;
-            else
-            {
-                var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
-                if(opponent.Route!=null&&pose.MovingTarget!=null)target=pose.MovingTarget.Position;
-                else
-                {
-                    var body=playerShotTargets.Nearest(1,vehicle.Position,
-                        row=>pose.BodyTarget(row.TransformFileId).Position);
-                    target=pose.BodyTarget(body.TransformFileId).Position;
-                }
-            }
+            Vector3 target=decoy?.Position??
+                CurrentPlayerBodyPosition(opponent.Definition.PlayerId,vehicle.Position);
             GroundVehicleAim aim;
             if(decoy!=null)aim=decoy.Value.Aim;
             else try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
@@ -2797,7 +2792,7 @@ public sealed partial class MatchEngine
             var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
             if (decoy == null && turret.NeedToSeePrimaryTarget)
             {
-                var visible = rifleCombat.TraceForArmy(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
+                var visible = TraceArmyVisibility(army.OwnerPlayerId, muzzle, delta / range, range + .05f);
                 if (visible?.PlayerId != opponent.Definition.PlayerId &&
                     visible?.DynamicOwner != opponent.Definition.PlayerId)
                 {
@@ -2816,7 +2811,7 @@ public sealed partial class MatchEngine
     private void LaunchBuggyMissile(ulong entityKey,int weaponIndex,BuggyCannonAttackState attack)
     {
         if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot()||vehicles==null||
-           rifleCombat==null||groundVehicleWeapons==null||
+           !HasArmyCombatView||groundVehicleWeapons==null||
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !activeArmyEntities.TryGetValue(entityKey,out var army)||
            !buggyCannonTargets.TryGetValue(entityKey,out var target))return;
@@ -2845,7 +2840,7 @@ public sealed partial class MatchEngine
         ulong id=++projectileId;int sign=buggyCurveCounter++%2==0?-1:1;
         var flight=new BuggyMissileFlight(id,entityKey,binding,
             armyVehicleShots[entityKey].ShotSpeed,origin,position,tick,NextArmyFloat(),NextArmyFloat(),sign,
-            (from,direction,range)=>rifleCombat.TraceForArmy(target.Owner,from,direction,range));
+            (from,direction,range)=>TraceArmyVisibility(target.Owner,from,direction,range));
         buggyProjectiles.Add(id,new(flight,target.Owner,target.Target,attack.DamagePerMissile,binding));
         Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"buggy-cannon");stateRevision++;
     }
@@ -2894,7 +2889,7 @@ public sealed partial class MatchEngine
         GroundVehicleMissileBinding binding = blast.Binding;
         Vector3 position = blast.Position;
         ulong projectileId = blast.ProjectileId;
-        if(rifleCombat==null||damageRoll==null||armyCatalog==null)
+        if(!HasArmyCombatView||damageRoll==null||armyCatalog==null)
             throw new InvalidDataException("Missing vehicle explosion authority.");
         if (activeArmyEntities.TryGetValue(blast.SourceEntityKey, out var sourceVehicle) &&
             (sourceVehicle.OwnerPlayerId != owner || sourceVehicle.UnitId != unitId))
@@ -2954,7 +2949,7 @@ public sealed partial class MatchEngine
         {
             float roll=damageRoll();
             var effect=BuggyExplosion.ResolvePlayer(position,
-                rifleCombat.Pose(victim.Definition.PlayerId).Collision,victim.Position,
+                ArmyPlayerCollision(victim.Definition.PlayerId),victim.Position,
                 CombatFor(victim),victim.Health,damage,binding,policy,
                 shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
                 attacker==victim,roll);
@@ -3123,7 +3118,7 @@ public sealed partial class MatchEngine
     private void ApplyTransporterRepairDroneExplosion(string ownerId,ulong vehicleId,
         TransporterRepairDroneState drone)
     {
-        if(rifleCombat==null||damageRoll==null||groundVehicleWeapons==null||explosionPolicy==null)
+        if(!HasArmyCombatView||damageRoll==null||groundVehicleWeapons==null||explosionPolicy==null)
             throw new InvalidDataException("Missing repair-drone explosion authority.");
         var attacker=Find(ownerId)??throw new InvalidDataException("Repair-drone owner disappeared.");
         var binding=groundVehicleWeapons.RepairDronePrefab;
@@ -3162,7 +3157,7 @@ public sealed partial class MatchEngine
         }
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
-            var parts=rifleCombat.Pose(victim.Definition.PlayerId).Collision.Parts
+            var parts=ArmyPlayerCollision(victim.Definition.PlayerId).Parts
                 .Where(p=>p.OverlapsSphere(drone.Position,binding.HurtRadius))
                 .OrderBy(p=>p.DistanceToPoint(drone.Position)).ThenBy(p=>p.SourcePath,StringComparer.Ordinal).ToArray();
             if(parts.Length==0)continue;

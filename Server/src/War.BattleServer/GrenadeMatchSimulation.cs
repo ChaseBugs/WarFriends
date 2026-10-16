@@ -193,6 +193,19 @@ internal sealed class GrenadeMatchSimulation
             runtimeLayer, dynamicTargets, bonusBoxes);
         return world.Raycast(owner, origin, direction, range, mask);
     }
+
+    internal ShotCollision? TraceForArmy(
+        string owner, Vector3 origin, Vector3 direction, float range, uint mask)
+    {
+        var players = actors.Select(actor => new CollisionPlayer(
+            actor.Definition.PlayerId, actor.Pose.Collision,
+            actor.Definition.Fraction == 1 ? 23 : 22));
+        var world = new ShotCollisionWorld(map, players,
+            dynamicColliderEnabled, indexedColliderEnabled,
+            runtimeLayer, dynamicTargets);
+        return world.Raycast(owner, origin, direction, range, mask);
+    }
+
     internal bool HelicopterCanSee(HelicopterSightRay ray)
     {
         if(!PlayerHitbox.Finite(ray.Origin)||!PlayerHitbox.Finite(ray.Direction)||

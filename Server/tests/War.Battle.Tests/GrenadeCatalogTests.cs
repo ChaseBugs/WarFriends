@@ -770,8 +770,9 @@ internal static class GrenadeCatalogTests
               grenadeScore.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] == 1 &&
               grenadeScore.Counts[PvpArmyKillSkillShotPolicy.TankDestroyed] == 1 &&
               grenadeScore.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] == 1 &&
-              grenadeScore.Score == 104,
-            "normal M320 Tank death credits one source explosion and Tank skill shot");
+              grenadeScore.Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1 &&
+              grenadeScore.Score == 114,
+            "normal M320 Tank death includes revenge after the live Tank damages its killer");
         Check(naturalTankMatch.BonusProgress.ComboSnapshot() is
               { Streak: 1, ReceiptCount: 1 },
             "the normal M320 Tank death advances the live shared kill combo");

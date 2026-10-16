@@ -254,9 +254,16 @@ infantry. The match records one score count, a `player-grenade` direct kill,
 and one private terminal `RevengeKill` count. The grenade weapon mode now
 supplies its pinned animated player collision and shot-target positions to
 ordinary army infantry attacks. A live Shotgunner projectile also damages
-the opponent and marks its source entity in that mode. Ground-vehicle cannon,
-air attack, and other army paths still contain rifle-only authority checks;
-their grenade-mode damage and full cross-weapon parity remain open.
+the opponent and marks its source entity in that mode. Ground-vehicle target
+selection, launch visibility, projectile collision, and blast damage now
+consume the same mode-independent player view. Live grenade-mode Buggy and
+Tank missiles damage the opposing player; a later player mine kill credits
+each vehicle's own confirmed revenge marker. Humvee and Transporter use the
+shared path but still need live grenade-mode player-hit fixtures. Air attacks
+and full cross-weapon parity remain open. An older M320 Tank fixture now earns
+`RevengeKill` as well as its explosion and vehicle flags because the live Tank
+damages its eventual killer before the grenade lands; its expected score is
+114 rather than the former passive-Tank score of 104.
 
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank, before any combo. Selected live death callbacks now update combo, score, progress, and eligible bonus authority; complete callback coverage and normal Unity presentation remain open.
 
