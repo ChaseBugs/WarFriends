@@ -234,8 +234,10 @@ damage and Commando poison pulses refresh the marker for their current
 army owner; a live Flamethrower-hit-to-mine death verifies flame revenge in
 match score and private terminal evidence. A Commando fixture isolates one
 poison pulse from bullet hits, observes its marker refresh, and confirms a
-private mine-revenge count. Vehicle revenge and live grenade/Bazooka revenge
-remain open.
+private mine-revenge count. Tank and Buggy missile impacts now retain their
+source vehicle identity when confirmed player damage marks a live vehicle for
+revenge. A live vehicle missile-hit-to-death proof, along with live
+grenade/Bazooka revenge, remains open.
 
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank, before any combo. Selected live death callbacks now update combo, score, progress, and eligible bonus authority; complete callback coverage and normal Unity presentation remain open.
 

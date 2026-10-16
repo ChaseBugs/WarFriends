@@ -2696,9 +2696,17 @@ public sealed partial class MatchEngine
             {
                 Emit(MatchEventKind.Impact,pair.Value.Owner,impact.Collision?.PlayerId??"",
                     impact.ProjectileId,impact.Position,0,"tank-cannon");stateRevision++;
-                try {ApplyGroundVehicleMissileExplosion(pair.Value.Owner,"ID_UNIT-TANK",pair.Value.Damage,
-                    pair.Value.Binding,impact.Position,impact.ProjectileId);}
-                catch(InvalidDataException){End("invalid-combat-authority","",false);return;}
+                try
+                {
+                    ApplyGroundVehicleMissileExplosion(new VehicleMissileBlast(
+                        impact.VehicleId, pair.Value.Owner, "ID_UNIT-TANK", pair.Value.Damage,
+                        pair.Value.Binding, impact.Position, impact.ProjectileId));
+                }
+                catch (InvalidDataException)
+                {
+                    End("invalid-combat-authority", "", false);
+                    return;
+                }
                 if(Terminal)return;
             }
         }
@@ -2794,15 +2802,37 @@ public sealed partial class MatchEngine
         }
     }
 
-    private void ApplyBuggyExplosion(BuggyProjectile projectile,BuggyMissileImpact impact)
-        =>ApplyGroundVehicleMissileExplosion(projectile.Owner,"ID_UNIT-BUGGY",projectile.Damage,
-            projectile.Binding,impact.Position,impact.ProjectileId);
-
-    private void ApplyGroundVehicleMissileExplosion(string owner,string unitId,float damage,
-        GroundVehicleMissileBinding binding,Vector3 position,ulong projectileId)
+    private void ApplyBuggyExplosion(BuggyProjectile projectile, BuggyMissileImpact impact)
     {
+        ApplyGroundVehicleMissileExplosion(new VehicleMissileBlast(
+            impact.VehicleId, projectile.Owner, "ID_UNIT-BUGGY", projectile.Damage,
+            projectile.Binding, impact.Position, impact.ProjectileId));
+    }
+
+    private sealed record VehicleMissileBlast(
+        ulong SourceEntityKey,
+        string OwnerPlayerId,
+        string UnitId,
+        float Damage,
+        GroundVehicleMissileBinding Binding,
+        Vector3 Position,
+        ulong ProjectileId);
+
+    private void ApplyGroundVehicleMissileExplosion(VehicleMissileBlast blast)
+    {
+        string owner = blast.OwnerPlayerId;
+        string unitId = blast.UnitId;
+        float damage = blast.Damage;
+        GroundVehicleMissileBinding binding = blast.Binding;
+        Vector3 position = blast.Position;
+        ulong projectileId = blast.ProjectileId;
         if(rifleCombat==null||damageRoll==null||armyCatalog==null)
             throw new InvalidDataException("Missing vehicle explosion authority.");
+        if (activeArmyEntities.TryGetValue(blast.SourceEntityKey, out var sourceVehicle) &&
+            (sourceVehicle.OwnerPlayerId != owner || sourceVehicle.UnitId != unitId))
+        {
+            throw new InvalidDataException("Vehicle blast differs from its live source entity.");
+        }
         var attacker=Find(owner)??throw new InvalidDataException("Vehicle owner disappeared.");
         var policy=armyCatalog.PlayerDamagePolicy(unitId);
         bool shieldBetween=false;
@@ -2861,11 +2891,17 @@ public sealed partial class MatchEngine
                 shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
                 attacker==victim,roll);
             if(effect==null)continue;
-            ApplyResolvedPlayerDamage(owner,victim.Definition.PlayerId,
+            var result = ApplyResolvedPlayerDamage(owner, victim.Definition.PlayerId,
                 new ResolvedPlayerDamage(effect.RawDamage,effect.Kind,HasWeapon:true,FriendKill:true,
                     PlayerCoefficient:policy.PlayerDamageRatio,
                     PlayerOvertimeCoefficient:policy.OvertimePlayerDamageRatio,Overtime:overtime),
                 roll,attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
+            if (result is { Applied: true } &&
+                attacker.Definition.Fraction != victim.Definition.Fraction &&
+                activeArmyEntities.ContainsKey(blast.SourceEntityKey))
+            {
+                MarkArmyRevenge(blast.SourceEntityKey, victim.Definition.PlayerId);
+            }
             if(Terminal)return;
         }
     }
