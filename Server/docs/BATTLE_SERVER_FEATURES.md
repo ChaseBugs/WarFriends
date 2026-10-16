@@ -1123,3 +1123,10 @@ master checks at start and death. Its local initialization also skips the
 Unity 2018.3 compilation and the source local-room callback Play Mode audit pass;
 actual bot gameplay and the remaining local Photon object lifecycle are still
 open. See [local-room source evidence](LOCAL_OFFLINE_ROOM_SOURCE.md).
+
+The next B22 obstacle-infantry slice is recorded in
+[COOP_OBSTACLE_VOLLEYS.md](COOP_OBSTACLE_VOLLEYS.md). Current first-target and
+reposition guards prevent subsequent obstacle volleys. The recovered Client
+requires shoot-first priority, post-preparation movement deadlines and source
+post-batch cooldown together; lifting only the repeat guard would omit those
+rules. This investigation changes no combat authority or registration status.
