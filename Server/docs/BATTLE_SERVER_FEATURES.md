@@ -1452,3 +1452,13 @@ terminal bridges retain presentation ownership. The separate native component
 audit exercises the actual source lifecycle and disconnected interval; normal
 co-op admission, authoritative presenters and settlement remain open. See
 [mission lifecycle authority](COOP_MISSION_AUTHORITY.md).
+
+B22/B32 now bind the source mission manager's time/progress/objective reads to
+validated host state for all four source mission types. The 30 Hz host clock
+replaces local countdown progression, Kill uses confirmed enemy deaths, Score
+uses conserved contributions, and Boss retains the original zero progress.
+Selected mission identity/duration/target checks precede HUD publication, which
+runs before lifecycle/snapshot callbacks; Photon serialization cannot overwrite
+it. Exact-source protocol cases and native manager/adapter checks cover the
+connection. This remains read-only state, with normal rendered HUD, combat,
+Worker co-op admission and settlement open. See [mission HUD state](COOP_HUD_STATE.md).

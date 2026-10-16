@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -32,6 +33,7 @@ public static class UnityCoopMissionAuthorityAudit
                 SetConnection(client, connection);
                 VerifyHostLifecycles(client, missions);
                 VerifyBossDeath((BotMission)missions[3]);
+                VerifyHudBinding(owner, client, (KillMission)missions[0]);
                 Mission resetProbe = owner.AddComponent<Mission>();
                 resetProbe.PlayMission(true);
                 Require(resetProbe.HasSelfHostedCoopAuthority, "A base mission must bind host authority before reset.");
@@ -99,6 +101,81 @@ public static class UnityCoopMissionAuthorityAudit
             Require(mission.HasSelfHostedCoopAuthority && !isPlaying,
                 "Host-owned " + missionTypes[index] + " must not run local setup, completion or progression.");
         }
+    }
+
+    private static void VerifyHudBinding(GameObject owner, SelfHostedBattleClient client, KillMission mission)
+    {
+        mission.index = 0;
+        mission.killFor1Star = 10;
+        typeof(Mission).GetField("mMissionDefinition", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(mission, new MissionDefinition { maxTimeForMission = 3 });
+        MissionsManager manager = owner.AddComponent<MissionsManager>();
+        manager.missions = new List<Mission> { mission };
+        manager.indexMissionToStart = 0;
+        MatchSnapshot snapshot = CreateHudSnapshot();
+        Publish(client, snapshot);
+        typeof(SelfHostedBattleClient).GetProperty("LocalPlayerId").SetValue(client, PlayerId, null);
+        client.BindMissionManager(manager);
+        Require(manager.time == 2f && manager.missionProgress == 0.4f,
+            "The source manager must read host clock and kills without a PhotonView.");
+        VerifyHudRejection(manager, snapshot);
+        bool hasObserved = false;
+        client.StateReceived += state => hasObserved = manager.time == 1f && manager.missionProgress == 0.5f;
+        snapshot.ServerTick = 60;
+        snapshot.Coop.EnemyKills = 5;
+        Publish(client, snapshot);
+        Require(hasObserved, "Host HUD publication must precede the snapshot callbacks.");
+        client.BindMissionManager(manager);
+        Require(manager.time == 1f, "Binding a scene again must replay its current host state.");
+    }
+
+    private static void VerifyHudRejection(MissionsManager manager, MatchSnapshot snapshot)
+    {
+        MatchSnapshot malformed = snapshot.Clone();
+        malformed.Coop.MissionIndex = 1;
+        bool hasRejected = false;
+        try
+        {
+            manager.ApplySelfHostedHud(malformed, PlayerId);
+        }
+        catch (InvalidOperationException)
+        {
+            hasRejected = true;
+        }
+
+        Require(hasRejected && manager.time == 2f && manager.missionProgress == 0.4f,
+            "A foreign mission view must reject before changing source HUD state.");
+    }
+
+    private static MatchSnapshot CreateHudSnapshot()
+    {
+        const string PeerId = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        var snapshot = new MatchSnapshot
+        {
+            MatchId = "mission-authority-audit", ManifestHash = new string('a', 64),
+            Phase = BattlePhase.Running, ServerTick = 30,
+            Coop = new BattleCoopState
+            {
+                MissionType = "KillXEnemies", Started = true, DeadlineTick = 90,
+                SceneMasterPlayerId = PlayerId, ObjectiveTarget = 10, EnemyKills = 4
+            }
+        };
+        foreach (string playerId in new[] { PlayerId, PeerId })
+        {
+            snapshot.Players.Add(new BattlePlayerState
+            {
+                PlayerId = playerId, Admitted = true, Ready = true, Health = 100, MaxHealth = 100
+            });
+            snapshot.Coop.ParticipantIds.Add(playerId);
+        }
+
+        return snapshot;
+    }
+
+    private static void Publish(SelfHostedBattleClient client, MatchSnapshot snapshot)
+    {
+        typeof(SelfHostedBattleClient).GetMethod("Apply", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(client, new object[] { new MatchReply { Code = "state", Snapshot = snapshot } });
     }
 
     private static void VerifyBossDeath(BotMission mission)

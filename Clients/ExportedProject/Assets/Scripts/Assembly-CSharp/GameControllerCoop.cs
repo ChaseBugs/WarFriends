@@ -244,6 +244,7 @@ public class GameControllerCoop : GameControllerOnline
         }
 
         _selfHostedOutcomeBridge = gameObject.AddComponent<SelfHostedCoopOutcomeBridge>();
+        SelfHostedBattleClient.Active.BindMissionManager(MissionsManager.instance);
         _selfHostedOutcomeBridge.Configure(SelfHostedBattleClient.Active, PresentSelfHostedOutcome,
             PresentSelfHostedLocalKia, PresentSelfHostedPeerKia);
     }

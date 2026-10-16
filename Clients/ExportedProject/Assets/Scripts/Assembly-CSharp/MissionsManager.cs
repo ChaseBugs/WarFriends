@@ -5,6 +5,7 @@ using Beebyte.Obfuscator;
 using Google2u;
 using Newtonsoft.Json;
 using UnityEngine;
+using War.Protocol;
 
 [Skip]
 public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.MissionManagerData>
@@ -85,6 +86,8 @@ public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.M
 
 	private int mHudObjective;
 
+    private SelfHostedCoopHudState _selfHostedHud;
+
 	private int mOpenedMissions;
 
 	private MissionData mMissionStateBeforeStart;
@@ -104,11 +107,84 @@ public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.M
 
 	public bool isHeroicLocked => missions.Count < 6 || !missions[5].opened;
 
-	public string missionHudObjective => (!mPhotonView.isMine) ? currentMission.Hud(mHudObjective) : currentMission.hudObjective;
+    public string missionHudObjective
+    {
+        get
+        {
+            if (currentMission.HasSelfHostedCoopAuthority)
+            {
+                return currentMission.Hud(_selfHostedHud == null ? 0 : _selfHostedHud.ObjectiveProgress);
+            }
 
-	public float missionProgress => (!mPhotonView.isMine) ? mProgress : currentMission.progress;
+            return !mPhotonView.isMine ? currentMission.Hud(mHudObjective) : currentMission.hudObjective;
+        }
+    }
 
-	public float time => (!mPhotonView.isMine) ? mRemainingTime : currentMission.remainingTime;
+    public float missionProgress
+    {
+        get
+        {
+            if (currentMission.HasSelfHostedCoopAuthority)
+            {
+                return _selfHostedHud == null ? 0f : _selfHostedHud.Progress;
+            }
+
+            return !mPhotonView.isMine ? mProgress : currentMission.progress;
+        }
+    }
+
+    public float time
+    {
+        get
+        {
+            if (currentMission.HasSelfHostedCoopAuthority)
+            {
+                return _selfHostedHud == null ? currentMission.maxTimeForMission : _selfHostedHud.RemainingSeconds;
+            }
+
+            return !mPhotonView.isMine ? mRemainingTime : currentMission.remainingTime;
+        }
+    }
+
+    /// <summary>Clears the previous scene's host view before binding a new admitted match.</summary>
+    public void ResetSelfHostedHud()
+    {
+        _selfHostedHud = null;
+    }
+
+    /// <summary>Publishes one source-bound host clock and objective view before scene callbacks.</summary>
+    public void ApplySelfHostedHud(MatchSnapshot snapshot, string localPlayerId)
+    {
+        if (snapshot.Coop == null || !snapshot.Coop.Started)
+        {
+            return;
+        }
+
+        SelfHostedCoopHudState next = SelfHostedCoopHudState.FromSnapshot(snapshot, localPlayerId);
+        Mission mission = currentMission;
+        if (mission == null || mission.index != next.MissionIndex ||
+            mission.maxTimeForMission != next.DurationSeconds || !MatchesSourceObjective(mission, snapshot.Coop))
+        {
+            throw new System.InvalidOperationException("Host mission HUD does not match the selected source mission.");
+        }
+
+        _selfHostedHud = next;
+    }
+
+    private static bool MatchesSourceObjective(Mission mission, BattleCoopState state)
+    {
+        if (mission is ScoreMission)
+        {
+            return state.MissionType == "Score" && ((ScoreMission)mission).scoreToSucces == state.ObjectiveTarget;
+        }
+        if (mission is KillMission)
+        {
+            return state.MissionType == "KillXEnemies" && ((KillMission)mission).killFor1Star == state.ObjectiveTarget;
+        }
+
+        return (mission is SurviveMission && state.MissionType == "SurviveXSeconds") ||
+            (mission is BotMission && state.MissionType == "KillOpponent");
+    }
 
 	public bool isHeroicMissionCompleted => heroicMission.completedInHeroic;
 
@@ -386,6 +462,11 @@ public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.M
 
 	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
+        if (currentMission != null && currentMission.HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		if (Singleton<GameController>.instance.isCoop || Singleton<GameController>.instance.isCoopBot)
 		{
 			if (stream.isWriting)

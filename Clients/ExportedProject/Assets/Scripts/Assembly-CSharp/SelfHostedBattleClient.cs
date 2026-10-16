@@ -67,6 +67,23 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private SpawningManagerDeathMatch armyManager;
     private SelfHostedDeathMatchBridge deathMatchBridge;
     private ScoreManager _scoreManager;
+    private MissionsManager _missionManager;
+
+    /// <summary>Binds the selected source mission before co-op presentation receives host snapshots.</summary>
+    public void BindMissionManager(MissionsManager manager)
+    {
+        if (manager == null)
+        {
+            throw new ArgumentNullException(nameof(manager));
+        }
+
+        manager.ResetSelfHostedHud();
+        _missionManager = manager;
+        if (State != null)
+        {
+            manager.ApplySelfHostedHud(State, LocalPlayerId);
+        }
+    }
 
     /// <summary>Binds the scene score view before room or terminal callbacks consume a snapshot.</summary>
     public void BindScoreManager(ScoreManager manager)
@@ -1052,6 +1069,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             cardsSelectedByBothRaised = true;
             if (CardsSelectedByBoth != null) CardsSelectedByBoth();
         }
+        if (_missionManager != null)
+        {
+            _missionManager.ApplySelfHostedHud(State, LocalPlayerId);
+        }
+
         if (roomLifecycle != null) roomLifecycle.Observe(State);
         if (StateReceived != null) StateReceived(State.Clone());
     }
@@ -1064,6 +1086,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
     private void Close()
     {
+        _missionManager = null;
         IsConnected = false;
         if (matchmaking != null) matchmaking.Cancel();
         reconnectRequestId = null;
