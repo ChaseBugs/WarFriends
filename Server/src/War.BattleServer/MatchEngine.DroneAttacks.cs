@@ -32,11 +32,12 @@ public sealed partial class MatchEngine
         ulong id=checked(projectileId+1);
         try
         {
+            // BulletSlow uses the owner's faction mask, not every scene layer.
             var flight=intent.Shot.Batch.IsFake
                 ?new DroneHostProjectile(key,army.OwnerPlayerId,intent,null,new DroneFakeProjectileFlight(intent,tick))
                 :new DroneHostProjectile(key,army.OwnerPlayerId,intent,new BulletFlight(id,army.OwnerPlayerId,
                     new(intent.Speed,intent.CheckDistance,false),intent.Shot.Muzzle,intent.Shot.Batch.Target,tick,
-                    (origin,direction,range)=>TraceHeavyTurretShot(army.OwnerPlayerId,origin,direction,range)),null);
+                    (origin,direction,range)=>TraceArmyShot(army.OwnerPlayerId,origin,direction,range)),null);
             droneProjectiles.Add(id,flight);projectileId=id;
             Emit(MatchEventKind.DroneFired,army.OwnerPlayerId,droneAttacks[key].TargetId??"",id,
                 intent.Shot.Batch.Target,0,"drone");
@@ -63,16 +64,19 @@ public sealed partial class MatchEngine
                 if(flight.Finished)droneProjectiles.Remove(id);
                 if(impact!=null)
                 {
-                    impacts.Add(new(projectile.ArmyId,projectile.Intent,impact));
-                    ApplyDroneProjectileImpact(projectile.Intent,impact);
+                    var confirmed = new DroneHostImpact(projectile.ArmyId, projectile.Intent, impact);
+                    impacts.Add(confirmed);
+                    ApplyDroneProjectileImpact(confirmed);
                     if(Terminal)break;
                 }
             }
         }
         return impacts.AsReadOnly();
     }
-    private void ApplyDroneProjectileImpact(DroneProjectileIntent intent,BulletImpact impact)
+    internal void ApplyDroneProjectileImpact(DroneHostImpact confirmed)
     {
+        DroneProjectileIntent intent = confirmed.Intent;
+        BulletImpact impact = confirmed.Impact;
         if(intent.Shot.Batch.IsFake)throw new InvalidDataException("Fake Drone round cannot authorize damage.");
         stateRevision++;
         Emit(MatchEventKind.Impact,impact.OwnerId,impact.Hit.PlayerId??"",impact.ProjectileId,impact.Hit.Position,0,"drone");
@@ -81,10 +85,23 @@ public sealed partial class MatchEngine
         if(Terminal)return;
         var hit=impact.Hit;
         if(hit.PlayerId != null)
-            ApplyConfirmedArmyProjectilePlayerDamage(impact,new(intent.Damage,CombatDamageType.Shot,
+        {
+            PlayerDamageResult? result = ApplyConfirmedArmyProjectilePlayerDamage(impact,
+                new(intent.Damage,CombatDamageType.Shot,
                 PartWeight:hit.PartWeight,FriendKill:true,PlayerCoefficient:intent.PlayerDamageCoefficient,
                 PlayerOvertimeCoefficient:intent.PlayerOvertimeDamageCoefficient,Overtime:overtime),
                 damageRoll?.Invoke()??1);
+            // PlayerController marks the MainGameEntity that actually damaged it.
+            // The owning player's ID cannot identify which Drone earned that window.
+            if (result is { Applied: true } &&
+                activeArmyEntities.TryGetValue(confirmed.ArmyId, out var source) &&
+                source.UnitId == "ID_UNIT-DRONE" &&
+                source.OwnerPlayerId == impact.OwnerId &&
+                source.OwnerPlayerId != hit.PlayerId)
+            {
+                MarkArmyRevenge(confirmed.ArmyId, hit.PlayerId);
+            }
+        }
         else if(hit is {DynamicDecoy:true,DynamicEntityId:ulong decoy})
             ApplyDecoyProjectileImpact(impact.OwnerId,decoy,intent.Damage,hit.PartWeight,impact.ProjectileId);
         else if(hit is {DynamicArmyInfantry:true,DynamicEntityId:ulong infantry})

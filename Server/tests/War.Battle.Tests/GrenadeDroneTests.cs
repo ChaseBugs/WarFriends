@@ -7,6 +7,12 @@ using War.Protocol;
 internal static class GrenadeDroneTests
 {
     private const ulong FinalTick = 900;
+    private const ulong ProbeProjectileId = 1_000_000;
+    private const ulong ProbeLifetimeTicks = 100;
+    private const ulong RevengeWindowTicks = 5 * MatchManifest.TickRate;
+    private const float ProbeHeight = 2f;
+    private const int SabotageRevengeScore = 56;
+
     private static readonly string DefenderId = new('a', 32);
     private static readonly string OwnerId = new('b', 32);
 
@@ -29,19 +35,144 @@ internal static class GrenadeDroneTests
         Check(match.DroneCanSee(new Vector3(0, 100, 0), new Vector3(0, 100.5f, 10)),
             "Drone sight reaches a clear elevated target in grenade mode.", ref checks);
         VerifyAutomaticFlight(match, content, ref checks);
+        VerifyControlledPlayerImpact(match, content, ref checks);
 
         Console.WriteLine($"PASS: {checks} grenade-mode Drone assertions");
         return checks;
     }
 
+    private static void VerifyControlledPlayerImpact(
+        MatchEngine match, BattleCombatContent content, ref int checks)
+    {
+        BattleArmyEntityState drone = match.ArmyEntityBatch(OwnerId, 0, 0).Entities.Single();
+        DroneProjectileIntent intent = match.LastDroneIntent(drone.EntityKey) ??
+            throw new Exception("The deployed Drone has no trusted launch intent.");
+        BulletImpact impact = ResolveControlledPlayerCollision(match, content, intent, ref checks);
+        float healthBefore = match.Snapshot().Players.Single(player => player.PlayerId == DefenderId).Health;
+
+        match.ApplyDroneProjectileImpact(new MatchEngine.DroneHostImpact(drone.EntityKey, intent, impact));
+
+        Check(match.Snapshot().Players.Single(player => player.PlayerId == DefenderId).Health < healthBefore,
+            "A confirmed Drone player collision applies its launch-time damage policy.", ref checks);
+        Check(match.ArmyRevengeExpiry(drone.EntityKey, DefenderId) == impact.Tick + RevengeWindowTicks,
+            "The damaging Drone receives the victim's source revenge window.", ref checks);
+        Check(match.Snapshot().Players.Single(player => player.PlayerId == OwnerId).ConfirmedPlayerBulletHits == 0,
+            "Drone damage does not become player-owned bullet credit.", ref checks);
+        VerifyFakeImpactRejected(match, intent, impact, ref checks);
+        VerifyDeadSourceImpact(match, content, intent, ref checks);
+        VerifyTerminalRevenge(match, ref checks);
+    }
+
+    private static void VerifyDeadSourceImpact(MatchEngine match,
+        BattleCombatContent content, DroneProjectileIntent intent, ref int checks)
+    {
+        SabotageTargetPolicy.Candidate drone = match.SabotageMechanicalCandidates().Single();
+        VerifySabotageRevenge(match, ref checks);
+        BulletImpact impact = ResolveControlledPlayerCollision(match, content, intent, ref checks);
+        float healthBefore = match.Snapshot().Players.Single(player => player.PlayerId == DefenderId).Health;
+
+        match.ApplyDroneProjectileImpact(new MatchEngine.DroneHostImpact(drone.EntityId, intent, impact));
+
+        Check(match.Snapshot().Players.Single(player => player.PlayerId == DefenderId).Health < healthBefore &&
+            match.ArmyRevengeExpiry(drone.EntityId, DefenderId) == null,
+            "A retired Drone's captured damage intent cannot revive its revenge window.", ref checks);
+    }
+
+    private static void VerifySabotageRevenge(MatchEngine match, ref int checks)
+    {
+        string requestId = new('d', 32);
+        MatchCommand Command(ulong commandId) => new()
+        {
+            CommandId = commandId,
+            UseSabotage = new UseSabotageCommand { RequestId = requestId }
+        };
+        Check(match.Command(DefenderId, Command(3)).Code == "sabotage-applied",
+            "The damaged player spends a selected Sabotage card to kill the marked Drone.", ref checks);
+        PvpOwnerScoreSnapshot score = match.BonusProgress.ScoreSnapshot(DefenderId);
+        Check(score.Score == SabotageRevengeScore &&
+            score.Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "Sabotage adds the Drone's source revenge flag to its base one-hit kill score.", ref checks);
+        Check(match.Command(DefenderId, Command(4)).Code == "sabotage-applied" &&
+            match.BonusProgress.ScoreSnapshot(DefenderId).Score == SabotageRevengeScore,
+            "Replaying the Sabotage request cannot award revenge twice.", ref checks);
+    }
+
+    private static void VerifyTerminalRevenge(MatchEngine match, ref int checks)
+    {
+        match.Command(DefenderId, new MatchCommand
+        {
+            CommandId = 5,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(match.TerminalEvidenceSnapshot().Players.Single(player =>
+            player.PlayerId == DefenderId).ConfirmedSkillShotCounts.Single(row =>
+                row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
+            "Private terminal evidence retains one confirmed Drone revenge kill.", ref checks);
+    }
+
+    private static void VerifyFakeImpactRejected(MatchEngine match,
+        DroneProjectileIntent intent, BulletImpact impact, ref int checks)
+    {
+        DroneProjectileIntent fake = intent with
+        {
+            Shot = intent.Shot with { Batch = intent.Shot.Batch with { IsFake = true } }
+        };
+        float healthBefore = match.Snapshot().Players.Single(player => player.PlayerId == DefenderId).Health;
+        bool isRejected = false;
+        try
+        {
+            ulong entityKey = match.ArmyEntityBatch(OwnerId, 0, 0).Entities.Single().EntityKey;
+            match.ApplyDroneProjectileImpact(new MatchEngine.DroneHostImpact(entityKey, fake, impact));
+        }
+        catch (InvalidDataException)
+        {
+            isRejected = true;
+        }
+
+        Check(isRejected &&
+            match.Snapshot().Players.Single(player => player.PlayerId == DefenderId).Health == healthBefore,
+            "A fake Drone round cannot reuse a real collision as damage authority.", ref checks);
+    }
+
+    private static BulletImpact ResolveControlledPlayerCollision(
+        MatchEngine match, BattleCombatContent content, DroneProjectileIntent intent, ref int checks)
+    {
+        Vector3 head = match.ArmyPlayerCollision(DefenderId).Parts.Single(part =>
+            part.Kind == PlayerHitboxKind.Sphere).Center;
+        ulong launchTick = match.Snapshot().ServerTick;
+        // Isolate impact ownership with a real host ray into the current posed head.
+        // This origin is controlled; it does not prove a natural Drone muzzle hit.
+        var flight = new BulletFlight(ProbeProjectileId + launchTick, OwnerId,
+            new BulletFlightDefinition(intent.Speed, intent.CheckDistance, false),
+            head + Vector3.UnitY * ProbeHeight, head, launchTick,
+            (origin, direction, range) => match.TraceHeavyTurretShot(OwnerId,
+                origin, direction, range, content.Bindings.BulletMask(2)));
+        BulletImpact? impact = null;
+        for (ulong tick = launchTick + 1;
+            tick <= launchTick + ProbeLifetimeTicks && impact == null; tick++)
+        {
+            match.Advance(tick);
+            impact = flight.Advance(tick);
+        }
+
+        Check(impact?.Hit.PlayerId == DefenderId,
+            "The controlled projectile resolves a real posed-player collision.", ref checks);
+        return impact!;
+    }
+
     private static void StartMatch(MatchEngine match, ref int checks)
     {
+        match.ConfigureBattleAllocations([
+            new(DefenderId, ["SABOTAGE"], [], [0], [-1], [-1]),
+            new(OwnerId, ["SABOTAGE"], [], [0], [-1], [-1])
+        ]);
         foreach (string playerId in new[] { DefenderId, OwnerId })
         {
             match.Admit(playerId);
+            SelectSabotage(match, playerId, ref checks);
             match.Command(playerId, new MatchCommand
             {
-                CommandId = 1,
+                CommandId = 2,
                 Ready = new ReadyCommand { ManifestHash = match.ManifestHash }
             });
         }
@@ -50,9 +181,24 @@ internal static class GrenadeDroneTests
         int option = match.ArmyBatch(OwnerId).OptionIndexes.First();
         Check(match.Command(OwnerId, new MatchCommand
         {
-            CommandId = 2,
+            CommandId = 3,
             DeployArmy = new DeployArmyCommand { OptionIndex = option }
         }).Code == "army-deploying", "Grenade match deploys the recovered Drone.", ref checks);
+    }
+
+    private static void SelectSabotage(MatchEngine match, string playerId, ref int checks)
+    {
+        Check(match.Command(playerId, new MatchCommand
+        {
+            CommandId = 1,
+            SelectCards = new SelectCardsCommand
+            {
+                CardIds = { "SABOTAGE" },
+                NormalUpgradeIndexes = { 0 },
+                SpecialUpgradeIndexes = { -1 },
+                EliteUpgradeIndexes = { -1 }
+            }
+        }).Code == "cards-selected", "Participant selects its source-bound Sabotage card.", ref checks);
     }
 
     private static void VerifyAutomaticFlight(

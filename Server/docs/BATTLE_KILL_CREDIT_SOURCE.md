@@ -120,4 +120,28 @@ is blocked by map cover without forged player damage; a typed Transporter
 split volley emits real and fake shots from its separate source muzzles.
 Direct player-hit and subsequent revenge-kill fixtures remain open for both.
 
-Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.
+Drone impacts now carry their launch-time army key into player damage dispatch.
+This follows `PlayerController` calling the damage owner's `SetRevenge` and
+`MainGameEntity.SetRevenge` granting five seconds only while that entity lives.
+Applied opposing-player damage marks the exact active Drone; a dead source
+cannot acquire a new window, and a fake round is rejected before damage.
+A controlled real `BulletFlight` into a current grenade player pose verifies
+damage, the window, and absence of player-owned bullet credit. This controlled
+origin does not establish a natural Drone muzzle hit. The selected public
+Sabotage command now includes the victim's confirmed revenge context when
+preparing the kill score, before spending the card or retiring the source.
+It earns 56 points for the marked Drone, replays without a second score, and
+retains one private terminal revenge count. Applying another controlled impact
+after that command preserves player damage without recreating the removed window.
+
+Sabotage is a distinct player-owned card shot. The recovered card supplies the
+selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and
+keeps the player as damage owner. The host prepares the source
+`Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank
+and any confirmed revenge context, before spending the selected card. It
+publishes that prepared combo and score only when the host confirms the
+selected opposing entity's death and writes the `card-sabotage` row. A real
+unmarked card Drone death checks 46 source points, one of each base flag,
+replay-safe card use, and private terminal counts. Other cards, barrel-chain
+deaths, ownerless environmental deaths, and AI-owned deaths remain outside
+this score path; other contextual flags remain open.

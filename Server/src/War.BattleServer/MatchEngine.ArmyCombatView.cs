@@ -8,7 +8,7 @@ public sealed partial class MatchEngine
 
     private bool HasArmyCombatView => rifleCombat != null || grenadeCombat != null;
 
-    private PlayerCollisionModel ArmyPlayerCollision(string playerId)
+    internal PlayerCollisionModel ArmyPlayerCollision(string playerId)
     {
         if (rifleCombat != null)
         {

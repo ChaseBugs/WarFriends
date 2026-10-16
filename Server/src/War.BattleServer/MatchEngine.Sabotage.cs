@@ -54,6 +54,8 @@ public sealed partial class MatchEngine
             BattleArmyEntityState victim = activeArmyEntities.GetValueOrDefault(target.EntityId) ??
                 throw new InvalidDataException("Sabotage target lost its host army identity.");
             int flags = checked((int)War.Shared.SabotageKillPresentationPolicy.BaseFlags(victim.UnitId));
+            // SkillShotController includes the living victim's revenge context for Sabotage too.
+            flags |= ConfirmedArmyRevengeFlag(victim.EntityKey, owner.Definition.PlayerId);
             string scoreReceiptId = PvpHitReceiptId(
                 "card-sabotage-army-kill", target.EntityId, requestId);
             try

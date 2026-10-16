@@ -285,8 +285,20 @@ static/destroyable blockers from both owners, and zero-direction no-hit rule.
 A normal grenade-mode Park deployment selects the opposing player, launches
 real rounds automatically, and dispatches their confirmed collisions while
 retaining the recovered player/overtime damage coefficients. A live Drone body
-also blocks its source sight ray. This fixture does not establish player damage,
-revenge scoring, two-peer UDP delivery, or Unity presentation in grenade mode.
+also blocks its source sight ray. Drone bullet tracing now applies the owner's
+recovered `TagsAndLayers.GetBulletMask` through the shared army collision path
+instead of an unrestricted mask. Confirmed impacts retain the launched Drone
+entity key; applied opposing-player damage marks that living Drone's five-second
+revenge window without claiming player-owned bullet credit. A controlled real
+bullet flight into the current posed player validates damage and that window,
+and fake intents cannot reuse the collision to apply damage. The controlled
+origin is not the normal Drone muzzle. A selected Sabotage command then kills
+the marked Drone and earns 56 source points including `RevengeKill`. Replaying
+the same card request cannot award the score again, and private terminal
+evidence retains one revenge kill. Resolving another controlled impact after
+the source dies preserves damage without recreating its window. Natural
+autonomous player hits, two-peer UDP delivery, and Unity presentation of this
+grenade-mode sequence remain unverified.
 Run it with `dotnet run --project Server/tests/War.Battle.Tests -c Release -- --grenade-drone-only`.
 An older M320 Tank fixture now earns
 `RevengeKill` as well as its explosion and vehicle flags because the live Tank
