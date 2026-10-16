@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using Google.Protobuf;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using War.Client;
 using War.Protocol;
@@ -53,6 +55,42 @@ public static class SelfHostedScoreHudAudit
         finally
         {
             UnityEngine.Object.DestroyImmediate(root);
+        }
+    }
+
+    /// <summary>Checks recovered MainScene score bindings through its production HUD event setup.</summary>
+    public static void RunScene()
+    {
+        _checks = 0;
+        try
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
+            ScoreManager scores = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<ScoreManager>(true)).Single();
+            HudScreen hud = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<HudScreen>(true)).Single();
+            Check(Singleton<ScoreManager>.instance == scores,
+                "The scene singleton resolves the recovered score component.");
+            Check(hud.scoreLabel != null && hud.scoreAddedLabel != null && hud.pauseButton != null,
+                "The recovered HUD retains its serialized score and control references.");
+            hud.InitEvents();
+            scores.ApplySelfHostedSnapshot(CreateSnapshot(BattlePhase.Ended, 2), LocalId);
+            IEnumerator clock = (IEnumerator)Invoke(scores, "CheckForScoreChange");
+            clock.MoveNext();
+            Component counter = hud.scoreLabel.GetComponent("TweenTextCounter");
+            Invoke(counter, "Awake");
+            ((UITweener)counter).Sample(1f, true);
+            Check(hud.scoreLabel.text == "56" && hud.scoreAddedLabel.text == "+56",
+                "The scene's production event subscription updates its actual NGUI labels.");
+            Check(hud.GetComponent<TweenAnimator>().allTweens.Count > 0,
+                "The production HUD initializes its recovered score animations.");
+            Debug.Log("PASS: " + _checks + " MainScene score HUD assertions");
+            EditorApplication.Exit(0);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+            EditorApplication.Exit(1);
         }
     }
 

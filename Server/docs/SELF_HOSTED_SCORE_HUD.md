@@ -57,3 +57,14 @@ Sabotage fixture admits two rank-zero players, so the recovered online noob
 policy disables crate progress while still awarding skill-shot score. The test
 now requires zero progress in that fixture; all 120 focused Sabotage UDP checks
 pass. The complete regression rerun then passed 143,243 assertions with exit code zero.
+
+## MainScene audit preparation
+
+`SelfHostedScoreHudAudit.RunScene` opens the recovered scene without saving it,
+checks that its real score singleton and serialized HUD references resolve,
+initializes the production `HudScreen.InitEvents` subscription, and checks the
+actual labels and configured score animations after a terminal host snapshot.
+This audit has compiled in Unity 2018.3, and the separate nine-assertion component
+audit still passes. The full-scene execution has not produced a result: its
+Unity process remains in project initialization before the audit method runs.
+This is not a passed scene gate or a normal Play Mode/two-peer gameplay proof.
