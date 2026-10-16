@@ -36,6 +36,7 @@ internal sealed record CoopInfantryPointArrival(
     ulong FirstShootEligibleTick, ulong? FirstRepositionTick)
 {
     internal ulong? FirstCornerChangeTick { get; init; }
+    internal ulong? FirstObstacleChangeTick { get; init; }
     internal bool HasUnchangedObstaclePointForFirstShot =>
         State == CoopInfantryPointState.ObstacleHiding &&
         FirstRepositionTick.HasValue &&
@@ -188,7 +189,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     private readonly Func<float> chooseInfantryRealShotRoll;
     private readonly Func<float> chooseInfantryFakeDistance;
     private readonly Func<float> chooseInfantryFakeSideRoll;
-    private readonly Func<int> chooseCornerChangeSeconds;
+    private readonly Func<int> chooseEnemyPointChangeSeconds;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly CoopEnemyMuzzleCatalog? enemyMuzzles;
     private readonly CoopCornerQueuePoseCatalog? cornerQueuePoses;
@@ -268,7 +269,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
         Func<float>? chooseInfantryShieldRoll = null,
-        Func<int>? chooseCornerChangeSeconds = null,
+        Func<int>? chooseEnemyPointChangeSeconds = null,
         Func<int, int, int>? chooseInfantryBatchSize = null,
         Func<float>? chooseInfantryRealShotRoll = null,
         Func<float>? chooseInfantryFakeDistance = null,
@@ -287,7 +288,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             chooseInfantryRepositionFraction: chooseInfantryRepositionFraction,
             chooseInfantryPlayer: chooseInfantryPlayer,
             chooseInfantryShieldRoll: chooseInfantryShieldRoll,
-            chooseCornerChangeSeconds: chooseCornerChangeSeconds,
+            chooseEnemyPointChangeSeconds: chooseEnemyPointChangeSeconds,
             chooseInfantryBatchSize: chooseInfantryBatchSize,
             chooseInfantryRealShotRoll: chooseInfantryRealShotRoll,
             chooseInfantryFakeDistance: chooseInfantryFakeDistance,
@@ -312,7 +313,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         Func<float>? chooseInfantryRepositionFraction = null,
         Func<int, int>? chooseInfantryPlayer = null,
         Func<float>? chooseInfantryShieldRoll = null,
-        Func<int>? chooseCornerChangeSeconds = null,
+        Func<int>? chooseEnemyPointChangeSeconds = null,
         Func<int, int, int>? chooseInfantryBatchSize = null,
         Func<float>? chooseInfantryRealShotRoll = null,
         Func<float>? chooseInfantryFakeDistance = null,
@@ -350,7 +351,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         this.chooseInfantryPlayer = chooseInfantryPlayer ?? Random.Shared.Next;
         this.chooseInfantryShieldRoll = chooseInfantryShieldRoll ??
             Random.Shared.NextSingle;
-        this.chooseCornerChangeSeconds = chooseCornerChangeSeconds ??
+        this.chooseEnemyPointChangeSeconds = chooseEnemyPointChangeSeconds ??
             (() => Random.Shared.Next(10, 20));
         this.chooseInfantryBatchSize = chooseInfantryBatchSize ??
             Random.Shared.Next;
@@ -804,6 +805,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             AdvanceCornerShotTurns();
             AdvanceInfantryShotWindups();
             AdvanceInfantryRoundIntents();
+            AdvanceObstaclePointChanges();
             AdvanceCornerRetargets();
             bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
             if (missionEnded)
@@ -1112,6 +1114,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts.Remove(enemy.EntityId);
         cornerNoTargetRetryTicks.Remove(enemy.EntityId);
         _obstacleVolleyClocks.Remove(enemy.EntityId);
+        _nextObstaclePointChangeTicks.Remove(enemy.EntityId);
         _obstacleCrawlStates.Remove(enemy.EntityId);
         infantryShotWindups.Remove(enemy.EntityId);
         infantryRoundIntents.Remove(enemy.EntityId);
@@ -1197,17 +1200,20 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 };
                 ulong firstShootEligibleTick =
                     FirstInfantryShotEligibleTick(enemy, tick);
+                ulong firstPointChangeTick = FirstEnemyPointChangeTick(tick);
                 ulong? firstRepositionTick = pointState ==
                     CoopInfantryPointState.ObstacleHiding
                     ? FirstInfantryRepositionTick(tick) : null;
                 ulong? firstCornerChangeTick = pointState ==
                     CoopInfantryPointState.CornerHiding
-                    ? FirstCornerChangeTick(tick) : null;
+                    ? firstPointChangeTick : null;
                 infantryPointArrivals[entityId] = new(
                     tick, destination.PointComponentFileId, pointState,
                     firstShootEligibleTick, firstRepositionTick)
                 {
-                    FirstCornerChangeTick = firstCornerChangeTick
+                    FirstCornerChangeTick = firstCornerChangeTick,
+                    FirstObstacleChangeTick = pointState == CoopInfantryPointState.ObstacleHiding
+                        ? firstPointChangeTick : null
                 };
                 if (firstCornerChangeTick.HasValue)
                     nextCornerChangeTicks[entityId] =
@@ -1218,6 +1224,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                         firstRepositionTick.Value;
                     _obstacleVolleyClocks[entityId] = new CoopObstacleVolleyClock(
                         firstShootEligibleTick, firstRepositionTick.Value);
+                    _nextObstaclePointChangeTicks[entityId] = firstPointChangeTick;
                 }
                 arrived.Add(entityId);
             }
@@ -1367,12 +1374,12 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         return FirstTickAfterDelay(reachedTick, 2f + 2f * fraction);
     }
 
-    private ulong FirstCornerChangeTick(ulong reachedTick)
+    private ulong FirstEnemyPointChangeTick(ulong reachedTick)
     {
-        int seconds = chooseCornerChangeSeconds();
+        int seconds = chooseEnemyPointChangeSeconds();
         if (seconds is < 10 or >= 20)
             throw new InvalidDataException(
-                "Co-op corner change draw must be a 10–19 second integer.");
+                "Co-op point change draw must be a 10–19 second integer.");
         // UnityEngine.Random.Range(10, 20) uses an exclusive upper bound.
         return FirstTickAfterDelay(reachedTick, seconds);
     }
@@ -2800,6 +2807,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             cornerLatestShotAttempts.Remove(entityId);
             cornerNoTargetRetryTicks.Remove(entityId);
             _obstacleVolleyClocks.Remove(entityId);
+            _nextObstaclePointChangeTicks.Remove(entityId);
             _obstacleCrawlStates.Remove(entityId);
             _obstacleRootTweens.Remove(entityId);
             infantryShotWindups.Remove(entityId);
@@ -3922,6 +3930,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         cornerLatestShotAttempts.Clear();
         cornerNoTargetRetryTicks.Clear();
         _obstacleVolleyClocks.Clear();
+        _nextObstaclePointChangeTicks.Clear();
         _obstacleCrawlStates.Clear();
         _obstacleRootTweens.Clear();
         infantryShotWindups.Clear();

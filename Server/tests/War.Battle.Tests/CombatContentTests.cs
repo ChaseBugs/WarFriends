@@ -4206,7 +4206,7 @@ internal static class CombatContentTests
                 chooseInfantryShotFraction: () => 0.5f,
                 chooseInfantryPlayer: choosePlayer ?? (_ => 0),
                 chooseInfantryShieldRoll: () => 0.5f,
-                chooseCornerChangeSeconds: () => 10,
+                chooseEnemyPointChangeSeconds: () => 10,
                 chooseInfantryBatchSize: (min, _) => min,
                 chooseInfantryRealShotRoll: () => 0.999f);
             result.Admit(firstPlayer);

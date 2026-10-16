@@ -10,6 +10,10 @@ internal static class CoopObstacleVolleyRuntimeTests
     private const float CrawlCenterTolerance = 0.00002f;
     private const float SourceTurnSeconds = 0.2f;
     private const float RootRotationTolerance = 0.000001f;
+    private const int LatestPointChangeSeconds = 19;
+    private const int FreePointChangeSeconds = 10;
+    private const int BusyPointChangeSeconds = 11;
+    private const ulong PointRetryTicks = 10UL * MatchManifest.TickRate;
 
     internal sealed record Sources
     {
@@ -23,6 +27,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         internal required CoopNavMeshConnectivity Navigation { get; init; }
         internal required BattleCombatContent Content { get; init; }
         internal int SpawnIndex { get; init; }
+        internal int PointChangeSeconds { get; init; } = LatestPointChangeSeconds;
     }
 
     internal static void Run(Sources sources)
@@ -60,6 +65,8 @@ internal static class CoopObstacleVolleyRuntimeTests
             "The source cooldown must start another volley after repositioning.");
         Console.WriteLine("PASS: co-op post-volley obstacle reposition runtime");
         VerifyMovingShotCase(sources);
+        VerifyPointChange(sources with { PointChangeSeconds = FreePointChangeSeconds });
+        VerifyOccupiedPointRetry(sources with { PointChangeSeconds = BusyPointChangeSeconds });
     }
 
     internal static void VerifyFirstShotAfterReposition(CoopMatchRuntime runtime, ulong enemyId,
@@ -85,6 +92,71 @@ internal static class CoopObstacleVolleyRuntimeTests
         Check(runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
             "Scheduling the previously missing first shot must not fabricate collision authority.");
         Console.WriteLine("PASS: first co-op obstacle volley after pre-shot repositioning");
+    }
+
+    private static void VerifyPointChange(Sources sources)
+    {
+        CoopMatchRuntime runtime = CreateRuntime(sources, () => 0.999f, () => 0.999f);
+        runtime.Advance(8);
+        ulong enemyId = runtime.Snapshot().Coop.EnemySpawns.First().EntityId;
+        while (runtime.InfantryPointArrival(enemyId) == null && runtime.Snapshot().ServerTick < MaximumFixtureTick)
+        {
+            runtime.Advance(runtime.Snapshot().ServerTick + 1);
+        }
+
+        CoopInfantryPointArrival arrival = runtime.InfantryPointArrival(enemyId)!;
+        CoopAssignedEnemyDestination original = runtime.EnemyDestination(enemyId)!;
+        ulong changeTick = arrival.FirstObstacleChangeTick!.Value;
+        runtime.Advance(changeTick - 1);
+        Check(runtime.EnemyDestination(enemyId)!.PointComponentFileId == original.PointComponentFileId,
+            "The enemy must not abandon its reserved obstacle before the source point-change deadline.");
+        while (runtime.EnemyDestination(enemyId)!.PointComponentFileId == original.PointComponentFileId &&
+            runtime.Snapshot().ServerTick < MaximumFixtureTick)
+        {
+            runtime.Advance(runtime.Snapshot().ServerTick + 1);
+        }
+
+        Check(runtime.EnemyDestination(enemyId)!.PointComponentFileId != original.PointComponentFileId &&
+            runtime.InfantryPointArrival(enemyId) == null && runtime.InfantryShotWindup(enemyId) == null &&
+            runtime.NextObstaclePointChangeTick(enemyId) == null && runtime.ObstacleVolleyState(enemyId) == null,
+            "A source-ready point change must reserve a different point and restart the walking lifecycle.");
+        Console.WriteLine("PASS: co-op obstacle source deadline changes the reserved enemy point");
+    }
+
+    private static void VerifyOccupiedPointRetry(Sources sources)
+    {
+        CoopMatchRuntime runtime = CreateRuntime(sources, () => 0.999f, () => 0.999f,
+            out CoopEnemyDestinationState destinations);
+        runtime.Advance(8);
+        ulong enemyId = runtime.Snapshot().Coop.EnemySpawns.First().EntityId;
+        while (runtime.InfantryPointArrival(enemyId) == null && runtime.Snapshot().ServerTick < MaximumFixtureTick)
+        {
+            runtime.Advance(runtime.Snapshot().ServerTick + 1);
+        }
+
+        CoopAssignedEnemyDestination original = runtime.EnemyDestination(enemyId)!;
+        ulong deadline = runtime.NextObstaclePointChangeTick(enemyId)!.Value;
+        // Reserve every other source-compatible point to exercise the actual destination ledger's no-free result.
+        for (int index = 0; index < sources.Map.Points.Count; index++)
+        {
+            if (destinations.TryAssignInitial(ulong.MaxValue - (ulong)index, "Assaulter", false,
+                original.Position) == null)
+            {
+                break;
+            }
+        }
+
+        while (runtime.NextObstaclePointChangeTick(enemyId) == deadline &&
+            runtime.Snapshot().ServerTick < MaximumFixtureTick)
+        {
+            runtime.Advance(runtime.Snapshot().ServerTick + 1);
+        }
+
+        Check(runtime.Snapshot().ServerTick > deadline &&
+            runtime.NextObstaclePointChangeTick(enemyId) == deadline + PointRetryTicks &&
+            runtime.EnemyDestination(enemyId)!.PointComponentFileId == original.PointComponentFileId,
+            "A delayed no-free attempt must add ten seconds to its original deadline and retain the old point.");
+        Console.WriteLine("PASS: occupied co-op points preserve the source retry deadline after a pending volley");
     }
 
     private static void VerifyMovingShotCase(Sources sources)
@@ -235,8 +307,14 @@ internal static class CoopObstacleVolleyRuntimeTests
     private static CoopMatchRuntime CreateRuntime(Sources sources,
         Func<float> shotFraction, Func<float> repositionFraction)
     {
+        return CreateRuntime(sources, shotFraction, repositionFraction, out _);
+    }
+
+    private static CoopMatchRuntime CreateRuntime(Sources sources,
+        Func<float> shotFraction, Func<float> repositionFraction, out CoopEnemyDestinationState destinations)
+    {
         int positionDraws = 0;
-        var destinations = new CoopEnemyDestinationState(sources.Map, sources.Masks, sources.Combat,
+        destinations = new CoopEnemyDestinationState(sources.Map, sources.Masks, sources.Combat,
             chooseObstacleFraction: () =>
             {
                 positionDraws++;
@@ -245,7 +323,7 @@ internal static class CoopObstacleVolleyRuntimeTests
                     return 0.5f;
                 }
                 return positionDraws % 2 == 0 ? 1f : 0f;
-            });
+            }, chooseNextPoint: _ => 0);
         var runtime = new CoopMatchRuntime(sources.Manifest, sources.Missions, sources.Spawns,
             sources.Routes, sources.Combat, chooseBehaviour: _ => 0,
             choosePoint: count => Math.Min(sources.SpawnIndex, count - 1),
@@ -253,6 +331,7 @@ internal static class CoopObstacleVolleyRuntimeTests
             playerWeaponContent: sources.Content,
             chooseInfantryShotFraction: shotFraction,
             chooseInfantryRepositionFraction: repositionFraction,
+            chooseEnemyPointChangeSeconds: () => sources.PointChangeSeconds,
             chooseInfantryPlayer: _ => 0, chooseInfantryShieldRoll: () => 0.5f,
             chooseInfantryBatchSize: (minimum, maximum) => maximum > minimum ? maximum - 1 : minimum,
             chooseInfantryRealShotRoll: () => 0f);

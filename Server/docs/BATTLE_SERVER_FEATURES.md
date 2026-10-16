@@ -1210,3 +1210,10 @@ and same-tick replay, then verifies actual round emission and source cooldown.
 The corner retarget regression now checks its own actor history without assuming
 that no other source-ready enemy may select a player. Moving-pose and damage
 authority remain incomplete.
+
+B22 obstacle enemies now schedule the recovered 10-19-second different-point
+deadline at arrival. After higher-priority shooting/same-point movement, the
+host reuses the source free-point selector and resumes walking toward the new
+reservation. A no-free attempt delayed by shooting extends its original deadline
+by ten seconds. Runtime fixtures cover both successful transition and occupied
+point retry. Native movement/rotation and collision/damage remain incomplete.

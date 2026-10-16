@@ -19,6 +19,32 @@ would introduce a rule absent from this Client.
 `minShootTime`–`maxShootTime` cooldown and restores crawling. A change to a
 different enemy point is a separate branch, outside same-segment repositioning.
 
+## Changing the reserved enemy point
+
+Obstacle arrival now schedules the source integer `Random.Range(10, 20)` point
+change deadline separately from shot and same-point position timers. The same
+validated draw callback supplies corner and obstacle point-change intervals.
+The runtime uses the source third-branch priority: a ready shot, a pending
+volley or a same-point reposition on this tick prevents a point-change attempt.
+
+An eligible change uses the existing source mask/free-point reservation
+selector, releases the old claim, reserves the new point and restarts walking.
+Walking clears the old arrival, volley and position/change clocks; reaching
+the new point initializes its own behavior. If no different free point exists,
+the runtime adds ten seconds to the original deadline, including after firing
+delayed the attempt. It does not shift that retry to ten seconds from now.
+
+The fixtures verify no early abandonment, a different reserved point and cleared
+old hiding state. A second fixture fills the destination ledger's compatible
+points with other source-valid claims, delays the attempt through a pending
+volley and verifies the original-deadline retry with the old reservation intact.
+The source `canChangePosition=false` assignments belong to tutorial actors;
+normal co-op enemies retain the initialization default `true`. Tutorial actor
+control is not inferred from this co-op transition.
+
+This implements point-selection/scheduling only. Source native movement,
+moving root orientation and complete collision/damage authority remain open.
+
 ## Implemented runtime transitions
 
 `CoopObstacleVolleyClock` now starts at obstacle arrival and owns crawling/pending

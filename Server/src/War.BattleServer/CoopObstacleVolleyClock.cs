@@ -24,6 +24,8 @@ internal sealed class CoopObstacleVolleyClock
 
     internal bool HasPendingShot { get; private set; }
 
+    internal ulong? LastRepositionTick { get; private set; }
+
     internal CoopObstacleVolleyClock(ulong firstShotTick, ulong firstPositionTick)
     {
         NextShotTick = firstShotTick;
@@ -94,6 +96,7 @@ internal sealed class CoopObstacleVolleyClock
         ulong positionTick = AfterDelay(tick, MinimumPositionDelaySeconds +
             RepositionDelayRangeSeconds * positionFraction);
         NextPositionTick = positionTick;
+        LastRepositionTick = tick;
         _lastTransitionTick = tick;
     }
 
