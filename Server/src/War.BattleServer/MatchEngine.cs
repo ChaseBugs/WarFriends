@@ -2669,6 +2669,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         // Barrels may produce their own deaths. Snapshot after those chains so
         // this ledger records only the player's bazooka blast transitions.
         var armyBeforeBazookaBlast=activeArmyEntities.Values.ToArray();
+        int firstBazookaDeathEventIndex = events.Count;
         ApplyPlayerBazookaDecoyExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
         if(Terminal)return;
@@ -2693,8 +2694,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         ApplyPlayerBazookaAirBodyExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
         if(Terminal)return;
-        RecordPlayerExplosionArmyKills(armyBeforeBazookaBlast,impact.OwnerId,
-            attacker.Definition.Fraction,"player-bazooka");
+        RecordPlayerExplosionArmyKills(armyBeforeBazookaBlast,
+            firstBazookaDeathEventIndex, impact.OwnerId, "player-bazooka");
         if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
@@ -2765,7 +2766,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             impact.Position, projectile.Stage);
         if (Terminal) return;
         var armyBeforeGrenadeBlast = activeArmyEntities.Values.ToArray();
-        int firstGrenadeKillIndex = directArmyKills.Count;
+        var firstGrenadeEvidence = (EventIndex: events.Count, KillIndex: directArmyKills.Count);
         ApplyPlayerGrenadeInfantryExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
         ApplyPlayerGrenadeDecoyExplosion(impact.OwnerId,impact.Position,projectile.Stage);
@@ -2783,7 +2784,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         ApplyPlayerGrenadeAirBodyExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
         RecordConfirmedGrenadeArmyDeaths(armyBeforeGrenadeBlast,
-            firstGrenadeKillIndex, impact.OwnerId, impact.ProjectileId);
+            firstGrenadeEvidence, impact.OwnerId, impact.ProjectileId);
         if (Terminal) return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {

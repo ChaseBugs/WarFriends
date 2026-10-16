@@ -280,6 +280,7 @@ public sealed partial class MatchEngine
         // chains. A later disappearance in this block belongs to this
         // mine's own source-backed blast, not to the barrel chain.
         var armyBeforeBlast=activeArmyEntities.Values.ToArray();
+        int firstMineDeathEventIndex = events.Count;
         ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,
             mine.EntityId,outerDamage);
         ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,
@@ -309,8 +310,8 @@ public sealed partial class MatchEngine
             if(effect!=null&&ApplyArmyHostDamage(army.EntityKey,effect.RawDamage))
                 attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
         }
-        RecordPlayerExplosionArmyKills(armyBeforeBlast,mine.OwnerPlayerId,
-            mine.OwnerFraction,"player-mine");
+        RecordPlayerExplosionArmyKills(armyBeforeBlast, firstMineDeathEventIndex,
+            mine.OwnerPlayerId, "player-mine");
         if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {

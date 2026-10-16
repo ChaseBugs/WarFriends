@@ -1963,19 +1963,105 @@ internal static class PvpBonusSpawnPlannerTests
             return (match, tick);
         }
 
+        void DeploySecondInfantry(MatchEngine match, ref ulong currentTick,
+            ulong firstEntityKey)
+        {
+            const ulong SpawnTimeoutTicks = 90;
+            ulong nextDeployTick = match.ArmyBatch(enemyId).NextDeployTick;
+            while (currentTick < nextDeployTick && !match.Terminal)
+            {
+                match.Advance(++currentTick);
+            }
+
+            Check(match.ArmyHealth(firstEntityKey) != null,
+                "first infantry target survives the source army deployment cooldown");
+            int nextOption = match.ArmyBatch(enemyId).OptionIndexes.First();
+            string secondDeployment = match.Command(enemyId, new MatchCommand
+            {
+                CommandId = 3,
+                DeployArmy = new DeployArmyCommand { OptionIndex = nextOption }
+            }).Code;
+            Check(secondDeployment == "army-deploying",
+                "opponent starts a second source infantry deployment for a live combo: " +
+                secondDeployment);
+            while (currentTick < nextDeployTick + SpawnTimeoutTicks && !match.Terminal &&
+                   match.ArmyEntityBatch(localId, 0, 0).Entities.Count < 2)
+            {
+                match.Advance(++currentTick);
+            }
+
+            Check(match.ArmyEntityBatch(localId, 0, 0).Entities.Count >= 2,
+                "both opposing infantry units have host vitality before the bonus burst");
+        }
+
+        void PrepareInfantryForBonusBlast(MatchEngine match)
+        {
+            const float RemainingHealth = 10f;
+            foreach (var infantry in match.ArmyEntityBatch(localId, 0, 0).Entities)
+            {
+                float setupDamage = infantry.Health + infantry.Kevlar - RemainingHealth;
+                if (setupDamage > 0f)
+                {
+                    match.ApplyArmyHostDamage(infantry.EntityKey, setupDamage);
+                }
+            }
+        }
+
+        void CheckBonusInfantryKillScores(MatchEngine match,
+            PvpOwnerScoreSnapshot scoreBeforeBlast, ulong firstEntityKey)
+        {
+            const int TripleKillThreshold = 3;
+            Check(match.ArmyHealth(firstEntityKey) == null,
+                "source bonus blast kills the prepared enemy infantry");
+            var scoreAfterBlast = match.BonusProgress.ScoreSnapshot(localId);
+            int newKills = scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.Kill] -
+                scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.Kill];
+            int newExplosionKills =
+                scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] -
+                scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill];
+            Check(newKills >= 2 && newExplosionKills == newKills &&
+                  scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] ==
+                      scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed],
+                "collected bonus grenades credit multiple confirmed infantry deaths: " +
+                $"kills={newKills}, explosions={newExplosionKills}, " +
+                $"remaining={match.ArmyEntityBatch(localId, 0, 0).Entities.Count}");
+            Check(scoreAfterBlast.Counts[PvpKillComboState.DoubleKillFlag] -
+                  scoreBeforeBlast.Counts[PvpKillComboState.DoubleKillFlag] == 1 &&
+                  scoreAfterBlast.Counts[PvpKillComboState.TripleKillFlag] -
+                  scoreBeforeBlast.Counts[PvpKillComboState.TripleKillFlag] == 1 &&
+                  scoreAfterBlast.Counts[PvpKillComboState.MultiKillFlag] -
+                  scoreBeforeBlast.Counts[PvpKillComboState.MultiKillFlag] ==
+                      newKills - TripleKillThreshold,
+                "live infantry deaths earn source Double, Triple and later MultiKill flags");
+            Check(match.BonusProgress.ComboSnapshot().ReceiptCount == newKills,
+                "each live bonus-grenade infantry death enters the shared combo once");
+            match.Command(localId, new MatchCommand { CommandId = 2,
+                Forfeit = new ForfeitCommand() });
+            var terminalKills = match.TerminalEvidenceSnapshot().DirectArmyKills
+                .Where(kill => kill.AttackerPlayerId == localId &&
+                               kill.VictimOwnerPlayerId == enemyId &&
+                               kill.Cause == "player-grenade").ToArray();
+            Check(terminalKills.Length == newKills &&
+                  terminalKills.Any(kill => kill.EntityKey == firstEntityKey),
+                "bonus grenade score count matches private direct-kill evidence");
+        }
+
         void BlastEnemyArmy(string unitId, int receiptBase,
             bool vehicleBody, bool expectKill = false)
         {
+            const ulong BlastTimeoutTicks = 240;
             var (match, currentTick) = BonusArmyMatch(unitId);
             var target = match.ArmyEntityBatch(localId, 0, 0).Entities.First();
+            if (expectKill)
+            {
+                DeploySecondInfantry(match, ref currentTick, target.EntityKey);
+            }
             var hitbox = match.GroundVehicleShotTargets(localId)
                 .First(part => part.EntityId == target.EntityKey &&
                     (vehicleBody ? part.GroundVehicleBody : part.ArmyInfantry)).Hitbox;
             if (expectKill)
             {
-                float setupDamage = target.Health + target.Kevlar - 10f;
-                if (setupDamage > 0f)
-                    match.ApplyArmyHostDamage(target.EntityKey, setupDamage);
+                PrepareInfantryForBonusBlast(match);
             }
             float healthBefore = match.ArmyHealth(target.EntityKey)!.Value;
             var scoreBeforeBlast = match.BonusProgress.ScoreSnapshot(localId);
@@ -1988,9 +2074,18 @@ internal static class PvpBonusSpawnPlannerTests
             Check(plannedBurst.Launches.Any(launch =>
                     launch.TargetId == "army:" + target.EntityKey),
                 "bonus grenade includes the deployed enemy unit in host targets");
+            if (expectKill)
+            {
+                var liveInfantry = match.ArmyEntityBatch(localId, 0, 0).Entities;
+                Check(liveInfantry.All(infantry => plannedBurst.Launches.Any(launch =>
+                        launch.TargetId == "army:" + infantry.EntityKey)),
+                    "the source bonus burst targets both live infantry units");
+            }
             ulong nextTick = currentTick;
-            while (nextTick < 420 && !match.Terminal &&
-                   match.ArmyHealth(target.EntityKey) == healthBefore)
+            while (nextTick < currentTick + BlastTimeoutTicks && !match.Terminal &&
+                   (expectKill
+                       ? match.ArmyEntityBatch(localId, 0, 0).Entities.Count > 0
+                       : match.ArmyHealth(target.EntityKey) == healthBefore))
                 match.Advance(++nextTick);
             float? healthAfter = match.ArmyHealth(target.EntityKey);
             Check(healthAfter == null || healthAfter < healthBefore,
@@ -2001,29 +2096,7 @@ internal static class PvpBonusSpawnPlannerTests
                     "vehicle registry and shared vitality agree after bonus grenade damage");
             if (expectKill)
             {
-                Check(healthAfter == null,
-                    "source bonus blast kills the prepared enemy infantry");
-                var scoreAfterBlast = match.BonusProgress.ScoreSnapshot(localId);
-                int newKills = scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.Kill] -
-                    scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.Kill];
-                int newExplosionKills =
-                    scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill] -
-                    scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.ExplosiveKill];
-                Check(newKills > 0 && newExplosionKills == newKills &&
-                      scoreAfterBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] ==
-                          scoreBeforeBlast.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed],
-                    "collected bonus grenades credit each confirmed infantry explosion death");
-                Check(match.BonusProgress.ComboSnapshot().ReceiptCount == newKills,
-                    "each live bonus-grenade infantry death enters the shared combo once");
-                match.Command(localId, new MatchCommand {CommandId = 2,
-                    Forfeit = new ForfeitCommand()});
-                var terminalKills = match.TerminalEvidenceSnapshot().DirectArmyKills
-                    .Where(kill => kill.AttackerPlayerId == localId &&
-                                   kill.VictimOwnerPlayerId == enemyId &&
-                                   kill.Cause == "player-grenade").ToArray();
-                Check(terminalKills.Length == newKills &&
-                      terminalKills.Any(kill => kill.EntityKey == target.EntityKey),
-                    "bonus grenade score count matches private direct-kill evidence");
+                CheckBonusInfantryKillScores(match, scoreBeforeBlast, target.EntityKey);
             }
         }
 

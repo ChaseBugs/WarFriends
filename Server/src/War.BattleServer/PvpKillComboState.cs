@@ -8,9 +8,9 @@ public sealed record PvpKillComboResult(int Streak, int ComboFlag);
 /// </summary>
 public sealed class PvpKillComboState
 {
-    private const int DoubleKillFlag = 32;
-    private const int TripleKillFlag = 64;
-    private const int MultiKillFlag = 128;
+    internal const int DoubleKillFlag = 32;
+    internal const int TripleKillFlag = 64;
+    internal const int MultiKillFlag = 128;
     private readonly float comboWindow;
     private readonly int maximumReceipts;
     private Dictionary<string, SavedKill> receipts = new(StringComparer.Ordinal);

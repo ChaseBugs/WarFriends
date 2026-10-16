@@ -114,8 +114,11 @@ complete combo, death-replay receipt, score, and streak progress. The host may
 publish that candidate only after its source death proof succeeds. A focused
 test verifies that preparation and replay leave the currently published state
 unchanged. Live death paths publish the prepared state only after host death
-evidence; focused match tests verify a normal M320 and bonus grenade each
-advance the shared combo once per confirmed army death.
+evidence; focused match tests verify a normal M320 advances the shared combo
+once, while a live collected-grenade burst earns DoubleKill, TripleKill, and
+MultiKill across four confirmed infantry deaths. Blast paths use the host's
+ordered `ArmyDied` events rather than entity-key sorting, and reject deaths
+that disagree with the pre-blast roster.
 
 `PvpScoreStreakPolicy` is now loaded with the combat package from the reviewed
 `recovered-pvp-score-streak-policy.json`. Its digest and the scene/content

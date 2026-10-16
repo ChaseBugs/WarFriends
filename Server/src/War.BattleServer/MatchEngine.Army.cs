@@ -4301,14 +4301,15 @@ public sealed partial class MatchEngine
     }
 
     private void RecordPlayerExplosionArmyKills(IReadOnlyList<BattleArmyEntityState> beforeBlast,
-        string attackerPlayerId,int attackerFraction,string cause)
+        int firstEventIndex, string attackerPlayerId, string cause)
     {
         if(cause is not ("player-mine" or "player-bazooka"))
             throw new InvalidDataException("Unsupported direct player explosion cause.");
 
-        var allDeaths=beforeBlast
-            .Where(army=>!activeArmyEntities.ContainsKey(army.EntityKey))
-            .OrderBy(army=>army.EntityKey).ToArray();
+        BattleArmyEntityState[] allDeaths = ConfirmedBlastArmyDeaths(
+            beforeBlast, firstEventIndex);
+        int attackerFraction = players.Single(player =>
+            player.Definition.PlayerId == attackerPlayerId).Definition.Fraction;
         var enemyDeaths=allDeaths.Where(army=>army.OwnerFraction!=attackerFraction)
             .ToArray();
         if(directArmyKills.Count+enemyDeaths.Length>256)

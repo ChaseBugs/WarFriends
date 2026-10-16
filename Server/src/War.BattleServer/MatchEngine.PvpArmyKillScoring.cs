@@ -10,7 +10,8 @@ public sealed partial class MatchEngine
 
     // Source RecieveKill advances its shared combo before the faction filter.
     private void RecordConfirmedGrenadeArmyDeaths(
-        IReadOnlyList<BattleArmyEntityState> beforeBlast, int firstKillIndex,
+        IReadOnlyList<BattleArmyEntityState> beforeBlast,
+        (int EventIndex, int KillIndex) firstEvidence,
         string attackerPlayerId, ulong projectileKey)
     {
         if (pvpBonusProgress == null)
@@ -18,14 +19,18 @@ public sealed partial class MatchEngine
             return;
         }
 
-        var deaths = beforeBlast
-            .Where(army => !activeArmyEntities.ContainsKey(army.EntityKey))
-            .OrderBy(army => army.EntityKey)
-            .ToArray();
-        var directKills = directArmyKills.Skip(firstKillIndex).ToDictionary(
+        BattleArmyEntityState[] deaths = ConfirmedBlastArmyDeaths(
+            beforeBlast, firstEvidence.EventIndex);
+        var directKills = directArmyKills.Skip(firstEvidence.KillIndex).ToDictionary(
             kill => kill.EntityKey);
         int attackerFraction = players.Single(player =>
             player.Definition.PlayerId == attackerPlayerId).Definition.Fraction;
+        if (directKills.Count != deaths.Count(army =>
+                army.OwnerFraction != attackerFraction))
+        {
+            throw new InvalidDataException(
+                "Grenade direct-kill count differs from its death events.");
+        }
         PvpBonusProgressCoordinator candidate = pvpBonusProgress;
 
         try
@@ -62,5 +67,38 @@ public sealed partial class MatchEngine
         }
 
         pvpBonusProgress = candidate;
+    }
+
+    private BattleArmyEntityState[] ConfirmedBlastArmyDeaths(
+        IReadOnlyList<BattleArmyEntityState> beforeBlast, int firstEventIndex)
+    {
+        var beforeByIdentity = beforeBlast.ToDictionary(
+            army => (army.OwnerPlayerId, army.LocalEntityId));
+        var deaths = new List<BattleArmyEntityState>();
+
+        foreach (MatchEvent deathEvent in events.Skip(firstEventIndex)
+                     .Where(row => row.Kind == MatchEventKind.ArmyDied))
+        {
+            if (!beforeByIdentity.TryGetValue(
+                    (deathEvent.TargetId, deathEvent.ArmyEntityId), out var army) ||
+                deathEvent.ArmyUnitId != army.UnitId ||
+                activeArmyEntities.ContainsKey(army.EntityKey))
+            {
+                throw new InvalidDataException(
+                    "Blast death event differs from its prior army identity.");
+            }
+
+            deaths.Add(army);
+        }
+
+        int removedCount = beforeBlast.Count(army =>
+            !activeArmyEntities.ContainsKey(army.EntityKey));
+        if (deaths.Count != removedCount)
+        {
+            throw new InvalidDataException(
+                "Blast removed an army entity without a death event.");
+        }
+
+        return deaths.ToArray();
     }
 }
