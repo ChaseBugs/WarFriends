@@ -64,7 +64,9 @@ pass. The complete regression rerun then passed 143,243 assertions with exit cod
 checks that its real score singleton and serialized HUD references resolve,
 initializes the production `HudScreen.InitEvents` subscription, and checks the
 actual labels and configured score animations after a terminal host snapshot.
-This audit has compiled in Unity 2018.3, and the separate nine-assertion component
-audit still passes. The full-scene execution has not produced a result: its
-Unity process remains in project initialization before the audit method runs.
-This is not a passed scene gate or a normal Play Mode/two-peer gameplay proof.
+The Unity 2018.3 run passed all four MainScene assertions with exit code zero
+on 2026-10-17 after project initialization completed. The separate nine-assertion
+component audit also passed again. The scene audit uses a controlled terminal
+snapshot and invokes the score notification coroutine explicitly in Edit Mode.
+It does not prove UDP-to-HUD delivery, normal Play Mode, two running Unity peers,
+Android behavior, or final result-screen navigation. Those gates remain open.

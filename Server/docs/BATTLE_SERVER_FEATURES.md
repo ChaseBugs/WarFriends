@@ -26,6 +26,9 @@ existing behavior. See [score HUD integration](SELF_HOSTED_SCORE_HUD.md).
 The controlled Drone/Sabotage sequence verifies 56 points and terminal counters;
 the real Sabotage UDP fixture checks peer/replay score consistency. An isolated
 Unity component audit checks actual NGUI label output and callback ordering.
+A separate MainScene Edit Mode audit passes four checks using the real score
+singleton, serialized HUD references, production event subscription and score
+Tween setup. Its controlled snapshot does not prove UDP-to-HUD delivery.
 This does not prove normal MainScene rendering, two-device Unity gameplay,
 Android behavior or complete skill-shot popup/statistics integration. B32 remains partial.
 
