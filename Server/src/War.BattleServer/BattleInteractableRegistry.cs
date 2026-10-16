@@ -20,7 +20,9 @@ public sealed class BattleInteractableRegistry
     public bool TryRegister(BattleInteractable interactable)
     {
         ArgumentNullException.ThrowIfNull(interactable);
+        // Skill-shot assignments read a selected ScoreManager flag, not an interactable event.
         if (interactable.EntityId <= 0 || interactable.RequiredAmount is < 1 or > 1000 ||
+            interactable.ObjectiveKind == BattleObjectiveKind.GainSkillshots ||
             !Enum.IsDefined(interactable.ObjectiveKind) || entries.Count >= capacity ||
             !entries.TryAdd(interactable.EntityId, interactable)) return false;
         return true;

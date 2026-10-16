@@ -587,7 +587,8 @@ public sealed partial class MatchEngine : IMatchRuntime
 
     internal bool TryRegisterObjectiveState(string playerId, IReadOnlyDictionary<BattleObjectiveKind,int> targets)
     {
-        if (Find(playerId)?.Admitted != true || objectives.ContainsKey(playerId)) return false;
+        if (Find(playerId)?.Admitted != true || objectives.ContainsKey(playerId) ||
+            targets is null || targets.ContainsKey(BattleObjectiveKind.GainSkillshots)) return false;
         objectives.Add(playerId, new BattleObjectiveState(targets));
         stateRevision++;
         return true;

@@ -1083,8 +1083,18 @@ checks += ShotgunOverlapTests.Run();
 MatchCommand Fire(ulong id) => new() { CommandId = id, Fire = new FireCommand { TargetX = 1, TargetY = 2, TargetZ = 3 } };
 MatchCommand Poll() => new() { Poll = new PollMatch() };
 var objectiveMatch = new MatchEngine(definition with { MatchId = "objective-replay-boundary" });
-Check(objectiveMatch.Admit(a) && objectiveMatch.Admit(b) &&
-      objectiveMatch.TryRegisterObjectiveState(a, new Dictionary<BattleObjectiveKind, int>
+Check(objectiveMatch.Admit(a) && objectiveMatch.Admit(b),
+    "objective replay fixture admits both players");
+ulong objectiveRevision = objectiveMatch.Snapshot().StateRevision;
+Check(!objectiveMatch.TryRegisterObjectiveState(a, new Dictionary<BattleObjectiveKind, int>
+      {
+          [BattleObjectiveKind.GainSkillshots] = 2
+      }) &&
+      !objectiveMatch.TryRegisterInteractable(new BattleInteractable(
+          701, BattleObjectiveKind.GainSkillshots, 1)) &&
+      objectiveMatch.Snapshot().StateRevision == objectiveRevision,
+    "generic interactables cannot fabricate source skill-shot assignment progress");
+Check(objectiveMatch.TryRegisterObjectiveState(a, new Dictionary<BattleObjectiveKind, int>
       {
           [BattleObjectiveKind.DestroyCrates] = 2
       }) &&
