@@ -15,6 +15,7 @@ internal static class CoopGameplayQueryTestRunner
                 BattleCombatContent content = BattleCombatContent.Load(manifestPath);
                 CoopGameplayQueryObservationTests.Run(contentDirectory, content);
                 CoopGameplayQueryObservationTests.RunPreparation(contentDirectory, content);
+                CoopShotCallbackClockTests.Run(contentDirectory, content);
                 return;
             }
 

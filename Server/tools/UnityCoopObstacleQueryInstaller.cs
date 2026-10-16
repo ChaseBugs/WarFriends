@@ -32,7 +32,25 @@ public static class UnityCoopObstacleQueryInstaller
             if (Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_EMISSION_PHASE") == "update")
             {
                 UnityCoopObstacleQueryProbe.ReadGameplayTick = () => UnityCoopObstacleVolleyPoseExport.GameplayTick;
-                UnityCoopObstacleQueryProbe.EmitGameplayRound = UnityCoopObstacleVolleyPoseExport.EmitGameplayRound;
+                UnityCoopDelayedShotProbe delayProbe = null;
+                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_DELAY_OUTPUT")))
+                {
+                    if (Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_PREPARATION_PHASE") != "update")
+                    {
+                        throw new InvalidOperationException("The delay probe requires gameplay preparation.");
+                    }
+
+                    delayProbe = rig.AddComponent<UnityCoopDelayedShotProbe>();
+                }
+
+                UnityCoopObstacleQueryProbe.EmitGameplayRound = tick =>
+                {
+                    UnityCoopObstacleVolleyPoseExport.EmitGameplayRound(tick);
+                    if (delayProbe != null)
+                    {
+                        delayProbe.ObserveGameplay(tick);
+                    }
+                };
             }
 
             rig.AddComponent<UnityCoopObstacleQueryProbe>();

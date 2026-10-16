@@ -1619,9 +1619,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         // EnemyController.Shoot invokes its start callback after the source
         // animation length plus 0.05 seconds. The host observes that callback
         // on the first fixed tick at or after the continuous-time deadline.
-        ulong delayTicks = (ulong)Math.Ceiling(
-            (callbackClipLength + 0.05f) * MatchManifest.TickRate);
-        ulong callbackTick = checked(tick + Math.Max(1UL, delayTicks));
+        ulong callbackTick = CoopShotCallbackClock.CallbackTick(tick, callbackClipLength);
         return new CoopInfantryShotWindup(target.EnemyEntityId,
             target.PlayerId, target.TransformFileId, target.Position,
             new Quaternion(enemy.CurrentRotation.X, enemy.CurrentRotation.Y,
@@ -1740,7 +1738,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             // update first polls ShootingFromWeapon; subsequent Gun.willShoot
             // checks require strictly more than the source rifle cadence.
             ulong nextTick = rounds.Count == 0
-                ? checked(callbackTick + 1)
+                ? CoopShotCallbackClock.FirstGameplayPollTick(callbackTick)
                 : assaulterWeapon.NextRoundEligibleTick(rounds[^1].Tick);
             if (tick < nextTick)
                 continue;

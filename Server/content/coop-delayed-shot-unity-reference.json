@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "captureRate": 30,
+  "timeScale": 1.0,
+  "callbackDelay": 0.316666663,
+  "preparationFrame": 3,
+  "preparationTime": 0.0533333346,
+  "callbackFrame": 13,
+  "callbackTick": 10,
+  "callbackTime": 0.3866667,
+  "firstReadyTick": 11,
+  "source": "Core_BaseScript.InvokeAfter -> WaitAndCall -> WaitForSeconds"
+}

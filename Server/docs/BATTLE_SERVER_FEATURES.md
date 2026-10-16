@@ -1291,3 +1291,10 @@ shapes and firing muzzle positions; catalog loading requires the pinned new
 preparation proof. The new `--coop-gameplay-query-only` command runs these
 comparisons separately. Full controller preparation, moving roots and live
 co-op authority remain incomplete; see the preparation section of the query report.
+
+B22's obstacle callback now has direct native coroutine evidence: the actual
+recovered `Core_BaseScript.InvokeAfter` resumes at relative tick ten, and the
+first later gameplay poll is tick eleven. The runtime uses the shared tested
+`CoopShotCallbackClock`, retaining its prior fixed-clock behavior with explicit
+clip/overflow validation. Full controller and callback-muzzle integration remain
+open. See [the callback clock evidence](COOP_SHOT_CALLBACK_CLOCK.md).
