@@ -94,8 +94,9 @@ hit or distance mismatch at the 0.00002 tolerance. All 243 centers are exactly
 equal to the preceding post frame, while 136 differ from the same post frame.
 The .NET content fixture also verifies every muzzle against the preceding
 sample and runs the actual host `PlayerHitbox.Raycast` against native distances.
-This verifies geometry at observed transforms; it does not verify that the
-current runtime pose selector chooses those transforms.
+At that checkpoint this verified geometry at observed transforms, without
+verifying runtime pose selection. The subsequent selector integration below
+extends that boundary.
 
 The first round changes from a queued animation clone to the ordinary loop.
 At query tick 12 the ordinary loop is at time zero. At query tick 23, following
@@ -116,3 +117,37 @@ The gameplay pair's raw SHA-256 bindings are enforced by
 `CoopGameplayQueryObservationTests`; the baseline catalog still requires its
 original schema-four neutral-look proof. No production authority gate changes
 as a result of these observations.
+
+## Host gameplay pose selection
+
+`CoopObstaclePoseCatalog.Gameplay.cs` now separates gameplay sampling from the
+existing editor-phase selector. Preparation uses the preceding sampled frame.
+The first `OnShot` replacing the queued clone takes one frame before the
+ordinary loop advances; subsequent ordinary-loop resets advance during the
+same frame's animation evaluation. Both paths ignore a shot on the current
+query tick, because the source fires before `OnShot`.
+
+The return Update changes animation state before it changes sampled geometry.
+The return tick therefore retains the firing sample; the following tick uses
+the first crawl sample. Firing-muzzle availability follows that sampled pose,
+rather than the controller's newly enabled animation state.
+
+The gameplay observation fixture now compares the selector's complete body
+and head shapes (position, rotation, dimensions and activity) against all 243
+actual sampled parts. It also checks firing availability and every exposed
+muzzle position. The runtime's obstacle collider candidates and emitted-round
+muzzles call these new methods. Historical editor observations retain their
+separate selector and exact comparisons.
+
+This closes the isolated neutral-look, fixed-root query-clock comparison.
+Initial preparation still comes from the isolated editor setup. Full controller
+preparation, moving roots, pooled residual state, nonzero procedural look,
+clock synchronization and complete live co-op damage remain unverified.
+Obstacle collider candidates continue to be reported as unplaced for live
+authority; this change does not register a complete playable co-op mode.
+
+Windows validation: the focused content executable exits zero with 26,368
+existing counted assertions plus the new gameplay selector comparisons. Native
+smoke builds the solution with zero warnings/errors, passes 1,037 protocol
+checks and 74 real MongoDB/HTTP/protobuf/UDP checks, and verifies durable
+evidence across Worker restarts. These do not prove full Unity co-op gameplay.

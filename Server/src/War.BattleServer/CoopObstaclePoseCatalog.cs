@@ -8,7 +8,7 @@ internal sealed record CoopObstaclePoseClock(ulong ElapsedTick,
     IReadOnlyList<ulong> EmittedRoundTicks, ulong? CrawlReturnTick = null);
 
 /// <summary>Selects diagnostic obstacle poses; sampled colliders are not complete hit authority.</summary>
-internal sealed class CoopObstaclePoseCatalog
+internal sealed partial class CoopObstaclePoseCatalog
 {
     private const string ReviewedSha256 = "100b40b541d9d311a1ad7298ca11bd263a3f21d7cb2791d0d342004fcd240d26";
     private const string CrawlClip = "stand_up_crawl";

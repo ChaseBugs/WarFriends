@@ -10,7 +10,7 @@ internal static class CoopGameplayQueryObservationTests
     private const int ExpectedFrames = 81;
     private const int ExpectedParts = 3;
 
-    internal static void Run(string directory)
+    internal static void Run(string directory, BattleCombatContent content)
     {
         using JsonDocument queryDocument = Read(directory, "coop-gameplay-query-unity-reference.json");
         using JsonDocument postDocument = Read(directory, "coop-gameplay-query-post-reference.json");
@@ -23,6 +23,12 @@ internal static class CoopGameplayQueryObservationTests
         Require(samples.GetArrayLength() == ExpectedFrames && postSamples.GetArrayLength() == ExpectedFrames + 1,
             "The observer must capture every frame after editor initialization.");
         int compared = 0;
+        ulong[] rounds = [11, 22];
+        ulong crawlReturn = postSamples.EnumerateArray().First(frame =>
+            frame.GetProperty("tick").GetUInt64() > rounds[^1] &&
+            frame.GetProperty("states").EnumerateArray().Any(state =>
+                state.GetProperty("name").GetString() == "stand_up_crawl"))
+            .GetProperty("tick").GetUInt64();
         foreach (JsonElement sample in samples.EnumerateArray())
         {
             int tick = sample.GetProperty("tick").GetInt32();
@@ -30,6 +36,9 @@ internal static class CoopGameplayQueryObservationTests
             Require(previous.GetProperty("unityFrame").GetInt32() + 1 ==
                 sample.GetProperty("unityFrame").GetInt32(), "Query and previous post frames must be contiguous.");
             compared += CompareParts(sample, previous, observation);
+            var clock = new CoopObstaclePoseClock((ulong)tick,
+                rounds.Where(round => round <= (ulong)tick).ToArray(), crawlReturn);
+            VerifySelectedPose(content, clock, sample, previous);
             Require(Vector3.Distance(Vector(sample.GetProperty("muzzle")),
                 Vector(previous.GetProperty("muzzle"))) <= DistanceTolerance,
                 "Gameplay firing origins must use the preceding animation sample.");
@@ -37,6 +46,25 @@ internal static class CoopGameplayQueryObservationTests
 
         Require(compared == ExpectedFrames * ExpectedParts, "Every body and head query must be compared.");
         Console.WriteLine($"PASS: {compared} native gameplay queries match host rays and previous sampled poses");
+    }
+
+    private static void VerifySelectedPose(BattleCombatContent content, CoopObstaclePoseClock clock,
+        JsonElement sample, JsonElement previous)
+    {
+        IReadOnlyList<PlayerHitbox> selected = content.CoopObstaclePoses.PlaceGameplay(
+            clock, Vector3.Zero, Quaternion.Identity, "probe/");
+        CoopObstaclePoseCatalogTests.CompareParts(selected, previous.GetProperty("parts"),
+            Vector3.Zero, Quaternion.Identity);
+        CoopQueuedMuzzleSample? muzzle = content.CoopObstaclePoses.GameplayFiringMuzzle(
+            clock, content.CoopEnemyMuzzles);
+        bool firing = previous.GetProperty("states").EnumerateArray().Any(state =>
+            state.GetProperty("name").GetString() is "rifle_shot_loop" or "rifle_shot_loop - Queued Clone");
+        Require((muzzle != null) == firing, "Firing availability must follow the sampled pose, not the new state.");
+        if (muzzle != null)
+        {
+            Require(Vector3.Distance(muzzle.LocalPosition, Vector(sample.GetProperty("muzzle"))) <=
+                DistanceTolerance, "The gameplay selector must reproduce the actual firing muzzle.");
+        }
     }
 
     private static int CompareParts(JsonElement sample, JsonElement previous, JsonElement observation)

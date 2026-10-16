@@ -56,7 +56,7 @@ internal sealed partial class CoopMatchRuntime
             .Select(round => round.Tick - windup.StartTick).ToArray();
         ulong? returnTick = state.ReturnTick.HasValue ? state.ReturnTick.Value - windup.StartTick : null;
         var clock = new CoopObstaclePoseClock(tick - windup.StartTick, roundTicks, returnTick);
-        return _obstaclePoseCatalog.FiringMuzzle(clock, enemyMuzzles);
+        return _obstaclePoseCatalog.GameplayFiringMuzzle(clock, enemyMuzzles);
     }
 
     private float ObstacleScaledTime()

@@ -1275,3 +1275,11 @@ primitive is compared directly with native Unity queries. First queued-clone
 replacement and subsequent loop resets advance differently, so uniform clock
 offsets are insufficient. Runtime pose selection and damage authority remain
 incomplete; see the gameplay-emission section of the same report.
+
+B22 now routes obstacle collider candidates and round muzzles through the
+gameplay-phase selector. It distinguishes queued-clone replacement from later
+ordinary-loop resets and delays sampled crawl geometry until the frame after
+the controller return. The observation fixture compares complete selected
+shapes and firing muzzle positions with every recorded gameplay frame.
+Moving roots, full-controller preparation and live damage authority remain
+open; historical editor-phase proofs keep their separate selector.

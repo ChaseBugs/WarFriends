@@ -41,7 +41,7 @@ internal static class CoopObstaclePoseCatalogTests
             $"from {referenceFileName}");
     }
 
-    private static void CompareParts(IReadOnlyList<PlayerHitbox> placed, JsonElement expected,
+    internal static void CompareParts(IReadOnlyList<PlayerHitbox> placed, JsonElement expected,
         Vector3 position, Quaternion rotation)
     {
         Require(placed.Count == expected.GetArrayLength(), "Every controller frame needs its complete collider set.");

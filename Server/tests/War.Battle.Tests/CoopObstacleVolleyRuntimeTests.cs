@@ -185,6 +185,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         runtime.Advance(returnTick);
         Check(runtime.ObstacleCrawlReturnTick(enemyId) == returnTick,
             "The first strictly later host float time must consume the return event.");
+        runtime.Advance(returnTick + 1);
         BattleCoopEnemySpawn enemy = runtime.Snapshot().Coop.EnemySpawns.Single(row => row.EntityId == enemyId);
         CoopInfantryShotWindup windup = runtime.InfantryShotWindup(enemyId)!;
         IReadOnlyList<PlayerHitbox> expected = content.EnemyPoses.Place("stand_up_crawl",
@@ -194,8 +195,8 @@ internal static class CoopObstacleVolleyRuntimeTests
         Check(actual.Count == expected.Count && actual.Zip(expected).All(pair =>
             pair.First.SourcePath == pair.Second.SourcePath &&
             Vector3.Distance(pair.First.Center, pair.Second.Center) < CrawlCenterTolerance),
-            "The consumed live return must select the source crawl clip at its start.");
-        runtime.Advance(returnTick);
+            "The frame after the consumed return must sample the source crawl clip at its start.");
+        runtime.Advance(returnTick + 1);
         Check(runtime.ObstacleCrawlReturnTick(enemyId) == returnTick &&
             runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
             "Repeated observation must preserve the event without opening collision authority.");
@@ -207,7 +208,12 @@ internal static class CoopObstacleVolleyRuntimeTests
         Check(rounds.Count > 1, "The source fixture must exercise a loop reset between real emitted rounds.");
         for (int index = 1; index < rounds.Count; index++)
         {
-            float expectedSeconds = (rounds[index].Tick - rounds[index - 1].Tick) / (float)MatchManifest.TickRate;
+            ulong elapsed = rounds[index].Tick - rounds[index - 1].Tick;
+            if (index == 1)
+            {
+                elapsed--;
+            }
+            float expectedSeconds = elapsed / (float)MatchManifest.TickRate;
             Check(rounds[index].ObservedLocalMuzzle?.FireClipSeconds == expectedSeconds &&
                 rounds[index].ObservedWorldLaunchOrigin.HasValue,
                 "Each later round must use the previous OnShot reset rather than the initial queue origin.");

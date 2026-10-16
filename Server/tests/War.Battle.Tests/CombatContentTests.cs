@@ -15,6 +15,22 @@ using War.Shared;
 
 internal static class CombatContentTests
 {
+    private static bool MatchesCoopMuzzleObservation(CoopQueuedMuzzleSample? actual, CoopQueuedMuzzleSample expected)
+    {
+        const float TimeTolerance = 0.00001f;
+        const float PositionTolerance = 0.00002f;
+        const float RotationTolerance = 0.000001f;
+        if (actual == null)
+        {
+            return false;
+        }
+
+        // Native animation samples and curve evaluation agree within the reviewed float tolerances.
+        return Math.Abs(actual.FireClipSeconds - expected.FireClipSeconds) <= TimeTolerance &&
+            Vector3.Distance(actual.LocalPosition, expected.LocalPosition) <= PositionTolerance &&
+            1f - Math.Abs(Quaternion.Dot(actual.LocalRotation, expected.LocalRotation)) <= RotationTolerance;
+    }
+
     private static int VerifyCoopSkillShotScores(CoopSkillShotScoreCatalog scores)
     {
         if (scores.Rows.Count != 19 || scores.Rows[0].Name != "HeadShot" ||
@@ -933,7 +949,7 @@ internal static class CombatContentTests
         CoopObstacleVolleyObservationTests.Run(directory, content);
         CoopObstaclePoseCatalogTests.Run(directory, content);
         CoopObstaclePoseCatalogTests.Run(directory, content, "coop-obstacle-volley-neutral-look-reference.json");
-        CoopGameplayQueryObservationTests.Run(directory);
+        CoopGameplayQueryObservationTests.Run(directory, content);
         CoopObstacleProofIntegrityTests.Run(directory, content);
         CoopObstacleCrawlReturnClockTests.Run();
         CoopObstacleTurnObservationTests.Run(directory, content);
@@ -3383,6 +3399,9 @@ internal static class CombatContentTests
             throw new Exception("Co-op callback muzzle survived its tick.");
         IReadOnlyList<CoopInfantryRoundIntent> firstRound = arrivalRuntime
             .InfantryRoundIntents(arrivalEnemy.EntityId);
+        CoopQueuedMuzzleSample gameplayObstacleSample = queue.Sample(crawlWindup.AnimationClip,
+            crawlWindup.QueuedFireClip, expectedCrawlCallback - crawlWindup.StartTick)
+            ?? throw new Exception("The frame before the first round must contain its sampled firing muzzle.");
         if (firstRound.Count != 1 || firstRound[0].RoundIndex != 0 ||
             firstRound[0].Tick != expectedCrawlCallback + 1 ||
             firstRound[0].Real != ((expectedRealMask & 1) != 0) ||
@@ -3392,12 +3411,12 @@ internal static class CombatContentTests
                 placedTarget.TransformFileId ||
             firstRound[0].ShieldTarget != (sourceTarget.Type == 2) ||
             firstRound[0].ShieldTarget ||
-            firstRound[0].ObservedLocalMuzzle != obstacleSample)
-            throw new Exception($"Co-op rifle missed its first host round intent: {firstRound.FirstOrDefault()}, expected observation {obstacleSample}.");
+            !MatchesCoopMuzzleObservation(firstRound[0].ObservedLocalMuzzle, gameplayObstacleSample))
+            throw new Exception($"Co-op rifle missed its gameplay-phase first round: {firstRound.FirstOrDefault()}.");
         Vector3 expectedLaunchOrigin =
             new Vector3(reachedEnemy.CurrentX, reachedEnemy.CurrentY,
                 reachedEnemy.CurrentZ) +
-            Vector3.Transform(obstacleSample.LocalPosition,
+            Vector3.Transform(gameplayObstacleSample.LocalPosition,
                 crawlWindup.FinalRootRotation);
         if (firstRound[0].ObservedWorldLaunchOrigin is not Vector3 origin ||
             Vector3.Distance(origin, expectedLaunchOrigin) > 0.00001f)
@@ -3566,7 +3585,7 @@ internal static class CombatContentTests
         Vector3 expectedFakeAim = fakeWindup.PreparedAimPosition +
             fakeSideways + new Vector3(0, 0.5f, 0);
         if (Vector3.Distance(fakeRound.AimPosition, expectedFakeAim) >
-            0.00001f || fakeRound.ObservedLocalMuzzle != obstacleSample ||
+            0.00001f || !MatchesCoopMuzzleObservation(fakeRound.ObservedLocalMuzzle, gameplayObstacleSample) ||
             fakeRound.ObservedWorldLaunchOrigin is not Vector3 fakeOrigin ||
             Vector3.Distance(fakeOrigin, expectedLaunchOrigin) > 0.00001f)
             throw new Exception("Co-op fake round lost its source sideways/upward aim.");

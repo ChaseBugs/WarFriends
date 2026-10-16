@@ -51,7 +51,7 @@ internal sealed partial class CoopMatchRuntime
         ulong? returnOffset = crawl.ReturnTick.HasValue ? crawl.ReturnTick.Value - windup.StartTick : null;
         var clock = new CoopObstaclePoseClock(tick - windup.StartTick, offsets, returnOffset);
         var position = new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ);
-        return _obstaclePoseCatalog.Place(clock, position, windup.FinalRootRotation, $"coop/{entityId}/");
+        return _obstaclePoseCatalog.PlaceGameplay(clock, position, windup.FinalRootRotation, $"coop/{entityId}/");
     }
 
     private bool HasCompletedPriorCrawl(BattleCoopEnemySpawn enemy)
