@@ -219,8 +219,10 @@ Walking Rusher infantry now earn `Runner` on a confirmed player-bullet death
 only when host-published movement in that tick exceeds 90% of configured
 speed squared, matching the recovered `EnemyController` gate. A live moving
 Shotgunner death records one private count; blocked and accelerating walking
-states are rejected. Explosion deaths and other infantry AI states still need
-movement proof.
+states are rejected. Player-owned grenade, mine, and Bazooka blasts capture
+the same pre-death movement proof and require their existing death-event
+identity check; a live moving Shotgunner mine death retains one private count.
+Other infantry AI states still need movement proof.
 
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank, before any combo. Selected live death callbacks now update combo, score, progress, and eligible bonus authority; complete callback coverage and normal Unity presentation remain open.
 

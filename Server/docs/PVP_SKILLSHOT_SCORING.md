@@ -51,10 +51,12 @@ For `EnemyController`, the Client awards `Runner` when its AI state is `Walk`
 and `agent.velocity.sqrMagnitude` exceeds 90% of the configured agent speed
 squared. The host now measures each Rusher's published three-dimensional
 movement in the death tick and compares it with its configured speed for
-confirmed player-bullet deaths. A blocked or still accelerating walker earns
-no `Runner`. A live player `Fire` kill of a moving Shotgunner records one
-`Runner` in private terminal evidence. Explosion deaths, other infantry
-movement states, and the Client's exact NavMeshAgent velocity remain outside
+confirmed player-bullet deaths. Player-owned grenade, mine, and Bazooka blasts
+capture the same movement evidence before removing their victims and require
+the existing blast death-event proof before scoring. A blocked or still
+accelerating walker earns no `Runner`. Live player `Fire` and mine kills of a
+moving Shotgunner each retain one private `Runner` count. Other infantry
+movement states and the Client's exact NavMeshAgent velocity remain outside
 this proof.
 
 ## Runtime boundary

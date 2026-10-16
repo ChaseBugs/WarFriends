@@ -5,6 +5,32 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private sealed record ArmyBlastSnapshot(
+        IReadOnlyList<BattleArmyEntityState> Entities,
+        IReadOnlyDictionary<ulong, int> RunnerFlags);
+
+    private ArmyBlastSnapshot CaptureArmyBlastSnapshot()
+    {
+        var entities = activeArmyEntities.Values.ToArray();
+        var runnerFlags = new Dictionary<ulong, int>();
+
+        foreach (var entity in entities)
+        {
+            if (rusherMotionCandidates.TryGetValue(entity.EntityKey, out var motion))
+            {
+                runnerFlags.Add(entity.EntityKey,
+                    PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(motion));
+            }
+        }
+
+        return new ArmyBlastSnapshot(entities, runnerFlags);
+    }
+
+    private static int BlastRunnerFlag(ArmyBlastSnapshot snapshot, ulong entityKey)
+    {
+        return snapshot.RunnerFlags.GetValueOrDefault(entityKey);
+    }
+
     // The recovered reconnect dialog pauses Unity Time.time. The simulation
     // tick also pauses while the host reconnect deadline continues advancing.
     internal float PlayerOwnedDeathGameTime =>
@@ -12,7 +38,7 @@ public sealed partial class MatchEngine
 
     // Source RecieveKill advances its shared combo before the faction filter.
     private void RecordConfirmedGrenadeArmyDeaths(
-        IReadOnlyList<BattleArmyEntityState> beforeBlast,
+        ArmyBlastSnapshot beforeBlast,
         (int EventIndex, int KillIndex) firstEvidence,
         string attackerPlayerId, ulong projectileKey)
     {
@@ -22,7 +48,7 @@ public sealed partial class MatchEngine
         }
 
         BattleArmyEntityState[] deaths = ConfirmedBlastArmyDeaths(
-            beforeBlast, firstEvidence.EventIndex);
+            beforeBlast.Entities, firstEvidence.EventIndex);
         var directKills = directArmyKills.Skip(firstEvidence.KillIndex).ToDictionary(
             kill => kill.EntityKey);
         int attackerFraction = players.Single(player =>
@@ -56,7 +82,8 @@ public sealed partial class MatchEngine
                         "Grenade death lacks a recovered army catalog."),
                     army.UnitId) |
                     PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
-                        army.Health, army.MaxHealth);
+                        army.Health, army.MaxHealth) |
+                    BlastRunnerFlag(beforeBlast, army.EntityKey);
                 string receiptId = PvpHitReceiptId("player-grenade-army-kill",
                     projectileKey, army.EntityKey.ToString(CultureInfo.InvariantCulture));
                 candidate = candidate.PrepareConfirmedPlayerOwnedDeathCopy(

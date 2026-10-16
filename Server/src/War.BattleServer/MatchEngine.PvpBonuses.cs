@@ -142,7 +142,7 @@ public sealed partial class MatchEngine
         ApplyGrenadeBonusBoxes(explosion.OwnerId, explosion.ProjectileId,
             explosion.Position, stage);
         if (Terminal) return;
-        var armyBeforeGrenadeBlast = activeArmyEntities.Values.ToArray();
+        var armyBeforeGrenadeBlast = CaptureArmyBlastSnapshot();
         var firstGrenadeEvidence = (EventIndex: events.Count, KillIndex: directArmyKills.Count);
         ApplyPvpBonusGrenadeInfantry(explosion, stage, owner);
         if (Terminal) return;

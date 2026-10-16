@@ -4301,14 +4301,14 @@ public sealed partial class MatchEngine
         return true;
     }
 
-    private void RecordPlayerExplosionArmyKills(IReadOnlyList<BattleArmyEntityState> beforeBlast,
+    private void RecordPlayerExplosionArmyKills(ArmyBlastSnapshot beforeBlast,
         int firstEventIndex, string attackerPlayerId, string cause)
     {
         if(cause is not ("player-mine" or "player-bazooka"))
             throw new InvalidDataException("Unsupported direct player explosion cause.");
 
         BattleArmyEntityState[] allDeaths = ConfirmedBlastArmyDeaths(
-            beforeBlast, firstEventIndex);
+            beforeBlast.Entities, firstEventIndex);
         int attackerFraction = players.Single(player =>
             player.Definition.PlayerId == attackerPlayerId).Definition.Fraction;
         var enemyDeaths=allDeaths.Where(army=>army.OwnerFraction!=attackerFraction)
@@ -4331,7 +4331,8 @@ public sealed partial class MatchEngine
                             "Player explosion lacks a recovered army catalog."),
                         army.UnitId) |
                         PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
-                            army.Health, army.MaxHealth);
+                            army.Health, army.MaxHealth) |
+                        BlastRunnerFlag(beforeBlast, army.EntityKey);
                     string receiptId = PvpHitReceiptId(cause, army.EntityKey, attackerPlayerId);
                     scoredDeaths = scoredDeaths.PrepareConfirmedPlayerOwnedDeathCopy(
                         attackerPlayerId, receiptId, flags, PlayerOwnedDeathGameTime,

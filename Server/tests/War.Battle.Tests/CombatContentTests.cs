@@ -18182,6 +18182,68 @@ internal static class CombatContentTests
               liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.Runner).Count == 1,
             "terminal evidence retains source shot and movement counts privately");
+        var runningMineManifest = walkingShotgunnerManifest with
+        {
+            MatchId = "running-shotgunner-mine",
+            Players = walkingShotgunnerManifest.Players.Select(player => player with
+            {
+                ArmyHealthFactors = [new ArmyHealthFactors(0.01f, 0.01f)]
+            }).ToArray()
+        };
+        var runningMineMatch = new MatchEngine(runningMineManifest, content: content, armyChoice: _ => 0);
+        runningMineMatch.Admit(soldierOwner);
+        runningMineMatch.Admit(helicopterOwner);
+        foreach (string playerId in new[] { soldierOwner, helicopterOwner })
+        {
+            runningMineMatch.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = runningMineMatch.ManifestHash }
+            });
+        }
+        runningMineMatch.Advance(60);
+        int mineShotgunnerOption = runningMineMatch.ArmyBatch(soldierOwner).OptionIndexes
+            .OrderBy(index => content.Army.Option(index).Count).First();
+        runningMineMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = mineShotgunnerOption }
+        });
+        BattleArmyEntityState? mineShotgunner = null;
+        ulong runningMineTick = 60;
+        while (runningMineTick < 400)
+        {
+            runningMineMatch.Advance(++runningMineTick);
+            mineShotgunner = runningMineMatch.ArmyEntityBatch(soldierOwner, 0, 0)
+                .Entities.SingleOrDefault();
+            if (mineShotgunner != null && PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(
+                    runningMineMatch.RusherMotionCandidate(mineShotgunner.EntityKey)) != 0)
+            {
+                break;
+            }
+        }
+        Check(mineShotgunner != null && runningMineTick < 400,
+            "host route publishes a running infantry victim before mine placement");
+        var movingBody = runningMineMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Single(target => target.EntityId == mineShotgunner!.EntityKey &&
+                target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
+        Check(runningMineMatch.TryRegisterLandMine(new string('b', 32), helicopterOwner,
+                movingBody.Hitbox.Center, mineShotgunner!.Health + 100f),
+            "host-owned mine overlaps the moving infantry body");
+        runningMineMatch.Advance(++runningMineTick);
+        Check(runningMineMatch.ArmyHealth(mineShotgunner.EntityKey) == null &&
+              runningMineMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.Runner] == 1,
+            "confirmed player mine blast preserves pre-death Runner movement evidence");
+        runningMineMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(runningMineMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.Runner).Count == 1,
+            "private terminal evidence retains the explosion victim's Runner count");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

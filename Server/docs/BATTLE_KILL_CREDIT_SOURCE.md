@@ -66,11 +66,14 @@ other contextual flags, revenge, environmental flags, exact scaled time, and ful
 cross-cause callback order remain open. These counts remain incomplete for Client MatchStats and
 Backend settlement.
 
-For a walking Rusher infantry bullet death, the host also derives `Runner` from its
-published death-tick displacement and configured speed. The Client requires
+For a walking Rusher infantry death caused by a player bullet or player-owned
+grenade, mine, or Bazooka blast, the host also derives `Runner` from its
+published pre-death displacement and configured speed. The Client requires
 `EnemyAIState.Walk` and velocity squared above 90% of agent speed squared.
 Blocked and slow walkers do not qualify; a live moving Shotgunner bullet death
-retains one private `Runner` count. Explosion deaths and other infantry
-movement modes remain open.
+retains one private `Runner` count. Blast scoring captures this movement proof
+before entity removal and checks the death-event identity. A live moving
+Shotgunner mine death also retains one private count. Other infantry movement
+modes remain open.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.
