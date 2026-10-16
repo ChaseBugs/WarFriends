@@ -32,6 +32,7 @@ internal static class CoopObstaclePoseCatalogTests
             var clock = new CoopObstaclePoseClock(tick, rounds.Where(round => round <= tick).ToArray(), crawlReturn);
             IReadOnlyList<PlayerHitbox> placed = content.CoopObstaclePoses.Place(clock, position, rotation, "probe/");
             CompareParts(placed, frame.GetProperty("parts"), position, rotation);
+            CompareFiringMuzzle(content, clock, frame);
             compared += placed.Count;
         }
         VerifyInvalidClocks(content.CoopObstaclePoses);
@@ -59,6 +60,21 @@ internal static class CoopObstaclePoseCatalogTests
                 actual.Enabled == part.GetProperty("enabled").GetBoolean() &&
                 actual.Active == part.GetProperty("active").GetBoolean(),
                 "Selected collider dimensions or activity differ from the actual controller frame.");
+        }
+    }
+
+    private static void CompareFiringMuzzle(BattleCombatContent content, CoopObstaclePoseClock clock,
+        JsonElement frame)
+    {
+        CoopQueuedMuzzleSample? muzzle = content.CoopObstaclePoses.FiringMuzzle(clock, content.CoopEnemyMuzzles);
+        bool firing = frame.GetProperty("states").EnumerateArray().Any(state =>
+            state.GetProperty("name").GetString() == "rifle_shot_loop - Queued Clone" ||
+            state.GetProperty("name").GetString() == "rifle_shot_loop");
+        Require((muzzle != null) == firing, "Only a firing source frame can expose its muzzle sample.");
+        if (muzzle != null)
+        {
+            Require(Vector3.Distance(muzzle.LocalPosition, Vector(frame.GetProperty("muzzle"))) <= PositionTolerance,
+                "Per-round loop resets must preserve the actual controller's muzzle position.");
         }
     }
 

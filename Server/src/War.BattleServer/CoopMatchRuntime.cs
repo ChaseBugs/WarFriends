@@ -1754,11 +1754,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             bool real = (windup.Batch.RealShotMask & (1 << index)) != 0;
             Vector3 aimPosition = real ? windup.PreparedAimPosition :
                 FakeInfantryAimPosition(entityId, windup.PreparedAimPosition);
-            // This is an isolated Unity 2018 observation at the elapsed
-            // host tick, not a live animation state or projectile origin.
-            CoopQueuedMuzzleSample? observedMuzzle = assaulterQueue?.Sample(
-                windup.AnimationClip, windup.QueuedFireClip,
-                tick - windup.StartTick);
+            // Source-sampled geometry stays diagnostic until gameplay transform phases and moving roots are verified.
+            CoopQueuedMuzzleSample? observedMuzzle = windup.AnimationClip == "stand_up_begin"
+                ? ObserveObstacleFiringMuzzle(entityId, windup)
+                : assaulterQueue?.Sample(windup.AnimationClip, windup.QueuedFireClip, tick - windup.StartTick);
             Vector3? observedWorldOrigin = null;
             CoopInfantryPointState pointState =
                 infantryPointArrivals[entityId].State;

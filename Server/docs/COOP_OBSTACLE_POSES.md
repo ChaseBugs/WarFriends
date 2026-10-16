@@ -122,3 +122,21 @@ unplaced collision status. The 82-frame comparison proves the isolated
 controller timer; normal gameplay transform sampling and host/Client clock
 synchronization remain separate unverified integration work. Collision
 authority stays closed.
+
+## Per-round firing muzzle
+
+The runtime now selects obstacle firing muzzles using the same per-round reset
+clock as collider candidates. Previously it sampled only elapsed time since
+the initial queue, ignoring later `EnemyController.OnShot` resets. The sample
+on a round's own tick still uses the previous reset: `SoldierBehaviour.Shooting`
+calls `Shoot` before `controller.OnShot`, and the source transform sample has
+already run. Later ticks use that round as the new fire-loop origin.
+
+`CoopObstaclePoseCatalog.FiringMuzzle` reuses the existing recovered rifle muzzle
+clip catalog. It exposes only firing frames; preparation, crawl return and
+interrupted returns cannot supply a firing origin. The complete 82-frame Unity
+reference checks muzzle availability and every available local position within
+0.00002 world units, including both resets. The runtime fixture independently
+checks each later emitted round's clip seconds against its previous round.
+Corner firing retains its separate queue path. These are diagnostic origins;
+moving-root parity and complete authoritative collision remain unverified.

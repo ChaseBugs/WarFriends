@@ -41,6 +41,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         CoopObstacleVolleySnapshot prepared = runtime.ObstacleVolleyState(enemyId)!;
         AdvanceUntilCompleted(runtime, enemyId);
         CoopInfantryShotWindup completed = runtime.InfantryShotWindup(enemyId)!;
+        VerifyRoundMuzzleClocks(runtime, enemyId);
         CoopObstaclePosePlanExport.WriteIfRequested(sources.Content, completed,
             runtime.InfantryRoundIntents(enemyId));
         CoopObstacleVolleySnapshot clock = runtime.ObstacleVolleyState(enemyId)!;
@@ -95,6 +96,19 @@ internal static class CoopObstacleVolleyRuntimeTests
         Check(runtime.ObstacleCrawlReturnTick(enemyId) == returnTick &&
             runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
             "Repeated observation must preserve the event without opening collision authority.");
+    }
+
+    private static void VerifyRoundMuzzleClocks(CoopMatchRuntime runtime, ulong enemyId)
+    {
+        IReadOnlyList<CoopInfantryRoundIntent> rounds = runtime.InfantryRoundIntents(enemyId);
+        Check(rounds.Count > 1, "The source fixture must exercise a loop reset between real emitted rounds.");
+        for (int index = 1; index < rounds.Count; index++)
+        {
+            float expectedSeconds = (rounds[index].Tick - rounds[index - 1].Tick) / (float)MatchManifest.TickRate;
+            Check(rounds[index].ObservedLocalMuzzle?.FireClipSeconds == expectedSeconds &&
+                rounds[index].ObservedWorldLaunchOrigin.HasValue,
+                "Each later round must use the previous OnShot reset rather than the initial queue origin.");
+        }
     }
 
     private static int SelectLongObstacleSpawn(Sources sources)

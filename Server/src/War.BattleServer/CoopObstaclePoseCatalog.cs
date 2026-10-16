@@ -86,6 +86,22 @@ internal sealed class CoopObstaclePoseCatalog
         return _clips.Place(FireClip, rootPosition, rootRotation, fireSeconds, prefix);
     }
 
+    internal CoopQueuedMuzzleSample? FiringMuzzle(CoopObstaclePoseClock clock, CoopEnemyMuzzleCatalog muzzles)
+    {
+        ArgumentNullException.ThrowIfNull(muzzles);
+        ulong fireOrigin = ValidateClock(clock);
+        if (clock.ElapsedTick < _firstQueuedFireTick ||
+            (clock.CrawlReturnTick.HasValue && clock.ElapsedTick >= clock.CrawlReturnTick.Value))
+        {
+            return null;
+        }
+
+        // OnShot resets the loop after this frame's transform sample; only earlier rounds change its pose.
+        float seconds = (clock.ElapsedTick - fireOrigin) / (float)MatchManifest.TickRate;
+        CoopMuzzlePose pose = muzzles.Place(FireClip, Vector3.Zero, Quaternion.Identity, seconds);
+        return new CoopQueuedMuzzleSample(seconds, pose.Position, pose.Rotation);
+    }
+
     private ulong ValidateClock(CoopObstaclePoseClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);

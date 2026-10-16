@@ -1178,3 +1178,10 @@ live diagnostic crawl pose, with zero-origin fixed-step time documented as
 reconstruction policy. The fixture checks strict expiry and repeated-tick
 stability. Client clock synchronization, transform-sampling parity, co-op
 collision and damage remain incomplete.
+
+B22 obstacle diagnostic firing origins now share the per-round animation reset
+clock with pose selection. All available firing muzzle positions agree with the
+actual 82-frame controller reference, and the runtime checks later-round clock
+origins against the previous emitted round. Preparation and crawl-return frames
+do not expose a firing muzzle. This replaces the stale initial-queue-only
+sampling for obstacle rounds; it does not open collision or damage authority.

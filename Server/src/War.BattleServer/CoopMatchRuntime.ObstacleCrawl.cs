@@ -43,6 +43,22 @@ internal sealed partial class CoopMatchRuntime
         state.Clock.RecordShot(ObstacleScaledTime(), SourceRoundHideSeconds);
     }
 
+    private CoopQueuedMuzzleSample? ObserveObstacleFiringMuzzle(ulong entityId, CoopInfantryShotWindup windup)
+    {
+        if (_obstaclePoseCatalog == null || enemyMuzzles == null ||
+            !_obstacleCrawlStates.TryGetValue(entityId, out ObstacleCrawlState? state) ||
+            state.HasInterruptedReturn)
+        {
+            return null;
+        }
+
+        ulong[] roundTicks = InfantryRoundIntents(entityId)
+            .Select(round => round.Tick - windup.StartTick).ToArray();
+        ulong? returnTick = state.ReturnTick.HasValue ? state.ReturnTick.Value - windup.StartTick : null;
+        var clock = new CoopObstaclePoseClock(tick - windup.StartTick, roundTicks, returnTick);
+        return _obstaclePoseCatalog.FiringMuzzle(clock, enemyMuzzles);
+    }
+
     private float ObstacleScaledTime()
     {
         // The self-hosted fixed-step simulation starts at zero, independently of Unity process uptime.
