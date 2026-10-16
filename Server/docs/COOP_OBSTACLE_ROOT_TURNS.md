@@ -17,6 +17,9 @@ tween can therefore both write the same root rotation.
 fixture, at host tick 383. It retains the source-bound enemy identity, actual
 current position, reserved destination, start/target rotations and recovered
 Assaulter speed of 0.9. It uses the recovered Desert NavMesh_7.
+This is a frozen host checkpoint. Later root-publication changes can export
+different starting rotations; refreshing a capture must retain its matching
+input and observation together.
 
 `UnityCoopObstacleTurnExport` loads that mesh in a disposable Unity 2018.3
 project and configures a native agent from the original prefab's settings.
@@ -53,6 +56,32 @@ explicit remaining integration gap, not a fabricated trajectory.
 Next implement and compare the host's live moving root, including navigation
 history, tween writes and transform sample phase. Then use that rotation for
 world muzzles and colliders before opening collision/damage authority.
+
+## Recovered tween stage
+
+`CoopShotRootTween` now implements the source `UITweener` and `TweenRotation`
+stage: float factor accumulation, default EaseInOut, quaternion interpolation
+and strict completion only after the factor exceeds one. `UITweener.Start`
+calls Update once in addition to the regular Update on the first active frame.
+Begin on a reused component resets the factor but does not repeat Start.
+
+The model reproduces all seven recorded frames from initialization through
+the final tween write, including the enabled flag. Tests also cover reused
+components, paused time and rejected invalid input. This validates the tween
+stage, not the native rotation that changes the root after the tween finishes.
+No fitted native steering formula has been promoted into gameplay authority.
+
+The co-op runtime now publishes this root rotation for stationary obstacle
+volleys. Previously those snapshots retained the spawn rotation even though
+diagnostic muzzle placement used the final shot target. A host fixture checks
+the first published transition against the source-tested tween. Component
+lifecycle is owned per live host entity: it survives successive volleys and
+path changes, then ends at death/match cleanup. Original Unity pool-object reuse
+and normal Client frame scheduling are not proved by this lifecycle policy.
+
+Moving volleys advance the tween stage without publishing it as the complete
+root. Their native rotation conflict remains explicit. The general moving-root
+model and Client synchronization remain required before collision authority.
 
 ## Reproduction
 

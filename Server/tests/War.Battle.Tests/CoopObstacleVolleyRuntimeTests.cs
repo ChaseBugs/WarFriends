@@ -8,6 +8,8 @@ internal static class CoopObstacleVolleyRuntimeTests
     private const ulong MaximumFixtureTick = 2000;
     private const float RoundHideSeconds = 0.5f;
     private const float CrawlCenterTolerance = 0.00002f;
+    private const float SourceTurnSeconds = 0.2f;
+    private const float RootRotationTolerance = 0.000001f;
 
     internal sealed record Sources
     {
@@ -34,6 +36,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         AdvanceUntilPrepared(runtime, enemyId, () => hasReachedObstacle = true);
         shotFraction = 0.999f;
         ulong preparedTick = runtime.InfantryShotWindup(enemyId)!.StartTick;
+        VerifyStationaryRootTurn(runtime, enemyId);
         runtime.Advance(preparedTick + 6);
         Check(runtime.PlaceObstacleVolleyHitboxes(enemyId).Count == 3 &&
             runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
@@ -109,6 +112,20 @@ internal static class CoopObstacleVolleyRuntimeTests
                 rounds[index].ObservedWorldLaunchOrigin.HasValue,
                 "Each later round must use the previous OnShot reset rather than the initial queue origin.");
         }
+    }
+
+    private static void VerifyStationaryRootTurn(CoopMatchRuntime runtime, ulong enemyId)
+    {
+        CoopInfantryShotWindup windup = runtime.InfantryShotWindup(enemyId)!;
+        var expected = new CoopShotRootTween(SourceTurnSeconds);
+        expected.Begin(windup.StartRootRotation, windup.FinalRootRotation);
+        expected.AdvanceFrame(1f / MatchManifest.TickRate);
+        runtime.Advance(windup.StartTick + 1);
+        BattleCoopEnemySpawn enemy = runtime.Snapshot().Coop.EnemySpawns.Single(row => row.EntityId == enemyId);
+        var rotation = new Quaternion(enemy.CurrentRotation.X, enemy.CurrentRotation.Y,
+            enemy.CurrentRotation.Z, enemy.CurrentRotation.W);
+        Check(1f - Math.Abs(Quaternion.Dot(rotation, expected.Rotation)) < RootRotationTolerance,
+            "A stationary obstacle root must publish its source tween rather than retain spawn rotation.");
     }
 
     private static int SelectLongObstacleSpawn(Sources sources)

@@ -934,6 +934,7 @@ internal static class CombatContentTests
         CoopObstaclePoseCatalogTests.Run(directory, content);
         CoopObstacleCrawlReturnClockTests.Run();
         CoopObstacleTurnObservationTests.Run(directory, content);
+        CoopShotRootTweenTests.Run(directory);
         VerifyCoopCornerQueue(directory, content.EnemyPoses,
             content.CoopCornerQueuePoses);
         ArmyDeploymentCatalog army = content.Army;

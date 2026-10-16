@@ -800,6 +800,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             SettleCornerInfantryRoots();
             AdvanceObstacleRepositions();
             ChooseInfantryTargets();
+            AdvanceObstacleRootTweens();
             AdvanceCornerShotTurns();
             AdvanceInfantryShotWindups();
             AdvanceInfantryRoundIntents();
@@ -1458,6 +1459,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 infantryRoundIntents.Remove(entityId);
                 infantryShotWindups[entityId] =
                     CreateInfantryShotWindup(arrival, placedTarget, batch);
+                BeginObstacleRootTween(entityId, infantryShotWindups[entityId]);
             }
             stateRevision++;
         }
@@ -2818,6 +2820,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             cornerNoTargetRetryTicks.Remove(entityId);
             _obstacleVolleyClocks.Remove(entityId);
             _obstacleCrawlStates.Remove(entityId);
+            _obstacleRootTweens.Remove(entityId);
             infantryShotWindups.Remove(entityId);
             infantryRoundIntents.Remove(entityId);
             nextCornerChangeTicks.Remove(entityId);
@@ -3939,6 +3942,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         cornerNoTargetRetryTicks.Clear();
         _obstacleVolleyClocks.Clear();
         _obstacleCrawlStates.Clear();
+        _obstacleRootTweens.Clear();
         infantryShotWindups.Clear();
         infantryRoundIntents.Clear();
         diagnosticFlights.Clear();

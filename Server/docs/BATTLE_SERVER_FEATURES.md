@@ -1193,3 +1193,10 @@ uncertainty after the path ends; rounds and local muzzle clocks continue, but
 fixed-root world muzzle/origin and collider candidates remain absent. The
 general moving-root model is still required. See
 [the experiment and implementation boundary](COOP_OBSTACLE_ROOT_TURNS.md).
+
+B22's source rotation stage now preserves NGUI's extra first-frame Start update,
+reused-component factor reset, float accumulation and strict completion. Its
+first seven frames match actual Unity tween writes and enabled state. Stationary
+obstacle snapshots now publish the interpolated root rather than retaining spawn
+rotation. Moving volleys retain their native navigation conflict; the tween
+stage alone does not establish their complete live rotation or hit authority.
