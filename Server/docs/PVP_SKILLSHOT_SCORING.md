@@ -28,8 +28,8 @@ Confirmed player-bullet infantry deaths now add the source `HeadShot` flag
 only when the host collision has the pinned head sphere's path and damage
 weight. The recovered `EnemyController` requires a `Shot` death on part index
 one; body hits and explosion deaths do not qualify. A real animated-infantry
-ray verifies the classifier, but a lethal player `Fire` headshot still needs
-end-to-end proof.
+ray verifies the classifier, and a live player `Fire` sequence confirms one
+infantry headshot in match score and private terminal evidence.
 
 ## Runtime boundary
 

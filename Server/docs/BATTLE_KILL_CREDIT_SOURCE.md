@@ -37,8 +37,10 @@ mine, and Bazooka full-health death paths still need live one-hit proof.
 head sphere from the body by its source path and 1.5 damage weight. Confirmed
 player-bullet deaths now add `HeadShot` only for that trusted head collider;
 body hits and explosion deaths do not. A real animated-infantry collision test
-proves the head/body distinction, while a lethal player `Fire` headshot still
-needs live end-to-end verification.
+proves the head/body distinction. A live player `Fire` sequence also kills one
+deployed infantry through head contact, scores one `HeadShot`, and retains that
+count only in private terminal evidence. Other weapons and attached victims
+remain outside this proof.
 
 Confirmed player-owned mine, Bazooka, and grenade blasts add the source ExplosiveKill flag to those
 same base flags. The blast death recorder stages every combo/score transition before publishing its

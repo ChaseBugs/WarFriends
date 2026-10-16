@@ -17981,6 +17981,89 @@ internal static class CombatContentTests
         {
             PartWeight = 1f
         }));
+        var liveHeadshotManifest = walkingShotgunnerManifest with
+        {
+            MatchId = "player-bullet-infantry-headshot",
+            DurationSeconds = 180,
+            SceneMasterPlayerId = soldierOwner,
+            Players = walkingShotgunnerManifest.Players.Select(player => player with
+            {
+                ArmySpecialUpgradeIndexes = [-1],
+                ShieldLevel = 0,
+                PlayerLevel = 8
+            }).ToArray()
+        };
+        var liveHeadshotMatch = new MatchEngine(liveHeadshotManifest, content: content, armyChoice: _ => 0);
+        liveHeadshotMatch.Admit(soldierOwner);
+        liveHeadshotMatch.Admit(helicopterOwner);
+        liveHeadshotMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = liveHeadshotMatch.ManifestHash }
+        });
+        liveHeadshotMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = liveHeadshotMatch.ManifestHash }
+        });
+        liveHeadshotMatch.Advance(60);
+        int headshotOption = liveHeadshotMatch.ArmyBatch(soldierOwner).OptionIndexes
+            .OrderBy(index => content.Army.Option(index).Count).First();
+        liveHeadshotMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = headshotOption }
+        });
+        BattleArmyEntityState? headshotVictim = null;
+        ulong headshotTick = 60;
+        while (headshotVictim == null && headshotTick < 90)
+        {
+            liveHeadshotMatch.Advance(++headshotTick);
+            headshotVictim = liveHeadshotMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities.SingleOrDefault();
+        }
+        Check(headshotVictim != null, "live headshot target deploys as one source infantry entity");
+        ulong headshotCommandId = 2;
+        while (liveHeadshotMatch.ArmyHealth(headshotVictim!.EntityKey) != null &&
+               headshotTick < 1500 && !liveHeadshotMatch.Terminal)
+        {
+            if (headshotTick % 12 == 0)
+            {
+                var liveHeadCollider = liveHeadshotMatch.GroundVehicleShotTargets(helicopterOwner)
+                    .Single(target => target.EntityId == headshotVictim.EntityKey &&
+                                      target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyHeadSourcePath);
+                Vector3 headCenter = liveHeadCollider.Hitbox.Center;
+                liveHeadshotMatch.Command(helicopterOwner, new MatchCommand
+                {
+                    CommandId = headshotCommandId++,
+                    Fire = new FireCommand
+                    {
+                        TargetX = headCenter.X,
+                        TargetY = headCenter.Y,
+                        TargetZ = headCenter.Z
+                    }
+                });
+            }
+            liveHeadshotMatch.Advance(++headshotTick);
+        }
+        Check(liveHeadshotMatch.ArmyHealth(headshotVictim!.EntityKey) == null,
+            "normal player Fire commands kill the deployed source infantry");
+        var liveHeadshotScore = liveHeadshotMatch.BonusProgress.ScoreSnapshot(helicopterOwner);
+        Check(liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.HeadShot] == 1 &&
+              liveHeadshotScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1,
+            "lethal player Fire head contact credits one private HeadShot skill-shot row");
+        liveHeadshotMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = headshotCommandId++,
+            Forfeit = new ForfeitCommand()
+        });
+        var liveHeadshotPublic = liveHeadshotMatch.Snapshot().Players
+            .Single(player => player.PlayerId == helicopterOwner);
+        var liveHeadshotPrivate = liveHeadshotMatch.TerminalEvidenceSnapshot().Players
+            .Single(player => player.PlayerId == helicopterOwner);
+        Check(liveHeadshotPublic.ConfirmedSkillShotCounts.Count == 0 &&
+              liveHeadshotPrivate.ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.HeadShot).Count == 1,
+            "terminal evidence retains the host-confirmed headshot without exposing private counts to peers");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
