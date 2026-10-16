@@ -40,6 +40,9 @@ public static class SelfHostedLiveRifleAudit
         {
             VerifyRemoteInterpolation();
             var scene=EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
+            HudScreen scoreHud = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<HudScreen>(true)).Single();
+            scoreHud.InitEvents();
             var reconnectDialog=scene.GetRootGameObjects()
                 .SelectMany(root=>root.GetComponentsInChildren<ReconnectDialog>(true)).Single();
             if(reconnectDialog.background==null || reconnectDialog.title==null ||
@@ -153,6 +156,14 @@ public static class SelfHostedLiveRifleAudit
                 if(!adapter.State.Players.Any(p=>p.Health<1000) ||
                     !adapter.State.Players.Any(p=>p.ConfirmedPlayerHits>0) || frames<2)
                     throw new InvalidOperationException("Live rendered rifle combat did not deliver damage and pose updates.");
+                for (int attempt = 0; attempt < 24 &&
+                    adapter.State.Players.Single(player => player.PlayerId == local.PlayerId).Score == 0; attempt++)
+                {
+                    await adapter.Fire(Head(rightPlayer));
+                    await Task.Delay(240, ct.Token);
+                    await adapter.Refresh();
+                }
+                VerifyLiveScoreHud(adapter, scoreHud);
                 var leftState=adapter.State.Players.Single(p=>p.PlayerId==local.PlayerId);
                 var rightState=adapter.State.Players.Single(p=>p.PlayerId==peer.PlayerId);
                 if(Math.Abs(leftPlayer.destroyableParts.health-leftState.Health)>.001f ||
@@ -355,6 +366,32 @@ public static class SelfHostedLiveRifleAudit
             // Unity 2018 PlayerLoop and can crash the editor before Run exits.
         }
     }
+    private static void VerifyLiveScoreHud(SelfHostedBattleClient adapter, HudScreen hud)
+    {
+        BattlePlayerState local = adapter.State.Players.Single(player => player.PlayerId == adapter.LocalPlayerId);
+        ScoreManager scores = Singleton<ScoreManager>.instance;
+        if (local.Score <= 0 || scores.score != local.Score)
+        {
+            throw new InvalidOperationException("Live UDP combat did not publish its score to the scene manager.");
+        }
+
+        // Edit Mode does not advance the recovered score notification coroutine.
+        var notify = typeof(ScoreManager).GetMethod("CheckForScoreChange",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var clock = (System.Collections.IEnumerator)notify.Invoke(scores, null);
+        clock.MoveNext();
+        Component counter = hud.scoreLabel.GetComponent("TweenTextCounter");
+        counter.GetType().GetMethod("Awake", System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic).Invoke(counter, null);
+        ((UITweener)counter).Sample(1f, true);
+        if (hud.scoreLabel.text != local.Score.ToString() || hud.scoreAddedLabel.text != "+" + local.Score)
+        {
+            throw new InvalidOperationException("The recovered scene HUD did not display the live UDP score.");
+        }
+
+        Debug.Log("UNITY_LIVE_SCORE_HUD_PASSED score=" + local.Score);
+    }
+
 	private static async Task AcknowledgeAll(MatchConnection connection,ulong cursor,
 		CancellationToken cancellation)
 	{

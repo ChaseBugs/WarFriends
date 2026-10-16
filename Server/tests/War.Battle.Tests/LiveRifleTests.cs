@@ -25,13 +25,16 @@ internal static class LiveRifleTests
         string[] ids=[new string('a',32),new string('b',32)];
         var weapon=content.Stats.CreateManifest("Google2u.AssaultRifle_AK47",0);
         var famas=content.Stats.CreateManifest("Google2u.AssaultRifle_Famas",0);
-        ParticipantManifest Player(string id,int fraction,CoverNode cover)=>new(id,weapon,fraction,cover.SourceIndex,1,new(1000),0)
+        ParticipantManifest Player(string id,int fraction,CoverNode cover)=>new(id,weapon,fraction,cover.SourceIndex,1,new(1000),0,null,0)
         {
             WeaponSlots=[new WeaponSlotManifest(0,11,weapon,0),new WeaponSlotManifest(2,26,famas,0)]
         };
         var manifest=new MatchManifest("rifle-unity","local-1",Path.GetFileNameWithoutExtension(map.Source),map.SourceHash,content.Revision,
             MatchManifest.RifleCombatMode,120,60,120,
-            [Player(ids[0],1,covers[0]),Player(ids[1],2,covers[1])]);
+            [Player(ids[0],1,covers[0]),Player(ids[1],2,covers[1])])
+        {
+            SceneMasterPlayerId = ids[0]
+        };
         string prefix=Path.Combine(Path.GetTempPath(),"war-rifle-unity-"+Guid.NewGuid().ToString("N"));
         string manifestFile=prefix+".json",grantsFile=prefix+".jsonl";
         string unityLog=Path.GetFullPath("Server/.local/unity-live-rifle.log");

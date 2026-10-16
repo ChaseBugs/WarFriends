@@ -28,7 +28,11 @@ the real Sabotage UDP fixture checks peer/replay score consistency. An isolated
 Unity component audit checks actual NGUI label output and callback ordering.
 A separate MainScene Edit Mode audit passes four checks using the real score
 singleton, serialized HUD references, production event subscription and score
-Tween setup. Its controlled snapshot does not prove UDP-to-HUD delivery.
+Tween setup. A subsequent live rifle Worker/Unity Editor run verified a
+positive host score (six points) through the production adapter into the same
+scene manager and NGUI total/gain labels. The Editor audit explicitly advances
+the notification coroutine and samples the tween; normal frame scheduling and
+final result navigation remain unverified.
 This does not prove normal MainScene rendering, two-device Unity gameplay,
 Android behavior or complete skill-shot popup/statistics integration. B32 remains partial.
 

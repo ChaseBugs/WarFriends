@@ -70,3 +70,21 @@ component audit also passed again. The scene audit uses a controlled terminal
 snapshot and invokes the score notification coroutine explicitly in Edit Mode.
 It does not prove UDP-to-HUD delivery, normal Play Mode, two running Unity peers,
 Android behavior, or final result-screen navigation. Those gates remain open.
+
+## Live UDP score delivery
+
+On 2026-10-17 the existing live rifle Editor harness passed with the production
+UDP Worker, two independently admitted participants and both recovered scene
+rigs. The fixture now admits both zero-based player ranks and a scene-master
+identity, enabling source score authority. It retains the previous unshielded
+setup; map-loader/shield integration is outside this fixture.
+
+`SelfHostedLiveRifleAudit` initializes the actual scene HUD subscription, fires
+until the local host score is positive, and verifies the scene manager and
+NGUI total/gain labels against that same received snapshot. The run recorded
+`UNITY_LIVE_SCORE_HUD_PASSED score=6` and the complete existing rifle audit passed,
+including movement, weapon switching and automatic event-history reconnect.
+Editor mode explicitly advances the score notification coroutine and samples
+the text tween. This proves live UDP-to-HUD value delivery; it does not prove
+normal frame scheduling, final result navigation, two running Unity processes,
+or Android presentation. No combat outcome becomes reward-eligible here.
