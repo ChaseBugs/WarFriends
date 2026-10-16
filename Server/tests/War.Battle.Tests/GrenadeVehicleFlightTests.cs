@@ -20,9 +20,38 @@ internal static class GrenadeVehicleFlightTests
         int checks = 0;
         VerifyHumveeFlight(content, map, ref checks);
         VerifyTransporterFlight(content, map, ref checks);
+        VerifyMovingTargetsAcrossScenes(content, ref checks);
 
         Console.WriteLine($"PASS: {checks} grenade-mode vehicle flight assertions");
         return checks;
+    }
+
+    private static void VerifyMovingTargetsAcrossScenes(
+        BattleCombatContent content, ref int checks)
+    {
+        foreach (RecoveredBattleMap map in content.Maps)
+        {
+            foreach (string unitId in new[] { "ID_UNIT-HUMVEE", "ID_UNIT-TRANSPORTER" })
+            {
+                var (match, vehicle, tick) = PrepareVehicle(content, map, unitId, ref checks);
+                var move = match.Command(DefenderId, new MatchCommand
+                {
+                    CommandId = 2,
+                    MoveCover = new MoveCoverCommand { Direction = 1 }
+                });
+                Check(move.Code == "moving", "Defender changes cover during vehicle fire.", ref checks);
+                StartAttack(match, vehicle, ref checks);
+                while (tick < 1100 && !match.Terminal)
+                {
+                    match.Advance(++tick);
+                }
+
+                BattlePlayerState defender = match.Snapshot().Players.Single(player =>
+                    player.PlayerId == DefenderId);
+                Check(defender.Health == defender.MaxHealth,
+                    $"{unitId} cannot invent player damage behind {map.Source} cover.", ref checks);
+            }
+        }
     }
 
     private static (MatchEngine Match, BattleArmyEntityState Vehicle, ulong Tick)

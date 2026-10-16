@@ -262,6 +262,9 @@ each vehicle's own confirmed revenge marker. Humvee and Transporter use the
 shared path. A typed grenade-mode Humvee command now launches from its source
 muzzle, and its shot hits map cover without inventing player damage. A typed
 Transporter command emits real and fake rounds from separate source muzzles.
+Authenticated Humvee and Transporter attacks were also checked in all five
+recovered maps while the defender moved to another cover. Those starting
+positions produced no player damage; they do not establish direct-hit parity.
 The grenade-mode normal vehicle flight no longer falls back to a fabricated
 target collision when `RifleMatchSimulation` is absent. Confirmed Humvee or
 Transporter player hits now mark the source vehicle for revenge, but neither
