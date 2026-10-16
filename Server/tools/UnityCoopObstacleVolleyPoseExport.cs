@@ -116,6 +116,14 @@ public static class UnityCoopObstacleVolleyPoseExport
             throw new InvalidOperationException("Gameplay preparation requires gameplay round emission.");
         }
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        CreateSourceRig();
+        SessionState.SetBool(SessionKey, true);
+        EditorApplication.isPlaying = true;
+    }
+
+    /// <summary>Creates a source rig with the rifle and animation controller, without online gameplay components.</summary>
+    public static GameObject CreateSourceRig()
+    {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(EnemyPath);
         GameObject enemy = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         enemy.name = ProbeName;
@@ -127,8 +135,7 @@ public static class UnityCoopObstacleVolleyPoseExport
         {
             agent.enabled = false;
         }
-        SessionState.SetBool(SessionKey, true);
-        EditorApplication.isPlaying = true;
+        return enemy;
     }
 
     private static void AttachWeapon(GameObject enemy)

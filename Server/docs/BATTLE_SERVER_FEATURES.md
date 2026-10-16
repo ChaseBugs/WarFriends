@@ -1306,3 +1306,11 @@ new fixture checks callback and next-poll positions and rotations against
 the active clock, and the runtime callback world-position regression uses
 the observed phase. Full controller, corner callback and moving-root evidence
 remain open; see the callback muzzle correction in the same report.
+
+B22 now uses gameplay-phase corner muzzles for callback prediction and emitted
+rounds. Native left/right source-controller observations verify callback tick
+17, first poll 18 and host-scheduled second reset 29, including local position
+and rotation before each OnShot. A bounded source clock replaces the previous
+unchanged initial-queue sampling and rejects mismatched or invalid histories.
+Full controller/Gun, moving roots, corner colliders and live co-op remain open.
+See [the corner callback report](COOP_CORNER_CALLBACKS.md).

@@ -1749,7 +1749,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             // Source-sampled geometry stays diagnostic until gameplay transform phases and moving roots are verified.
             CoopQueuedMuzzleSample? observedMuzzle = windup.AnimationClip == "stand_up_begin"
                 ? ObserveObstacleFiringMuzzle(entityId, windup)
-                : assaulterQueue?.Sample(windup.AnimationClip, windup.QueuedFireClip, tick - windup.StartTick);
+                : ObserveCornerFiringMuzzle(entityId, windup);
             Vector3? observedWorldOrigin = null;
             CoopInfantryPointState pointState =
                 infantryPointArrivals[entityId].State;
@@ -3606,10 +3606,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         if (!CoopAssaulterShotRotation.FinalRotationReached(
                 arrival.State, elapsedTicks))
             return null;
-        // The verified obstacle coroutine sees the Update sample before this frame's animation evaluation.
+        // Source callbacks read the gameplay transform sample before this frame's animation evaluation.
         CoopQueuedMuzzleSample? sample = windup.AnimationClip == "stand_up_begin"
             ? ObserveObstacleFiringMuzzle(enemyId, windup)
-            : assaulterQueue.Sample(windup.AnimationClip, windup.QueuedFireClip, elapsedTicks);
+            : ObserveCornerFiringMuzzle(enemyId, windup);
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == enemyId && spawn.Health > 0 &&
             spawn.DeathTick == 0);

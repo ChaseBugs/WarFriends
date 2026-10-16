@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "captureRate": 30,
+  "timeScale": 1.0,
+  "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
+  "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "weaponSha256": "a55f77d5fc32e948951805b01e13c9193cf852171ec842a2caa6ad3338239de2",
+  "coroutineSha256": "3a42957a1560169dc96af028905d93f0a70aa7d84050d6d5b640b06507f60dce",
+  "probeSha256": "38fa221ecc0372510833163c7ef4c19ecbb17693dfbe41b5fd2c707a5db2b840",
+  "exporterSha256": "8a3393444477c0c0c5ff8dac0c487429170eebe163aa4da34717838ebb2ba497",
+  "rigFactorySha256": "d536026bd9f71190ef17e0afd1f4e9e8798aa36bd26432de57e08a30ac1ecdab",
+  "clips": [
+    {
+      "name": "player_look_right3",
+      "sha256": "8e436ded13866414bf59a5595ce64f1a9ecb879d1bdb44eb51770d9a532246f7"
+    },
+    {
+      "name": "player_look_left3",
+      "sha256": "a7a6a25eda2068ca8d3031f6afb94a0460855e4675336690e9c95d1e228e4804"
+    },
+    {
+      "name": "player_fire_right3",
+      "sha256": "38141f384200d0ca1a51ac3ef3f09795e312ce4158bf0d062a168eb5f39261c7"
+    },
+    {
+      "name": "player_fire_left3",
+      "sha256": "a628bcbfb8eb228980ca5056f6c0c17178c6917d6871cfbb82a9d8dcdf7d6fe8"
+    },
+    {
+      "name": "idle_1",
+      "sha256": "fc75d82afa2e12a7119e53ddad5db550273f71e513f487cd17b5bca1d8518b04"
+    }
+  ],
+  "scenarios": [
+    {
+      "side": "left",
+      "startClip": "player_look_left3",
+      "fireClip": "player_fire_left3",
+      "delaySeconds": 0.5500005,
+      "preparationFrame": 1,
+      "callbackFrame": 18,
+      "callbackTick": 17,
+      "firstReadyTick": 18,
+      "callbackPose": {
+        "position": [
+          -0.3218965,
+          0.255685478,
+          -0.112532109
+        ],
+        "rotation": [
+          -0.0619605556,
+          0.997996867,
+          -0.0113025308,
+          -0.00599161442
+        ],
+        "states": [
+          {
+            "name": "player_fire_left3 - Queued Clone",
+            "time": 0.0333333351,
+            "normalizedTime": 0.09999989,
+            "weight": 1.0
+          }
+        ]
+      },
+      "firstReadyPose": {
+        "position": [
+          -0.330828458,
+          0.2538232,
+          -0.101139188
+        ],
+        "rotation": [
+          -0.0774477,
+          0.996856,
+          -0.00570383668,
+          -0.0157316271
+        ],
+        "states": [
+          {
+            "name": "player_fire_left3 - Queued Clone",
+            "time": 0.06666667,
+            "normalizedTime": 0.199999779,
+            "weight": 1.0
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "tick": 18,
+          "pose": {
+            "position": [
+              -0.330828458,
+              0.2538232,
+              -0.101139188
+            ],
+            "rotation": [
+              -0.0774477,
+              0.996856,
+              -0.00570383668,
+              -0.0157316271
+            ],
+            "states": [
+              {
+                "name": "player_fire_left3 - Queued Clone",
+                "time": 0.06666667,
+                "normalizedTime": 0.199999779,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 29,
+          "pose": {
+            "position": [
+              -0.3224054,
+              0.254417956,
+              -0.167371452
+            ],
+            "rotation": [
+              -0.06537244,
+              0.997781754,
+              -0.0110851228,
+              -0.005931999
+            ],
+            "states": [
+              {
+                "name": "player_fire_left3",
+                "time": 0.333333343,
+                "normalizedTime": 0.999998868,
+                "weight": 1.0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "side": "right",
+      "startClip": "player_look_right3",
+      "fireClip": "player_fire_right3",
+      "delaySeconds": 0.5500005,
+      "preparationFrame": 1,
+      "callbackFrame": 18,
+      "callbackTick": 17,
+      "firstReadyTick": 18,
+      "callbackPose": {
+        "position": [
+          0.248388931,
+          0.249721482,
+          -0.082663
+        ],
+        "rotation": [
+          0.06770414,
+          -0.9968802,
+          0.0260288715,
+          -0.03112568
+        ],
+        "states": [
+          {
+            "name": "player_fire_right3 - Queued Clone",
+            "time": 0.0333333351,
+            "normalizedTime": 0.0999998152,
+            "weight": 1.0
+          }
+        ]
+      },
+      "firstReadyPose": {
+        "position": [
+          0.242635742,
+          0.245268166,
+          -0.08179128
+        ],
+        "rotation": [
+          0.0722923949,
+          -0.9968289,
+          0.0290522575,
+          -0.0161872916
+        ],
+        "states": [
+          {
+            "name": "player_fire_right3 - Queued Clone",
+            "time": 0.06666667,
+            "normalizedTime": 0.19999963,
+            "weight": 1.0
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "tick": 18,
+          "pose": {
+            "position": [
+              0.242635742,
+              0.245268166,
+              -0.08179128
+            ],
+            "rotation": [
+              0.0722923949,
+              -0.9968289,
+              0.0290522575,
+              -0.0161872916
+            ],
+            "states": [
+              {
+                "name": "player_fire_right3 - Queued Clone",
+                "time": 0.06666667,
+                "normalizedTime": 0.19999963,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 29,
+          "pose": {
+            "position": [
+              0.248439953,
+              0.247154668,
+              -0.131221011
+            ],
+            "rotation": [
+              0.06317811,
+              -0.9970834,
+              0.0286833942,
+              -0.0317944139
+            ],
+            "states": [
+              {
+                "name": "player_fire_right3",
+                "time": 0.333333343,
+                "normalizedTime": 0.999998152,
+                "weight": 1.0
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

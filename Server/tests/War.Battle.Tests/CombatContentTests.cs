@@ -953,6 +953,7 @@ internal static class CombatContentTests
         CoopGameplayQueryObservationTests.RunPreparation(directory, content);
         CoopShotCallbackClockTests.Run(directory, content);
         CoopShotCallbackMuzzleTests.Run(directory, content);
+        CoopCornerCallbackTests.Run(directory, content);
         CoopObstacleProofIntegrityTests.Run(directory, content);
         CoopObstacleCrawlReturnClockTests.Run();
         CoopObstacleTurnObservationTests.Run(directory, content);
