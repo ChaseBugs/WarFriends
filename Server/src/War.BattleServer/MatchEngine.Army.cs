@@ -4336,7 +4336,8 @@ public sealed partial class MatchEngine
                         army.UnitId) |
                         PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
                             army.Health, army.MaxHealth) |
-                        BlastRunnerFlag(beforeBlast, army.EntityKey);
+                        BlastRunnerFlag(beforeBlast, army.EntityKey) |
+                        BlastRevengeFlag(beforeBlast, army.EntityKey);
                     string receiptId = PvpHitReceiptId(cause, army.EntityKey, attackerPlayerId);
                     scoredDeaths = scoredDeaths.PrepareConfirmedPlayerOwnedDeathCopy(
                         attackerPlayerId, receiptId, flags, PlayerOwnedDeathGameTime,

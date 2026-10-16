@@ -2689,7 +2689,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             projectile.Stage, projectile.Binding, projectile.HalfDamage);
         // Barrels may produce their own deaths. Snapshot after those chains so
         // this ledger records only the player's bazooka blast transitions.
-        var armyBeforeBazookaBlast = CaptureArmyBlastSnapshot();
+        var armyBeforeBazookaBlast = CaptureArmyBlastSnapshot(impact.OwnerId);
         int firstBazookaDeathEventIndex = events.Count;
         ApplyPlayerBazookaDecoyExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
@@ -2786,7 +2786,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         ApplyGrenadeBonusBoxes(impact.OwnerId, impact.ProjectileId,
             impact.Position, projectile.Stage);
         if (Terminal) return;
-        var armyBeforeGrenadeBlast = CaptureArmyBlastSnapshot();
+        var armyBeforeGrenadeBlast = CaptureArmyBlastSnapshot(impact.OwnerId);
         var firstGrenadeEvidence = (EventIndex: events.Count, KillIndex: directArmyKills.Count);
         ApplyPlayerGrenadeInfantryExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;

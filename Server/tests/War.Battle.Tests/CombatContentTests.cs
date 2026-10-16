@@ -18248,59 +18248,61 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.Runner).Count == 1,
             "private terminal evidence retains the explosion victim's Runner count");
-        var revengeManifest = runningMineManifest with
+        (MatchEngine Match, BattleArmyEntityState Victim, ulong Tick) PrepareRevengeVictim(
+            string matchId)
         {
-            MatchId = "army-shot-player-revenge",
-            DurationSeconds = 180,
-            IdleSeconds = 120
-        };
-        var revengeMatch = new MatchEngine(revengeManifest, content: content, armyChoice: _ => 0);
-        revengeMatch.Admit(soldierOwner);
-        revengeMatch.Admit(helicopterOwner);
-        foreach (string playerId in new[] { soldierOwner, helicopterOwner })
-        {
-            revengeMatch.Command(playerId, new MatchCommand
+            const int RevengeScenarioRandomSeed = 731;
+            var manifest = runningMineManifest with
             {
-                CommandId = 1,
-                Ready = new ReadyCommand { ManifestHash = revengeMatch.ManifestHash }
-            });
-        }
-        revengeMatch.Advance(60);
-        int revengeOption = revengeMatch.ArmyBatch(soldierOwner).OptionIndexes
-            .OrderBy(index => content.Army.Option(index).Count).First();
-        revengeMatch.Command(soldierOwner, new MatchCommand
-        {
-            CommandId = 2,
-            DeployArmy = new DeployArmyCommand { OptionIndex = revengeOption }
-        });
-        ulong revengeTick = 60;
-        BattleArmyEntityState? revengeVictim = null;
-        int observedRevengeShots = 0;
-        int observedRealRevengeShots = 0;
-        uint playerHitsBeforeArmyShot = revengeMatch.Snapshot().Players.Single(player =>
-            player.PlayerId == soldierOwner).ConfirmedPlayerHits;
-        while (revengeTick < 1500 && !revengeMatch.Terminal)
-        {
-            revengeMatch.Advance(++revengeTick);
-            observedRevengeShots += revengeMatch.RusherShotIntents.Count;
-            observedRealRevengeShots += revengeMatch.RusherShotIntents.Count(shot => shot.IsReal);
-            revengeVictim = revengeMatch.ArmyEntityBatch(soldierOwner, 0, 0)
-                .Entities.SingleOrDefault();
-            uint confirmedPlayerHits = revengeMatch.Snapshot().Players.Single(player =>
-                player.PlayerId == soldierOwner).ConfirmedPlayerHits;
-            if (revengeVictim != null && confirmedPlayerHits > playerHitsBeforeArmyShot)
+                MatchId = matchId,
+                DurationSeconds = 180,
+                IdleSeconds = 120
+            };
+            var random = new Random(RevengeScenarioRandomSeed);
+            var match = new MatchEngine(manifest, content: content,
+                armyChoice: _ => 0, combatRandom: random.NextSingle);
+            match.Admit(soldierOwner);
+            match.Admit(helicopterOwner);
+            foreach (string playerId in new[] { soldierOwner, helicopterOwner })
             {
-                break;
+                match.Command(playerId, new MatchCommand
+                {
+                    CommandId = 1,
+                    Ready = new ReadyCommand { ManifestHash = match.ManifestHash }
+                });
             }
+            match.Advance(60);
+            int option = match.ArmyBatch(soldierOwner).OptionIndexes
+                .OrderBy(index => content.Army.Option(index).Count).First();
+            match.Command(soldierOwner, new MatchCommand
+            {
+                CommandId = 2,
+                DeployArmy = new DeployArmyCommand { OptionIndex = option }
+            });
+            ulong currentTick = 60;
+            BattleArmyEntityState? victim = null;
+            uint hitsBefore = match.Snapshot().Players.Single(player =>
+                player.PlayerId == soldierOwner).ConfirmedPlayerHits;
+            int realShots = 0;
+            while (currentTick < 1500 && !match.Terminal)
+            {
+                match.Advance(++currentTick);
+                realShots += match.RusherShotIntents.Count(shot => shot.IsReal);
+                victim = match.ArmyEntityBatch(soldierOwner, 0, 0).Entities.SingleOrDefault();
+                uint hitsNow = match.Snapshot().Players.Single(player =>
+                    player.PlayerId == soldierOwner).ConfirmedPlayerHits;
+                if (victim != null && hitsNow > hitsBefore)
+                {
+                    break;
+                }
+            }
+            Check(victim != null && !match.Terminal && realShots > 0 && currentTick < 1500,
+                "a live army projectile hits its opposing player before a revenge kill");
+            return (match, victim!, currentTick);
         }
-        uint confirmedRevengeHits = revengeMatch.Snapshot().Players.Single(player =>
-            player.PlayerId == soldierOwner).ConfirmedPlayerHits;
-        Check(revengeVictim != null && !revengeMatch.Terminal && revengeTick < 1500 &&
-              observedRealRevengeShots > 0,
-            "a live army projectile damages its opposing player before the revenge kill: " +
-            $"tick={revengeTick}, hits={confirmedRevengeHits}, " +
-            $"shots={observedRevengeShots}, real={observedRealRevengeShots}, " +
-            $"projectiles={revengeMatch.Snapshot().Projectiles.Count}, terminal={revengeMatch.Terminal}");
+
+        var (revengeMatch, revengeVictim, revengeTick) = PrepareRevengeVictim(
+            "army-shot-player-revenge");
         ulong revengeCommandId = 2;
         while (revengeMatch.ArmyHealth(revengeVictim!.EntityKey) != null &&
                revengeTick < 1500 && !revengeMatch.Terminal)
@@ -18332,6 +18334,28 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains one source-backed army revenge kill");
+        var (revengeMineMatch, revengeMineVictim, revengeMineTick) = PrepareRevengeVictim(
+            "army-shot-player-mine-revenge");
+        var revengeMineBody = revengeMineMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == revengeMineVictim.EntityKey &&
+                target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
+        Check(revengeMineMatch.TryRegisterLandMine(new string('c', 32), helicopterOwner,
+                revengeMineBody.Hitbox.Center, revengeMineVictim.Health + 100f),
+            "host-owned mine overlaps the army entity that damaged its opposing player");
+        revengeMineMatch.Advance(++revengeMineTick);
+        Check(revengeMineMatch.ArmyHealth(revengeMineVictim.EntityKey) == null &&
+              revengeMineMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "a player mine preserves the same victim's pre-death revenge marker");
+        revengeMineMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(revengeMineMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
+            "private terminal evidence retains the confirmed mine revenge kill");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

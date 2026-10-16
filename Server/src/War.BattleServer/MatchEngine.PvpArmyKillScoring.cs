@@ -28,12 +28,14 @@ public sealed partial class MatchEngine
 
     private sealed record ArmyBlastSnapshot(
         IReadOnlyList<BattleArmyEntityState> Entities,
-        IReadOnlyDictionary<ulong, int> RunnerFlags);
+        IReadOnlyDictionary<ulong, int> RunnerFlags,
+        IReadOnlyDictionary<ulong, int> RevengeFlags);
 
-    private ArmyBlastSnapshot CaptureArmyBlastSnapshot()
+    private ArmyBlastSnapshot CaptureArmyBlastSnapshot(string attackerPlayerId)
     {
         var entities = activeArmyEntities.Values.ToArray();
         var runnerFlags = new Dictionary<ulong, int>();
+        var revengeFlags = new Dictionary<ulong, int>();
 
         foreach (var entity in entities)
         {
@@ -42,14 +44,25 @@ public sealed partial class MatchEngine
                 runnerFlags.Add(entity.EntityKey,
                     PvpArmyKillSkillShotPolicy.ConfirmedRunnerFlag(motion));
             }
+
+            int revengeFlag = ConfirmedArmyRevengeFlag(entity.EntityKey, attackerPlayerId);
+            if (revengeFlag != 0)
+            {
+                revengeFlags.Add(entity.EntityKey, revengeFlag);
+            }
         }
 
-        return new ArmyBlastSnapshot(entities, runnerFlags);
+        return new ArmyBlastSnapshot(entities, runnerFlags, revengeFlags);
     }
 
     private static int BlastRunnerFlag(ArmyBlastSnapshot snapshot, ulong entityKey)
     {
         return snapshot.RunnerFlags.GetValueOrDefault(entityKey);
+    }
+
+    private static int BlastRevengeFlag(ArmyBlastSnapshot snapshot, ulong entityKey)
+    {
+        return snapshot.RevengeFlags.GetValueOrDefault(entityKey);
     }
 
     // The recovered reconnect dialog pauses Unity Time.time. The simulation
@@ -104,7 +117,8 @@ public sealed partial class MatchEngine
                     army.UnitId) |
                     PvpArmyKillSkillShotPolicy.ConfirmedOneHitFlag(
                         army.Health, army.MaxHealth) |
-                    BlastRunnerFlag(beforeBlast, army.EntityKey);
+                    BlastRunnerFlag(beforeBlast, army.EntityKey) |
+                    BlastRevengeFlag(beforeBlast, army.EntityKey);
                 string receiptId = PvpHitReceiptId("player-grenade-army-kill",
                     projectileKey, army.EntityKey.ToString(CultureInfo.InvariantCulture));
                 candidate = candidate.PrepareConfirmedPlayerOwnedDeathCopy(

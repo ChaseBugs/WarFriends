@@ -279,7 +279,7 @@ public sealed partial class MatchEngine
         // Capture only entities still alive after environmental barrel
         // chains. A later disappearance in this block belongs to this
         // mine's own source-backed blast, not to the barrel chain.
-        var armyBeforeBlast = CaptureArmyBlastSnapshot();
+        var armyBeforeBlast = CaptureArmyBlastSnapshot(mine.OwnerPlayerId);
         int firstMineDeathEventIndex = events.Count;
         ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,
             mine.EntityId,outerDamage);

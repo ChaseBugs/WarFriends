@@ -65,10 +65,12 @@ marker for five scaled seconds, and `SkillShotController` reads it on death.
 The host now records the exact spawned army entity and damaged player after a
 confirmed army projectile hit. A later player bullet kill of that same entity
 earns `RevengeKill` only for that player and only before the 150th following
-30 Hz tick. A live Shotgunner projectile-hit-to-bullet-kill fixture verifies
-the score and private terminal count; an unmarked bullet kill stays at zero.
-Other army damage families, player-owned explosions, and exact Unity frame
-ordering remain open for this flag.
+30 Hz tick. Player-owned grenade, mine, and Bazooka deaths snapshot that
+marker before entity removal and require their existing blast death proof.
+Live Shotgunner projectile-hit-to-bullet and projectile-hit-to-mine fixtures
+verify the score and private terminal count; an unmarked bullet kill stays at
+zero. Other army damage families, live grenade/Bazooka revenge cases, and
+exact Unity frame ordering remain open for this flag.
 
 ## Runtime boundary
 
