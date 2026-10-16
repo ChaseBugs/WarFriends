@@ -2601,18 +2601,33 @@ public sealed partial class MatchEngine
         return pose.BodyTarget(body.TransformFileId).Position;
     }
 
-    private Vector3? SelectCannonPlayerTarget(string playerId, Vector3 turretPosition)
+    private DroneTargetDetails? VisibleCannonTarget(string targetId, Vector3 sightOrigin)
     {
-        // Tank and Buggy cannon prefabs both serialize playerShieldProbability as 1.
-        const float CannonShieldProbability = 1f;
         var candidate = DroneTargetSnapshot().FirstOrDefault(row =>
-            row.Id == "player:" + playerId && row.Alive);
-        if (candidate == null)
+            row.Id == targetId && row.Alive && row.Visible);
+        if (candidate == null || rifleCombat == null)
         {
             return null;
         }
 
         var details = ResolveDroneShotTarget(candidate);
+        var firstTarget = details.Targets.FirstOrDefault(row =>
+            (row.Type & 0xFFFFFB) == row.Type);
+        if (firstTarget == null)
+        {
+            return null;
+        }
+
+        var sightRay = HelicopterTurretSightRay.ForAimedShot(
+            sightOrigin, firstTarget.Position);
+        return rifleCombat.HelicopterCanSee(sightRay) ? details : null;
+    }
+
+    private Vector3? SelectCannonPlayerTarget(
+        DroneTargetDetails details, Vector3 turretPosition)
+    {
+        // Tank and Buggy cannon prefabs both serialize playerShieldProbability as 1.
+        const float CannonShieldProbability = 1f;
         var selected = HelicopterTurretShotTargetPolicy.Select(
             turretPosition, details, CannonShieldProbability, NextArmyFloat);
         return selected?.Position;
@@ -2690,16 +2705,24 @@ public sealed partial class MatchEngine
            !tankCannonDamage.TryGetValue(entityKey,out float damage))return;
         var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons.Single();
         var binding=weapon.Missile??throw new InvalidDataException("Tank cannon lacks missile binding.");
+        Vector3 origin = groundVehicleWeapons.RestMuzzleOrigin(
+            army.UnitId, "cannon", 0, vehicle.Position, target.Position - vehicle.Position);
+        string targetId = target.DecoyId is ulong decoyId
+            ? "decoy:" + decoyId.ToString(CultureInfo.InvariantCulture)
+            : "player:" + target.Target;
+        var visibleTarget = VisibleCannonTarget(targetId, origin);
+        if (visibleTarget == null)
+        {
+            return;
+        }
         Vector3? selectedPosition = target.DecoyId != null
             ? target.Position
-            : SelectCannonPlayerTarget(target.Target, vehicle.Position);
+            : SelectCannonPlayerTarget(visibleTarget, vehicle.Position);
         if (selectedPosition == null)
         {
             return;
         }
         Vector3 position = selectedPosition.Value;
-        var origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,
-            position-vehicle.Position);
         if(projectileId==ulong.MaxValue)throw new InvalidDataException("Tank projectile identity exhausted.");
         ulong id=++projectileId;
         var flight=new TankMissileFlight(id,entityKey,binding,origin,()=>position,tick,
@@ -2799,16 +2822,25 @@ public sealed partial class MatchEngine
            !buggyCannonTargets.TryGetValue(entityKey,out var target))return;
         var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons[weaponIndex];
         var binding=weapon.Missile??throw new InvalidDataException("Buggy cannon lacks missile binding.");
+        Vector3 origin = groundVehicleWeapons.RestMuzzleOrigin(
+            army.UnitId, "cannon", weaponIndex, vehicle.Position,
+            target.Position - vehicle.Position);
+        string targetId = target.DecoyId is ulong decoyId
+            ? "decoy:" + decoyId.ToString(CultureInfo.InvariantCulture)
+            : "player:" + target.Target;
+        var visibleTarget = VisibleCannonTarget(targetId, origin);
+        if (visibleTarget == null)
+        {
+            return;
+        }
         Vector3? selectedPosition = target.DecoyId != null
             ? target.Position
-            : SelectCannonPlayerTarget(target.Target, vehicle.Position);
+            : SelectCannonPlayerTarget(visibleTarget, vehicle.Position);
         if (selectedPosition == null)
         {
             return;
         }
         Vector3 position = selectedPosition.Value;
-        var origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",weaponIndex,
-            vehicle.Position,position-vehicle.Position);
         if(projectileId==ulong.MaxValue)throw new InvalidDataException("Buggy projectile identity exhausted.");
         ulong id=++projectileId;int sign=buggyCurveCounter++%2==0?-1:1;
         var flight=new BuggyMissileFlight(id,entityKey,binding,

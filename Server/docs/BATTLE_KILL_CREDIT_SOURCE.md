@@ -99,7 +99,9 @@ posed shield or moving target when each weapon fires. The Tank holds its
 launch target for the straight missile flight. The shield advances before
 vehicle projectile damage, so a Tank shield impact no longer aborts on a
 stale tick. Park matches verify live Tank and Buggy missile hits, mine kills
-of those same vehicles, and one private `RevengeKill` count each. The Client's
-pre-fire static sight check and live grenade/Bazooka revenge remain open.
+of those same vehicles, and one private `RevengeKill` count each. Tank and
+Buggy now check `TurretSeesEnemy` at launch from their serialized spawn-point
+fallback to the first ordered source target, reusing the verified static and
+destroyable visibility ray. Live grenade/Bazooka revenge remains open.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.

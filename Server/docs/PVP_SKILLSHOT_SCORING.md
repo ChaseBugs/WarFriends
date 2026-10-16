@@ -83,8 +83,10 @@ missile impacts carry the source vehicle ID into confirmed player damage.
 Live Tank and Buggy cannon hits followed by that player's mine kill each
 verify one revenge score and private terminal count. The shield advances
 before vehicle missile damage so a Tank shield impact cannot abort on a stale
-tick. Grenade/Bazooka revenge, the Client's pre-fire static sight check, and
-exact Unity frame ordering remain open.
+tick. The cannon launch path now also applies the Client's post-aim
+`TurretSeesEnemy` ray from the prefab spawn point to the first ordered target,
+using the existing source-offset and static/destroyable layer policy. Exact
+Unity frame ordering and live grenade/Bazooka revenge remain open.
 
 ## Runtime boundary
 
