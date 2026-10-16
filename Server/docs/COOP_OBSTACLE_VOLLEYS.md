@@ -98,3 +98,12 @@ same windup. The collision frame must still mark the enemy unplaced. The search
 used to locate the source combination is not part of the committed regression.
 This is host scheduling/motion evidence only; the moving crawl-to-stand/fire
 animation, hitbox placement and damage still need Unity/source parity work.
+
+## Source controller observation
+
+An actual two-round host schedule now drives the recovered Unity animation
+controller, with 82 observed frames of muzzle and all three collider parts.
+The source per-round `ShootFromCrawl` call resets the fire loop and later returns
+to crawling; the queue-only muzzle artifact does not contain that lifecycle.
+The new reference is validated but not consumed by gameplay pose authority.
+See [the observation, reproduction steps and limits](COOP_OBSTACLE_POSES.md).

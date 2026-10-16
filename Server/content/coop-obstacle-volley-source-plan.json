@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "enemySha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "weaponPrefabGuid": "d03f97fa25701ab42ab60f1fa86421ce",
+  "startClip": "stand_up_begin",
+  "fireClip": "rifle_shot_loop",
+  "captureRate": 30,
+  "roundTicks": [
+    11,
+    22
+  ],
+  "captureFrames": 82
+}

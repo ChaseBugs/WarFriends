@@ -1149,3 +1149,10 @@ This row finishes firing before its two-second position delay; overlapping fire,
 simultaneous runtime deadlines still need dedicated proof. A later pinned
 source case now verifies active-path shot preparation and continuing movement;
 its Unity pose and damage proof remain open. [Detailed boundary](COOP_OBSTACLE_VOLLEYS.md).
+
+The B22 obstacle pose investigation now captures the actual recovered animation
+controller with the real host round ticks 11 and 22. Its 82-frame source-bound
+reference includes muzzle and three collider parts, per-round loop resets and
+return to crawl. The previous queue-only reference omits those callbacks; the
+new reference is not yet used for host pose selection or damage. Sampling-phase
+and moving-root parity remain open. [Details](COOP_OBSTACLE_POSES.md).

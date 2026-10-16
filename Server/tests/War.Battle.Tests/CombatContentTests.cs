@@ -930,6 +930,7 @@ internal static class CombatContentTests
         string directory, MissionCatalog catalog, BattleCombatContent content)
     {
         VerifyCoopCornerUnityPose(directory, catalog, content);
+        CoopObstacleVolleyObservationTests.Run(directory, content);
         VerifyCoopCornerQueue(directory, content.EnemyPoses,
             content.CoopCornerQueuePoses);
         ArmyDeploymentCatalog army = content.Army;

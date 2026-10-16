@@ -34,6 +34,8 @@ internal static class CoopObstacleVolleyRuntimeTests
         CoopObstacleVolleySnapshot prepared = runtime.ObstacleVolleyState(enemyId)!;
         AdvanceUntilCompleted(runtime, enemyId);
         CoopInfantryShotWindup completed = runtime.InfantryShotWindup(enemyId)!;
+        CoopObstaclePosePlanExport.WriteIfRequested(sources.Content, completed,
+            runtime.InfantryRoundIntents(enemyId));
         CoopObstacleVolleySnapshot clock = runtime.ObstacleVolleyState(enemyId)!;
         ulong moveTick = Math.Max(prepared.NextPositionTick, completed.CompletedTick!.Value + 1);
         Check(moveTick < clock.NextShotTick, "The fixture must leave a movement window before its next shot.");
