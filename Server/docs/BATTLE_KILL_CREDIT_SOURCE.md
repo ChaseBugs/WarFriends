@@ -102,6 +102,13 @@ stale tick. Park matches verify live Tank and Buggy missile hits, mine kills
 of those same vehicles, and one private `RevengeKill` count each. Tank and
 Buggy now check `TurretSeesEnemy` at launch from their serialized spawn-point
 fallback to the first ordered source target, reusing the verified static and
-destroyable visibility ray. Live grenade/Bazooka revenge remains open.
+destroyable visibility ray. Live grenade/Bazooka revenge remains open. In
+`GrenadeCombatMode`, the host constructs `GrenadeMatchSimulation` without
+`RifleMatchSimulation`, but its deployed-army flame, bullet, and vehicle
+player-damage paths still require `rifleCombat`. An exploratory live
+Flamethrower fixture produced no player hit through tick 1500 in that mode,
+although its rifle-mode counterpart does. Shared army collision and player
+damage must work across weapon modes before a grenade revenge fixture can
+exercise the complete source callback chain.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.
