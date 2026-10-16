@@ -42,7 +42,8 @@ internal static class CoopObstacleVolleyObservationTests
                 Math.Abs(frame.GetProperty("seconds").GetDouble() - tick / (double)captureRate) < FrameTimeTolerance,
                 "The observed frames must be ordered at the declared capture rate.");
             JsonElement parts = frame.GetProperty("parts");
-            Require(parts.GetArrayLength() == ColliderPartCount, "Every frame needs both body shapes and the head shape.");
+            Require(parts.GetArrayLength() == ColliderPartCount,
+                "Every frame needs both body shapes and the head shape.");
             foreach (JsonElement part in parts.EnumerateArray())
             {
                 Require(part.GetProperty("center").EnumerateArray().All(value => float.IsFinite(value.GetSingle())),
