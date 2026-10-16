@@ -3667,7 +3667,10 @@ public sealed partial class MatchEngine
 
     private void LaunchRusherShotIntents()
     {
-        if(rifleCombat==null || rusherShotIntents.Count==0)return;
+        if (!HasArmyCombatView || rusherShotIntents.Count == 0)
+        {
+            return;
+        }
         ArmyWeaponBindingCatalog weaponBindings = armyWeapons ??
             throw new InvalidDataException("Army projectile lacks weapon binding authority.");
         foreach(var intent in rusherShotIntents)
@@ -3729,7 +3732,8 @@ public sealed partial class MatchEngine
             ulong id=++projectileId;
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
-                (from,direction,range)=>rifleCombat.TraceForArmyDamage(intent.OwnerPlayerId,from,direction,range),
+                (from, direction, range) => TraceArmyShot(
+                    intent.OwnerPlayerId, from, direction, range),
                 weaponBindings.SlowBulletCheckDistance(army.UnitId),
                 fastBullet:shotgun,
                 targetVelocity:shotgun?ArmyFastBulletTargetVelocity:null);
@@ -3982,8 +3986,7 @@ public sealed partial class MatchEngine
             var owner=Find(burst.OwnerPlayerId);
             if(owner==null){armyFlameBursts.Remove(pair.Key);continue;}
             var victim=players.Single(x=>x!=owner);
-            var target=rifleCombat?.Pose(victim.Definition.PlayerId).Collision;
-            if(target==null)throw new InvalidDataException("Army flame requires current player collision authority.");
+            PlayerCollisionModel target = ArmyPlayerCollision(victim.Definition.PlayerId);
             var entityPosition=new Vector3(army.X,army.Y,army.Z);
             var forward=target.RootPosition-entityPosition;
             var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,forward)??
@@ -4304,7 +4307,7 @@ public sealed partial class MatchEngine
     // controller reaches EnemyAIState.Rusher. This is target intent, not fire.
     internal ArmyRusherTarget? RusherWalkingTarget(ulong entityKey)
     {
-        if(phase!=BattlePhase.Running || rifleCombat==null || playerShotTargets==null ||
+        if(phase!=BattlePhase.Running || !HasArmyCombatView || playerShotTargets==null ||
            !activeArmyEntities.TryGetValue(entityKey,out var army) ||
            !rusherSlotByEntity.TryGetValue(entityKey,out int slot))return null;
         if(!occupiedRusherSlots.TryGetValue(slot,out ulong occupant) || occupant!=entityKey)
@@ -4312,16 +4315,18 @@ public sealed partial class MatchEngine
         var owner=Find(army.OwnerPlayerId) ?? throw new InvalidDataException("Rusher owner disappeared.");
         var opponent=players.Single(p=>p!=owner);
         if(opponent.Dead)return null;
-        var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
         var origin=new Vector3(army.X,army.Y,army.Z);
-        var source=playerShotTargets.Nearest(1,origin,t=>pose.BodyTarget(t.TransformFileId).Position);
+        Vector3 BodyPosition(PlayerShotTarget target) => rifleCombat != null
+            ? rifleCombat.Pose(opponent.Definition.PlayerId).BodyTarget(target.TransformFileId).Position
+            : GrenadePlayerShotTarget(opponent.Definition.PlayerId, target.TransformFileId);
+        var source=playerShotTargets.Nearest(1,origin,BodyPosition);
         return new(entityKey,opponent.Definition.PlayerId,source.TransformFileId,slot,
-            pose.BodyTarget(source.TransformFileId).Position);
+            BodyPosition(source));
     }
 
     private ArmyRusherTarget? MinigunnerBodyTarget(ulong entityKey)
     {
-        if(phase!=BattlePhase.Running || rifleCombat==null || playerShotTargets==null ||
+        if(phase!=BattlePhase.Running || !HasArmyCombatView || playerShotTargets==null ||
            !activeArmyEntities.TryGetValue(entityKey,out var army))return null;
         var owner=Find(army.OwnerPlayerId) ?? throw new InvalidDataException("Minigunner owner disappeared.");
         var opponent=players.Single(p=>p!=owner);
@@ -4340,7 +4345,7 @@ public sealed partial class MatchEngine
     // navigation transition; this does not cause a shot or claim arrival.
     internal ArmyRusherTarget? RusherMovingTarget(ulong entityKey)
     {
-        if(phase!=BattlePhase.Running || rifleCombat==null || map==null ||
+        if(phase!=BattlePhase.Running || !HasArmyCombatView || map==null ||
            armyRusherPoints==null || playerShotTargets==null ||
            !activeArmyEntities.TryGetValue(entityKey,out var army) ||
            !rusherSlotByEntity.TryGetValue(entityKey,out int slot))return null;
@@ -4351,12 +4356,29 @@ public sealed partial class MatchEngine
         if(opponent.Dead || opponent.Cover<0 || opponent.Route!=null ||
            !armyRusherPoints.ForCover(map,opponent.Cover).Any(p=>p.ComponentFileId==slot))
             return null;
-        var moving=rifleCombat.Pose(opponent.Definition.PlayerId).MovingTarget;
         var source=playerShotTargets.Gameplay.Single(p=>p.Type==16);
-        if(moving==null || moving.SourcePath!=source.Path ||
-           !PlayerHitbox.Finite(moving.Position))
-            throw new InvalidDataException("Rusher moving target is not bound to host pose.");
-        return new(entityKey,opponent.Definition.PlayerId,source.TransformFileId,slot,moving.Position);
+        Vector3 position;
+        if (rifleCombat != null)
+        {
+            var moving = rifleCombat.Pose(opponent.Definition.PlayerId).MovingTarget;
+            if (moving == null || moving.SourcePath != source.Path)
+            {
+                throw new InvalidDataException("Rusher moving target is not bound to host pose.");
+            }
+
+            position = moving.Position;
+        }
+        else
+        {
+            position = GrenadePlayerShotTarget(opponent.Definition.PlayerId, source.TransformFileId);
+        }
+
+        if (!PlayerHitbox.Finite(position))
+        {
+            throw new InvalidDataException("Rusher moving target position is invalid.");
+        }
+
+        return new(entityKey, opponent.Definition.PlayerId, source.TransformFileId, slot, position);
     }
 
     // EnemyController.RusherUpdate may first call PrepareToShoot only after

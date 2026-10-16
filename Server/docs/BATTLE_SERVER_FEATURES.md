@@ -248,17 +248,15 @@ first ordered target, using the existing source visibility mask. Live
 RPG7 hold, missile flight, and blast now verify a Flamethrower victim's
 `RevengeKill` score, `player-bazooka` direct-kill cause, and private terminal
 count after that victim damaged the opposing player. Live grenade revenge
-remains open.
-
-The normal grenade-weapon path has an additional integration gap. A live
-Flamethrower can damage its opponent under the rifle combat mode, but the
-same source army allocation produced no confirmed player hit through tick
-1500 under `GrenadeCombatMode`. The constructor creates `GrenadeMatchSimulation`
-instead of `RifleMatchSimulation` for that mode, while army flame, projectile,
-and vehicle player-damage paths still require `rifleCombat`. Move their shared
-pose, collision, and damage authority behind a mode-independent interface
-before claiming grenade-equipped army combat or live grenade `RevengeKill`.
-The failed exploratory test was removed; it is not a passing regression test.
+is now verified through an M320 throw and impact as well: a live Flamethrower
+first damages its opponent, and that player's grenade kills the same marked
+infantry. The match records one score count, a `player-grenade` direct kill,
+and one private terminal `RevengeKill` count. The grenade weapon mode now
+supplies its pinned animated player collision and shot-target positions to
+ordinary army infantry attacks. A live Shotgunner projectile also damages
+the opponent and marks its source entity in that mode. Ground-vehicle cannon,
+air attack, and other army paths still contain rifle-only authority checks;
+their grenade-mode damage and full cross-weapon parity remain open.
 
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank, before any combo. Selected live death callbacks now update combo, score, progress, and eligible bonus authority; complete callback coverage and normal Unity presentation remain open.
 

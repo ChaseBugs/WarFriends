@@ -1107,6 +1107,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             if(map==null || content==null)throw new InvalidDataException("Army authority needs the pinned scene.");
             armyCatalog=content.Army;
             armyWeapons=content.ArmyWeapons;
+            _armyBulletBindings=content.Bindings;
             groundVehicleWeapons=content.GroundVehicleWeapons;
             enemyPoses = content.EnemyPoses;
             enemyMuzzles = content.CoopEnemyMuzzles;

@@ -18453,6 +18453,79 @@ internal static class CombatContentTests
               bazookaRevengeMatch.TerminalEvidenceSnapshot().DirectArmyKills.Single(row =>
                   row.EntityKey == bazookaRevengeVictim.EntityKey).Cause == "player-bazooka",
             "private terminal evidence retains the live RPG7 revenge kill");
+        var grenadeRevengeContent = BattleCombatContent.Load(
+            Path.Combine(directory, "combat-content-manifest.json"),
+            grenadeManifestPath: Path.Combine(directory, "grenade-content-manifest.json"));
+        var grenadeRevengeWeapon = grenadeRevengeContent.Grenades!.CreateManifest(
+            "Google2u.GrenadeLauncher_M320", 0);
+        var grenadeRevengeManifest = flameRevengeManifest with
+        {
+            Mode = MatchManifest.GrenadeCombatMode,
+            CatalogRevision = grenadeRevengeContent.GrenadeRevision!,
+            Players = flameRevengeManifest.Players.Select(player => player with
+            {
+                Weapon = grenadeRevengeWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var (grenadeRevengeMatch, grenadeRevengeVictim, grenadeRevengeTick, _) =
+            PrepareRevengeVictim("army-flame-player-grenade-revenge",
+                grenadeRevengeManifest, scenarioContent: grenadeRevengeContent);
+        var grenadeRevengeBody = grenadeRevengeMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == grenadeRevengeVictim.EntityKey &&
+                target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
+        Vector3 grenadeRevengeAim = grenadeRevengeBody.Hitbox.Center;
+        Check(grenadeRevengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            GrenadeThrow = new GrenadeThrowCommand
+            {
+                TargetX = grenadeRevengeAim.X,
+                TargetY = grenadeRevengeAim.Y,
+                TargetZ = grenadeRevengeAim.Z
+            }
+        }).Code == "grenade-throwing",
+            "an admitted player starts an M320 throw toward the marked infantry");
+        while (grenadeRevengeMatch.ArmyHealth(grenadeRevengeVictim.EntityKey) != null &&
+               grenadeRevengeTick < 1500 && !grenadeRevengeMatch.Terminal)
+        {
+            grenadeRevengeMatch.Advance(++grenadeRevengeTick);
+        }
+        Check(grenadeRevengeMatch.ArmyHealth(grenadeRevengeVictim.EntityKey) == null &&
+              grenadeRevengeMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ShotsFired > 0 &&
+              grenadeRevengeMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "a live M320 blast kills the marked infantry and credits one revenge kill");
+        grenadeRevengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 3,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(grenadeRevengeMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1 &&
+              grenadeRevengeMatch.TerminalEvidenceSnapshot().DirectArmyKills.Single(row =>
+                  row.EntityKey == grenadeRevengeVictim.EntityKey).Cause == "player-grenade",
+            "private terminal evidence retains the live M320 revenge kill");
+        var grenadeShotgunnerManifest = runningMineManifest with
+        {
+            Mode = MatchManifest.GrenadeCombatMode,
+            CatalogRevision = grenadeRevengeContent.GrenadeRevision!,
+            Players = runningMineManifest.Players.Select(player => player with
+            {
+                Weapon = grenadeRevengeWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var (grenadeShotgunnerMatch, grenadeShotgunnerVictim, grenadeShotgunnerTick,
+            grenadeShotgunnerShots) = PrepareRevengeVictim(
+                "army-shotgunner-grenade-mode-revenge", grenadeShotgunnerManifest,
+                scenarioContent: grenadeRevengeContent);
+        Check(grenadeShotgunnerShots > 0 &&
+              grenadeShotgunnerMatch.ArmyRevengeExpiry(
+                  grenadeShotgunnerVictim.EntityKey, helicopterOwner) > grenadeShotgunnerTick,
+            "grenade weapon mode retains confirmed Shotgunner projectile damage ownership");
         var poisonRevengeManifest = flameRevengeManifest with
         {
             Players = flameRevengeManifest.Players.Select(player => player with

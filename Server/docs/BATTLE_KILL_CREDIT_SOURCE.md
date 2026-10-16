@@ -104,13 +104,12 @@ Buggy now check `TurretSeesEnemy` at launch from their serialized spawn-point
 fallback to the first ordered source target, reusing the verified static and
 destroyable visibility ray. A live RPG7 hold and missile blast now kill a
 marked Flamethrower and verify one private `RevengeKill` plus the
-`player-bazooka` terminal direct-kill cause. Live grenade revenge remains
-open. In `GrenadeCombatMode`, the host constructs `GrenadeMatchSimulation` without
-`RifleMatchSimulation`, but its deployed-army flame, bullet, and vehicle
-player-damage paths still require `rifleCombat`. An exploratory live
-Flamethrower fixture produced no player hit through tick 1500 in that mode,
-although its rifle-mode counterpart does. Shared army collision and player
-damage must work across weapon modes before a grenade revenge fixture can
-exercise the complete source callback chain.
+`player-bazooka` terminal direct-kill cause. Grenade revenge is now verified
+through an M320 throw: the grenade-equipped defender takes a live
+Flamethrower hit, kills that same infantry with the host projectile blast,
+and retains the `player-grenade` direct-kill cause and private revenge count.
+The grenade-mode collision view now also supports a live Shotgunner projectile
+hit and source-entity revenge marker. Other army paths with rifle-only checks,
+including ground-vehicle cannon attacks, still need cross-mode work.
 
 Sabotage is a distinct player-owned card shot. The recovered card supplies the selected mechanical root's maximum health as Shot damage, sets `isOneHit`, and keeps the player as damage owner. The host prepares the source `Kill | OneHitKill | VehicleDestroyed` flags, plus `TankDestroyed` for a Tank, before spending the selected card. It publishes that prepared combo and score only when the host confirms the selected opposing entity's death and writes the `card-sabotage` row. A real card Drone death checks 46 source points, one of each base flag, replay-safe card use, and private terminal counts. Other cards, barrel-chain deaths, ownerless environmental deaths, and AI-owned deaths remain outside this score path; contextual flags remain open.
