@@ -108,11 +108,34 @@ public static class SelfHostedScoreHudAudit
                 "The recovered result summary retains the host's final participant totals.");
             Check(summary.playerScore.text == "56" && summary.opponentScore.text == "0",
                 "The recovered result prefab displays both final score labels.");
+            VerifyResultBreakdown(summary, scores);
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(summary.gameObject);
         }
+    }
+
+    private static void VerifyResultBreakdown(SkillshotGuiRecord record, ScoreManager scores)
+    {
+        SkillShotManager manager = Singleton<SkillShotManager>.instance;
+        Google2u.Skillshots sheet = manager.GetComponent<Google2u.Skillshots>();
+        int total = 0;
+        foreach (KeyValuePair<SkillShot.SkillShotType, int> count in scores.skillShotCounts)
+        {
+            SkillShotManager.SkillShotItemDefinition definition = manager.GetItemDefinition(count.Key);
+            // Normal boot binds these same recovered rows after PlayerDataLoaded.
+            definition.row = sheet.GetRow(count.Key.ToString());
+            int opponentCount = scores.skillShotCountsOponent[count.Key];
+            record.MultiplayerSkillshot(count.Value, opponentCount, count.Key);
+            Check(record.plScore == count.Value && record.opScore == opponentCount &&
+                record.plModifier == count.Value * definition.row.SCOREMP &&
+                record.playerScore.text == "x" + count.Value && record.opponentScore.text == "x" + opponentCount,
+                "The recovered result row preserves the host counter for " + count.Key + ".");
+            total += record.plModifier;
+        }
+        Check(total == scores.score,
+            "The complete source result breakdown conserves the accepted terminal score.");
     }
 
     private static void VerifySnapshotOrdering(SelfHostedBattleClient client,

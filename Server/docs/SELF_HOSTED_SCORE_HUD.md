@@ -112,3 +112,27 @@ All six scene checks pass: the summary model and its actual labels retain
 56 local points and zero opponent points. No scene or prefab is saved.
 This verifies the total-score result row, not the full per-flag table, pooled
 screen initialization, GameOver navigation, or Backend response lifecycle.
+
+## Complete skill-shot row formatting
+
+The MainScene audit now passes 26 assertions. In addition to its total-score row,
+it resolves all 19 terminal counter identities through the scene's recovered
+`SkillShotManager` definitions and attached Google2u `Skillshots` rows. Each
+counter is passed to the existing `SkillshotGuiRecord.MultiplayerSkillshot`
+formatter, checking both count labels, source multiplayer point multiplication
+and conservation of the complete 56-point breakdown. The audit explicitly binds
+rows as normal boot does after `PlayerDataLoaded`; it reuses one instantiated
+result row and does not exercise the complete pooled table or its animations.
+
+Static audits completed with zero missing scripts/broken references across
+288,080 references; the existing 17 unmatched NGUI sprite selections persist.
+
+The remaining full-result gate crosses the Backend boundary: recovered
+`GameController.FinishGame` opens GameOver and calls `BeanstalkServerManager.GameEnded`;
+`WaitForGameEndResponse` waits for the GameOver animation and a real response
+before freeing the level. That request includes score, obtained/used cards,
+crate currencies, ribbon rewards and assignment/statistic assertions. The Worker
+currently publishes unscored durable terminal evidence, with no atomic economy
+settlement consumer. A local success flag would bypass that missing authority
+and is not implemented. Complete GameOver navigation needs this handoff and
+normal controller/UI boot, not only a valid score display.

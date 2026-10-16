@@ -26,9 +26,10 @@ existing behavior. See [score HUD integration](SELF_HOSTED_SCORE_HUD.md).
 The controlled Drone/Sabotage sequence verifies 56 points and terminal counters;
 the real Sabotage UDP fixture checks peer/replay score consistency. An isolated
 Unity component audit checks actual NGUI label output and callback ordering.
-A separate MainScene Edit Mode audit passes six checks using the real score
+A separate MainScene Edit Mode audit passes 26 checks using the real score
 singleton, serialized HUD references, production event subscription, score
-Tween setup and actual result-summary prefab labels. A subsequent live rifle Worker/Unity Editor run verified a
+Tween setup, actual result-summary prefab labels and all 19 source skill-shot
+row formatters with conserved terminal score. A subsequent live rifle Worker/Unity Editor run verified a
 positive host score (six points) through the production adapter into the same
 scene manager and NGUI total/gain labels. The Editor audit explicitly advances
 the notification coroutine and samples the tween. A separate isolated Play Mode
