@@ -1140,3 +1140,11 @@ passing, including both binding invariants. Subsequent runtime work now uses
 that clock for repeated selection and same-segment repositioning, preserving
 first-target history and unique projectile IDs. Actual collision/damage and
 complete initial movement coverage remain open; registration stays closed.
+
+A dedicated B22 runtime fixture now verifies the legal post-volley movement
+window with real source batch/cooldown bounds: no early movement, firing-windup
+removal, actual position change, unplaced collision state, replay-stable deadline
+and the following volley. The content suite still reports 26,368 passing checks.
+This row finishes firing before its two-second position delay; overlapping fire,
+simultaneous runtime deadlines and active-crawl shooting still need dedicated
+proof. [Detailed boundary](COOP_OBSTACLE_VOLLEYS.md).

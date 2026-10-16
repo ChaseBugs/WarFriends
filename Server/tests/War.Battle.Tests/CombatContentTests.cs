@@ -2808,6 +2808,19 @@ internal static class CombatContentTests
                 stoppedEnemy.EntityId).Count != 0)
             throw new Exception("Dead infantry kept moving after its host-confirmed death.");
 
+        CoopObstacleVolleyRuntimeTests.Run(new CoopObstacleVolleyRuntimeTests.Sources
+        {
+            Manifest = coop,
+            Missions = catalog,
+            Spawns = spawnPoints,
+            Routes = routes,
+            Combat = enemyCombat,
+            Map = enemyMap,
+            Masks = enemyPointMasks,
+            Navigation = infantryNavigation,
+            Content = content
+        });
+
         var arrivalDestinations = new CoopEnemyDestinationState(
             enemyMap, enemyPointMasks, enemyCombat,
             chooseObstacleFraction: () => 0.5f);

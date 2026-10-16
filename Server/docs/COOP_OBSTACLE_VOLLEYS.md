@@ -61,3 +61,22 @@ still need implementation or Unity verification. Current enemy collision frames
 remain unplaced for this authority. Do not infer player damage from a selected
 target or a diagnostic flight. Complete source-equivalent combat and the other
 B22 completion gates are required before Worker registration can open.
+
+## Dedicated post-volley movement fixture
+
+`CoopObstacleVolleyRuntimeTests` now forces a legal movement window by changing
+source draw fractions at observed arrival/preparation boundaries, rather than
+assuming the first RNG call belongs to a particular enemy. It uses real source
+batch bounds, cadence, shot cooldown and same-segment path geometry.
+
+The clean build and combat-content regression pass. This fixture proves no
+early reposition, removal of the completed firing windup, actual next-tick
+position change, retained unplaced collision status, replay-stable movement
+deadline, and a subsequent volley at the source cooldown boundary.
+
+The chosen source row completes its maximum batch before the minimum two-second
+position delay. It therefore does not prove an unfinished volley spanning that
+deadline. Pending suppression and simultaneous shoot-first priority currently
+have clock-unit evidence; dedicated runtime cases for those conditions, and a
+shot while the reposition path is still active, remain open. Do not extend this
+fixture's evidence to Unity animation or authoritative player damage.
