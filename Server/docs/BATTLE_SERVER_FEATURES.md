@@ -1146,5 +1146,6 @@ window with real source batch/cooldown bounds: no early movement, firing-windup
 removal, actual position change, unplaced collision state, replay-stable deadline
 and the following volley. The content suite still reports 26,368 passing checks.
 This row finishes firing before its two-second position delay; overlapping fire,
-simultaneous runtime deadlines and active-crawl shooting still need dedicated
-proof. [Detailed boundary](COOP_OBSTACLE_VOLLEYS.md).
+simultaneous runtime deadlines still need dedicated proof. A later pinned
+source case now verifies active-path shot preparation and continuing movement;
+its Unity pose and damage proof remain open. [Detailed boundary](COOP_OBSTACLE_VOLLEYS.md).

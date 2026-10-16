@@ -77,6 +77,24 @@ deadline, and a subsequent volley at the source cooldown boundary.
 The chosen source row completes its maximum batch before the minimum two-second
 position delay. It therefore does not prove an unfinished volley spanning that
 deadline. Pending suppression and simultaneous shoot-first priority currently
-have clock-unit evidence; dedicated runtime cases for those conditions, and a
-shot while the reposition path is still active, remain open. Do not extend this
-fixture's evidence to Unity animation or authoritative player damage.
+have clock-unit evidence; dedicated runtime cases for those two conditions
+remain open. A subsequent fixture below exercises a shot during an active
+reposition path. Neither fixture proves Unity animation or authoritative damage.
+
+## Active-path shot fixture
+
+The source map's longest ordinary obstacle segment reachable from a legal
+Assaulter spawn supplies a deterministic moving-shot case. It uses the pinned
+source selection algorithm and unchanged map points, navigation and movement
+speed. Source draw fractions 0.1875 for the following shot cooldown and zero
+for position delay place the second shot at host tick 383 while its regenerated
+same-segment path remains active. Position choices alternate the two legal
+segment ends so later repositioning actually moves rather than repeatedly
+choosing the same endpoint.
+
+The fixture checks the actual runtime's active-path state and shot windup start,
+then advances another tick and requires continuing position change with the
+same windup. The collision frame must still mark the enemy unplaced. The search
+used to locate the source combination is not part of the committed regression.
+This is host scheduling/motion evidence only; the moving crawl-to-stand/fire
+animation, hitbox placement and damage still need Unity/source parity work.

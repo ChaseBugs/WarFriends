@@ -18,6 +18,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         internal required CoopEnemyPointMaskCatalog Masks { get; init; }
         internal required CoopNavMeshConnectivity Navigation { get; init; }
         internal required BattleCombatContent Content { get; init; }
+        internal int SpawnIndex { get; init; }
     }
 
     internal static void Run(Sources sources)
@@ -44,6 +45,86 @@ internal static class CoopObstacleVolleyRuntimeTests
         Check(runtime.InfantryShotWindup(enemyId)?.StartTick == clock.NextShotTick,
             "The source cooldown must start another volley after repositioning.");
         Console.WriteLine("PASS: co-op post-volley obstacle reposition runtime");
+        VerifyMovingShotCase(sources);
+    }
+
+    private static void VerifyMovingShotCase(Sources sources)
+    {
+        Sources movingSources = sources with { SpawnIndex = SelectLongObstacleSpawn(sources) };
+        Check(TryMovingShot(movingSources, 0.1875f, 0f),
+            "The pinned source fractions must produce a shot during obstacle repositioning.");
+    }
+
+    private static int SelectLongObstacleSpawn(Sources sources)
+    {
+        IReadOnlyList<CoopSpawnPoint> candidates = new CoopAiSpawnSelector(sources.Missions,
+            sources.Spawns, sources.Manifest.MissionIndex!.Value).Candidates("Assaulter");
+        string unitId = sources.Combat.UnitIdFor("Assaulter");
+        CoopSoldierPointMask soldier = sources.Masks.Soldiers.Single(row => row.UnitId == unitId);
+        int mask = CoopEnemyPointSelection.InitialMask(soldier, false);
+        int selectedIndex = -1;
+        float longestSegment = 0;
+        for (int index = 0; index < candidates.Count; index++)
+        {
+            CoopEnemyPoint? point = CoopEnemyPointSelection.SelectOrdinary(sources.Map, mask,
+                candidates[index].Position, new HashSet<int>());
+            if (point?.SegmentStart == null || point.SegmentEnd == null)
+            {
+                continue;
+            }
+            float length = Vector3.Distance(point.SegmentStart.Value, point.SegmentEnd.Value);
+            if (length > longestSegment)
+            {
+                longestSegment = length;
+                selectedIndex = index;
+            }
+        }
+        Check(selectedIndex >= 0, "The recovered map must contain an ordinary obstacle segment.");
+        return selectedIndex;
+    }
+
+    private static bool TryMovingShot(Sources sources, float nextShotFraction, float positionFraction)
+    {
+        float shotFraction = 0f;
+        bool hasReachedObstacle = false;
+        CoopMatchRuntime runtime = CreateRuntime(sources, () => shotFraction,
+            () => hasReachedObstacle ? positionFraction : 0.999f);
+        runtime.Advance(8);
+        ulong enemyId = runtime.Snapshot().Coop.EnemySpawns.First().EntityId;
+        AdvanceUntilPrepared(runtime, enemyId, () => hasReachedObstacle = true);
+        shotFraction = nextShotFraction;
+        CoopObstacleVolleySnapshot prepared = runtime.ObstacleVolleyState(enemyId)!;
+        AdvanceUntilCompleted(runtime, enemyId);
+        CoopInfantryShotWindup completed = runtime.InfantryShotWindup(enemyId)!;
+        CoopObstacleVolleySnapshot clock = runtime.ObstacleVolleyState(enemyId)!;
+        ulong moveTick = Math.Max(prepared.NextPositionTick, completed.CompletedTick!.Value + 1);
+        if (moveTick >= clock.NextShotTick)
+        {
+            return false;
+        }
+        runtime.Advance(clock.NextShotTick);
+        if (!runtime.IsObstacleRepositioning(enemyId))
+        {
+            return false;
+        }
+        Check(runtime.InfantryShotWindup(enemyId)?.StartTick == clock.NextShotTick,
+            "A source-ready obstacle shot must start during same-segment movement.");
+        Check(runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
+            "An unverified moving-shot posture must remain outside collision authority.");
+        VerifyMovementContinues(runtime, enemyId, clock.NextShotTick);
+        Console.WriteLine($"PASS: co-op moving obstacle shot at tick {clock.NextShotTick}");
+        return true;
+    }
+
+    private static void VerifyMovementContinues(CoopMatchRuntime runtime, ulong enemyId, ulong shotTick)
+    {
+        BattleCoopEnemySpawn before = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == enemyId);
+        runtime.Advance(shotTick + 1);
+        BattleCoopEnemySpawn after = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == enemyId);
+        Check(Vector3.Distance(new Vector3(before.CurrentX, before.CurrentY, before.CurrentZ),
+            new Vector3(after.CurrentX, after.CurrentY, after.CurrentZ)) > 0 &&
+            runtime.InfantryShotWindup(enemyId)?.StartTick == shotTick,
+            "Preparing the source moving shot must not stop same-segment crawl movement.");
     }
 
     private static CoopMatchRuntime CreateRuntime(Sources sources,
@@ -51,9 +132,18 @@ internal static class CoopObstacleVolleyRuntimeTests
     {
         int positionDraws = 0;
         var destinations = new CoopEnemyDestinationState(sources.Map, sources.Masks, sources.Combat,
-            chooseObstacleFraction: () => positionDraws++ == 0 ? 0.5f : 1f);
+            chooseObstacleFraction: () =>
+            {
+                positionDraws++;
+                if (positionDraws == 1)
+                {
+                    return 0.5f;
+                }
+                return positionDraws % 2 == 0 ? 1f : 0f;
+            });
         var runtime = new CoopMatchRuntime(sources.Manifest, sources.Missions, sources.Spawns,
-            sources.Routes, sources.Combat, chooseBehaviour: _ => 0, choosePoint: _ => 0,
+            sources.Routes, sources.Combat, chooseBehaviour: _ => 0,
+            choosePoint: count => Math.Min(sources.SpawnIndex, count - 1),
             enemyDestinations: destinations, infantryNavigation: sources.Navigation,
             playerWeaponContent: sources.Content,
             chooseInfantryShotFraction: shotFraction,

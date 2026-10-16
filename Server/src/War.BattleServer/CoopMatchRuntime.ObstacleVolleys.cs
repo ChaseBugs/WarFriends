@@ -16,6 +16,11 @@ internal sealed partial class CoopMatchRuntime
             clock.IsCrawling, clock.HasPendingShot);
     }
 
+    internal bool IsObstacleRepositioning(ulong entityId)
+    {
+        return movingObstacleRepositions.Contains(entityId) && infantryPaths.ContainsKey(entityId);
+    }
+
     private void BeginObstacleVolleyClock(ulong entityId, CoopInfantryPointArrival arrival)
     {
         if (arrival.State != CoopInfantryPointState.ObstacleHiding || enemyPoses == null)
