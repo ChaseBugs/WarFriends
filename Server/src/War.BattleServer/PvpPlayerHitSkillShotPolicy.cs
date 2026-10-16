@@ -12,7 +12,7 @@ internal static class PvpPlayerHitSkillShotPolicy
     internal const int ArmyPlayerHit = 524_288;
 
     internal static int FlagsForConfirmedDamage(CombatDamageType damageType,
-        bool victimWalking)
+        bool victimWalking, bool flameAllowed = false)
     {
         if (!Enum.IsDefined(damageType))
             throw new InvalidDataException("Unknown player damage type.");
@@ -21,9 +21,8 @@ internal static class PvpPlayerHitSkillShotPolicy
         if (damageType is CombatDamageType.Poison or CombatDamageType.Immortal)
             return 0;
 
-        // Flame has a real-time six-hit throttle in the Client. The current
-        // host has no verified equivalent, so it cannot award these flags.
-        if (damageType == CombatDamageType.Flame)
+        // The caller must first advance the victim's shared Flame throttle.
+        if (damageType == CombatDamageType.Flame && !flameAllowed)
             return 0;
 
         return EnemyPlayerHit | (victimWalking ? OnTheMove : 0);
@@ -35,12 +34,13 @@ internal static class PvpPlayerHitSkillShotPolicy
     /// add OnTheMove even when the victim is walking.
     /// </summary>
     internal static int FlagsForConfirmedArmyDamage(CombatDamageType damageType,
-        bool opposingFractions)
+        bool opposingFractions, bool flameAllowed = false)
     {
         if (!Enum.IsDefined(damageType))
             throw new InvalidDataException("Unknown army damage type.");
         if (!opposingFractions || damageType is CombatDamageType.Poison or
-            CombatDamageType.Immortal or CombatDamageType.Flame)
+            CombatDamageType.Immortal ||
+            (damageType == CombatDamageType.Flame && !flameAllowed))
             return 0;
         return ArmyPlayerHit;
     }

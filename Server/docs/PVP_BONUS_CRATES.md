@@ -333,11 +333,15 @@ branches of `SkillShotControllerPlayer.PlayerOnDamage`: a different player
 owner earns `EnemyPlayerHit` and, only when the victim's source state is
 Walking, `OnTheMove`; a hostile AIObject earns its owning player
 `ArmyPlayerHit`. Poison and Immortal return before those branches. Flame stays
-closed until its real-time six-hit throttle is reproduced. The policy requires
+closed unless the shared victim throttle admits the callback. The host now
+uses its pause-aware 30 Hz match time to reproduce the first scored hit,
+six suppressed hits inside a rolling half-second window, and the next scored
+hit. The live Army Flame pulse has its own match/projectile/victim/tick receipt;
+Unity variable-frame timing parity is still unverified. The policy requires
 host-proven damage ownership, faction and walking state. `PvpBonusProgressCoordinator`
 can now accept such confirmed damage through one receipt: it calculates the
 source flags, then publishes score and streak gain together. Poison, Immortal,
-unverified Flame, self damage and friendly army damage retain an unscored
+throttled Flame, self damage and friendly army damage retain an unscored
 receipt so replay cannot convert them into points. The normal player-owned
 bullet impact now stages this transition before publishing damage; a malformed
 or exhausted score receipt aborts the host hit without partial score or health.

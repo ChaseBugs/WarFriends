@@ -2800,9 +2800,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             if (pvpBonusProgress == null || !confirmedProjectileImpact)
                 throw new InvalidDataException("PvP hit receipt lacks confirmed player projectile authority.");
+            // The recovered Flame timer stops during pauses; simulation ticks do too.
             preparedProgress = pvpBonusProgress.PrepareConfirmedPlayerDamageCopy(
                 attackerId, victimId, pvpPlayerDamageReceiptId,
-                pvpDamageOwner, result.Type, victim.Route != null, out _);
+                pvpDamageOwner, result.Type, victim.Route != null, out _,
+                sourceTime: tick / (float)MatchManifest.TickRate);
         }
         if (confirmedProjectileImpact && attacker != victim && attacker.Definition.Fraction != victim.Definition.Fraction)
         {

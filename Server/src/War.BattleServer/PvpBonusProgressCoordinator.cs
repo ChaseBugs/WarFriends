@@ -52,12 +52,14 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     private PvpKillComboState combo;
     private readonly Dictionary<string, ConfirmedDeathReceipt> deathReceipts = new(StringComparer.Ordinal);
     private Dictionary<string, ConfirmedHitReceipt> hitReceipts = new(StringComparer.Ordinal);
+    private Dictionary<string, PvpFlameHitThrottle> flameByVictim = new(StringComparer.Ordinal);
     private readonly int maximumHitReceipts;
     private sealed record ConfirmedDeathReceipt(string OwnerId, int BaseFlags, int GameTimeBits,
         bool IsEnemy, int MultiplierBits, PvpConfirmedPlayerDeath Result);
     private sealed record ConfirmedHitReceipt(string OwnerId, string VictimId,
         PvpPlayerDamageOwner DamageOwner, CombatDamageType DamageType,
-        bool VictimWalking, int MultiplierBits, PvpConfirmedSkillShot? Result);
+        bool VictimWalking, int MultiplierBits, int SourceTimeBits,
+        PvpConfirmedSkillShot? Result);
     private PvpBonusDelayQueue delays;
     private PvpBonusProgressFrame? lastFrame;
     private int lastDeltaBits;
@@ -154,7 +156,8 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     /// </summary>
     internal PvpConfirmedSkillShot? RecordConfirmedPlayerDamage(string ownerId,
         string victimId, string receiptId, PvpPlayerDamageOwner damageOwner,
-        CombatDamageType damageType, bool victimWalking, float confirmedMultiplier)
+        CombatDamageType damageType, bool victimWalking, float confirmedMultiplier,
+        float sourceTime = 0f)
     {
         lock (gate)
         {
@@ -164,17 +167,20 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
                 ownerId is null || victimId is null ||
                 (ownerId != localOwnerId && ownerId != opponentOwnerId) ||
                 (victimId != localOwnerId && victimId != opponentOwnerId) ||
-                !Enum.IsDefined(damageOwner) || !Enum.IsDefined(damageType))
+                !Enum.IsDefined(damageOwner) || !Enum.IsDefined(damageType) ||
+                !float.IsFinite(sourceTime) || sourceTime < 0f)
                 throw new InvalidDataException("Invalid host player-damage evidence.");
             if (confirmedMultiplier is not (0f or 1f or 1.25f))
                 throw new ArgumentOutOfRangeException(nameof(confirmedMultiplier));
             int multiplierBits = BitConverter.SingleToInt32Bits(confirmedMultiplier);
+            int sourceTimeBits = BitConverter.SingleToInt32Bits(sourceTime);
             if (hitReceipts.TryGetValue(receiptId, out var previous))
             {
                 if (previous.OwnerId != ownerId || previous.VictimId != victimId ||
                     previous.DamageOwner != damageOwner || previous.DamageType != damageType ||
                     previous.VictimWalking != victimWalking ||
-                    previous.MultiplierBits != multiplierBits)
+                    previous.MultiplierBits != multiplierBits ||
+                    previous.SourceTimeBits != sourceTimeBits)
                     throw new InvalidDataException("Confirmed hit replay changed its evidence.");
                 return previous.Result;
             }
@@ -184,13 +190,25 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
             if (hitReceipts.Count == maximumHitReceipts)
                 throw new InvalidOperationException("Confirmed hit receipt capacity exhausted.");
 
+            PvpFlameHitThrottle? nextFlame = null;
+            bool flameAllowed = false;
+            if (damageType == CombatDamageType.Flame)
+            {
+                PvpFlameHitThrottle current = flameByVictim.TryGetValue(victimId, out var prior)
+                    ? prior : PvpFlameHitThrottle.Initial;
+                (PvpFlameHitThrottle next, bool shouldScore) = current.Advance(sourceTime);
+                nextFlame = next;
+                flameAllowed = shouldScore;
+            }
+
             int flags = damageOwner switch
             {
                 PvpPlayerDamageOwner.Player => ownerId == victimId ? 0 :
-                    PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(damageType, victimWalking),
+                    PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+                        damageType, victimWalking, flameAllowed),
                 PvpPlayerDamageOwner.Army =>
                     PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
-                        damageType, ownerId != victimId),
+                        damageType, ownerId != victimId, flameAllowed),
                 _ => throw new InvalidDataException("Unknown damage owner.")
             };
             PvpConfirmedSkillShot? result = null;
@@ -205,7 +223,11 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
                 result = new(scored, gained);
             }
             hitReceipts.Add(receiptId, new(ownerId, victimId, damageOwner,
-                damageType, victimWalking, multiplierBits, result));
+                damageType, victimWalking, multiplierBits, sourceTimeBits, result));
+            if (nextFlame.HasValue)
+            {
+                flameByVictim[victimId] = nextFlame.Value;
+            }
             if (nextScore != null && nextProgress != null)
             {
                 if (ownerId == localOwnerId)
@@ -226,19 +248,19 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
     internal PvpBonusProgressCoordinator PrepareConfirmedPlayerDamageCopy(string ownerId,
         string victimId, string receiptId, PvpPlayerDamageOwner damageOwner,
         CombatDamageType damageType, bool victimWalking,
-        out PvpConfirmedSkillShot? result)
+        out PvpConfirmedSkillShot? result, float sourceTime = 0f)
     {
         // The live host must derive this value from its card timers. The
         // explicit-multiplier overload remains for source-fixture tests.
         return PrepareConfirmedPlayerDamageCopy(ownerId, victimId, receiptId,
             damageOwner, damageType, victimWalking, ConfirmedMultiplierFor(ownerId),
-            out result);
+            out result, sourceTime);
     }
 
     internal PvpBonusProgressCoordinator PrepareConfirmedPlayerDamageCopy(string ownerId,
         string victimId, string receiptId, PvpPlayerDamageOwner damageOwner,
         CombatDamageType damageType, bool victimWalking, float confirmedMultiplier,
-        out PvpConfirmedSkillShot? result)
+        out PvpConfirmedSkillShot? result, float sourceTime = 0f)
     {
         lock (gate)
         {
@@ -246,8 +268,11 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
             var candidate = (PvpBonusProgressCoordinator)MemberwiseClone();
             candidate.hitReceipts = new Dictionary<string, ConfirmedHitReceipt>(
                 hitReceipts, StringComparer.Ordinal);
+            candidate.flameByVictim = new Dictionary<string, PvpFlameHitThrottle>(
+                flameByVictim, StringComparer.Ordinal);
             result = candidate.RecordConfirmedPlayerDamage(ownerId, victimId,
-                receiptId, damageOwner, damageType, victimWalking, confirmedMultiplier);
+                receiptId, damageOwner, damageType, victimWalking,
+                confirmedMultiplier, sourceTime);
             return candidate;
         }
     }

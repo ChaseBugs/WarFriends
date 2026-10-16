@@ -24,8 +24,11 @@ multiplier. This remains an unbound source-view state transition: it does not
 infer those inputs from Client packets or partial MatchEngine death events.
 The source player-damage callback now has a host-only flag classifier for
 `EnemyPlayerHit`, walking-victim `OnTheMove`, and hostile-army
-`ArmyPlayerHit`. Poison and Immortal are excluded; Flame stays closed until
-its timer throttle is verified. The source-view coordinator now publishes
+`ArmyPlayerHit`. Poison and Immortal are excluded. A victim-owned Flame
+throttle now reproduces the first-hit, next-six-hit suppression and half-second
+reset using the host's pause-aware 30 Hz match clock; the live Army Flame
+path supplies one receipt per pulse. Unity frame-time parity remains unverified.
+The source-view coordinator now publishes
 classified damage, score and streak gain under one receipt, including silent
 receipts for excluded damage. Normal player-owned bullet impact now stages
 this score transition before damage publication, with a deterministic receipt

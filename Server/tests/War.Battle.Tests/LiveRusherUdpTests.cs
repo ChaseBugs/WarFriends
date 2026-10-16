@@ -156,6 +156,18 @@ internal static class LiveRusherUdpTests
                   bothPeers.Count(x=>x.OwnerPlayerId==two)==opposingCount &&
                   bothPeers.All(x=>x.PositionTick>x.SpawnTick),
                   "live Worker publishes simultaneous opposing Rusher motion to the SDK");
+            Check((await b.ForfeitAsync(timeout.Token)).Code == "forfeited",
+                "the live Flame match reaches a normal terminal result");
+            while (!worker.Outbox.HasIdentity(manifest.MatchId))
+            {
+                await Task.Delay(50, timeout.Token);
+            }
+
+            MatchSnapshot terminal = worker.Outbox.Pending().Single();
+            BattlePlayerState flameOwner = terminal.Players.Single(player => player.PlayerId == one);
+            Check(flameOwner.ConfirmedSkillShotCounts.Count == content.PvpScores.Rows.Count &&
+                  flameOwner.ConfirmedSkillShotCounts.Single(row => row.Flag == 524288).Count >= 1,
+                "a live Army Flame pulse persists the source ArmyPlayerHit counter");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
         checks+=await RunCommando(directory,content,map,left,right,weapon);

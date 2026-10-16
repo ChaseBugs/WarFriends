@@ -86,6 +86,78 @@ internal static class PvpBonusProgressCoordinatorTests
                 PvpPlayerDamageOwner.Player, (CombatDamageType)99, false, 1f);
             throw new Exception("Invalid self-damage type acquired a silent receipt."); }
         catch (InvalidDataException) { checks++; }
+        using var flameHits = Create();
+        var firstFlame = flameHits.RecordConfirmedPlayerDamage(
+            "local", "opponent", Id(1100), PvpPlayerDamageOwner.Army,
+            CombatDamageType.Flame, false, 1f, sourceTime: 0f);
+        Check(firstFlame?.Score is { Flags: 524288, Points: 10 } &&
+              flameHits.ScoreSnapshot("local").Counts[524288] == 1,
+            "the first opposing Army Flame hit awards its owning player");
+        for (int hitIndex = 1; hitIndex <= 6; hitIndex++)
+        {
+            float sourceTime = hitIndex * 0.1f;
+            Check(flameHits.RecordConfirmedPlayerDamage(
+                      "local", "opponent", Id(1100 + hitIndex),
+                      PvpPlayerDamageOwner.Army, CombatDamageType.Flame,
+                      false, 1f, sourceTime) == null,
+                "each of the next six rapid Flame hits is suppressed");
+        }
+        var eighthFlame = flameHits.RecordConfirmedPlayerDamage(
+            "local", "opponent", Id(1107), PvpPlayerDamageOwner.Army,
+            CombatDamageType.Flame, false, 1f, sourceTime: 0.7f);
+        Check(eighthFlame?.Score is { Flags: 524288, ScoreAfter: 20 } &&
+              flameHits.ScoreSnapshot("local").Counts[524288] == 2,
+            "the eighth rapid Flame hit passes the recovered six-hit throttle");
+        Check(flameHits.RecordConfirmedPlayerDamage(
+                  "local", "opponent", Id(1107), PvpPlayerDamageOwner.Army,
+                  CombatDamageType.Flame, false, 1f, sourceTime: 0.7f) == eighthFlame &&
+              flameHits.ScoreSnapshot("local").Counts[524288] == 2,
+            "replaying a Flame receipt cannot consume another throttle slot");
+        try
+        {
+            flameHits.RecordConfirmedPlayerDamage("local", "opponent", Id(1107),
+                PvpPlayerDamageOwner.Army, CombatDamageType.Flame,
+                false, 1f, sourceTime: 0.8f);
+            throw new Exception("Flame replay changed its source time.");
+        }
+        catch (InvalidDataException) { checks++; }
+        var recoveredFlame = flameHits.RecordConfirmedPlayerDamage(
+            "local", "opponent", Id(1108), PvpPlayerDamageOwner.Army,
+            CombatDamageType.Flame, false, 1f, sourceTime: 2f);
+        Check(recoveredFlame?.Score is { ScoreAfter: 30 },
+            "Flame scoring resumes after the source half-second window expires");
+        using var friendlyFlame = Create();
+        Check(friendlyFlame.RecordConfirmedPlayerDamage(
+                  "local", "local", Id(1110), PvpPlayerDamageOwner.Army,
+                  CombatDamageType.Flame, false, 1f, sourceTime: 0f) == null &&
+              friendlyFlame.RecordConfirmedPlayerDamage(
+                  "opponent", "local", Id(1111), PvpPlayerDamageOwner.Army,
+                  CombatDamageType.Flame, false, 1f, sourceTime: 0.1f) == null &&
+              friendlyFlame.ScoreSnapshot("opponent").Score == 0,
+            "a friendly Flame callback still consumes the victim's shared throttle");
+        using var limitedFlame = Create(scoreReceipts: 1);
+        limitedFlame.RecordConfirmedPlayerDamage("local", "opponent", Id(1120),
+            PvpPlayerDamageOwner.Army, CombatDamageType.Flame,
+            false, 1f, sourceTime: 0f);
+        for (int hitIndex = 1; hitIndex <= 6; hitIndex++)
+        {
+            limitedFlame.RecordConfirmedPlayerDamage("local", "opponent",
+                Id(1120 + hitIndex), PvpPlayerDamageOwner.Army,
+                CombatDamageType.Flame, false, 1f, sourceTime: hitIndex * 0.1f);
+        }
+        foreach (float sourceTime in new[] { 0.7f, 0.8f })
+        {
+            try
+            {
+                limitedFlame.RecordConfirmedPlayerDamage("local", "opponent",
+                    Id(1130), PvpPlayerDamageOwner.Army, CombatDamageType.Flame,
+                    false, 1f, sourceTime);
+                throw new Exception("Full score ledger consumed the Flame throttle.");
+            }
+            catch (InvalidOperationException) { checks++; }
+        }
+        Check(limitedFlame.ScoreSnapshot("local").Counts[524288] == 1,
+            "score capacity failure leaves the Flame counter and throttle unchanged");
         using var fullHits = Create(hitReceipts: 1);
         fullHits.RecordConfirmedPlayerDamage("local", "opponent", Id(1010),
             PvpPlayerDamageOwner.Player, CombatDamageType.Poison, false, 1f);

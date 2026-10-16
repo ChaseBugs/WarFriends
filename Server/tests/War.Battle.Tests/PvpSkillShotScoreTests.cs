@@ -46,7 +46,15 @@ internal static class PvpSkillShotScoreTests
                   CombatDamageType.Immortal, true) == 0 &&
               PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
                   CombatDamageType.Flame, true) == 0,
-            "source exclusions and unverified flame throttle cannot mint points");
+            "source exclusions and Flame without a throttle decision cannot mint points");
+        Check(PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
+                  CombatDamageType.Flame, true, flameAllowed: true) ==
+                  (PvpPlayerHitSkillShotPolicy.EnemyPlayerHit |
+                   PvpPlayerHitSkillShotPolicy.OnTheMove) &&
+              PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
+                  CombatDamageType.Flame, true, flameAllowed: true) ==
+                  PvpPlayerHitSkillShotPolicy.ArmyPlayerHit,
+            "only a completed victim Flame throttle can authorize source hit flags");
         int armyHit = PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
             CombatDamageType.Shot, opposingFractions: true);
         Check(armyHit == PvpPlayerHitSkillShotPolicy.ArmyPlayerHit &&
@@ -58,7 +66,7 @@ internal static class PvpSkillShotScoreTests
                   CombatDamageType.Poison, opposingFractions: true) == 0 &&
               PvpPlayerHitSkillShotPolicy.FlagsForConfirmedArmyDamage(
                   CombatDamageType.Flame, opposingFractions: true) == 0,
-            "friendly and unverified army damage cannot mint source points");
+            "friendly army damage and ungated Flame cannot mint source points");
         try { PvpPlayerHitSkillShotPolicy.FlagsForConfirmedDamage(
                 (CombatDamageType)99, false);
             throw new Exception("Unknown damage type produced a PvP skill shot."); }

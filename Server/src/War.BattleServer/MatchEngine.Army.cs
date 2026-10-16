@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Numerics;
 using War.Protocol;
 
@@ -3871,11 +3872,30 @@ public sealed partial class MatchEngine
             burst.CommitPulse(tick);
             if(hit!=null&&!victim.Dead)
             {
-                var result=ApplyResolvedPlayerDamage(owner.Definition.PlayerId,victim.Definition.PlayerId,
-                    new ResolvedPlayerDamage(hit.RawDamage,CombatDamageType.Flame,HasWeapon:true,FriendKill:false),
-                    damageRoll?.Invoke()??1f,true);
-                Emit(MatchEventKind.Impact,burst.EntityKey.ToString(),victim.Definition.PlayerId,
-                    burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
+                try
+                {
+                    string? receiptId = pvpBonusProgress == null ? null : PvpHitReceiptId(
+                        "army-flame-" + tick.ToString(CultureInfo.InvariantCulture),
+                        burst.ProjectileId, victim.Definition.PlayerId);
+                    var result=ApplyResolvedPlayerDamage(owner.Definition.PlayerId,victim.Definition.PlayerId,
+                        new ResolvedPlayerDamage(hit.RawDamage,CombatDamageType.Flame,
+                            HasWeapon:true,FriendKill:false),
+                        damageRoll?.Invoke()??1f,true,
+                        pvpPlayerDamageReceiptId: receiptId,
+                        pvpDamageOwner: PvpPlayerDamageOwner.Army);
+                    Emit(MatchEventKind.Impact,burst.EntityKey.ToString(),victim.Definition.PlayerId,
+                        burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
+                }
+                catch (InvalidDataException)
+                {
+                    End("invalid-army-flame-authority", "", false);
+                    return;
+                }
+                catch (InvalidOperationException)
+                {
+                    End("pvp-score-backpressure", "", false);
+                    return;
+                }
             }
             if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameDronePulse(burst.EntityKey,origin,forward);
