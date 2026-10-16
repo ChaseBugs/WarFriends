@@ -231,6 +231,13 @@ The card Drone result outage variant observes an actual HTTP 503 from a loopback
 
 B11/B18 CardShieldDestroyer (DESTROYSHIELD) now has a distinct authenticated command and normal card-button route. The recovered Client samples all four opposing PlayerPoints, including an already destroyed shield, using a float draw followed by Math.Round to the nearest index. The host reproduces that selection, destroys one live shield if selected, and still spends the card when it draws a dead shield. Snapshot/event replay and one-card inventory receipts remain authoritative; Play Mode visual timing is unverified.
 
+B19 `GainSkillshotsAssignment` is keyed by one source skill-shot flag, not a
+generic objective total. The recovered active `ID_10` row specifies twelve
+name/count multipliers; [the statistics source boundary](BATTLE_STATISTICS_SOURCE.md)
+records them and the existing host-confirmed per-flag counters. Full callback
+coverage, durable terminal evidence, and Backend assignment settlement remain
+open; no generic objective event may be promoted into this claim.
+
 B11/B18 CardMassShieldDestroyer (APOCALYPSE) is now an authenticated self-hosted card. MainScene binds shieldCount = 3; the host draws without replacement from currently living opposing cover shields, reserves one Backend-provisioned card, and publishes each destroyed shield through existing snapshots and replayable events. No target list or damage arrives from the Client. The original card spends even when no eligible shield exists. The card-button dispatcher and portable SDK now send only a request ID. Replay and exhausted-stock tests cover the live match; Unity Play Mode effects and two-Client presentation still need validation.
 
 B18 [source-card inventory](BATTLE_CARD_SOURCE_INVENTORY.md) now enumerates all 67 MainScene rows and their IMPLEMENTED flags: 57 source-enabled and ten source-disabled. It cross-checks the reviewed class/ID map and the 30 class routes plus seven source-specific unit-card routes. A class or icon alone is insufficient to open a card: PARALYZE has both, but its source row says IMPLEMENTED: 0. While the self-hosted match is connected, source-enabled cards outside those routes are rejected locally before the recovered Photon fallback. They require explicit host commands before offline battle admission. The audit_battle_card_inventory.py --check command is part of the release checkpoint.

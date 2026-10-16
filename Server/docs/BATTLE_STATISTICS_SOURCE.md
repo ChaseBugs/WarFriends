@@ -14,4 +14,19 @@ The active source is `Clients/ExportedProject/Assets/Scripts/Assembly-CSharp`. T
 | `scorestreakGained` | `KillStreakManager.SpawnBonus` increments the local owner's `MatchStats` only after a bonus box is instantiated; `SpawnBonusNetwork` mirrors the count for the remote owner. Collection is a separate event. | The host counts accepted, receipt-stable spawn plans by owner. Private terminal `confirmed_scorestreaks_gained` is bounded and `BattleResultStore.GetScorestreakStats` reads it from validated durable evidence. | Do not count delayed requests or crate collections as spawns. Keep the count read-only until atomic MatchStats settlement exists. |
 | `unitsDeployed` / `unitsSpawned` and their specific maps | `MatchStats.DeployUnit` increments deployment once and adds `numberOfEnemies` to `unitsSpawnedSpecific` immediately, before those units appear. The totals sum their respective maps. The recovered Photon path calls this for manual and automatic deployment; the self-hosted path now does the same after a Worker-accepted command, preserving `clicked` only for `deployClicks`. | Terminal `army_usage` retains source unit ID, option index, accepted deployments, planned spawns and confirmed spawns. `BattleArmyStatsProjection` exposes the source-shaped deployment and planned-spawn totals separately from realized spawns. | The active MainScene `LevelManager` has no serialized `behaviours` list and recovered unit `indexInLevelsManager` values are zero placeholders; do not invent the integer key map or award group-6/7 achievements from deployment clicks. |
 
+`GainSkillshotsAssignment` is a separate B19/B24 boundary. Its constructor resolves
+`TaskDefinitions` row `ID_10`, selects the `SECONDTARGETPARAMETER` entry by the
+assignment's second parameter, resolves that entry's `NAME` to a
+`SkillShot.SkillShotType`, and multiplies the assignment target by its `COUNT`.
+`Update` reads only `ScoreManager.skillShotCounts[selectedType]`; a total score,
+combined skill-shot count, or generic objective event is not equivalent. The
+active row contains these twelve name/count pairs: HeadShot/3, Runner/3,
+LongShot/10, Covered/6, OneHitKill/4, DoubleKill/2, TrippleKill/1,
+RevengeKill/3, ExplosiveKill/1, OnTheMove/2, EnemyPlayerHit/2, and ArmyKill/3.
+`PvpSkillShotScoreState.Counts` already preserves separate host-confirmed counters
+for all source flags, including zero-point awards. These counters currently live
+only in a match-local score view; they are not a durable terminal assignment
+receipt or a Backend claim authority. Each selected type still needs its own
+complete host callback proof before assignment progression can be settled.
+
 Next B24/B26 implementation work: establish source-equivalent owner/weapon/target event credits for shots, hits, kills and vehicles; obtain or explicitly replace the missing unit-index mapping; compare countdown and Worker clock behavior in a running Unity match; then consume one validated terminal result in a Mongo transaction that updates per-player MatchStats, outcome, wallet and an idempotent receipt together. Keep rewards closed until that transaction and its source-backed policy exist.
