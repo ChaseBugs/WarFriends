@@ -1,5 +1,6 @@
 using Google.Protobuf;
 using War.BattleServer;
+using War.Client;
 using War.Protocol;
 
 /// <summary>Distinguishes co-op loading cancellation from an actual mission's terminal forfeit.</summary>
@@ -89,6 +90,9 @@ internal static class CoopPrestartCancellationTests
             "The final active departure must end the mission without a winner or reward.");
         Validate(sources, terminal);
         MatchSnapshot forged = terminal.Clone();
+        Require(terminal.Players.All(player =>
+            MatchOutcomeProjection.ForPlayer(terminal, player.PlayerId) == ClientGameEndReason.Forfeit),
+            "Co-op master departure must not project a PvP WinByForfeit for the other ally.");
         forged.Players[0].CoopDeparted = false;
         RequireInvalid(() => Validate(sources, forged));
     }

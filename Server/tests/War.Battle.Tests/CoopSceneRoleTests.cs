@@ -1,5 +1,6 @@
 using Google.Protobuf;
 using War.BattleServer;
+using War.Client;
 using War.Protocol;
 
 /// <summary>Checks source start positions and distinct master-star/peer-completion ownership.</summary>
@@ -40,6 +41,9 @@ internal static class CoopSceneRoleTests
             terminal.Coop.PeerCompletionPlayerIds.SequenceEqual([peerId]) && !terminal.RewardEligible,
             "Only the source master owns stars/highscore; the peer owns the separate completion marker.");
         VerifyRejectedRoleForgeries(terminal, sources, peerId);
+        Require(MatchOutcomeProjection.ForPlayer(terminal, masterId) == ClientGameEndReason.MissionSuccess &&
+            MatchOutcomeProjection.ForPlayer(terminal, peerId) == ClientGameEndReason.MissionSuccess,
+            "The shared source success callback must not require a PvP winner or grant the peer its own stars.");
     }
 
     private static void VerifyStarts(MatchSnapshot snapshot, CoopObstacleVolleyRuntimeTests.Sources sources,
@@ -89,6 +93,8 @@ internal static class CoopSceneRoleTests
         Require(terminal.Coop.PeerCompletionPlayerIds.SequenceEqual([peerId]) &&
             terminal.Coop.SuccessScores.Count == 1 && terminal.Coop.SuccessScores[0].PlayerId != peerId,
             "MissionSucceededRPC still marks the connected spectating peer complete without awarding it stars.");
+        Require(MatchOutcomeProjection.ForPlayer(terminal, peerId) == ClientGameEndReason.MissionSuccess,
+            "FinishGameMultiplayerRPC replaces the spectating peer's KIA presentation with the shared mission result.");
     }
 
     private static CoopMatchRuntime Start(CoopObstacleVolleyRuntimeTests.Sources sources)

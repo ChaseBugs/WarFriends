@@ -1,5 +1,6 @@
 using Google.Protobuf;
 using War.BattleServer;
+using War.Client;
 using War.Protocol;
 
 /// <summary>Exercises authenticated departure through live mission progress and terminal evidence.</summary>
@@ -70,6 +71,9 @@ internal static class CoopSurvivorRuntimeTests
             "Survivor completion must exclude the departed peer from success and reward presentation.");
         CoopTerminalScoreValidator.ValidateSuccess(terminal, sources.Manifest, sources.Missions,
             sources.Combat, spawnPoints: sources.Spawns);
+        Require(MatchOutcomeProjection.ForPlayer(terminal, departingId) == ClientGameEndReason.Forfeit &&
+            MatchOutcomeProjection.ForPlayer(terminal, survivorId) == ClientGameEndReason.MissionSuccess,
+            "A departed peer's personal Forfeit must not become its later master's success presentation.");
         MatchSnapshot forged = terminal.Clone();
         forged.Coop.SuccessScores.Add(new BattleCoopPlayerScore { PlayerId = departingId });
         RequireInvalid(() => CoopTerminalScoreValidator.ValidateSuccess(forged, sources.Manifest,

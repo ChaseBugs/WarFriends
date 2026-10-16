@@ -4,6 +4,7 @@
     <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedCoopDepartureState.cs"
              Link="ClientSource/SelfHostedCoopDepartureState.cs" />
     <ProjectReference Include="..\..\src\War.Infrastructure\War.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\War.Client\War.Client.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

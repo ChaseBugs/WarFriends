@@ -1,5 +1,6 @@
 using Google.Protobuf;
 using War.BattleServer;
+using War.Client;
 using War.Protocol;
 
 /// <summary>Preserves source master-KIA termination and peer spectating with exact host death ticks.</summary>
@@ -69,6 +70,11 @@ internal static class CoopMasterDeathTests
         Require(runtime.TerminalEvidenceSnapshot().ToByteArray().AsSpan().SequenceEqual(before),
             "Master KIA must freeze terminal tick, vitality, objective and evidence.");
         VerifyRejectedForgeries(terminal, sources);
+        foreach (BattlePlayerState player in terminal.Players)
+        {
+            Require(MatchOutcomeProjection.ForPlayer(terminal, player.PlayerId) == ClientGameEndReason.MissionFailed,
+                "The source shared master-KIA boundary must display MissionFailed to both connected players.");
+        }
     }
 
     private static void VerifyTickZeroDeath(CoopObstacleVolleyRuntimeTests.Sources sources)

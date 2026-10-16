@@ -1398,3 +1398,11 @@ damage history cannot authorize that terminal shape. Tests retain immutable
 impact replay and source no-target retry coverage under a reachable alive-master
 fixture. Normal rendered KIA/result UI and combat/settlement gates remain open.
 See [the master-KIA contract](COOP_MASTER_KIA.md).
+
+B22/B30 portable SDK outcome projection now distinguishes source co-op shared
+mission success/failure/Forfeit from PvP winners. Connected KIA spectators can
+receive the later shared result; a departed peer's personal Forfeit stays final.
+It validates role, vitality, clock and completion consistency and does not write
+stars or rewards. Real runtime fixtures call the SDK projection. Active Unity
+DLL installation and the normal result-screen callback bridge remain unfinished.
+See [the outcome projection boundary](COOP_OUTCOME_PROJECTION.md).
