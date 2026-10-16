@@ -17740,6 +17740,45 @@ internal static class CombatContentTests
               armyStats[0] is {UnitsDeployed:1,UnitsSpawned:2}&&
               armyStats[1] is {UnitsDeployed:1,UnitsSpawned:1},
               "validated terminal result projects source deployment totals separately from realized spawns");
+        var partialSpawnMatch = new MatchEngine(
+            detached with { MatchId = "army-planned-before-realized" }, content: content);
+        partialSpawnMatch.Admit(soldierOwner);
+        partialSpawnMatch.Admit(helicopterOwner);
+        foreach (var participant in detached.Players)
+        {
+            partialSpawnMatch.Command(participant.PlayerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = partialSpawnMatch.ManifestHash }
+            });
+        }
+
+        partialSpawnMatch.Advance(60);
+        partialSpawnMatch.ArmyBatch(soldierOwner);
+        Check(partialSpawnMatch.Command(soldierOwner, new MatchCommand
+        {
+            CommandId = 2,
+            DeployArmy = new DeployArmyCommand { OptionIndex = 0 }
+        }).Code == "army-deploying", "source Assault deployment schedules two units");
+        for (ulong armyTick = 61; armyTick <= 100 &&
+            partialSpawnMatch.Snapshot().Players[0].ConfirmedArmySpawns == 0; armyTick++)
+        {
+            partialSpawnMatch.Advance(armyTick);
+        }
+
+        Check(partialSpawnMatch.Snapshot().Players[0].ConfirmedArmySpawns == 1,
+            "first Assault spawn precedes the second scheduled spawn");
+        partialSpawnMatch.AbortForHostShutdown();
+        var partialSpawnTerminal = partialSpawnMatch.TerminalEvidenceSnapshot();
+        byte[] partialSpawnPayload = partialSpawnTerminal.ToByteArray();
+        var partialSpawnStats = BattleArmyStatsProjection.FromPayload(
+            partialSpawnPayload,
+            partialSpawnTerminal.MatchId,
+            War.Shared.TerminalResultDigest.Compute(partialSpawnPayload));
+        Check(partialSpawnStats[0] is { UnitsDeployed: 1, UnitsSpawned: 2 } &&
+              partialSpawnStats[0].Units.Single() is
+              { AcceptedDeployments: 1, PlannedSpawns: 2, ConfirmedSpawns: 1 },
+            "Client unitsSpawned totals preserve planned count before the second unit appears");
         var paratrooperManifest=detached with {MatchId="paratrooper-kevlar",Players=detached.Players.Select((p,i)=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-PARATROOPER"],NewArmyUnitIds=null,
