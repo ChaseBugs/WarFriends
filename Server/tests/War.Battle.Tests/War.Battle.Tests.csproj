@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Referenced apps provide assemblies; this executable owns its config and runtime metadata. -->
+    <_GetChildProjectCopyToPublishDirectoryItems>false</_GetChildProjectCopyToPublishDirectoryItems>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/War.BattleServer/War.BattleServer.csproj" />

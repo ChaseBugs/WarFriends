@@ -1245,3 +1245,12 @@ the separate overtime ratio retained. The previous conversion defaulted to one.
 Regression checks cover resolved health, no-damage refund and collided-ally
 identity independent of the intended aim target. Shield damage remains on its
 own unit-to-shield policy; this does not open live co-op damage authority.
+
+B34/B36 Linux validation on 2026-10-17 now executes the current self-contained
+Battle test runner under Ubuntu 22.04.5 WSL2: terminal exit zero and 143,124
+assertions, including real two-peer UDP, 32-match concurrent polls and recent
+co-op regressions. The test publication now excludes referenced apps' content
+without suppressing duplicate-file errors, resolving NETSDK1152 while retaining
+required assemblies. Windows solution build also passes. Production-host,
+Linux MongoDB smoke, normal Unity/Android play and complete game modes remain
+unverified. See [reproduction and scope](BATTLE_LINUX_VALIDATION.md).

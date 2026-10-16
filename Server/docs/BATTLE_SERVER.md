@@ -65,6 +65,10 @@ Forfeit recovery keeps the original pending command on the admitted session when
 
 ## Run the tests
 
+See [the current Linux validation checkpoint](BATTLE_LINUX_VALIDATION.md) for
+self-contained publishing, the referenced-app content collision fix and the
+exact Linux execution boundary. Earlier validation counts below remain history.
+
 From repository root:
 
 ```powershell
