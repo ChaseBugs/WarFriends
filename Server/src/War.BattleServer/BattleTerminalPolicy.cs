@@ -31,6 +31,7 @@ public static class BattleTerminalPolicy
         "invalid-assault-helicopter-projectile-authority",
         "invalid-assault-helicopter-route-authority",
         "army-event-backpressure", "source-kill-backpressure",
+        "pvp-score-backpressure",
         "overtime-event-backpressure"
     };
 

@@ -491,7 +491,8 @@ internal static class LiveRusherUdpTests
             };
         }
 
-        using var worker = new NetworkWorker(config, NullLogger<NetworkWorker>.Instance);
+        using var worker = new NetworkWorker(config, NullLogger<NetworkWorker>.Instance,
+            _ => 0);
         try
         {
             await worker.StartAsync(CancellationToken.None);
@@ -566,6 +567,9 @@ internal static class LiveRusherUdpTests
             var remoteImpacts = new HashSet<ulong>();
             var localShieldHits = new HashSet<ulong>();
             var remoteShieldHits = new HashSet<ulong>();
+            float lastLocalShieldHealth = initialShieldHealth;
+            float lastRemoteShieldHealth = initialShieldHealth;
+            float lastOpponentHealth = initialOpponent.Health;
             watch.Restart();
             while (watch.Elapsed < TimeSpan.FromSeconds(45) &&
                    !bothSawShieldDamage)
@@ -599,6 +603,10 @@ internal static class LiveRusherUdpTests
                 }
                 float ShieldHealth(MatchReply reply) => reply.Snapshot.Shields
                     .Single(shield => shield.CoverIndex == initialOpponent.CoverIndex).Health;
+                lastLocalShieldHealth = ShieldHealth(localPoll.Result);
+                lastRemoteShieldHealth = ShieldHealth(remotePoll.Result);
+                lastOpponentHealth = localPoll.Result.Snapshot.Players.Single(player =>
+                    player.PlayerId == opponent).Health;
                 bool sharedDamagingShot = localShieldHits.Any(id =>
                     remoteShieldHits.Contains(id) &&
                     localShots.Contains(id) && remoteShots.Contains(id) &&
@@ -612,7 +620,12 @@ internal static class LiveRusherUdpTests
                         player.PlayerId == opponent).Health == initialOpponent.Health;
             }
             Check(bothSawShieldDamage,
-                "both UDP peers receive the ordinary Sniper's shield damage without player damage");
+                "both UDP peers receive the ordinary Sniper's shield damage without player damage: " +
+                $"shots={localShots.Count}/{remoteShots.Count}, " +
+                $"impacts={localImpacts.Count}/{remoteImpacts.Count}, " +
+                $"shieldHits={localShieldHits.Count}/{remoteShieldHits.Count}, " +
+                $"shield={initialShieldHealth}->{lastLocalShieldHealth}/{lastRemoteShieldHealth}, " +
+                $"player={initialOpponent.Health}->{lastOpponentHealth}");
         }
         finally
         {

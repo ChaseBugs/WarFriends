@@ -1832,7 +1832,7 @@ try
     foreach (string reason in new[] {
         "invalid-assault-helicopter-projectile-authority",
         "invalid-assault-helicopter-route-authority",
-        "source-kill-backpressure", "host-crash" })
+        "source-kill-backpressure", "pvp-score-backpressure", "host-crash" })
     {
         var abortedEvidence=timer.Snapshot().Clone();
         abortedEvidence.TerminalReason=reason;

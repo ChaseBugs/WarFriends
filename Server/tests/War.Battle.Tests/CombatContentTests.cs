@@ -9981,7 +9981,7 @@ internal static class CombatContentTests
                 "invalid-land-mine-authority","invalid-tank-projectile-authority",
                 "invalid-vehicle-route-authority","invalid-assault-helicopter-projectile-authority",
                 "invalid-assault-helicopter-route-authority","invalid-pvp-grenade-authority",
-                "source-kill-backpressure","host-crash"})
+                "source-kill-backpressure","pvp-score-backpressure","host-crash"})
                 BattleTerminalPolicy.Validate(reason,"",false,false);
             count++;
             Reject(()=>BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,false));

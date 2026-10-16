@@ -19,6 +19,7 @@ public sealed class MatchRouter
     private readonly uint publicPort;
     private readonly IReadOnlyList<RecoveredBattleMap>? maps;
     private readonly BattleCombatContent? content;
+    private readonly Func<int, int>? armyChoice;
     private readonly int maxMatches;
     private readonly Dictionary<string,MatchConnectionGrant[]> issued=new(StringComparer.Ordinal);
     private readonly Dictionary<string,ulong[]> issuedGenerations=new(StringComparer.Ordinal);
@@ -36,7 +37,8 @@ public sealed class MatchRouter
     public bool ContainsMatch(string matchId) => matches.ContainsKey(matchId);
     public MatchRouter(IEnumerable<MatchManifest> manifests, string serverId, string signingKey,
         IReadOnlyList<RecoveredBattleMap>? maps = null,BattleCombatContent? content=null,
-        string publicHost="127.0.0.1",uint publicPort=30000,int maxMatches=32)
+        string publicHost="127.0.0.1",uint publicPort=30000,int maxMatches=32,
+        Func<int, int>? armyChoice=null)
     {
         if(maxMatches is <1 or >1024)throw new InvalidDataException("Invalid match capacity.");
         this.maxMatches=maxMatches;
@@ -51,6 +53,7 @@ public sealed class MatchRouter
         this.publicPort=publicPort;
         this.maps=maps;
         this.content=content;
+        this.armyChoice=armyChoice;
         matches=new Dictionary<string,MatchEndpoint>(StringComparer.Ordinal);
         foreach(var manifest in all)
             if(Register(manifest).Code!="registered")throw new InvalidDataException("Duplicate startup match allocation.");
@@ -91,8 +94,10 @@ public sealed class MatchRouter
         RecoveredBattleMap? map = maps?.SingleOrDefault(candidate =>
             Path.GetFileNameWithoutExtension(candidate.Source) ==
                 manifest.MapId);
-        var endpoint = new MatchEndpoint(manifest, signingKey, map,
-            content, currentTick);
+        var endpoint = armyChoice == null
+            ? new MatchEndpoint(manifest, signingKey, map, content, currentTick)
+            : new MatchEndpoint(manifest, signingKey,
+                new MatchEngine(manifest, map, content, armyChoice), currentTick);
         if (manifest.Allocations is { } allocations)
             endpoint.ConfigureBattleAllocations(allocations);
 

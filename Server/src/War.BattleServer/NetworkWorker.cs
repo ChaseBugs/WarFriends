@@ -166,6 +166,11 @@ public sealed class NetworkWorker : BackgroundService
     public NetworkWorker(IConfiguration config, ILogger<NetworkWorker> logger)
         : this(config, ResolveRuntime(config), logger) { }
 
+    internal NetworkWorker(IConfiguration config, ILogger<NetworkWorker> logger,
+        Func<int, int> armyChoice)
+        : this(config, ResolveRuntime(config), BattleKeyConfig.FromConfiguration(config),
+            logger, new SenderEndpointRegistry(), armyChoice) { }
+
     public NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
         ILogger<NetworkWorker> logger)
         : this(config, runtime, BattleKeyConfig.FromConfiguration(config),
@@ -193,9 +198,16 @@ public sealed class NetworkWorker : BackgroundService
             BattleWorkerSettings.FromConfiguration(config, keys.ControlKey != null),
             logger, senderEndpoints) { }
 
+    internal NetworkWorker(IConfiguration config, BattleRuntimeConfig runtime,
+        BattleKeyConfig keys, ILogger<NetworkWorker> logger,
+        SenderEndpointRegistry senderEndpoints, Func<int, int> armyChoice)
+        : this(runtime, keys,
+            BattleWorkerSettings.FromConfiguration(config, keys.ControlKey != null),
+            logger, senderEndpoints, armyChoice) { }
+
     private NetworkWorker(BattleRuntimeConfig runtime, BattleKeyConfig keys,
         BattleWorkerSettings settings, ILogger<NetworkWorker> logger,
-        SenderEndpointRegistry senderEndpoints)
+        SenderEndpointRegistry senderEndpoints, Func<int, int>? armyChoice = null)
     {
         this.logger = logger;
         this.senderEndpoints = senderEndpoints ??
@@ -226,7 +238,7 @@ public sealed class NetworkWorker : BackgroundService
         var maps = settings.ContentPath == null
             ? null : RecoveredBattleMap.Load(settings.ContentPath);
         match = new MatchRouter(files.Select(MatchManifest.Read), serverId, keys.SigningKey, maps,combat,
-            settings.PublicHost,(uint)port,maxMatches);
+            settings.PublicHost,(uint)port,maxMatches,armyChoice);
         byte[]? controlKey=keys.ControlKey;
         resultEndpoint=null; resultForwarder=null; allocationEndpoint=null; allocationClient=null;
         if (settings.BackendResultEndpoint != null)
