@@ -53,6 +53,14 @@ identities remain above those captured before the change, and replaying the
 completion tick emits no extra round. This is executable host lifecycle proof,
 not Unity native navigation parity or rendered Client gameplay verification.
 
+The shared-match reservation regression now observes every live actor on each
+host tick while at least two distinct enemies change points. No two published
+destinations may share one point, including during walking; another actor must
+successfully claim a point released by an earlier owner. All actors come from
+the actual mission scheduler, with no injected destination-only occupants in
+this case. This checks multiple actors in the Desert fixture's single Worker
+simulation; it does not claim multithreaded mutation or complete five-map play.
+
 ## Implemented runtime transitions
 
 `CoopObstacleVolleyClock` now starts at obstacle arrival and owns crawling/pending

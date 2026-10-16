@@ -67,6 +67,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         VerifyMovingShotCase(sources);
         VerifyPointChange(sources with { PointChangeSeconds = FreePointChangeSeconds });
         VerifyOccupiedPointRetry(sources with { PointChangeSeconds = BusyPointChangeSeconds });
+        CoopObstacleReservationRuntimeTests.Run(sources);
     }
 
     internal static void VerifyFirstShotAfterReposition(CoopMatchRuntime runtime, ulong enemyId,
@@ -306,7 +307,7 @@ internal static class CoopObstacleVolleyRuntimeTests
             "Preparing the source moving shot must not stop same-segment crawl movement.");
     }
 
-    private static CoopMatchRuntime CreateRuntime(Sources sources,
+    internal static CoopMatchRuntime CreateRuntime(Sources sources,
         Func<float> shotFraction, Func<float> repositionFraction)
     {
         return CreateRuntime(sources, shotFraction, repositionFraction, out _);

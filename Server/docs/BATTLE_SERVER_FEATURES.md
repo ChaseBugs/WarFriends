@@ -1224,3 +1224,9 @@ completes the subsequent batch/cooldown. It checks new projectile identities
 against the captured previous batch and same-tick completion replay. This proves
 the host lifecycle beyond departure; native navigation parity, rendered Client
 play and authoritative damage remain incomplete.
+
+B22 shared-match reservation verification now spans multiple real scheduled
+actors: every observed tick retains unique destination ownership while at least
+two enemies change points, and a released point is reclaimed by another actor.
+This extends the Desert host regression beyond a single actor; it does not close
+native navigation, Client presentation or authoritative combat gates.
