@@ -206,6 +206,56 @@ internal sealed class GrenadeMatchSimulation
         return world.Raycast(owner, origin, direction, range, mask);
     }
 
+    internal bool DroneCanSee(Vector3 position, Vector3 target)
+    {
+        DroneSightRay ray = DroneTargetPolicy.Sight(position, target);
+        if (ray.Direction == Vector3.Zero)
+        {
+            return true;
+        }
+
+        const uint Mask = DroneTargetPolicy.VisibilityLayerMask;
+        if (map.Raycast(ray.Origin, ray.Direction, ray.Range, Mask,
+            dynamicColliderEnabled, indexedColliderEnabled, runtimeLayer) != null)
+        {
+            return false;
+        }
+
+        // Check both owners' colliders: allied destroyables also block source sight rays.
+        // This mask excludes player body layers, so animated player poses are not blockers.
+        if (dynamicTargets != null)
+        {
+            foreach (Actor actor in actors)
+            {
+                if (IsDroneSightBlocked(ray, dynamicTargets(actor.Definition.PlayerId)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsDroneSightBlocked(DroneSightRay ray, IReadOnlyList<DynamicShotTarget> colliders)
+    {
+        foreach (DynamicShotTarget collider in colliders)
+        {
+            if (collider.Layer is < 0 or > 31 || collider.Hitbox == null)
+            {
+                throw new InvalidDataException("Invalid grenade-mode Drone visibility collider.");
+            }
+
+            if ((DroneTargetPolicy.VisibilityLayerMask & (1u << collider.Layer)) != 0 &&
+                collider.Hitbox.Raycast(ray.Origin, ray.Direction, ray.Range).HasValue)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     internal bool HelicopterCanSee(HelicopterSightRay ray)
     {
         if(!PlayerHitbox.Finite(ray.Origin)||!PlayerHitbox.Finite(ray.Direction)||

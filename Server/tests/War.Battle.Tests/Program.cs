@@ -783,7 +783,7 @@ if(args is ["--bazooka-only"])
     Console.WriteLine($"PASS: {focused} focused bazooka assertions");return;
 }
 
-if (args is ["--grenade-vehicles-only"])
+if (args is ["--grenade-vehicles-only"] or ["--grenade-drone-only"])
 {
     var vehicleContentRoot = new DirectoryInfo(AppContext.BaseDirectory);
     while (vehicleContentRoot != null &&
@@ -797,7 +797,14 @@ if (args is ["--grenade-vehicles-only"])
         throw new Exception("Recovered grenade content artifact not found.");
     }
 
-    GrenadeVehicleFlightTests.Run(Path.Combine(vehicleContentRoot.FullName, "content"));
+    if (args[0] == "--grenade-drone-only")
+    {
+        GrenadeDroneTests.Run(Path.Combine(vehicleContentRoot.FullName, "content"));
+    }
+    else
+    {
+        GrenadeVehicleFlightTests.Run(Path.Combine(vehicleContentRoot.FullName, "content"));
+    }
     return;
 }
 
@@ -808,6 +815,7 @@ if(args is ["--grenade-only"])
     if(root==null)throw new Exception("Recovered grenade content artifact not found.");
     int focused=GrenadeCatalogTests.Run(Path.Combine(root.FullName,"content"));
     focused+=GrenadeVehicleFlightTests.Run(Path.Combine(root.FullName,"content"));
+    focused+=GrenadeDroneTests.Run(Path.Combine(root.FullName,"content"));
     focused+=await GrenadeCatalogTests.RunUdp(Path.Combine(root.FullName,"content"));
     focused+=await GrenadeCatalogTests.RunTankUdp(Path.Combine(root.FullName,"content"));
     Console.WriteLine($"PASS: {focused} focused grenade assertions");return;
@@ -3158,6 +3166,7 @@ checks += BazookaCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += await GrenadeCatalogTests.RunTankUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyFlameBurstTests.Run();

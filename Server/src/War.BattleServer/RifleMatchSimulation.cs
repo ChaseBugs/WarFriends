@@ -377,7 +377,7 @@ internal sealed class RifleMatchSimulation
         var ray=DroneTargetPolicy.Sight(position,target);
         // Unity Physics.Raycast with a zero normalized direction reports no hit.
         if(ray.Direction==Vector3.Zero)return true;
-        const uint mask=(1u<<8)|(1u<<13)|(1u<<22)|(1u<<23)|(1u<<24)|(1u<<26)|(1u<<27)|(1u<<30);
+        const uint mask = DroneTargetPolicy.VisibilityLayerMask;
         if(map.Raycast(ray.Origin,ray.Direction,ray.Range,mask,dynamicColliderEnabled,
             indexedColliderEnabled,runtimeLayer)!=null)return false;
         // Visibility is not restricted to enemy colliders: allied destroyables block too.

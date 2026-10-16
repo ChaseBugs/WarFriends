@@ -278,8 +278,16 @@ The grenade-mode normal vehicle flight no longer falls back to a fabricated
 target collision when `RifleMatchSimulation` is absent. Confirmed Humvee or
 Transporter player hits now mark the source vehicle for revenge, but neither
 has a live grenade-mode player-hit fixture yet. Air attacks and full
-cross-weapon parity remain open: `MatchEngine.DroneCanSee` still requires
-`RifleMatchSimulation` even though the grenade mode supplies a separate pose world.
+cross-weapon parity remain open. Drone visibility now selects the active rifle
+or grenade collision world, with one shared source layer mask. The grenade
+world preserves `AIObject.CanSeeTarget`'s elevated ray, endpoint offsets,
+static/destroyable blockers from both owners, and zero-direction no-hit rule.
+A normal grenade-mode Park deployment selects the opposing player, launches
+real rounds automatically, and dispatches their confirmed collisions while
+retaining the recovered player/overtime damage coefficients. A live Drone body
+also blocks its source sight ray. This fixture does not establish player damage,
+revenge scoring, two-peer UDP delivery, or Unity presentation in grenade mode.
+Run it with `dotnet run --project Server/tests/War.Battle.Tests -c Release -- --grenade-drone-only`.
 An older M320 Tank fixture now earns
 `RevengeKill` as well as its explosion and vehicle flags because the live Tank
 damages its eventual killer before the grenade lands; its expected score is

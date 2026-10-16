@@ -7,6 +7,10 @@ public sealed record DroneSightRay(Vector3 Origin,Vector3 Direction,float Range)
 
 public static class DroneTargetPolicy
 {
+    // AIObject.CanSeeTarget includes allied destroyables but excludes player body layers.
+    internal const uint VisibilityLayerMask = (1u << 8) | (1u << 13) | (1u << 22) | (1u << 23) |
+        (1u << 24) | (1u << 26) | (1u << 27) | (1u << 30);
+
     // Caller must provide the source registry ordering; never nearest/random sort.
     public static DroneTargetCandidate? Select(int fraction,IReadOnlyList<DroneTargetCandidate> registry,
         Func<DroneTargetCandidate,bool> canSee)
