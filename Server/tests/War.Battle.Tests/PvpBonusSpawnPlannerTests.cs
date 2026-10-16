@@ -659,6 +659,11 @@ internal static class PvpBonusSpawnPlannerTests
                   quote.BoxId == liveMoneyPlan.Request.ReceiptId).Kind ==
                   PvpBonusEffectKind.Warbucks,
             "live engine retains both Gold and Warbucks quotes by confirmed box ID");
+        string skillShotReceiptId = Id(8561);
+        clockEngine.BonusProgress.RecordConfirmedSkillShot(
+            localId, skillShotReceiptId, 65536, 1f);
+        clockEngine.BonusProgress.RecordConfirmedSkillShot(
+            localId, skillShotReceiptId, 65536, 1f);
         clockEngine.Command(localId, new MatchCommand {CommandId = 2,
             Forfeit = new ForfeitCommand()});
         var quoteTerminal = clockEngine.TerminalEvidenceSnapshot();
@@ -668,7 +673,8 @@ internal static class PvpBonusSpawnPlannerTests
             "currency quotes appear only in private terminal evidence with signed recipient ranks");
         Check(clockEngine.Snapshot().Players.All(player =>
                   player.ConfirmedCratesCollected == 0 && player.ConfirmedCratesStolen == 0 &&
-                  player.ConfirmedScorestreaksGained == 0) &&
+                  player.ConfirmedScorestreaksGained == 0 &&
+                  player.ConfirmedSkillShotCounts.Count == 0) &&
               quoteTerminal.Players.Single(player => player.PlayerId == localId)
                   .ConfirmedCratesCollected == 2 &&
               quoteTerminal.Players.Single(player => player.PlayerId == localId)
@@ -682,6 +688,12 @@ internal static class PvpBonusSpawnPlannerTests
               quoteTerminal.Players.Single(player => player.PlayerId != localId)
                   .ConfirmedScorestreaksGained == 0,
             "private terminal counters separate spawned scorestreaks from collected crates");
+        Check(quoteTerminal.Players.All(player => player.ConfirmedSkillShotCounts.Count == 19) &&
+              quoteTerminal.Players.Single(player => player.PlayerId == localId)
+                  .ConfirmedSkillShotCounts.Single(row => row.Flag == 65536).Count == 1 &&
+              quoteTerminal.Players.Single(player => player.PlayerId != localId)
+                  .ConfirmedSkillShotCounts.All(row => row.Count == 0),
+            "terminal evidence preserves each owner's confirmed source skill-shot counters");
         byte[] QuotePayload(MatchSnapshot snapshot) =>
             Google.Protobuf.MessageExtensions.ToByteArray(snapshot);
         MatchSnapshot ValidatedQuotePayload(MatchSnapshot snapshot)
@@ -705,6 +717,54 @@ internal static class PvpBonusSpawnPlannerTests
         Check(scorestreakStats.Single(player => player.PlayerId == localId).ScorestreaksGained == 3 &&
               scorestreakStats.Single(player => player.PlayerId != localId).ScorestreaksGained == 0,
             "Backend scorestreak projection counts owner-spawned boxes, not collections");
+        var skillShotStats = BattleSkillShotStatsProjection.FromPayload(
+            cratePayload, quoteTerminal.MatchId, War.Shared.TerminalResultDigest.Compute(cratePayload));
+        Check(skillShotStats.Single(player => player.PlayerId == localId).Counts[65536] == 1 &&
+              skillShotStats.Single(player => player.PlayerId != localId).Counts[65536] == 0,
+            "Backend skill-shot projection reads complete validated owner counters");
+        try
+        {
+            ((IDictionary<int, int>)skillShotStats[0].Counts)[65536] = 99;
+            throw new Exception("Skill-shot projection exposed mutable counters.");
+        }
+        catch (NotSupportedException)
+        {
+            checks++;
+        }
+        var changedSkillShot = quoteTerminal.Clone();
+        changedSkillShot.Players[0].ConfirmedSkillShotCounts[0].Flag = 65536;
+        try
+        {
+            ValidatedQuotePayload(changedSkillShot);
+            throw new Exception("Reordered skill-shot identity entered terminal evidence.");
+        }
+        catch (InvalidDataException)
+        {
+            checks++;
+        }
+        var oversizedSkillShot = quoteTerminal.Clone();
+        oversizedSkillShot.Players[0].ConfirmedSkillShotCounts[0].Count =
+            BattleSkillShotEvidencePolicy.MaximumConfirmedReceipts + 1;
+        try
+        {
+            ValidatedQuotePayload(oversizedSkillShot);
+            throw new Exception("Oversized skill-shot count entered terminal evidence.");
+        }
+        catch (InvalidDataException)
+        {
+            checks++;
+        }
+        var incompleteSkillShots = quoteTerminal.Clone();
+        incompleteSkillShots.Players[0].ConfirmedSkillShotCounts.RemoveAt(0);
+        try
+        {
+            ValidatedQuotePayload(incompleteSkillShots);
+            throw new Exception("Incomplete skill-shot counters entered terminal evidence.");
+        }
+        catch (InvalidDataException)
+        {
+            checks++;
+        }
         var forgedScorestreak = quoteTerminal.Clone();
         forgedScorestreak.Players.Single(player => player.PlayerId == localId)
             .ConfirmedScorestreaksGained = MaximumTerminalScorestreaks + 1;

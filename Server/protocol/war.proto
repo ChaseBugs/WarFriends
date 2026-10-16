@@ -309,6 +309,12 @@ message BattlePlayerState {
   // Private terminal-only count of boxes actually spawned for this owner.
   // This is the recovered MatchStats.scorestreakGained event boundary.
   uint32 confirmed_scorestreaks_gained = 51;
+  // Private terminal-only source ScoreManager skill-shot counters.
+  repeated BattleSkillShotCount confirmed_skill_shot_counts = 52;
+}
+message BattleSkillShotCount {
+  uint32 flag = 1;
+  uint32 count = 2;
 }
 message BattleArmyUsage {
   int32 option_index = 1; string unit_id = 2; uint32 deployments = 3;

@@ -178,6 +178,19 @@ public sealed class BattleResultStore
         return BattleScorestreakStatsProjection.FromPayload(
             result.Snapshot, result.MatchId, result.Digest);
     }
+    /// <summary>Reads complete host-confirmed skill-shot counters from a completed result.</summary>
+    public async Task<IReadOnlyList<BattleSkillShotMatchStats>?> GetSkillShotStats(
+        string matchId, CancellationToken cancellationToken)
+    {
+        BattleResultDocument? result = await Get(matchId, cancellationToken);
+        if (result == null)
+        {
+            return null;
+        }
+
+        return BattleSkillShotStatsProjection.FromPayload(
+            result.Snapshot, result.MatchId, result.Digest);
+    }
     public async Task<IReadOnlyList<BattleDirectArmyKillEvidence>?> GetDirectArmyKillEvidence(string matchId,CancellationToken ct)
     {
         var result=await Get(matchId,ct);

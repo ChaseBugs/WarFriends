@@ -3270,6 +3270,16 @@ public sealed partial class MatchEngine : IMatchRuntime
             ,SniperAiming = rifleCombat?.SniperAiming(p.Definition.PlayerId) ?? false
             ,SniperScopeVisible = rifleCombat?.SniperScopeVisible(p.Definition.PlayerId,tick) ?? false
         }));
+        if (includeTerminalEvidence && pvpBonusProgress != null)
+        {
+            foreach (BattlePlayerState player in snapshot.Players)
+            {
+                PvpOwnerScoreSnapshot score = pvpBonusProgress.ScoreSnapshot(player.PlayerId);
+                player.ConfirmedSkillShotCounts.AddRange(
+                    BattleSkillShotEvidencePolicy.FromConfirmedCounts(score.Counts));
+            }
+        }
+
         if(Terminal)
             foreach(var (player,row) in players.SelectMany(p=>p.ArmyStats.Snapshot()
                 .Select(row=>(p.Definition.PlayerId,row))))

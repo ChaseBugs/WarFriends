@@ -278,6 +278,7 @@ public sealed class TerminalOutbox
                p.ConfirmedCratesCollected > MaximumCrateCollections ||
                p.ConfirmedCratesStolen > p.ConfirmedCratesCollected ||
                p.ConfirmedScorestreaksGained > MaximumSpawnedScorestreaks ||
+               !BattleSkillShotEvidencePolicy.Valid(p.ConfirmedSkillShotCounts) ||
                p.ConfirmedCardsPlayed>4096 ||
                p.ConfirmedEnemyHits>1_000_000) ||
            snapshot.Players.Any(p=>!Guid.TryParseExact(p.PlayerId,"N",out _)) ||

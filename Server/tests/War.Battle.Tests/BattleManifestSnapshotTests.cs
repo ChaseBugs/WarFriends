@@ -89,6 +89,8 @@ internal static class BattleManifestSnapshotTests
                     MaximumTerminalCrateCollections + 1),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedScorestreaksGained=
                     MaximumTerminalScorestreaks + 1),
+                new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedSkillShotCounts.Add(
+                    new BattleSkillShotCount { Flag = 65536, Count = 1 })),
                 new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
                     {OptionIndex=0,UnitId="ID_UNIT-ASSAULT",Deployments=1,PlannedSpawns=2,ConfirmedSpawns=1})),
                 new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
@@ -121,6 +123,21 @@ internal static class BattleManifestSnapshotTests
             terminal.Players[1].ConfirmedCratesCollected = 1;
             terminal.Players[0].ConfirmedScorestreaksGained = 2;
             terminal.Players[1].ConfirmedScorestreaksGained = 1;
+            JsonArray scoreRows = JsonNode.Parse(await File.ReadAllBytesAsync(Path.Combine(
+                root.FullName, "content/recovered-pvp-skillshot-scores.json")))!
+                .AsObject()["rows"]!.AsArray();
+            foreach (BattlePlayerState player in terminal.Players)
+            {
+                foreach (JsonNode? scoreRow in scoreRows)
+                {
+                    player.ConfirmedSkillShotCounts.Add(new BattleSkillShotCount
+                    {
+                        Flag = checked((uint)scoreRow!["flag"]!.GetValue<int>()),
+                        Count = player.PlayerId == players[0] &&
+                            scoreRow["name"]!.GetValue<string>() == "EnemyPlayerHit" ? 1u : 0u
+                    });
+                }
+            }
             terminal.PvpCurrencyQuotes.Add(new BattlePvpCurrencyQuote {
                 BoxId = new string('d', 32), RecipientPlayerId = players[1],
                 Currency = "gold", BaseDraw = 4, Amount = 4,
@@ -200,6 +217,12 @@ internal static class BattleManifestSnapshotTests
                 scorestreakStats[1].PlayerId != players[1])
             {
                 throw new Exception("Durable result read lost spawned scorestreak statistics.");
+            }
+            var skillShotStats = await resultStore.GetSkillShotStats(match, CancellationToken.None);
+            if (skillShotStats == null || skillShotStats.Count != 2 ||
+                skillShotStats[0].Counts[65536] != 1 || skillShotStats[1].Counts[65536] != 0)
+            {
+                throw new Exception("Durable result read lost confirmed skill-shot counters.");
             }
             var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
                 new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));

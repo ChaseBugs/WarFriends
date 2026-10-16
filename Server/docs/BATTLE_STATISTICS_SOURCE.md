@@ -23,10 +23,13 @@ combined skill-shot count, or generic objective event is not equivalent. The
 active row contains these twelve name/count pairs: HeadShot/3, Runner/3,
 LongShot/10, Covered/6, OneHitKill/4, DoubleKill/2, TrippleKill/1,
 RevengeKill/3, ExplosiveKill/1, OnTheMove/2, EnemyPlayerHit/2, and ArmyKill/3.
-`PvpSkillShotScoreState.Counts` already preserves separate host-confirmed counters
-for all source flags, including zero-point awards. These counters currently live
-only in a match-local score view; they are not a durable terminal assignment
-receipt or a Backend claim authority. Each selected type still needs its own
-complete host callback proof before assignment progression can be settled.
+`PvpSkillShotScoreState.Counts` preserves separate host-confirmed counters for
+all 19 source flags, including zero-point awards. Completed PvP results now
+carry the complete ordered set in private `confirmed_skill_shot_counts` rows;
+live snapshots omit it. `BattleResultStore.GetSkillShotStats` validates the
+terminal payload and exposes detached per-player counters, rejecting legacy
+results without this evidence. This is not a durable assignment claim or a
+proof that every source callback is already implemented. Each selected type
+still needs complete host callback coverage and atomic Backend settlement.
 
 Next B24/B26 implementation work: establish source-equivalent owner/weapon/target event credits for shots, hits, kills and vehicles; obtain or explicitly replace the missing unit-index mapping; compare countdown and Worker clock behavior in a running Unity match; then consume one validated terminal result in a Mongo transaction that updates per-player MatchStats, outcome, wallet and an idempotent receipt together. Keep rewards closed until that transaction and its source-backed policy exist.

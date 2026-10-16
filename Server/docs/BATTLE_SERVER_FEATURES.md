@@ -234,9 +234,11 @@ B11/B18 CardShieldDestroyer (DESTROYSHIELD) now has a distinct authenticated com
 B19 `GainSkillshotsAssignment` is keyed by one source skill-shot flag, not a
 generic objective total. The recovered active `ID_10` row specifies twelve
 name/count multipliers; [the statistics source boundary](BATTLE_STATISTICS_SOURCE.md)
-records them and the existing host-confirmed per-flag counters. Full callback
-coverage, durable terminal evidence, and Backend assignment settlement remain
-open; no generic objective event may be promoted into this claim.
+records them. Completed PvP results now retain all 19 host-confirmed source
+counters in validated private terminal rows, and the durable result store
+exposes a detached read projection. Full callback coverage and atomic Backend
+assignment settlement remain open; no generic objective event may be promoted
+into this claim.
 
 B11/B18 CardMassShieldDestroyer (APOCALYPSE) is now an authenticated self-hosted card. MainScene binds shieldCount = 3; the host draws without replacement from currently living opposing cover shields, reserves one Backend-provisioned card, and publishes each destroyed shield through existing snapshots and replayable events. No target list or damage arrives from the Client. The original card spends even when no eligible shield exists. The card-button dispatcher and portable SDK now send only a request ID. Replay and exhausted-stock tests cover the live match; Unity Play Mode effects and two-Client presentation still need validation.
 
