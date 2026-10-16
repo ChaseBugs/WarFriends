@@ -1217,3 +1217,10 @@ host reuses the source free-point selector and resumes walking toward the new
 reservation. A no-free attempt delayed by shooting extends its original deadline
 by ten seconds. Runtime fixtures cover both successful transition and occupied
 point retry. Native movement/rotation and collision/damage remain incomplete.
+
+B22's point-change regression now walks the complete new route at the recovered
+speed, reaches the new reserved obstacle, waits for its fresh shot deadline and
+completes the subsequent batch/cooldown. It checks new projectile identities
+against the captured previous batch and same-tick completion replay. This proves
+the host lifecycle beyond departure; native navigation parity, rendered Client
+play and authoritative damage remain incomplete.

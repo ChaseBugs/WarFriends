@@ -108,6 +108,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         CoopAssignedEnemyDestination original = runtime.EnemyDestination(enemyId)!;
         ulong changeTick = arrival.FirstObstacleChangeTick!.Value;
         runtime.Advance(changeTick - 1);
+        ulong previousProjectileId = runtime.InfantryRoundIntents(enemyId).LastOrDefault()?.ProjectileId ?? 0;
         Check(runtime.EnemyDestination(enemyId)!.PointComponentFileId == original.PointComponentFileId,
             "The enemy must not abandon its reserved obstacle before the source point-change deadline.");
         while (runtime.EnemyDestination(enemyId)!.PointComponentFileId == original.PointComponentFileId &&
@@ -121,6 +122,7 @@ internal static class CoopObstacleVolleyRuntimeTests
             runtime.NextObstaclePointChangeTick(enemyId) == null && runtime.ObstacleVolleyState(enemyId) == null,
             "A source-ready point change must reserve a different point and restart the walking lifecycle.");
         Console.WriteLine("PASS: co-op obstacle source deadline changes the reserved enemy point");
+        CoopObstaclePointLifecycleTests.Run(runtime, enemyId, sources, previousProjectileId);
     }
 
     private static void VerifyOccupiedPointRetry(Sources sources)

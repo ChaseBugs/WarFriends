@@ -45,6 +45,14 @@ control is not inferred from this co-op transition.
 This implements point-selection/scheduling only. Source native movement,
 moving root orientation and complete collision/damage authority remain open.
 
+The host lifecycle regression now follows the successful change through the
+entire new route. Each planar movement step stays within the recovered speed;
+the actor reaches its new reserved obstacle, creates a new arrival/shot deadline,
+waits for readiness and completes the next batch and cooldown. New projectile
+identities remain above those captured before the change, and replaying the
+completion tick emits no extra round. This is executable host lifecycle proof,
+not Unity native navigation parity or rendered Client gameplay verification.
+
 ## Implemented runtime transitions
 
 `CoopObstacleVolleyClock` now starts at obstacle arrival and owns crawling/pending
