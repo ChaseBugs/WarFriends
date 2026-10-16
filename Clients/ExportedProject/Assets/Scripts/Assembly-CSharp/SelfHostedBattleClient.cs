@@ -66,6 +66,22 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private string manifestHash;
     private SpawningManagerDeathMatch armyManager;
     private SelfHostedDeathMatchBridge deathMatchBridge;
+    private ScoreManager _scoreManager;
+
+    /// <summary>Binds the scene score view before room or terminal callbacks consume a snapshot.</summary>
+    public void BindScoreManager(ScoreManager manager)
+    {
+        if (manager == null)
+        {
+            return;
+        }
+
+        _scoreManager = manager;
+        if (_scoreManager != null && State != null)
+        {
+            _scoreManager.ApplySelfHostedSnapshot(State, LocalPlayerId);
+        }
+    }
     public bool IsMatchmaking { get { return matchmaking != null; } }
     public bool OwnsMatch { get { return connection != null; } }
     public bool ReconnectFailed { get { return reconnectFailureReported; } }
@@ -1026,6 +1042,10 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             if (player.RiflePose != null && rifleViews.TryGetValue(player.PlayerId, out renderer)) renderer.Apply(player);
         }
         State = next;
+        if (_scoreManager != null)
+        {
+            _scoreManager.ApplySelfHostedSnapshot(State, LocalPlayerId);
+        }
         if (!cardsSelectedByBothRaised && State.Players.Count == 2 && State.Players[0].CardsSelected && State.Players[1].CardsSelected)
         {
             cardsSelectedByBothRaised = true;
@@ -1065,6 +1085,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         LocalPlayerId = null;
         rifleViews.Clear();
         rifleRoots.Clear();
+        _scoreManager = null;
         if (deathMatchBridge != null) { Destroy(deathMatchBridge); deathMatchBridge = null; }
         barrelTracker = null;
         barrelCatalog = null;

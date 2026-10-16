@@ -105,6 +105,7 @@ internal static class GrenadeDroneTests
             CommandId = 5,
             Forfeit = new ForfeitCommand()
         });
+        checks += BattleScoreSnapshotTests.VerifyTerminal(match, DefenderId);
         Check(match.TerminalEvidenceSnapshot().Players.Single(player =>
             player.PlayerId == DefenderId).ConfirmedSkillShotCounts.Single(row =>
                 row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,

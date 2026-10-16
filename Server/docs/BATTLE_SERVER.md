@@ -21,7 +21,10 @@ The Worker supports a [pinned combat content package](COMBAT_CONTENT.md), valida
 Matches remain **ineligible for durable rewards**: `RewardEligible` is always
 false. This is separate from the server-owned PvP skill-shot score, which live
 player snapshots now publish as `BattlePlayerState.score`. The SDK validates
-that score before delivering the snapshot; Unity HUD binding remains pending.
+score, streak progress and terminal counters before delivering snapshots. The
+self-hosted PvP adapter now binds the recovered Unity score HUD before terminal
+callbacks and suppresses local score authority. Its isolated component audit
+does not establish full-scene gameplay; see [score HUD integration](SELF_HOSTED_SCORE_HUD.md).
 Weapon, movement, destructible, army, card, allocation, and settlement coverage
 and their remaining gameplay gates are tracked in
 [the active completion checklist](BATTLE_SERVER_FEATURES.md). Synthetic test

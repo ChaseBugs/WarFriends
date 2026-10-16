@@ -394,6 +394,11 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         lock (gate)
         {
             var progress = ProgressFor(ownerId);
+            if (!float.IsFinite(progress.Progress) || progress.Progress < 0)
+            {
+                throw new InvalidDataException("Invalid source score-streak progress.");
+            }
+
             return new(ownerId, progress.Progress, progress.BonusesRequested, progress.ReceiptCount);
         }
     }

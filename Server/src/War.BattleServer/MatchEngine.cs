@@ -3312,6 +3312,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             ConfirmedPlayerHits = p.ConfirmedPlayerHits, ConfirmedPlayerKills = p.ConfirmedPlayerKills,
             ConfirmedEnemyHits = p.ConfirmedEnemyHits,
             Score = pvpBonusProgress?.ScoreSnapshot(p.Definition.PlayerId).Score ?? 0,
+            KillStreakProgress = pvpBonusProgress?.Snapshot(p.Definition.PlayerId).Progress ?? 0,
             ConfirmedPlayerBulletHits=includeTerminalEvidence ? p.ConfirmedPlayerBulletHits : 0,
             ConfirmedCratesCollected = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Collected),
             ConfirmedCratesStolen = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Stolen),
@@ -3329,13 +3330,22 @@ public sealed partial class MatchEngine : IMatchRuntime
             ,SniperAiming = rifleCombat?.SniperAiming(p.Definition.PlayerId) ?? false
             ,SniperScopeVisible = rifleCombat?.SniperScopeVisible(p.Definition.PlayerId,tick) ?? false
         }));
-        if (includeTerminalEvidence && pvpBonusProgress != null)
+        if ((includeTerminalEvidence || Terminal) && pvpBonusProgress != null)
         {
             foreach (BattlePlayerState player in snapshot.Players)
             {
                 PvpOwnerScoreSnapshot score = pvpBonusProgress.ScoreSnapshot(player.PlayerId);
-                player.ConfirmedSkillShotCounts.AddRange(
-                    BattleSkillShotEvidencePolicy.FromConfirmedCounts(score.Counts));
+                IReadOnlyList<BattleSkillShotCount> counts =
+                    BattleSkillShotEvidencePolicy.FromConfirmedCounts(score.Counts);
+                if (includeTerminalEvidence)
+                {
+                    player.ConfirmedSkillShotCounts.AddRange(counts);
+                }
+
+                if (Terminal)
+                {
+                    player.SkillShotCounts.AddRange(counts.Select(count => count.Clone()));
+                }
             }
         }
 

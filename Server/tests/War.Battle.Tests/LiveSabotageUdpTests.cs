@@ -243,7 +243,10 @@ internal static class LiveSabotageUdpTests
             BattlePlayerState scoredPlayer = used.Snapshot.Players.Single(player =>
                 player.PlayerId == attackerId);
             MatchReply remoteScore = await defender.PollAsync(timeout.Token);
-            Check(scoredPlayer.Score > 0 &&
+            // Both admitted ranks are zero. The recovered noob policy disables
+            // crate progress while preserving confirmed skill-shot score.
+            Check(scoredPlayer.Score > 0 && scoredPlayer.KillStreakProgress == 0 &&
+                scoredPlayer.SkillShotCounts.Count == 0 &&
                 retry.Snapshot.Players.Single(player => player.PlayerId == attackerId).Score == scoredPlayer.Score &&
                 remoteScore.Snapshot.Players.Single(player => player.PlayerId == attackerId).Score == scoredPlayer.Score,
                 "both UDP peers receive the host score and a replay cannot increase it");

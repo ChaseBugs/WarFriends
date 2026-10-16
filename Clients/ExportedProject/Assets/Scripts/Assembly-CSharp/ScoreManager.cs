@@ -4,9 +4,14 @@ using System.Collections.Generic;
 using CodeStage.AntiCheat.ObscuredTypes;
 using Google2u;
 using UnityEngine;
+using Google.Protobuf.Collections;
+using War.Client;
+using War.Protocol;
 
 public class ScoreManager : Singleton<ScoreManager>
 {
+    private const float KillStreakThreshold = 100f;
+
 	public AudioClip skillStreakSound;
 
 	private ObscuredInt mScore;
@@ -43,6 +48,93 @@ public class ScoreManager : Singleton<ScoreManager>
 
 	private PhotonView mPhotonView;
 
+    private bool _hasSelfHostedScore;
+
+    private bool IsSelfHostedScoreActive
+    {
+        get { return _hasSelfHostedScore || IsSelfHostedPvp; }
+    }
+
+    private static bool IsSelfHostedPvp
+    {
+        get
+        {
+            SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+            return client != null && client.OwnsMatch && (client.State == null || client.State.Coop == null);
+        }
+    }
+
+    /// <summary>Replaces PvP presentation state with one validated host snapshot.</summary>
+    public void ApplySelfHostedSnapshot(MatchSnapshot snapshot, string localPlayerId)
+    {
+        BattleScoreSnapshotPolicy.Validate(snapshot);
+        if (snapshot.Coop != null)
+        {
+            return;
+        }
+
+        BattlePlayerState local;
+        BattlePlayerState other;
+        ResolveHostParticipants(snapshot, localPlayerId, out local, out other);
+
+        bool isTerminal = snapshot.Phase == BattlePhase.Ended || snapshot.Phase == BattlePhase.Aborted;
+        Dictionary<SkillShot.SkillShotType, int> localCounts = skillShotCounts;
+        Dictionary<SkillShot.SkillShotType, int> otherCounts = skillShotCountsOponent;
+        if (isTerminal)
+        {
+            localCounts = ReadHostCounts(local.SkillShotCounts, skillShotCounts);
+            otherCounts = ReadHostCounts(other.SkillShotCounts, skillShotCountsOponent);
+        }
+
+        _hasSelfHostedScore = true;
+        mScore = local.Score;
+        opponentScore = other.Score;
+        killStreakProgress = local.KillStreakProgress;
+        killStreakProgressOpponent = other.KillStreakProgress;
+        skillShotCounts = localCounts;
+        skillShotCountsOponent = otherCounts;
+    }
+
+    private static void ResolveHostParticipants(MatchSnapshot snapshot, string localPlayerId,
+        out BattlePlayerState local, out BattlePlayerState other)
+    {
+        local = null;
+        other = null;
+        foreach (BattlePlayerState player in snapshot.Players)
+        {
+            if (player.PlayerId == localPlayerId)
+            {
+                local = player;
+            }
+            else
+            {
+                other = player;
+            }
+        }
+
+        if (local == null || other == null)
+        {
+            throw new InvalidOperationException("Host scores do not identify the local participant.");
+        }
+    }
+
+    private static Dictionary<SkillShot.SkillShotType, int> ReadHostCounts(
+        RepeatedField<BattleSkillShotCount> counts, Dictionary<SkillShot.SkillShotType, int> template)
+    {
+        var result = new Dictionary<SkillShot.SkillShotType, int>();
+        foreach (SkillShot.SkillShotType flag in template.Keys)
+        {
+            result.Add(flag, 0);
+        }
+
+        foreach (BattleSkillShotCount count in counts)
+        {
+            result[(SkillShot.SkillShotType)count.Flag] = checked((int)count.Count);
+        }
+
+        return result;
+    }
+
 	public int score
 	{
 		get
@@ -51,7 +143,10 @@ public class ScoreManager : Singleton<ScoreManager>
 		}
 		set
 		{
-			mScore = value;
+            if (!IsSelfHostedScoreActive)
+            {
+                mScore = value;
+            }
 		}
 	}
 
@@ -102,10 +197,19 @@ public class ScoreManager : Singleton<ScoreManager>
 		mPhotonView = GetComponent<PhotonView>();
 		Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
 		Singleton<GameController>.instance.BeforeGameStarted += Restart;
+        SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+        if (client != null && client.OwnsMatch)
+        {
+            client.BindScoreManager(this);
+        }
 	}
 
 	private void InstanceOnGameEnded(GameController.GameEndReason gameEndReason)
 	{
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
 		mPhotonView.RPC("RecieveOponentScore", PhotonTargets.Others, score);
 		foreach (KeyValuePair<SkillShot.SkillShotType, int> skillShotCount in skillShotCounts)
 		{
@@ -144,9 +248,10 @@ public class ScoreManager : Singleton<ScoreManager>
 
 	public void Restart()
 	{
+        _hasSelfHostedScore = IsSelfHostedPvp;
 		isNewKillStreak = false;
 		mLastScore = 0;
-		score = 0;
+		mScore = 0;
 		killStreakProgress = 0f;
 		killStreakProgressOpponent = 0f;
 		gotGoldBoxes = 0;
@@ -175,6 +280,11 @@ public class ScoreManager : Singleton<ScoreManager>
 		}
 		bonusMultiplier = 1f;
 		bonusMultiplierEnemy = 1f;
+        SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+        if (IsSelfHostedPvp && client.State != null)
+        {
+            ApplySelfHostedSnapshot(client.State, client.LocalPlayerId);
+        }
 	}
 
 	private IEnumerator CheckForScoreChange()
@@ -196,6 +306,10 @@ public class ScoreManager : Singleton<ScoreManager>
 	[PunRPC]
 	private void RecieveOponentScore(int score)
 	{
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
 		opponentScore = score;
 		Debug.Log("score recieved");
 	}
@@ -203,6 +317,10 @@ public class ScoreManager : Singleton<ScoreManager>
 	[PunRPC]
 	private void RecieveSkillShotsCount(int skillShot, int skillshotCount)
 	{
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
 		skillShotCountsOponent[(SkillShot.SkillShotType)skillShot] = skillshotCount;
 	}
 
@@ -210,22 +328,7 @@ public class ScoreManager : Singleton<ScoreManager>
 	{
 		if (Singleton<GameController>.instance.gameIsRunning)
 		{
-			killStreakProgress -= Time.deltaTime * killsStreakProgressLoss;
-			killStreakProgress = Mathf.Clamp(killStreakProgress, 0f, float.PositiveInfinity);
-			if (killStreakProgress > 100f)
-			{
-				killStreakProgress -= 100f;
-				isNewKillStreak = true;
-				Singleton<KillStreakManager>.instance.GenerateNewBonus(PlayerController.currentPlayer);
-				SoundsManager.Instance.PlaySound(skillStreakSound);
-			}
-			killStreakProgressOpponent -= Time.deltaTime * killsStreakProgressLoss;
-			killStreakProgressOpponent = Mathf.Clamp(killStreakProgressOpponent, 0f, float.PositiveInfinity);
-			if (killStreakProgressOpponent > 100f)
-			{
-				killStreakProgressOpponent -= 100f;
-				Singleton<KillStreakManager>.instance.GenerateNewBonus(Singleton<GameController>.instance.opponent);
-			}
+            AdvanceLocalStreak();
 			mTimeFromStart += Time.deltaTime;
 			if (mTimeFromStart > 10f)
 			{
@@ -237,8 +340,38 @@ public class ScoreManager : Singleton<ScoreManager>
 		}
 	}
 
+    private void AdvanceLocalStreak()
+    {
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
+
+        killStreakProgress -= Time.deltaTime * killsStreakProgressLoss;
+        killStreakProgress = Mathf.Clamp(killStreakProgress, 0f, float.PositiveInfinity);
+        if (killStreakProgress > KillStreakThreshold)
+        {
+            killStreakProgress -= KillStreakThreshold;
+            isNewKillStreak = true;
+            Singleton<KillStreakManager>.instance.GenerateNewBonus(PlayerController.currentPlayer);
+            SoundsManager.Instance.PlaySound(skillStreakSound);
+        }
+
+        killStreakProgressOpponent -= Time.deltaTime * killsStreakProgressLoss;
+        killStreakProgressOpponent = Mathf.Clamp(killStreakProgressOpponent, 0f, float.PositiveInfinity);
+        if (killStreakProgressOpponent > KillStreakThreshold)
+        {
+            killStreakProgressOpponent -= KillStreakThreshold;
+            Singleton<KillStreakManager>.instance.GenerateNewBonus(Singleton<GameController>.instance.opponent);
+        }
+    }
+
 	private void LateUpdate()
 	{
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
 		if ((Singleton<GameController>.instance.isCoop || Singleton<GameController>.instance.isCoopBot) && mLastScore != score)
 		{
 			mPhotonView.RPC("AddCoopScoreRPC", PhotonTargets.Others, score - mLastScore);
@@ -249,11 +382,19 @@ public class ScoreManager : Singleton<ScoreManager>
 	[PunRPC]
 	private void AddCoopScoreRPC(int scoreToAdd)
 	{
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
 		mCoopOtherPlayerScore += scoreToAdd;
 	}
 
 	public void AddSkillshot(SkillShotManager.SkillShotItemDefinition def, PlayerController playerController)
 	{
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
 		if (playerController.isCurrentPlayer && skillShotCounts.ContainsKey(def.skillShotType))
 		{
 			Dictionary<SkillShot.SkillShotType, int> dictionary2;
@@ -326,6 +467,10 @@ public class ScoreManager : Singleton<ScoreManager>
 
 	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
+        if (IsSelfHostedScoreActive)
+        {
+            return;
+        }
 		if (stream.isWriting)
 		{
 			stream.SendNext(score);

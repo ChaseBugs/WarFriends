@@ -1,24 +1,36 @@
 using System;
+using System.Collections.Generic;
 using War.Protocol;
+using War.Shared;
 
 namespace War.Client
 {
-    // A host score replaces the recovered HUD total; malformed values must
-    // fail before a snapshot can reach Unity or overwrite a displayed score.
-    internal static class BattleScoreSnapshotPolicy
+    /// <summary>Rejects damaged host score state before it reaches the recovered HUD.</summary>
+    public static class BattleScoreSnapshotPolicy
     {
-        internal static void Validate(MatchSnapshot snapshot)
+        private const int MatchPlayerCount = 2;
+
+        /// <summary>Validates public score, streak progress, and terminal counter snapshots.</summary>
+        public static void Validate(MatchSnapshot snapshot)
         {
-            if (snapshot == null)
+            if (snapshot == null || snapshot.Players.Count != MatchPlayerCount)
             {
                 throw new InvalidOperationException("Missing battle score snapshot.");
             }
 
+            bool isTerminal = snapshot.Phase == BattlePhase.Ended || snapshot.Phase == BattlePhase.Aborted;
+            var playerIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (BattlePlayerState player in snapshot.Players)
             {
-                if (player.Score < 0)
+                Guid parsedId;
+                if (!Guid.TryParseExact(player.PlayerId, "N", out parsedId) ||
+                    player.PlayerId != parsedId.ToString("N") || !playerIds.Add(player.PlayerId) ||
+                    player.Score < 0 || player.KillStreakProgress < 0 ||
+                    float.IsNaN(player.KillStreakProgress) || float.IsInfinity(player.KillStreakProgress) ||
+                    !SkillShotCounterPolicy.Valid(player.SkillShotCounts) ||
+                    (!isTerminal && player.SkillShotCounts.Count != 0))
                 {
-                    throw new InvalidOperationException("Invalid server-owned battle score.");
+                    throw new InvalidOperationException("Invalid public battle score state.");
                 }
             }
         }

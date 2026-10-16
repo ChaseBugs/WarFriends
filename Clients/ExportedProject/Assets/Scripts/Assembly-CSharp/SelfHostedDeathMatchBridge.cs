@@ -55,6 +55,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		otherAnimator = other.ResolveSelfHostedAnimator();
 		sniperScope = UnityEngine.Object.FindObjectOfType<SniperScope>();
 		hud = UnityEngine.Object.FindObjectOfType<HudScreen>();
+        client.BindScoreManager(UnityEngine.Object.FindObjectOfType<ScoreManager>());
 		if (localAnimator == null || otherAnimator == null)
 			throw new InvalidOperationException("Both self-hosted DeathMatch players require an animation controller.");
 		local.enabled = false; other.enabled = false;

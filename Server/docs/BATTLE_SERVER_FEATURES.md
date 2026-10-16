@@ -8,18 +8,26 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
-Live player snapshots now publish the server-owned PvP skill-shot score as
-`BattlePlayerState.score`. The SDK rejects negative values before delivering a
-snapshot. Private per-flag terminal counters remain separate. Frozen command
-replays keep their original score; display ordering must use the snapshot tick
-and revision rather than rejecting every lower score. The controlled
-Drone/Sabotage sequence checks the public 56-point projection, and the real
-Sabotage UDP fixture requires both peers and the replay to retain the same score.
-The recovered Unity `ScoreManager` still calculates locally and sends Photon
-score RPCs; binding its HUD and disabling local authority for self-hosted play
-remain necessary Client integration work. Score transport alone does not close B32.
-The final score must reach the HUD before `SelfHostedBattleClient.Apply` calls
-`roomLifecycle.Observe`, which can publish terminal callbacks before `StateReceived`.
+Live player snapshots publish server-owned PvP score and kill-streak progress.
+Terminal snapshots also publish the complete ordered skill-shot breakdown,
+separately from private settlement evidence. The SDK validates participant
+identities, nonnegative score, finite progress and canonical counters before
+publishing snapshots. Frozen command replies retain their original state;
+tick/revision ordering prevents a replay from rewinding the display.
+
+The recovered Unity `ScoreManager` now binds self-hosted PvP snapshots before
+`roomLifecycle.Observe` can invoke terminal callbacks. Its existing HUD event
+updates the NGUI score and gain labels. Self-hosted play suppresses local score
+mutation, streak bonus generation and Photon score callbacks; that guard
+survives disconnect until restart. Existing diagnostic time-history sampling
+continues. Campaign/tutorial and the separate co-op score path retain their
+existing behavior. See [score HUD integration](SELF_HOSTED_SCORE_HUD.md).
+
+The controlled Drone/Sabotage sequence verifies 56 points and terminal counters;
+the real Sabotage UDP fixture checks peer/replay score consistency. An isolated
+Unity component audit checks actual NGUI label output and callback ordering.
+This does not prove normal MainScene rendering, two-device Unity gameplay,
+Android behavior or complete skill-shot popup/statistics integration. B32 remains partial.
 
 Progress and delayed bonus issuance now publish atomically for a two-owner
 source view. Both use the original single ratio; candidate frame state is
