@@ -3606,8 +3606,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         if (!CoopAssaulterShotRotation.FinalRotationReached(
                 arrival.State, elapsedTicks))
             return null;
-        CoopQueuedMuzzleSample? sample = assaulterQueue.Sample(
-            windup.AnimationClip, windup.QueuedFireClip, elapsedTicks);
+        // The verified obstacle coroutine sees the Update sample before this frame's animation evaluation.
+        CoopQueuedMuzzleSample? sample = windup.AnimationClip == "stand_up_begin"
+            ? ObserveObstacleFiringMuzzle(enemyId, windup)
+            : assaulterQueue.Sample(windup.AnimationClip, windup.QueuedFireClip, elapsedTicks);
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
             spawn.EntityId == enemyId && spawn.Health > 0 &&
             spawn.DeathTick == 0);

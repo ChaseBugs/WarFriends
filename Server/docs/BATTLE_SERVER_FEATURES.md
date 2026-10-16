@@ -1298,3 +1298,11 @@ first later gameplay poll is tick eleven. The runtime uses the shared tested
 `CoopShotCallbackClock`, retaining its prior fixed-clock behavior with explicit
 clip/overflow validation. Full controller and callback-muzzle integration remain
 open. See [the callback clock evidence](COOP_SHOT_CALLBACK_CLOCK.md).
+
+B22 obstacle callbacks now use the gameplay-phase muzzle selector. A native
+coroutine observation found the former editor-phase lookup one sample later
+than the callback transform (about 1.8 cm from the actual muzzle). The
+new fixture checks callback and next-poll positions and rotations against
+the active clock, and the runtime callback world-position regression uses
+the observed phase. Full controller, corner callback and moving-root evidence
+remain open; see the callback muzzle correction in the same report.

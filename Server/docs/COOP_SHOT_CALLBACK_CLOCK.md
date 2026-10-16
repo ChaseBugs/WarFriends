@@ -32,7 +32,8 @@ gameplay poll. It does not implement its own waiting loop or substitute a
 test coroutine. The final record must contain a nonnegative `firstReadyTick`;
 the intermediate callback-only file is not a completed observation.
 
-This isolates scheduling. It does not run the complete EnemyController, send
+The original timing-only observation isolates scheduling. It does not run the
+complete EnemyController, send
 Photon RPCs, poll the actual Gun, measure callback-phase muzzle geometry or
 prove live co-op damage. The exporter still owns normal round animation resets
 and process termination. Preserve those boundaries when interpreting results.
@@ -83,3 +84,49 @@ plus the observation fixtures. Native smoke builds with zero warnings/errors,
 passes 1,037 protocol checks and 74 live MongoDB/HTTP/protobuf/UDP checks, and
 verifies evidence persistence across Worker restarts. No full Unity match or
 new Linux execution is claimed by these checks.
+
+## Callback muzzle phase correction
+
+The schema-two observation adds the local muzzle position, rotation and enabled
+animation states at the actual coroutine callback and the first following
+gameplay poll. The run completes all 82 post frames with no compiler error or
+runtime exception. The timing remains callback tick ten and first poll tick
+eleven. At callback, the queued firing clip is sampled at 0.06666667 seconds.
+At the next poll the transform reflects 0.1 seconds, even though the first
+round's `OnShot` has already reset the ordinary animation state's time to zero.
+Transforms and newly reset state time must not be confused.
+
+`ObserveShotStartAssaulterMuzzle` previously queried the editor-phase queue at
+the callback's current tick. For obstacle preparation this selected the next
+animation sample, approximately 1.8 cm from the native callback position.
+The runtime now calls the already verified obstacle gameplay pose selector.
+Its world-root placement and uncertain-moving-root rejection remain intact.
+The walking-target callback therefore feeds the source prediction formula
+the correct sampled muzzle instead of a later frame. Corner preparations
+retain their existing path pending a separate native callback observation.
+
+`CoopShotCallbackMuzzleTests` compares position and rotation at both native
+moments, binds them to the active callback clock, and requires the record to
+distinguish the obsolete frame. The complete runtime fixture also checks the
+callback world position before round emission; this is separate from the
+first round's later muzzle. Both the focused gameplay-query command and full
+content command run the new fixture.
+
+The raw record is `content/coop-callback-muzzle-unity-reference.json`, SHA-256
+`514dae0b51e244146856785fb939456bbac07ab14d860aaef68e1f03faf78418`.
+The updated probe source SHA-256 is
+`fb741e49e95bfc7ea8784acc2cad9e1feca028efcf99c14b289fdd2904cbcc03`.
+The earlier schema-one timing record and its probe digest remain historical
+evidence from commit `1f1e9c6ca`; do not overwrite them with schema-two output.
+
+This closes the isolated fixed-root obstacle callback muzzle discrepancy.
+It does not prove full EnemyController execution, native moving-root parity,
+corner callback geometry, Unity 5.2.5 behavior or complete live co-op damage.
+
+Validation after the correction: focused callback geometry checks and the
+full content executable pass (26,368 counted assertions plus observation
+fixtures). Final native smoke exits zero with a warning-free solution build,
+1,037 protocol checks, 74 live integration checks and restart-persistence proof.
+The initial concurrent build encountered a Windows DLL lock from the running
+content test; after that test exited, the sequential smoke retry passed.
+Run a rebuilding smoke and the content executable sequentially on Windows.

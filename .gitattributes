@@ -67,4 +67,5 @@ Server/content/coop-gameplay-query-post-reference.json text eol=crlf
 Server/content/coop-gameplay-preparation-query-reference.json text eol=crlf
 Server/content/coop-gameplay-preparation-post-reference.json text eol=crlf
 Server/content/coop-delayed-shot-unity-reference.json text eol=crlf
+Server/content/coop-callback-muzzle-unity-reference.json text eol=crlf
 Server/tools/UnityCoopDelayedShotProbe.cs text eol=lf

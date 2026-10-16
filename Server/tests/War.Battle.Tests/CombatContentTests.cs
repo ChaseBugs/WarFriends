@@ -952,6 +952,7 @@ internal static class CombatContentTests
         CoopGameplayQueryObservationTests.Run(directory, content);
         CoopGameplayQueryObservationTests.RunPreparation(directory, content);
         CoopShotCallbackClockTests.Run(directory, content);
+        CoopShotCallbackMuzzleTests.Run(directory, content);
         CoopObstacleProofIntegrityTests.Run(directory, content);
         CoopObstacleCrawlReturnClockTests.Run();
         CoopObstacleTurnObservationTests.Run(directory, content);
@@ -3377,7 +3378,7 @@ internal static class CombatContentTests
         arrivalRuntime.Advance(expectedCrawlCallback);
         CoopQueuedMuzzleSample? callbackSample = content.CoopAssaulterQueue
             .Sample(crawlWindup!.AnimationClip, crawlWindup.QueuedFireClip,
-                expectedCrawlCallback - crawlWindup.StartTick);
+                expectedCrawlCallback - crawlWindup.StartTick - 1);
         CoopMuzzlePose? callbackMuzzle = arrivalRuntime
             .ObserveShotStartAssaulterMuzzle(arrivalEnemy.EntityId);
         Vector3 expectedCallbackPosition = new(reachedEnemy.CurrentX,
