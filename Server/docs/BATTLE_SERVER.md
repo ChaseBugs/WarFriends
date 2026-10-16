@@ -18,7 +18,15 @@ The Worker supports a [pinned combat content package](COMBAT_CONTENT.md), valida
 - Pollable full two-player state, authoritative tick/ammo/reload/shot counters, forfeit and idle/admission/duration expiry.
 - No Mongo, Backend process, Photon Cloud or Unity process is needed for the Battle tests.
 
-Both available modes remain **unscored**: `RewardEligible` is always false. The original weapon prototype validates ammo/timing and static geometry without live damage. The opt-in rifle mode applies collision-driven damage using server-owned poses and projectiles; it permits cover movement and stationary firing for the eleven recovered assault rifles. Walking fire, other weapon variants, destructible-state changes, AI, vehicles, cards, production allocation and Backend settlement remain unfinished. Synthetic test weapon values are not recovered balancing data. See [player damage evidence and limits](PLAYER_DAMAGE.md).
+Matches remain **ineligible for durable rewards**: `RewardEligible` is always
+false. This is separate from the server-owned PvP skill-shot score, which live
+player snapshots now publish as `BattlePlayerState.score`. The SDK validates
+that score before delivering the snapshot; Unity HUD binding remains pending.
+Weapon, movement, destructible, army, card, allocation, and settlement coverage
+and their remaining gameplay gates are tracked in
+[the active completion checklist](BATTLE_SERVER_FEATURES.md). Synthetic test
+weapon values are not recovered balancing data. See
+[player damage evidence and limits](PLAYER_DAMAGE.md).
 
 ### Recovered maps and Unity integration
 

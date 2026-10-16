@@ -8,6 +8,19 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+Live player snapshots now publish the server-owned PvP skill-shot score as
+`BattlePlayerState.score`. The SDK rejects negative values before delivering a
+snapshot. Private per-flag terminal counters remain separate. Frozen command
+replays keep their original score; display ordering must use the snapshot tick
+and revision rather than rejecting every lower score. The controlled
+Drone/Sabotage sequence checks the public 56-point projection, and the real
+Sabotage UDP fixture requires both peers and the replay to retain the same score.
+The recovered Unity `ScoreManager` still calculates locally and sends Photon
+score RPCs; binding its HUD and disabling local authority for self-hosted play
+remain necessary Client integration work. Score transport alone does not close B32.
+The final score must reach the HUD before `SelfHostedBattleClient.Apply` calls
+`roomLifecycle.Observe`, which can publish terminal callbacks before `StateReceived`.
+
 Progress and delayed bonus issuance now publish atomically for a two-owner
 source view. Both use the original single ratio; candidate frame state is
 discarded on either owner's request/capacity failure, preserving thresholds,

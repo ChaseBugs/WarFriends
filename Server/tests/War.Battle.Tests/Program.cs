@@ -495,6 +495,12 @@ if (args is ["--sabotage-udp-only"])
     return;
 }
 
+if (args is ["--score-snapshot-only"])
+{
+    BattleScoreSnapshotTests.Run();
+    return;
+}
+
 if (args is ["--sabotage-backend-live", var mongoUri])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -3167,6 +3173,7 @@ checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"co
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += BattleScoreSnapshotTests.Run();
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += await GrenadeCatalogTests.RunTankUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyFlameBurstTests.Run();

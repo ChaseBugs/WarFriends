@@ -90,6 +90,7 @@ internal static class GrenadeDroneTests
             "The damaged player spends a selected Sabotage card to kill the marked Drone.", ref checks);
         PvpOwnerScoreSnapshot score = match.BonusProgress.ScoreSnapshot(DefenderId);
         Check(score.Score == SabotageRevengeScore &&
+            match.Snapshot().Players.Single(player => player.PlayerId == DefenderId).Score == SabotageRevengeScore &&
             score.Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
             "Sabotage adds the Drone's source revenge flag to its base one-hit kill score.", ref checks);
         Check(match.Command(DefenderId, Command(4)).Code == "sabotage-applied" &&

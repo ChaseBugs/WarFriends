@@ -240,6 +240,13 @@ internal static class LiveSabotageUdpTests
                 $"authenticated UDP SABOTAGE spends one card and removes {unitId}: {used.Code}, {used.Snapshot.CardActivations}, {afterSabotage.Count}");
             MatchReply retry = await attacker.UseSabotageAsync(requestId,
                 timeout.Token);
+            BattlePlayerState scoredPlayer = used.Snapshot.Players.Single(player =>
+                player.PlayerId == attackerId);
+            MatchReply remoteScore = await defender.PollAsync(timeout.Token);
+            Check(scoredPlayer.Score > 0 &&
+                retry.Snapshot.Players.Single(player => player.PlayerId == attackerId).Score == scoredPlayer.Score &&
+                remoteScore.Snapshot.Players.Single(player => player.PlayerId == attackerId).Score == scoredPlayer.Score,
+                "both UDP peers receive the host score and a replay cannot increase it");
             Check(retry.Code == "sabotage-applied" &&
                   retry.Snapshot.CardActivations == (cardSpawned ? 2u : 1u),
                 "a repeated request ID cannot spend or kill twice over UDP");

@@ -311,6 +311,8 @@ message BattlePlayerState {
   uint32 confirmed_scorestreaks_gained = 51;
   // Private terminal-only source ScoreManager skill-shot counters.
   repeated BattleSkillShotCount confirmed_skill_shot_counts = 52;
+  // Server-owned PvP HUD score. This is not a client settlement assertion.
+  int32 score = 53;
 }
 message BattleSkillShotCount {
   uint32 flag = 1;

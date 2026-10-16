@@ -3311,6 +3311,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             KevlarHealth = p.KevlarHealth, KevlarMaxHealth = p.KevlarMaximum,
             ConfirmedPlayerHits = p.ConfirmedPlayerHits, ConfirmedPlayerKills = p.ConfirmedPlayerKills,
             ConfirmedEnemyHits = p.ConfirmedEnemyHits,
+            Score = pvpBonusProgress?.ScoreSnapshot(p.Definition.PlayerId).Score ?? 0,
             ConfirmedPlayerBulletHits=includeTerminalEvidence ? p.ConfirmedPlayerBulletHits : 0,
             ConfirmedCratesCollected = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Collected),
             ConfirmedCratesStolen = checked((uint)crateStatsByPlayer[p.Definition.PlayerId].Stolen),
