@@ -102,6 +102,11 @@ public class BotMission : Mission
 	public override void OnGameStarted()
 	{
 		base.OnGameStarted();
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		if (PhotonConnectionManager.IsLocalSoloRoom || PhotonNetwork.isMasterClient)
 		{
 			PlayerBot playerBot = botInstance.playerBot;
@@ -118,6 +123,11 @@ public class BotMission : Mission
 
 	private void OnBotKilled(IGameMainEntity arg1, DestroyableObject.DamageInfo arg2)
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		Singleton<MatchManager>.instance.SetHitBy(arg2);
 		mBotKilled = true;
 		Singleton<GameCamera>.instance.FocusPlayer((PlayerController)arg1, arg2.owner is PlayerController);
@@ -163,6 +173,11 @@ public class BotMission : Mission
 	public override void PlayMission(bool isMaster)
 	{
 		base.PlayMission(isMaster);
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		mBotKilled = false;
 		InitBot(isMaster);
 	}
@@ -192,6 +207,11 @@ public class BotMission : Mission
 
 	public override void EndMission()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		if (!mIsMissionPlaying)
 		{
 			Debug.LogError("Ending mission when not playing this mission");

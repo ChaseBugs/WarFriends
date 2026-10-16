@@ -316,7 +316,7 @@ public class GameControllerCoop : GameControllerOnline
 
 	private void OtherPlayerInstanceOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo damageInfo)
 	{
-        if (PhotonConnectionManager.IsSelfHostedActive)
+        if (MissionsManager.instance.currentMission.HasSelfHostedCoopAuthority)
         {
             return;
         }
@@ -341,7 +341,7 @@ public class GameControllerCoop : GameControllerOnline
 
 	private void OnPlayerControllerKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo arg3)
 	{
-        if (PhotonConnectionManager.IsSelfHostedActive)
+        if (MissionsManager.instance.currentMission.HasSelfHostedCoopAuthority)
         {
             // Confirmed co-op vitality selects spectator or shared failure presentation.
             return;

@@ -20,6 +20,11 @@ public class SurviveMission : HordeMission
 
 	public override void EndMission()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		int scoreCoop = Singleton<ScoreManager>.instance.scoreCoop;
 		if (base.remainingTime > 0f)
 		{

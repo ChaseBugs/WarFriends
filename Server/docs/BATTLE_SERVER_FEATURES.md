@@ -1442,3 +1442,13 @@ host-credited runtime projection and seven Unity component checks cover the
 connection. Other mission score families, normal rendered HUD/gameplay,
 complete combat attribution and settlement remain open. See
 [Score-mission presentation](COOP_SCORE_PRESENTATION.md).
+
+B22 now selects host-owned Client mission authority from the owned co-op
+adapter for all four source mission types, including Boss (`isCoopBot`). The
+selection survives disconnect until explicit mission restart. Local setup,
+wave/Boss initialization, simulation, derived completion, star/failure and
+peer-completion callbacks cannot override the host result. Confirmed KIA and
+terminal bridges retain presentation ownership. The separate native component
+audit exercises the actual source lifecycle and disconnected interval; normal
+co-op admission, authoritative presenters and settlement remain open. See
+[mission lifecycle authority](COOP_MISSION_AUTHORITY.md).

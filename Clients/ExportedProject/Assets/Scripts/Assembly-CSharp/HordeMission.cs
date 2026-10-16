@@ -9,6 +9,11 @@ public class HordeMission : Mission
 	public override void PlayMission(bool isMaster)
 	{
 		base.PlayMission(isMaster);
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		if (isMaster)
 		{
 			Singleton<WaveManager>.instance.waveDefinition = waveDefinition;

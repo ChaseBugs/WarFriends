@@ -20,6 +20,11 @@ public class KillMission : HordeMission
 
 	public override void EndMission()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		int scoreCoop = Singleton<ScoreManager>.instance.scoreCoop;
 		if (Singleton<ScoreManager>.instance.enemiesKilledAllTypes >= killFor1Star)
 		{

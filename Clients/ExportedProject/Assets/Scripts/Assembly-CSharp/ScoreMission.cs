@@ -33,7 +33,7 @@ public class ScoreMission : HordeMission
 
 	public override void EndMission()
 	{
-        if (PhotonConnectionManager.IsSelfHostedActive && Singleton<GameController>.instance.isCoop)
+        if (HasSelfHostedCoopAuthority)
         {
             // Shared score presentation cannot authorize local stars or a mission outcome.
             return;
@@ -53,7 +53,7 @@ public class ScoreMission : HordeMission
 
 	protected override void UpdateMission()
 	{
-        if (PhotonConnectionManager.IsSelfHostedActive && Singleton<GameController>.instance.isCoop)
+        if (HasSelfHostedCoopAuthority)
         {
             return;
         }

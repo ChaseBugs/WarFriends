@@ -20,6 +20,28 @@ public class Mission : Core_BaseScript
 
 	protected bool mIsMissionPlaying;
 
+    private bool _hasSelfHostedCoopAuthority;
+
+    /// <summary>Keeps host-owned mission authority until a new PlayMission explicitly selects another mode.</summary>
+    public bool HasSelfHostedCoopAuthority
+    {
+        get
+        {
+            if (HasActiveSelfHostedCoop())
+            {
+                _hasSelfHostedCoopAuthority = true;
+            }
+
+            return _hasSelfHostedCoopAuthority;
+        }
+    }
+
+    private static bool HasActiveSelfHostedCoop()
+    {
+        SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+        return client != null && client.OwnsMatch && client.State != null && client.State.Coop != null;
+    }
+
 	public static Dictionary<string, Tuple<Type, int>> behavioursDictionary = new Dictionary<string, Tuple<Type, int>>(StringComparer.OrdinalIgnoreCase)
 	{
 		{
@@ -240,6 +262,14 @@ public class Mission : Core_BaseScript
 
 	public virtual void PlayMission(bool isMaster)
 	{
+        _hasSelfHostedCoopAuthority = HasActiveSelfHostedCoop();
+        if (_hasSelfHostedCoopAuthority)
+        {
+            // Local source setup must not spawn AI or publish attempts for a host-owned mission.
+            mIsMissionPlaying = false;
+            return;
+        }
+
 		Debug.Log($"Play Mission id: {index}, {missionObjectiveProgress}");
 		if (!isMaster)
 		{
@@ -273,11 +303,21 @@ public class Mission : Core_BaseScript
 
 	public virtual void OnGameStarted()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		mIsMissionPlaying = true;
 	}
 
 	public void OnAfterGameStarted()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		int num = 0;
 		int num2 = 0;
 		List<MapDefinition.DefendPosition> availablePoints = Singleton<MapManager>.instance.currentMapDef.availablePoints;
@@ -325,6 +365,11 @@ public class Mission : Core_BaseScript
 
 	public void MissionSuccessCoopClient()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		savedData.completedInCoopClient = true;
 	}
 
@@ -344,6 +389,11 @@ public class Mission : Core_BaseScript
 
 	protected void MissionSuccess()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		mIsMissionPlaying = false;
 		Debug.Log("MISSIONS SCORE DEBUG - score for mission " + Singleton<ScoreManager>.instance.scoreCoop + " extra time score ");
 		int num = computedGainedSuccesScore();
@@ -392,17 +442,32 @@ public class Mission : Core_BaseScript
 
 	protected void MissionFail()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		Singleton<GameController>.instance.gameEndReason = GameController.GameEndReason.MissionFailed;
 	}
 
 	public virtual void EndMission()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		mIsMissionPlaying = false;
 		MissionsManager.instance.EndMission(this);
 	}
 
 	public void UpdateCurrentMission()
 	{
+        if (HasSelfHostedCoopAuthority)
+        {
+            return;
+        }
+
 		if (mIsMissionPlaying && Singleton<GameController>.instance.gameIsRunning)
 		{
 			UpdateMission();
