@@ -12230,12 +12230,22 @@ internal static class CombatContentTests
               }).Code == "sabotage-applied" &&
               liveSabotageMatch.Snapshot().CardActivations == 2,
             "authenticated Sabotage consumes one card and kills the host-selected opposing Drone");
+        var sabotageScore = liveSabotageMatch.BonusProgress.ScoreSnapshot(decoyPlayer);
+        Check(sabotageScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
+              sabotageScore.Counts[PvpArmyKillSkillShotPolicy.OneHitKill] == 1 &&
+              sabotageScore.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] == 1 &&
+              sabotageScore.Score == 46,
+            "confirmed Sabotage Drone death credits source Kill, OneHitKill, and VehicleDestroyed");
         liveSabotageMatch.Command(decoyPlayer, new MatchCommand
         {
             CommandId = 5,
             Forfeit = new ForfeitCommand()
         });
         var cardDroneTerminal = liveSabotageMatch.TerminalEvidenceSnapshot();
+        Check(cardDroneTerminal.Players.Single(player =>
+                  player.PlayerId == decoyPlayer).ConfirmedSkillShotCounts.Single(row =>
+                      row.Flag == PvpArmyKillSkillShotPolicy.OneHitKill).Count == 1,
+            "private terminal skill-shot evidence retains the Sabotage one-hit kill");
         var cardDroneKill = cardDroneTerminal.DirectArmyKills.Single();
         Check(cardDroneKill.EntityKey == liveSabotageDroneId &&
               cardDroneKill.VictimSourceCardId == "HEAVYDRONE" &&

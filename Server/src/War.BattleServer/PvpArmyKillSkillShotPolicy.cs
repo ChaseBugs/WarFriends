@@ -7,6 +7,7 @@ internal static class PvpArmyKillSkillShotPolicy
     internal const int VehicleDestroyed = 512;
     internal const int TankDestroyed = 16384;
     internal const int ExplosiveKill = 8192;
+    internal const int OneHitKill = 16;
 
     /// <summary>Classifies the recovered victim family without optional kill conditions.</summary>
     internal static int BaseFlags(ArmyDeploymentCatalog catalog, string unitId)

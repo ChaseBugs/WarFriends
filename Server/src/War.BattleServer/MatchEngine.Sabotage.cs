@@ -48,6 +48,25 @@ public sealed partial class MatchEngine
         if (target != null && directArmyKills.Count >= 256)
             return "event-backpressure";
 
+        PvpBonusProgressCoordinator? scoredKill = null;
+        if (target != null && pvpBonusProgress != null)
+        {
+            BattleArmyEntityState victim = activeArmyEntities.GetValueOrDefault(target.EntityId) ??
+                throw new InvalidDataException("Sabotage target lost its host army identity.");
+            int flags = checked((int)War.Shared.SabotageKillPresentationPolicy.BaseFlags(victim.UnitId));
+            string scoreReceiptId = PvpHitReceiptId(
+                "card-sabotage-army-kill", target.EntityId, requestId);
+            try
+            {
+                scoredKill = pvpBonusProgress.PrepareConfirmedSkillShotCopy(
+                    owner.Definition.PlayerId, scoreReceiptId, flags, out _);
+            }
+            catch (InvalidOperationException)
+            {
+                return "event-backpressure";
+            }
+        }
+
         // The packet carries no target or damage. The recovered Client spends
         // SABOTAGE even when there is no visible opposing mechanical unit.
         var effect = new WarCardEffectRequest(
@@ -84,6 +103,10 @@ public sealed partial class MatchEngine
                 directArmyKills.Add((target.EntityId, victim.UnitId,
                     victim.OwnerPlayerId, owner.Definition.PlayerId,
                     "card-sabotage", tick));
+                if (scoredKill != null)
+                {
+                    pvpBonusProgress = scoredKill;
+                }
                 if (cardVictim != null)
                     sabotageCardVictims.Add(target.EntityId, cardVictim);
                 Emit(MatchEventKind.SabotageKillCredited, owner.Definition.PlayerId,
