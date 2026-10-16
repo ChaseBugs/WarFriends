@@ -959,6 +959,7 @@ internal static class CombatContentTests
         CoopObstacleTurnObservationTests.Run(directory, content);
         CoopShotRootTweenTests.Run(directory);
         CoopShotRootCompositionTests.Run(directory);
+        CoopInfantryFacingEstimateTests.Run(directory);
         VerifyCoopCornerQueue(directory, content.EnemyPoses,
             content.CoopCornerQueuePoses);
         ArmyDeploymentCatalog army = content.Army;

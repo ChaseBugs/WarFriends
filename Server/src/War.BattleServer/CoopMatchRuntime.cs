@@ -1162,11 +1162,13 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             if (enemy.DeathTick != 0)
                 continue;
 
+            var previousPosition = new Vector3(enemy.CurrentX, enemy.CurrentY, enemy.CurrentZ);
             Vector3 position = path.PositionAt(tick);
             enemy.CurrentX = position.X;
             enemy.CurrentY = position.Y;
             enemy.CurrentZ = position.Z;
             enemy.PoseTick = tick;
+            UpdateInfantryFacingEstimate(enemy, path, previousPosition, position);
             stateRevision++;
             CoopAssignedEnemyDestination? destination =
                 enemyDestinations?.ForEnemy(entityId);
@@ -1901,12 +1903,8 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         if (enemy == null)
             return [];
 
-        Vector3 direction = path.SmoothedPlanarDirectionAt(tick, 0.6f);
-        if (direction == Vector3.Zero)
-            return [];
-        float heading = MathF.Atan2(direction.X, direction.Z);
-        Quaternion rotation = Quaternion.CreateFromAxisAngle(
-            Vector3.UnitY, heading);
+        Quaternion rotation = new(enemy.CurrentRotation.X, enemy.CurrentRotation.Y,
+            enemy.CurrentRotation.Z, enemy.CurrentRotation.W);
         Vector3 position = new(enemy.CurrentX, enemy.CurrentY,
             enemy.CurrentZ);
         string clip = ArmyInfantryPosePolicy.For(

@@ -1322,3 +1322,11 @@ boundary and invalid-input rejection preserves its first Start update. This
 does not reconstruct the Worker's missing native navigation orientation input;
 moving origins and collision stay unavailable. See the root composition phase
 in [the moving-root report](COOP_OBSTACLE_ROOT_TURNS.md).
+
+B22 walking snapshots and diagnostic colliders now share a bounded presentation
+facing estimate. Path motion updates the root before the verified shot tween,
+including moving volleys; their native rotation conflict and absent world-shot
+origins remain intact. The native comparison explicitly reports 53 differing
+frames and about 84.99 degrees maximum error after the known tween stage.
+This is presentation consistency, not native steering or collision completion.
+See [the facing estimate boundary](COOP_INFANTRY_FACING.md).

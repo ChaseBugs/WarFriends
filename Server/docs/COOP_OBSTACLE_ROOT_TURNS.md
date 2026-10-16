@@ -79,8 +79,9 @@ lifecycle is owned per live host entity: it survives successive volleys and
 path changes, then ends at death/match cleanup. Original Unity pool-object reuse
 and normal Client frame scheduling are not proved by this lifecycle policy.
 
-Moving volleys advance the tween stage without publishing it as the complete
-root. Their native rotation conflict remains explicit. The general moving-root
+Moving volleys now publish a presentation estimate combined with the known
+tween stage, as described in [infantry facing](COOP_INFANTRY_FACING.md).
+Their native rotation conflict remains explicit. The general native moving-root
 model and Client synchronization remain required before collision authority.
 
 ## Reproduction
@@ -121,8 +122,8 @@ advances the source-tested tween, retaining the completion frame's final write,
 and preserves its trusted incoming root once the tween is disabled. Invalid
 rotation or delta-time input must not consume the one-time Start update.
 The stationary runtime publication path now uses the same composition boundary.
-Moving windups continue to advance only their known tween stage and retain
-their explicit navigation conflict. The Worker does not possess a verified
+Moving windups combine an estimated incoming root with the known tween stage
+and retain their explicit navigation conflict. The Worker does not possess a verified
 generator for the incoming moving rotation and does not accept one from a
 Client packet.
 

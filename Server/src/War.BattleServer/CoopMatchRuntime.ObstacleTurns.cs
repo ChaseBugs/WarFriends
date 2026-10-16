@@ -35,13 +35,6 @@ internal sealed partial class CoopMatchRuntime
                 continue;
             }
 
-            if (windup.HasNavigationRotationConflict)
-            {
-                // The source tween alone does not determine the root after native navigation writes.
-                tween.AdvanceFrame(ScaledFrameSeconds);
-                continue;
-            }
-
             BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(row => row.EntityId == entityId &&
                 row.Health > 0 && row.DeathTick == 0);
             if (enemy == null)
@@ -52,6 +45,7 @@ internal sealed partial class CoopMatchRuntime
 
             var rootBeforeUpdate = new Quaternion(enemy.CurrentRotation.X, enemy.CurrentRotation.Y,
                 enemy.CurrentRotation.Z, enemy.CurrentRotation.W);
+            // A moving root is still an estimate; HasNavigationRotationConflict keeps world-shot authority closed.
             Quaternion root = CoopShotRootComposition.AfterFrame(tween, rootBeforeUpdate, ScaledFrameSeconds);
             enemy.CurrentRotation = new BattleJointRotation
             {

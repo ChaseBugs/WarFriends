@@ -10,6 +10,7 @@ internal static class CoopObstacleVolleyRuntimeTests
     private const float CrawlCenterTolerance = 0.00002f;
     private const float SourceTurnSeconds = 0.2f;
     private const float RootRotationTolerance = 0.000001f;
+    private const float FrameSeconds = 1f / MatchManifest.TickRate;
     private const int LatestPointChangeSeconds = 19;
     private const int FreePointChangeSeconds = 10;
     private const int BusyPointChangeSeconds = 11;
@@ -291,7 +292,7 @@ internal static class CoopObstacleVolleyRuntimeTests
         Check(runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
             "An unverified moving-shot posture must remain outside collision authority.");
         CoopObstacleTurnPlanExport.WriteIfRequested(sources, runtime, enemyId);
-        VerifyMovementContinues(runtime, enemyId, clock.NextShotTick);
+        VerifyMovementContinues(runtime, enemyId, clock.NextShotTick, completed);
         AdvanceUntilCompleted(runtime, enemyId);
         IReadOnlyList<CoopInfantryRoundIntent> movingRounds = runtime.InfantryRoundIntents(enemyId);
         Check(!runtime.IsObstacleRepositioning(enemyId) && movingRounds.Count > 0 &&
@@ -302,7 +303,8 @@ internal static class CoopObstacleVolleyRuntimeTests
         return true;
     }
 
-    private static void VerifyMovementContinues(CoopMatchRuntime runtime, ulong enemyId, ulong shotTick)
+    private static void VerifyMovementContinues(CoopMatchRuntime runtime, ulong enemyId, ulong shotTick,
+        CoopInfantryShotWindup previousWindup)
     {
         BattleCoopEnemySpawn before = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == enemyId);
         runtime.Advance(shotTick + 1);
@@ -311,6 +313,19 @@ internal static class CoopObstacleVolleyRuntimeTests
             new Vector3(after.CurrentX, after.CurrentY, after.CurrentZ)) > 0 &&
             runtime.InfantryShotWindup(enemyId)?.StartTick == shotTick,
             "Preparing the source moving shot must not stop same-segment crawl movement.");
+        CoopInfantryShotWindup windup = runtime.InfantryShotWindup(enemyId)!;
+        var expectedTween = new CoopShotRootTween(SourceTurnSeconds);
+        expectedTween.Begin(previousWindup.StartRootRotation, previousWindup.FinalRootRotation);
+        expectedTween.AdvanceFrame(FrameSeconds);
+        // This actor already fired a volley, so a reused tween does not invoke Start again.
+        expectedTween.Begin(windup.StartRootRotation, windup.FinalRootRotation);
+        expectedTween.AdvanceFrame(FrameSeconds);
+        var published = new Quaternion(after.CurrentRotation.X, after.CurrentRotation.Y,
+            after.CurrentRotation.Z, after.CurrentRotation.W);
+        Check(1f - Math.Abs(Quaternion.Dot(expectedTween.Rotation, published)) < RootRotationTolerance &&
+            windup.HasNavigationRotationConflict &&
+            runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
+            "Moving presentation must compose the source tween without opening rotation authority.");
     }
 
     internal static CoopMatchRuntime CreateRuntime(Sources sources,

@@ -19,6 +19,7 @@ internal static class CoopGameplayQueryTestRunner
                 CoopShotCallbackMuzzleTests.Run(contentDirectory, content);
                 CoopCornerCallbackTests.Run(contentDirectory, content);
                 CoopShotRootCompositionTests.Run(contentDirectory);
+                CoopInfantryFacingEstimateTests.Run(contentDirectory);
                 return;
             }
 
