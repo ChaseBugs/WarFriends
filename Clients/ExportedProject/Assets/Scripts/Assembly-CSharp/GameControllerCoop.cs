@@ -7,6 +7,7 @@ public class GameControllerCoop : GameControllerOnline
 {
     private const float PeerDeactivationDelaySeconds = 3f;
     private SelfHostedCoopPeerBridge _selfHostedPeerBridge;
+    private SelfHostedCoopOutcomeBridge _selfHostedOutcomeBridge;
 
 	public override string loadingWaitingCards => Localization.Localize("ID_WAITINGFORFRIENDCARDS");
 
@@ -207,6 +208,7 @@ public class GameControllerCoop : GameControllerOnline
 			yield return new WaitForSeconds(0.8f);
 		}
         BindSelfHostedPeerPresentation();
+        BindSelfHostedOutcomePresentation();
 	}
 
     private void BindSelfHostedPeerPresentation()
@@ -234,8 +236,32 @@ public class GameControllerCoop : GameControllerOnline
             PeerDeactivationDelaySeconds, GameController.GameEndReason.Forfeit);
     }
 
+    private void BindSelfHostedOutcomePresentation()
+    {
+        if (!PhotonConnectionManager.IsSelfHostedActive || _selfHostedOutcomeBridge != null)
+        {
+            return;
+        }
+
+        _selfHostedOutcomeBridge = gameObject.AddComponent<SelfHostedCoopOutcomeBridge>();
+        _selfHostedOutcomeBridge.Configure(SelfHostedBattleClient.Active, PresentSelfHostedOutcome);
+    }
+
+    private void PresentSelfHostedOutcome(War.Client.ClientGameEndReason reason)
+    {
+        // Reuse the received source finish order; star persistence remains owned by server settlement.
+        FinishGameMultiplayerRPC((byte)reason);
+    }
+
     protected override void Reset()
     {
+        if (_selfHostedOutcomeBridge != null)
+        {
+            _selfHostedOutcomeBridge.enabled = false;
+            Destroy(_selfHostedOutcomeBridge);
+            _selfHostedOutcomeBridge = null;
+        }
+
         if (_selfHostedPeerBridge != null)
         {
             _selfHostedPeerBridge.enabled = false;

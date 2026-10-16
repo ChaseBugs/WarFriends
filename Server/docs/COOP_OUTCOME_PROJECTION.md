@@ -49,31 +49,49 @@ main-thread delivery and does not implement concurrent callback dispatch.
 
 Ten additional protocol scenarios check identity isolation, replay, reentrancy,
 callback failure, malformed result recovery, running/PvP exclusion and departed
-peer exclusion. This is portable SDK preparation: neither active Client DLLs
-nor its scene/result callbacks are changed by this addition.
+peer exclusion. The Unity connection below now uses this delivery helper.
 
 Protocol tests add ten outcome cases for success, personal departure, abort,
 and malformed winner/role/star/completion/death data. The existing real runtime
 fixtures now call the public SDK projection for master KIA, both role orders,
 spectating-peer success, shared Forfeit and a departed peer's later result.
 
-`UnityCoopOutcomeAudit.Run` checks nine scenarios in Unity Mono using freshly
+`UnityCoopOutcomeAudit.Run` checks fifteen scenarios in Unity Mono using freshly
 built portable `War.Shared` and `War.Client` DLLs in the disposable project.
 It checks recovered numeric codes, running versus final spectator results,
 tick-zero death protobuf presence, common Forfeit, departed-peer finality and
-invalid payload rejection. It creates no match, scene gameplay or rewards.
+invalid payload rejection. Six additional bridge scenarios exercise running
+binding, unsubscribe, missed-result replay on re-enable, terminal poll replay,
+immediate terminal replay during configuration and retained delivery history.
+They use the actual `SelfHostedBattleClient.Apply` event path and a harmless
+callback counter. They create no match, rendered scene gameplay or rewards.
 
-This checkpoint changes source SDK behavior. The active Client's installed
-network DLLs are not replaced, and its normal co-op result-screen bridge is
-still unfinished. The native audit is Editor-mode package compatibility,
-not Play Mode, rendered GUI or two normal Clients completing a mission.
-Worker co-op admission, source UI callbacks and durable settlement remain
-separate work; no combat/economy gate is opened here.
+The active Client now installs the audited `War.Client` and `War.Shared` DLLs,
+with updated `sdk-manifest.json` hashes and unchanged plugin metadata. No
+third-party DLL is replaced. `GameControllerCoop.StartGame` binds the new
+`SelfHostedCoopOutcomeBridge` after the recovered mission/UI startup. Its
+callback invokes the existing `FinishGameMultiplayerRPC` with the validated
+source reason. `Reset` disables and destroys the bridge before base cleanup.
+
+This preserves the received source callback's TimeManager stop, game-running
+guard, reset, match-state update, reason assignment and main-controller finish
+order. It does not call local `MissionSuccess` to recompute or persist host
+stars. The main controller still enters its original GameOver/Beanstalk end
+request and optimistic statistics path; its durable co-op settlement response
+is not implemented here and a fully completed result screen is not claimed.
+Private KIA/spectator presentation is also separate.
+
+The native audit proves Editor-mode compilation and event delivery, not Play
+Mode, rendered GUI or two normal Clients completing a mission. Worker co-op
+admission, source result rendering and durable settlement remain separate work;
+no combat/economy gate is opened here.
 
 Windows validation: the focused combat-content executable passes 26,368
 counted assertions plus the outcome/runtime fixtures. Protocol tests pass
 1,061 checks, and sequential native Mongo smoke builds with zero warnings/errors,
 passes 74 live MongoDB/HTTP/protobuf/UDP checks, and preserves evidence across
-Worker restarts. The disposable Unity 2018.3.0f2 run passed all nine projection
-checks and completed shutdown using the current portable SDK binaries. No new
-Linux, Android or normal result-screen proof is claimed.
+Worker restarts. After delivery preparation the protocol count is 1,071. The
+final disposable Unity 2018.3.0f2 run passed all fifteen projection/bridge checks
+and completed shutdown using the installed portable SDK binaries. A second
+clean import/run retained that result. No new Linux, Android or normal
+result-screen proof is claimed.

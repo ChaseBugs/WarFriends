@@ -1413,3 +1413,12 @@ callback failures visible and retryable. Running missions, PvP and already
 departed peers cannot enter this shared finish path. Ten protocol scenarios
 cover these delivery boundaries. This remains SDK preparation; active Unity
 installation and source result-screen callback integration are still open.
+
+B22/B30 now install the audited portable SDK in the active Client and connect
+`SelfHostedCoopOutcomeBridge` after recovered co-op scene startup. Validated
+shared results enter the existing received mission-finish callback; scene reset
+unsubscribes and destroys the bridge. Fifteen Unity Mono Editor checks cover
+projection and actual adapter event delivery. Static asset audits retain zero
+missing scripts/broken references and the same seventeen unmatched NGUI sprite
+selections. Rendered result UI, private KIA/spectator behavior, the end-request
+response/settlement and normal Worker co-op admission remain unverified/open.

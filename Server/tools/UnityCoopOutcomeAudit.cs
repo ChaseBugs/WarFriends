@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Google.Protobuf;
 using UnityEditor;
 using UnityEngine;
@@ -12,7 +13,7 @@ public static class UnityCoopOutcomeAudit
     private const string MasterId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     private const string PeerId = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
-    /// <summary>Runs nine Editor-mode checks against the freshly built portable SDK.</summary>
+    /// <summary>Runs portable projection and Unity event bridge checks without rendering result UI.</summary>
     public static void Run()
     {
         try
@@ -24,9 +25,10 @@ public static class UnityCoopOutcomeAudit
             VerifyForfeit();
             VerifyDepartedPeer();
             VerifyMalformedResults();
+            VerifyBridgeLifecycle();
             File.WriteAllText(Path.Combine(Application.dataPath, "../coop-outcome-unity-audit.json"),
-                "{\"schemaVersion\":1,\"checks\":9,\"scope\":\"edit-mode portable SDK projection\"}\n");
-            Debug.Log("PASS: nine source co-op result projections in Unity Mono; no game-over UI or rewards applied.");
+                "{\"schemaVersion\":2,\"checks\":15,\"scope\":\"edit-mode SDK projection and event bridge\"}\n");
+            Debug.Log("PASS: 15 co-op projection and event bridge checks; no rendered result UI or rewards applied.");
             EditorApplication.Exit(0);
         }
         catch (Exception failure)
@@ -34,6 +36,82 @@ public static class UnityCoopOutcomeAudit
             Debug.LogException(failure);
             EditorApplication.Exit(1);
         }
+    }
+
+    private static void VerifyBridgeLifecycle()
+    {
+        var owner = new GameObject("CoopOutcomeBridgeAudit");
+        try
+        {
+            SelfHostedBattleClient client = owner.AddComponent<SelfHostedBattleClient>();
+            typeof(SelfHostedBattleClient).GetProperty("LocalPlayerId").SetValue(client, MasterId, null);
+            VerifySubscribedDelivery(owner, client);
+            VerifyImmediateReplay(owner, client);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(owner);
+        }
+    }
+
+    private static void VerifySubscribedDelivery(GameObject owner, SelfHostedBattleClient client)
+    {
+        MatchSnapshot running = CreateBridgeSnapshot();
+        SetUnsuccessful(running, "");
+        running.Coop.Failed = false;
+        running.Phase = BattlePhase.Running;
+        running.EndTick = 0;
+        Publish(client, running);
+        int callbacks = 0;
+        SelfHostedCoopOutcomeBridge bridge = owner.AddComponent<SelfHostedCoopOutcomeBridge>();
+        bridge.Configure(client, reason =>
+        {
+            Require(reason == ClientGameEndReason.MissionSuccess, "The bridge must preserve the shared result.");
+            callbacks++;
+        });
+        Require(callbacks == 0, "Binding a running mission must not finish it.");
+        InvokeLifecycle(bridge, "OnDisable");
+        Publish(client, CreateBridgeSnapshot());
+        Require(callbacks == 0, "Disabled result bridges must unsubscribe.");
+        InvokeLifecycle(bridge, "OnEnable");
+        Require(callbacks == 1, "Re-enable must replay the terminal state missed while disabled.");
+        Publish(client, CreateBridgeSnapshot());
+        Require(callbacks == 1, "Repeated terminal polls must not finish twice.");
+        InvokeLifecycle(bridge, "OnDisable");
+        UnityEngine.Object.DestroyImmediate(bridge);
+    }
+
+    private static void VerifyImmediateReplay(GameObject owner, SelfHostedBattleClient client)
+    {
+        int callbacks = 0;
+        SelfHostedCoopOutcomeBridge bridge = owner.AddComponent<SelfHostedCoopOutcomeBridge>();
+        bridge.Configure(client, reason => callbacks++);
+        Require(callbacks == 1, "Configure must replay an already received terminal result.");
+        InvokeLifecycle(bridge, "OnDisable");
+        InvokeLifecycle(bridge, "OnEnable");
+        Require(callbacks == 1, "Re-enable must retain successful delivery history.");
+        InvokeLifecycle(bridge, "OnDisable");
+        UnityEngine.Object.DestroyImmediate(bridge);
+    }
+
+    private static MatchSnapshot CreateBridgeSnapshot()
+    {
+        MatchSnapshot snapshot = CreateSuccess();
+        snapshot.MatchId = "outcome-bridge-match";
+        snapshot.ManifestHash = "outcome-bridge-manifest";
+        return snapshot;
+    }
+
+    private static void Publish(SelfHostedBattleClient client, MatchSnapshot snapshot)
+    {
+        typeof(SelfHostedBattleClient).GetMethod("Apply", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(client, new object[] { new MatchReply { Code = "state", Snapshot = snapshot } });
+    }
+
+    private static void InvokeLifecycle(SelfHostedCoopOutcomeBridge bridge, string method)
+    {
+        typeof(SelfHostedCoopOutcomeBridge).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(bridge, null);
     }
 
     private static void VerifySuccessAndSpectating()
