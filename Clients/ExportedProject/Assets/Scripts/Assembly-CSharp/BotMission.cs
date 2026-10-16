@@ -77,7 +77,11 @@ public class BotMission : Mission
 		MapDefinition.DefendPosition mainPlayerPoint = GetMainPlayerPoint(fractions);
 		botInstance.MoveTo(mainPlayerPoint.point.transform.position, mainPlayerPoint.point.transform.rotation);
 		botInstance.fraction = fractions;
-		botInstance.mPhotonView.RPC("InitBotRPC", PhotonTargets.Others, (byte)fractions);
+		// A solo room has no remote recipient; local initialization is already applied above.
+		if (!PhotonConnectionManager.IsLocalSoloRoom)
+		{
+			botInstance.mPhotonView.RPC("InitBotRPC", PhotonTargets.Others, (byte)fractions);
+		}
 		botInstance.currentPlayerPoint = mainPlayerPoint;
 		botInstance.Killed -= OnBotKilled;
 		botInstance.Killed += OnBotKilled;
@@ -98,7 +102,7 @@ public class BotMission : Mission
 	public override void OnGameStarted()
 	{
 		base.OnGameStarted();
-		if (PhotonNetwork.isMasterClient)
+		if (PhotonConnectionManager.IsLocalSoloRoom || PhotonNetwork.isMasterClient)
 		{
 			PlayerBot playerBot = botInstance.playerBot;
 			playerBot.enabled = true;
@@ -117,7 +121,7 @@ public class BotMission : Mission
 		Singleton<MatchManager>.instance.SetHitBy(arg2);
 		mBotKilled = true;
 		Singleton<GameCamera>.instance.FocusPlayer((PlayerController)arg1, arg2.owner is PlayerController);
-		if (PhotonNetwork.isMasterClient)
+		if (PhotonConnectionManager.IsLocalSoloRoom || PhotonNetwork.isMasterClient)
 		{
 			EndMission();
 		}

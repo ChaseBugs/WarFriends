@@ -47,3 +47,19 @@ and authoritative for multiplayer; solo campaign simulation may stay local.
 The callback order is now checked in Unity 2018.3 Play Mode by `Server/tools/UnityLocalOfflineRoomAudit.cs`. Copy it into the disposable project's `Assets/Editor`, then run Unity with `-batchmode -nographics -projectPath <disposable-project> -executeMethod UnityLocalOfflineRoomAudit.Run -logFile <log>` without `-quit`; the audit exits the Editor itself. It creates an empty scene and a callback receiver, compares the bundled offline Photon callbacks with `LocalOfflineRoom` for first and replacement joins, checks room name/local/master ID/player count, and checks disconnect cleanup. The October 8 run logged `LOCAL_OFFLINE_ROOM_AUDIT_PASSED`. This validates the room model and source callback order, not the campaign/tutorial controller behavior or removal of the remaining Photon objects.
 
 `GameController.Awake` sets `PhotonNetwork.offlineMode = true` before some later `JoinOfflineGame` calls. The SDK model now has `ObserveExistingOfflineMode()` so the manager can adopt that already-enabled state without replaying `ConnectedToMaster` during room creation. The isolated Unity Play Mode audit now exercises this pre-enabled path as well as first/replacement join and disconnect; it passed again. This matters for the eventual callback bridge because the master connection event belongs to the earlier scene transition, not the later room join.
+
+## Solo bot authority call sites
+
+`BotMission.OnGameStarted` and `OnBotKilled` now short-circuit through the
+Client-owned local-room state before consulting Photon master ownership.
+`InitBot` skips its `PhotonTargets.Others` initialization RPC in a solo room.
+The bundled `NetworkingPeer.RPC` Others branch only raises an event and never
+executes the local callback; the existing local initialization therefore remains
+unchanged. Network-mode branches retain their original Photon behavior.
+
+Unity 2018.3 compilation and the isolated local-room callback Play Mode audit
+passed on 2026-10-17 in the full asset copy. An initial minimal source-only copy
+could not initialize Photon because it lacked the settings resource; it is not
+used as runtime evidence. The passing audit covers the room lifecycle, not bot
+movement, combat, mission completion or all four solo controllers. Photon still
+creates local rooms and supplies local object/RPC behavior. B33 remains partial.
