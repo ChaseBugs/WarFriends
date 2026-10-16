@@ -18248,11 +18248,11 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.Runner).Count == 1,
             "private terminal evidence retains the explosion victim's Runner count");
-        (MatchEngine Match, BattleArmyEntityState Victim, ulong Tick) PrepareRevengeVictim(
-            string matchId)
+        (MatchEngine Match, BattleArmyEntityState Victim, ulong Tick, int RealShots)
+            PrepareRevengeVictim(string matchId, MatchManifest sourceManifest)
         {
             const int RevengeScenarioRandomSeed = 731;
-            var manifest = runningMineManifest with
+            var manifest = sourceManifest with
             {
                 MatchId = matchId,
                 DurationSeconds = 180,
@@ -18296,13 +18296,14 @@ internal static class CombatContentTests
                     break;
                 }
             }
-            Check(victim != null && !match.Terminal && realShots > 0 && currentTick < 1500,
-                "a live army projectile hits its opposing player before a revenge kill");
-            return (match, victim!, currentTick);
+            Check(victim != null && !match.Terminal && currentTick < 1500,
+                "a live army entity damages its opposing player before a revenge kill");
+            return (match, victim!, currentTick, realShots);
         }
 
-        var (revengeMatch, revengeVictim, revengeTick) = PrepareRevengeVictim(
-            "army-shot-player-revenge");
+        var (revengeMatch, revengeVictim, revengeTick, revengeRealShots) =
+            PrepareRevengeVictim("army-shot-player-revenge", runningMineManifest);
+        Check(revengeRealShots > 0, "the marked victim fired a real army bullet");
         ulong revengeCommandId = 2;
         while (revengeMatch.ArmyHealth(revengeVictim!.EntityKey) != null &&
                revengeTick < 1500 && !revengeMatch.Terminal)
@@ -18334,8 +18335,9 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains one source-backed army revenge kill");
-        var (revengeMineMatch, revengeMineVictim, revengeMineTick) = PrepareRevengeVictim(
-            "army-shot-player-mine-revenge");
+        var (revengeMineMatch, revengeMineVictim, revengeMineTick, revengeMineRealShots) =
+            PrepareRevengeVictim("army-shot-player-mine-revenge", runningMineManifest);
+        Check(revengeMineRealShots > 0, "the mine victim fired a real army bullet");
         var revengeMineBody = revengeMineMatch.GroundVehicleShotTargets(helicopterOwner)
             .First(target => target.EntityId == revengeMineVictim.EntityKey &&
                 target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
@@ -18356,6 +18358,37 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains the confirmed mine revenge kill");
+        var flameRevengeManifest = flameManifest with
+        {
+            SceneMasterPlayerId = helicopterOwner,
+            Players = flameManifest.Players.Select(player => player with
+            {
+                ArmyHealthFactors = [new ArmyHealthFactors(0.01f, 0.01f)],
+                PlayerLevel = 8
+            }).ToArray()
+        };
+        var (flameRevengeMatch, flameRevengeVictim, flameRevengeTick, _) =
+            PrepareRevengeVictim("army-flame-player-mine-revenge", flameRevengeManifest);
+        var flameRevengeBody = flameRevengeMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == flameRevengeVictim.EntityKey &&
+                target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
+        Check(flameRevengeMatch.TryRegisterLandMine(new string('d', 32), helicopterOwner,
+                flameRevengeBody.Hitbox.Center, flameRevengeVictim.Health + 100f),
+            "host mine overlaps the live Flamethrower that damaged its opposing player");
+        flameRevengeMatch.Advance(++flameRevengeTick);
+        Check(flameRevengeMatch.ArmyHealth(flameRevengeVictim.EntityKey) == null &&
+              flameRevengeMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "confirmed flame damage creates a source-backed mine revenge kill");
+        flameRevengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(flameRevengeMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
+            "private terminal evidence retains one flame-sourced revenge count");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],

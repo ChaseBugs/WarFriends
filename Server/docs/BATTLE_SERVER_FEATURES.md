@@ -229,8 +229,11 @@ host-backed path: an army projectile damages a player, and that player kills
 the same spawned entity with a bullet before its 150-tick deadline. Player-owned
 grenade, mine, and Bazooka blasts now preserve that marker before removal.
 Live Shotgunner damage followed by bullet and mine deaths verifies `RevengeKill`
-in score and private terminal counts; unmarked kills remain zero. Other army
-damage owners and live grenade/Bazooka revenge cases remain open.
+in score and private terminal counts; unmarked kills remain zero. Host flame
+damage and Commando poison pulses refresh the marker for their current
+army owner; a live Flamethrower-hit-to-mine death verifies flame revenge in
+match score and private terminal evidence.
+Poison and vehicle revenge, plus live grenade/Bazooka revenge, remain open.
 
 The Unity statistics review found that recovered `ScoreManager.AddSkillshot` also changes kill-streak progress and can generate gameplay bonuses. [PvP skill-shot scoring](PVP_SKILLSHOT_SCORING.md) pins all 19 source SCOREMP rows, exact scene definition order, the serialized 0.9-second combo window, and immutable checked score composition before live content publication. Source Sabotage base contributions are 46, or 106 for a Tank, before any combo. Selected live death callbacks now update combo, score, progress, and eligible bonus authority; complete callback coverage and normal Unity presentation remain open.
 

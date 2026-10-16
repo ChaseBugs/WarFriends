@@ -69,8 +69,12 @@ earns `RevengeKill` only for that player and only before the 150th following
 marker before entity removal and require their existing blast death proof.
 Live Shotgunner projectile-hit-to-bullet and projectile-hit-to-mine fixtures
 verify the score and private terminal count; an unmarked bullet kill stays at
-zero. Other army damage families, live grenade/Bazooka revenge cases, and
-exact Unity frame ordering remain open for this flag.
+zero. The recovered `Burn` and `Poison` callbacks also retain the weapon's
+entity owner. Host flame damage and Commando poison pulses now refresh
+that entity's revenge marker while it remains alive; a live Flamethrower
+hit followed by that player's mine kill verifies match score and the private
+terminal count. Poison revenge, vehicle damage, grenade/Bazooka revenge,
+and exact Unity frame ordering still need live coverage.
 
 ## Runtime boundary
 

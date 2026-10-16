@@ -3846,9 +3846,13 @@ public sealed partial class MatchEngine
             if(victim==null||victim.Dead){armyPoisons.Remove(pair.Key);continue;}
             Emit(MatchEventKind.Impact,poison.AttackerPlayerId,poison.VictimPlayerId,
                 poison.ProjectileId,poison.Position,victim.Health,"army-poison");
-            _=ApplyResolvedPlayerDamage(poison.AttackerPlayerId,poison.VictimPlayerId,
+            var result = ApplyResolvedPlayerDamage(poison.AttackerPlayerId,poison.VictimPlayerId,
                 new ResolvedPlayerDamage(poison.DamagePerPulse,CombatDamageType.Poison),
                 damageRoll?.Invoke()??1f,false);
+            if (result is { Applied: true } && activeArmyEntities.ContainsKey(poison.EntityKey))
+            {
+                MarkArmyRevenge(poison.EntityKey, poison.VictimPlayerId);
+            }
             if(poison.Remaining==0||victim.Dead)armyPoisons.Remove(pair.Key);
             if(Terminal)return;
         }
@@ -3888,6 +3892,10 @@ public sealed partial class MatchEngine
                         damageRoll?.Invoke()??1f,true,
                         pvpPlayerDamageReceiptId: receiptId,
                         pvpDamageOwner: PvpPlayerDamageOwner.Army);
+                    if (result is { Applied: true })
+                    {
+                        MarkArmyRevenge(burst.EntityKey, victim.Definition.PlayerId);
+                    }
                     Emit(MatchEventKind.Impact,burst.EntityKey.ToString(),victim.Definition.PlayerId,
                         burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
                 }
@@ -4256,10 +4264,15 @@ public sealed partial class MatchEngine
            !activeArmyEntities.TryGetValue(impact.EntityKey,out var army) ||
            army.OwnerPlayerId!=impact.AttackerPlayerId)
             return null;
-        return ApplyResolvedPlayerDamage(impact.AttackerPlayerId,
+        var result = ApplyResolvedPlayerDamage(impact.AttackerPlayerId,
             impact.VictimPlayerId,new ResolvedPlayerDamage(impact.Damage,
                 CombatDamageType.Shot,impact.PartWeight),randomRoll,
             confirmedProjectileImpact:true);
+        if (result is { Applied: true })
+        {
+            MarkArmyRevenge(impact.EntityKey, impact.VictimPlayerId);
+        }
+        return result;
     }
 
     // Damage is already established by trusted host collision/weapon logic.
