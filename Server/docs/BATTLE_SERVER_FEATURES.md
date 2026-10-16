@@ -1167,3 +1167,9 @@ frames stay unavailable. The collision frame still marks all such candidates
 unplaced, so this does not authorize damage or open co-op registration. Content
 regression, protocol checks and the native Mongo/UDP smoke pass; see
 [the detailed pose boundary](COOP_OBSTACLE_POSES.md).
+
+B22 now also isolates the recovered single-precision crawl-return deadline.
+Tests preserve strict expiry, per-round replacement and the different results
+of shot-before-Update versus Update-before-shot. This is a source timer
+foundation, not live pose integration: absolute scaled time and PlayerLoop phase
+still require Unity comparison. Co-op collision and damage remain incomplete.

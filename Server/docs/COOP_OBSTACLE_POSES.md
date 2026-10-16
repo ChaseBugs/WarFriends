@@ -78,3 +78,20 @@ crawl-return clock; compare moving roots, turning and repeated-volley posture in
 Unity; then prove complete collision and damage routing. Before opening co-op,
 include the accepted pose catalog in its authoritative content identity. The
 stationary diagnostic reference does not open any of those gates.
+
+## Source float return timer
+
+`CoopObstacleCrawlReturnClock` now isolates the timer semantics in recovered
+`SoldierAnimationController.ShootFromCrawl` and `Update`: each round replaces the
+single-precision `Time.time + hideAfter` deadline; Update consumes it once only
+when scaled time is strictly greater. It accepts explicit scaled float time so
+the host cannot silently substitute an integer tick boundary or double sum.
+Malformed or backward time and an unrepresentable deadline reject atomically.
+
+The content suite checks exact equality, the next representable float, repeated
+round resets, one-shot consumption, and both callback orders when a new round
+and expired Update share a frame. Those orders intentionally differ: a shot
+before Update postpones return, whereas Update before the shot emits return.
+The runtime does not yet use this clock. Its actual PlayerLoop phase and absolute
+scaled-time origin still require Unity comparison before live pose selection
+can use the event. This foundation does not open collision authority.
