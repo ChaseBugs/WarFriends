@@ -18255,7 +18255,8 @@ internal static class CombatContentTests
             "private terminal evidence retains the explosion victim's Runner count");
         (MatchEngine Match, BattleArmyEntityState Victim, ulong Tick, int RealShots)
             PrepareRevengeVictim(string matchId, MatchManifest sourceManifest,
-                Func<float>? combatRandom = null)
+                Func<float>? combatRandom = null,
+                BattleCombatContent? scenarioContent = null)
         {
             const int RevengeScenarioRandomSeed = 731;
             var manifest = sourceManifest with
@@ -18266,7 +18267,7 @@ internal static class CombatContentTests
             };
             var random = new Random(RevengeScenarioRandomSeed);
             Func<float> selectedRoll = combatRandom ?? random.NextSingle;
-            var match = new MatchEngine(manifest, content: content,
+            var match = new MatchEngine(manifest, content: scenarioContent ?? content,
                 armyChoice: _ => 0, combatRandom: selectedRoll);
             match.Admit(soldierOwner);
             match.Admit(helicopterOwner);
@@ -18396,6 +18397,62 @@ internal static class CombatContentTests
                   player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
                   row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1,
             "private terminal evidence retains one flame-sourced revenge count");
+        var bazookaRevengeContent = BattleCombatContent.Load(
+            Path.Combine(directory, "combat-content-manifest.json"),
+            bazookaManifestPath: Path.Combine(directory, "bazooka-content-manifest.json"));
+        var bazookaRevengeWeapon = bazookaRevengeContent.Bazookas!.CreateManifest(
+            "Google2u.Bazooka_RPG7", 0);
+        var bazookaRevengeManifest = flameRevengeManifest with
+        {
+            Mode = MatchManifest.BazookaCombatMode,
+            CatalogRevision = bazookaRevengeContent.BazookaRevision!,
+            Players = flameRevengeManifest.Players.Select(player => player with
+            {
+                Weapon = bazookaRevengeWeapon,
+                WeaponUpgrade = 0
+            }).ToArray()
+        };
+        var (bazookaRevengeMatch, bazookaRevengeVictim, bazookaRevengeTick, _) =
+            PrepareRevengeVictim("army-flame-player-bazooka-revenge",
+                bazookaRevengeManifest, scenarioContent: bazookaRevengeContent);
+        var bazookaRevengeBody = bazookaRevengeMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target => target.EntityId == bazookaRevengeVictim.EntityKey &&
+                target.Hitbox.SourcePath == EnemyPoseCatalog.ArmyBodySourcePath);
+        Vector3 bazookaRevengeAim = bazookaRevengeBody.Hitbox.Center;
+        Check(bazookaRevengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 2,
+            BazookaHold = new BazookaHoldCommand
+            {
+                Pressed = true,
+                TargetX = bazookaRevengeAim.X,
+                TargetY = bazookaRevengeAim.Y,
+                TargetZ = bazookaRevengeAim.Z
+            }
+        }).Code == "bazooka-targeting",
+            "an admitted player aims the source RPG7 at the marked infantry");
+        while (bazookaRevengeMatch.ArmyHealth(bazookaRevengeVictim.EntityKey) != null &&
+               bazookaRevengeTick < 1500 && !bazookaRevengeMatch.Terminal)
+        {
+            bazookaRevengeMatch.Advance(++bazookaRevengeTick);
+        }
+        Check(bazookaRevengeMatch.ArmyHealth(bazookaRevengeVictim.EntityKey) == null &&
+              bazookaRevengeMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ShotsFired > 0 &&
+              bazookaRevengeMatch.BonusProgress.ScoreSnapshot(helicopterOwner)
+                  .Counts[PvpArmyKillSkillShotPolicy.RevengeKill] == 1,
+            "a live RPG7 blast kills the marked infantry and credits one revenge kill");
+        bazookaRevengeMatch.Command(helicopterOwner, new MatchCommand
+        {
+            CommandId = 3,
+            Forfeit = new ForfeitCommand()
+        });
+        Check(bazookaRevengeMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == helicopterOwner).ConfirmedSkillShotCounts.Single(row =>
+                  row.Flag == PvpArmyKillSkillShotPolicy.RevengeKill).Count == 1 &&
+              bazookaRevengeMatch.TerminalEvidenceSnapshot().DirectArmyKills.Single(row =>
+                  row.EntityKey == bazookaRevengeVictim.EntityKey).Cause == "player-bazooka",
+            "private terminal evidence retains the live RPG7 revenge kill");
         var poisonRevengeManifest = flameRevengeManifest with
         {
             Players = flameRevengeManifest.Players.Select(player => player with

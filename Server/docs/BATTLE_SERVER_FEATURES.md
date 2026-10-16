@@ -245,7 +245,10 @@ and Buggy missile damage followed by player mine deaths, with one score and
 private revenge count for each. Tank and Buggy now apply the Client's
 post-aim `TurretSeesEnemy` ray from the prefab spawn-point fallback to the
 first ordered target, using the existing source visibility mask. Live
-grenade/Bazooka revenge remains open.
+RPG7 hold, missile flight, and blast now verify a Flamethrower victim's
+`RevengeKill` score, `player-bazooka` direct-kill cause, and private terminal
+count after that victim damaged the opposing player. Live grenade revenge
+remains open.
 
 The normal grenade-weapon path has an additional integration gap. A live
 Flamethrower can damage its opponent under the rifle combat mode, but the

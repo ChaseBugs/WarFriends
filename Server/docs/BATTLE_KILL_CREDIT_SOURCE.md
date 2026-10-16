@@ -102,8 +102,10 @@ stale tick. Park matches verify live Tank and Buggy missile hits, mine kills
 of those same vehicles, and one private `RevengeKill` count each. Tank and
 Buggy now check `TurretSeesEnemy` at launch from their serialized spawn-point
 fallback to the first ordered source target, reusing the verified static and
-destroyable visibility ray. Live grenade/Bazooka revenge remains open. In
-`GrenadeCombatMode`, the host constructs `GrenadeMatchSimulation` without
+destroyable visibility ray. A live RPG7 hold and missile blast now kill a
+marked Flamethrower and verify one private `RevengeKill` plus the
+`player-bazooka` terminal direct-kill cause. Live grenade revenge remains
+open. In `GrenadeCombatMode`, the host constructs `GrenadeMatchSimulation` without
 `RifleMatchSimulation`, but its deployed-army flame, bullet, and vehicle
 player-damage paths still require `rifleCombat`. An exploratory live
 Flamethrower fixture produced no player hit through tick 1500 in that mode,
