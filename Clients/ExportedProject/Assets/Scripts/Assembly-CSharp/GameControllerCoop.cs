@@ -358,7 +358,7 @@ public class GameControllerCoop : GameControllerOnline
 	{
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
-			// Base sends the Worker intent and waits for its terminal result.
+			// Base waits for the Worker receipt before the mode presents its local or shared outcome.
 			base.Forfeit();
 			return;
 		}
@@ -369,6 +369,20 @@ public class GameControllerCoop : GameControllerOnline
 			Disconnect();
 		}
 	}
+
+    protected override void OnSelfHostedForfeitConfirmed(SelfHostedBattleClient client)
+    {
+        if (!gameIsRunning || !SelfHostedCoopDepartureState.IsLocalDeparture(client.State, client.LocalPlayerId))
+        {
+            return;
+        }
+
+        // The host removed only this peer. Reuse the source local Forfeit order without ending the host mission.
+        mMainController.gameEndReason = GameController.GameEndReason.Forfeit;
+        FinishGame();
+        MissionsManager.instance.currentMission.EndMission();
+        Disconnect();
+    }
 
 	public override void FinishGame()
 	{

@@ -12,7 +12,8 @@ internal static class CoopDeparturePresentationTests
         VerifyConfirmedDeparture();
         VerifyLoadingAndSpectatorBoundaries();
         VerifyRosterBoundaries();
-        return 10;
+        VerifyLocalDeparture();
+        return 14;
     }
 
     private static void VerifyConfirmedDeparture()
@@ -53,6 +54,20 @@ internal static class CoopDeparturePresentationTests
         snapshot.Players[1].PlayerId = RemoteId;
         snapshot.Players[1].Admitted = false;
         Require(!IsDeparture(snapshot), "A peer who never entered must not be shown as leaving a played mission.");
+    }
+
+    private static void VerifyLocalDeparture()
+    {
+        MatchSnapshot snapshot = CreateDeparture();
+        Require(SelfHostedCoopDepartureState.IsLocalDeparture(snapshot, RemoteId),
+            "The inactive local peer may exit while the other ally remains in the running mission.");
+        Require(!SelfHostedCoopDepartureState.IsLocalDeparture(snapshot, LocalId),
+            "The surviving local ally must not exit when its partner departs.");
+        Require(!SelfHostedCoopDepartureState.IsLocalDeparture(snapshot, "unknown"),
+            "An identity outside the original roster must not obtain local departure confirmation.");
+        snapshot.Phase = BattlePhase.Ended;
+        Require(!SelfHostedCoopDepartureState.IsLocalDeparture(snapshot, RemoteId),
+            "A shared terminal result must keep its existing terminal presentation path.");
     }
 
     private static MatchSnapshot CreateDeparture()

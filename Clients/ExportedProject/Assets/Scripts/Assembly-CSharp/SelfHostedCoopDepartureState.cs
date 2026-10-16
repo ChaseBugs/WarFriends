@@ -6,6 +6,25 @@ public static class SelfHostedCoopDepartureState
 {
     private const int MissionPlayerCount = 2;
 
+    /// <summary>Recognizes the departed local peer while the other ally's mission remains running.</summary>
+    public static bool IsLocalDeparture(MatchSnapshot snapshot, string localPlayerId)
+    {
+        if (snapshot == null || snapshot.Players.Count != MissionPlayerCount || string.IsNullOrEmpty(localPlayerId))
+        {
+            return false;
+        }
+
+        foreach (BattlePlayerState player in snapshot.Players)
+        {
+            if (player.PlayerId != localPlayerId)
+            {
+                return IsRemoteDeparture(snapshot, player.PlayerId, localPlayerId);
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Requires the surviving local ally and inactive remote peer in one running host snapshot.</summary>
     public static bool IsRemoteDeparture(MatchSnapshot snapshot, string localPlayerId, string remotePlayerId)
     {

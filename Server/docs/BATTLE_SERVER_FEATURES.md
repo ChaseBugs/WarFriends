@@ -1364,3 +1364,12 @@ notification, point release and delayed deactivation once; loading, KIA and
 terminal states do not infer a departure. The exact Unity predicate is linked
 into protocol tests. Full co-op input/AI presentation, local exit, settlement
 and two-Client gameplay remain open. See [the presentation scope](COOP_PEER_PRESENTATION.md).
+
+B22 co-op local Forfeit confirmation now reaches the recovered local finish,
+mission-end and delayed disconnect order only after the host removed that peer.
+An already confirmed departure completes recovery without another reconnect or
+UDP command and preserves the survivor's running state. The exact predicate
+has fourteen protocol checks; Unity Mono covers the early recovery branch with
+a real loopback receiver. Rendered exit, admitted co-op response-loss recovery,
+shared terminal presentation and durable settlement remain open. See the
+[local confirmation boundary](COOP_PEER_PRESENTATION.md#confirmed-local-departure).

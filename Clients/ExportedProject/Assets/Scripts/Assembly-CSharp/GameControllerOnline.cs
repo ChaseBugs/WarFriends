@@ -1407,7 +1407,11 @@ public abstract class GameControllerOnline : IGameController
 	private async void ForfeitSelfHosted(SelfHostedBattleClient client)
 	{
 		mSelfHostedForfeitPending = true;
-		try { await client.ForfeitWithRecovery(); }
+        try
+        {
+            await client.ForfeitWithRecovery();
+            OnSelfHostedForfeitConfirmed(client);
+        }
 		catch (Exception failure)
 		{
 			// No local result is authoritative. The dialog stays open so the
@@ -1416,6 +1420,11 @@ public abstract class GameControllerOnline : IGameController
 		}
 		finally { mSelfHostedForfeitPending = false; }
 	}
+
+    /// <summary>Allows a mode to finish its confirmed local departure without inventing a shared terminal result.</summary>
+    protected virtual void OnSelfHostedForfeitConfirmed(SelfHostedBattleClient client)
+    {
+    }
 
 	public override void PauseGame(bool focusLost)
 	{

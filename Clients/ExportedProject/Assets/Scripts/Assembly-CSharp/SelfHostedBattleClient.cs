@@ -513,7 +513,8 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             Exception lastFailure = null;
             for (int attempt = 0; attempt < 3 && !destroyed; attempt++)
             {
-                if (State != null && (State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted))
+                if (State != null && (State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted ||
+                    SelfHostedCoopDepartureState.IsLocalDeparture(State, LocalPlayerId)))
                 { forfeitCommandPending = false; return; }
                 try
                 {
@@ -526,13 +527,13 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
                         await Forfeit();
                     }
                     forfeitCommandPending = false;
-                    return; // Apply publishes the Worker's terminal snapshot.
+                    return; // Apply publishes either the shared terminal state or this co-op peer's departure.
                 }
                 catch (Exception failure)
                 {
                     lastFailure = failure;
-                    // A consumed Forfeit makes the match terminal; the Worker will
-                    // not issue another reconnect grant. Retry its original receipt.
+                    // A consumed Forfeit is terminal or removes this co-op peer.
+                    // The Worker will not issue that peer another grant; retry the original receipt.
                     if (reconnectFailureReported || destroyed) break;
                     await Task.Delay(500);
                 }
