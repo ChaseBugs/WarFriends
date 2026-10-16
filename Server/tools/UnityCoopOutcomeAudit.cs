@@ -26,9 +26,10 @@ public static class UnityCoopOutcomeAudit
             VerifyDepartedPeer();
             VerifyMalformedResults();
             VerifyBridgeLifecycle();
+            VerifyCoopScorePresentation();
             File.WriteAllText(Path.Combine(Application.dataPath, "../coop-outcome-unity-audit.json"),
-                "{\"schemaVersion\":3,\"checks\":23,\"scope\":\"edit-mode SDK projection and event bridge\"}\n");
-            Debug.Log("PASS: 23 co-op projection and event bridge checks; no rendered result UI or rewards applied.");
+                "{\"schemaVersion\":4,\"checks\":30,\"scope\":\"edit-mode co-op outcome and score components\"}\n");
+            Debug.Log("PASS: 30 co-op outcome and score component checks; no rendered result UI or rewards applied.");
             EditorApplication.Exit(0);
         }
         catch (Exception failure)
@@ -36,6 +37,86 @@ public static class UnityCoopOutcomeAudit
             Debug.LogException(failure);
             EditorApplication.Exit(1);
         }
+    }
+
+    private static void VerifyCoopScorePresentation()
+    {
+        var owner = new GameObject("CoopScorePresentationAudit");
+        owner.SetActive(false);
+        try
+        {
+            ScoreManager scores = owner.AddComponent<ScoreManager>();
+            SelfHostedBattleClient client = owner.AddComponent<SelfHostedBattleClient>();
+            typeof(SelfHostedBattleClient).GetProperty("LocalPlayerId").SetValue(client, MasterId, null);
+            MatchSnapshot snapshot = CreateScoreSnapshot();
+            scores.ApplySelfHostedSnapshot(snapshot, MasterId);
+            Require(scores.score == 10 && scores.opponentScore == 5 && scores.scoreCoop == 15,
+                "The source score manager must publish local, allied and shared host scores.");
+            scores.score = 999;
+            Require(scores.score == 10, "Local score assignment must not overwrite the host contribution.");
+            typeof(ScoreManager).GetMethod("AddCoopScoreRPC", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(scores, new object[] { 999 });
+            Require(scores.scoreCoop == 15, "A retired Photon delta must not change the shared host total.");
+            VerifyInvalidScorePublication(scores, snapshot);
+            scores.ApplySelfHostedSnapshot(snapshot, PeerId);
+            Require(scores.score == 5 && scores.opponentScore == 10 && scores.scoreCoop == 15,
+                "Peer presentation must retain the shared total with reversed local ownership.");
+            VerifyScoreEventOrdering(client, scores, snapshot);
+            client.LeaveMatch();
+            scores.score = 999;
+            Require(scores.scoreCoop == 15, "Disconnect must not restore local score authority before restart.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(owner);
+        }
+    }
+
+    private static void VerifyInvalidScorePublication(ScoreManager scores, MatchSnapshot snapshot)
+    {
+        MatchSnapshot malformed = snapshot.Clone();
+        malformed.Coop.ObjectiveScore++;
+        bool hasRejected = false;
+        try
+        {
+            scores.ApplySelfHostedSnapshot(malformed, MasterId);
+        }
+        catch (Exception failure)
+        {
+            if (failure.GetType().FullName != "System.IO.InvalidDataException")
+            {
+                throw;
+            }
+
+            hasRejected = true;
+        }
+
+        Require(hasRejected && scores.score == 10 && scores.scoreCoop == 15,
+            "Malformed conservation must reject before either score field changes.");
+    }
+
+    private static void VerifyScoreEventOrdering(SelfHostedBattleClient client, ScoreManager scores,
+        MatchSnapshot snapshot)
+    {
+        Publish(client, snapshot);
+        client.BindScoreManager(scores);
+        bool hasObserved = false;
+        client.StateReceived += state =>
+        {
+            hasObserved = scores.score == 10 && scores.scoreCoop == 15;
+        };
+        Publish(client, snapshot);
+        Require(hasObserved, "Co-op score publication must precede result and other snapshot callbacks.");
+    }
+
+    private static MatchSnapshot CreateScoreSnapshot()
+    {
+        MatchSnapshot snapshot = CreateBridgeSnapshot();
+        snapshot.Coop.MissionType = "Score";
+        snapshot.Coop.ObjectiveScore = 15;
+        snapshot.Coop.ParticipantScores.Add(new BattleCoopParticipantScore { PlayerId = MasterId, Score = 10 });
+        snapshot.Coop.ParticipantScores.Add(new BattleCoopParticipantScore { PlayerId = PeerId, Score = 5 });
+        return snapshot;
     }
 
     private static void VerifyBridgeLifecycle()

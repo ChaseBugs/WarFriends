@@ -1431,3 +1431,14 @@ reentrancy and later shared finish are covered by 23 Unity Mono Editor checks.
 These are event/callback checks, not rendered GUI or normal co-op gameplay.
 See [confirmed KIA presentation](COOP_KIA_PRESENTATION.md) for the remaining
 attribution, rendering, admission and settlement boundaries.
+
+B22/B32 now project the source Score mission's exact two-player contribution
+rows into the recovered `ScoreManager.scoreCoop` HUD value. Validation rejects
+missing/reordered/duplicate rows, negative values, sum overflow, inconsistent
+objective totals and prestart points before publication. Local score mutation
+and Photon score deltas cannot overwrite the bound view; local Score mission
+completion defers to host terminal authority. Eleven protocol cases, a real
+host-credited runtime projection and seven Unity component checks cover the
+connection. Other mission score families, normal rendered HUD/gameplay,
+complete combat attribution and settlement remain open. See
+[Score-mission presentation](COOP_SCORE_PRESENTATION.md).

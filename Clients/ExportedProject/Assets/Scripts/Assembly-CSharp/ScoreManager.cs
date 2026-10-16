@@ -52,7 +52,7 @@ public class ScoreManager : Singleton<ScoreManager>
 
     private bool IsSelfHostedScoreActive
     {
-        get { return _hasSelfHostedScore || IsSelfHostedPvp; }
+        get { return _hasSelfHostedScore || IsSelfHostedPvp || IsSelfHostedCoopScore; }
     }
 
     private static bool IsSelfHostedPvp
@@ -64,12 +64,27 @@ public class ScoreManager : Singleton<ScoreManager>
         }
     }
 
-    /// <summary>Replaces PvP presentation state with one validated host snapshot.</summary>
+    private static bool IsSelfHostedCoopScore
+    {
+        get
+        {
+            SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+            return client != null && client.OwnsMatch && client.State != null && client.State.Coop != null &&
+                client.State.Coop.MissionType == "Score";
+        }
+    }
+
+    /// <summary>Replaces supported presentation state with one validated host snapshot.</summary>
     public void ApplySelfHostedSnapshot(MatchSnapshot snapshot, string localPlayerId)
     {
         BattleScoreSnapshotPolicy.Validate(snapshot);
         if (snapshot.Coop != null)
         {
+            if (snapshot.Coop.MissionType == "Score")
+            {
+                ApplySelfHostedCoopScore(snapshot, localPlayerId);
+            }
+
             return;
         }
 
@@ -93,6 +108,17 @@ public class ScoreManager : Singleton<ScoreManager>
         killStreakProgressOpponent = other.KillStreakProgress;
         skillShotCounts = localCounts;
         skillShotCountsOponent = otherCounts;
+    }
+
+    private void ApplySelfHostedCoopScore(MatchSnapshot snapshot, string localPlayerId)
+    {
+        CoopScoreProjection projection = CoopScoreProjection.ForPlayer(snapshot, localPlayerId);
+        _hasSelfHostedScore = true;
+        mScore = projection.LocalScore;
+        mCoopOtherPlayerScore = projection.PeerScore;
+        opponentScore = projection.PeerScore;
+        killStreakProgress = 0f;
+        killStreakProgressOpponent = 0f;
     }
 
     private static void ResolveHostParticipants(MatchSnapshot snapshot, string localPlayerId,
@@ -248,7 +274,7 @@ public class ScoreManager : Singleton<ScoreManager>
 
 	public void Restart()
 	{
-        _hasSelfHostedScore = IsSelfHostedPvp;
+        _hasSelfHostedScore = IsSelfHostedPvp || IsSelfHostedCoopScore;
 		isNewKillStreak = false;
 		mLastScore = 0;
 		mScore = 0;
@@ -281,7 +307,7 @@ public class ScoreManager : Singleton<ScoreManager>
 		bonusMultiplier = 1f;
 		bonusMultiplierEnemy = 1f;
         SelfHostedBattleClient client = SelfHostedBattleClient.Active;
-        if (IsSelfHostedPvp && client.State != null)
+        if ((IsSelfHostedPvp || IsSelfHostedCoopScore) && client.State != null)
         {
             ApplySelfHostedSnapshot(client.State, client.LocalPlayerId);
         }

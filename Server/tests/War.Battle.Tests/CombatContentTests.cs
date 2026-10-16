@@ -5369,6 +5369,14 @@ internal static class CombatContentTests
             scoreRuntime.Snapshot().Coop.ParticipantScores[0].Score != 10 ||
             scoreRuntime.Snapshot().Coop.ParticipantScores[1].Score != 5)
             throw new Exception("The second ally's army kill must add its source score.");
+        CoopScoreProjection firstScoreView = CoopScoreProjection.ForPlayer(scoreRuntime.Snapshot(), firstPlayer);
+        CoopScoreProjection secondScoreView = CoopScoreProjection.ForPlayer(scoreRuntime.Snapshot(), secondPlayer);
+        if (firstScoreView.LocalScore != 10 || firstScoreView.PeerScore != 5 || firstScoreView.TotalScore != 15 ||
+            secondScoreView.LocalScore != 5 || secondScoreView.PeerScore != 10 || secondScoreView.TotalScore != 15)
+        {
+            throw new Exception("Both portable SDK views must conserve the real host-credited co-op score.");
+        }
+
         if (!scoreRuntime.AbortForHostShutdown())
             throw new Exception("The Score fixture could not close as a host abort.");
         MatchSnapshot abortedScore = scoreRuntime.TerminalEvidenceSnapshot();

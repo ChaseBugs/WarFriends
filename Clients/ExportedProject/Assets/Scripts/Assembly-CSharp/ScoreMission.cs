@@ -33,6 +33,12 @@ public class ScoreMission : HordeMission
 
 	public override void EndMission()
 	{
+        if (PhotonConnectionManager.IsSelfHostedActive && Singleton<GameController>.instance.isCoop)
+        {
+            // Shared score presentation cannot authorize local stars or a mission outcome.
+            return;
+        }
+
 		if (Singleton<ScoreManager>.instance.scoreCoop < scoreToSucces)
 		{
 			Singleton<GameController>.instance.gameEndReason = GameController.GameEndReason.MissionFailed;
@@ -47,6 +53,11 @@ public class ScoreMission : HordeMission
 
 	protected override void UpdateMission()
 	{
+        if (PhotonConnectionManager.IsSelfHostedActive && Singleton<GameController>.instance.isCoop)
+        {
+            return;
+        }
+
 		base.UpdateMission();
 		int scoreCoop = Singleton<ScoreManager>.instance.scoreCoop;
 		if (scoreCoop >= scoreToSucces)
