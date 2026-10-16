@@ -149,6 +149,21 @@ public sealed class PvpBonusProgressCoordinator : IDisposable
         }
     }
 
+    /// <summary>Stages a host-confirmed skill shot before its gameplay result is published.</summary>
+    internal PvpBonusProgressCoordinator PrepareConfirmedSkillShotCopy(
+        string ownerId, string receiptId, int flags, out PvpConfirmedSkillShot result)
+    {
+        lock (gate)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            var candidate = (PvpBonusProgressCoordinator)MemberwiseClone();
+            float multiplier = multipliers.ForPlayer(ownerId);
+            result = candidate.RecordConfirmedSkillShotWithScore(
+                ownerId, receiptId, flags, multiplier);
+            return candidate;
+        }
+    }
+
     /// <summary>
     /// One host-confirmed damage callback. The duel roster establishes the
     /// owner/victim factions; no packet supplies a score flag or multiplier.

@@ -15285,7 +15285,9 @@ internal static class CombatContentTests
                   .Single(p=>p.PlayerId==decoyOpponent).ConfirmedPlayerBulletHits==1,
             "controlled immortal-root contact survives as one private terminal bullet hit");
         var droneShotManifest=deployedDroneManifest with {MatchId="player-projectile-drone",DurationSeconds=180,
-            Players=[deployedDroneManifest.Players[0] with {ArmySpecialUpgradeIndexes=[-1]},deployedDroneManifest.Players[1]]};
+            SceneMasterPlayerId=decoyPlayer,
+            Players=[deployedDroneManifest.Players[0] with {ArmySpecialUpgradeIndexes=[-1],PlayerLevel=8},
+                deployedDroneManifest.Players[1] with {PlayerLevel=8}]};
         var droneShotMatch=new MatchEngine(droneShotManifest,content:content,armyChoice:_=>0);
         droneShotMatch.Admit(decoyPlayer);droneShotMatch.Admit(decoyOpponent);
         droneShotMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=droneShotMatch.ManifestHash}});
@@ -15366,6 +15368,17 @@ internal static class CombatContentTests
               directDroneKill.AttackerPlayerId==decoyOpponent&&
               directDroneKill.VictimOwnerPlayerId==decoyPlayer,
             "lethal player bullet retains one private source-identity Drone kill rather than a generic army loss");
+        var bulletKillScore = droneShotMatch.BonusProgress.ScoreSnapshot(decoyOpponent);
+        Check(bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.Kill] == 1 &&
+              bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.VehicleDestroyed] == 1 &&
+              bulletKillScore.Counts[PvpArmyKillSkillShotPolicy.TankDestroyed] == 0 &&
+              bulletKillScore.Score == 40 &&
+              droneShotMatch.Snapshot().Players.Single(player =>
+                  player.PlayerId == decoyOpponent).ConfirmedSkillShotCounts.Count == 0 &&
+              droneShotMatch.TerminalEvidenceSnapshot().Players.Single(player =>
+                  player.PlayerId == decoyOpponent).ConfirmedSkillShotCounts.Single(row =>
+                      row.Flag == PvpArmyKillSkillShotPolicy.Kill).Count == 1,
+            "host bullet kill credits Drone base skill-shot rows only in private terminal evidence");
         var bulletResult=Google.Protobuf.MessageExtensions.ToByteArray(droneShotMatch.TerminalEvidenceSnapshot());
         Check(TerminalOutbox.ValidatePayload(bulletResult,droneShotMatch.MatchId,
                   War.Shared.TerminalResultDigest.Compute(bulletResult)).Players
@@ -15384,6 +15397,12 @@ internal static class CombatContentTests
             TerminalResultDigest.Compute(forgedSabotageBytes)));
         foreach(var family in content.Army.Families)
         {
+            int expectedBaseFlags = PvpArmyKillSkillShotPolicy.Kill |
+                (family.IsSoldier ? 0 : PvpArmyKillSkillShotPolicy.VehicleDestroyed) |
+                (family.UnitId == "ID_UNIT-TANK" ? PvpArmyKillSkillShotPolicy.TankDestroyed : 0);
+            Check(PvpArmyKillSkillShotPolicy.BaseFlags(content.Army, family.UnitId) ==
+                  expectedBaseFlags,
+                $"source base kill flags match recovered family {family.UnitId}");
             var unitResult=droneShotMatch.TerminalEvidenceSnapshot();
             var option=ArmyOptionIdentityCatalog.All.First(x=>x.UnitId==family.UnitId);
             var unitUsage=unitResult.Players.Single(p=>p.PlayerId==decoyPlayer).ArmyUsage.Single();

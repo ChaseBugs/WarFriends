@@ -1979,11 +1979,28 @@ public sealed partial class MatchEngine : IMatchRuntime
                         }
                         if(directArmyKills.Count>=256)
                         {End("source-kill-backpressure","",false);break;}
+                        PvpBonusProgressCoordinator? scoredKill = null;
+                        if (pvpBonusProgress != null)
+                        {
+                            int flags = PvpArmyKillSkillShotPolicy.BaseFlags(
+                                armyCatalog ?? throw new InvalidDataException(
+                                    "Player-owned kill lacks a recovered army catalog."),
+                                armyBeforeImpact.UnitId);
+                            string receiptId = PvpHitReceiptId("player-bullet-army-kill",
+                                pair.Key, vehicleId.ToString(CultureInfo.InvariantCulture));
+                            scoredKill = pvpBonusProgress.PrepareConfirmedSkillShotCopy(
+                                shooter.Definition.PlayerId, receiptId, flags, out _);
+                        }
                         directArmyKills.Add((vehicleId,armyBeforeImpact.UnitId,
                             armyBeforeImpact.OwnerPlayerId,shooter.Definition.PlayerId,"player-bullet",tick));
+                        if (scoredKill != null)
+                        {
+                            pvpBonusProgress = scoredKill;
+                        }
                     }
                 }
                 catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
+                catch(InvalidOperationException){End("pvp-score-backpressure","",false);break;}
                 if(Terminal)break;
             }
             if (impact?.Hit.PlayerId != null)
