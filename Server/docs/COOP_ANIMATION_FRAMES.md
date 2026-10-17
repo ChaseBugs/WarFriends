@@ -16,7 +16,8 @@ The corner timeline now retains the source starting state before each attempt.
 It preserves existing look, restarts existing fire or reverses an active return
 before entering the recovered side-specific queue. Latest host round intents
 then own fire resets. It excludes active paths, navigation conflicts, invalid
-root clocks and current-round reset evaluation boundaries. See
+root clocks. Current rounds publish their evaluated post-notification fire
+reset, while gameplay muzzle observations retain their prior evaluation. See
 [retained preparation](COOP_CORNER_PREPARATION.md). The subsequent
 [return-frame catalog](COOP_CORNER_RETURN_FRAMES.md) covers source return,
 cover-to-idle blending and continued idle in the guarded corner window.
@@ -65,8 +66,7 @@ explicitly and does not prove rendered pixels, normal bootstrap or automatic
 Play Mode lifecycle. Real MongoDB/HTTP/UDP smoke and restart recovery pass;
 those 74 integration checks do not exercise public co-op combat admission.
 
-Current-round transition frames,
-obstacle fire, procedural aiming, other families, missed snapshots and normal
+Initial preparation blend frames, obstacle fire, procedural aiming, other families, missed snapshots and normal
 two-Client co-op remain open. Worker co-op admission and validated player-hit
 routing remain closed. This checkpoint does not open reward or damage gates,
 or establish Linux/Android execution or shipped Unity 5.2 parity.

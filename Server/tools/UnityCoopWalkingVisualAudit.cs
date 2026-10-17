@@ -101,7 +101,27 @@ public static class UnityCoopWalkingVisualAudit
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, walkingPose[index]) > 0.001f).Any(),
             "A confirmed protobuf fire frame must reuse the actor and replace its walking bone pose.");
         VerifyReturnBlend(client, actor, skin, fire);
+        VerifyRoundReset(client, actor, skin);
         VerifyInterruptedPreparation(client, actor, skin);
+    }
+
+    private static void VerifyRoundReset(SelfHostedBattleClient client, GameObject actor, SkinnedMeshRenderer skin)
+    {
+        MatchSnapshot snapshot = client.State.Clone();
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation = new BattleInfantryAnimationFrame
+        {
+            SampleTick = snapshot.ServerTick
+        };
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "player_fire_right3", TimeSeconds = 0f, Weight = 1f,
+            Wrap = BattleInfantryAnimationWrap.ClampForever
+        });
+        Quaternion[] before = skin.bones.Select(bone => bone.localRotation).ToArray();
+        Publish(client, snapshot);
+        Require(GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
+            "The decoded zero-time round reset must keep the source actor visible and update its pose.");
     }
 
     private static void VerifyInterruptedPreparation(SelfHostedBattleClient client, GameObject actor,

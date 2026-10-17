@@ -199,4 +199,5 @@ and the fixed-root corner-fire connection. The subsequent
 [return projection](COOP_CORNER_RETURN_FRAMES.md) preserves measured return
 and idle blends. [Retained preparation](COOP_CORNER_PREPARATION.md) now captures
 idle/look/fire/return before each attempt and preserves its source phase.
-Current-round boundaries and obstacle fire still need complete host projection.
+[Current-round resets](COOP_ROUND_RESET_FRAMES.md) now publish confirmed fire
+at time zero. Obstacle fire still needs complete host projection.

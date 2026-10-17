@@ -58,6 +58,12 @@ public sealed class UnityCoopCornerVolleyProbe
         return new { tick, events };
     }
 
+    /// <summary>Invokes the source per-round animation notification without advancing the observation clock.</summary>
+    public void NotifyRound()
+    {
+        Shoot(RoundHideSeconds);
+    }
+
     private void Shoot(float hideSeconds)
     {
         // The recovered public overload reverses the Boolean before choosing its private CoverSide.

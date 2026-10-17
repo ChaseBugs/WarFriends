@@ -1602,3 +1602,12 @@ capture-before-clear regression passes, and seventeen native checks include
 decoding the actual server-model protobuf reversal. Public admission/combat
 and unsupported evaluation boundaries remain open. See
 [retained preparation](COOP_CORNER_PREPARATION.md).
+
+B22 now keeps the current-round actor visible with a confirmed zero-time fire
+frame. A separate empty-scene Play Mode audit invokes the actual source
+notification for queued and ordinary fire on both sides and compares evaluated
+hierarchies to the production sampler: 168 checks pass. The native adapter
+audit passes eighteen checks including the zero-time protobuf frame. Gameplay
+muzzle observation timing and all collision authority remain unchanged. See
+[round reset frames](COOP_ROUND_RESET_FRAMES.md); normal co-op admission/combat
+and other unsupported states remain open.

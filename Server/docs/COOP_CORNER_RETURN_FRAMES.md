@@ -64,9 +64,9 @@ passes 74 checks plus restart recovery. Those integration checks do not open
 or verify public co-op combat admission. No SDK binary or Client asset changes
 are required for this server/content increment.
 
-Current-round reset boundaries,
-obstacle fire, procedural aiming and normal co-op admission/combat remain
-open. Existing collider diagnostics are unchanged; their own full source
+The subsequent [round-reset projection](COOP_ROUND_RESET_FRAMES.md) publishes
+confirmed fire at time zero on the current round. Obstacle fire, procedural
+aiming and normal co-op admission/combat remain open. Existing collider diagnostics are unchanged; their own full source
 parity remains a separate requirement. This does not establish shipped Unity
 5.2, Linux execution or Android execution.
 

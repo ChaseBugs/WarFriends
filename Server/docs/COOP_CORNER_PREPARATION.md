@@ -40,8 +40,10 @@ capture can read the old state on the tick a new attempt becomes eligible.
 The existing protobuf frame and Unity sampler carry the retained time without
 new wire fields or SDK binaries. Root pose must match the host's current corner
 turn clock; active paths, invalid roots, dead/ended actors and navigation
-conflicts remain excluded. Initial tick-zero blending and current-round reset
-evaluation boundaries remain unrepresented.
+conflicts remain excluded. Initial tick-zero blending remains unrepresented.
+The subsequent [round reset frame](COOP_ROUND_RESET_FRAMES.md) checkpoint
+represents the current round's evaluated post-notification state separately
+from the previous gameplay muzzle evaluation.
 
 Known retained/reversed/direct-fire plans cannot use the old fresh-look
 uncover/fire hitbox or queued-muzzle diagnostic samples. Those methods return

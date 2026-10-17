@@ -4142,7 +4142,24 @@ internal static class CombatContentTests
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
                     "Co-op corner fire escaped its diagnostic gate.");
+            ulong firstRoundTick = coverWindup.CallbackTick + 1;
+            cornerRuntime.Advance(firstRoundTick);
+            BattleInfantryAnimationFrame? resetFrame = cornerRuntime.Snapshot().Coop.EnemySpawns
+                .Single(enemy => enemy.EntityId == cornerEnemy.EntityId).InfantryAnimation;
+            if (resetFrame?.SampleTick != firstRoundTick || resetFrame.Clips[0].ClipName != coverWindup.QueuedFireClip ||
+                resetFrame.Clips[0].TimeSeconds != 0f)
+            {
+                throw new Exception("The current host round must publish its confirmed post-command fire reset.");
+            }
             cornerRuntime.Advance(coverWindup.StartTick + 21);
+            BattleInfantryAnimationFrame? currentRoundFrame = cornerRuntime.Snapshot().Coop.EnemySpawns
+                .Single(enemy => enemy.EntityId == cornerEnemy.EntityId).InfantryAnimation;
+            IReadOnlyList<CoopInfantryRoundIntent> currentRounds = cornerRuntime.InfantryRoundIntents(cornerEnemy.EntityId);
+            if (currentRoundFrame?.Clips[0].TimeSeconds !=
+                (cornerRuntime.Snapshot().ServerTick - currentRounds[^1].Tick) / (float)MatchManifest.TickRate)
+            {
+                throw new Exception("Confirmed firing presentation must follow the latest source notification.");
+            }
             if (cornerRuntime.PlaceCornerFireHitboxes(
                     cornerEnemy.EntityId).Count != 3)
                 throw new Exception("Co-op corner fire ended before cover return.");

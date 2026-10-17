@@ -74,11 +74,7 @@ internal sealed partial class CoopMatchRuntime
             rounds.Count > 0)
         {
             ulong lastRound = rounds[^1].Tick;
-            if (lastRound == tick)
-            {
-                // The current-round evaluation boundary remains separate from later confirmed samples.
-                return null;
-            }
+            // This is the confirmed post-notification visual. Gameplay muzzles still use their prior evaluation.
             return CreateVisualFrame(windup.QueuedFireClip,
                 (tick - lastRound) / (float)MatchManifest.TickRate, BattleInfantryAnimationWrap.ClampForever);
         }
