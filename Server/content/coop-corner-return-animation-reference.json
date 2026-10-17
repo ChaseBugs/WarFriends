@@ -1,0 +1,812 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "captureRate": 30,
+  "sourceSha256": "52dc91af539033bbe9c7043e2a8e7649fcc2c8bc7d06fd0546f8ace78c5f9149",
+  "enemySha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
+  "sourceReturnEpoch": 59,
+  "scenarios": [
+    {
+      "coverClip": "player_right_coverBack3",
+      "frames": [
+        {
+          "offset": 1,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.0333333351,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 2,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.06666667,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 3,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.100000009,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 4,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.13333334,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 5,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.166666672,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.0,
+              "weight": 0.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 6,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.200000018,
+              "weight": 0.8888889,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.0333333351,
+              "weight": 0.111111112,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 7,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.233333349,
+              "weight": 0.7777778,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.06666667,
+              "weight": 0.222222224,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 8,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.266666681,
+              "weight": 0.6666667,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.100000009,
+              "weight": 0.333333343,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 9,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.3,
+              "weight": 0.5555556,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.13333334,
+              "weight": 0.444444448,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 10,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.333333343,
+              "weight": 0.444444478,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.166666672,
+              "weight": 0.5555556,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 11,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.366666675,
+              "weight": 0.333333373,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.200000018,
+              "weight": 0.6666667,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 12,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.400000036,
+              "weight": 0.222222269,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.233333349,
+              "weight": 0.7777778,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 13,
+          "clips": [
+            {
+              "clipName": "player_right_coverBack3",
+              "timeSeconds": 0.433333367,
+              "weight": 0.111111157,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.266666681,
+              "weight": 0.8888889,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 14,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.3,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 15,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.333333343,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 16,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.366666675,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 17,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.400000036,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 18,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.433333367,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 19,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.4666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 20,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.5,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 21,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.533333361,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 22,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.5666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 23,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.6,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 24,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.6333334,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 25,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.6666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 26,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.700000048,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 27,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.733333349,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 28,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.7666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 29,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.8000001,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 30,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.8333334,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 31,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.866666734,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "coverClip": "player_left_coverBack3",
+      "frames": [
+        {
+          "offset": 1,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.0333333351,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 2,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.06666667,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 3,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.100000009,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 4,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.13333334,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 5,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.166666672,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 6,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.200000018,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            }
+          ]
+        },
+        {
+          "offset": 7,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.233333349,
+              "weight": 1.0,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.0,
+              "weight": 0.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 8,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.266666681,
+              "weight": 0.8888889,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.0333333351,
+              "weight": 0.111111112,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 9,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.3,
+              "weight": 0.7777778,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.06666667,
+              "weight": 0.222222224,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 10,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.333333343,
+              "weight": 0.6666667,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.100000009,
+              "weight": 0.333333343,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 11,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.366666675,
+              "weight": 0.5555556,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.13333334,
+              "weight": 0.444444448,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 12,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.400000036,
+              "weight": 0.444444478,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.166666672,
+              "weight": 0.5555556,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 13,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.433333367,
+              "weight": 0.333333373,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.200000018,
+              "weight": 0.6666667,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 14,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.4666667,
+              "weight": 0.222222269,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.233333349,
+              "weight": 0.7777778,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 15,
+          "clips": [
+            {
+              "clipName": "player_left_coverBack3",
+              "timeSeconds": 0.5,
+              "weight": 0.111111157,
+              "wrap": "Clamp"
+            },
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.266666681,
+              "weight": 0.8888889,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 16,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.3,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 17,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.333333343,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 18,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.366666675,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 19,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.400000036,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 20,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.433333367,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 21,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.4666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 22,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.5,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 23,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.533333361,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 24,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.5666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 25,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.6,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 26,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.6333334,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 27,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.6666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 28,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.700000048,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 29,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.733333349,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 30,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.7666667,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        },
+        {
+          "offset": 31,
+          "clips": [
+            {
+              "clipName": "idle",
+              "timeSeconds": 0.8000001,
+              "weight": 1.0,
+              "wrap": "Loop"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

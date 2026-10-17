@@ -963,6 +963,7 @@ internal static class CombatContentTests
         CoopInfantryFacingEstimateTests.Run(directory);
         VerifyCoopCornerQueue(directory, content.EnemyPoses,
             content.CoopCornerQueuePoses);
+        CoopCornerReturnAnimationTests.Run(directory, content);
         ArmyDeploymentCatalog army = content.Army;
         CoopAssaulterWeaponCatalog rifle = content.CoopAssaulterWeapon;
         if (rifle.WeaponPrefabGuid !=
@@ -4154,6 +4155,15 @@ internal static class CombatContentTests
                     cornerEnemy.EntityId).Count != 0)
                 throw new Exception("Co-op corner cover return started too early.");
             cornerRuntime.Advance(coverReturnTick);
+            BattleCoopEnemySpawn returnVisual = cornerRuntime.Snapshot().Coop.EnemySpawns
+                .Single(enemy => enemy.EntityId == cornerEnemy.EntityId);
+            if (returnVisual.InfantryAnimation?.Clips[0].ClipName !=
+                    (coverWindup.AnimationClip == "player_look_right3"
+                        ? "player_right_coverBack3" : "player_left_coverBack3") ||
+                returnVisual.InfantryAnimation.Clips[0].TimeSeconds != 0f)
+            {
+                throw new Exception("Confirmed cover return must project its source Play epoch.");
+            }
             if (cornerRuntime.PlaceCornerCoverBackHitboxes(
                     cornerEnemy.EntityId).Count != 3 ||
                 !cornerRuntime.CurrentEnemyCollisionFrame()
@@ -4200,6 +4210,11 @@ internal static class CombatContentTests
             BattleCoopEnemySpawn resumedEnemy = cornerRuntime.Snapshot()
                 .Coop.EnemySpawns.Single(enemy =>
                     enemy.EntityId == cornerEnemy.EntityId);
+            if (resumedEnemy.InfantryAnimation?.Clips.Count != 1 ||
+                resumedEnemy.InfantryAnimation.Clips[0].ClipName != "idle")
+            {
+                throw new Exception("Completed source return must keep its actual idle alias for presentation.");
+            }
             BattleJointRotation resumedFacing =
                 resumedEnemy.CurrentRotation!;
             CoopMuzzlePose expectedResumedMuzzle = content.CoopEnemyMuzzles

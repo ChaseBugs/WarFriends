@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text.Json;
+using War.Protocol;
 
 namespace War.BattleServer;
 
@@ -17,15 +18,17 @@ internal sealed class CoopCornerQueuePoseCatalog
     private readonly Dictionary<string, PlayerHitbox[][]> frames;
     private readonly Dictionary<string, float> idleSecondsAtLastFrame;
     private readonly EnemyPoseCatalog enemyPoses;
+    private readonly CoopCornerReturnAnimationCatalog returnAnimations;
 
     private CoopCornerQueuePoseCatalog(
         Dictionary<string, PlayerHitbox[][]> frames,
         Dictionary<string, float> idleSecondsAtLastFrame,
-        EnemyPoseCatalog enemyPoses)
+        EnemyPoseCatalog enemyPoses, CoopCornerReturnAnimationCatalog returnAnimations)
     {
         this.frames = frames;
         this.idleSecondsAtLastFrame = idleSecondsAtLastFrame;
         this.enemyPoses = enemyPoses;
+        this.returnAnimations = returnAnimations;
     }
 
     internal static CoopCornerQueuePoseCatalog Load(string path,
@@ -137,7 +140,9 @@ internal sealed class CoopCornerQueuePoseCatalog
                 idleTimes.Add(coverClip, idleSeconds);
             }
             return new CoopCornerQueuePoseCatalog(accepted, idleTimes,
-                enemyPoses);
+                enemyPoses, CoopCornerReturnAnimationCatalog.Load(
+                    Path.Combine(Path.GetDirectoryName(path)!, "coop-corner-return-animation-reference.json"),
+                    enemyPoses.SourceSha256));
         }
         catch (Exception error) when (error is JsonException or
             KeyNotFoundException or FormatException or IndexOutOfRangeException)
@@ -187,6 +192,11 @@ internal sealed class CoopCornerQueuePoseCatalog
             return null;
         return idleSecondsAtLastFrame[coverClip] +
             (tick - 30) / (float)MatchManifest.TickRate;
+    }
+
+    internal BattleInfantryAnimationFrame AnimationFrame(string coverClip, ulong offset, ulong sampleTick)
+    {
+        return returnAnimations.Sample(coverClip, offset, sampleTick);
     }
 
     private static float ReadIdleWeight(JsonElement sample)

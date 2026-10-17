@@ -195,5 +195,7 @@ The original-name positive control now uses the actual
 [runtime infantry sampler](INFANTRY_ANIMATION_SAMPLER.md), which is connected
 to the existing presenter. The subsequent
 [confirmed-frame increment](COOP_ANIMATION_FRAMES.md) adds protobuf/SDK views
-and the fixed-root corner-fire connection. Preparation, return, interruption,
+and the fixed-root corner-fire connection. The subsequent
+[return projection](COOP_CORNER_RETURN_FRAMES.md) preserves measured return
+and idle blends. Preparation, interruption,
 current-round boundaries and obstacle fire still need complete host projection.

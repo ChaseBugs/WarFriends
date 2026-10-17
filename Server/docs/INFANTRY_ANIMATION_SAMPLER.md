@@ -25,7 +25,8 @@ The co-op walking presenter now owns one sampler per cached source actor.
 It samples validated host frames and retains the previous confirmed
 root placement, source appearance choice, unknown-state hiding, death removal,
 reset and direct-close cleanup. Legacy walking remains a compatibility path;
-the complete frame also supports the host's fixed-root corner fire window.
+the complete frame also supports the host's fixed-root corner fire and
+[source return/idle window](COOP_CORNER_RETURN_FRAMES.md).
 A failed sampler construction destroys its incomplete actor.
 
 The native whole-rig exporter now uses this exact runtime class for its
@@ -42,7 +43,7 @@ change, actor reuse, hiding and lifecycle cleanup. These are isolated Unity
 2018.3 observations, not normal two-Client gameplay or shipped Unity 5.2 proof.
 
 The runtime class supports only the reviewed base layer, not procedural aiming,
-additive layers or full animation state machines. Complete preparation/return
+additive layers or full animation state machines. Complete preparation/interruption
 projection, missed-snapshot verification, other families and authoritative
 co-op combat remain open. See [confirmed frames](COOP_ANIMATION_FRAMES.md)
 for the current wire contract and partial host selection.

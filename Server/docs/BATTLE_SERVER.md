@@ -164,9 +164,14 @@ Solo campaign can retain the Client's local AI simulation. It uses offline Photo
 
 The latest co-op presentation checkpoint adds protobuf infantry animation
 frames, immutable SDK validation and the actual Unity runtime sampler path.
-Host walking and the fixed-root corner-fire window are represented; source
-transition gaps remain hidden. Windows verification passes 1,136 protocol,
-26,368 focused combat, thirteen native adapter/presentation and 74 live
+Host walking, fixed-root corner fire and measured return/idle blends are
+represented; unsupported source transition gaps remain hidden. Windows
+verification passes 1,136 protocol, 26,368 focused combat plus 154 return
+source/integrity checks, fourteen native adapter/presentation and 74 live
 integration checks plus restart recovery. These checks do not establish
 public co-op admission, authoritative player-hit routing or normal two-Client
 co-op gameplay. See [confirmed animation frames](COOP_ANIMATION_FRAMES.md).
+
+The compact source-method return artifact is mandatory combat content and is
+revision-pinned at startup. See [return frames](COOP_CORNER_RETURN_FRAMES.md)
+for reproducible extraction, deployment and the unchanged collision boundary.

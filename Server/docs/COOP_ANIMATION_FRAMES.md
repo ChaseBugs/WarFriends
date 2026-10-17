@@ -18,7 +18,9 @@ left/right fire clip and samples from queued-fire start or the latest actual
 host round intent. It excludes active paths, navigation rotation conflicts,
 unconfirmed root transforms, unsupported phases and current-round reset ticks. The latter
 occur between source animation evaluations and are not represented yet.
-Cover return and preparation also remain unrepresented by this selector.
+Preparation remains unrepresented by this selector. The subsequent
+[return-frame catalog](COOP_CORNER_RETURN_FRAMES.md) covers source return,
+cover-to-idle blending and continued idle in the guarded corner window.
 
 An unrepresented state emits no frame; the Client hides that rig. Raw spawn
 history remains unchanged. Terminal evidence rejects any live animation frame,
@@ -63,7 +65,7 @@ explicitly and does not prove rendered pixels, normal bootstrap or automatic
 Play Mode lifecycle. Real MongoDB/HTTP/UDP smoke and restart recovery pass;
 those 74 integration checks do not exercise public co-op combat admission.
 
-Preparation/return/interruption projection, current-round transition frames,
+Preparation/interruption projection, current-round transition frames,
 obstacle fire, procedural aiming, other families, missed snapshots and normal
 two-Client co-op remain open. Worker co-op admission and validated player-hit
 routing remain closed. This checkpoint does not open reward or damage gates,

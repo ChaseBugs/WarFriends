@@ -31,7 +31,7 @@ internal sealed partial class CoopMatchRuntime
         }
         else
         {
-            view.InfantryAnimation = ProjectCornerFireVisual(enemy);
+            view.InfantryAnimation = ProjectCornerFireVisual(enemy) ?? ProjectCornerReturnVisual(enemy);
         }
 
         return view;
@@ -61,6 +61,30 @@ internal sealed partial class CoopMatchRuntime
 
         return CreateVisualFrame(windup.QueuedFireClip,
             (tick - fireStartTick) / (float)MatchManifest.TickRate, BattleInfantryAnimationWrap.ClampForever);
+    }
+
+    private BattleInfantryAnimationFrame? ProjectCornerReturnVisual(BattleCoopEnemySpawn enemy)
+    {
+        if (cornerQueuePoses == null || infantryPaths.ContainsKey(enemy.EntityId) ||
+            !infantryShotWindups.TryGetValue(enemy.EntityId, out CoopInfantryShotWindup? windup) ||
+            windup.HasNavigationRotationConflict ||
+            windup.AnimationClip is not ("player_look_right3" or "player_look_left3") ||
+            (windup.NextEligibleTick is ulong nextEligible && tick >= nextEligible))
+        {
+            return null;
+        }
+
+        ulong startTick = CornerCoverBackStartTick(enemy.EntityId, windup);
+        if (tick < startTick ||
+            (PlaceCornerCoverBackHitboxes(enemy.EntityId).Count == 0 &&
+                PlaceCornerQueuedIdleHitboxes(enemy.EntityId).Count == 0))
+        {
+            return null;
+        }
+
+        string coverClip = windup.AnimationClip == "player_look_right3"
+            ? "player_right_coverBack3" : "player_left_coverBack3";
+        return cornerQueuePoses.AnimationFrame(coverClip, tick - startTick, tick);
     }
 
     private BattleInfantryAnimationFrame CreateVisualFrame(string clip, float seconds, BattleInfantryAnimationWrap wrap)

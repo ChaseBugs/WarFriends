@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using Google.Protobuf;
+using Newtonsoft.Json.Linq;
 using War.Protocol;
 
 /// <summary>Checks walking and corner-fire protobuf samples without enabling source enemy simulation.</summary>
@@ -98,6 +99,39 @@ public static class UnityCoopWalkingVisualAudit
         Require(GameObject.Find(actor.name) == actor &&
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, walkingPose[index]) > 0.001f).Any(),
             "A confirmed protobuf fire frame must reuse the actor and replace its walking bone pose.");
+        VerifyReturnBlend(client, actor, skin, fire);
+    }
+
+    private static void VerifyReturnBlend(SelfHostedBattleClient client, GameObject actor,
+        SkinnedMeshRenderer skin, MatchSnapshot previous)
+    {
+        string path = Environment.GetEnvironmentVariable("WAR_CORNER_RETURN_ANIMATION_REFERENCE");
+        if (string.IsNullOrEmpty(path))
+        {
+            throw new InvalidOperationException("Set WAR_CORNER_RETURN_ANIMATION_REFERENCE to the reviewed artifact.");
+        }
+
+        JObject source = JObject.Parse(File.ReadAllText(path));
+        JToken rows = source["scenarios"][0]["frames"][7]["clips"];
+        MatchSnapshot snapshot = previous.Clone();
+        var frame = new BattleInfantryAnimationFrame { SampleTick = snapshot.ServerTick };
+        foreach (JToken row in rows)
+        {
+            frame.Clips.Add(new BattleInfantryAnimationClip
+            {
+                ClipName = row.Value<string>("clipName"),
+                TimeSeconds = row.Value<float>("timeSeconds"),
+                Weight = row.Value<float>("weight"),
+                Wrap = row.Value<string>("wrap") == "Clamp"
+                    ? BattleInfantryAnimationWrap.Clamp : BattleInfantryAnimationWrap.Loop
+            });
+        }
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation = frame;
+        Quaternion[] before = skin.bones.Select(bone => bone.localRotation).ToArray();
+        Publish(client, snapshot);
+        Require(frame.Clips.Count == 2 && GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
+            "A measured cover-to-idle protobuf blend must reuse the actor and update its actual source rig.");
     }
 
     private static void VerifyLifecycle(SelfHostedBattleClient client, SelfHostedCoopInfantryPresenter presenter)

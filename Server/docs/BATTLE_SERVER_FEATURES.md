@@ -1571,3 +1571,13 @@ authority remains unchanged. Windows checks pass 1,136 protocol, 26,368 focused
 combat, thirteen native adapter/presentation and 74 live integration checks.
 Public co-op admission/combat remains closed. See
 [confirmed animation frames](COOP_ANIMATION_FRAMES.md).
+
+B22 now also projects source-method corner return, cover-to-idle blending and
+continued idle from a pinned 62-frame compact artifact. Its extractor checks
+reproducibility against the independent full-rig capture; runtime frames clone
+private templates and preserve the measured idle phase. Source checks pass
+154 comparisons/integrity cases and the existing 26,368 combat assertions;
+the native adapter audit passes fourteen checks including the actual two-clip
+blend. Existing diagnostic collision data is not promoted to authority.
+Preparation/interruption and normal co-op admission/combat remain open. See
+[source return frames](COOP_CORNER_RETURN_FRAMES.md).
