@@ -19,6 +19,7 @@ public sealed class UnityCoopRigReplayProbe
     private readonly Transform[] _replayTransforms;
     private readonly QueueReplayMode _queueMode;
     private bool _clipIdentitiesMatch;
+    private readonly SelfHostedInfantryAnimationSampler _runtimeSampler;
 
     /// <summary>Clones only the already stripped observation rig and disables autonomous animation.</summary>
     public UnityCoopRigReplayProbe(Transform source, QueueReplayMode queueMode = QueueReplayMode.NativeQueue)
@@ -37,7 +38,16 @@ public sealed class UnityCoopRigReplayProbe
         WrapMode wrapMode = copiedAnimation.wrapMode;
         UnityEngine.Object.DestroyImmediate(copiedAnimation);
         // A fresh mixer must not inherit the source's native queue or transition cache through Instantiate.
-        _animation = animationRoot.AddComponent<Animation>();
+        if (queueMode == QueueReplayMode.OrdinaryBaseName)
+        {
+            _runtimeSampler = new SelfHostedInfantryAnimationSampler(animationRoot,
+                source.GetComponentInChildren<Animation>(true));
+            _animation = animationRoot.GetComponent<Animation>();
+        }
+        else
+        {
+            _animation = animationRoot.AddComponent<Animation>();
+        }
         _animation.wrapMode = wrapMode;
         _animation.playAutomatically = false;
         _animation.enabled = false;
@@ -52,6 +62,11 @@ public sealed class UnityCoopRigReplayProbe
     /// <summary>Copies mixer scalars, samples the independent rig and reports local transform errors.</summary>
     public object Compare(Animation source)
     {
+        if (_runtimeSampler != null)
+        {
+            return CompareRuntimeSampler(source);
+        }
+
         var observedStates = new List<AnimationState>();
         var replayStates = new List<AnimationState>();
         _clipIdentitiesMatch = true;
@@ -72,6 +87,30 @@ public sealed class UnityCoopRigReplayProbe
         }
 
         _animation.Sample();
+        return MeasurePose();
+    }
+
+    private object CompareRuntimeSampler(Animation source)
+    {
+        var states = new List<SelfHostedInfantryAnimationState>();
+        _clipIdentitiesMatch = true;
+        foreach (AnimationState state in source)
+        {
+            if (!state.enabled)
+            {
+                continue;
+            }
+            if (state.layer != 0 || state.blendMode != AnimationBlendMode.Blend)
+            {
+                throw new InvalidOperationException("The reviewed runtime sampler supports base-layer blending only.");
+            }
+
+            states.Add(new SelfHostedInfantryAnimationState(state.clip.name, state.time, state.weight, state.wrapMode));
+            AnimationState replayState = _animation[state.clip.name];
+            _clipIdentitiesMatch &= replayState != null && replayState.clip == state.clip;
+        }
+
+        _runtimeSampler.Sample(states);
         return MeasurePose();
     }
 

@@ -336,6 +336,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
             animation.Stop();
             if (replayProbes != null)
             {
+                SoldierAnimationController.RestoreRecoveredBaseAliases(animation);
                 // Bind the independent hierarchy before prior-pose sampling changes any partial curve defaults.
                 replayProbes[i] = new UnityCoopRigReplayProbe(roots[i]);
                 ordinaryQueueControls[i] = new UnityCoopRigReplayProbe(roots[i],

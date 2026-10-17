@@ -14,6 +14,7 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
     private EnemyController _source;
     private SoldierBehaviourAssaulter _family;
     private AnimationClip _walkingClip;
+    private Animation _sourceAnimation;
     private string _matchId;
     private string _manifestHash;
 
@@ -60,6 +61,7 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
         _source = source;
         _family = family;
         _walkingClip = clip;
+        _sourceAnimation = animation;
         _matchId = client.State.MatchId;
         _manifestHash = client.State.ManifestHash;
         _client = client;
@@ -137,7 +139,7 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
             throw new InvalidOperationException("A source enemy identity cannot change appearance lanes in place.");
         }
 
-        SampleActor(actor.Visual, row);
+        SampleActor(actor, row);
     }
 
     private Actor CreateActor(CoopEnemyViewState row)
@@ -153,16 +155,30 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
         int index = UnityEngine.Random.Range(0, styles.Count);
         SelfHostedInfantryVisual visual = SelfHostedInfantryVisualFactory.Create(_source, styles[index],
             "SelfHostedCoopInfantry_" + row.EntityId);
-        return new Actor(visual, row.Level, row.IsCardUnit);
+        try
+        {
+            var sampler = new SelfHostedInfantryAnimationSampler(visual.AnimationRoot, _sourceAnimation);
+            return new Actor(visual, row.Level, row.IsCardUnit, sampler);
+        }
+        catch
+        {
+            DestroyRoot(visual.Root);
+            throw;
+        }
     }
 
-    private void SampleActor(SelfHostedInfantryVisual visual, CoopEnemyViewState row)
+    private void SampleActor(Actor actor, CoopEnemyViewState row)
     {
+        SelfHostedInfantryVisual visual = actor.Visual;
         BattleJointRotation rotation = row.Rotation;
         visual.Root.transform.position = new Vector3(row.X, row.Y, row.Z);
         visual.Root.transform.rotation = new Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W);
         float seconds = (float)((row.InfantryVisualSampleTick - row.InfantryVisualStartTick) / HostTicksPerSecond);
-        _walkingClip.SampleAnimation(visual.AnimationRoot, Mathf.Repeat(seconds, _walkingClip.length));
+        actor.Sampler.Sample(new[]
+        {
+            new SelfHostedInfantryAnimationState(WalkingClip, Mathf.Repeat(seconds, _walkingClip.length),
+                1f, WrapMode.ClampForever)
+        });
         visual.Root.SetActive(true);
     }
 
@@ -235,12 +251,15 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
         internal SelfHostedInfantryVisual Visual { get; private set; }
         internal int Level { get; private set; }
         internal bool IsCardUnit { get; private set; }
+        internal SelfHostedInfantryAnimationSampler Sampler { get; private set; }
 
-        internal Actor(SelfHostedInfantryVisual visual, int level, bool isCardUnit)
+        internal Actor(SelfHostedInfantryVisual visual, int level, bool isCardUnit,
+            SelfHostedInfantryAnimationSampler sampler)
         {
             Visual = visual;
             Level = level;
             IsCardUnit = isCardUnit;
+            Sampler = sampler;
         }
     }
 }

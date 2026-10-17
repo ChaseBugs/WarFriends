@@ -40,8 +40,9 @@ pose. Death retires the walking rig. Disable/reset unsubscribes and destroys
 owned roots; re-enable replays the current view. The adapter's new `MatchClosed`
 notification clears roots after connection/view cleanup, including direct close.
 
-The actor contains only visual transforms/renderers: no source MonoBehaviours,
-colliders, rigid bodies or autonomous animation controller. It cannot produce
+The actor contains visual transforms/renderers and a disabled built-in
+Animation sampler: no source MonoBehaviours, colliders, rigid bodies or
+autonomous animation controller. It cannot produce
 projectile damage, kill credit or economy changes.
 
 ## Verification and remaining work

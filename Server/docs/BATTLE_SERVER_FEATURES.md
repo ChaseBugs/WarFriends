@@ -1553,3 +1553,11 @@ cover 393 frames with unchanged strict tolerances, a positive original-name
 control and a negative alias control. Stable source clip identities must be
 preserved in the future network representation. SDK mixer projection, runtime
 firing integration, skipped snapshots and live combat remain open.
+
+B22 now has an active reusable base-layer sampler with immutable local frame
+states, complete frame validation before mixer mutation and preserved source
+clip bindings. The walking presenter uses one disabled mixer per cached actor.
+The strict native positive control now invokes this exact runtime class for
+393 source frames; 31 input/pose-preservation checks and twelve walking actor
+checks pass. This does not add a protobuf mixer DTO or firing fallback. See
+[runtime sampler](INFANTRY_ANIMATION_SAMPLER.md) for the verified boundary.
