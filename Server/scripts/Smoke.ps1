@@ -60,6 +60,8 @@ try {
     if($LASTEXITCODE -ne 0) { throw 'MongoDB replica-set initiation failed' }
     & dotnet $testDll --queue-attempts-only $env:Mongo__Uri
     if($LASTEXITCODE -ne 0) { throw 'Scoped queue attempt checks failed' }
+    & dotnet $testDll --queue-cancellation-recovery-only $env:Mongo__Uri
+    if($LASTEXITCODE -ne 0) { throw 'Cancellation recovery claim checks failed' }
     foreach($project in @('War.Backend','War.BattleServer')) {
         $dll=Join-Path $serverRoot "src/$project/bin/Debug/net10.0/$project.dll"
         $processes+=Start-Process dotnet -ArgumentList ('"'+$dll+'"') -WorkingDirectory (Join-Path $serverRoot "src/$project") -RedirectStandardOutput (Join-Path $runRoot "$project.log") -RedirectStandardError (Join-Path $runRoot "$project.error.log") -PassThru -WindowStyle Hidden

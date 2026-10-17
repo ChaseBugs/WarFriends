@@ -128,3 +128,12 @@ Server/tests/War.Battle.Tests/BattleQueueOwnershipSnapshot.cs text eol=lf
 Server/src/War.Backend/BattleCancellationPreparation.cs text eol=lf
 Server/src/War.Infrastructure/BattleMatchNotRegisteredException.cs text eol=lf
 Server/tests/War.Battle.Tests/UnpreparedPairCancellationChecks.cs text eol=lf
+
+Server/src/War.Persistence/BattlePairCancellationRequest.cs text eol=lf
+Server/src/War.Persistence/BattleMatchQueueStore.CancellationRecovery.cs text eol=lf
+Server/src/War.Backend/BattleCancellationRecoveryService.cs text eol=lf
+Server/tests/War.Battle.Tests/QueueCancellationRecoveryStoreTests.cs text eol=lf
+Server/tests/War.Battle.Tests/UnattendedCancellationChecks.cs text eol=lf
+Server/docs/UNATTENDED_CANCELLATION_RECOVERY.md text eol=lf
+
+Server/scripts/smoke.sh text eol=lf

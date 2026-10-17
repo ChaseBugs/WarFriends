@@ -24,6 +24,7 @@ builder.Services.AddSingleton(new BattleResultStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleResultArchivalLeaseStore(mongoUri, mongoDatabase));
 builder.Services.AddHostedService<BattleResultArchivalService>();
 builder.Services.AddSingleton<BattleTerminalAcceptance>();
+builder.Services.AddHostedService<BattleCancellationRecoveryService>();
 builder.Services.AddSingleton(new LegacyPlayerStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<BattlePlayerPresentationSource>();
 builder.Services.AddSingleton(new LegacyBufferStore(mongoUri, mongoDatabase));

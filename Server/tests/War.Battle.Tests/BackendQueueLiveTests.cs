@@ -120,21 +120,6 @@ internal static class BackendQueueLiveTests
                (await new BattleGrantStore(mongoUri,database).GetForPlayer(frozenPair.MatchId,ids[0],
                    DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token))!=null)
                 throw new Exception("Deferred provisioning did not retain one frozen, ungranted pair.");
-            try
-            {
-                await left.CancelMatchQueueAsync(tokens[0], deadline.Token);
-                throw new Exception("Unavailable Worker acknowledged paired cancellation.");
-            }
-            catch (HttpRequestException failure) when (failure.Message.Contains("Backend status 503", StringComparison.Ordinal))
-            {
-                // Retry must retain the frozen pair until authentic Worker evidence exists.
-            }
-
-            if ((await new BattleMatchQueueStore(mongoUri, database).Existing(ids[0], deadline.Token))?.MatchId != frozenPair.MatchId)
-            {
-                throw new Exception("Deferred cancellation released the durable pair without terminal proof.");
-            }
-
             worker=Start(workerDll,run,"Worker",workerEnvironment);
             await Ready($"http://127.0.0.1:{controlPort}/health/ready",worker);
             using var controlHttp=new HttpClient();
@@ -369,6 +354,21 @@ internal static class BackendQueueLiveTests
             await UnpreparedPairCancellationChecks.RunAsync(scopedScenario, ids, attemptIssuer,
                 new UnpreparedPairCancellationChecks.Stores(
                     queue, new BattleManifestSnapshotStore(mongoUri, database), results, grantStore));
+            using var recoveryDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+            var unattended = new UnattendedCancellationChecks(
+                queue, results, new BattleManifestSnapshotStore(mongoUri, database), recoveryDeadline.Token);
+            await unattended.PrepareAsync(mongo.GetDatabase(database), ids, attemptIssuer);
+            Stop(worker);
+            worker = null;
+            Stop(backend);
+            backend = null;
+            await unattended.CommitWhileBackendStoppedAsync();
+            backend = Start(backendDll, run, "UnattendedCancellationRestart", backendEnvironment);
+            await Ready(backendUrl + "health/ready", backend);
+            await unattended.VerifyDeferredAsync();
+            worker = Start(workerDll, run, "WorkerOutageRecovery", workerEnvironment);
+            await Ready($"http://127.0.0.1:{controlPort}/health/ready", worker);
+            await unattended.VerifyRecoveredAsync();
             Console.WriteLine("PASS: deferred pair, stable grants, terminal revocation, Worker crash recovery and rematch");
         }
         finally

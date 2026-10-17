@@ -8,12 +8,18 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Unattended cancellation recovery](UNATTENDED_CANCELLATION_RECOVERY.md) now keeps
+intent on the exact durable pair independently of expiring attempt receipts.
+Backend uses bounded, validated Mongo claims and the same authoritative Worker
+cancellation path; a client is no longer required to keep retrying after a
+committed intent. Claims cannot release pairs or award outcomes on their own.
+
 [Interrupted cancellation preparation](PAIRED_CANCELLATION_CONTROL.md) now recovers
 pairs whose manifest or Worker registration was never completed. It freezes
 source-backed settings, registers only on an exact unknown-match refusal, and
 accepts real Worker terminal proof before release without publishing player
 grants. Native cases reproduce the prior 503 and verify both interruption points.
-Unattended intent recovery and in-flight admission/cancellation races remain open.
+In-flight admission/cancellation schedules and full gameplay proof remain open.
 
 [Queue attempt credentials](QUEUE_ATTEMPT_FENCING.md) now provide authenticated,
 stateless protobuf issuance with player-bound, purpose-separated signed tokens.

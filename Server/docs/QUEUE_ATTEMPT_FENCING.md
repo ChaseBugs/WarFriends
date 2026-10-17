@@ -107,10 +107,10 @@ match/roster tuple to cancellation; it never interprets it as a new match.
 
 - Exercise the full two-Unity-client gameplay path, including Android and Linux
   runtime coverage, and crashes while requests/registration are still in flight.
-- Complete unattended cancellation-intent recovery when every client abandons
-  its request, and exercise actual in-flight registration/cancellation races.
-  Missing settings/registration now recover through the cancellation coordinator;
-  unavailable Worker transport or invalid source authority still requires retry.
+- Exercise additional actual in-flight registration/cancellation schedules.
+  Missing settings/registration recover through the cancellation coordinator;
+  committed intent is now retried by Backend without a live client. Invalid
+  source authority remains fail-closed and needs operator repair.
 
 These boundaries keep B31/B36 and the overall BattleServer objective partial.
 
@@ -206,5 +206,7 @@ also covers scoped pairs before snapshot publication or Worker registration.
 The coordinator freezes source-backed settings if absent, recognizes only the
 exact `unknown-match` conflict for one registration attempt, then accepts actual
 Worker cancellation proof before release. Native cases verify no grant publication
-and no mutation of already frozen settings. Unattended recovery and in-flight
-scheduling remain separate from that verified request-driven recovery.
+and no mutation of already frozen settings. The
+[unattended recovery service](UNATTENDED_CANCELLATION_RECOVERY.md) subsequently
+adds durable pair intent, bounded claims and recovery without a live client.
+Additional in-flight scheduling proof remains separate.

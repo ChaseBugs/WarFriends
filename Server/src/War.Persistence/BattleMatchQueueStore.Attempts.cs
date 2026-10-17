@@ -180,6 +180,7 @@ public sealed partial class BattleMatchQueueStore
                     await SaveAttemptAsync(receipt, transaction);
                 }
 
+                await RecordPairCancellationAsync(pair, attempt.PlayerId, attempt.AttemptId, transaction);
                 return Result("already-paired", pair);
             }
         }

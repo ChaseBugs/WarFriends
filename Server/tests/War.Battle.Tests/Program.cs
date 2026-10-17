@@ -73,6 +73,12 @@ if (args is ["--queue-attempts-only", var attemptMongoUri])
     return;
 }
 
+if (args is ["--queue-cancellation-recovery-only", var queueCancellationMongoUri])
+{
+    await QueueCancellationRecoveryStoreTests.RunAsync(queueCancellationMongoUri);
+    return;
+}
+
 if(args is ["--queue-live",var queueMongoUri])
 {await BackendQueueLiveTests.Run(queueMongoUri);return;}
 

@@ -82,8 +82,9 @@ Cancellation can now recover a missing frozen manifest or an interrupted Worker
 registration using the same source-backed factory and atomic snapshot identity.
 Scoped attempts prevent an old cancellation from selecting a replacement pair;
 normal Unity uses these scoped SDK calls. Full recovered UI entry, requests
-crashing while in flight, normal admission/cancellation races and recovery with
-no remaining client retry are still separate proof/work boundaries. B31/B36 and
+crashing while in flight, normal admission/cancellation races remain separate proof/work boundaries. Durable
+[unattended recovery](UNATTENDED_CANCELLATION_RECOVERY.md) now handles committed
+intents without another client retry. B31/B36 and
 the complete BattleServer objective remain partial.
 
 ## Atomic allocator decision
@@ -150,6 +151,7 @@ classification; the protocol total is 1,322.
 
 These tests model interruption by publishing only the durable prefix of normal
 allocation. They do not claim an arbitrary process kill at every instruction,
-registration/cancellation scheduling under all load, or a background completion
-guarantee when every client abandons its pending cancellation. Those remain
-explicit B31/B36 follow-up work, alongside complete Unity/Android/Linux gameplay.
+registration/cancellation scheduling under all load. A subsequent
+[unattended recovery checkpoint](UNATTENDED_CANCELLATION_RECOVERY.md) now retains
+committed pair intent and retries it after process or transport failure. Broad
+B31/B36 completion and complete Unity/Android/Linux gameplay remain open.

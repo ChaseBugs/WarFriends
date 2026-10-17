@@ -20,6 +20,7 @@ public sealed class BattlePairDocument
     public string CompatibilityKey {get;set;}="";
     public string[] Players {get;set;}=[];
     public string[] AttemptIds {get;set;}=[];
+    public BattlePairCancellationRequest? Cancellation {get;set;}
     public DateTime CreatedUtc {get;set;}
 }
 public sealed record BattlePairingResult(string Code,string? MatchId,IReadOnlyList<string>? Players);
@@ -51,6 +52,7 @@ public sealed partial class BattleMatchQueueStore
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.CompatibilityKey).Ascending(x=>x.JoinedUtc).Ascending(x=>x.PlayerId)),
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.ExpiresUtc),new CreateIndexOptions{ExpireAfter=TimeSpan.Zero})],ct);
         await InitializeAttemptIndexesAsync(ct);
+        await InitializeCancellationIndexAsync(ct);
         await pairs.Indexes.CreateManyAsync([
             new CreateIndexModel<BattlePairDocument>(Builders<BattlePairDocument>.IndexKeys.Ascending(x=>x.MatchId),new CreateIndexOptions{Unique=true}),
             new CreateIndexModel<BattlePairDocument>(Builders<BattlePairDocument>.IndexKeys.Ascending(x=>x.Players),new CreateIndexOptions{Unique=true})],ct);
@@ -182,9 +184,14 @@ public sealed partial class BattleMatchQueueStore
             {
                 // A later account lookup could select a replacement match after settlement.
                 _ = Result("paired", pair);
-                return pair.AttemptIds.Length == 0
-                    ? Result("already-paired", pair)
-                    : new BattlePairingResult("attempt-conflict", null, null);
+                if (pair.AttemptIds.Length != 0)
+                {
+                    return new BattlePairingResult("attempt-conflict", null, null);
+                }
+
+                await RecordPairCancellationAsync(pair, playerId, "",
+                    new AttemptTransaction(transaction, now, token));
+                return Result("already-paired", pair);
             }
 
             var ticket = await tickets.Find(transaction, row => row.PlayerId == playerId)
@@ -241,6 +248,7 @@ public sealed partial class BattleMatchQueueStore
             !ValidKey(pair.CompatibilityKey) || !System.Text.RegularExpressions.Regex.IsMatch(pair.MatchId??"",@"\Am[0-9a-f]{32}\z") ||
             pair.CreatedUtc.Kind!=DateTimeKind.Utc || pair.CreatedUtc<DateTime.UnixEpoch)
             throw new InvalidDataException("Invalid durable battle pairing.");
+        ValidatePairCancellation(pair);
         return new(code,pair.MatchId,Array.AsReadOnly(pair.Players.ToArray()));
     }
     private static void ValidateTicket(BattleQueueTicketDocument ticket)
