@@ -1648,3 +1648,9 @@ and prior corner fixture initialization as sufficient causes. Source manual
 Sample agrees with the runtime sampler while automatic poses still differ;
 this is evidence for the remaining evaluation-boundary investigation, not a
 passed parity or admission gate. See [interruption controls](COOP_OBSTACLE_INTERRUPTION.md).
+
+The [observed-pose candidate](COOP_OBSTACLE_POSE_OVERRIDES.md) preserves all
+twelve calibration poses on fresh hierarchies using source position/scale
+rows. Identical current mixer states can represent different prior histories,
+so host state retention and a complete phase catalog remain required. This
+is not implemented interruption transport or a passed clip-only parity gate.

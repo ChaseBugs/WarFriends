@@ -119,3 +119,9 @@ Native runs use the original source prefab hash. For the clean exporter set
 `WAR_OBSTACLE_CLEAN_MANUAL_SAMPLE` unset for the thirteen-frame baseline; set
 it to `1` with `WAR_OBSTACLE_CLEAN_MANUAL_FINAL_TICK=1` or `2` for the two
 terminal source Sample controls. No normal controller lifecycle or AI executes.
+
+The [observed-pose candidate](COOP_OBSTACLE_POSE_OVERRIDES.md) preserves all
+twelve calibration poses on fresh hierarchies using source position/scale
+rows. Identical current mixer states can represent different prior histories,
+so host state retention and a complete phase catalog remain required. This
+is not implemented interruption transport or a passed clip-only parity gate.
