@@ -12,6 +12,9 @@ The [portable observed-pose catalog](COOP_PORTABLE_POSE_CATALOG.md) now shares
 221 source-bound samples between the server and installed Unity SDK. B32 remains
 partial: normal animation views reject references until hierarchy binding,
 renderer capability negotiation and host publication are implemented and verified.
+The local production renderer now reconstructs the captured body/rifle poses;
+its independent source comparison and remaining integration boundary are recorded
+in the same checkpoint. This does not close B32 or public co-op admission.
 
 Live player snapshots publish server-owned PvP score and kill-streak progress.
 Terminal snapshots also publish the complete ordered skill-shot breakdown,

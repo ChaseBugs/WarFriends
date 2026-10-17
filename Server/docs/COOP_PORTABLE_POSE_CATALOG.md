@@ -68,3 +68,27 @@ asset audits report zero missing scripts, zero broken references and the same
 This establishes a supported binding candidate, not pose correction parity.
 The normal presenter still needs source-backed inventory selection before using
 this overload, and other weapons/styles require their own compatibility checks.
+
+## Local renderer checkpoint
+
+`SelfHostedObservedInfantryPoseRenderer` binds the exact catalog topology before
+adding a disabled mixer. It retains every non-root source transform's initial
+position, rotation and scale. Each sample resolves its revision/ID through the
+pinned local catalog, checks that the bound hierarchy has not changed, restores
+that initial basis, samples the original clips and applies the source-observed
+position/scale corrections. Root placement stays host-owned. Restoring the basis
+prevents partial-weight animation and previous corrections from accumulating
+across reordered or repeated samples.
+
+The native audit compares one reused production factory actor against the
+independent automatic source capture in forward order, reverse order and replay:
+663 applications spanning all 221 observations. It checks all non-root local
+positions, rotations and scales, using position tolerance 1e-5, quaternion-dot
+error 1e-6 and per-axis relative scale tolerance 1e-5. Invalid references and a
+renamed bound transform must leave both mixer and transform state unchanged.
+
+This is a local rendering component, not negotiated wire support. The normal SDK
+frame path still rejects observed references, the presenter does not invoke this
+renderer, and the host publishes none. Capability negotiation, source inventory
+selection, other appearances, repeated source interruption histories and normal
+gameplay proof remain necessary. No rendered-pixel or Android claim is made.
