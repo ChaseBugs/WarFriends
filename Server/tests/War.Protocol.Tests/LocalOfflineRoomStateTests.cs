@@ -8,8 +8,27 @@ internal static class LocalOfflineRoomStateTests
         int checks = VerifyLifecycle();
         checks += VerifyCallbackCancellation();
         checks += VerifyDetachedObservation();
+        checks += VerifyJoinedObservation();
         Console.WriteLine("PASS: " + checks + " local solo callback-visible identity checks");
         return checks;
+    }
+
+    private static int VerifyJoinedObservation()
+    {
+        var room = new LocalOfflineRoom();
+        var observed = new List<RoomView>();
+        room.Callback += callback => observed.Add(Capture(callback, room));
+
+        room.ObserveJoinedOfflineRoom();
+        room.ObserveJoinedOfflineRoom();
+
+        Require(room.IsOffline && room.IsInRoom && room.PlayerId == 1 &&
+            room.MasterPlayerId == 1 && room.PlayerCount == 1 && observed.Count == 0,
+            "Observed room adoption must publish membership without duplicating external callbacks.");
+        room.LeaveRoom();
+        Require(observed.SequenceEqual(new[] { Detached(LocalRoomCallback.LeftRoom, 1) }),
+            "An observed room must retain the recovered local identity when it is left.");
+        return 2;
     }
 
     private static int VerifyLifecycle()

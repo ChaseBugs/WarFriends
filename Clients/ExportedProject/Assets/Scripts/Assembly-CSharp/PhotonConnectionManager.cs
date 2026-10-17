@@ -268,6 +268,36 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		}
 		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
 		Singleton<PhotonConnectionManager>.instance.isClient = false;
+        NetworkingPeer.BeforeLocalRoomCallback += ObserveLocalRoomBeforeCallback;
+        try
+        {
+            JoinLegacyLocalRoom();
+        }
+        finally
+        {
+            NetworkingPeer.BeforeLocalRoomCallback -= ObserveLocalRoomBeforeCallback;
+        }
+	}
+
+    private static void ObserveLocalRoomBeforeCallback(PhotonNetworkingMessage callback)
+    {
+        if (!PhotonNetwork.offlineMode)
+        {
+            mLocalOfflineRoom.Disconnect();
+            return;
+        }
+
+        if (PhotonNetwork.room == null)
+        {
+            mLocalOfflineRoom.ObserveDetachedOfflinePlayer(PhotonNetwork.player.ID);
+            return;
+        }
+
+        mLocalOfflineRoom.ObserveJoinedOfflineRoom();
+    }
+
+    private static void JoinLegacyLocalRoom()
+    {
 		bool offlineModeWasAlreadyEnabled = PhotonNetwork.offlineMode;
 		PhotonNetwork.offlineMode = true;
 		if (!PhotonNetwork.offlineMode)
@@ -275,8 +305,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		if (offlineModeWasAlreadyEnabled)
 			mLocalOfflineRoom.ObserveExistingOfflineMode();
 		PhotonNetwork.LeaveRoom();
-		// EnterOfflineRoom sends OnJoinedRoom synchronously, before CreateRoom
-		// returns and before the portable room model records the completed join.
+        // The observer publishes state before each synchronous recovered SDK callback.
 		mCreatingLocalSoloRoom = true;
 		try
 		{
@@ -299,7 +328,8 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
             return;
         }
 
-		mLocalOfflineRoom.JoinSoloRoom();
+        // The observer already published the room before CreatedRoom/JoinedRoom.
+        mLocalOfflineRoom.ObserveJoinedOfflineRoom();
 	}
 
 	public static void Disconnect()

@@ -42,20 +42,19 @@ remain open.
 
 ## Verification
 
-### Open: actual callback-time membership
+### Transitional callback-time membership
 
-`UnityLocalOfflineRoomAudit.RunManagerVisibility` is an intentionally failing
-diagnostic for an unresolved production mismatch, not part of the passing
-reference suite. It samples the actual manager's membership/count inside the
-SDK CreatedRoom callback, then still performs the requested cancellation before
+`UnityLocalOfflineRoomAudit.RunManagerVisibility` began as a failing diagnostic
+for a production mismatch. It now samples the actual manager's membership/count
+inside each SDK callback, then still performs the requested cancellation before
 asserting the sample after the command returns. This avoids turning an assertion
 exception into a different callback-cancellation scenario.
 
-The manager currently mirrors its room only after SDK CreateRoom returns.
-Consequently CreatedRoom observes SDK membership/count one while the manager
-reports no membership/count zero. The temporary IsLocalSoloRoom creation flag
-protects the online controller's two-player branch but does not repair those
-reads. A successful post-return mirror comparison cannot prove callback-time
+The previous manager mirrored its room only after SDK CreateRoom returned.
+Consequently CreatedRoom observed SDK membership/count one while the manager
+reported no membership/count zero. The temporary IsLocalSoloRoom creation flag
+protected the online controller's two-player branch but did not repair those
+reads. A successful post-return mirror comparison could not prove callback-time
 visibility. The first diagnostic log is
 `Server/.local/unity-solo-manager-visibility-baseline.log`; its callback exception
 also interrupted cancellation, so use the isolated diagnostic for the clean
@@ -64,12 +63,34 @@ new post-return bug.
 The isolated run in `Server/.local/unity-solo-manager-visibility-isolated.log`
 fails only the sampled callback membership assertion after cancellation returns.
 
-The replacement lifecycle must publish local state before callback dispatch,
-allow cancellation to change the state seen by subsequent callbacks, and retain
-the recovered final JoinedRoom notification after CreatedRoom cancellation.
-Reading the retired SDK room from the new public getters would hide this mismatch
-without completing the required Photon-free lifecycle. Normal scene dispatch,
-reentrant joins and listener failures remain separate acceptance requirements.
+NetworkingPeer now provides a transitional BeforeLocalRoomCallback notification
+before receiver discovery/delivery. JoinOfflineGame subscribes only while its
+legacy local command runs and unsubscribes in finally, including rejected joins.
+The observer silently adopts existing detached/joined identity before receivers
+run, and resets the model on disconnect. Nested disconnect/leave callbacks update
+the model before subsequent receivers and the final JoinedRoom notification.
+The command does not synthesize another model join/callback sequence afterward.
+
+Public getters still read only the model; this deliberately does not restore an
+SDK fallback there. The observer itself still reads the legacy local SDK state,
+so this is a migration seam, not a Photon-free lifecycle. Notifications outside
+the scoped command, normal scene dispatch, reentrant joins and listener failures
+remain separate acceptance requirements. Ownership/RPC/serialization still need
+their own migration before removing the retained SDK.
+
+The corrected focused visibility gate passes in
+`Server/.local/unity-solo-manager-visibility-fixed.log`. Callback-time checks are
+now unconditional in the actual-manager cases of the normal reference suite;
+the complete comparison also passes in
+`Server/.local/unity-solo-manager-visibility-complete.log`. The portable suite
+adds silent repeated room adoption and subsequent leave-identity checks. All
+seven installed/native SDK hashes agree with the manifest, and the complete
+Release solution builds with zero warnings/errors. Static reference checks still
+find zero missing scripts or broken references.
+The existing combined Chat/region/session/loading/retry/modal regression also
+passes in `Server/.local/unity-solo-visibility-ui-regression.log`, with no
+unexpected runtime errors. This remains a controlled component fixture rather
+than a complete campaign/menu test.
 
 The native manager fixture also delivers the actual OnConnectedToMaster method
 from the reference SDK's synchronous local-mode callback. Its baseline in
@@ -83,7 +104,7 @@ The complete native SDK/model/manager comparison passes with this delivery in
 `Server/.local/unity-solo-manager-connected-final.log`; the runtime error gate
 still permits only the single deliberate CreateRoom refusal described below.
 
-The portable suite passes 1,358 checks, including twelve local lifecycle cases.
+The portable suite passes 1,360 checks, including fourteen local lifecycle cases.
 The extended native SDK/model/manager comparison passes in
 `Server/.local/unity-local-callback-cancellation-errors-final.log`. Its runtime
 error gate requires exactly the known CreateRoom refusal caused by disconnect

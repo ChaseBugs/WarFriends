@@ -1922,8 +1922,16 @@ public class NetworkingPeer : LoadBalancingPeer, IPhotonPeerListener
 		OpRaiseEvent(211, list.ToArray(), sendReliable: true, null);
 	}
 
+    // The transitional local adapter publishes state before any recovered receiver runs.
+    public static event Action<PhotonNetworkingMessage> BeforeLocalRoomCallback;
+
 	public static void SendMonoMessage(PhotonNetworkingMessage methodString, params object[] parameters)
 	{
+        if (PhotonNetwork.offlineMode || methodString == PhotonNetworkingMessage.OnDisconnectedFromPhoton)
+        {
+            BeforeLocalRoomCallback?.Invoke(methodString);
+        }
+
 		HashSet<GameObject> hashSet = ((PhotonNetwork.SendMonoMessageTargets == null) ? PhotonNetwork.FindGameObjectsWithComponent(PhotonNetwork.SendMonoMessageTargetType) : PhotonNetwork.SendMonoMessageTargets);
 		string methodName = methodString.ToString();
 		object value = ((parameters == null || parameters.Length != 1) ? parameters : parameters[0]);

@@ -8,13 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
-The explicit actual-manager callback-time diagnostic is now red: inside
-CreatedRoom the SDK has one member while the manager reports no room/zero players.
-The mirror updates only after SDK callbacks finish. Passing post-return tests
-do not close this boundary. `UnityLocalOfflineRoomAudit.RunManagerVisibility`
-captures this without interrupting callback cancellation; the replacement local
-lifecycle must publish state before dispatch rather than restore retired SDK
-fallback in public getters. See [the open visibility requirement](LOCAL_SOLO_CALLBACK_CANCELLATION.md#open-actual-callback-time-membership).
+The actual-manager callback-time diagnostic reproduced CreatedRoom reporting an
+SDK member but no model room/zero players. A scoped pre-dispatch observer now
+publishes local state before recovered callbacks, including nested cancellation,
+and silently adopts final membership rather than replaying another model join.
+Public getters still have no SDK fallback. This is a transitional legacy bridge,
+not Photon-free solo creation; out-of-command callbacks and normal scene dispatch
+remain open. See [the visibility boundary](LOCAL_SOLO_CALLBACK_CANCELLATION.md#transitional-callback-time-membership).
 
 The actual Disconnect command now uses the canonical retained self-hosted owner
 before scene discovery, matching the session-read boundary even while its object

@@ -49,6 +49,14 @@ namespace War.Client
             _localPlayerId = localPlayerId;
         }
 
+        /// <summary>Adopts an existing local room before its external callbacks run, without replaying them.</summary>
+        public void ObserveJoinedOfflineRoom()
+        {
+            IsOffline = true;
+            IsInRoom = true;
+            _localPlayerId = SoloPlayerId;
+        }
+
         public void JoinSoloRoom()
         {
             // PhotonNetwork.offlineMode emits this callback only when it changes

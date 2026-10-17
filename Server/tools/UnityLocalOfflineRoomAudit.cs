@@ -41,10 +41,9 @@ public static class UnityLocalOfflineRoomAudit
         Run();
     }
 
-    /// <summary>Diagnoses the still-open callback-time visibility boundary in the actual manager.</summary>
+    /// <summary>Checks callback-time membership before and after actual manager room cancellation.</summary>
     public static void RunManagerVisibility()
     {
-        SessionState.SetBool(Active + ".CheckVisibility", true);
         RunManagerCancellation();
     }
 
@@ -269,6 +268,10 @@ public static class UnityLocalOfflineRoomAudit
         bool callbackMembershipMatches = true;
         scenario.Probe.AfterCallback = callback =>
         {
+            bool referenceHasRoom = PhotonNetwork.room != null;
+            int referenceCount = referenceHasRoom ? PhotonNetwork.room.playerCount : 0;
+            callbackMembershipMatches &= PhotonConnectionManager.isInRoom == referenceHasRoom &&
+                PhotonConnectionManager.GetPlayerCount() == referenceCount;
             if (callback == nameof(LocalRoomCallback.ConnectedToMaster))
             {
                 // The inactive fixture needs explicit delivery of this actual manager callback.
@@ -277,11 +280,6 @@ public static class UnityLocalOfflineRoomAudit
             }
             if (callback == nameof(LocalRoomCallback.CreatedRoom))
             {
-                if (SessionState.GetBool(Active + ".CheckVisibility", false))
-                {
-                    callbackMembershipMatches = PhotonConnectionManager.isInRoom &&
-                        PhotonConnectionManager.GetPlayerCount() == 1;
-                }
                 cancel();
             }
         };
@@ -311,7 +309,6 @@ public static class UnityLocalOfflineRoomAudit
     {
         SessionState.SetBool(Active, false);
         SessionState.SetBool(Active + ".ManagerOnly", false);
-        SessionState.SetBool(Active + ".CheckVisibility", false);
         EditorApplication.Exit(code);
     }
 

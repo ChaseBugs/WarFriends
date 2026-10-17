@@ -26,8 +26,8 @@ callback.
 
 ## Verification
 
-Twelve portable checks cover lifecycle, callback cancellation and detached
-observation. The protocol executable passes 1,358
+Fourteen portable checks cover lifecycle, callback cancellation and silent
+detached/joined observation. The protocol executable passes 1,360
 checks. The native reference probe independently records SDK state synchronously
 inside each modeled callback kind, then compares every row and
 order with the portable model. It also compares explicit leave and rejoin.
