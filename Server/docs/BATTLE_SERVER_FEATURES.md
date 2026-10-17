@@ -17,6 +17,11 @@ checks fresh match credentials and Mongo pair release, and preserves the first
 accepted result digest. Normal second-battle entry and same-opponent consent
 remain open; this does not reopen a terminal Worker match.
 
+Same-opponent consent now has a separate durable persistence foundation:
+accepted Ended-result participant binding, thirty-second expiry, idempotent
+concurrent votes and irreversible cancellation. It is not yet exposed through
+HTTP/SDK/controllers or connected to fresh allocation; `ready` is intent only.
+
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop
 keep their immediate local callback and use the actual reporter instead of a

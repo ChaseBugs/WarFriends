@@ -85,6 +85,12 @@ if (args is ["--prestart-cancellation-ordering-only"])
     return;
 }
 
+if (args is ["--rematch-consent-only", var rematchMongoUri])
+{
+    await RematchConsentStoreTests.RunAsync(rematchMongoUri);
+    return;
+}
+
 if (args is ["--atomic-terminal-only", var atomicTerminalMongoUri])
 {
     await AtomicTerminalAcceptanceTests.RunAsync(atomicTerminalMongoUri);

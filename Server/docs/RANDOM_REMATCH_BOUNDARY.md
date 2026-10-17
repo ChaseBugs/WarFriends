@@ -51,6 +51,33 @@ digest remains unchanged. The native run passed in
 This uses the explicit authenticated SDK entry point without menu/profile
 stubs. It does not prove Dog Tag settlement, normal lobby-to-second-battle play
 or two Unity clients.
-Same-opponent friend/co-op rematch negotiation remains absent. Its required
+End-to-end same-opponent friend/co-op rematch negotiation remains absent. Its required
 two-party consent, cancellation/expiry and fresh allocator grants must be built
 separately; the old Photon RematchRPC is not an accepted Worker command.
+
+## Same-opponent consent foundation
+
+`BattleRematchConsentStore` records consent separately from terminal results.
+It accepts only the two player identities recovered from an accepted Ended
+snapshot, binds the record to its result digest, and uses MongoDB's unique
+match identity plus revision compare-and-set for concurrent requests.
+One participant produces `waiting`; both produce `ready`. Either participant
+can cancel before allocation. Cancelled and expired records cannot reopen.
+The half-open thirty-second window comes from CheckRematchStates. Duplicate
+requests do not extend it: unlike buffered Photon RPC delivery, a retry is not
+a new consent. Millisecond timestamps match BSON persistence precision.
+
+This store is not exposed as an HTTP endpoint and does not issue grants.
+`ready` means mutual intent only. An allocator must still atomically reserve
+the exact original participants, revalidate their current loadouts and mode,
+fence cancellation against publication, and issue fresh Worker capabilities.
+No wallet or Dog Tag changes are made by consent. Normal controllers and the
+SDK still need typed consent/status/cancel integration; friend, human co-op
+and co-op bot policy must remain distinct. No same-opponent gameplay claim
+follows from the persistence test.
+
+Run the isolated replica-set check with
+`dotnet Server/tests/War.Battle.Tests/bin/Release/net10.0/War.Battle.Tests.dll --rematch-consent-only <mongo-uri>`.
+It checks concurrent first/second consent through independent store instances,
+unchanged duplicate deadlines, outsider rejection, cancellation, the exact
+expiry boundary, damaged-result binding rejection and terminal-result preservation.
