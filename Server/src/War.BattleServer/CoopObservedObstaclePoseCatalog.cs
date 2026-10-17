@@ -19,14 +19,16 @@ internal sealed partial class CoopObservedObstaclePoseCatalog
     private const int SampleCount = PhaseCount * ObservationCount;
     private const int SkeletonCount = 58;
     private readonly Sample[] _samples;
+    private readonly string _enemyRevision;
 
     internal string Revision => ContentRevision;
     internal ReadOnlyCollection<TransformIdentity> Skeleton { get; }
 
-    private CoopObservedObstaclePoseCatalog(List<TransformIdentity> skeleton, Sample[] samples)
+    private CoopObservedObstaclePoseCatalog(List<TransformIdentity> skeleton, Sample[] samples, string enemyRevision)
     {
         Skeleton = skeleton.AsReadOnly();
         _samples = samples;
+        _enemyRevision = enemyRevision;
     }
 
     internal static CoopObservedObstaclePoseCatalog Load(string path, string enemyRevision)
@@ -42,7 +44,7 @@ internal sealed partial class CoopObservedObstaclePoseCatalog
         ValidateHeader(root, enemyRevision);
         List<TransformIdentity> skeleton = ReadSkeleton(root.GetProperty("skeleton"));
         Sample[] samples = ReadSamples(root.GetProperty("samples"));
-        return new CoopObservedObstaclePoseCatalog(skeleton, samples);
+        return new CoopObservedObstaclePoseCatalog(skeleton, samples, enemyRevision);
     }
 
     internal Sample GetSample(int id)

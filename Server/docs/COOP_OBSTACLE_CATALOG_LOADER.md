@@ -39,8 +39,11 @@ compressed content present. Those tests do not open public co-op admission.
 
 This installs the server content reader, not the pose presentation feature.
 The existing origin selector still returns only a nominal internal candidate.
-No protobuf schema, SDK binary, Unity actor or renderer changes here. A future
+This loader checkpoint made no protobuf schema, SDK binary, Unity actor or renderer changes. A future
 host/SDK reference must bind the loaded revision and source history; Unity must
 validate its actual hierarchy and source assets, including weapon attachments,
 before applying a complete override set. Controller callback parity, repeated
 interruptions, supported actor styles and normal gameplay remain unfinished.
+
+The subsequent [portable catalog checkpoint](COOP_PORTABLE_POSE_CATALOG.md)
+adds protobuf content and SDK lookup without enabling host publication or rendering.

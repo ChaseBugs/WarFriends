@@ -918,6 +918,25 @@ if (args is ["--coop-obstacle-clock-only"])
     return;
 }
 
+if (args is ["--export-observed-obstacle-protobuf", var poseCatalogOutputPath])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new FileNotFoundException("Recovered content root is missing.");
+    }
+    string directory = Path.Combine(root.FullName, "content");
+    var content = BattleCombatContent.Load(Path.Combine(directory, "combat-content-manifest.json"));
+    ObservedInfantryPoseCatalog catalog = content.ObservedObstaclePoses.ProtobufSnapshot();
+    File.WriteAllBytes(poseCatalogOutputPath, catalog.ToByteArray());
+    Console.WriteLine($"PASS: exported {catalog.Samples.Count} verified portable pose samples");
+    return;
+}
+
 if (args is ["--observed-obstacle-catalog-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);

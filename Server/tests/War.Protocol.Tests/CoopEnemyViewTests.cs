@@ -17,6 +17,7 @@ internal static class CoopEnemyViewTests
         VerifyWalkingFrames();
         VerifyAnimationFrames();
         VerifyInvalidAnimationFrames();
+        ObservedPoseCatalogTests.Run();
         return _checks;
     }
 
@@ -226,6 +227,16 @@ internal static class CoopEnemyViewTests
     private static void VerifyInvalidAnimationFrames()
     {
         VerifyInvalidAnimation(frame => frame.SampleTick = 19);
+        VerifyInvalidAnimation(frame =>
+        {
+            ObservedInfantryPoseCatalogData catalog = ObservedInfantryPoseCatalogData.BuiltIn;
+            frame.ObservedPose = new BattleInfantryObservedPoseReference
+            {
+                CatalogRevision = catalog.Revision, SampleId = 1
+            };
+            frame.Clips.Clear();
+            frame.Clips.AddRange(catalog.GetSample(frame.ObservedPose).Clips);
+        });
         VerifyInvalidAnimation(frame => frame.Clips.Clear());
         VerifyInvalidAnimation(frame => frame.Clips[0].ClipName = "player_fire_right3 - Queued Clone");
         VerifyInvalidAnimation(frame => frame.Clips[0].TimeSeconds = float.NaN);

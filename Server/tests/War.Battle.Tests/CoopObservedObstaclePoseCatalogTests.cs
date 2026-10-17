@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using System.IO.Compression;
 using System.Numerics;
 using System.Text.Json;
@@ -22,6 +23,9 @@ internal static class CoopObservedObstaclePoseCatalogTests
             Compare(catalog, frame, cases[count]);
             count++;
         }
+        Require(catalog.ProtobufSnapshot().ToByteArray().SequenceEqual(File.ReadAllBytes(Path.Combine(directory,
+            "coop-obstacle-fixed-step-pose-catalog.pb"))),
+            "Portable protobuf must reproduce the independently verified source catalog exactly.");
         VerifyIsolation(catalog);
         VerifyRejection(directory, content.EnemyPoses.SourceSha256, catalog);
         Console.WriteLine($"PASS: {count} immutable observed obstacle catalog samples match native source evidence");

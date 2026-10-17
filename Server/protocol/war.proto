@@ -701,6 +701,29 @@ message BattleInfantryAnimationClip {
 message BattleInfantryAnimationFrame {
   uint64 sample_tick = 1;
   repeated BattleInfantryAnimationClip clips = 2;
+  BattleInfantryObservedPoseReference observed_pose = 3;
+}
+message BattleInfantryObservedPoseReference {
+  string catalog_revision = 1;
+  uint32 sample_id = 2;
+}
+// Local source content, never accepted as client-authored gameplay authority.
+message ObservedInfantryPoseVector { float x = 1; float y = 2; float z = 3; }
+message ObservedInfantryPoseTransform { uint32 index = 1; string path = 2; string name = 3; }
+message ObservedInfantryPoseOverride {
+  uint32 transform_index = 1;
+  ObservedInfantryPoseVector position = 2;
+  ObservedInfantryPoseVector scale = 3;
+}
+message ObservedInfantryPoseSample {
+  uint32 id = 1; uint32 prior_return_ticks = 2; uint32 observation_tick = 3;
+  repeated BattleInfantryAnimationClip clips = 4;
+  repeated ObservedInfantryPoseOverride overrides = 5;
+}
+message ObservedInfantryPoseCatalog {
+  string revision = 1; string prefab_sha256 = 2;
+  repeated ObservedInfantryPoseTransform skeleton = 3;
+  repeated ObservedInfantryPoseSample samples = 4;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

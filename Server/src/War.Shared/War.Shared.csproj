@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <Protobuf Include="../../protocol/war.proto" GrpcServices="None" />
+    <EmbeddedResource Include="../../content/coop-obstacle-fixed-step-pose-catalog.pb"
+                      LogicalName="WarFriends.ObservedObstaclePoseCatalog" />
     <PackageReference Include="Google.Protobuf" Version="3.36.2" />
     <PackageReference Include="Grpc.Tools" Version="2.84.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

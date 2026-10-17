@@ -61,6 +61,11 @@ namespace War.Client
                 throw new InvalidDataException("Infantry animation requires a live, confirmed source pose and clock.");
             }
 
+            if (frame.ObservedPose != null)
+            {
+                // Rendering support and capability negotiation must precede normal publication of these references.
+                throw new InvalidDataException("Observed pose references require an installed renderer capability.");
+            }
             ValidateClips(frame, snapshot);
             ValidateWalkingMirror(frame, enemy);
             return new InfantryAnimationFrameView(frame);
