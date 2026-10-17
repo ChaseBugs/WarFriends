@@ -47,6 +47,13 @@ consent and frozen admission bytes, then recovers the original capabilities.
 Process kill inside an in-flight commit, admission expiry and Unity UI handoff
 remain open.
 
+Allocated rematch cancellation now has a source-bound API and SDK method. Its
+transaction checks the exact reserved match ID and participant order, so stale
+requests cannot select successor matches or delete waiting tickets. Completion
+requires existing Worker prestart proof and terminal acceptance. The native
+gate covers cancellation followed by harmless stale replay in a fresh match;
+Unity cancel-button integration remains open.
+
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop
 keep their immediate local callback and use the actual reporter instead of a

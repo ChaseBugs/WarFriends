@@ -32,6 +32,7 @@ internal static class RematchReservationStoreTests
             await VerifyCancellationRaceAsync(stores, deadline.Token);
             await VerifyBusyAndExpiredAsync(stores, deadline.Token);
             await VerifyExhaustedRevisionAsync(stores, deadline.Token);
+            await VerifyScopedCancellationAsync(stores, deadline.Token);
             Console.WriteLine("PASS: atomic rematch reservation, concurrent replay, cancellation race, busy and expiry");
         }
         finally
@@ -224,6 +225,56 @@ internal static class RematchReservationStoreTests
         Require(await TryReserveAsync(stores.First, fixture.Request, cancellationToken) == null &&
             await stores.Queue.Existing(fixture.Players[0], cancellationToken) == null,
             "Exhausted consent revision must not publish a pair or unusable allocation marker.");
+    }
+
+    private static async Task VerifyScopedCancellationAsync(Stores stores, CancellationToken cancellationToken)
+    {
+        Fixture fixture = await PrepareAsync(stores, cancellationToken);
+        var reservation = await stores.First.ReserveAsync(fixture.Request, cancellationToken);
+        var request = new BattleReservedMatchCancellation(fixture.Players[0], reservation.NextMatchId,
+            reservation.NextPlayers, fixture.Request.ApplicationTime);
+        var captured = await stores.Queue.CancelReservedMatchAsync(request, cancellationToken);
+        Require(captured.Code == "already-paired" && captured.MatchId == reservation.NextMatchId,
+            "Scoped cancellation must capture the exact reserved match.");
+        await stores.Queue.Release(reservation.NextMatchId, captured.Players ?? [], cancellationToken);
+        await stores.Queue.Join(fixture.Players[0], "successor.fixture", DateTimeOffset.UtcNow, cancellationToken);
+        var successor = await stores.Queue.Join(fixture.Players[1], "successor.fixture",
+            DateTimeOffset.UtcNow, cancellationToken);
+        var stale = await stores.Queue.CancelReservedMatchAsync(request with
+        {
+            ApplicationTime = DateTimeOffset.UtcNow,
+        }, cancellationToken);
+        Require(stale.Code == "not-assigned", "Stale cancellation must not select a successor pair.");
+        string outsider = Guid.NewGuid().ToString("N");
+        await stores.Queue.Join(outsider, "waiting.fixture", DateTimeOffset.UtcNow, cancellationToken);
+        await stores.Queue.CancelReservedMatchAsync(new BattleReservedMatchCancellation(outsider,
+            "m" + Guid.NewGuid().ToString("N"), [outsider, Guid.NewGuid().ToString("N")], DateTimeOffset.UtcNow),
+            cancellationToken);
+        var tickets = stores.Database.GetCollection<BattleQueueTicketDocument>("battle_queue_tickets");
+        Require(await tickets.CountDocumentsAsync(ticket => ticket.PlayerId == outsider,
+            cancellationToken: cancellationToken) == 1, "A stale match cancellation must not delete a waiting ticket.");
+        var invalidRequests = new[]
+        {
+            new BattleReservedMatchCancellation(outsider, successor.MatchId ?? "",
+                successor.Players ?? [], DateTimeOffset.UtcNow),
+            new BattleReservedMatchCancellation(fixture.Players[0], successor.MatchId ?? "",
+                [fixture.Players[0], outsider], DateTimeOffset.UtcNow),
+        };
+        foreach (var invalid in invalidRequests)
+        {
+            try
+            {
+                await stores.Queue.CancelReservedMatchAsync(invalid, cancellationToken);
+                throw new InvalidOperationException("A foreign actor or mismatched roster cancelled a reserved pair.");
+            }
+            catch (InvalidDataException)
+            {
+                // Neither a foreign actor nor a changed peer may create cancellation authority.
+            }
+        }
+        var pairs = stores.Database.GetCollection<BattlePairDocument>("battle_pairs");
+        var untouched = await pairs.Find(pair => pair.MatchId == successor.MatchId).SingleAsync(cancellationToken);
+        Require(untouched.Cancellation == null, "Stale or foreign cancellation changed successor authority.");
     }
 
     private static void Require(bool condition, string message)

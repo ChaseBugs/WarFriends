@@ -413,6 +413,11 @@ internal static class BackendQueueLiveTests
                 new LiveSameOpponentRematchChecks.Stores(results, queue,
                     new BattleManifestSnapshotStore(mongoUri, database), mongo.GetDatabase(database)),
                 rematchAllocationDeadline.Token);
+            await LiveSameOpponentRematchChecks.RunCancellationAsync(
+                new LiveSameOpponentRematchChecks.Settings(new Uri(backendUrl), tokens),
+                new LiveSameOpponentRematchChecks.Stores(results, queue,
+                    new BattleManifestSnapshotStore(mongoUri, database), mongo.GetDatabase(database)),
+                rematchAllocationDeadline.Token);
             if (unityExecutable != null && unityProject != null)
             {
                 using var unityDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));

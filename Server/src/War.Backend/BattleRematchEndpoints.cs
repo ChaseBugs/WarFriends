@@ -20,6 +20,41 @@ public static class BattleRematchEndpoints
             HandleAsync(context, store, authenticate, "cancel"));
         Func<HttpContext, Task<IResult>> allocate = context => AllocateAsync(context, authenticate);
         routes.MapPost("/battle/rematch/allocate", allocate);
+        routes.MapPost("/battle/rematch/cancel-allocation",
+            (HttpContext context, BattleRematchCancellation cancellation) =>
+            CancelAllocatedAsync(context, cancellation, authenticate));
+    }
+
+    private static async Task<IResult> CancelAllocatedAsync(HttpContext context, BattleRematchCancellation cancellation,
+        Func<HttpContext, Task<string?>> authenticate)
+    {
+        string? playerId = await authenticate(context);
+        if (playerId == null)
+        {
+            return Error(401, "unauthorized", "Authentication required.");
+        }
+        MatchGrantRequest request = await Read(context, MatchGrantRequest.Parser);
+        if (!IsCanonicalRequest(request))
+        {
+            return Error(400, "invalid_rematch_request", "Only a canonical completed match ID is accepted.");
+        }
+        try
+        {
+            return Proto(await cancellation.CancelAllocatedAsync(request.MatchId, playerId, context.RequestAborted));
+        }
+        catch (InvalidDataException)
+        {
+            return Error(409, "rematch_unavailable", "Source-bound rematch cancellation is unavailable.");
+        }
+        catch (HttpRequestException exception) when (exception.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            return Error(409, "rematch_cancellation_conflict", "The Worker did not confirm prestart cancellation.");
+        }
+        catch (Exception exception) when (exception is HttpRequestException ||
+            exception is OperationCanceledException && !context.RequestAborted.IsCancellationRequested)
+        {
+            return Error(503, "rematch_cancellation_deferred", "Reserved rematch cancellation must be retried.");
+        }
     }
 
     private static async Task<IResult> AllocateAsync(

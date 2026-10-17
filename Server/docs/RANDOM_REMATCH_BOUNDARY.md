@@ -248,3 +248,36 @@ This combined loss/restart gate passed in
 terminal results afterward. This is a restart after a known deferred response,
 not a process kill inside an in-flight Mongo commit. Admission expiry and Unity
 UI handoff remain separate unfinished checks.
+
+## Source-bound cancellation after allocation
+
+`/v1/battle/rematch/cancel-allocation` accepts the canonical source match ID
+and uses authenticated identity to read its consumed consent. The caller cannot
+supply a replacement player, roster or new match ID. The queue transaction
+captures only that `NextMatchId` and its exact persisted participant order.
+It does not look up a replacement pair by account and never deletes a waiting
+ticket. A foreign participant or mismatched expected roster rejects before
+the cancellation receipt is written.
+
+`BattleRematchCancellation` then uses existing Worker-confirmed prestart
+cancellation and accepted terminal evidence before releasing the captured pair.
+The portable SDK exposes `CancelAllocatedRematchAsync`. Successful cancellation
+returns `MatchQueueReply` code `cancelled` with the reserved match ID. An inactive
+reservation returns `completed` for that old ID, even if the account is now in
+another match; this is reservation status, not reward or outcome authority.
+Worker conflict returns `409 rematch_cancellation_conflict`; unavailable proof
+returns `503 rematch_cancellation_deferred`. Neither response authorizes a
+local forfeit or unconfirmed release. Cancelling consent before allocation
+continues to use the separate `/cancel` route.
+
+The Mongo reservation gate checks stale-pair and waiting-ticket preservation,
+foreign-actor rejection and mismatched-peer rejection. The native queue gate
+cancels a newly allocated rematch before UDP admission, checks the accepted
+unscored Aborted result and both pair releases, then starts a successor match
+and sends the old cancellation again. The successor must still complete real
+UDP play and terminal acceptance while the original source result stays unchanged.
+Unity cancel-button ownership and late-cancel presentation remain unimplemented.
+The final scoped-cancellation native gate passed in
+`Server/.local/queue-live-5c18488a23e246b3beadfdf59f0b6410`.
+This prestart/stale-request proof does not verify every Running or reconnect
+race after cancellation intent.

@@ -22,6 +22,7 @@ builder.Services.AddSingleton(new BattleMatchQueueStore(mongoUri, mongoDatabase)
 builder.Services.AddSingleton(new BattleManifestSnapshotStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleResultStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleRematchConsentStore(mongoUri, mongoDatabase));
+builder.Services.AddSingleton<BattleRematchCancellation>();
 builder.Services.AddSingleton(new BattleResultArchivalLeaseStore(mongoUri, mongoDatabase));
 builder.Services.AddHostedService<BattleResultArchivalService>();
 builder.Services.AddSingleton<BattleTerminalAcceptance>();

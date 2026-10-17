@@ -10,6 +10,46 @@ internal static class LiveSameOpponentRematchChecks
     private const int PollDelayMilliseconds = 100;
     private const int SearchTimeoutSeconds = 25;
 
+    internal static async Task RunCancellationAsync(
+        Settings settings, Stores stores, CancellationToken cancellationToken)
+    {
+        using var backend = new BackendClient(settings.Endpoint, true);
+        var original = await Task.WhenAll(settings.Tokens.Select(token =>
+            backend.FindMatchAsync(token, TimeSpan.FromSeconds(SearchTimeoutSeconds), cancellationToken)));
+        await FinishRoundAsync(original, cancellationToken);
+        string originalDigest = await WaitForAcceptedAsync(stores, original[0], cancellationToken);
+        foreach (string token in settings.Tokens)
+        {
+            await backend.AcceptRematchAsync(original[0].MatchId, token, cancellationToken);
+        }
+        var allocated = await backend.AllocateRematchAsync(original[0].MatchId, settings.Tokens[0], cancellationToken);
+        var grant = await backend.MatchGrantAsync(allocated.MatchId, settings.Tokens[0], cancellationToken);
+        var cancelled = await backend.CancelAllocatedRematchAsync(
+            original[0].MatchId, settings.Tokens[0], cancellationToken);
+        Require(cancelled.Code == "cancelled" && cancelled.MatchId == allocated.MatchId,
+            "Allocated rematch cancellation did not confirm the exact pending match.");
+        await WaitForAcceptedAsync(stores, grant, cancellationToken);
+        var result = await stores.Results.Get(allocated.MatchId, cancellationToken)
+            ?? throw new InvalidDataException("Cancelled rematch has no accepted terminal evidence.");
+        var terminal = War.BattleServer.TerminalOutbox.ValidatePayload(result.Snapshot, result.MatchId, result.Digest);
+        Require(terminal.Phase == BattlePhase.Aborted && terminal.TerminalReason == "cancelled-before-start" &&
+            !terminal.RewardEligible && terminal.WinnerPlayerId.Length == 0,
+            "Cancellation must use Worker-confirmed unscored prestart evidence.");
+        var successor = await Task.WhenAll(settings.Tokens.Select(token =>
+            backend.FindMatchAsync(token, TimeSpan.FromSeconds(SearchTimeoutSeconds), cancellationToken)));
+        var stale = await backend.CancelAllocatedRematchAsync(
+            original[0].MatchId, settings.Tokens[0], cancellationToken);
+        Require(stale.Code == "completed" && stale.MatchId == allocated.MatchId &&
+            (await stores.Queue.Existing(successor[0].PlayerId, cancellationToken))?.MatchId == successor[0].MatchId,
+            "Delayed rematch cancellation selected the participant's successor match.");
+        await FinishRoundAsync(successor, cancellationToken);
+        await WaitForAcceptedAsync(stores, successor[0], cancellationToken);
+        Require((await stores.Results.Get(original[0].MatchId, cancellationToken))?.Digest == originalDigest,
+            "Allocated cancellation must preserve the original completed result.");
+        Console.WriteLine("PASS: Worker-confirmed allocated rematch cancellation " +
+            "and harmless stale replay in a new match");
+    }
+
     internal static async Task RunAsync(Settings settings, Stores stores, CancellationToken cancellationToken)
     {
         using var backend = new BackendClient(settings.Endpoint, true);

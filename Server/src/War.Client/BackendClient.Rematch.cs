@@ -6,6 +6,14 @@ namespace War.Client
 {
     public sealed partial class BackendClient
     {
+        /// <summary>Cancels this source's allocated match without touching a later search or match.</summary>
+        public Task<MatchQueueReply> CancelAllocatedRematchAsync(
+            string sourceMatchId, string token, CancellationToken cancellationToken)
+        {
+            return Send("v1/battle/rematch/cancel-allocation", new MatchGrantRequest { MatchId = sourceMatchId },
+                token, MatchQueueReply.Parser, cancellationToken);
+        }
+
         /// <summary>Allocates a mutually accepted rematch; fetch its separate fresh grant before connecting.</summary>
         public Task<MatchQueueReply> AllocateRematchAsync(
             string sourceMatchId, string token, CancellationToken cancellationToken)
