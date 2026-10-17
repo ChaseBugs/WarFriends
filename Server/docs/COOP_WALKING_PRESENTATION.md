@@ -79,3 +79,7 @@ The asset audit resolves 1,052 script targets and 288,080 serialized references
 with no missing scripts or broken references. NGUI retains the same seventeen
 unmatched sprite selections. These checks do not establish rendered gameplay,
 normal co-op admission, Linux execution or Android execution.
+
+The next firing work follows the source-derived
+[firing presentation requirements](COOP_FIRING_PRESENTATION_PLAN.md). In
+particular, callback muzzle samples are not whole-body visual mixer samples.
