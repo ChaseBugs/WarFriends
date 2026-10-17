@@ -34,7 +34,10 @@ full initial turret rendering and old mission RPC migration remain open.
 Managed cleanup now retains ownership and failure history through disposal;
 confirmed abort quiesces gameplay/transport before cleanup and keeps new
 admission blocked under injected failures in all four game states. Automatic repair and
-complete two-client error presentation remain open.
+complete two-client error presentation remain open. Managed MoveNext/Current
+faults now also close the scope and retain both execution/disposal causes;
+controlled wrapper faults with native sibling lanes pass. Full engine error
+presentation and end-to-end controller recovery remain open.
 
 [Game-atlas cancellation](ABORT_ATLAS_LOADING.md) now invalidates independently
 hosted game loaders at confirmed abort, leaving menu/common work unscoped.

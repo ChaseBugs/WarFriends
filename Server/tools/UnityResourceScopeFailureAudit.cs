@@ -113,7 +113,7 @@ public static class UnityResourceScopeFailureAudit
         Require(HasCleanupFailure(CancelFailure(scope)), "Rejected setup forgot its cleanup failure on retry.");
     }
 
-    private static void VerifyBlockedRootAdmission(BattleResourceLoadScope scope)
+    internal static void VerifyBlockedRootAdmission(BattleResourceLoadScope scope, Exception expectedFailure = null)
     {
         GameController game = Singleton<GameController>.instance;
         var scopeField = GameField("_battleResourceLoads");
@@ -144,9 +144,17 @@ public static class UnityResourceScopeFailureAudit
             {
                 reported = failure;
             }
-            Require(!setupReached && reported != null && HasCleanupFailure(reported) &&
-                ReferenceEquals(scopeField.GetValue(game), scope),
-                "Real root admission replaced or bypassed a scope with failed cleanup.");
+            Require(!setupReached && reported != null && ReferenceEquals(scopeField.GetValue(game), scope),
+                "Real root admission replaced or bypassed a scope with failed resource loading.");
+            if (expectedFailure == null)
+            {
+                Require(HasCleanupFailure(reported), "Root rejection lost its retained cleanup cause.");
+            }
+            else
+            {
+                Require(reported.Flatten().InnerExceptions.Any(error => ReferenceEquals(error, expectedFailure)),
+                    "Root rejection lost its retained execution cause.");
+            }
         }
         finally
         {

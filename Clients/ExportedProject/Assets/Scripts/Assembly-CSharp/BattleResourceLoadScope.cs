@@ -141,22 +141,23 @@ public sealed class BattleResourceLoadScope
 
     private IEnumerator Observe(PendingLoad pending)
     {
+        Exception executionFailure = null;
         try
         {
             while (!_isCancelled)
             {
-                BattleResourceLoadScope previousScope = _currentScope;
                 bool hasNext;
                 object current;
-                _currentScope = this;
                 try
                 {
-                    hasNext = pending.Loading.MoveNext();
-                    current = hasNext ? pending.Loading.Current : null;
+                    hasNext = Advance(pending, out current);
                 }
-                finally
+                catch (Exception failure)
                 {
-                    _currentScope = previousScope;
+                    // A failed iterator must close sibling loading before Unity resumes another host.
+                    executionFailure = failure;
+                    RecordFailure(failure);
+                    throw;
                 }
                 if (!hasNext)
                 {
@@ -167,7 +168,44 @@ public sealed class BattleResourceLoadScope
         }
         finally
         {
+            FinishAfterExecution(pending, executionFailure);
+        }
+    }
+
+    private void FinishAfterExecution(PendingLoad pending, Exception executionFailure)
+    {
+        try
+        {
             Finish(pending);
+        }
+        catch (Exception cleanupFailure)
+        {
+            if (executionFailure != null)
+            {
+                throw new AggregateException("Battle loading execution and cleanup failed.",
+                    executionFailure, cleanupFailure);
+            }
+            throw;
+        }
+    }
+
+    private bool Advance(PendingLoad pending, out object current)
+    {
+        BattleResourceLoadScope previousScope = _currentScope;
+        _currentScope = this;
+        current = null;
+        try
+        {
+            bool hasNext = pending.Loading.MoveNext();
+            if (hasNext)
+            {
+                current = pending.Loading.Current;
+            }
+            return hasNext;
+        }
+        finally
+        {
+            _currentScope = previousScope;
         }
     }
 

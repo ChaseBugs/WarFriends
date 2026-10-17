@@ -237,3 +237,39 @@ texture loading, source mission setup, scoped/unscoped visual lanes and modal
 handoff. Protocol regression checks passed 1,334 cases; serialized asset audits
 retained zero missing scripts and zero broken references. These checks do not
 close the full BattleServer, automatic repair or complete gameplay/UI gates.
+
+## Managed execution failures
+
+The wrapper now records failures from both IEnumerator.MoveNext and Current
+before returning control to Unity. Previously a body failure disposed only that
+iterator and left sibling loaders eligible to run; the source visual control
+reproduced this in `Server/.local/unity-resource-execution-baseline.log`.
+Recording the execution failure closes the scope, stops further owned steps and
+keeps the cause available to repeated cancellation and new-admission rejection.
+
+If disposal also fails, FinishAfterExecution reports an AggregateException with
+both original exception instances. Both causes remain in the scope's retained
+history; cleanup no longer masks the body error. Advance separately restores the
+prior ownership context even when MoveNext or Current throws.
+
+UnityResourceExecutionFailureAudit covers MoveNext failure, Current failure and
+combined execution/disposal failure. To catch expected faults without filtering
+engine logs, it directly advances the actual private scope wrapper around an
+injected iterator. Concurrent sibling and unscoped visual lanes still run on
+real Unity hosts using the original level/slot Resources loading code. It checks
+that the sibling lane stays cleared, the unscoped lane finishes, disposal occurs
+once, original exception identities survive cancellation, and actual
+GameController.StartGame rejects the failed scope before new setup.
+
+This is controlled managed-wrapper fault injection with native sibling loading,
+not full Unity engine exception dispatch or a normal recovered gameplay failure.
+Network error cancellation/presentation and complete automatic recovery still
+need end-to-end controller policy and verification.
+
+The final combined run passed without compiler errors:
+`Server/.local/UnityBattleVisualLoadingAudit.RunWithNativeBundleAsync-execution-cause-final.log`.
+The four-state abort/failing-cleanup checks also passed in
+`Server/.local/UnityAbortRecoveryRoutingAudit.RunAsync-execution-cause-final.log`.
+Protocol regression checks passed 1,334 cases and serialized asset auditing
+retained zero missing scripts and zero broken references. Overall BattleServer,
+full gameplay/menu, two real Unity peers, Unity 5.2 and Android gates remain open.
