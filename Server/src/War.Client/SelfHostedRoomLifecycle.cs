@@ -14,6 +14,7 @@ namespace War.Client
     {
         private readonly MatchConnection connection;
         private bool disposed;
+        private MatchSnapshot _terminalSnapshot;
         public SelfHostedRoomPhase Phase { get; private set; } = SelfHostedRoomPhase.Disconnected;
         public event Action<SelfHostedRoomPhase> PhaseChanged;
         public MatchConnection Connection => connection;
@@ -45,6 +46,16 @@ namespace War.Client
         /// polls; callers do not need to infer Running/Closed locally.</summary>
         public void Observe(MatchSnapshot snapshot)
         {
+            if (!disposed && Phase == SelfHostedRoomPhase.Closed && _terminalSnapshot != null)
+            {
+                if (!_terminalSnapshot.Equals(snapshot))
+                {
+                    throw new InvalidOperationException("A terminal room cannot accept changed battle evidence.");
+                }
+
+                return;
+            }
+
             EnsureOpen();
             if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
             switch (snapshot.Phase)
@@ -70,6 +81,8 @@ namespace War.Client
                     break;
                 case BattlePhase.Ended:
                 case BattlePhase.Aborted:
+                    // Unity may receive the same frozen result again while finishing its screen callbacks.
+                    _terminalSnapshot = snapshot.Clone();
                     if (Phase != SelfHostedRoomPhase.Closed) SetPhase(SelfHostedRoomPhase.Closed);
                     break;
                 default:

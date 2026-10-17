@@ -151,3 +151,6 @@ Server/src/War.Persistence/BattleResultStore.PairAcceptance.cs text eol=lf
 Server/tests/War.Battle.Tests/AtomicTerminalAcceptanceTests.cs text eol=lf
 Server/tests/War.Battle.Tests/TerminalGrantRaceTests.cs text eol=lf
 Server/docs/TERMINAL_GRANT_ORDERING.md text eol=lf
+Server/tests/War.Protocol.Tests/RoomTerminalReplayTests.cs text eol=lf
+Server/tools/UnityTerminalRoomReplayAudit.cs text eol=lf
+Server/docs/TERMINAL_ROOM_REPLAY.md text eol=lf

@@ -94,3 +94,8 @@ The Windows smoke run `Server/.local/smoke-3d21322833374811bdadda54568840bd`
 passed the new transaction/replay gate, 1,322 protocol checks and 74 live
 Mongo/HTTP/protobuf/UDP checks. Linux shell syntax passed; Linux runtime was
 not exercised by this checkpoint.
+
+A later full Release queue run at revision `1baef61f2` passed Backend restart,
+delayed registration replay, actual HTTP/UDP races and unattended outage recovery.
+See [terminal room replay](TERMINAL_ROOM_REPLAY.md) for that run's evidence and
+the subsequent SDK change; the earlier timeout above remains historical.

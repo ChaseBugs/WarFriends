@@ -8,6 +8,11 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Terminal room replay](TERMINAL_ROOM_REPLAY.md) fixes repeated frozen Ended/Aborted
+snapshots throwing before Unity state callbacks. Exact replay stays closed,
+changed evidence cannot reopen the room, and disposal still rejects delivery.
+Explicit Aborted screen recovery and complete terminal UI remain open.
+
 [Delayed grant publication](DELAYED_GRANT_PUBLICATION.md) now holds an actual
 Worker registration response until cancellation has been accepted. It reproduced
 stale grant insertion and now uses a snapshot/majority transaction that validates
