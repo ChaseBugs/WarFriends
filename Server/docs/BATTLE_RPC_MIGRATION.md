@@ -31,4 +31,14 @@ The recovered `AIObject` and `AICarBase` RPCs form one entity lifecycle slice. `
 | `ReSyncDisabledRPC()` | Host despawn/tombstone event and absence from the active entity roster | Spawn/despawn event kinds and paged active roster exist; normal Client pooled teardown/reconnect proof remains incomplete |
 | `AICarBase.ReSyncRPC(...)` override | Same entity snapshot plus ordered vehicle transform samples for interpolation | Host vehicle position/rotation projection covers reviewed families; the original `mPhotonTransform.AddNewState` renderer path is not migrated |
 
+## Local solo pool slice
+
+`NetworkReInstantiate` and `NetworkReInstantiate_1` represent the remote half of
+NetworkObjectPool creation/reuse. The four public solo commands now perform only
+their original local pool operation because an offline room has no Others
+recipient. First-free-slot selection uses the local model rather than Photon
+master identity. [The source and native fixture](LOCAL_SOLO_POOLING.md) document
+the exact boundary. Pool initialization/view registration and online host-owned
+entity projection remain open; local pool IDs are not Worker authority.
+
 Next review must classify every remaining inventory RPC, dynamic/cached RPC call, stream, room/player property, offline room, and attached PhotonView as a validated command, host event, snapshot field, or local presentation behavior. Each row then needs a replacement test and a normal Client consumption proof. Until that review and integration pass, B01, B31, and B33 remain incomplete.

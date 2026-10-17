@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Local solo pooling](LOCAL_SOLO_POOLING.md) now routes all four network-labelled
+creation/reuse commands through their original local pool lifecycle without
+Others RPCs. The local model selects the recovered first free slot without a
+Photon master query. A native recovered-scene fixture passes all four commands
+with no bound PhotonView or SDK room. Pool Init/view registration, online
+host-owned entity projection and complete campaign gameplay remain open.
+
 The actual-manager cancellation matrix now checks connection/leave rejection as
 well as CreatedRoom disconnect/leave, including callback-time membership and
 exact observer removal after both rejection and normal return. The full native

@@ -142,6 +142,12 @@ public class NetworkObjectPool : ObjectPool
 
 	public PoolableObject InstantiateNetwork(PoolableObject objectPrefab, Vector3 position, Quaternion rotation)
 	{
+        // A solo room has no remote recipient; keep the original local pool lifecycle.
+        if (PhotonConnectionManager.IsLocalSoloRoom)
+        {
+            return Instantiate(objectPrefab, position, rotation);
+        }
+
 		int firstFreeIndex = GetFirstFreeIndex(objectPrefab);
 		if (firstFreeIndex >= 0)
 		{
@@ -158,6 +164,11 @@ public class NetworkObjectPool : ObjectPool
 
 	public PoolableObject InstantiateNetwork(PoolableObject objectPrefab)
 	{
+        if (PhotonConnectionManager.IsLocalSoloRoom)
+        {
+            return Instantiate(objectPrefab);
+        }
+
 		int firstFreeIndex = GetFirstFreeIndex(objectPrefab);
 		if (firstFreeIndex >= 0)
 		{
@@ -174,12 +185,22 @@ public class NetworkObjectPool : ObjectPool
 
 	public PoolableObject ReInstantiateNetwork(PoolableObject pooledObject, Vector3 position, Quaternion rotation)
 	{
+        if (PhotonConnectionManager.IsLocalSoloRoom)
+        {
+            return ReInstantiate(pooledObject, position, rotation);
+        }
+
 		mPhotonView.RPC("NetworkReInstantiate", PhotonTargets.Others, prefabToIndexDic[pooledObject.prefab], pooledObject.indexInObjectPool, position, rotation);
 		return ReInstantiate(pooledObject, position, rotation);
 	}
 
 	public PoolableObject ReInstantiateNetwork(PoolableObject pooledObject)
 	{
+        if (PhotonConnectionManager.IsLocalSoloRoom)
+        {
+            return ReInstantiate(pooledObject);
+        }
+
 		mPhotonView.RPC("NetworkReInstantiate_1", PhotonTargets.Others, prefabToIndexDic[pooledObject.prefab], pooledObject.indexInObjectPool);
 		return ReInstantiate(pooledObject);
 	}
@@ -222,7 +243,8 @@ public class NetworkObjectPool : ObjectPool
 
 	public override PoolableObject Instantiate(int index, Vector3 position, Quaternion rotation)
 	{
-		bool isMasterClient = PhotonNetwork.isMasterClient;
+        // The recovered solo host consumes the first free slot; no peer identity is needed.
+        bool isMasterClient = PhotonConnectionManager.IsLocalSoloRoom || PhotonNetwork.isMasterClient;
 		freePooledObjects.TryGetValue(index, out var value);
 		if (value != null && value.Count > 0)
 		{
