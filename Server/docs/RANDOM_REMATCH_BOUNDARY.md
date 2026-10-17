@@ -67,12 +67,23 @@ The half-open thirty-second window comes from CheckRematchStates. Duplicate
 requests do not extend it: unlike buffered Photon RPC delivery, a retry is not
 a new consent. Millisecond timestamps match BSON persistence precision.
 
-This store is not exposed as an HTTP endpoint and does not issue grants.
+The authenticated protobuf API exposes `/v1/battle/rematch/read`, `/accept`
+and `/cancel`, each with only a canonical `MatchGrantRequest.match_id`.
+The authenticated account supplies the player identity; unknown request fields
+are rejected. Modern and recovered legacy account tokens use the same battle
+authentication boundary. Unavailable, foreign or damaged completed evidence
+returns `409 rematch_unavailable` without disclosing the roster.
+`MatchRematchConsent` returns match ID, status, accepted player IDs, revision
+and the Unix-millisecond deadline. A missing consent reads `not-requested`
+with zero revision/deadline; it does not create a window. Reads persist expiry
+without adding a vote. `BackendClient` has matching read/accept/cancel methods.
+
+These routes do not issue grants.
 `ready` means mutual intent only. An allocator must still atomically reserve
 the exact original participants, revalidate their current loadouts and mode,
 fence cancellation against publication, and issue fresh Worker capabilities.
-No wallet or Dog Tag changes are made by consent. Normal controllers and the
-SDK still need typed consent/status/cancel integration; friend, human co-op
+No wallet or Dog Tag changes are made by consent. Normal Unity controllers
+still need typed consent/status/cancel integration; friend, human co-op
 and co-op bot policy must remain distinct. No same-opponent gameplay claim
 follows from the persistence test.
 
@@ -81,3 +92,7 @@ Run the isolated replica-set check with
 It checks concurrent first/second consent through independent store instances,
 unchanged duplicate deadlines, outsider rejection, cancellation, the exact
 expiry boundary, damaged-result binding rejection and terminal-result preservation.
+The native `--queue-live <mongo-uri>` suite additionally checks real Backend
+protobuf/SDK consent against an accepted Worker result, including unauthenticated,
+nonparticipant, malformed-ID and unknown-field rejection. This is not a second
+same-opponent allocation or Unity controller proof.

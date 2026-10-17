@@ -11,7 +11,7 @@ using War.Protocol;
 namespace War.Client
 {
     // Portable .NET Standard 2.0; no Unity or Photon dependency.
-    public sealed class BackendClient : IDisposable
+    public sealed partial class BackendClient : IDisposable
     {
         private sealed class BackendStatusException : HttpRequestException
         {

@@ -26,6 +26,8 @@ internal static class RematchConsentStoreTests
             var fixture = new Fixture(first, second, mongo.GetDatabase(databaseName));
             string[] players = manifest.Players.Select(player => player.PlayerId).ToArray();
             var now = DateTimeOffset.UtcNow;
+            Require(await first.ReadAsync(manifest.MatchId, players[0], now, deadline.Token) == null,
+                "A status read must not create a consent window.");
             await RejectAsync(() => first.AcceptAsync(manifest.MatchId, "outsider", now, deadline.Token));
             await RejectAsync(() => first.CancelAsync(manifest.MatchId, "outsider", now, deadline.Token));
             await RejectAsync(() => first.AcceptAsync("missing-match", players[0], now, deadline.Token));
@@ -54,6 +56,9 @@ internal static class RematchConsentStoreTests
         Require(initial.All(row => row.Revision == 1), "Concurrent first consent must insert one record.");
         Require(waiting.Status == "waiting" && waiting.AcceptedPlayers.Length == 1,
             "One participant cannot authorize a two-player rematch.");
+        var observed = await second.ReadAsync(matchId, players[1], now, cancellationToken);
+        Require(observed?.Revision == waiting.Revision && observed.AcceptedPlayers.Length == 1,
+            "Reading as the opponent must not silently add its consent.");
         BattleRematchConsentDocument replay = await second.AcceptAsync(matchId, players[0], now, cancellationToken);
         Require(replay.Revision == waiting.Revision && replay.ExpiresUtc == waiting.ExpiresUtc,
             "A replay must not extend consent or consume another revision.");
@@ -77,9 +82,9 @@ internal static class RematchConsentStoreTests
         await rows.DeleteOneAsync(row => row.Id == matchId, cancellationToken);
         var now = DateTimeOffset.UtcNow;
         var waiting = await store.AcceptAsync(matchId, players[0], now, cancellationToken);
-        var expired = await store.AcceptAsync(matchId, players[1],
+        var expired = await store.ReadAsync(matchId, players[1],
             now.AddSeconds(BattleRematchConsentStore.ConsentDurationSeconds), cancellationToken);
-        Require(expired.Status == "expired" && expired.AcceptedPlayers.Length == 1 &&
+        Require(expired?.Status == "expired" && expired.AcceptedPlayers.Length == 1 &&
             expired.ExpiresUtc == waiting.ExpiresUtc, "The half-open deadline must reject a late second consent.");
         await rows.UpdateOneAsync(row => row.Id == matchId,
             Builders<BattleRematchConsentDocument>.Update.Set(row => row.ResultDigest, new string('b', 64)),

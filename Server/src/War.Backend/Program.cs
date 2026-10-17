@@ -21,6 +21,7 @@ builder.Services.AddSingleton(new BattleGrantStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleMatchQueueStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleManifestSnapshotStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleResultStore(mongoUri, mongoDatabase));
+builder.Services.AddSingleton(new BattleRematchConsentStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleResultArchivalLeaseStore(mongoUri, mongoDatabase));
 builder.Services.AddHostedService<BattleResultArchivalService>();
 builder.Services.AddSingleton<BattleTerminalAcceptance>();
@@ -171,6 +172,9 @@ auth.MapPost("/login", async (HttpContext ctx, AccountStore store) =>
     return session == null ? Error(401, "invalid_credentials", "Invalid credentials.") : Proto(session);
 });
 var api = app.MapGroup("/v1").RequireRateLimiting("api");
+api.MapBattleRematchEndpoints(context => BattlePlayerId(context,
+    context.RequestServices.GetRequiredService<AccountStore>(),
+    context.RequestServices.GetRequiredService<LegacyPlayerStore>()));
 api.MapGet("/player", async (HttpContext ctx, AccountStore store) =>
 {
     var player = await Player(ctx, store);

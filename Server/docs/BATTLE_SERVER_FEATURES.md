@@ -19,8 +19,9 @@ remain open; this does not reopen a terminal Worker match.
 
 Same-opponent consent now has a separate durable persistence foundation:
 accepted Ended-result participant binding, thirty-second expiry, idempotent
-concurrent votes and irreversible cancellation. It is not yet exposed through
-HTTP/SDK/controllers or connected to fresh allocation; `ready` is intent only.
+concurrent votes and irreversible cancellation. Authenticated protobuf
+read/accept/cancel endpoints and portable SDK methods now expose that state.
+They are not connected to Unity controllers or fresh allocation; `ready` is intent only.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

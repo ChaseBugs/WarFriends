@@ -26,20 +26,29 @@ public sealed partial class BattleRematchConsentStore
     }
 
     /// <summary>Records an authenticated participant's idempotent consent to the same opponent.</summary>
-    public Task<BattleRematchConsentDocument> AcceptAsync(
+    public async Task<BattleRematchConsentDocument> AcceptAsync(
         string matchId, string authenticatedPlayerId, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        return ChangeAsync(new Change(matchId, authenticatedPlayerId, now, false), cancellationToken);
+        return await ChangeAsync(new Change(matchId, authenticatedPlayerId, now, Operation.Accept), cancellationToken)
+            ?? throw new InvalidDataException("Consent was not recorded.");
     }
 
     /// <summary>Withdraws the participant's pending consent without touching the completed result.</summary>
-    public Task<BattleRematchConsentDocument> CancelAsync(
+    public async Task<BattleRematchConsentDocument> CancelAsync(
         string matchId, string authenticatedPlayerId, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        return ChangeAsync(new Change(matchId, authenticatedPlayerId, now, true), cancellationToken);
+        return await ChangeAsync(new Change(matchId, authenticatedPlayerId, now, Operation.Cancel), cancellationToken)
+            ?? throw new InvalidDataException("Cancellation was not recorded.");
     }
 
-    private async Task<BattleRematchConsentDocument> ChangeAsync(
+    /// <summary>Reads participant consent and persists expiry without adding a vote or starting a window.</summary>
+    public Task<BattleRematchConsentDocument?> ReadAsync(
+        string matchId, string authenticatedPlayerId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        return ChangeAsync(new Change(matchId, authenticatedPlayerId, now, Operation.Read), cancellationToken);
+    }
+
+    private async Task<BattleRematchConsentDocument?> ChangeAsync(
         Change change, CancellationToken cancellationToken)
     {
         ValidateTime(change.Now);
@@ -58,6 +67,10 @@ public sealed partial class BattleRematchConsentStore
                 .FirstOrDefaultAsync(cancellationToken);
             if (current == null)
             {
+                if (change.Kind == Operation.Read)
+                {
+                    return null;
+                }
                 BattleRematchConsentDocument created = Create(change, result, players);
                 if (await TryInsertAsync(created, cancellationToken))
                 {
@@ -117,8 +130,8 @@ public sealed partial class BattleRematchConsentStore
             Id = result.MatchId,
             ResultDigest = result.Digest,
             Players = players,
-            AcceptedPlayers = change.IsCancellation ? [] : [change.PlayerId],
-            Status = change.IsCancellation ? Cancelled : Waiting,
+            AcceptedPlayers = change.Kind == Operation.Cancel ? [] : [change.PlayerId],
+            Status = change.Kind == Operation.Cancel ? Cancelled : Waiting,
             Revision = 1,
             CreatedUtc = change.Now.UtcDateTime,
             UpdatedUtc = change.Now.UtcDateTime,
@@ -134,11 +147,12 @@ public sealed partial class BattleRematchConsentStore
         }
         string status = change.Now.UtcDateTime >= current.ExpiresUtc ? Expired : current.Status;
         string[] accepted = current.AcceptedPlayers;
-        if (status != Expired && change.IsCancellation)
+        if (status != Expired && change.Kind == Operation.Cancel)
         {
             status = Cancelled;
         }
-        else if (status != Expired && !accepted.Contains(change.PlayerId, StringComparer.Ordinal))
+        else if (status != Expired && change.Kind == Operation.Accept &&
+            !accepted.Contains(change.PlayerId, StringComparer.Ordinal))
         {
             accepted = accepted.Append(change.PlayerId).OrderBy(player => player, StringComparer.Ordinal).ToArray();
             status = Ready;
@@ -155,5 +169,12 @@ public sealed partial class BattleRematchConsentStore
         };
     }
 
-    private sealed record Change(string MatchId, string PlayerId, DateTimeOffset Now, bool IsCancellation);
+    private enum Operation
+    {
+        Read,
+        Accept,
+        Cancel,
+    }
+
+    private sealed record Change(string MatchId, string PlayerId, DateTimeOffset Now, Operation Kind);
 }

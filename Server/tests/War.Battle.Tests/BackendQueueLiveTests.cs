@@ -268,6 +268,8 @@ internal static class BackendQueueLiveTests
                 await Task.Delay(100,deadline.Token);
                 if(attempt==99)throw new Exception("Worker terminal result did not release the durable pair.");
             }
+            await LiveRematchConsentChecks.RunAsync(new LiveRematchConsentChecks.Settings(
+                new Uri(backendUrl), tokens, grants[0].MatchId), deadline.Token);
             try {await left.MatchGrantAsync(grants[0].MatchId,tokens[0],deadline.Token);
                 throw new Exception("Terminal match still delivered a stale player grant.");}
             catch(HttpRequestException e) when(e.Message.Contains("Backend status 404",StringComparison.Ordinal)){}
