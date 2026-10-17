@@ -22,6 +22,11 @@ counterexample fixed the actual manager recreating model membership after the
 SDK room was cancelled/left. Portable and native model/manager gates pass;
 normal scene dispatch, general reentrancy, listener exceptions and complete
 Photon-free solo gameplay remain open.
+Explicit native delivery of the actual manager's local ConnectedToMaster callback
+also reproduced and removed its false Cloud-admission error. The local-mode
+callback returns without opening a room; non-offline callbacks retain the Cloud
+refusal. The full SDK/model/manager comparison passes, but the fixture's inactive
+manager still does not prove scene-wide callback dispatch.
 
 The local callback reference now also observes general offline disconnection.
 It reproduced a missing model notification and now verifies reset-before-notify

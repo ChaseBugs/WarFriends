@@ -201,6 +201,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	private void OnConnectedToMaster()
 	{
+        // The retained SDK also sends this callback synchronously when local offline mode is enabled.
+        if (PhotonNetwork.offlineMode)
+        {
+            return;
+        }
+
 		// Cloud connection callbacks can still arrive from retained Photon scene
 		// components. They must never open a room in the offline build.
 		Debug.LogError("Photon Cloud room admission is unavailable; use the self-hosted battle grant.");

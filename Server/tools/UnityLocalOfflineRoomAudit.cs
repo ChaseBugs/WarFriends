@@ -261,6 +261,12 @@ public static class UnityLocalOfflineRoomAudit
         scenario.Clear();
         scenario.Probe.AfterCallback = callback =>
         {
+            if (callback == nameof(LocalRoomCallback.ConnectedToMaster))
+            {
+                // The inactive fixture needs explicit delivery of this actual manager callback.
+                typeof(PhotonConnectionManager).GetMethod("OnConnectedToMaster",
+                    BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, null);
+            }
             if (callback == nameof(LocalRoomCallback.CreatedRoom))
             {
                 cancel();

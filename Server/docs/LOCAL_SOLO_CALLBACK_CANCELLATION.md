@@ -42,6 +42,18 @@ remain open.
 
 ## Verification
 
+The native manager fixture also delivers the actual OnConnectedToMaster method
+from the reference SDK's synchronous local-mode callback. Its baseline in
+`Server/.local/unity-solo-manager-connected-baseline.log` reproduced two false
+Cloud-admission errors. The manager now returns for local offline mode before
+the existing Cloud refusal. The offlineMode getter reads the SDK's local Boolean;
+this guard does not connect, create a room or dispatch another callback. Because
+the manager is inactive to avoid unrelated boot dependencies, callback delivery
+in this fixture is explicit, not proof of normal scene-wide dispatch.
+The complete native SDK/model/manager comparison passes with this delivery in
+`Server/.local/unity-solo-manager-connected-final.log`; the runtime error gate
+still permits only the single deliberate CreateRoom refusal described below.
+
 The portable suite passes 1,358 checks, including twelve local lifecycle cases.
 The extended native SDK/model/manager comparison passes in
 `Server/.local/unity-local-callback-cancellation-errors-final.log`. Its runtime
