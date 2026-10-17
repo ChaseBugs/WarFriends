@@ -13,7 +13,10 @@ Worker registration response until cancellation has been accepted. It reproduced
 stale grant insertion and now uses a snapshot/majority transaction that validates
 and writes the exact active pair together with grant publication. Cancelled
 publication closes the queue response instead of reporting a stale pair. Wider
-normal terminal/result races and complete gameplay proof remain open.
+normal terminal acceptance now stores its result and removes its pair in one
+transaction, verified through actual Mongo change-stream transaction identity
+and concurrent exact replay. Forced database interleavings and complete gameplay
+proof remain open.
 
 [Actual HTTP/UDP cancellation](LIVE_PRESTART_CANCELLATION_RACES.md) now covers
 late Ready after cancellation, concurrent ready/cancel dispatch and Running-first

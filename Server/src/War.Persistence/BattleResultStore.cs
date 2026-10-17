@@ -19,15 +19,19 @@ public sealed class BattleResultDocument
     public DateTime? SettledUtc { get; set; }
 }
 
-public sealed class BattleResultStore
+public sealed partial class BattleResultStore
 {
     public const int ArchivalPageSize = 256;
+    private readonly MongoClient _client;
+    private readonly IMongoDatabase _database;
     private readonly IMongoCollection<BattleResultDocument> results;
     public BattleResultStore(string uri, string databaseName)
     {
         var settings = MongoClientSettings.FromConnectionString(uri);
         settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
-        results = new MongoClient(settings).GetDatabase(databaseName).GetCollection<BattleResultDocument>("battle_results");
+        _client = new MongoClient(settings);
+        _database = _client.GetDatabase(databaseName);
+        results = _database.GetCollection<BattleResultDocument>("battle_results");
     }
     public async Task Initialize(CancellationToken ct)
     {

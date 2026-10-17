@@ -62,6 +62,8 @@ try {
     if($LASTEXITCODE -ne 0) { throw 'Scoped queue attempt checks failed' }
     & dotnet $testDll --queue-cancellation-recovery-only $env:Mongo__Uri
     if($LASTEXITCODE -ne 0) { throw 'Cancellation recovery claim checks failed' }
+    & dotnet $testDll --atomic-terminal-only $env:Mongo__Uri
+    if($LASTEXITCODE -ne 0) { throw 'Atomic terminal acceptance checks failed' }
     & dotnet $testDll --prestart-cancellation-ordering-only
     if($LASTEXITCODE -ne 0) { throw 'Prestart cancellation ordering checks failed' }
     & dotnet $testDll --command-ack-only

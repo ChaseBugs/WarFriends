@@ -44,13 +44,16 @@ public sealed class BattleTerminalAcceptance
         }
         else if (terminal.PvpCurrencyQuotes.Count != 0)
             throw new InvalidDataException("Currency evidence has no frozen match allocation.");
+        if (pair != null)
+        {
+            return await results.AcceptAndReleasePairAsync(matchId, digest, payload, ct);
+        }
         string code=await results.Accept(matchId,digest,payload,ct);
         if(code!="conflict")
         {
             var stored=await results.Get(matchId,ct);
             if(stored==null || stored.Digest!=digest || !stored.Snapshot.AsSpan().SequenceEqual(payload))
                 throw new InvalidDataException("Persisted terminal evidence differs from the validated Worker payload.");
-            if(pair!=null)_=await queue.Release(matchId,pair.Players!,ct);
         }
         return code;
     }

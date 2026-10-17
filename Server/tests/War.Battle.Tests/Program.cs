@@ -85,6 +85,11 @@ if (args is ["--prestart-cancellation-ordering-only"])
     return;
 }
 
+if (args is ["--atomic-terminal-only", var atomicTerminalMongoUri])
+{
+    await AtomicTerminalAcceptanceTests.RunAsync(atomicTerminalMongoUri);
+    return;
+}
 if(args is ["--queue-live",var queueMongoUri])
 {await BackendQueueLiveTests.Run(queueMongoUri);return;}
 

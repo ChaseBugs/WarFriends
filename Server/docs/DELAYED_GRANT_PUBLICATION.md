@@ -54,7 +54,43 @@ normal join HTTP request or force a particular interleaving inside Mongo's
 transaction engine. Existing stable-grant, Backend restart, HTTP/UDP race and
 unattended Worker-outage cases remain regression gates.
 
-This checkpoint concerns cancellation winning publication. It does not claim all
-normal combat-terminal/result-write races, arbitrary packet faults, two actual
-Unity clients, Android/Linux runtime or full BattleServer completion. B05/B31/B36
-and the overall objective remain partial.
+## Terminal acceptance publication
+
+Backend-allocated terminal acceptance now stores the validated result and removes
+the allocation in one snapshot/majority transaction. That transaction revalidates
+the complete pair, frozen manifest, ordered participants and currency proof.
+Grant publication writes the same pair, so concurrent transactions must serialize
+or retry; there is no committed result-with-live-pair interval from this path.
+An exact prior result remains replayable after allocation removal. A conflicting
+result cannot release an allocation. Historical accepted-result/live-pair rows
+can be repaired by an exact replay after the same authority validation.
+
+Trusted non-allocator result storage remains separate. This does not retrofit
+atomicity into direct fixture calls to the older result-store helper. Existing
+native queue tests exercise normal terminal forwarding, cancellation and replay.
+The delayed-registration case additionally sends two concurrent exact result
+replays after pair removal and requires both to remain already accepted without
+recreating an allocation. These checks do not force every internal database
+interleaving. Arbitrary packet faults,
+two actual Unity clients, Android/Linux runtime and full BattleServer completion
+remain unverified. B05/B31/B36 and the overall objective remain partial.
+
+The focused `--atomic-terminal-only <MongoUri>` gate creates a synthetic
+prototype match, advances both admitted players to Running, and records a real
+engine forfeit result. A database change stream must show the result insert and
+pair delete with the same nonempty transaction identity (`lsid`, `txnNumber`).
+Two concurrent exact replays must then return `already-accepted` with no pair.
+Both native smoke scripts include this gate. It verifies actual database
+atomic publication, not recovered weapon balance or full HTTP/UDP scheduling.
+
+At this checkpoint the focused transaction/replay gate passed. The additional
+full `--queue-live` attempt timed out during the first Worker registration
+(`BackendQueueLiveTests`, before terminal acceptance); its later cases, including
+the new delayed-response replay assertion, were not reached. That run is not
+counted as a passing full-network regression. The earlier passing queue checks
+above remain historical evidence for their earlier revision.
+
+The Windows smoke run `Server/.local/smoke-3d21322833374811bdadda54568840bd`
+passed the new transaction/replay gate, 1,322 protocol checks and 74 live
+Mongo/HTTP/protobuf/UDP checks. Linux shell syntax passed; Linux runtime was
+not exercised by this checkpoint.

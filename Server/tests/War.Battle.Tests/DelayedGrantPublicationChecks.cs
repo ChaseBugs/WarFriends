@@ -44,7 +44,23 @@ internal static class DelayedGrantPublicationChecks
             throw new Exception("A delayed registration response published a grant after accepted cancellation.");
         }
 
+        await VerifyTerminalReplayAsync(stores, pair.MatchId!, scenario.CancellationToken);
         Console.WriteLine("PASS: delayed real Worker registration cannot publish a cancelled pair's grant");
+    }
+
+    private static async Task VerifyTerminalReplayAsync(
+        UnpreparedPairCancellationChecks.Stores stores, string matchId, CancellationToken cancellationToken)
+    {
+        var result = await stores.Results.Get(matchId, cancellationToken) ??
+            throw new Exception("Cancelled pair has no accepted terminal evidence.");
+        var replies = await Task.WhenAll(
+            stores.Results.AcceptAndReleasePairAsync(matchId, result.Digest, result.Snapshot, cancellationToken),
+            stores.Results.AcceptAndReleasePairAsync(matchId, result.Digest, result.Snapshot, cancellationToken));
+        if (replies.Any(reply => reply != "already-accepted") ||
+            await stores.Queue.ForMatch(matchId, cancellationToken) != null)
+        {
+            throw new Exception("Concurrent terminal replay changed the accepted result or recreated its pair.");
+        }
     }
 
     internal sealed class Settings
