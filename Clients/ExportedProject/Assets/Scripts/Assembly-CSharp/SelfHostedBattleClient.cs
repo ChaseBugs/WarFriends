@@ -115,6 +115,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         get { return matchmaking != null && matchmaking.IsRetainedForLoading && OwnsMatch; }
     }
 
+    internal SelfHostedMatchmakingAttempt LoadingCancellationOwner
+    {
+        get { return HasLoadingCancellationAuthority ? matchmaking : null; }
+    }
+
     /// <summary>Cancels the exact admitted attempt while retaining UDP delivery of the server's terminal proof.</summary>
     internal Task CancelFailedLoadingAsync()
     {

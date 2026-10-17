@@ -15,13 +15,15 @@ acknowledgement before closing transport; failed/refused cleanup retains the
 same owner. Automatic resource-failure dispatch and end-to-end recovery remain
 distinct boundaries: scope failures now dispatch one owner-bound cancellation
 after iterator unwinding, retain UDP for terminal proof and block Ready/new maps.
-Actual queued two-Unity-client failure recovery and retry presentation remain
+Actual queued two-Unity-client failure recovery and full retry presentation remain
 pending.
 Temporary cancellation failures now retry the same retained attempt at most
 three times, with shared in-flight ownership and a phase/connection check before
 each request. Authentication, validation and Running/terminal ownership changes
-do not trigger repeated cancellation. Retry exhaustion remains blocked and
-user-facing retry presentation is still pending.
+do not trigger repeated cancellation. Retry exhaustion remains blocked and now
+offers the original localized retry modal under scope/controller/connection
+ownership checks. Unrelated popups and replacement callbacks are preserved;
+complete retry-to-menu integration remains pending.
 The actual plain C# Unity attempt owner now also passes real authenticated
 HTTP/UDP loading cancellation, accepted Mongo terminal/pair release and
 Running-first refusal checks. This supplements the controlled Unity dispatch

@@ -44,20 +44,33 @@ the existing owner-bound abort callback. Readiness is blocked after dispatch,
 and another map cannot replace the failed scope while its Client still owns the
 match. No local exception manufactures a terminal snapshot or reward.
 
+The scope also captures the exact `SelfHostedMatchmakingAttempt` object. Both
+initial dispatch and manual retry compare that identity, so reusing the same
+MonoBehaviour for another admission cannot transfer the old failure to its new
+queue attempt.
+
 Loading cancellation shares one retry operation per attempt: at most three
 requests with 500 ms between temporary failures. The SDK classifies transport
 errors, request timeout and HTTP 408/500/502/503/504 as transient; authentication,
 validation and protocol refusals do not retry. Before each request the captured
 Client, connection and attempt must still own a Waiting/Countdown match.
 Terminal recovery, replacement ownership or disposal stops further retries.
-Exhaustion is logged and ownership remains blocked. User-facing retry
-presentation is not implemented. Direct trusted-grant
+Exhaustion is logged and ownership remains blocked. `GameController` offers an
+owner-bound `BattleLoadingRetryNotice` while that exact scope and connection
+still own a Waiting/Countdown match. It uses the recovered localized confirmation
+dialog and `ID_RETRY`, waits for unrelated dialogs, and retries the same bounded
+operation on acknowledgement. A stale or superseded dialog callback cannot
+retry. Closing an old notice cannot clear or hide another notice's callback;
+an interrupted pending notice may resume after that other popup closes.
+The failed-loading spinner is hidden when the retry notice actually opens.
+Confirmed abort quiesces gameplay/transport before closing the owned retry UI.
+Direct trusted-grant
 admission has no queue token and does not acquire this automatic cancellation
 path.
 
 Remaining proof includes actual queued Unity admission followed by loading
 failure, expired tokens through this Unity path, stale-owner isolation under a
-replacement admission, retry presentation and Running-first races. Cleanup
+replacement admission, full retry presentation integration and Running-first races. Cleanup
 failures remain retained by the resource scope; a confirmed server abort does
 not prove successful menu recovery after damaged resource disposal.
 
@@ -127,3 +140,15 @@ remain blocked. The audit also retains the four cleanup-failure controls. Log:
 SDK hashes match their manifest. The earlier retry audit exposed a fixture that
 left an Aborted snapshot from a stale-callback control; the loading control now
 explicitly establishes Waiting, rather than weakening the terminal phase guard.
+
+The original modal audit now passes the localized Retry label, original NGUI
+button callback/tweens, duplicate-click rejection, stale-owner rejection,
+preservation of an unrelated/replacement popup, and resumption after a temporary
+popup closes. Log:
+`Server/.local/unity-loading-retry-notice-resume-final.log`.
+The routing audit additionally rejects another captured attempt on the same
+adapter and retains its four normal/four cleanup-failure recovery controls. Log:
+`Server/.local/unity-loading-retry-attempt-owner-final.log`.
+Static asset checks still report zero broken references/missing scripts; the
+17 existing atlas sprite mismatches remain unchanged. These are separate modal
+and routing gates, not one real-service retry-to-menu gameplay session.

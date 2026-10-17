@@ -204,6 +204,14 @@ public static class UnityAbortRecoveryRoutingAudit
         SetGame(game, "_battleResourceLoads", scope);
         SetGame(game, "_resourceLoadClient", client);
         MethodInfo lateUpdate = typeof(GameController).GetMethod("LateUpdate", InstanceFields);
+        object previousAttempt = Activator.CreateInstance(attemptType, InstanceFields, null,
+            new object[] { new BackendClient(new Uri("http://127.0.0.1:30001/"),
+                new LoadingCancellationHandler(), true), "previous-fixture-token" }, null);
+        SetGame(game, "_resourceLoadCancellationOwner", previousAttempt);
+        lateUpdate.Invoke(game, null);
+        Require(http.Requests == 0, "A different attempt on the same adapter inherited the old loading failure.");
+        ((IDisposable)previousAttempt).Dispose();
+        SetGame(game, "_resourceLoadCancellationOwner", attempt);
         SetGame(game, "mMainController", _coop);
         lateUpdate.Invoke(game, null);
         Require(http.Requests == 0, "A different controller cancelled the previous owner's loading failure.");

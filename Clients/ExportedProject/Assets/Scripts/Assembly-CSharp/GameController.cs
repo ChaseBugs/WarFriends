@@ -84,7 +84,9 @@ public class GameController : Singleton<GameController>
 
     private BattleResourceLoadScope _battleResourceLoads;
     private SelfHostedBattleClient _resourceLoadClient;
+    private SelfHostedMatchmakingAttempt _resourceLoadCancellationOwner;
     private BattleResourceLoadScope _reportedResourceFailure;
+    private BattleLoadingRetryNotice _loadingRetryNotice;
 
 	private PlayerController mOpponent;
 
@@ -403,12 +405,18 @@ public class GameController : Singleton<GameController>
         SelfHostedBattleClient client = SelfHostedBattleClient.Active;
         _resourceLoadClient = onlineController != null && client != null &&
             onlineController.OwnsSelfHostedClient(client) && client.HasLoadingCancellationAuthority ? client : null;
+        _resourceLoadCancellationOwner = _resourceLoadClient == null ?
+            null : _resourceLoadClient.LoadingCancellationOwner;
         _battleResourceLoads.RunSetup(mainController.LoadingStarted);
         _battleResourceLoads.Start(this, LoadAndStartNewMap(mapName));
 	}
 
     private void LateUpdate()
     {
+        if (_loadingRetryNotice != null)
+        {
+            _loadingRetryNotice.TryShow();
+        }
         if (_isSelfHostedAbortRecovery || _resourceLoadClient == null || _battleResourceLoads == null ||
             _battleResourceLoads.FirstFailure == null || _reportedResourceFailure == _battleResourceLoads)
         {
@@ -417,17 +425,18 @@ public class GameController : Singleton<GameController>
 
         var onlineController = mainController as GameControllerOnline;
         if (onlineController == null || !onlineController.OwnsSelfHostedClient(_resourceLoadClient) ||
-            SelfHostedBattleClient.Active != _resourceLoadClient)
+            SelfHostedBattleClient.Active != _resourceLoadClient || _resourceLoadCancellationOwner == null ||
+            _resourceLoadClient.LoadingCancellationOwner != _resourceLoadCancellationOwner)
         {
             return;
         }
 
         // Defer network work until the failed iterator has unwound; never cancel a replacement scope.
         _reportedResourceFailure = _battleResourceLoads;
-        CancelFailedResourceLoadingAsync(_resourceLoadClient);
+        CancelFailedResourceLoadingAsync(_resourceLoadClient, _battleResourceLoads);
     }
 
-    private async void CancelFailedResourceLoadingAsync(SelfHostedBattleClient client)
+    private async void CancelFailedResourceLoadingAsync(SelfHostedBattleClient client, BattleResourceLoadScope scope)
     {
         try
         {
@@ -437,7 +446,27 @@ public class GameController : Singleton<GameController>
         {
             // A local failure or refused cancellation cannot manufacture an outcome or release ownership.
             Debug.LogWarning("Battle loading cancellation remains unconfirmed: " + failure.GetType().Name);
+            if (OwnsFailedResourceLoad(client, scope))
+            {
+                _loadingRetryNotice = new BattleLoadingRetryNotice(() => OwnsFailedResourceLoad(client, scope), () =>
+                {
+                    _loadingRetryNotice = null;
+                    CancelFailedResourceLoadingAsync(client, scope);
+                });
+            }
         }
+    }
+
+    private bool OwnsFailedResourceLoad(SelfHostedBattleClient client, BattleResourceLoadScope scope)
+    {
+        var onlineController = mainController as GameControllerOnline;
+        return !_isSelfHostedAbortRecovery && client != null && _resourceLoadClient == client &&
+            _battleResourceLoads == scope && SelfHostedBattleClient.Active == client &&
+            onlineController != null && onlineController.OwnsSelfHostedClient(client) &&
+            _resourceLoadCancellationOwner != null &&
+            client.LoadingCancellationOwner == _resourceLoadCancellationOwner &&
+            client.HasLoadingCancellationAuthority && client.State != null &&
+            (client.State.Phase == BattlePhase.Waiting || client.State.Phase == BattlePhase.Countdown);
     }
 
 	private IEnumerator LoadAndStartNewMap(string levelName)
@@ -1031,6 +1060,11 @@ public class GameController : Singleton<GameController>
             if (_battleResourceLoads != null)
             {
                 _battleResourceLoads.Cancel();
+            }
+            if (_loadingRetryNotice != null)
+            {
+                _loadingRetryNotice.Close();
+                _loadingRetryNotice = null;
             }
         }
         finally

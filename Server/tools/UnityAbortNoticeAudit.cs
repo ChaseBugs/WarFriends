@@ -69,6 +69,7 @@ public static class UnityAbortNoticeAudit
             VerifyMessageRecoveryGate();
             await VerifyNoticeCycleAsync(dialog, false);
             await VerifyNoticeCycleAsync(dialog, true);
+            await UnityLoadingRetryNoticeAudit.VerifyAsync(dialog);
 
             Require(Errors.Count == 0, "Runtime UI errors: " + string.Join(" | ", Errors.ToArray()));
             Require(UnityEngine.Object.FindObjectOfType<BeanstalkServerManager>() == null &&
