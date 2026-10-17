@@ -19,8 +19,9 @@ public sealed class MatchEndpoint
     public string ManifestHash => match.ManifestHash;
     public MatchSnapshot? TerminalSnapshot => match.Terminal ? match.TerminalEvidenceSnapshot() : null;
     public bool Expired => terminalTick.HasValue && tick - terminalTick.Value > 120 * MatchManifest.TickRate;
-    private sealed class Session(string playerId, IPEndPoint endpoint, byte[] key)
+    private sealed class Session(string playerId, IPEndPoint endpoint, byte[] key, string poseRevision)
     {
+        public string ObservedPoseRevision { get; } = poseRevision;
         public string PlayerId { get; } = playerId;
         public IPEndPoint Endpoint { get; } = endpoint;
         public byte[] Key { get; } = key;
@@ -103,9 +104,15 @@ public sealed class MatchEndpoint
             }
             else if (sessions.Count >= 2 || !match.Admit(claims.PlayerId)) return null;
             generations[claims.PlayerId] = claims.ConnectionGeneration;
-            sessions.Add(packet.SessionId, new Session(claims.PlayerId, endpoint, key));
+            sessions.Add(packet.SessionId, new Session(
+                claims.PlayerId, endpoint, key, packet.MatchHello.ObservedPoseCatalogRevision));
         }
         if (!sessions.TryGetValue(packet.SessionId, out var session) || !session.Endpoint.Equals(endpoint) || !PacketCodec.Authenticate(datagram, session.Key)) return null;
+        if (packet.MatchHello != null &&
+            packet.MatchHello.ObservedPoseCatalogRevision != session.ObservedPoseRevision)
+        {
+            return null;
+        }
         // At most four authenticated commands per player/tick, in addition to the
         // host's global bounded receive queue. Excess traffic cannot refill budget.
         if (session.BudgetTick != tick) { session.BudgetTick = tick; session.UsedBudget = 0; }
@@ -141,6 +148,12 @@ public sealed class MatchEndpoint
                 reply.MatchReplyChunkBatch=ReplyChunk(session,packet.MatchReplyChunkPoll);
                 break;
             default: return null;
+        }
+        if (reply.MatchReply != null)
+        {
+            // Presentation negotiation belongs to this connection, never a retained gameplay receipt.
+            reply.MatchReply = reply.MatchReply.Clone();
+            reply.MatchReply.ObservedPoseCatalogRevision = session.ObservedPoseRevision;
         }
         MatchReply? complete=reply.MatchReply!=null &&
             reply.CalculateSize()+PacketCodec.MacBytes>PacketCodec.MaximumDatagramBytes
@@ -247,7 +260,13 @@ public sealed class MatchEndpoint
             case Packet.BodyOneofCase.MatchHello:
                 var hello=packet.MatchHello;
                 return hello.Ticket.Length is >=10 and <=1024 && hello.MatchId.Length<=64 &&
-                    hello.CalculateSize()==new MatchHello {Ticket=hello.Ticket,MatchId=hello.MatchId}.CalculateSize();
+                    (hello.ObservedPoseCatalogRevision.Length == 0 ||
+                     hello.ObservedPoseCatalogRevision == CoopObservedObstaclePoseCatalog.ContentRevision) &&
+                    hello.CalculateSize()==new MatchHello
+                    {
+                        Ticket=hello.Ticket, MatchId=hello.MatchId,
+                        ObservedPoseCatalogRevision=hello.ObservedPoseCatalogRevision
+                    }.CalculateSize();
             case Packet.BodyOneofCase.MatchCommand:
                 var command=packet.MatchCommand;
                 if(command.IntentCase==MatchCommand.IntentOneofCase.None || command.CalculateSize()>256)return false;

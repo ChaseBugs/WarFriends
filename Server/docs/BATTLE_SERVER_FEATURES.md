@@ -18,7 +18,9 @@ in the same checkpoint. This does not close B32 or public co-op admission.
 The production factory also supports recovered weapon model application before
 renderer initialization; a 17,680-case native compatibility matrix covers 80
 weapon selections and all 221 poses with one controlled body style.
-Observed-pose presenter dispatch, other body styles and transport negotiation remain open.
+Observed-pose presenter dispatch and other body styles remain open.
+Transport now negotiates an exact catalog revision per authenticated session;
+Unity's default connection remains clip-only pending renderer dispatch.
 The normal presenter now selects and displays the source ordinary/card weapon
 model using the host normal upgrade index or fixed card lane. This is separate
 from accepting observed-pose references and does not close B32.

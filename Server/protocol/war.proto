@@ -55,7 +55,11 @@ message MatchAdmission {
   int64 issued_unix_seconds = 6; int64 expires_unix_seconds = 7;
   uint64 connection_generation = 8;
 }
-message MatchHello { string ticket = 1; string match_id = 2; }
+message MatchHello {
+  string ticket = 1; string match_id = 2;
+  // Empty keeps clip-only presentation. A nonempty revision requires explicit renderer support.
+  string observed_pose_catalog_revision = 3;
+}
 // Delivered through a trusted allocator/control channel, never a public UDP request.
 message MatchConnectionGrant {
   string host = 1; uint32 port = 2; string ticket = 3; bytes session_key = 4;
@@ -730,6 +734,7 @@ message MatchReply {
   // When snapshot cannot fit one datagram, these describe a frozen serialized
   // MatchReply. The SDK must reassemble and verify it before publishing state.
   uint64 transfer_id = 4; uint32 transfer_size = 5; bytes transfer_sha256 = 6;
+  string observed_pose_catalog_revision = 7;
 }
 message MatchReplyChunkPoll { uint64 transfer_id = 1; uint32 index = 2; }
 message MatchReplyChunkBatch {

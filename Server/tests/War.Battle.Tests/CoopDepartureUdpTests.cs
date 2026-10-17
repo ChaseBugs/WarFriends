@@ -24,7 +24,8 @@ internal static class CoopDepartureUdpTests
         await using var host = new Host(sources);
         string masterId = sources.Manifest.Players[0].PlayerId;
         string peerId = sources.Manifest.Players[1].PlayerId;
-        using var master = new MatchConnection(host.CreateGrant(masterId, MasterSessionId));
+        using var master = new MatchConnection(host.CreateGrant(masterId, MasterSessionId),
+            ObservedInfantryPoseCatalogData.BuiltIn.Revision);
         using var peer = new MatchConnection(host.CreateGrant(peerId, PeerSessionId));
         await StartMission(master, peer, host.Token);
         await LoseDepartureReply(peer, host);
@@ -34,8 +35,12 @@ internal static class CoopDepartureUdpTests
 
     private static async Task StartMission(MatchConnection master, MatchConnection peer, CancellationToken token)
     {
-        Require((await master.ConnectAsync(token)).Code == "admitted", "The source master must be admitted.");
-        Require((await peer.ConnectAsync(token)).Code == "admitted", "The source peer must be admitted.");
+        MatchReply masterReply = await master.ConnectAsync(token);
+        Require(masterReply.Code == "admitted" && masterReply.ObservedPoseCatalogRevision ==
+            ObservedInfantryPoseCatalogData.BuiltIn.Revision, "The master must negotiate its exact renderer revision.");
+        MatchReply peerReply = await peer.ConnectAsync(token);
+        Require(peerReply.Code == "admitted" && peerReply.ObservedPoseCatalogRevision.Length == 0,
+            "The clip-only peer must remain compatible without advertising a renderer.");
         Require((await master.ReadyAsync(token)).Code == "ready", "The source master must become ready.");
         Require((await peer.ReadyAsync(token)).Snapshot.Coop.Started,
             "Both SDK clients must start the source mission.");

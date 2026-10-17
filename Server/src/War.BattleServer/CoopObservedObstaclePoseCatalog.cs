@@ -11,7 +11,7 @@ namespace War.BattleServer;
 internal sealed partial class CoopObservedObstaclePoseCatalog
 {
     private const string ArtifactDigest = "bd861aad1415154f11bc9c1c92164e97d70e425720545a12311884dad00bdaf8";
-    private const string ContentRevision = "dd1e4ac94ca558155645f58e9bacdaa2691d9726f837063a531230b3e1b52854";
+    internal const string ContentRevision = "dd1e4ac94ca558155645f58e9bacdaa2691d9726f837063a531230b3e1b52854";
     private const int MaximumCompressedBytes = 32 * 1024;
     private const int MaximumJsonBytes = 256 * 1024;
     private const int PhaseCount = 17;

@@ -27,10 +27,24 @@ namespace War.Client
         private MatchCommand pending;
         private bool admitted;
         private volatile bool disposed;
+        private readonly string _observedPoseRevision;
         public IReadOnlyList<BattlePlayerView> PlayerViews { get; private set; }
 
         public MatchConnection(MatchConnectionGrant connection)
+            : this(connection, string.Empty)
         {
+        }
+
+        /// <summary>Requests an exact installed renderer revision; the default constructor stays clip-only.</summary>
+        public MatchConnection(MatchConnectionGrant connection, string observedPoseCatalogRevision)
+        {
+            if (observedPoseCatalogRevision == null ||
+                (observedPoseCatalogRevision.Length != 0 &&
+                 observedPoseCatalogRevision != ObservedInfantryPoseCatalogData.BuiltIn.Revision))
+            {
+                throw new ArgumentException("The requested pose renderer revision is not installed.");
+            }
+            _observedPoseRevision = observedPoseCatalogRevision;
             if (connection == null) throw new ArgumentNullException(nameof(connection));
             grant = connection.Clone();
             PlayerViews = connection.PlayerViews.Count==0 ? new List<BattlePlayerView>().AsReadOnly() : BattlePlayerViewProjection.Validate(connection);
@@ -786,7 +800,11 @@ namespace War.Client
                 if (watch.ElapsedMilliseconds >= nextSend)
                 {
                     var packet = new Packet { Version = 1, SessionId = grant.SessionId, Sequence = checked(++sequence) };
-                    if (hello) packet.MatchHello = new MatchHello { Ticket = grant.Ticket, MatchId = grant.MatchId };
+                    if (hello) packet.MatchHello = new MatchHello
+                    {
+                        Ticket = grant.Ticket, MatchId = grant.MatchId,
+                        ObservedPoseCatalogRevision = _observedPoseRevision
+                    };
                     else packet.MatchCommand = command;
                     socket.Send(PacketCodec.Encode(packet, key));
                     nextSend = watch.ElapsedMilliseconds + 150;
@@ -803,6 +821,10 @@ namespace War.Client
                     response.MatchReply == null || response.MatchReply.CommandId != (hello ? 0 : command.CommandId) || !replay.Accept(response.Sequence)) continue;
                 if(response.MatchReply.TransferId!=0)
                     response.MatchReply=ResolveReplyTransfer(response.MatchReply,ct);
+                if (response.MatchReply.ObservedPoseCatalogRevision != _observedPoseRevision)
+                {
+                    throw new InvalidOperationException("Battle host changed or rejected the requested pose capability.");
+                }
                 var snapshot = response.MatchReply.Snapshot;
                 if (snapshot == null || snapshot.MatchId != grant.MatchId || snapshot.ManifestHash != grant.ManifestHash || snapshot.Players.Count != 2)
                     throw new InvalidOperationException("Battle host returned an incompatible snapshot.");

@@ -40,8 +40,8 @@ until a renderer capability is installed. Even a valid reference with matching
 clip fields is rejected. This prevents accidental clip-only presentation of a
 pose known to require hierarchy corrections.
 
-Before the host can publish references, implement capability and revision
-negotiation: older protobuf clients ignore additive fields and could otherwise
+Before the host can publish references, capability and revision negotiation must
+be connected to the installed renderer: older protobuf clients ignore additive fields and could otherwise
 display an incorrect clip-only pose. Bind the actual Unity actor hierarchy,
 including weapon attachments, validate the complete sample before mutation, and
 verify source-equivalent local transforms. Then connect host history selection
@@ -177,3 +177,38 @@ references and the same 17 pre-existing atlas sprite mismatches.
 This is fixture-driven component integration, not a live Worker session
 or normal MainScene scheduling. Observed-pose references still remain rejected
 by the SDK until capability negotiation and presenter dispatch are connected.
+
+## Authenticated transport negotiation
+
+`MatchHello.observed_pose_catalog_revision` is an explicit opt-in, empty for
+existing clients. `MatchReply.observed_pose_catalog_revision` acknowledges the
+exact selected revision on complete replies. The host accepts only the empty
+revision or its reviewed catalog revision, stores it on the authenticated
+session, and rejects repeated hellos that change it. Negotiation is session-local;
+it is not a player entitlement, gameplay mutation or room-wide authority.
+
+Replies are cloned before adding that connection metadata so retained command
+receipts and settlement evidence remain independent of presentation capability.
+Frozen chunk transfers contain the negotiated value in their complete reply;
+the SDK checks it after digest-verified reassembly, before returning the snapshot.
+
+The SDK's existing constructor stays clip-only. Its explicit two-argument
+constructor requests a known installed catalog revision and rejects unknown or
+null revisions. Every complete reply must match the requested value: there is
+no silent downgrade to an unsupported rendering path. Unity's normal connection
+creation still uses the default constructor. The SDK animation view still rejects
+observed references and the host emits none until renderer dispatch is connected.
+
+Authenticated endpoint tests reject unknown content before admission, reject an
+in-session downgrade without consuming the valid retry, and verify that command
+receipt replay retains no presentation metadata. The existing live UDP SDK
+departure-recovery fixture now pairs an opted-in master with a clip-only peer,
+exercising negotiation alongside ready, poll, receipt retry and departure paths.
+This does not prove normal Unity admission or reconnect capability changes.
+
+Verification after SDK installation: the solution builds without warnings or
+errors; focused combat passes 26,368 assertions; native smoke passes 1,144
+protocol checks, 74 live MongoDB/HTTP/protobuf/UDP checks and restart recovery.
+The installed Unity SDK passes the existing 24-check visual adapter audit.
+Static asset audits retain zero missing scripts, zero broken references and
+the same 17 pre-existing atlas sprite mismatches.
