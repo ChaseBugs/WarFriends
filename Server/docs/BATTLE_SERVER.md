@@ -191,3 +191,9 @@ B22 now projects the confirmed obstacle fire window from emitted rounds,
 reusing the existing validated frame and actor. Preparation/return/interrupted
 transitions remain excluded. See [obstacle fire frames](COOP_OBSTACLE_FIRE_FRAMES.md)
 for the source evidence and unchanged public admission/collision boundary.
+
+B22 obstacle presentation now continues into the actual consumed crawl-return
+tick with ordinary clamped `stand_up_crawl`, preserving its strict float
+clock. Native source checks total 460; the adapter audit totals twenty-one.
+Preparation and interrupted return remain open. See
+[obstacle frames](COOP_OBSTACLE_FIRE_FRAMES.md).

@@ -70,6 +70,13 @@ public sealed class UnityCoopCornerVolleyProbe
         _controller.ShootFromCrawl(RoundHideSeconds, 1f, Weapon.WeaponType.Riffle);
     }
 
+    /// <summary>Runs source Update with an explicitly expired obstacle deadline, independently of scheduling.</summary>
+    public void ReturnToObstacleCrawl()
+    {
+        SetField("mTimeToHideToCrawl", Time.time - 1f);
+        _update.Invoke(_controller, null);
+    }
+
     private void Shoot(float hideSeconds)
     {
         // The recovered public overload reverses the Boolean before choosing its private CoverSide.

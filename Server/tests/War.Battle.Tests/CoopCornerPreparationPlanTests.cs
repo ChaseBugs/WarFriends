@@ -110,7 +110,10 @@ internal static class CoopCornerPreparationPlanTests
         var windups = (Dictionary<ulong, CoopInfantryShotWindup>)field.GetValue(runtime)!;
         windups[entityId] = previous with { NextEligibleTick = interruptionTick };
         runtime.Advance(interruptionTick);
-        CoopInfantryShotWindup current = runtime.InfantryShotWindup(entityId)!;
+        CoopInfantryShotWindup current = runtime.InfantryShotWindup(entityId)
+            ?? throw new Exception($"Corner interruption lost its windup at {interruptionTick}; " +
+                $"previous start {previous.StartTick}, final round {finalRound}, " +
+                $"enemy {runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == entityId)}.");
         Require(current.StartTick == interruptionTick && current.CornerPreparation is { UsesFreshLookClock: false },
             "The new attempt must capture return before the previous round ledger is cleared.");
         runtime.Advance(interruptionTick + 1);

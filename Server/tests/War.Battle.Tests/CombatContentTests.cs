@@ -3763,6 +3763,41 @@ internal static class CombatContentTests
         if (arrivalRuntime.InfantryRoundIntents(
                 arrivalEnemy.EntityId).Count != expectedBatchCount)
             throw new Exception("Co-op rifle exceeded its source batch size.");
+        ulong expectedReturnTick = lastRoundTick;
+        float crawlDeadline = (float)(lastRoundTick / (double)MatchManifest.TickRate) + 0.5f;
+        do
+        {
+            expectedReturnTick++;
+        }
+        while ((float)(expectedReturnTick / (double)MatchManifest.TickRate) <= crawlDeadline);
+        if (expectedReturnTick + 1 >= Math.Min(expectedNextShot, preparedObstacle.NextPositionTick))
+        {
+            throw new Exception("The obstacle return fixture needs a stationary interval before the next action.");
+        }
+        arrivalRuntime.Advance(expectedReturnTick - 1);
+        BattleInfantryAnimationFrame? beforeReturn = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (beforeReturn?.Clips[0].ClipName != "rifle_shot_loop")
+        {
+            throw new Exception("The last fire pose must persist until the strict crawl deadline expires.");
+        }
+        arrivalRuntime.Advance(expectedReturnTick);
+        BattleInfantryAnimationFrame? crawlFrame = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (arrivalRuntime.ObstacleCrawlReturnTick(arrivalEnemy.EntityId) != expectedReturnTick ||
+            crawlFrame?.SampleTick != expectedReturnTick || crawlFrame.Clips.Count != 1 ||
+            crawlFrame.Clips[0].ClipName != "stand_up_crawl" || crawlFrame.Clips[0].TimeSeconds != 0f ||
+            crawlFrame.Clips[0].Wrap != BattleInfantryAnimationWrap.ClampForever)
+        {
+            throw new Exception("Expired obstacle hide time must publish one zero-time clamped crawl frame.");
+        }
+        arrivalRuntime.Advance(expectedReturnTick + 1);
+        BattleInfantryAnimationFrame? advancedCrawl = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (advancedCrawl?.Clips[0].TimeSeconds != 1f / MatchManifest.TickRate)
+        {
+            throw new Exception("Obstacle return presentation must advance from its actual consumed timer tick.");
+        }
         ulong lastFirstVolleyProjectile = arrivalRuntime.InfantryRoundIntents(arrivalEnemy.EntityId)
             .Max(round => round.ProjectileId);
         arrivalRuntime.Advance(expectedNextShot - 1);
@@ -3926,7 +3961,9 @@ internal static class CombatContentTests
             chooseInfantryPlayer: _ => 0,
             chooseInfantryShieldRoll: () => 0.5f,
             chooseInfantryBatchSize: (min, _) => min,
-            chooseInfantryRealShotRoll: () => 0f);
+            chooseInfantryRealShotRoll: () => 0f,
+            // Keep the preparation/interruption fixture at its corner until all three attempts finish.
+            chooseEnemyPointChangeSeconds: () => 19);
         cornerRuntime.Admit(firstPlayer);
         cornerRuntime.Admit(secondPlayer);
         foreach (string playerId in new[] { firstPlayer, secondPlayer })

@@ -102,6 +102,7 @@ public static class UnityCoopWalkingVisualAudit
             "A confirmed protobuf fire frame must reuse the actor and replace its walking bone pose.");
         VerifyReturnBlend(client, actor, skin, fire);
         VerifyRoundReset(client, actor, skin);
+        VerifyObstacleReturn(client, actor, skin);
         VerifyInterruptedPreparation(client, actor, skin);
     }
 
@@ -128,6 +129,25 @@ public static class UnityCoopWalkingVisualAudit
         Require(GameObject.Find(actor.name) == actor &&
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
             "The decoded obstacle fire reset must reuse the actor and sample the source rifle clip.");
+    }
+
+    private static void VerifyObstacleReturn(SelfHostedBattleClient client, GameObject actor,
+        SkinnedMeshRenderer skin)
+    {
+        const float returnSampleSeconds = 0.25f;
+        MatchSnapshot snapshot = client.State.Clone();
+        BattleInfantryAnimationClip clip = snapshot.Coop.EnemySpawns[0].InfantryAnimation.Clips[0];
+        clip.ClipName = "stand_up_crawl";
+        clip.TimeSeconds = 0f;
+        Publish(client, snapshot);
+        Require(GameObject.Find(actor.name) == actor,
+            "The decoded crawl start must preserve the existing actor.");
+        Quaternion[] before = skin.bones.Select(bone => bone.localRotation).ToArray();
+        clip.TimeSeconds = returnSampleSeconds;
+        Publish(client, snapshot);
+        Require(GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
+            "A later confirmed crawl sample must change the source pose without recreating the actor.");
     }
 
     private static void VerifyInterruptedPreparation(SelfHostedBattleClient client, GameObject actor,

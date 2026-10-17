@@ -232,3 +232,8 @@ remain closed until their own requirements are implemented and verified.
 The subsequent [obstacle fire window](COOP_OBSTACLE_FIRE_FRAMES.md) now connects
 confirmed stationary rounds. Complete preparation/return/interruption host
 projection remains open; this checkpoint does not complete the ordered plan.
+
+The [obstacle return checkpoint](COOP_OBSTACLE_FIRE_FRAMES.md) now projects the
+consumed timer event and clamped crawl samples. This path uses ordinary Play
+without the corner idle queue. Preparation and interruption still need a
+complete previous-state model before this ordered plan can be closed.

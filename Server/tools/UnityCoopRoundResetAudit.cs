@@ -142,6 +142,7 @@ public static class UnityCoopRoundResetAudit
         source.Stop();
         source.Play(fireClip);
         VerifyObstacleReset(source, controller, sampler, source[fireClip]);
+        VerifyObstacleReturn(source, controller, sampler);
     }
 
     private static void VerifyObstacleReset(Animation source, UnityCoopCornerVolleyProbe controller,
@@ -158,6 +159,27 @@ public static class UnityCoopRoundResetAudit
         source.Sample();
         sampler.Sample(new[] { new SelfHostedInfantryAnimationState(fireClip, 0f, 1f, WrapMode.ClampForever) });
         CompareHierarchy(source.transform, FindReplayAnimation(source).transform);
+    }
+
+    private static void VerifyObstacleReturn(Animation source, UnityCoopCornerVolleyProbe controller,
+        SelfHostedInfantryAnimationSampler sampler)
+    {
+        const string crawlClip = "stand_up_crawl";
+        controller.ReturnToObstacleCrawl();
+        Require(source[crawlClip].enabled && source[crawlClip].time == 0f &&
+            source[crawlClip].wrapMode == WrapMode.ClampForever,
+            "Expired source Update must play ordinary clamped crawl at time zero.");
+        float[] sampleTimes = { 0f, 1f / 30f, 0.25f, 0.5f, 1f };
+        foreach (float seconds in sampleTimes)
+        {
+            source[crawlClip].time = seconds;
+            source.Sample();
+            sampler.Sample(new[]
+            {
+                new SelfHostedInfantryAnimationState(crawlClip, seconds, 1f, WrapMode.ClampForever)
+            });
+            CompareHierarchy(source.transform, FindReplayAnimation(source).transform);
+        }
     }
 
     private static Animation FindReplayAnimation(Animation source)

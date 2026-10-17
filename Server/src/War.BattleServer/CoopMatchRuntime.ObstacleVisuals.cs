@@ -4,7 +4,7 @@ namespace War.BattleServer;
 
 internal sealed partial class CoopMatchRuntime
 {
-    private BattleInfantryAnimationFrame? ProjectObstacleFireAnimation(BattleCoopEnemySpawn enemy)
+    private BattleInfantryAnimationFrame? ProjectObstacleAnimation(BattleCoopEnemySpawn enemy)
     {
         if (phase != BattlePhase.Running || enemy.Behaviour != "Assaulter" ||
             enemy.Health <= 0f || enemy.DeathTick != 0 || enemy.CurrentRotation == null ||
@@ -17,15 +17,22 @@ internal sealed partial class CoopMatchRuntime
         }
 
         if (!_obstacleCrawlStates.TryGetValue(enemy.EntityId, out ObstacleCrawlState? crawl) ||
-            crawl.HasInterruptedReturn || (crawl.ReturnTick is ulong returnTick && tick >= returnTick) ||
+            crawl.HasInterruptedReturn ||
             !infantryRoundIntents.TryGetValue(enemy.EntityId, out List<CoopInfantryRoundIntent>? rounds) ||
             rounds.Count == 0)
         {
             return null;
         }
 
+        if (crawl.ReturnTick is ulong returnTick && tick >= returnTick)
+        {
+            // The recovered Update uses Play, so return replaces fire without a queued idle blend.
+            return CreateVisualFrame("stand_up_crawl", (tick - returnTick) / (float)MatchManifest.TickRate,
+                BattleInfantryAnimationWrap.ClampForever);
+        }
+
         // ShootFromCrawl resets ordinary fire after an emitted round.
-        // Preparation and crawl blends need separate frames.
+        // Preparation and interrupted crawl still need their own transition frames.
         // This post-notification visual does not change the preceding gameplay muzzle observation or hit authority.
         ulong latestRoundTick = rounds[^1].Tick;
         return CreateVisualFrame("rifle_shot_loop", (tick - latestRoundTick) / (float)MatchManifest.TickRate,
