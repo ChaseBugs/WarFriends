@@ -6,7 +6,7 @@ using War.Shared;
 namespace War.Backend;
 
 /// <summary>Fills only allocator-owned identities/projections into an operator-reviewed source-valid manifest template.</summary>
-public sealed class BattleManifestFactory
+public sealed partial class BattleManifestFactory
 {
     private readonly JsonObject template;
     private readonly BattleAllocationStore allocations;

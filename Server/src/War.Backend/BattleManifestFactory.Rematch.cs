@@ -1,0 +1,81 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using War.BattleServer;
+
+namespace War.Backend;
+
+public sealed partial class BattleManifestFactory
+{
+    /// <summary>Refreshes durable equipment while preserving the accepted source battle's map and slots.</summary>
+    public async Task<byte[]> CreateRematchAsync(byte[] acceptedManifest, string acceptedManifestHash,
+        string nextMatchId, CancellationToken cancellationToken)
+    {
+        MatchManifest previous = MatchManifest.Parse(acceptedManifest);
+        if (previous.Digest() != acceptedManifestHash || previous.MatchId == nextMatchId)
+        {
+            throw new InvalidDataException("Rematch source must match accepted evidence and use a fresh identity.");
+        }
+        var source = JsonNode.Parse(acceptedManifest)?.AsObject()
+            ?? throw new InvalidDataException("Rematch source is absent.");
+        RequireRefreshableSource(source, previous);
+        source.Remove("Allocations");
+        source.Remove("Presentations");
+        var rematch = new BattleManifestFactory(JsonSerializer.SerializeToUtf8Bytes(source),
+            allocations, presentations, weapons);
+        string[] players = previous.Players.Select(player => player.PlayerId).ToArray();
+        byte[] bound = await rematch.Create(nextMatchId, players, cancellationToken);
+        var refreshed = JsonNode.Parse(bound)?.AsObject()
+            ?? throw new InvalidDataException("Rematch projection is absent.");
+        PreserveSceneMaster(refreshed, previous);
+        RefreshExistingRankFields(refreshed);
+        byte[] result = JsonSerializer.SerializeToUtf8Bytes(refreshed);
+        MatchManifest.Parse(result);
+        return result;
+    }
+
+    private void RequireRefreshableSource(JsonObject source, MatchManifest previous)
+    {
+        weapons.ValidateTemplate(source);
+        if (previous.ServerId != template["ServerId"]?.GetValue<string>() ||
+            previous.PvpGoldBonusesAtAdmission.HasValue)
+        {
+            throw new InvalidDataException("Rematch requires current host policy and a fresh bonus admission ledger.");
+        }
+        foreach (JsonNode? node in source["Players"]!.AsArray())
+        {
+            var player = node?.AsObject() ?? throw new InvalidDataException("Rematch participant is absent.");
+            bool hasUnrefreshedAuthority = player.Any(field => field.Value != null &&
+                (field.Key.StartsWith("Army", StringComparison.Ordinal) ||
+                    field.Key is "EquippedArmyUnitIds" or "NewArmyUnitIds" or "ShieldLevel"));
+            if (hasUnrefreshedAuthority)
+            {
+                // Reusing expired perks, old army lanes or shield upgrades would invent current authority.
+                throw new InvalidDataException(
+                    "Rematch army and shield authority requires a fresh projection builder.");
+            }
+        }
+    }
+
+    private static void PreserveSceneMaster(JsonObject root, MatchManifest previous)
+    {
+        if (previous.SceneMasterPlayerId != null)
+        {
+            // Ordinary Create chooses slot zero; rematch retains the source room's actual scene master.
+            root["SceneMasterPlayerId"] = previous.SceneMasterPlayerId;
+        }
+    }
+
+    private static void RefreshExistingRankFields(JsonObject root)
+    {
+        JsonArray players = root["Players"]!.AsArray();
+        JsonArray views = root["Presentations"]!.AsArray();
+        for (int index = 0; index < players.Count; index++)
+        {
+            var player = players[index]!.AsObject();
+            if (player["PlayerLevel"] != null)
+            {
+                player["PlayerLevel"] = views[index]!["Level"]!.GetValue<int>();
+            }
+        }
+    }
+}

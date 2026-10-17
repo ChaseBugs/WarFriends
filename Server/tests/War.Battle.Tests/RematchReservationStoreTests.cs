@@ -84,6 +84,10 @@ internal static class RematchReservationStoreTests
     private static async Task VerifyConcurrentReservationAsync(Stores stores, CancellationToken cancellationToken)
     {
         Fixture fixture = await PrepareAsync(stores, cancellationToken);
+        fixture = fixture with
+        {
+            Request = fixture.Request with { PlayerOrder = fixture.Players },
+        };
         using var changes = await stores.Database.WatchAsync(
             new EmptyPipelineDefinition<ChangeStreamDocument<BsonDocument>>(),
             new ChangeStreamOptions { MaxAwaitTime = TimeSpan.FromSeconds(1) }, cancellationToken);
@@ -102,6 +106,12 @@ internal static class RematchReservationStoreTests
         var players = pair.Players ?? throw new InvalidDataException("The committed reservation roster is absent.");
         Require(players.OrderBy(player => player).SequenceEqual(fixture.Players.OrderBy(player => player)),
             "The reserved roster must contain exactly the original participants.");
+        Require(players.SequenceEqual(fixture.Players) && reserved[0].NextPlayers.SequenceEqual(fixture.Players),
+            "The reserved pair and consent marker must retain the frozen source order.");
+        Require(await TryReserveAsync(stores.First, fixture.Request with
+        {
+            PlayerOrder = fixture.Players.Reverse().ToArray(),
+        }, cancellationToken) == null, "Reservation replay must not swap player slots.");
         var cancelled = await stores.Second.CancelAsync(fixture.Request.SourceMatchId, fixture.Players[1],
             fixture.Request.ApplicationTime, cancellationToken);
         Require(cancelled.Status == "allocated" && cancelled.NextMatchId == reserved[0].NextMatchId,

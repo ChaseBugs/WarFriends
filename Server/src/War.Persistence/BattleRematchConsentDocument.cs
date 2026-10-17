@@ -17,6 +17,8 @@ public sealed class BattleRematchConsentDocument
 
     public string NextCompatibilityKey { get; set; } = "";
 
+    public string[] NextPlayers { get; set; } = [];
+
     public long Revision { get; set; }
 
     public DateTime CreatedUtc { get; set; }

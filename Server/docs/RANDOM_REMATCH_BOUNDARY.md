@@ -109,6 +109,10 @@ The compatibility key is server-owned policy, not an HTTP request field.
 The committed consent becomes `allocated` with a distinct `NextMatchId`.
 Its reserved compatibility key is retained, so a retry cannot silently change
 the server policy associated with that identity.
+The allocator can supply the frozen source `PlayerOrder`; the pair and consumed
+consent retain that exact order separately from sorted consent membership.
+A retry cannot swap the slots. `GetForParticipantsAsync` reads the validated
+source snapshot by participant set without replacing its original order.
 Concurrent reservation retries return that same identity. A retry after pair
 release or consent-window expiry does not recreate a battle. Cancellation
 before reservation prevents publication; after reservation, it observes
@@ -122,7 +126,31 @@ single-party consent, outsider rejection, busy/expired requests, exhausted
 revision rejection and replay after release. Its source result comes from a
 controlled real MatchEngine fixture, not a normal Unity rematch session.
 
-No HTTP allocation route calls this primitive yet. Current-loadout validation,
-original map/mode and player-slot preservation, Worker provisioning, fresh
-grants, post-reservation recovery and Unity controller handoff remain open.
+No HTTP allocation route calls this primitive yet. Production orchestration of
+current-loadout validation and original map/mode/player-slot preservation,
+Worker provisioning, fresh grants, post-reservation recovery and Unity
+controller handoff remain open.
 No wallet or Dog Tag transition is implemented by this reservation layer.
+
+## Source-bound manifest refresh foundation
+
+`BattleManifestFactory.CreateRematchAsync` parses the frozen source manifest
+and requires its canonical digest to match the supplied accepted-result hash.
+Its caller must obtain that hash from accepted terminal authority. The method
+requires a new match ID, preserves source map/mode, participant order, placement
+and scene master, and replaces weapon selections, card allocations and profile
+presentations by querying current durable stores. Existing participant rank
+fields refresh from those current presentations. The old snapshot is unchanged.
+
+The source must still use the configured host and weapon catalog. A manifest
+containing army/perk projections, shield levels or a PvP Gold-bonus admission
+counter is rejected until those current projections can be rebuilt; none is
+silently copied as current authority. This does not prove every loadout or mode
+is supported, and the method is not connected to an HTTP allocation route yet.
+
+`--rematch-manifest-only <mongo-uri>` checks real Mongo-backed equipment/rank
+changes between rounds, reversed consent membership versus original slot
+order, a second-slot scene master, original snapshot immutability and rejection
+of mismatched source hashes, reused match IDs and stale shield authority.
+The fixture uses reviewed rifle content and controlled account documents;
+it is not Worker registration, full menu or same-opponent Unity gameplay proof.

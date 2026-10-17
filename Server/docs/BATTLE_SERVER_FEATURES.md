@@ -27,6 +27,12 @@ the exact two participants once, with cancel/reserve fencing and stable replay
 after pair release. Real Mongo change streams prove both writes share one
 transaction. Production allocator invocation, mode/loadout validation and
 Worker provisioning are not connected yet.
+The source-bound rematch manifest builder now preserves map/mode, ordered
+player slots and the actual scene master while reading current weapon/profile
+and card-allocation stores. Source hash/identity and stale shield/army/bonus
+authority fail closed. Ordered reservation binding and Mongo-backed upgrade
+refresh checks exist; this builder still needs production allocation/Worker
+and Unity controller integration.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

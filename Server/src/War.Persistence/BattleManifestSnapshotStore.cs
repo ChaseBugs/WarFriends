@@ -50,6 +50,24 @@ public sealed class BattleManifestSnapshotStore
         return row==null?null:Validate(row,matchId,players);
     }
 
+    /// <summary>Checks participant membership while retaining the source manifest's original slot order.</summary>
+    public async Task<byte[]?> GetForParticipantsAsync(
+        string matchId, IReadOnlyList<string> participants, CancellationToken cancellationToken)
+    {
+        ValidateIdentity(matchId, participants);
+        var row = await snapshots.Find(snapshot => snapshot.Id == matchId).FirstOrDefaultAsync(cancellationToken);
+        if (row == null)
+        {
+            return null;
+        }
+        if (row.Players == null || !row.Players.OrderBy(player => player, StringComparer.Ordinal)
+            .SequenceEqual(participants.OrderBy(player => player, StringComparer.Ordinal)))
+        {
+            throw new InvalidDataException("Rematch participants differ from the source manifest roster.");
+        }
+        return Validate(row, matchId, row.Players);
+    }
+
     public static byte[] Validate(BattleManifestSnapshotDocument document,string matchId,IReadOnlyList<string> players)
     {
         ValidateIdentity(matchId,players);

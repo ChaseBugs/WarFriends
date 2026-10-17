@@ -12,6 +12,7 @@ public sealed partial class BattleRematchConsentStore
         BattleRematchReservation request, CancellationToken cancellationToken)
     {
         ValidateTime(request.ApplicationTime);
+        request = request with { PlayerOrder = request.PlayerOrder?.ToArray() };
         DateTimeOffset now = DateTimeOffset.FromUnixTimeMilliseconds(request.ApplicationTime.ToUnixTimeMilliseconds());
         BattleResultDocument result = await _results.Get(request.SourceMatchId, cancellationToken)
             ?? throw new InvalidDataException("Rematch reservation requires accepted terminal evidence.");
@@ -20,7 +21,12 @@ public sealed partial class BattleRematchConsentStore
             throw new InvalidDataException("Rematch reservation cannot precede terminal acceptance.");
         }
         string[] players = ReadParticipants(result, request.AuthenticatedPlayerId);
-        BattlePairDocument pair = CreateReservedPair(request.CompatibilityKey, players, now);
+        string[] order = request.PlayerOrder?.ToArray() ?? players;
+        if (!order.OrderBy(player => player, StringComparer.Ordinal).SequenceEqual(players))
+        {
+            throw new InvalidDataException("Rematch source order differs from accepted participants.");
+        }
+        BattlePairDocument pair = CreateReservedPair(request.CompatibilityKey, order, now);
         using IClientSessionHandle session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
         try
         {
@@ -31,7 +37,8 @@ public sealed partial class BattleRematchConsentStore
                 Validate(current, result, players, now);
                 if (current.Status == Allocated)
                 {
-                    if (current.NextCompatibilityKey != request.CompatibilityKey)
+                    if (current.NextCompatibilityKey != request.CompatibilityKey ||
+                        !current.NextPlayers.SequenceEqual(order))
                     {
                         throw new InvalidDataException("Reservation replay changed the server compatibility policy.");
                     }
@@ -77,6 +84,7 @@ public sealed partial class BattleRematchConsentStore
         consent.Status = Allocated;
         consent.NextMatchId = pair.MatchId;
         consent.NextCompatibilityKey = pair.CompatibilityKey;
+        consent.NextPlayers = pair.Players.ToArray();
         consent.UpdatedUtc = pair.CreatedUtc;
         consent.Revision = NextRevision(previousRevision);
         ReplaceOneResult replaced = await _consents.ReplaceOneAsync(session,
