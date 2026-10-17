@@ -105,8 +105,8 @@ match/roster tuple to cancellation; it never interprets it as a new match.
 
 ## Required remaining integration
 
-- Exercise scoped requests across real Backend process restart and the full
-  two-Unity-client gameplay path, including Android and Linux runtime coverage.
+- Exercise the full two-Unity-client gameplay path, including Android and Linux
+  runtime coverage, and crashes while requests/registration are still in flight.
 - Coordinate cancellation intent with registration before a frozen manifest is
   available. A missing manifest or unavailable Worker still requires retry;
   the existing control flow does not yet guarantee a completed early pair cancel.
@@ -168,3 +168,34 @@ normal recovered login/menu flow. Separate service tests cover real allocator
 fencing. Native results come from a disposable Unity 2018.3 project, not a Unity
 5.2/Android/Linux or rendered/audible gameplay claim. Static asset audits retain
 zero missing scripts/broken references and the same 17 preexisting sprite mismatches.
+
+## Actual Backend process restart evidence
+
+`--queue-live` now stops the real Backend process and starts a new process on the
+same port/database/key configuration at three stable checkpoints:
+
+1. An early cancellation receipt exists and another attempt has a waiting ticket.
+   The cancelled credential still cannot join, while the original waiting scope
+   remains usable after restart.
+2. A scoped pair has registered with the running Worker and fetched a grant.
+   Scoped SDK search after restart returns a protobuf-equal grant, preserving
+   match/manifest identity, player views, session ID/key, expiry and signed ticket.
+   An old or unscoped cancellation cannot select this pair.
+3. The first pair was cancelled and a new attempt has a replacement ticket.
+   After restart an old cancellation leaves the replacement alive, which pairs
+   under a distinct match ID. Old cancellation still cannot capture that pair;
+   its actual owner can cancel it through Worker terminal acceptance.
+
+The fixture snapshots the complete sorted BSON documents in `battle_queue_tickets`,
+`battle_pairs` and `battle_queue_attempts` immediately before stopping Backend and
+again after readiness, before further queue calls. Every document, revision and
+deadline must remain equal. Snapshots are bounded and never printed. Each restart
+uses an actual stop/wait/start lifecycle, not a new store object or a health-check
+proxy; the same existing SDK clients and credentials are reused.
+
+This passes with native Windows Backend/Worker processes and a disposable Mongo
+replica set. The test intentionally restarts at completed durable checkpoints;
+it does not claim crashes during an in-flight transaction, an absent frozen
+manifest, complete Unity UI boot or Linux execution. Production behavior did not
+need a change for this gate. Standard protocol and smoke regressions remain
+separate from this actual restart scenario.

@@ -16,7 +16,8 @@ pairs to attempts and write cancellation receipts transactionally. Real Mongo
 races and Backend/Worker HTTP checks cover old-request isolation. Normal Unity
 now preserves one issued credential through search and cancellation retries;
 updated portable binaries, native cancellation Play Mode and HTTP-to-Worker
-admission pass. Full recovered UI and actual two-Unity-client proof remain open.
+admission pass. Three actual Backend restarts now preserve complete durable queue
+ownership and exact grants, including stale cancellation after replacement. Full recovered UI and actual two-Unity-client proof remain open.
 
 Paired cancellation now captures the exact allocator pair inside its decision
 transaction. A signed, manifest-bound targeted Worker result lookup can retrieve

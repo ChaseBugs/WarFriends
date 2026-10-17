@@ -122,3 +122,5 @@ Server/src/War.Persistence/BattleMatchQueueStore.AttemptReceipts.cs text eol=lf
 Server/tests/War.Battle.Tests/QueueAttemptStoreTests.cs text eol=lf
 Server/tests/War.Battle.Tests/ScopedQueueLiveChecks.cs text eol=lf
 Server/tests/War.Protocol.Tests/QueueAttemptWireTests.cs text eol=lf
+
+Server/tests/War.Battle.Tests/BattleQueueOwnershipSnapshot.cs text eol=lf

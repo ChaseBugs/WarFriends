@@ -105,7 +105,9 @@ for scoped HTTP/SDK search and cleanup, as detailed in
 [queue attempt fencing](QUEUE_ATTEMPT_FENCING.md). Its updated SDK/protobuf plugin
 binaries, native cancellation Play Mode and HTTP-to-UDP admission checks pass.
 Actual Mongo allocator fencing has separate service tests. Full recovered UI
-boot and scoped ownership across a real Backend process restart still need proof.
+boot still needs proof. Scoped ownership and exact grants now survive three
+actual Backend process restarts in the real HTTP/Mongo/Worker queue fixture;
+crashes during in-flight registration/cancellation remain a separate boundary.
 The server now cancels a registered prestart pair through hash-bound Worker
 control and accepts its validated terminal result before releasing both players.
 The Client accepts the resulting `cancelled` response; running or unavailable

@@ -355,7 +355,17 @@ internal static class BackendQueueLiveTests
                 throw new Exception("Legacy fixture pair could not release before scoped queue checks.");
             }
 
-            await ScopedQueueLiveChecks.RunAsync(left, right, tokens, deadline.Token);
+            var scopedScenario = new ScopedQueueLiveChecks.Scenario(left, right, tokens, deadline.Token);
+            await ScopedQueueLiveChecks.RunAsync(scopedScenario, async () =>
+            {
+                var ownership = await BattleQueueOwnershipSnapshot.CaptureAsync(
+                    mongo.GetDatabase(database), deadline.Token);
+                Stop(backend);
+                backend = null;
+                backend = Start(backendDll, run, "ScopedBackendRestart-" + Guid.NewGuid().ToString("N"), backendEnvironment);
+                await Ready(backendUrl + "health/ready", backend);
+                await ownership.VerifyUnchangedAsync(mongo.GetDatabase(database), deadline.Token);
+            });
             Console.WriteLine("PASS: deferred pair, stable grants, terminal revocation, Worker crash recovery and rematch");
         }
         finally
