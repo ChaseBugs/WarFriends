@@ -184,8 +184,6 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 
 	private FlurryService mFlurryService;
 
-	private AwsEvents mAwsEvents;
-
 	private string mIdfa;
 
 	private string mAdZone;
@@ -272,10 +270,7 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 
 	public void RegisterAwsAnalyticsInApp(string produktId, double price, string formatedPrice, string transactionId, string currencyCode)
 	{
-		if (mAwsEvents != null)
-		{
-			mAwsEvents.RegisterInApp(produktId, price, formatedPrice, transactionId, currencyCode);
-		}
+        // Retain the purchase callback contract without sending data to retired AWS analytics.
 	}
 
 	public void RegisterKochavaInApp(string packId, float price, string type, string currency)
@@ -304,17 +299,12 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 	{
 		base.Start();
 		mFlurryService.Init();
-		mAwsEvents = new AwsEvents(base.gameObject);
 	}
 
 	private void RegisterEvent(string eventName, string parameterName, string parameterValue, Hashtable table)
 	{
 		fuseboxxService.RegisterEvent(eventName, parameterName, parameterValue, table);
 		mFlurryService.RegisterEvent(eventName, parameterName, parameterValue);
-		if (mAwsEvents != null)
-		{
-			mAwsEvents.RegisterEvent(eventName, parameterName, parameterValue, table);
-		}
 	}
 
 	private void OnLevelUp()
@@ -1940,15 +1930,6 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 	public void RegisterPartsGainedFromScraps(string unitId, int parts)
 	{
 		RegisterEvent("PartssGainedScraps", "UnitID", unitId, new Hashtable { { "Parts", parts } });
-	}
-
-	private void OnApplicationFocus(bool focus)
-	{
-		Debug.LogFormat("Application focus changed to {0} and have created AWS mobile analytics {1}", focus, mAwsEvents != null);
-		if (mAwsEvents != null)
-		{
-			mAwsEvents.ChangeFocuse(focus);
-		}
 	}
 
 	public void LoginToFacebook()

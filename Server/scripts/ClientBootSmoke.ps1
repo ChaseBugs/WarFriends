@@ -1,0 +1,117 @@
+# Runs the recovered Splash-to-MainScene chain against an isolated native Backend.
+param(
+    [Parameter(Mandatory = $true)][string]$UnityExecutable,
+    [Parameter(Mandatory = $true)][string]$UnityProject,
+    [string]$MongoExecutable = 'mongod'
+)
+$ErrorActionPreference = 'Stop'
+$serverRoot = Split-Path $PSScriptRoot -Parent
+$projectPath = (Resolve-Path -LiteralPath $UnityProject).Path
+$validationRoot = [IO.Path]::GetFullPath((Join-Path $serverRoot '.local')) + [IO.Path]::DirectorySeparatorChar
+if (!$projectPath.StartsWith($validationRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Use a disposable Unity project under Server/.local.'
+}
+$editorFolder = Join-Path $projectPath 'Assets/Editor'
+New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalClientBootAudit.cs') -Destination $editorFolder
+$runRoot = Join-Path $validationRoot ('client-boot-' + [Guid]::NewGuid().ToString('N'))
+$mongoPath = Join-Path $runRoot 'mongo'
+New-Item -ItemType Directory -Path $mongoPath -Force | Out-Null
+$processes = @()
+$variables = @(
+    'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
+    'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
+    'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT'
+)
+$prior = @{}
+foreach ($name in $variables) {
+    $prior[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+}
+function Get-FreePort {
+    $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
+    $listener.Start()
+    try { return $listener.LocalEndpoint.Port }
+    finally { $listener.Stop() }
+}
+function New-SigningKey {
+    $bytes = New-Object byte[] 32
+    $generator = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $generator.GetBytes($bytes) }
+    finally { $generator.Dispose() }
+    return [Convert]::ToBase64String($bytes)
+}
+try {
+    dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') -c Release --no-restore --nologo -v minimal
+    if ($LASTEXITCODE -ne 0) { throw 'Release build failed.' }
+    $mongoPort = Get-FreePort
+    $httpPort = Get-FreePort
+    while ($httpPort -eq $mongoPort) { $httpPort = Get-FreePort }
+    $mongoArguments = @(
+        '--bind_ip', '127.0.0.1', '--port', $mongoPort, '--dbpath', $mongoPath,
+        '--replSet', 'wfClientBoot', '--logpath', (Join-Path $runRoot 'mongo.log'), '--logappend'
+    )
+    $mongo = Start-Process $MongoExecutable -ArgumentList $mongoArguments -WindowStyle Hidden -PassThru
+    $processes += $mongo
+    $testDll = Join-Path $serverRoot 'tests/War.Battle.Tests/bin/Release/net10.0/War.Battle.Tests.dll'
+    dotnet $testDll --init-mongo-replica-set "mongodb://127.0.0.1:$mongoPort/?directConnection=true" `
+        wfClientBoot "127.0.0.1:$mongoPort"
+    if ($LASTEXITCODE -ne 0) { throw 'Mongo initialization failed.' }
+    $env:ASPNETCORE_ENVIRONMENT = 'Development'
+    $env:ASPNETCORE_URLS = "http://127.0.0.1:$httpPort"
+    $env:Mongo__Uri = "mongodb://127.0.0.1:$mongoPort/?replicaSet=wfClientBoot"
+    $env:Mongo__Database = 'war_client_boot_' + [Guid]::NewGuid().ToString('N')
+    $env:Battle__SigningKey = New-SigningKey
+    $env:Battle__ControlKey = New-SigningKey
+    $env:Legacy__ContentPath = Join-Path $serverRoot 'content/recovered-battle-content.json'
+    $backendDll = Join-Path $serverRoot 'src/War.Backend/bin/Release/net10.0/War.Backend.dll'
+    $backend = Start-Process dotnet -ArgumentList ('"' + $backendDll + '"') -WindowStyle Hidden -PassThru `
+        -WorkingDirectory (Split-Path $backendDll -Parent) `
+        -RedirectStandardOutput (Join-Path $runRoot 'Backend.log') `
+        -RedirectStandardError (Join-Path $runRoot 'Backend.error.log')
+    $processes += $backend
+    $ready = $false
+    for ($attempt = 0; $attempt -lt 100; $attempt++) {
+        if ($backend.HasExited) { throw "Backend exited; inspect $runRoot" }
+        try {
+            $null = Invoke-WebRequest "http://127.0.0.1:$httpPort/health/ready" -UseBasicParsing -TimeoutSec 1
+            $ready = $true
+            break
+        }
+        catch { Start-Sleep -Milliseconds 200 }
+    }
+    if (!$ready) { throw "Backend readiness timed out; inspect $runRoot" }
+    $env:WARFRIENDS_BACKEND_URL = "http://127.0.0.1:$httpPort/"
+    $env:WAR_LOBBY_BOOT_REQUIRE_ACCOUNT = '1'
+    $reportPath = Join-Path $projectPath 'normal-client-boot.json'
+    if (Test-Path -LiteralPath $reportPath) { Remove-Item -LiteralPath $reportPath }
+    $unityArguments = @(
+        '-batchmode', '-nographics', '-noUpm', '-projectPath', ('"' + $projectPath + '"'),
+        '-executeMethod', 'UnityNormalClientBootAudit.Run', '-logFile', ('"' + (Join-Path $runRoot 'Unity.log') + '"')
+    )
+    $editor = Start-Process $UnityExecutable -ArgumentList $unityArguments -WindowStyle Hidden -PassThru
+    $processes += $editor
+    if (!$editor.WaitForExit(150000)) { throw "Owned Editor timed out; inspect $runRoot" }
+    if (Test-Path -LiteralPath $reportPath) {
+        Copy-Item -LiteralPath $reportPath -Destination (Join-Path $runRoot 'report.json')
+    }
+    if ($editor.ExitCode -ne 0) { throw "Actual Client account boot failed; inspect $runRoot" }
+    $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+    if (!$report.mainSceneLoaded -or !$report.accountDataReady -or !$report.playerNetworkReady -or
+        $report.recoveredUnitRows -le 0 -or $report.exceptions -ne 0) {
+        throw "Client readiness evidence is incomplete; inspect $runRoot"
+    }
+    Write-Output "PASS: actual isolated Client account/unit initialization boundary; $runRoot"
+}
+finally {
+    [array]::Reverse($processes)
+    foreach ($process in $processes) {
+        if (!$process.HasExited) {
+            Stop-Process -Id $process.Id
+            $process.WaitForExit(5000) | Out-Null
+        }
+        $process.Dispose()
+    }
+    foreach ($name in $variables) {
+        [Environment]::SetEnvironmentVariable($name, $prior[$name], 'Process')
+    }
+}
