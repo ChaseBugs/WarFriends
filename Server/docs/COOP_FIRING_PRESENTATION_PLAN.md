@@ -197,5 +197,6 @@ to the existing presenter. The subsequent
 [confirmed-frame increment](COOP_ANIMATION_FRAMES.md) adds protobuf/SDK views
 and the fixed-root corner-fire connection. The subsequent
 [return projection](COOP_CORNER_RETURN_FRAMES.md) preserves measured return
-and idle blends. Preparation, interruption,
-current-round boundaries and obstacle fire still need complete host projection.
+and idle blends. [Retained preparation](COOP_CORNER_PREPARATION.md) now captures
+idle/look/fire/return before each attempt and preserves its source phase.
+Current-round boundaries and obstacle fire still need complete host projection.

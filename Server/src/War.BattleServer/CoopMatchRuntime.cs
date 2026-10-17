@@ -67,6 +67,7 @@ internal sealed record CoopInfantryShotWindup(
     internal bool TargetWasWalking { get; init; }
     internal bool CallbackAimReady { get; init; }
     internal bool HasNavigationRotationConflict { get; init; }
+    internal CoopCornerPreparationPlan? CornerPreparation { get; init; }
 }
 
 internal sealed record CoopInfantryRoundIntent(
@@ -1452,9 +1453,9 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             {
                 // A new cover volley starts its own round sequence. Its
                 // projectile IDs remain unique across the whole match.
+                CoopInfantryShotWindup nextWindup = CreateInfantryShotWindup(arrival, placedTarget, batch);
                 infantryRoundIntents.Remove(entityId);
-                infantryShotWindups[entityId] =
-                    CreateInfantryShotWindup(arrival, placedTarget, batch);
+                infantryShotWindups[entityId] = nextWindup;
                 BeginObstacleRootTween(entityId, infantryShotWindups[entityId]);
             }
             stateRevision++;
@@ -1639,6 +1640,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             assaulterWeapon.CadenceSeconds)
         {
             TargetWasWalking = participants[target.PlayerId].Route != null,
+            CornerPreparation = CaptureCornerPreparation(enemy, arrival, clipName, queuedFireClip),
             // Native agent rotation continues after the source firing tween; a fixed target is not its live root.
             HasNavigationRotationConflict = arrival.State == CoopInfantryPointState.ObstacleHiding &&
                 IsObstacleRepositioning(target.EnemyEntityId)
@@ -1977,6 +1979,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         if (phase != BattlePhase.Running || enemyPoses == null ||
             !infantryShotWindups.TryGetValue(entityId,
                 out CoopInfantryShotWindup? windup) ||
+            windup.CornerPreparation is { UsesFreshLookClock: false } ||
             windup.AnimationClip is not
                 ("player_look_right3" or "player_look_left3") ||
             tick <= windup.StartTick)
@@ -2011,6 +2014,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         if (phase != BattlePhase.Running || enemyPoses == null ||
             !infantryShotWindups.TryGetValue(entityId,
                 out CoopInfantryShotWindup? windup) ||
+            windup.CornerPreparation is { UsesFreshLookClock: false } ||
             windup.AnimationClip is not
                 ("player_look_right3" or "player_look_left3") ||
             tick <= windup.StartTick ||

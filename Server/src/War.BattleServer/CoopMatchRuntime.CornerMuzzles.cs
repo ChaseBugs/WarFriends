@@ -4,7 +4,8 @@ internal sealed partial class CoopMatchRuntime
 {
     private CoopQueuedMuzzleSample? ObserveCornerFiringMuzzle(ulong entityId, CoopInfantryShotWindup windup)
     {
-        if (assaulterQueue == null || enemyMuzzles == null)
+        if (assaulterQueue == null || enemyMuzzles == null ||
+            windup.CornerPreparation is { UsesFreshLookClock: false })
         {
             return null;
         }

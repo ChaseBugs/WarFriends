@@ -1,67 +1,74 @@
-# Initial corner preparation and the remaining interruption state
+# Retained source corner preparation
 
-The host now projects the first accepted preparation at a corner point.
-`EnemyController` enters CornerHiding by stopping the agent and calling Idle.
-The retained first-target tick identifies the first windup at that point;
-later windups cannot silently reuse its zero-based animation clock.
+The host retains the prior corner animation before creating another windup.
+`CreateInfantryShotWindup` now runs before the old round ledger is cleared.
+That ledger determines the previous hide deadline; reading it afterward can
+mistake an active return for completed idle and incorrectly restart look.
 
-## Represented frames
+## Source branch order
 
-The selector requires the existing source uncover/root geometry guard, an
-alive Assaulter, no active path and no navigation rotation conflict. It
-also requires the corner-entry 0.5-second tween to have finished before this
-first attempt, so a remaining prior movement/idle transition is not treated
-as an established fresh starting state. The start tick remains unrepresented.
-The source's 0.02-second fade has completed
-by the first 30 Hz observation, so subsequent initial preparation frames carry
-the side-specific look clip at elapsed host seconds with unit weight and Clamp.
+`CoopCornerPreparationPlan` preserves the recovered private ShotFromCover rules:
 
-Both measured source queues switch to their fire state at elapsed tick 15,
-with fire time zero. The new selector represents that exact boundary instead
-of showing the look end pose. It validates that source look length agrees
-with the reviewed fixed-tick boundary. Later fire frames continue through the
-existing selector. None of this promotes diagnostic geometry into collision,
-projectile or damage authority.
+| Prior source state | New preparation |
+| --- | --- |
+| Matching look already enabled | Retain its sample time. |
+| Matching fire already enabled | Restart fire at zero without a new look. |
+| Matching cover return enabled | Start look at one minus return normalized progress. |
+| Known idle or another side's clips | Start the fresh look/queue path. |
 
-The SDK and runtime sampler already support these reviewed clip identities,
-so no protobuf, SDK binary or Client asset change is required.
+Enabled zero-weight states participate in this order, as in IsPlaying. Prior
+frames require known source identities, finite scalars, reviewed wrapping,
+unique states and conserved weights. Unknown prior state does not become an
+invented fresh look. On first entry, preparation remains closed until the
+source corner-entry tween has settled.
 
-## Why later attempts remain closed
+The plan derives remaining queued-fire ticks from the retained look phase.
+Values close to a reviewed fixed-tick boundary use that boundary; fractional
+remaining durations advance to the next evaluation. The first full look queues
+fire at tick 15. In the measured return interruption, right-side fire starts
+four ticks after the new attempt and left-side fire starts after three.
 
-The recovered private ShotFromCover has different starting-state branches:
-an already playing look is retained; an already playing fire is restarted;
-and a playing return sets look normalized time to `1 - returnNormalizedTime`.
-Only the remaining branch cross-fades a fresh look and queues fire.
+Gameplay callback timing remains the recovered full uncover length plus
+0.05 seconds. A shorter remaining animation does not accelerate emitted rounds.
+Later rounds own fire resets and hide deadlines. Return blending continues
+through the measured return catalog. Snapshot projection and prior-state
+capture share the same timeline reader, with different admission timing:
+capture can read the old state on the tick a new attempt becomes eligible.
 
-The source-method fixture interrupts return at observation 43. At the next
-observation, right-side look time is 0.41794908 seconds and left-side look time
-is 0.4333336 seconds. Both match the reversed normalized phase plus 1/30 second,
-not a new look time of 1/30 second. The source verifier now checks this relation
-as well as the initial queued-fire boundary. Resetting these later attempts
-to the initial preparation clock would misrepresent the Client.
+## Rendering and diagnostic boundary
 
-The next integration must retain the prior source animation before
-`ChooseInfantryTargets` clears `infantryRoundIntents` and replaces the windup.
-That round history owns the prior hide deadline. It must distinguish idle,
-existing look, existing fire and active return, preserve the selected side,
-and carry any nonzero preparation phase into later queue/reset selection.
-Do not shorten the recovered gameplay callback delay merely because an
-interrupted look has less animation remaining.
+The existing protobuf frame and Unity sampler carry the retained time without
+new wire fields or SDK binaries. Root pose must match the host's current corner
+turn clock; active paths, invalid roots, dead/ended actors and navigation
+conflicts remain excluded. Initial tick-zero blending and current-round reset
+evaluation boundaries remain unrepresented.
 
-## Windows verification
+Known retained/reversed/direct-fire plans cannot use the old fresh-look
+uncover/fire hitbox or queued-muzzle diagnostic samples. Those methods return
+no geometry for a non-fresh plan. Visual progression therefore does not promote
+an incorrect collision frame or launch origin into authority. Returning collider
+diagnostics retain their separate provenance and existing unplaced marker.
 
-The combat fixture verifies the first preparation clip/time during root turn,
-the queued-fire boundary, and rejection of an unclassified later preparation.
-The existing 26,368 focused combat assertions and 154 source return checks pass.
-The native adapter audit passes fifteen checks, including protobuf-decoded
-preparation on the reused source rig. Source capture checks validate queue
-start and both reversed-return relations under unchanged strict pose tolerances.
+## Windows evidence
 
-Protocol checks remain at 1,136. The 74 live MongoDB/HTTP/UDP checks and restart
-recovery also pass; their scope does not include public co-op combat admission.
+Seventy-two source/model checks cover both measured initial queues, reversed
+return phases, direct fire resets, retained look and malformed prior frames.
+The live runtime regression advances a trusted eligibility timestamp only in
+the test, reaches a return interruption, and checks capture-before-clear plus
+the resulting nonzero look time and closed fresh-clock geometry. No Client
+request can set that timestamp.
 
-These remain isolated component/source observations. Normal co-op admission,
-validated player-hit routing, later preparation/interruption, current-round
-reset boundaries, obstacle fire and procedural aiming remain open. No normal
-two-Client gameplay, rendered pixels, shipped Unity 5.2, Linux or Android
-execution is claimed.
+The native adapter audit passes seventeen checks, including decoding the actual
+protobuf sample written by the server model and updating the same source actor.
+Run the combat executable first to generate
+`Server/.local/corner-interruption-sample.bin`; set
+`WAR_CORNER_INTERRUPTION_FRAME` to that file and
+`WAR_CORNER_RETURN_ANIMATION_REFERENCE` to the reviewed compact return JSON
+before invoking the disposable Unity audit. This is component/source geometry
+proof, not normal two-Client gameplay or rendered pixels.
+
+The 26,368 combat assertions, 154 return checks, 1,136 protocol checks and 74
+live integration checks plus restart recovery pass. Public co-op admission,
+authoritative player-hit routing, obstacle fire, procedural aiming, unsupported
+transition boundaries and normal complete co-op gameplay remain open. Shipped
+Unity 5.2, Linux and Android execution are not established by these Windows tests.

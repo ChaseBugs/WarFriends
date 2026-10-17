@@ -1591,3 +1591,14 @@ native adapter audit passes fifteen checks. Source verification additionally
 pins both reversed-return timing relations. See
 [initial preparation](COOP_CORNER_PREPARATION.md); normal co-op admission and
 combat authority remain open.
+
+B22 now captures the previous source animation before clearing its round
+ledger and classifies later look/fire/return/idle starting states. Retained
+look and return reversal preserve nonzero time; existing fire restarts without
+an invented preparation. The unchanged gameplay callback delay remains separate
+from the shorter animation queue. Known non-fresh plans cannot use fresh-clock
+hitbox/muzzle diagnostics. Source/model checks pass 72 cases, a live runtime
+capture-before-clear regression passes, and seventeen native checks include
+decoding the actual server-model protobuf reversal. Public admission/combat
+and unsupported evaluation boundaries remain open. See
+[retained preparation](COOP_CORNER_PREPARATION.md).

@@ -964,6 +964,7 @@ internal static class CombatContentTests
         VerifyCoopCornerQueue(directory, content.EnemyPoses,
             content.CoopCornerQueuePoses);
         CoopCornerReturnAnimationTests.Run(directory, content);
+        CoopCornerPreparationPlanTests.Run(directory);
         ArmyDeploymentCatalog army = content.Army;
         CoopAssaulterWeaponCatalog rifle = content.CoopAssaulterWeapon;
         if (rifle.WeaponPrefabGuid !=
@@ -4277,10 +4278,12 @@ internal static class CombatContentTests
                 throw new Exception(
                     "Co-op corner reused idle past its next shot deadline.");
             cornerRuntime.Advance(secondWindup.StartTick + 1);
-            if (cornerRuntime.Snapshot().Coop.EnemySpawns.Single(enemy =>
-                    enemy.EntityId == cornerEnemy.EntityId).InfantryAnimation != null)
+            BattleInfantryAnimationFrame? laterPreparation = cornerRuntime.Snapshot().Coop.EnemySpawns.Single(enemy =>
+                enemy.EntityId == cornerEnemy.EntityId).InfantryAnimation;
+            if (laterPreparation?.Clips[0].ClipName != secondWindup.AnimationClip ||
+                laterPreparation.Clips[0].TimeSeconds != 1f / MatchManifest.TickRate)
             {
-                throw new Exception("A later preparation must not silently reuse the initial source idle clock.");
+                throw new Exception("A later attempt from confirmed idle must retain its captured preparation plan.");
             }
             cornerRuntime.Advance(secondWindup.CallbackTick + 1);
             IReadOnlyList<CoopInfantryRoundIntent> secondVolley =
@@ -4291,6 +4294,8 @@ internal static class CombatContentTests
                 secondVolley[0].ProjectileId <= firstVolley[^1].ProjectileId)
                 throw new Exception(
                     "Co-op corner reused its first volley or projectile identity.");
+            CoopCornerPreparationPlanTests.VerifyRuntimeInterruption(cornerRuntime,
+                cornerEnemy.EntityId, rifle, content.EnemyPoses);
         }
 
         // Flip only the test point's exposed side when needed so this

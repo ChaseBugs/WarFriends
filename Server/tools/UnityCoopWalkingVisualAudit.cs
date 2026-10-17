@@ -101,6 +101,27 @@ public static class UnityCoopWalkingVisualAudit
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, walkingPose[index]) > 0.001f).Any(),
             "A confirmed protobuf fire frame must reuse the actor and replace its walking bone pose.");
         VerifyReturnBlend(client, actor, skin, fire);
+        VerifyInterruptedPreparation(client, actor, skin);
+    }
+
+    private static void VerifyInterruptedPreparation(SelfHostedBattleClient client, GameObject actor,
+        SkinnedMeshRenderer skin)
+    {
+        string path = Environment.GetEnvironmentVariable("WAR_CORNER_INTERRUPTION_FRAME");
+        if (string.IsNullOrEmpty(path))
+        {
+            throw new InvalidOperationException("Set WAR_CORNER_INTERRUPTION_FRAME to the server-model sample.");
+        }
+        BattleInfantryAnimationFrame frame = BattleInfantryAnimationFrame.Parser.ParseFrom(File.ReadAllBytes(path));
+        MatchSnapshot snapshot = client.State.Clone();
+        Require(frame.SampleTick == snapshot.ServerTick && frame.Clips[0].TimeSeconds > 0.4f,
+            "The server model must retain the nonzero interrupted source look phase.");
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation = frame;
+        Quaternion[] before = skin.bones.Select(bone => bone.localRotation).ToArray();
+        Publish(client, snapshot);
+        Require(GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
+            "The actual decoded server-model reversal must reuse the actor and update the source pose.");
     }
 
     private static void VerifyPreparation(SelfHostedBattleClient client, GameObject actor,

@@ -12,15 +12,12 @@ The walking selector now projects both its legacy route epoch and a complete
 frame with run_0, unit weight and Loop wrapping. The frame's unwrapped time
 comes from the same 30 Hz route clock.
 
-The next supported state is the fixed-root corner fire window. The host uses
-the existing diagnostic corner-fire geometry guard, chooses the recovered
-left/right fire clip and samples from queued-fire start or the latest actual
-host round intent. It excludes active paths, navigation rotation conflicts,
-unconfirmed root transforms, unsupported phases and current-round reset ticks. The latter
-occur between source animation evaluations and are not represented yet.
-The [initial preparation selector](COOP_CORNER_PREPARATION.md) represents the
-first accepted windup and its measured queued-fire boundary. Later preparation
-still needs prior-state classification. The subsequent
+The corner timeline now retains the source starting state before each attempt.
+It preserves existing look, restarts existing fire or reverses an active return
+before entering the recovered side-specific queue. Latest host round intents
+then own fire resets. It excludes active paths, navigation conflicts, invalid
+root clocks and current-round reset evaluation boundaries. See
+[retained preparation](COOP_CORNER_PREPARATION.md). The subsequent
 [return-frame catalog](COOP_CORNER_RETURN_FRAMES.md) covers source return,
 cover-to-idle blending and continued idle in the guarded corner window.
 
@@ -60,14 +57,15 @@ focused combat assertions include host walking/frame agreement, source corner
 fire time, death cleanup and the existing unplaced-collision boundary. Terminal
 fixtures reject forged animation frames.
 
-The disposable Unity 2018.3 audit passes thirteen checks, including protobuf
+The disposable Unity 2018.3 audit passes seventeen checks, including protobuf
 encode/decode through the actual adapter, actor reuse and replacement of the
-walking pose by a corner fire sample. It invokes Editor lifecycle callbacks
+walking pose by a corner fire sample, return blending and the actual server
+model's retained reversal sample. It invokes Editor lifecycle callbacks
 explicitly and does not prove rendered pixels, normal bootstrap or automatic
 Play Mode lifecycle. Real MongoDB/HTTP/UDP smoke and restart recovery pass;
 those 74 integration checks do not exercise public co-op combat admission.
 
-Later preparation/interruption projection, current-round transition frames,
+Current-round transition frames,
 obstacle fire, procedural aiming, other families, missed snapshots and normal
 two-Client co-op remain open. Worker co-op admission and validated player-hit
 routing remain closed. This checkpoint does not open reward or damage gates,

@@ -164,10 +164,10 @@ Solo campaign can retain the Client's local AI simulation. It uses offline Photo
 
 The latest co-op presentation checkpoint adds protobuf infantry animation
 frames, immutable SDK validation and the actual Unity runtime sampler path.
-Host walking, initial corner preparation, fixed-root corner fire and measured return/idle blends are
+Host walking, retained corner preparation, corner fire and measured return/idle blends are
 represented; unsupported source transition gaps remain hidden. Windows
 verification passes 1,136 protocol, 26,368 focused combat plus 154 return
-source/integrity checks, fifteen native adapter/presentation and 74 live
+source/integrity checks, 72 retained-state checks, seventeen native adapter/presentation and 74 live
 integration checks plus restart recovery. These checks do not establish
 public co-op admission, authoritative player-hit routing or normal two-Client
 co-op gameplay. See [confirmed animation frames](COOP_ANIMATION_FRAMES.md).
@@ -176,7 +176,7 @@ The compact source-method return artifact is mandatory combat content and is
 revision-pinned at startup. See [return frames](COOP_CORNER_RETURN_FRAMES.md)
 for reproducible extraction, deployment and the unchanged collision boundary.
 
-The first accepted corner preparation uses its retained point/target clock
-only after source corner entry settles. Later attempts still need prior-state
-classification; they are not reset to the first preparation clock. See
-[initial preparation](COOP_CORNER_PREPARATION.md).
+Corner preparation captures prior state before the previous round ledger is
+cleared, preserving existing look, restarting fire and reversing return as
+the recovered Client does. Non-fresh plans cannot reuse fresh-clock hitbox
+or muzzle diagnostics. See [retained preparation](COOP_CORNER_PREPARATION.md).
