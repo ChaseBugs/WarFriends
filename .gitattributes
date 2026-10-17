@@ -149,3 +149,5 @@ Server/tests/War.Battle.Tests/DelayedGrantPublicationChecks.cs text eol=lf
 Server/docs/DELAYED_GRANT_PUBLICATION.md text eol=lf
 Server/src/War.Persistence/BattleResultStore.PairAcceptance.cs text eol=lf
 Server/tests/War.Battle.Tests/AtomicTerminalAcceptanceTests.cs text eol=lf
+Server/tests/War.Battle.Tests/TerminalGrantRaceTests.cs text eol=lf
+Server/docs/TERMINAL_GRANT_ORDERING.md text eol=lf

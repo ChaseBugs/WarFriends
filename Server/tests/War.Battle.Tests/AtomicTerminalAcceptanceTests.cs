@@ -41,6 +41,7 @@ internal static class AtomicTerminalAcceptanceTests
             Require(replay.All(code => code == "already-accepted") &&
                 await queue.ForMatch(manifest.MatchId, deadline.Token) == null,
                 "Concurrent exact replay must preserve the result without recreating the allocation.");
+            await TerminalGrantRaceTests.RunAsync(uri, databaseName, deadline.Token);
             Console.WriteLine("PASS: terminal insertion and pair removal share one Mongo transaction; " +
                 "concurrent replay is stable");
         }
@@ -50,7 +51,7 @@ internal static class AtomicTerminalAcceptanceTests
         }
     }
 
-    private static async Task<MatchManifest> CreatePairAsync(
+    internal static async Task<MatchManifest> CreatePairAsync(
         BattleMatchQueueStore queue, CancellationToken cancellationToken)
     {
         string first = Guid.NewGuid().ToString("N");
@@ -66,7 +67,7 @@ internal static class AtomicTerminalAcceptanceTests
             pair.Players!.Select(player => new ParticipantManifest(player, weapon)).ToArray());
     }
 
-    private static byte[] FinishBattle(MatchManifest manifest)
+    internal static byte[] FinishBattle(MatchManifest manifest)
     {
         var battle = new MatchEngine(manifest);
         foreach (var player in manifest.Players)

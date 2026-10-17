@@ -18,6 +18,12 @@ transaction, verified through actual Mongo change-stream transaction identity
 and concurrent exact replay. Forced database interleavings and complete gameplay
 proof remain open.
 
+[Terminal/grant ordering](TERMINAL_GRANT_ORDERING.md) adds deterministic
+grant-first and terminal-first storage cases plus twelve overlapping dispatches.
+Committed Mongo logical timestamps must place any retained grant before its
+terminal result. This supplements atomic publication/replay checks without
+claiming full HTTP/UDP or two-Unity-client gameplay coverage.
+
 [Actual HTTP/UDP cancellation](LIVE_PRESTART_CANCELLATION_RACES.md) now covers
 late Ready after cancellation, concurrent ready/cancel dispatch and Running-first
 refusal. It reproduced and fixed SDK handling of a valid unconsumed terminal
