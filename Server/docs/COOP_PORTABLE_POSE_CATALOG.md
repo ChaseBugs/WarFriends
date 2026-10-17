@@ -47,3 +47,24 @@ including weapon attachments, validate the complete sample before mutation, and
 verify source-equivalent local transforms. Then connect host history selection
 and the production presenter, with repeated-interruption and normal gameplay
 proof. Public co-op admission remains closed during this work.
+
+## Production visual topology checkpoint
+
+The visual factory now offers an explicit inventory-weapon overload. It copies
+only transforms and static mesh renderers to the selected left/right attachment.
+It follows recovered `SoldierParts.AttachWeapons`: zero local translation,
+prefab rotation, unit local scale. Construction stays inactive and a rejected
+attachment destroys the partially built actor. Existing body-only callers retain
+their previous behavior; no weapon is guessed from a behavior name or pose ID.
+
+A native Unity 2018.3 audit uses the production factory, recovered enemy prefab,
+real Assaulter style and source AssaultRifleEnemy prefab. The resulting rig has
+59 transforms including its root, matches every one of the catalog's 58 indexed
+path/name identities, and has no MonoBehaviour, Collider or Rigidbody components.
+It also checks the rifle's local attachment pose and static renderer count.
+The existing 24-check production visual adapter audit still passes. Static
+asset audits report zero missing scripts, zero broken references and the same
+17 pre-existing atlas sprite mismatches.
+This establishes a supported binding candidate, not pose correction parity.
+The normal presenter still needs source-backed inventory selection before using
+this overload, and other weapons/styles require their own compatibility checks.

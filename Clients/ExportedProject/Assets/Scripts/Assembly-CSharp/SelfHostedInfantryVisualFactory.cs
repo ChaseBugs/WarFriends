@@ -13,6 +13,16 @@ public static class SelfHostedInfantryVisualFactory
     public static SelfHostedInfantryVisual Create(EnemyController source,
         SoldierMeshChanger.SoldierStyle style, string rootName)
     {
+        return Create(source, style, null, rootName);
+    }
+
+    /// <summary>Copies an explicitly selected inventory weapon without starting its gameplay components.</summary>
+    public static SelfHostedInfantryVisual Create(
+        EnemyController source,
+        SoldierMeshChanger.SoldierStyle style,
+        EnemyBasicInventory.InventoryWeapon selectedWeapon,
+        string rootName)
+    {
         ValidateSource(source, style, rootName);
         var root = new GameObject(rootName);
         root.SetActive(false);
@@ -22,6 +32,10 @@ public static class SelfHostedInfantryVisualFactory
             rig.transform.SetParent(root.transform, false);
             var copies = new Dictionary<Transform, Transform>();
             SelfHostedVisualHierarchy.CopyRoot(source.transform, rig.transform, copies);
+            if (selectedWeapon != null)
+            {
+                CopyWeapon(source, selectedWeapon, copies);
+            }
             SkinnedMeshRenderer body = CopyBody(source.meshChanger.skinnedMeshRenderer, style, copies);
             CopyHelmets(source.meshChanger.helmet, style, copies);
             Animation animation = source.GetComponentInChildren<Animation>(true);
@@ -46,6 +60,34 @@ public static class SelfHostedInfantryVisualFactory
 
             throw;
         }
+    }
+
+    private static void CopyWeapon(
+        EnemyController source,
+        EnemyBasicInventory.InventoryWeapon selectedWeapon,
+        Dictionary<Transform, Transform> copies)
+    {
+        SoldierParts parts = source.GetComponentInChildren<SoldierParts>(true);
+        if (parts == null || selectedWeapon.weapon == null)
+        {
+            throw new InvalidOperationException("A selected source weapon and infantry attachment are required.");
+        }
+
+        Transform attachment = selectedWeapon.leftHand ? parts.gunSnapPointNotScaledLeft : parts.gunSnapPointNotScaled;
+        Transform destination;
+        if (attachment == null || !copies.TryGetValue(attachment, out destination))
+        {
+            throw new InvalidOperationException("The selected weapon attachment is outside the copied source rig.");
+        }
+
+        Transform weapon = selectedWeapon.weapon.transform;
+        var weaponRoot = new GameObject(weapon.name);
+        weaponRoot.transform.SetParent(destination, false);
+        SelfHostedVisualHierarchy.CopyRoot(weapon, weaponRoot.transform, new Dictionary<Transform, Transform>());
+        // SoldierParts.AttachWeapons keeps prefab rotation but resets attachment translation and scale.
+        weaponRoot.transform.localPosition = Vector3.zero;
+        weaponRoot.transform.localRotation = weapon.localRotation;
+        weaponRoot.transform.localScale = Vector3.one;
     }
 
     private static void ValidateSource(EnemyController source, SoldierMeshChanger.SoldierStyle style, string rootName)
