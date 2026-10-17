@@ -8,6 +8,12 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Abort scene recovery](ABORT_SCENE_RECOVERY.md) identifies the source Forfeit,
+co-op dog-tag and Photon Chat side effects that prevent reuse of generic stop
+methods. The map loader now retains its real native operation for progress and
+draining after its enumerator stops. Aborted controller/menu integration remains
+open; retaining the operation does not complete that feature.
+
 [Terminal room replay](TERMINAL_ROOM_REPLAY.md) fixes repeated frozen Ended/Aborted
 snapshots throwing before Unity state callbacks. Exact replay stays closed,
 changed evidence cannot reopen the room, and disposal still rejects delivery.

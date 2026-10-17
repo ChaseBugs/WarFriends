@@ -49,7 +49,7 @@ public class MapManager : Singleton<MapManager>
 
 	public List<MapEntry> mapEntries;
 
-	private AsyncOperation async;
+    private AsyncOperation _sceneLoadOperation;
 
 	private MapEntry mCurrentMap;
 
@@ -92,7 +92,8 @@ public class MapManager : Singleton<MapManager>
 		}
 	}
 
-	public float loadProgress => async.progress;
+    /// <summary>Gets native scene load progress, or zero before the first operation starts.</summary>
+    public float loadProgress => _sceneLoadOperation == null ? 0f : _sceneLoadOperation.progress;
 
 	public List<MapEntry> mapUnlocks
 	{
@@ -229,9 +230,9 @@ public class MapManager : Singleton<MapManager>
 				UnityEngine.Object.Destroy(currentMapDef.gameObject);
 			}
 			Application.backgroundLoadingPriority = ThreadPriority.High;
-			AsyncOperation async = Application.LoadLevelAsync(mapEntry.sceneName);
-			async.allowSceneActivation = true;
-			yield return async;
+            _sceneLoadOperation = Application.LoadLevelAsync(mapEntry.sceneName);
+            _sceneLoadOperation.allowSceneActivation = true;
+            yield return _sceneLoadOperation;
 			Debug.Log("GetCurrentMapDefinition");
 			GetCurrentMapDefinition();
 		}
@@ -242,6 +243,17 @@ public class MapManager : Singleton<MapManager>
 		Debug.Log("Map Loaded");
 		yield return null;
 	}
+
+    /// <summary>Waits for an already issued native scene load before abort recovery releases level resources.</summary>
+    public IEnumerator WaitForSceneLoadRoutine()
+    {
+        // Stopping the loading coroutine does not cancel Unity's native scene operation.
+        AsyncOperation pendingLoad = _sceneLoadOperation;
+        if (pendingLoad != null && !pendingLoad.isDone)
+        {
+            yield return pendingLoad;
+        }
+    }
 
 	public void ResyncShields()
 	{
