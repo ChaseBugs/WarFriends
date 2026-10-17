@@ -1470,3 +1470,12 @@ Connection close alone retains the last confirmed result view. Native coverage
 adds these transitions, while the actual role/Score runtime fixtures compile
 and call the exact Unity helper. Rendered UI and normal co-op admission remain
 open; these checks do not establish full moving combat or settlement.
+
+B22/B32 now have real MainScene NGUI output proof for Kill, Survive, Score and
+Boss visibility/time: fourteen checks use the serialized labels/sprite and
+recovered English/source mission rows. Eight separate isolated Play Mode
+checks use Unity's actual source HUD Update scheduling, observe a later host
+state and verify the countdown remains frozen while only local time advances.
+These are component/frame checks, not rendered pixels, normal bootstrap,
+all-mission or two-Client gameplay proof. See
+[scene and frame validation](COOP_HUD_SCENE_VALIDATION.md).
