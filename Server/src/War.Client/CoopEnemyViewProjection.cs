@@ -21,8 +21,21 @@ namespace War.Client
         };
 
         /// <summary>Returns an isolated read-only view; rejected rows publish no partial roster.</summary>
-        public static IReadOnlyList<CoopEnemyViewState> FromSnapshot(MatchSnapshot snapshot, string localPlayerId)
+        public static IReadOnlyList<CoopEnemyViewState> FromSnapshot(
+            MatchSnapshot snapshot, string localPlayerId)
         {
+            return FromSnapshot(snapshot, localPlayerId, string.Empty);
+        }
+
+        /// <summary>Accepts observed references only for the caller's explicitly negotiated renderer revision.</summary>
+        public static IReadOnlyList<CoopEnemyViewState> FromSnapshot(
+            MatchSnapshot snapshot, string localPlayerId, string observedPoseCatalogRevision)
+        {
+            if (observedPoseCatalogRevision == null || (observedPoseCatalogRevision.Length != 0 &&
+                observedPoseCatalogRevision != ObservedInfantryPoseCatalogData.BuiltIn.Revision))
+            {
+                throw new InvalidDataException("Enemy presentation has no matching installed pose catalog.");
+            }
             CoopOutcomeProjection.ForPlayer(snapshot, localPlayerId);
             if (string.IsNullOrEmpty(snapshot.MatchId) || string.IsNullOrEmpty(snapshot.ManifestHash) ||
                 (!snapshot.Coop.Started && snapshot.Coop.EnemySpawns.Count != 0))
@@ -38,7 +51,8 @@ namespace War.Client
                 ValidateVitality(enemy, snapshot.ServerTick);
                 ValidatePose(enemy, snapshot.ServerTick);
                 ValidateAnimation(enemy, snapshot.ServerTick, snapshot.Phase);
-                InfantryAnimationFrameView animation = InfantryAnimationFrameView.FromEnemy(enemy, snapshot);
+                InfantryAnimationFrameView animation = InfantryAnimationFrameView.FromEnemy(
+                    enemy, snapshot, observedPoseCatalogRevision);
                 views.Add(new CoopEnemyViewState(enemy, animation));
                 expectedId++;
             }

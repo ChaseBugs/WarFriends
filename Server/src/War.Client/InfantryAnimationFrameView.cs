@@ -29,15 +29,22 @@ namespace War.Client
                 { "player_left_coverBack3", BattleInfantryAnimationWrap.Clamp }
             };
 
+        private readonly BattleInfantryObservedPoseReference _observedPose;
+
         /// <summary>Gets the host observation tick, independently of the last root movement tick.</summary>
         public ulong SampleTick { get; }
 
         /// <summary>Gets the isolated read-only collection of source samples.</summary>
         public IReadOnlyList<InfantryAnimationClipView> Clips { get; }
 
+        /// <summary>Gets an isolated reference to a validated local catalog sample, or null for clip-only frames.</summary>
+        public BattleInfantryObservedPoseReference ObservedPose =>
+            _observedPose == null ? null : _observedPose.Clone();
+
         private InfantryAnimationFrameView(BattleInfantryAnimationFrame source)
         {
             SampleTick = source.SampleTick;
+            _observedPose = source.ObservedPose == null ? null : source.ObservedPose.Clone();
             var clips = new List<InfantryAnimationClipView>(source.Clips.Count);
             foreach (BattleInfantryAnimationClip clip in source.Clips)
             {
@@ -47,7 +54,8 @@ namespace War.Client
             Clips = clips.AsReadOnly();
         }
 
-        internal static InfantryAnimationFrameView FromEnemy(BattleCoopEnemySpawn enemy, MatchSnapshot snapshot)
+        internal static InfantryAnimationFrameView FromEnemy(
+            BattleCoopEnemySpawn enemy, MatchSnapshot snapshot, string observedPoseCatalogRevision)
         {
             BattleInfantryAnimationFrame frame = enemy.InfantryAnimation;
             if (frame == null)
@@ -56,19 +64,46 @@ namespace War.Client
             }
             if (snapshot.Phase != BattlePhase.Running || enemy.Behaviour != "Assaulter" || enemy.Health <= 0f ||
                 enemy.CurrentRotation == null || frame.SampleTick != snapshot.ServerTick ||
-                frame.SampleTick < enemy.PoseTick || frame.Clips.Count == 0 || frame.Clips.Count > MaximumBaseStates)
+                frame.SampleTick < enemy.PoseTick || frame.SampleTick < snapshot.StartTick ||
+                frame.Clips.Count == 0 || frame.Clips.Count > MaximumBaseStates)
             {
                 throw new InvalidDataException("Infantry animation requires a live, confirmed source pose and clock.");
             }
 
             if (frame.ObservedPose != null)
             {
-                // Rendering support and capability negotiation must precede normal publication of these references.
-                throw new InvalidDataException("Observed pose references require an installed renderer capability.");
+                ValidateObservedPose(frame, snapshot, observedPoseCatalogRevision);
             }
-            ValidateClips(frame, snapshot);
+            else
+            {
+                ValidateClips(frame, snapshot);
+            }
             ValidateWalkingMirror(frame, enemy);
             return new InfantryAnimationFrameView(frame);
+        }
+
+        private static void ValidateObservedPose(
+            BattleInfantryAnimationFrame frame, MatchSnapshot snapshot, string negotiatedRevision)
+        {
+            if (negotiatedRevision.Length == 0 || frame.ObservedPose.CatalogRevision != negotiatedRevision)
+            {
+                throw new InvalidDataException("Observed pose references require a negotiated renderer capability.");
+            }
+
+            ObservedInfantryPoseSample sample = ObservedInfantryPoseCatalogData.BuiltIn.GetSample(frame.ObservedPose);
+            if (sample.Clips.Count != frame.Clips.Count ||
+                sample.ObservationTick > frame.SampleTick - snapshot.StartTick)
+            {
+                throw new InvalidDataException("Observed pose clip count or observation clock is inconsistent.");
+            }
+
+            for (int index = 0; index < sample.Clips.Count; index++)
+            {
+                if (!sample.Clips[index].Equals(frame.Clips[index]))
+                {
+                    throw new InvalidDataException("Observed pose reference disagrees with its exact source clips.");
+                }
+            }
         }
 
         private static void ValidateClips(BattleInfantryAnimationFrame frame, MatchSnapshot snapshot)

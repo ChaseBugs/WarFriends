@@ -7,6 +7,7 @@ internal static class ObservedPoseCatalogTests
 {
     internal static void Run()
     {
+        ObservedPoseProjectionTests.Run();
         ObservedInfantryPoseCatalogData catalog = ObservedInfantryPoseCatalogData.BuiltIn;
         ObservedInfantryPoseCatalog snapshot = catalog.Snapshot();
         foreach (ObservedInfantryPoseSample expected in snapshot.Samples)

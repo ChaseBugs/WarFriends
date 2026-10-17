@@ -76,6 +76,14 @@ public sealed class SelfHostedObservedInfantryPoseRenderer
         }
     }
 
+    // The presenter supplies only the SDK's already validated clip views.
+    internal void SampleClips(IReadOnlyList<SelfHostedInfantryAnimationState> states)
+    {
+        ValidateBinding();
+        RestoreSourcePose();
+        _sampler.Sample(states);
+    }
+
     private static Transform[] Bind(Transform rig, ObservedInfantryPoseCatalog catalog)
     {
         if (rig.GetComponentsInChildren<Transform>(true).Length != catalog.Skeleton.Count + 1)

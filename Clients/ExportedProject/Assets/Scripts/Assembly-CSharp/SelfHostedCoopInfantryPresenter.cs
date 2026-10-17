@@ -162,8 +162,8 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
             _source, styles[index], appearance, "SelfHostedCoopInfantry_" + row.EntityId);
         try
         {
-            var sampler = new SelfHostedInfantryAnimationSampler(visual.AnimationRoot, _sourceAnimation);
-            return new Actor(visual, row.Level, row.IsCardUnit, sampler);
+            var renderer = new SelfHostedObservedInfantryPoseRenderer(visual, _sourceAnimation);
+            return new Actor(visual, row.Level, row.IsCardUnit, renderer);
         }
         catch
         {
@@ -190,7 +190,16 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
         BattleJointRotation rotation = row.Rotation;
         visual.Root.transform.position = new Vector3(row.X, row.Y, row.Z);
         visual.Root.transform.rotation = new Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W);
-        actor.Sampler.Sample(CreateAnimationStates(row));
+        BattleInfantryObservedPoseReference observedPose = row.InfantryAnimation == null
+            ? null : row.InfantryAnimation.ObservedPose;
+        if (observedPose != null)
+        {
+            actor.Renderer.Sample(observedPose);
+        }
+        else
+        {
+            actor.Renderer.SampleClips(CreateAnimationStates(row));
+        }
         visual.Root.SetActive(true);
     }
 
@@ -298,15 +307,15 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
         internal SelfHostedInfantryVisual Visual { get; private set; }
         internal int Level { get; private set; }
         internal bool IsCardUnit { get; private set; }
-        internal SelfHostedInfantryAnimationSampler Sampler { get; private set; }
+        internal SelfHostedObservedInfantryPoseRenderer Renderer { get; private set; }
 
         internal Actor(SelfHostedInfantryVisual visual, int level, bool isCardUnit,
-            SelfHostedInfantryAnimationSampler sampler)
+            SelfHostedObservedInfantryPoseRenderer renderer)
         {
             Visual = visual;
             Level = level;
             IsCardUnit = isCardUnit;
-            Sampler = sampler;
+            Renderer = renderer;
         }
     }
 }

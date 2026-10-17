@@ -42,6 +42,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public bool IsConnected { get; private set; }
     public SelfHostedPhotonCompatibility PhotonCompatibility { get; private set; }
     private MatchConnection connection;
+    private string _observedPoseCatalogRevision = string.Empty;
     private SelfHostedRoomLifecycle roomLifecycle;
     private CancellationTokenSource lifetime;
     private CancellationTokenSource matchmaking;
@@ -260,7 +261,9 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (connection != null) throw new InvalidOperationException("This component already owns a match session.");
         var preparedTracker = barrelCatalog == null ? null :
             new BarrelStateTracker(grant.MatchId, grant.ManifestHash, barrelCatalog);
-        connection = new MatchConnection(grant);
+        string poseRevision = ObservedInfantryPoseCatalogData.BuiltIn.Revision;
+        connection = new MatchConnection(grant, poseRevision);
+        _observedPoseCatalogRevision = poseRevision;
         PlayerViews = connection.PlayerViews;
         Active = this;
         roomLifecycle = new SelfHostedRoomLifecycle(connection);
@@ -367,7 +370,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             eventDelivery.Release();
             MatchPendingCommand unresolved = await oldConnection.CapturePendingAsync(CancellationToken.None);
 
-            var nextConnection = new MatchConnection(grant);
+            var nextConnection = new MatchConnection(grant, _observedPoseCatalogRevision);
             var nextLifecycle = new SelfHostedRoomLifecycle(nextConnection);
             var nextLifetime = new CancellationTokenSource();
             bool installed = false;
@@ -1057,10 +1060,14 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (State != null && (reply.Snapshot.ServerTick < State.ServerTick ||
             reply.Snapshot.StateRevision < State.StateRevision)) return;
         var next = reply.Snapshot.Clone();
+        if (reply.ObservedPoseCatalogRevision != _observedPoseCatalogRevision)
+        {
+            throw new InvalidOperationException("The snapshot does not match the negotiated pose renderer.");
+        }
         IReadOnlyList<CoopEnemyViewState> enemyViews = Array.Empty<CoopEnemyViewState>();
         if (next.Coop != null && !string.IsNullOrEmpty(next.Coop.MissionType))
         {
-            enemyViews = CoopEnemyViewProjection.FromSnapshot(next, LocalPlayerId);
+            enemyViews = CoopEnemyViewProjection.FromSnapshot(next, LocalPlayerId, _observedPoseCatalogRevision);
         }
 
         if (State != null && State.Phase != next.Phase)
@@ -1122,6 +1129,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
         else if (connection != null) connection.Dispose();
         connection = null;
+        _observedPoseCatalogRevision = string.Empty;
         if (Active == this) Active = null;
         roomLifecycle = null;
         PhotonCompatibility = null;

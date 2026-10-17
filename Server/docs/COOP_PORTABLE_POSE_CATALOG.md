@@ -35,10 +35,10 @@ asset validation reports no missing scripts or broken references. The existing
 17 atlas sprite mismatches remain unchanged. These checks do not establish
 Unity 5.2, Android, Linux or two-Unity-client gameplay support.
 
-The normal SDK animation view deliberately rejects every observed-pose reference
-until a renderer capability is installed. Even a valid reference with matching
-clip fields is rejected. This prevents accidental clip-only presentation of a
-pose known to require hierarchy corrections.
+The default SDK projection rejects every observed-pose reference. Its explicit
+negotiated overload now accepts only the installed revision and exact source
+clips, as described in the dispatch checkpoint below. This prevents accidental
+clip-only presentation of a pose known to require hierarchy corrections.
 
 Before the host can publish references, capability and revision negotiation must
 be connected to the installed renderer: older protobuf clients ignore additive fields and could otherwise
@@ -88,11 +88,11 @@ positions, rotations and scales, using position tolerance 1e-5, quaternion-dot
 error 1e-6 and per-axis relative scale tolerance 1e-5. Invalid references and a
 renamed bound transform must leave both mixer and transform state unchanged.
 
-This is a local rendering component, not negotiated wire support. The normal SDK
-frame path still rejects observed references, the presenter does not invoke this
-renderer, and the host publishes none. Capability negotiation, source inventory
-selection, other appearances, repeated source interruption histories and normal
-gameplay proof remain necessary. No rendered-pixel or Android claim is made.
+This local renderer checkpoint initially had no negotiated wire support. The
+subsequent transport and dispatch checkpoints connect its SDK/presenter path.
+The host still publishes no references. Other appearances, repeated source
+interruption histories and normal gameplay proof remain necessary.
+No rendered-pixel or Android claim is made.
 
 ## Recovered weapon model selection
 
@@ -175,8 +175,8 @@ scripts: 78 decoded selections pass, alongside the existing 24 visual adapter
 regression checks. Static asset audits retain zero missing scripts, zero broken
 references and the same 17 pre-existing atlas sprite mismatches.
 This is fixture-driven component integration, not a live Worker session
-or normal MainScene scheduling. Observed-pose references still remain rejected
-by the SDK until capability negotiation and presenter dispatch are connected.
+or normal MainScene scheduling. Negotiated observed-pose dispatch was added
+subsequently in the checkpoint below.
 
 ## Authenticated transport negotiation
 
@@ -195,9 +195,10 @@ the SDK checks it after digest-verified reassembly, before returning the snapsho
 The SDK's existing constructor stays clip-only. Its explicit two-argument
 constructor requests a known installed catalog revision and rejects unknown or
 null revisions. Every complete reply must match the requested value: there is
-no silent downgrade to an unsupported rendering path. Unity's normal connection
-creation still uses the default constructor. The SDK animation view still rejects
-observed references and the host emits none until renderer dispatch is connected.
+no silent downgrade to an unsupported rendering path. Unity now requests the
+installed revision when connecting and retains that choice when reconnecting.
+The SDK default constructor remains clip-only. The host still emits no references
+until source-history publication is connected and verified.
 
 Authenticated endpoint tests reject unknown content before admission, reject an
 in-session downgrade without consuming the valid retry, and verify that command
@@ -212,3 +213,32 @@ protocol checks, 74 live MongoDB/HTTP/protobuf/UDP checks and restart recovery.
 The installed Unity SDK passes the existing 24-check visual adapter audit.
 Static asset audits retain zero missing scripts, zero broken references and
 the same 17 pre-existing atlas sprite mismatches.
+
+## Negotiated SDK and Unity dispatch
+
+The SDK projection has an explicit revision overload; its existing overload
+remains clip-only. Observed frames require the negotiated revision, a known
+sample ID, exact ordered source clips and a non-future observation offset inside
+the match. Their captured partial weights are validated by that exact catalog
+entry rather than generalized into a new arbitrary-weight policy. Accepted views
+return isolated reference copies.
+
+`SelfHostedBattleClient` requests the installed revision at connection creation,
+uses the same choice for reconnect, checks reply agreement before publishing
+views, and clears the local choice when closing. Its presenter now owns the
+observed-pose renderer for each source actor. A validated reference invokes the
+catalog reconstruction; an ordinary clip frame restores the original basis
+before sampling, so old corrections cannot leak into a later walking/fire pose.
+The frozen legacy sampler implementation and source evidence remain unchanged.
+
+Protocol tests accept all 221 negotiated entries, reject them for clip-only
+callers, reject altered clip clocks and premature observation offsets, and check
+reference isolation. A native Unity component audit decodes all 221 references
+through the actual adapter and presenter and compares non-root body transforms
+with the independent source capture. Model pivot/scale remain covered separately
+by the model matrix. The audit also enters a corrected interruption sample,
+returns to walking and compares with a fresh source sampler basis.
+
+These are controlled fixture/component checks. No live Worker has published a
+pose reference yet. Host source-history selection, terminal cleanup, broader
+interruption/appearance coverage and normal gameplay proof remain open.
