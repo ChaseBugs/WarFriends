@@ -116,3 +116,34 @@ new admission stays blocked; automatic recovery from every UI/resource exception
 has not been implemented or verified. Source Unity 5.2 and Android remain
 unverified. The implementation and component gates do not close B05/B31/B36 or
 the overall BattleServer objective.
+
+## Inactive map discard
+
+The original tag search only returns active objects. The expanded native audit
+reproduced an unregistered map surviving cleanup after deactivation; see
+`Server/.local/unity-abort-inactive-map-baseline.log`. Stopping/draining a loader
+is not sufficient evidence that every remaining map is active or registered.
+
+For Unity 5.3 and later, DiscardAbortedScene now enumerates loaded MapDefinition
+components including inactive objects and requires a valid, loaded scene before
+scheduling destruction. It never calls Init. This excludes persistent prefab
+assets returned by Resources.FindObjectsOfTypeAll. The registered map is captured
+before its original destruction so that scan does not schedule it a second time.
+Normal scene teardown remains unchanged.
+
+The native gate covers a registered active map, an unregistered active map, a
+previously activated but now inactive map, and an inactive map whose Awake never
+ran. Every case must destroy only the scene instance, retain an unrelated scene
+marker and retain a real persistent MapDefinition prefab loaded from disk.
+
+The Unity 5.2 compile branch retains its existing active tagged-map behavior:
+that runtime has no equivalent public scene-membership API used here. Inactive
+unregistered map cleanup is therefore still incomplete on the original 5.2
+runtime. The 2018 native fixture does not close that compatibility gate or the
+complete resource/menu recovery gate.
+
+All four discard cases and the real interrupted native-load drain passed in
+Unity 2018.3: `Server/.local/unity-abort-inactive-map-fixed.log`. At this checkpoint
+the protocol executable passed 1,334 checks and the static asset audit retained
+2,376 documents, 23,513 components, 288,165 references, zero missing scripts and
+zero broken references. No active Client scene, prefab or meta file was changed.

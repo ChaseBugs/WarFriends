@@ -14,6 +14,8 @@ public static class UnitySceneLoadDrainAudit
 {
     private const string SessionKey = "WarFriends.SceneLoadDrainAudit";
     private const string SceneKey = SessionKey + ".Scene";
+    private const string PrefabKey = SessionKey + ".Prefab";
+    private const int DiscardCaseCount = 4;
     private const string MarkerName = "AbortedNativeLoadMarker";
     private const int TimeoutSeconds = 30;
 
@@ -36,6 +38,14 @@ public static class UnitySceneLoadDrainAudit
             throw new InvalidOperationException("The disposable scene could not be saved.");
         }
 
+        string prefabPath = "Assets/__AbortMapPrefab_" + Guid.NewGuid().ToString("N") + ".prefab";
+        var prefabOwner = new GameObject("PreservedAbortMapPrefab");
+        prefabOwner.SetActive(false);
+        var prefabDefinition = prefabOwner.AddComponent<MapDefinition>();
+        prefabDefinition.floorTransform = prefabOwner.transform;
+        PrefabUtility.SaveAsPrefabAsset(prefabOwner, prefabPath);
+        UnityEngine.Object.DestroyImmediate(prefabOwner);
+        SessionState.SetString(PrefabKey, prefabPath);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
         scenes.Add(new EditorBuildSettingsScene(path, true));
@@ -93,7 +103,7 @@ public static class UnitySceneLoadDrainAudit
             await VerifyDiscardAsync(map);
             SessionState.SetBool(SessionKey, false);
             Debug.Log("PASS: actual source scene load retains progress after its enumerator stops; " +
-                "abort drain waits for native completion and discards registered/unregistered maps without Init; " +
+                "abort drain waits for native completion and discards registered, late and inactive maps without Init; " +
                 "Play Mode, no menu or combat proof.");
             EditorApplication.Exit(0);
         }
@@ -128,25 +138,40 @@ public static class UnitySceneLoadDrainAudit
 
     private static async Task VerifyDiscardAsync(MapManager map)
     {
-        for (int index = 0; index < 2; index++)
+        string prefabPath = SessionState.GetString(PrefabKey, string.Empty);
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        Require(prefab != null && prefab.GetComponent<MapDefinition>() != null,
+            "The source component on the persistent prefab control is missing.");
+        for (int index = 0; index < DiscardCaseCount; index++)
         {
             var root = new GameObject("DiscardedAbortMap");
             root.SetActive(false);
             var definition = root.AddComponent<MapDefinition>();
             definition.floorTransform = root.transform;
             definition.playersPositions = null;
-            root.SetActive(true);
+            if (index != 3)
+            {
+                root.SetActive(true);
+            }
+            if (index == 2)
+            {
+                root.SetActive(false);
+            }
             map.currentMapDef = index == 0 ? definition : null;
             map.DiscardAbortedScene();
             DateTime deadline = DateTime.UtcNow.AddSeconds(TimeoutSeconds);
             while (root != null)
             {
-                Require(DateTime.UtcNow < deadline, "The discarded map survived deferred destruction.");
+                Require(DateTime.UtcNow < deadline, "The discarded map survived deferred destruction in case " + index + ".");
                 await Task.Yield();
             }
 
             Require(root == null && map.currentMapDef == null && GameObject.Find(MarkerName) != null,
-                "Abort discard must remove registered and late maps without initializing or deleting unrelated objects.");
+                "Abort discard must remove registered, late and inactive maps without deleting unrelated objects.");
+            Require(prefab != null && prefab.GetComponent<MapDefinition>() != null &&
+                AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) == prefab,
+                "Abort discard destroyed the persistent prefab control.");
+            Debug.Log("PASS: abort map discard case " + index + " preserves the prefab asset and scene marker.");
         }
     }
 

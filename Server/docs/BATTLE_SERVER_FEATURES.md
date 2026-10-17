@@ -26,7 +26,10 @@ co-op dog-tag and Photon Chat side effects that prevent reuse of generic stop
 methods. Owner-bound callbacks now enter a separate recovery coroutine, retain
 ownership during native-load draining, and request menu recovery without ordinary
 result or Chat dispatch. Play Mode entry/ownership/reuse and registered/late-map
-discard gates pass. The whole resource/menu graph, callback failure recovery and
+discard gates pass. The loaded-scene discard now also covers previously active
+and never-awakened inactive maps while retaining a real persistent prefab;
+Unity 5.2 still has only the original active-map fallback. The whole
+resource/menu graph, callback failure recovery and
 two-client presentation remain unverified, so this feature is still partial.
 
 [Terminal room replay](TERMINAL_ROOM_REPLAY.md) fixes repeated frozen Ended/Aborted

@@ -258,15 +258,29 @@ public class MapManager : Singleton<MapManager>
     /// <summary>Discards a loaded abort scene even when its stopped loader never registered the map definition.</summary>
     public void DiscardAbortedScene()
     {
+        MapDefinition registeredMap = currentMapDef;
         DestroyCurrentScene();
+#if UNITY_5_3_OR_NEWER
+        // A stopped loader may leave an inactive map; scene membership excludes persistent prefab assets.
+        foreach (MapDefinition definition in Resources.FindObjectsOfTypeAll<MapDefinition>())
+        {
+            if (definition != registeredMap && definition.gameObject.scene.IsValid() &&
+                definition.gameObject.scene.isLoaded)
+            {
+                UnityEngine.Object.Destroy(definition.gameObject);
+            }
+        }
+#else
+        // Unity 5.2 has no public scene-membership API; retain its existing active-map boundary.
         foreach (GameObject root in GameObject.FindGameObjectsWithTag(TagsAndLayers.mapDefinition))
         {
-            // Initializing a late native load here could start gameplay while recovery is tearing it down.
-            if (root.GetComponent<MapDefinition>() != null)
+            MapDefinition definition = root.GetComponent<MapDefinition>();
+            if (definition != null && definition != registeredMap)
             {
                 UnityEngine.Object.Destroy(root);
             }
         }
+#endif
     }
 
 	public void ResyncShields()
