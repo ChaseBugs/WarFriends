@@ -184,3 +184,23 @@ strict equivalence gate closed and do not substitute relaxed tolerances for
 an explanation. The corner reference includes the final `manualSampleReplay`
 measurement; reference validation rejects nonfinite diagnostic measurements
 and any diagnostic resampling before the last observation.
+
+### Initial binding, continuity and actual curve channels
+
+Replay hierarchy creation now occurs before the prior-pose sample. Continuous
+active states remain enabled between observations, and replay retains their
+observed speed while autonomous animation stays disabled. Neither change
+removes the observed maximum rotation discrepancy in the declared fixture.
+
+`UnityCoopClipBindingAudit` records Unity's actual path/type/property bindings
+for each scenario's prior, preparation and firing clips. Each recorded clip
+has 237 bindings. The three diagnosed bones all have complete x/y/z/w local
+rotation bindings in those clips; missing quaternion components are not an
+explanation for these targeted cases. The source animation files contain
+compressed rotation curves, which remain a candidate for further comparison,
+not an established cause.
+
+The corner reference now includes the source and replay quaternion components
+at the greatest rotation error and the binding inventory. The verifier checks
+unique binding identities, clip order and the four rotation components for
+each diagnosed bone. The strict parity gate remains unchanged and fails.

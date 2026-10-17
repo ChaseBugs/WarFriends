@@ -80,6 +80,22 @@ def validate_scenario(scenario, require_mixer_parity=False):
     return len(frames), len(expected_paths)
 
 
+def validate_bindings(scenario):
+    clips = scenario.get("sourceBindings")
+    if clips is None:
+        return
+    require([clip["name"] for clip in clips] ==
+            [scenario["priorClip"], scenario["startClip"], scenario["fireClip"]], "Binding clip order changed.")
+    rotation_properties = {"m_LocalRotation." + axis for axis in "xyzw"}
+    for clip in clips:
+        bindings = clip["bindings"]
+        identities = [(row["path"], row["property"], row["type"]) for row in bindings]
+        require(len(identities) == len(set(identities)) and len(identities) > 0, "Ambiguous curve bindings.")
+        for bone in ("cartoon_guyLLegAnkle", "cartoon_guyLArm2", "cartoon_guyRArmPalm"):
+            properties = {row["property"] for row in bindings if row["path"].endswith("/" + bone)}
+            require(rotation_properties <= properties, "The diagnosed bone lacks a complete quaternion binding.")
+
+
 def validate_corner_volley(scenario):
     frames = scenario["frames"]
     require(len(frames) == 91, "Corner volley fixture duration changed.")
@@ -128,6 +144,7 @@ def main():
         require(hashlib.sha256(source.read_bytes()).hexdigest() == capture["animationControllerSha256"],
                 "Recovered animation controller source changed.")
     for scenario in scenarios:
+        validate_bindings(scenario)
         for field in ("priorClip", "startClip", "fireClip"):
             clip_path = arguments.project / "Assets/AnimationClip" / (scenario[field] + ".anim")
             require(hashlib.sha256(clip_path.read_bytes()).hexdigest() == scenario[field + "Sha256"],

@@ -1536,3 +1536,10 @@ final source frame again after its own manual Sample, restoring all observed
 transforms afterward. Neither change removes the measured rotation mismatch.
 The corner reference records the additional final-frame measurement; strict
 network mixer acceptance remains open rather than relaxing its tolerance.
+
+Initial-bind-pose and continuous-state replay experiments also retain the same
+error. Recorded Unity curve bindings show complete quaternion channels for the
+diagnosed ankle/forearm/palm in each tested source clip, excluding missing
+components in those cases. The corner reference now preserves both quaternion
+values and binding inventories for compressed-rotation investigation; no
+network firing presentation or combat authority is claimed.

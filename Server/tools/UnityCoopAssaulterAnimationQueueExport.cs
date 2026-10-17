@@ -222,6 +222,8 @@ public static class UnityCoopAssaulterAnimationQueueExport
                     fireClip = FireClips[i],
                     fireClipSha256 = Hash("Assets/AnimationClip/" + FireClips[i] + ".anim"),
                     fadeSeconds = FadeSeconds[i],
+                    sourceBindings = UnityCoopClipBindingAudit.Capture(animations[i],
+                        new[] { PriorClips[i], StartClips[i], FireClips[i] }),
                     frames = Frames[i]
                 }).ToArray();
                 File.WriteAllText(output, JsonConvert.SerializeObject(new
@@ -305,6 +307,10 @@ public static class UnityCoopAssaulterAnimationQueueExport
         animations = new Animation[3];
         muzzles = new Transform[3];
         roots = new Transform[3];
+        if (SessionState.GetBool(WholeRig, false))
+        {
+            replayProbes = new UnityCoopRigReplayProbe[3];
+        }
         for (int i = 0; i < 3; i++)
         {
             GameObject enemy = GameObject.Find("CoopAssaulterQueue" + i);
@@ -320,6 +326,11 @@ public static class UnityCoopAssaulterAnimationQueueExport
             Animation animation = animations[i];
             animation.cullingType = AnimationCullingType.AlwaysAnimate;
             animation.Stop();
+            if (replayProbes != null)
+            {
+                // Bind the independent hierarchy before prior-pose sampling changes any partial curve defaults.
+                replayProbes[i] = new UnityCoopRigReplayProbe(roots[i]);
+            }
             if (SessionState.GetBool(Primed, false))
             {
                 AnimationState prior = animation[PriorClips[i]];
@@ -340,14 +351,6 @@ public static class UnityCoopAssaulterAnimationQueueExport
             volleyProbes = new UnityCoopCornerVolleyProbe[3];
             volleyProbes[1] = new UnityCoopCornerVolleyProbe(animations[1], true);
             volleyProbes[2] = new UnityCoopCornerVolleyProbe(animations[2], false);
-        }
-        if (SessionState.GetBool(WholeRig, false))
-        {
-            replayProbes = new UnityCoopRigReplayProbe[3];
-            for (int index = 0; index < replayProbes.Length; index++)
-            {
-                replayProbes[index] = new UnityCoopRigReplayProbe(roots[index]);
-            }
         }
         startTime = Time.time;
     }

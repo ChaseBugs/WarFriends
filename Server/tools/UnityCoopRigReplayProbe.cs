@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Measures whether a separate legacy Animation can reconstruct an observed mixer frame.</summary>
@@ -40,9 +41,21 @@ public sealed class UnityCoopRigReplayProbe
     /// <summary>Copies mixer scalars, samples the independent rig and reports local transform errors.</summary>
     public object Compare(Animation source)
     {
+        var activeNames = new HashSet<string>();
+        foreach (AnimationState state in source)
+        {
+            if (state.enabled)
+            {
+                activeNames.Add(state.name);
+            }
+        }
+
         foreach (AnimationState state in _animation)
         {
-            state.enabled = false;
+            if (!activeNames.Contains(state.name))
+            {
+                state.enabled = false;
+            }
         }
 
         foreach (AnimationState state in source)
@@ -54,11 +67,18 @@ public sealed class UnityCoopRigReplayProbe
         }
 
         _animation.Sample();
+        return MeasurePose();
+    }
+
+    private object MeasurePose()
+    {
         float positionError = 0f;
         float rotationError = 0f;
         float relativeScaleError = 0f;
         string greatestPositionErrorTransform = string.Empty;
         string greatestRotationErrorTransform = string.Empty;
+        Quaternion sourceRotation = Quaternion.identity;
+        Quaternion replayRotation = Quaternion.identity;
         for (int index = 0; index < _sourceTransforms.Length; index++)
         {
             Transform original = _sourceTransforms[index];
@@ -74,6 +94,8 @@ public sealed class UnityCoopRigReplayProbe
             {
                 rotationError = rotationDifference;
                 greatestRotationErrorTransform = original.name;
+                sourceRotation = original.localRotation;
+                replayRotation = replay.localRotation;
             }
             relativeScaleError = Mathf.Max(relativeScaleError,
                 Vector3.Distance(original.localScale, replay.localScale) / Mathf.Max(1f, original.localScale.magnitude));
@@ -83,8 +105,15 @@ public sealed class UnityCoopRigReplayProbe
         {
             positionError, rotationError, relativeScaleError, greatestPositionErrorTransform,
             greatestRotationErrorTransform,
+            sourceRotation = Coordinates(sourceRotation),
+            replayRotation = Coordinates(replayRotation),
             transforms = _sourceTransforms.Length
         };
+    }
+
+    private static float[] Coordinates(Quaternion rotation)
+    {
+        return new[] { rotation.x, rotation.y, rotation.z, rotation.w };
     }
 
     /// <summary>Diagnoses the final observation using the source's own manual sampler, then restores its pose.</summary>
@@ -152,7 +181,7 @@ public sealed class UnityCoopRigReplayProbe
         target.blendMode = observed.blendMode;
         target.layer = observed.layer;
         target.time = observed.time;
-        target.speed = 0f;
+        target.speed = observed.speed;
         target.weight = observed.weight;
         target.enabled = true;
     }
