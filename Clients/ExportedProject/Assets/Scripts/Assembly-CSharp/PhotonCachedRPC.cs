@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +25,7 @@ public class PhotonCachedRPC : Core_BaseScript
 
 	public static void SendOfflineRPC(PhotonView view, string function, PhotonTargets target, params object[] parameters)
 	{
+        RequireLegacyTransport();
 		if (PhotonConnectionManager.isInRoom)
 		{
 			view.RPC(function, target, parameters);
@@ -38,6 +40,7 @@ public class PhotonCachedRPC : Core_BaseScript
 
 	public static void SendOfflineRPC(PhotonView view, string function, PhotonPlayer targetPlayer, params object[] parameters)
 	{
+        RequireLegacyTransport();
 		if (PhotonConnectionManager.isInRoom)
 		{
 			view.RPC(function, targetPlayer, parameters);
@@ -63,6 +66,13 @@ public class PhotonCachedRPC : Core_BaseScript
 
 	protected void Update()
 	{
+        if (PhotonConnectionManager.IsSelfHostedActive)
+        {
+            // New-room notification normally clears these; ownership may change before that notification.
+            mCachedRpcs.Clear();
+            return;
+        }
+
 		if (!PhotonConnectionManager.isInRoom || mCachedRpcs.Count <= 0)
 		{
 			return;
@@ -84,11 +94,34 @@ public class PhotonCachedRPC : Core_BaseScript
 
 	private void OnJoinedNewRoom()
 	{
-		mCachedRpcs.Clear();
+        InvalidateForNewRoom();
 	}
+
+    /// <summary>Discards the previous room's requests even while this pooled receiver is inactive.</summary>
+    public void InvalidateForNewRoom()
+    {
+        mCachedRpcs.Clear();
+    }
 
 	private void OnEnable()
 	{
-		mPhotonCachedRpcs.Add(this);
+        // Inactive caches still need the original new-room reset, so retain them until destruction.
+        if (!mPhotonCachedRpcs.Contains(this))
+        {
+            mPhotonCachedRpcs.Add(this);
+        }
 	}
+
+    private void OnDestroy()
+    {
+        mPhotonCachedRpcs.Remove(this);
+    }
+
+    private static void RequireLegacyTransport()
+    {
+        if (PhotonConnectionManager.IsSelfHostedActive)
+        {
+            throw new InvalidOperationException("Cached Photon RPCs cannot mutate a self-hosted battle.");
+        }
+    }
 }

@@ -41,4 +41,14 @@ master identity. [The source and native fixture](LOCAL_SOLO_POOLING.md) document
 the exact boundary. Pool initialization/view registration and online host-owned
 entity projection remain open; local pool IDs are not Worker authority.
 
+## Cached legacy sends during self-hosted ownership
+
+Both PhotonCachedRPC public send overloads now explicitly reject retained
+self-hosted ownership, and Update discards a pre-admission legacy queue rather
+than replaying it through Photon. Room reset directly clears inactive caches;
+the receiver registry no longer duplicates re-enabled or retains destroyed
+objects. [The native boundary checks](CACHED_RPC_BOUNDARY.md) prove those scoped
+behaviors with a controlled SDK owner. This is a closed legacy transport path,
+not an implementation of arbitrary RPC replacement or a full battle proof.
+
 Next review must classify every remaining inventory RPC, dynamic/cached RPC call, stream, room/player property, offline room, and attached PhotonView as a validated command, host event, snapshot field, or local presentation behavior. Each row then needs a replacement test and a normal Client consumption proof. Until that review and integration pass, B01, B31, and B33 remain incomplete.

@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Cached RPC lifetime](CACHED_RPC_BOUNDARY.md) now keeps one room-reset receiver
+per object, removes destroyed receivers and preserves inactive-cache invalidation.
+Retained self-hosted ownership rejects direct legacy cached sends and discards
+pre-admission legacy queues rather than replaying them through Photon. The native
+controlled-owner fixture checks these boundaries; arbitrary RPC replacement and
+normal battle bootstrap remain open.
+
 [Local solo pooling](LOCAL_SOLO_POOLING.md) now routes all four network-labelled
 creation/reuse commands through their original local pool lifecycle without
 Others RPCs. The local model selects the recovered first free slot without a

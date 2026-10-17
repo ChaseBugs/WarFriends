@@ -25,6 +25,7 @@ public static class UnitySessionReadAudit
         try
         {
             VerifyIdle();
+            UnityCachedRpcAudit.VerifyRegistry();
             room.JoinSoloRoom();
             Require(PhotonConnectionManager.isInRoom && PhotonConnectionManager.IsLocalSoloRoom &&
                 PhotonConnectionManager.GetPlayerCount() == 1 && PhotonConnectionManager.GetBattleId().Length == 0,
@@ -54,6 +55,7 @@ public static class UnitySessionReadAudit
             Require(PhotonConnectionManager.GetNetworkTime() == 2.5 && PhotonConnectionManager.GetPlayerCount() == 2 &&
                 PhotonConnectionManager.GetBattleId() == MatchId && SelfHostedBattleClient.GetOrCreate() == client,
                 "An inactive retained owner fell back to Photon or created a replacement adapter.");
+            UnityCachedRpcAudit.VerifyOwnedBoundary();
             PhotonConnectionManager.Disconnect();
             Require(!client.OwnsMatch,
                 "Disconnect ignored the inactive canonical self-hosted owner.");

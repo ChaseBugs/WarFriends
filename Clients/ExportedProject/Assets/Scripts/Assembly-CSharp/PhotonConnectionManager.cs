@@ -226,12 +226,23 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	private void SendOnJoinedNewRoom()
 	{
-		foreach (PhotonCachedRPC photonCachedRpc in PhotonCachedRPC.photonCachedRpcs)
-		{
-			photonCachedRpc.SendMessage("OnJoinedNewRoom", SendMessageOptions.DontRequireReceiver);
-		}
+        InvalidateCachedRoomRequests();
 		Singleton<GameController>.instance.BroadcastMessage("OnJoinedNewRoom", SendMessageOptions.DontRequireReceiver);
-	}
+    }
+
+    private static void InvalidateCachedRoomRequests()
+    {
+        // Receivers may destroy scene objects while the new-room notification is delivered.
+        foreach (PhotonCachedRPC photonCachedRpc in PhotonCachedRPC.photonCachedRpcs.ToArray())
+        {
+            if (photonCachedRpc != null)
+            {
+                // Unity messages skip inactive objects; invalidation must not depend on activation.
+                photonCachedRpc.InvalidateForNewRoom();
+                photonCachedRpc.SendMessage("OnJoinedNewRoom", SendMessageOptions.DontRequireReceiver);
+            }
+        }
+    }
 
 	public void CompleteSelfHostedJoin()
 	{
