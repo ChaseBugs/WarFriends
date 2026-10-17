@@ -113,7 +113,8 @@ public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.M
         {
             if (currentMission.HasSelfHostedCoopAuthority)
             {
-                return currentMission.Hud(_selfHostedHud == null ? 0 : _selfHostedHud.ObjectiveProgress);
+                SelfHostedCoopHudState view = GetCurrentSelfHostedHud();
+                return currentMission.Hud(view == null ? 0 : view.ObjectiveProgress);
             }
 
             return !mPhotonView.isMine ? currentMission.Hud(mHudObjective) : currentMission.hudObjective;
@@ -126,7 +127,8 @@ public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.M
         {
             if (currentMission.HasSelfHostedCoopAuthority)
             {
-                return _selfHostedHud == null ? 0f : _selfHostedHud.Progress;
+                SelfHostedCoopHudState view = GetCurrentSelfHostedHud();
+                return view == null ? 0f : view.Progress;
             }
 
             return !mPhotonView.isMine ? mProgress : currentMission.progress;
@@ -139,11 +141,34 @@ public class MissionsManager : DatabaseSerializedObjectGeneric<MissionsManager.M
         {
             if (currentMission.HasSelfHostedCoopAuthority)
             {
-                return _selfHostedHud == null ? currentMission.maxTimeForMission : _selfHostedHud.RemainingSeconds;
+                SelfHostedCoopHudState view = GetCurrentSelfHostedHud();
+                return view == null ? currentMission.maxTimeForMission : view.RemainingSeconds;
             }
 
             return !mPhotonView.isMine ? mRemainingTime : currentMission.remainingTime;
         }
+    }
+
+    private SelfHostedCoopHudState GetCurrentSelfHostedHud()
+    {
+        if (_selfHostedHud == null || currentMission.index != _selfHostedHud.MissionIndex)
+        {
+            return null;
+        }
+
+        SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+        if (client != null && client.OwnsMatch)
+        {
+            MatchSnapshot state = client.State;
+            if (state == null || state.MatchId != _selfHostedHud.MatchId ||
+                state.ManifestHash != _selfHostedHud.ManifestHash)
+            {
+                return null;
+            }
+        }
+
+        // Connection close retains the last confirmed result view; a new match never inherits it.
+        return _selfHostedHud;
     }
 
     /// <summary>Clears the previous scene's host view before binding a new admitted match.</summary>

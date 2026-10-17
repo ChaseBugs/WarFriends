@@ -7,6 +7,12 @@ public sealed class SelfHostedCoopHudState
 {
     private const float HostTicksPerSecond = 30f;
 
+    /// <summary>Gets the admitted match owning this view.</summary>
+    public string MatchId { get; private set; }
+
+    /// <summary>Gets the signed manifest identity owning this view.</summary>
+    public string ManifestHash { get; private set; }
+
     /// <summary>Gets the source mission index represented by this view.</summary>
     public int MissionIndex { get; private set; }
 
@@ -24,6 +30,8 @@ public sealed class SelfHostedCoopHudState
 
     private SelfHostedCoopHudState()
     {
+        MatchId = string.Empty;
+        ManifestHash = string.Empty;
     }
 
     /// <summary>Validates a started source mission before exposing its clock or objective counters.</summary>
@@ -31,13 +39,16 @@ public sealed class SelfHostedCoopHudState
     {
         CoopOutcomeProjection.ForPlayer(snapshot, localPlayerId);
         BattleCoopState mission = snapshot.Coop;
-        if (!mission.Started || mission.MissionIndex < 0 || mission.EnemyKills < 0 || mission.ObjectiveTarget < 0)
+        if (string.IsNullOrEmpty(snapshot.MatchId) || string.IsNullOrEmpty(snapshot.ManifestHash) ||
+            !mission.Started || mission.MissionIndex < 0 || mission.EnemyKills < 0 || mission.ObjectiveTarget < 0)
         {
             throw new InvalidOperationException("A source HUD needs a started mission with valid counters.");
         }
 
         var view = new SelfHostedCoopHudState
         {
+            MatchId = snapshot.MatchId,
+            ManifestHash = snapshot.ManifestHash,
             MissionIndex = mission.MissionIndex,
             DurationSeconds = (mission.DeadlineTick - snapshot.StartTick) / HostTicksPerSecond,
             RemainingSeconds = (mission.DeadlineTick - snapshot.ServerTick) / HostTicksPerSecond

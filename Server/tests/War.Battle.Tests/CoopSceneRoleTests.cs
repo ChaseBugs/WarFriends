@@ -49,6 +49,12 @@ internal static class CoopSceneRoleTests
     private static void VerifyStarts(MatchSnapshot snapshot, CoopObstacleVolleyRuntimeTests.Sources sources,
         string masterId, string peerId)
     {
+        SelfHostedCoopHudState masterView = SelfHostedCoopHudState.FromSnapshot(snapshot, masterId);
+        SelfHostedCoopHudState peerView = SelfHostedCoopHudState.FromSnapshot(snapshot, peerId);
+        Require(masterView.MissionIndex == sources.Manifest.MissionIndex && masterView.Progress == 0f &&
+            masterView.RemainingSeconds == masterView.DurationSeconds &&
+            peerView.RemainingSeconds == masterView.RemainingSeconds,
+            "Both source roles must read the actual runtime's starting mission clock without local simulation.");
         CoopPlayerAnchor[] points = sources.Spawns.MapForMission(sources.Missions,
             sources.Manifest.MissionIndex!.Value).PlayerPositions.Where(point => point.Main)
             .OrderBy(point => point.Index).ToArray();

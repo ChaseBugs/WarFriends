@@ -33,11 +33,12 @@ public static class UnityCoopMissionAuthorityAudit
                 SetConnection(client, connection);
                 VerifyHostLifecycles(client, missions);
                 VerifyBossDeath((BotMission)missions[3]);
-                VerifyHudBinding(owner, client, (KillMission)missions[0]);
+                MissionsManager hudManager = VerifyHudBinding(owner, client, (KillMission)missions[0]);
                 Mission resetProbe = owner.AddComponent<Mission>();
                 resetProbe.PlayMission(true);
                 Require(resetProbe.HasSelfHostedCoopAuthority, "A base mission must bind host authority before reset.");
                 client.LeaveMatch();
+                Require(hudManager.time == 1f, "Closing the connection must retain its last confirmed HUD view.");
                 VerifyDisconnectedAuthority(missions);
                 resetProbe.PlayMission(false);
                 Require(!resetProbe.HasSelfHostedCoopAuthority,
@@ -103,7 +104,8 @@ public static class UnityCoopMissionAuthorityAudit
         }
     }
 
-    private static void VerifyHudBinding(GameObject owner, SelfHostedBattleClient client, KillMission mission)
+    private static MissionsManager VerifyHudBinding(GameObject owner, SelfHostedBattleClient client,
+        KillMission mission)
     {
         mission.index = 0;
         mission.killFor1Star = 10;
@@ -127,6 +129,32 @@ public static class UnityCoopMissionAuthorityAudit
         Require(hasObserved, "Host HUD publication must precede the snapshot callbacks.");
         client.BindMissionManager(manager);
         Require(manager.time == 1f, "Binding a scene again must replay its current host state.");
+        VerifyHudIdentityIsolation(client, manager, mission, snapshot);
+        return manager;
+    }
+
+    private static void VerifyHudIdentityIsolation(SelfHostedBattleClient client, MissionsManager manager,
+        KillMission mission, MatchSnapshot snapshot)
+    {
+        PropertyInfo stateProperty = typeof(SelfHostedBattleClient).GetProperty("State");
+        MatchSnapshot nextMatch = snapshot.Clone();
+        nextMatch.MatchId = "another-match-same-mission";
+        stateProperty.SetValue(client, nextMatch, null);
+        Require(manager.time == 3f && manager.missionProgress == 0f,
+            "The same mission in a new match must not reuse the previous clock or progress.");
+        MatchSnapshot nextManifest = snapshot.Clone();
+        nextManifest.ManifestHash = new string('b', 64);
+        stateProperty.SetValue(client, nextManifest, null);
+        Require(manager.time == 3f && manager.missionProgress == 0f,
+            "Another manifest must not inherit cached HUD state even if the match ID repeats.");
+        stateProperty.SetValue(client, null, null);
+        Require(manager.time == 3f && manager.missionProgress == 0f,
+            "An owned connection awaiting its first state must not expose an old mission view.");
+        stateProperty.SetValue(client, snapshot, null);
+        mission.index = 1;
+        Require(manager.time == 3f && manager.missionProgress == 0f,
+            "Selecting another source mission must not reuse the previous objective view.");
+        mission.index = 0;
     }
 
     private static void VerifyHudRejection(MissionsManager manager, MatchSnapshot snapshot)

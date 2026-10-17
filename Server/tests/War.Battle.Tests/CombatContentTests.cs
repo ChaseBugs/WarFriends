@@ -5370,6 +5370,12 @@ internal static class CombatContentTests
             scoreRuntime.Snapshot().Coop.ParticipantScores[1].Score != 5)
             throw new Exception("The second ally's army kill must add its source score.");
         CoopScoreProjection firstScoreView = CoopScoreProjection.ForPlayer(scoreRuntime.Snapshot(), firstPlayer);
+        SelfHostedCoopHudState scoreHud = SelfHostedCoopHudState.FromSnapshot(scoreRuntime.Snapshot(), firstPlayer);
+        if (scoreHud.ObjectiveProgress != 15 || scoreHud.MissionIndex != scoreAllocation.MissionIndex)
+        {
+            throw new Exception("The exact Unity HUD source must accept the real host Score-mission snapshot.");
+        }
+
         CoopScoreProjection secondScoreView = CoopScoreProjection.ForPlayer(scoreRuntime.Snapshot(), secondPlayer);
         if (firstScoreView.LocalScore != 10 || firstScoreView.PeerScore != 5 || firstScoreView.TotalScore != 15 ||
             secondScoreView.LocalScore != 5 || secondScoreView.PeerScore != 10 || secondScoreView.TotalScore != 15)

@@ -32,7 +32,7 @@ internal static class CoopHudStateTests
         SelfHostedCoopHudState score = SelfHostedCoopHudState.FromSnapshot(snapshot, PlayerId);
         Require(score.ObjectiveProgress == 15 && score.Progress == 0.15f,
             "Score progress must use conserved shared contributions rather than success stars.");
-        return 8;
+        return 10;
     }
 
     private static void VerifyInvalidCounters()
@@ -46,11 +46,19 @@ internal static class CoopHudStateTests
         MatchSnapshot missingIndex = CreateRunning();
         missingIndex.Coop.MissionIndex = -1;
         RequireInvalid(missingIndex);
+        MatchSnapshot missingMatch = CreateRunning();
+        missingMatch.MatchId = "";
+        RequireInvalid(missingMatch);
+        MatchSnapshot missingManifest = CreateRunning();
+        missingManifest.ManifestHash = "";
+        RequireInvalid(missingManifest);
     }
 
     private static MatchSnapshot CreateRunning()
     {
         MatchSnapshot snapshot = CoopOutcomeProjectionTests.CreateSuccess();
+        snapshot.MatchId = "source-mission-hud";
+        snapshot.ManifestHash = new string('a', 64);
         snapshot.Phase = BattlePhase.Running;
         snapshot.ServerTick = 30;
         snapshot.EndTick = 0;

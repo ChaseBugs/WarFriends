@@ -8,6 +8,8 @@
     <_GetChildProjectCopyToPublishDirectoryItems>false</_GetChildProjectCopyToPublishDirectoryItems>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedCoopHudState.cs"
+             Link="ClientSource/SelfHostedCoopHudState.cs" />
     <ProjectReference Include="../../src/War.BattleServer/War.BattleServer.csproj" />
     <ProjectReference Include="../../src/War.Client/War.Client.csproj" />
     <ProjectReference Include="../../src/War.Backend/War.Backend.csproj" />

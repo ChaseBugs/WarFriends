@@ -1462,3 +1462,11 @@ runs before lifecycle/snapshot callbacks; Photon serialization cannot overwrite
 it. Exact-source protocol cases and native manager/adapter checks cover the
 connection. This remains read-only state, with normal rendered HUD, combat,
 Worker co-op admission and settlement open. See [mission HUD state](COOP_HUD_STATE.md).
+
+B22/B32 HUD caching now binds match and manifest identity as well as the source
+mission. A same-mission rematch, a different manifest or an owned connection
+waiting for its first snapshot cannot expose the previous match's progress.
+Connection close alone retains the last confirmed result view. Native coverage
+adds these transitions, while the actual role/Score runtime fixtures compile
+and call the exact Unity helper. Rendered UI and normal co-op admission remain
+open; these checks do not establish full moving combat or settlement.
