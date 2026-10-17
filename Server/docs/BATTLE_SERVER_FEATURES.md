@@ -8,6 +8,12 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Original abort notice](ABORT_NOTICE_UI.md) now runs the recovered modal's real
+labels, tweens and OK callback in Play Mode and has an inspected camera capture.
+Recovery retains ownership until the menu transition and notice readiness or
+acknowledgement, including an immediate OK that hides the notice before polling.
+The complete main-screen/resource graph and physical two-client UI remain open.
+
 [Abort scene recovery](ABORT_SCENE_RECOVERY.md) identifies the source Forfeit,
 co-op dog-tag and Photon Chat side effects that prevent reuse of generic stop
 methods. Owner-bound callbacks now enter a separate recovery coroutine, retain

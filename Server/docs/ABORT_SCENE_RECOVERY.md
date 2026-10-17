@@ -59,8 +59,10 @@ to Menu. Other states reuse the original ordered asset release with an explicit
 SelfHostedAbort reason. That branch discards even an unregistered late map
 without Init, tolerates unset selected-card strings, and skips ordinary unit-use
 analytics, results, account/relogin dispatch and Photon Chat reconnection. It
-then resets the online controller, releases the adapter, requests the original
-main screen and shows the generic localized battle-cancelled notice. Previously
+then resets the online controller, requests the original main screen, waits for
+its completed transition and shows the generic localized battle-cancelled notice.
+The adapter is released only after that notice is visible or acknowledged; see
+[the original modal gate](ABORT_NOTICE_UI.md). Previously
 charged entry costs are not refunded or reconstructed by this client path.
 
 Late stop/finish/quit/forfeit callbacks and new match starts are guarded during
@@ -104,8 +106,10 @@ The existing normal queue cancellation/disable/retry gate also passed with the
 new OnDisable pairing; see
 `Server/.local/UnityMatchmakingCancellationAudit-abort-final.log`.
 
-These gates do not prove the whole recovery coroutine through the recovered
-player pools, atlas restoration, menu widgets and cancellation notice. That full
+The original cancellation notice now has a separate Play Mode animation/input
+gate and an inspected graphics-camera capture. These component gates do not
+prove the whole recovery coroutine through the recovered player pools, atlas
+restoration and main-screen widgets. That full
 graph, cleanup callback failures/retry, mode-specific mission/Arena state and
 actual two-client abort cases remain work. If cleanup fails before completion,
 new admission stays blocked; automatic recovery from every UI/resource exception

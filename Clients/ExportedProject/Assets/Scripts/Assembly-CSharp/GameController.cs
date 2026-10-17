@@ -979,12 +979,75 @@ public class GameController : Singleton<GameController>
         }
 
         controller.CompleteSelfHostedAbort(source);
-        source.FinishAbortedMatchRecovery();
         LoadingDialog.Hide();
-        Singleton<GuiManager>.instance.ShowMainScreen();
+        yield return StartCoroutine(ShowAbortedMenuRoutine());
+        source.FinishAbortedMatchRecovery();
         _isSelfHostedAbortRecovery = false;
-        ConfirmDialog.ShowAlert(null, Localization.Localize("ID_CONFIRM_INFO"),
+    }
+
+    private IEnumerator ShowAbortedMenuRoutine()
+    {
+        GuiManager manager = Singleton<GuiManager>.instance;
+        MainScreen menu = GuiScreenSingle<MainScreen>.instance;
+        bool menuShown = false;
+        Action shown = () => menuShown = true;
+        menu.AfterShowUp += shown;
+        try
+        {
+            manager.ShowMainScreen();
+            menuShown = menuShown || (manager.currentScreen == menu && menu.isFullyShowed && !menu.readyToShowUp);
+            while (!menuShown)
+            {
+                RequireAbortedMenuDestination(manager, menu);
+                yield return null;
+            }
+
+            RequireAbortedMenuDestination(manager, menu);
+            if (!menu.gameObject.activeInHierarchy)
+            {
+                throw new InvalidOperationException("The recovery menu completed while inactive.");
+            }
+        }
+        finally
+        {
+            if (menu != null)
+            {
+                menu.AfterShowUp -= shown;
+            }
+        }
+
+        bool acknowledged = false;
+        ConfirmDialog.ShowAlert((dialog, accepted) => acknowledged = true, Localization.Localize("ID_CONFIRM_INFO"),
             Localization.Localize("ID_BATTLECANCELED"));
+        yield return StartCoroutine(WaitForAbortedNoticeRoutine(GuiElementSingle<ConfirmDialog>.instance,
+            () => acknowledged));
+    }
+
+    private static void RequireAbortedMenuDestination(GuiManager manager, MainScreen menu)
+    {
+        if (menu == null || manager.currentScreen != menu)
+        {
+            throw new InvalidOperationException("The recovery menu was replaced before showing.");
+        }
+    }
+
+    private static IEnumerator WaitForAbortedNoticeRoutine(ConfirmDialog dialog, Func<bool> acknowledged)
+    {
+        while (!acknowledged())
+        {
+            if (dialog == null || dialog.isFullyHidden)
+            {
+                throw new InvalidOperationException("The recovery notice disappeared before showing or acknowledgement.");
+            }
+
+            if (dialog.isFullyShowed && !dialog.readyToShowUp)
+            {
+                yield break;
+            }
+
+            // The OK callback proves visibility even if the user closes the dialog before the next coroutine frame.
+            yield return null;
+        }
     }
 
     private enum LevelReleaseReason

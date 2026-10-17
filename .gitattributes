@@ -158,3 +158,7 @@ Server/tools/UnitySceneLoadDrainAudit.cs text eol=lf
 Server/docs/ABORT_SCENE_RECOVERY.md text eol=lf
 Server/tools/AbortRecoveryControllerProbe.cs text eol=lf
 Server/tools/UnityAbortRecoveryRoutingAudit.cs text eol=lf
+Server/tools/UnityAbortMenuGraphAudit.cs text eol=lf
+Server/tools/UnityAbortNoticeFixture.cs text eol=lf
+Server/tools/UnityAbortNoticeAudit.cs text eol=lf
+Server/docs/ABORT_NOTICE_UI.md text eol=lf
