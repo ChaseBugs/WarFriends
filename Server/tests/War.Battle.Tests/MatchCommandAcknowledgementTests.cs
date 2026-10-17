@@ -78,6 +78,49 @@ internal static class MatchCommandAcknowledgementTests
                 Reply(3, 2, 2, "ready"), localId, 2),
             "reply and requested command identities must agree");
 
+        var terminal = Reply(2, 1, 2, "match-terminal");
+        terminal.Snapshot.Phase = BattlePhase.Aborted;
+        terminal.Snapshot.ServerTick = 10;
+        terminal.Snapshot.EndTick = 10;
+        terminal.Snapshot.TerminalReason = "cancelled-before-start";
+        Check(MatchCommandAcknowledgement.TerminalCursor(terminal, localId, 2) == 1,
+            "terminal refusal closes pending work without inventing a consumed cursor");
+        var consumedTerminal = terminal.Clone();
+        consumedTerminal.Snapshot.Players[0].LastCommandId = 2;
+        Check(MatchCommandAcknowledgement.TerminalCursor(consumedTerminal, localId, 2) == 2,
+            "a consumed terminal response retains the proven cursor");
+        var nonterminal = terminal.Clone();
+        nonterminal.Snapshot.Phase = BattlePhase.Running;
+        Reject(() => MatchCommandAcknowledgement.TerminalCursor(nonterminal, localId, 2),
+            "terminal code alone cannot close a running command stream");
+        var wrongCursor = terminal.Clone();
+        wrongCursor.Snapshot.Players[0].LastCommandId = 0;
+        Reject(() => MatchCommandAcknowledgement.TerminalCursor(wrongCursor, localId, 2),
+            "terminal refusal cannot skip unresolved earlier commands");
+        var wrongTick = terminal.Clone();
+        wrongTick.Snapshot.EndTick++;
+        Reject(() => MatchCommandAcknowledgement.TerminalCursor(wrongTick, localId, 2),
+            "terminal refusal needs a frozen terminal tick");
+        var wrongReply = terminal.Clone();
+        wrongReply.CommandId++;
+        Reject(() => MatchCommandAcknowledgement.TerminalCursor(wrongReply, localId, 2),
+            "terminal refusal remains bound to the pending request ID");
+
+        var noRevision = terminal.Clone();
+        noRevision.Snapshot.StateRevision = 0;
+        Reject(() => MatchCommandAcknowledgement.TerminalCursor(noRevision, localId, 2),
+            "terminal refusal must carry a positive terminal revision");
+        var noReason = terminal.Clone();
+        noReason.Snapshot.TerminalReason = "";
+        Reject(() => MatchCommandAcknowledgement.TerminalCursor(noReason, localId, 2),
+            "terminal refusal must identify its host-owned end reason");
+        var ended = terminal.Clone();
+        ended.Snapshot.Phase = BattlePhase.Ended;
+        ended.Snapshot.TerminalReason = "forfeit";
+        ended.Snapshot.WinnerPlayerId = remoteId;
+        Check(MatchCommandAcknowledgement.TerminalCursor(ended, localId, 2) == 1,
+            "a completed battle can reject a late pending command without consuming it");
+
         return checks;
     }
 }

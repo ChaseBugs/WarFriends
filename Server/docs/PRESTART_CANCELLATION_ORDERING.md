@@ -17,9 +17,10 @@ participants. Synthetic fixture weapon values are not recovered balancing data.
 
 The standard Windows/Linux smoke scripts run this focused executable gate.
 Native Windows execution passes; Bash syntax checking is not Linux runtime proof.
-This closes the engine ordering gate only. Signed HTTP control, UDP admission,
-Backend grant publication and cancellation racing across actual processes still
-need their own combined scheduling proof. The existing service, replay, ownership
+This closes the engine ordering gate only. Separate
+[actual HTTP/UDP cases](LIVE_PRESTART_CANCELLATION_RACES.md) now cover late Ready,
+concurrent dispatch and Running-first refusal. Deterministically paused
+registration/grant publication and broader network schedules still need proof. The existing service, replay, ownership
 and Worker-outage tests remain separate evidence. B31/B36 and the complete
 BattleServer objective remain partial; no complete gameplay claim follows from
 these deterministic engine cases.

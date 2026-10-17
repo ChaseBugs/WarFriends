@@ -354,6 +354,9 @@ internal static class BackendQueueLiveTests
             await UnpreparedPairCancellationChecks.RunAsync(scopedScenario, ids, attemptIssuer,
                 new UnpreparedPairCancellationChecks.Stores(
                     queue, new BattleManifestSnapshotStore(mongoUri, database), results, grantStore));
+            using var raceDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var raceScenario = new ScopedQueueLiveChecks.Scenario(left, right, tokens, raceDeadline.Token);
+            await new LiveQueueCancellationRaceChecks(raceScenario, queue, results).RunAsync();
             using var recoveryDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
             var unattended = new UnattendedCancellationChecks(
                 queue, results, new BattleManifestSnapshotStore(mongoUri, database), recoveryDeadline.Token);

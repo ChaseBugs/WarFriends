@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Actual HTTP/UDP cancellation](LIVE_PRESTART_CANCELLATION_RACES.md) now covers
+late Ready after cancellation, concurrent ready/cancel dispatch and Running-first
+refusal. It reproduced and fixed SDK handling of a valid unconsumed terminal
+refusal without changing frozen server results. Accepted terminal hashes and
+both players' allocation release are checked; broader forced scheduling and
+complete two-Unity-client gameplay remain open.
+
 [Prestart cancellation ordering](PRESTART_CANCELLATION_ORDERING.md) now covers all
 24 ready/tick/cancel permutations plus late admission after cancellation. A
 successful cancellation freezes exact unscored terminal bytes; a battle that

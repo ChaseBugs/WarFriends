@@ -64,6 +64,8 @@ try {
     if($LASTEXITCODE -ne 0) { throw 'Cancellation recovery claim checks failed' }
     & dotnet $testDll --prestart-cancellation-ordering-only
     if($LASTEXITCODE -ne 0) { throw 'Prestart cancellation ordering checks failed' }
+    & dotnet $testDll --command-ack-only
+    if($LASTEXITCODE -ne 0) { throw 'Command acknowledgement checks failed' }
     foreach($project in @('War.Backend','War.BattleServer')) {
         $dll=Join-Path $serverRoot "src/$project/bin/Debug/net10.0/$project.dll"
         $processes+=Start-Process dotnet -ArgumentList ('"'+$dll+'"') -WorkingDirectory (Join-Path $serverRoot "src/$project") -RedirectStandardOutput (Join-Path $runRoot "$project.log") -RedirectStandardError (Join-Path $runRoot "$project.error.log") -PassThru -WindowStyle Hidden

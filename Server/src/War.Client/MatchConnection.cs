@@ -781,8 +781,18 @@ namespace War.Client
                 {
                     if (reply.Code == "command-conflict" || reply.Code == "command-order" || reply.Code == "invalid-command" || reply.Code == "not-admitted")
                         throw new InvalidOperationException("Match command stream rejected: " + reply.Code);
-                    MatchCommandAcknowledgement.RequireConsumed(reply, grant.PlayerId, command.CommandId);
-                    commandId = command.CommandId;
+                    if (reply.Code == "match-terminal")
+                    {
+                        // A terminal host rejects late intent without changing its frozen result or consuming the ID.
+                        commandId = MatchCommandAcknowledgement.TerminalCursor(
+                            reply, grant.PlayerId, command.CommandId);
+                    }
+                    else
+                    {
+                        MatchCommandAcknowledgement.RequireConsumed(reply, grant.PlayerId, command.CommandId);
+                        commandId = command.CommandId;
+                    }
+
                     pending = null;
                 }
                 return reply;

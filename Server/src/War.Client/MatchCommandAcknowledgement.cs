@@ -6,10 +6,12 @@ namespace War.Client
     /// <summary>Confirms which local command the host actually consumed.</summary>
     internal static class MatchCommandAcknowledgement
     {
+        private const ulong MaximumCommandId = 100000;
+
         internal static ulong AdmissionCursor(MatchSnapshot snapshot, string localPlayerId)
         {
             BattlePlayerState localPlayer = FindLocalPlayer(snapshot, localPlayerId);
-            if (localPlayer.LastCommandId > 100000 ||
+            if (localPlayer.LastCommandId > MaximumCommandId ||
                 snapshot.StateRevision < localPlayer.LastCommandId)
                 throw new InvalidOperationException("Battle host returned an invalid command cursor.");
             return localPlayer.LastCommandId;
@@ -18,7 +20,7 @@ namespace War.Client
         internal static void RequireConsumed(MatchReply reply, string localPlayerId,
             ulong expectedCommandId)
         {
-            if (reply == null || expectedCommandId == 0 || expectedCommandId > 100000 ||
+            if (reply == null || expectedCommandId == 0 || expectedCommandId > MaximumCommandId ||
                 reply.CommandId != expectedCommandId)
                 throw new InvalidOperationException("Battle host returned an invalid command acknowledgement.");
 
@@ -26,6 +28,30 @@ namespace War.Client
             if (localPlayer.LastCommandId != expectedCommandId ||
                 reply.Snapshot.StateRevision < expectedCommandId)
                 throw new InvalidOperationException("Battle host did not consume the pending command.");
+        }
+
+        /// <summary>Closes a refused terminal command without inventing a consumed cursor.</summary>
+        internal static ulong TerminalCursor(MatchReply reply, string localPlayerId, ulong expectedCommandId)
+        {
+            if (reply == null || reply.Code != "match-terminal" || expectedCommandId == 0 ||
+                expectedCommandId > MaximumCommandId || reply.CommandId != expectedCommandId ||
+                reply.Snapshot == null ||
+                (reply.Snapshot.Phase != BattlePhase.Aborted && reply.Snapshot.Phase != BattlePhase.Ended) ||
+                reply.Snapshot.EndTick != reply.Snapshot.ServerTick || reply.Snapshot.StateRevision == 0 ||
+                string.IsNullOrEmpty(reply.Snapshot.TerminalReason))
+            {
+                throw new InvalidOperationException("Battle host returned an invalid terminal refusal.");
+            }
+
+            BattlePlayerState localPlayer = FindLocalPlayer(reply.Snapshot, localPlayerId);
+            if ((localPlayer.LastCommandId != expectedCommandId &&
+                localPlayer.LastCommandId != expectedCommandId - 1) ||
+                reply.Snapshot.StateRevision < localPlayer.LastCommandId)
+            {
+                throw new InvalidOperationException("Terminal refusal changed the pending command cursor.");
+            }
+
+            return localPlayer.LastCommandId;
         }
 
         private static BattlePlayerState FindLocalPlayer(MatchSnapshot snapshot, string playerId)
