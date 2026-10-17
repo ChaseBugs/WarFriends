@@ -42,6 +42,35 @@ remain open.
 
 ## Verification
 
+### Open: actual callback-time membership
+
+`UnityLocalOfflineRoomAudit.RunManagerVisibility` is an intentionally failing
+diagnostic for an unresolved production mismatch, not part of the passing
+reference suite. It samples the actual manager's membership/count inside the
+SDK CreatedRoom callback, then still performs the requested cancellation before
+asserting the sample after the command returns. This avoids turning an assertion
+exception into a different callback-cancellation scenario.
+
+The manager currently mirrors its room only after SDK CreateRoom returns.
+Consequently CreatedRoom observes SDK membership/count one while the manager
+reports no membership/count zero. The temporary IsLocalSoloRoom creation flag
+protects the online controller's two-player branch but does not repair those
+reads. A successful post-return mirror comparison cannot prove callback-time
+visibility. The first diagnostic log is
+`Server/.local/unity-solo-manager-visibility-baseline.log`; its callback exception
+also interrupted cancellation, so use the isolated diagnostic for the clean
+counterexample rather than interpreting that secondary membership failure as a
+new post-return bug.
+The isolated run in `Server/.local/unity-solo-manager-visibility-isolated.log`
+fails only the sampled callback membership assertion after cancellation returns.
+
+The replacement lifecycle must publish local state before callback dispatch,
+allow cancellation to change the state seen by subsequent callbacks, and retain
+the recovered final JoinedRoom notification after CreatedRoom cancellation.
+Reading the retired SDK room from the new public getters would hide this mismatch
+without completing the required Photon-free lifecycle. Normal scene dispatch,
+reentrant joins and listener failures remain separate acceptance requirements.
+
 The native manager fixture also delivers the actual OnConnectedToMaster method
 from the reference SDK's synchronous local-mode callback. Its baseline in
 `Server/.local/unity-solo-manager-connected-baseline.log` reproduced two false

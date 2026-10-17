@@ -41,6 +41,13 @@ public static class UnityLocalOfflineRoomAudit
         Run();
     }
 
+    /// <summary>Diagnoses the still-open callback-time visibility boundary in the actual manager.</summary>
+    public static void RunManagerVisibility()
+    {
+        SessionState.SetBool(Active + ".CheckVisibility", true);
+        RunManagerCancellation();
+    }
+
     private static void RunInPlayMode()
     {
         if (!EditorApplication.isPlaying || EditorApplication.isPaused)
@@ -259,6 +266,7 @@ public static class UnityLocalOfflineRoomAudit
         var manager = owner.AddComponent<PhotonConnectionManager>();
         singleton.SetValue(null, manager);
         scenario.Clear();
+        bool callbackMembershipMatches = true;
         scenario.Probe.AfterCallback = callback =>
         {
             if (callback == nameof(LocalRoomCallback.ConnectedToMaster))
@@ -269,6 +277,11 @@ public static class UnityLocalOfflineRoomAudit
             }
             if (callback == nameof(LocalRoomCallback.CreatedRoom))
             {
+                if (SessionState.GetBool(Active + ".CheckVisibility", false))
+                {
+                    callbackMembershipMatches = PhotonConnectionManager.isInRoom &&
+                        PhotonConnectionManager.GetPlayerCount() == 1;
+                }
                 cancel();
             }
         };
@@ -276,6 +289,8 @@ public static class UnityLocalOfflineRoomAudit
         try
         {
             PhotonConnectionManager.JoinOfflineGame();
+            Require(callbackMembershipMatches,
+                "CreatedRoom observes an SDK member but the actual manager reports no local membership.");
             Require(PhotonNetwork.room == null && !model.IsInRoom && model.PlayerCount == 0 &&
                 model.IsOffline == PhotonNetwork.offlineMode && model.PlayerId == PhotonNetwork.player.ID &&
                 !PhotonConnectionManager.isInRoom && PhotonConnectionManager.GetPlayerCount() == 0,
@@ -296,6 +311,7 @@ public static class UnityLocalOfflineRoomAudit
     {
         SessionState.SetBool(Active, false);
         SessionState.SetBool(Active + ".ManagerOnly", false);
+        SessionState.SetBool(Active + ".CheckVisibility", false);
         EditorApplication.Exit(code);
     }
 
