@@ -53,6 +53,11 @@ public static class UnitySameOpponentRematchAudit
                 await PlayToTerminalAsync(client, lifetime.Token);
                 Require(client.State.MatchId != source.MatchId && source.Phase == BattlePhase.Ended,
                     "Rematch reopened its original terminal identity.");
+                while (File.ReadAllText(released) != client.State.MatchId)
+                {
+                    await Task.Delay(PollDelayMilliseconds, lifetime.Token);
+                }
+                await UnityRematchCancellationAudit.VerifyAsync(client, endpoint, token, lifetime.Token);
                 Debug.Log("UNITY_SAME_OPPONENT_REMATCH_PASSED " +
                     "callbackRecovery=True canonicalOwner=True freshMatch=True");
             }

@@ -113,10 +113,10 @@ public sealed partial class SelfHostedBattleClient
         if (_rematchAttempt == attempt)
         {
             Close();
-            return true;
         }
 
-        // Disconnect may already have observed the same receipt; never close a successor operation.
+        // MatchClosed can synchronously start a successor; recheck ownership after every callback.
+        // Disconnect may also have observed the same receipt before this continuation resumed.
         return _rematchAttempt == null && connection == null && matchmaking == null && Active == null;
     }
 

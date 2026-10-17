@@ -368,3 +368,33 @@ Successful actual lobby transitions, reset/disable/cancel UI race injection, two
 Unity clients, original Unity 5.2/Android compatibility, admission-expiry UI
 behavior and rematch-specific late-cancellation/reconnect races remain unverified.
 This is an empty-scene Mono adapter gate, not a normal-screen gameplay proof.
+
+## Reentrant cancellation callback boundary
+
+Remote cancellation confirmation does not by itself authorize the controller's
+remaining local quit steps. `MatchClosed` can synchronously start another search
+on the same Mono adapter. `CancelRematchAndReleaseAsync` now checks retained
+rematch, UDP, queue and canonical-owner state after that callback as well as
+after an already-observed cancellation receipt. Its Boolean means local quit
+may continue; false can mean the old cancellation succeeded but a successor
+operation must be preserved.
+
+`UnityRematchCancellationAudit` starts real one-player consent from the second
+accepted result, waits for Backend evidence, cancels through the actual adapter,
+and starts an authenticated successor search inside `MatchClosed`. It requires
+durable cancelled consent, exactly one closure, a negative local-quit decision,
+an intact successor search and unchanged terminal snapshot bytes. Cleanup then
+cancels that exact successor through its normal queue owner. The native
+coordinator rechecks both accepted result digests after Editor exit.
+
+The old unconditional return failed this gate in
+`Server/.local/queue-live-0c0c3347c9174988a736f03348f5d9dd/UnitySameOpponentRematch.log`
+with `Old rematch cleanup authorized local quit after a callback started a successor search.`
+The corrected adapter passed the same real cancellation gate in
+`Server/.local/queue-live-9ada34dceb8449d9befcb0eaeef5800c/UnitySameOpponentRematch.log`,
+including a still-pending successor search and unchanged accepted result digests.
+This gate covers a callback-started search on the same adapter. Cross-adapter
+pending-search ownership, the old controller's timeout behavior after that
+successor starts, and full screen reset/disable/cancel races still need separate
+migration and evidence. The adapter's local-quit decision is not proof of those
+remaining controller paths.

@@ -68,6 +68,12 @@ passes with an SDK peer, including retained ownership after a failed close
 callback. Normal controller entry/quit wiring now exists, with actual friend
 DeathMatch/Coop Running-source guards. Successful full lobby transitions and
 reset/disable/cancel UI races remain open.
+The rematch cancellation adapter now rechecks ownership after `MatchClosed` so
+a callback-started successor search cannot authorize the old controller's local
+quit. A real Mono/Backend cancellation regression reproduces the previous
+unconditional-return failure and passes after the ownership recheck; its scope
+and remaining controller-timeout/cross-adapter/UI gaps are
+recorded in [the rematch boundary](RANDOM_REMATCH_BOUNDARY.md).
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

@@ -33,12 +33,18 @@ internal static class LiveUnitySameOpponentRematchChecks
                 settings.AccessTokens[1], snapshot, source.PlayerId);
             MatchConnectionGrant next = await rematch.FindAsync(cancellationToken);
             await PlayAdmittedPeerAsync(next, cancellationToken);
-            await LiveUnityRandomRematchChecks.WaitForAcceptedAsync(next, proof, cancellationToken);
+            string nextDigest = await LiveUnityRandomRematchChecks.WaitForAcceptedAsync(next, proof, cancellationToken);
+            await File.WriteAllTextAsync(released, next.MatchId, cancellationToken);
             Require(next.MatchId != source.MatchId && next.SessionId != source.SessionId &&
                 (await stores.Results.Get(source.MatchId, cancellationToken))?.Digest == digest,
                 "Unity handoff reused its original identity or changed the accepted source result.");
             await editor.WaitForExitAsync(cancellationToken);
-            Require(editor.ExitCode == 0 && File.ReadAllText(logPath).Contains(SuccessMarker, StringComparison.Ordinal),
+            Require((await stores.Results.Get(source.MatchId, cancellationToken))?.Digest == digest &&
+                (await stores.Results.Get(next.MatchId, cancellationToken))?.Digest == nextDigest,
+                "Rematch cancellation changed an accepted terminal result.");
+            string editorLog = File.ReadAllText(logPath);
+            Require(editor.ExitCode == 0 && editorLog.Contains(SuccessMarker, StringComparison.Ordinal) &&
+                editorLog.Contains("UNITY_REMATCH_CANCELLATION_PASSED", StringComparison.Ordinal),
                 "Actual Mono rematch handoff failed; inspect " + logPath);
             Console.WriteLine(
                 "PASS: actual Mono rematch handoff, failed-close retry, canonical owner and real UDP; " + logPath);
