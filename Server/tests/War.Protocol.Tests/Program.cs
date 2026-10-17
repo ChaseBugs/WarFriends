@@ -11,6 +11,7 @@ checks += CoopOutcomeProjectionTests.Run();
 checks += CoopOutcomeDeliveryTests.Run();
 checks += CoopScoreProjectionTests.Run();
 checks += CoopHudStateTests.Run();
+checks += CoopEnemyViewTests.Run();
 checks += await BattleMatchControlClientTests.Run();
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); checks++; }
 Check(new MatchQueueRequest().CalculateSize()==0,"canonical matchmaking request is empty");

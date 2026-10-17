@@ -1479,3 +1479,12 @@ state and verify the countdown remains frozen while only local time advances.
 These are component/frame checks, not rendered pixels, normal bootstrap,
 all-mission or two-Client gameplay proof. See
 [scene and frame validation](COOP_HUD_SCENE_VALIDATION.md).
+
+B22 now has a dedicated common enemy view in the portable SDK and Unity
+adapter. Complete-roster validation precedes state publication; immutable common
+identity/card/body/pose views reach typed subscribers before outcome callbacks.
+Source case-insensitive behaviour resolution preserves `FlameThrower` spelling.
+Protocol, real runtime creation/death and native adapter tests cover this data
+path. Enemy actor creation, specialized air/crew/vehicle fields, source animation,
+full combat and normal Worker co-op registration remain open. See
+[common enemy view](COOP_ENEMY_VIEW.md).

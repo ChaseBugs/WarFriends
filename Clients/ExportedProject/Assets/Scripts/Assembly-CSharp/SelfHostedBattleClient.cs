@@ -18,6 +18,10 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     [SerializeField] private bool allowLocalHttp = true;
     public static SelfHostedBattleClient Active { get; private set; }
     public event Action<MatchSnapshot> StateReceived;
+    /// <summary>Publishes validated common co-op enemy fields before mission outcome callbacks.</summary>
+    public event Action<IReadOnlyList<CoopEnemyViewState>> CoopEnemiesReceived;
+    /// <summary>Gets the current isolated common enemy view without enabling local AI.</summary>
+    public IReadOnlyList<CoopEnemyViewState> CoopEnemies { get; private set; } = Array.Empty<CoopEnemyViewState>();
     public event Action FullSnapshotRebuild;
     // Handlers run on Unity's synchronization context. Failed handlers cause
     // the same event ID to be fetched again; side effects must be idempotent.
@@ -1051,6 +1055,12 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (State != null && (reply.Snapshot.ServerTick < State.ServerTick ||
             reply.Snapshot.StateRevision < State.StateRevision)) return;
         var next = reply.Snapshot.Clone();
+        IReadOnlyList<CoopEnemyViewState> enemyViews = Array.Empty<CoopEnemyViewState>();
+        if (next.Coop != null && !string.IsNullOrEmpty(next.Coop.MissionType))
+        {
+            enemyViews = CoopEnemyViewProjection.FromSnapshot(next, LocalPlayerId);
+        }
+
         if (State != null && State.Phase != next.Phase)
             foreach (var renderer in rifleViews.Values)
                 renderer.ResetRemote();
@@ -1060,6 +1070,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             if (player.RiflePose != null && rifleViews.TryGetValue(player.PlayerId, out renderer)) renderer.Apply(player);
         }
         State = next;
+        CoopEnemies = enemyViews;
         if (_scoreManager != null)
         {
             _scoreManager.ApplySelfHostedSnapshot(State, LocalPlayerId);
@@ -1074,6 +1085,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             _missionManager.ApplySelfHostedHud(State, LocalPlayerId);
         }
 
+        if (State.Coop != null && !string.IsNullOrEmpty(State.Coop.MissionType) && CoopEnemiesReceived != null)
+        {
+            CoopEnemiesReceived(CoopEnemies);
+        }
+
         if (roomLifecycle != null) roomLifecycle.Observe(State);
         if (StateReceived != null) StateReceived(State.Clone());
     }
@@ -1086,6 +1102,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
     private void Close()
     {
+        CoopEnemies = Array.Empty<CoopEnemyViewState>();
         _missionManager = null;
         IsConnected = false;
         if (matchmaking != null) matchmaking.Cancel();

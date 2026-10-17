@@ -126,11 +126,20 @@ internal static class CoopSceneRoleTests
         for (ulong tick = 1; tick < deadline && !runtime.Terminal; tick++)
         {
             runtime.Advance(tick);
+            MatchSnapshot beforeDamage = runtime.Snapshot();
+            IReadOnlyList<CoopEnemyViewState> aliveViews = CoopEnemyViewProjection.FromSnapshot(beforeDamage,
+                beforeDamage.Coop.SceneMasterPlayerId);
+            Require(aliveViews.Count == beforeDamage.Coop.EnemySpawns.Count,
+                "The portable enemy view must accept the actual source runtime roster before damage.");
             foreach (BattleCoopEnemySpawn enemy in runtime.Snapshot().Coop.EnemySpawns.Where(enemy => enemy.Health > 0))
             {
                 Require(runtime.ApplyHostEnemyDamage(enemy.EntityId, enemy.Health, tick),
                     "Completion requires actual source-spawned enemies and host-confirmed deaths.");
             }
+
+            MatchSnapshot afterDamage = runtime.Snapshot();
+            Require(CoopEnemyViewProjection.FromSnapshot(afterDamage, afterDamage.Coop.SceneMasterPlayerId)
+                .All(view => view.IsDead), "Confirmed source deaths must remain visible as dead roster entries.");
         }
     }
 
