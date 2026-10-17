@@ -1543,3 +1543,13 @@ diagnosed ankle/forearm/palm in each tested source clip, excluding missing
 components in those cases. The corner reference now preserves both quaternion
 values and binding inventories for compressed-rotation investigation; no
 network firing presentation or combat authority is claimed.
+
+The current strict replay gate now passes after correcting queued-state clip
+binding. Three-way controls show that both real PlayQueued states and ordinary
+states bound under the original base clip name reproduce the observed poses;
+registering the generated queued name as an AddClip alias creates a different
+clip object and reproduces the historical rotation error. Both references now
+cover 393 frames with unchanged strict tolerances, a positive original-name
+control and a negative alias control. Stable source clip identities must be
+preserved in the future network representation. SDK mixer projection, runtime
+firing integration, skipped snapshots and live combat remain open.

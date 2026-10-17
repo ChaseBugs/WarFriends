@@ -138,69 +138,56 @@ source rigid bodies kinematic, disables gravity/collisions and disables source
 colliders before Play Mode. This affects disposable probes only, not Client
 prefabs or gameplay physics. Muzzle-only historical references are unchanged.
 
-`UnityCoopRigReplayProbe` samples a separate inactive clone from observed clip
-names, time, weight, layer, wrap and blend mode. It creates aliases for queued
-clones without enabling source scripts or autonomous animation. Each frame
-records maximum local position error, normalized quaternion error, relative
-scale error and the transforms owning the greatest position/rotation errors.
-Quaternion error is `1 - abs(normalizedDot)` calculated with double intermediates;
-relative scale error divides distance by `max(1, sourceScaleMagnitude)`.
+`UnityCoopRigReplayProbe` samples a separate inactive hierarchy from observed
+clip bindings, time, weight, layer, wrap and blend mode. Each frame records
+maximum local position error, normalized quaternion error, relative scale
+error and the transforms owning the greatest errors. Quaternion error is
+`1 - abs(normalizedDot)` calculated with double intermediates; relative scale
+error divides distance by `max(1, sourceScaleMagnitude)`.
 
-Structural reference validation succeeds, but strict mixer equivalence does
-not. In the corner fixture, maximum normalized quaternion errors are about
-0.00001155 for the obstacle control, 0.00000305 for right corner and 0.00000220
-for left corner. The largest rotation discrepancies identify the left ankle,
-left forearm and right palm respectively. These observations contradict a
-claim that the current scalar-only replay exactly reproduces every bone.
+### Historical failed alias replay
 
-Use `--require-mixer-parity` with the verifier to enforce the separate gate:
-position error at most 0.00001 local units, quaternion error at most 0.000001
-and relative scale error at most 0.00001. The current references must fail
-that gate; ordinary reference validation checks finite/nonnegative measurements
-without claiming equivalence. Investigate evaluation phase, state interpolation
-and remaining mixer inputs before adopting this representation for networking.
-The replay currently evaluates consecutive observations; skipped-snapshot
-reconstruction is also unverified.
+The initial replayer registered a base clip under a generated state name such
+as `player_fire_right3 - Queued Clone`. It produced maximum quaternion errors
+of about 0.00001155 for obstacle, 0.00000305 for right corner and 0.00000220
+for left corner. Changing initial bind pose, preserving continuous states,
+matching speed, creating a fresh mixer and manually sampling the source's
+final frame did not remove those errors.
 
-### Evaluation-phase and inherited-cache diagnosis
+`UnityCoopClipBindingAudit` records 237 bindings for each tested prior,
+preparation and fire clip. The diagnosed ankle/forearm/palm all have complete
+x/y/z/w quaternion channels; missing components do not explain these cases.
+The generated state name was incorrectly treated as a clip asset identity.
 
-The replay now creates a fresh Animation component on its inactive hierarchy
-rather than inheriting the source component's native queue/transition cache.
-The maximum rotation errors remain unchanged in the corner fixture.
+### Corrected clip binding and three-way control
 
-On the final observation only, `CompareAfterSourceSample` saves the source
-local transforms, calls its own Animation.Sample, compares again and restores
-the saved transforms in a finally block. No subsequent observation consumes
-this diagnostic mutation. The final normalized quaternion errors before/after
-manual source evaluation remain identical: about 0.000002157 for the obstacle
-control and 0.000002197 for either corner.
+Three independent inactive replay hierarchies now receive the same observed
+states and clocks:
 
-This rules out a simple final-frame automatic-versus-manual evaluation phase
-explanation for those observations, and the fresh component removes inherited
-native queue cache as an explanation. It does not exclude phase effects at
-every earlier transition or identify the remaining missing input. Bone binding,
-partial rotation channels and interpolation still need investigation. Keep the
-strict equivalence gate closed and do not substitute relaxed tolerances for
-an explanation. The corner reference includes the final `manualSampleReplay`
-measurement; reference validation rejects nonfinite diagnostic measurements
-and any diagnostic resampling before the last observation.
+| Replay mode | Clip binding | Observed result |
+| --- | --- | --- |
+| `NativeQueue` | Original clip plus a real PlayQueued state | Strict parity passes. |
+| `OrdinaryBaseName` | Original clip under its base binding | Strict parity passes. |
+| `OrdinaryQueuedAlias` | AddClip under the generated queued name | Different clip object; rotation mismatch. |
 
-### Initial binding, continuity and actual curve channels
+The alias control reproduces the historical error, while both accepted paths
+preserve source clip object identity in the local probe. Thus queue mode alone
+is not required to sample these confirmed poses; the original clip binding
+must be preserved. Do not use generated queue-state names as asset identities.
+This establishes the alias-path defect without claiming how Unity internally
+re-encodes its compressed curves.
 
-Replay hierarchy creation now occurs before the prior-pose sample. Continuous
-active states remain enabled between observations, and replay retains their
-observed speed while autonomous animation stays disabled. Neither change
-removes the observed maximum rotation discrepancy in the declared fixture.
+Both corrected references pass `--require-mixer-parity` without changing the
+thresholds: position error at most 0.00001 local units, normalized quaternion
+error at most 0.000001 and relative scale error at most 0.00001. The corner
+fixture's maximum corrected quaternion error is below 0.000000001 across all
+three scenarios. The negative alias control still exceeds the quaternion
+threshold in every scenario. The verifier requires both the positive
+original-name control and the negative alias control.
 
-`UnityCoopClipBindingAudit` records Unity's actual path/type/property bindings
-for each scenario's prior, preparation and firing clips. Each recorded clip
-has 237 bindings. The three diagnosed bones all have complete x/y/z/w local
-rotation bindings in those clips; missing quaternion components are not an
-explanation for these targeted cases. The source animation files contain
-compressed rotation curves, which remain a candidate for further comparison,
-not an established cause.
-
-The corner reference now includes the source and replay quaternion components
-at the greatest rotation error and the binding inventory. The verifier checks
-unique binding identities, clip order and the four rotation components for
-each diagnosed bone. The strict parity gate remains unchanged and fails.
+Clip instance IDs in the captures are process-local diagnostics, never wire
+or durable gameplay identities. Production reconstruction must resolve
+reviewed base clips from matching source content. The network mixer DTO,
+host timeline projection, runtime presenter and skipped-snapshot verification
+remain unimplemented. This is 393 frames of isolated source/replay geometry,
+not normal two-Client battle, projectile authority or Unity 5.2 parity.

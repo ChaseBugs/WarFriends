@@ -39,6 +39,8 @@ public static class UnityCoopAssaulterAnimationQueueExport
     private static float startTime;
     private static UnityCoopCornerVolleyProbe[] volleyProbes;
     private static UnityCoopRigReplayProbe[] replayProbes;
+    private static UnityCoopRigReplayProbe[] ordinaryQueueControls;
+    private static UnityCoopRigReplayProbe[] ordinaryBaseControls;
 
     static UnityCoopAssaulterAnimationQueueExport()
     {
@@ -171,6 +173,8 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 {
                     object rig = UnityCoopRigFrameCapture.Capture(root, animation);
                     object replay = replayProbes[i].Compare(animation);
+                    object ordinaryQueueControl = ordinaryQueueControls[i].Compare(animation);
+                    object ordinaryBaseControl = ordinaryBaseControls[i].Compare(animation);
                     object manualSampleReplay = null;
                     if (seconds >= duration)
                     {
@@ -186,6 +190,8 @@ public static class UnityCoopAssaulterAnimationQueueExport
                         observation = frame,
                         commandsAfterObservation = commands,
                         replay,
+                        ordinaryQueueControl,
+                        ordinaryBaseControl,
                         manualSampleReplay,
                         rig
                     });
@@ -310,6 +316,8 @@ public static class UnityCoopAssaulterAnimationQueueExport
         if (SessionState.GetBool(WholeRig, false))
         {
             replayProbes = new UnityCoopRigReplayProbe[3];
+            ordinaryQueueControls = new UnityCoopRigReplayProbe[3];
+            ordinaryBaseControls = new UnityCoopRigReplayProbe[3];
         }
         for (int i = 0; i < 3; i++)
         {
@@ -330,6 +338,10 @@ public static class UnityCoopAssaulterAnimationQueueExport
             {
                 // Bind the independent hierarchy before prior-pose sampling changes any partial curve defaults.
                 replayProbes[i] = new UnityCoopRigReplayProbe(roots[i]);
+                ordinaryQueueControls[i] = new UnityCoopRigReplayProbe(roots[i],
+                    UnityCoopRigReplayProbe.QueueReplayMode.OrdinaryQueuedAlias);
+                ordinaryBaseControls[i] = new UnityCoopRigReplayProbe(roots[i],
+                    UnityCoopRigReplayProbe.QueueReplayMode.OrdinaryBaseName);
             }
             if (SessionState.GetBool(Primed, false))
             {

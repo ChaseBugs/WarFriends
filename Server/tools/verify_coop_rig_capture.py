@@ -80,6 +80,31 @@ def validate_scenario(scenario, require_mixer_parity=False):
     return len(frames), len(expected_paths)
 
 
+def validate_queue_control(scenario):
+    has_ordinary_queue_mismatch = False
+    for frame in scenario["frames"]:
+        control = frame["ordinaryQueueControl"]
+        base_control = frame["ordinaryBaseControl"]
+        require(control["transforms"] == len(frame["rig"]["transforms"]), "Incomplete ordinary-queue control.")
+        require(base_control["transforms"] == len(frame["rig"]["transforms"]), "Incomplete original-name control.")
+        require(frame["replay"]["clipIdentitiesMatch"] is True and base_control["clipIdentitiesMatch"] is True,
+                "Accepted replay must preserve the actual source clip objects.")
+        for field, tolerance in (("positionError", 0.00001), ("rotationError", 0.000001),
+                                 ("relativeScaleError", 0.00001)):
+            value = base_control[field]
+            require(type(value) in (int, float) and math.isfinite(value) and 0 <= value <= tolerance,
+                    "Original-name ordinary state failed mixer equivalence.")
+        for field in ("positionError", "rotationError", "relativeScaleError"):
+            value = control[field]
+            require(type(value) in (int, float) and math.isfinite(value) and value >= 0,
+                    "Invalid ordinary-queue control measurement.")
+        has_queued_state = any(state["name"].endswith(" - Queued Clone") for state in frame["rig"]["states"])
+        if has_queued_state:
+            require(control["clipIdentitiesMatch"] is False, "The renamed-alias control did not create a distinct clip.")
+        has_ordinary_queue_mismatch |= has_queued_state and control["rotationError"] > 0.000001
+    require(has_ordinary_queue_mismatch, "The negative control did not distinguish native queued-state evaluation.")
+
+
 def validate_bindings(scenario):
     clips = scenario.get("sourceBindings")
     if clips is None:
@@ -145,6 +170,7 @@ def main():
                 "Recovered animation controller source changed.")
     for scenario in scenarios:
         validate_bindings(scenario)
+        validate_queue_control(scenario)
         for field in ("priorClip", "startClip", "fireClip"):
             clip_path = arguments.project / "Assets/AnimationClip" / (scenario[field] + ".anim")
             require(hashlib.sha256(clip_path.read_bytes()).hexdigest() == scenario[field + "Sha256"],
@@ -155,6 +181,8 @@ def main():
         print(f"PASS: {scenario['startClip']}: {frames} frames, {transforms} transforms per frame")
         maximum_rotation_error = max(frame["replay"]["rotationError"] for frame in scenario["frames"])
         print(f"Measured normalized quaternion error: {maximum_rotation_error:.9g}; parity is a separate gate")
+        if arguments.require_mixer_parity:
+            print("PASS: strict independent mixer parity")
 
 
 if __name__ == "__main__":

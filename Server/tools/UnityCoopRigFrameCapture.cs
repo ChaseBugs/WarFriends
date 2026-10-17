@@ -27,6 +27,9 @@ public static class UnityCoopRigFrameCapture
             states.Add(new
             {
                 name = state.name,
+                clipName = state.clip.name,
+                clipInstanceId = state.clip.GetInstanceID(),
+                clipLength = state.clip.length,
                 time = state.time,
                 normalizedTime = state.normalizedTime,
                 weight = state.weight,

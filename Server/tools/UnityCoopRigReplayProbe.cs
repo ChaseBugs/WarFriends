@@ -5,14 +5,25 @@ using UnityEngine;
 /// <summary>Measures whether a separate legacy Animation can reconstruct an observed mixer frame.</summary>
 public sealed class UnityCoopRigReplayProbe
 {
+    /// <summary>Separates native queues, original-name ordinary states and the historical renamed-alias control.</summary>
+    public enum QueueReplayMode
+    {
+        NativeQueue,
+        OrdinaryBaseName,
+        OrdinaryQueuedAlias
+    }
+
     private const string QueuedSuffix = " - Queued Clone";
     private readonly Animation _animation;
     private readonly Transform[] _sourceTransforms;
     private readonly Transform[] _replayTransforms;
+    private readonly QueueReplayMode _queueMode;
+    private bool _clipIdentitiesMatch;
 
     /// <summary>Clones only the already stripped observation rig and disables autonomous animation.</summary>
-    public UnityCoopRigReplayProbe(Transform source)
+    public UnityCoopRigReplayProbe(Transform source, QueueReplayMode queueMode = QueueReplayMode.NativeQueue)
     {
+        _queueMode = queueMode;
         GameObject replay = UnityEngine.Object.Instantiate(source.gameObject);
         replay.SetActive(false);
         replay.name = "IndependentMixerReplay";
@@ -41,29 +52,23 @@ public sealed class UnityCoopRigReplayProbe
     /// <summary>Copies mixer scalars, samples the independent rig and reports local transform errors.</summary>
     public object Compare(Animation source)
     {
-        var activeNames = new HashSet<string>();
+        var observedStates = new List<AnimationState>();
+        var replayStates = new List<AnimationState>();
+        _clipIdentitiesMatch = true;
+        _animation.Stop();
         foreach (AnimationState state in source)
         {
             if (state.enabled)
             {
-                activeNames.Add(state.name);
+                observedStates.Add(state);
+                replayStates.Add(CreateReplayState(state));
             }
         }
 
-        foreach (AnimationState state in _animation)
+        for (int index = 0; index < observedStates.Count; index++)
         {
-            if (!activeNames.Contains(state.name))
-            {
-                state.enabled = false;
-            }
-        }
-
-        foreach (AnimationState state in source)
-        {
-            if (state.enabled)
-            {
-                ApplyState(source, state);
-            }
+            ApplyState(replayStates[index], observedStates[index]);
+            _clipIdentitiesMatch &= replayStates[index].clip == observedStates[index].clip;
         }
 
         _animation.Sample();
@@ -105,6 +110,7 @@ public sealed class UnityCoopRigReplayProbe
         {
             positionError, rotationError, relativeScaleError, greatestPositionErrorTransform,
             greatestRotationErrorTransform,
+            clipIdentitiesMatch = _clipIdentitiesMatch,
             sourceRotation = Coordinates(sourceRotation),
             replayRotation = Coordinates(replayRotation),
             transforms = _sourceTransforms.Length
@@ -156,27 +162,43 @@ public sealed class UnityCoopRigReplayProbe
         return (float)Math.Max(0d, 1d - Math.Abs(dot) / Math.Sqrt(firstNorm * secondNorm));
     }
 
-    private void ApplyState(Animation source, AnimationState observed)
+    private AnimationState CreateReplayState(AnimationState observed)
     {
-        AnimationState target = _animation[observed.name];
-        if (target == null)
+        AnimationClip clip = observed.clip;
+        if (clip == null)
         {
-            string clipName = observed.name;
-            if (clipName.EndsWith(QueuedSuffix, StringComparison.Ordinal))
-            {
-                clipName = clipName.Substring(0, clipName.Length - QueuedSuffix.Length);
-            }
-
-            AnimationClip clip = source.GetClip(clipName);
-            if (clip == null)
-            {
-                throw new InvalidOperationException("Missing source replay clip: " + clipName);
-            }
-
-            _animation.AddClip(clip, observed.name);
-            target = _animation[observed.name];
+            throw new InvalidOperationException("The observed mixer state has no clip.");
+        }
+        bool isQueued = observed.name.EndsWith(QueuedSuffix, StringComparison.Ordinal);
+        string name = observed.name;
+        if (isQueued && _queueMode != QueueReplayMode.OrdinaryQueuedAlias)
+        {
+            name = name.Substring(0, name.Length - QueuedSuffix.Length);
         }
 
+        AnimationState target = _animation[name];
+        if (target == null || target.clip != clip)
+        {
+            if (target != null)
+            {
+                _animation.RemoveClip(name);
+            }
+
+            _animation.AddClip(clip, name);
+            target = _animation[name];
+        }
+
+        if (isQueued && _queueMode == QueueReplayMode.NativeQueue)
+        {
+            // A native queued state is not equivalent to an ordinary state given a queued-looking name.
+            return _animation.PlayQueued(name, QueueMode.PlayNow, PlayMode.StopSameLayer);
+        }
+
+        return target;
+    }
+
+    private static void ApplyState(AnimationState target, AnimationState observed)
+    {
         target.wrapMode = observed.wrapMode;
         target.blendMode = observed.blendMode;
         target.layer = observed.layer;

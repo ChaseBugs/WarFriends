@@ -28,7 +28,7 @@ public static class UnityCoopClipBindingAudit
                     property = binding.propertyName,
                     type = binding.type.FullName
                 }).ToArray();
-            clips.Add(new { name = clipName, bindings });
+            clips.Add(new { name = clipName, clipInstanceId = clip.GetInstanceID(), bindings });
         }
 
         return clips;
