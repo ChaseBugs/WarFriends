@@ -17,6 +17,10 @@ distinct boundaries: scope failures now dispatch one owner-bound cancellation
 after iterator unwinding, retain UDP for terminal proof and block Ready/new maps.
 Actual queued two-Unity-client failure recovery and retry presentation remain
 pending.
+The actual plain C# Unity attempt owner now also passes real authenticated
+HTTP/UDP loading cancellation, accepted Mongo terminal/pair release and
+Running-first refusal checks. This supplements the controlled Unity dispatch
+gate; it does not combine resource failure and real services in one Unity run.
 
 [Original abort notice](ABORT_NOTICE_UI.md) now runs the recovered modal's real
 labels, tweens and OK callback in Play Mode and has an inspected camera capture.

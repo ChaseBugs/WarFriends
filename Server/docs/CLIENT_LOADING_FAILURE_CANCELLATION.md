@@ -90,3 +90,23 @@ cross-host visual and cancellation-modal gates. Log:
 `Server/.local/unity-loading-failure-scope-final.log`. Managed execution faults
 use the actual wrapper under controlled advancement; this does not prove Unity's
 complete engine exception dispatch or every resource variant.
+
+`LiveLoadingCancellationChecks` links the same Unity attempt source into the
+native live executable. With real authenticated Backend routes, Worker UDP and
+MongoDB it completes two searches, admits both peers, retains the successful
+loading owner and calls completion before cancellation. Both open UDP transports
+must receive `cancelled-before-start` with no winner or reward eligibility;
+accepted manifest-bound terminal evidence must release both pair members.
+A second match reaches Running first: the attempt must reject cancellation,
+leave the pair without a terminal result and keep UDP usable. Only the test's
+separate explicit Forfeit ends that running match.
+
+These checks run inside `--queue-live <replica-set-uri>`. They prove the actual
+plain C# attempt lifetime across real services; they do not execute the Unity
+MonoBehaviour, resource iterator, UI or two Unity processes together.
+
+The Release build completed with zero warnings/errors. The complete native queue
+suite passed against its own MongoDB replica set, including Backend restarts,
+delayed registration publication, cancellation races and unattended Worker-outage
+recovery. Run log:
+`Server/.local/loading-cancellation-live-61f5e56c0b554c0f9c0449d8a9a4281d/queue-live.log`.

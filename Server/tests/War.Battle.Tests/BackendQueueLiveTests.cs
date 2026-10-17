@@ -368,6 +368,9 @@ internal static class BackendQueueLiveTests
             using var raceDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var raceScenario = new ScopedQueueLiveChecks.Scenario(left, right, tokens, raceDeadline.Token);
             await new LiveQueueCancellationRaceChecks(raceScenario, queue, results).RunAsync();
+            using var loadingDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            await new LiveLoadingCancellationChecks(new Uri(backendUrl), tokens, queue, results)
+                .RunAsync(loadingDeadline.Token);
             using var recoveryDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
             var unattended = new UnattendedCancellationChecks(
                 queue, results, new BattleManifestSnapshotStore(mongoUri, database), recoveryDeadline.Token);
