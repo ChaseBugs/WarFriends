@@ -217,3 +217,9 @@ The [obstacle interruption checkpoint](COOP_OBSTACLE_INTERRUPTION.md) records
 six reversed phases across 78 source frames. Six independent replay frames
 exceed unchanged tolerances, so its strict parity gate intentionally fails.
 This is a reproducible counterexample, not implemented interruption support.
+
+The [fixed-step pose catalog](COOP_OBSTACLE_FIXED_STEP_CATALOG.md) now covers
+17 nominal crawl phases and 221 source/reconstruction pairs. Observed channel
+preservation passes the full matrix; eighteen clip-only failures remain.
+Runtime loading, prior-state retention and validated host/SDK selection are
+still required before this content becomes interruption support.

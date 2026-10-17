@@ -63,3 +63,9 @@ compressed controls path and `WAR_OBSTACLE_OVERRIDE_OUTPUT` to a JSON output,
 then execute `UnityCoopObstaclePoseOverrideAudit.Run` in the disposable Unity
 2018 project with the original source prefab. These are isolated Windows
 measurements, not rendered gameplay, Linux, Android or shipped Unity 5.2 proof.
+
+The [fixed-step pose catalog](COOP_OBSTACLE_FIXED_STEP_CATALOG.md) now covers
+17 nominal crawl phases and 221 source/reconstruction pairs. Observed channel
+preservation passes the full matrix; eighteen clip-only failures remain.
+Runtime loading, prior-state retention and validated host/SDK selection are
+still required before this content becomes interruption support.

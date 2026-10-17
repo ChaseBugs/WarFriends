@@ -1654,3 +1654,9 @@ twelve calibration poses on fresh hierarchies using source position/scale
 rows. Identical current mixer states can represent different prior histories,
 so host state retention and a complete phase catalog remain required. This
 is not implemented interruption transport or a passed clip-only parity gate.
+
+The [fixed-step pose catalog](COOP_OBSTACLE_FIXED_STEP_CATALOG.md) now covers
+17 nominal crawl phases and 221 source/reconstruction pairs. Observed channel
+preservation passes the full matrix; eighteen clip-only failures remain.
+Runtime loading, prior-state retention and validated host/SDK selection are
+still required before this content becomes interruption support.
