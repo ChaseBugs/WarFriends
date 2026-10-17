@@ -25,7 +25,8 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		return client != null && client.PhotonCompatibility != null && client.PhotonCompatibility.IsConnected ? client : null;
 	}
 
-	private static SelfHostedBattleClient GetOwnedSelfHostedClient()
+    /// <summary>Returns the canonical retained owner even while its scene object is inactive.</summary>
+	public static SelfHostedBattleClient GetOwnedSelfHostedClient()
 	{
 		SelfHostedBattleClient client = SelfHostedBattleClient.Active;
 		return client != null && client.OwnsMatch ? client : null;

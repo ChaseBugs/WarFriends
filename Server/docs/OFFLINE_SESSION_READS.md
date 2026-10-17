@@ -60,6 +60,38 @@ The fixed command and the existing combined NGUI/component regression pass in
 errors. The same fixture still does not prove live-server cancellation or full
 menu boot.
 
+## Normal controller owner resolution
+
+GameControllerOnline now uses the canonical owned-client getter for loading
+readiness, card submission, player initialization and time compatibility calls.
+GameControllerPVP uses it for scene activation and camera completion; Coop uses
+it for camera completion. These paths no longer rediscover only active objects
+after IsSelfHostedActive already confirmed retained ownership. The getter still
+requires OwnsMatch; connection/roster validation remains with each caller.
+
+The native baseline `Server/.local/unity-controller-owner-baseline.log` invokes
+the actual InitializeSelfHostedPlayers method with an inactive retained owner
+and a deliberately non-local roster. It incorrectly fails at missing adapter
+discovery. The corrected gate reaches the exact local-roster ownership rejection
+without setting mBothPlayersConnected or touching profile-dependent player data.
+This negative test proves owner resolution and rejection order, not successful
+player initialization, card traffic, readiness or normal gameplay.
+
+An unreachable self-hosted camera branch inside ResyncPlayerStates was removed:
+that method already returns for self-hosted ownership. Source inspection also
+confirmed that SelfHostedRpcRouter's camera/time compatibility cases only return
+Boolean recognition, rather than transmitting or applying those callbacks. See
+the corrected [RPC ledger](BATTLE_RPC_MIGRATION.md); peer camera-completion flags
+and full start-animation/reconnect gating remain open. The lifetime scope of the
+shared pool also prevents simply skipping view registration according to one
+temporary match owner; that migration still needs a complete lifecycle design.
+
+The complete controlled component/UI regression passes after all three
+controller changes in `Server/.local/unity-controller-owner-final.log`, with no
+unexpected runtime errors. Static asset checks still find zero missing scripts
+or broken references. These results do not prove full gameplay, two running
+Unity clients, Android or the original Unity 5.2 environment.
+
 The existing four-state controller recovery and four injected cleanup-failure
 controls also pass with the canonical owner lookup:
 `Server/.local/unity-session-read-abort-routing.log`. Static asset checks still

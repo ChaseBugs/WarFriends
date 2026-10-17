@@ -218,7 +218,7 @@ public abstract class GameControllerOnline : IGameController
 		PlayerController.currentPlayer.networkStatus.matchState = PlayerNetworkStatus.MatchState.LoadingFinished;
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
-			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
 			if (selfHosted == null || !selfHosted.DispatchRpc("LoadingFinishedRPC"))
 				Debug.LogError("Self-hosted loading readiness could not be submitted.");
 			while (selfHosted != null && selfHosted.IsConnected &&
@@ -363,7 +363,7 @@ public abstract class GameControllerOnline : IGameController
 	{
 		try
 		{
-			SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
 			if (client == null || !client.IsConnected) throw new InvalidOperationException("Self-hosted room is not connected.");
 			string selected = CardManager.instance.selectedCards;
 			string[] cards = string.IsNullOrEmpty(selected) ? new string[0] : selected.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -461,7 +461,7 @@ public abstract class GameControllerOnline : IGameController
 	private void InitializeSelfHostedPlayers()
 	{
 		if (mBothPlayersConnected) throw new InvalidOperationException("All players already connected.");
-		SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
 		if (client == null || !client.IsConnected || client.PlayerViews == null || client.PlayerViews.Count != 2)
 			throw new InvalidOperationException("A complete self-hosted player roster is required.");
 		BattlePlayerView local = null;
@@ -941,7 +941,7 @@ public abstract class GameControllerOnline : IGameController
 	{
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
-			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
 			if (selfHosted != null) selfHosted.DispatchRpc("ResyncTimeRPC", time);
 			return;
 		}
@@ -963,15 +963,7 @@ public abstract class GameControllerOnline : IGameController
 		}
 		if (PlayerController.currentPlayer.networkStatus.startAnimationFinished)
 		{
-			if (PhotonConnectionManager.IsSelfHostedActive)
-			{
-				SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
-				if (selfHosted != null) selfHosted.DispatchRpc("StartCameraAnimationFinishedRPC");
-			}
-			else
-			{
-				mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
-			}
+			mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
 		}
 	}
 

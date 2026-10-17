@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The normal Online/PVP/Coop controller paths now resolve the canonical retained
+owner rather than an active-object search. The actual player-initialization
+negative gate reproduces and fixes loss of an inactive owner before roster
+ownership validation; it does not prove complete player bootstrap. Source review
+also corrected the RPC ledger: camera/time compatibility calls only return
+recognition, and remote camera-completion delivery remains open.
+
 [Cached RPC lifetime](CACHED_RPC_BOUNDARY.md) now keeps one room-reset receiver
 per object, removes destroyed receivers and preserves inactive-cache invalidation.
 Retained self-hosted ownership rejects direct legacy cached sends and discards

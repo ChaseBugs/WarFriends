@@ -37,7 +37,7 @@ public abstract class GameControllerPVP : GameControllerOnline
 		yield return BattleResourceLoadScope.StartNested(this, base.StartGame());
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
-			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
 			if (selfHosted == null) throw new System.InvalidOperationException("Self-hosted scene adapter is missing.");
 			selfHosted.ActivateDeathMatchScene(base.mMainPlayerController, GameControllerOnline.mOtherPlayerInstance);
 		}
@@ -45,7 +45,7 @@ public abstract class GameControllerPVP : GameControllerOnline
 		yield return StartCoroutine(Singleton<GameCamera>.instance.StartBeginAnimation());
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
-			SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
 			if (client != null) client.DispatchRpc("StartCameraAnimationFinishedRPC");
 		}
 		else mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
