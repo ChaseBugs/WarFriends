@@ -64,6 +64,12 @@ public sealed class UnityCoopCornerVolleyProbe
         Shoot(RoundHideSeconds);
     }
 
+    /// <summary>Invokes the separate recovered obstacle notification without advancing animation.</summary>
+    public void NotifyObstacleRound()
+    {
+        _controller.ShootFromCrawl(RoundHideSeconds, 1f, Weapon.WeaponType.Riffle);
+    }
+
     private void Shoot(float hideSeconds)
     {
         // The recovered public overload reverses the Boolean before choosing its private CoverSide.

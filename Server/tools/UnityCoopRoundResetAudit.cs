@@ -84,6 +84,10 @@ public static class UnityCoopRoundResetAudit
             source.Stop();
             source.Play(fire);
             VerifyReset(source, controller, sampler, source[fire]);
+            if (isRightSide)
+            {
+                VerifyObstacle(source, controller, sampler);
+            }
         }
         finally
         {
@@ -106,6 +110,54 @@ public static class UnityCoopRoundResetAudit
         sampler.Sample(new[] { new SelfHostedInfantryAnimationState(fire, 0f, 1f, WrapMode.ClampForever) });
         Animation replay = FindReplayAnimation(source);
         CompareHierarchy(source.transform, replay.transform);
+    }
+
+    private static void VerifyObstacle(Animation source, UnityCoopCornerVolleyProbe controller,
+        SelfHostedInfantryAnimationSampler sampler)
+    {
+        const string beginClip = "stand_up_begin";
+        const string fireClip = "rifle_shot_loop";
+        const string returnClip = "stand_up_crawl";
+        const float seedSeconds = 0.1f;
+        const float returnFraction = 0.25f;
+        const float phaseTolerance = 0.00001f;
+
+        source.Stop();
+        source.Play(beginClip);
+        source[beginClip].time = seedSeconds;
+        controller.NotifyObstacleRound();
+        Require(source[beginClip].enabled && source[beginClip].time == seedSeconds,
+            "An obstacle notification must retain the playing preparation clock.");
+
+        source.Stop();
+        source.Play(returnClip);
+        source[returnClip].normalizedTime = returnFraction;
+        controller.NotifyObstacleRound();
+        Require(Mathf.Abs(source[beginClip].normalizedTime - (1f - returnFraction)) < phaseTolerance,
+            "Interrupted crawl must reverse into the remaining stand-up preparation.");
+
+        source.Stop();
+        AnimationState queued = source.PlayQueued(fireClip, QueueMode.PlayNow);
+        VerifyObstacleReset(source, controller, sampler, queued);
+        source.Stop();
+        source.Play(fireClip);
+        VerifyObstacleReset(source, controller, sampler, source[fireClip]);
+    }
+
+    private static void VerifyObstacleReset(Animation source, UnityCoopCornerVolleyProbe controller,
+        SelfHostedInfantryAnimationSampler sampler, AnimationState before)
+    {
+        const string fireClip = "rifle_shot_loop";
+        const float seedSeconds = 0.1f;
+        before.wrapMode = WrapMode.ClampForever;
+        before.time = seedSeconds;
+        source.Sample();
+        controller.NotifyObstacleRound();
+        Require(source[fireClip].enabled && source[fireClip].time == 0f,
+            "An obstacle notification must replace queued fire or restart ordinary fire at zero.");
+        source.Sample();
+        sampler.Sample(new[] { new SelfHostedInfantryAnimationState(fireClip, 0f, 1f, WrapMode.ClampForever) });
+        CompareHierarchy(source.transform, FindReplayAnimation(source).transform);
     }
 
     private static Animation FindReplayAnimation(Animation source)

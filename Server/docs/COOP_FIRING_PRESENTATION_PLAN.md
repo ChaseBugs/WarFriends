@@ -1,8 +1,8 @@
 # Co-op firing presentation implementation requirements
 
 This is an implementation dependency list for B22, not evidence that firing
-presentation or co-op combat admission is complete. The walking presenter is
-installed; this firing path is not implemented.
+presentation or co-op combat admission is complete. Walking and fixed-root
+corner frames are connected; obstacle firing still needs host projection.
 
 ## Recovered behavior
 
@@ -201,3 +201,30 @@ and idle blends. [Retained preparation](COOP_CORNER_PREPARATION.md) now captures
 idle/look/fire/return before each attempt and preserves its source phase.
 [Current-round resets](COOP_ROUND_RESET_FRAMES.md) now publish confirmed fire
 at time zero. Obstacle fire still needs complete host projection.
+
+## Obstacle source notification checkpoint
+
+`UnityCoopRoundResetAudit` now also invokes the recovered `ShootFromCrawl`
+method with the source Rifle identity and round parameters (0.5 seconds,
+speed one). The separate obstacle branch is not `ShootStandNew`: that method
+uses Colt preparation/stop names and cannot substitute for crawl behavior.
+
+The source checks retain an enabled `stand_up_begin` at its existing time,
+reverse a quarter-complete `stand_up_crawl` into three-quarter-complete
+preparation, and replace queued or ordinary `rifle_shot_loop` with enabled
+ordinary fire at time zero. Both reset cases compare all local hierarchy
+transforms against the production script-free animation sampler.
+
+The isolated Windows Unity 2018 Play Mode audit passes 254 checks total:
+168 existing corner checks and 86 obstacle checks. The source methods are
+manually wired on an inactive controller; normal AI and callback scheduling
+are not executed. This does not verify the initial 0.05-second blend, queued
+transition timing, timed crawl return, interrupted-return blend geometry,
+procedural aiming, rendered gameplay, or shipped Unity 5.2 behavior.
+
+Host projection must next preserve these separate obstacle branches, the
+actual emitted-round ledger and the crawl-return timer. It must capture the
+previous animation before replacing a windup. Existing collider/muzzle
+observations precede notifications and cannot supply post-command visuals
+without an explicit phase conversion. Public admission and hit authority
+remain closed until their own requirements are implemented and verified.
