@@ -13,6 +13,10 @@ public sealed class BattleRematchConsentDocument
 
     public string Status { get; set; } = "";
 
+    public string NextMatchId { get; set; } = "";
+
+    public string NextCompatibilityKey { get; set; } = "";
+
     public long Revision { get; set; }
 
     public DateTime CreatedUtc { get; set; }

@@ -22,6 +22,11 @@ accepted Ended-result participant binding, thirty-second expiry, idempotent
 concurrent votes and irreversible cancellation. Authenticated protobuf
 read/accept/cancel endpoints and portable SDK methods now expose that state.
 They are not connected to Unity controllers or fresh allocation; `ready` is intent only.
+An additional transaction primitive now consumes mutual consent and reserves
+the exact two participants once, with cancel/reserve fencing and stable replay
+after pair release. Real Mongo change streams prove both writes share one
+transaction. Production allocator invocation, mode/loadout validation and
+Worker provisioning are not connected yet.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

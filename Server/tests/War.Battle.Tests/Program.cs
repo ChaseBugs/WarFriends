@@ -91,6 +91,12 @@ if (args is ["--rematch-consent-only", var rematchMongoUri])
     return;
 }
 
+if (args is ["--rematch-reservation-only", var reservationMongoUri])
+{
+    await RematchReservationStoreTests.RunAsync(reservationMongoUri);
+    return;
+}
+
 if (args is ["--atomic-terminal-only", var atomicTerminalMongoUri])
 {
     await AtomicTerminalAcceptanceTests.RunAsync(atomicTerminalMongoUri);

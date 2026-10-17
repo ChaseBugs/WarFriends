@@ -14,6 +14,8 @@ public sealed partial class BattleRematchConsentStore
     private const string Ready = "ready";
     private const string Cancelled = "cancelled";
     private const string Expired = "expired";
+    private const string Allocated = "allocated";
+    private readonly MongoClient _client;
     private readonly BattleResultStore _results;
     private readonly IMongoCollection<BattleRematchConsentDocument> _consents;
 
@@ -21,7 +23,8 @@ public sealed partial class BattleRematchConsentStore
     public BattleRematchConsentStore(string uri, string databaseName)
     {
         _results = new BattleResultStore(uri, databaseName);
-        _consents = new MongoClient(uri).GetDatabase(databaseName)
+        _client = new MongoClient(uri);
+        _consents = _client.GetDatabase(databaseName)
             .GetCollection<BattleRematchConsentDocument>("battle_rematch_consents");
     }
 
@@ -141,7 +144,7 @@ public sealed partial class BattleRematchConsentStore
 
     private static BattleRematchConsentDocument Apply(BattleRematchConsentDocument current, Change change)
     {
-        if (current.Status is Cancelled or Expired)
+        if (current.Status is Cancelled or Expired or Allocated)
         {
             return current;
         }
@@ -164,7 +167,7 @@ public sealed partial class BattleRematchConsentStore
         return new BattleRematchConsentDocument
         {
             Id = current.Id, ResultDigest = current.ResultDigest, Players = current.Players,
-            AcceptedPlayers = accepted, Status = status, Revision = checked(current.Revision + 1),
+            AcceptedPlayers = accepted, Status = status, Revision = NextRevision(current.Revision),
             CreatedUtc = current.CreatedUtc, UpdatedUtc = change.Now.UtcDateTime, ExpiresUtc = current.ExpiresUtc,
         };
     }

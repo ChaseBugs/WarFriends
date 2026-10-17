@@ -79,9 +79,9 @@ with zero revision/deadline; it does not create a window. Reads persist expiry
 without adding a vote. `BackendClient` has matching read/accept/cancel methods.
 
 These routes do not issue grants.
-`ready` means mutual intent only. An allocator must still atomically reserve
-the exact original participants, revalidate their current loadouts and mode,
-fence cancellation against publication, and issue fresh Worker capabilities.
+`ready` means mutual intent only. The reservation primitive below can consume
+it atomically; the production allocator still needs to invoke that primitive,
+revalidate current loadouts and mode, and issue fresh Worker capabilities.
 No wallet or Dog Tag changes are made by consent. Normal Unity controllers
 still need typed consent/status/cancel integration; friend, human co-op
 and co-op bot policy must remain distinct. No same-opponent gameplay claim
@@ -96,3 +96,33 @@ The native `--queue-live <mongo-uri>` suite additionally checks real Backend
 protobuf/SDK consent against an accepted Worker result, including unauthenticated,
 nonparticipant, malformed-ID and unknown-field rejection. This is not a second
 same-opponent allocation or Unity controller proof.
+
+## Atomic reservation foundation
+
+`ReserveAsync` consumes an unexpired `ready` record and inserts one new
+`battle_pairs` row in the same snapshot/majority MongoDB transaction. It binds
+the accepted result digest and exact participant set, checks existing pairs
+and queue tickets, and relies on the allocator's unique participant index to
+exclude competing pairs. Queue indexes must be initialized before this call.
+The compatibility key is server-owned policy, not an HTTP request field.
+
+The committed consent becomes `allocated` with a distinct `NextMatchId`.
+Its reserved compatibility key is retained, so a retry cannot silently change
+the server policy associated with that identity.
+Concurrent reservation retries return that same identity. A retry after pair
+release or consent-window expiry does not recreate a battle. Cancellation
+before reservation prevents publication; after reservation, it observes
+`allocated` and leaves cancellation of the new pair to the ordinary
+Worker-confirmed cancellation path. The API projects `next_match_id` as a
+reservation pointer only, never as a connection grant.
+
+`--rematch-reservation-only <mongo-uri>` checks concurrent reservation,
+Mongo change-stream transaction identity, cancel/reserve ordering, missing or
+single-party consent, outsider rejection, busy/expired requests, exhausted
+revision rejection and replay after release. Its source result comes from a
+controlled real MatchEngine fixture, not a normal Unity rematch session.
+
+No HTTP allocation route calls this primitive yet. Current-loadout validation,
+original map/mode and player-slot preservation, Worker provisioning, fresh
+grants, post-reservation recovery and Unity controller handoff remain open.
+No wallet or Dog Tag transition is implemented by this reservation layer.

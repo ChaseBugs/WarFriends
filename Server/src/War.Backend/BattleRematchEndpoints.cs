@@ -60,6 +60,7 @@ public static class BattleRematchEndpoints
         }
         response.Status = consent.Status;
         response.Revision = consent.Revision;
+        response.NextMatchId = consent.NextMatchId;
         response.ExpiresUnixMilliseconds = new DateTimeOffset(consent.ExpiresUtc).ToUnixTimeMilliseconds();
         response.AcceptedPlayerIds.Add(consent.AcceptedPlayers);
         return response;
