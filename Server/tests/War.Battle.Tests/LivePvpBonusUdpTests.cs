@@ -209,17 +209,29 @@ internal static class LivePvpBonusUdpTests
                 Check(selected.Code == "weapon-selected",
                     "first UDP peer equips the source RPG slot");
             }
+            var launchDiagnostics = new List<string>();
             for (int attempt = 0; attempt < (bazooka ? 7 : 35); attempt++)
             {
-                firstView = await first.PollAsync(timeout.Token);
+                if (bazooka)
+                {
+                    firstView = await PvpBonusRpgApproach.PrepareShotAsync(first, map, box.BoxId, timeout.Token);
+                }
+                else
+                {
+                    firstView = await first.PollAsync(timeout.Token);
+                }
+
                 var activeBox = firstView.Snapshot.PvpBonusBoxes.FirstOrDefault(
                     item => item.BoxId == box.BoxId);
                 if (activeBox == null) break;
                 box = activeBox;
                 if (bazooka)
                 {
-                    await first.BazookaHoldAsync(true, box.X, box.Y, box.Z,
+                    MatchReply launch = await first.BazookaHoldAsync(true, box.X, box.Y, box.Z,
                         timeout.Token);
+                    launchDiagnostics.Add($"tick={launch.Snapshot.ServerTick}, code={launch.Code}, " +
+                        $"target=({box.X},{box.Y},{box.Z}), phase={box.Phase}");
+                    Check(launch.Code == "bazooka-targeting", "The approached crate accepts a real RPG hold.");
                     await Task.Delay(11_000, timeout.Token);
                 }
                 else
@@ -239,6 +251,7 @@ internal static class LivePvpBonusUdpTests
                     item.Kind == MatchEventKind.Impact &&
                     item.Reason == "bazooka" &&
                     item.ActorId == firstId).ToArray();
+                launchDiagnostics.Add("impacts=" + string.Join(";", bazookaImpacts.Select(item => item.ToString())));
                 Check(firstView.Snapshot.Players[0].ShotsFired > shotsBeforeBazooka &&
                       bazookaImpacts.Length > 0 &&
                       secondEvents.Any(item => bazookaImpacts.Contains(item)),
@@ -246,7 +259,8 @@ internal static class LivePvpBonusUdpTests
             }
             Check(firstView.Snapshot.PvpBonusBoxes.All(item => item.BoxId != box.BoxId) &&
                   secondView.Snapshot.PvpBonusBoxes.All(item => item.BoxId != box.BoxId),
-                "both UDP peers observe host-confirmed box collection");
+                "both UDP peers observe host-confirmed box collection: " +
+                string.Join(";", launchDiagnostics));
         }
         finally
         {

@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[RPG crate occlusion](PVP_RPG_CRATE_OCCLUSION.md) now reproduces a valid City
+spawn hidden from the initial cover. The host and original Unity Physics agree
+on the blocking tires surface; a normal cover change permits collection.
+The live UDP fixture approaches settled crates instead of spending every round
+through the same obstruction. This strengthens the regression gate without
+changing projectile collision or explosion authority.
+
 [Unity match-scope isolation](CLIENT_MATCH_SCOPE.md) fixes component reuse across
 matches: a new grant resets snapshot ordering, foreign callbacks are ignored,
 and canceled admission cleanup cannot close a replacement connection. Native

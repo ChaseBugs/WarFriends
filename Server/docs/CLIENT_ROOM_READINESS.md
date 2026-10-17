@@ -62,8 +62,13 @@ normal scene loading, rendered gameplay, Unity 5.2, Android or Linux runtime.
 One complete battle-suite run passed 143,201 assertions. A later run, including
 the additional duplicate-local-row checks, passed this readiness regression but
 failed the separate live RPG bonus-box collection fixture
-(`LivePvpBonusUdpTests.RunBazooka`). The latest full-suite result is therefore
-not green. Treat that intermittent collection result as an open investigation;
-the earlier pass must not be presented as a reliable full release gate.
+(`LivePvpBonusUdpTests.RunBazooka`). That checkpoint therefore had a failing
+latest full-suite run. The earlier pass could not establish a reliable release
+gate while the intermittent collection result remained unexplained.
 The ordinary bonus UDP fixture and the RPG fixture both passed their subsequent
 isolated reruns without code changes. That does not resolve the full-run failure.
+
+The subsequent [RPG occlusion investigation](PVP_RPG_CRATE_OCCLUSION.md) reproduces
+that failure against the exact City tires geometry and original Unity Physics.
+The UDP fixture now uses normal cover movement before retrying the shot. See
+that checkpoint for the current verification scope and subsequent full-suite pass.
