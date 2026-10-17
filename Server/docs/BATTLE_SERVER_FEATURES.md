@@ -24,7 +24,10 @@ The complete main-screen/resource graph and physical two-client UI remain open.
 [Game-atlas cancellation](ABORT_ATLAS_LOADING.md) now invalidates independently
 hosted game loaders at confirmed abort, leaving menu/common work unscoped.
 The original missing-reference wait has a native counterexample and two-scope
-cancellation gate; completed native bundle/refcount handling remains unverified.
+cancellation gate. A real Windows texture bundle now also checks cancellation
+after a native request starts, fresh-scope publication, exact shared-lease release
+and final native unload; download/dependency failures and the full resource/menu
+path remain open.
 
 [Abort scene recovery](ABORT_SCENE_RECOVERY.md) identifies the source Forfeit,
 co-op dog-tag and Photon Chat side effects that prevent reuse of generic stop

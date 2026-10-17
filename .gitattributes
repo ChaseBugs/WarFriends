@@ -168,3 +168,6 @@ Server/docs/ABORT_MENU_DEPENDENCIES.md text eol=lf
 Server/tools/AbortAtlasPreparerProbe.cs text eol=lf
 Server/tools/UnityAbortAtlasLoadingAudit.cs text eol=lf
 Server/docs/ABORT_ATLAS_LOADING.md text eol=lf
+Server/tools/UnityCompletedAtlasAudit.cs text eol=lf
+Server/tools/UnityCompletedAtlasFixture.cs text eol=lf
+Server/tools/UnityNativeAtlasBundleBuilder.cs text eol=lf
