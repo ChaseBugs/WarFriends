@@ -108,3 +108,5 @@ Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.c
 Server/src/War.Infrastructure/BattleMatchCancellationClient.cs text eol=lf
 Server/tests/War.Protocol.Tests/BattleMatchCancellationTests.cs text eol=lf
 Server/docs/PAIRED_CANCELLATION_CONTROL.md text eol=lf
+
+Server/src/War.Backend/BattlePairedCancellation.cs text eol=lf

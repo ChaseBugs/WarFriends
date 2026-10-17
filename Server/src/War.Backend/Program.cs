@@ -55,6 +55,12 @@ if (matchmakingCompatibilityKey != null && !System.Text.RegularExpressions.Regex
 if (battleControlPort is < 1 or > 65535 || !Uri.TryCreate(controlEndpointText, UriKind.Absolute, out var battleControlEndpoint) ||
     battleControlEndpoint.Scheme is not ("http" or "https")) throw new InvalidOperationException("Invalid Battle control endpoint.");
 builder.Services.AddSingleton(new BattleMatchControlClient(new HttpClient { Timeout = TimeSpan.FromSeconds(5) }, battleControlKey));
+builder.Services.AddSingleton(new BattleMatchCancellationClient(
+    new HttpClient { Timeout = TimeSpan.FromSeconds(5) }, battleControlKey));
+builder.Services.AddSingleton(services => new BattlePairedCancellation(
+    services.GetRequiredService<BattleManifestSnapshotStore>(),
+    services.GetRequiredService<BattleTerminalAcceptance>(),
+    services.GetRequiredService<BattleMatchCancellationClient>(), battleControlEndpoint));
 builder.Services.AddSingleton(services => new BattleMatchProvisioner(services.GetRequiredService<BattleMatchControlClient>(),
     services.GetRequiredService<BattleGrantStore>(), battleControlEndpoint));
 string? battleManifestTemplatePath = builder.Configuration["Battle:MatchManifestTemplatePath"];
@@ -284,13 +290,31 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
     if (result.Players != null) reply.PlayerIds.Add(result.Players);
     return Proto(reply);
 });
-api.MapPost("/battle/queue/cancel", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy, BattleMatchQueueStore queue) =>
+api.MapPost("/battle/queue/cancel", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy, BattleMatchQueueStore queue,
+    BattlePairedCancellation cancellation) =>
 {
     string? playerId = await BattlePlayerId(ctx, accounts, legacy);
     if (playerId == null) return Error(401, "unauthorized", "Authentication required.");
     var request = await Read(ctx, MatchQueueRequest.Parser);
     if (request.CalculateSize() != 0) return Error(400, "invalid_matchmaking_request", "Matchmaking request must be empty.");
-    string code = await queue.Cancel(playerId, DateTimeOffset.UtcNow, ctx.RequestAborted);
+    var decision = await queue.CancelWithPairAsync(playerId, DateTimeOffset.UtcNow, ctx.RequestAborted);
+    string code = decision.Code;
+    if (code == "already-paired")
+    {
+        try
+        {
+            code = await cancellation.CancelAsync(decision, ctx.RequestAborted);
+        }
+        catch (HttpRequestException failure) when (failure.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            return Proto(new MatchQueueReply { Code = "already-paired" });
+        }
+        catch (Exception failure) when (failure is InvalidDataException or HttpRequestException ||
+            failure is OperationCanceledException && !ctx.RequestAborted.IsCancellationRequested)
+        {
+            return Error(503, "match_cancellation_deferred", "Paired cancellation must be retried.");
+        }
+    }
     return Proto(new MatchQueueReply { Code = code });
 });
 app.MapPost("/internal/battle/matches/provision", async (HttpContext ctx, BattleMatchProvisioner provisioner) =>

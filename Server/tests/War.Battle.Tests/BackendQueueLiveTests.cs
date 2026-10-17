@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using War.Backend.Legacy;
 using War.Client;
+using War.BattleServer;
 using War.Infrastructure;
 using War.Persistence;
 using War.Protocol;
@@ -96,6 +97,21 @@ internal static class BackendQueueLiveTests
                (await new BattleGrantStore(mongoUri,database).GetForPlayer(frozenPair.MatchId,ids[0],
                    DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token))!=null)
                 throw new Exception("Deferred provisioning did not retain one frozen, ungranted pair.");
+            try
+            {
+                await left.CancelMatchQueueAsync(tokens[0], deadline.Token);
+                throw new Exception("Unavailable Worker acknowledged paired cancellation.");
+            }
+            catch (HttpRequestException failure) when (failure.Message.Contains("Backend status 503", StringComparison.Ordinal))
+            {
+                // Retry must retain the frozen pair until authentic Worker evidence exists.
+            }
+
+            if ((await new BattleMatchQueueStore(mongoUri, database).Existing(ids[0], deadline.Token))?.MatchId != frozenPair.MatchId)
+            {
+                throw new Exception("Deferred cancellation released the durable pair without terminal proof.");
+            }
+
             worker=Start(workerDll,run,"Worker",workerEnvironment);
             await Ready($"http://127.0.0.1:{controlPort}/health/ready",worker);
             using var controlHttp=new HttpClient();
@@ -191,6 +207,13 @@ internal static class BackendQueueLiveTests
             MatchReply state;
             do {await Task.Delay(100,deadline.Token);state=await peerA.PollAsync(deadline.Token);}
             while(state.Snapshot.Phase!=BattlePhase.Running);
+            var runningCancellation = await left.CancelMatchQueueAsync(tokens[0], deadline.Token);
+            if (runningCancellation.Code != "already-paired" ||
+                (await new BattleMatchQueueStore(mongoUri, database).Existing(ids[0], deadline.Token))?.MatchId != frozenPair.MatchId)
+            {
+                throw new Exception("Queue cancellation released an already running battle.");
+            }
+
             long afterInitialTicket=grants[0].ExpiresUnixSeconds+1;
             var retained=await grantStore.GetAssignmentForPlayer(grants[0].MatchId,ids[0],
                 afterInitialTicket,deadline.Token);
@@ -265,6 +288,45 @@ internal static class BackendQueueLiveTests
             if(afterCrashWait.Code!="waiting" || afterCrashPair.Code!="paired" ||
                afterCrashPair.MatchId==rematch.MatchId)
                 throw new Exception("Players could not requeue after Worker crash settlement.");
+            var cancelled = await left.CancelMatchQueueAsync(tokens[0], deadline.Token);
+            var cancellationReplay = await left.CancelMatchQueueAsync(tokens[0], deadline.Token);
+            var cancelledResult = await results.Get(afterCrashPair.MatchId, deadline.Token);
+            if (cancelled.Code != "cancelled" || cancellationReplay.Code != "not-queued" ||
+                cancelledResult == null || await queue.Existing(ids[0], deadline.Token) != null ||
+                await queue.Existing(ids[1], deadline.Token) != null)
+            {
+                throw new Exception("Public paired cancellation did not persist terminal proof before release.");
+            }
+
+            var cancelledSnapshot = TerminalOutbox.ValidatePayload(
+                cancelledResult.Snapshot, afterCrashPair.MatchId, cancelledResult.Digest);
+            if (cancelledSnapshot.Phase != BattlePhase.Aborted ||
+                cancelledSnapshot.TerminalReason != "cancelled-before-start" || cancelledSnapshot.WinnerPlayerId.Length != 0)
+            {
+                throw new Exception("Prestart cancellation produced scored or non-cancellation evidence.");
+            }
+
+            try
+            {
+                await left.MatchGrantAsync(afterCrashPair.MatchId, tokens[0], deadline.Token);
+                throw new Exception("A cancelled match still delivered an admission grant.");
+            }
+            catch (HttpRequestException failure) when (failure.Message.Contains("Backend status 404", StringComparison.Ordinal))
+            {
+                // The original frozen grant remains retained, but terminal authority revokes delivery.
+            }
+
+            if ((await left.JoinMatchQueueAsync(tokens[0], deadline.Token)).Code != "waiting")
+            {
+                throw new Exception("Cancelled players could not requeue.");
+            }
+
+            var afterCancellation = await right.JoinMatchQueueAsync(tokens[1], deadline.Token);
+            if (afterCancellation.Code != "paired" || afterCancellation.MatchId == afterCrashPair.MatchId)
+            {
+                throw new Exception("Cancellation reused a terminal match identity.");
+            }
+
             Console.WriteLine("PASS: deferred pair, stable grants, terminal revocation, Worker crash recovery and rematch");
         }
         finally

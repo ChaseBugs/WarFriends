@@ -18,6 +18,7 @@ internal static class BattleMatchCancellationTests
         int checks = await VerifySuccessAsync();
         checks += await VerifyInvalidRepliesAsync();
         checks += await VerifyInvalidRequestsAsync();
+        checks += await VerifyEvidenceRepliesAsync();
         Console.WriteLine("PASS: " + checks + " hash-bound Worker cancellation checks");
         return checks;
     }
@@ -30,6 +31,13 @@ internal static class BattleMatchCancellationTests
         var client = new BattleMatchCancellationClient(http, Convert.FromBase64String(encodedKey));
         string code = await client.CancelAsync(new Uri(endpoint), matchId, manifestHash, CancellationToken.None);
         Require(code == "already-cancelled", "The actual Worker must replay its persisted cancellation identity.");
+        var evidence = await client.CancelAndReadAsync(
+            new Uri(endpoint.TrimEnd('/')[..^"/cancel".Length]), matchId, manifestHash, CancellationToken.None);
+        var terminal = War.Protocol.MatchSnapshot.Parser.ParseFrom(evidence.Payload);
+        Require(terminal.MatchId == matchId && terminal.ManifestHash == manifestHash &&
+            terminal.TerminalReason == "cancelled-before-start" &&
+            terminal.Phase == War.Protocol.BattlePhase.Aborted,
+            "The signed C# client must retrieve this exact cancellation's terminal proof.");
         string conflictingHash = (manifestHash[0] == '0' ? "1" : "0") + manifestHash.Substring(1);
         try
         {
@@ -43,6 +51,62 @@ internal static class BattleMatchCancellationTests
         }
 
         throw new Exception("A conflicting hash must not acknowledge an already-cancelled match.");
+    }
+
+    private static async Task<int> VerifyEvidenceRepliesAsync()
+    {
+        byte[] payload = [1, 2, 3];
+        string digest = War.Shared.TerminalResultDigest.Compute(payload);
+        string valid = JsonSerializer.Serialize(new
+        {
+            matchId = MatchId, digest, snapshot = Convert.ToBase64String(payload)
+        });
+        string[] replies =
+        [
+            valid,
+            valid.Replace(digest, new string('0', 64)),
+            valid.Replace(MatchId, "different-match"),
+            valid.Replace("AQID", "invalid-base64"),
+            "{}",
+            new string('x', 90001)
+        ];
+        for (int index = 0; index < replies.Length; index++)
+        {
+            string text = replies[index];
+            using var http = new HttpClient(new ReplyHandler(request =>
+            {
+                if (request.RequestUri!.AbsolutePath.EndsWith("/cancel", StringComparison.Ordinal))
+                {
+                    return Reply("already-cancelled", MatchId, ManifestHash);
+                }
+
+                Require(request.RequestUri.AbsolutePath == "/internal/results/find",
+                    "Evidence must use the targeted result endpoint.");
+                byte[] body = request.Content!.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+                string timestamp = request.Headers.GetValues("X-War-Control-Time").Single();
+                byte[] signed = Encoding.UTF8.GetBytes("war/result/find/v1/" + timestamp + "\n").Concat(body).ToArray();
+                Require(request.Headers.GetValues("X-War-Control-Mac").Single() ==
+                    Convert.ToHexString(HMACSHA256.HashData(ControlKey, signed)),
+                    "Result lookup must use its separate authentication domain.");
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(text) };
+            }));
+            var client = new BattleMatchCancellationClient(http, ControlKey);
+            try
+            {
+                var evidence = await client.CancelAndReadAsync(
+                    new Uri("http://127.0.0.1:30001/internal/matches"), MatchId, ManifestHash, CancellationToken.None);
+                Require(index == 0 && evidence.Digest == digest && evidence.Payload.SequenceEqual(payload),
+                    "Only exact, bounded, digest-checked evidence can reach Backend validation.");
+            }
+            catch (InvalidDataException) when (index != 0)
+            {
+                continue;
+            }
+
+            Require(index == 0, "Invalid cancellation evidence was accepted.");
+        }
+
+        return replies.Length;
     }
 
     private static async Task<int> VerifySuccessAsync()

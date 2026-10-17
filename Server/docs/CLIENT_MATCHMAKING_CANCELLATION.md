@@ -101,14 +101,17 @@ references and the same 17 preexisting NGUI sprite mismatches.
 ## Remaining boundary
 
 The account-scoped queue API has no distributed attempt ID. Client serialization
-is per adapter, not cross-component or cross-process cancellation fencing. The server still returns
-`already-paired` rather than canceling/releasing that allocation through a
-confirmed Worker control transition. This checkpoint refuses to treat it as
-success; that paired cancellation/result cleanup remains required BattleServer
-work. Region/ping-based bot routing, full recovered UI loading, two actual Unity
+is per adapter, not cross-component or cross-process cancellation fencing.
+The server now cancels a registered prestart pair through hash-bound Worker
+control and accepts its validated terminal result before releasing both players.
+The Client accepts the resulting `cancelled` response; running or unavailable
+control transitions remain `already-paired` and cannot acknowledge cleanup.
+Missing manifests or transport/evidence failures return a retryable HTTP 503.
+Region/ping-based bot routing, full recovered UI loading, two actual Unity
 clients, Android and Linux gameplay also remain open. B31/B32/B36 and the overall
 goal remain partial.
 
 The [next control checkpoint](PAIRED_CANCELLATION_CONTROL.md) adds a signed,
-hash-bound Worker cancellation request and pre-mutation manifest guard. It does
-not yet connect the public queue route to terminal acceptance/pair release.
+hash-bound Worker cancellation request and pre-mutation manifest guard. It
+now connects the public queue route to terminal acceptance/pair release for
+registered prestart matches; durable distributed attempt fencing remains open.

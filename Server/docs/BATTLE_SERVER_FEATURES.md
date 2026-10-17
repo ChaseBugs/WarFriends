@@ -11,23 +11,26 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 Paired cancellation now captures the exact allocator pair inside its decision
 transaction. A signed, manifest-bound targeted Worker result lookup can retrieve
 both pending and acknowledged terminal proof, avoiding a race with normal result
-forwarding. Public queue cancellation still requires a coordinator with durable
-registration fencing and validated Backend terminal acceptance before release.
+forwarding. Public queue cancellation now invokes Worker control and validated Backend
+terminal acceptance before release. Durable attempt fencing and cancellation
+before manifest publication/Worker registration remain open.
 
 The [hash-bound cancellation control checkpoint](PAIRED_CANCELLATION_CONTROL.md)
 now compares the allocator's expected manifest hash inside the Worker simulation
 queue before prestart cancellation. A server-only signed client validates the
 exact durable acknowledgement; native HTTP smoke rejects a conflicting hash
-without aborting the match. Public paired queue cancellation still needs frozen
-pair coordination, validated terminal acceptance and durable pair release.
+without aborting the match. Public paired queue cancellation now uses frozen
+pair coordination, validated terminal acceptance and durable pair release for
+registered prestart matches.
 
 The [matchmaking cancellation checkpoint](CLIENT_MATCHMAKING_CANCELLATION.md)
 now routes normal pending-search disconnects to the self-hosted adapter, retains
 HTTP ownership until cancellation acknowledgement, and prevents delayed/reset
 lobby continuations from publishing a new room. Normal authenticated HTTP queue
 and grant requests also reach the real Worker and automatic Play Mode scenario.
-The HTTP allocator facade is test-only; already-paired allocation cancellation,
-distributed attempt fencing and complete recovered UI entry remain open.
+The Play Mode HTTP allocator facade is test-only. Separate native real Backend
+queue tests now verify paired prestart cancellation; distributed attempt fencing
+and complete recovered UI entry remain open.
 
 The [host-owned PvP clock checkpoint](PLAYER_PVP_CLOCK.md) now stops the normal
 DeathMatch controller from starting local overtime, destroying source shields

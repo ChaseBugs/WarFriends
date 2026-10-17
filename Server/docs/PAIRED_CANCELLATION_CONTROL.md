@@ -6,8 +6,8 @@ reader before `MatchEndpoint.CancelBeforeStart` can mutate the match. A stale
 or conflicting hash returns HTTP 409 without producing cancellation evidence.
 
 This is the Worker/control-client foundation for paired queue cancellation.
-The public Backend queue route still returns `already-paired`; it has not yet
-been connected to terminal acceptance and durable pair release.
+The public Backend queue route now cancels a registered prestart pair, accepts
+validated terminal evidence, and releases the pair only after durable acceptance.
 
 ## Control contract
 
@@ -52,15 +52,34 @@ rejects a conflicting hash after cancellation. The final solution builds with
 zero warnings/errors; 1,193 protocol checks (18 new cancellation checks) and
 74 live Mongo/HTTP/protobuf/UDP checks pass.
 
-Paired cancellation must still capture the authenticated player's exact durable
-pair, bind the frozen manifest, coordinate registration/cancellation races, and
-accept the validated Worker terminal payload before releasing that pair. Releasing
-the pair first would make `BattleTerminalAcceptance` reject a first late result
-for lack of its durable roster proof. Missing/unpublished manifests and retries
-after Worker failure also need explicit handling; a control acknowledgement
-alone is not a substitute for result acceptance.
-The cancellation decision and pair identity must be captured together; a later
-lookup of the account's current pair could accidentally select a replacement.
+The public coordinator captures the authenticated player's pair with
+`CancelWithPairAsync`, reads its frozen manifest, invokes hash-bound cancellation,
+retrieves retained terminal proof, requires the exact aborted prestart reason,
+manifest hash and ordered roster, and calls `BattleTerminalAcceptance`. Only
+accepted or exact already-accepted evidence becomes `cancelled`. That acceptance
+path persists and rereads exact bytes before releasing the pair. A repeat after
+release becomes `not-queued`; no reward or winner is fabricated.
+
+Running or otherwise unavailable Worker control transitions remain
+`already-paired`, which the Unity attempt correctly refuses as successful cleanup.
+Unavailable transport, missing frozen manifests or invalid terminal evidence
+return HTTP 503 `match_cancellation_deferred`, retaining authority for retry.
+An aborted HTTP request does not become a success; already persisted Worker
+proof can be replayed by a later request or the normal result forwarder.
+
+Native authenticated queue tests now prove unavailable-Worker retention, refusal
+to cancel a running battle, successful prestart cancellation with stored proof,
+release of both roster members, replay, revoked grant delivery and a distinct
+new match. The signed C# client retrieves actual Worker evidence; six protocol
+cases check bounded envelopes, identity, encoding, digest and the separate MAC
+domain. The current protocol total is 1,199; native general smoke remains 74
+checks plus the targeted lookup checks. Linux runtime and complete UI gameplay
+are not claimed from these Windows service tests.
+
+Cancellation before a manifest is frozen or registration reaches the Worker
+still requires retry; a durable distributed intent/tombstone is not implemented.
+Cross-component stale account-scoped cancellation can still select a newer
+attempt because the public request does not yet carry an attempt ID.
 
 Cross-component/process attempt fencing and complete recovered UI entry remain
 open as described in [Client cancellation](CLIENT_MATCHMAKING_CANCELLATION.md).
@@ -94,5 +113,5 @@ snapshot and its canonical payload digest. This removes pending-page starvation
 and the race where the regular forwarder acknowledges a cancellation result
 before a coordinator reads it. Retention remains bounded by the existing
 acknowledgement policy; Backend accepted-result replay is still necessary after
-pruning. This endpoint alone does not release allocator pairs or make public
-paired cancellation complete.
+pruning. The public coordinator uses this endpoint before terminal acceptance. The
+endpoint itself never releases allocator pairs.

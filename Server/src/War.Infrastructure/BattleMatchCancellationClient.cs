@@ -13,6 +13,7 @@ public sealed class BattleMatchCancellationClient
 {
     private const int ControlKeyBytes = 32;
     private const int MaximumReplyBytes = 1024;
+    private const int MaximumEvidenceReplyBytes = 90000;
     private const string SigningDomain = "war/match/control/v1/";
     private readonly HttpClient _http;
     private readonly byte[] _controlKey;
@@ -48,6 +49,60 @@ public sealed class BattleMatchCancellationClient
         return ValidateReply(document.RootElement, matchId, manifestHash);
     }
 
+    /// <summary>Cancels the exact registration and retrieves retained proof for Backend validation.</summary>
+    public async Task<(string Digest, byte[] Payload)> CancelAndReadAsync(
+        Uri registrationEndpoint, string matchId, string manifestHash, CancellationToken cancellationToken)
+    {
+        ValidateRequest(registrationEndpoint, matchId, manifestHash);
+        var cancelEndpoint = new Uri(registrationEndpoint.AbsoluteUri.TrimEnd('/') + "/cancel");
+        await CancelAsync(cancelEndpoint, matchId, manifestHash, cancellationToken);
+        var resultEndpoint = new Uri(new Uri(registrationEndpoint.AbsoluteUri.TrimEnd('/')), "results/find");
+        byte[] body = JsonSerializer.SerializeToUtf8Bytes(new { matchId, manifestHash });
+        using var request = CreateSignedRequest(resultEndpoint, body, "war/result/find/v1/");
+        using var response = await _http.SendAsync(
+            request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            throw new HttpRequestException("Cancellation evidence unavailable: " + (int)response.StatusCode,
+                null, response.StatusCode);
+        }
+
+        using var document = await ReadReplyAsync(response, cancellationToken, MaximumEvidenceReplyBytes);
+        return DecodeEvidence(document.RootElement, matchId);
+    }
+
+    private static (string Digest, byte[] Payload) DecodeEvidence(JsonElement root, string matchId)
+    {
+        if (root.ValueKind != JsonValueKind.Object || root.EnumerateObject().Count() != 3 ||
+            !root.TryGetProperty("matchId", out var match) || match.ValueKind != JsonValueKind.String ||
+            match.GetString() != matchId ||
+            !root.TryGetProperty("digest", out var digest) || digest.ValueKind != JsonValueKind.String ||
+            !root.TryGetProperty("snapshot", out var snapshot) || snapshot.ValueKind != JsonValueKind.String)
+        {
+            throw new InvalidDataException("Invalid cancellation evidence envelope.");
+        }
+
+        byte[] payload;
+        try
+        {
+            payload = Convert.FromBase64String(snapshot.GetString()!);
+        }
+        catch (FormatException failure)
+        {
+            throw new InvalidDataException("Invalid cancellation evidence encoding.", failure);
+        }
+
+        string hash = digest.GetString()!;
+        if (payload.Length is < 1 or > War.Shared.TerminalResultDigest.MaximumPayloadBytes ||
+            !Regex.IsMatch(hash, @"\A[0-9a-f]{64}\z") ||
+            War.Shared.TerminalResultDigest.Compute(payload) != hash)
+        {
+            throw new InvalidDataException("Cancellation evidence digest differs from its payload.");
+        }
+
+        return (hash, payload);
+    }
+
     private static void ValidateRequest(Uri endpoint, string matchId, string manifestHash)
     {
         if (endpoint == null || !endpoint.IsAbsoluteUri || endpoint.Scheme is not ("http" or "https") ||
@@ -58,10 +113,10 @@ public sealed class BattleMatchCancellationClient
         }
     }
 
-    private HttpRequestMessage CreateSignedRequest(Uri endpoint, byte[] body)
+    private HttpRequestMessage CreateSignedRequest(Uri endpoint, byte[] body, string domain = SigningDomain)
     {
         string timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
-        byte[] prefix = Encoding.UTF8.GetBytes(SigningDomain + timestamp + "\n");
+        byte[] prefix = Encoding.UTF8.GetBytes(domain + timestamp + "\n");
         byte[] signed = new byte[prefix.Length + body.Length];
         prefix.CopyTo(signed, 0);
         body.CopyTo(signed, prefix.Length);
@@ -76,10 +131,10 @@ public sealed class BattleMatchCancellationClient
     }
 
     private static async Task<JsonDocument> ReadReplyAsync(
-        HttpResponseMessage response, CancellationToken cancellationToken)
+        HttpResponseMessage response, CancellationToken cancellationToken, int maximumBytes = MaximumReplyBytes)
     {
         using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        byte[] bytes = new byte[MaximumReplyBytes + 1];
+        byte[] bytes = new byte[maximumBytes + 1];
         int length = 0;
         while (length < bytes.Length)
         {
@@ -92,7 +147,7 @@ public sealed class BattleMatchCancellationClient
             length += read;
         }
 
-        if (length > MaximumReplyBytes)
+        if (length > maximumBytes)
         {
             throw new InvalidDataException("Battle cancellation response exceeded its byte limit.");
         }
