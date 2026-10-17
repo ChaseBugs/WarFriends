@@ -1488,3 +1488,12 @@ Protocol, real runtime creation/death and native adapter tests cover this data
 path. Enemy actor creation, specialized air/crew/vehicle fields, source animation,
 full combat and normal Worker co-op registration remain open. See
 [common enemy view](COOP_ENEMY_VIEW.md).
+
+B18/B22 now share a script-free infantry geometry builder. It prepares an
+inactive rig from an explicit source style, remaps body/bones/helmets and copies
+no gameplay or physics components. Existing infantry/canopy presentation reuses
+the same hierarchy code. Source no-helmet selection now clears both template
+helmet meshes instead of retaining them. Native checks cover sixteen ordinary
+and seven mission-card styles, with Buddy's separate camo path kept explicit.
+Co-op actor binding, source animation state, full weapon appearance and rendered
+gameplay remain open. See [shared infantry geometry](SHARED_INFANTRY_VISUALS.md).

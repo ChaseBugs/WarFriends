@@ -142,7 +142,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             throw new InvalidOperationException("Recovered parachute canopy mesh is absent.");
         var canopy = new GameObject("ParachuteCanopy");
         var sourceMap = new Dictionary<Transform, Transform>();
-        CopyVisualHierarchy(parachuteSource.transform, canopy.transform, true, sourceMap);
+        SelfHostedVisualHierarchy.CopyRoot(parachuteSource.transform, canopy.transform, sourceMap);
         var renderer = canopy.GetComponentInChildren<MeshRenderer>(true);
         var shader = Shader.Find("Legacy Shaders/Transparent/DiffuseNew");
         if (renderer == null || renderer.sharedMaterial == null || shader == null)
@@ -240,56 +240,15 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             throw new InvalidOperationException("Recovered infantry card style is absent.");
         int styleIndex = (int)(row.EntityKey % (ulong)styles.Count);
         var style = styles[styleIndex];
-        style.LoadModel();
-        var sourceSkin = source.meshChanger.skinnedMeshRenderer;
-        if (style.modelMeshRenderer == null || style.modelMeshRenderer.sharedMesh == null ||
-            sourceSkin == null || sourceSkin.bones == null || sourceSkin.rootBone == null)
-            throw new InvalidOperationException("Recovered infantry mesh or skeleton is absent.");
-
-        var root = new GameObject("SelfHostedInfantry_" + row.EntityKey);
-        var rig = new GameObject("Rig");
-        rig.transform.SetParent(root.transform, false);
-        var map = new Dictionary<Transform, Transform>();
-        CopyVisualHierarchy(source.transform, rig.transform, true, map);
-
-        var skin = map[sourceSkin.transform].gameObject.AddComponent<SkinnedMeshRenderer>();
-        skin.sharedMesh = style.modelMeshRenderer.sharedMesh;
-        skin.sharedMaterials = style.modelMeshRenderer.sharedMaterials;
-        var bones = new Transform[sourceSkin.bones.Length];
-        for (int i = 0; i < bones.Length; i++) bones[i] = map[sourceSkin.bones[i]];
-        skin.bones = bones;
-        skin.rootBone = map[sourceSkin.rootBone];
-        skin.localBounds = sourceSkin.localBounds;
-        skin.updateWhenOffscreen = sourceSkin.updateWhenOffscreen;
-
-        var helmet = source.meshChanger.helmet;
-        if (helmet != null && style.helmetMesh != null)
+        SelfHostedInfantryVisual model = SelfHostedInfantryVisualFactory.Create(source, style,
+            "SelfHostedInfantry_" + row.EntityKey);
+        model.Root.SetActive(true);
+        return new Visual
         {
-            if (helmet.NoRigidBodyObject == null || helmet.RigidBodyObject == null)
-                throw new InvalidOperationException("Recovered infantry helmet rig is absent.");
-            CopyHelmet(helmet.NoRigidBodyObject.transform, style, map);
-            CopyHelmet(helmet.RigidBodyObject.transform, style, map);
-        }
-
-        var animation = source.GetComponentInChildren<Animation>(true);
-        if (animation == null || !map.ContainsKey(animation.transform))
-            throw new InvalidOperationException("Recovered infantry animation rig is absent.");
-        return new Visual { Root = root, Motion = new SelfHostedRemoteTransformBuffer(),
-            AnimationRoot = map[animation.transform].gameObject };
-    }
-
-    private static void CopyHelmet(Transform sourceHelmet,
-        SoldierMeshChanger.SoldierStyle style,
-        Dictionary<Transform, Transform> map)
-    {
-        var filter = map[sourceHelmet].GetComponent<MeshFilter>();
-        if (filter == null)
-            throw new InvalidOperationException("Recovered infantry helmet mesh is absent.");
-        filter.sharedMesh = style.helmetMesh;
-        var renderer = map[sourceHelmet].GetComponent<MeshRenderer>();
-        if (renderer != null && style.helmetMaterials != null &&
-            style.helmetMaterials.Count > 0)
-            renderer.sharedMaterials = style.helmetMaterials.ToArray();
+            Root = model.Root,
+            Motion = new SelfHostedRemoteTransformBuffer(),
+            AnimationRoot = model.AnimationRoot
+        };
     }
 
     private void UpdateVisual(Visual visual, BattleArmyEntityState row)
@@ -335,8 +294,8 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             visual.Canopy = new GameObject("ParachuteCanopy");
             visual.Canopy.transform.SetParent(visual.Root.transform, false);
             var sourceMap = new Dictionary<Transform, Transform>();
-            CopyVisualHierarchy(parachuteSource.transform,
-                visual.Canopy.transform, true, sourceMap);
+            SelfHostedVisualHierarchy.CopyRoot(parachuteSource.transform,
+                visual.Canopy.transform, sourceMap);
             if (visual.Canopy.GetComponentInChildren<MeshRenderer>(true) == null)
                 throw new InvalidOperationException("Recovered parachute visual has no renderer.");
         }
@@ -413,35 +372,6 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         if (visual.Clip != null)
             visual.Clip.SampleAnimation(visual.AnimationRoot,
                 Mathf.Repeat(seconds, visual.Clip.length));
-    }
-
-    private static void CopyVisualHierarchy(Transform sourcePart, Transform copyPart,
-        bool root, Dictionary<Transform, Transform> map)
-    {
-        map.Add(sourcePart, copyPart);
-        copyPart.localScale = sourcePart.localScale;
-        if (!root)
-        {
-            copyPart.localPosition = sourcePart.localPosition;
-            copyPart.localRotation = sourcePart.localRotation;
-            copyPart.gameObject.SetActive(sourcePart.gameObject.activeSelf);
-        }
-        var filter = sourcePart.GetComponent<MeshFilter>();
-        var renderer = sourcePart.GetComponent<MeshRenderer>();
-        if (filter != null && renderer != null)
-        {
-            copyPart.gameObject.AddComponent<MeshFilter>().sharedMesh = filter.sharedMesh;
-            var copyRenderer = copyPart.gameObject.AddComponent<MeshRenderer>();
-            copyRenderer.sharedMaterials = renderer.sharedMaterials;
-            copyRenderer.enabled = renderer.enabled;
-        }
-        for (int i = 0; i < sourcePart.childCount; i++)
-        {
-            var child = sourcePart.GetChild(i);
-            var copy = new GameObject(child.name);
-            copy.transform.SetParent(copyPart, false);
-            CopyVisualHierarchy(child, copy.transform, false, map);
-        }
     }
 
     private void OnDestroy()
