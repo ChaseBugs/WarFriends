@@ -1,0 +1,513 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "apkSha256": "b9fe5ca10e4073db4dfd56164c88c8af0786864139c745ae92ef92b7da5981f5",
+    "obbSha256": "078cd1c4ebaeef4a39646274a54d35ce05741bc15a2e13d95ae55340711b5125",
+    "serializedFile": "level0",
+    "componentPathId": 45847,
+    "payloadBytes": 1176,
+    "payloadSha256": "f576232b67fbc4ee0212fcbf381af31622d322c8d3b548906a6810444fcf6e1c",
+    "assemblySha256": "2ba1c57162a1651edc201e449551a7de3a2faca21823b2ebe9d316ab0a286014",
+    "unityVersion": "5.2.5f1",
+    "unityPyVersion": "1.25.3"
+  },
+  "counts": {
+    "weaponLevelsSetups": 66,
+    "behaviours": 24,
+    "additionalBehaviours": 3
+  },
+  "fields": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 4900
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 1,
+      "m_PathID": 467
+    },
+    "m_Name": "",
+    "weaponLevelsSetups": [
+      {
+        "m_FileID": 0,
+        "m_PathID": 49675
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41995
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 49795
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41639
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 36082
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 43659
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 40841
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 37327
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45561
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46991
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 39462
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 37202
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45745
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44630
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48570
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45459
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 40603
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 38960
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 39183
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 36787
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 39259
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48313
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44548
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48991
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 40797
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 40795
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45647
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44830
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46017
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 40088
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48143
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44879
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46643
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44195
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45784
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48829
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 38829
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 37307
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41382
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 42637
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41770
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 40735
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46922
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 49117
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41477
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 39079
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45088
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45636
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41379
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 47002
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44996
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 35821
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 47615
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48135
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 37179
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 42644
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48966
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48436
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 43290
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48259
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 40174
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46166
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44118
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 47866
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46282
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 42471
+      }
+    ],
+    "behaviours": [
+      {
+        "m_FileID": 0,
+        "m_PathID": 35664
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46839
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 43123
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 38536
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 42012
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 38324
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 49788
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41873
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48221
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 38275
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 39312
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 43871
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44495
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 37382
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 37224
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 47666
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 39067
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48630
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 48623
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 47747
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 36243
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 41188
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 44715
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 45572
+      }
+    ],
+    "additionalBehaviours": [
+      {
+        "m_FileID": 0,
+        "m_PathID": 39731
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 46269
+      },
+      {
+        "m_FileID": 0,
+        "m_PathID": 39782
+      }
+    ],
+    "levelExperience": 0,
+    "experience": 0,
+    "levels": []
+  },
+  "target": {
+    "scene": "Clients/ExportedProject/Assets/Scenes/MainScene.unity",
+    "componentFileId": 45847,
+    "beforeSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+    "afterSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff"
+  },
+  "resolvedTargetClasses": {
+    "49675": "RifleLevelsSetup",
+    "41995": "RifleLevelsSetup",
+    "49795": "RifleLevelsSetup",
+    "41639": "SniperRifleLevelsSetup",
+    "36082": "BazookaLevelsSetup",
+    "43659": "ShotgunLevelsSetup",
+    "40841": "GrenadeLevelsSetup",
+    "37327": "GrenadeLevelsSetup",
+    "45561": "GrenadeLevelsSetup",
+    "46991": "GrenadeLevelsSetup",
+    "39462": "RifleLevelsSetup",
+    "37202": "SniperRifleLevelsSetup",
+    "45745": "PistolLevelsSetup",
+    "44630": "PistolLevelsSetup",
+    "48570": "PistolLevelsSetup",
+    "45459": "PistolLevelsSetup",
+    "40603": "SniperRifleLevelsSetup",
+    "38960": "RifleLevelsSetup",
+    "39183": "RifleLevelsSetup",
+    "36787": "RifleLevelsSetup",
+    "39259": "RifleLevelsSetup",
+    "48313": "MinigunLevelsSetup",
+    "44548": "RifleLevelsSetup",
+    "48991": "RifleLevelsSetup",
+    "40797": "RifleLevelsSetup",
+    "40795": "GrenadeLevelsSetup",
+    "45647": "RifleLevelsSetup",
+    "44830": "ShotgunLevelsSetup",
+    "46017": "SniperRifleLevelsSetup",
+    "40088": "RifleLevelsSetup",
+    "48143": "SniperRifleLevelsSetup",
+    "44879": "ShotgunLevelsSetup",
+    "46643": "RifleLevelsSetup",
+    "44195": "RifleLevelsSetup",
+    "45784": "RifleLevelsSetup",
+    "48829": "BazookaLevelsSetup",
+    "38829": "BazookaLevelsSetup",
+    "37307": "PistolLevelsSetup",
+    "41382": "ShotgunLevelsSetup",
+    "42637": "GrenadeLevelsSetup",
+    "41770": "BazookaLevelsSetup",
+    "40735": "BazookaFangsLevelsSetup",
+    "46922": "RifleLevelsSetup",
+    "49117": "RifleLevelsSetup",
+    "41477": "RifleLevelsSetup",
+    "39079": "SniperRifleLevelsSetup",
+    "45088": "RifleLevelsSetup",
+    "45636": "RifleLevelsSetup",
+    "41379": "RifleLevelsSetup",
+    "47002": "ShotgunLevelsSetup",
+    "44996": "ShotgunLevelsSetup",
+    "35821": "PistolLevelsSetup",
+    "47615": "GrenadeLevelsSetup",
+    "48135": "ShotgunLevelsSetup",
+    "37179": "ShotgunLevelsSetup",
+    "42644": "RifleLevelsSetup",
+    "48966": "BazookaLevelsSetup",
+    "48436": "BazookaLevelsSetup",
+    "43290": "SniperRifleLevelsSetup",
+    "48259": "RifleLevelsSetup",
+    "40174": "RifleLevelsSetup",
+    "46166": "GrenadeLevelsSetup",
+    "44118": "ShotgunLevelsSetup",
+    "47866": "SniperRifleLevelsSetup",
+    "46282": "RifleLevelsSetup",
+    "42471": "RifleLevelsSetup",
+    "35664": "SoldierBehaviourAssaulter",
+    "46839": "SoldierBehaviourShotgunner",
+    "43123": "SoldierBehaviourSniper",
+    "38536": "SoldierBehaviourSwat",
+    "42012": "SoldierBehaviourBazooka",
+    "38324": "SoldierBehaviourParachuter",
+    "49788": "SoldierBehaviourGrennader",
+    "41873": "SoldierBehaviourMinigunner",
+    "48221": "SoldierBehaviourEngineer",
+    "38275": "SoldierBehaviourMachineGunner",
+    "39312": "DroneBehaviour",
+    "43871": "HelicopterBehaviour",
+    "44495": "TankBehaviour",
+    "37382": "CarTransporterBehaviour",
+    "37224": "SoldierBehaviourSciFi",
+    "47666": "CarBuggyBehaviour",
+    "39067": "AssaultHelicopterBehaviour",
+    "48630": "CarBehaviour",
+    "48623": "SoldierBehaviourFlamethrower",
+    "47747": "SoldierBehaviourCommando",
+    "36243": "SoldierBehaviourGunslinger",
+    "41188": "SoldierBehaviourMortar",
+    "44715": "SoldierBehaviourWarper",
+    "45572": "MechBehaviour",
+    "39731": "HeavyTurretBehaviour",
+    "46269": "TurretBehaviour",
+    "39782": "TurretRocketsBehaviour"
+  }
+}

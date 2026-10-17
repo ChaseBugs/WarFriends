@@ -86,24 +86,64 @@ The AWS exception and its source stack remain valid baseline evidence.
 `Server/scripts/ClientBootSmoke.ps1` now starts an isolated native Mongo replica
 set and real Backend, then runs that same original Client startup. Its stricter
 gate requires actual account data, initialized unit rows and player network
-state. It currently **fails** at the next genuine boundary:
+state. Its original failing boundary is preserved at:
 `Server/.local/client-boot-ec87754fc1af4932a7bcbb94834a4ac9/report.json` records
 MainScene loaded, account data received, main player/network state assigned,
 zero unit rows and one `PlayerInventory.Init` index exception. The call comes
 from `LevelManager.OnPlayerDataLoaded` after the real HTTP response, not from an
 injected profile or a fabricated game-state message.
 
-The active and disposable MainScene files have identical SHA-256
+The failing active and disposable MainScene files had identical SHA-256
 `d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43`.
 Its LevelManager component, file ID `45847`, refers to script GUID
-`780c78d4af376959b095359d8460246f` but contains no serialized weapon/unit list
-payload. Runtime `PlayerInventory.Init` cannot choose an inventory weapon from
-the empty list and indexes `-1`. Repair the real runtime binding from original
-Client evidence, preserving canonical indices, before continuing normal lobby
-initialization. An empty substitute list or invented inventory must not turn
-this gate green.
+`780c78d4af376959b095359d8460246f` but contained no serialized weapon/unit list
+payload. Runtime `PlayerInventory.Init` could not choose an inventory weapon
+from the empty list and indexed `-1`.
 
-Run the current diagnostic gate with a refreshed disposable Client copy:
+## Original LevelManager binding repair
+
+`restore_level_manager_bindings.py` now reads the actual OBB `level0` component
+45847 with metadata from the APK's original managed assemblies. It verifies the
+matching OBB digest, byte-identical reference DLLs, Unity 5.2.5f1 version,
+LevelManager type/owner, complete 1,176-byte payload consumption, and every
+original Mono header field. Unity 5's enabled-byte alignment comes from the
+same file's native MonoBehaviour schema before the script PPtr is decoded.
+
+The original payload contains **66 weapons, 24 player units and 3 additional
+units**. All 93 pointers resolve to the existing active component IDs and the
+same script classes. The tool preserves exact pointer order, existing headers,
+script GUIDs and object IDs; it refuses conflicting custom payloads. No names,
+indices, prices, progression values or inventory entries are invented. A repeat
+dry run reports no changes.
+
+Only that component's missing custom payload is appended to MainScene. The
+active scene hash becomes
+`5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff`.
+[The binding evidence](level-manager-bindings.json) records the original package,
+assembly and raw component hashes, all ordered fields, and before/after export
+hashes. Existing combat/economy artifacts retain their immutable pre-binding
+export provenance; their balance data and geometry did not change.
+
+After this repair, original Splash/MainScene startup against a fresh real
+Backend passed in
+`Server/.local/client-boot-58366426cd8d465aaa66caf2a9d20a20/report.json`.
+It records real account data, 24 initialized/sorted unit rows, 66
+initialized/sorted weapon rows, player network state, completed
+`loadingPlayerData` callbacks and **zero observed runtime exceptions**. The
+strengthened gate waits for those callbacks and sorted lists, then observes
+twelve more real frames. It also records 72 error-level logs, which remain
+separate from the exception counter and need further classification. This is
+account/catalog initialization evidence, not complete rendered lobby or battle
+verification.
+
+Static reference checks now count 288,258 nonzero references, including the 93
+restored pointers, with zero missing scripts/broken references. The same seventeen
+pre-existing NGUI atlas selections remain unmatched.
+
+Reproduce the binding check with `python Server/tools/restore_level_manager_bindings.py`;
+add `--apply` only to restore a missing payload from the verified source.
+
+Run the account/unit initialization gate with a refreshed disposable Client copy:
 
 ```powershell
 ./Server/scripts/ClientBootSmoke.ps1 `
@@ -114,15 +154,14 @@ Run the current diagnostic gate with a refreshed disposable Client copy:
 
 The script installs its Editor probe, rejects projects outside `Server/.local`,
 preserves the caller's environment, and stops only owned processes. It does not
-refresh the runtime/assets in that copy or claim the failing account/unit gate
-has passed.
+refresh the runtime/assets in that copy. Supply a copy containing the restored
+MainScene payload and current runtime before running it.
 
 ## Remaining normal-flow work
 
-Continue the real account/unit gate above by repairing source-backed LevelManager
-bindings, then verify selected cards, player prefab inventory and preview-camera
-readiness. Do not replace these dependencies with invented player profiles or
-menu stubs to obtain a passing battle test.
+Continue from the real account/unit gate by verifying selected cards, player
+prefab inventory and preview-camera readiness. Do not replace these dependencies
+with invented player profiles or menu stubs to obtain a passing battle test.
 
 `GameControllerOnline.InitializeSelfHostedPlayers` currently publishes
 `mBothPlayersConnected` and other controller/player fields before all profile,

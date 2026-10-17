@@ -104,8 +104,14 @@ public static class UnityNormalClientBootAudit
     {
         LevelManager levels = Resources.FindObjectsOfTypeAll<LevelManager>()
             .FirstOrDefault(manager => manager.gameObject.scene.IsValid());
+        BeanstalkServerManager server = Resources.FindObjectsOfTypeAll<BeanstalkServerManager>()
+            .FirstOrDefault(manager => manager.gameObject.scene.IsValid());
         return GameLoginManager.currentPlayer != null && levels != null &&
-            levels.behaviours != null && levels.behaviours.Count > 0;
+            levels.behaviours != null && levels.behaviours.Count > 0 &&
+            levels.weaponLevelsSetups != null && levels.weaponLevelsSetups.Count > 0 &&
+            levels.unitsSortedByLevel.Count == levels.behaviours.Count &&
+            levels.weaponsSortedByLevel.Count == levels.weaponLevelsSetups.Count &&
+            server != null && !server.loadingPlayerData;
     }
 
     private static void Finish()
@@ -120,6 +126,7 @@ public static class UnityNormalClientBootAudit
         string reportPath = Path.Combine(Application.dataPath, "../normal-client-boot.json");
         bool requireAccount = Environment.GetEnvironmentVariable("WAR_LOBBY_BOOT_REQUIRE_ACCOUNT") == "1";
         bool accountReady = Application.loadedLevelName == "MainScene" && GameLoginManager.currentPlayer != null;
+        bool dataLoadComplete = accountReady && HasAccountAndUnits();
         File.WriteAllText(reportPath, JsonConvert.SerializeObject(new
         {
             schemaVersion = 1,
@@ -135,6 +142,9 @@ public static class UnityNormalClientBootAudit
             recoveredWeaponRows = levels == null || levels.weaponLevelsSetups == null
                 ? 0 : levels.weaponLevelsSetups.Count,
             accountDataReady = accountReady,
+            playerDataLoadComplete = dataLoadComplete,
+            initializedUnitRows = levels == null ? 0 : levels.unitsSortedByLevel.Count,
+            initializedWeaponRows = levels == null ? 0 : levels.weaponsSortedByLevel.Count,
             exceptions = _exceptions,
             errors = _errors,
             exceptionSources = ExceptionSources
@@ -143,8 +153,7 @@ public static class UnityNormalClientBootAudit
         Debug.Log("UNITY_NORMAL_BOOT_OBSERVED mainScene=" + reachedMain + " exceptions=" + _exceptions +
             " report=" + reportPath);
         bool completed = reachedMain && game != null && _exceptions == 0 &&
-            (!requireAccount || accountReady && levels != null && levels.behaviours != null &&
-                levels.behaviours.Count > 0);
+            (!requireAccount || dataLoadComplete);
         EditorApplication.Exit(completed ? 0 : 1);
     }
 }

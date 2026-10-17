@@ -16,12 +16,13 @@ Process configuration tests and the actual recovered URL-builder/BestHTTP
 `check.php` acknowledgement pass alongside the real battle transport gate.
 Full MainScene account/profile/card/player initialization and normal lobby
 success remain open.
-The original Splash-to-MainScene Play Mode observation now reproduces and fixes
-retired AWS analytics constructing a missing SQLite provider at startup. A new
-isolated native account-boot runner receives real account data, then fails at
-the empty LevelManager weapon/unit binding and PlayerInventory index boundary.
-The bootstrap document records the failing gate and exact runtime binding
-evidence. Normal lobby initialization remains incomplete.
+The original Splash-to-MainScene Play Mode observation reproduced and fixed
+retired AWS analytics constructing a missing SQLite provider at startup. Direct
+APK/OBB metadata decoding now restores the original LevelManager's ordered 66
+weapon, 24 player-unit and 3 additional-unit pointers. The real account-boot gate
+passes account loading, complete sorted catalog initialization and data-loaded
+callback completion with zero observed exceptions. Error-level logs, selected
+cards, preview rendering and complete normal lobby/battle entry remain open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

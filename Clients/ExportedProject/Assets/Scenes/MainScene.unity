@@ -1128376,6 +1128376,106 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 780c78d4af376959b095359d8460246f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weaponLevelsSetups:
+  - {fileID: 49675}
+  - {fileID: 41995}
+  - {fileID: 49795}
+  - {fileID: 41639}
+  - {fileID: 36082}
+  - {fileID: 43659}
+  - {fileID: 40841}
+  - {fileID: 37327}
+  - {fileID: 45561}
+  - {fileID: 46991}
+  - {fileID: 39462}
+  - {fileID: 37202}
+  - {fileID: 45745}
+  - {fileID: 44630}
+  - {fileID: 48570}
+  - {fileID: 45459}
+  - {fileID: 40603}
+  - {fileID: 38960}
+  - {fileID: 39183}
+  - {fileID: 36787}
+  - {fileID: 39259}
+  - {fileID: 48313}
+  - {fileID: 44548}
+  - {fileID: 48991}
+  - {fileID: 40797}
+  - {fileID: 40795}
+  - {fileID: 45647}
+  - {fileID: 44830}
+  - {fileID: 46017}
+  - {fileID: 40088}
+  - {fileID: 48143}
+  - {fileID: 44879}
+  - {fileID: 46643}
+  - {fileID: 44195}
+  - {fileID: 45784}
+  - {fileID: 48829}
+  - {fileID: 38829}
+  - {fileID: 37307}
+  - {fileID: 41382}
+  - {fileID: 42637}
+  - {fileID: 41770}
+  - {fileID: 40735}
+  - {fileID: 46922}
+  - {fileID: 49117}
+  - {fileID: 41477}
+  - {fileID: 39079}
+  - {fileID: 45088}
+  - {fileID: 45636}
+  - {fileID: 41379}
+  - {fileID: 47002}
+  - {fileID: 44996}
+  - {fileID: 35821}
+  - {fileID: 47615}
+  - {fileID: 48135}
+  - {fileID: 37179}
+  - {fileID: 42644}
+  - {fileID: 48966}
+  - {fileID: 48436}
+  - {fileID: 43290}
+  - {fileID: 48259}
+  - {fileID: 40174}
+  - {fileID: 46166}
+  - {fileID: 44118}
+  - {fileID: 47866}
+  - {fileID: 46282}
+  - {fileID: 42471}
+  behaviours:
+  - {fileID: 35664}
+  - {fileID: 46839}
+  - {fileID: 43123}
+  - {fileID: 38536}
+  - {fileID: 42012}
+  - {fileID: 38324}
+  - {fileID: 49788}
+  - {fileID: 41873}
+  - {fileID: 48221}
+  - {fileID: 38275}
+  - {fileID: 39312}
+  - {fileID: 43871}
+  - {fileID: 44495}
+  - {fileID: 37382}
+  - {fileID: 37224}
+  - {fileID: 47666}
+  - {fileID: 39067}
+  - {fileID: 48630}
+  - {fileID: 48623}
+  - {fileID: 47747}
+  - {fileID: 36243}
+  - {fileID: 41188}
+  - {fileID: 44715}
+  - {fileID: 45572}
+  additionalBehaviours:
+  - {fileID: 39731}
+  - {fileID: 46269}
+  - {fileID: 39782}
+  levelExperience: 0
+  experience: 0
+  levels: []
+
 --- !u!114 &45848
 MonoBehaviour:
   m_ObjectHideFlags: 0
