@@ -1642,3 +1642,9 @@ The [obstacle interruption checkpoint](COOP_OBSTACLE_INTERRUPTION.md) records
 six reversed phases across 78 source frames. Six independent replay frames
 exceed unchanged tolerances, so its strict parity gate intentionally fails.
 This is a reproducible counterexample, not implemented interruption support.
+
+B22 interruption diagnostics now rule out the tested float-time conversions
+and prior corner fixture initialization as sufficient causes. Source manual
+Sample agrees with the runtime sampler while automatic poses still differ;
+this is evidence for the remaining evaluation-boundary investigation, not a
+passed parity or admission gate. See [interruption controls](COOP_OBSTACLE_INTERRUPTION.md).

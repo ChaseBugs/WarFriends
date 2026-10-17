@@ -68,3 +68,54 @@ reset and before clearing old round history, then distinguish retained begin,
 fire restart, partial crawl reversal and fresh completed crawl. That data
 retention and a verified transition sampler remain future implementation;
 no gameplay/collision/admission gate is removed by this research checkpoint.
+
+## Time, initialization and source-sampling controls
+
+`UnityCoopObstacleTimeReplayAudit` reuses the independently verified fresh
+prefab comparator with four explicitly diagnostic clocks: recorded float time,
+recorded normalized time multiplied by clip length, the preceding float and
+the succeeding float. All four retain the same six failing observations.
+These adjacent-float trials are hypotheses, not proposed production offsets.
+
+`UnityCoopObstacleOnlyProbe` wires only the recovered obstacle method. The
+separate clean exporter intentionally preserves the earlier frozen fixture
+implementation while excluding its prior idle/corner initialization. The
+78-frame automatic control still has the same six failures. Thus the earlier
+corner initialization is not sufficient to explain them.
+
+Two additional clean runs terminate at observation one or two. Only at their
+final observation does the exporter invoke the actual source Animation.Sample,
+then capture the source again and compare the production sampler. There is
+no later observation that this diagnostic could contaminate. All twelve
+manual source/replay comparisons have zero reported transform error. Enabled
+states, source clocks, weights, speed, wraps and bindings remain unchanged
+across that call. The six previously failing automatic observations are all
+covered by these controls, and their source transforms change under Sample.
+
+This establishes a difference between automatic evaluation and explicit
+sampling at the same observable mixer state in this fixture. It does not
+identify Unity's internal cause or establish a replacement automatic pose.
+Manual source results must not overwrite the original automatic reference.
+The original strict promotion gate still fails; host interruption support,
+SDK extension and gameplay-phase callback parity remain unfinished.
+
+The obstacle comparator reports maximum per-axis fractional scale error.
+The older general full-rig helper instead used vector scale distance divided
+by max(1, source scale magnitude); those scale measures are not interchangeable.
+The obstacle limit remains unchanged within these experiments. Independently
+of that stricter scale diagnostic, the quarter-return observation at tick one
+also exceeds the existing absolute position threshold. This research does not
+relax either metric to declare the feature implemented.
+
+The compressed controls artifact preserves the four time variants, clean
+automatic baseline and both terminal manual experiments. Validate all controls:
+
+```powershell
+python Server/tools/verify_coop_obstacle_interruption_controls.py
+```
+
+Native runs use the original source prefab hash. For the clean exporter set
+`WAR_OBSTACLE_CLEAN_INTERRUPTION_OUTPUT` to an absolute JSON path. Leave
+`WAR_OBSTACLE_CLEAN_MANUAL_SAMPLE` unset for the thirteen-frame baseline; set
+it to `1` with `WAR_OBSTACLE_CLEAN_MANUAL_FINAL_TICK=1` or `2` for the two
+terminal source Sample controls. No normal controller lifecycle or AI executes.
