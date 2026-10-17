@@ -128,3 +128,36 @@ This supplies measured source-method reset/return/interruption poses under one
 explicit command order. It does not prove normal controller lifecycle, actual
 gameplay callback order, obstacle round resets, procedural aiming, network
 mixer reconstruction or Unity 5.2 parity. Those requirements remain open.
+
+## Independent mixer replay and corrected physics isolation
+
+The two rig references above have been regenerated with `physicsFrozen=true`.
+The earlier whole-hierarchy observations retained detached weapon rigid bodies;
+their physics motion was not animation evidence. The probe now makes all
+source rigid bodies kinematic, disables gravity/collisions and disables source
+colliders before Play Mode. This affects disposable probes only, not Client
+prefabs or gameplay physics. Muzzle-only historical references are unchanged.
+
+`UnityCoopRigReplayProbe` samples a separate inactive clone from observed clip
+names, time, weight, layer, wrap and blend mode. It creates aliases for queued
+clones without enabling source scripts or autonomous animation. Each frame
+records maximum local position error, normalized quaternion error, relative
+scale error and the transforms owning the greatest position/rotation errors.
+Quaternion error is `1 - abs(normalizedDot)` calculated with double intermediates;
+relative scale error divides distance by `max(1, sourceScaleMagnitude)`.
+
+Structural reference validation succeeds, but strict mixer equivalence does
+not. In the corner fixture, maximum normalized quaternion errors are about
+0.00001155 for the obstacle control, 0.00000305 for right corner and 0.00000220
+for left corner. The largest rotation discrepancies identify the left ankle,
+left forearm and right palm respectively. These observations contradict a
+claim that the current scalar-only replay exactly reproduces every bone.
+
+Use `--require-mixer-parity` with the verifier to enforce the separate gate:
+position error at most 0.00001 local units, quaternion error at most 0.000001
+and relative scale error at most 0.00001. The current references must fail
+that gate; ordinary reference validation checks finite/nonnegative measurements
+without claiming equivalence. Investigate evaluation phase, state interpolation
+and remaining mixer inputs before adopting this representation for networking.
+The replay currently evaluates consecutive observations; skipped-snapshot
+reconstruction is also unverified.

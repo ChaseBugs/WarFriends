@@ -38,6 +38,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
     private static Transform[] roots;
     private static float startTime;
     private static UnityCoopCornerVolleyProbe[] volleyProbes;
+    private static UnityCoopRigReplayProbe[] replayProbes;
 
     static UnityCoopAssaulterAnimationQueueExport()
     {
@@ -121,6 +122,10 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 throw new InvalidOperationException("Gameplay script remains on probe rig: " +
                     string.Join(",", remaining.Where(script => script != null)
                         .Select(script => script.GetType().Name).ToArray()));
+            if (wholeRig)
+            {
+                FreezeProbePhysics(enemy);
+            }
         }
         SessionState.SetBool(Active, true);
         SessionState.SetBool(Primed, primed);
@@ -164,6 +169,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 if (SessionState.GetBool(WholeRig, false))
                 {
                     object rig = UnityCoopRigFrameCapture.Capture(root, animation);
+                    object replay = replayProbes[i].Compare(animation);
                     object commands = null;
                     if (volleyProbes != null && volleyProbes[i] != null)
                     {
@@ -173,6 +179,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
                     {
                         observation = frame,
                         commandsAfterObservation = commands,
+                        replay,
                         rig
                     });
                 }
@@ -219,6 +226,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
                     weaponSha256 = Hash(WeaponPath),
                     captureRate = 30,
                     cornerVolleyFixture = SessionState.GetBool(CornerVolley, false),
+                    physicsFrozen = SessionState.GetBool(WholeRig, false),
                     animationControllerSha256 = Hash("Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs"),
                     scenarios = primedScenarios
                 }, Formatting.Indented));
@@ -253,6 +261,21 @@ public static class UnityCoopAssaulterAnimationQueueExport
             EditorApplication.update -= Update;
             Debug.LogException(error);
             EditorApplication.Exit(1);
+        }
+    }
+
+    private static void FreezeProbePhysics(GameObject root)
+    {
+        // Detached weapon rigid bodies must not contaminate animation-only transform observations.
+        foreach (Rigidbody body in root.GetComponentsInChildren<Rigidbody>(true))
+        {
+            body.isKinematic = true;
+            body.useGravity = false;
+            body.detectCollisions = false;
+        }
+        foreach (Collider collider in root.GetComponentsInChildren<Collider>(true))
+        {
+            collider.enabled = false;
         }
     }
 
@@ -311,6 +334,14 @@ public static class UnityCoopAssaulterAnimationQueueExport
             volleyProbes = new UnityCoopCornerVolleyProbe[3];
             volleyProbes[1] = new UnityCoopCornerVolleyProbe(animations[1], true);
             volleyProbes[2] = new UnityCoopCornerVolleyProbe(animations[2], false);
+        }
+        if (SessionState.GetBool(WholeRig, false))
+        {
+            replayProbes = new UnityCoopRigReplayProbe[3];
+            for (int index = 0; index < replayProbes.Length; index++)
+            {
+                replayProbes[index] = new UnityCoopRigReplayProbe(roots[index]);
+            }
         }
         startTime = Time.time;
     }

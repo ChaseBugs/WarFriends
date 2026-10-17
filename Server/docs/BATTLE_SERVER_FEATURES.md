@@ -1523,3 +1523,10 @@ return and queued idle, with commands identified as after-observation events.
 This is a declared animation fixture, not live AI round authority or normal
 controller lifecycle proof. Obstacle resets and network reconstruction remain
 open; see the same firing requirements for the exact observation boundary.
+
+Independent mixer replay now compares all observed transforms and has exposed
+a remaining rotation mismatch. Full-rig references were regenerated with
+probe physics frozen because detached weapon rigid bodies contaminated earlier
+observations. Reference integrity passes, while the explicit strict mixer-parity
+gate fails; scalar-only animation reconstruction is not yet accepted for the
+network presenter. No combat or admission authority changes in this checkpoint.

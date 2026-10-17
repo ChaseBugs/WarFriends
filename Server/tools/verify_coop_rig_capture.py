@@ -19,7 +19,7 @@ def finite_vector(values, length):
     )
 
 
-def validate_scenario(scenario):
+def validate_scenario(scenario, require_mixer_parity=False):
     frames = scenario["frames"]
     require(len(frames) >= 30, "The capture needs at least one second of observations.")
     expected_paths = None
@@ -53,6 +53,15 @@ def validate_scenario(scenario):
             require(abs(sum(value * value for value in row["rotation"]) - 1) < 0.001,
                     "Local rotation is not normalized.")
         has_pose_change |= rows != first_pose
+        replay = frame["replay"]
+        require(replay["transforms"] == len(rows), "Replay did not compare the complete hierarchy.")
+        for field, tolerance in (("positionError", 0.00001), ("rotationError", 0.000001),
+                                 ("relativeScaleError", 0.00001)):
+            value = replay[field]
+            require(type(value) in (int, float) and math.isfinite(value) and value >= 0,
+                    "Invalid independent mixer measurement: " + field)
+            if require_mixer_parity:
+                require(value <= tolerance, "Independent mixer replay exceeds tolerance: " + field)
         for state in frame["rig"]["states"]:
             for field in ("time", "normalizedTime", "weight", "speed"):
                 value = state[field]
@@ -90,12 +99,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
     parser.add_argument("--project", type=Path, required=True)
+    parser.add_argument("--require-mixer-parity", action="store_true",
+                        help="Also require strict independent Animation.Sample replay equivalence.")
     arguments = parser.parse_args()
     capture_bytes = arguments.capture.read_bytes()
     if arguments.capture.suffix == ".gz":
         capture_bytes = gzip.decompress(capture_bytes)
     capture = json.loads(capture_bytes.decode("utf-8-sig"))
     require(capture["unity"] == "2018.3.0f2" and capture["captureRate"] == 30, "Unsupported probe.")
+    require(capture.get("physicsFrozen") is True, "Physics must be frozen for mixer pose observations.")
     for field, relative in (("enemySha256", "Assets/GameObject/enemy.prefab"),
                             ("weaponSha256", "Assets/GameObject/AssaultRifleEnemy.prefab")):
         digest = hashlib.sha256((arguments.project / relative).read_bytes()).hexdigest()
@@ -112,10 +124,12 @@ def main():
             clip_path = arguments.project / "Assets/AnimationClip" / (scenario[field] + ".anim")
             require(hashlib.sha256(clip_path.read_bytes()).hexdigest() == scenario[field + "Sha256"],
                     "Source animation clip changed.")
-        frames, transforms = validate_scenario(scenario)
+        frames, transforms = validate_scenario(scenario, arguments.require_mixer_parity)
         if capture.get("cornerVolleyFixture") is True and scenario["startClip"] != "stand_up_begin":
             validate_corner_volley(scenario)
         print(f"PASS: {scenario['startClip']}: {frames} frames, {transforms} transforms per frame")
+        maximum_rotation_error = max(frame["replay"]["rotationError"] for frame in scenario["frames"])
+        print(f"Measured normalized quaternion error: {maximum_rotation_error:.9g}; parity is a separate gate")
 
 
 if __name__ == "__main__":
