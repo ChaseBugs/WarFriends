@@ -14,7 +14,7 @@ internal sealed partial class CoopMatchRuntime
 
     private void BeginObstacleCrawlClock(ulong entityId, CoopObstaclePreparationStart? preparation)
     {
-        // Until observed poses are connected, a reversed or unknown prior attempt cannot use fresh-clock diagnostics.
+        // Partial or unknown prior histories cannot borrow completed-return gameplay diagnostics.
         var state = new ObstacleCrawlState { HasInterruptedReturn = preparation?.HasUnverifiedTransition == true };
         state.Clock.RecordShot(ObstacleScaledTime(), SourceInitialHideSeconds);
         _obstacleCrawlStates[entityId] = state;

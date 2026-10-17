@@ -12,7 +12,8 @@ The [portable observed-pose catalog](COOP_PORTABLE_POSE_CATALOG.md) now shares
 221 source-bound samples between the server and installed Unity SDK. B32 remains
 partial: default animation views reject references; the negotiated SDK/Unity path
 now dispatches verified catalog entries. Host publication is connected for
-completed-return histories; partial/unknown histories and normal gameplay proof remain open.
+return phases 1 through 16 after an independent automatic-history comparison.
+Phase zero, unknown/repeated histories and normal gameplay proof remain open.
 The local production renderer now reconstructs the captured body/rifle poses;
 its independent source comparison and remaining integration boundary are recorded
 in the same checkpoint. This does not close B32 or public co-op admission.

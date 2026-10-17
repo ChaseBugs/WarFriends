@@ -14,9 +14,16 @@ internal static class CoopObservedPoseUdpTests
     private const int TimeoutSeconds = 30;
     private const ulong MaximumTick = 1600;
     private const ulong CompletedReturnTicks = 16;
+    private const ulong PartialReturnTicks = 3;
     private const ulong SettledTurnTicks = 6;
 
     internal static async Task Run(CoopObstacleVolleyRuntimeTests.Sources sources)
+    {
+        await RunCase(sources, PartialReturnTicks);
+        await RunCase(sources, CompletedReturnTicks);
+    }
+
+    private static async Task RunCase(CoopObstacleVolleyRuntimeTests.Sources sources, ulong returnTicks)
     {
         await using var host = new Host(sources);
         string revision = ObservedInfantryPoseCatalogData.BuiltIn.Revision;
@@ -27,7 +34,7 @@ internal static class CoopObservedPoseUdpTests
         await legacy.ConnectAsync(host.Token);
         await modern.ReadyAsync(host.Token);
         await legacy.ReadyAsync(host.Token);
-        ulong enemyId = host.PrepareObservedWindow();
+        ulong enemyId = host.PrepareObservedWindow(returnTicks);
         Task<MatchReply> modernPoll = modern.PollAsync(host.Token);
         Task<MatchReply> legacyPoll = legacy.PollAsync(host.Token);
         await Task.WhenAll(modernPoll, legacyPoll);
@@ -48,7 +55,8 @@ internal static class CoopObservedPoseUdpTests
             File.WriteAllBytes(output, observed.ToByteArray());
         }
 
-        Console.WriteLine("PASS: SDK UDP observed-pose negotiation, clip-only isolation and frozen chunk delivery");
+        Console.WriteLine($"PASS: return phase {returnTicks} SDK UDP negotiation, clip-only isolation " +
+            "and frozen observed-pose chunk delivery");
     }
 
     private static void Require(bool condition, string message)
@@ -120,7 +128,7 @@ internal static class CoopObservedPoseUdpTests
             };
         }
 
-        internal ulong PrepareObservedWindow()
+        internal ulong PrepareObservedWindow(ulong returnTicks)
         {
             lock (_sync)
             {
@@ -136,10 +144,10 @@ internal static class CoopObservedPoseUdpTests
                     Advance(_tick + 1);
                 }
 
-                ulong capture = _runtime.ObstacleCrawlReturnTick(_enemyId)!.Value + CompletedReturnTicks;
+                ulong capture = _runtime.ObstacleCrawlReturnTick(_enemyId)!.Value + returnTicks;
                 CoopObstaclePreparationRuntimeTests.ForceEarlyReadiness(_runtime, _enemyId, capture);
                 Advance(capture + SettledTurnTicks);
-                Require(HasReference(), "The trusted completed-return window must exist before network polling.");
+                Require(HasReference(), "The verified return window must exist before network polling.");
                 _shouldPairPolls = true;
                 return _enemyId;
             }

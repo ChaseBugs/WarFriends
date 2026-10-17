@@ -8,7 +8,7 @@ completed renderer or a new co-op admission path.
 
 `BattleInfantryAnimationFrame` retains its existing sample tick and clip fields.
 Its additive `observed_pose` field contains only a catalog revision and sample ID.
-The host now captures this field for verified completed-return histories and
+The host now captures this field for verified nonzero return phases and
 delivers it only to negotiated connections. Arbitrary network transform arrays
 are not accepted as presentation authority.
 
@@ -243,14 +243,16 @@ verified publishing a pose reference. The later host checkpoint adds completed
 return selection and terminal cleanup; broader interruption/appearance coverage
 and normal gameplay proof remain open.
 
-## Completed-return host publication
+## Initial completed-return host publication
 
-The runtime now reads the already validated observed catalog when projecting an
+The initial host checkpoint reads the validated observed catalog when projecting an
 Assaulter preparation snapshot. Publication requires a captured prior return at
 the completed phase (16), the existing live/stationary/root-turn guards, no newly
-emitted round and an observation inside the 13-entry domain. Partial returns
-remain nominal candidates only; their live transition histories are not yet
-verified. Initial attempts retain their existing separate presentation path.
+emitted round and an observation inside the 13-entry domain. At that checkpoint
+partial returns remained nominal candidates only. The later
+[automatic-history experiment](COOP_AUTOMATIC_CRAWL_HISTORY.md) verifies phases
+1 through 15 and connects preparation visuals without opening collision/muzzle
+diagnostics. Initial attempts retain their separate presentation path.
 No unmeasured continuation is extrapolated beyond the catalog domain.
 
 The reference and exact source clips are captured at snapshot creation, including

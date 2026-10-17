@@ -5,13 +5,16 @@ namespace War.BattleServer;
 internal sealed partial class CoopMatchRuntime
 {
     private const int CompletedObservedReturnPhase = 16;
+    private const int FirstVerifiedObservedReturnPhase = 1;
     private readonly CoopObservedObstaclePoseCatalog? _observedObstaclePoseCatalog;
 
     private bool HasObservedPreparationOrigin(CoopInfantryShotWindup windup)
     {
-        // Partial returns remain nominal candidates: their live transition histories are not yet verified.
+        // Automatic fire -> ordinary crawl Play matches the nominal catalog for phases 1 through 16.
+        // Phase zero still retains the prior fire pose before its first evaluation and needs separate content.
         return _observedObstaclePoseCatalog != null &&
-            windup.ObstaclePreparation?.PriorReturnTicks == CompletedObservedReturnPhase;
+            windup.ObstaclePreparation?.PriorReturnTicks is >= FirstVerifiedObservedReturnPhase
+                and <= CompletedObservedReturnPhase;
     }
 
     private BattleInfantryAnimationFrame? ProjectObservedPreparation(ulong entityId)

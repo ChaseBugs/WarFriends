@@ -16,11 +16,17 @@ internal sealed partial class CoopMatchRuntime
             return null;
         }
 
-        if (!_obstacleCrawlStates.TryGetValue(enemy.EntityId, out ObstacleCrawlState? crawl) ||
-            crawl.HasInterruptedReturn ||
-            tick < windup.StartTick)
+        if (!_obstacleCrawlStates.TryGetValue(enemy.EntityId, out ObstacleCrawlState? crawl) || tick < windup.StartTick)
         {
             return null;
+        }
+
+        if (crawl.HasInterruptedReturn)
+        {
+            // Observed visual evidence does not authorize fresh-clock hitboxes or muzzle placement.
+            // The candidate selector also closes this preparation path once a new round is emitted.
+            return crawl.ReturnTick == null && HasObservedPreparationOrigin(windup)
+                ? ProjectObservedPreparation(enemy.EntityId) : null;
         }
 
         if (crawl.ReturnTick is ulong returnTick && tick >= returnTick)

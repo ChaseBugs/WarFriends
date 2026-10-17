@@ -76,3 +76,4 @@ Server/content/coop-moving-root-phase-unity-reference.json text eol=crlf
 Server/content/coop-moving-root-phase-post-reference.json text eol=crlf
 Server/tools/UnityCoopDelayedShotProbe.cs text eol=lf
 Server/content/coop-corner-return-animation-reference.json text eol=lf
+Server/tools/UnityAutomaticCrawlHistoryExport.cs text eol=lf

@@ -14,11 +14,11 @@ internal static class CoopObservedPosePublicationTests
             .Single(enemy => enemy.EntityId == enemyId).InfantryAnimation;
         if (frame?.ObservedPose == null)
         {
-            throw new Exception("The completed-return fixture did not publish an observed reference.");
+            throw new Exception("The verified-return fixture did not publish an observed reference.");
         }
 
         Require(frame.ObservedPose.SampleId == runtime.ObstaclePreparationSampleId(enemyId),
-            "A verified completed return must capture its exact observed sample at snapshot creation.");
+            "A verified return must capture its exact observed sample at snapshot creation.");
         string revision = ObservedInfantryPoseCatalogData.BuiltIn.Revision;
         MatchReply supported = MatchPresentationProjection.ForConnection(retained, revision);
         Require(CoopEnemyViewProjection.FromSnapshot(supported.Snapshot,

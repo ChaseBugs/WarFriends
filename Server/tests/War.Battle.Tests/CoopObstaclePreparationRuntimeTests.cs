@@ -13,7 +13,9 @@ internal static class CoopObstaclePreparationRuntimeTests
     internal static void Run(CoopObstacleVolleyRuntimeTests.Sources sources)
     {
         Verify(sources, null);
+        Verify(sources, 1);
         Verify(sources, 3);
+        Verify(sources, 15);
         Verify(sources, CompletedReturnPhase);
         Console.WriteLine("PASS: obstacle prior fire, partial return and completed return " +
             "survive new-volley clock reset");
@@ -43,23 +45,25 @@ internal static class CoopObstaclePreparationRuntimeTests
             origin.PreviousReturnTick == previousReturn && origin.PreviousRoundTick == completed.CompletedTick &&
             origin.PriorReturnTicks == returnSteps &&
             runtime.ObstacleCrawlReturnTick(enemyId) == null,
-            "The new volley must retain prior return before its new clock clears that event.");
+            $"The new volley must retain prior return before its new clock clears that event (phase {returnSteps}).");
         int? expectedId = returnSteps.HasValue ? 1 + returnSteps.Value * ObservationCount : null;
         Require(runtime.ObstaclePreparationSampleId(enemyId) == expectedId,
             "Only a known prior crawl may select a verified content sample.");
         runtime.Advance(captureTick + SettledTurnSteps);
-        bool isUnsupported = !returnSteps.HasValue || returnSteps.Value < CompletedReturnPhase;
-        Require(origin.HasUnverifiedTransition == isUnsupported,
+        bool hasUnverifiedGameplay = !returnSteps.HasValue || returnSteps.Value < CompletedReturnPhase;
+        Require(origin.HasUnverifiedTransition == hasUnverifiedGameplay,
             "Unresolved fire or partial crawl must not be classified as completed fresh preparation.");
-        Require((runtime.PlaceObstacleVolleyHitboxes(enemyId).Count == 0) == isUnsupported &&
-            (runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == enemyId).InfantryAnimation == null)
-                == isUnsupported,
-            "Unconnected transitions must stay out of fresh-clock collision diagnostics and presentation.");
+        Require((runtime.PlaceObstacleVolleyHitboxes(enemyId).Count == 0) == hasUnverifiedGameplay,
+            "Partial histories must stay outside fresh-clock collision diagnostics even when a visual is known.");
+        bool hasObservedPresentation = returnSteps is >= 1 and <= CompletedReturnPhase;
+        Require((runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == enemyId)
+            .InfantryAnimation != null) == hasObservedPresentation,
+            "Only source-verified return histories may publish preparation visuals.");
         runtime.Advance(captureTick + SettledTurnSteps);
         Require(ReferenceEquals(origin, runtime.InfantryShotWindup(enemyId)!.ObstaclePreparation) &&
             runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
             "Replayed observation must preserve the immutable origin without opening hit authority.");
-        if (returnSteps == CompletedReturnPhase)
+        if (hasObservedPresentation)
         {
             CoopObservedPosePublicationTests.Run(runtime, enemyId);
         }
