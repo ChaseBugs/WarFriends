@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using War.Protocol;
 
-public abstract class GameControllerOnline : IGameController
+public abstract partial class GameControllerOnline : IGameController
 {
 	protected static PlayerController mOtherPlayerInstance;
 
@@ -187,6 +187,7 @@ public abstract class GameControllerOnline : IGameController
     protected virtual void OnDisable()
     {
         UnbindSelfHostedAbortRecovery();
+        CancelSelfHostedRematchRequest();
     }
 
 	public override IEnumerator StartGame()
@@ -653,6 +654,7 @@ public abstract class GameControllerOnline : IGameController
 
 	protected virtual void Reset()
 	{
+        CancelSelfHostedRematchRequest();
         UnbindSelfHostedAbortRecovery();
 		if (mSelfHostedClient != null) mSelfHostedClient.CardsSelectedByBoth -= OnSelfHostedCardsSelected;
 		mSelfHostedClient = null;
@@ -770,6 +772,12 @@ public abstract class GameControllerOnline : IGameController
 
 	public override void Rematch()
 	{
+        SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
+        if (selfHosted != null)
+        {
+            BeginSelfHostedRematch(selfHosted);
+            return;
+        }
 		mShowWaitingForPlayer = false;
 		if (PhotonNetwork.connected)
 		{
@@ -1127,6 +1135,11 @@ public abstract class GameControllerOnline : IGameController
 	protected virtual void CheckForReconnect()
 	{
 		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+        if (selfHosted != null && selfHosted.HasPendingRematch)
+        {
+            return;
+        }
+
 		if (selfHosted != null && selfHosted.OwnsMatch)
 		{
 			float opponentSeconds;
@@ -1487,18 +1500,31 @@ public abstract class GameControllerOnline : IGameController
             return;
         }
 
-		PlayerController.currentPlayer.networkStatus.Reset();
-		Screen.sleepTimeout = -2;
-		if (shouldLooseDogtagWhenQuit)
-		{
-			PayDogtag();
-		}
-		Singleton<DogTagManager>.instance.ResetLocalDogtags();
-		StopAllCoroutines();
-		PhotonConnectionManager.Disconnect();
-		Reset();
-		isInMatch = false;
-	}
+        SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
+        if (selfHosted != null && selfHosted.HasPendingRematch)
+        {
+            QuitSelfHostedRematchAsync(selfHosted);
+            return;
+        }
+
+        CompleteLocalQuit();
+    }
+
+    private void CompleteLocalQuit()
+    {
+        PlayerController.currentPlayer.networkStatus.Reset();
+        Screen.sleepTimeout = -2;
+        if (shouldLooseDogtagWhenQuit)
+        {
+            PayDogtag();
+        }
+
+        Singleton<DogTagManager>.instance.ResetLocalDogtags();
+        StopAllCoroutines();
+        PhotonConnectionManager.Disconnect();
+        Reset();
+        isInMatch = false;
+    }
 
 	public virtual void PausematchMaking(bool pause)
 	{
@@ -1511,7 +1537,13 @@ public abstract class GameControllerOnline : IGameController
             return;
         }
 
-		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+        SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+        if (selfHosted != null && selfHosted.HasPendingRematch)
+        {
+            QuitSelfHostedRematchAsync(selfHosted);
+            return;
+        }
+
 		if (selfHosted != null && selfHosted.OwnsMatch)
 		{
 			if (!mSelfHostedForfeitPending) ForfeitSelfHosted(selfHosted);
@@ -1616,7 +1648,10 @@ public abstract class GameControllerOnline : IGameController
 		{
 			LoadingDialog.SetHeader(Localization.Localize("ID_WAITINGFOROTHERPLAYER"));
 		}
-		if (PlayerController.currentPlayer != null && PlayerController.currentPlayer.networkStatus != null && PlayerController.currentPlayer.networkStatus.matchState == PlayerNetworkStatus.MatchState.Rematch && !mBothPlayersConnected && Time.realtimeSinceStartup > MatchManager.rematchExpireTime)
+        if (!IsSelfHostedRematchOwned && PlayerController.currentPlayer != null &&
+            PlayerController.currentPlayer.networkStatus != null &&
+            PlayerController.currentPlayer.networkStatus.matchState == PlayerNetworkStatus.MatchState.Rematch &&
+            !mBothPlayersConnected && Time.realtimeSinceStartup > MatchManager.rematchExpireTime)
 		{
 			Quit();
 			LoadingDialog.Hide();

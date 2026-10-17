@@ -657,6 +657,7 @@ public class GameControllerCoop : GameControllerOnline
 
 	public override void Rematch()
 	{
+        RequireSelfHostedRematchSource();
 		LoadingDialog.SetLook(smallLook: false);
 		MissionsManager.instance.currentMission.OpenMission(null, isInvite: false, isRematch: true, isHeroicMode: false);
 		BotMission botMission = MissionsManager.instance.currentMission as BotMission;
@@ -664,7 +665,9 @@ public class GameControllerCoop : GameControllerOnline
 		{
 			PlayerController botInstance = botMission.botInstance;
 			botInstance.networkStatus.matchState = PlayerNetworkStatus.MatchState.Rematch;
-			if (PhotonNetwork.isMasterClient)
+			if (PhotonConnectionManager.IsSelfHostedActive
+                ? Singleton<PhotonConnectionManager>.instance.isMasterClient
+                : PhotonNetwork.isMasterClient)
 			{
 				GuiScreenSingle<CardSelectionScreen>.instance.ShowLobby();
 			}

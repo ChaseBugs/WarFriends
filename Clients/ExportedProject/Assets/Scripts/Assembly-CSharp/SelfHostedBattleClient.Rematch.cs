@@ -32,6 +32,18 @@ public sealed partial class SelfHostedBattleClient
         }
     }
 
+    /// <summary>Uses the existing login session and configured offline Backend for a fresh rematch.</summary>
+    public Task RematchWithRecoveredSessionAsync(CancellationToken cancellationToken)
+    {
+        GameLoginManager login = Singleton<GameLoginManager>.instance;
+        if (login == null || string.IsNullOrEmpty(login.accessToken))
+        {
+            throw new InvalidOperationException("The recovered Backend session is not available.");
+        }
+
+        return RematchAndConnectAsync(backendEndpoint, login.accessToken, allowLocalHttp, cancellationToken);
+    }
+
     /// <summary>Finds and admits a same-opponent grant while keeping the original result until handoff.</summary>
     public Task RematchAndConnectAsync(
         string endpoint,
@@ -87,6 +99,25 @@ public sealed partial class SelfHostedBattleClient
             throw new InvalidOperationException("A started rematch cannot use prestart cancellation.");
         }
         return _rematchAttempt.CancelAsync();
+    }
+
+    internal async Task<bool> CancelRematchAndReleaseAsync()
+    {
+        SelfHostedRematchAttempt attempt = _rematchAttempt;
+        await CancelRematchAsync();
+        if (destroyed || !attempt.IsCancellationConfirmed || Active != null && Active != this)
+        {
+            return false;
+        }
+
+        if (_rematchAttempt == attempt)
+        {
+            Close();
+            return true;
+        }
+
+        // Disconnect may already have observed the same receipt; never close a successor operation.
+        return _rematchAttempt == null && connection == null && matchmaking == null && Active == null;
     }
 
     private async Task RunRematchHandoffAsync(SelfHostedRematchAttempt attempt, CancellationToken cancellationToken)

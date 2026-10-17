@@ -133,8 +133,44 @@ public static class UnitySameOpponentRematchAudit
             await client.Refresh();
         }
         Require(!client.HasPendingRematch, "Running transport did not release the completed rematch operation.");
+        VerifyControllerRejectsRunningRematch(client);
         await client.Forfeit();
         Require(client.State.Phase == BattlePhase.Ended, "The Worker did not confirm a terminal result.");
+    }
+
+    private static void VerifyControllerRejectsRunningRematch(SelfHostedBattleClient client)
+    {
+        var root = new GameObject("ActualRematchControllerGuard");
+        root.SetActive(false);
+        GameControllerOnline[] controllers =
+        {
+            root.AddComponent<GameControllerDeathMatch>(),
+            root.AddComponent<GameControllerCoop>()
+        };
+        ByteString before = client.State.ToByteString();
+        try
+        {
+            foreach (GameControllerOnline controller in controllers)
+            {
+                try
+                {
+                    controller.Rematch();
+                    throw new Exception("The controller accepted a Running match as a rematch source.");
+                }
+                catch (InvalidOperationException failure)
+                {
+                    Require(failure.Message ==
+                        "Rematch requires an ended owner without another pending request.",
+                        "The actual controller reached profile or scene dependencies before its source guard.");
+                }
+            }
+            Require(SelfHostedBattleClient.Active == client && client.State.ToByteString().Equals(before),
+                "Controller rejection changed the Running match owner or snapshot.");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+        }
     }
 
     private static void ObserveCompletion()

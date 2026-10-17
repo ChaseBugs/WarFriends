@@ -336,8 +336,35 @@ and unchanged accepted source-result digest. This passed in
 Asset checks still report zero missing scripts/broken references and the same
 seventeen pre-existing NGUI atlas mismatches.
 
-Normal `GameControllerOnline.Rematch` and its cancel buttons still use their
-recovered Photon branch. Actual lobby transitions, two Unity clients, original
-Unity 5.2/Android compatibility, admission-expiry UI behavior and rematch-specific
-late-cancellation/reconnect races remain unverified. This is an empty-scene Mono
-adapter gate, not a normal-screen gameplay proof.
+## Normal controller integration in progress
+
+`GameControllerOnline.Rematch` now selects the retained self-hosted adapter
+before the old Photon branch. Friend DeathMatch and Coop entry points validate
+the source before touching their lobby dependencies. The controller preserves
+the recovered WaitingForOpponent, saved map, Reset, restored map and isInMatch
+ordering, sends authenticated consent, then applies the same local Dog Tag call.
+After fresh admission it uses the existing self-hosted room/player initialization.
+The adapter reads the existing login token and configured Backend endpoint.
+
+Reset and disable cancel the controller request so late completion cannot publish
+a new lobby. The old local rematch timeout cannot reset a retained self-hosted
+operation before remote cleanup. Quit waits for source-scoped confirmation and
+adapter release before its existing local quit steps. Adapter release recognizes
+an already-observed receipt but refuses a successor match or queue operation.
+Pending rematch ownership also bypasses legacy reconnect polling and routes a
+Forfeit request through scoped cancellation instead of inventing a local result.
+
+The real Mono/SDK-peer gate also invokes the actual DeathMatch and Coop public
+Rematch methods against a Running match. Both must reject before missing profile
+or lobby dependencies and preserve the original owner/snapshot. This verifies
+the rejection boundary, not successful normal-screen player initialization.
+The controller guard/adapter gate passed in
+`Server/.local/queue-live-9f2c1abe3e2648d68f01359bc65aed9e/UnitySameOpponentRematch.log`.
+The final reset/request ordering and reset cancellation hook also compile in
+`Server/.local/unity-controller-rematch-final.log`; that compilation does not
+verify their successful normal-screen behavior or cancellation races.
+
+Successful actual lobby transitions, reset/disable/cancel UI race injection, two
+Unity clients, original Unity 5.2/Android compatibility, admission-expiry UI
+behavior and rematch-specific late-cancellation/reconnect races remain unverified.
+This is an empty-scene Mono adapter gate, not a normal-screen gameplay proof.

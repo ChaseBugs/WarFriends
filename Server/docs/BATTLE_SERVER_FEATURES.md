@@ -17,14 +17,16 @@ checks fresh match credentials and Mongo pair release, and preserves the first
 accepted result digest. The same-opponent Mono adapter now retains canonical
 ownership across a failed close callback and retries into a fresh reserved UDP
 match. The actual Editor/Backend/Worker/Mongo gate verifies this handoff and the
-unchanged original result. Normal second-battle screen entry and same-opponent
-button wiring remain open; this does not reopen a terminal Worker match.
+unchanged original result. Same-opponent entry is partially wired through the
+normal Online controller; successful second-battle screen initialization and
+cancel races remain open. This does not reopen a terminal Worker match.
 
 Same-opponent consent now has a separate durable persistence foundation:
 accepted Ended-result participant binding, thirty-second expiry, idempotent
 concurrent votes and irreversible cancellation. Authenticated protobuf
 read/accept/cancel endpoints and portable SDK methods now expose that state.
-They are not connected to Unity controllers; `ready` is intent only until the separate allocation call.
+The Online controller now starts the adapter operation; `ready` remains intent
+only until the separate allocation call. Full normal-screen proof remains open.
 An additional transaction primitive now consumes mutual consent and reserves
 the exact two participants once, with cancel/reserve fencing and stable replay
 after pair release. Real Mongo change streams prove both writes share one
@@ -55,14 +57,17 @@ transaction checks the exact reserved match ID and participant order, so stale
 requests cannot select successor matches or delete waiting tickets. Completion
 requires existing Worker prestart proof and terminal acceptance. The native
 gate covers cancellation followed by harmless stale replay in a fresh match;
-Unity cancel-button integration remains open.
+Unity Quit now awaits source-scoped confirmation before local cleanup; complete
+cancel-button screen behavior and race injection remain open.
 The active Unity source now has a separate rematch operation owner for consent,
 validated fresh grants and retryable source-bound cancellation. Its real source
 is linked into native HTTP/UDP/Mongo tests; waiting/allocated cleanup and a new
 playable round pass. Disposable Unity compilation/construction and static asset
 audits pass as scoped in the rematch document. The Mono transport handoff also
 passes with an SDK peer, including retained ownership after a failed close
-callback. Normal controller/button wiring and full lobby transitions remain open.
+callback. Normal controller entry/quit wiring now exists, with actual friend
+DeathMatch/Coop Running-source guards. Successful full lobby transitions and
+reset/disable/cancel UI races remain open.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

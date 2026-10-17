@@ -372,6 +372,11 @@ public class GameControllerDeathMatch : GameControllerPVP
 
 	public override void Rematch()
 	{
+        if (!isRandomMatchMaking)
+        {
+            RequireSelfHostedRematchSource();
+        }
+
 		LoadingDialog.SetLook(smallLook: true);
 		if (isRandomMatchMaking)
 		{
