@@ -23,6 +23,13 @@ bridge. Source identity survives a mid-flight slot change; both admitted peers
 receive identical impact bytes. This is one Editor plus an SDK peer, with
 explicit polling; rendered/two-Unity-client play remains open.
 
+The [explosion-effects checkpoint](PLAYER_BAZOOKA_EFFECTS.md) now resumes
+interrupted source sound/particle callbacks without duplicating completed steps.
+Isolated native Play Mode verifies actual recovered clips, particles, automatic
+simulation and match-scoped replay. Two WAV container headers required length
+restoration while preserving all PCM bytes and GUIDs. Combined live networking
+and normal Play Mode effects remain open.
+
 [RPG crate occlusion](PVP_RPG_CRATE_OCCLUSION.md) now reproduces a valid City
 spawn hidden from the initial cover. The host and original Unity Physics agree
 on the blocking tires surface; a normal cover change permits collection.

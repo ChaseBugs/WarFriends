@@ -33,6 +33,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 
 	private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
     private readonly SelfHostedBazookaLifetime bazookaLifetime = new SelfHostedBazookaLifetime();
+    private readonly SelfHostedBazookaImpactEffects _bazookaEffects = new SelfHostedBazookaImpactEffects();
     private readonly Dictionary<string, InfantryBulletSource> infantryBullets =
         new Dictionary<string, InfantryBulletSource>(System.StringComparer.Ordinal);
 	private PlayerController local;
@@ -138,6 +139,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		if (snapshot == null) return;
         if (snapshot.MatchId.Length != 0 && bazookaLifetime.SelectScope(snapshot.MatchId, snapshot.ManifestHash))
         {
+            _bazookaEffects.Clear();
             ResetForFullSnapshot();
         }
 		HashSet<ulong> present = new HashSet<ulong>();
@@ -230,12 +232,11 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 throw new System.InvalidOperationException("Invalid bazooka impact presentation.");
             }
 
-            bool isFirstImpact = bazookaLifetime.Impact(item, Time.time);
+            bazookaLifetime.Impact(item, Time.time);
             active.Remove(item.ProjectileId);
-            if (isFirstImpact && Application.isPlaying)
+            if (Application.isPlaying)
             {
-                Explosion.PlayEffects(SelfHostedBazookaVisual.ExplosionTypeFor(item.WeaponSourceId),
-                    new Vector3(item.X, item.Y, item.Z));
+                _bazookaEffects.Apply(item);
             }
 
             return;

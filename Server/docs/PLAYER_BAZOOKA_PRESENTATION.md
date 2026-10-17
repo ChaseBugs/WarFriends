@@ -84,7 +84,7 @@ mismatches remain unchanged.
 The subsequent [lifetime checkpoint](PLAYER_BAZOOKA_LIFETIME.md) adds the original
 owner/peer tail delays and scoped late-read suppression. Its controlled tests
 and independent Play Mode source-timer comparison pass. This is not a complete
-visual-parity claim: normal Play Mode sound/explosion scheduling, rendered live
+visual-parity claim: combined live Play Mode sound/explosion scheduling, rendered live
 Worker/Unity missile flight, broader ordering, Android, Unity 5.2 and two actual
 Unity clients remain unverified. B32 and overall completion remain open.
 
@@ -92,3 +92,8 @@ The [subsequent live UDP Editor checkpoint](PLAYER_BAZOOKA_LIVE_UDP.md) connects
 the production Worker, SDK, adapter and normal battle bridge for five source
 flights/impacts and a mid-flight slot change. It verifies component binding,
 not rendered Play Mode effects or two Unity processes.
+
+The [explosion-effects checkpoint](PLAYER_BAZOOKA_EFFECTS.md) subsequently verifies
+real source sound/particle dispatch and interrupted callback replay in isolated
+Play Mode. It restores two zero-length WAV container headers without changing
+their PCM samples. It does not combine Play Mode effects with the live UDP run.
