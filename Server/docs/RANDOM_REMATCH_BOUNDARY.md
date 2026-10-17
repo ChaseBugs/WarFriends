@@ -175,8 +175,8 @@ completed reservations return `completed` without registering the Worker again.
 Missing or unsupported source authority returns `409 rematch_unavailable`.
 Unconfigured allocation policy returns `503 rematch_disabled`.
 
-Unity controller integration, post-reservation cancel UI behavior, fault-injected
-registration/reply-loss recovery, admission expiry and all shield/army/bonus
+Unity controller integration, post-reservation cancel UI behavior, lost registration
+replies after Worker acceptance, admission expiry and all shield/army/bonus
 projection paths remain unverified or unfinished. This is not full gameplay
 or same-opponent friend/co-op feature completion.
 
@@ -195,3 +195,24 @@ peer closed its port. The shared Worker receiver now continues after peer
 ConnectionReset/ConnectionRefused feedback without changing battle authority;
 other socket failures retain their existing handling. The rerun completes the
 second accepted result instead of stopping the entire Worker.
+
+## Deferred registration recovery evidence
+
+The native queue gate now stops its owned Worker after both source participants
+consent, before calling rematch allocation. The actual Backend returns
+`503 rematch_provision_deferred`; the test requires a retained `allocated`
+record, both reserved participants, the frozen manifest, no terminal result and
+no retrievable connection grant.
+
+Before restarting the Worker, the gate changes one durable display name and
+checks the Mongo update modified exactly one profile. Retry must register the
+same reserved match, retain byte-identical admission data and publish a grant
+with the original frozen profile and manifest hash. The temporary profile change
+is restored afterward. The same SDK peers then complete the rematch and its
+accepted result, and replay after completion still returns `completed`.
+
+This passed in
+`Server/.local/queue-live-60f04171eed24e48a43e665c9d47d863`, including
+`RematchProvisionRecovery.log`. It proves recovery when registration initially
+cannot reach the Worker; it does not prove response loss after registration,
+Worker replacement during active combat, admission expiry, or Unity UI recovery.

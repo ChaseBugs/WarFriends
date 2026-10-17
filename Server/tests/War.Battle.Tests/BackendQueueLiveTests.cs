@@ -375,9 +375,27 @@ internal static class BackendQueueLiveTests
                 .RunAsync(loadingDeadline.Token);
             using var rematchAllocationDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
             await LiveSameOpponentRematchChecks.RunAsync(
-                new LiveSameOpponentRematchChecks.Settings(new Uri(backendUrl), tokens),
+                new LiveSameOpponentRematchChecks.Settings(new Uri(backendUrl), tokens)
+                {
+                    WorkerRecovery = new LiveSameOpponentRematchChecks.WorkerRecoveryHooks(
+                        () =>
+                        {
+                            Stop(worker);
+                            worker = null;
+                        },
+                        async () =>
+                        {
+                            if (worker != null && !worker.HasExited)
+                            {
+                                return;
+                            }
+                            worker = Start(workerDll, run, "RematchProvisionRecovery", workerEnvironment);
+                            await Ready($"http://127.0.0.1:{controlPort}/health/ready", worker);
+                        }),
+                },
                 new LiveSameOpponentRematchChecks.Stores(results, queue,
-                    new BattleManifestSnapshotStore(mongoUri, database)), rematchAllocationDeadline.Token);
+                    new BattleManifestSnapshotStore(mongoUri, database), mongo.GetDatabase(database)),
+                rematchAllocationDeadline.Token);
             if (unityExecutable != null && unityProject != null)
             {
                 using var unityDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));

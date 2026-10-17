@@ -1,3 +1,5 @@
+using MongoDB.Driver;
+
 using War.Client;
 using War.Persistence;
 using War.Protocol;
@@ -18,6 +20,11 @@ internal static class LiveSameOpponentRematchChecks
         await backend.AcceptRematchAsync(original[0].MatchId, settings.Tokens[0], cancellationToken);
         await RequireSecondConsentAsync(backend, settings, original[0].MatchId, cancellationToken);
         await backend.AcceptRematchAsync(original[0].MatchId, settings.Tokens[1], cancellationToken);
+        if (settings.WorkerRecovery != null)
+        {
+            await LiveRematchProvisionRecoveryChecks.RunAsync(new LiveRematchProvisionRecoveryChecks.Scenario(
+                backend, settings, stores, original[0].MatchId), cancellationToken);
+        }
         MatchQueueReply[] allocation = await Task.WhenAll(settings.Tokens.Select(token =>
             backend.AllocateRematchAsync(original[0].MatchId, token, cancellationToken)));
         Require(allocation.All(reply => reply.Code == "paired" && reply.MatchId == allocation[0].MatchId) &&
@@ -119,8 +126,13 @@ internal static class LiveSameOpponentRematchChecks
         }
     }
 
-    internal sealed record Settings(Uri Endpoint, string[] Tokens);
+    internal sealed record Settings(Uri Endpoint, string[] Tokens)
+    {
+        internal WorkerRecoveryHooks? WorkerRecovery { get; init; }
+    }
+
+    internal sealed record WorkerRecoveryHooks(Action Stop, Func<Task> RestartAsync);
 
     internal sealed record Stores(BattleResultStore Results, BattleMatchQueueStore Queue,
-        BattleManifestSnapshotStore Snapshots);
+        BattleManifestSnapshotStore Snapshots, IMongoDatabase Database);
 }
