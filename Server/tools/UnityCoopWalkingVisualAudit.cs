@@ -86,6 +86,7 @@ public static class UnityCoopWalkingVisualAudit
         Require(!actor.activeSelf, "An unrepresented state must hide the rig instead of inventing an idle pose.");
         Publish(client, next);
         Require(GameObject.Find(actor.name) == actor, "Supported presentation must resume its cached appearance.");
+        VerifyPreparation(client, actor, skin, next);
         MatchSnapshot fire = next.Clone();
         ClearAnimation(fire.Coop.EnemySpawns[0]);
         fire.Coop.EnemySpawns[0].InfantryAnimation = new BattleInfantryAnimationFrame { SampleTick = 23 };
@@ -100,6 +101,25 @@ public static class UnityCoopWalkingVisualAudit
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, walkingPose[index]) > 0.001f).Any(),
             "A confirmed protobuf fire frame must reuse the actor and replace its walking bone pose.");
         VerifyReturnBlend(client, actor, skin, fire);
+    }
+
+    private static void VerifyPreparation(SelfHostedBattleClient client, GameObject actor,
+        SkinnedMeshRenderer skin, MatchSnapshot previous)
+    {
+        MatchSnapshot snapshot = previous.Clone();
+        ClearAnimation(snapshot.Coop.EnemySpawns[0]);
+        var frame = new BattleInfantryAnimationFrame { SampleTick = snapshot.ServerTick };
+        frame.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "player_look_right3", TimeSeconds = 0.1f, Weight = 1f,
+            Wrap = BattleInfantryAnimationWrap.Clamp
+        });
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation = frame;
+        Quaternion[] before = skin.bones.Select(bone => bone.localRotation).ToArray();
+        Publish(client, snapshot);
+        Require(GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
+            "The decoded first preparation frame must replace walking on the same source actor.");
     }
 
     private static void VerifyReturnBlend(SelfHostedBattleClient client, GameObject actor,

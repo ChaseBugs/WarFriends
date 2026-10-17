@@ -1581,3 +1581,13 @@ the native adapter audit passes fourteen checks including the actual two-clip
 blend. Existing diagnostic collision data is not promoted to authority.
 Preparation/interruption and normal co-op admission/combat remain open. See
 [source return frames](COOP_CORNER_RETURN_FRAMES.md).
+
+B22 now projects the first accepted corner preparation using the retained
+first-target clock and existing source root guard. The measured tick-15 queue
+boundary projects fire time zero; later preparations remain unrepresented
+until their prior animation state is classified. Host tests verify preparation,
+queue start and that a later windup cannot restart at zero implicitly. The
+native adapter audit passes fifteen checks. Source verification additionally
+pins both reversed-return timing relations. See
+[initial preparation](COOP_CORNER_PREPARATION.md); normal co-op admission and
+combat authority remain open.

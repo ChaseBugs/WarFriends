@@ -4080,6 +4080,13 @@ internal static class CombatContentTests
                 1 - Math.Abs(Quaternion.Dot(actualIntermediate,
                     expectedIntermediate)) > 0.00002f)
                 throw new Exception("Co-op corner turn missed its eased frame.");
+            if (beforeTurn.InfantryAnimation?.Clips.Count != 1 ||
+                beforeTurn.InfantryAnimation.Clips[0].ClipName != coverWindup.AnimationClip ||
+                beforeTurn.InfantryAnimation.Clips[0].TimeSeconds != 8f / MatchManifest.TickRate ||
+                beforeTurn.InfantryAnimation.SampleTick != coverWindup.StartTick + 8)
+            {
+                throw new Exception("The first source corner preparation must share the confirmed turn clock.");
+            }
             if (cornerRuntime.PlaceCornerUncoverHitboxes(
                     cornerEnemy.EntityId).Count != 3 ||
                 cornerRuntime.CurrentEnemyCollisionFrame().Targets.Count(
@@ -4109,6 +4116,14 @@ internal static class CombatContentTests
                     .UnplacedEnemyIds.Contains(cornerEnemy.EntityId))
                 throw new Exception(
                     "Co-op corner lost the late diagnostic uncover pose.");
+            cornerRuntime.Advance(coverWindup.StartTick + 15);
+            BattleInfantryAnimationFrame? queuedStart = cornerRuntime.Snapshot().Coop.EnemySpawns
+                .Single(enemy => enemy.EntityId == cornerEnemy.EntityId).InfantryAnimation;
+            if (queuedStart?.Clips.Count != 1 || queuedStart.Clips[0].ClipName != coverWindup.QueuedFireClip ||
+                queuedStart.Clips[0].TimeSeconds != 0f)
+            {
+                throw new Exception("The first measured queued-fire frame must start at source time zero.");
+            }
             cornerRuntime.Advance(coverWindup.StartTick + 17);
             BattleCoopEnemySpawn fireVisual = cornerRuntime.Snapshot().Coop.EnemySpawns
                 .Single(enemy => enemy.EntityId == cornerEnemy.EntityId);
@@ -4261,6 +4276,12 @@ internal static class CombatContentTests
                     cornerEnemy.EntityId).Count != 0)
                 throw new Exception(
                     "Co-op corner reused idle past its next shot deadline.");
+            cornerRuntime.Advance(secondWindup.StartTick + 1);
+            if (cornerRuntime.Snapshot().Coop.EnemySpawns.Single(enemy =>
+                    enemy.EntityId == cornerEnemy.EntityId).InfantryAnimation != null)
+            {
+                throw new Exception("A later preparation must not silently reuse the initial source idle clock.");
+            }
             cornerRuntime.Advance(secondWindup.CallbackTick + 1);
             IReadOnlyList<CoopInfantryRoundIntent> secondVolley =
                 cornerRuntime.InfantryRoundIntents(cornerEnemy.EntityId);

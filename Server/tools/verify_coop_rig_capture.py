@@ -142,6 +142,15 @@ def validate_corner_volley(scenario):
     for tick in (19, 25):
         state = next(row for row in frames[tick]["rig"]["states"] if row["name"] == scenario["fireClip"])
         require(abs(state["time"] - 1 / 30) < 0.0001, "Per-round fire restart did not take effect.")
+    queued = frames[15]["rig"]["states"]
+    require(any(state["name"] == scenario["fireClip"] + " - Queued Clone" and state["time"] == 0
+                and state["weight"] == 1 for state in queued), "Initial queued fire must start at observation fifteen.")
+    cover = next(state for state in frames[43]["rig"]["states"]
+                 if state["name"] == f"player_{side}_coverBack3")
+    look = next(state for state in frames[44]["rig"]["states"] if state["name"] == scenario["startClip"])
+    expected_time = (1 - cover["normalizedTime"]) * look["clipLength"] + 1 / 30
+    require(abs(look["time"] - expected_time) < 0.00001,
+            "Interrupted return must reverse its normalized progress instead of restarting look at zero.")
 
 
 def main():

@@ -43,7 +43,7 @@ change, actor reuse, hiding and lifecycle cleanup. These are isolated Unity
 2018.3 observations, not normal two-Client gameplay or shipped Unity 5.2 proof.
 
 The runtime class supports only the reviewed base layer, not procedural aiming,
-additive layers or full animation state machines. Complete preparation/interruption
+additive layers or full animation state machines. Complete later preparation/interruption
 projection, missed-snapshot verification, other families and authoritative
 co-op combat remain open. See [confirmed frames](COOP_ANIMATION_FRAMES.md)
 for the current wire contract and partial host selection.

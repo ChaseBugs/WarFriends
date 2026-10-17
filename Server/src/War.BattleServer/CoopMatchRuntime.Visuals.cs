@@ -4,6 +4,8 @@ namespace War.BattleServer;
 
 internal sealed partial class CoopMatchRuntime
 {
+    private const ulong CornerEntryTweenTicks = 15;
+
     private CoopInfantryPathState? GetWalkingPresentationPath(BattleCoopEnemySpawn enemy)
     {
         if (phase != BattlePhase.Running || enemyPoses == null || enemy.Behaviour != "Assaulter" ||
@@ -31,10 +33,44 @@ internal sealed partial class CoopMatchRuntime
         }
         else
         {
-            view.InfantryAnimation = ProjectCornerFireVisual(enemy) ?? ProjectCornerReturnVisual(enemy);
+            view.InfantryAnimation = ProjectCornerPreparationVisual(enemy) ??
+                ProjectCornerFireVisual(enemy) ?? ProjectCornerReturnVisual(enemy);
         }
 
         return view;
+    }
+
+    private BattleInfantryAnimationFrame? ProjectCornerPreparationVisual(BattleCoopEnemySpawn enemy)
+    {
+        if (infantryPaths.ContainsKey(enemy.EntityId) ||
+            !infantryShotWindups.TryGetValue(enemy.EntityId, out CoopInfantryShotWindup? windup) ||
+            !infantryFirstTargets.TryGetValue(enemy.EntityId, out CoopInfantryPlayerTargetPlan? firstTarget) ||
+            !infantryPointArrivals.TryGetValue(enemy.EntityId, out CoopInfantryPointArrival? arrival) ||
+            firstTarget.Tick < arrival.Tick + CornerEntryTweenTicks ||
+            firstTarget.Tick != windup.StartTick || windup.HasNavigationRotationConflict ||
+            PlaceCornerUncoverHitboxes(enemy.EntityId).Count == 0)
+        {
+            return null;
+        }
+
+        // The first accepted corner attempt follows source idle. Later attempts may reverse an active return;
+        // they cannot reuse a zero-based look clock without retaining the prior animation state.
+        ulong elapsed = tick - windup.StartTick;
+        float lookTicks = enemyPoses!.Clip(windup.AnimationClip).Length * MatchManifest.TickRate;
+        float roundedLookTicks = MathF.Round(lookTicks);
+        if (MathF.Abs(lookTicks - roundedLookTicks) > 0.0001f)
+        {
+            throw new InvalidDataException("Source corner preparation must end on the reviewed fixed-tick boundary.");
+        }
+        ulong queuedStart = (ulong)roundedLookTicks;
+        if (elapsed == queuedStart)
+        {
+            // Both measured source corner queues switch to their fire clone at this exact 30 Hz frame.
+            return CreateVisualFrame(windup.QueuedFireClip, 0f, BattleInfantryAnimationWrap.ClampForever);
+        }
+
+        float seconds = elapsed / (float)MatchManifest.TickRate;
+        return CreateVisualFrame(windup.AnimationClip, seconds, BattleInfantryAnimationWrap.Clamp);
     }
 
     private BattleInfantryAnimationFrame? ProjectCornerFireVisual(BattleCoopEnemySpawn enemy)

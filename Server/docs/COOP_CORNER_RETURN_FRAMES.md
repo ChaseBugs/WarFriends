@@ -64,8 +64,12 @@ passes 74 checks plus restart recovery. Those integration checks do not open
 or verify public co-op combat admission. No SDK binary or Client asset changes
 are required for this server/content increment.
 
-Preparation, interrupted-return projection, current-round reset boundaries,
+Later preparation, interrupted-return projection, current-round reset boundaries,
 obstacle fire, procedural aiming and normal co-op admission/combat remain
 open. Existing collider diagnostics are unchanged; their own full source
 parity remains a separate requirement. This does not establish shipped Unity
 5.2, Linux execution or Android execution.
+
+The subsequent [initial preparation](COOP_CORNER_PREPARATION.md) checkpoint
+adds the first source windup only; interrupted-return starting state is still
+not projected as a fresh look.
