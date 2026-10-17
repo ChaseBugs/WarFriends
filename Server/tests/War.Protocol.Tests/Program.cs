@@ -15,6 +15,7 @@ int checks = 0;
 checks += BattleQueueAttemptTokenTests.Run();
 checks += QueueAttemptWireTests.Run();
 checks += RoomTerminalReplayTests.Run();
+checks += LocalOfflineRoomStateTests.Run();
 checks += await BattleMatchCancellationTests.RunAsync();
 checks += await MatchmakingAttemptTests.RunAsync();
 checks += PvpMatchClockTests.Run();

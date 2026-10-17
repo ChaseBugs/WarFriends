@@ -18,12 +18,18 @@ namespace War.Client
     public sealed class LocalOfflineRoom
     {
         public const string SoloRoomName = "OfflineRoom";
+        private const int UnassignedPlayerId = -1;
+        private const int SoloPlayerId = 1;
+        private int _localPlayerId = UnassignedPlayerId;
 
         public bool IsOffline { get; private set; }
         public bool IsInRoom { get; private set; }
         public string RoomName => IsInRoom ? SoloRoomName : string.Empty;
-        public int PlayerId => IsInRoom ? 1 : -1;
-        public int MasterPlayerId => IsInRoom ? 1 : -1;
+        /// <summary>Preserves the recovered local ID after leaving a room, until mode reset or disconnect.</summary>
+        public int PlayerId => _localPlayerId;
+
+        /// <summary>Reads the offline local master identity independently of current room membership.</summary>
+        public int MasterPlayerId => IsOffline ? _localPlayerId : UnassignedPlayerId;
         public int PlayerCount => IsInRoom ? 1 : 0;
 
         public event Action<LocalRoomCallback> Callback;
@@ -45,11 +51,13 @@ namespace War.Client
             if (!IsOffline)
             {
                 IsOffline = true;
+                _localPlayerId = UnassignedPlayerId;
                 Callback?.Invoke(LocalRoomCallback.ConnectedToMaster);
             }
 
             LeaveRoom();
             IsInRoom = true;
+            _localPlayerId = SoloPlayerId;
             Callback?.Invoke(LocalRoomCallback.CreatedRoom);
             Callback?.Invoke(LocalRoomCallback.JoinedRoom);
         }
@@ -62,6 +70,7 @@ namespace War.Client
             // The bundled PhotonNetwork.LeaveRoom sends OnLeftRoom even when
             // its offline room is already null.
             IsInRoom = false;
+            // The original LeaveRoom clears the room but leaves the local player/master ID intact.
             Callback?.Invoke(LocalRoomCallback.LeftRoom);
         }
 
@@ -71,6 +80,7 @@ namespace War.Client
             // sending the offline LeaveRoom callback.
             IsInRoom = false;
             IsOffline = false;
+            _localPlayerId = UnassignedPlayerId;
         }
     }
 }

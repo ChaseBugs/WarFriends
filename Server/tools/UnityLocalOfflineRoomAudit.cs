@@ -6,36 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using War.Client;
 
-public sealed class LocalOfflineRoomCallbackProbe : MonoBehaviour
-{
-    public readonly List<LocalRoomCallback> Callbacks =
-        new List<LocalRoomCallback>();
-
-    private void OnConnectedToMaster()
-    {
-        Callbacks.Add(LocalRoomCallback.ConnectedToMaster);
-    }
-
-    private void OnLeftRoom()
-    {
-        Callbacks.Add(LocalRoomCallback.LeftRoom);
-    }
-
-    private void OnCreatedRoom()
-    {
-        Callbacks.Add(LocalRoomCallback.CreatedRoom);
-    }
-
-    private void OnJoinedRoom()
-    {
-        Callbacks.Add(LocalRoomCallback.JoinedRoom);
-    }
-}
-
-/// <summary>
-/// Run in a disposable Unity project with -executeMethod and without -quit.
-/// Compares the bundled offline Photon callback order with the portable model.
-/// </summary>
+/// <summary>Compares local room callbacks and their visible state with the bundled SDK in an empty scene.</summary>
 [InitializeOnLoad]
 public static class UnityLocalOfflineRoomAudit
 {
@@ -44,9 +15,12 @@ public static class UnityLocalOfflineRoomAudit
     static UnityLocalOfflineRoomAudit()
     {
         if (SessionState.GetBool(Active, false))
+        {
             EditorApplication.update += RunInPlayMode;
+        }
     }
 
+    /// <summary>Runs only the local reference comparison; no Photon Cloud connection is made.</summary>
     public static void Run()
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -58,92 +32,145 @@ public static class UnityLocalOfflineRoomAudit
     private static void RunInPlayMode()
     {
         if (!EditorApplication.isPlaying || EditorApplication.isPaused)
+        {
             return;
-
+        }
         EditorApplication.update -= RunInPlayMode;
         try
         {
-            var gameObject = new GameObject("LocalOfflineRoomCallbackProbe");
-            var probe = gameObject.AddComponent<LocalOfflineRoomCallbackProbe>();
-            var localRoom = new LocalOfflineRoom();
-            var modelCallbacks = new List<LocalRoomCallback>();
-            localRoom.Callback += modelCallbacks.Add;
-
-            PhotonNetwork.offlineMode = true;
-            Require(PhotonNetwork.offlineMode, "Photon did not enter offline mode.");
-            PhotonNetwork.LeaveRoom();
-            Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName),
-                "Photon did not create the first offline room.");
-            localRoom.JoinSoloRoom();
-            CompareCallbacks(probe, modelCallbacks, "first join");
-            Require(PhotonNetwork.room != null &&
-                PhotonNetwork.room.name == localRoom.RoomName &&
-                PhotonNetwork.player.ID == localRoom.PlayerId &&
-                PhotonNetwork.masterClient.ID == localRoom.MasterPlayerId &&
-                PhotonNetwork.room.playerCount == localRoom.PlayerCount,
-                "The portable solo roster differs from the bundled room.");
-
-            probe.Callbacks.Clear();
-            modelCallbacks.Clear();
-            PhotonNetwork.LeaveRoom();
-            Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName),
-                "Photon did not replace its offline room.");
-            localRoom.JoinSoloRoom();
-            CompareCallbacks(probe, modelCallbacks, "replacement join");
-
-            PhotonNetwork.Disconnect();
-            localRoom.Disconnect();
-            Require(!PhotonNetwork.offlineMode && PhotonNetwork.room == null &&
-                !localRoom.IsOffline && !localRoom.IsInRoom,
-                "The portable solo room did not clear on disconnect.");
-
-            // GameController.Awake may have enabled offline mode before the
-            // later JoinOfflineGame call. Observe that prior transition.
-            probe.Callbacks.Clear();
-            modelCallbacks.Clear();
-            PhotonNetwork.offlineMode = true;
-            Require(probe.Callbacks.SequenceEqual(new[]
-                { LocalRoomCallback.ConnectedToMaster }),
-                "The scene's earlier offline transition had no callback.");
-            probe.Callbacks.Clear();
-            localRoom.ObserveExistingOfflineMode();
-            PhotonNetwork.LeaveRoom();
-            Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName),
-                "Photon did not create the pre-enabled offline room.");
-            localRoom.JoinSoloRoom();
-            CompareCallbacks(probe, modelCallbacks, "pre-enabled offline mode");
-            PhotonNetwork.Disconnect();
-            localRoom.Disconnect();
-
+            var owner = new GameObject("LocalOfflineRoomCallbackProbe");
+            var scenario = new Scenario(owner.AddComponent<LocalOfflineRoomCallbackProbe>());
+            VerifyFirstJoin(scenario);
+            VerifyReplacement(scenario);
+            VerifyLeaveAndRejoin(scenario);
+            VerifyDisconnect(scenario);
+            VerifyPreEnabledScene(scenario);
+            VerifyDisconnect(scenario);
             Debug.Log("LOCAL_OFFLINE_ROOM_AUDIT_PASSED");
             Finish(0);
         }
-        catch (Exception exception)
+        catch (Exception failure)
         {
-            Debug.LogException(exception);
+            Debug.LogException(failure);
             Finish(1);
         }
     }
 
-    private static void CompareCallbacks(LocalOfflineRoomCallbackProbe probe,
-        List<LocalRoomCallback> modelCallbacks, string scenario)
+    private static void VerifyFirstJoin(Scenario scenario)
     {
-        Require(probe.Callbacks.SequenceEqual(modelCallbacks),
-            "Offline callback order differs on " + scenario + ": Photon=" +
-            string.Join(",", probe.Callbacks.Select(value => value.ToString()).ToArray()) +
-            " model=" +
-            string.Join(",", modelCallbacks.Select(value => value.ToString()).ToArray()));
+        PhotonNetwork.offlineMode = true;
+        Require(PhotonNetwork.offlineMode, "The reference SDK did not enter offline mode.");
+        PhotonNetwork.LeaveRoom();
+        Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName), "The first reference room was not created.");
+        scenario.Room.JoinSoloRoom();
+        scenario.Compare("first join");
+        Require(PhotonNetwork.room.name == scenario.Room.RoomName &&
+            PhotonNetwork.player.ID == scenario.Room.PlayerId &&
+            PhotonNetwork.masterClient.ID == scenario.Room.MasterPlayerId &&
+            PhotonNetwork.room.playerCount == scenario.Room.PlayerCount,
+            "The joined local roster differs from the reference SDK.");
+    }
+
+    private static void VerifyReplacement(Scenario scenario)
+    {
+        scenario.Clear();
+        PhotonNetwork.LeaveRoom();
+        Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName), "The replacement room was not created.");
+        scenario.Room.JoinSoloRoom();
+        scenario.Compare("replacement join");
+    }
+
+    private static void VerifyLeaveAndRejoin(Scenario scenario)
+    {
+        scenario.Clear();
+        PhotonNetwork.LeaveRoom();
+        scenario.Room.LeaveRoom();
+        scenario.Compare("explicit leave");
+        scenario.Clear();
+        PhotonNetwork.LeaveRoom();
+        Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName), "The empty room was not rejoined.");
+        scenario.Room.JoinSoloRoom();
+        scenario.Compare("rejoin after explicit leave");
+    }
+
+    private static void VerifyDisconnect(Scenario scenario)
+    {
+        scenario.Clear();
+        PhotonNetwork.Disconnect();
+        scenario.Room.Disconnect();
+        Require(!PhotonNetwork.offlineMode && PhotonNetwork.room == null &&
+            !scenario.Room.IsOffline && !scenario.Room.IsInRoom && scenario.Room.PlayerId == -1 &&
+            scenario.Room.MasterPlayerId == -1 && scenario.Probe.Callbacks.Count == 0 &&
+            scenario.ModelCallbacks.Count == 0,
+            "Disconnect did not reset the local state without a room callback.");
+    }
+
+    private static void VerifyPreEnabledScene(Scenario scenario)
+    {
+        scenario.Clear();
+        PhotonNetwork.offlineMode = true;
+        scenario.Room.ObserveExistingOfflineMode();
+        Require(scenario.Probe.Callbacks.SequenceEqual(new[] { LocalRoomCallback.ConnectedToMaster }) &&
+            scenario.Probe.States.Single() == scenario.ModelState(LocalRoomCallback.ConnectedToMaster),
+            "The earlier offline transition has an unexpected callback or visible identity.");
+        scenario.Clear();
+        PhotonNetwork.LeaveRoom();
+        Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName), "The pre-enabled room was not created.");
+        scenario.Room.JoinSoloRoom();
+        scenario.Compare("pre-enabled offline mode");
     }
 
     private static void Require(bool condition, string message)
     {
         if (!condition)
+        {
             throw new InvalidOperationException(message);
+        }
     }
 
     private static void Finish(int code)
     {
         SessionState.SetBool(Active, false);
         EditorApplication.Exit(code);
+    }
+
+    private sealed class Scenario
+    {
+        internal Scenario(LocalOfflineRoomCallbackProbe probe)
+        {
+            Probe = probe;
+            Room.Callback += callback =>
+            {
+                ModelCallbacks.Add(callback);
+                ModelStates.Add(ModelState(callback));
+            };
+        }
+
+        internal LocalOfflineRoomCallbackProbe Probe { get; private set; }
+        internal LocalOfflineRoom Room { get; } = new LocalOfflineRoom();
+        internal List<LocalRoomCallback> ModelCallbacks { get; } = new List<LocalRoomCallback>();
+        internal List<string> ModelStates { get; } = new List<string>();
+
+        internal string ModelState(LocalRoomCallback callback)
+        {
+            return callback + "|" + Room.IsOffline + "|" + Room.RoomName + "|" +
+                Room.PlayerId + "|" + Room.MasterPlayerId + "|" + Room.PlayerCount;
+        }
+
+        internal void Clear()
+        {
+            Probe.Callbacks.Clear();
+            Probe.States.Clear();
+            ModelCallbacks.Clear();
+            ModelStates.Clear();
+        }
+
+        internal void Compare(string scenario)
+        {
+            Require(Probe.Callbacks.SequenceEqual(ModelCallbacks), "Room callback order differs on " + scenario);
+            Require(Probe.States.SequenceEqual(ModelStates),
+                "Callback-visible state differs on " + scenario + ": Photon=" +
+                string.Join(",", Probe.States.ToArray()) + " model=" + string.Join(",", ModelStates.ToArray()));
+        }
     }
 }

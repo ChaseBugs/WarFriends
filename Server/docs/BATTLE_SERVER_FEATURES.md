@@ -8,6 +8,12 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The [local solo callback-state comparison](LOCAL_SOLO_CALLBACK_STATE.md) now
+checks the state visible inside callbacks, not only their names/final roster.
+It reproduced and fixed loss of local/master ID during replacement/explicit
+leave. Native SDK/reference rows and six portable cases pass; actual solo
+creation/scene dispatch and Photon ownership/RPC/serialization are still open.
+
 [Session reads](OFFLINE_SESSION_READS.md) now use the canonical retained owner,
 including inactive objects, or the local solo model. Missing owned snapshots
 stay unknown; idle/local time preserves the recovered unsigned offline clock
