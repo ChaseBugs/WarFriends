@@ -62,6 +62,7 @@ public static class UnityAbortNoticeAudit
         try
         {
             ConfirmDialog dialog = UnityAbortNoticeFixture.StartServices();
+            VerifyMessageRecoveryGate();
             await VerifyNoticeCycleAsync(dialog, false);
             await VerifyNoticeCycleAsync(dialog, true);
 
@@ -84,6 +85,72 @@ public static class UnityAbortNoticeAudit
         finally
         {
             Application.logMessageReceived -= CaptureError;
+        }
+    }
+
+    private static void VerifyMessageRecoveryGate()
+    {
+        GameController controller = Singleton<GameController>.instance;
+        GuiManager gui = Singleton<GuiManager>.instance;
+        MainScreen menu = Array.Find(Resources.FindObjectsOfTypeAll<MainScreen>(),
+            candidate => candidate.gameObject.scene.IsValid());
+        MessageManager messages = Array.Find(Resources.FindObjectsOfTypeAll<MessageManager>(),
+            candidate => candidate.gameObject.scene.IsValid());
+        var recovery = typeof(GameController).GetField("_isSelfHostedAbortRecovery",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        var queue = (Dictionary<string, DatabaseMessage>)typeof(MessageManager).GetField("mMessages",
+            BindingFlags.Instance | BindingFlags.NonPublic).GetValue(messages);
+        const string messageId = "AbortRecoveryGateProbe";
+        var pending = new DatabaseMessage(new Newtonsoft.Json.Linq.JObject())
+        {
+            messageId = messageId,
+            playerId = "abort-ui-probe",
+            messageType = DatabaseMessage.Type.SystemMessage,
+        };
+        GuiScreen previousScreen = gui.currentScreen;
+        bool previousDialogs = menu.showDialogs;
+        bool previousRecovery = controller.IsSelfHostedAbortRecovery;
+        queue.Add(messageId, pending);
+        var routine = (IEnumerator)typeof(MessageManager).GetMethod("CheckForEventsRoutine",
+            BindingFlags.Instance | BindingFlags.NonPublic).Invoke(messages, null);
+        try
+        {
+            recovery.SetValue(controller, true);
+            gui.currentScreen = null;
+            Require(routine.MoveNext() && routine.Current == null,
+                "Messages touched an unavailable menu while abort recovery still owned the UI.");
+            Require(routine.MoveNext() && routine.Current == null,
+                "Messages stopped waiting before abort recovery released ownership.");
+            Require(queue[messageId] == pending && !pending.WasShown(),
+                "Waiting for recovery consumed or replaced a queued source message.");
+
+            menu.showDialogs = false;
+            gui.currentScreen = menu;
+            recovery.SetValue(controller, false);
+            Require(routine.MoveNext() && routine.Current is WaitForSeconds,
+                "Messages did not resume their original menu eligibility loop after recovery.");
+            Require(queue[messageId] == pending && !pending.WasShown(),
+                "An ineligible screen consumed the retained source message.");
+            recovery.SetValue(controller, true);
+            var cancelledIterator = (IEnumerator)typeof(MessageManager).GetMethod("CheckForEventsRoutine",
+                BindingFlags.Instance | BindingFlags.NonPublic).Invoke(messages, null);
+            RadicalRoutine cancelled = RadicalRoutine.Create(cancelledIterator);
+            Require(cancelled.enumerator.MoveNext() && cancelled.enumerator.Current == null,
+                "The cancellable source routine did not enter its recovery wait.");
+            cancelled.Cancel();
+            Require(!cancelled.enumerator.MoveNext() && queue[messageId] == pending && !pending.WasShown(),
+                "Stopping a recovery wait consumed a message or left the source routine running.");
+            ((IDisposable)cancelledIterator).Dispose();
+            Debug.Log("PASS: source message iterator waits through abort recovery, retains its queue and " +
+                "resumes normal screen eligibility; no full popup or menu boot proof.");
+        }
+        finally
+        {
+            recovery.SetValue(controller, previousRecovery);
+            gui.currentScreen = previousScreen;
+            menu.showDialogs = previousDialogs;
+            queue.Remove(messageId);
+            ((IDisposable)routine).Dispose();
         }
     }
 

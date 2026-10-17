@@ -70,3 +70,34 @@ orders, the original collider/raycaster, two modal cycles and the camera capture
 The preceding routing and cancellation audits also passed; they establish entry
 ownership and adapter reuse, not full MainScreen initialization. The protocol
 executable independently passed 1,334 checks after this change.
+
+## Deferred menu messages
+
+The recovered `GuiScreen.DoAfterShowUp` starts MessageManager before invoking
+AfterShowUp subscribers. `GuiManager.ShowGui` also restarts that routine when the
+requested screen is already shown. The abort owner must therefore block queued
+message dispatch independently of the screen transition callback. Otherwise
+normal notices may enter between menu completion and the cancellation notice.
+
+`MessageManager.CheckForEventsRoutine` now yields while the current controller
+owns abort recovery. It leaves both message dictionaries, shown flags and server
+acknowledgements unchanged. Once ownership is released it evaluates the original
+screen, loading, tutorial and advertisement conditions. The existing timeout and
+RadicalRoutine cancellation behavior are retained. This does not change the
+separate synchronous OfferManager check in StartMessageCoroutine or establish
+that all legacy offer/service dependencies are already migrated.
+
+The native audit advances the actual source iterator twice during recovery with
+a deliberately unavailable current screen. Before the guard, this controlled
+case threw NullReferenceException at MessageManager's screen eligibility check;
+see `Server/.local/unity-abort-message-baseline-queue.log`. It is a regression
+probe, not evidence that a normal account boot necessarily has a null screen.
+The guarded run must preserve a pending source DatabaseMessage, resume the
+original timeout on a screen with dialogs disabled, and cancel a waiting
+RadicalRoutine without consuming the message. Full eligible-popup dispatch,
+account initialization and the complete menu/notice interleaving remain open.
+
+The guarded graphics-enabled run passed all of these iterator checks and both
+original modal cycles: `Server/.local/unity-abort-message-guard.log`. The same
+checkpoint passed 1,334 protocol checks and retained zero missing scripts/broken
+asset references; the seventeen existing atlas selections remain unresolved.

@@ -12,6 +12,8 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 labels, tweens and OK callback in Play Mode and has an inspected camera capture.
 Recovery retains ownership until the menu transition and notice readiness or
 acknowledgement, including an immediate OK that hides the notice before polling.
+The source message loop now defers queued popups while abort recovery owns the
+UI, preserving pending messages and its normal cancellation/eligibility path.
 The complete main-screen/resource graph and physical two-client UI remain open.
 
 [Abort scene recovery](ABORT_SCENE_RECOVERY.md) identifies the source Forfeit,

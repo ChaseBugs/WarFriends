@@ -121,6 +121,13 @@ public class MessageManager : Singleton<MessageManager>
 	{
 		while (true)
 		{
+            // Menu completion starts this loop before abort recovery has shown its own notice.
+            if (Singleton<GameController>.instance.IsSelfHostedAbortRecovery)
+            {
+                yield return null;
+                continue;
+            }
+
 			bool processNextMessage = false;
 			if (Singleton<GuiManager>.instance.currentScreen.dialogsEnabled && Singleton<GameController>.instance.gameState == GameController.GameState.Menu && !GuiElementSingle<LoadingDialog>.instance.isShowed && !Singleton<GameController>.instance.isTutorial && !TutorialManagerStage4.instance.isTutorialRunning && !TutorialManagerStage5.instance.isTutorialRunning && !Singleton<EventTrackingManager>.instance.isAdVideoPlaying)
 			{
