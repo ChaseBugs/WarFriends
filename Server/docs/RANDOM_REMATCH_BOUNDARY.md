@@ -237,5 +237,14 @@ This passed through real Backend, Worker and MongoDB in
 `Server/.local/queue-live-7c7bf71aac6e4aa084c4ea399c96fa43`. The same native
 run also includes the preceding Worker-outage/profile-change gate. This proves
 one lost successful registration acknowledgement while the Worker remains
-alive; Backend restart during the lost reply, admission expiry and Unity UI
-handoff are separate remaining checks.
+alive. The gate now also replaces the actual Backend after its deferred 503
+response and before retry. The new process must read identical consumed
+consent and frozen bytes, still expose no grant before recovery, and publish
+the original Worker's capabilities through `existing-match`.
+
+This combined loss/restart gate passed in
+`Server/.local/queue-live-3fde60cdd2274b94aa6afd8874b25e0e`, including
+`RematchLostReplyBackendRestart.log`. The same peers complete UDP and accepted
+terminal results afterward. This is a restart after a known deferred response,
+not a process kill inside an in-flight Mongo commit. Admission expiry and Unity
+UI handoff remain separate unfinished checks.

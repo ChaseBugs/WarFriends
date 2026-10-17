@@ -402,6 +402,13 @@ internal static class BackendQueueLiveTests
                 new LiveSameOpponentRematchChecks.Settings(new Uri(backendUrl), tokens)
                 {
                     RegistrationReplyLoss = registrationProxy,
+                    RestartBackendAfterLostReply = async () =>
+                    {
+                        Stop(backend);
+                        backend = null;
+                        backend = Start(backendDll, run, "RematchLostReplyBackendRestart", backendEnvironment);
+                        await Ready(backendUrl + "health/ready", backend);
+                    },
                 },
                 new LiveSameOpponentRematchChecks.Stores(results, queue,
                     new BattleManifestSnapshotStore(mongoUri, database), mongo.GetDatabase(database)),

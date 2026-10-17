@@ -23,6 +23,19 @@ internal static class LiveRematchRegistrationLossChecks
         Require(RegistrationReplyLossProxy.Hash(frozen) == dropped.RequestHash,
             "The Worker did not register the exact frozen admission bytes.");
         await RequireNoGrantAsync(scenario, dropped.MatchId, cancellationToken);
+        if (scenario.Settings.RestartBackendAfterLostReply != null)
+        {
+            await scenario.Settings.RestartBackendAfterLostReply();
+            var restored = await scenario.Backend.ReadRematchConsentAsync(
+                scenario.SourceMatchId, scenario.Settings.Tokens[0], cancellationToken);
+            Require(restored.Equals(consent), "Backend restart changed the consumed consent or reserved identity.");
+            await RequireNoGrantAsync(scenario, dropped.MatchId, cancellationToken);
+            byte[] restoredBytes = await scenario.Stores.Snapshots.GetForParticipantsAsync(
+                restored.NextMatchId, restored.AcceptedPlayerIds.ToArray(), cancellationToken)
+                ?? throw new InvalidDataException("Backend restart lost its frozen admission payload.");
+            Require(restoredBytes.SequenceEqual(frozen), "Backend restart rewrote frozen admission authority.");
+            Console.WriteLine("PASS: actual Backend restart after lost registration reply retains frozen reservation");
+        }
         var retry = await scenario.Backend.AllocateRematchAsync(
             scenario.SourceMatchId, scenario.Settings.Tokens[0], cancellationToken);
         Require(retry.Code == "paired" && retry.MatchId == dropped.MatchId,

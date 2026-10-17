@@ -41,8 +41,11 @@ through actual UDP and accepted terminal evidence; this remains SDK-only proof.
 A second native gate drops the first successful Worker registration response,
 requires unpublished grants during the failure, and recovers through identical
 request bytes, `existing-match` and the original session/ticket/key identities.
-Actual UDP completion and accepted results pass afterward. Backend restart
-during that lost reply and Unity UI handoff remain open.
+Actual UDP completion and accepted results pass afterward. Replacing the real
+Backend after its deferred lost-reply response now preserves identical consumed
+consent and frozen admission bytes, then recovers the original capabilities.
+Process kill inside an in-flight commit, admission expiry and Unity UI handoff
+remain open.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

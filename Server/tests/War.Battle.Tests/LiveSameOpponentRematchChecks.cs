@@ -136,6 +136,8 @@ internal static class LiveSameOpponentRematchChecks
         internal WorkerRecoveryHooks? WorkerRecovery { get; init; }
 
         internal RegistrationReplyLossProxy? RegistrationReplyLoss { get; init; }
+
+        internal Func<Task>? RestartBackendAfterLostReply { get; init; }
     }
 
     internal sealed record WorkerRecoveryHooks(Action Stop, Func<Task> RestartAsync);
