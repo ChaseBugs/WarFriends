@@ -16,6 +16,7 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
     private Task _cancellation = Task.CompletedTask;
     private bool _hasCancellation;
     private bool _hasSearch;
+    private bool _hasGrant;
     private bool _isDisposed;
 
     internal SelfHostedMatchmakingAttempt(BackendClient backend, string accessToken)
@@ -25,6 +26,8 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
     }
 
     internal bool IsCancellationRequested { get { return _lifetime.IsCancellationRequested; } }
+
+    internal bool IsRetainedForLoading { get; private set; }
 
     internal async Task<MatchConnectionGrant> FindAsync(int timeoutSeconds)
     {
@@ -40,13 +43,25 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
             _attemptToken = AcquireAttemptTokenAsync();
             string attemptToken = await _attemptToken;
             _lifetime.Token.ThrowIfCancellationRequested();
-            return await _backend.FindMatchAsync(
+            MatchConnectionGrant grant = await _backend.FindMatchAsync(
                 _accessToken, attemptToken, TimeSpan.FromSeconds(timeoutSeconds), _lifetime.Token);
+            _hasGrant = true;
+            return grant;
         }
         finally
         {
             _searchFinished.TrySetResult(true);
         }
+    }
+
+    internal void RetainForLoading()
+    {
+        if (_isDisposed || !_hasGrant || IsCancellationRequested)
+        {
+            throw new InvalidOperationException("Only a successful current search can retain loading cancellation.");
+        }
+
+        IsRetainedForLoading = true;
     }
 
     internal Task CancelAsync()
@@ -118,7 +133,10 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
             await _cancellation;
         }
 
-        Dispose();
+        if (!IsRetainedForLoading || _hasCancellation)
+        {
+            Dispose();
+        }
     }
 
     /// <summary>Releases only this attempt; shutdown may also abort an outstanding HTTP cleanup.</summary>

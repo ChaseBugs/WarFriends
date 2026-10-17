@@ -107,7 +107,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             _scoreManager.ApplySelfHostedSnapshot(State, LocalPlayerId);
         }
     }
-    public bool IsMatchmaking { get { return matchmaking != null; } }
+    public bool IsMatchmaking { get { return matchmaking != null && !matchmaking.IsRetainedForLoading; } }
     public bool OwnsMatch { get { return connection != null; } }
     public bool ReconnectFailed { get { return reconnectFailureReported; } }
     public bool IsReconnecting { get { return reconnectTask != null || reconnecting ||
@@ -193,6 +193,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             RequireCurrentMatchmaking(attempt);
             await ConnectCoreAsync(grant, 0);
             RequireCurrentMatchmaking(attempt);
+            attempt.RetainForLoading();
         }
         catch
         {
@@ -221,6 +222,12 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
         // Close admission as well as the HTTP search; it uses a separate UDP cancellation token.
         Task cancellation = attempt.CancelAsync();
+        if (attempt.IsRetainedForLoading)
+        {
+            // A failed HTTP request or Running-first refusal is not authority to discard this live match.
+            await cancellation;
+        }
+
         Close();
         await cancellation;
         await CompleteMatchmakingAsync(attempt);
@@ -271,7 +278,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             return;
         }
 
-        if (matchmaking == attempt)
+        if (matchmaking == attempt && (!attempt.IsRetainedForLoading || attempt.IsCancellationRequested))
         {
             matchmaking = null;
         }
@@ -1302,8 +1309,19 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         IsConnected = false;
         if (matchmaking != null)
         {
-            // This observer keeps cancellation errors out of async-void UI callers and retains failed cleanup.
-            ObserveQueueCancellationAsync(matchmaking);
+            if (matchmaking.IsRetainedForLoading && State != null &&
+                (State.Phase == BattlePhase.Running || State.Phase == BattlePhase.Ended ||
+                 State.Phase == BattlePhase.Aborted))
+            {
+                // Loading cancellation cannot forfeit a started battle or change a terminal result.
+                matchmaking.Dispose();
+                matchmaking = null;
+            }
+            else
+            {
+                // This observer retains failed cleanup so another search cannot replace its authority.
+                ObserveQueueCancellationAsync(matchmaking);
+            }
         }
         reconnectRequestId = null;
         reconnectAttempts = 0;

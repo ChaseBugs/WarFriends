@@ -19,6 +19,8 @@ internal static class MatchmakingAttemptTests
         checks += await VerifyFailedIssuanceAsync();
         checks += await VerifyCancellationBeforeSearchAsync();
         checks += await VerifyRepeatedSearchRejectedAsync();
+        checks += await VerifyLoadingOwnershipAsync();
+        checks += await VerifyLoadingOwnerReleaseAsync();
         Console.WriteLine("PASS: " + checks + " recovered Client matchmaking cancellation checks");
         return checks;
     }
@@ -141,6 +143,57 @@ internal static class MatchmakingAttemptTests
         return new SelfHostedMatchmakingAttempt(backend, AccessToken);
     }
 
+    private static async Task<int> VerifyLoadingOwnershipAsync()
+    {
+        var handler = new ControlledQueueHandler { ReturnPair = true };
+        using var attempt = CreateAttempt(handler);
+        await attempt.FindAsync(TimeoutSeconds);
+        attempt.RetainForLoading();
+        await attempt.CompleteAsync();
+        Require(attempt.IsRetainedForLoading && !handler.IsDisposed,
+            "Successful admission must retain its original scoped HTTP owner through loading.");
+
+        Task cancellation = attempt.CancelAsync();
+        handler.AcceptCancellation("already-paired");
+        await ExpectInvalidOperationAsync(cancellation);
+        await ExpectInvalidOperationAsync(attempt.CompleteAsync());
+        Require(!handler.IsDisposed, "Running-first refusal must retain loading cleanup ownership.");
+
+        Task retry = attempt.CancelAsync();
+        handler.AcceptCancellation();
+        await retry;
+        await attempt.CompleteAsync();
+        Require(handler.IsDisposed && handler.IssueRequests == 1 && handler.CancelRequests == 2,
+            "Loading cancellation retries must use the admitted attempt without issuing another credential.");
+        return 3;
+    }
+
+    private static async Task<int> VerifyLoadingOwnerReleaseAsync()
+    {
+        var handler = new ControlledQueueHandler { ReturnPair = true };
+        using var attempt = CreateAttempt(handler);
+        try
+        {
+            attempt.RetainForLoading();
+            throw new Exception("A search without a grant retained loading authority.");
+        }
+        catch (InvalidOperationException)
+        {
+            // No signed pair has been found, so loading ownership cannot exist yet.
+        }
+
+        await attempt.FindAsync(TimeoutSeconds);
+        attempt.RetainForLoading();
+        await attempt.CompleteAsync();
+        await attempt.CompleteAsync();
+        Require(!handler.IsDisposed && handler.CancelRequests == 0,
+            "Repeated successful search completion must not cancel or release the loading owner.");
+        attempt.Dispose();
+        Require(handler.IsDisposed && handler.CancelRequests == 0,
+            "Terminal owner release must dispose locally without changing the server outcome.");
+        return 3;
+    }
+
     private static async Task<int> VerifyPairedCleanupAsync()
     {
         var handler = new ControlledQueueHandler();
@@ -217,6 +270,7 @@ internal static class MatchmakingAttemptTests
         private TaskCompletionSource<HttpResponseMessage> _cancellation = NewResponse();
         private readonly TaskCompletionSource<HttpResponseMessage> _issuance = NewResponse();
         internal bool HoldIssuance { get; set; }
+        internal bool ReturnPair { get; set; }
         internal int IssueRequests { get; private set; }
         internal TaskCompletionSource<bool> IssuanceObserved { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -264,6 +318,10 @@ internal static class MatchmakingAttemptTests
         {
             Require(request.Headers.Authorization?.Parameter == AccessToken,
                 "Every queue request must retain the original bearer token.");
+            if (request.RequestUri?.AbsolutePath.EndsWith("/grant", StringComparison.Ordinal) == true)
+            {
+                return Task.FromResult(GrantReply());
+            }
             if (request.RequestUri?.AbsolutePath.EndsWith("/attempt", StringComparison.Ordinal) == true)
             {
                 IssueRequests++;
@@ -277,6 +335,17 @@ internal static class MatchmakingAttemptTests
             if (request.RequestUri?.AbsolutePath.EndsWith("/join", StringComparison.Ordinal) == true)
             {
                 JoinObserved.TrySetResult(true);
+                if (ReturnPair)
+                {
+                    var pair = new MatchQueueReply { Code = "paired", MatchId = "m" + new string('c', 32) };
+                    pair.PlayerIds.Add(new string('a', 32));
+                    pair.PlayerIds.Add(new string('b', 32));
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new ByteArrayContent(pair.ToByteArray())
+                    });
+                }
+
                 return Task.FromResult(Reply("waiting"));
             }
 
@@ -301,6 +370,31 @@ internal static class MatchmakingAttemptTests
         private static TaskCompletionSource<HttpResponseMessage> NewResponse()
         {
             return new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+
+        private static HttpResponseMessage GrantReply()
+        {
+            const int SessionKeyBytes = 32;
+            var grant = new MatchConnectionGrant
+            {
+                MatchId = "m" + new string('c', 32), PlayerId = new string('a', 32), SessionId = 1,
+                SessionKey = ByteString.CopyFrom(new byte[SessionKeyBytes])
+            };
+            for (int i = 0; i < 2; i++)
+            {
+                var view = new BattlePlayerView
+                {
+                    PlayerId = new string(i == 0 ? 'a' : 'b', 32), DisplayName = "Fixture player", Fraction = i + 1
+                };
+                view.VisualIds.Add(new[] { "head", "body", "legs", "decal" });
+                view.Weapons.Add(new BattleWeaponView { SourceId = "fixture-rifle" });
+                grant.PlayerViews.Add(view);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(grant.ToByteArray())
+            };
         }
 
         private static HttpResponseMessage Reply(string code)
