@@ -918,6 +918,23 @@ if (args is ["--coop-obstacle-clock-only"])
     return;
 }
 
+if (args is ["--observed-obstacle-catalog-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new FileNotFoundException("Recovered battle content root is missing.");
+    }
+    string directory = Path.Combine(root.FullName, "content");
+    var content = BattleCombatContent.Load(Path.Combine(directory, "combat-content-manifest.json"));
+    CoopObservedObstaclePoseCatalogTests.Run(directory, content);
+    return;
+}
+
 if(args is ["--combat-content-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

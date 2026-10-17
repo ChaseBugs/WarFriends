@@ -53,6 +53,7 @@ public sealed class BattleCombatContent
     internal CoopAssaulterQueueCatalog CoopAssaulterQueue { get; private init; } = null!;
     internal CoopCornerQueuePoseCatalog CoopCornerQueuePoses { get; private init; } = null!;
     internal CoopObstaclePoseCatalog CoopObstaclePoses { get; private init; } = null!;
+    internal CoopObservedObstaclePoseCatalog ObservedObstaclePoses { get; private init; } = null!;
     internal EnemyShotTargetCatalog EnemyShotTargets { get; }
     public DecoySourceCatalog Decoys { get; }
     public LandMineSourceCatalog LandMines { get; }
@@ -134,6 +135,8 @@ public sealed class BattleCombatContent
             enemyPoses);
         var coopObstaclePoses = CoopObstaclePoseCatalog.Load(
             Path.Combine(directory, "coop-obstacle-volley-unity-reference.json"), enemyPoses);
+        var observedObstaclePoses = CoopObservedObstaclePoseCatalog.Load(
+            Path.Combine(directory, "coop-obstacle-fixed-step-pose-catalog.json.gz"), enemyPoses.SourceSha256);
         var coopCornerQueuePoses=CoopCornerQueuePoseCatalog.Load(
             Path.Combine(directory,"coop-corner-queue-unity-reference.json"),
             enemyPoses);
@@ -275,7 +278,8 @@ public sealed class BattleCombatContent
             CoopEnemyMuzzles=coopEnemyMuzzles,
             CoopAssaulterQueue=coopAssaulterQueue,
             CoopCornerQueuePoses=coopCornerQueuePoses,
-            CoopObstaclePoses = coopObstaclePoses};
+            CoopObstaclePoses = coopObstaclePoses,
+            ObservedObstaclePoses = observedObstaclePoses};
     }
     public void ValidateAllocation(MatchManifest manifest)
     {

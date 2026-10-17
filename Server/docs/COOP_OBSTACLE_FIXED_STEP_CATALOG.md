@@ -47,8 +47,9 @@ order; the revision hashes the complete canonical content and provenance.
 Transform indexes retain their source hierarchy identity. Generated queue
 names and process-local clip instance IDs are never catalog identities.
 
-The catalog is a verified content artifact, not an installed runtime feature.
-It is not yet loaded by the Worker, SDK or Unity presenter. The host now preserves nominal prior return and scoped round context before
+The catalog is a verified content artifact, not installed pose presentation.
+The Worker now validates it through the [server loader](COOP_OBSTACLE_CATALOG_LOADER.md);
+the SDK and Unity presenter do not yet consume it. The host now preserves nominal prior return and scoped round context before
 resetting its clock/history; see [origin capture](COOP_OBSTACLE_PREPARATION_ORIGIN.md).
 It still needs complete branch/evaluation validation and a bound catalog
 revision/sample identity in the protocol contract. The Client must

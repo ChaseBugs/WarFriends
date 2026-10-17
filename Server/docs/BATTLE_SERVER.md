@@ -230,3 +230,9 @@ and three real runtime branches pass; unknown/partial histories cannot reuse
 fresh diagnostics, and selection stops when a new round is confirmed. This
 internal candidate is not a wire pose or loaded catalog. See
 [preparation origins](COOP_OBSTACLE_PREPARATION_ORIGIN.md).
+
+The [server catalog loader](COOP_OBSTACLE_CATALOG_LOADER.md) now validates the
+source-bound compressed matrix during content startup and exposes immutable
+samples/deep animation copies. All 221 entries match independent native data.
+Wire references and atomic Unity application remain unimplemented; no co-op
+admission or hit-authority gate is removed.
