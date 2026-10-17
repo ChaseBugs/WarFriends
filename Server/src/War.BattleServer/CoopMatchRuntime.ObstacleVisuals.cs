@@ -18,8 +18,7 @@ internal sealed partial class CoopMatchRuntime
 
         if (!_obstacleCrawlStates.TryGetValue(enemy.EntityId, out ObstacleCrawlState? crawl) ||
             crawl.HasInterruptedReturn ||
-            !infantryRoundIntents.TryGetValue(enemy.EntityId, out List<CoopInfantryRoundIntent>? rounds) ||
-            rounds.Count == 0)
+            tick < windup.StartTick)
         {
             return null;
         }
@@ -29,6 +28,14 @@ internal sealed partial class CoopMatchRuntime
             // The recovered Update uses Play, so return replaces fire without a queued idle blend.
             return CreateVisualFrame("stand_up_crawl", (tick - returnTick) / (float)MatchManifest.TickRate,
                 BattleInfantryAnimationWrap.ClampForever);
+        }
+
+        if (!infantryRoundIntents.TryGetValue(enemy.EntityId, out List<CoopInfantryRoundIntent>? rounds) ||
+            rounds.Count == 0)
+        {
+            return HasCompletedPriorCrawl(enemy)
+                ? _obstaclePoseCatalog?.PreparationAnimationFrame(tick - windup.StartTick, tick)
+                : null;
         }
 
         // ShootFromCrawl resets ordinary fire after an emitted round.

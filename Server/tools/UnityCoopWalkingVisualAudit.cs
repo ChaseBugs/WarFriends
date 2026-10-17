@@ -103,6 +103,7 @@ public static class UnityCoopWalkingVisualAudit
         VerifyReturnBlend(client, actor, skin, fire);
         VerifyRoundReset(client, actor, skin);
         VerifyObstacleReturn(client, actor, skin);
+        VerifyObstaclePreparation(client, actor, skin);
         VerifyInterruptedPreparation(client, actor, skin);
     }
 
@@ -148,6 +149,22 @@ public static class UnityCoopWalkingVisualAudit
         Require(GameObject.Find(actor.name) == actor &&
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
             "A later confirmed crawl sample must change the source pose without recreating the actor.");
+    }
+
+    private static void VerifyObstaclePreparation(SelfHostedBattleClient client, GameObject actor,
+        SkinnedMeshRenderer skin)
+    {
+        const float fullyWeightedSeconds = 2f / 30f;
+        MatchSnapshot snapshot = client.State.Clone();
+        BattleInfantryAnimationClip clip = snapshot.Coop.EnemySpawns[0].InfantryAnimation.Clips[0];
+        clip.ClipName = "stand_up_begin";
+        clip.TimeSeconds = fullyWeightedSeconds;
+        clip.Wrap = BattleInfantryAnimationWrap.Clamp;
+        Quaternion[] before = skin.bones.Select(bone => bone.localRotation).ToArray();
+        Publish(client, snapshot);
+        Require(GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
+            "A decoded fully weighted preparation must reuse the actor and sample its original stand-up clip.");
     }
 
     private static void VerifyInterruptedPreparation(SelfHostedBattleClient client, GameObject actor,

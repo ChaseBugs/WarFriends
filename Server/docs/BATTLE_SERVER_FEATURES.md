@@ -1622,3 +1622,8 @@ tick with ordinary clamped `stand_up_crawl`, preserving its strict float
 clock. Native source checks total 460; the adapter audit totals twenty-one.
 Preparation and interrupted return remain open. See
 [obstacle frames](COOP_OBSTACLE_FIRE_FRAMES.md).
+
+B22 now projects fully weighted obstacle preparation from elapsed tick two
+and the measured queued-fire transition without inventing a projectile.
+Initial gameplay-phase partial-weight frames and interrupted preparation
+remain open. See [obstacle frames](COOP_OBSTACLE_FIRE_FRAMES.md).

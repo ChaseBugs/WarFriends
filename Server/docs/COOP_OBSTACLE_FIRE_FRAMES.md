@@ -26,7 +26,7 @@ outcomes, economy and public co-op admission are unchanged.
 
 Live runtime regression checks the absent pre-round frame, exact first-round
 zero-time tuple and the second-round reset. The combat executable passes
-26,368 assertions. The native Unity 2018 adapter audit passes twenty-one checks,
+26,368 assertions. The native Unity 2018 adapter audit passes twenty-two checks,
 including protobuf decoding of the obstacle fire frame, actor reuse and a
 changed bone pose. These are isolated Windows checks, not rendered gameplay,
 two normal Unity clients, Android/Linux execution or shipped Unity 5.2 parity.
@@ -63,3 +63,39 @@ nineteen seconds. A default random 10-19-second draw could move that fixture
 before its third attempt, producing a missing windup unrelated to obstacle
 presentation. Production random policy is unchanged, and the test now reports
 a missing windup explicitly instead of throwing an uninformative null error.
+
+## Fully weighted preparation checkpoint
+
+For a completed-prior-crawl windup with no emitted rounds, the host now
+projects the reviewed preparation clock from elapsed tick two. It uses
+`stand_up_begin` with Clamp, then the catalog's measured first queued-fire
+tick and `rifle_shot_loop` with ClampForever. Queue start is observed at tick
+seven in the pinned Unity reference; rounding the nominal clip duration would
+incorrectly invent a different transition tick. A queued visual never issues
+a projectile, changes an emitted-round receipt or advances the shot callback.
+The first confirmed round still replaces its queued clock with zero.
+
+The prior-crawl predicate is the same conservative source-delay requirement
+used by existing obstacle pose diagnostics. Interrupted returns stay excluded.
+This does not reconstruct arbitrary previous poses or later shortened queues.
+
+Source comparison checks the absent initial frames and every fully weighted
+sample through tick ten in both pinned controller captures. Live runtime
+regression checks preparation at elapsed tick two, queued fire before the
+first emitted round and the subsequent confirmed reset. The adapter audit now
+also decodes the clamped stand-up clip and checks actor reuse and changed bones.
+
+Elapsed ticks zero and one remain unsupported. The gameplay-preparation
+post-reference contains a partial-weight transition: tick zero has a clamped
+crawl weight about one third plus zero-weight begin, and tick one has begin
+weight about two thirds. Those command-state observations are separate from
+the previously evaluated hierarchy. The SDK currently requires total weight
+one. Do not normalize, copy the Editor-phase blend, or lower that guard without
+capturing the gameplay-phase whole hierarchy and proving stateless replay of
+the missing base contribution. That is required unfinished work, not an
+alternative definition of completed preparation.
+
+The final preparation checkpoint passes the existing 26,368 combat assertions
+and twenty-two native adapter checks. Protocol smoke retains 1,136 checks,
+74 live integration checks and restart recovery. Public co-op admission and
+combat authority remain incomplete.

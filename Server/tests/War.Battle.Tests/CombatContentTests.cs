@@ -3405,15 +3405,26 @@ internal static class CombatContentTests
             crawlWindup.CallbackTick != expectedCrawlCallback ||
             crawlWindup.CallbackStartedTick != null)
             throw new Exception("Co-op crawl shot lost its source animation delay.");
+        arrivalRuntime.Advance(firstShootTick + 2);
+        BattleInfantryAnimationFrame? obstaclePreparation = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (obstaclePreparation?.Clips[0].ClipName != "stand_up_begin" ||
+            obstaclePreparation.Clips[0].TimeSeconds != 2f / MatchManifest.TickRate)
+        {
+            throw new Exception("A fully weighted obstacle preparation must preserve the source start clock.");
+        }
         arrivalRuntime.Advance(expectedCrawlCallback - 1);
         if (arrivalRuntime.InfantryShotWindup(
                 arrivalEnemy.EntityId)?.CallbackStartedTick != null)
             throw new Exception("Co-op crawl callback started before its host tick.");
         arrivalRuntime.Advance(expectedCrawlCallback);
-        if (arrivalRuntime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == arrivalEnemy.EntityId)
-            .InfantryAnimation != null)
+        BattleInfantryAnimationFrame? queuedObstacleFire = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (queuedObstacleFire?.Clips[0].ClipName != "rifle_shot_loop" ||
+            queuedObstacleFire.Clips[0].TimeSeconds <= 0f ||
+            arrivalRuntime.InfantryRoundIntents(arrivalEnemy.EntityId).Count != 0)
         {
-            throw new Exception("An obstacle callback without an emitted round must not invent a fire frame.");
+            throw new Exception("Queued obstacle fire must display without inventing an emitted projectile.");
         }
         CoopQueuedMuzzleSample? callbackSample = content.CoopAssaulterQueue
             .Sample(crawlWindup!.AnimationClip, crawlWindup.QueuedFireClip,

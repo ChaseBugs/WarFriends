@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Text.Json;
 using War.BattleServer;
+using War.Protocol;
 
 /// <summary>Compares selected source poses with every actual controller frame and collider dimension.</summary>
 internal static class CoopObstaclePoseCatalogTests
@@ -17,6 +18,7 @@ internal static class CoopObstaclePoseCatalogTests
         using JsonDocument plan = JsonDocument.Parse(File.ReadAllBytes(
             Path.Combine(directory, "coop-obstacle-volley-source-plan.json")));
         JsonElement samples = observation.RootElement.GetProperty("samples");
+        ComparePreparation(content, samples);
         ulong[] rounds = plan.RootElement.GetProperty("roundTicks").EnumerateArray()
             .Select(value => value.GetUInt64()).ToArray();
         ulong crawlReturn = samples.EnumerateArray().First(frame =>
@@ -62,6 +64,29 @@ internal static class CoopObstaclePoseCatalogTests
                 actual.Enabled == part.GetProperty("enabled").GetBoolean() &&
                 actual.Active == part.GetProperty("active").GetBoolean(),
                 "Selected collider dimensions or activity differ from the actual controller frame.");
+        }
+    }
+
+    private static void ComparePreparation(BattleCombatContent content, JsonElement samples)
+    {
+        const float clockTolerance = 0.000001f;
+        const ulong firstWeightedTick = 2;
+        const int preparationSamples = 11;
+        foreach (JsonElement observed in samples.EnumerateArray().Take(preparationSamples))
+        {
+            ulong tick = observed.GetProperty("tick").GetUInt64();
+            BattleInfantryAnimationFrame? frame = content.CoopObstaclePoses.PreparationAnimationFrame(tick, tick);
+            if (tick < firstWeightedTick)
+            {
+                Require(frame == null, "Unsupported initial blend must remain explicit.");
+                continue;
+            }
+            JsonElement state = observed.GetProperty("states")[0];
+            string sourceName = state.GetProperty("name").GetString()!.Replace(" - Queued Clone", "");
+            Require(frame?.SampleTick == tick && frame.Clips.Count == 1 &&
+                frame.Clips[0].ClipName == sourceName && frame.Clips[0].Weight == 1f &&
+                MathF.Abs(frame.Clips[0].TimeSeconds - state.GetProperty("time").GetSingle()) < clockTolerance,
+                "Preparation visual must match the fully weighted source clock and original clip identity.");
         }
     }
 
