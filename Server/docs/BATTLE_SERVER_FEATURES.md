@@ -11,9 +11,11 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted
 owners reject before lobby/player mutation, and a controlled native terminal
-release preserves the old snapshot and notifies closure once. A live Backend
-second allocation, normal second-battle entry and same-opponent consent remain
-open; this does not reopen a terminal Worker match.
+release preserves the old snapshot and notifies closure once. The live native
+gate now reuses one Unity adapter for two real Backend/Worker allocations,
+checks fresh match credentials and Mongo pair release, and preserves the first
+accepted result digest. Normal second-battle entry and same-opponent consent
+remain open; this does not reopen a terminal Worker match.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

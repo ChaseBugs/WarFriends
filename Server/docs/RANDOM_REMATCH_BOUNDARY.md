@@ -38,9 +38,19 @@ before player/lobby mutation, then checks a controlled Ended transport releases
 ownership once, emits one MatchClosed notification and preserves its terminal
 snapshot bytes. The existing combined component/NGUI regression also passes.
 
-That terminal snapshot is controlled fixture state, not a live result receipt.
-The native gate does not prove accepted Backend pair release, a fresh allocation,
-Dog Tag settlement, normal lobby-to-second-battle play or two Unity clients.
+The additional `UnityRandomRematchAudit` now reuses one actual Unity adapter for
+two authenticated Backend queue allocations, with a real UDP Worker, SDK peer
+and isolated MongoDB replica set. Each round reaches Running, forfeits through
+the Worker, and releases the ended transport without changing its snapshot.
+The coordinator waits for accepted terminal evidence and both durable player
+pair releases before starting the next round. It requires a distinct match,
+session, ticket and session key, then verifies the original accepted result
+digest remains unchanged. The native run passed in
+`Server/.local/queue-live-58cb6518e0614e9aa5e6964b8b94b047/UnityRandomRematch.log`.
+
+This uses the explicit authenticated SDK entry point without menu/profile
+stubs. It does not prove Dog Tag settlement, normal lobby-to-second-battle play
+or two Unity clients.
 Same-opponent friend/co-op rematch negotiation remains absent. Its required
 two-party consent, cancellation/expiry and fresh allocator grants must be built
 separately; the old Photon RematchRPC is not an accepted Worker command.
