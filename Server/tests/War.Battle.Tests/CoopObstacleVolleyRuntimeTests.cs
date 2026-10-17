@@ -337,6 +337,27 @@ internal static class CoopObstacleVolleyRuntimeTests
     private static CoopMatchRuntime CreateRuntime(Sources sources,
         Func<float> shotFraction, Func<float> repositionFraction, out CoopEnemyDestinationState destinations)
     {
+        CoopMatchRuntime runtime = CreateUnstartedRuntime(sources, shotFraction, repositionFraction, out destinations);
+        foreach (ParticipantManifest player in sources.Manifest.Players)
+        {
+            runtime.Admit(player.PlayerId);
+            runtime.Command(player.PlayerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = runtime.ManifestHash }
+            });
+        }
+        return runtime;
+    }
+
+    internal static CoopMatchRuntime CreateUnstartedRuntime(Sources sources)
+    {
+        return CreateUnstartedRuntime(sources, () => 0f, () => 0.999f, out _);
+    }
+
+    private static CoopMatchRuntime CreateUnstartedRuntime(Sources sources,
+        Func<float> shotFraction, Func<float> repositionFraction, out CoopEnemyDestinationState destinations)
+    {
         int positionDraws = 0;
         destinations = new CoopEnemyDestinationState(sources.Map, sources.Masks, sources.Combat,
             chooseObstacleFraction: () =>
@@ -359,15 +380,6 @@ internal static class CoopObstacleVolleyRuntimeTests
             chooseInfantryPlayer: _ => 0, chooseInfantryShieldRoll: () => 0.5f,
             chooseInfantryBatchSize: (minimum, maximum) => maximum > minimum ? maximum - 1 : minimum,
             chooseInfantryRealShotRoll: () => 0f);
-        foreach (ParticipantManifest player in sources.Manifest.Players)
-        {
-            runtime.Admit(player.PlayerId);
-            runtime.Command(player.PlayerId, new MatchCommand
-            {
-                CommandId = 1,
-                Ready = new ReadyCommand { ManifestHash = runtime.ManifestHash }
-            });
-        }
         return runtime;
     }
 

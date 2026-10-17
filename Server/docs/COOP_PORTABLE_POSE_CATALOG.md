@@ -279,3 +279,35 @@ The solution builds without warnings/errors. Focused combat passes 26,368
 assertions, including the new capture/delivery/lifecycle checks. Native smoke
 passes 1,144 protocol checks, 74 live MongoDB/HTTP/protobuf/UDP checks and restart
 recovery. The separate native Unity controlled-host snapshot comparison passes.
+
+## SDK UDP and exported Unity replay checkpoint
+
+`CoopObservedPoseUdpTests` now connects two independent production SDK sockets to
+the authenticated `MatchEndpoint`: one requests the installed revision and the
+other remains clip-only. Both admission and Ready transitions go through UDP.
+The shared source fixture can now be constructed without pre-admitting players;
+its existing direct-start callers retain their original setup sequence.
+
+The test host serializes simulation changes and datagram processing under one
+lock. Trusted test-only readiness controls enter a known completed-return
+window. It holds both poll requests before sending either response so their
+narrow observed windows can be compared. The host confirms that the clip-only
+poll actually encountered a reference before projection, rather than passing
+because its request arrived after the pose expired.
+
+The negotiated response takes the normal frozen chunk-transfer path. Each
+subsequent datagram advances the test simulation, and the SDK's reassembled
+reply must retain its earlier source sample and matching revision. This checks
+real UDP authentication, negotiation, per-session projection and digest-verified
+reassembly together. It does not model production frame pacing.
+
+Setting `WAR_OBSERVED_UDP_FRAME_OUTPUT` exports the SDK-received complete reply.
+That reply was replayed through the native Unity adapter/presenter using
+`UnityObservedHostSnapshotAudit`; body transforms match the independent source
+capture. This is a sequential network-capture/component-replay check, not a live
+Unity socket session or two-Unity-client gameplay.
+
+The full focused combat run still passes 26,368 assertions with the new UDP
+fixture. The solution builds without warnings/errors. The separate Worker
+process, public co-op admission, partial-return histories and normal gameplay
+remain unverified or incomplete as described in the feature checklist.

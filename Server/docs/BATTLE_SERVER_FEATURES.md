@@ -22,6 +22,9 @@ weapon selections and all 221 poses with one controlled body style.
 Observed-pose presenter dispatch now passes 221 native component comparisons;
 bounded host publication now passes controlled runtime-to-Unity comparison;
 other histories and body styles remain open.
+Two real SDK UDP sockets now verify negotiated/clip-only delivery and frozen
+chunk reassembly while the test simulation advances. The received reply also
+passes separate native Unity replay. This is not a live Worker/Unity session.
 Transport now negotiates an exact catalog revision per authenticated session;
 Unity requests the installed revision; the portable SDK's default constructor
 remains clip-only.

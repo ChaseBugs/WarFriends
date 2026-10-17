@@ -94,7 +94,7 @@ internal static class CoopObstaclePreparationRuntimeTests
         return (runtime, enemyId);
     }
 
-    private static void ForceEarlyReadiness(CoopMatchRuntime runtime, ulong enemyId, ulong nextTick)
+    internal static void ForceEarlyReadiness(CoopMatchRuntime runtime, ulong enemyId, ulong nextTick)
     {
         // Trusted test-only timing exercises source branches that ordinary cooldowns usually skip.
         // There is no Client command or request field that can set these readiness timestamps.

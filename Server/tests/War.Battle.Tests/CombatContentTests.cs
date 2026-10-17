@@ -2883,6 +2883,7 @@ internal static class CombatContentTests
         CoopMasterDeathTests.Run(volleySources);
         CoopSurvivorRuntimeTests.Run(volleySources);
         PoseCapabilityTests.Run(volleySources);
+        CoopObservedPoseUdpTests.Run(volleySources).GetAwaiter().GetResult();
         CoopDepartureUdpTests.Run(volleySources).GetAwaiter().GetResult();
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
         CoopObstaclePreparationRuntimeTests.Run(volleySources);
