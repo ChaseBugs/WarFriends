@@ -170,6 +170,7 @@ internal static class CoopEnemyViewTests
         Require(CoopEnemyViewProjection.FromSnapshot(blend, PlayerId)[0].InfantryAnimation.Clips.Count == 2,
             "Two reviewed source states may conserve one base-layer blend.");
 
+        VerifyObstaclePartialFrames();
         MatchSnapshot walking = CreateSnapshot();
         SetWalkingFrame(walking);
         walking.Coop.EnemySpawns[0].InfantryAnimation = new BattleInfantryAnimationFrame { SampleTick = 20 };
@@ -179,6 +180,47 @@ internal static class CoopEnemyViewTests
         });
         Require(CoopEnemyViewProjection.FromSnapshot(walking, PlayerId)[0].InfantryAnimation.Clips[0].TimeSeconds == 0.4f,
             "A complete walking frame must agree with the retained legacy clock.");
+    }
+
+    private static void VerifyObstaclePartialFrames()
+    {
+        MatchSnapshot snapshot = CreateAnimationSnapshot();
+        BattleInfantryAnimationFrame frame = snapshot.Coop.EnemySpawns[0].InfantryAnimation;
+        frame.Clips.Clear();
+        frame.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "stand_up_begin", TimeSeconds = 1f / 30f, Weight = 2f / 3f,
+            Wrap = BattleInfantryAnimationWrap.Clamp
+        });
+        MatchSnapshot decoded = MatchSnapshot.Parser.ParseFrom(snapshot.ToByteArray());
+        Require(CoopEnemyViewProjection.FromSnapshot(decoded, PlayerId)[0].InfantryAnimation.Clips[0].Weight < 1f,
+            "Reviewed preparation must preserve its partial source weight through protobuf.");
+        foreach (Action<BattleInfantryAnimationClip> corrupt in new Action<BattleInfantryAnimationClip>[]
+        {
+            clip => clip.Weight = 0.5f,
+            clip => clip.TimeSeconds = 0f,
+            clip => clip.ClipName = "player_look_right3",
+            clip => clip.Wrap = BattleInfantryAnimationWrap.Loop
+        })
+        {
+            MatchSnapshot invalid = snapshot.Clone();
+            corrupt(invalid.Coop.EnemySpawns[0].InfantryAnimation.Clips[0]);
+            VerifyInvalid(target => target.Coop.EnemySpawns[0].InfantryAnimation =
+                invalid.Coop.EnemySpawns[0].InfantryAnimation);
+        }
+        frame.Clips[0].TimeSeconds = 0f;
+        frame.Clips[0].Weight = 0f;
+        frame.Clips.Insert(0, new BattleInfantryAnimationClip
+        {
+            ClipName = "stand_up_crawl", TimeSeconds = 0.5333335f, Weight = 1f / 3f,
+            Wrap = BattleInfantryAnimationWrap.ClampForever
+        });
+        Require(CoopEnemyViewProjection.FromSnapshot(snapshot, PlayerId)[0].InfantryAnimation.Clips.Count == 2,
+            "The reviewed initial crawl/begin pair must remain ordered and unnormalized.");
+        MatchSnapshot wrongCrawl = snapshot.Clone();
+        wrongCrawl.Coop.EnemySpawns[0].InfantryAnimation.Clips[0].TimeSeconds = 0f;
+        VerifyInvalid(target => target.Coop.EnemySpawns[0].InfantryAnimation =
+            wrongCrawl.Coop.EnemySpawns[0].InfantryAnimation);
     }
 
     private static void VerifyInvalidAnimationFrames()

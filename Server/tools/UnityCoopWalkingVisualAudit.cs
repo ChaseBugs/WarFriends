@@ -104,6 +104,7 @@ public static class UnityCoopWalkingVisualAudit
         VerifyRoundReset(client, actor, skin);
         VerifyObstacleReturn(client, actor, skin);
         VerifyObstaclePreparation(client, actor, skin);
+        VerifyObstaclePartialFrames(client, actor);
         VerifyInterruptedPreparation(client, actor, skin);
     }
 
@@ -165,6 +166,28 @@ public static class UnityCoopWalkingVisualAudit
         Require(GameObject.Find(actor.name) == actor &&
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
             "A decoded fully weighted preparation must reuse the actor and sample its original stand-up clip.");
+    }
+
+    private static void VerifyObstaclePartialFrames(SelfHostedBattleClient client, GameObject actor)
+    {
+        string directory = Environment.GetEnvironmentVariable("WAR_OBSTACLE_INITIAL_FRAMES");
+        if (string.IsNullOrEmpty(directory))
+        {
+            throw new InvalidOperationException("Set WAR_OBSTACLE_INITIAL_FRAMES to the live host sample directory.");
+        }
+        const int initialFrameCount = 2;
+        for (int index = 0; index < initialFrameCount; index++)
+        {
+            byte[] bytes = File.ReadAllBytes(Path.Combine(directory, "obstacle-initial-" + index + ".bin"));
+            MatchSnapshot snapshot = client.State.Clone();
+            BattleInfantryAnimationFrame frame = BattleInfantryAnimationFrame.Parser.ParseFrom(bytes);
+            frame.SampleTick = snapshot.ServerTick;
+            snapshot.Coop.EnemySpawns[0].InfantryAnimation = frame;
+            Publish(client, snapshot);
+            Require(GameObject.Find(actor.name) == actor &&
+                client.CoopEnemies[0].InfantryAnimation.Clips[0].Weight == frame.Clips[0].Weight,
+                "A live host partial preparation must survive SDK decoding and preserve the source actor.");
+        }
     }
 
     private static void VerifyInterruptedPreparation(SelfHostedBattleClient client, GameObject actor,

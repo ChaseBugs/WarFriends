@@ -3358,7 +3358,26 @@ internal static class CombatContentTests
                 expectedRootTarget) > 0.0002f)
             throw new Exception(
                 "Co-op body target differs from its serialized root transform.");
+        BattleInfantryAnimationFrame? initialObstacle = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (initialObstacle?.SampleTick != firstShootTick || initialObstacle.Clips.Count != 2 ||
+            initialObstacle.Clips[0].ClipName != "stand_up_crawl" ||
+            initialObstacle.Clips[0].Weight != 1f / 3f || initialObstacle.Clips[1].Weight != 0f)
+        {
+            throw new Exception("Obstacle preparation must publish its initial partial crawl/begin frame.");
+        }
+        File.WriteAllBytes(Path.Combine(directory, "..", ".local", "obstacle-initial-0.bin"),
+            initialObstacle.ToByteArray());
         arrivalRuntime.Advance(firstShootTick + 1);
+        BattleInfantryAnimationFrame? firstObstacleStep = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (firstObstacleStep?.SampleTick != firstShootTick + 1 || firstObstacleStep.Clips.Count != 1 ||
+            firstObstacleStep.Clips[0].ClipName != "stand_up_begin" || firstObstacleStep.Clips[0].Weight != 2f / 3f)
+        {
+            throw new Exception("The next obstacle step must preserve its partial begin weight.");
+        }
+        File.WriteAllBytes(Path.Combine(directory, "..", ".local", "obstacle-initial-1.bin"),
+            firstObstacleStep.ToByteArray());
         if (arrivalRuntime.InfantryFirstPlayerTarget(
                 arrivalEnemy.EntityId) != targetPlan)
             throw new Exception("Co-op Assaulter first target was chosen more than once.");

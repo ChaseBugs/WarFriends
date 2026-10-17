@@ -207,3 +207,8 @@ The [gameplay-phase rig checkpoint](COOP_OBSTACLE_GAMEPLAY_RIG.md) now captures
 82 complete frames and verifies primed runtime replay, including partial
 initial weights. Fresh-actor/skipped-frame controls remain required before
 publishing initial blend frames or changing SDK validation.
+
+B22 now models the two initial gameplay-phase partial-weight forms explicitly
+in the host and SDK after independent fresh-prefab replay. Unreviewed weight
+combinations remain rejected. See [initial obstacle frames](COOP_OBSTACLE_FIRE_FRAMES.md).
+Interrupted preparation and normal co-op combat remain incomplete.

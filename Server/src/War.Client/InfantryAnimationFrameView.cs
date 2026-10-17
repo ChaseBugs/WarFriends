@@ -84,9 +84,10 @@ namespace War.Client
 
                 totalWeight += clip.Weight;
             }
-            if (Math.Abs(totalWeight - 1d) > WeightTolerance)
+            if (Math.Abs(totalWeight - 1d) > WeightTolerance && !InfantryObstaclePreparationFrame.IsReviewed(frame))
             {
-                throw new InvalidDataException("Reviewed base-layer animation weights must conserve one frame.");
+                throw new InvalidDataException(
+                    "Animation weights must conserve one frame or match a reviewed obstacle preparation sample.");
             }
         }
 

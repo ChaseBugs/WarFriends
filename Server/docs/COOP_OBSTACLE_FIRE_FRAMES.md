@@ -104,3 +104,36 @@ The [gameplay-phase rig checkpoint](COOP_OBSTACLE_GAMEPLAY_RIG.md) now captures
 82 complete frames and verifies primed runtime replay, including partial
 initial weights. Fresh-actor/skipped-frame controls remain required before
 publishing initial blend frames or changing SDK validation.
+
+## Initial partial-weight wire frames
+
+The SDK now permits only the two forms verified by independent fresh-prefab
+replay, in addition to ordinary frames whose weights sum to one:
+
+- Initial frame: ordered clamped crawl at canonical time 0.5333335 and weight
+  one third, followed by zero-time, zero-weight clamped begin.
+- First step: only clamped begin at one fixed step (1/30 second) with weight
+  two thirds.
+
+Source-sample matching uses a 0.000001 float tolerance; general finite/time,
+wrap, life, clip identity and host-clock checks still run first. This does not
+permit arbitrary underweighted frames or normalize away source contribution.
+The host derives the initial clamped sample from source crawl length plus one
+step and retains the existing completed-prior-crawl requirement. It does not
+claim an exact unbounded previous crawl clock, whose completed clamp pose is
+constant. Interrupted and otherwise unproven prior states remain excluded.
+
+Live regression now checks initial and first-step frames, writes their actual
+protobuf samples for the native adapter, and compares all eleven preparation
+observations against the gameplay-phase reference. SDK rejection covers wrong
+clip/time/weight/wrap and an incomplete prior crawl. No gameplay callback,
+projectile, damage, economy or public co-op admission rule changes.
+
+The installed portable SDK and native adapter now pass twenty-four checks,
+including decoding the actual live host's two initial protobuf samples while
+preserving weights and actor identity. Protocol tests pass 1,143 checks;
+focused combat passes 26,368. Native MongoDB/HTTP/UDP smoke passes 74 checks
+plus restart recovery. SDK manifest digests match all seven installed DLLs.
+Static asset audit finds no missing scripts or broken references; the seventeen
+previously documented NGUI sprite selections remain unchanged. These results
+still do not open or verify normal co-op combat admission.

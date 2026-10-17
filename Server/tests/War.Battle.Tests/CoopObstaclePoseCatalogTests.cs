@@ -18,7 +18,7 @@ internal static class CoopObstaclePoseCatalogTests
         using JsonDocument plan = JsonDocument.Parse(File.ReadAllBytes(
             Path.Combine(directory, "coop-obstacle-volley-source-plan.json")));
         JsonElement samples = observation.RootElement.GetProperty("samples");
-        ComparePreparation(content, samples);
+        ComparePreparation(directory, content);
         ulong[] rounds = plan.RootElement.GetProperty("roundTicks").EnumerateArray()
             .Select(value => value.GetUInt64()).ToArray();
         ulong crawlReturn = samples.EnumerateArray().First(frame =>
@@ -67,26 +67,34 @@ internal static class CoopObstaclePoseCatalogTests
         }
     }
 
-    private static void ComparePreparation(BattleCombatContent content, JsonElement samples)
+    private static void ComparePreparation(string directory, BattleCombatContent content)
     {
-        const float clockTolerance = 0.000001f;
-        const ulong firstWeightedTick = 2;
-        const int preparationSamples = 11;
-        foreach (JsonElement observed in samples.EnumerateArray().Take(preparationSamples))
+        const float sourceTolerance = 0.000001f;
+        const int lastPreparationTick = 10;
+        using JsonDocument observation = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "coop-gameplay-preparation-post-reference.json")));
+        foreach (JsonElement observed in observation.RootElement.GetProperty("samples").EnumerateArray())
         {
-            ulong tick = observed.GetProperty("tick").GetUInt64();
-            BattleInfantryAnimationFrame? frame = content.CoopObstaclePoses.PreparationAnimationFrame(tick, tick);
-            if (tick < firstWeightedTick)
+            int sourceTick = observed.GetProperty("tick").GetInt32();
+            if (sourceTick < 0 || sourceTick > lastPreparationTick)
             {
-                Require(frame == null, "Unsupported initial blend must remain explicit.");
                 continue;
             }
-            JsonElement state = observed.GetProperty("states")[0];
-            string sourceName = state.GetProperty("name").GetString()!.Replace(" - Queued Clone", "");
-            Require(frame?.SampleTick == tick && frame.Clips.Count == 1 &&
-                frame.Clips[0].ClipName == sourceName && frame.Clips[0].Weight == 1f &&
-                MathF.Abs(frame.Clips[0].TimeSeconds - state.GetProperty("time").GetSingle()) < clockTolerance,
-                "Preparation visual must match the fully weighted source clock and original clip identity.");
+            ulong tick = (ulong)sourceTick;
+            BattleInfantryAnimationFrame frame = content.CoopObstaclePoses.PreparationAnimationFrame(tick, tick)!;
+            JsonElement states = observed.GetProperty("states");
+            Require(frame.SampleTick == tick && frame.Clips.Count == states.GetArrayLength(),
+                "Gameplay preparation must preserve every enabled source state.");
+            for (int index = 0; index < frame.Clips.Count; index++)
+            {
+                JsonElement expected = states[index];
+                string name = expected.GetProperty("name").GetString()!.Replace(" - Queued Clone", "");
+                BattleInfantryAnimationClip actual = frame.Clips[index];
+                Require(actual.ClipName == name &&
+                    MathF.Abs(actual.Weight - expected.GetProperty("weight").GetSingle()) < sourceTolerance &&
+                    MathF.Abs(actual.TimeSeconds - expected.GetProperty("time").GetSingle()) < sourceTolerance,
+                    "Preparation must preserve the gameplay-phase clock and partial weights without normalization.");
+            }
         }
     }
 

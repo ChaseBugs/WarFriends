@@ -88,3 +88,8 @@ artifacts with `python Server/tools/verify_coop_obstacle_fresh_replay.py`.
 The SDK weight gate and host ticks zero/one are still unchanged; they are the
 next implementation step, with explicit partial-weight forms and rejection
 coverage required before installation into the Client.
+
+The subsequent [partial-weight wire implementation](COOP_OBSTACLE_FIRE_FRAMES.md)
+now explicitly recognizes and projects these two forms. Historical statements
+above that the SDK rejects them describe the observation checkpoint before
+that implementation; arbitrary partial-weight blends remain unsupported.
