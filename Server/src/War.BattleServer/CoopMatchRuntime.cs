@@ -1897,16 +1897,13 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     internal IReadOnlyList<PlayerHitbox> PlaceWalkingAssaulterHitboxes(
         ulong entityId)
     {
-        if (phase != BattlePhase.Running || enemyPoses == null ||
-            movingObstacleRepositions.Contains(entityId) ||
-            !infantryPaths.TryGetValue(entityId,
-                out CoopInfantryPathState? path))
-            return [];
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
-            spawn.EntityId == entityId && spawn.Behaviour == "Assaulter" &&
-            spawn.PoseTick == tick && spawn.Health > 0 &&
-            spawn.DeathTick == 0);
+            spawn.EntityId == entityId);
         if (enemy == null)
+            return [];
+        CoopInfantryPathState? path = GetWalkingPresentationPath(enemy);
+        EnemyPoseCatalog? poses = enemyPoses;
+        if (path == null || poses == null)
             return [];
 
         Quaternion rotation = new(enemy.CurrentRotation.X, enemy.CurrentRotation.Y,
@@ -1915,7 +1912,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             enemy.CurrentZ);
         string clip = ArmyInfantryPosePolicy.For(
             combat.UnitIdFor(enemy.Behaviour)).Walk;
-        return enemyPoses.Place(clip, position, rotation,
+        return poses.Place(clip, position, rotation,
             path.SecondsSinceStart(tick), $"coop/{entityId}/");
     }
 
@@ -3348,8 +3345,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 });
             }
         }
-        snapshot.Coop.EnemySpawns.AddRange(
-            enemySpawns.Select(enemy => enemy.Clone()));
+        foreach (BattleCoopEnemySpawn enemy in enemySpawns)
+        {
+            snapshot.Coop.EnemySpawns.Add(ProjectEnemyVisual(enemy));
+        }
         AddShields(snapshot, alliedShields);
         AddShields(snapshot, enemyShields);
         if (boss != null)

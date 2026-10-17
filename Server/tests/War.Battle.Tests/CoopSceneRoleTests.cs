@@ -68,6 +68,11 @@ internal static class CoopSceneRoleTests
     private static void VerifyRejectedRoleForgeries(MatchSnapshot terminal,
         CoopObstacleVolleyRuntimeTests.Sources sources, string peerId)
     {
+        MatchSnapshot liveVisual = terminal.Clone();
+        liveVisual.Coop.EnemySpawns[0].InfantryVisualClip = "run_0";
+        liveVisual.Coop.EnemySpawns[0].InfantryVisualStartTick = liveVisual.Coop.EnemySpawns[0].SpawnTick;
+        liveVisual.Coop.EnemySpawns[0].InfantryVisualSampleTick = liveVisual.EndTick;
+        RequireInvalid(liveVisual, sources);
         MatchSnapshot wrongMaster = terminal.Clone();
         wrongMaster.Coop.SceneMasterPlayerId = peerId;
         RequireInvalid(wrongMaster, sources);

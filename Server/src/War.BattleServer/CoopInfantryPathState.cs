@@ -15,6 +15,9 @@ public sealed class CoopInfantryPathState
     private readonly double routeLength;
     private readonly ulong startTick;
 
+    /// <summary>Gets the host route epoch used by the source walking presentation clock.</summary>
+    internal ulong StartTick => startTick;
+
     public CoopInfantryPathState(ArmyNavMeshCorridor corridor,
         float movementSpeed, ulong firstTick)
     {

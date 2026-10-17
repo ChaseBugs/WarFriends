@@ -1497,3 +1497,12 @@ helmet meshes instead of retaining them. Native checks cover sixteen ordinary
 and seven mission-card styles, with Buddy's separate camo path kept explicit.
 Co-op actor binding, source animation state, full weapon appearance and rendered
 gameplay remain open. See [shared infantry geometry](SHARED_INFANTRY_VISUALS.md).
+
+B22 now carries a supported Assaulter walking clip and route/sample epochs in
+protobuf and renders those confirmed frames on the recovered script-free body.
+The selector is shared with diagnostic walking geometry; the existing moving
+collision exclusion is retained. Unknown animation states hide the rig, death
+retires it, and reset/close clears owned roots. This is presentation-only source
+clip sampling: cross-fades, other states/families, full upgrade appearance,
+native movement parity, normal co-op admission/combat and settlement remain
+open. See [walking presentation](COOP_WALKING_PRESENTATION.md).

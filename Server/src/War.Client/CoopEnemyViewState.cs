@@ -52,6 +52,15 @@ namespace War.Client
         /// <summary>Gets the tick owning the current pose.</summary>
         public ulong PoseTick { get; }
 
+        /// <summary>Gets the supported host presentation clip, or an empty string for an unrepresented state.</summary>
+        public string InfantryVisualClip { get; }
+
+        /// <summary>Gets the host epoch of the supplied visual clip.</summary>
+        public ulong InfantryVisualStartTick { get; }
+
+        /// <summary>Gets the exact confirmed tick to sample without advancing local combat time.</summary>
+        public ulong InfantryVisualSampleTick { get; }
+
         /// <summary>Gets a copy of the optional host rotation; absence does not imply simulated facing.</summary>
         public BattleJointRotation Rotation => _rotation == null ? null : _rotation.Clone();
 
@@ -71,6 +80,9 @@ namespace War.Client
             Y = source.CurrentY;
             Z = source.CurrentZ;
             PoseTick = source.PoseTick;
+            InfantryVisualClip = source.InfantryVisualClip;
+            InfantryVisualStartTick = source.InfantryVisualStartTick;
+            InfantryVisualSampleTick = source.InfantryVisualSampleTick;
             _rotation = source.CurrentRotation == null ? null : source.CurrentRotation.Clone();
         }
     }

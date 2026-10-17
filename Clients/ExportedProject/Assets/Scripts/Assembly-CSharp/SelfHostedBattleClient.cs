@@ -20,6 +20,8 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public event Action<MatchSnapshot> StateReceived;
     /// <summary>Publishes validated common co-op enemy fields before mission outcome callbacks.</summary>
     public event Action<IReadOnlyList<CoopEnemyViewState>> CoopEnemiesReceived;
+    /// <summary>Notifies visuals after a match connection and its active views have been released.</summary>
+    public event Action MatchClosed;
     /// <summary>Gets the current isolated common enemy view without enabling local AI.</summary>
     public IReadOnlyList<CoopEnemyViewState> CoopEnemies { get; private set; } = Array.Empty<CoopEnemyViewState>();
     public event Action FullSnapshotRebuild;
@@ -1102,6 +1104,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
     private void Close()
     {
+        bool hadMatch = connection != null || LocalPlayerId != null || CoopEnemies.Count != 0;
         CoopEnemies = Array.Empty<CoopEnemyViewState>();
         _missionManager = null;
         IsConnected = false;
@@ -1130,5 +1133,9 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (deathMatchBridge != null) { Destroy(deathMatchBridge); deathMatchBridge = null; }
         barrelTracker = null;
         barrelCatalog = null;
+        if (hadMatch && MatchClosed != null)
+        {
+            MatchClosed();
+        }
     }
 }

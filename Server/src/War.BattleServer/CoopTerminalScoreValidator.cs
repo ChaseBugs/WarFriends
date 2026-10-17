@@ -531,6 +531,12 @@ internal static class CoopTerminalScoreValidator
         int lastTimedEventIndex = -1;
         foreach (BattleCoopEnemySpawn enemy in snapshot.Coop.EnemySpawns)
         {
+            if (enemy.InfantryVisualClip.Length != 0 || enemy.InfantryVisualStartTick != 0 ||
+                enemy.InfantryVisualSampleTick != 0)
+            {
+                throw new InvalidDataException("Terminal enemy evidence cannot carry a live walking presentation.");
+            }
+
             if (enemy.EntityId != expectedEntityId ||
                 enemy.SpawnTick < snapshot.StartTick ||
                 enemy.SpawnTick >= snapshot.Coop.DeadlineTick ||

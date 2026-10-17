@@ -37,6 +37,7 @@ namespace War.Client
                 ValidateIdentity(enemy, expectedId, snapshot);
                 ValidateVitality(enemy, snapshot.ServerTick);
                 ValidatePose(enemy, snapshot.ServerTick);
+                ValidateAnimation(enemy, snapshot.ServerTick, snapshot.Phase);
                 views.Add(new CoopEnemyViewState(enemy));
                 expectedId++;
             }
@@ -99,6 +100,28 @@ namespace War.Client
                 !IsFinite(rotation.W) || Math.Abs(lengthSquared - 1d) > RotationTolerance)
             {
                 throw new InvalidDataException("Enemy presentation rotation must be a finite source quaternion.");
+            }
+        }
+
+        private static void ValidateAnimation(BattleCoopEnemySpawn enemy, ulong serverTick, BattlePhase phase)
+        {
+            if (enemy.InfantryVisualClip.Length == 0)
+            {
+                if (enemy.InfantryVisualStartTick != 0 || enemy.InfantryVisualSampleTick != 0)
+                {
+                    throw new InvalidDataException("An absent enemy animation cannot carry a visual clock.");
+                }
+
+                return;
+            }
+
+            if (phase != BattlePhase.Running || enemy.Behaviour != "Assaulter" ||
+                enemy.InfantryVisualClip != "run_0" || enemy.Health <= 0 ||
+                enemy.CurrentRotation == null || enemy.InfantryVisualStartTick < enemy.SpawnTick ||
+                enemy.InfantryVisualStartTick > enemy.InfantryVisualSampleTick ||
+                enemy.InfantryVisualSampleTick != enemy.PoseTick || enemy.InfantryVisualSampleTick != serverTick)
+            {
+                throw new InvalidDataException("Enemy walking presentation has an unsupported clip or clock.");
             }
         }
 

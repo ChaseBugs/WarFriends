@@ -2824,6 +2824,11 @@ internal static class CombatContentTests
             throw new Exception("Walking Assaulter did not use Unity's pinned corners.");
         IReadOnlyList<PlayerHitbox> walkingParts =
             walkingRuntime.PlaceWalkingAssaulterHitboxes(walkingStep.EntityId);
+        if (walkingStep.InfantryVisualClip != "run_0" || walkingStep.InfantryVisualStartTick != 8 ||
+            walkingStep.InfantryVisualSampleTick != walkingStep.PoseTick)
+        {
+            throw new Exception("A supported walking enemy must project the same diagnostic clip and route clock.");
+        }
         if (walkingStep.PoseTick != 9 ||
             new Vector3(walkingStep.CurrentX, walkingStep.CurrentY,
                 walkingStep.CurrentZ) == new Vector3(walkingStart.CurrentX,
@@ -2839,6 +2844,11 @@ internal static class CombatContentTests
         walkingRuntime.Advance(10);
         BattleCoopEnemySpawn stoppedEnemy = walkingRuntime.Snapshot()
             .Coop.EnemySpawns.Single();
+        if (stoppedEnemy.InfantryVisualClip.Length != 0 || stoppedEnemy.InfantryVisualStartTick != 0 ||
+            stoppedEnemy.InfantryVisualSampleTick != 0)
+        {
+            throw new Exception("A dead enemy must not retain a live walking presentation declaration.");
+        }
         if (stoppedEnemy.CurrentX != walkingStep.CurrentX ||
             stoppedEnemy.CurrentZ != walkingStep.CurrentZ ||
             stoppedEnemy.PoseTick != 9 ||

@@ -13,6 +13,7 @@ internal static class CoopEnemyViewTests
         VerifyIsolationAndDeath();
         VerifySourceSpellingAndCardLane();
         VerifyMalformedRows();
+        VerifyWalkingFrames();
         return _checks;
     }
 
@@ -93,6 +94,57 @@ internal static class CoopEnemyViewTests
         }
 
         throw new InvalidDataException("An invalid enemy row selected a published visual state.");
+    }
+
+    private static void VerifyWalkingFrames()
+    {
+        MatchSnapshot snapshot = CreateSnapshot();
+        SetWalkingFrame(snapshot);
+        CoopEnemyViewState view = CoopEnemyViewProjection.FromSnapshot(snapshot, PlayerId)[0];
+        Require(view.InfantryVisualClip == "run_0" && view.InfantryVisualStartTick == 8 &&
+            view.InfantryVisualSampleTick == 20, "A supported walking sample must preserve its exact host clock.");
+        VerifyInvalidWalking(row => row.InfantryVisualClip = "idle_1");
+        VerifyInvalidWalking(row => row.InfantryVisualClip = "");
+        VerifyInvalidWalking(row => row.InfantryVisualStartTick = 21);
+        VerifyInvalidWalking(row =>
+        {
+            row.PoseTick = 19;
+            row.InfantryVisualSampleTick = 19;
+        });
+        VerifyInvalidWalking(row =>
+        {
+            row.Health = 0;
+            row.DeathTick = 20;
+        });
+        VerifyInvalidWalking(row => row.Behaviour = "Sniper");
+        VerifyInvalid(terminal =>
+        {
+            SetWalkingFrame(terminal);
+            terminal.Phase = BattlePhase.Ended;
+            terminal.EndTick = terminal.ServerTick;
+            terminal.TerminalReason = "mission-success";
+            terminal.Coop.Completed = true;
+            terminal.Coop.SuccessScores.Add(new BattleCoopPlayerScore { PlayerId = PlayerId, Score = 100, Stars = 1 });
+            terminal.Coop.PeerCompletionPlayerIds.Add("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        });
+    }
+
+    private static void VerifyInvalidWalking(Action<BattleCoopEnemySpawn> change)
+    {
+        VerifyInvalid(snapshot =>
+        {
+            SetWalkingFrame(snapshot);
+            change(snapshot.Coop.EnemySpawns[0]);
+        });
+    }
+
+    private static void SetWalkingFrame(MatchSnapshot snapshot)
+    {
+        BattleCoopEnemySpawn enemy = snapshot.Coop.EnemySpawns[0];
+        enemy.PoseTick = snapshot.ServerTick;
+        enemy.InfantryVisualClip = "run_0";
+        enemy.InfantryVisualStartTick = enemy.SpawnTick;
+        enemy.InfantryVisualSampleTick = snapshot.ServerTick;
     }
 
     internal static MatchSnapshot CreateSnapshot()

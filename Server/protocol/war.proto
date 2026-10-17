@@ -680,6 +680,11 @@ message BattleCoopEnemySpawn {
   float gunner_max_health = 24; float gunner_health = 25;
   uint64 gunner_spawn_tick = 26; uint64 gunner_respawn_tick = 27;
   int32 gunner_point_component_file_id = 28;
+  // Presentation-only source walking sample. Empty until the host owns a supported pose;
+  // it does not authorize moving collision or replace queued/cross-faded animation state.
+  string infantry_visual_clip = 29;
+  uint64 infantry_visual_start_tick = 30;
+  uint64 infantry_visual_sample_tick = 31;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

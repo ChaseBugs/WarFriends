@@ -8,6 +8,7 @@ public class GameControllerCoop : GameControllerOnline
     private const float PeerDeactivationDelaySeconds = 3f;
     private SelfHostedCoopPeerBridge _selfHostedPeerBridge;
     private SelfHostedCoopOutcomeBridge _selfHostedOutcomeBridge;
+    private SelfHostedCoopInfantryPresenter _selfHostedInfantryPresenter;
 
 	public override string loadingWaitingCards => Localization.Localize("ID_WAITINGFORFRIENDCARDS");
 
@@ -208,6 +209,7 @@ public class GameControllerCoop : GameControllerOnline
 			yield return new WaitForSeconds(0.8f);
 		}
         BindSelfHostedPeerPresentation();
+        BindSelfHostedInfantryPresentation();
         BindSelfHostedOutcomePresentation();
 	}
 
@@ -234,6 +236,18 @@ public class GameControllerCoop : GameControllerOnline
         // Reuse the source notification, point release and real-time deactivation order.
         DisalblePlayerAndResumeGame(mOtherPlayerInstance.playerNetworkId,
             PeerDeactivationDelaySeconds, GameController.GameEndReason.Forfeit);
+    }
+
+    private void BindSelfHostedInfantryPresentation()
+    {
+        if (!PhotonConnectionManager.IsSelfHostedActive || _selfHostedInfantryPresenter != null)
+        {
+            return;
+        }
+
+        _selfHostedInfantryPresenter = gameObject.AddComponent<SelfHostedCoopInfantryPresenter>();
+        _selfHostedInfantryPresenter.Configure(Singleton<ObjectPoolDatabase>.instance.enemy,
+            Singleton<LevelBehaviourManager>.instance, SelfHostedBattleClient.Active);
     }
 
     private void BindSelfHostedOutcomePresentation()
@@ -281,6 +295,13 @@ public class GameControllerCoop : GameControllerOnline
 
     protected override void Reset()
     {
+        if (_selfHostedInfantryPresenter != null)
+        {
+            _selfHostedInfantryPresenter.enabled = false;
+            Destroy(_selfHostedInfantryPresenter);
+            _selfHostedInfantryPresenter = null;
+        }
+
         if (_selfHostedOutcomeBridge != null)
         {
             _selfHostedOutcomeBridge.enabled = false;
