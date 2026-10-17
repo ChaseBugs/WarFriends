@@ -4,6 +4,14 @@ Inspected 2026-09-19 against `Clients/ExportedProject`, not the older 1.6.0/4.9.
 
 ## HTTP account/progression channel
 
+Current integration now uses `SelfHostedBackendEndpoint` for both the legacy
+URL builder and normal battle-session entry. The default is
+`http://127.0.0.1:8080/`; `WARFRIENDS_BACKEND_URL` selects one process-wide
+directory URL before startup. The legacy filename, sibling check path and
+requestId transport below are preserved. See [lobby bootstrap boundaries](CLIENT_LOBBY_BOOTSTRAP.md)
+for the original retired-service routing defect, validation and remaining
+normal-scene work. This does not prove full account/menu initialization.
+
 `BeanstalkUrlCreator.CreateUrl()` selects `index_09_25_2015.php` on the original environment host. `BeanstalkServerManager.GetServerRequest()` posts form fields to that single URL. **This is not the older `/<action>/<version>` transport.**
 
 Common fields are `requestId` (DatabaseAction integer), `Version`, `Os=android`, `SheetConfig`, and action-specific string fields. The header `App-Version` carries the short version. Most authenticated calls add `Token` and `PlayerId`; the account-management allowlist differs. Null/empty action values become the literal string `null`. Debug and cheat flags are client assertions, never authorization.

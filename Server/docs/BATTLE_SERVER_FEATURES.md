@@ -8,6 +8,15 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
+account/configuration HTTP and normal battle-session entry to the same
+self-hosted Backend address. The old URL builder's retired AWS production
+destination is removed; requestId and legacy filenames remain unchanged.
+Process configuration tests and the actual recovered URL-builder/BestHTTP
+`check.php` acknowledgement pass alongside the real battle transport gate.
+Full MainScene account/profile/card/player initialization and normal lobby
+success remain open.
+
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted
 owners reject before lobby/player mutation, and a controlled native terminal

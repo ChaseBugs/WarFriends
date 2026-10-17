@@ -61,6 +61,16 @@ if(args is ["--verify-queue-requires-replica-set",var standaloneUri])
         return;
     }
 }
+if (args is ["--client-endpoint-only"])
+{
+    await ClientBackendEndpointTests.RunAsync();
+    return;
+}
+if (args is ["--client-endpoint-process", var endpointMode])
+{
+    ClientBackendEndpointTests.RunChild(endpointMode);
+    return;
+}
 if (args is ["--rematch-attempt-client-only"])
 {
     await RematchAttemptCancellationTests.RunAsync();

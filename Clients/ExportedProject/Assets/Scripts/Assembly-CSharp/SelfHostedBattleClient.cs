@@ -20,7 +20,7 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         new Dictionary<string, PlayerController>(StringComparer.Ordinal);
     private string _startPresentationMatchId;
     private object _startPresentationReport;
-    [SerializeField] private string backendEndpoint = "http://127.0.0.1:8080/";
+    [SerializeField] private string backendEndpoint = SelfHostedBackendEndpoint.DefaultBackendUrl;
     [SerializeField] private int matchmakingTimeoutSeconds = 120;
     [SerializeField] private bool allowLocalHttp = true;
     public static SelfHostedBattleClient Active { get; private set; }
@@ -190,7 +190,8 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         GameLoginManager login = Singleton<GameLoginManager>.instance;
         if (login == null || string.IsNullOrEmpty(login.accessToken))
             throw new InvalidOperationException("The recovered Backend session is not available.");
-        return MatchmakeAndConnect(backendEndpoint, login.accessToken, matchmakingTimeoutSeconds, allowLocalHttp);
+        return MatchmakeAndConnect(SelfHostedBackendEndpoint.Resolve().AbsoluteUri,
+            login.accessToken, matchmakingTimeoutSeconds, allowLocalHttp);
     }
 
     /// <summary>Releases a confirmed ended transport before a fresh Backend-authorized random search.</summary>
@@ -233,13 +234,10 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
             throw new InvalidOperationException("A self-hosted match operation is already active.");
         }
 
-        Uri endpoint;
-        if (!Uri.TryCreate(backendEndpoint, UriKind.Absolute, out endpoint))
-        {
-            throw new ArgumentException("A valid Backend endpoint is required.", nameof(backendEndpoint));
-        }
+        Uri endpoint = SelfHostedBackendEndpoint.Resolve(backendEndpoint);
 
         var attempt = new SelfHostedMatchmakingAttempt(new BackendClient(endpoint, allowLocalHttp), accessToken);
+        this.backendEndpoint = endpoint.AbsoluteUri;
         matchmaking = attempt;
         Active = this;
         try
@@ -537,7 +535,7 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         {
             IsConnected = false; // Stop new scene input while the Backend issues a grant.
             if (reconnectRequestId == null) reconnectRequestId = Guid.NewGuid().ToString("N");
-            using (var backend = new BackendClient(new Uri(backendEndpoint), allowLocalHttp))
+            using (var backend = new BackendClient(SelfHostedBackendEndpoint.Resolve(backendEndpoint), allowLocalHttp))
             {
                 var grant = await backend.ReconnectMatchAsync(matchId, reconnectRequestId,
                     accessToken, CancellationToken.None);

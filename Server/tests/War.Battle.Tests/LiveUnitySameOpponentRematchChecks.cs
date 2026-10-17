@@ -45,6 +45,7 @@ internal static class LiveUnitySameOpponentRematchChecks
             string editorLog = File.ReadAllText(logPath);
             Require(editor.ExitCode == 0 && editorLog.Contains(SuccessMarker, StringComparison.Ordinal) &&
                 editorLog.Contains("UNITY_REMATCH_CANCELLATION_PASSED", StringComparison.Ordinal) &&
+                editorLog.Contains("UNITY_BACKEND_ENDPOINT_PASSED", StringComparison.Ordinal) &&
                 editorLog.Contains("UNITY_PENDING_BATTLE_OWNER_PASSED", StringComparison.Ordinal),
                 "Actual Mono rematch handoff failed; inspect " + logPath);
             Console.WriteLine(
@@ -98,6 +99,7 @@ internal static class LiveUnitySameOpponentRematchChecks
             start.ArgumentList.Add(argument);
         }
         start.Environment["WAR_REMATCH_BACKEND_ENDPOINT"] = settings.BackendEndpoint.AbsoluteUri;
+        start.Environment[SelfHostedBackendEndpoint.EnvironmentVariableName] = settings.BackendEndpoint.AbsoluteUri;
         start.Environment["WAR_REMATCH_BACKEND_TOKEN"] = settings.AccessTokens[0];
         start.Environment["WAR_REMATCH_RELEASED_FILE"] = released;
         return Process.Start(start) ?? throw new InvalidDataException("The owned Mono handoff Editor did not start.");

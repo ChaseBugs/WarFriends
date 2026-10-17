@@ -23,6 +23,13 @@ Mongo is the only required data service. Battle matchmaking now publishes a pair
 
 ## Windows: verified smoke test
 
+The active Unity 1.4.0 legacy HTTP builder and normal battle-session entry now
+share `http://127.0.0.1:8080/`. Set `WARFRIENDS_BACKEND_URL` before starting Unity
+to override both with one Backend directory URL. The active legacy paths are
+root `check.php` and `index_09_25_2015.php`; this does not use the older 1.6.0
+`/api/` transport. See [Client lobby bootstrap](docs/CLIENT_LOBBY_BOOTSTRAP.md)
+for transport tests and the still-unverified normal scene initialization.
+
 For a repeatable source/build/test checkpoint on Windows or Linux, run
 `python Server/scripts/verify_battle_checkpoint.py` from the repository root.
 Add `--native-smoke` to run the platform's isolated MongoDB, Backend, and UDP

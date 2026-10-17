@@ -8,6 +8,8 @@
     <_GetChildProjectCopyToPublishDirectoryItems>false</_GetChildProjectCopyToPublishDirectoryItems>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedBackendEndpoint.cs"
+             Link="ClientSource/SelfHostedBackendEndpoint.cs" />
     <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedRematchAttempt.cs"
              Link="ClientSource/SelfHostedRematchAttempt.cs" />
     <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedRematchAuthority.cs"

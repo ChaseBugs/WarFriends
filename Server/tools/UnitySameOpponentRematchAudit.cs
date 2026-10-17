@@ -41,6 +41,7 @@ public static class UnitySameOpponentRematchAudit
         {
             try
             {
+                await UnityBackendEndpointAudit.VerifyAsync(endpoint, lifetime.Token);
                 await client.MatchmakeAndConnect(endpoint, token, SearchTimeoutSeconds, true);
                 await PlayToTerminalAsync(client, lifetime.Token);
                 MatchSnapshot source = client.State.Clone();

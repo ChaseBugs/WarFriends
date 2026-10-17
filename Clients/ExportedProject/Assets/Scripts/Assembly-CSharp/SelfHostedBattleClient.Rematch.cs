@@ -41,7 +41,8 @@ public sealed partial class SelfHostedBattleClient
             throw new InvalidOperationException("The recovered Backend session is not available.");
         }
 
-        return RematchAndConnectAsync(backendEndpoint, login.accessToken, allowLocalHttp, cancellationToken);
+        return RematchAndConnectAsync(SelfHostedBackendEndpoint.Resolve().AbsoluteUri,
+            login.accessToken, allowLocalHttp, cancellationToken);
     }
 
     /// <summary>Finds and admits a same-opponent grant while keeping the original result until handoff.</summary>
@@ -54,7 +55,7 @@ public sealed partial class SelfHostedBattleClient
         RequireAbortRecoveryReleased();
         RequireNoPendingRematch();
         RequireEndedRematchSource();
-        var backend = new BackendClient(new Uri(endpoint), allowLoopbackHttp);
+        var backend = new BackendClient(SelfHostedBackendEndpoint.Resolve(endpoint), allowLoopbackHttp);
         try
         {
             _rematchAttempt = new SelfHostedRematchAttempt(backend, accessToken, State, LocalPlayerId);
