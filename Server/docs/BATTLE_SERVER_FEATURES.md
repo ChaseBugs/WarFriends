@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The [retired Chat boundary](OFFLINE_CHAT_BOUNDARY.md) removes Photon Chat
+construction, service/reconnect loops, sending, subscription and history access
+from the recovered component while preserving scene/type/entry-point identity.
+Its native scene audit checks unavailable transport and paired local provider
+subscriptions. This does not implement replacement chat or prove complete
+normal boot/retirement of every other Photon caller.
+
 [Client loading failure cancellation](CLIENT_LOADING_FAILURE_CANCELLATION.md)
 now retains successful-admission credentials through loading and distinguishes
 search completion from owner disposal. An admitted cancellation waits for server
