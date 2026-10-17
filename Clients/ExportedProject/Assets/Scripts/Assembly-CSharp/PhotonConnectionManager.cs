@@ -9,6 +9,7 @@ using UnityEngine;
 
 public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 {
+    private const int UnknownRegionPingMilliseconds = 4000;
 	private static readonly LocalOfflineRoom mLocalOfflineRoom = new LocalOfflineRoom();
 	private static bool mCreatingLocalSoloRoom;
 
@@ -94,7 +95,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public static InternetConnection connection => (InternetConnection)Application.internetReachability;
 
-	public static CloudRegionCode bestRegion { get; private set; }
+	public static CloudRegionCode bestRegion { get; private set; } = CloudRegionCode.none;
 
 	public static List<Tuple<CloudRegionCode, int>> bestRegionsSorted
 	{
@@ -109,11 +110,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 				}
 			}
 			list.Sort((Tuple<CloudRegionCode, int> a, Tuple<CloudRegionCode, int> b) => a.Value2.CompareTo(b.Value2));
-			if (list.Count == 0)
-			{
-				Debug.LogError("we dont have best regions for player");
-				list.Add(new Tuple<CloudRegionCode, int>(CloudRegionCode.au, 0));
-			}
+			// No measurements means no Photon regions, not a fabricated zero-latency route.
 			return list;
 		}
 	}
@@ -122,13 +119,29 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	{
 		get
 		{
-			int value = 4000;
-			bestRegions.TryGetValue(bestRegion, out value);
-			return value;
+            int measuredPing;
+            if (bestRegions != null && bestRegions.TryGetValue(bestRegion, out measuredPing))
+            {
+                return measuredPing;
+            }
+            return UnknownRegionPingMilliseconds;
 		}
 	}
 
 	public static int totalMatchesInRegions { get; private set; }
+
+    /// <summary>Uses only an actual cached measurement for the recovered latency-based bot decision.</summary>
+    public static bool HasMeasuredRegionPingAbove(float maximumPingMilliseconds)
+    {
+        if (float.IsNaN(maximumPingMilliseconds) || float.IsInfinity(maximumPingMilliseconds) ||
+            maximumPingMilliseconds < 0f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumPingMilliseconds));
+        }
+
+        List<Tuple<CloudRegionCode, int>> regions = bestRegionsSorted;
+        return regions.Count != 0 && regions[0].Value2 > maximumPingMilliseconds;
+    }
 
 	protected override void Awake()
 	{
@@ -140,13 +153,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	protected override void Start()
 	{
 		base.Start();
-		PhotonNetwork.sendRate = 26;
-		PhotonNetwork.sendRateOnSerialize = 13;
-		PhotonNetwork.networkingPeer.DisconnectTimeout = 4000;
-		PhotonNetwork.networkingPeer.SentCountAllowance = 5;
-		PhotonNetwork.networkingPeer.MaximumTransferUnit = 1500;
-		PhotonNetwork.networkingPeer.LimitOfUnreliableCommands = 60;
-		PhotonNetwork.autoJoinLobby = false;
+        // Self-hosted UDP owns transport configuration; startup must not initialize a Photon peer here.
 	}
 
 	private void Update()
@@ -430,6 +437,11 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	private void TryAnotherRegionForMatchmaking()
 	{
+        if (bestRegionsSorted.Count == 0)
+        {
+            // The self-hosted allocator owns routing when no Photon measurements exist.
+            return;
+        }
 		mJoinAttemtCounter = 1;
 		int num = 0;
 		for (num = 0; num < bestRegionsSorted.Count; num++)
@@ -482,8 +494,8 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	{
 		isGood = false;
 		int num = int.MaxValue;
-		CloudRegionCode cloudRegionCode = CloudRegionCode.eu;
-		if (bestRegions1 == null)
+		CloudRegionCode cloudRegionCode = CloudRegionCode.none;
+		if (bestRegions1 == null || bestRegions1.Count == 0 || bestRegions2 == null || bestRegions2.Count == 0)
 		{
 			return cloudRegionCode;
 		}

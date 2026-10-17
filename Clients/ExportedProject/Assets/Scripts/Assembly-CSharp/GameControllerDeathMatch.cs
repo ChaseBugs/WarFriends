@@ -30,10 +30,12 @@ public class GameControllerDeathMatch : GameControllerPVP
 		Screen.sleepTimeout = -1;
 		PlayerController.players.Clear();
 		StartMatch();
-		Tuple<CloudRegionCode, int> tuple = PhotonConnectionManager.bestRegionsSorted[0];
-		bool flag = (float)tuple.Value2 > (float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MaxPingToConnectRegion).FLOATVALUE;
+        // Missing retired-service measurements cannot prove high latency or force a local bot battle.
+        bool hasMeasuredHighPing = PhotonConnectionManager.HasMeasuredRegionPingAbove(
+            (float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MaxPingToConnectRegion).FLOATVALUE);
 		mWaitingTime = Singleton<GameVariables>.instance.maxMatchmakingTime;
-		if (flag || BotManager.useEasyBot || UserDeviceManager.instance.IsSlowDevice() || StatsManager.instance.deathMatchLossesInRow >= 3f)
+        if (hasMeasuredHighPing || BotManager.useEasyBot || UserDeviceManager.instance.IsSlowDevice() ||
+            StatsManager.instance.deathMatchLossesInRow >= 3f)
 		{
 			Reset();
 			isRandomMatchMaking = true;

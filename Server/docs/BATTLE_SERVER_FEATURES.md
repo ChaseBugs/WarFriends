@@ -8,6 +8,14 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The [offline region boundary](OFFLINE_REGION_BOUNDARY.md) now handles the
+Backend's omitted Regions without null access, invented Australia/zero-ping
+metadata or empty-list indexing in normal matchmaking. Only a real cached
+measurement can select the recovered high-latency bot branch; device/streak/bot
+conditions remain unchanged. Manager startup no longer configures a Photon peer.
+The native metadata/startup gate passes, while complete normal match bootstrap
+and the other Photon runtime migrations remain open.
+
 The [retired Chat boundary](OFFLINE_CHAT_BOUNDARY.md) removes Photon Chat
 construction, service/reconnect loops, sending, subscription and history access
 from the recovered component while preserving scene/type/entry-point identity.

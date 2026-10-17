@@ -63,6 +63,7 @@ public static class UnityAbortNoticeAudit
         {
             ConfirmDialog dialog = UnityAbortNoticeFixture.StartServices();
             UnityRetiredChatAudit.Verify();
+            UnityOfflineRegionAudit.Verify();
             await UnityAbortAtlasLoadingAudit.VerifyAsync();
             await UnityCompletedAtlasAudit.VerifyIfRequestedAsync();
             await UnityBattleVisualLoadingAudit.VerifyIfRequestedAsync();
