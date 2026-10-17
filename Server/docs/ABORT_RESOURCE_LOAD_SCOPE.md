@@ -55,8 +55,9 @@ Only loading calls in those paths were changed. ArmyPreviewCamera and other
 unscoped preview entry points retain ordinary coroutine ownership. Native gates
 below exercise the base level/card-visual path; compiling the other connections
 and inspecting their call sites is not full native execution of every variant.
-Mission-triggered preparation, additional effect/spawn routines and complete
-mode-specific cleanup still need their own scope audit and integration proof.
+Early Mission.LoadingStarted preparation now has the synchronous ownership gate
+below. Additional effect/spawn routines and complete mode-specific cleanup still
+need their own scope audit and integration proof.
 
 ## Native verification
 
@@ -93,3 +94,49 @@ documents, 23,513 components and 288,165 serialized references with zero missing
 scripts and zero broken references. The seventeen original NGUI atlas selections
 remain unmatched. The helper adds a new source/meta identity; existing source
 GUIDs, scenes, prefabs and serialized component payloads were preserved.
+
+## Early synchronous mission setup
+
+GameController.StartGame originally called mainController.LoadingStarted before
+creating its managed battle scope. Campaign and co-op controllers call
+Mission.LoadingStarted from that callback; the mission starts event-unit visual
+preparation without awaiting it. Those loaders therefore escaped the root scope
+even after the managed iterator connections above were added.
+
+GameController now creates the scope before LoadingStarted and invokes that
+callback through RunSetup. RunSetup provides the same temporary ownership context
+used by iterator steps, cancels already started loaders on setup failure, restores
+the previous context in finally and preserves the original exception. If cleanup
+also fails, an AggregateException retains both failures. Map loading still starts
+after successful LoadingStarted, preserving the source callback-before-map order.
+No mission reward, progression or entry-cost rollback is invented here.
+
+The three Mission event/initial-unit visual start calls use StartNested. They
+inherit ownership only when called from an owned setup/loader context; an old
+Photon RPC callback outside that context does not become migrated merely through
+this helper. Initial turret-specific rendering, legacy LoadUnitsVisualsRPC
+replacement and full mission gameplay remain separate work.
+
+UnityMissionLoadingAudit executes the original Mission.LoadingStarted using a
+controlled event definition, a temporary source behaviour lookup and inactive
+original LevelManager provider. It uses the existing base-level/slot probes and
+actual Resources texture loads, not a replacement mission algorithm. The baseline
+`Server/.local/unity-mission-loading-baseline.log` reproduced opponent visuals
+being repopulated after cancellation of the unowned setup.
+
+The owned run checks cancellation and fresh setup. Its failure control then calls
+the actual GameController.StartGame entry with a controller probe dispatching to
+the original mission callback: a valid first event starts loading, then a missing
+second behaviour throws the original KeyNotFoundException. The start entry must
+have created a scope before that callback and cancelled its pending loaders.
+After clearing the partial visual, it must stay clear. A later unscoped source
+load must still finish, proving the failed context did not leak ownership.
+The probe restores root controller/scope fields, mission lookup and level list.
+
+The combined Unity 2018.3 run passed without compiler errors:
+`Server/.local/unity-mission-loading-owned.log`. It also passed the existing
+same-host lane, fresh managed scope, native bundle completion, message handoff
+and original modal gates. The protocol executable passed 1,334 checks and static
+asset references retained zero missing scripts and zero broken references.
+This remains component/start-entry proof, not a complete normal mission start,
+full menu/profile recovery, Android, Unity 5.2 or two-client battle proof.

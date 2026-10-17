@@ -387,12 +387,12 @@ public class GameController : Singleton<GameController>
         }
 
 		mGameCreated = null;
-		mainController.LoadingStarted();
         if (_battleResourceLoads != null)
         {
             _battleResourceLoads.Cancel();
         }
         _battleResourceLoads = new BattleResourceLoadScope();
+        _battleResourceLoads.RunSetup(mainController.LoadingStarted);
         _battleResourceLoads.Start(this, LoadAndStartNewMap(mapName));
 	}
 

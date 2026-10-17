@@ -31,6 +31,41 @@ public sealed class BattleResourceLoadScope
         return _currentScope.Start(owner, loading);
     }
 
+    /// <summary>Includes loaders started by synchronous battle preparation callbacks in this scope.</summary>
+    public void RunSetup(Action setup)
+    {
+        if (setup == null)
+        {
+            throw new ArgumentNullException("setup");
+        }
+        if (_isCancelled)
+        {
+            throw new InvalidOperationException("A cancelled battle scope cannot run setup.");
+        }
+        BattleResourceLoadScope previousScope = _currentScope;
+        _currentScope = this;
+        try
+        {
+            setup();
+        }
+        catch (Exception failure)
+        {
+            try
+            {
+                Cancel();
+            }
+            catch (Exception cancellationFailure)
+            {
+                throw new AggregateException("Battle setup and cancellation failed.", failure, cancellationFailure);
+            }
+            throw;
+        }
+        finally
+        {
+            _currentScope = previousScope;
+        }
+    }
+
     /// <summary>Starts a loader and carries its battle ownership through each managed continuation.</summary>
     public Coroutine Start(MonoBehaviour owner, IEnumerator loading)
     {

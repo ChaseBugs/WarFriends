@@ -177,3 +177,5 @@ Server/tools/AbortUpgradeSlotsProbe.cs text eol=lf
 Server/tools/AbortVisualLevelProbe.cs text eol=lf
 Server/tools/UnityBattleVisualLoadingAudit.cs text eol=lf
 Server/docs/ABORT_RESOURCE_LOAD_SCOPE.md text eol=lf
+Server/tools/UnityMissionLoadingAudit.cs text eol=lf
+Server/tools/AbortMissionSetupControllerProbe.cs text eol=lf

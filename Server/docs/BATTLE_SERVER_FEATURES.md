@@ -25,7 +25,9 @@ The complete main-screen/resource graph and physical two-client UI remain open.
 reviewed cross-host upgrade/card/weapon preparation chain. Confirmed abort
 cancels exact battle handles; a source visual-lane control checks old-state
 repopulation, unscoped work and fresh-scope reuse. Full variant/menu/mode
-integration remains open.
+integration remains open. Early mission LoadingStarted now runs inside the scope;
+the actual start entry also passes a source callback-failure cleanup/context
+control. Initial turret rendering and old mission RPC migration remain open.
 
 [Game-atlas cancellation](ABORT_ATLAS_LOADING.md) now invalidates independently
 hosted game loaders at confirmed abort, leaving menu/common work unscoped.

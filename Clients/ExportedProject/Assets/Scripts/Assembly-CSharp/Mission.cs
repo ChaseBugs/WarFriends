@@ -358,7 +358,9 @@ public class Mission : Core_BaseScript
 			{
 				Type value = behavioursDictionary[@event.behaviour].Value1;
 				LevelBehaviour behaviour = LevelManager.instance.GetBehaviour(value);
-				StartCoroutine(behaviour.PrepareVisualsForCardCoroutine(mine: false, opponent: true));
+				BattleResourceLoadScope.StartNested(
+                    this,
+                    behaviour.PrepareVisualsForCardCoroutine(mine: false, opponent: true));
 			}
 		}
 	}
@@ -801,11 +803,19 @@ public class Mission : Core_BaseScript
 		}
 		if (flag)
 		{
-			StartCoroutine(Singleton<ObjectPoolDatabase>.instance.turretRockets.preparedBehaviour.PrepareVisualsForCardCoroutine(mine: false, opponent: true));
+			BattleResourceLoadScope.StartNested(
+                this,
+                Singleton<ObjectPoolDatabase>.instance.turretRockets.preparedBehaviour.PrepareVisualsForCardCoroutine(
+                    mine: false,
+                    opponent: true));
 		}
 		if (flag2)
 		{
-			StartCoroutine(Singleton<ObjectPoolDatabase>.instance.heavyTurret.preparedBehaviour.PrepareVisualsForCardCoroutine(mine: false, opponent: true));
+			BattleResourceLoadScope.StartNested(
+                this,
+                Singleton<ObjectPoolDatabase>.instance.heavyTurret.preparedBehaviour.PrepareVisualsForCardCoroutine(
+                    mine: false,
+                    opponent: true));
 		}
 	}
 
