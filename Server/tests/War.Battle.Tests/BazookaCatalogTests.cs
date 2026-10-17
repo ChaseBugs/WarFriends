@@ -55,6 +55,15 @@ internal static class BazookaCatalogTests
             do{await Task.Delay(35,timeout.Token);state=await a.PollAsync(timeout.Token);}while(state.Snapshot.Players[0].ShotsFired==0);
             Check(!state.Snapshot.Players[0].BazookaTargeting&&state.Snapshot.Players[0].ShotsFired==1&&state.Snapshot.Players[0].ClipAmmo==weapon.ClipSize-1,
                 "Worker launches one bazooka missile after host hold time");
+            var missile = state.Snapshot.Projectiles.Single(row => row.Kind == "bazooka");
+            var remote = await b.PollAsync(timeout.Token);
+            var scan = await b.FetchProjectilesAsync(timeout.Token);
+            Check(missile.WeaponSourceId == "Google2u.Bazooka_RPG7" &&
+                remote.Snapshot.Projectiles.Any(row => row.ProjectileId == missile.ProjectileId &&
+                    row.WeaponSourceId == missile.WeaponSourceId) &&
+                scan.Projectiles.Any(row => row.ProjectileId == missile.ProjectileId &&
+                    row.WeaponSourceId == missile.WeaponSourceId),
+                "both SDK peers and frozen scans receive the launch-bound player RPG");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);if(Directory.Exists(outbox))Directory.Delete(outbox,true);}
         Console.WriteLine($"PASS: {checks} live bazooka UDP assertions");return checks;

@@ -802,6 +802,7 @@ if(args is ["--bazooka-only"])
     while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/bazooka-content-manifest.json")))root=root.Parent;
     if(root==null)throw new Exception("Recovered bazooka content artifact not found.");
     int focused=BazookaCatalogTests.Run(Path.Combine(root.FullName,"content"));
+    focused += BazookaPresentationTests.Run(Path.Combine(root.FullName, "content"));
     focused+=await BazookaCatalogTests.RunUdp(Path.Combine(root.FullName,"content"));
     Console.WriteLine($"PASS: {focused} focused bazooka assertions");return;
 }
@@ -3262,6 +3263,7 @@ checks += await MinigunCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"co
 checks += SniperCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await SniperCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += BazookaCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += BazookaPresentationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));

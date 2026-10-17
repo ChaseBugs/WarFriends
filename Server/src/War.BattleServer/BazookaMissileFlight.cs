@@ -17,6 +17,10 @@ internal sealed class BazookaMissileFlight
     internal ulong Id=>id;internal string OwnerId=>owner;internal bool Fake=>fake;
     internal ulong CurrentTick=>tick;
     internal Vector3 Position{get;private set;}internal bool Finished{get;private set;}
+    private readonly ulong _launchTick;
+    internal Vector3 Velocity => tick == _launchTick && binding.StopSeconds == 0
+        ? Vector3.Normalize(direction) * binding.Speed
+        : (Position - last) * MatchManifest.TickRate;
 
     internal BazookaMissileFlight(ulong id,string owner,BazookaBinding binding,Vector3 from,Vector3 to,ulong tick,
         bool fake,float middleRoll,float rotationRoll,int curveSign,Func<Vector3,Vector3,float,ShotCollision?> trace)
@@ -26,6 +30,7 @@ internal sealed class BazookaMissileFlight
            !float.IsFinite(middleRoll)||middleRoll is <0 or >1||!float.IsFinite(rotationRoll)||rotationRoll is <0 or >1||
            curveSign is not (-1 or 1)||trace==null)throw new InvalidDataException("Invalid bazooka missile launch.");
         this.id=id;this.owner=owner;this.binding=binding;this.tick=tick;this.fake=fake;this.trace=trace;
+        _launchTick = tick;
         start=from;var delta=to-from;if(delta.Length()>50)to=from+Vector3.Normalize(delta)*50;end=to;direction=end-start;
         duration=direction.Length()/binding.Speed;if(!float.IsFinite(duration)||duration<=0||duration>1800)throw new InvalidDataException("Invalid bazooka missile duration.");
         progress=-binding.StopSeconds/duration;Position=last=lastUp=from;

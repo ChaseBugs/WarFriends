@@ -541,7 +541,7 @@ message BattleProjectileState {
   uint64 projectile_id = 1; string owner_player_id = 2; string kind = 3;
   float x = 4; float y = 5; float z = 6;
   float velocity_x = 7; float velocity_y = 8; float velocity_z = 9;
-  // Exact server-owned source weapon for shotgun visuals across slot switches.
+  // Exact server-owned source weapon for shotgun and bazooka visuals across slot switches.
   string weapon_source_id = 10;
   // Launch-time infantry identity survives the shooter's later death.
   string army_unit_id = 11;
@@ -844,6 +844,8 @@ message MatchEvent {
   float parachute_landing_y = 31;
   float parachute_landing_z = 32;
   SabotageKillPresentation sabotage_kill = 33;
+  // Launch-time identity on player bazooka Shot/Impact events only.
+  string weapon_source_id = 34;
 }
 message MatchEventBatch {
   string match_id = 1; string manifest_hash = 2;

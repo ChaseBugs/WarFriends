@@ -39,6 +39,10 @@ namespace War.Client
                     ? !War.Shared.SabotageKillPresentationPolicy.Valid(item)
                     : item.SabotageKill != null)
                     throw new InvalidDataException("Invalid Sabotage kill attribution.");
+                if (!War.Shared.BazookaSourceIdentity.ValidEvent(item))
+                {
+                    throw new InvalidDataException("Invalid bazooka launch identity.");
+                }
                 if (item.Kind == MatchEventKind.AirSpawned || item.Kind == MatchEventKind.AirDespawned ||
                     item.Kind == MatchEventKind.DeployableSpawned || item.Kind == MatchEventKind.DeployableDespawned)
                     if (item.ProjectileId == 0 || !Guid.TryParseExact(item.ActorId, "N", out _))

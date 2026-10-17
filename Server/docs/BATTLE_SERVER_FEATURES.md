@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Player bazooka presentation](PLAYER_BAZOOKA_PRESENTATION.md) now carries the
+seven source weapon identities through host projectile rows, reliable impacts,
+the SDK and the normal Unity projectile presenter. A script-free derived source
+prefab preserves the original render data. Native component comparisons and
+real SDK UDP delivery pass; post-impact tail timing and live rendered gameplay
+remain B32 work.
+
 [RPG crate occlusion](PVP_RPG_CRATE_OCCLUSION.md) now reproduces a valid City
 spawn hidden from the initial cover. The host and original Unity Physics agree
 on the blocking tires surface; a normal cover change permits collection.

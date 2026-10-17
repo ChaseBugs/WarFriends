@@ -1844,6 +1844,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                 if(impact==null)continue;
                 Emit(MatchEventKind.Impact,impact.OwnerId,impact.Collision?.PlayerId??"",
                     impact.ProjectileId,impact.Position,0,impact.Fake?"bazooka-fake":"bazooka");
+                events[^1].WeaponSourceId = pair.Value.WeaponSourceId;
                 if(impact.Fake)continue;
                 try{ApplyBazookaPlayerExplosion(pair.Value,impact);}
                 catch(InvalidDataException){End("invalid-combat-authority","",false);break;}
@@ -2661,6 +2662,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             (from,direction,range)=>rifleCombat.TraceForBazooka(launch.Owner,from,direction,range,mask));
         bazookaProjectiles.Add(projectileId,new(flight,stage,binding,launch.WeaponSourceId,launch.HalfDamage));
         Emit(MatchEventKind.Shot,launch.Owner,"",projectileId,origin,0,launch.Fake?"bazooka-fake":"bazooka");
+        events[^1].WeaponSourceId = launch.WeaponSourceId;
     }
     private void ApplyBazookaPlayerExplosion(BazookaProjectile projectile,BazookaMissileImpact impact)
     {
@@ -3169,6 +3171,18 @@ public sealed partial class MatchEngine : IMatchRuntime
                     VelocityY = flight.Velocity.Y,
                     VelocityZ = flight.Velocity.Z
                 };
+            }));
+        snapshot.Projectiles.AddRange(bazookaProjectiles.OrderBy(row => row.Key).Select(row =>
+            new BattleProjectileState
+            {
+                ProjectileId = row.Key,
+                OwnerPlayerId = row.Value.Flight.OwnerId,
+                Kind = row.Value.Flight.Fake ? "bazooka-fake" : "bazooka",
+                WeaponSourceId = row.Value.WeaponSourceId,
+                X = row.Value.Flight.Position.X, Y = row.Value.Flight.Position.Y, Z = row.Value.Flight.Position.Z,
+                VelocityX = row.Value.Flight.Velocity.X,
+                VelocityY = row.Value.Flight.Velocity.Y,
+                VelocityZ = row.Value.Flight.Velocity.Z
             }));
         snapshot.Projectiles.AddRange(projectiles.OrderBy(x=>x.Key)
             .Where(x=>x.Value.WeaponSourceId.StartsWith("Google2u.Shotgun_",StringComparison.Ordinal))

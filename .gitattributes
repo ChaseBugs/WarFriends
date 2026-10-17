@@ -77,3 +77,6 @@ Server/content/coop-moving-root-phase-post-reference.json text eol=crlf
 Server/tools/UnityCoopDelayedShotProbe.cs text eol=lf
 Server/content/coop-corner-return-animation-reference.json text eol=lf
 Server/tools/UnityAutomaticCrawlHistoryExport.cs text eol=lf
+Clients/ExportedProject/Assets/GameObject/Missile.prefab text eol=lf
+Clients/ExportedProject/Assets/Resources/SelfHostedPlayerMissileVisual.prefab text eol=lf
+Server/content/player-missile-visual-reference.json text eol=lf

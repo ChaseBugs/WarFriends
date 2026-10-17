@@ -1,0 +1,10 @@
+{
+  "sourcePath": "Clients/ExportedProject/Assets/GameObject/Missile.prefab",
+  "sourceSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+  "removedComponentIds": [
+    11431434,
+    11470521
+  ],
+  "visualPath": "Clients/ExportedProject/Assets/Resources/SelfHostedPlayerMissileVisual.prefab",
+  "visualSha256": "1a24204fc31c7642a855f027aef4572151fdd352b923b4d8226bdd3e89f62228"
+}

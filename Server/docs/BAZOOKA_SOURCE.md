@@ -24,4 +24,8 @@ The normal `SelfHostedDeathMatchBridge` recognizes `PlayerHoldWeapon` before swi
 
 Bazooka explosions also mutate source-bound shields with the recovered `ShieldExplosionCoef`, per-weapon shield ratio and friendly-fire coefficient, and mutate barrels with inner/outer damage while preserving explosion/shiver cause through synchronous barrel chains. Focused live `MatchEngine` tests prove both dynamic lifecycles.
 
-Remaining bazooka work is spawned missile/explosion visual presentation in the normal Client, a rendered live Unity UDP audit, and Android/two-device proof.
+The [player presentation checkpoint](PLAYER_BAZOOKA_PRESENTATION.md) connects host
+missile rows and source-bound impacts to the normal Client presenter. Source
+model/particle/trail comparisons pass for all seven families, and two SDK UDP
+peers receive the launch identity. Post-impact tail lifetime, normal Play Mode
+effects, a rendered live Unity UDP audit and Android/two-device proof remain open.

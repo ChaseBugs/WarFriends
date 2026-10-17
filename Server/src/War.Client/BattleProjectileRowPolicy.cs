@@ -47,8 +47,7 @@ namespace War.Client
                 !Guid.TryParseExact(row.OwnerPlayerId, "N", out _) ||
                 row.OwnerPlayerId != row.OwnerPlayerId.ToLowerInvariant() ||
                 !SupportedKind(row.Kind) ||
-                (IsShotgun(row.Kind) ? !ValidShotgunSource(row.WeaponSourceId) :
-                    !string.IsNullOrEmpty(row.WeaponSourceId)) ||
+                !ValidWeaponSource(row) ||
                 !ValidArmyIdentity(row) ||
                 !FiniteCoordinate(row.X) || !FiniteCoordinate(row.Y) || !FiniteCoordinate(row.Z) ||
                 !FiniteCoordinate(row.VelocityX) || !FiniteCoordinate(row.VelocityY) ||
@@ -58,7 +57,8 @@ namespace War.Client
 
         private static bool SupportedKind(string kind)
         {
-            return kind == "grenade" || kind == "grenade-molotov" ||
+            return kind == "bazooka" || kind == "bazooka-fake" ||
+                kind == "grenade" || kind == "grenade-molotov" ||
                 kind == "pvp-bonus-grenade" ||
                 kind == "card-rocket" || kind == "card-rocket-fake" ||
                 kind == "card-grenadier" ||
@@ -74,6 +74,21 @@ namespace War.Client
         private static bool IsShotgun(string kind)
         {
             return kind == "shotgun-bullet" || kind == "shotgun-fake-bullet";
+        }
+
+        private static bool ValidWeaponSource(BattleProjectileState row)
+        {
+            if (IsShotgun(row.Kind))
+            {
+                return ValidShotgunSource(row.WeaponSourceId);
+            }
+
+            if (row.Kind == "bazooka" || row.Kind == "bazooka-fake")
+            {
+                return BazookaSourceIdentity.ValidProjectile(row.WeaponSourceId, row.Kind == "bazooka-fake");
+            }
+
+            return row.WeaponSourceId.Length == 0;
         }
 
         private static bool ValidArmyIdentity(BattleProjectileState row)

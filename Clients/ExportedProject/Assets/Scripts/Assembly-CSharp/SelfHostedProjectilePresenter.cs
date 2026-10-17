@@ -132,7 +132,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		HashSet<ulong> present = new HashSet<ulong>();
 		foreach (BattleProjectileState state in snapshot.Projectiles)
 		{
-			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" &&
+			if (state.Kind != "bazooka" && state.Kind != "bazooka-fake" &&
+                state.Kind != "grenade" && state.Kind != "grenade-molotov" &&
                 state.Kind != "pvp-bonus-grenade" && state.Kind != "heavy-turret-bullet" &&
                 state.Kind != "drone-bullet" && state.Kind != "drone-fake-bullet" &&
                 state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet" &&
@@ -205,6 +206,24 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 
 	public void ApplyEvent(MatchEvent item)
 	{
+        if (item != null && item.Kind == MatchEventKind.Impact &&
+            (item.Reason == "bazooka" || item.Reason == "bazooka-fake"))
+        {
+            if (!War.Shared.BazookaSourceIdentity.ValidEvent(item))
+            {
+                throw new System.InvalidOperationException("Invalid bazooka impact presentation.");
+            }
+
+            Remove(item.ProjectileId);
+            if (Application.isPlaying)
+            {
+                Explosion.PlayEffects(SelfHostedBazookaVisual.ExplosionTypeFor(item.WeaponSourceId),
+                    new Vector3(item.X, item.Y, item.Z));
+            }
+
+            return;
+        }
+
 		if (item != null &&
             ((item.Kind == MatchEventKind.DroneFired && item.DroneShot != null) ||
              (item.Kind == MatchEventKind.HelicopterFired && item.HelicopterShot != null) ||
@@ -457,6 +476,11 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	{
 		PlayerController owner = local != null && local.playerProperties != null && local.playerProperties.playerID == ownerId ? local : other;
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
+		if (kind == "bazooka" || kind == "bazooka-fake")
+        {
+            return new Visual(SelfHostedBazookaVisual.Create(inventory, sourceId, "SelfHostedProjectile_" + projectileId));
+        }
+
 		PlayerWeapon current = CurrentWeaponOrNull(inventory);
 		Weapon weapon = current == null ? null : current.weapon;
 		GameObject root = new GameObject("SelfHostedProjectile_" + projectileId);
