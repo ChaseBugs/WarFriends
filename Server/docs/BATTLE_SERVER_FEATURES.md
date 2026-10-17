@@ -1530,3 +1530,9 @@ probe physics frozen because detached weapon rigid bodies contaminated earlier
 observations. Reference integrity passes, while the explicit strict mixer-parity
 gate fails; scalar-only animation reconstruction is not yet accepted for the
 network presenter. No combat or admission authority changes in this checkpoint.
+
+The next diagnosis uses a fresh replay Animation component and compares the
+final source frame again after its own manual Sample, restoring all observed
+transforms afterward. Neither change removes the measured rotation mismatch.
+The corner reference records the additional final-frame measurement; strict
+network mixer acceptance remains open rather than relaxing its tolerance.

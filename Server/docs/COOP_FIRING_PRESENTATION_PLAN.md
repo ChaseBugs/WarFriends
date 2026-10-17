@@ -161,3 +161,26 @@ without claiming equivalence. Investigate evaluation phase, state interpolation
 and remaining mixer inputs before adopting this representation for networking.
 The replay currently evaluates consecutive observations; skipped-snapshot
 reconstruction is also unverified.
+
+### Evaluation-phase and inherited-cache diagnosis
+
+The replay now creates a fresh Animation component on its inactive hierarchy
+rather than inheriting the source component's native queue/transition cache.
+The maximum rotation errors remain unchanged in the corner fixture.
+
+On the final observation only, `CompareAfterSourceSample` saves the source
+local transforms, calls its own Animation.Sample, compares again and restores
+the saved transforms in a finally block. No subsequent observation consumes
+this diagnostic mutation. The final normalized quaternion errors before/after
+manual source evaluation remain identical: about 0.000002157 for the obstacle
+control and 0.000002197 for either corner.
+
+This rules out a simple final-frame automatic-versus-manual evaluation phase
+explanation for those observations, and the fresh component removes inherited
+native queue cache as an explanation. It does not exclude phase effects at
+every earlier transition or identify the remaining missing input. Bone binding,
+partial rotation channels and interpolation still need investigation. Keep the
+strict equivalence gate closed and do not substitute relaxed tolerances for
+an explanation. The corner reference includes the final `manualSampleReplay`
+measurement; reference validation rejects nonfinite diagnostic measurements
+and any diagnostic resampling before the last observation.

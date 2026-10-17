@@ -143,6 +143,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 StartPlayback();
 
             float seconds = Time.time - startTime;
+            float duration = SessionState.GetBool(CornerVolley, false) ? 3f : 1.3f;
             for (int i = 0; i < animations.Length; i++)
             {
                 Animation animation = animations[i];
@@ -170,6 +171,11 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 {
                     object rig = UnityCoopRigFrameCapture.Capture(root, animation);
                     object replay = replayProbes[i].Compare(animation);
+                    object manualSampleReplay = null;
+                    if (seconds >= duration)
+                    {
+                        manualSampleReplay = replayProbes[i].CompareAfterSourceSample(animation);
+                    }
                     object commands = null;
                     if (volleyProbes != null && volleyProbes[i] != null)
                     {
@@ -180,6 +186,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
                         observation = frame,
                         commandsAfterObservation = commands,
                         replay,
+                        manualSampleReplay,
                         rig
                     });
                 }
@@ -188,7 +195,6 @@ public static class UnityCoopAssaulterAnimationQueueExport
                     Frames[i].Add(frame);
                 }
             }
-            float duration = SessionState.GetBool(CornerVolley, false) ? 3f : 1.3f;
             if (seconds < duration)
                 return;
 

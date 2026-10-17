@@ -20,8 +20,14 @@ public sealed class UnityCoopRigReplayProbe
             throw new InvalidOperationException("The replay rig must contain no gameplay scripts.");
         }
 
-        _animation = replay.GetComponentInChildren<Animation>(true);
-        _animation.Stop();
+        Animation copiedAnimation = replay.GetComponentInChildren<Animation>(true);
+        GameObject animationRoot = copiedAnimation.gameObject;
+        WrapMode wrapMode = copiedAnimation.wrapMode;
+        UnityEngine.Object.DestroyImmediate(copiedAnimation);
+        // A fresh mixer must not inherit the source's native queue or transition cache through Instantiate.
+        _animation = animationRoot.AddComponent<Animation>();
+        _animation.wrapMode = wrapMode;
+        _animation.playAutomatically = false;
         _animation.enabled = false;
         _sourceTransforms = source.GetComponentsInChildren<Transform>(true);
         _replayTransforms = replay.GetComponentsInChildren<Transform>(true);
@@ -79,6 +85,35 @@ public sealed class UnityCoopRigReplayProbe
             greatestRotationErrorTransform,
             transforms = _sourceTransforms.Length
         };
+    }
+
+    /// <summary>Diagnoses the final observation using the source's own manual sampler, then restores its pose.</summary>
+    public object CompareAfterSourceSample(Animation source)
+    {
+        var positions = new Vector3[_sourceTransforms.Length];
+        var rotations = new Quaternion[_sourceTransforms.Length];
+        var scales = new Vector3[_sourceTransforms.Length];
+        for (int index = 0; index < _sourceTransforms.Length; index++)
+        {
+            positions[index] = _sourceTransforms[index].localPosition;
+            rotations[index] = _sourceTransforms[index].localRotation;
+            scales[index] = _sourceTransforms[index].localScale;
+        }
+
+        try
+        {
+            source.Sample();
+            return Compare(source);
+        }
+        finally
+        {
+            for (int index = 0; index < _sourceTransforms.Length; index++)
+            {
+                _sourceTransforms[index].localPosition = positions[index];
+                _sourceTransforms[index].localRotation = rotations[index];
+                _sourceTransforms[index].localScale = scales[index];
+            }
+        }
     }
 
     private static float RotationDifference(Quaternion first, Quaternion second)

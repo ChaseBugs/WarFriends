@@ -62,6 +62,14 @@ def validate_scenario(scenario, require_mixer_parity=False):
                     "Invalid independent mixer measurement: " + field)
             if require_mixer_parity:
                 require(value <= tolerance, "Independent mixer replay exceeds tolerance: " + field)
+        manual_replay = frame.get("manualSampleReplay")
+        if manual_replay is not None:
+            require(frame is frames[-1], "Manual source resampling must occur only after the final observation.")
+            require(manual_replay["transforms"] == len(rows), "Incomplete manual source comparison.")
+            for field in ("positionError", "rotationError", "relativeScaleError"):
+                value = manual_replay[field]
+                require(type(value) in (int, float) and math.isfinite(value) and value >= 0,
+                        "Invalid manual source measurement.")
         for state in frame["rig"]["states"]:
             for field in ("time", "normalizedTime", "weight", "speed"):
                 value = state[field]
