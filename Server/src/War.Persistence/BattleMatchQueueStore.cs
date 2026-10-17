@@ -8,6 +8,8 @@ public sealed class BattleQueueTicketDocument
     public string Id {get;set;}="";
     public string PlayerId {get;set;}="";
     public string CompatibilityKey {get;set;}="";
+    public string AttemptId {get;set;}="";
+    public DateTime AttemptExpiresUtc {get;set;}
     public DateTime JoinedUtc {get;set;}
     public DateTime ExpiresUtc {get;set;}
 }
@@ -17,17 +19,19 @@ public sealed class BattlePairDocument
     public string MatchId {get;set;}="";
     public string CompatibilityKey {get;set;}="";
     public string[] Players {get;set;}=[];
+    public string[] AttemptIds {get;set;}=[];
     public DateTime CreatedUtc {get;set;}
 }
 public sealed record BattlePairingResult(string Code,string? MatchId,IReadOnlyList<string>? Players);
 
 /// <summary>Durable allocator pairing primitive. Compatibility keys are server policy, never client assertions.</summary>
-public sealed class BattleMatchQueueStore
+public sealed partial class BattleMatchQueueStore
 {
     private static readonly TransactionOptions QueueTransaction=new(readConcern:ReadConcern.Snapshot,writeConcern:WriteConcern.WMajority);
     private readonly MongoClient client;
     private readonly IMongoCollection<BattleQueueTicketDocument> tickets;
     private readonly IMongoCollection<BattlePairDocument> pairs;
+    private readonly IMongoCollection<BattleQueueAttemptDocument> attempts;
     public BattleMatchQueueStore(string uri,string databaseName)
     {
         var settings=MongoClientSettings.FromConnectionString(uri);settings.ServerSelectionTimeout=TimeSpan.FromSeconds(5);
@@ -35,6 +39,7 @@ public sealed class BattleMatchQueueStore
         var db=client.GetDatabase(databaseName);
         tickets=db.GetCollection<BattleQueueTicketDocument>("battle_queue_tickets");
         pairs=db.GetCollection<BattlePairDocument>("battle_pairs");
+        attempts=db.GetCollection<BattleQueueAttemptDocument>("battle_queue_attempts");
     }
     public async Task Initialize(CancellationToken ct)
     {
@@ -45,6 +50,7 @@ public sealed class BattleMatchQueueStore
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.PlayerId),new CreateIndexOptions{Unique=true}),
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.CompatibilityKey).Ascending(x=>x.JoinedUtc).Ascending(x=>x.PlayerId)),
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.ExpiresUtc),new CreateIndexOptions{ExpireAfter=TimeSpan.Zero})],ct);
+        await InitializeAttemptIndexesAsync(ct);
         await pairs.Indexes.CreateManyAsync([
             new CreateIndexModel<BattlePairDocument>(Builders<BattlePairDocument>.IndexKeys.Ascending(x=>x.MatchId),new CreateIndexOptions{Unique=true}),
             new CreateIndexModel<BattlePairDocument>(Builders<BattlePairDocument>.IndexKeys.Ascending(x=>x.Players),new CreateIndexOptions{Unique=true})],ct);
@@ -53,7 +59,7 @@ public sealed class BattleMatchQueueStore
     {
         Validate(playerId,compatibilityKey,now);
         var existingPair=await PairFor(playerId,ct);
-        if(existingPair!=null)return Result("paired",existingPair);
+        if(existingPair!=null)return UnscopedResult(existingPair);
         string? activeTicketId=null;
         for(int admission=0;admission<16 && activeTicketId==null;admission++)
         {
@@ -70,10 +76,11 @@ public sealed class BattleMatchQueueStore
                 if(prior==null)
                 {
                     existingPair=await PairFor(playerId,ct);
-                    if(existingPair!=null)return Result("paired",existingPair);
+                    if(existingPair!=null)return UnscopedResult(existingPair);
                     continue;
                 }
                 ValidateTicket(prior);
+                if(prior.AttemptId.Length!=0)throw new InvalidDataException("An attempt token owns this ticket.");
                 if(prior.ExpiresUtc<=now.UtcDateTime)
                 {
                     await tickets.DeleteOneAsync(x=>x.Id==prior.Id && x.ExpiresUtc==prior.ExpiresUtc,ct);
@@ -95,10 +102,12 @@ public sealed class BattleMatchQueueStore
                     if(ownPair!=null)
                     {
                         await tickets.DeleteOneAsync(s,x=>x.Id==activeTicketId,null,token);
-                        return Result("paired",ownPair);
+                        _=Result("paired",ownPair);
+                        return ownPair.AttemptIds.Length==0?UnscopedResult(ownPair):new BattlePairingResult("attempt-conflict",null,null);
                     }
                     var candidate=await tickets.Find(s,x=>x.CompatibilityKey==compatibilityKey && x.PlayerId!=playerId &&
-                        x.JoinedUtc<=now.UtcDateTime && x.ExpiresUtc>now.UtcDateTime)
+                        x.JoinedUtc<=now.UtcDateTime && x.ExpiresUtc>now.UtcDateTime &&
+                        (x.AttemptId=="" || x.AttemptId==null))
                         .SortBy(x=>x.JoinedUtc).ThenBy(x=>x.PlayerId).FirstOrDefaultAsync(token);
                     if(candidate==null)return new BattlePairingResult("waiting",null,null);
                     ValidateTicket(candidate);
@@ -115,13 +124,14 @@ public sealed class BattleMatchQueueStore
                     if(consumed.DeletedCount!=2)throw new PairingRetryException();
                     return Result("paired",pair);
                 },QueueTransaction,ct);
+                if(result.Code=="attempt-conflict")throw new InvalidDataException("An attempt token owns this pair.");
                 if(result.Code!="retry")return result;
             }
             catch(PairingRetryException){continue;}
             catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey){continue;}
         }
         existingPair=await PairFor(playerId,ct);
-        return existingPair==null?new("waiting",null,null):Result("paired",existingPair);
+        return existingPair==null?new("waiting",null,null):UnscopedResult(existingPair);
     }
     public async Task<BattlePairingResult?> Existing(string playerId,CancellationToken ct)
     {
@@ -171,7 +181,10 @@ public sealed class BattleMatchQueueStore
             if (pair != null)
             {
                 // A later account lookup could select a replacement match after settlement.
-                return Result("already-paired", pair);
+                _ = Result("paired", pair);
+                return pair.AttemptIds.Length == 0
+                    ? Result("already-paired", pair)
+                    : new BattlePairingResult("attempt-conflict", null, null);
             }
 
             var ticket = await tickets.Find(transaction, row => row.PlayerId == playerId)
@@ -182,6 +195,11 @@ public sealed class BattleMatchQueueStore
             }
 
             ValidateTicket(ticket);
+            if (ticket.AttemptId.Length != 0)
+            {
+                return new BattlePairingResult("attempt-conflict", null, null);
+            }
+
             var deleted = await tickets.DeleteOneAsync(
                 transaction,
                 row => row.Id == ticket.Id && row.PlayerId == playerId,
@@ -191,6 +209,24 @@ public sealed class BattleMatchQueueStore
             return new BattlePairingResult(code, null, null);
         }, QueueTransaction, cancellationToken);
     }
+    public async Task<BattlePairingResult?> ExistingUnscoped(string playerId, CancellationToken cancellationToken)
+    {
+        Validate(playerId, "existing", DateTimeOffset.UnixEpoch);
+        var pair = await PairFor(playerId, cancellationToken);
+        return pair == null ? null : UnscopedResult(pair);
+    }
+
+    private static BattlePairingResult UnscopedResult(BattlePairDocument pair)
+    {
+        var result = Result("paired", pair);
+        if (pair.AttemptIds.Length != 0)
+        {
+            throw new InvalidDataException("An attempt token owns this pair.");
+        }
+
+        return result;
+    }
+
     private async Task<BattlePairDocument?> PairFor(string playerId,CancellationToken ct)=>
         await pairs.Find(Builders<BattlePairDocument>.Filter.AnyEq(x=>x.Players,playerId)).FirstOrDefaultAsync(ct);
     private async Task<BattlePairDocument?> PairFor(IClientSessionHandle session,string playerId,CancellationToken ct)=>
@@ -200,6 +236,8 @@ public sealed class BattleMatchQueueStore
     {
         if(!ValidId(pair.Id) || pair.Players is not {Length:2} ||
             pair.Players.Any(x=>!ValidId(x)) || pair.Players.Distinct(StringComparer.Ordinal).Count()!=2 ||
+            pair.AttemptIds == null || (pair.AttemptIds.Length != 0 &&
+                (pair.AttemptIds.Length != 2 || pair.AttemptIds.Any(x=>!ValidId(x)))) ||
             !ValidKey(pair.CompatibilityKey) || !System.Text.RegularExpressions.Regex.IsMatch(pair.MatchId??"",@"\Am[0-9a-f]{32}\z") ||
             pair.CreatedUtc.Kind!=DateTimeKind.Utc || pair.CreatedUtc<DateTime.UnixEpoch)
             throw new InvalidDataException("Invalid durable battle pairing.");
@@ -208,6 +246,9 @@ public sealed class BattleMatchQueueStore
     private static void ValidateTicket(BattleQueueTicketDocument ticket)
     {
         if(!ValidId(ticket.Id) || !ValidId(ticket.PlayerId) || !ValidKey(ticket.CompatibilityKey) ||
+            ticket.AttemptId == null || (ticket.AttemptId.Length != 0 &&
+                (!ValidId(ticket.AttemptId) || ticket.AttemptExpiresUtc.Kind != DateTimeKind.Utc ||
+                 ticket.AttemptExpiresUtc <= ticket.JoinedUtc)) ||
             ticket.JoinedUtc.Kind!=DateTimeKind.Utc || ticket.JoinedUtc<DateTime.UnixEpoch ||
             ticket.JoinedUtc>DateTime.MaxValue.AddSeconds(-120) ||
             ticket.ExpiresUtc.Kind!=DateTimeKind.Utc ||

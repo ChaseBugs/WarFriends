@@ -11,10 +11,13 @@ resolver as queue admission. Its request is the existing empty protobuf
 Issuance is stateless. It creates no waiting ticket, does not replace a pair,
 and does not cancel another attempt. If a Unity search is cancelled while its
 credential request is in flight, an unused issued token alone cannot create a
-queue entry. Normal queue join/cancel still use their existing account-scoped
-contracts: this checkpoint does **not** enable distributed attempt fencing.
-The new SDK method/protobuf type have not been installed into the Unity plugin
-bundle or connected to `SelfHostedMatchmakingAttempt` yet.
+queue entry. Queue join/cancel now accept the additive protobuf
+`MatchQueueRequest.attempt_token` field. The SDK has scoped join, cancel and
+`FindMatchAsync` overloads which retain the same token across polling/retries.
+These paths enforce attempt ownership in real Backend/Mongo/Worker tests.
+The normal Unity `SelfHostedMatchmakingAttempt` still calls the unscoped SDK
+path; the new SDK/protobuf binaries have not been installed into its plugin
+bundle yet. Distributed fencing is therefore not active in normal Unity play.
 
 ## Token authority
 
@@ -48,29 +51,67 @@ identify an expired credential, but never makes it eligible for new admission.
 This distinction will allow safe cleanup of an original pair after admission
 expiry without selecting another attempt for the same account.
 
+## Transactional queue ownership
+
+`BattleMatchQueueStore.JoinAttemptAsync` and `CancelAttemptAsync` use the same
+Mongo client, snapshot transaction and majority write concern as pair allocation.
+Each ticket carries its attempt ID and signed admission deadline. Each pair
+carries two attempt IDs in the same order as its two players. No participant
+receives the other participant's token. Legacy rows default to no attempt scope.
+
+`battle_queue_attempts` records the exact player/attempt identity, signed
+issuance/expiry, state, optional match ID, retention deadline and revision.
+States are `waiting`, `paired`, `cancelling`, `cancelled` and `closed`.
+Every admission writes its receipt in the same transaction as ticket/pair
+changes. A cancellation before first admission inserts the same receipt ID,
+so racing first inserts or receipt updates conflict and retry rather than
+publishing two ownership outcomes. A cancelled/closed attempt cannot recreate
+a ticket; a paired attempt whose match was released becomes closed.
+
+Cancellation deletes only its exact ticket or captures only its exact ordered
+pair. An old request for another attempt returns `not-queued` and never selects
+the player's current pair. Paired cancellation records `cancelling`, then the
+existing Worker/terminal-acceptance coordinator must still prove and store the
+prestart result before releasing that pair. An expired valid token may identify
+its original pair but does not create a new cancellation receipt.
+
+Replacing an expired waiting ticket closes other waiting receipts for that
+player, so an older still-valid credential cannot reenter after replacement.
+Receipt shape, lifetime, revision, state/match binding and ticket/pair coherence
+are validated before use. Corruption is rejected rather than reset into a
+fresh admission. Candidate receipt reads are bounded. Transaction operations
+have a 30-second linked cancellation deadline and bounded duplicate-key retries.
+
+Receipts have a separate `RetainUntilUtc` TTL index, exactly five minutes beyond
+the signed admission expiry. This transport policy keeps tombstones past any
+in-flight 30-second admission operation at the expiry boundary. The HTTP join
+route captures fresh server time again immediately before the queue operation,
+after asynchronous allocation/presentation checks. Pruning is cleanup, never
+admission authority. Queue lifetime validation rejects retention-date overflow.
+Trusted store callers must supply current server time, not replay a historical
+request timestamp. Multi-process deployments must maintain coherent server clocks.
+
+Scoped candidates pair only with scoped candidates. Legacy unscoped candidates
+remain in their own pool; legacy join/cancel cannot adopt or alter scoped tickets
+or pairs. This temporary compatibility partition prevents an older account-only
+request from bypassing the new ownership boundary while Unity migration is open.
+Unknown request fields and foreign/invalid credentials fail before allocation.
+The scoped SDK overloads reject empty credentials instead of falling back to an
+account-only mutation. `FindMatchAsync` maps a closed scoped attempt with an empty
+match/roster tuple to cancellation; it never interprets it as a new match.
+
 ## Required remaining integration
 
-1. Add a scoped request contract carrying the token and bind each waiting ticket
-   and ordered pair member to its validated attempt identity.
-2. In the same Mongo transaction that removes a waiting ticket or captures a pair,
-   persist a cancellation receipt scoped to player and attempt. A cancellation
-   arriving before its delayed join must prevent that join from creating a ticket.
-3. Every join/refresh/pair publication must check that receipt under transactional
-   write-conflict protection. Never select an account's newer ticket or pair
-   through an older attempt, including legacy unscoped requests.
-4. Retain receipts through the signed admission deadline. Pruning after that
-   deadline is safe only because new joins reject the expired token. Mongo TTL
-   cleanup delay must not affect authority. An expired cancellation with no
-   matching original ticket/pair must not reopen admission or create unlimited
-   historical receipts.
-5. Serialize token acquisition/search/cancel ownership in the normal Unity
-   attempt, preserve the same token through retries, install matching portable
-   binaries, and test cancellation-before-join, delayed old cancellation after
-   requeue, concurrent independent Backend stores, restart and expiry.
+- Acquire and preserve one credential in normal Unity search/cancel ownership,
+  install matching SDK/protobuf binaries, and audit native Play Mode cancellation
+  and admission with the actual recovered adapter.
+- Exercise scoped requests across real Backend process restart and the full
+  two-Unity-client gameplay path, including Android and Linux runtime coverage.
+- Coordinate cancellation intent with registration before a frozen manifest is
+  available. A missing manifest or unavailable Worker still requires retry;
+  the existing control flow does not yet guarantee a completed early pair cancel.
 
-Only after those steps are proven can B31/B36 claim distributed cancellation
-ownership. Registration before a frozen manifest is available, complete recovered
-UI entry, two actual Unity clients and Linux gameplay remain separate open work.
+These boundaries keep B31/B36 and the overall BattleServer objective partial.
 
 ## Verification
 
@@ -80,4 +121,18 @@ mutation of every token byte, noncanonical encodings, wrong key, unsupported
 version and invalid time. The native authenticated queue fixture verifies token
 issuance and advertised expiry, rejects unauthenticated issuance, and checks
 that issuance creates neither a queue ticket nor a durable pair. These are
-credential-boundary tests, not proof of the unimplemented scoped queue lifecycle.
+credential-boundary tests. The native `--queue-attempts-only` fixture also checks
+cancellation before first join, old cancellation after requeue/pairing, legacy
+refusal, replacement of expired tickets, retained/pruned receipt behavior,
+corruption rejection, and 32 concurrent pairing/cancellation races across two
+independent stores. `--queue-live` sends real authenticated protobuf requests,
+rejects a foreign player's credential, exercises scoped SDK search/grant download,
+cancels its registered Worker match, and verifies stale HTTP cancellation cannot
+delete the replacement ticket. Existing manifest/result regression tests remain
+separate. No normal Unity or Linux gameplay proof is inferred from these tests.
+
+The standard Windows and Linux smoke scripts invoke `--queue-attempts-only`
+after initializing their disposable Mongo replica set. The Windows script and
+standalone live queue/manifest suites pass at this checkpoint; adding the same
+command to the Linux script is not Linux execution evidence. The current
+protocol total is 1,307, including eight additive wire/empty-scope SDK guards.

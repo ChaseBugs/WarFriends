@@ -115,3 +115,10 @@ Server/src/War.Infrastructure/BattleQueueAttemptIdentity.cs text eol=lf
 Server/src/War.Infrastructure/BattleQueueAttemptTokens.cs text eol=lf
 Server/tests/War.Protocol.Tests/BattleQueueAttemptTokenTests.cs text eol=lf
 Server/docs/QUEUE_ATTEMPT_FENCING.md text eol=lf
+
+Server/src/War.Persistence/BattleQueueAttemptDocument.cs text eol=lf
+Server/src/War.Persistence/BattleMatchQueueStore.Attempts.cs text eol=lf
+Server/src/War.Persistence/BattleMatchQueueStore.AttemptReceipts.cs text eol=lf
+Server/tests/War.Battle.Tests/QueueAttemptStoreTests.cs text eol=lf
+Server/tests/War.Battle.Tests/ScopedQueueLiveChecks.cs text eol=lf
+Server/tests/War.Protocol.Tests/QueueAttemptWireTests.cs text eol=lf

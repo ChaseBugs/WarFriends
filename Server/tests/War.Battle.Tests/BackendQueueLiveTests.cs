@@ -350,6 +350,12 @@ internal static class BackendQueueLiveTests
                 throw new Exception("Cancellation reused a terminal match identity.");
             }
 
+            if ((await left.CancelMatchQueueAsync(tokens[0], deadline.Token)).Code != "cancelled")
+            {
+                throw new Exception("Legacy fixture pair could not release before scoped queue checks.");
+            }
+
+            await ScopedQueueLiveChecks.RunAsync(left, right, tokens, deadline.Token);
             Console.WriteLine("PASS: deferred pair, stable grants, terminal revocation, Worker crash recovery and rematch");
         }
         finally

@@ -100,8 +100,11 @@ references and the same 17 preexisting NGUI sprite mismatches.
 
 ## Remaining boundary
 
-The account-scoped queue API has no distributed attempt ID. Client serialization
-is per adapter, not cross-component or cross-process cancellation fencing.
+The normal Unity attempt still uses account-scoped queue requests. New scoped
+HTTP/SDK paths now enforce distributed attempt ownership as detailed in
+[queue attempt fencing](QUEUE_ATTEMPT_FENCING.md), but the Unity adapter and its
+plugin binaries have not been migrated to them. Its serialization remains per
+adapter until that migration and native verification are complete.
 The server now cancels a registered prestart pair through hash-bound Worker
 control and accepts its validated terminal result before releasing both players.
 The Client accepts the resulting `cancelled` response; running or unavailable

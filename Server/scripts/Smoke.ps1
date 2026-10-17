@@ -58,6 +58,8 @@ try {
     $testDll=Join-Path $serverRoot 'tests/War.Battle.Tests/bin/Debug/net10.0/War.Battle.Tests.dll'
     & dotnet $testDll --init-mongo-replica-set "mongodb://127.0.0.1:$MongoPort/?directConnection=true" wfSmoke "127.0.0.1:$MongoPort"
     if($LASTEXITCODE -ne 0) { throw 'MongoDB replica-set initiation failed' }
+    & dotnet $testDll --queue-attempts-only $env:Mongo__Uri
+    if($LASTEXITCODE -ne 0) { throw 'Scoped queue attempt checks failed' }
     foreach($project in @('War.Backend','War.BattleServer')) {
         $dll=Join-Path $serverRoot "src/$project/bin/Debug/net10.0/$project.dll"
         $processes+=Start-Process dotnet -ArgumentList ('"'+$dll+'"') -WorkingDirectory (Join-Path $serverRoot "src/$project") -RedirectStandardOutput (Join-Path $runRoot "$project.log") -RedirectStandardError (Join-Path $runRoot "$project.error.log") -PassThru -WindowStyle Hidden

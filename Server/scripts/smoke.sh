@@ -18,6 +18,7 @@ export Battle__Port=30080 Battle__ServerId=local-1 Battle__PublicHost=127.0.0.1 
 "${MONGOD:-mongod}" --dbpath "$run_root/mongo" --bind_ip 127.0.0.1 --port 27028 --replSet wfSmoke --logpath "$run_root/mongo.log" &
 pids+=("$!")
 dotnet "$server_root/tests/War.Battle.Tests/bin/Debug/net10.0/War.Battle.Tests.dll" --init-mongo-replica-set 'mongodb://127.0.0.1:27028/?directConnection=true' wfSmoke 127.0.0.1:27028
+dotnet "$server_root/tests/War.Battle.Tests/bin/Debug/net10.0/War.Battle.Tests.dll" --queue-attempts-only "$Mongo__Uri"
 for app in War.Backend War.BattleServer; do
     dotnet "$server_root/src/$app/bin/Debug/net10.0/$app.dll" >"$run_root/$app.log" 2>&1 &
     pids+=("$!")

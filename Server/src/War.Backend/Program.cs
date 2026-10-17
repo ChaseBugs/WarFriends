@@ -269,17 +269,32 @@ api.MapPost("/battle/queue/attempt", async (HttpContext context, AccountStore ac
 });
 api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy,
     BattleAllocationStore allocations, BattlePlayerPresentationSource presentations, BattleMatchQueueStore queue,
-    BattleManifestSnapshotStore snapshots,IServiceProvider services, BattleMatchProvisioner provisioner) =>
+    BattleManifestSnapshotStore snapshots,IServiceProvider services, BattleMatchProvisioner provisioner,
+    BattleQueueAttemptTokens attemptTokens) =>
 {
     string? playerId = await BattlePlayerId(ctx, accounts, legacy);
     if (playerId == null) return Error(401, "unauthorized", "Authentication required.");
     var request = await Read(ctx, MatchQueueRequest.Parser);
-    if (request.CalculateSize() != 0) return Error(400, "invalid_matchmaking_request", "Matchmaking request must be empty.");
+    if (!request.Equals(new MatchQueueRequest { AttemptToken = request.AttemptToken }))
+        return Error(400, "invalid_matchmaking_request", "Unknown matchmaking request fields.");
+    DateTimeOffset now = DateTimeOffset.UtcNow;
+    BattleQueueAttemptIdentity? attempt = null;
+    if (request.AttemptToken.Length != 0)
+    {
+        try
+        {
+            attempt = attemptTokens.ValidateForJoin(request.AttemptToken, playerId, now.ToUnixTimeSeconds());
+        }
+        catch (InvalidDataException)
+        {
+            return Error(400, "invalid_queue_attempt", "Invalid or expired queue attempt credential.");
+        }
+    }
     if (matchmakingCompatibilityKey == null) return Error(503, "matchmaking_disabled", "Matchmaking policy is not configured.");
     BattlePairingResult result;
     try
     {
-        var existing=await queue.Existing(playerId,ctx.RequestAborted);
+        var existing=attempt.HasValue?null:await queue.ExistingUnscoped(playerId,ctx.RequestAborted);
         if(existing!=null)result=existing;
         else
         {
@@ -295,7 +310,9 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
                 services.GetRequiredService<BattleManifestFactory>().ValidatePresentation(view);
             }
             catch(InvalidDataException){return Error(409,"battle_presentation_invalid","A complete durable player presentation is required before matchmaking.");}
-            result=await queue.Join(playerId,matchmakingCompatibilityKey,DateTimeOffset.UtcNow,ctx.RequestAborted);
+            result=attempt.HasValue
+                ?await queue.JoinAttemptAsync(attempt.Value,matchmakingCompatibilityKey,DateTimeOffset.UtcNow,ctx.RequestAborted)
+                :await queue.Join(playerId,matchmakingCompatibilityKey,now,ctx.RequestAborted);
         }
     }
     catch (InvalidDataException) { return Error(409, "matchmaking_conflict", "Player has incompatible matchmaking authority."); }
@@ -315,13 +332,30 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
     return Proto(reply);
 });
 api.MapPost("/battle/queue/cancel", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy, BattleMatchQueueStore queue,
-    BattlePairedCancellation cancellation) =>
+    BattlePairedCancellation cancellation, BattleQueueAttemptTokens attemptTokens) =>
 {
     string? playerId = await BattlePlayerId(ctx, accounts, legacy);
     if (playerId == null) return Error(401, "unauthorized", "Authentication required.");
     var request = await Read(ctx, MatchQueueRequest.Parser);
-    if (request.CalculateSize() != 0) return Error(400, "invalid_matchmaking_request", "Matchmaking request must be empty.");
-    var decision = await queue.CancelWithPairAsync(playerId, DateTimeOffset.UtcNow, ctx.RequestAborted);
+    if (!request.Equals(new MatchQueueRequest { AttemptToken = request.AttemptToken }))
+        return Error(400, "invalid_matchmaking_request", "Unknown matchmaking request fields.");
+    DateTimeOffset now = DateTimeOffset.UtcNow;
+    BattleQueueAttemptIdentity? attempt = null;
+    if (request.AttemptToken.Length != 0)
+    {
+        try
+        {
+            attempt = attemptTokens.ValidateForCancellation(request.AttemptToken, playerId, now.ToUnixTimeSeconds());
+        }
+        catch (InvalidDataException)
+        {
+            return Error(400, "invalid_queue_attempt", "Invalid queue attempt credential.");
+        }
+    }
+
+    var decision = attempt.HasValue
+        ? await queue.CancelAttemptAsync(attempt.Value, now, ctx.RequestAborted)
+        : await queue.CancelWithPairAsync(playerId, now, ctx.RequestAborted);
     string code = decision.Code;
     if (code == "already-paired")
     {

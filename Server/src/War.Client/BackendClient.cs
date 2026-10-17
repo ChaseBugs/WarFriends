@@ -47,7 +47,37 @@ namespace War.Client
 
         public Task<MatchQueueReply> JoinMatchQueueAsync(string token, CancellationToken ct) => Send("v1/battle/queue/join", new MatchQueueRequest(), token, MatchQueueReply.Parser, ct);
         public Task<MatchQueueReply> CancelMatchQueueAsync(string token, CancellationToken ct) => Send("v1/battle/queue/cancel", new MatchQueueRequest(), token, MatchQueueReply.Parser, ct);
-        public async Task<MatchConnectionGrant> FindMatchAsync(string token, TimeSpan timeout, CancellationToken ct)
+        /// <summary>Joins one server-issued attempt without adopting another attempt's queue entry.</summary>
+        public Task<MatchQueueReply> JoinMatchQueueAsync(string token, string attemptToken, CancellationToken ct)
+        {
+            RequireAttemptToken(attemptToken);
+            return Send("v1/battle/queue/join", new MatchQueueRequest { AttemptToken = attemptToken },
+                token, MatchQueueReply.Parser, ct);
+        }
+
+        /// <summary>Cancels only the queue or pair owned by this server-issued attempt.</summary>
+        public Task<MatchQueueReply> CancelMatchQueueAsync(string token, string attemptToken, CancellationToken ct)
+        {
+            RequireAttemptToken(attemptToken);
+            return Send("v1/battle/queue/cancel", new MatchQueueRequest { AttemptToken = attemptToken },
+                token, MatchQueueReply.Parser, ct);
+        }
+
+        public Task<MatchConnectionGrant> FindMatchAsync(string token, TimeSpan timeout, CancellationToken ct)
+        {
+            return FindMatchCoreAsync(token, null, timeout, ct);
+        }
+
+        /// <summary>Keeps the same attempt credential through polling and deferred provisioning retries.</summary>
+        public Task<MatchConnectionGrant> FindMatchAsync(
+            string token, string attemptToken, TimeSpan timeout, CancellationToken ct)
+        {
+            RequireAttemptToken(attemptToken);
+            return FindMatchCoreAsync(token, attemptToken, timeout, ct);
+        }
+
+        private async Task<MatchConnectionGrant> FindMatchCoreAsync(
+            string token, string attemptToken, TimeSpan timeout, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(token) || timeout < TimeSpan.FromSeconds(5) || timeout > TimeSpan.FromMinutes(5))
                 throw new ArgumentException("Matchmaking requires a token and a 5-second to 5-minute timeout.");
@@ -57,7 +87,12 @@ namespace War.Client
                 while (true)
                 {
                     MatchQueueReply reply;
-                    try { reply = await JoinMatchQueueAsync(token, deadline.Token).ConfigureAwait(false); }
+                    try
+                    {
+                        reply = attemptToken == null
+                            ? await JoinMatchQueueAsync(token, deadline.Token).ConfigureAwait(false)
+                            : await JoinMatchQueueAsync(token, attemptToken, deadline.Token).ConfigureAwait(false);
+                    }
                     catch (BackendStatusException e) when (e.StatusCode == 503 && e.Code == "match_provision_deferred")
                     {
                         await Task.Delay(500, deadline.Token).ConfigureAwait(false);
@@ -69,6 +104,15 @@ namespace War.Client
                             throw new InvalidOperationException("Backend returned invalid waiting matchmaking authority.");
                         await Task.Delay(500, deadline.Token).ConfigureAwait(false);
                         continue;
+                    }
+                    if (attemptToken != null && (reply.Code == "cancelled" || reply.Code == "attempt-completed"))
+                    {
+                        if (reply.MatchId.Length != 0 || reply.PlayerIds.Count != 0)
+                        {
+                            throw new InvalidOperationException("Closed queue attempt returned unexpected match authority.");
+                        }
+
+                        throw new OperationCanceledException("Queue attempt no longer admits a match.", deadline.Token);
                     }
                     if (reply.Code != "paired" ||
                         !System.Text.RegularExpressions.Regex.IsMatch(reply.MatchId ?? "", @"\Am[0-9a-f]{32}\z") ||
@@ -85,6 +129,14 @@ namespace War.Client
                 }
             }
         }
+        private static void RequireAttemptToken(string attemptToken)
+        {
+            if (string.IsNullOrWhiteSpace(attemptToken))
+            {
+                throw new ArgumentException("Scoped matchmaking requires its original attempt credential.");
+            }
+        }
+
         private async Task<T> Send<T>(string path, IMessage body, string token, MessageParser<T> parser, CancellationToken ct) where T : IMessage<T>
         {
             using (var request = new HttpRequestMessage(body == null ? HttpMethod.Get : HttpMethod.Post, path))

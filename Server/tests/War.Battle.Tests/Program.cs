@@ -67,6 +67,12 @@ if(args is ["--matchmaking-client-only"])
     return;
 }
 
+if (args is ["--queue-attempts-only", var attemptMongoUri])
+{
+    await QueueAttemptStoreTests.RunAsync(attemptMongoUri);
+    return;
+}
+
 if(args is ["--queue-live",var queueMongoUri])
 {await BackendQueueLiveTests.Run(queueMongoUri);return;}
 

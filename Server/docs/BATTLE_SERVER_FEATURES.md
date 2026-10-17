@@ -11,8 +11,10 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 [Queue attempt credentials](QUEUE_ATTEMPT_FENCING.md) now provide authenticated,
 stateless protobuf issuance with player-bound, purpose-separated signed tokens.
 Admission expires after five minutes while cancellation can still identify the
-original scope. Queue/pair binding, transactional cancellation receipts and
-normal Unity use remain required before distributed attempt fencing is active.
+original scope. Scoped HTTP/SDK join/cancel/search now bind tickets and ordered
+pairs to attempts and write cancellation receipts transactionally. Real Mongo
+races and Backend/Worker HTTP checks cover old-request isolation. Normal Unity
+still uses the unscoped SDK path; its migration and native proof remain open.
 
 Paired cancellation now captures the exact allocator pair inside its decision
 transaction. A signed, manifest-bound targeted Worker result lookup can retrieve
