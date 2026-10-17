@@ -137,3 +137,8 @@ plus restart recovery. SDK manifest digests match all seven installed DLLs.
 Static asset audit finds no missing scripts or broken references; the seventeen
 previously documented NGUI sprite selections remain unchanged. These results
 still do not open or verify normal co-op combat admission.
+
+The [obstacle interruption checkpoint](COOP_OBSTACLE_INTERRUPTION.md) records
+six reversed phases across 78 source frames. Six independent replay frames
+exceed unchanged tolerances, so its strict parity gate intentionally fails.
+This is a reproducible counterexample, not implemented interruption support.

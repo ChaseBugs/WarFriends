@@ -1637,3 +1637,8 @@ B22 now models the two initial gameplay-phase partial-weight forms explicitly
 in the host and SDK after independent fresh-prefab replay. Unreviewed weight
 combinations remain rejected. See [initial obstacle frames](COOP_OBSTACLE_FIRE_FRAMES.md).
 Interrupted preparation and normal co-op combat remain incomplete.
+
+The [obstacle interruption checkpoint](COOP_OBSTACLE_INTERRUPTION.md) records
+six reversed phases across 78 source frames. Six independent replay frames
+exceed unchanged tolerances, so its strict parity gate intentionally fails.
+This is a reproducible counterexample, not implemented interruption support.
