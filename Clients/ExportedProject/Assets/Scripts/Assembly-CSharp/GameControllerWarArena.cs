@@ -75,6 +75,7 @@ public class GameControllerWarArena : GameControllerPVP
 
 	public override void StartRandomMatchMaking(float connectDelay = 1.5f)
 	{
+        RequireAbortRecoveryComplete();
 		LoadingDialog.SetLook(smallLook: true);
 		Screen.sleepTimeout = -1;
 		PlayerController.players.Clear();
@@ -134,6 +135,11 @@ public class GameControllerWarArena : GameControllerPVP
 
 	public override void FinishGame()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		if (MatchManager.isReconnect)
 		{
 			Disconnect();
@@ -256,6 +262,11 @@ public class GameControllerWarArena : GameControllerPVP
 
 	public override void Quit()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		if (MatchManager.beforeMatch && mBothPlayersConnected)
 		{
 			WarArena.instance.TakePlayerLive();

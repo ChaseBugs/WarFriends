@@ -255,6 +255,20 @@ public class MapManager : Singleton<MapManager>
         }
     }
 
+    /// <summary>Discards a loaded abort scene even when its stopped loader never registered the map definition.</summary>
+    public void DiscardAbortedScene()
+    {
+        DestroyCurrentScene();
+        foreach (GameObject root in GameObject.FindGameObjectsWithTag(TagsAndLayers.mapDefinition))
+        {
+            // Initializing a late native load here could start gameplay while recovery is tearing it down.
+            if (root.GetComponent<MapDefinition>() != null)
+            {
+                UnityEngine.Object.Destroy(root);
+            }
+        }
+    }
+
 	public void ResyncShields()
 	{
 		foreach (MapDefinition.DefendPosition playersPosition in currentMapDef.playersPositions)

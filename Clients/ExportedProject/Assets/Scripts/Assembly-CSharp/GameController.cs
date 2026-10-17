@@ -4,9 +4,14 @@ using System.Collections.Generic;
 using CodeStage.AdvancedFPSCounter;
 using Prime31;
 using UnityEngine;
+using War.Protocol;
 
 public class GameController : Singleton<GameController>
 {
+    private const float PlayerDeactivationDelaySeconds = 0.5f;
+    private const float LevelReleaseDelaySeconds = 0.2f;
+    private const float MenuPreparationDelaySeconds = 0.5f;
+
 	public enum GameEndReason
 	{
 		None = 0,
@@ -75,6 +80,7 @@ public class GameController : Singleton<GameController>
 	private ChallengeMessage mMessage;
 
 	private IGameController mMainController;
+    private bool _isSelfHostedAbortRecovery;
 
 	private PlayerController mOpponent;
 
@@ -92,6 +98,9 @@ public class GameController : Singleton<GameController>
 
 	private string mLog;
 
+    /// <summary>Gets whether an aborted self-hosted match is still releasing its scene and UI resources.</summary>
+    public bool IsSelfHostedAbortRecovery => _isSelfHostedAbortRecovery;
+
 	public GameState gameState { get; private set; }
 
 	public IGameController mainController
@@ -102,6 +111,11 @@ public class GameController : Singleton<GameController>
 		}
 		set
 		{
+            if (_isSelfHostedAbortRecovery && value != mMainController)
+            {
+                throw new InvalidOperationException("Finish aborted battle recovery before changing controllers.");
+            }
+
 			EnableDisableController(gameControllerCampaign, value);
 			EnableDisableController(gameControllerCoop, value);
 			EnableDisableController(gameControllerDeathMatch, value);
@@ -365,6 +379,11 @@ public class GameController : Singleton<GameController>
 
 	public void StartGame(string mapName = "ModernTown")
 	{
+        if (_isSelfHostedAbortRecovery)
+        {
+            throw new InvalidOperationException("Finish aborted battle recovery before loading a new map.");
+        }
+
 		mGameCreated = null;
 		mainController.LoadingStarted();
 		StartCoroutine(LoadAndStartNewMap(mapName));
@@ -668,6 +687,11 @@ public class GameController : Singleton<GameController>
 
 	public void FinishGame()
 	{
+        if (_isSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		Debug.Log("Finish Game");
 		SoundsManager.Instance.PlaySound((!wonLastGame) ? lostSound : winSound);
 		mIsRestart = false;
@@ -783,6 +807,11 @@ public class GameController : Singleton<GameController>
 
 	public void StopGame(bool switchScreen)
 	{
+        if (_isSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		FreeLevel(switchScreen);
 		gameEndReason = GameEndReason.Forfeit;
 		if (this.GameEnded != null)
@@ -797,83 +826,172 @@ public class GameController : Singleton<GameController>
 		StartCoroutine(RadicalRoutine.Run(Free(switchScreen, wasError)));
 	}
 
-	private IEnumerator Free(bool switchScreen, bool wasError)
-	{
-		Screen.sleepTimeout = -2;
-		gameState = GameState.Loading;
-		LoadingDialog.ShowLoading(Localization.Localize("ID_LOADING"), showCancelButton: false, hideBackgroundElements: true);
-		if (DebugSettings.debugEnabled && mLog != null)
-		{
-			LoadingDialog.SetText(mLog);
-		}
-		yield return new WaitForRealSeconds(0.5f);
-		PlayerController.currentPlayer.gameObject.SetActive(value: false);
-		Singleton<GameCamera>.instance.Disable();
-		LightmapSettings.lightmaps = new LightmapData[0];
-		LightmapSettings.lightProbes = null;
-		yield return new WaitForRealSeconds(0.2f);
-		TimeManager.Reset();
-		Ammo.ammoPool.FreeWholePool();
-		ObjectPoolDatabase.ammoPool.FreeWholePool();
-		ObjectPoolDatabase.networkPool.FreeWholePool();
-		Singleton<MapManager>.instance.DestroyCurrentScene();
-		if (this.SceneFreed != null)
-		{
-			this.SceneFreed();
-		}
-		mainController.FreeLevel();
-		EnemyLeveledWeapon.ClearModels();
-		PlayerWeapon.ClearModels();
-		Singleton<UpgradesManager>.instance.UnloadAll();
-		Singleton<SoundsManager3D>.instance.UnloadSounds();
-		CardManager.instance.ReleaseCards(PlayerController.currentPlayer.playerProperties.chosenCards, isOpponnetCard: false, isCurrentPlayer: true);
-		if (mOpponent != null)
-		{
-			CardManager.instance.ReleaseCards(mOpponent.playerProperties.chosenCards, isOpponnetCard: true, isCurrentPlayer: false);
-		}
-		if (friend != null)
-		{
-			CardManager.instance.ReleaseCards(friend.playerProperties.chosenCards, isOpponnetCard: false, isCurrentPlayer: false);
-		}
-		TimeManager.instance.EndOfEndGame();
-		yield return new WaitForRealSeconds(0.2f);
-		Resources.UnloadUnusedAssets();
-		yield return new WaitForRealSeconds(0.5f);
-		if (!isMission)
-		{
-			PlayerAnalytics.instance.UseLastBoughtUnit();
-		}
-		CamosManager.instance.LoadAll();
-		GuiElementSingle<Background>.instance.LoadParallax();
-		yield return StartCoroutine(Singleton<AtlasPreparer>.instance.LoadMenuClearGameCoroutine());
-		yield return new WaitForRealSeconds(0.2f);
-		Singleton<DogTagManager>.instance.ResetLocalDogtags();
-		UICamera.instance.cachedCamera.clearFlags = CameraClearFlags.Nothing;
-		gameState = GameState.Menu;
-		Singleton<Chat>.instance.Connect();
-		if (mIsAccountChanged)
-		{
-			mIsAccountChanged = false;
-			GameLoginManager.instance.AccountChange();
-		}
-		else if (!mIsRestart)
-		{
-			LoadingDialog.Hide();
-			if (wasError)
-			{
-				Singleton<BeanstalkServerManager>.instance.CancelAllRequests();
-				GameLoginManager.Relog();
-			}
-			else if (switchScreen)
-			{
-				mainController.ShowResultsScreen();
-			}
-			else
-			{
-				Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<MainScreen>.instance);
-			}
-		}
-	}
+    private IEnumerator Free(bool switchScreen, bool wasError, LevelReleaseReason reason = LevelReleaseReason.Normal)
+    {
+        Screen.sleepTimeout = -2;
+        gameState = GameState.Loading;
+        LoadingDialog.ShowLoading(Localization.Localize("ID_LOADING"), showCancelButton: false, hideBackgroundElements: true);
+        if (DebugSettings.debugEnabled && mLog != null)
+        {
+            LoadingDialog.SetText(mLog);
+        }
+        yield return new WaitForRealSeconds(PlayerDeactivationDelaySeconds);
+        PlayerController.currentPlayer.gameObject.SetActive(value: false);
+        Singleton<GameCamera>.instance.Disable();
+        LightmapSettings.lightmaps = new LightmapData[0];
+        LightmapSettings.lightProbes = null;
+        yield return new WaitForRealSeconds(LevelReleaseDelaySeconds);
+        ReleaseLoadedLevelResources(reason);
+        yield return new WaitForRealSeconds(LevelReleaseDelaySeconds);
+        Resources.UnloadUnusedAssets();
+        yield return new WaitForRealSeconds(MenuPreparationDelaySeconds);
+        if (reason == LevelReleaseReason.Normal && !isMission)
+        {
+            PlayerAnalytics.instance.UseLastBoughtUnit();
+        }
+        CamosManager.instance.LoadAll();
+        GuiElementSingle<Background>.instance.LoadParallax();
+        yield return StartCoroutine(Singleton<AtlasPreparer>.instance.LoadMenuClearGameCoroutine());
+        yield return new WaitForRealSeconds(LevelReleaseDelaySeconds);
+        Singleton<DogTagManager>.instance.ResetLocalDogtags();
+        UICamera.instance.cachedCamera.clearFlags = CameraClearFlags.Nothing;
+        gameState = GameState.Menu;
+        if (reason == LevelReleaseReason.SelfHostedAbort)
+        {
+            yield break;
+        }
+
+        Singleton<Chat>.instance.Connect();
+        if (mIsAccountChanged)
+        {
+            mIsAccountChanged = false;
+            GameLoginManager.instance.AccountChange();
+        }
+        else if (!mIsRestart)
+        {
+            LoadingDialog.Hide();
+            if (wasError)
+            {
+                Singleton<BeanstalkServerManager>.instance.CancelAllRequests();
+                GameLoginManager.Relog();
+            }
+            else if (switchScreen)
+            {
+                mainController.ShowResultsScreen();
+            }
+            else
+            {
+                Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<MainScreen>.instance);
+            }
+        }
+    }
+
+    private void ReleaseLoadedLevelResources(LevelReleaseReason reason)
+    {
+        TimeManager.Reset();
+        Ammo.ammoPool.FreeWholePool();
+        ObjectPoolDatabase.ammoPool.FreeWholePool();
+        ObjectPoolDatabase.networkPool.FreeWholePool();
+        if (reason == LevelReleaseReason.SelfHostedAbort)
+        {
+            Singleton<MapManager>.instance.DiscardAbortedScene();
+        }
+        else
+        {
+            Singleton<MapManager>.instance.DestroyCurrentScene();
+        }
+
+        if (this.SceneFreed != null)
+        {
+            this.SceneFreed();
+        }
+
+        mainController.FreeLevel();
+        EnemyLeveledWeapon.ClearModels();
+        PlayerWeapon.ClearModels();
+        Singleton<UpgradesManager>.instance.UnloadAll();
+        Singleton<SoundsManager3D>.instance.UnloadSounds();
+        // An abort can arrive before selected-card strings have been initialized.
+        CardManager.instance.ReleaseCards(
+            PlayerController.currentPlayer.playerProperties.chosenCards ?? string.Empty,
+            isOpponnetCard: false,
+            isCurrentPlayer: true);
+        if (mOpponent != null)
+        {
+            CardManager.instance.ReleaseCards(
+                mOpponent.playerProperties.chosenCards ?? string.Empty,
+                isOpponnetCard: true,
+                isCurrentPlayer: false);
+        }
+        if (friend != null)
+        {
+            CardManager.instance.ReleaseCards(
+                friend.playerProperties.chosenCards ?? string.Empty,
+                isOpponnetCard: false,
+                isCurrentPlayer: false);
+        }
+        TimeManager.instance.EndOfEndGame();
+    }
+
+    /// <summary>Recovers a confirmed abort without reporting Forfeit or projecting a combat outcome.</summary>
+    internal void RecoverSelfHostedAbort(GameControllerOnline controller, SelfHostedBattleClient source)
+    {
+        if (_isSelfHostedAbortRecovery || controller == null || mainController != controller ||
+            !controller.OwnsSelfHostedClient(source) || source == null ||
+            SelfHostedBattleClient.Active != source || !source.OwnsMatch || source.State == null ||
+            source.State.Phase != BattlePhase.Aborted || source.State.WinnerPlayerId.Length != 0 ||
+            source.State.RewardEligible)
+        {
+            return;
+        }
+
+        GameState previousState = gameState;
+        _isSelfHostedAbortRecovery = true;
+        StopAllCoroutines();
+        Singleton<MapManager>.instance.StopAllCoroutines();
+        controller.PrepareSelfHostedAbort(source);
+        gameIsRunning = false;
+        gameEndReason = GameEndReason.None;
+        source.SuspendAbortedMatch();
+        gameState = GameState.Loading;
+        MatchManager.matchState = MatchState.GameCancelled;
+        Screen.sleepTimeout = SleepTimeout.SystemSetting;
+        StartCoroutine(RecoverSelfHostedAbortRoutine(controller, source, previousState));
+    }
+
+    private IEnumerator RecoverSelfHostedAbortRoutine(
+        GameControllerOnline controller, SelfHostedBattleClient source, GameState previousState)
+    {
+        // Let the terminal callback unwind before releasing its presenters and loading coroutines.
+        yield return null;
+        LoadingDialog.ShowLoading(Localization.Localize("ID_LOADING"), showCancelButton: false,
+            hideBackgroundElements: true);
+        Singleton<Recording>.instance.CancelRecording();
+        yield return StartCoroutine(Singleton<MapManager>.instance.WaitForSceneLoadRoutine());
+        if (previousState != GameState.Menu)
+        {
+            yield return StartCoroutine(Free(false, false, LevelReleaseReason.SelfHostedAbort));
+        }
+        else
+        {
+            Singleton<DogTagManager>.instance.ResetLocalDogtags();
+            gameState = GameState.Menu;
+        }
+
+        controller.CompleteSelfHostedAbort(source);
+        source.FinishAbortedMatchRecovery();
+        LoadingDialog.Hide();
+        Singleton<GuiManager>.instance.ShowMainScreen();
+        _isSelfHostedAbortRecovery = false;
+        ConfirmDialog.ShowAlert(null, Localization.Localize("ID_CONFIRM_INFO"),
+            Localization.Localize("ID_BATTLECANCELED"));
+    }
+
+    private enum LevelReleaseReason
+    {
+        Normal,
+        SelfHostedAbort,
+    }
 
 	public void Quit()
 	{

@@ -149,6 +149,7 @@ public class GameControllerCoop : GameControllerOnline
 
 	public new void StartMultiplayerGame(DatabasePlayer otherPlayer, out string roomName, out bool isGoodPing)
 	{
+        RequireAbortRecoveryComplete();
 		LoadingDialog.SetLook(smallLook: false);
 		base.StartMultiplayerGame(otherPlayer, out roomName, out isGoodPing);
 		if (Singleton<GameController>.instance.isCoop && isGoodPing)
@@ -165,6 +166,7 @@ public class GameControllerCoop : GameControllerOnline
 
 	public override void StartMultiplayerGame(string roomName, CloudRegionCode region)
 	{
+        RequireAbortRecoveryComplete();
 		LoadingDialog.SetLook(smallLook: false);
 		base.StartMultiplayerGame(roomName, region);
 		if (Singleton<GameController>.instance.isCoop)
@@ -357,6 +359,11 @@ public class GameControllerCoop : GameControllerOnline
 
 	public override void Quit()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		base.Quit();
 		MissionsManager.instance.QuitCurrentMission();
 	}
@@ -440,6 +447,11 @@ public class GameControllerCoop : GameControllerOnline
 
 	public override void Forfeit()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
 			// Base waits for the Worker receipt before the mode presents its local or shared outcome.
@@ -470,6 +482,11 @@ public class GameControllerCoop : GameControllerOnline
 
 	public override void FinishGame()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		StopAllCoroutines();
 		if (base.mMainController.isCoop)
 		{

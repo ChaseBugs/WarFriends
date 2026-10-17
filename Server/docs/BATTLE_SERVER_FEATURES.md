@@ -10,9 +10,11 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 [Abort scene recovery](ABORT_SCENE_RECOVERY.md) identifies the source Forfeit,
 co-op dog-tag and Photon Chat side effects that prevent reuse of generic stop
-methods. The map loader now retains its real native operation for progress and
-draining after its enumerator stops. Aborted controller/menu integration remains
-open; retaining the operation does not complete that feature.
+methods. Owner-bound callbacks now enter a separate recovery coroutine, retain
+ownership during native-load draining, and request menu recovery without ordinary
+result or Chat dispatch. Play Mode entry/ownership/reuse and registered/late-map
+discard gates pass. The whole resource/menu graph, callback failure recovery and
+two-client presentation remain unverified, so this feature is still partial.
 
 [Terminal room replay](TERMINAL_ROOM_REPLAY.md) fixes repeated frozen Ended/Aborted
 snapshots throwing before Unity state callbacks. Exact replay stays closed,

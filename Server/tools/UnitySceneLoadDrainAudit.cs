@@ -90,9 +90,11 @@ public static class UnitySceneLoadDrainAudit
                 GameObject.Find(MarkerName) != null,
                 "Recovery must finish only after the real scene has loaded, without losing final progress.");
             Require(!map.WaitForSceneLoadRoutine().MoveNext(), "A completed load must not block recovery again.");
+            await VerifyDiscardAsync(map);
             SessionState.SetBool(SessionKey, false);
             Debug.Log("PASS: actual source scene load retains progress after its enumerator stops; " +
-                "abort drain waits for native completion in Play Mode; no menu or combat proof.");
+                "abort drain waits for native completion and discards registered/unregistered maps without Init; " +
+                "Play Mode, no menu or combat proof.");
             EditorApplication.Exit(0);
         }
         catch (Exception failure)
@@ -122,6 +124,30 @@ public static class UnitySceneLoadDrainAudit
             new MapManager.MapEntry { name = "drain-fixture", levelPVPName = Path.GetFileNameWithoutExtension(path) },
         };
         return map;
+    }
+
+    private static async Task VerifyDiscardAsync(MapManager map)
+    {
+        for (int index = 0; index < 2; index++)
+        {
+            var root = new GameObject("DiscardedAbortMap");
+            root.SetActive(false);
+            var definition = root.AddComponent<MapDefinition>();
+            definition.floorTransform = root.transform;
+            definition.playersPositions = null;
+            root.SetActive(true);
+            map.currentMapDef = index == 0 ? definition : null;
+            map.DiscardAbortedScene();
+            DateTime deadline = DateTime.UtcNow.AddSeconds(TimeoutSeconds);
+            while (root != null)
+            {
+                Require(DateTime.UtcNow < deadline, "The discarded map survived deferred destruction.");
+                await Task.Yield();
+            }
+
+            Require(root == null && map.currentMapDef == null && GameObject.Find(MarkerName) != null,
+                "Abort discard must remove registered and late maps without initializing or deleting unrelated objects.");
+        }
     }
 
     private static void Require(bool condition, string message)

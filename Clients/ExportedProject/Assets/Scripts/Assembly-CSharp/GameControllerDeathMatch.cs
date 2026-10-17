@@ -25,6 +25,7 @@ public class GameControllerDeathMatch : GameControllerPVP
 
 	public override void StartRandomMatchMaking(float connectDelay = 1.5f)
 	{
+        RequireAbortRecoveryComplete();
 		LoadingDialog.SetLook(smallLook: true);
 		Screen.sleepTimeout = -1;
 		PlayerController.players.Clear();
@@ -127,8 +128,9 @@ public class GameControllerDeathMatch : GameControllerPVP
         }
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         CancelSelfHostedMatchmaking();
     }
 
@@ -338,6 +340,11 @@ public class GameControllerDeathMatch : GameControllerPVP
 
 	public override void Quit()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		base.Quit();
 		if (TutorialManagerPlayWarcards.instance.isTutorialRunning)
 		{

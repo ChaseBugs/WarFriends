@@ -49,6 +49,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private CancellationTokenSource lifetime;
     private SelfHostedMatchmakingAttempt matchmaking;
     private bool polling;
+    private bool _isAbortRecoverySuspended;
     private float nextPoll;
     private float nextBarrelPoll;
     private float nextArmyPoll;
@@ -146,6 +147,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     public Task MatchmakeWithRecoveredSession()
     {
+        RequireAbortRecoveryReleased();
         GameLoginManager login = Singleton<GameLoginManager>.instance;
         if (login == null || string.IsNullOrEmpty(login.accessToken))
             throw new InvalidOperationException("The recovered Backend session is not available.");
@@ -156,6 +158,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public async Task MatchmakeAndConnect(
         string backendEndpoint, string accessToken, int timeoutSeconds, bool allowLocalHttp)
     {
+        RequireAbortRecoveryReleased();
         if (destroyed)
         {
             throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
@@ -209,6 +212,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     /// <summary>Closes pending admission and waits for acknowledged cancellation before another search.</summary>
     public async Task CancelMatchmaking()
     {
+        RequireAbortRecoveryReleased();
         SelfHostedMatchmakingAttempt attempt = matchmaking;
         if (attempt == null)
         {
@@ -338,6 +342,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     /// <summary>Admits a direct trusted grant only when no account-scoped queue cleanup remains pending.</summary>
     public Task Connect(MatchConnectionGrant grant, ulong processedEventId = 0)
     {
+        RequireAbortRecoveryReleased();
         if (matchmaking != null)
         {
             throw new InvalidOperationException("Finish the pending matchmaking cleanup before direct admission.");
@@ -348,6 +353,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     private async Task ConnectCoreAsync(MatchConnectionGrant grant, ulong processedEventId)
     {
+        RequireAbortRecoveryReleased();
         if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
         if (connection != null) throw new InvalidOperationException("This component already owns a match session.");
         var preparedTracker = barrelCatalog == null ? null :
@@ -396,10 +402,44 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
     }
 
+    /// <summary>Stops delivery during abort cleanup while preserving the self-hosted ownership guard.</summary>
+    public void SuspendAbortedMatch()
+    {
+        if (!OwnsMatch || State == null || State.Phase != BattlePhase.Aborted)
+        {
+            throw new InvalidOperationException("Only a confirmed aborted match can suspend for recovery.");
+        }
+
+        _isAbortRecoverySuspended = true;
+        IsConnected = false;
+        lifetime.Cancel();
+    }
+
+    /// <summary>Releases the retained abort owner only after its scene cleanup has completed.</summary>
+    public void FinishAbortedMatchRecovery()
+    {
+        if (!_isAbortRecoverySuspended)
+        {
+            throw new InvalidOperationException("There is no suspended abort recovery to finish.");
+        }
+
+        Close();
+        _isAbortRecoverySuspended = false;
+    }
+
+    private void RequireAbortRecoveryReleased()
+    {
+        if (_isAbortRecoverySuspended)
+        {
+            throw new InvalidOperationException("Finish aborted battle cleanup before replacing its connection.");
+        }
+    }
+
     private void BeginSnapshotScope(MatchConnectionGrant grant)
     {
         // Host ticks and revisions are ordered inside one match, not across successive grants.
         State = null;
+        _isAbortRecoverySuspended = false;
         CoopEnemies = Array.Empty<CoopEnemyViewState>();
         matchId = grant.MatchId;
         LocalPlayerId = grant.PlayerId;
@@ -409,6 +449,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     /// <summary>Ask the Backend for a fresh capability using the recovered login session.</summary>
     public Task ReconnectWithRecoveredSession()
     {
+        RequireAbortRecoveryReleased();
         if (reconnectTask != null) return reconnectTask;
         if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
         if (connection == null || string.IsNullOrEmpty(matchId))
@@ -1079,6 +1120,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     private async void Update()
     {
+        if (_isAbortRecoverySuspended)
+        {
+            return;
+        }
+
         if (forfeitRecoveryActive) return;
         if (!IsConnected)
         {
@@ -1168,7 +1214,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     private void Apply(MatchReply reply)
     {
-        if (destroyed) return;
+        if (destroyed || _isAbortRecoverySuspended) return;
         if (!string.IsNullOrEmpty(matchId) &&
             (reply.Snapshot.MatchId != matchId || reply.Snapshot.ManifestHash != manifestHash))
         {
@@ -1228,7 +1274,16 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         destroyed = true;
         Close();
     }
-    public void LeaveMatch() { Close(); }
+    public void LeaveMatch()
+    {
+        if (_isAbortRecoverySuspended)
+        {
+            // Cleanup still needs this ownership guard to avoid legacy Photon fallback in recovered components.
+            return;
+        }
+
+        Close();
+    }
     private void OnRoomPhaseChanged(SelfHostedRoomPhase phase)
     {
         if (!destroyed && RoomPhaseChanged != null) RoomPhaseChanged(phase);

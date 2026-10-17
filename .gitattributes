@@ -156,3 +156,5 @@ Server/tools/UnityTerminalRoomReplayAudit.cs text eol=lf
 Server/docs/TERMINAL_ROOM_REPLAY.md text eol=lf
 Server/tools/UnitySceneLoadDrainAudit.cs text eol=lf
 Server/docs/ABORT_SCENE_RECOVERY.md text eol=lf
+Server/tools/AbortRecoveryControllerProbe.cs text eol=lf
+Server/tools/UnityAbortRecoveryRoutingAudit.cs text eol=lf

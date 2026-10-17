@@ -36,6 +36,9 @@ public abstract class GameControllerOnline : IGameController
 	private int mSelfHostedLocalStartCover = -1;
 	private int mSelfHostedOtherStartCover = -1;
 	private SelfHostedBattleClient mSelfHostedClient;
+    private Action<MatchSnapshot> _selfHostedAbortHandler;
+    private SelfHostedBattleClient _selfHostedAbortSource;
+    private object _selfHostedAbortSubscription;
 	private bool mSelfHostedReconnectDialog;
 	private ReconnectState mSelfHostedReconnectCause;
 	private bool mSelfHostedForfeitPending;
@@ -171,6 +174,20 @@ public abstract class GameControllerOnline : IGameController
 			mPhotonView.didAwake = true;
 		}
 	}
+
+    protected virtual void OnEnable()
+    {
+        if (mSelfHostedClient != null && mSelfHostedClient.OwnsMatch && mSelfHostedClient.State != null &&
+            mMainController.mainController == this)
+        {
+            BindSelfHostedAbortRecovery(mSelfHostedClient);
+        }
+    }
+
+    protected virtual void OnDisable()
+    {
+        UnbindSelfHostedAbortRecovery();
+    }
 
 	public override IEnumerator StartGame()
 	{
@@ -493,6 +510,8 @@ public abstract class GameControllerOnline : IGameController
 		MatchManager.matchState = MatchState.BothPlayersConnected;
 		MatchManager.matchStartTime = Time.realtimeSinceStartup + (float)GameVariables.GetMatchStartTime(level);
 		MatchManager.invitationState = InvitationState.Accepted;
+
+        BindSelfHostedAbortRecovery(client);
 	}
 
 	private void OnSelfHostedCardsSelected()
@@ -584,6 +603,11 @@ public abstract class GameControllerOnline : IGameController
 
 	protected virtual void StartMatch()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            throw new InvalidOperationException("Finish aborted battle recovery before starting another match.");
+        }
+
 		mShowWaitingForPlayer = false;
 		mMainPlayerController.playerProperties = PlayerProperties.CreateForLocalPlayer();
 		isInMatch = true;
@@ -597,6 +621,7 @@ public abstract class GameControllerOnline : IGameController
 
 	public virtual void StartMultiplayerGame(DatabasePlayer otherPlayer, out string roomName, out bool isGoodPing)
 	{
+        RequireAbortRecoveryComplete();
 		Screen.sleepTimeout = -1;
 		CloudRegionCode bestRegion = PhotonConnectionManager.GetBestRegion(PhotonConnectionManager.bestRegions, otherPlayer.bestRegions, out isGoodPing);
 		if (isGoodPing)
@@ -614,6 +639,7 @@ public abstract class GameControllerOnline : IGameController
 
 	public virtual void StartMultiplayerGame(string roomName, CloudRegionCode region)
 	{
+        RequireAbortRecoveryComplete();
 		Screen.sleepTimeout = -1;
 		SpendDogtagLocaly();
 		Debug.Log("Connect to room " + roomName);
@@ -626,6 +652,7 @@ public abstract class GameControllerOnline : IGameController
 
 	protected virtual void Reset()
 	{
+        UnbindSelfHostedAbortRecovery();
 		if (mSelfHostedClient != null) mSelfHostedClient.CardsSelectedByBoth -= OnSelfHostedCardsSelected;
 		mSelfHostedClient = null;
 		mSelfHostedLocalStartCover = -1;
@@ -637,6 +664,88 @@ public abstract class GameControllerOnline : IGameController
 		MatchManager.invitationState = InvitationState.None;
 		mMapIdSet = false;
 	}
+
+    private void BindSelfHostedAbortRecovery(SelfHostedBattleClient source)
+    {
+        UnbindSelfHostedAbortRecovery();
+        _selfHostedAbortSource = source;
+        object subscription = new object();
+        _selfHostedAbortSubscription = subscription;
+        string matchId = source.State.MatchId;
+        string manifestHash = source.State.ManifestHash;
+        _selfHostedAbortHandler = snapshot =>
+        {
+            // A multicast invocation may already hold this delegate when its controller is disabled or rebound.
+            if (!ReferenceEquals(_selfHostedAbortSubscription, subscription) ||
+                mSelfHostedClient != source || snapshot.Phase != BattlePhase.Aborted ||
+                snapshot.MatchId != matchId || snapshot.ManifestHash != manifestHash ||
+                source.State == null || source.State.MatchId != matchId ||
+                source.State.ManifestHash != manifestHash)
+            {
+                return;
+            }
+
+            mMainController.RecoverSelfHostedAbort(this, source);
+        };
+        source.StateReceived += _selfHostedAbortHandler;
+        _selfHostedAbortHandler(source.State.Clone());
+    }
+
+    private void UnbindSelfHostedAbortRecovery()
+    {
+        if (_selfHostedAbortSource != null && _selfHostedAbortHandler != null)
+        {
+            _selfHostedAbortSource.StateReceived -= _selfHostedAbortHandler;
+        }
+
+        _selfHostedAbortSource = null;
+        _selfHostedAbortHandler = null;
+        _selfHostedAbortSubscription = null;
+    }
+
+    protected void RequireAbortRecoveryComplete()
+    {
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            throw new InvalidOperationException("Finish aborted battle recovery before starting another match.");
+        }
+    }
+
+    internal void PrepareSelfHostedAbort(SelfHostedBattleClient source)
+    {
+        if (mSelfHostedClient != source)
+        {
+            throw new InvalidOperationException("Abort recovery belongs to another match owner.");
+        }
+
+        StopAllCoroutines();
+        mBothPlayersConnected = false;
+        mCardsChoosen = false;
+        mIsWaitingToAcceptInvitation = false;
+        isInMatch = false;
+        foreach (PlayerController player in PlayerController.players.Values)
+        {
+            if (player != null && player.networkStatus != null)
+            {
+                player.networkStatus.Reset();
+            }
+        }
+    }
+
+    internal bool OwnsSelfHostedClient(SelfHostedBattleClient source)
+    {
+        return source != null && mSelfHostedClient == source;
+    }
+
+    internal void CompleteSelfHostedAbort(SelfHostedBattleClient source)
+    {
+        if (mSelfHostedClient != source)
+        {
+            throw new InvalidOperationException("Abort recovery cannot reset a replacement match owner.");
+        }
+
+        Reset();
+    }
 
 	[PunRPC]
 	public void RematchRPC(int playerID, int stateUpdate)
@@ -1333,6 +1442,11 @@ public abstract class GameControllerOnline : IGameController
 
 	public override void StopGame(bool switchScreen = true)
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		Disconnect();
 		gameIsRunning = false;
 		mMainController.StopGame(switchScreen);
@@ -1375,6 +1489,11 @@ public abstract class GameControllerOnline : IGameController
 
 	public override void Quit()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		PlayerController.currentPlayer.networkStatus.Reset();
 		Screen.sleepTimeout = -2;
 		if (shouldLooseDogtagWhenQuit)
@@ -1394,6 +1513,11 @@ public abstract class GameControllerOnline : IGameController
 
 	public override void Forfeit()
 	{
+        if (mMainController.IsSelfHostedAbortRecovery)
+        {
+            return;
+        }
+
 		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
 		if (selfHosted != null && selfHosted.OwnsMatch)
 		{
