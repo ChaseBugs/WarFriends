@@ -137,3 +137,6 @@ Server/tests/War.Battle.Tests/UnattendedCancellationChecks.cs text eol=lf
 Server/docs/UNATTENDED_CANCELLATION_RECOVERY.md text eol=lf
 
 Server/scripts/smoke.sh text eol=lf
+
+Server/tests/War.Battle.Tests/PrestartCancellationOrderingTests.cs text eol=lf
+Server/docs/PRESTART_CANCELLATION_ORDERING.md text eol=lf

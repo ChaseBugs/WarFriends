@@ -8,6 +8,12 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Prestart cancellation ordering](PRESTART_CANCELLATION_ORDERING.md) now covers all
+24 ready/tick/cancel permutations plus late admission after cancellation. A
+successful cancellation freezes exact unscored terminal bytes; a battle that
+already reached Running rejects cancellation. This is an engine ordering gate,
+not a replacement for combined actual HTTP/UDP/process scheduling proof.
+
 [Unattended cancellation recovery](UNATTENDED_CANCELLATION_RECOVERY.md) now keeps
 intent on the exact durable pair independently of expiring attempt receipts.
 Backend uses bounded, validated Mongo claims and the same authoritative Worker

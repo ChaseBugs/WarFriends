@@ -79,6 +79,12 @@ if (args is ["--queue-cancellation-recovery-only", var queueCancellationMongoUri
     return;
 }
 
+if (args is ["--prestart-cancellation-ordering-only"])
+{
+    PrestartCancellationOrderingTests.Run();
+    return;
+}
+
 if(args is ["--queue-live",var queueMongoUri])
 {await BackendQueueLiveTests.Run(queueMongoUri);return;}
 
