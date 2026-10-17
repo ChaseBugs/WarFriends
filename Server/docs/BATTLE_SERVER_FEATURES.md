@@ -8,6 +8,11 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Client loading failure cancellation](CLIENT_LOADING_FAILURE_CANCELLATION.md)
+records the successful-admission credential lifetime gap and the existing
+attempt-scoped cancellation authority, including expired tokens and newer-pair
+isolation. Client wiring and end-to-end failure recovery remain pending.
+
 [Original abort notice](ABORT_NOTICE_UI.md) now runs the recovered modal's real
 labels, tweens and OK callback in Play Mode and has an inspected camera capture.
 Recovery retains ownership until the menu transition and notice readiness or
