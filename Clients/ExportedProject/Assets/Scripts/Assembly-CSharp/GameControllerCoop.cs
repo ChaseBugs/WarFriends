@@ -191,7 +191,7 @@ public class GameControllerCoop : GameControllerOnline
 		base.mMainPlayerController.Killed += OnPlayerControllerKilled;
 		GameControllerOnline.mOtherPlayerInstance.Killed -= OtherPlayerInstanceOnKilled;
 		GameControllerOnline.mOtherPlayerInstance.Killed += OtherPlayerInstanceOnKilled;
-		yield return StartCoroutine(base.StartGame());
+		yield return BattleResourceLoadScope.StartNested(this, base.StartGame());
 		time = 0f;
 		MissionsManager.instance.PlayCurrentMission();
 		yield return new WaitForSeconds(0.2f);

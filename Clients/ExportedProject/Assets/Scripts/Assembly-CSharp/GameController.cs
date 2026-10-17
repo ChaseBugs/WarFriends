@@ -481,7 +481,7 @@ public class GameController : Singleton<GameController>
 			e.enabled = true;
 		}
 		Singleton<Recording>.instance.StartRecording();
-		yield return StartCoroutine(RadicalRoutine.Run(mainController.StartGame()));
+		yield return BattleResourceLoadScope.StartNested(this, RadicalRoutine.Run(mainController.StartGame()));
 		gameState = GameState.Playing;
 		Singleton<GameCamera>.instance.Enable();
 		yield return null;

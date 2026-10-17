@@ -34,7 +34,7 @@ public abstract class GameControllerPVP : GameControllerOnline
 		Debug.Log("Set time to: " + time);
 		base.mMainPlayerController.Killed -= OnPlayerControllerKilled;
 		base.mMainPlayerController.Killed += OnPlayerControllerKilled;
-		yield return StartCoroutine(base.StartGame());
+		yield return BattleResourceLoadScope.StartNested(this, base.StartGame());
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
 			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();

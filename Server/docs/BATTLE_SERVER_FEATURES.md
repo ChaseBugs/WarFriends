@@ -27,7 +27,10 @@ cancels exact battle handles; a source visual-lane control checks old-state
 repopulation, unscoped work and fresh-scope reuse. Full variant/menu/mode
 integration remains open. Early mission LoadingStarted now runs inside the scope;
 the actual start entry also passes a source callback-failure cleanup/context
-control. Initial turret rendering and old mission RPC migration remain open.
+control. Original rocket/heavy turret preparation now also passes selector,
+delayed-scope cancellation and fresh texture-load checks using actual source
+component data. Controller/base readiness waits retain ownership across yields;
+full initial turret rendering and old mission RPC migration remain open.
 
 [Game-atlas cancellation](ABORT_ATLAS_LOADING.md) now invalidates independently
 hosted game loaders at confirmed abort, leaving menu/common work unscoped.

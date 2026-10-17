@@ -140,3 +140,44 @@ and original modal gates. The protocol executable passed 1,334 checks and static
 asset references retained zero missing scripts and zero broken references.
 This remains component/start-entry proof, not a complete normal mission start,
 full menu/profile recovery, Android, Unity 5.2 or two-client battle proof.
+
+## Initial turret visual branches and controller continuations
+
+The root wait for mainController.StartGame now uses StartNested through its
+existing RadicalRoutine wrapper. The co-op, PvP and War Arena base StartGame
+waits also retain the scope. These connections matter because a coroutine on an
+independent host loses the temporary context after its first yield unless its
+continuation is wrapped. This is source-reviewed/compiled wiring, not a full
+native run through every controller's account, readiness and gameplay setup.
+
+UnityInitialTurretLoadingAudit now calls original Mission.LoadInitialUnitVisuals
+with base, rocket and heavy initial-unit selectors. The base-only selection must
+start no special visual loader. The two special branches are dispatched after a
+real coroutine frame boundary inside a scope, then cancelled and cleared. Their
+caches must stay empty. A fresh scope must subsequently resolve the original
+nonempty texture paths for both actual turret preparation types.
+
+The fixture initially found preparedBehaviour unset because it deliberately
+omits full pool startup. In the source, AIObjectG.PrepareInstancies obtains this
+binding from LevelBehaviourManager.GetPreparedBehaviour<T>. The fixture now calls
+that original selection method and restores its allocation counts. It copies
+the selected original LevelBehaviour/UpgradeSlots component data onto matching
+concrete types and rebinds only the cloned inactive carrier references. It does
+not substitute the generic visual probes or invent visual rows for these types.
+The original pool/provider fields are restored after the test.
+
+The executed types are TurretRocketsBehaviour and HeavyTurretBehaviour, both with
+UpgradeSlotsTurret. Each resolves its one original nonempty opponent texture row.
+Visual component clones are activated only for preparation; carrier prefabs stay
+inactive, and the sound lookup is isolated. This verifies texture-cache loading
+and cancellation, not complete turret hierarchy rendering, audio, spawning,
+aiming, projectile collision, damage authority or original live-service behavior.
+Legacy mission Photon RPC entry points outside an owned scope remain unmigrated.
+
+The final combined Unity 2018.3 run passed without compiler errors:
+`Server/.local/unity-initial-turret-controller-final.log`. It includes both original
+turret texture branches plus the existing native bundle, managed scope, mission
+setup/failure and modal/message gates. The protocol executable passed 1,334
+checks and the static asset audit retained zero missing scripts and zero broken
+references. Full normal controller readiness/gameplay, initial-unit rendering,
+legacy RPC replacement and two real Unity peers remain open.

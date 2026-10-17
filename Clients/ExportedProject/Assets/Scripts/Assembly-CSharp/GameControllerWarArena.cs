@@ -69,7 +69,7 @@ public class GameControllerWarArena : GameControllerPVP
 
 	public override IEnumerator StartGame()
 	{
-		yield return StartCoroutine(base.StartGame());
+		yield return BattleResourceLoadScope.StartNested(this, base.StartGame());
 		WarArena.instance.ApplyRules();
 	}
 

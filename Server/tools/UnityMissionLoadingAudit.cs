@@ -58,6 +58,7 @@ public static class UnityMissionLoadingAudit
                 slots.cardVisuals.TrueForAll(visual => visual.materialTetxureRed != null),
                 "Fresh mission setup did not complete its original visual chain.");
             await VerifyFailedSetupAsync(mission, definition, slots);
+            await UnityInitialTurretLoadingAudit.VerifyAsync(mission, definition);
             Debug.Log("PASS: original mission LoadingStarted owns and cancels its early event visual loaders, " +
                 "fresh setup completes and rejected setup restores ownership; no full campaign/co-op gameplay proof.");
         }
