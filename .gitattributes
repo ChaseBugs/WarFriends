@@ -143,3 +143,7 @@ Server/docs/PRESTART_CANCELLATION_ORDERING.md text eol=lf
 
 Server/tests/War.Battle.Tests/LiveQueueCancellationRaceChecks.cs text eol=lf
 Server/docs/LIVE_PRESTART_CANCELLATION_RACES.md text eol=lf
+
+Server/src/War.Persistence/BattleGrantStore.ActivePair.cs text eol=lf
+Server/tests/War.Battle.Tests/DelayedGrantPublicationChecks.cs text eol=lf
+Server/docs/DELAYED_GRANT_PUBLICATION.md text eol=lf

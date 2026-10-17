@@ -16,33 +16,28 @@ public sealed class BattleGrantDocument
     public DateTime ExpiresUtc {get;set;}
 }
 
-public sealed class BattleGrantStore
+public sealed partial class BattleGrantStore
 {
     // The initial ticket lasts two minutes, but an admitted battle can run for
     // thirty minutes and then enter reconnect grace. Keep roster metadata long
     // enough to publish replacement tickets without keeping old tickets valid.
     private const int AssignmentRetentionSeconds=2100;
+    private readonly MongoClient _client;
+    private readonly IMongoDatabase _database;
     private readonly IMongoCollection<BattleGrantDocument> grants;
     public BattleGrantStore(string uri,string databaseName)
     {
         var settings=MongoClientSettings.FromConnectionString(uri);settings.ServerSelectionTimeout=TimeSpan.FromSeconds(5);
-        grants=new MongoClient(settings).GetDatabase(databaseName).GetCollection<BattleGrantDocument>("battle_grants");
+        _client=new MongoClient(settings);
+        _database=_client.GetDatabase(databaseName);
+        grants=_database.GetCollection<BattleGrantDocument>("battle_grants");
     }
     public async Task Initialize(CancellationToken ct)=>await grants.Indexes.CreateManyAsync([
         new CreateIndexModel<BattleGrantDocument>(Builders<BattleGrantDocument>.IndexKeys.Ascending(x=>x.MatchId),new CreateIndexOptions{Unique=true}),
         new CreateIndexModel<BattleGrantDocument>(Builders<BattleGrantDocument>.IndexKeys.Ascending(x=>x.ExpiresUtc),new CreateIndexOptions{ExpireAfter=TimeSpan.Zero})],ct);
     public async Task<string> Publish(string matchId,string manifestHash,IEnumerable<MatchConnectionGrant> values,CancellationToken ct)
     {
-        var rows=(values??throw new ArgumentNullException(nameof(values))).Select(Validate).ToArray();
-        if(rows.Length!=2 || rows.Select(x=>x.PlayerId).Distinct(StringComparer.Ordinal).Count()!=2 ||
-            rows.Select(x=>x.SessionId).Distinct().Count()!=2 || rows.Any(x=>x.MatchId!=matchId || x.ManifestHash!=manifestHash) ||
-            rows.Any(x=>x.PlayerViews.Count!=2) ||
-            rows.Any(x=>!x.PlayerViews.Select(v=>v.PlayerId).SequenceEqual(rows.Select(r=>r.PlayerId),StringComparer.Ordinal)))
-            throw new InvalidDataException("Invalid battle grant assignment.");
-        var doc=new BattleGrantDocument{Id=Guid.NewGuid().ToString("N"),MatchId=matchId,ManifestHash=manifestHash,
-            PlayerA=rows[0].PlayerId,PlayerB=rows[1].PlayerId,GrantA=rows[0].ToByteArray(),GrantB=rows[1].ToByteArray(),
-            ExpiresUtc=RetentionDate(Math.Max(rows[0].ExpiresUnixSeconds,rows[1].ExpiresUnixSeconds))};
-        _=ValidateDocument(doc);
+        var doc=CreateDocument(matchId,manifestHash,values);
         try {await grants.InsertOneAsync(doc,cancellationToken:ct);return "published";}
         catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
         {
@@ -183,6 +178,22 @@ public sealed class BattleGrantStore
             view.Units.Select(x=>new War.Shared.BattleUnitPresentation(x.SourceId,x.UpgradeIndex,x.SpecialIndex,x.EliteIndex,x.Tier)).ToArray());
         War.Shared.BattlePlayerPresentation.Validate(shared);
     }
+    private static BattleGrantDocument CreateDocument(
+        string matchId, string manifestHash, IEnumerable<MatchConnectionGrant> values)
+    {
+        var rows=(values??throw new ArgumentNullException(nameof(values))).Select(Validate).ToArray();
+        if(rows.Length!=2 || rows.Select(x=>x.PlayerId).Distinct(StringComparer.Ordinal).Count()!=2 ||
+            rows.Select(x=>x.SessionId).Distinct().Count()!=2 || rows.Any(x=>x.MatchId!=matchId || x.ManifestHash!=manifestHash) ||
+            rows.Any(x=>x.PlayerViews.Count!=2) ||
+            rows.Any(x=>!x.PlayerViews.Select(v=>v.PlayerId).SequenceEqual(rows.Select(r=>r.PlayerId),StringComparer.Ordinal)))
+            throw new InvalidDataException("Invalid battle grant assignment.");
+        var doc=new BattleGrantDocument{Id=Guid.NewGuid().ToString("N"),MatchId=matchId,ManifestHash=manifestHash,
+            PlayerA=rows[0].PlayerId,PlayerB=rows[1].PlayerId,GrantA=rows[0].ToByteArray(),GrantB=rows[1].ToByteArray(),
+            ExpiresUtc=RetentionDate(Math.Max(rows[0].ExpiresUnixSeconds,rows[1].ExpiresUnixSeconds))};
+        _=ValidateDocument(doc);
+        return doc;
+    }
+
     private static bool Same(BattleGrantDocument a,BattleGrantDocument b)=>a.MatchId==b.MatchId && a.ManifestHash==b.ManifestHash &&
         a.PlayerA==b.PlayerA && a.PlayerB==b.PlayerB && a.GrantA.AsSpan().SequenceEqual(b.GrantA) && a.GrantB.AsSpan().SequenceEqual(b.GrantB) && a.ExpiresUtc==b.ExpiresUtc;
     private static bool ValidMatch(string? value)=>System.Text.RegularExpressions.Regex.IsMatch(value??"",@"\A[a-zA-Z0-9_-]{1,64}\z");

@@ -21,6 +21,7 @@ public sealed class BattlePairDocument
     public string[] Players {get;set;}=[];
     public string[] AttemptIds {get;set;}=[];
     public BattlePairCancellationRequest? Cancellation {get;set;}
+    public long GrantPublicationRevision {get;set;}
     public DateTime CreatedUtc {get;set;}
 }
 public sealed record BattlePairingResult(string Code,string? MatchId,IReadOnlyList<string>? Players);
@@ -239,9 +240,15 @@ public sealed partial class BattleMatchQueueStore
     private async Task<BattlePairDocument?> PairFor(IClientSessionHandle session,string playerId,CancellationToken ct)=>
         await pairs.Find(session,Builders<BattlePairDocument>.Filter.AnyEq(x=>x.Players,playerId)).FirstOrDefaultAsync(ct);
     private sealed class PairingRetryException:Exception;
+    internal static BattlePairingResult ValidatePairDocument(BattlePairDocument pair)
+    {
+        return Result("paired", pair);
+    }
+
     private static BattlePairingResult Result(string code,BattlePairDocument pair)
     {
-        if(!ValidId(pair.Id) || pair.Players is not {Length:2} ||
+        if(!ValidId(pair.Id) || pair.GrantPublicationRevision < 0 || pair.GrantPublicationRevision == long.MaxValue ||
+            pair.Players is not {Length:2} ||
             pair.Players.Any(x=>!ValidId(x)) || pair.Players.Distinct(StringComparer.Ordinal).Count()!=2 ||
             pair.AttemptIds == null || (pair.AttemptIds.Length != 0 &&
                 (pair.AttemptIds.Length != 2 || pair.AttemptIds.Any(x=>!ValidId(x)))) ||

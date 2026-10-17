@@ -354,6 +354,17 @@ internal static class BackendQueueLiveTests
             await UnpreparedPairCancellationChecks.RunAsync(scopedScenario, ids, attemptIssuer,
                 new UnpreparedPairCancellationChecks.Stores(
                     queue, new BattleManifestSnapshotStore(mongoUri, database), results, grantStore));
+            var delayedTokens = await Task.WhenAll(
+                left.CreateMatchQueueAttemptAsync(tokens[0], deadline.Token),
+                right.CreateMatchQueueAttemptAsync(tokens[1], deadline.Token));
+            var delayedAttempts = delayedTokens.Select((grant, index) => attemptIssuer.ValidateForJoin(
+                grant.Token, ids[index], DateTimeOffset.UtcNow.ToUnixTimeSeconds())).ToArray();
+            await DelayedGrantPublicationChecks.RunAsync(scopedScenario,
+                new UnpreparedPairCancellationChecks.Stores(
+                    queue, new BattleManifestSnapshotStore(mongoUri, database), results, grantStore),
+                delayedAttempts, new DelayedGrantPublicationChecks.Settings(frozen,
+                    Convert.FromBase64String(control), new Uri($"http://127.0.0.1:{controlPort}/internal/matches"),
+                    delayedTokens[0].Token));
             using var raceDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var raceScenario = new ScopedQueueLiveChecks.Scenario(left, right, tokens, raceDeadline.Token);
             await new LiveQueueCancellationRaceChecks(raceScenario, queue, results).RunAsync();

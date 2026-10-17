@@ -327,7 +327,11 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
         {
             byte[] frozen=await snapshots.GetOrCreate(result.MatchId,result.Players,
                 ()=>factory.Create(result.MatchId,result.Players,ctx.RequestAborted),ctx.RequestAborted);
-            await provisioner.Provision(frozen,ctx.RequestAborted);
+            string provisioning = await provisioner.Provision(frozen,ctx.RequestAborted);
+            if (provisioning == "cancelled")
+            {
+                result = new BattlePairingResult("cancelled", null, null);
+            }
         }
         catch (Exception e) when (e is InvalidDataException or HttpRequestException)
         { return Error(503, "match_provision_deferred", "Match is paired but provisioning must be retried."); }

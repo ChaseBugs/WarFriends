@@ -54,7 +54,8 @@ public sealed class BattleMatchProvisioner
             copy.PlayerViews.AddRange(presentations.Select((value,index)=>ToWire(value,fractions[index],defendPositions[index])));
             return copy;
         }).ToArray();
-        string publication=await grants.Publish(registration.MatchId,registration.ManifestHash,deliverable,ct);
+        string publication=await grants.PublishForActivePairAsync(registration.MatchId,registration.ManifestHash,deliverable,ct);
+        if(publication=="cancelled")return "cancelled";
         if(publication=="conflict")throw new InvalidDataException("Conflicting durable grant assignment for match.");
         return registration.Code=="existing-match" || publication=="already-published"?"already-provisioned":"provisioned";
     }

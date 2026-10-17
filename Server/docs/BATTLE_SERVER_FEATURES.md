@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Delayed grant publication](DELAYED_GRANT_PUBLICATION.md) now holds an actual
+Worker registration response until cancellation has been accepted. It reproduced
+stale grant insertion and now uses a snapshot/majority transaction that validates
+and writes the exact active pair together with grant publication. Cancelled
+publication closes the queue response instead of reporting a stale pair. Wider
+normal terminal/result races and complete gameplay proof remain open.
+
 [Actual HTTP/UDP cancellation](LIVE_PRESTART_CANCELLATION_RACES.md) now covers
 late Ready after cancellation, concurrent ready/cancel dispatch and Running-first
 refusal. It reproduced and fixed SDK handling of a valid unconsumed terminal
