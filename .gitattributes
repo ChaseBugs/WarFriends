@@ -163,3 +163,5 @@ Server/tools/UnityAbortNoticeFixture.cs text eol=lf
 Server/tools/UnityAbortNoticeAudit.cs text eol=lf
 Server/docs/ABORT_NOTICE_UI.md text eol=lf
 Server/tools/UnityAbortMessageProbe.cs text eol=lf
+Server/tools/UnityAbortOfferAudit.cs text eol=lf
+Server/docs/ABORT_MENU_DEPENDENCIES.md text eol=lf

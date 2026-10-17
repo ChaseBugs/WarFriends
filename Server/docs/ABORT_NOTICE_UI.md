@@ -83,9 +83,9 @@ normal notices may enter between menu completion and the cancellation notice.
 owns abort recovery. It leaves both message dictionaries, shown flags and server
 acknowledgements unchanged. Once ownership is released it evaluates the original
 screen, loading, tutorial and advertisement conditions. The existing timeout and
-RadicalRoutine cancellation behavior are retained. This does not change the
-separate synchronous OfferManager check in StartMessageCoroutine or establish
-that all legacy offer/service dependencies are already migrated.
+RadicalRoutine cancellation behavior are retained. The later synchronous-offer
+checkpoint below also guards startup during recovery; other legacy offer/service
+dependencies are not established as migrated.
 
 The native audit advances the actual source iterator twice during recovery with
 a deliberately unavailable current screen. Before the guard, this controlled
@@ -126,3 +126,25 @@ a real modal. It does not execute a concrete message's reward, maintenance,
 account acknowledgement or separate popup implementation. Nor does it initialize
 the full menu/profile graph or force the combined menu/message coroutine schedule.
 Those broader integration gates remain open.
+
+## Synchronous offer startup
+
+The actual StartMessageCoroutine entry is now covered with an eligible stale
+legacy offer and an uninitialized Fuse service. Its old synchronous CheckOffer
+call threw NullReferenceException inside OfferManager.CheckOffer before creating
+the message routine; `Server/.local/unity-abort-offer-baseline.log` records this
+controlled counterexample. Abort recovery now skips this retired-service check
+and starts its normal cancellable waiting routine without consuming the legacy
+check timestamp. The probe temporarily activates only the original MessageManager,
+binds inactive source providers, then restores the source hierarchy and fields.
+It does not start EventTrackingManager, Backend or account initialization.
+
+See [full menu prerequisites](ABORT_MENU_DEPENDENCIES.md) for the remaining
+profile, reward, assignment, squad and league dependencies. The startup probe is
+not a complete account/menu boot or proof that every legacy service is retired.
+
+The guarded graphics-enabled run passed the real startup, deferred iterator,
+registry/dispatch handoff and both modal cycles:
+`Server/.local/unity-abort-offer-guard.log`. The protocol executable passed
+1,334 checks and the static asset audit retained zero missing scripts and zero
+broken references at this checkpoint.

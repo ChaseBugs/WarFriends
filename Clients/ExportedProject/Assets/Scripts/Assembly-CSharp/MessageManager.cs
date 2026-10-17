@@ -58,7 +58,12 @@ public class MessageManager : Singleton<MessageManager>
 			mRoutine.Cancel();
 			mRoutine = null;
 		}
-		Singleton<OfferManager>.instance.CheckOffer();
+        // Abort recovery must not enter the retired offer service before its message wait starts.
+        if (!Singleton<GameController>.instance.IsSelfHostedAbortRecovery)
+        {
+            Singleton<OfferManager>.instance.CheckOffer();
+        }
+
 		mRoutine = RadicalRoutine.Create(CheckForEventsRoutine());
 		StartCoroutine(mRoutine.enumerator);
 	}

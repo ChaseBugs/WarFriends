@@ -16,6 +16,9 @@ The source message loop now defers queued popups while abort recovery owns the
 UI, preserving pending messages and its normal cancellation/eligibility path.
 The original dialog registry and dispatcher now also pass opening/visible/hiding
 message-blocking and post-hide shown-history transfer checks.
+Message startup also skips its synchronous legacy Fuse offer check during abort
+recovery; the iterator guard alone was too late. See the source-backed
+[full menu dependency inventory](ABORT_MENU_DEPENDENCIES.md).
 The complete main-screen/resource graph and physical two-client UI remain open.
 
 [Abort scene recovery](ABORT_SCENE_RECOVERY.md) identifies the source Forfeit,

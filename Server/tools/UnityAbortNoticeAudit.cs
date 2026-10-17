@@ -62,6 +62,7 @@ public static class UnityAbortNoticeAudit
         try
         {
             ConfirmDialog dialog = UnityAbortNoticeFixture.StartServices();
+            UnityAbortOfferAudit.Verify();
             VerifyMessageRecoveryGate();
             await VerifyNoticeCycleAsync(dialog, false);
             await VerifyNoticeCycleAsync(dialog, true);
