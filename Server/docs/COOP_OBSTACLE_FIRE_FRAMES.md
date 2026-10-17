@@ -99,3 +99,8 @@ The final preparation checkpoint passes the existing 26,368 combat assertions
 and twenty-two native adapter checks. Protocol smoke retains 1,136 checks,
 74 live integration checks and restart recovery. Public co-op admission and
 combat authority remain incomplete.
+
+The [gameplay-phase rig checkpoint](COOP_OBSTACLE_GAMEPLAY_RIG.md) now captures
+82 complete frames and verifies primed runtime replay, including partial
+initial weights. Fresh-actor/skipped-frame controls remain required before
+publishing initial blend frames or changing SDK validation.

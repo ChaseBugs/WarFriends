@@ -202,3 +202,8 @@ B22 now projects fully weighted obstacle preparation from elapsed tick two
 and the measured queued-fire transition without inventing a projectile.
 Initial gameplay-phase partial-weight frames and interrupted preparation
 remain open. See [obstacle frames](COOP_OBSTACLE_FIRE_FRAMES.md).
+
+The [gameplay-phase rig checkpoint](COOP_OBSTACLE_GAMEPLAY_RIG.md) now captures
+82 complete frames and verifies primed runtime replay, including partial
+initial weights. Fresh-actor/skipped-frame controls remain required before
+publishing initial blend frames or changing SDK validation.

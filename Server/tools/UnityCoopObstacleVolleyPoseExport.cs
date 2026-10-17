@@ -41,6 +41,11 @@ public static class UnityCoopObstacleVolleyPoseExport
     private static readonly FieldInfo CrawlDeadlineField = typeof(SoldierAnimationController).GetField(
         "mTimeToHideToCrawl", BindingFlags.Instance | BindingFlags.NonPublic);
     private static float _deadlineBeforeShot;
+    private static UnityCoopObstacleRigReplayProbe _rigReplay;
+    private static bool CapturesWholeRig
+    {
+        get { return Environment.GetEnvironmentVariable("WAR_COOP_OBSTACLE_WHOLE_RIG") == "1"; }
+    }
 
     /// <summary>Exposes the next source-relative frame after the editor initializes playback.</summary>
     public static int GameplayTick
@@ -134,6 +139,15 @@ public static class UnityCoopObstacleVolleyPoseExport
         foreach (NavMeshAgent agent in enemy.GetComponentsInChildren<NavMeshAgent>(true))
         {
             agent.enabled = false;
+        }
+        if (CapturesWholeRig)
+        {
+            foreach (Rigidbody body in enemy.GetComponentsInChildren<Rigidbody>(true))
+            {
+                body.isKinematic = true;
+                body.useGravity = false;
+                body.detectCollisions = false;
+            }
         }
         return enemy;
     }
@@ -243,6 +257,10 @@ public static class UnityCoopObstacleVolleyPoseExport
         {
             _controller.ShootFromCrawl(InitialHideSeconds, ShotSpeed, Weapon.WeaponType.Riffle);
         }
+        if (CapturesWholeRig)
+        {
+            _rigReplay = new UnityCoopObstacleRigReplayProbe(_root, _animation);
+        }
         _startedTime = Time.time;
     }
 
@@ -284,6 +302,8 @@ public static class UnityCoopObstacleVolleyPoseExport
             deadlineBeforeShot = _deadlineBeforeShot,
             deadlineAfterShot = (float)CrawlDeadlineField.GetValue(_controller),
             roundInvoked = _roundTicks.Contains(tick),
+            rig = CapturesWholeRig ? UnityCoopRigFrameCapture.Capture(_root, _animation) : null,
+            replay = _rigReplay == null ? null : _rigReplay.Compare(_animation),
             muzzle = Values(_root.InverseTransformPoint(_muzzle.position)),
             states = _animation.Cast<AnimationState>().Where(state => state.enabled)
                 .Select(state => new { state.name, state.time, state.normalizedTime, state.weight }).ToArray(),
@@ -352,6 +372,11 @@ public static class UnityCoopObstacleVolleyPoseExport
                 samplePhase = "EditorApplication.update; controller uses normal MonoBehaviour.Update",
                 roundInvocations = _roundInvocations,
                 observedReturnToCrawl = _observedReturnToCrawl,
+                wholeRig = CapturesWholeRig,
+                rigReplaySha256 = CapturesWholeRig ? Hash("Assets/Editor/UnityCoopObstacleRigReplayProbe.cs") : null,
+                samplerSha256 = CapturesWholeRig
+                    ? Hash("Assets/Scripts/Assembly-CSharp/SelfHostedInfantryAnimationSampler.cs") : null,
+                physicsFrozen = CapturesWholeRig,
                 samples = Samples
             }, Formatting.Indented));
         SessionState.SetBool(SessionKey, false);
