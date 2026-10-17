@@ -949,6 +949,7 @@ public class GameController : Singleton<GameController>
         _isSelfHostedAbortRecovery = true;
         StopAllCoroutines();
         Singleton<MapManager>.instance.StopAllCoroutines();
+        Singleton<AtlasPreparer>.instance.CancelGameLoadingForAbort();
         controller.PrepareSelfHostedAbort(source);
         gameIsRunning = false;
         gameEndReason = GameEndReason.None;

@@ -147,3 +147,11 @@ Unity 2018.3: `Server/.local/unity-abort-inactive-map-fixed.log`. At this checkp
 the protocol executable passed 1,334 checks and the static asset audit retained
 2,376 documents, 23,513 components, 288,165 references, zero missing scripts and
 zero broken references. No active Client scene, prefab or meta file was changed.
+
+## Independently hosted game-atlas loaders
+
+Confirmed abort now invalidates the game-atlas scope before releasing resources.
+Stopping only root GameController coroutines left AtlasPreparer's child loaders
+running. See [scoped atlas cancellation](ABORT_ATLAS_LOADING.md) for the native
+counterexample, source call chain and remaining completed-bundle verification.
+Menu/common atlas work is not globally stopped by this change.

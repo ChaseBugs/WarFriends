@@ -21,6 +21,11 @@ recovery; the iterator guard alone was too late. See the source-backed
 [full menu dependency inventory](ABORT_MENU_DEPENDENCIES.md).
 The complete main-screen/resource graph and physical two-client UI remain open.
 
+[Game-atlas cancellation](ABORT_ATLAS_LOADING.md) now invalidates independently
+hosted game loaders at confirmed abort, leaving menu/common work unscoped.
+The original missing-reference wait has a native counterexample and two-scope
+cancellation gate; completed native bundle/refcount handling remains unverified.
+
 [Abort scene recovery](ABORT_SCENE_RECOVERY.md) identifies the source Forfeit,
 co-op dog-tag and Photon Chat side effects that prevent reuse of generic stop
 methods. Owner-bound callbacks now enter a separate recovery coroutine, retain

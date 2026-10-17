@@ -61,6 +61,8 @@ public class AtlasPreparer : Singleton<AtlasPreparer>
 
 	private bool mBuildPrepared;
 
+    private object _gameLoadScope = new object();
+
 	protected override void Awake()
 	{
 		base.Awake();
@@ -310,12 +312,23 @@ public class AtlasPreparer : Singleton<AtlasPreparer>
 		}
 	}
 
+    /// <summary>Invalidates game-atlas publication without cancelling menu or common atlas work.</summary>
+    public void CancelGameLoadingForAbort()
+    {
+        _gameLoadScope = new object();
+    }
+
 	public IEnumerator LoadGameCoroutine()
 	{
+        object gameLoadScope = _gameLoadScope;
 		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
 		{
 			if (textureDatasNgui.mode == AtlasMode.Game && textureDatasNgui.resourceMode == ResourceMode.Resource)
 			{
+                if (IsGameLoadCancelled(gameLoadScope))
+                {
+                    yield break;
+                }
 				LoadTextureForAtlas(textureDatasNgui);
 			}
 		}
@@ -323,20 +336,42 @@ public class AtlasPreparer : Singleton<AtlasPreparer>
 		{
 			if (textureDatasNgui2.mode == AtlasMode.Game && textureDatasNgui2.resourceMode == ResourceMode.AssetBundle)
 			{
-				yield return StartCoroutine(LoadTextureForAtlasCoroutine(textureDatasNgui2.atlas));
+                if (IsGameLoadCancelled(gameLoadScope))
+                {
+                    yield break;
+                }
+                yield return StartCoroutine(LoadTextureForAtlasCoroutine(textureDatasNgui2.atlas, gameLoadScope));
 			}
 		}
 		foreach (TextureDatas2DToolkit textureDatas2DToolkit in toolkitSrites)
 		{
 			if (textureDatas2DToolkit.mode == AtlasMode.Game)
 			{
+                if (IsGameLoadCancelled(gameLoadScope))
+                {
+                    yield break;
+                }
 				Load2DToolkitTexture(textureDatas2DToolkit);
 			}
 		}
 	}
 
-	public IEnumerator LoadTextureForAtlasCoroutine(UIAtlas atlas)
-	{
+    public IEnumerator LoadTextureForAtlasCoroutine(UIAtlas atlas)
+    {
+        return LoadTextureForAtlasCoroutine(atlas, null);
+    }
+
+    private bool IsGameLoadCancelled(object gameLoadScope)
+    {
+        return gameLoadScope != null && !ReferenceEquals(gameLoadScope, _gameLoadScope);
+    }
+
+    private IEnumerator LoadTextureForAtlasCoroutine(UIAtlas atlas, object gameLoadScope)
+    {
+        if (IsGameLoadCancelled(gameLoadScope))
+        {
+            yield break;
+        }
 		Debug.Log("AtlasPreparer - LOADING ATLAS FOR " + Screen.height + "px :\n " + atlas.name);
 		string path = atlas.pngPath;
 		string assetBundle = "GUI/" + path;
@@ -344,14 +379,31 @@ public class AtlasPreparer : Singleton<AtlasPreparer>
 		AssetBundleReference assetBundleRef = Singleton<AssetBundleManager>.instance.GetReference(assetBundle);
 		while (assetBundleRef == null || !assetBundleRef.cached)
 		{
+            if (IsGameLoadCancelled(gameLoadScope))
+            {
+                yield break;
+            }
 			if (assetBundleRef == null)
 			{
 				assetBundleRef = Singleton<AssetBundleManager>.instance.GetReference(assetBundle);
 			}
 			yield return null;
 		}
-		AssetBundleLoadAssetOperation op = Singleton<AssetBundleManager>.instance.LoadAssetAsync(assetBundle, atlas.pngPath, typeof(Texture2D));
+        if (IsGameLoadCancelled(gameLoadScope))
+        {
+            yield break;
+        }
+        AssetBundleLoadAssetOperation op = Singleton<AssetBundleManager>.instance.LoadAssetAsync(
+            assetBundle,
+            atlas.pngPath,
+            typeof(Texture2D));
 		yield return StartCoroutine(op);
+        // Native loading can complete after recovery; release its bundle without publishing an old texture.
+        if (IsGameLoadCancelled(gameLoadScope))
+        {
+            AssetBundleManager.UnloadAssetBundle(assetBundle);
+            yield break;
+        }
 		Texture2D texture = op.GetAsset<Texture2D>();
 		atlas.spriteMaterial.mainTexture = texture;
 		AssetBundleManager.UnloadAssetBundle(assetBundle);

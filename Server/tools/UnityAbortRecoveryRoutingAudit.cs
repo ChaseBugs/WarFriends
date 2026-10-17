@@ -67,6 +67,9 @@ public static class UnityAbortRecoveryRoutingAudit
             _arena = sources.AddComponent<GameControllerWarArena>();
             var time = sources.AddComponent<TimeManager>();
             var map = sources.AddComponent<MapManager>();
+            var atlas = sources.AddComponent<AtlasPreparer>();
+            typeof(Singleton<AtlasPreparer>).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic)
+                .SetValue(null, atlas);
             typeof(Singleton<GameController>).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic)
                 .SetValue(null, game);
             typeof(Singleton<MapManager>).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic)
@@ -118,7 +121,11 @@ public static class UnityAbortRecoveryRoutingAudit
                 .GetField("_selfHostedAbortHandler", InstanceFields).GetValue(controller);
             handler = VerifySubscriptionLifecycle(game, controller, client, handler);
             VerifyRejectedOwners(game, controller, client, handler);
+            var scopeField = typeof(AtlasPreparer).GetField("_gameLoadScope", InstanceFields);
+            object previousAtlasScope = scopeField.GetValue(Singleton<AtlasPreparer>.instance);
             Apply(client, Snapshot(BattlePhase.Aborted));
+            Require(!ReferenceEquals(previousAtlasScope, scopeField.GetValue(Singleton<AtlasPreparer>.instance)),
+                "Confirmed abort did not invalidate the separately hosted game-atlas loader.");
             Require(game.IsSelfHostedAbortRecovery && game.gameState == GameController.GameState.Loading &&
                 !game.gameIsRunning && !time.gameIsRunning && game.gameEndReason == GameController.GameEndReason.None &&
                 MatchManager.matchState == MatchState.GameCancelled && client.OwnsMatch && !client.IsConnected,
