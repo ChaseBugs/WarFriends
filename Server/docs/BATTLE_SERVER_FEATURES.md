@@ -15,6 +15,10 @@ renderer capability negotiation and host publication are implemented and verifie
 The local production renderer now reconstructs the captured body/rifle poses;
 its independent source comparison and remaining integration boundary are recorded
 in the same checkpoint. This does not close B32 or public co-op admission.
+The production factory also supports recovered weapon model application before
+renderer initialization; a 17,680-case native compatibility matrix covers 80
+weapon selections and all 221 poses with one controlled body style. Normal
+presenter selection, other body styles and transport negotiation remain open.
 
 Live player snapshots publish server-owned PvP score and kill-streak progress.
 Terminal snapshots also publish the complete ordered skill-shot breakdown,

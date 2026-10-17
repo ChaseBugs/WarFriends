@@ -7,6 +7,36 @@ using UnityEngine;
 /// </summary>
 public static class SelfHostedInfantryVisualFactory
 {
+    /// <summary>Applies recovered model replacement before a pose renderer captures its initial basis.</summary>
+    public static SelfHostedInfantryVisual CreateWithAppearance(
+        EnemyController source,
+        SoldierMeshChanger.SoldierStyle style,
+        SelfHostedInfantryWeaponAppearance appearance,
+        string rootName)
+    {
+        if (appearance == null)
+        {
+            throw new ArgumentNullException("appearance");
+        }
+
+        var selected = new EnemyBasicInventory.InventoryWeapon
+        {
+            weapon = appearance.WeaponPrefab,
+            leftHand = appearance.IsLeftHand
+        };
+        SelfHostedInfantryVisual visual = Create(source, style, selected, rootName);
+        try
+        {
+            appearance.ApplyTo(visual.WeaponRoot);
+            return visual;
+        }
+        catch
+        {
+            DestroyRoot(visual.Root);
+            throw;
+        }
+    }
+
     /// <summary>
     /// Creates an inactive rig for an explicitly selected source style; it chooses no random appearance.
     /// </summary>
@@ -32,9 +62,10 @@ public static class SelfHostedInfantryVisualFactory
             rig.transform.SetParent(root.transform, false);
             var copies = new Dictionary<Transform, Transform>();
             SelfHostedVisualHierarchy.CopyRoot(source.transform, rig.transform, copies);
+            Transform weaponRoot = null;
             if (selectedWeapon != null)
             {
-                CopyWeapon(source, selectedWeapon, copies);
+                weaponRoot = CopyWeapon(source, selectedWeapon, copies);
             }
             SkinnedMeshRenderer body = CopyBody(source.meshChanger.skinnedMeshRenderer, style, copies);
             CopyHelmets(source.meshChanger.helmet, style, copies);
@@ -44,25 +75,18 @@ public static class SelfHostedInfantryVisualFactory
                 throw new InvalidOperationException("Recovered infantry animation hierarchy is absent.");
             }
 
-            return new SelfHostedInfantryVisual(root, copies[animation.transform].gameObject, body);
+            return new SelfHostedInfantryVisual(root, copies[animation.transform].gameObject, body, weaponRoot);
         }
         catch
         {
             // A rejected style must not leave a partly constructed actor for a later snapshot to reuse.
-            if (Application.isPlaying)
-            {
-                UnityEngine.Object.Destroy(root);
-            }
-            else
-            {
-                UnityEngine.Object.DestroyImmediate(root);
-            }
+            DestroyRoot(root);
 
             throw;
         }
     }
 
-    private static void CopyWeapon(
+    private static Transform CopyWeapon(
         EnemyController source,
         EnemyBasicInventory.InventoryWeapon selectedWeapon,
         Dictionary<Transform, Transform> copies)
@@ -88,6 +112,19 @@ public static class SelfHostedInfantryVisualFactory
         weaponRoot.transform.localPosition = Vector3.zero;
         weaponRoot.transform.localRotation = weapon.localRotation;
         weaponRoot.transform.localScale = Vector3.one;
+        return weaponRoot.transform;
+    }
+
+    private static void DestroyRoot(GameObject root)
+    {
+        if (Application.isPlaying)
+        {
+            UnityEngine.Object.Destroy(root);
+        }
+        else
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+        }
     }
 
     private static void ValidateSource(EnemyController source, SoldierMeshChanger.SoldierStyle style, string rootName)

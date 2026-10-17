@@ -12,10 +12,15 @@ public sealed class SelfHostedInfantryVisual
     /// <summary>Gets the body renderer with the selected source mesh and remapped bones.</summary>
     public SkinnedMeshRenderer Body { get; private set; }
 
-    internal SelfHostedInfantryVisual(GameObject root, GameObject animationRoot, SkinnedMeshRenderer body)
+    /// <summary>Gets the optional copied weapon attachment without any recovered weapon components.</summary>
+    public Transform WeaponRoot { get; private set; }
+
+    internal SelfHostedInfantryVisual(
+        GameObject root, GameObject animationRoot, SkinnedMeshRenderer body, Transform weaponRoot)
     {
         Root = root;
         AnimationRoot = animationRoot;
         Body = body;
+        WeaponRoot = weaponRoot;
     }
 }

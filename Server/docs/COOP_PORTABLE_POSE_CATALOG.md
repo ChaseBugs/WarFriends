@@ -120,7 +120,32 @@ lane, and applies the corresponding models to copied source weapon hierarchies:
 `Weapons/AssaultRiffle_AK47/AK47_lp` in this source snapshot.
 
 This does not yet feed the normal presenter. Its battle level must be mapped to
-the exact recovered upgrade index, and pose-catalog compatibility must be checked
-after model replacement: model pivot and scale differ from the basic attachment
-used by the existing catalog audit. Do not let a pose correction overwrite those
-appearance channels without a source-backed reconstruction. B32 remains partial.
+the exact recovered upgrade index. Model pivot and scale differ from the basic
+attachment used by the initial catalog audit; the subsequent checkpoint below
+tests that interaction. B32 remains partial.
+
+## Model and pose compatibility checkpoint
+
+`SelfHostedInfantryVisualFactory.CreateWithAppearance` now attaches the selected
+weapon and applies its recovered model before a pose renderer captures its basis.
+The visual exposes that explicit copied `WeaponRoot`; body-only construction
+continues to leave it absent. Failed model application destroys the partial actor.
+
+The native model/pose audit uses this production construction path for all 80
+normal/Elite/card selections from the previous checkpoint. Each resulting actor
+receives every one of the 221 source observations, for 17,680 applications. All
+non-root transforms except the replaced model renderer are compared against the
+independent automatic source capture. The replaced renderer retains the captured
+rotation, while its mesh, material, position and scale must match the selected
+model's recovered `SetLevel` rules after every sample. This verifies that current
+catalog corrections do not erase model appearance values.
+The existing 24-check native visual adapter regression also passes after the
+factory change. Static asset audits retain zero missing scripts, zero broken
+references and the same 17 pre-existing atlas sprite mismatches.
+
+This is a controlled compatibility matrix using the first ordinary body style.
+It does not capture automatic source gameplay anew with every upgraded model,
+validate Elite/card body appearances, map battle level to upgrade index, enable
+host references, or negotiate renderer capability. The renderer must be created
+after model application. Normal presenter integration and wider source-history
+coverage remain open.
