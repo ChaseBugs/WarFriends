@@ -156,46 +156,53 @@ public static class UnityAbortNoticeAudit
 
     private static async Task VerifyNoticeCycleAsync(ConfirmDialog dialog, bool acknowledgeBeforePolling)
     {
-        bool acknowledged = false;
-        string title = Localization.Localize("ID_CONFIRM_INFO");
-        string message = Localization.Localize("ID_BATTLECANCELED");
-        Require(title != "ID_CONFIRM_INFO" && message != "ID_BATTLECANCELED",
-            "The original source strings did not resolve.");
-        ConfirmDialog.ShowAlert((owner, accepted) => acknowledged = true, title, message);
-        Require(!dialog.isFullyShowed, "ShowAlert must expose its asynchronous animation before completion.");
-        var wait = (IEnumerator)typeof(GameController).GetMethod("WaitForAbortedNoticeRoutine",
-            BindingFlags.Static | BindingFlags.NonPublic).Invoke(null,
-            new object[] { dialog, new Func<bool>(() => acknowledged) });
-        Require(wait.MoveNext(), "Recovery released its owner before the original notice had appeared.");
-        await WaitAsync(() => dialog.isFullyShowed && !dialog.readyToShowUp);
-        Require(dialog.gameObject.activeInHierarchy && dialog.okButton.gameObject.activeInHierarchy &&
-            !dialog.yesButton.gameObject.activeSelf && !dialog.cancelButton.gameObject.activeSelf &&
-            dialog.dialogTitle.text == title && dialog.dialogText.text == message,
-            "The recovered alert did not show its original localized labels and OK-only controls.");
-        Require(dialog.GetComponent<UIPanel>().alpha1 > 0.99f,
-            "The recovered modal panel did not finish its actual alpha tween.");
-        GameObject selectedButton = FindOriginalOkButton(dialog);
-        if (!acknowledgeBeforePolling && SessionState.GetBool(RenderKey, false))
+        using (var messages = new UnityAbortMessageProbe())
         {
-            int frame = Time.frameCount;
-            await WaitAsync(() => Time.frameCount > frame);
-            CaptureModal();
-        }
-        var click = UIEventListener.Get(dialog.okButton.gameObject).onClick;
-        Require(click != null, "The original OK listener was not wired by Awake.");
-        if (!acknowledgeBeforePolling)
-        {
-            Require(!wait.MoveNext(), "A fully visible notice did not finish the recovery wait.");
-        }
+            bool acknowledged = false;
+            string title = Localization.Localize("ID_CONFIRM_INFO");
+            string message = Localization.Localize("ID_BATTLECANCELED");
+            Require(title != "ID_CONFIRM_INFO" && message != "ID_BATTLECANCELED",
+                "The original source strings did not resolve.");
+            ConfirmDialog.ShowAlert((owner, accepted) => acknowledged = true, title, message);
+            messages.VerifyBlocked();
+            Require(!dialog.isFullyShowed, "ShowAlert must expose its asynchronous animation before completion.");
+            var wait = (IEnumerator)typeof(GameController).GetMethod("WaitForAbortedNoticeRoutine",
+                BindingFlags.Static | BindingFlags.NonPublic).Invoke(null,
+                new object[] { dialog, new Func<bool>(() => acknowledged) });
+            Require(wait.MoveNext(), "Recovery released its owner before the original notice had appeared.");
+            await WaitAsync(() => dialog.isFullyShowed && !dialog.readyToShowUp);
+            Require(dialog.gameObject.activeInHierarchy && dialog.okButton.gameObject.activeInHierarchy &&
+                !dialog.yesButton.gameObject.activeSelf && !dialog.cancelButton.gameObject.activeSelf &&
+                dialog.dialogTitle.text == title && dialog.dialogText.text == message,
+                "The recovered alert did not show its original localized labels and OK-only controls.");
+            Require(dialog.GetComponent<UIPanel>().alpha1 > 0.99f,
+                "The recovered modal panel did not finish its actual alpha tween.");
+            messages.VerifyBlocked();
+            GameObject selectedButton = FindOriginalOkButton(dialog);
+            if (!acknowledgeBeforePolling && SessionState.GetBool(RenderKey, false))
+            {
+                int frame = Time.frameCount;
+                await WaitAsync(() => Time.frameCount > frame);
+                CaptureModal();
+            }
+            var click = UIEventListener.Get(dialog.okButton.gameObject).onClick;
+            Require(click != null, "The original OK listener was not wired by Awake.");
+            if (!acknowledgeBeforePolling)
+            {
+                Require(!wait.MoveNext(), "A fully visible notice did not finish the recovery wait.");
+            }
 
-        click(selectedButton);
-        Require(acknowledged, "The original OK callback did not acknowledge the notice.");
-        if (acknowledgeBeforePolling)
-        {
-            Require(!wait.MoveNext(), "Immediate acknowledgement left recovery waiting for a hidden notice.");
+            click(selectedButton);
+            Require(acknowledged, "The original OK callback did not acknowledge the notice.");
+            messages.VerifyBlocked();
+            if (acknowledgeBeforePolling)
+            {
+                Require(!wait.MoveNext(), "Immediate acknowledgement left recovery waiting for a hidden notice.");
+            }
+            await WaitAsync(() => dialog.isFullyHidden && !dialog.gameObject.activeSelf);
+            Require(!UIDraggablePanel.panelDisabled, "Closing the modal left NGUI dragging locked.");
+            messages.VerifyDelivered();
         }
-        await WaitAsync(() => dialog.isFullyHidden && !dialog.gameObject.activeSelf);
-        Require(!UIDraggablePanel.panelDisabled, "Closing the modal left NGUI dragging locked.");
     }
 
     private static GameObject FindOriginalOkButton(ConfirmDialog dialog)

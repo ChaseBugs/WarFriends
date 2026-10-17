@@ -101,3 +101,28 @@ The guarded graphics-enabled run passed all of these iterator checks and both
 original modal cycles: `Server/.local/unity-abort-message-guard.log`. The same
 checkpoint passed 1,334 protocol checks and retained zero missing scripts/broken
 asset references; the seventeen existing atlas selections remain unresolved.
+
+## Modal-to-message handoff
+
+`UnityAbortNoticeFixture` also binds the original inactive DialogManager to the
+original IGuiDialog components beneath the retained UIRoot. Only its registry is
+initialized; its account/logout Awake path remains outside this isolated test.
+No dialog is replaced with a mock or removed from that registry.
+
+`UnityAbortMessageProbe` inserts a base source DatabaseMessage through AddMessage
+and calls the original private ShowEvent dispatcher. At opening, fully visible
+and hiding states, the actual DialogManager must report an active dialog,
+DatabaseMessage.CanShow must reject delivery, and dispatch must retain the same
+unshown message. After the original OK handler and fade-out make the modal
+inactive, dispatch must mark it shown and then migrate it from the pending queue
+to the original shown-message dictionary. Probe cleanup removes only its own IDs.
+
+Both cycles passed in graphics-enabled Play Mode, including the fast OK recovery
+wait: `Server/.local/unity-abort-message-delivery.log`. The source registry already
+protects this handoff, so this checkpoint changes verification tools only.
+
+This proves base message eligibility, dispatch and shown-history transfer against
+a real modal. It does not execute a concrete message's reward, maintenance,
+account acknowledgement or separate popup implementation. Nor does it initialize
+the full menu/profile graph or force the combined menu/message coroutine schedule.
+Those broader integration gates remain open.

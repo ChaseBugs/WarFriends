@@ -63,9 +63,20 @@ public static class UnityAbortNoticeFixture
         typeof(DebugSettings).GetField("mInstance", BindingFlags.Static | BindingFlags.NonPublic)
             .SetValue(null, settings);
         BindLocalization(dialog);
+        BindDialogRegistry(uiRoot);
         uiRoot.gameObject.SetActive(true);
         dialog.InitEvents();
         return dialog;
+    }
+
+    private static void BindDialogRegistry(UIRoot uiRoot)
+    {
+        DialogManager dialogs = Resources.FindObjectsOfTypeAll<DialogManager>()
+            .Single(value => value.gameObject.scene.IsValid());
+        typeof(DialogManager).GetField("mInstance", BindingFlags.Static | BindingFlags.NonPublic)
+            .SetValue(null, dialogs);
+        typeof(DialogManager).GetField("mDialogs", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(dialogs, uiRoot.GetComponentsInChildren<IGuiDialog>(true));
     }
 
     private static void BindLocalization(ConfirmDialog dialog)
