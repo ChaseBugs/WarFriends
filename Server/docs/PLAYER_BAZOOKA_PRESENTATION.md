@@ -81,9 +81,9 @@ Unity 2018.3. The source controls' Awake stays uncalled. Asset reference audits
 report zero missing scripts and broken references; the existing 17 NGUI sprite
 mismatches remain unchanged.
 
-This is not a complete visual-parity claim. Original post-impact smoke lifetime
-(1.3 seconds for the owner and 0.2 for a network copy) is not yet reproduced:
-the presenter currently removes the root immediately. Normal Play Mode sound
-and explosion scheduling, rendered live Worker/Unity missile flight, late
-snapshot/scan behavior after an impact, Android, Unity 5.2 and two actual Unity
-clients remain unverified. B32 and overall BattleServer completion remain open.
+The subsequent [lifetime checkpoint](PLAYER_BAZOOKA_LIFETIME.md) adds the original
+owner/peer tail delays and scoped late-read suppression. Its controlled tests
+and independent Play Mode source-timer comparison pass. This is not a complete
+visual-parity claim: normal Play Mode sound/explosion scheduling, rendered live
+Worker/Unity missile flight, broader ordering, Android, Unity 5.2 and two actual
+Unity clients remain unverified. B32 and overall completion remain open.

@@ -96,6 +96,11 @@ public static class UnityPlayerBazookaPresentationAudit
             Kind = MatchEventKind.Impact, ActorId = PlayerId, ProjectileId = projectileId,
             Reason = projectile.Kind, WeaponSourceId = sourceId
         });
+        Require(visual != null && !visual.transform.Find("missilePrototype").gameObject.activeSelf,
+            "The host impact stops the model before the original smoke tail expires.");
+        var lifetime = (SelfHostedBazookaLifetime)typeof(SelfHostedProjectilePresenter)
+            .GetField("bazookaLifetime", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(presenter);
+        lifetime.Advance(Time.time + 1.31f);
         Require(GameObject.Find("SelfHostedProjectile_" + projectileId) == null,
             "The host impact removes the missile.");
     }

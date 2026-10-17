@@ -9,6 +9,8 @@ public static class SelfHostedBazookaVisual
     private const float NormalTrailSize = 0.2f;
     private const float SmallTrailSize = 0.08f;
     private const string VisualResourceName = "SelfHostedPlayerMissileVisual";
+    private const string ModelPath = "missilePrototype";
+    private const string FlightParticlesPath = "fireFlash";
     private static readonly Vector3 NormalModelScale = new Vector3(1f, 1f, 1.4f);
 
     /// <summary>Uses launch identity even when the owner has changed weapons during flight.</summary>
@@ -81,6 +83,21 @@ public static class SelfHostedBazookaVisual
         }
 
         return sourceId == "Google2u.Bazooka_M202" ? Explosion.ExplosionType.Small : Explosion.ExplosionType.Medium;
+    }
+
+    /// <summary>Matches Missile.TryKill's visual stop while preserving the remaining smoke and trail.</summary>
+    public static void StopFlight(GameObject root)
+    {
+        Transform model = root.transform.Find(ModelPath);
+        Transform flash = root.transform.Find(FlightParticlesPath);
+        ParticleSystem particles = flash == null ? null : flash.GetComponent<ParticleSystem>();
+        if (model == null || particles == null)
+        {
+            throw new InvalidOperationException("The reviewed missile retirement bindings are absent.");
+        }
+
+        particles.Stop();
+        model.gameObject.SetActive(false);
     }
 
     private static void ValidateVisualPrefab(GameObject prefab)

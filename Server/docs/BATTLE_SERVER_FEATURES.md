@@ -12,8 +12,11 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 seven source weapon identities through host projectile rows, reliable impacts,
 the SDK and the normal Unity projectile presenter. A script-free derived source
 prefab preserves the original render data. Native component comparisons and
-real SDK UDP delivery pass; post-impact tail timing and live rendered gameplay
-remain B32 work.
+real SDK UDP delivery pass; live rendered gameplay remains B32 work.
+The [lifetime checkpoint](PLAYER_BAZOOKA_LIFETIME.md) now preserves the source
+owner/peer smoke delays and prevents completed flights from returning through
+late reads. Controlled checks and an isolated automatic Play Mode comparison
+against source pool timers pass, including pause and same-match reconnect.
 
 [RPG crate occlusion](PVP_RPG_CRATE_OCCLUSION.md) now reproduces a valid City
 spawn hidden from the initial cover. The host and original Unity Physics agree

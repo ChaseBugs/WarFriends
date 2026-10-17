@@ -27,5 +27,7 @@ Bazooka explosions also mutate source-bound shields with the recovered `ShieldEx
 The [player presentation checkpoint](PLAYER_BAZOOKA_PRESENTATION.md) connects host
 missile rows and source-bound impacts to the normal Client presenter. Source
 model/particle/trail comparisons pass for all seven families, and two SDK UDP
-peers receive the launch identity. Post-impact tail lifetime, normal Play Mode
-effects, a rendered live Unity UDP audit and Android/two-device proof remain open.
+peers receive the launch identity. The [lifetime checkpoint](PLAYER_BAZOOKA_LIFETIME.md)
+adds source owner/peer tails and scoped replay protection with controlled and
+automatic Play Mode timing checks. Normal Play Mode effects, a rendered live
+Unity UDP audit and Android/two-device proof remain open.

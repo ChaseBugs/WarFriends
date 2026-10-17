@@ -32,6 +32,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
     }
 
 	private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
+    private readonly SelfHostedBazookaLifetime bazookaLifetime = new SelfHostedBazookaLifetime();
     private readonly Dictionary<string, InfantryBulletSource> infantryBullets =
         new Dictionary<string, InfantryBulletSource>(System.StringComparer.Ordinal);
 	private PlayerController local;
@@ -121,17 +122,32 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	// discard them before applying the Worker's current projectile list.
 	public void ResetForFullSnapshot()
 	{
-		foreach (Visual visual in active.Values)
-			if (visual.Root != null) DestroyObject(visual.Root);
+        foreach (KeyValuePair<ulong, Visual> entry in active)
+        {
+            if (entry.Value.Root != null && !bazookaLifetime.OwnsVisual(entry.Key))
+            {
+                DestroyObject(entry.Value.Root);
+            }
+        }
 		active.Clear();
+        bazookaLifetime.ClearVisuals();
 	}
 
 	public void Apply(MatchSnapshot snapshot)
 	{
 		if (snapshot == null) return;
+        if (snapshot.MatchId.Length != 0 && bazookaLifetime.SelectScope(snapshot.MatchId, snapshot.ManifestHash))
+        {
+            ResetForFullSnapshot();
+        }
 		HashSet<ulong> present = new HashSet<ulong>();
 		foreach (BattleProjectileState state in snapshot.Projectiles)
 		{
+            if ((state.Kind == "bazooka" || state.Kind == "bazooka-fake") &&
+                bazookaLifetime.IsFinished(state.ProjectileId))
+            {
+                continue;
+            }
 			if (state.Kind != "bazooka" && state.Kind != "bazooka-fake" &&
                 state.Kind != "grenade" && state.Kind != "grenade-molotov" &&
                 state.Kind != "pvp-bonus-grenade" && state.Kind != "heavy-turret-bullet" &&
@@ -199,7 +215,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		if (batch == null || batch.Code != "projectiles" || batch.HasMore ||
 			batch.Projectiles.Count != batch.ActiveCount)
 			throw new System.InvalidOperationException("Projectile scan is incomplete.");
-		var complete = new MatchSnapshot();
+		var complete = new MatchSnapshot { MatchId = batch.MatchId, ManifestHash = batch.ManifestHash };
 		complete.Projectiles.Add(batch.Projectiles);
 		Apply(complete);
 	}
@@ -214,8 +230,9 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 throw new System.InvalidOperationException("Invalid bazooka impact presentation.");
             }
 
-            Remove(item.ProjectileId);
-            if (Application.isPlaying)
+            bool isFirstImpact = bazookaLifetime.Impact(item, Time.time);
+            active.Remove(item.ProjectileId);
+            if (isFirstImpact && Application.isPlaying)
             {
                 Explosion.PlayEffects(SelfHostedBazookaVisual.ExplosionTypeFor(item.WeaponSourceId),
                     new Vector3(item.X, item.Y, item.Z));
@@ -311,6 +328,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	}
     private void Update()
     {
+        bazookaLifetime.Advance(Time.time);
         RenderAt(Time.realtimeSinceStartup);
         var finished = new List<ulong>();
         foreach (var pair in active)
@@ -478,7 +496,19 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
 		if (kind == "bazooka" || kind == "bazooka-fake")
         {
-            return new Visual(SelfHostedBazookaVisual.Create(inventory, sourceId, "SelfHostedProjectile_" + projectileId));
+            GameObject missileRoot = SelfHostedBazookaVisual.Create(
+                inventory, sourceId, "SelfHostedProjectile_" + projectileId);
+            try
+            {
+                bazookaLifetime.Register(projectileId, missileRoot, sourceId,
+                    local != null && local.playerProperties != null && local.playerProperties.playerID == ownerId);
+            }
+            catch
+            {
+                DestroyObject(missileRoot);
+                throw;
+            }
+            return new Visual(missileRoot);
         }
 
 		PlayerWeapon current = CurrentWeaponOrNull(inventory);
@@ -592,13 +622,16 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		Visual visual;
 		if (!active.TryGetValue(projectileId, out visual)) return;
 		active.Remove(projectileId);
+        if (bazookaLifetime.RetireMissing(projectileId, Time.time))
+        {
+            return;
+        }
 		if (visual.Root != null) DestroyObject(visual.Root);
 	}
 
 	private void OnDestroy()
 	{
-		foreach (Visual visual in active.Values) if (visual.Root != null) DestroyObject(visual.Root);
-		active.Clear();
+        ResetForFullSnapshot();
 	}
 
 	private static void DestroyObject(GameObject value)
