@@ -30,6 +30,9 @@ namespace War.Client
         private readonly string _observedPoseRevision;
         public IReadOnlyList<BattlePlayerView> PlayerViews { get; private set; }
 
+        /// <summary>Gets the local participant identity from the owned grant copy.</summary>
+        public string LocalPlayerId => grant.PlayerId;
+
         public MatchConnection(MatchConnectionGrant connection)
             : this(connection, string.Empty)
         {

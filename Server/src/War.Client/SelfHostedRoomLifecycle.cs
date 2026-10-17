@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using War.Protocol;
@@ -52,10 +51,17 @@ namespace War.Client
             {
                 case BattlePhase.Waiting:
                 case BattlePhase.Countdown:
+                    bool isLocalReady = IsLocalPlayerReady(snapshot);
                     if (Phase == SelfHostedRoomPhase.Disconnected || Phase == SelfHostedRoomPhase.Connecting)
+                    {
                         SetPhase(SelfHostedRoomPhase.Loading);
-                    if (Phase == SelfHostedRoomPhase.Loading && snapshot.Players.Any(p => p.Ready))
+                    }
+
+                    if (Phase == SelfHostedRoomPhase.Loading && isLocalReady)
+                    {
                         SetPhase(SelfHostedRoomPhase.Ready);
+                    }
+
                     break;
                 case BattlePhase.Running:
                     if (Phase == SelfHostedRoomPhase.Connecting) SetPhase(SelfHostedRoomPhase.Loading);
@@ -69,6 +75,28 @@ namespace War.Client
                 default:
                     throw new InvalidOperationException("Unknown authoritative battle phase.");
             }
+        }
+
+        private bool IsLocalPlayerReady(MatchSnapshot snapshot)
+        {
+            BattlePlayerState localPlayer = null;
+            foreach (BattlePlayerState player in snapshot.Players)
+            {
+                if (player.PlayerId != connection.LocalPlayerId)
+                {
+                    continue;
+                }
+
+                if (localPlayer != null)
+                {
+                    throw new InvalidOperationException("Room readiness has duplicate local participant rows.");
+                }
+
+                localPlayer = player;
+            }
+
+            // A peer loading first does not complete this client's scene-loading handshake.
+            return localPlayer != null && localPlayer.Admitted && localPlayer.Ready;
         }
 
         public void MarkRunning()

@@ -1050,6 +1050,34 @@ using (var lifecycle = new SelfHostedRoomLifecycle(new MatchConnection(lifecycle
     lifecycle.Observe(new MatchSnapshot { Phase = BattlePhase.Waiting });
     lifecycle.Observe(new MatchSnapshot { Phase = BattlePhase.Waiting });
     Check(transitions == 1 && lifecycle.Phase == SelfHostedRoomPhase.Loading, "lifecycle suppresses duplicate phase callbacks");
+    var readiness = new MatchSnapshot { Phase = BattlePhase.Waiting };
+    readiness.Players.Add(new BattlePlayerState
+    {
+        PlayerId = Guid.NewGuid().ToString("N"), Admitted = true, Ready = true
+    });
+    lifecycle.Observe(readiness);
+    Check(lifecycle.Phase == SelfHostedRoomPhase.Loading, "peer readiness does not consume local loading");
+    var localReadiness = new BattlePlayerState { PlayerId = lifecycleGrant.PlayerId, Ready = true };
+    readiness.Players.Add(localReadiness);
+    lifecycle.Observe(readiness);
+    Check(lifecycle.Phase == SelfHostedRoomPhase.Loading, "an unadmitted local row cannot complete loading");
+    localReadiness.Admitted = true;
+    readiness.Players.Add(localReadiness.Clone());
+    try
+    {
+        lifecycle.Observe(readiness);
+        throw new Exception("Duplicate local readiness rows were accepted.");
+    }
+    catch (InvalidOperationException)
+    {
+        Check(true, "duplicate local readiness rows are rejected");
+    }
+    Check(lifecycle.Phase == SelfHostedRoomPhase.Loading && transitions == 1,
+        "ambiguous local readiness cannot publish a phase change");
+    readiness.Players.RemoveAt(readiness.Players.Count - 1);
+    lifecycle.Observe(readiness);
+    Check(lifecycle.Phase == SelfHostedRoomPhase.Ready && transitions == 2,
+        "only the admitted local participant completes loading");
 }
 var rematch = new RematchRequestState();
 Check(rematch.Request("test-match", lifecycleGrant.PlayerId, "r1", false) == "not-terminal", "rematch rejects live match");

@@ -30,10 +30,9 @@ internal static class CoopObservedPoseUdpTests
         using var modern = new MatchConnection(
             host.CreateGrant(sources.Manifest.Players[0].PlayerId, ModernSessionId), revision);
         using var legacy = new MatchConnection(host.CreateGrant(sources.Manifest.Players[1].PlayerId, LegacySessionId));
-        await modern.ConnectAsync(host.Token);
-        await legacy.ConnectAsync(host.Token);
-        await modern.ReadyAsync(host.Token);
-        await legacy.ReadyAsync(host.Token);
+        using var modernRoom = new SelfHostedRoomLifecycle(modern);
+        using var legacyRoom = new SelfHostedRoomLifecycle(legacy);
+        await VerifyReadinessOrderAsync(modernRoom, legacyRoom, host.Token);
         ulong enemyId = host.PrepareObservedWindow(returnTicks);
         Task<MatchReply> modernPoll = modern.PollAsync(host.Token);
         Task<MatchReply> legacyPoll = legacy.PollAsync(host.Token);
@@ -57,6 +56,21 @@ internal static class CoopObservedPoseUdpTests
 
         Console.WriteLine($"PASS: return phase {returnTicks} SDK UDP negotiation, clip-only isolation " +
             "and frozen observed-pose chunk delivery");
+    }
+
+    private static async Task VerifyReadinessOrderAsync(
+        SelfHostedRoomLifecycle modernRoom, SelfHostedRoomLifecycle legacyRoom, CancellationToken token)
+    {
+        modernRoom.Observe((await modernRoom.ConnectAsync(token)).Snapshot);
+        legacyRoom.Observe((await legacyRoom.ConnectAsync(token)).Snapshot);
+        modernRoom.Observe((await modernRoom.MarkReadyAsync(token)).Snapshot);
+        MatchReply peerReady = await legacyRoom.Connection.PollAsync(token);
+        legacyRoom.Observe(peerReady.Snapshot);
+        Require(legacyRoom.Phase == SelfHostedRoomPhase.Loading,
+            "The other player's Ready must not consume the local scene-loading transition.");
+        legacyRoom.Observe((await legacyRoom.MarkReadyAsync(token)).Snapshot);
+        Require(legacyRoom.Phase == SelfHostedRoomPhase.Running,
+            "The local Ready must still reach the host and start the cooperative mission.");
     }
 
     private static void Require(bool condition, string message)

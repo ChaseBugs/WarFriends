@@ -390,18 +390,10 @@ internal static class LiveRusherUdpTests
                               row.VelocityY*row.VelocityY+
                               row.VelocityZ*row.VelocityZ)-10f)<.001f),
                       "remote SDK receives one real and four harmless source-speed pellets");
-                ulong scanId=BitConverter.ToUInt64(Guid.NewGuid().ToByteArray(),0);
-                if(scanId==0)scanId=1;
-                var first=await b.PollProjectilesAsync(scanId,0,timeout.Token);
-                var replay=await b.PollProjectilesAsync(scanId,0,timeout.Token);
-                scanReplayed|=first.Code=="projectiles"&&!first.HasMore&&
-                    first.ActiveCount==5&&first.Projectiles.Count==5&&
-                    first.Projectiles.Select(row=>row.ProjectileId)
-                        .SequenceEqual(rows.Select(row=>row.ProjectileId))&&
-                    first.ToByteArray().SequenceEqual(replay.ToByteArray());
+                scanReplayed |= await ShotgunnerProjectileScanTest.VerifyAsync(b, remote.Snapshot, owner, timeout.Token);
             }
             Check(ownerSawBurst&&opponentSawBurst&&scanReplayed,
-                  $"both UDP peers and a replayed full scan see the same five host pellets: " +
+                  $"both UDP peers observe the host burst and a frozen complete scan replays its five pellets: " +
                   $"owner={ownerSawBurst}, opponent={opponentSawBurst}, scan={scanReplayed}");
         }
         finally

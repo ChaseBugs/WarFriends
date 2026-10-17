@@ -13,6 +13,11 @@ matches: a new grant resets snapshot ordering, foreign callbacks are ignored,
 and canceled admission cleanup cannot close a replacement connection. Native
 component checks pass; normal two-client loading remains unverified.
 
+[Local room readiness](CLIENT_ROOM_READINESS.md) now follows the grant's own
+participant rather than any ready peer. Actual SDK UDP tests cover peer-first
+loading so the second player can still send Ready and start the source mission.
+Normal two-Unity-client scene loading remains open.
+
 The [portable observed-pose catalog](COOP_PORTABLE_POSE_CATALOG.md) now shares
 221 source-bound samples between the server and installed Unity SDK. B32 remains
 partial: default animation views reject references; the negotiated SDK/Unity path
