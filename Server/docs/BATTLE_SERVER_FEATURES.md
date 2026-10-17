@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Interrupted cancellation preparation](PAIRED_CANCELLATION_CONTROL.md) now recovers
+pairs whose manifest or Worker registration was never completed. It freezes
+source-backed settings, registers only on an exact unknown-match refusal, and
+accepts real Worker terminal proof before release without publishing player
+grants. Native cases reproduce the prior 503 and verify both interruption points.
+Unattended intent recovery and in-flight admission/cancellation races remain open.
+
 [Queue attempt credentials](QUEUE_ATTEMPT_FENCING.md) now provide authenticated,
 stateless protobuf issuance with player-bound, purpose-separated signed tokens.
 Admission expires after five minutes while cancellation can still identify the

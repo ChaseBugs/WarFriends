@@ -39,6 +39,12 @@ public sealed class BattleMatchCancellationClient
         using HttpRequestMessage request = CreateSignedRequest(endpoint, body);
         using HttpResponseMessage response = await _http.SendAsync(
             request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.Conflict &&
+            await IsUnknownMatchAsync(response, cancellationToken))
+        {
+            throw new BattleMatchNotRegisteredException();
+        }
+
         if (response.StatusCode != HttpStatusCode.OK)
         {
             throw new HttpRequestException("Battle cancellation failed: " + (int)response.StatusCode,
@@ -101,6 +107,24 @@ public sealed class BattleMatchCancellationClient
         }
 
         return (hash, payload);
+    }
+
+    private static async Task<bool> IsUnknownMatchAsync(
+        HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var document = await ReadReplyAsync(response, cancellationToken);
+            var root = document.RootElement;
+            return root.ValueKind == JsonValueKind.Object && root.EnumerateObject().Count() == 1 &&
+                root.TryGetProperty("code", out var code) && code.ValueKind == JsonValueKind.String &&
+                code.GetString() == "unknown-match";
+        }
+        catch (InvalidDataException)
+        {
+            // An ambiguous refusal must never authorize a registration-recovery attempt.
+            return false;
+        }
     }
 
     private static void ValidateRequest(Uri endpoint, string matchId, string manifestHash)

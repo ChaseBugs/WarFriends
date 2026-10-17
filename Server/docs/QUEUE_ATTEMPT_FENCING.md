@@ -107,9 +107,10 @@ match/roster tuple to cancellation; it never interprets it as a new match.
 
 - Exercise the full two-Unity-client gameplay path, including Android and Linux
   runtime coverage, and crashes while requests/registration are still in flight.
-- Coordinate cancellation intent with registration before a frozen manifest is
-  available. A missing manifest or unavailable Worker still requires retry;
-  the existing control flow does not yet guarantee a completed early pair cancel.
+- Complete unattended cancellation-intent recovery when every client abandons
+  its request, and exercise actual in-flight registration/cancellation races.
+  Missing settings/registration now recover through the cancellation coordinator;
+  unavailable Worker transport or invalid source authority still requires retry.
 
 These boundaries keep B31/B36 and the overall BattleServer objective partial.
 
@@ -135,7 +136,7 @@ The standard Windows and Linux smoke scripts invoke `--queue-attempts-only`
 after initializing their disposable Mongo replica set. The Windows script and
 standalone live queue/manifest suites pass at this checkpoint; adding the same
 command to the Linux script is not Linux execution evidence. The current
-protocol total is 1,314, including eight additive wire/empty-scope SDK guards
+protocol total is 1,322, including eight additive wire/empty-scope SDK guards
 and 16 linked-source Unity attempt ownership checks.
 
 ## Normal Unity integration
@@ -199,3 +200,11 @@ it does not claim crashes during an in-flight transaction, an absent frozen
 manifest, complete Unity UI boot or Linux execution. Production behavior did not
 need a change for this gate. Standard protocol and smoke regressions remain
 separate from this actual restart scenario.
+
+The [interrupted preparation recovery](PAIRED_CANCELLATION_CONTROL.md) checkpoint
+also covers scoped pairs before snapshot publication or Worker registration.
+The coordinator freezes source-backed settings if absent, recognizes only the
+exact `unknown-match` conflict for one registration attempt, then accepts actual
+Worker cancellation proof before release. Native cases verify no grant publication
+and no mutation of already frozen settings. Unattended recovery and in-flight
+scheduling remain separate from that verified request-driven recovery.

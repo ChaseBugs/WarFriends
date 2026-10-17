@@ -124,3 +124,7 @@ Server/tests/War.Battle.Tests/ScopedQueueLiveChecks.cs text eol=lf
 Server/tests/War.Protocol.Tests/QueueAttemptWireTests.cs text eol=lf
 
 Server/tests/War.Battle.Tests/BattleQueueOwnershipSnapshot.cs text eol=lf
+
+Server/src/War.Backend/BattleCancellationPreparation.cs text eol=lf
+Server/src/War.Infrastructure/BattleMatchNotRegisteredException.cs text eol=lf
+Server/tests/War.Battle.Tests/UnpreparedPairCancellationChecks.cs text eol=lf

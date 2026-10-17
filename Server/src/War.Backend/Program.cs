@@ -58,8 +58,12 @@ builder.Services.AddSingleton(new BattleMatchControlClient(new HttpClient { Time
 builder.Services.AddSingleton(new BattleQueueAttemptTokens(battleControlKey));
 builder.Services.AddSingleton(new BattleMatchCancellationClient(
     new HttpClient { Timeout = TimeSpan.FromSeconds(5) }, battleControlKey));
-builder.Services.AddSingleton(services => new BattlePairedCancellation(
+builder.Services.AddSingleton(services => new BattleCancellationPreparation(
     services.GetRequiredService<BattleManifestSnapshotStore>(),
+    services.GetRequiredService<BattleMatchControlClient>(),
+    services.GetService<BattleManifestFactory>(), battleControlEndpoint));
+builder.Services.AddSingleton(services => new BattlePairedCancellation(
+    services.GetRequiredService<BattleCancellationPreparation>(),
     services.GetRequiredService<BattleTerminalAcceptance>(),
     services.GetRequiredService<BattleMatchCancellationClient>(), battleControlEndpoint));
 builder.Services.AddSingleton(services => new BattleMatchProvisioner(services.GetRequiredService<BattleMatchControlClient>(),

@@ -19,6 +19,7 @@ internal static class BattleMatchCancellationTests
         checks += await VerifyInvalidRepliesAsync();
         checks += await VerifyInvalidRequestsAsync();
         checks += await VerifyEvidenceRepliesAsync();
+        checks += await VerifyRegistrationRecoveryRefusalsAsync();
         Console.WriteLine("PASS: " + checks + " hash-bound Worker cancellation checks");
         return checks;
     }
@@ -107,6 +108,43 @@ internal static class BattleMatchCancellationTests
         }
 
         return replies.Length;
+    }
+
+    private static async Task<int> VerifyRegistrationRecoveryRefusalsAsync()
+    {
+        (HttpStatusCode Status, string Body, bool CanRecover)[] cases =
+        [
+            (HttpStatusCode.Conflict, "{\"code\":\"unknown-match\"}", true),
+            (HttpStatusCode.Conflict, "{\"code\":\"cancel-unavailable\"}", false),
+            (HttpStatusCode.Conflict, "{\"code\":\"manifest-conflict\"}", false),
+            (HttpStatusCode.Conflict, "{\"code\":\"unknown-match\",\"extra\":true}", false),
+            (HttpStatusCode.Conflict, "{\"code\":\"other\",\"code\":\"unknown-match\"}", false),
+            (HttpStatusCode.Conflict, "malformed-json", false),
+            (HttpStatusCode.Conflict, new string('x', 1025), false),
+            (HttpStatusCode.ServiceUnavailable, "{\"code\":\"unknown-match\"}", false)
+        ];
+        foreach (var testCase in cases)
+        {
+            using var http = new HttpClient(new ReplyHandler(_ => new HttpResponseMessage(testCase.Status)
+                { Content = new StringContent(testCase.Body) }));
+            var client = new BattleMatchCancellationClient(http, ControlKey);
+            bool hasRejected = false;
+            try
+            {
+                await client.CancelAsync(Endpoint, MatchId, ManifestHash, CancellationToken.None);
+            }
+            catch (HttpRequestException failure)
+            {
+                hasRejected = true;
+                Require(failure.StatusCode == testCase.Status &&
+                    (failure is BattleMatchNotRegisteredException) == testCase.CanRecover,
+                    "Only the exact unknown-match conflict may authorize registration recovery.");
+            }
+
+            Require(hasRejected, "A registration refusal must not become a successful cancellation.");
+        }
+
+        return cases.Length;
     }
 
     private static async Task<int> VerifySuccessAsync()

@@ -366,6 +366,9 @@ internal static class BackendQueueLiveTests
                 await Ready(backendUrl + "health/ready", backend);
                 await ownership.VerifyUnchangedAsync(mongo.GetDatabase(database), deadline.Token);
             });
+            await UnpreparedPairCancellationChecks.RunAsync(scopedScenario, ids, attemptIssuer,
+                new UnpreparedPairCancellationChecks.Stores(
+                    queue, new BattleManifestSnapshotStore(mongoUri, database), results, grantStore));
             Console.WriteLine("PASS: deferred pair, stable grants, terminal revocation, Worker crash recovery and rematch");
         }
         finally

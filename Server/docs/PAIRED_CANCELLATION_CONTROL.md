@@ -62,8 +62,10 @@ release becomes `not-queued`; no reward or winner is fabricated.
 
 Running or otherwise unavailable Worker control transitions remain
 `already-paired`, which the Unity attempt correctly refuses as successful cleanup.
-Unavailable transport, missing frozen manifests or invalid terminal evidence
-return HTTP 503 `match_cancellation_deferred`, retaining authority for retry.
+Unavailable transport, unavailable/invalid source-backed settings or invalid terminal
+evidence return HTTP 503 `match_cancellation_deferred`, retaining authority for retry.
+A missing snapshot is now prepared from the normal immutable server factory;
+a missing Worker registration can be recovered as described below.
 An aborted HTTP request does not become a success; already persisted Worker
 proof can be replayed by a later request or the normal result forwarder.
 
@@ -72,18 +74,17 @@ to cancel a running battle, successful prestart cancellation with stored proof,
 release of both roster members, replay, revoked grant delivery and a distinct
 new match. The signed C# client retrieves actual Worker evidence; six protocol
 cases check bounded envelopes, identity, encoding, digest and the separate MAC
-domain. The current protocol total is 1,199; native general smoke remains 74
+domain. The current protocol total is 1,322; native general smoke remains 74
 checks plus the targeted lookup checks. Linux runtime and complete UI gameplay
 are not claimed from these Windows service tests.
 
-Cancellation before a manifest is frozen or registration reaches the Worker
-still requires retry; a durable distributed intent/tombstone is not implemented.
-Cross-component stale account-scoped cancellation can still select a newer
-attempt because the public request does not yet carry an attempt ID.
-
-Cross-component/process attempt fencing and complete recovered UI entry remain
-open as described in [Client cancellation](CLIENT_MATCHMAKING_CANCELLATION.md).
-B31/B36 and the complete BattleServer objective remain partial.
+Cancellation can now recover a missing frozen manifest or an interrupted Worker
+registration using the same source-backed factory and atomic snapshot identity.
+Scoped attempts prevent an old cancellation from selecting a replacement pair;
+normal Unity uses these scoped SDK calls. Full recovered UI entry, requests
+crashing while in flight, normal admission/cancellation races and recovery with
+no remaining client retry are still separate proof/work boundaries. B31/B36 and
+the complete BattleServer objective remain partial.
 
 ## Atomic allocator decision
 
@@ -115,3 +116,40 @@ before a coordinator reads it. Retention remains bounded by the existing
 acknowledgement policy; Backend accepted-result replay is still necessary after
 pruning. The public coordinator uses this endpoint before terminal acceptance. The
 endpoint itself never releases allocator pairs.
+
+## Interrupted preparation recovery
+
+A real-service regression reproduced the old failure: a durable scoped pair
+with no snapshot returned HTTP 503 `match_cancellation_deferred` forever when
+cancellation was its only remaining request. The same issue applied when the
+snapshot existed but registration never reached the Worker.
+
+`BattleCancellationPreparation` now uses `BattleManifestSnapshotStore.GetOrCreate`
+and the normal `BattleManifestFactory`. Existing settings are immutable and
+never replaced. If preparation never finished, the first valid server factory
+publication establishes the source-backed settings, just as ordinary admission
+would. Missing configuration or invalid durable loadouts still fail closed.
+
+The cancellation client recognizes only HTTP 409 with exactly
+`{"code":"unknown-match"}` as `BattleMatchNotRegisteredException`. Running,
+manifest-conflicting, malformed, oversized, duplicate-key or extra-field refusals
+never authorize registration recovery. A missing registration is retried once
+through the signed `BattleMatchControlClient`, then cancellation is requested
+again with the frozen manifest hash. No loop silently overrides Worker authority.
+The preparer does not call grant publication and creates no deliverable Backend
+grant. The Worker still owns the actual aborted terminal result; acceptance
+validates its exact hash/roster and stores it before allocator release.
+
+The native HTTP/Mongo/Worker fixture now proves both a missing-snapshot pair and
+a frozen-but-unregistered pair. Both cancel without a winner, retain the correct
+frozen hash, store real Worker terminal proof, release both roster members and
+publish no player grants. The frozen case also checks exact snapshot bytes are
+unchanged. Existing running-match cancellation refusal and three real Backend
+restart checks still pass. Eight protocol cases cover the narrow refusal
+classification; the protocol total is 1,322.
+
+These tests model interruption by publishing only the durable prefix of normal
+allocation. They do not claim an arbitrary process kill at every instruction,
+registration/cancellation scheduling under all load, or a background completion
+guarantee when every client abandons its pending cancellation. Those remain
+explicit B31/B36 follow-up work, alongside complete Unity/Android/Linux gameplay.

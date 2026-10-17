@@ -8,19 +8,19 @@ namespace War.Backend;
 /// <summary>Accepts a captured pair's proven prestart cancellation before its allocator release.</summary>
 public sealed class BattlePairedCancellation
 {
-    private readonly BattleManifestSnapshotStore _manifests;
+    private readonly BattleCancellationPreparation _preparation;
     private readonly BattleTerminalAcceptance _acceptance;
     private readonly BattleMatchCancellationClient _worker;
     private readonly Uri _endpoint;
 
     /// <summary>Uses the same registration endpoint and frozen authority as match provisioning.</summary>
     public BattlePairedCancellation(
-        BattleManifestSnapshotStore manifests,
+        BattleCancellationPreparation preparation,
         BattleTerminalAcceptance acceptance,
         BattleMatchCancellationClient worker,
         Uri endpoint)
     {
-        _manifests = manifests;
+        _preparation = preparation;
         _acceptance = acceptance;
         _worker = worker;
         _endpoint = endpoint;
@@ -34,11 +34,9 @@ public sealed class BattlePairedCancellation
             throw new InvalidDataException("Paired cancellation requires a captured allocator decision.");
         }
 
-        byte[] frozen = await _manifests.Get(pair.MatchId, pair.Players, cancellationToken) ??
-            throw new InvalidDataException("Paired cancellation has no frozen manifest yet.");
+        byte[] frozen = await _preparation.GetFrozenManifestAsync(pair, cancellationToken);
         var manifest = MatchManifest.Parse(frozen);
-        var evidence = await _worker.CancelAndReadAsync(
-            _endpoint, pair.MatchId, manifest.Digest(), cancellationToken);
+        var evidence = await RequestEvidenceAsync(frozen, manifest, cancellationToken);
         var terminal = TerminalOutbox.ValidatePayload(evidence.Payload, pair.MatchId, evidence.Digest);
         if (terminal.Phase != BattlePhase.Aborted || terminal.TerminalReason != "cancelled-before-start" ||
             terminal.ManifestHash != manifest.Digest() ||
@@ -57,4 +55,22 @@ public sealed class BattlePairedCancellation
 
         return "cancelled";
     }
+
+    private async Task<(string Digest, byte[] Payload)> RequestEvidenceAsync(
+        byte[] frozen, MatchManifest manifest, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _worker.CancelAndReadAsync(
+                _endpoint, manifest.MatchId, manifest.Digest(), cancellationToken);
+        }
+        catch (BattleMatchNotRegisteredException)
+        {
+            // A Backend may have stopped after pair/snapshot publication but before Worker registration.
+            await _preparation.RegisterAsync(frozen, cancellationToken);
+            return await _worker.CancelAndReadAsync(
+                _endpoint, manifest.MatchId, manifest.Digest(), cancellationToken);
+        }
+    }
+
 }
