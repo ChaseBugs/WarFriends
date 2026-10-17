@@ -393,8 +393,47 @@ with `Old rematch cleanup authorized local quit after a callback started a succe
 The corrected adapter passed the same real cancellation gate in
 `Server/.local/queue-live-9ada34dceb8449d9befcb0eaeef5800c/UnitySameOpponentRematch.log`,
 including a still-pending successor search and unchanged accepted result digests.
-This gate covers a callback-started search on the same adapter. Cross-adapter
-pending-search ownership, the old controller's timeout behavior after that
-successor starts, and full screen reset/disable/cancel races still need separate
-migration and evidence. The adapter's local-quit decision is not proof of those
-remaining controller paths.
+This gate covers a callback-started search on the same adapter. The following
+pending-owner checkpoint extends the timeout and cross-adapter rejection scope;
+full screen reset/disable/cancel races still need separate evidence.
+
+## Canonical pending-search ownership
+
+`OwnsBattleOperation` now includes the queue attempt, including failed cleanup
+that remains retained. `MatchmakeAndConnect` publishes the canonical adapter
+before starting discovery. Confirmed completion clears that owner only when no
+UDP, queue or rematch operation remains. Closing a socket alone cannot release
+an unconfirmed queue attempt. Direct and queue admission on a different adapter
+reject before opening a socket or creating a new Backend request.
+
+Pending ownership does not mean room admission. The compatibility player count,
+clock and battle ID remain zero/empty without an owned UDP transport, and
+`isInRoom` remains false. The previous terminal snapshot stays available without
+being presented as the new room. Legacy reconnect and pause-result paths do not
+claim a pending search, and a Forfeit during discovery selects queue cleanup
+rather than a locally invented battle result.
+
+`UpdateLegacyRematchTimeout` retains the recovered legacy timeout steps, while
+`HasSelfHostedBattleOperation` fences them against a retained controller request,
+that controller's adapter, or the current canonical owner. This also protects a
+successor when an old controller no longer retains its original adapter field.
+
+`UnityPendingBattleOwnerAudit` runs inside the real callback-started search. It
+checks inactive canonical reuse, neutral room projections, rejected foreign
+direct/queue admissions, and the actual timeout method on inactive DeathMatch
+and Coop controllers with an expired deadline and a real PlayerNetworkStatus.
+Both retained-reference and cleared-reference cases must leave player state and
+the real successor search unchanged. These are controlled controller-boundary
+checks, not successful menu/profile bootstrap or rendered gameplay.
+The real Editor/Backend/Worker/Mongo run passed in
+`Server/.local/queue-live-20a7639f90134ae7a89c34ae3713fa06/UnitySameOpponentRematch.log`
+with `UNITY_PENDING_BATTLE_OWNER_PASSED`; the successor cleanup also requires
+the canonical owner to become empty only after acknowledged completion. Both
+accepted battle-result digests remain unchanged afterward. Static asset checks
+retain zero missing scripts/broken references and the same seventeen NGUI
+atlas mismatches.
+
+Cross-adapter callback handoff, pending-owner HTTP failure injection, complete
+screen reset/disable/cancel races, two Unity players and full lobby initialization
+remain open. Source-scoped server cancellation and queue leases still own remote
+cleanup; the local canonical reference is not a remote receipt.

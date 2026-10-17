@@ -48,6 +48,7 @@ public static class UnityRematchCancellationAudit
                     client.IsMatchmaking &&
                     !client.HasPendingRematch && client.State.ToByteString().Equals(frozen),
                     "Old rematch cleanup authorized local quit after a callback started a successor search.");
+                await UnityPendingBattleOwnerAudit.VerifyAsync(client, endpoint, token, cancellationToken);
             }
         }
         finally
@@ -63,6 +64,8 @@ public static class UnityRematchCancellationAudit
             {
                 await Task.Delay(PollDelayMilliseconds, cancellationToken);
             }
+            Require(SelfHostedBattleClient.Active == null && !client.OwnsBattleOperation,
+                "Confirmed successor cleanup retained an empty canonical owner.");
         }
 
         Debug.Log("UNITY_REMATCH_CANCELLATION_PASSED remoteReceipt=True successorProtected=True");

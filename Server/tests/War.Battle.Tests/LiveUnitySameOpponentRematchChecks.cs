@@ -44,7 +44,8 @@ internal static class LiveUnitySameOpponentRematchChecks
                 "Rematch cancellation changed an accepted terminal result.");
             string editorLog = File.ReadAllText(logPath);
             Require(editor.ExitCode == 0 && editorLog.Contains(SuccessMarker, StringComparison.Ordinal) &&
-                editorLog.Contains("UNITY_REMATCH_CANCELLATION_PASSED", StringComparison.Ordinal),
+                editorLog.Contains("UNITY_REMATCH_CANCELLATION_PASSED", StringComparison.Ordinal) &&
+                editorLog.Contains("UNITY_PENDING_BATTLE_OWNER_PASSED", StringComparison.Ordinal),
                 "Actual Mono rematch handoff failed; inspect " + logPath);
             Console.WriteLine(
                 "PASS: actual Mono rematch handoff, failed-close retry, canonical owner and real UDP; " + logPath);

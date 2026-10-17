@@ -14,12 +14,12 @@ public sealed partial class SelfHostedBattleClient
     private bool _isRematchSourceReleased;
     private bool _hasRematchAdmissionStarted;
 
-    /// <summary>Includes retained remote rematch authority while no UDP connection is assigned.</summary>
+    /// <summary>Includes retained queue and rematch authority while no UDP connection is assigned.</summary>
     public bool OwnsBattleOperation
     {
         get
         {
-            return OwnsMatch || _rematchAttempt != null;
+            return OwnsMatch || matchmaking != null || _rematchAttempt != null;
         }
     }
 
@@ -173,9 +173,9 @@ public sealed partial class SelfHostedBattleClient
 
     private void RequireNoPendingRematch()
     {
-        if (_rematchAttempt != null || Active != null && Active != this && Active.HasPendingRematch)
+        if (_rematchAttempt != null || Active != null && Active != this && Active.OwnsBattleOperation)
         {
-            throw new InvalidOperationException("Retained rematch authority must complete before another admission.");
+            throw new InvalidOperationException("Retained battle authority must complete before another admission.");
         }
     }
 

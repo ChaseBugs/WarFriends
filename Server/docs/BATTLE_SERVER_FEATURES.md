@@ -72,8 +72,13 @@ The rematch cancellation adapter now rechecks ownership after `MatchClosed` so
 a callback-started successor search cannot authorize the old controller's local
 quit. A real Mono/Backend cancellation regression reproduces the previous
 unconditional-return failure and passes after the ownership recheck; its scope
-and remaining controller-timeout/cross-adapter/UI gaps are
-recorded in [the rematch boundary](RANDOM_REMATCH_BOUNDARY.md).
+and remaining gaps are recorded in [the rematch boundary](RANDOM_REMATCH_BOUNDARY.md).
+Pending searches now retain the canonical adapter through confirmed cleanup.
+Foreign admissions reject before starting another operation; a pending search
+does not expose the previous match's clock, roster count or room ID. The legacy
+rematch timeout now fences against the current canonical operation even if the
+old controller's retained reference was cleared. Full UI bootstrap, failure
+injection and cross-adapter callback handoff remain open.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

@@ -241,6 +241,7 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
 
         var attempt = new SelfHostedMatchmakingAttempt(new BackendClient(endpoint, allowLocalHttp), accessToken);
         matchmaking = attempt;
+        Active = this;
         try
         {
             MatchConnectionGrant grant = await attempt.FindAsync(timeoutSeconds);
@@ -335,6 +336,10 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         if (matchmaking == attempt && (!attempt.IsRetainedForLoading || attempt.IsCancellationRequested))
         {
             matchmaking = null;
+            if (Active == this && !OwnsBattleOperation)
+            {
+                Active = null;
+            }
         }
     }
 
@@ -1616,7 +1621,7 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         {
             ReleaseRematchOperation();
         }
-        if (Active == this && _rematchAttempt == null) Active = null;
+        if (Active == this && !OwnsBattleOperation) Active = null;
         roomLifecycle = null;
         PhotonCompatibility = null;
         cardsSelectedByBothRaised = false;

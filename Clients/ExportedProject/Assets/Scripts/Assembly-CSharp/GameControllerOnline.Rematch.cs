@@ -115,12 +115,21 @@ public abstract partial class GameControllerOnline
         }
     }
 
-    private bool IsSelfHostedRematchOwned
+    private bool HasSelfHostedBattleOperation
     {
         get
         {
-            return _selfHostedRematchClient != null &&
-                (_selfHostedRematchRequest != null || _selfHostedRematchClient.HasPendingRematch);
+            if (_selfHostedRematchRequest != null)
+            {
+                return true;
+            }
+
+            if (_selfHostedRematchClient != null && _selfHostedRematchClient.OwnsBattleOperation)
+            {
+                return true;
+            }
+
+            return PhotonConnectionManager.GetOwnedSelfHostedClient() != null;
         }
     }
 
@@ -137,6 +146,34 @@ public abstract partial class GameControllerOnline
             PlayerNetworkStatus.MatchState.Rematch,
             ++mStateUpdateCounter);
         MatchManager.rematchExpireTime = Time.realtimeSinceStartup + RematchConsentTimeoutSeconds;
+    }
+
+    private void UpdateLegacyRematchTimeout()
+    {
+        PlayerController player = PlayerController.currentPlayer;
+        if (HasSelfHostedBattleOperation || player == null || player.networkStatus == null ||
+            player.networkStatus.matchState != PlayerNetworkStatus.MatchState.Rematch ||
+            mBothPlayersConnected || !(Time.realtimeSinceStartup > MatchManager.rematchExpireTime))
+        {
+            return;
+        }
+
+        Quit();
+        LoadingDialog.Hide();
+        MatchManager.matchState = MatchState.GameCancelled;
+        bool isCoop = mMainController.isCoop || mMainController.isCoopBot;
+        WarningDialog.ShowError(
+            Localization.Localize(isCoop ? "ID_COOPCANCELED" : "ID_BATTLECANCELED"),
+            Localization.Localize(isCoop ? "ID_FRIENDREFUSEDREMATCHCOOP" : "ID_OPPONENTREFUSEDTHEREMATCH"),
+            0f,
+            delegate
+            {
+                Singleton<GuiManager>.instance.ShowMainScreen();
+                LoadingDialog.Hide();
+            },
+            string.Empty);
+        PlayerController.currentPlayer.networkStatus.Reset();
+        GuiElementSingle<WarningDialog>.instance.HideDialog();
     }
 
     private void CancelSelfHostedRematchRequest()

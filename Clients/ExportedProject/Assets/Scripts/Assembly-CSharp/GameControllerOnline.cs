@@ -1135,7 +1135,8 @@ public abstract partial class GameControllerOnline : IGameController
 	protected virtual void CheckForReconnect()
 	{
 		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
-        if (selfHosted != null && selfHosted.HasPendingRematch)
+        if (selfHosted != null && (selfHosted.HasPendingRematch ||
+            selfHosted.OwnsBattleOperation && !selfHosted.OwnsMatch))
         {
             return;
         }
@@ -1538,6 +1539,12 @@ public abstract partial class GameControllerOnline : IGameController
         }
 
         SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+        if (selfHosted != null && selfHosted.IsMatchmaking)
+        {
+            selfHosted.LeaveMatch();
+            return;
+        }
+
         if (selfHosted != null && selfHosted.HasPendingRematch)
         {
             QuitSelfHostedRematchAsync(selfHosted);
@@ -1648,23 +1655,7 @@ public abstract partial class GameControllerOnline : IGameController
 		{
 			LoadingDialog.SetHeader(Localization.Localize("ID_WAITINGFOROTHERPLAYER"));
 		}
-        if (!IsSelfHostedRematchOwned && PlayerController.currentPlayer != null &&
-            PlayerController.currentPlayer.networkStatus != null &&
-            PlayerController.currentPlayer.networkStatus.matchState == PlayerNetworkStatus.MatchState.Rematch &&
-            !mBothPlayersConnected && Time.realtimeSinceStartup > MatchManager.rematchExpireTime)
-		{
-			Quit();
-			LoadingDialog.Hide();
-			MatchManager.matchState = MatchState.GameCancelled;
-			bool flag = Singleton<GameController>.instance.isCoop || Singleton<GameController>.instance.isCoopBot;
-			WarningDialog.ShowError(Localization.Localize((!flag) ? "ID_BATTLECANCELED" : "ID_COOPCANCELED"), Localization.Localize((!flag) ? "ID_OPPONENTREFUSEDTHEREMATCH" : "ID_FRIENDREFUSEDREMATCHCOOP"), 0f, delegate
-			{
-				Singleton<GuiManager>.instance.ShowMainScreen();
-				LoadingDialog.Hide();
-			}, string.Empty);
-			PlayerController.currentPlayer.networkStatus.Reset();
-			GuiElementSingle<WarningDialog>.instance.HideDialog();
-		}
+        UpdateLegacyRematchTimeout();
 		if (mIsWaitingToAcceptInvitation && (MatchManager.invitationState == InvitationState.Denied || MatchManager.invitationTimeRemaining <= 0f))
 		{
 			LoadingDialog.Hide();
@@ -1680,7 +1671,7 @@ public abstract partial class GameControllerOnline : IGameController
 	protected virtual void UpdatePause()
 	{
 		if (gameIsRunning && TimeManager.instance.isPaused && TimeManager.pauseTimeLeft <= 0f && !MatchManager.isReconnect &&
-			!(SelfHostedBattleClient.Active != null && SelfHostedBattleClient.Active.OwnsMatch))
+			!(SelfHostedBattleClient.Active != null && SelfHostedBattleClient.Active.OwnsBattleOperation))
 		{
 			if (TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedRemote)
 			{
