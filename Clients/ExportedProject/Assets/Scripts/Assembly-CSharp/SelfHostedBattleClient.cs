@@ -11,7 +11,7 @@ using War.Protocol;
 /// Photon rooms or grants rewards. Configure with a participant-specific grant
 /// supplied by the trusted allocator (or the local validation harness).
 /// </summary>
-public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClientAdapter
+public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClientAdapter
 {
     private const int MinimumMatchmakingTimeoutSeconds = 5;
     private const int MaximumMatchmakingTimeoutSeconds = 300;
@@ -171,7 +171,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     /// <summary>Reuses an owned match even while its GameObject is inactive before finding a free adapter.</summary>
     public static SelfHostedBattleClient GetOrCreate()
     {
-        if (Active != null && Active.OwnsMatch)
+        if (Active != null && Active.OwnsBattleOperation)
         {
             // Scene inactivity does not release an admitted or recovering match's ownership.
             return Active;
@@ -196,6 +196,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     /// <summary>Releases a confirmed ended transport before a fresh Backend-authorized random search.</summary>
     public void ReleaseEndedMatchForNewSearch()
     {
+        RequireNoPendingRematch();
         RequireAbortRecoveryReleased();
         if (Active != this || !OwnsMatch || State == null || State.Phase != BattlePhase.Ended)
         {
@@ -210,6 +211,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public async Task MatchmakeAndConnect(
         string backendEndpoint, string accessToken, int timeoutSeconds, bool allowLocalHttp)
     {
+        RequireNoPendingRematch();
         RequireAbortRecoveryReleased();
         if (destroyed)
         {
@@ -401,6 +403,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     /// <summary>Admits a direct trusted grant only when no account-scoped queue cleanup remains pending.</summary>
     public Task Connect(MatchConnectionGrant grant, ulong processedEventId = 0)
     {
+        RequireNoPendingRematch();
         RequireAbortRecoveryReleased();
         if (matchmaking != null)
         {
@@ -1529,6 +1532,10 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             CoopEnemiesReceived(CoopEnemies);
         }
 
+        if (_rematchConnecting != null && _rematchConnecting.IsCompleted)
+        {
+            ReleaseRematchAfterStart();
+        }
         if (roomLifecycle != null) roomLifecycle.Observe(State);
         if (StateReceived != null) StateReceived(State.Clone());
     }
@@ -1536,6 +1543,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private void OnDestroy()
     {
         destroyed = true;
+        ReleaseRematchOperation();
         Close();
     }
     public void LeaveMatch()
@@ -1543,6 +1551,12 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (_isAbortRecoverySuspended)
         {
             // Cleanup still needs this ownership guard to avoid legacy Photon fallback in recovered components.
+            return;
+        }
+
+        if (_rematchAttempt != null && !_rematchAttempt.IsCancellationConfirmed)
+        {
+            ObserveRematchLeaveAsync(_rematchAttempt);
             return;
         }
 
@@ -1598,7 +1612,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         connection = null;
         _hasLoadingFailure = false;
         _observedPoseCatalogRevision = string.Empty;
-        if (Active == this) Active = null;
+        if (_rematchAttempt != null && _rematchAttempt.IsCancellationConfirmed)
+        {
+            ReleaseRematchOperation();
+        }
+        if (Active == this && _rematchAttempt == null) Active = null;
         roomLifecycle = null;
         PhotonCompatibility = null;
         cardsSelectedByBothRaised = false;

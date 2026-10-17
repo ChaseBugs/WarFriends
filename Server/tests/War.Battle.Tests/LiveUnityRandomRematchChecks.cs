@@ -66,7 +66,7 @@ internal static class LiveUnityRandomRematchChecks
         return grant;
     }
 
-    private static async Task<string> WaitForAcceptedAsync(MatchConnectionGrant grant, Stores stores,
+    internal static async Task<string> WaitForAcceptedAsync(MatchConnectionGrant grant, Stores stores,
         CancellationToken cancellationToken)
     {
         for (int poll = 0; poll < MaximumPolls; poll++)

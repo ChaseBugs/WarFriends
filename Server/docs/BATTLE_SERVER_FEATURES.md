@@ -14,8 +14,11 @@ owners reject before lobby/player mutation, and a controlled native terminal
 release preserves the old snapshot and notifies closure once. The live native
 gate now reuses one Unity adapter for two real Backend/Worker allocations,
 checks fresh match credentials and Mongo pair release, and preserves the first
-accepted result digest. Normal second-battle entry and same-opponent consent
-remain open; this does not reopen a terminal Worker match.
+accepted result digest. The same-opponent Mono adapter now retains canonical
+ownership across a failed close callback and retries into a fresh reserved UDP
+match. The actual Editor/Backend/Worker/Mongo gate verifies this handoff and the
+unchanged original result. Normal second-battle screen entry and same-opponent
+button wiring remain open; this does not reopen a terminal Worker match.
 
 Same-opponent consent now has a separate durable persistence foundation:
 accepted Ended-result participant binding, thirty-second expiry, idempotent
@@ -57,8 +60,9 @@ The active Unity source now has a separate rematch operation owner for consent,
 validated fresh grants and retryable source-bound cancellation. Its real source
 is linked into native HTTP/UDP/Mongo tests; waiting/allocated cleanup and a new
 playable round pass. Disposable Unity compilation/construction and static asset
-audits pass as scoped in the rematch document. Normal controller/button wiring
-and Mono transport handoff remain open.
+audits pass as scoped in the rematch document. The Mono transport handoff also
+passes with an SDK peer, including retained ownership after a failed close
+callback. Normal controller/button wiring and full lobby transitions remain open.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

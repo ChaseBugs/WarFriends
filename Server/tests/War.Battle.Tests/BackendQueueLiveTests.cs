@@ -438,6 +438,12 @@ internal static class BackendQueueLiveTests
                     BackendEndpoint = new Uri(backendUrl), AccessTokens = tokens,
                     UnityExecutable = unityExecutable, ProjectPath = unityProject, RunDirectory = run
                 }, new LiveUnityRandomRematchChecks.Stores(queue, results), rematchDeadline.Token);
+                using var sameOpponentDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+                await LiveUnitySameOpponentRematchChecks.RunAsync(new LiveUnitySameOpponentRematchChecks.Settings
+                {
+                    BackendEndpoint = new Uri(backendUrl), AccessTokens = tokens,
+                    UnityExecutable = unityExecutable, ProjectPath = unityProject, RunDirectory = run,
+                }, new LiveUnitySameOpponentRematchChecks.Stores(queue, results), sameOpponentDeadline.Token);
             }
             using var recoveryDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
             var unattended = new UnattendedCancellationChecks(

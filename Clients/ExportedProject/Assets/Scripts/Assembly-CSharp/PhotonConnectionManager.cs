@@ -29,7 +29,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static SelfHostedBattleClient GetOwnedSelfHostedClient()
 	{
 		SelfHostedBattleClient client = SelfHostedBattleClient.Active;
-		return client != null && client.OwnsMatch ? client : null;
+		return client != null && client.OwnsBattleOperation ? client : null;
 	}
 
 	public static bool IsSelfHostedActive => GetOwnedSelfHostedClient() != null;
@@ -353,7 +353,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
         {
             selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
         }
-		if (selfHosted != null && (selfHosted.OwnsMatch || selfHosted.IsMatchmaking))
+		if (selfHosted != null && (selfHosted.OwnsBattleOperation || selfHosted.IsMatchmaking))
 		{
 			selfHosted.LeaveMatch();
 			return;

@@ -311,7 +311,33 @@ Running-source rejection, socket-free envelope rejection and disposal without
 false confirmation. Static asset checks retain zero missing scripts/broken
 references and the same seventeen pre-existing NGUI atlas mismatches.
 
-These classes are not yet called by normal `GameControllerOnline.Rematch` or
-its cancel buttons. Mono transport handoff, actual lobby transitions, two Unity
-clients, original Unity 5.2/Android compatibility and admission-expiry UI behavior
-remain unverified. Linked source tests are not a normal-screen gameplay proof.
+## Mono same-opponent transport handoff
+
+`SelfHostedBattleClient.RematchAndConnectAsync` now owns consent discovery and
+the transition from the original Ended UDP transport to a fresh allocated grant.
+It validates the grant before closing the source connection. While this operation
+is retained, `OwnsBattleOperation` keeps the canonical adapter discoverable even
+without a socket; direct admissions and random searches cannot replace it.
+
+If an original `MatchClosed` callback throws after transport disposal,
+`RetryRematchHandoffAsync` retains the same source operation and prepared grant.
+It does not close the original transport twice. Once UDP admission starts,
+this API refuses pre-admission retry rather than reusing an endpoint-bound grant.
+The operation is released when the new admitted match reaches Running or Ended.
+Before then, leaving requires confirmed source-scoped remote cancellation;
+failed cancellation retains ownership and blocks replacement admissions.
+
+The native `--queue-live-unity` gate pairs the actual Mono adapter with an SDK
+peer through Backend, Worker and an isolated Mongo replica set. It checks a real
+source result, controlled close-callback failure, canonical ownership during the
+socket-free gap, rejected foreign admission, retry into a fresh playable match,
+and unchanged accepted source-result digest. This passed in
+`Server/.local/queue-live-e291e2d8072749b6bb3172601a641ef9/UnitySameOpponentRematch.log`.
+Asset checks still report zero missing scripts/broken references and the same
+seventeen pre-existing NGUI atlas mismatches.
+
+Normal `GameControllerOnline.Rematch` and its cancel buttons still use their
+recovered Photon branch. Actual lobby transitions, two Unity clients, original
+Unity 5.2/Android compatibility, admission-expiry UI behavior and rematch-specific
+late-cancellation/reconnect races remain unverified. This is an empty-scene Mono
+adapter gate, not a normal-screen gameplay proof.
