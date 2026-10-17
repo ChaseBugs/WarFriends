@@ -276,8 +276,8 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static void Disconnect()
 	{
 		Debug.Log("PhotonConnectionManager: Disconnect");
-		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
-		if (selfHosted != null)
+		SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		if (selfHosted != null && (selfHosted.OwnsMatch || selfHosted.IsMatchmaking))
 		{
 			selfHosted.LeaveMatch();
 			return;

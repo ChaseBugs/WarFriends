@@ -13,6 +13,8 @@ using War.Protocol;
 /// </summary>
 public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClientAdapter
 {
+    private const int MinimumMatchmakingTimeoutSeconds = 5;
+    private const int MaximumMatchmakingTimeoutSeconds = 300;
     [SerializeField] private string backendEndpoint = "http://127.0.0.1:8080/";
     [SerializeField] private int matchmakingTimeoutSeconds = 120;
     [SerializeField] private bool allowLocalHttp = true;
@@ -45,9 +47,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private string _observedPoseCatalogRevision = string.Empty;
     private SelfHostedRoomLifecycle roomLifecycle;
     private CancellationTokenSource lifetime;
-    private CancellationTokenSource matchmaking;
-    private BackendClient matchmakingBackend;
-    private string matchmakingToken;
+    private SelfHostedMatchmakingAttempt matchmaking;
     private bool polling;
     private float nextPoll;
     private float nextBarrelPoll;
@@ -152,44 +152,124 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         return MatchmakeAndConnect(backendEndpoint, login.accessToken, matchmakingTimeoutSeconds, allowLocalHttp);
     }
 
-    public async Task MatchmakeAndConnect(string backendEndpoint, string accessToken, int timeoutSeconds, bool allowLocalHttp)
+    /// <summary>Owns one authenticated queue search and admits its grant only while that search is current.</summary>
+    public async Task MatchmakeAndConnect(
+        string backendEndpoint, string accessToken, int timeoutSeconds, bool allowLocalHttp)
     {
-        if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
-        if (connection != null || matchmaking != null) throw new InvalidOperationException("A self-hosted match operation is already active.");
+        if (destroyed)
+        {
+            throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
+        }
+        if (string.IsNullOrEmpty(accessToken) || timeoutSeconds < MinimumMatchmakingTimeoutSeconds ||
+            timeoutSeconds > MaximumMatchmakingTimeoutSeconds)
+        {
+            throw new ArgumentException("Matchmaking requires a token and a 5-second to 5-minute timeout.");
+        }
+
+        if (matchmaking != null && matchmaking.IsCancellationRequested)
+        {
+            await CancelMatchmaking();
+        }
+
+        if (connection != null || matchmaking != null)
+        {
+            throw new InvalidOperationException("A self-hosted match operation is already active.");
+        }
+
         Uri endpoint;
         if (!Uri.TryCreate(backendEndpoint, UriKind.Absolute, out endpoint))
+        {
             throw new ArgumentException("A valid Backend endpoint is required.", nameof(backendEndpoint));
-        var source = new CancellationTokenSource();
-        matchmaking = source;
-        matchmakingToken = accessToken;
-        matchmakingBackend = new BackendClient(endpoint, allowLocalHttp);
+        }
+
+        var attempt = new SelfHostedMatchmakingAttempt(new BackendClient(endpoint, allowLocalHttp), accessToken);
+        matchmaking = attempt;
         try
         {
-            MatchConnectionGrant grant = await matchmakingBackend.FindMatchAsync(accessToken,
-                TimeSpan.FromSeconds(timeoutSeconds), source.Token);
-            source.Token.ThrowIfCancellationRequested();
-            await Connect(grant);
+            MatchConnectionGrant grant = await attempt.FindAsync(timeoutSeconds);
+            RequireCurrentMatchmaking(attempt);
+            await ConnectCoreAsync(grant, 0);
+            RequireCurrentMatchmaking(attempt);
+        }
+        catch
+        {
+            if (!attempt.IsCancellationRequested)
+            {
+                await CancelQueueAfterFailureAsync(attempt);
+            }
+
+            throw;
         }
         finally
         {
-            if (matchmaking == source) matchmaking = null;
-            source.Dispose();
-            if (matchmakingBackend != null) { matchmakingBackend.Dispose(); matchmakingBackend = null; }
-            matchmakingToken = null;
+            await CompleteMatchmakingAsync(attempt);
         }
     }
 
+    /// <summary>Closes pending admission and waits for acknowledged cancellation before another search.</summary>
     public async Task CancelMatchmaking()
     {
-        var source = matchmaking;
-        var backend = matchmakingBackend;
-        var token = matchmakingToken;
-        if (source == null) return;
-        source.Cancel();
-        if (backend != null && !string.IsNullOrEmpty(token))
+        SelfHostedMatchmakingAttempt attempt = matchmaking;
+        if (attempt == null)
         {
-            try { await backend.CancelMatchQueueAsync(token, CancellationToken.None); }
-            catch { }
+            return;
+        }
+
+        // Close admission as well as the HTTP search; it uses a separate UDP cancellation token.
+        Task cancellation = attempt.CancelAsync();
+        Close();
+        await cancellation;
+        await CompleteMatchmakingAsync(attempt);
+    }
+
+    private void RequireCurrentMatchmaking(SelfHostedMatchmakingAttempt attempt)
+    {
+        if (destroyed || matchmaking != attempt || attempt.IsCancellationRequested)
+        {
+            throw new OperationCanceledException("The matchmaking attempt was canceled or replaced.");
+        }
+    }
+
+    private async Task CancelQueueAfterFailureAsync(SelfHostedMatchmakingAttempt attempt)
+    {
+        try
+        {
+            await attempt.CancelAsync();
+        }
+        catch (Exception failure)
+        {
+            // Keep the original search failure; the retained attempt blocks a new join until cleanup retries.
+            if (!destroyed)
+            {
+                Debug.LogWarning("Self-hosted queue cancellation failed: " + failure.GetType().Name);
+            }
+        }
+    }
+
+    private async Task CompleteMatchmakingAsync(SelfHostedMatchmakingAttempt attempt)
+    {
+        try
+        {
+            await attempt.CompleteAsync();
+        }
+        catch (Exception failure)
+        {
+            if (destroyed)
+            {
+                // A destroyed owner cannot retry, but the bounded HTTP cancellation had its chance to finish.
+                attempt.Dispose();
+            }
+            else
+            {
+                Debug.LogWarning("Self-hosted queue cleanup is pending: " + failure.GetType().Name);
+            }
+
+            return;
+        }
+
+        if (matchmaking == attempt)
+        {
+            matchmaking = null;
         }
     }
 
@@ -255,7 +335,18 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         barrelTracker = tracker;
     }
 
-    public async Task Connect(MatchConnectionGrant grant, ulong processedEventId = 0)
+    /// <summary>Admits a direct trusted grant only when no account-scoped queue cleanup remains pending.</summary>
+    public Task Connect(MatchConnectionGrant grant, ulong processedEventId = 0)
+    {
+        if (matchmaking != null)
+        {
+            throw new InvalidOperationException("Finish the pending matchmaking cleanup before direct admission.");
+        }
+
+        return ConnectCoreAsync(grant, processedEventId);
+    }
+
+    private async Task ConnectCoreAsync(MatchConnectionGrant grant, ulong processedEventId)
     {
         if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
         if (connection != null) throw new InvalidOperationException("This component already owns a match session.");
@@ -1132,19 +1223,33 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (StateReceived != null) StateReceived(State.Clone());
     }
 
-    private void OnDestroy() { destroyed = true; Close(); }
+    private void OnDestroy()
+    {
+        destroyed = true;
+        Close();
+    }
     public void LeaveMatch() { Close(); }
     private void OnRoomPhaseChanged(SelfHostedRoomPhase phase)
     {
         if (!destroyed && RoomPhaseChanged != null) RoomPhaseChanged(phase);
     }
+    private async void ObserveQueueCancellationAsync(SelfHostedMatchmakingAttempt attempt)
+    {
+        await CancelQueueAfterFailureAsync(attempt);
+        await CompleteMatchmakingAsync(attempt);
+    }
+
     private void Close()
     {
         bool hadMatch = connection != null || LocalPlayerId != null || CoopEnemies.Count != 0;
         CoopEnemies = Array.Empty<CoopEnemyViewState>();
         _missionManager = null;
         IsConnected = false;
-        if (matchmaking != null) matchmaking.Cancel();
+        if (matchmaking != null)
+        {
+            // This observer keeps cancellation errors out of async-void UI callers and retains failed cleanup.
+            ObserveQueueCancellationAsync(matchmaking);
+        }
         reconnectRequestId = null;
         reconnectAttempts = 0;
         forfeitCommandPending = false;

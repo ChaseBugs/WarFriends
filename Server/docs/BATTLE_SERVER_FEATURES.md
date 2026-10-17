@@ -8,6 +8,14 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The [matchmaking cancellation checkpoint](CLIENT_MATCHMAKING_CANCELLATION.md)
+now routes normal pending-search disconnects to the self-hosted adapter, retains
+HTTP ownership until cancellation acknowledgement, and prevents delayed/reset
+lobby continuations from publishing a new room. Normal authenticated HTTP queue
+and grant requests also reach the real Worker and automatic Play Mode scenario.
+The HTTP allocator facade is test-only; already-paired allocation cancellation,
+distributed attempt fencing and complete recovered UI entry remain open.
+
 The [host-owned PvP clock checkpoint](PLAYER_PVP_CLOCK.md) now stops the normal
 DeathMatch controller from starting local overtime, destroying source shields
 or sending the legacy overtime RPC for an owned self-hosted match. Its time

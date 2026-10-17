@@ -93,3 +93,8 @@ manifest under `Server/.local/bazooka-live-*`. Success requires native exit zero
 and `UNITY_LIVE_BAZOOKA_PLAY_PASSED`. The original `--unity-bazooka-only` command
 remains the separate Editor control; it explicitly polls because Editor mode
 does not execute the adapter's normal `Update`.
+
+The [subsequent matchmaking checkpoint](CLIENT_MATCHMAKING_CANCELLATION.md)
+adds `--unity-bazooka-matchmaking-only`. It enters through actual authenticated
+HTTP queue/grant requests to a test-only allocator facade, then the real Worker;
+the existing direct-grant Editor/Play Mode controls remain separate.

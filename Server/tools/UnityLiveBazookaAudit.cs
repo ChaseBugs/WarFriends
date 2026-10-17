@@ -87,7 +87,7 @@ public static class UnityLiveBazookaAudit
             using (var other = new MatchConnection(peer))
             {
                 SetStage("local-admission");
-                await adapter.Connect(local);
+                await ConnectLocalAsync(adapter, local);
                 SetStage("peer-admission");
                 await other.ConnectAsync(token.Token);
                 SetStage("bridge-activation");
@@ -118,6 +118,22 @@ public static class UnityLiveBazookaAudit
             DestroyOwned(left);
             DestroyOwned(right);
         }
+    }
+
+    private static async Task ConnectLocalAsync(SelfHostedBattleClient adapter, MatchConnectionGrant grant)
+    {
+        string endpoint = Environment.GetEnvironmentVariable("WAR_BAZOOKA_QUEUE_ENDPOINT");
+        if (string.IsNullOrEmpty(endpoint))
+        {
+            await adapter.Connect(grant);
+            return;
+        }
+
+        string accessToken = Environment.GetEnvironmentVariable("WAR_BAZOOKA_QUEUE_TOKEN");
+        await adapter.MatchmakeAndConnect(endpoint, accessToken, TimeoutSeconds, true);
+        Require(adapter.IsConnected && !adapter.IsMatchmaking && adapter.LocalPlayerId == grant.PlayerId,
+            "Normal HTTP matchmaking must release search resources while retaining its admitted UDP connection.");
+        Debug.Log("LIVE_BAZOOKA_QUEUE_ADMITTED: authenticated HTTP queue/grant to the actual UDP Worker.");
     }
 
     private static async Task RunBattleAsync(

@@ -736,7 +736,7 @@ if(args is ["--command-ack-only"])
 }
 
 if (args is [var bazookaAuditCommand, var bazookaUnityExecutable, var bazookaUnityProject] &&
-    bazookaAuditCommand is "--unity-bazooka-only" or "--unity-bazooka-play-only")
+    bazookaAuditCommand is "--unity-bazooka-only" or "--unity-bazooka-play-only" or "--unity-bazooka-matchmaking-only")
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
     while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
@@ -749,7 +749,12 @@ if (args is [var bazookaAuditCommand, var bazookaUnityExecutable, var bazookaUni
         throw new Exception("Recovered battle content artifact not found.");
     }
 
-    if (bazookaAuditCommand == "--unity-bazooka-play-only")
+    if (bazookaAuditCommand == "--unity-bazooka-matchmaking-only")
+    {
+        await LiveBazookaUnityTests.RunMatchmakingAsync(Path.Combine(root.FullName, "content"),
+            bazookaUnityExecutable, bazookaUnityProject);
+    }
+    else if (bazookaAuditCommand == "--unity-bazooka-play-only")
     {
         await LiveBazookaUnityTests.RunPlayModeAsync(Path.Combine(root.FullName, "content"),
             bazookaUnityExecutable, bazookaUnityProject);

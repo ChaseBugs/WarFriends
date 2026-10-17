@@ -1,6 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedMatchmakingAttempt.cs"
+             Link="ClientSource/SelfHostedMatchmakingAttempt.cs" />
     <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedCoopHudState.cs"
              Link="ClientSource/SelfHostedCoopHudState.cs" />
     <Compile Include="../../../Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedCoopDepartureState.cs"

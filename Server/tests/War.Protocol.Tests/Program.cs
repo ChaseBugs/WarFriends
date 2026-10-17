@@ -6,6 +6,7 @@ using War.Protocol.Transport;
 using War.Shared;
 
 int checks = 0;
+checks += await MatchmakingAttemptTests.RunAsync();
 checks += PvpMatchClockTests.Run();
 checks += CoopDeparturePresentationTests.Run();
 checks += CoopOutcomeProjectionTests.Run();

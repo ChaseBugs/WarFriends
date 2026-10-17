@@ -36,6 +36,11 @@ internal static class LiveBazookaUnityTests
         return RunModeAsync(directory, unityExecutable, projectPath, AuditMode.PlayMode);
     }
 
+    internal static Task RunMatchmakingAsync(string directory, string unityExecutable, string projectPath)
+    {
+        return RunModeAsync(directory, unityExecutable, projectPath, AuditMode.MatchmakingPlayMode);
+    }
+
     private static async Task RunModeAsync(
         string directory, string unityExecutable, string projectPath, AuditMode mode)
     {
@@ -63,17 +68,24 @@ internal static class LiveBazookaUnityTests
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            await File.WriteAllLinesAsync(grantsFile, manifest.Players.Select(player =>
-                JsonFormatter.Default.Format(CreateGrant(manifest, port, tokens, player.PlayerId))));
-            string method = mode == AuditMode.PlayMode ? "UnityLiveBazookaPlayAudit.Run" : "UnityLiveBazookaAudit.Run";
-            editor = StartEditor(unityExecutable, projectPath, grantsFile, new EditorInvocation(unityLog, method));
+            MatchConnectionGrant[] grants = manifest.Players.Select(player =>
+                CreateGrant(manifest, port, tokens, player.PlayerId)).ToArray();
+            await File.WriteAllLinesAsync(grantsFile, grants.Select(grant => JsonFormatter.Default.Format(grant)));
+            await using LiveMatchmakingTestHost? backend = mode == AuditMode.MatchmakingPlayMode ?
+                await LiveMatchmakingTestHost.StartAsync(grants[0]) : null;
+            string method = mode == AuditMode.EditorComponents ?
+                "UnityLiveBazookaAudit.Run" : "UnityLiveBazookaPlayAudit.Run";
+            editor = StartEditor(unityExecutable, projectPath, grantsFile,
+                new EditorInvocation(unityLog, method, backend?.Endpoint, backend?.AccessToken));
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(EditorTimeoutSeconds));
             await editor.WaitForExitAsync(timeout.Token);
-            string marker = mode == AuditMode.PlayMode ? PlaySuccessMarker : SuccessMarker;
+            string marker = mode == AuditMode.EditorComponents ? SuccessMarker : PlaySuccessMarker;
             if (editor.ExitCode != 0 || !File.ReadAllText(unityLog).Contains(marker, StringComparison.Ordinal))
             {
                 throw new Exception("Live Unity bazooka presentation failed; inspect " + unityLog);
             }
+
+            backend?.VerifySuccessfulAdmission();
 
             Console.WriteLine("PASS: live Worker/SDK/Unity bazooka " + mode + "; " + unityLog);
         }
@@ -114,7 +126,7 @@ internal static class LiveBazookaUnityTests
             RequireEditorTool(projectPath, tool);
         }
 
-        if (mode == AuditMode.PlayMode)
+        if (mode != AuditMode.EditorComponents)
         {
             foreach (string tool in new[] { "UnityLiveBazookaPlayAudit", "UnityLiveBazookaPlayScene" })
             {
@@ -138,7 +150,7 @@ internal static class LiveBazookaUnityTests
         WeaponManifest rpg = content.Bazookas.CreateManifest(Rpg, 0);
         return template with
         {
-            MatchId = "bazooka-unity-" + Guid.NewGuid().ToString("N"),
+            MatchId = "m" + Guid.NewGuid().ToString("N"),
             Mode = MatchManifest.BazookaCombatMode,
             CatalogRevision = content.BazookaRevision!,
             SceneMasterPlayerId = template.Players[0].PlayerId,
@@ -214,14 +226,18 @@ internal static class LiveBazookaUnityTests
         }
 
         start.Environment["WAR_BAZOOKA_LIVE_GRANTS_FILE"] = grantsFile;
+        start.Environment["WAR_BAZOOKA_QUEUE_ENDPOINT"] = invocation.QueueEndpoint ?? string.Empty;
+        start.Environment["WAR_BAZOOKA_QUEUE_TOKEN"] = invocation.QueueToken ?? string.Empty;
         return Process.Start(start) ?? throw new Exception("Unity did not start.");
     }
 
     private enum AuditMode
     {
         EditorComponents,
-        PlayMode
+        PlayMode,
+        MatchmakingPlayMode
     }
 
-    private sealed record EditorInvocation(string LogFile, string MethodName);
+    private sealed record EditorInvocation(
+        string LogFile, string MethodName, string? QueueEndpoint = null, string? QueueToken = null);
 }

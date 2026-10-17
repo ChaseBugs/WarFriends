@@ -81,5 +81,6 @@ digest manifest. Scene/prefab references and GUIDs are unchanged. Source
 compilation and these targeted checks do not prove normal camera/UI boot, two
 running Unity clients, Android, Unity 5.2 or Linux gameplay. B16/B32 and the
 overall BattleServer objective remain partial.
-The random-matchmaking region/bot decision and pending queue cancellation still
-require a separate offline room-entry audit.
+The [subsequent queue cancellation checkpoint](CLIENT_MATCHMAKING_CANCELLATION.md)
+covers pending searches and delayed callbacks. Paired allocation cancellation,
+the region/bot decision and complete offline room entry remain open.

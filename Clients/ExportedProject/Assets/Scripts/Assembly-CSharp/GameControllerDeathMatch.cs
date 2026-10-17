@@ -8,6 +8,9 @@ public class GameControllerDeathMatch : GameControllerPVP
 
 	private bool mIsTutorial;
 
+    private System.Threading.CancellationTokenSource _matchmakingRequest;
+    private SelfHostedBattleClient _matchmakingClient;
+
 	private float mWaitingTime = 20f;
 
 	public bool isRandomMatchMaking { get; private set; }
@@ -51,30 +54,83 @@ public class GameControllerDeathMatch : GameControllerPVP
 			isRandomMatchMaking = true;
 			mRandomConnectTime = Time.realtimeSinceStartup;
 			GuiScreenSingle<CardSelectionScreen>.instance.ShowLobby();
-			BeginSelfHostedRandomMatchmaking(connectDelay);
+			BeginSelfHostedRandomMatchmakingAsync(connectDelay);
 			PayDogtag();
 		}
 	}
 
-	private async void BeginSelfHostedRandomMatchmaking(float connectDelay)
-	{
-		try
-		{
-			if (connectDelay > 0f)
-				await System.Threading.Tasks.Task.Delay((int)(connectDelay * 1000f));
-			SelfHostedBattleClient client = SelfHostedBattleClient.GetOrCreate();
-			await client.MatchmakeWithRecoveredSession();
-			Singleton<PhotonConnectionManager>.instance.CompleteSelfHostedJoin();
-			AllPlayersConnected();
-		}
-		catch (Exception exception)
-		{
-			Debug.LogError("Self-hosted matchmaking failed: " + exception.GetType().Name);
-			MatchManager.matchState = MatchState.GameCancelled;
-			Reset();
-			WarningDialog.ShowError(Localization.Localize("ID_WARNING_CANNOTINVITE_TEXT"), Localization.Localize("ID_WARNING_CANNOTINVITE"), 0f, null, string.Empty);
-		}
-	}
+    private async void BeginSelfHostedRandomMatchmakingAsync(float connectDelay)
+    {
+        var request = new System.Threading.CancellationTokenSource();
+        _matchmakingRequest = request;
+        try
+        {
+            if (connectDelay > 0f)
+            {
+                const int MillisecondsPerSecond = 1000;
+                await System.Threading.Tasks.Task.Delay((int)(connectDelay * MillisecondsPerSecond), request.Token);
+            }
+
+            request.Token.ThrowIfCancellationRequested();
+            SelfHostedBattleClient client = SelfHostedBattleClient.GetOrCreate();
+            _matchmakingClient = client;
+            await client.MatchmakeWithRecoveredSession();
+            request.Token.ThrowIfCancellationRequested();
+            if (_matchmakingRequest != request)
+            {
+                return;
+            }
+
+            Singleton<PhotonConnectionManager>.instance.CompleteSelfHostedJoin();
+            AllPlayersConnected();
+        }
+        catch (OperationCanceledException)
+        {
+            // Leaving or restarting the lobby must not publish a join or reset a newer request.
+        }
+        catch (Exception exception)
+        {
+            if (_matchmakingRequest == request && !request.IsCancellationRequested)
+            {
+                Debug.LogError("Self-hosted matchmaking failed: " + exception.GetType().Name);
+                MatchManager.matchState = MatchState.GameCancelled;
+                Reset();
+                WarningDialog.ShowError(Localization.Localize("ID_WARNING_CANNOTINVITE_TEXT"),
+                    Localization.Localize("ID_WARNING_CANNOTINVITE"), 0f, null, string.Empty);
+            }
+        }
+        finally
+        {
+            if (_matchmakingRequest == request)
+            {
+                _matchmakingRequest = null;
+                _matchmakingClient = null;
+            }
+
+            request.Dispose();
+        }
+    }
+
+    private void CancelSelfHostedMatchmaking()
+    {
+        System.Threading.CancellationTokenSource request = _matchmakingRequest;
+        SelfHostedBattleClient client = _matchmakingClient;
+        _matchmakingRequest = null;
+        _matchmakingClient = null;
+        if (request != null)
+        {
+            request.Cancel();
+            if (client != null && (client.IsMatchmaking || client.OwnsMatch))
+            {
+                client.LeaveMatch();
+            }
+        }
+    }
+
+    private void OnDisable()
+    {
+        CancelSelfHostedMatchmaking();
+    }
 
 	public void StartTutorialMatch()
 	{
@@ -151,7 +207,7 @@ public class GameControllerDeathMatch : GameControllerPVP
 		mRandomConnectTime = ((!resetRandomConnectTime) ? num : Time.realtimeSinceStartup);
 		isRandomMatchMaking = true;
 		StartMatch();
-		BeginSelfHostedRandomMatchmaking(0f);
+		BeginSelfHostedRandomMatchmakingAsync(0f);
 	}
 
 	protected override void AllPlayersConnected()
@@ -291,6 +347,7 @@ public class GameControllerDeathMatch : GameControllerPVP
 
 	protected override void Reset()
 	{
+        CancelSelfHostedMatchmaking();
 		base.Reset();
 		mCardsChoosen = false;
 		mRandomConnectTime = 0f;
