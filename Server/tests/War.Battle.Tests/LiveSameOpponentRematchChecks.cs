@@ -25,6 +25,11 @@ internal static class LiveSameOpponentRematchChecks
             await LiveRematchProvisionRecoveryChecks.RunAsync(new LiveRematchProvisionRecoveryChecks.Scenario(
                 backend, settings, stores, original[0].MatchId), cancellationToken);
         }
+        if (settings.RegistrationReplyLoss != null)
+        {
+            await LiveRematchRegistrationLossChecks.RunAsync(new LiveRematchRegistrationLossChecks.Scenario(
+                backend, settings, stores, original[0].MatchId), cancellationToken);
+        }
         MatchQueueReply[] allocation = await Task.WhenAll(settings.Tokens.Select(token =>
             backend.AllocateRematchAsync(original[0].MatchId, token, cancellationToken)));
         Require(allocation.All(reply => reply.Code == "paired" && reply.MatchId == allocation[0].MatchId) &&
@@ -129,6 +134,8 @@ internal static class LiveSameOpponentRematchChecks
     internal sealed record Settings(Uri Endpoint, string[] Tokens)
     {
         internal WorkerRecoveryHooks? WorkerRecovery { get; init; }
+
+        internal RegistrationReplyLossProxy? RegistrationReplyLoss { get; init; }
     }
 
     internal sealed record WorkerRecoveryHooks(Action Stop, Func<Task> RestartAsync);

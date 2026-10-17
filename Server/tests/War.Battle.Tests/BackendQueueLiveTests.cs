@@ -35,6 +35,8 @@ internal static class BackendQueueLiveTests
         Process? backend=null,worker=null;
         try
         {
+            await using var registrationProxy = await RegistrationReplyLossProxy.StartAsync(
+                new Uri($"http://127.0.0.1:{controlPort}/"), [backendPort, controlPort, udpPort]);
             var legacy=new LegacyPlayerStore(mongoUri,database);
             var allocations=new BattleAllocationStore(mongoUri,database);
             await legacy.Initialize(CancellationToken.None);
@@ -72,7 +74,7 @@ internal static class BackendQueueLiveTests
                 ["Battle__SigningKey"]=signing,["Battle__ControlKey"]=control,
                 ["Battle__ServerId"]="local-1",["Battle__PublicHost"]="127.0.0.1",
                 ["Battle__Port"]=udpPort.ToString(),["Battle__ControlPort"]=controlPort.ToString(),
-                ["Battle__ControlEndpoint"]=$"http://127.0.0.1:{controlPort}/internal/matches",
+                ["Battle__ControlEndpoint"]=registrationProxy.Endpoint.AbsoluteUri,
                 ["Battle__MatchmakingCompatibilityKey"]="unscored-rifle.fixture",
                 ["Battle__MatchManifestTemplatePath"]=Path.Combine(content,"local-rifle-match-template.json"),
                 ["Battle__CombatContentManifestPath"]=Path.Combine(content,"combat-content-manifest.json")
@@ -392,6 +394,14 @@ internal static class BackendQueueLiveTests
                             worker = Start(workerDll, run, "RematchProvisionRecovery", workerEnvironment);
                             await Ready($"http://127.0.0.1:{controlPort}/health/ready", worker);
                         }),
+                },
+                new LiveSameOpponentRematchChecks.Stores(results, queue,
+                    new BattleManifestSnapshotStore(mongoUri, database), mongo.GetDatabase(database)),
+                rematchAllocationDeadline.Token);
+            await LiveSameOpponentRematchChecks.RunAsync(
+                new LiveSameOpponentRematchChecks.Settings(new Uri(backendUrl), tokens)
+                {
+                    RegistrationReplyLoss = registrationProxy,
                 },
                 new LiveSameOpponentRematchChecks.Stores(results, queue,
                     new BattleManifestSnapshotStore(mongoUri, database), mongo.GetDatabase(database)),

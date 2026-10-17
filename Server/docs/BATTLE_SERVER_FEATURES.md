@@ -33,11 +33,16 @@ player slots and the actual scene master while reading current weapon/profile
 and card-allocation stores. Source hash/identity and stale shield/army/bonus
 authority fail closed. Ordered reservation binding and Mongo-backed upgrade
 refresh checks exist. Unity controller integration, the rejected shield/army/
-bonus projection paths, lost registration replies and admission expiry remain open.
+bonus projection paths and admission expiry remain open.
 A real Worker-outage gate now proves deferred reservation retains both players
 without grants, then uses identical frozen admission/profile data after restart
 even when durable profile data changed in between. The recovered round completes
 through actual UDP and accepted terminal evidence; this remains SDK-only proof.
+A second native gate drops the first successful Worker registration response,
+requires unpublished grants during the failure, and recovers through identical
+request bytes, `existing-match` and the original session/ticket/key identities.
+Actual UDP completion and accepted results pass afterward. Backend restart
+during that lost reply and Unity UI handoff remain open.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

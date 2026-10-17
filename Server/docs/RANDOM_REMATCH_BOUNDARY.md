@@ -175,8 +175,7 @@ completed reservations return `completed` without registering the Worker again.
 Missing or unsupported source authority returns `409 rematch_unavailable`.
 Unconfigured allocation policy returns `503 rematch_disabled`.
 
-Unity controller integration, post-reservation cancel UI behavior, lost registration
-replies after Worker acceptance, admission expiry and all shield/army/bonus
+Unity controller integration, post-reservation cancel UI behavior, admission expiry and all shield/army/bonus
 projection paths remain unverified or unfinished. This is not full gameplay
 or same-opponent friend/co-op feature completion.
 
@@ -216,3 +215,27 @@ This passed in
 `RematchProvisionRecovery.log`. It proves recovery when registration initially
 cannot reach the Worker; it does not prove response loss after registration,
 Worker replacement during active combat, admission expiry, or Unity UI recovery.
+
+## Lost registration acknowledgement evidence
+
+`RegistrationReplyLossProxy` forwards the real signed control request bytes to
+the owned Worker and aborts one downstream response only after observing a
+successful `registered` reply. It forwards normal registration, reconnect,
+cancellation and cancellation-evidence lookup paths without rewriting bodies.
+No fake Worker response or credential is introduced.
+
+The rematch gate requires `503 rematch_provision_deferred`, retained allocated
+intent and frozen admission data, and no retrievable grant before recovery.
+Retry must send identical frozen bytes and receive `existing-match`. The proxy
+compares the entire returned grant-array digest; the SDK separately checks both
+players' original session IDs and ticket/key fingerprints against that first
+lost response. Capability values are never printed. The recovered round then
+completes actual UDP admission, terminal acceptance and pair release, with
+stable replay after completion.
+
+This passed through real Backend, Worker and MongoDB in
+`Server/.local/queue-live-7c7bf71aac6e4aa084c4ea399c96fa43`. The same native
+run also includes the preceding Worker-outage/profile-change gate. This proves
+one lost successful registration acknowledgement while the Worker remains
+alive; Backend restart during the lost reply, admission expiry and Unity UI
+handoff are separate remaining checks.
