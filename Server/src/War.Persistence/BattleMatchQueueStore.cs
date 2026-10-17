@@ -153,17 +153,43 @@ public sealed class BattleMatchQueueStore
     }
     public async Task<string> Cancel(string playerId,DateTimeOffset now,CancellationToken ct)
     {
-        Validate(playerId,"cancel",now);
-        using var session=await client.StartSessionAsync(cancellationToken:ct);
-        return await session.WithTransactionAsync(async (s,token)=>
+        var decision = await CancelWithPairAsync(playerId, now, ct);
+        return decision.Code;
+    }
+
+    /// <summary>Captures the pair or removes the waiting ticket in one transaction snapshot.</summary>
+    public async Task<BattlePairingResult> CancelWithPairAsync(
+        string playerId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        Validate(playerId, "cancel", now);
+        using var session = await client.StartSessionAsync(cancellationToken: cancellationToken);
+        return await session.WithTransactionAsync(async (transaction, token) =>
         {
-            if(await PairFor(s,playerId,token)!=null)return "already-paired";
-            var ticket=await tickets.Find(s,x=>x.PlayerId==playerId).FirstOrDefaultAsync(token);
-            if(ticket==null)return "not-queued";
+            var pair = await PairFor(transaction, playerId, token);
+            if (pair != null)
+            {
+                // A later account lookup could select a replacement match after settlement.
+                return Result("already-paired", pair);
+            }
+
+            var ticket = await tickets.Find(transaction, row => row.PlayerId == playerId)
+                .FirstOrDefaultAsync(token);
+            if (ticket == null)
+            {
+                return new BattlePairingResult("not-queued", null, null);
+            }
+
             ValidateTicket(ticket);
-            var deleted=await tickets.DeleteOneAsync(s,x=>x.Id==ticket.Id && x.PlayerId==playerId,null,token);
-            return deleted.DeletedCount==1?"cancelled":"not-queued";
-        },QueueTransaction,ct);
+            var deleted = await tickets.DeleteOneAsync(
+                transaction,
+                row => row.Id == ticket.Id && row.PlayerId == playerId,
+                null,
+                token);
+            string code = deleted.DeletedCount == 1 ? "cancelled" : "not-queued";
+            return new BattlePairingResult(code, null, null);
+        }, QueueTransaction, cancellationToken);
     }
     private async Task<BattlePairDocument?> PairFor(string playerId,CancellationToken ct)=>
         await pairs.Find(Builders<BattlePairDocument>.Filter.AnyEq(x=>x.Players,playerId)).FirstOrDefaultAsync(ct);

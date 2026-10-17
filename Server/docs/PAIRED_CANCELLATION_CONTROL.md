@@ -65,3 +65,16 @@ lookup of the account's current pair could accidentally select a replacement.
 Cross-component/process attempt fencing and complete recovered UI entry remain
 open as described in [Client cancellation](CLIENT_MATCHMAKING_CANCELLATION.md).
 B31/B36 and the complete BattleServer objective remain partial.
+
+## Atomic allocator decision
+
+`BattleMatchQueueStore.CancelWithPairAsync` returns the validated match ID and
+an immutable copy of the ordered roster from the cancellation transaction itself.
+Waiting-ticket cancellation returns no pair. The existing string-only `Cancel`
+method delegates to this decision API, preserving the public route contract.
+A coordinator must retain this captured authority rather than resolving the
+account's current pair after cancellation. This API does not release a pair or
+cancel a Worker; terminal acceptance and registration fencing remain open.
+
+The native manifest-snapshot fixture checks captured identity, preservation after
+release and replacement allocation, and rejection of a corrupt durable pair.

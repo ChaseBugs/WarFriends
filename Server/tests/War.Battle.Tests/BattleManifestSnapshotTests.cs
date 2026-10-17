@@ -351,6 +351,29 @@ internal static class BattleManifestSnapshotTests
             var cancelPair=await queue.Join(opponent,"cancel.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
             if(cancelPair.Code!="paired" || await queue.Cancel(cancelling,DateTimeOffset.UtcNow,CancellationToken.None)!="already-paired")
                 throw new Exception("Cancellation dissolved a durable pair.");
+            var captured = await queue.CancelWithPairAsync(cancelling, DateTimeOffset.UtcNow, CancellationToken.None);
+            if (captured.Code != "already-paired" || captured.MatchId != cancelPair.MatchId ||
+                captured.Players == null || !captured.Players.SequenceEqual(cancelPair.Players!))
+            {
+                throw new Exception("Cancellation did not capture the exact ordered durable pair.");
+            }
+
+            await queue.Release(cancelPair.MatchId!, cancelPair.Players!, CancellationToken.None);
+            await queue.Join(cancelling, "replacement.fixture", DateTimeOffset.UtcNow, CancellationToken.None);
+            var replacement = await queue.Join(opponent, "replacement.fixture", DateTimeOffset.UtcNow, CancellationToken.None);
+            if (replacement.MatchId == captured.MatchId || captured.MatchId != cancelPair.MatchId ||
+                !captured.Players.SequenceEqual(cancelPair.Players!))
+            {
+                throw new Exception("A replacement pairing changed the captured cancellation authority.");
+            }
+
+            try
+            {
+                await queue.CancelWithPairAsync(new string('2', 32), DateTimeOffset.UtcNow, CancellationToken.None);
+                throw new Exception("Cancellation accepted a corrupt durable pair.");
+            }
+            catch (InvalidDataException) { }
+
             for(int i=0;i<32;i++)
             {
                 string firstId=(1000+i).ToString("x32"),secondId=(2000+i).ToString("x32"),key="cancel-race."+i;
