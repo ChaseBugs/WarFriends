@@ -64,7 +64,10 @@ namespace War.Client
         /// <summary>Gets a copy of the optional host rotation; absence does not imply simulated facing.</summary>
         public BattleJointRotation Rotation => _rotation == null ? null : _rotation.Clone();
 
-        internal CoopEnemyViewState(BattleCoopEnemySpawn source)
+        /// <summary>Gets the immutable confirmed base-layer frame, or null for an unrepresented state.</summary>
+        public InfantryAnimationFrameView InfantryAnimation { get; }
+
+        internal CoopEnemyViewState(BattleCoopEnemySpawn source, InfantryAnimationFrameView animation)
         {
             EntityId = source.EntityId;
             Behaviour = source.Behaviour;
@@ -83,6 +86,7 @@ namespace War.Client
             InfantryVisualClip = source.InfantryVisualClip;
             InfantryVisualStartTick = source.InfantryVisualStartTick;
             InfantryVisualSampleTick = source.InfantryVisualSampleTick;
+            InfantryAnimation = animation;
             _rotation = source.CurrentRotation == null ? null : source.CurrentRotation.Clone();
         }
     }

@@ -1561,3 +1561,13 @@ The strict native positive control now invokes this exact runtime class for
 393 source frames; 31 input/pose-preservation checks and twelve walking actor
 checks pass. This does not add a protobuf mixer DTO or firing fallback. See
 [runtime sampler](INFANTRY_ANIMATION_SAMPLER.md) for the verified boundary.
+
+B22 now appends a validated protobuf base-layer frame and projects walking
+plus the fixed-root corner-fire window to the actual Unity sampler. SDK views
+copy source samples immutably, validate clocks/wraps/weights and require legacy
+walking mirrors to agree. Current-round reset ticks and unrepresented source
+transitions remain hidden. Terminal evidence rejects live frames and collision
+authority remains unchanged. Windows checks pass 1,136 protocol, 26,368 focused
+combat, thirteen native adapter/presentation and 74 live integration checks.
+Public co-op admission/combat remains closed. See
+[confirmed animation frames](COOP_ANIMATION_FRAMES.md).

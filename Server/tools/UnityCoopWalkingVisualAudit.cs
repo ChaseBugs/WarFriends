@@ -5,9 +5,10 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using Google.Protobuf;
 using War.Protocol;
 
-/// <summary>Checks host-clock walking samples on recovered meshes without enabling source enemy simulation.</summary>
+/// <summary>Checks walking and corner-fire protobuf samples without enabling source enemy simulation.</summary>
 public static class UnityCoopWalkingVisualAudit
 {
     private const string PlayerId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -70,6 +71,8 @@ public static class UnityCoopWalkingVisualAudit
         next.ServerTick = 23;
         next.Coop.EnemySpawns[0].PoseTick = 23;
         next.Coop.EnemySpawns[0].InfantryVisualSampleTick = 23;
+        next.Coop.EnemySpawns[0].InfantryAnimation.SampleTick = 23;
+        next.Coop.EnemySpawns[0].InfantryAnimation.Clips[0].TimeSeconds = 0.5f;
         next.Coop.EnemySpawns[0].CurrentX = 4;
         Publish(client, next);
         Require(GameObject.Find(actor.name) == actor && actor.transform.position.x == 4f,
@@ -82,6 +85,19 @@ public static class UnityCoopWalkingVisualAudit
         Require(!actor.activeSelf, "An unrepresented state must hide the rig instead of inventing an idle pose.");
         Publish(client, next);
         Require(GameObject.Find(actor.name) == actor, "Supported presentation must resume its cached appearance.");
+        MatchSnapshot fire = next.Clone();
+        ClearAnimation(fire.Coop.EnemySpawns[0]);
+        fire.Coop.EnemySpawns[0].InfantryAnimation = new BattleInfantryAnimationFrame { SampleTick = 23 };
+        fire.Coop.EnemySpawns[0].InfantryAnimation.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "player_fire_right3", TimeSeconds = 0.1f, Weight = 1f,
+            Wrap = BattleInfantryAnimationWrap.ClampForever
+        });
+        Quaternion[] walkingPose = skin.bones.Select(bone => bone.localRotation).ToArray();
+        Publish(client, fire);
+        Require(GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, walkingPose[index]) > 0.001f).Any(),
+            "A confirmed protobuf fire frame must reuse the actor and replace its walking bone pose.");
     }
 
     private static void VerifyLifecycle(SelfHostedBattleClient client, SelfHostedCoopInfantryPresenter presenter)
@@ -111,6 +127,8 @@ public static class UnityCoopWalkingVisualAudit
         second.PoseTick = spawn.ServerTick;
         second.InfantryVisualStartTick = spawn.ServerTick;
         second.InfantryVisualSampleTick = spawn.ServerTick;
+        second.InfantryAnimation.SampleTick = spawn.ServerTick;
+        second.InfantryAnimation.Clips[0].TimeSeconds = 0f;
         spawn.Coop.EnemySpawns.Add(second);
         Publish(client, spawn);
         Require(GameObject.Find("SelfHostedCoopInfantry_2") != null, "Another source entity must create its own rig.");
@@ -145,6 +163,12 @@ public static class UnityCoopWalkingVisualAudit
             Health = 100, MaxHealth = 100, CurrentRotation = new BattleJointRotation { W = 1 },
             InfantryVisualClip = "run_0", InfantryVisualStartTick = 8, InfantryVisualSampleTick = 20
         });
+        var animation = new BattleInfantryAnimationFrame { SampleTick = 20 };
+        animation.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "run_0", TimeSeconds = 0.4f, Weight = 1f, Wrap = BattleInfantryAnimationWrap.Loop
+        });
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation = animation;
         return snapshot;
     }
 
@@ -153,6 +177,7 @@ public static class UnityCoopWalkingVisualAudit
         enemy.InfantryVisualClip = "";
         enemy.InfantryVisualStartTick = 0;
         enemy.InfantryVisualSampleTick = 0;
+        enemy.InfantryAnimation = null;
     }
 
     private static void InvokeLifecycle(SelfHostedCoopInfantryPresenter presenter, string method)
@@ -163,8 +188,9 @@ public static class UnityCoopWalkingVisualAudit
 
     private static void Publish(SelfHostedBattleClient client, MatchSnapshot snapshot)
     {
+        MatchSnapshot decoded = MatchSnapshot.Parser.ParseFrom(snapshot.ToByteArray());
         typeof(SelfHostedBattleClient).GetMethod("Apply", BindingFlags.Instance | BindingFlags.NonPublic)
-            .Invoke(client, new object[] { new MatchReply { Code = "state", Snapshot = snapshot } });
+            .Invoke(client, new object[] { new MatchReply { Code = "state", Snapshot = decoded } });
     }
 
     private static void Require(bool condition, string message)

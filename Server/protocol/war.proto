@@ -685,6 +685,22 @@ message BattleCoopEnemySpawn {
   string infantry_visual_clip = 29;
   uint64 infantry_visual_start_tick = 30;
   uint64 infantry_visual_sample_tick = 31;
+  // Validated base-layer presentation only; never damage or reward authority.
+  BattleInfantryAnimationFrame infantry_animation = 32;
+}
+enum BattleInfantryAnimationWrap {
+  BATTLE_INFANTRY_ANIMATION_WRAP_UNSPECIFIED = 0;
+  BATTLE_INFANTRY_ANIMATION_WRAP_CLAMP = 1;
+  BATTLE_INFANTRY_ANIMATION_WRAP_CLAMP_FOREVER = 2;
+  BATTLE_INFANTRY_ANIMATION_WRAP_LOOP = 3;
+}
+message BattleInfantryAnimationClip {
+  string clip_name = 1; float time_seconds = 2; float weight = 3;
+  BattleInfantryAnimationWrap wrap = 4;
+}
+message BattleInfantryAnimationFrame {
+  uint64 sample_tick = 1;
+  repeated BattleInfantryAnimationClip clips = 2;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

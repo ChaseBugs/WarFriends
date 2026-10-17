@@ -2829,6 +2829,12 @@ internal static class CombatContentTests
         {
             throw new Exception("A supported walking enemy must project the same diagnostic clip and route clock.");
         }
+        if (walkingStep.InfantryAnimation?.SampleTick != 9 || walkingStep.InfantryAnimation.Clips.Count != 1 ||
+            walkingStep.InfantryAnimation.Clips[0].ClipName != "run_0" ||
+            walkingStep.InfantryAnimation.Clips[0].TimeSeconds != 1f / 30f)
+        {
+            throw new Exception("Walking projection must carry a complete confirmed source frame.");
+        }
         if (walkingStep.PoseTick != 9 ||
             new Vector3(walkingStep.CurrentX, walkingStep.CurrentY,
                 walkingStep.CurrentZ) == new Vector3(walkingStart.CurrentX,
@@ -2845,7 +2851,7 @@ internal static class CombatContentTests
         BattleCoopEnemySpawn stoppedEnemy = walkingRuntime.Snapshot()
             .Coop.EnemySpawns.Single();
         if (stoppedEnemy.InfantryVisualClip.Length != 0 || stoppedEnemy.InfantryVisualStartTick != 0 ||
-            stoppedEnemy.InfantryVisualSampleTick != 0)
+            stoppedEnemy.InfantryVisualSampleTick != 0 || stoppedEnemy.InfantryAnimation != null)
         {
             throw new Exception("A dead enemy must not retain a live walking presentation declaration.");
         }
@@ -4103,6 +4109,14 @@ internal static class CombatContentTests
                 throw new Exception(
                     "Co-op corner lost the late diagnostic uncover pose.");
             cornerRuntime.Advance(coverWindup.StartTick + 17);
+            BattleCoopEnemySpawn fireVisual = cornerRuntime.Snapshot().Coop.EnemySpawns
+                .Single(enemy => enemy.EntityId == cornerEnemy.EntityId);
+            if (fireVisual.InfantryAnimation?.Clips.Count != 1 ||
+                fireVisual.InfantryAnimation.Clips[0].ClipName != coverWindup.QueuedFireClip ||
+                MathF.Abs(fireVisual.InfantryAnimation.Clips[0].TimeSeconds - 2f / 30f) > 0.0001f)
+            {
+                throw new Exception("A supported corner queued-fire sample must preserve its source clock.");
+            }
             if (cornerRuntime.PlaceCornerUncoverHitboxes(
                     cornerEnemy.EntityId).Count != 0 ||
                 cornerRuntime.PlaceCornerFireHitboxes(

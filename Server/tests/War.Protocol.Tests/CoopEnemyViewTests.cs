@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using War.Client;
 using War.Protocol;
 
@@ -14,6 +15,8 @@ internal static class CoopEnemyViewTests
         VerifySourceSpellingAndCardLane();
         VerifyMalformedRows();
         VerifyWalkingFrames();
+        VerifyAnimationFrames();
+        VerifyInvalidAnimationFrames();
         return _checks;
     }
 
@@ -145,6 +148,86 @@ internal static class CoopEnemyViewTests
         enemy.InfantryVisualClip = "run_0";
         enemy.InfantryVisualStartTick = enemy.SpawnTick;
         enemy.InfantryVisualSampleTick = snapshot.ServerTick;
+    }
+
+    private static void VerifyAnimationFrames()
+    {
+        MatchSnapshot snapshot = CreateAnimationSnapshot();
+        snapshot = MatchSnapshot.Parser.ParseFrom(snapshot.ToByteArray());
+        InfantryAnimationFrameView frame = CoopEnemyViewProjection.FromSnapshot(snapshot, PlayerId)[0].InfantryAnimation;
+        Require(frame.SampleTick == 20 && frame.Clips.Count == 1 &&
+            frame.Clips[0].ClipName == "player_fire_right3", "A protobuf frame must preserve its source clip and clock.");
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation.Clips[0].TimeSeconds = 0.5f;
+        Require(frame.Clips[0].TimeSeconds == 0.1f, "Packet mutation must not change a published source clip sample.");
+
+        MatchSnapshot blend = CreateAnimationSnapshot();
+        blend.Coop.EnemySpawns[0].InfantryAnimation.Clips[0].Weight = 0.75f;
+        blend.Coop.EnemySpawns[0].InfantryAnimation.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "player_look_right3", TimeSeconds = 0.4f, Weight = 0.25f,
+            Wrap = BattleInfantryAnimationWrap.Clamp
+        });
+        Require(CoopEnemyViewProjection.FromSnapshot(blend, PlayerId)[0].InfantryAnimation.Clips.Count == 2,
+            "Two reviewed source states may conserve one base-layer blend.");
+
+        MatchSnapshot walking = CreateSnapshot();
+        SetWalkingFrame(walking);
+        walking.Coop.EnemySpawns[0].InfantryAnimation = new BattleInfantryAnimationFrame { SampleTick = 20 };
+        walking.Coop.EnemySpawns[0].InfantryAnimation.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "run_0", TimeSeconds = 0.4f, Weight = 1f, Wrap = BattleInfantryAnimationWrap.Loop
+        });
+        Require(CoopEnemyViewProjection.FromSnapshot(walking, PlayerId)[0].InfantryAnimation.Clips[0].TimeSeconds == 0.4f,
+            "A complete walking frame must agree with the retained legacy clock.");
+    }
+
+    private static void VerifyInvalidAnimationFrames()
+    {
+        VerifyInvalidAnimation(frame => frame.SampleTick = 19);
+        VerifyInvalidAnimation(frame => frame.Clips.Clear());
+        VerifyInvalidAnimation(frame => frame.Clips[0].ClipName = "player_fire_right3 - Queued Clone");
+        VerifyInvalidAnimation(frame => frame.Clips[0].TimeSeconds = float.NaN);
+        VerifyInvalidAnimation(frame => frame.Clips[0].TimeSeconds = float.PositiveInfinity);
+        VerifyInvalidAnimation(frame => frame.Clips[0].TimeSeconds = -1);
+        VerifyInvalidAnimation(frame => frame.Clips[0].TimeSeconds = 100);
+        VerifyInvalidAnimation(frame => frame.Clips[0].Weight = float.NaN);
+        VerifyInvalidAnimation(frame => frame.Clips[0].Weight = 0.5f);
+        VerifyInvalidAnimation(frame => frame.Clips[0].Wrap = BattleInfantryAnimationWrap.Unspecified);
+        VerifyInvalidAnimation(frame => frame.Clips[0].Wrap = BattleInfantryAnimationWrap.Loop);
+        VerifyInvalidAnimation(frame => frame.Clips.Add(frame.Clips[0].Clone()));
+        VerifyInvalidAnimation(frame =>
+        {
+            frame.Clips.Add(frame.Clips[0].Clone());
+            frame.Clips.Add(frame.Clips[0].Clone());
+        });
+        VerifyInvalid(snapshot =>
+        {
+            snapshot.Coop.EnemySpawns[0].InfantryAnimation = CreateAnimationSnapshot().Coop.EnemySpawns[0].InfantryAnimation;
+            SetWalkingFrame(snapshot);
+        });
+    }
+
+    private static void VerifyInvalidAnimation(Action<BattleInfantryAnimationFrame> change)
+    {
+        VerifyInvalid(snapshot =>
+        {
+            BattleInfantryAnimationFrame frame = CreateAnimationSnapshot().Coop.EnemySpawns[0].InfantryAnimation;
+            change(frame);
+            snapshot.Coop.EnemySpawns[0].InfantryAnimation = frame;
+        });
+    }
+
+    private static MatchSnapshot CreateAnimationSnapshot()
+    {
+        MatchSnapshot snapshot = CreateSnapshot();
+        var frame = new BattleInfantryAnimationFrame { SampleTick = snapshot.ServerTick };
+        frame.Clips.Add(new BattleInfantryAnimationClip
+        {
+            ClipName = "player_fire_right3", TimeSeconds = 0.1f, Weight = 1f,
+            Wrap = BattleInfantryAnimationWrap.ClampForever
+        });
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation = frame;
+        return snapshot;
     }
 
     internal static MatchSnapshot CreateSnapshot()

@@ -187,12 +187,13 @@ original-name control and the negative alias control.
 
 Clip instance IDs in the captures are process-local diagnostics, never wire
 or durable gameplay identities. Production reconstruction must resolve
-reviewed base clips from matching source content. The network mixer DTO,
-host timeline projection, firing presenter and skipped-snapshot verification
-remain unimplemented. This is 393 frames of isolated source/replay geometry,
+reviewed base clips from matching source content. Complete host timeline
+projection and skipped-snapshot verification remain open. This is 393 frames of isolated source/replay geometry,
 not normal two-Client battle, projectile authority or Unity 5.2 parity.
 
 The original-name positive control now uses the actual
 [runtime infantry sampler](INFANTRY_ANIMATION_SAMPLER.md), which is connected
-to the existing walking presenter. That does not yet connect firing snapshots
-to the presenter; the network contract and server projection remain open.
+to the existing presenter. The subsequent
+[confirmed-frame increment](COOP_ANIMATION_FRAMES.md) adds protobuf/SDK views
+and the fixed-root corner-fire connection. Preparation, return, interruption,
+current-round boundaries and obstacle fire still need complete host projection.

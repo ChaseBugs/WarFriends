@@ -73,6 +73,12 @@ internal static class CoopSceneRoleTests
         liveVisual.Coop.EnemySpawns[0].InfantryVisualStartTick = liveVisual.Coop.EnemySpawns[0].SpawnTick;
         liveVisual.Coop.EnemySpawns[0].InfantryVisualSampleTick = liveVisual.EndTick;
         RequireInvalid(liveVisual, sources);
+        MatchSnapshot liveFrame = terminal.Clone();
+        liveFrame.Coop.EnemySpawns[0].InfantryAnimation = new BattleInfantryAnimationFrame
+        {
+            SampleTick = liveFrame.EndTick
+        };
+        RequireInvalid(liveFrame, sources);
         MatchSnapshot wrongMaster = terminal.Clone();
         wrongMaster.Coop.SceneMasterPlayerId = peerId;
         RequireInvalid(wrongMaster, sources);

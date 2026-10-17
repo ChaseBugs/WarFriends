@@ -161,3 +161,12 @@ HMAC authenticates bytes; it does not encrypt them. Session keys must be deliver
 5. Connect accepted durable battle evidence to Backend settlement without moving wallet authority into the Worker.
 
 Solo campaign can retain the Client's local AI simulation. It uses offline Photon APIs today, so removing Photon still requires a local adapter. Multiplayer co-op and PvP require a shared battle authority; this milestone does not move solo campaign into the Worker.
+
+The latest co-op presentation checkpoint adds protobuf infantry animation
+frames, immutable SDK validation and the actual Unity runtime sampler path.
+Host walking and the fixed-root corner-fire window are represented; source
+transition gaps remain hidden. Windows verification passes 1,136 protocol,
+26,368 focused combat, thirteen native adapter/presentation and 74 live
+integration checks plus restart recovery. These checks do not establish
+public co-op admission, authoritative player-hit routing or normal two-Client
+co-op gameplay. See [confirmed animation frames](COOP_ANIMATION_FRAMES.md).

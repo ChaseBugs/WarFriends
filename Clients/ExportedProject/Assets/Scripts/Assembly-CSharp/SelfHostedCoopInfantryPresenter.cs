@@ -52,6 +52,10 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
 
         SoldierBehaviourAssaulter family = FindAssaulter(manager);
         Animation animation = source.GetComponentInChildren<Animation>(true);
+        if (animation != null)
+        {
+            SoldierAnimationController.RestoreRecoveredBaseAliases(animation);
+        }
         AnimationClip clip = animation == null ? null : animation.GetClip(WalkingClip);
         if (family == null || clip == null || clip.length <= 0f)
         {
@@ -115,7 +119,7 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
             Remove(row.EntityId);
             return;
         }
-        if (row.InfantryVisualClip.Length == 0)
+        if (row.InfantryVisualClip.Length == 0 && row.InfantryAnimation == null)
         {
             if (actor != null)
             {
@@ -124,7 +128,7 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
 
             return;
         }
-        if (row.Behaviour != "Assaulter" || row.InfantryVisualClip != WalkingClip || row.Rotation == null)
+        if (row.Behaviour != "Assaulter" || row.Rotation == null)
         {
             throw new InvalidOperationException("The infantry presenter received an unsupported visual state.");
         }
@@ -173,13 +177,43 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
         BattleJointRotation rotation = row.Rotation;
         visual.Root.transform.position = new Vector3(row.X, row.Y, row.Z);
         visual.Root.transform.rotation = new Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W);
-        float seconds = (float)((row.InfantryVisualSampleTick - row.InfantryVisualStartTick) / HostTicksPerSecond);
-        actor.Sampler.Sample(new[]
-        {
-            new SelfHostedInfantryAnimationState(WalkingClip, Mathf.Repeat(seconds, _walkingClip.length),
-                1f, WrapMode.ClampForever)
-        });
+        actor.Sampler.Sample(CreateAnimationStates(row));
         visual.Root.SetActive(true);
+    }
+
+    private IReadOnlyList<SelfHostedInfantryAnimationState> CreateAnimationStates(CoopEnemyViewState row)
+    {
+        var states = new List<SelfHostedInfantryAnimationState>();
+        if (row.InfantryAnimation != null)
+        {
+            foreach (InfantryAnimationClipView clip in row.InfantryAnimation.Clips)
+            {
+                states.Add(new SelfHostedInfantryAnimationState(clip.ClipName, clip.TimeSeconds,
+                    clip.Weight, ToUnityWrap(clip.Wrap)));
+            }
+            return states;
+        }
+
+        // Keep older walking-only hosts compatible until every source animation is projected by the host.
+        float seconds = (float)((row.InfantryVisualSampleTick - row.InfantryVisualStartTick) / HostTicksPerSecond);
+        states.Add(new SelfHostedInfantryAnimationState(WalkingClip, Mathf.Repeat(seconds, _walkingClip.length),
+            1f, WrapMode.ClampForever));
+        return states;
+    }
+
+    private static WrapMode ToUnityWrap(BattleInfantryAnimationWrap wrap)
+    {
+        switch (wrap)
+        {
+            case BattleInfantryAnimationWrap.Clamp:
+                return WrapMode.Clamp;
+            case BattleInfantryAnimationWrap.ClampForever:
+                return WrapMode.ClampForever;
+            case BattleInfantryAnimationWrap.Loop:
+                return WrapMode.Loop;
+            default:
+                throw new InvalidOperationException("The SDK published an unsupported source wrapping mode.");
+        }
     }
 
     private void SubscribeAndReplay()

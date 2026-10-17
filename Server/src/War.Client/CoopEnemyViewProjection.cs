@@ -38,7 +38,8 @@ namespace War.Client
                 ValidateVitality(enemy, snapshot.ServerTick);
                 ValidatePose(enemy, snapshot.ServerTick);
                 ValidateAnimation(enemy, snapshot.ServerTick, snapshot.Phase);
-                views.Add(new CoopEnemyViewState(enemy));
+                InfantryAnimationFrameView animation = InfantryAnimationFrameView.FromEnemy(enemy, snapshot);
+                views.Add(new CoopEnemyViewState(enemy, animation));
                 expectedId++;
             }
 
