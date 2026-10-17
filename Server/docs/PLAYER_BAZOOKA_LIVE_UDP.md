@@ -40,9 +40,9 @@ received records.
 
 ## Reproduction
 
-Copy `Server/tools/UnityLiveBazookaAudit.cs` and
-`Server/tools/UnityLiveBazookaObservation.cs` into the prepared disposable
-project's `Assets/Editor`. That copy must already contain the current Client
+Copy the seven shared/native tools listed in the
+[Play Mode reproduction instructions](PLAYER_BAZOOKA_LIVE_PLAY_MODE.md#running)
+into the prepared disposable project's `Assets/Editor`. That copy must already contain the current Client
 integration, SDK and generated script-free missile resource. Then run:
 
 ```powershell
@@ -75,3 +75,8 @@ MainScene is used as the recovered rig/presenter source; normal map loading,
 camera/UI boot, Android, Linux Unity execution, full multiplayer modes and
 Backend result/economy handoff remain unverified here. B32 and the complete
 BattleServer objective remain open.
+
+The [subsequent live Play Mode checkpoint](PLAYER_BAZOOKA_LIVE_PLAY_MODE.md)
+shares this battle scenario but uses automatic adapter Update instead of manual
+polling. It adds actual source sound/particle dispatch and interrupted callback
+recovery, while keeping original boot/input and player rigs inactive.

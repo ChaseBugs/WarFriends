@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using Google.Protobuf;
 using War.Client;
@@ -23,6 +22,7 @@ public static class UnityLiveBazookaAudit
     private static double _deadline;
     private static string _stage = "scene-load";
     private static SelfHostedBattleClient _client;
+    private static UnityLiveBazookaEffectObservation _effects;
 
     /// <summary>Requires two temporary host-issued grants from the .NET fixture.</summary>
     public static void Run()
@@ -42,26 +42,44 @@ public static class UnityLiveBazookaAudit
         var local = JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
         var peer = JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
         _deadline = EditorApplication.timeSinceStartup + TimeoutSeconds;
-        _audit = CheckAsync(local, peer);
+        _audit = CheckAsync(local, peer, null, null);
         EditorApplication.update += Observe;
     }
 
-    private static async Task CheckAsync(MatchConnectionGrant local, MatchConnectionGrant peer)
+    /// <summary>Runs the same live battle scenario after an isolated Play Mode scene is ready.</summary>
+    public static Task RunPreparedAsync(
+        MatchConnectionGrant local,
+        MatchConnectionGrant peer,
+        GameObject sources,
+        UnityBazookaEffectFixture effects)
+    {
+        if (!Application.isPlaying || sources == null || effects == null)
+        {
+            throw new InvalidOperationException("Prepare source services and enter Play Mode first.");
+        }
+
+        return CheckAsync(local, peer, sources, effects);
+    }
+
+    /// <summary>Reports the last completed setup step for native timeout diagnostics.</summary>
+    public static string Stage { get { return _stage; } }
+
+    private static async Task CheckAsync(
+        MatchConnectionGrant local,
+        MatchConnectionGrant peer,
+        GameObject sources,
+        UnityBazookaEffectFixture effects)
     {
         GameObject owner = null;
         GameObject left = null;
         GameObject right = null;
         try
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
-            PlayerController original = scene.GetRootGameObjects()
-                .SelectMany(root => root.GetComponentsInChildren<GameController>(true)).Single().mainPlayerController;
-            left = CloneRig(original, "LiveBazookaLeft");
-            right = CloneRig(original, "LiveBazookaRight");
+            UnityLiveBazookaRigs.Select(sources, out left, out right);
             PlayerController leftPlayer = left.GetComponent<PlayerController>();
             PlayerController rightPlayer = right.GetComponent<PlayerController>();
-            BindInventory(leftPlayer, local);
-            BindInventory(rightPlayer, peer);
+            UnityLiveBazookaRigs.BindInventory(leftPlayer, local);
+            UnityLiveBazookaRigs.BindInventory(rightPlayer, peer);
             owner = new GameObject("LiveBazookaAdapter");
             SelfHostedBattleClient adapter = owner.AddComponent<SelfHostedBattleClient>();
             _client = adapter;
@@ -73,79 +91,84 @@ public static class UnityLiveBazookaAudit
                 SetStage("peer-admission");
                 await other.ConnectAsync(token.Token);
                 SetStage("bridge-activation");
+                if (effects != null)
+                {
+                    _effects = new UnityLiveBazookaEffectObservation(effects, adapter);
+                }
+
                 adapter.ActivateDeathMatchScene(leftPlayer, rightPlayer);
+                if (_effects != null)
+                {
+                    _effects.BindCompletedHandler();
+                }
+
                 var observation = new UnityLiveBazookaObservation(local.PlayerId, peer.PlayerId);
                 adapter.StateReceived += observation.ObserveSnapshot;
                 adapter.CombatEventReceived += observation.ObserveEvent;
-                SetStage("peer-ready-first");
-                await other.ReadyAsync(token.Token);
-                await adapter.Refresh();
-                await adapter.Ready();
-                SetStage("wait-running");
-                await WaitForAsync(() => adapter.State.Phase == BattlePhase.Running, adapter, token.Token);
-                await adapter.BazookaHold(true, Target);
-                SetStage("wait-four-m202-flights");
-                await WaitForAsync(() => observation.HasM202Volley, adapter, token.Token);
-                await adapter.SwitchWeapon(RpgSlot);
-                SetStage("verify-slot-switch");
-                Require(adapter.State.Players.Single(row => row.PlayerId == local.PlayerId).ActiveWeaponSlot == RpgSlot,
-                    "The host must accept the local RPG slot switch.");
-                int rpgIndex = local.PlayerViews.Single(row => row.PlayerId == local.PlayerId)
-                    .Weapons.Single(row => row.Slot == RpgSlot).WeaponIndex;
-                Require(leftPlayer.weaponInventory.currentWeapon == leftPlayer.weaponInventory.allWeapons[rpgIndex],
-                    "The recovered rig must select its actual RPG weapon.");
-                observation.VerifySwitchedFlight();
-                Require((await other.SwitchWeaponAsync(RpgSlot, token.Token)).Code == "weapon-selected",
-                    "The independently admitted peer must select its own RPG slot.");
-                Require((await other.BazookaHoldAsync(true, Target.x, Target.y, Target.z, token.Token))
-                    .Code == "bazooka-targeting", "The peer must send a real typed RPG hold.");
-                SetStage("wait-five-impacts");
-                await WaitForAsync(() => observation.ImpactCount == ExpectedImpacts, adapter, token.Token);
-                SetStage("compare-peer-history");
-                observation.VerifyPeer(await ReadPeerImpactsAsync(other, token.Token));
+                await RunBattleAsync(adapter, other, observation, token.Token);
                 Debug.Log("UNITY_LIVE_BAZOOKA_PASSED: five moving host missiles, M202 real/fake, " +
                     "RPG slot independence, production bridge tails and identical two-peer impacts; " +
-                    "Editor components only.");
+                    (Application.isPlaying ?
+                        "automatic Play Mode polling and source effects." : "Editor components only."));
             }
         }
         finally
         {
-            foreach (GameObject owned in new[] { owner, left, right })
-            {
-                if (owned != null)
-                {
-                    UnityEngine.Object.DestroyImmediate(owned);
-                }
-            }
+            DestroyOwned(owner);
+            DestroyOwned(left);
+            DestroyOwned(right);
         }
     }
 
-    private static GameObject CloneRig(PlayerController original, string name)
+    private static async Task RunBattleAsync(
+        SelfHostedBattleClient adapter,
+        MatchConnection other,
+        UnityLiveBazookaObservation observation,
+        CancellationToken token)
     {
-        bool wasActive = original.gameObject.activeSelf;
-        original.gameObject.SetActive(false);
-        GameObject clone = UnityEngine.Object.Instantiate(original.gameObject);
-        original.gameObject.SetActive(wasActive);
-        clone.name = name;
-        foreach (MonoBehaviour behaviour in clone.GetComponentsInChildren<MonoBehaviour>(true))
+        SetStage("peer-ready-first");
+        await other.ReadyAsync(token);
+        await WaitForAsync(() => adapter.State.Players.Single(row => row.PlayerId == other.LocalPlayerId).Ready,
+            adapter, token);
+        await adapter.Ready();
+        SetStage("wait-running");
+        await WaitForAsync(() => adapter.State.Phase == BattlePhase.Running, adapter, token);
+        await adapter.BazookaHold(true, Target);
+        SetStage("wait-four-m202-flights");
+        await WaitForAsync(() => observation.HasM202Volley, adapter, token);
+        await adapter.SwitchWeapon(RpgSlot);
+        SetStage("verify-slot-switch");
+        UnityLiveBazookaRigs.VerifySlotSelection(adapter, RpgSlot);
+        observation.VerifySwitchedFlight();
+        Require((await other.SwitchWeaponAsync(RpgSlot, token)).Code == "weapon-selected",
+            "The independently admitted peer must select its own RPG slot.");
+        Require((await other.BazookaHoldAsync(true, Target.x, Target.y, Target.z, token))
+            .Code == "bazooka-targeting", "The peer must send a real typed RPG hold.");
+        SetStage("wait-five-impacts");
+        await WaitForAsync(() => observation.ImpactCount == ExpectedImpacts, adapter, token);
+        SetStage("compare-peer-history");
+        observation.VerifyPeer(await ReadPeerImpactsAsync(other, token));
+        if (_effects != null)
         {
-            behaviour.enabled = false;
+            SetStage("wait-source-particle-simulation");
+            await WaitForAsync(_effects.HasFinished, adapter, token);
         }
-
-        clone.SetActive(true);
-        return clone;
     }
 
-    private static void BindInventory(PlayerController player, MatchConnectionGrant grant)
+    private static void DestroyOwned(GameObject owned)
     {
-        player.playerProperties = new PlayerProperties { playerID = grant.PlayerId };
-        WeaponInventory inventory = player.ResolveSelfHostedInventory();
-        inventory.usedWeapons = new List<PlayerWeapon>();
-        foreach (BattleWeaponView weapon in grant.PlayerViews.Single(row => row.PlayerId == grant.PlayerId).Weapons)
+        if (owned == null)
         {
-            PlayerWeapon source = inventory.allWeapons[weapon.WeaponIndex];
-            source.playerController = player;
-            inventory.usedWeapons.Add(source);
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            UnityEngine.Object.Destroy(owned);
+        }
+        else
+        {
+            UnityEngine.Object.DestroyImmediate(owned);
         }
     }
 
@@ -155,9 +178,17 @@ public static class UnityLiveBazookaAudit
         while (!condition())
         {
             await Task.Delay(PollMilliseconds, token);
-            await adapter.Refresh();
-            // Editor mode does not run the component's Update; use its same SDK event path explicitly.
-            await adapter.DispatchEvents();
+            if (_effects != null)
+            {
+                _effects.ThrowIfFailed();
+            }
+
+            if (!Application.isPlaying)
+            {
+                // Only the Editor control needs explicit polling; Play Mode uses the real adapter Update.
+                await adapter.Refresh();
+                await adapter.DispatchEvents();
+            }
         }
     }
 

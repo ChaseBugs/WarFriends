@@ -25,6 +25,12 @@ public sealed class UnityBazookaEffectFixture
     /// <summary>Preserves source sound entries, AudioSource settings and both source particle lists.</summary>
     public static void PrepareScene()
     {
+        PrepareScene(null);
+    }
+
+    /// <summary>Allows another native audit to preserve source-only scene dependencies before isolation.</summary>
+    public static void PrepareScene(Action<GameObject, Component[]> prepareAdditionalSources)
+    {
         var sourceScene = EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
         Component[] components = sourceScene.GetRootGameObjects()
             .SelectMany(sceneRoot => sceneRoot.GetComponentsInChildren<Component>(true)).ToArray();
@@ -40,6 +46,11 @@ public sealed class UnityBazookaEffectFixture
         GameObject performance = Child(root, "InactiveQualityProvider");
         performance.SetActive(false);
         performance.AddComponent<PerformanceManager>();
+        if (prepareAdditionalSources != null)
+        {
+            prepareAdditionalSources(root, components);
+        }
+
         var emptyScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         Type manager = emptyScene.GetType().Assembly.GetType("UnityEngine.SceneManagement.SceneManager", true);
         manager.GetMethod("MoveGameObjectToScene", BindingFlags.Public | BindingFlags.Static)
@@ -56,19 +67,20 @@ public sealed class UnityBazookaEffectFixture
     {
         GameObject root = Resources.FindObjectsOfTypeAll<Transform>()
             .Single(row => row.name == RootName && row.gameObject.scene.IsValid()).gameObject;
-        SoundsManager volume = root.GetComponentInChildren<SoundsManager>(true);
+        SoundsManager volume = root.transform.Find("InactiveVolumeProvider").GetComponent<SoundsManager>();
         volume.data = new SoundsManager.SoundSettingsSerialized();
         typeof(SoundsManager).GetField("mInstance", BindingFlags.NonPublic | BindingFlags.Static)
             .SetValue(null, volume);
-        PerformanceManager performance = root.GetComponentInChildren<PerformanceManager>(true);
+        PerformanceManager performance = root.transform.Find("InactiveQualityProvider")
+            .GetComponent<PerformanceManager>();
         performance.performance = Performance.Best;
         typeof(Singleton<PerformanceManager>).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static)
             .SetValue(null, performance);
         root.SetActive(true);
-        SoundsManager3D sounds = root.GetComponentInChildren<SoundsManager3D>(true);
+        SoundsManager3D sounds = root.transform.Find("SourceAudio3D").GetComponent<SoundsManager3D>();
         sounds.LoadNow(Sounds3DEnum.ExplosionMedium);
         sounds.LoadNow(Sounds3DEnum.ExplosionSmall);
-        HitParticleSystem particles = root.GetComponentInChildren<HitParticleSystem>(true);
+        HitParticleSystem particles = root.transform.Find("SourceHitParticles").GetComponent<HitParticleSystem>();
         return new UnityBazookaEffectFixture(sounds, particles);
     }
 
@@ -100,6 +112,28 @@ public sealed class UnityBazookaEffectFixture
     /// <summary>Checks original clip membership, volume, position and particle activation.</summary>
     public void VerifyEffect(int index, Sounds3DEnum sound, Vector3 position)
     {
+        VerifyAudio(index, sound, position);
+        VerifyParticle(_pool[index], position);
+    }
+
+    /// <summary>Captures the actual latest source spawn even when the pool has reused an earlier effect.</summary>
+    public ParticleSystem CaptureLatestEffect(Sounds3DEnum sound, Vector3 position)
+    {
+        int audioIndex = (AudioCursor + AudioSourceCount - 1) % AudioSourceCount;
+        VerifyAudio(audioIndex, sound, position);
+        Transform effect = _pool.Last();
+        VerifyParticle(effect, position);
+        return effect.GetComponent<ParticleSystem>();
+    }
+
+    /// <summary>Returns the next cursor in the original bounded AudioSource bank.</summary>
+    public int NextAudioCursor(int current)
+    {
+        return (current + 1) % AudioSourceCount;
+    }
+
+    private void VerifyAudio(int index, Sounds3DEnum sound, Vector3 position)
+    {
         AudioSource source = _sounds.audioSourcesParent.GetComponentsInChildren<AudioSource>()[index];
         SoundEntry entry = _sounds.SoundEntries.Single(row => row.soundEnum == sound);
         var clips = (AudioClip[])typeof(SoundEntry).GetField("mClips",
@@ -112,7 +146,10 @@ public sealed class UnityBazookaEffectFixture
             ", resource=" + Resources.Load<AudioClip>("Sounds/SFX/game/New/EXPLOSION_MEDIUM") + ".");
         Require(source.transform.position == position && source.spatialBlend == 1f && source.volume == entry.volume,
             "The original 3D sound position and source volume must be preserved.");
-        Transform effect = _pool[index];
+    }
+
+    private static void VerifyParticle(Transform effect, Vector3 position)
+    {
         Require(Vector3.Distance(effect.position, position + Vector3.up * 0.2f) < 0.0001f,
             "The original particle offset must be preserved.");
         Require(effect.GetComponent<ParticleSystem>().isPlaying,

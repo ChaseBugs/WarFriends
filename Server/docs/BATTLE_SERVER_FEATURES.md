@@ -27,8 +27,12 @@ The [explosion-effects checkpoint](PLAYER_BAZOOKA_EFFECTS.md) now resumes
 interrupted source sound/particle callbacks without duplicating completed steps.
 Isolated native Play Mode verifies actual recovered clips, particles, automatic
 simulation and match-scoped replay. Two WAV container headers required length
-restoration while preserving all PCM bytes and GUIDs. Combined live networking
-and normal Play Mode effects remain open.
+restoration while preserving all PCM bytes and GUIDs.
+The [combined live Play Mode checkpoint](PLAYER_BAZOOKA_LIVE_PLAY_MODE.md) now
+uses actual UDP and automatic adapter polling for five source explosions,
+including an interrupted callback with a held event cursor and successful retry.
+Original boot/input and recovered player rigs stay inactive; two Unity clients,
+rendered gameplay and full camera/UI loading remain open.
 
 [RPG crate occlusion](PVP_RPG_CRATE_OCCLUSION.md) now reproduces a valid City
 spawn hidden from the initial cover. The host and original Unity Physics agree

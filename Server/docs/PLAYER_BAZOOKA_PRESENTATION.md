@@ -97,3 +97,7 @@ The [explosion-effects checkpoint](PLAYER_BAZOOKA_EFFECTS.md) subsequently verif
 real source sound/particle dispatch and interrupted callback replay in isolated
 Play Mode. It restores two zero-length WAV container headers without changing
 their PCM samples. It does not combine Play Mode effects with the live UDP run.
+
+The [later combined Play Mode run](PLAYER_BAZOOKA_LIVE_PLAY_MODE.md) closes that
+specific network/effect scheduling gap using automatic adapter Update and real
+callback retry. Normal boot/input, rendered rigs and two Unity clients remain open.

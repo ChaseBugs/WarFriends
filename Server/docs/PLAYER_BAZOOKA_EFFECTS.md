@@ -74,5 +74,8 @@ missile prefab verifier and both restored audio digest checks pass.
 
 The run is isolated Play Mode, without rendered pixels or audible-output proof.
 It is separate from the [actual UDP Editor checkpoint](PLAYER_BAZOOKA_LIVE_UDP.md).
-Combined normal Play Mode networking, two Unity clients, Android, Unity 5.2 and
-Linux gameplay remain unverified. No full-game completion claim follows.
+The [subsequent live Play Mode checkpoint](PLAYER_BAZOOKA_LIVE_PLAY_MODE.md)
+combines actual UDP and automatic adapter polling with these source effects,
+including callback failure/retry. Its original player rigs and boot/input stay
+inactive. Two Unity clients, Android, Unity 5.2, Linux gameplay and rendered
+normal boot remain unverified. No full-game completion claim follows.

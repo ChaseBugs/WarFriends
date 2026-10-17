@@ -24,15 +24,22 @@ internal static class LiveBazookaUnityTests
     private const ulong LocalSessionId = 4001;
     private const ulong PeerSessionId = 4002;
     private const string SuccessMarker = "UNITY_LIVE_BAZOOKA_PASSED";
+    private const string PlaySuccessMarker = "UNITY_LIVE_BAZOOKA_PLAY_PASSED";
 
-    internal static async Task RunAsync(string directory, string unityExecutable, string projectPath)
+    internal static Task RunAsync(string directory, string unityExecutable, string projectPath)
     {
-        if (!File.Exists(unityExecutable) ||
-            !File.Exists(Path.Combine(projectPath, "Assets/Editor/UnityLiveBazookaAudit.cs")) ||
-            !File.Exists(Path.Combine(projectPath, "Assets/Editor/UnityLiveBazookaObservation.cs")))
-        {
-            throw new FileNotFoundException("Prepare the disposable Unity project with both live bazooka audit tools.");
-        }
+        return RunModeAsync(directory, unityExecutable, projectPath, AuditMode.EditorComponents);
+    }
+
+    internal static Task RunPlayModeAsync(string directory, string unityExecutable, string projectPath)
+    {
+        return RunModeAsync(directory, unityExecutable, projectPath, AuditMode.PlayMode);
+    }
+
+    private static async Task RunModeAsync(
+        string directory, string unityExecutable, string projectPath, AuditMode mode)
+    {
+        ValidateProject(unityExecutable, projectPath, mode);
 
         string runDirectory = Path.GetFullPath(Path.Combine(directory, "../.local/bazooka-live-" +
             Guid.NewGuid().ToString("N")));
@@ -58,15 +65,17 @@ internal static class LiveBazookaUnityTests
             await worker.StartAsync(CancellationToken.None);
             await File.WriteAllLinesAsync(grantsFile, manifest.Players.Select(player =>
                 JsonFormatter.Default.Format(CreateGrant(manifest, port, tokens, player.PlayerId))));
-            editor = StartEditor(unityExecutable, projectPath, grantsFile, unityLog);
+            string method = mode == AuditMode.PlayMode ? "UnityLiveBazookaPlayAudit.Run" : "UnityLiveBazookaAudit.Run";
+            editor = StartEditor(unityExecutable, projectPath, grantsFile, new EditorInvocation(unityLog, method));
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(EditorTimeoutSeconds));
             await editor.WaitForExitAsync(timeout.Token);
-            if (editor.ExitCode != 0 || !File.ReadAllText(unityLog).Contains(SuccessMarker, StringComparison.Ordinal))
+            string marker = mode == AuditMode.PlayMode ? PlaySuccessMarker : SuccessMarker;
+            if (editor.ExitCode != 0 || !File.ReadAllText(unityLog).Contains(marker, StringComparison.Ordinal))
             {
                 throw new Exception("Live Unity bazooka presentation failed; inspect " + unityLog);
             }
 
-            Console.WriteLine("PASS: live Worker/SDK/Unity Editor bazooka presentation; " + unityLog);
+            Console.WriteLine("PASS: live Worker/SDK/Unity bazooka " + mode + "; " + unityLog);
         }
         finally
         {
@@ -82,6 +91,43 @@ internal static class LiveBazookaUnityTests
 
             await worker.StopAsync(CancellationToken.None);
             File.Delete(grantsFile);
+        }
+    }
+
+    private static void ValidateProject(string unityExecutable, string projectPath, AuditMode mode)
+    {
+        if (!File.Exists(unityExecutable))
+        {
+            throw new FileNotFoundException("The native Unity executable was not found.");
+        }
+
+        string[] sharedTools =
+        [
+            "UnityLiveBazookaAudit",
+            "UnityLiveBazookaObservation",
+            "UnityLiveBazookaRigs",
+            "UnityLiveBazookaEffectObservation",
+            "UnityBazookaEffectFixture"
+        ];
+        foreach (string tool in sharedTools)
+        {
+            RequireEditorTool(projectPath, tool);
+        }
+
+        if (mode == AuditMode.PlayMode)
+        {
+            foreach (string tool in new[] { "UnityLiveBazookaPlayAudit", "UnityLiveBazookaPlayScene" })
+            {
+                RequireEditorTool(projectPath, tool);
+            }
+        }
+    }
+
+    private static void RequireEditorTool(string projectPath, string name)
+    {
+        if (!File.Exists(Path.Combine(projectPath, "Assets/Editor", name + ".cs")))
+        {
+            throw new FileNotFoundException("Prepare the disposable Unity source tool: " + name);
         }
     }
 
@@ -154,14 +200,15 @@ internal static class LiveBazookaUnityTests
         }).Build();
     }
 
-    private static Process StartEditor(string executable, string projectPath, string grantsFile, string logFile)
+    private static Process StartEditor(
+        string executable, string projectPath, string grantsFile, EditorInvocation invocation)
     {
         var start = new ProcessStartInfo(executable)
         {
             UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden
         };
         foreach (string argument in new[] { "-batchmode", "-nographics", "-noUpm", "-projectPath", projectPath,
-            "-executeMethod", "UnityLiveBazookaAudit.Run", "-logFile", logFile })
+            "-executeMethod", invocation.MethodName, "-logFile", invocation.LogFile })
         {
             start.ArgumentList.Add(argument);
         }
@@ -169,4 +216,12 @@ internal static class LiveBazookaUnityTests
         start.Environment["WAR_BAZOOKA_LIVE_GRANTS_FILE"] = grantsFile;
         return Process.Start(start) ?? throw new Exception("Unity did not start.");
     }
+
+    private enum AuditMode
+    {
+        EditorComponents,
+        PlayMode
+    }
+
+    private sealed record EditorInvocation(string LogFile, string MethodName);
 }
