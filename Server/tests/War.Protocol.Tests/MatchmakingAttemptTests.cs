@@ -21,6 +21,10 @@ internal static class MatchmakingAttemptTests
         checks += await VerifyRepeatedSearchRejectedAsync();
         checks += await VerifyLoadingOwnershipAsync();
         checks += await VerifyLoadingOwnerReleaseAsync();
+        checks += await VerifyLoadingRetryAsync();
+        checks += await VerifyLoadingRetryOwnershipAsync();
+        checks += await VerifyLoadingRejectionAsync();
+        checks += await VerifyLoadingRetryLimitAsync();
         Console.WriteLine("PASS: " + checks + " recovered Client matchmaking cancellation checks");
         return checks;
     }
@@ -194,6 +198,90 @@ internal static class MatchmakingAttemptTests
         return 3;
     }
 
+    private static async Task<int> VerifyLoadingRetryAsync()
+    {
+        var handler = new ControlledQueueHandler { ReturnPair = true };
+        using var attempt = CreateAttempt(handler);
+        await attempt.FindAsync(TimeoutSeconds);
+        attempt.RetainForLoading();
+        Task cancellation = attempt.CancelLoadingWithRetryAsync(() => true);
+        Require(ReferenceEquals(cancellation, attempt.CancelLoadingWithRetryAsync(() => true)),
+            "Concurrent loading cancellation must share one bounded retry operation.");
+        handler.FailCancellation(HttpStatusCode.ServiceUnavailable);
+        await WaitForCancelRequestsAsync(handler, 2);
+        handler.AcceptCancellation();
+        await cancellation;
+        Require(handler.CancelRequests == 2 && handler.IssueRequests == 1,
+            "Temporary failure must retry only the original admitted attempt.");
+        await attempt.CompleteAsync();
+        return 2;
+    }
+
+    private static async Task<int> VerifyLoadingRetryOwnershipAsync()
+    {
+        var handler = new ControlledQueueHandler { ReturnPair = true };
+        using var attempt = CreateAttempt(handler);
+        await attempt.FindAsync(TimeoutSeconds);
+        attempt.RetainForLoading();
+        bool isCurrentOwner = true;
+        Task cancellation = attempt.CancelLoadingWithRetryAsync(() => isCurrentOwner);
+        handler.RejectCancellation();
+        isCurrentOwner = false;
+        await ExpectCanceledAsync(cancellation);
+        Require(handler.CancelRequests == 1 && !handler.IsDisposed,
+            "An old owner must stop retrying without disposing a replacement's live transport authority.");
+        return 1;
+    }
+
+    private static async Task<int> VerifyLoadingRejectionAsync()
+    {
+        int checks = 0;
+        foreach (HttpStatusCode status in new[] { HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest })
+        {
+            var handler = new ControlledQueueHandler { ReturnPair = true };
+            using var attempt = CreateAttempt(handler);
+            await attempt.FindAsync(TimeoutSeconds);
+            attempt.RetainForLoading();
+            Task cancellation = attempt.CancelLoadingWithRetryAsync(() => true);
+            handler.FailCancellation(status);
+            await ExpectHttpFailureAsync(cancellation);
+            Require(handler.CancelRequests == 1 && !handler.IsDisposed,
+                "Authentication and validation rejections must not retry or release loading ownership.");
+            checks++;
+        }
+
+        return checks;
+    }
+
+    private static async Task WaitForCancelRequestsAsync(ControlledQueueHandler handler, int expectedCount)
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (handler.CancelRequests < expectedCount)
+        {
+            await Task.Delay(10, deadline.Token);
+        }
+    }
+
+    private static async Task<int> VerifyLoadingRetryLimitAsync()
+    {
+        const int ExpectedAttempts = 3;
+        var handler = new ControlledQueueHandler { ReturnPair = true };
+        using var attempt = CreateAttempt(handler);
+        await attempt.FindAsync(TimeoutSeconds);
+        attempt.RetainForLoading();
+        Task cancellation = attempt.CancelLoadingWithRetryAsync(() => true);
+        for (int i = 1; i <= ExpectedAttempts; i++)
+        {
+            await WaitForCancelRequestsAsync(handler, i);
+            handler.FailCancellation(HttpStatusCode.ServiceUnavailable);
+        }
+
+        await ExpectHttpFailureAsync(cancellation);
+        Require(handler.CancelRequests == ExpectedAttempts && !handler.IsDisposed,
+            "Exhausted automatic retries must retain ownership and surface failure after exactly three requests.");
+        return 1;
+    }
+
     private static async Task<int> VerifyPairedCleanupAsync()
     {
         var handler = new ControlledQueueHandler();
@@ -311,6 +399,14 @@ internal static class MatchmakingAttemptTests
         internal void RejectCancellation()
         {
             _cancellation.SetException(new HttpRequestException("Controlled queue cleanup failure."));
+        }
+
+        internal void FailCancellation(HttpStatusCode status)
+        {
+            _cancellation.SetResult(new HttpResponseMessage(status)
+            {
+                Content = new ByteArrayContent(new ErrorResponse { Code = "controlled-failure" }.ToByteArray())
+            });
         }
 
         protected override Task<HttpResponseMessage> SendAsync(

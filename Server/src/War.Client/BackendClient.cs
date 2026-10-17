@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -135,6 +136,21 @@ namespace War.Client
             {
                 throw new ArgumentException("Scoped matchmaking requires its original attempt credential.");
             }
+        }
+
+        /// <summary>Identifies transport failures and temporary HTTP errors without retrying rejected authority.</summary>
+        public static bool IsTransientFailure(Exception failure)
+        {
+            var statusFailure = failure as BackendStatusException;
+            if (statusFailure != null)
+            {
+                HttpStatusCode status = (HttpStatusCode)statusFailure.StatusCode;
+                return status == HttpStatusCode.RequestTimeout || status == HttpStatusCode.InternalServerError ||
+                    status == HttpStatusCode.BadGateway || status == HttpStatusCode.ServiceUnavailable ||
+                    status == HttpStatusCode.GatewayTimeout;
+            }
+
+            return failure is HttpRequestException || failure is TaskCanceledException;
         }
 
         private async Task<T> Send<T>(string path, IMessage body, string token, MessageParser<T> parser, CancellationToken ct) where T : IMessage<T>

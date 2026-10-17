@@ -179,6 +179,8 @@ public static class UnityAbortRecoveryRoutingAudit
     private static async Task VerifyLoadingFailureDispatchAsync(
         GameController game, GameControllerDeathMatch controller, SelfHostedBattleClient client)
     {
+        // The preceding stale-callback control intentionally leaves an Aborted snapshot installed.
+        typeof(SelfHostedBattleClient).GetProperty("State").SetValue(client, Snapshot(BattlePhase.Waiting), null);
         var http = new LoadingCancellationHandler();
         var backend = new BackendClient(new Uri("http://127.0.0.1:30001/"), http, true);
         Type attemptType = typeof(SelfHostedBattleClient).Assembly.GetType("SelfHostedMatchmakingAttempt", true);
@@ -210,6 +212,15 @@ public static class UnityAbortRecoveryRoutingAudit
         lateUpdate.Invoke(game, null);
         Require(http.Requests == 1 && client.OwnsMatch && client.IsConnected,
             "Loading failure must issue one scoped cancellation while retaining terminal UDP delivery.");
+        DateTime retryDeadline = DateTime.UtcNow.AddSeconds(5);
+        while (http.Requests < 2)
+        {
+            Require(DateTime.UtcNow < retryDeadline, "Temporary HTTP failure did not retry in Unity.");
+            await Task.Yield();
+        }
+        lateUpdate.Invoke(game, null);
+        Require(http.Requests == 2 && client.OwnsMatch && client.IsConnected,
+            "A successful retry must retain UDP and must not start another cancellation operation.");
         bool rejectedReady = false;
         try
         {
@@ -230,8 +241,8 @@ public static class UnityAbortRecoveryRoutingAudit
             rejectedReplacement = true;
         }
         Require(rejectedReplacement, "A new map replaced the failed loading scope before terminal recovery.");
-        Debug.Log("PASS: deferred loading failure dispatch rejects another controller, sends one scoped HTTP " +
-            "cancellation, retains transport and blocks Ready; controlled admission credential and HTTP receipt.");
+        Debug.Log("PASS: deferred loading failure dispatch rejects another controller, retries a temporary HTTP " +
+            "failure with the same scope, retains transport and blocks Ready; controlled credential and receipt.");
     }
 
     private sealed class LoadingCancellationHandler : HttpMessageHandler
@@ -248,6 +259,14 @@ public static class UnityAbortRecoveryRoutingAudit
                 request.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult());
             Require(body.AttemptToken == "fixture-attempt", "Loading cancellation lost its attempt scope.");
             Requests++;
+            if (Requests == 1)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+                {
+                    Content = new ByteArrayContent(new ErrorResponse { Code = "match_cancellation_deferred" }.ToByteArray())
+                });
+            }
+
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new ByteArrayContent(new MatchQueueReply { Code = "cancelled" }.ToByteArray())

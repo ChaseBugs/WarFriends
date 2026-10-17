@@ -7,6 +7,8 @@ using War.Protocol;
 /// <summary>Owns one queue search and keeps its HTTP client alive until remote cancellation completes.</summary>
 internal sealed class SelfHostedMatchmakingAttempt : IDisposable
 {
+    private const int MaximumLoadingCancellationAttempts = 3;
+    private const int LoadingCancellationRetryDelayMilliseconds = 500;
     private readonly BackendClient _backend;
     private readonly string _accessToken;
     private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
@@ -14,6 +16,7 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
         new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
     private Task<string> _attemptToken;
     private Task _cancellation = Task.CompletedTask;
+    private Task _loadingCancellation;
     private bool _hasCancellation;
     private bool _hasSearch;
     private bool _hasGrant;
@@ -80,6 +83,39 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
 
         _lifetime.Cancel();
         return _cancellation;
+    }
+
+    internal Task CancelLoadingWithRetryAsync(Func<bool> isCurrentOwner)
+    {
+        if (_loadingCancellation == null || _loadingCancellation.IsFaulted || _loadingCancellation.IsCanceled)
+        {
+            _loadingCancellation = CancelLoadingCoreAsync(isCurrentOwner);
+        }
+
+        return _loadingCancellation;
+    }
+
+    private async Task CancelLoadingCoreAsync(Func<bool> isCurrentOwner)
+    {
+        for (int i = 0; i < MaximumLoadingCancellationAttempts; i++)
+        {
+            if (_isDisposed || !IsRetainedForLoading || isCurrentOwner == null || !isCurrentOwner())
+            {
+                throw new OperationCanceledException("Loading cancellation no longer owns this match.");
+            }
+
+            try
+            {
+                await CancelAsync();
+                return;
+            }
+            catch (Exception failure) when (BackendClient.IsTransientFailure(failure) &&
+                i < MaximumLoadingCancellationAttempts - 1)
+            {
+                // Reuse the exact attempt credential; a temporary outage never authorizes another scope.
+                await Task.Delay(LoadingCancellationRetryDelayMilliseconds);
+            }
+        }
     }
 
     private async Task<string> AcquireAttemptTokenAsync()

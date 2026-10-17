@@ -124,7 +124,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
 
         _hasLoadingFailure = true;
-        return matchmaking.CancelAsync();
+        SelfHostedMatchmakingAttempt attempt = matchmaking;
+        MatchConnection ownedConnection = connection;
+        return attempt.CancelLoadingWithRetryAsync(() => !destroyed && !_isAbortRecoverySuspended &&
+            Active == this && matchmaking == attempt && connection == ownedConnection && State != null &&
+            (State.Phase == BattlePhase.Waiting || State.Phase == BattlePhase.Countdown));
     }
     public bool OwnsMatch { get { return connection != null; } }
     public bool ReconnectFailed { get { return reconnectFailureReported; } }

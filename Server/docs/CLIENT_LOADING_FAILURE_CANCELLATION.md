@@ -44,9 +44,14 @@ the existing owner-bound abort callback. Readiness is blocked after dispatch,
 and another map cannot replace the failed scope while its Client still owns the
 match. No local exception manufactures a terminal snapshot or reward.
 
-Failed HTTP cancellation is logged and ownership remains blocked. The same
-internal cancellation method retains retry capability, but automatic retry and
-user-facing retry presentation are not implemented. Direct trusted-grant
+Loading cancellation shares one retry operation per attempt: at most three
+requests with 500 ms between temporary failures. The SDK classifies transport
+errors, request timeout and HTTP 408/500/502/503/504 as transient; authentication,
+validation and protocol refusals do not retry. Before each request the captured
+Client, connection and attempt must still own a Waiting/Countdown match.
+Terminal recovery, replacement ownership or disposal stops further retries.
+Exhaustion is logged and ownership remains blocked. User-facing retry
+presentation is not implemented. Direct trusted-grant
 admission has no queue token and does not acquire this automatic cancellation
 path.
 
@@ -62,10 +67,12 @@ been verified.
 ## Verification
 
 The portable protocol executable links the actual Unity
-`SelfHostedMatchmakingAttempt` source. Its 22 lifecycle checks include successful
+`SelfHostedMatchmakingAttempt` source. Its 28 lifecycle checks include successful
 search completion retaining the HTTP owner, refusal followed by same-token retry,
 repeated completion, and terminal local disposal without another cancellation.
-The full executable passes 1,340 checks. These controlled HTTP replies do not
+The full executable passes 1,346 checks. Additional controls cover shared retry
+tasks, temporary HTTP failure recovery, owner replacement, no retry for HTTP
+400/401 and the exact three-request exhaustion bound. These controlled replies do not
 prove an actual two-Unity-client loading failure or server cancellation race.
 
 The disposable Unity 2018.3 validation project compiled both changed Client
@@ -110,3 +117,13 @@ suite passed against its own MongoDB replica set, including Backend restarts,
 delayed registration publication, cancellation races and unattended Worker-outage
 recovery. Run log:
 `Server/.local/loading-cancellation-live-61f5e56c0b554c0f9c0449d8a9a4281d/queue-live.log`.
+
+The retry extension also passes the native Unity routing audit using the final
+installed SDK. In each of the four controller states its controlled HTTP handler
+returns 503 once, then accepts the same scoped retry. Duplicate failure polling
+cannot start another operation, UDP remains owned, and Ready/replacement maps
+remain blocked. The audit also retains the four cleanup-failure controls. Log:
+`Server/.local/unity-loading-cancellation-retry-sdk-final.log`. All seven installed
+SDK hashes match their manifest. The earlier retry audit exposed a fixture that
+left an Aborted snapshot from a stale-callback control; the loading control now
+explicitly establishes Waiting, rather than weakening the terminal phase guard.

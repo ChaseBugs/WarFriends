@@ -17,6 +17,11 @@ distinct boundaries: scope failures now dispatch one owner-bound cancellation
 after iterator unwinding, retain UDP for terminal proof and block Ready/new maps.
 Actual queued two-Unity-client failure recovery and retry presentation remain
 pending.
+Temporary cancellation failures now retry the same retained attempt at most
+three times, with shared in-flight ownership and a phase/connection check before
+each request. Authentication, validation and Running/terminal ownership changes
+do not trigger repeated cancellation. Retry exhaustion remains blocked and
+user-facing retry presentation is still pending.
 The actual plain C# Unity attempt owner now also passes real authenticated
 HTTP/UDP loading cancellation, accepted Mongo terminal/pair release and
 Running-first refusal checks. This supplements the controlled Unity dispatch
