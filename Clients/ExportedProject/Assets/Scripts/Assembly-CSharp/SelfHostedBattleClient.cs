@@ -193,6 +193,19 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         return MatchmakeAndConnect(backendEndpoint, login.accessToken, matchmakingTimeoutSeconds, allowLocalHttp);
     }
 
+    /// <summary>Releases a confirmed ended transport before a fresh Backend-authorized random search.</summary>
+    public void ReleaseEndedMatchForNewSearch()
+    {
+        RequireAbortRecoveryReleased();
+        if (Active != this || !OwnsMatch || State == null || State.Phase != BattlePhase.Ended)
+        {
+            throw new InvalidOperationException("Only a confirmed ended match can be released for a fresh search.");
+        }
+
+        // Closing transport does not reopen the old match or submit another result/forfeit.
+        Close();
+    }
+
     /// <summary>Owns one authenticated queue search and admits its grant only while that search is current.</summary>
     public async Task MatchmakeAndConnect(
         string backendEndpoint, string accessToken, int timeoutSeconds, bool allowLocalHttp)

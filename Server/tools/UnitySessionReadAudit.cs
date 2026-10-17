@@ -58,9 +58,12 @@ public static class UnitySessionReadAudit
             UnityCachedRpcAudit.VerifyOwnedBoundary();
             UnityControllerOwnerAudit.Verify(client);
             UnityStartPresentationAudit.Verify(client);
+            UnityRandomSearchBoundaryAudit.VerifyLiveOwner(client);
             PhotonConnectionManager.Disconnect();
             Require(!client.OwnsMatch,
                 "Disconnect ignored the inactive canonical self-hosted owner.");
+            VerifyIdle();
+            UnityRandomSearchBoundaryAudit.VerifyEndedRelease(client, grant);
             VerifyIdle();
             Debug.Log("PASS: idle/local-model/owned reads avoid Photon fallback, preserve unsigned local time, " +
                 "keep missing snapshots unknown and reuse/disconnect the inactive canonical owner; " +

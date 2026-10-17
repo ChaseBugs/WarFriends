@@ -26,6 +26,12 @@ public class GameControllerDeathMatch : GameControllerPVP
 	public override void StartRandomMatchMaking(float connectDelay = 1.5f)
 	{
         RequireAbortRecoveryComplete();
+        SelfHostedBattleClient previous = PhotonConnectionManager.GetOwnedSelfHostedClient();
+        if (previous != null)
+        {
+            // Source random Rematch starts a new search; it cannot reuse a terminal room.
+            previous.ReleaseEndedMatchForNewSearch();
+        }
 		LoadingDialog.SetLook(smallLook: true);
 		Screen.sleepTimeout = -1;
 		PlayerController.players.Clear();
