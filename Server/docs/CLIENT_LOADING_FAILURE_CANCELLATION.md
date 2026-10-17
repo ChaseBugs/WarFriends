@@ -73,6 +73,10 @@ failure, expired tokens through this Unity path, stale-owner isolation under a
 replacement admission, full retry presentation integration and Running-first races. Cleanup
 failures remain retained by the resource scope; a confirmed server abort does
 not prove successful menu recovery after damaged resource disposal.
+Execution-only errors now permit confirmed-abort resource cleanup; actual
+StopCoroutine/disposal failures still block it. Ordinary cancellation retains
+the original failure history and still blocks a fresh load. The controller clears
+the old scope only after successful menu/notice handoff and owner release.
 
 This inventory does not establish that the full Client loading or menu path has
 been verified.

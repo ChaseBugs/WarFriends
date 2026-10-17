@@ -240,6 +240,35 @@ close the full BattleServer, automatic repair or complete gameplay/UI gates.
 
 ## Managed execution failures
 
+Confirmed server abort now uses `CancelAfterConfirmedAbort` rather than ordinary
+`Cancel`. Ordinary cancellation still retains and throws execution history to
+block an unreviewed replacement load. The confirmed-abort path may proceed when
+every pending loader was stopped/disposed successfully and only earlier
+execution errors remain. It preserves `FirstFailure` and normal cancellation
+history. Stop/disposal errors are tracked separately and still reject recovery,
+including combined execution/disposal failures.
+
+The controller calls this path only after validating an unscored, owner-bound
+Aborted snapshot and quiescing gameplay/transport. It drops the completed scope
+only after the existing menu/notice handoff and match release succeed. This does
+not establish that the complete menu graph has been verified.
+
+This distinction describes the wrapper boundary: MoveNext/Current failures and
+explicit StopCoroutine/Dispose failures. It cannot identify which internal user
+statement threw, or prove that every asset is healthy because Dispose returned.
+The original resource/menu release still has to complete before admission is
+released; full gameplay/resource validation remains open.
+
+The extended resource audit passes execution-only confirmed cleanup, combined
+execution/disposal refusal, retained ordinary-cancellation diagnostics and
+single-disposal checks alongside the native bundle/visual/modal suite. Log:
+`Server/.local/unity-confirmed-abort-resource-cleanup.log`.
+The controller routing audit injects an execution fault before confirmed abort
+in each of the four game states and keeps its four disposal-failure controls.
+Log: `Server/.local/unity-confirmed-abort-execution-routing.log`.
+Both run in the disposable Unity 2018 project and stop short of full menu boot;
+they do not verify Unity 5.2, Android or two-client gameplay.
+
 The wrapper now records failures from both IEnumerator.MoveNext and Current
 before returning control to Unity. Previously a body failure disposed only that
 iterator and left sibling loaders eligible to run; the source visual control

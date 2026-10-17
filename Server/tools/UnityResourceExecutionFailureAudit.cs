@@ -54,12 +54,47 @@ public static class UnityResourceExecutionFailureAudit
                 Require(Contains(retained, fault.CleanupFailure), "Retried cleanup lost one of the original causes.");
             }
             UnityResourceScopeFailureAudit.VerifyBlockedRootAdmission(scope, fault.ExecutionFailure);
+            VerifyConfirmedAbortCleanup(scope, fault, mode);
         }
         finally
         {
             host.StopAllCoroutines();
             slots.StopAllCoroutines();
         }
+    }
+
+    internal static void InjectExecutionFailure(BattleResourceLoadScope scope, MonoBehaviour host)
+    {
+        var fault = new ExecutionLoad(FailureMode.MoveNext);
+        Exception reported = AdvanceFault(scope, host, fault);
+        Require(Contains(reported, fault.ExecutionFailure), "The abort control did not retain its execution failure.");
+    }
+
+    private static void VerifyConfirmedAbortCleanup(
+        BattleResourceLoadScope scope, ExecutionLoad fault, FailureMode mode)
+    {
+        if (mode == FailureMode.MoveAndCleanup)
+        {
+            AggregateException reported = null;
+            try
+            {
+                scope.CancelAfterConfirmedAbort();
+            }
+            catch (AggregateException failure)
+            {
+                reported = failure;
+            }
+            Require(reported != null && Contains(reported, fault.CleanupFailure),
+                "Confirmed abort discarded an actual resource cleanup failure.");
+        }
+        else
+        {
+            scope.CancelAfterConfirmedAbort();
+            Require(ReferenceEquals(scope.FirstFailure, fault.ExecutionFailure) && fault.DisposeCount == 1,
+                "Confirmed abort lost its execution diagnostic or disposed an iterator twice.");
+        }
+        Require(Contains(CaptureCancellation(scope), fault.ExecutionFailure),
+            "Confirmed abort erased the normal admission failure history.");
     }
 
     private static Exception AdvanceFault(BattleResourceLoadScope scope, MonoBehaviour host, IEnumerator loading)

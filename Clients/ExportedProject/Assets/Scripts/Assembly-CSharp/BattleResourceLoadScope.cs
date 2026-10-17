@@ -11,6 +11,7 @@ public sealed class BattleResourceLoadScope
     private static BattleResourceLoadScope _currentScope;
     private readonly List<PendingLoad> _pending = new List<PendingLoad>();
     private readonly List<Exception> _cancellationFailures = new List<Exception>();
+    private readonly List<Exception> _cleanupFailures = new List<Exception>();
     private bool _isCancelled;
 
     /// <summary>Retains the first loading failure for owner-bound handling after the iterator unwinds.</summary>
@@ -96,7 +97,7 @@ public sealed class BattleResourceLoadScope
         }
         catch (Exception failure)
         {
-            FirstFailure = FirstFailure ?? failure;
+            RecordFailure(failure);
             try
             {
                 Finish(pending);
@@ -126,7 +127,7 @@ public sealed class BattleResourceLoadScope
             }
             catch (Exception failure)
             {
-                RecordFailure(failure);
+                RecordCleanupFailure(failure);
             }
             // Disposal is still required when Unity could not stop the coroutine handle.
             try
@@ -135,12 +136,25 @@ public sealed class BattleResourceLoadScope
             }
             catch (Exception failure)
             {
-                RecordFailure(failure);
+                RecordCleanupFailure(failure);
             }
         }
         if (_cancellationFailures.Count != 0)
         {
             throw new AggregateException("Battle resource cancellation failed.", _cancellationFailures.ToArray());
+        }
+    }
+
+    /// <summary>Allows confirmed abort cleanup past prior execution errors, but never reported stop/disposal errors.</summary>
+    public void CancelAfterConfirmedAbort()
+    {
+        try
+        {
+            Cancel();
+        }
+        catch (AggregateException) when (_cleanupFailures.Count == 0)
+        {
+            // The original execution failure remains in FirstFailure and ordinary Cancel still rejects reuse.
         }
     }
 
@@ -240,7 +254,7 @@ public sealed class BattleResourceLoadScope
         }
         catch (Exception failure)
         {
-            RecordFailure(failure);
+            RecordCleanupFailure(failure);
             throw;
         }
         finally
@@ -256,6 +270,15 @@ public sealed class BattleResourceLoadScope
         if (!_cancellationFailures.Contains(failure))
         {
             _cancellationFailures.Add(failure);
+        }
+    }
+
+    private void RecordCleanupFailure(Exception failure)
+    {
+        RecordFailure(failure);
+        if (!_cleanupFailures.Contains(failure))
+        {
+            _cleanupFailures.Add(failure);
         }
     }
 

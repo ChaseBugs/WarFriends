@@ -24,6 +24,10 @@ do not trigger repeated cancellation. Retry exhaustion remains blocked and now
 offers the original localized retry modal under scope/controller/connection
 ownership checks. Unrelated popups and replacement callbacks are preserved;
 complete retry-to-menu integration remains pending.
+Confirmed abort now distinguishes prior loading execution errors from actual
+cleanup errors: clean disposal may continue recovery without erasing diagnostics,
+while disposal/stop failures still block it. Full resource/menu handoff remains
+unverified.
 The actual plain C# Unity attempt owner now also passes real authenticated
 HTTP/UDP loading cancellation, accepted Mongo terminal/pair release and
 Running-first refusal checks. This supplements the controlled Unity dispatch

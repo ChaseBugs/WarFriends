@@ -143,6 +143,10 @@ public static class UnityAbortRecoveryRoutingAudit
             }
             resourceScope.Start(game, loading);
             Require(resourceScope.PendingCount == 1, "The controlled resource loader did not become pending.");
+            if (!_injectCleanupFailure)
+            {
+                UnityResourceExecutionFailureAudit.InjectExecutionFailure(resourceScope, game);
+            }
             if (_injectCleanupFailure)
             {
                 VerifyInjectedAbortFailure(game, client, handler);

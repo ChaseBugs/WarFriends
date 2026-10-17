@@ -1059,7 +1059,7 @@ public class GameController : Singleton<GameController>
         {
             if (_battleResourceLoads != null)
             {
-                _battleResourceLoads.Cancel();
+                _battleResourceLoads.CancelAfterConfirmedAbort();
             }
             if (_loadingRetryNotice != null)
             {
@@ -1100,6 +1100,10 @@ public class GameController : Singleton<GameController>
         LoadingDialog.Hide();
         yield return StartCoroutine(ShowAbortedMenuRoutine());
         source.FinishAbortedMatchRecovery();
+        _battleResourceLoads = null;
+        _resourceLoadClient = null;
+        _resourceLoadCancellationOwner = null;
+        _reportedResourceFailure = null;
         _isSelfHostedAbortRecovery = false;
     }
 
