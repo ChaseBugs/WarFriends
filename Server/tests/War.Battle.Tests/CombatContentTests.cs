@@ -3410,6 +3410,11 @@ internal static class CombatContentTests
                 arrivalEnemy.EntityId)?.CallbackStartedTick != null)
             throw new Exception("Co-op crawl callback started before its host tick.");
         arrivalRuntime.Advance(expectedCrawlCallback);
+        if (arrivalRuntime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == arrivalEnemy.EntityId)
+            .InfantryAnimation != null)
+        {
+            throw new Exception("An obstacle callback without an emitted round must not invent a fire frame.");
+        }
         CoopQueuedMuzzleSample? callbackSample = content.CoopAssaulterQueue
             .Sample(crawlWindup!.AnimationClip, crawlWindup.QueuedFireClip,
                 expectedCrawlCallback - crawlWindup.StartTick - 1);
@@ -3436,6 +3441,15 @@ internal static class CombatContentTests
             throw new Exception("Co-op callback muzzle survived its tick.");
         IReadOnlyList<CoopInfantryRoundIntent> firstRound = arrivalRuntime
             .InfantryRoundIntents(arrivalEnemy.EntityId);
+        BattleInfantryAnimationFrame? obstacleFire = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (obstacleFire?.SampleTick != expectedCrawlCallback + 1 || obstacleFire.Clips.Count != 1 ||
+            obstacleFire.Clips[0].ClipName != "rifle_shot_loop" || obstacleFire.Clips[0].TimeSeconds != 0f ||
+            obstacleFire.Clips[0].Weight != 1f ||
+            obstacleFire.Clips[0].Wrap != BattleInfantryAnimationWrap.ClampForever)
+        {
+            throw new Exception("The first confirmed obstacle round must publish the source fire reset.");
+        }
         CoopQueuedMuzzleSample gameplayObstacleSample = queue.Sample(crawlWindup.AnimationClip,
             crawlWindup.QueuedFireClip, expectedCrawlCallback - crawlWindup.StartTick)
             ?? throw new Exception("The frame before the first round must contain its sampled firing muzzle.");
@@ -3695,6 +3709,12 @@ internal static class CombatContentTests
                 arrivalEnemy.EntityId).Count != 1)
             throw new Exception("Co-op rifle scheduled a round before its cadence.");
         arrivalRuntime.Advance(secondRoundTick);
+        BattleInfantryAnimationFrame? secondObstacleFire = arrivalRuntime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.EntityId == arrivalEnemy.EntityId).InfantryAnimation;
+        if (secondObstacleFire?.SampleTick != secondRoundTick || secondObstacleFire.Clips[0].TimeSeconds != 0f)
+        {
+            throw new Exception("A later obstacle round must restart its displayed fire clock.");
+        }
         IReadOnlyList<CoopInfantryRoundIntent> secondRound = arrivalRuntime
             .InfantryRoundIntents(arrivalEnemy.EntityId);
         if (expectedBatchCount < 2 || secondRound.Count != 2 ||

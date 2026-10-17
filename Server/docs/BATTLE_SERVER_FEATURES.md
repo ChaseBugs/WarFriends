@@ -1611,3 +1611,8 @@ audit passes eighteen checks including the zero-time protobuf frame. Gameplay
 muzzle observation timing and all collision authority remain unchanged. See
 [round reset frames](COOP_ROUND_RESET_FRAMES.md); normal co-op admission/combat
 and other unsupported states remain open.
+
+B22 now projects the confirmed obstacle fire window from emitted rounds,
+reusing the existing validated frame and actor. Preparation/return/interrupted
+transitions remain excluded. See [obstacle fire frames](COOP_OBSTACLE_FIRE_FRAMES.md)
+for the source evidence and unchanged public admission/collision boundary.

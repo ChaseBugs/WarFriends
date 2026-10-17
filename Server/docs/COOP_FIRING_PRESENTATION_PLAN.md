@@ -228,3 +228,7 @@ previous animation before replacing a windup. Existing collider/muzzle
 observations precede notifications and cannot supply post-command visuals
 without an explicit phase conversion. Public admission and hit authority
 remain closed until their own requirements are implemented and verified.
+
+The subsequent [obstacle fire window](COOP_OBSTACLE_FIRE_FRAMES.md) now connects
+confirmed stationary rounds. Complete preparation/return/interruption host
+projection remains open; this checkpoint does not complete the ordered plan.

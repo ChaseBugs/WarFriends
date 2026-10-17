@@ -186,3 +186,8 @@ time zero without replacing the prior gameplay muzzle observation. A separate
 source Play Mode audit passes 168 reset/hierarchy checks. See
 [round reset frames](COOP_ROUND_RESET_FRAMES.md) for the phase distinction and
 the unchanged public co-op combat boundary.
+
+B22 now projects the confirmed obstacle fire window from emitted rounds,
+reusing the existing validated frame and actor. Preparation/return/interrupted
+transitions remain excluded. See [obstacle fire frames](COOP_OBSTACLE_FIRE_FRAMES.md)
+for the source evidence and unchanged public admission/collision boundary.

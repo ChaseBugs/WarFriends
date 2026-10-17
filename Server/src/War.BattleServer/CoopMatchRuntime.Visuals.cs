@@ -33,7 +33,7 @@ internal sealed partial class CoopMatchRuntime
         }
         else
         {
-            view.InfantryAnimation = ProjectCornerAnimation(enemy);
+            view.InfantryAnimation = ProjectCornerAnimation(enemy) ?? ProjectObstacleFireAnimation(enemy);
         }
 
         return view;

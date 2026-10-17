@@ -122,6 +122,12 @@ public static class UnityCoopWalkingVisualAudit
         Require(GameObject.Find(actor.name) == actor &&
             skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
             "The decoded zero-time round reset must keep the source actor visible and update its pose.");
+        before = skin.bones.Select(bone => bone.localRotation).ToArray();
+        snapshot.Coop.EnemySpawns[0].InfantryAnimation.Clips[0].ClipName = "rifle_shot_loop";
+        Publish(client, snapshot);
+        Require(GameObject.Find(actor.name) == actor &&
+            skin.bones.Where((bone, index) => Quaternion.Angle(bone.localRotation, before[index]) > 0.001f).Any(),
+            "The decoded obstacle fire reset must reuse the actor and sample the source rifle clip.");
     }
 
     private static void VerifyInterruptedPreparation(SelfHostedBattleClient client, GameObject actor,
