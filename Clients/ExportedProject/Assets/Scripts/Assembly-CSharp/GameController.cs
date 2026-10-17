@@ -83,6 +83,8 @@ public class GameController : Singleton<GameController>
     private bool _isSelfHostedAbortRecovery;
 
     private BattleResourceLoadScope _battleResourceLoads;
+    private SelfHostedBattleClient _resourceLoadClient;
+    private BattleResourceLoadScope _reportedResourceFailure;
 
 	private PlayerController mOpponent;
 
@@ -385,6 +387,11 @@ public class GameController : Singleton<GameController>
         {
             throw new InvalidOperationException("Finish aborted battle recovery before loading a new map.");
         }
+        if (_resourceLoadClient != null && _resourceLoadClient.OwnsMatch &&
+            _battleResourceLoads != null && _battleResourceLoads.FirstFailure != null)
+        {
+            throw new InvalidOperationException("Resolve the failed battle load before replacing its resource scope.");
+        }
 
 		mGameCreated = null;
         if (_battleResourceLoads != null)
@@ -392,9 +399,46 @@ public class GameController : Singleton<GameController>
             _battleResourceLoads.Cancel();
         }
         _battleResourceLoads = new BattleResourceLoadScope();
+        var onlineController = mainController as GameControllerOnline;
+        SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+        _resourceLoadClient = onlineController != null && client != null &&
+            onlineController.OwnsSelfHostedClient(client) && client.HasLoadingCancellationAuthority ? client : null;
         _battleResourceLoads.RunSetup(mainController.LoadingStarted);
         _battleResourceLoads.Start(this, LoadAndStartNewMap(mapName));
 	}
+
+    private void LateUpdate()
+    {
+        if (_isSelfHostedAbortRecovery || _resourceLoadClient == null || _battleResourceLoads == null ||
+            _battleResourceLoads.FirstFailure == null || _reportedResourceFailure == _battleResourceLoads)
+        {
+            return;
+        }
+
+        var onlineController = mainController as GameControllerOnline;
+        if (onlineController == null || !onlineController.OwnsSelfHostedClient(_resourceLoadClient) ||
+            SelfHostedBattleClient.Active != _resourceLoadClient)
+        {
+            return;
+        }
+
+        // Defer network work until the failed iterator has unwound; never cancel a replacement scope.
+        _reportedResourceFailure = _battleResourceLoads;
+        CancelFailedResourceLoadingAsync(_resourceLoadClient);
+    }
+
+    private async void CancelFailedResourceLoadingAsync(SelfHostedBattleClient client)
+    {
+        try
+        {
+            await client.CancelFailedLoadingAsync();
+        }
+        catch (Exception failure)
+        {
+            // A local failure or refused cancellation cannot manufacture an outcome or release ownership.
+            Debug.LogWarning("Battle loading cancellation remains unconfirmed: " + failure.GetType().Name);
+        }
+    }
 
 	private IEnumerator LoadAndStartNewMap(string levelName)
 	{

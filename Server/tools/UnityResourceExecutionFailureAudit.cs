@@ -33,6 +33,8 @@ public static class UnityResourceExecutionFailureAudit
             slots.NullCardVisuals(true, false);
             Exception reported = AdvanceFault(scope, host, fault);
             Require(Contains(reported, fault.ExecutionFailure), "Execution failure lost its original cause.");
+            Require(ReferenceEquals(scope.FirstFailure, fault.ExecutionFailure),
+                "The owner cannot observe the exact first execution failure after its iterator unwinds.");
             if (mode == FailureMode.MoveAndCleanup)
             {
                 Require(Contains(reported, fault.CleanupFailure), "Cleanup masked the original execution failure.");

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -129,6 +130,10 @@ public static class UnityAbortRecoveryRoutingAudit
                 .GetField("_selfHostedAbortHandler", InstanceFields).GetValue(controller);
             handler = VerifySubscriptionLifecycle(game, controller, client, handler);
             VerifyRejectedOwners(game, controller, client, handler);
+            if (!_injectCleanupFailure)
+            {
+                await VerifyLoadingFailureDispatchAsync(game, controller, client);
+            }
             var resourceScope = new BattleResourceLoadScope();
             SetGame(game, "_battleResourceLoads", resourceScope);
             System.Collections.IEnumerator loading = PendingResourceRoutine();
@@ -169,6 +174,85 @@ public static class UnityAbortRecoveryRoutingAudit
         }
 
         UnityEngine.Object.DestroyImmediate(adapterRoot);
+    }
+
+    private static async Task VerifyLoadingFailureDispatchAsync(
+        GameController game, GameControllerDeathMatch controller, SelfHostedBattleClient client)
+    {
+        var http = new LoadingCancellationHandler();
+        var backend = new BackendClient(new Uri("http://127.0.0.1:30001/"), http, true);
+        Type attemptType = typeof(SelfHostedBattleClient).Assembly.GetType("SelfHostedMatchmakingAttempt", true);
+        object attempt = Activator.CreateInstance(attemptType, InstanceFields, null,
+            new object[] { backend, "fixture-access-token" }, null);
+        // Search issuance is covered by portable tests; this isolates the admitted Unity owner boundary.
+        attemptType.GetField("_attemptToken", InstanceFields).SetValue(attempt, Task.FromResult("fixture-attempt"));
+        attemptType.GetField("_hasGrant", InstanceFields).SetValue(attempt, true);
+        attemptType.GetMethod("RetainForLoading", InstanceFields).Invoke(attempt, null);
+        typeof(SelfHostedBattleClient).GetField("matchmaking", InstanceFields).SetValue(client, attempt);
+        var scope = new BattleResourceLoadScope();
+        var expected = new InvalidOperationException("Controlled loading failure.");
+        try
+        {
+            scope.RunSetup(() => { throw expected; });
+        }
+        catch (InvalidOperationException failure)
+        {
+            Require(ReferenceEquals(failure, expected), "Setup changed the original loading exception.");
+        }
+        SetGame(game, "_battleResourceLoads", scope);
+        SetGame(game, "_resourceLoadClient", client);
+        MethodInfo lateUpdate = typeof(GameController).GetMethod("LateUpdate", InstanceFields);
+        SetGame(game, "mMainController", _coop);
+        lateUpdate.Invoke(game, null);
+        Require(http.Requests == 0, "A different controller cancelled the previous owner's loading failure.");
+        SetGame(game, "mMainController", controller);
+        lateUpdate.Invoke(game, null);
+        lateUpdate.Invoke(game, null);
+        Require(http.Requests == 1 && client.OwnsMatch && client.IsConnected,
+            "Loading failure must issue one scoped cancellation while retaining terminal UDP delivery.");
+        bool rejectedReady = false;
+        try
+        {
+            await client.ReadyAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            rejectedReady = true;
+        }
+        Require(rejectedReady, "Failed loading still sent readiness to the Worker.");
+        bool rejectedReplacement = false;
+        try
+        {
+            game.StartGame();
+        }
+        catch (InvalidOperationException)
+        {
+            rejectedReplacement = true;
+        }
+        Require(rejectedReplacement, "A new map replaced the failed loading scope before terminal recovery.");
+        Debug.Log("PASS: deferred loading failure dispatch rejects another controller, sends one scoped HTTP " +
+            "cancellation, retains transport and blocks Ready; controlled admission credential and HTTP receipt.");
+    }
+
+    private sealed class LoadingCancellationHandler : HttpMessageHandler
+    {
+        internal int Requests { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Require(request.RequestUri.AbsolutePath.EndsWith("/queue/cancel", StringComparison.Ordinal) &&
+                request.Headers.Authorization.Parameter == "fixture-access-token",
+                "Loading cancellation lost its exact authenticated route.");
+            var body = MatchQueueRequest.Parser.ParseFrom(
+                request.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult());
+            Require(body.AttemptToken == "fixture-attempt", "Loading cancellation lost its attempt scope.");
+            Requests++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(new MatchQueueReply { Code = "cancelled" }.ToByteArray())
+            });
+        }
     }
 
     private static void VerifyInjectedAbortFailure(GameController game, SelfHostedBattleClient client,

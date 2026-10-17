@@ -1,6 +1,7 @@
 # Client loading failure cancellation
 
-Status: loading credential retention implemented; automatic failure dispatch is not implemented.
+Status: loading credential retention and owner-bound failure dispatch implemented;
+complete gameplay and failure recovery remain unverified.
 
 ## Existing authority
 
@@ -31,11 +32,29 @@ without introducing an account-wide cancellation or another protocol message:
 
 ## Remaining implementation boundary
 
-Connect managed loading failures to this exact owner before releasing transport
-or attempting menu recovery. Cancellation must await server confirmation;
-neither a local exception nor HTTP failure authorizes Forfeit, rewards, or an
-Aborted result. Test successful admission followed by loading failure, expired
-tokens, old-owner/new-pair isolation, cancellation retry and Running-first races.
+`BattleResourceLoadScope.FirstFailure` retains setup, execution, start or cleanup
+failure for deferred observation. `GameController.StartGame` captures the exact
+online controller's admitted Client owner. Its LateUpdate dispatches the first
+failure once for that scope, only while the same controller and active Client
+still own it. Dispatch happens after the failed iterator unwinds.
+
+`CancelFailedLoadingAsync` sends the retained attempt's cancellation without
+closing UDP. Polling can therefore receive the actual terminal snapshot through
+the existing owner-bound abort callback. Readiness is blocked after dispatch,
+and another map cannot replace the failed scope while its Client still owns the
+match. No local exception manufactures a terminal snapshot or reward.
+
+Failed HTTP cancellation is logged and ownership remains blocked. The same
+internal cancellation method retains retry capability, but automatic retry and
+user-facing retry presentation are not implemented. Direct trusted-grant
+admission has no queue token and does not acquire this automatic cancellation
+path.
+
+Remaining proof includes actual queued Unity admission followed by loading
+failure, expired tokens through this Unity path, stale-owner isolation under a
+replacement admission, retry presentation and Running-first races. Cleanup
+failures remain retained by the resource scope; a confirmed server abort does
+not prove successful menu recovery after damaged resource disposal.
 
 This inventory does not establish that the full Client loading or menu path has
 been verified.
@@ -55,3 +74,19 @@ and four injected cleanup failures). Log:
 `Server/.local/unity-loading-attempt-retention.log`. This existing fixture checks
 abort ownership regressions, not the newly retained HTTP owner on a real queued
 Unity admission. Unity 5.2, Android and complete gameplay remain unverified.
+
+The extended routing audit also passes deferred loading-failure dispatch in all
+four controller states. It injects a retained admission credential, uses the real
+BackendClient with a controlled HTTP handler and checks the exact bearer/token,
+one request per scope, different-controller rejection, retained transport,
+blocked readiness and blocked replacement maps. It then exercises the existing
+confirmed-abort entry. Log:
+`Server/.local/unity-loading-failure-dispatch-final.log`. This is not an actual
+Backend/Worker cancellation or a complete menu recovery test.
+
+The source-backed resource suite passes first-failure identity checks for setup,
+MoveNext/Current and cleanup, plus the existing real texture-bundle, turret,
+cross-host visual and cancellation-modal gates. Log:
+`Server/.local/unity-loading-failure-scope-final.log`. Managed execution faults
+use the actual wrapper under controlled advancement; this does not prove Unity's
+complete engine exception dispatch or every resource variant.

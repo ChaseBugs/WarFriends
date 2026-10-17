@@ -13,6 +13,9 @@ now retains successful-admission credentials through loading and distinguishes
 search completion from owner disposal. An admitted cancellation waits for server
 acknowledgement before closing transport; failed/refused cleanup retains the
 same owner. Automatic resource-failure dispatch and end-to-end recovery remain
+distinct boundaries: scope failures now dispatch one owner-bound cancellation
+after iterator unwinding, retain UDP for terminal proof and block Ready/new maps.
+Actual queued two-Unity-client failure recovery and retry presentation remain
 pending.
 
 [Original abort notice](ABORT_NOTICE_UI.md) now runs the recovered modal's real

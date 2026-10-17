@@ -48,6 +48,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private SelfHostedRoomLifecycle roomLifecycle;
     private CancellationTokenSource lifetime;
     private SelfHostedMatchmakingAttempt matchmaking;
+    private bool _hasLoadingFailure;
     private bool polling;
     private bool _isAbortRecoverySuspended;
     private float nextPoll;
@@ -108,6 +109,23 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
     }
     public bool IsMatchmaking { get { return matchmaking != null && !matchmaking.IsRetainedForLoading; } }
+
+    internal bool HasLoadingCancellationAuthority
+    {
+        get { return matchmaking != null && matchmaking.IsRetainedForLoading && OwnsMatch; }
+    }
+
+    /// <summary>Cancels the exact admitted attempt while retaining UDP delivery of the server's terminal proof.</summary>
+    internal Task CancelFailedLoadingAsync()
+    {
+        if (!HasLoadingCancellationAuthority)
+        {
+            throw new InvalidOperationException("This match has no retained loading cancellation authority.");
+        }
+
+        _hasLoadingFailure = true;
+        return matchmaking.CancelAsync();
+    }
     public bool OwnsMatch { get { return connection != null; } }
     public bool ReconnectFailed { get { return reconnectFailureReported; } }
     public bool IsReconnecting { get { return reconnectTask != null || reconnecting ||
@@ -641,6 +659,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
     private async Task ExecuteReady()
     {
+        if (_hasLoadingFailure)
+        {
+            throw new InvalidOperationException("A failed battle load cannot report scene readiness.");
+        }
+
         if (!IsConnected || roomLifecycle == null) throw new InvalidOperationException("No self-hosted room is connected.");
         var active = connection;
         var reply = await roomLifecycle.MarkReadyAsync(lifetime.Token);
@@ -1336,6 +1359,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
         else if (connection != null) connection.Dispose();
         connection = null;
+        _hasLoadingFailure = false;
         _observedPoseCatalogRevision = string.Empty;
         if (Active == this) Active = null;
         roomLifecycle = null;

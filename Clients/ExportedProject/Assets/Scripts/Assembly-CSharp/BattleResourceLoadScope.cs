@@ -13,6 +13,9 @@ public sealed class BattleResourceLoadScope
     private readonly List<Exception> _cancellationFailures = new List<Exception>();
     private bool _isCancelled;
 
+    /// <summary>Retains the first loading failure for owner-bound handling after the iterator unwinds.</summary>
+    public Exception FirstFailure { get; private set; }
+
     /// <summary>Gets the number of tracked loaders still pending in this battle scope.</summary>
     public int PendingCount
     {
@@ -51,6 +54,7 @@ public sealed class BattleResourceLoadScope
         }
         catch (Exception failure)
         {
+            FirstFailure = FirstFailure ?? failure;
             try
             {
                 Cancel();
@@ -92,6 +96,7 @@ public sealed class BattleResourceLoadScope
         }
         catch (Exception failure)
         {
+            FirstFailure = FirstFailure ?? failure;
             try
             {
                 Finish(pending);
@@ -246,6 +251,7 @@ public sealed class BattleResourceLoadScope
 
     private void RecordFailure(Exception failure)
     {
+        FirstFailure = FirstFailure ?? failure;
         _isCancelled = true;
         if (!_cancellationFailures.Contains(failure))
         {

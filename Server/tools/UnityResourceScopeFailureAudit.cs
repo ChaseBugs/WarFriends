@@ -83,6 +83,8 @@ public static class UnityResourceScopeFailureAudit
         scope.Start(host, failing);
         scope.Start(host, remaining);
         AggregateException original = CancelFailure(scope);
+        Require(scope.FirstFailure != null && scope.FirstFailure.Message == CleanupFailureMessage,
+            "The loading owner cannot observe its first cleanup failure.");
         Require(failing.DisposeCount == 1 && remaining.DisposeCount == 1 && scope.PendingCount == 0,
             "Cleanup failure skipped another pending loader or disposed a loader twice.");
         AggregateException repeated = CancelFailure(scope);
@@ -110,6 +112,8 @@ public static class UnityResourceScopeFailureAudit
         Require(reported != null && HasCleanupFailure(reported) &&
             reported.Flatten().InnerExceptions.Any(error => error.Message == SetupFailureMessage),
             "Setup failure lost its original cause or its cleanup cause.");
+        Require(scope.FirstFailure != null && scope.FirstFailure.Message == SetupFailureMessage,
+            "Disposal replaced the owner's original setup failure.");
         Require(HasCleanupFailure(CancelFailure(scope)), "Rejected setup forgot its cleanup failure on retry.");
     }
 
