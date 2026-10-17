@@ -153,7 +153,7 @@ public class EnemyBasicInventory : Core_BaseScript
 			if (leveledWeapons.Length > 0)
 			{
 				EnemyLeveledWeapon leveledWeapon = leveledWeapons[0];
-				yield return StartCoroutine(leveledWeapon.PrepareAsync(level[index]));
+				yield return BattleResourceLoadScope.StartNested(this, leveledWeapon.PrepareAsync(level[index]));
 			}
 		}
 	}

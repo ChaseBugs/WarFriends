@@ -14,7 +14,9 @@ public class CardSpawnUnit : Card
 	public override IEnumerator InitCard(bool isOpponentCard)
 	{
 		mIsOpponentCard = isOpponentCard;
-		yield return StartCoroutine(behaviour.PrepareVisualsForCardCoroutine(!mIsOpponentCard, mIsOpponentCard));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            behaviour.PrepareVisualsForCardCoroutine(!mIsOpponentCard, mIsOpponentCard));
 	}
 
 	public override void ReleaseCard(bool isOpponent)

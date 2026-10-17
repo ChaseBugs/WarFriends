@@ -59,13 +59,21 @@ public class UpgradeSlotsBaseSoldier<T> : UpgradeSlotsGeneric<T> where T : Googl
 	{
 		if (unitUpgrades.isElite)
 		{
-			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsBody));
-			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsHelmet));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsBody));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsHelmet));
 		}
 		else
 		{
-			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsBody));
-			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsHelmet));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsBody));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsHelmet));
 		}
 	}
 
@@ -73,13 +81,21 @@ public class UpgradeSlotsBaseSoldier<T> : UpgradeSlotsGeneric<T> where T : Googl
 	{
 		if (unitUpgrades.isElite)
 		{
-			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsBody));
-			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsHelmet));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsBody));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsHelmet));
 		}
 		else
 		{
-			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsBody));
-			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsHelmet));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsBody));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsHelmet));
 		}
 	}
 

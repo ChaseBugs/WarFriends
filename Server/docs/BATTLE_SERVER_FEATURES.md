@@ -21,6 +21,12 @@ recovery; the iterator guard alone was too late. See the source-backed
 [full menu dependency inventory](ABORT_MENU_DEPENDENCIES.md).
 The complete main-screen/resource graph and physical two-client UI remain open.
 
+[Managed resource ownership](ABORT_RESOURCE_LOAD_SCOPE.md) now tracks the
+reviewed cross-host upgrade/card/weapon preparation chain. Confirmed abort
+cancels exact battle handles; a source visual-lane control checks old-state
+repopulation, unscoped work and fresh-scope reuse. Full variant/menu/mode
+integration remains open.
+
 [Game-atlas cancellation](ABORT_ATLAS_LOADING.md) now invalidates independently
 hosted game loaders at confirmed abort, leaving menu/common work unscoped.
 The original missing-reference wait has a native counterexample and two-scope

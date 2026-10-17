@@ -195,11 +195,15 @@ public abstract class LevelBehaviour : Core_BaseScript
 		}
 		if (mine)
 		{
-			yield return StartCoroutine(upgradeSlots.LoadMineVisualsCoroutine(unitUpgrades, bought));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                upgradeSlots.LoadMineVisualsCoroutine(unitUpgrades, bought));
 		}
 		else
 		{
-			yield return StartCoroutine(upgradeSlots.LoadOponentVisualsCoroutine(unitUpgrades, bought));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                upgradeSlots.LoadOponentVisualsCoroutine(unitUpgrades, bought));
 		}
 	}
 
@@ -208,11 +212,11 @@ public abstract class LevelBehaviour : Core_BaseScript
 		LoadSounds();
 		if (mine)
 		{
-			yield return StartCoroutine(upgradeSlots.LoadMineVisualsCoroutineCards());
+			yield return BattleResourceLoadScope.StartNested(this, upgradeSlots.LoadMineVisualsCoroutineCards());
 		}
 		if (opponent)
 		{
-			yield return StartCoroutine(upgradeSlots.LoadOpponentVisualsCoroutineCards());
+			yield return BattleResourceLoadScope.StartNested(this, upgradeSlots.LoadOpponentVisualsCoroutineCards());
 		}
 	}
 

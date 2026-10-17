@@ -123,7 +123,9 @@ public abstract class SoldierBehaviour : LevelBehaviour
 				soldierVisual.LoadModel();
 			}
 		}
-		yield return StartCoroutine(base.PrepareVisualsForGameCoroutine(unitUpgrades, bought, mine));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            base.PrepareVisualsForGameCoroutine(unitUpgrades, bought, mine));
 		if (!bought)
 		{
 			yield break;
@@ -144,7 +146,9 @@ public abstract class SoldierBehaviour : LevelBehaviour
 		}
 		if (vis.Count > 2 && vis[2] != null)
 		{
-			yield return StartCoroutine(inventory.PrepareWeaponCoroutine(GetWeaponLevels(unitUpgrades), forCard: false));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                inventory.PrepareWeaponCoroutine(GetWeaponLevels(unitUpgrades), forCard: false));
 		}
 		else
 		{
@@ -173,13 +177,15 @@ public abstract class SoldierBehaviour : LevelBehaviour
 		List<TechnologyVisualDefinition> vis = upgradeSlots.cardVisuals;
 		if (vis.Count > 2 && vis[2] != null)
 		{
-			yield return StartCoroutine(inventory.PrepareWeaponCoroutine(GetCardWeaponLevels(), forCard: true));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                inventory.PrepareWeaponCoroutine(GetCardWeaponLevels(), forCard: true));
 		}
 		else
 		{
 			Debug.LogError("bad card visuals for" + base.name + "!!!!");
 		}
-		yield return StartCoroutine(base.PrepareVisualsForCardCoroutine(mine, opponent));
+		yield return BattleResourceLoadScope.StartNested(this, base.PrepareVisualsForCardCoroutine(mine, opponent));
 	}
 
 	public override void Init(AIObject aiObject)

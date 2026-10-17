@@ -8,9 +8,11 @@ public class UpgradeSlotsVehicle<T> : UpgradeSlotsMechanical<T> where T : Google
 		LevelBehaviour beh = LevelManager.instance.behaviours[0];
 		if (bought)
 		{
-			yield return StartCoroutine(beh.PrepareVisualsForCardCoroutine(mine: true, opponent: false));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                beh.PrepareVisualsForCardCoroutine(mine: true, opponent: false));
 		}
-		yield return StartCoroutine(base.LoadMineVisualsCoroutine(unitUpgrades, bought));
+		yield return BattleResourceLoadScope.StartNested(this, base.LoadMineVisualsCoroutine(unitUpgrades, bought));
 	}
 
 	public override IEnumerator LoadOponentVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
@@ -18,8 +20,10 @@ public class UpgradeSlotsVehicle<T> : UpgradeSlotsMechanical<T> where T : Google
 		LevelBehaviour beh = LevelManager.instance.behaviours[0];
 		if (bought)
 		{
-			yield return StartCoroutine(beh.PrepareVisualsForCardCoroutine(mine: false, opponent: true));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                beh.PrepareVisualsForCardCoroutine(mine: false, opponent: true));
 		}
-		yield return StartCoroutine(base.LoadOponentVisualsCoroutine(unitUpgrades, bought));
+		yield return BattleResourceLoadScope.StartNested(this, base.LoadOponentVisualsCoroutine(unitUpgrades, bought));
 	}
 }

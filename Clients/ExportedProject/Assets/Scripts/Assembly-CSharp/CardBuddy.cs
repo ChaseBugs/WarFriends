@@ -78,14 +78,14 @@ public class CardBuddy : Card
 		EnemyLeveledWeapon leveledWeapon = prim.unitWeaponPrefab.GetComponent<EnemyLeveledWeapon>();
 		if (leveledWeapon != null)
 		{
-			yield return StartCoroutine(leveledWeapon.PrepareAsync(prim.unitWeaponLevel));
+			yield return BattleResourceLoadScope.StartNested(this, leveledWeapon.PrepareAsync(prim.unitWeaponLevel));
 		}
 		if (sec != null)
 		{
 			leveledWeapon = sec.unitWeaponPrefab.GetComponent<EnemyLeveledWeapon>();
 			if (leveledWeapon != null)
 			{
-				yield return StartCoroutine(leveledWeapon.PrepareAsync(sec.unitWeaponLevel));
+				yield return BattleResourceLoadScope.StartNested(this, leveledWeapon.PrepareAsync(sec.unitWeaponLevel));
 			}
 		}
 	}

@@ -155,3 +155,11 @@ Stopping only root GameController coroutines left AtlasPreparer's child loaders
 running. See [scoped atlas cancellation](ABORT_ATLAS_LOADING.md) for the native
 counterexample, source call chain and remaining completed-bundle verification.
 Menu/common atlas work is not globally stopped by this change.
+
+## Managed upgrade/card/weapon loaders
+
+Confirmed abort now also cancels a battle-owned managed loading scope. The
+original cross-host level/card chain could repopulate visuals after they were
+cleared. [Managed loading ownership](ABORT_RESOURCE_LOAD_SCOPE.md) records the
+counterexample, exact source links and native unscoped-lane/fresh-scope controls.
+This does not establish complete resource/menu or mode-specific cleanup.

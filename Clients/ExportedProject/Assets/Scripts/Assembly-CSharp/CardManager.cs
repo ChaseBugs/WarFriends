@@ -1055,7 +1055,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 				Card card = GetCardInstance(cardID, isCurrentPlayer);
 				if (card != null)
 				{
-					yield return StartCoroutine(card.InitCard(isOpponnetCard));
+					yield return BattleResourceLoadScope.StartNested(this, card.InitCard(isOpponnetCard));
 				}
 			}
 		}

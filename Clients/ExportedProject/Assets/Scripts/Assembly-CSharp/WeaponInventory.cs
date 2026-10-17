@@ -249,7 +249,9 @@ public class WeaponInventory : Core_BaseScript
 		InitWeapons();
 		foreach (PlayerWeapon playerWeapon in usedWeapons)
 		{
-			yield return Singleton<AssetBundleManager>.instance.StartCoroutine(playerWeapon.LoadWeapon());
+            yield return BattleResourceLoadScope.StartNested(
+                Singleton<AssetBundleManager>.instance,
+                playerWeapon.LoadWeapon());
 		}
 	}
 

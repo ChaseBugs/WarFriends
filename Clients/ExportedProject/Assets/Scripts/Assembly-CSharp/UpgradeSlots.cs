@@ -930,7 +930,7 @@ public abstract class UpgradeSlots : Core_BaseScript
 		TechnologyVisualDefinition def = GetTechnologyVisualDefinition(boughtIndex, definitions);
 		if (bought && def != null)
 		{
-			yield return StartCoroutine(def.LoadMineAsync());
+			yield return BattleResourceLoadScope.StartNested(this, def.LoadMineAsync());
 		}
 		foreach (TechnologyVisualDefinition technologyVisualDefinition in definitions)
 		{
@@ -946,7 +946,7 @@ public abstract class UpgradeSlots : Core_BaseScript
 		TechnologyVisualDefinition def = GetTechnologyVisualDefinition(boughtIndex, definitions);
 		if (bought && def != null)
 		{
-			yield return StartCoroutine(def.LoadOpponentAsync());
+			yield return BattleResourceLoadScope.StartNested(this, def.LoadOpponentAsync());
 		}
 		foreach (TechnologyVisualDefinition technologyVisualDefinition in definitions)
 		{
@@ -959,19 +959,29 @@ public abstract class UpgradeSlots : Core_BaseScript
 
 	public virtual IEnumerator LoadMineVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
 	{
-		yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, (!unitUpgrades.isElite) ? allVisuals : eliteVisuals));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            LoadMineVisualAsync(
+                unitUpgrades.slotUpgradeindex,
+                bought,
+                (!unitUpgrades.isElite) ? allVisuals : eliteVisuals));
 	}
 
 	public virtual IEnumerator LoadOponentVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
 	{
-		yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, (!unitUpgrades.isElite) ? allVisuals : eliteVisuals));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            LoadOpponentVisualAsync(
+                unitUpgrades.slotUpgradeindex,
+                bought,
+                (!unitUpgrades.isElite) ? allVisuals : eliteVisuals));
 	}
 
 	public virtual IEnumerator LoadMineVisualsCoroutineCards()
 	{
 		foreach (TechnologyVisualDefinition technologyVisualDefinition in cardVisuals)
 		{
-			yield return StartCoroutine(technologyVisualDefinition.LoadMineAsync());
+			yield return BattleResourceLoadScope.StartNested(this, technologyVisualDefinition.LoadMineAsync());
 		}
 	}
 
@@ -979,7 +989,7 @@ public abstract class UpgradeSlots : Core_BaseScript
 	{
 		foreach (TechnologyVisualDefinition technologyVisualDefinition in cardVisuals)
 		{
-			yield return StartCoroutine(technologyVisualDefinition.LoadOpponentAsync());
+			yield return BattleResourceLoadScope.StartNested(this, technologyVisualDefinition.LoadOpponentAsync());
 		}
 	}
 

@@ -17,7 +17,12 @@ public class UpgradesManager : Singleton<UpgradesManager>
 		{
 			LevelBehaviour levelBehaviour2 = LevelManager.instance.behaviours[i];
 			UnitUpgradeDefinition unitUpgradeDefinition = upgrades[i];
-			yield return StartCoroutine(levelBehaviour2.PrepareVisualsForGameCoroutine(unitUpgradeDefinition.unitUpgrades, unitUpgradeDefinition.isEquipped, mine: true));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                levelBehaviour2.PrepareVisualsForGameCoroutine(
+                    unitUpgradeDefinition.unitUpgrades,
+                    unitUpgradeDefinition.isEquipped,
+                    mine: true));
 		}
 	}
 
@@ -32,7 +37,9 @@ public class UpgradesManager : Singleton<UpgradesManager>
 			{
 				bought = true;
 			}
-			yield return StartCoroutine(levelBehaviour.PrepareVisualsForGameCoroutine(unitUpgradeDefinition.unitUpgrades, bought, mine: false));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                levelBehaviour.PrepareVisualsForGameCoroutine(unitUpgradeDefinition.unitUpgrades, bought, mine: false));
 		}
 	}
 

@@ -85,23 +85,27 @@ public class UpgradeSlotsEngineer : UpgradeSlotsBaseSoldier<DBUpgradeSlotsShotgu
 
 	public override IEnumerator LoadMineVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
 	{
-		yield return StartCoroutine(base.LoadMineVisualsCoroutine(unitUpgrades, bought));
+		yield return BattleResourceLoadScope.StartNested(this, base.LoadMineVisualsCoroutine(unitUpgrades, bought));
 		UnitUpgrades turretUnitUpgrades = new UnitUpgrades(1f)
 		{
 			slotUpgradeindex = GetTurretUpgrades(unitUpgrades.slotUpgradeindex)
 		};
-		yield return StartCoroutine(upgradeSlotsTurret.LoadMineVisualsCoroutine(turretUnitUpgrades, bought));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            upgradeSlotsTurret.LoadMineVisualsCoroutine(turretUnitUpgrades, bought));
 	}
 
 	public override IEnumerator LoadOponentVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
 	{
-		yield return StartCoroutine(base.LoadOponentVisualsCoroutine(unitUpgrades, bought));
+		yield return BattleResourceLoadScope.StartNested(this, base.LoadOponentVisualsCoroutine(unitUpgrades, bought));
 		int turretUpgradeLevel = GetTurretUpgrades(unitUpgrades.slotUpgradeindex);
 		UnitUpgrades turretUnitUpgrades = new UnitUpgrades(1f)
 		{
 			slotUpgradeindex = GetTurretUpgrades(unitUpgrades.slotUpgradeindex)
 		};
-		yield return StartCoroutine(upgradeSlotsTurret.LoadOponentVisualsCoroutine(turretUnitUpgrades, bought));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            upgradeSlotsTurret.LoadOponentVisualsCoroutine(turretUnitUpgrades, bought));
 	}
 
 	public override void NullOpponentVisuals()

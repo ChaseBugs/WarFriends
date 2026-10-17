@@ -82,6 +82,8 @@ public class GameController : Singleton<GameController>
 	private IGameController mMainController;
     private bool _isSelfHostedAbortRecovery;
 
+    private BattleResourceLoadScope _battleResourceLoads;
+
 	private PlayerController mOpponent;
 
 	public PlayerController friend;
@@ -386,7 +388,12 @@ public class GameController : Singleton<GameController>
 
 		mGameCreated = null;
 		mainController.LoadingStarted();
-		StartCoroutine(LoadAndStartNewMap(mapName));
+        if (_battleResourceLoads != null)
+        {
+            _battleResourceLoads.Cancel();
+        }
+        _battleResourceLoads = new BattleResourceLoadScope();
+        _battleResourceLoads.Start(this, LoadAndStartNewMap(mapName));
 	}
 
 	private IEnumerator LoadAndStartNewMap(string levelName)
@@ -418,22 +425,43 @@ public class GameController : Singleton<GameController>
 		{
 			this.BeforeGameStarted();
 		}
-		yield return StartCoroutine(Singleton<UpgradesManager>.instance.LoadMineUpgrades(mainController.myUpgrades));
-		yield return StartCoroutine(Singleton<UpgradesManager>.instance.LoadOpponentUpgradesForGame(mainController.opponentUpgrades));
-		yield return StartCoroutine(CardManager.instance.InitGameCards(PlayerController.currentPlayer.playerProperties.chosenCards, isOpponnetCard: false, isCurrentPlayer: true));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            Singleton<UpgradesManager>.instance.LoadMineUpgrades(mainController.myUpgrades));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            Singleton<UpgradesManager>.instance.LoadOpponentUpgradesForGame(mainController.opponentUpgrades));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            CardManager.instance.InitGameCards(
+                PlayerController.currentPlayer.playerProperties.chosenCards,
+                isOpponnetCard: false,
+                isCurrentPlayer: true));
 		if (mOpponent != null)
 		{
-			yield return StartCoroutine(mOpponent.weaponInventory.LoadWeapons());
+			yield return BattleResourceLoadScope.StartNested(this, mOpponent.weaponInventory.LoadWeapons());
 			CardManager.instance.SetBuddyCardsOher(mOpponent.playerProperties.buddyCards);
-			yield return StartCoroutine(CardManager.instance.InitGameCards(mOpponent.playerProperties.chosenCards, isOpponnetCard: true, isCurrentPlayer: false));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                CardManager.instance.InitGameCards(
+                    mOpponent.playerProperties.chosenCards,
+                    isOpponnetCard: true,
+                    isCurrentPlayer: false));
 		}
 		if (friend != null)
 		{
-			yield return StartCoroutine(friend.weaponInventory.LoadWeapons());
+			yield return BattleResourceLoadScope.StartNested(this, friend.weaponInventory.LoadWeapons());
 			CardManager.instance.SetBuddyCardsOher(friend.playerProperties.buddyCards);
-			yield return StartCoroutine(CardManager.instance.InitGameCards(friend.playerProperties.chosenCards, isOpponnetCard: false, isCurrentPlayer: false));
+            yield return BattleResourceLoadScope.StartNested(
+                this,
+                CardManager.instance.InitGameCards(
+                    friend.playerProperties.chosenCards,
+                    isOpponnetCard: false,
+                    isCurrentPlayer: false));
 		}
-		yield return StartCoroutine(PlayerController.currentPlayer.weaponInventory.LoadWeapons());
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            PlayerController.currentPlayer.weaponInventory.LoadWeapons());
 		Singleton<SoundsManager3D>.instance.LoadSounds();
 		yield return null;
 		Resources.UnloadUnusedAssets();
@@ -947,6 +975,10 @@ public class GameController : Singleton<GameController>
 
         GameState previousState = gameState;
         _isSelfHostedAbortRecovery = true;
+        if (_battleResourceLoads != null)
+        {
+            _battleResourceLoads.Cancel();
+        }
         StopAllCoroutines();
         Singleton<MapManager>.instance.StopAllCoroutines();
         Singleton<AtlasPreparer>.instance.CancelGameLoadingForAbort();

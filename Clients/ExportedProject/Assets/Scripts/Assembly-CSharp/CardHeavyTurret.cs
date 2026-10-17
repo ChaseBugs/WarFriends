@@ -13,7 +13,9 @@ public class CardHeavyTurret : Card
 	{
 		LevelBehaviour behaviour = Singleton<ObjectPoolDatabase>.instance.heavyTurret.preparedBehaviour;
 		mIsOpponentCard = isOpponentCard;
-		yield return StartCoroutine(behaviour.PrepareVisualsForCardCoroutine(!mIsOpponentCard, mIsOpponentCard));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            behaviour.PrepareVisualsForCardCoroutine(!mIsOpponentCard, mIsOpponentCard));
 	}
 
 	public override void ReleaseCard(bool isOpponent)

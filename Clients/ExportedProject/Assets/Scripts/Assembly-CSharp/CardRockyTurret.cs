@@ -11,7 +11,9 @@ public class CardRockyTurret : Card
 	{
 		LevelBehaviour behaviour = Singleton<ObjectPoolDatabase>.instance.turretRockets.preparedBehaviour;
 		mIsOpponentCard = isOpponentCard;
-		yield return StartCoroutine(behaviour.PrepareVisualsForCardCoroutine(!mIsOpponentCard, mIsOpponentCard));
+        yield return BattleResourceLoadScope.StartNested(
+            this,
+            behaviour.PrepareVisualsForCardCoroutine(!mIsOpponentCard, mIsOpponentCard));
 	}
 
 	public override void ReleaseCard(bool isOpponent)

@@ -121,9 +121,15 @@ public static class UnityAbortRecoveryRoutingAudit
                 .GetField("_selfHostedAbortHandler", InstanceFields).GetValue(controller);
             handler = VerifySubscriptionLifecycle(game, controller, client, handler);
             VerifyRejectedOwners(game, controller, client, handler);
+            var resourceScope = new BattleResourceLoadScope();
+            SetGame(game, "_battleResourceLoads", resourceScope);
+            resourceScope.Start(game, PendingResourceRoutine());
+            Require(resourceScope.PendingCount == 1, "The controlled resource loader did not become pending.");
             var scopeField = typeof(AtlasPreparer).GetField("_gameLoadScope", InstanceFields);
             object previousAtlasScope = scopeField.GetValue(Singleton<AtlasPreparer>.instance);
             Apply(client, Snapshot(BattlePhase.Aborted));
+            Require(resourceScope.PendingCount == 0,
+                "Confirmed abort left its tracked managed resource loader pending.");
             Require(!ReferenceEquals(previousAtlasScope, scopeField.GetValue(Singleton<AtlasPreparer>.instance)),
                 "Confirmed abort did not invalidate the separately hosted game-atlas loader.");
             Require(game.IsSelfHostedAbortRecovery && game.gameState == GameController.GameState.Loading &&
@@ -144,6 +150,14 @@ public static class UnityAbortRecoveryRoutingAudit
         }
 
         UnityEngine.Object.DestroyImmediate(adapterRoot);
+    }
+
+    private static System.Collections.IEnumerator PendingResourceRoutine()
+    {
+        while (true)
+        {
+            yield return null;
+        }
     }
 
     private static void VerifyRejectedOwners(GameController game, GameControllerDeathMatch controller,
