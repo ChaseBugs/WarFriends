@@ -8,6 +8,12 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+Paired cancellation now captures the exact allocator pair inside its decision
+transaction. A signed, manifest-bound targeted Worker result lookup can retrieve
+both pending and acknowledged terminal proof, avoiding a race with normal result
+forwarding. Public queue cancellation still requires a coordinator with durable
+registration fencing and validated Backend terminal acceptance before release.
+
 The [hash-bound cancellation control checkpoint](PAIRED_CANCELLATION_CONTROL.md)
 now compares the allocator's expected manifest hash inside the Worker simulation
 queue before prestart cancellation. A server-only signed client validates the

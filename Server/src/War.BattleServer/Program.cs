@@ -159,6 +159,55 @@ app.MapPost("/internal/results/poll",async (HttpContext context,NetworkWorker wo
         digest=e.Digest,snapshot=Convert.ToBase64String(e.Snapshot.ToByteArray())}).ToArray();
     return Results.Ok(new {results=rows});
 });
+app.MapPost("/internal/results/find", async (HttpContext context, NetworkWorker worker) =>
+{
+    if (context.Request.ContentLength is > 256)
+    {
+        return Results.StatusCode(413);
+    }
+
+    using var stream = new MemoryStream();
+    await context.Request.Body.CopyToAsync(stream, context.RequestAborted);
+    byte[] body = stream.ToArray();
+    if (body.Length > 256)
+    {
+        return Results.StatusCode(413);
+    }
+
+    if (!Authorized(context, body, controlKey, "war/result/find/v1/"))
+    {
+        return Results.Unauthorized();
+    }
+
+    try
+    {
+        using var document = JsonDocument.Parse(body);
+        var root = document.RootElement;
+        if (root.ValueKind != JsonValueKind.Object || root.EnumerateObject().Count() != 2 ||
+            !root.TryGetProperty("matchId", out var match) || match.ValueKind != JsonValueKind.String ||
+            !root.TryGetProperty("manifestHash", out var hash) || hash.ValueKind != JsonValueKind.String)
+        {
+            return Results.BadRequest(new { code = "invalid-result-lookup" });
+        }
+
+        var evidence = worker.Outbox.FindEvidence(match.GetString()!, hash.GetString()!);
+        if (evidence == null)
+        {
+            return Results.NotFound(new { code = "missing" });
+        }
+
+        return Results.Ok(new { matchId = evidence.Snapshot.MatchId, digest = evidence.Digest,
+            snapshot = Convert.ToBase64String(evidence.Snapshot.ToByteArray()) });
+    }
+    catch (Exception failure) when (failure is JsonException or ArgumentException)
+    {
+        return Results.BadRequest(new { code = "invalid-result-lookup" });
+    }
+    catch (InvalidDataException)
+    {
+        return Results.Conflict(new { code = "terminal-authority-conflict" });
+    }
+});
 app.MapPost("/internal/results/ack",async (HttpContext context,NetworkWorker worker)=>
 {
     if(context.Request.ContentLength is >256)return Results.StatusCode(413);

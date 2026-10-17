@@ -258,6 +258,45 @@ try {
     $replayPollHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $replayPollBytes)}
     $afterAck=(Invoke-WebRequest $pollUrl -Method Post -Body $pollBody -ContentType 'application/json' -Headers $replayPollHeaders -UseBasicParsing).Content | ConvertFrom-Json
     if(@($afterAck.results | Where-Object { $_.matchId -eq $result[0].matchId }).Count -ne 0) { throw 'Acknowledged result remained pending' }
+    $findUrl="http://127.0.0.1:$($UdpPort+1)/internal/results/find"
+    $findBody=ConvertTo-Json @{matchId='smoke-control-match';manifestHash=$registration.manifestHash} -Compress
+    $findBytes=[Text.Encoding]::UTF8.GetBytes("war/result/find/v1/$replayStamp`n$findBody")
+    $findHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $findBytes)}
+    $unsignedFindStatus=0
+    try { $null=Invoke-WebRequest $findUrl -Method Post -Body $findBody -ContentType 'application/json' -UseBasicParsing }
+    catch { $unsignedFindStatus=[int]$_.Exception.Response.StatusCode }
+    if($unsignedFindStatus -ne 401) { throw 'Unsigned targeted result lookup was accepted' }
+    $invalidFindBodies=@(
+        ('{"matchId":"../escape","manifestHash":"' + ('0'*64) + '"}'),
+        ('{"matchId":"missing","manifestHash":"' + ('0'*64) + '","extra":true}')
+    )
+    foreach($invalidFindBody in $invalidFindBodies) {
+        $invalidFindBytes=[Text.Encoding]::UTF8.GetBytes("war/result/find/v1/$replayStamp`n$invalidFindBody")
+        $invalidFindHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $invalidFindBytes)}
+        $invalidFindStatus=0
+        try { $null=Invoke-WebRequest $findUrl -Method Post -Body $invalidFindBody -ContentType 'application/json' -Headers $invalidFindHeaders -UseBasicParsing }
+        catch { $invalidFindStatus=[int]$_.Exception.Response.StatusCode }
+        if($invalidFindStatus -ne 400) { throw "Malformed targeted lookup returned $invalidFindStatus" }
+    }
+    $found=(Invoke-WebRequest $findUrl -Method Post -Body $findBody -ContentType 'application/json' -Headers $findHeaders -UseBasicParsing).Content | ConvertFrom-Json
+    if($found.matchId -ne 'smoke-control-match' -or $found.digest -notmatch '^[0-9a-f]{64}$' -or
+       ![Convert]::FromBase64String($found.snapshot)) { throw 'Targeted cancellation evidence lookup failed' }
+    $findAckBody=ConvertTo-Json @{matchId=$found.matchId;digest=$found.digest} -Compress
+    $findAckBytes=[Text.Encoding]::UTF8.GetBytes("war/result/ack/v1/$replayStamp`n$findAckBody")
+    $findAckHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $findAckBytes)}
+    $null=Invoke-WebRequest $ackUrl -Method Post -Body $findAckBody -ContentType 'application/json' -Headers $findAckHeaders -UseBasicParsing
+    $foundAgain=(Invoke-WebRequest $findUrl -Method Post -Body $findBody -ContentType 'application/json' -Headers $findHeaders -UseBasicParsing).Content | ConvertFrom-Json
+    if($foundAgain.digest -ne $found.digest -or $foundAgain.snapshot -ne $found.snapshot) {
+        throw 'Acknowledgement hid or changed targeted terminal evidence'
+    }
+    $findWrongBody=ConvertTo-Json @{matchId='smoke-control-match';manifestHash=('0'*64)} -Compress
+    $findWrongBytes=[Text.Encoding]::UTF8.GetBytes("war/result/find/v1/$replayStamp`n$findWrongBody")
+    $findWrongHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $findWrongBytes)}
+    $findWrongStatus=0
+    try { $null=Invoke-WebRequest $findUrl -Method Post -Body $findWrongBody -ContentType 'application/json' -Headers $findWrongHeaders -UseBasicParsing }
+    catch { $findWrongStatus=[int]$_.Exception.Response.StatusCode }
+    if($findWrongStatus -ne 409) { throw 'Targeted lookup accepted a conflicting manifest hash' }
+    Write-Host 'PASS: targeted cancellation evidence survives acknowledgement and rejects conflicting manifest authority'
     Write-Host 'PASS: pending evidence and acknowledged tombstone survive BattleServer restarts; digest-checked ack is idempotent'
     Write-Host "Smoke passed. Local test data/logs: $runRoot"
 }

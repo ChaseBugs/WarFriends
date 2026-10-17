@@ -78,3 +78,21 @@ cancel a Worker; terminal acceptance and registration fencing remain open.
 
 The native manifest-snapshot fixture checks captured identity, preservation after
 release and replacement allocation, and rejection of a corrupt durable pair.
+
+## Targeted terminal evidence
+
+The signed `POST /internal/results/find` route accepts exactly `matchId` and
+`manifestHash`, using the separate HMAC domain `war/result/find/v1/`. It returns
+exactly `matchId`, `digest`, and base64 `snapshot` for retained pending **or
+acknowledged** terminal evidence. Missing evidence returns 404, conflicting
+manifest authority 409, malformed requests 400, and unsigned requests 401.
+Requests are capped at 256 bytes, under the existing global control body limit.
+
+`TerminalOutbox.FindEvidence` validates identity before path construction and
+reads under the same lock as acknowledgement and pruning. It returns a detached
+snapshot and its canonical payload digest. This removes pending-page starvation
+and the race where the regular forwarder acknowledges a cancellation result
+before a coordinator reads it. Retention remains bounded by the existing
+acknowledgement policy; Backend accepted-result replay is still necessary after
+pruning. This endpoint alone does not release allocator pairs or make public
+paired cancellation complete.

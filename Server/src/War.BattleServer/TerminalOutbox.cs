@@ -99,6 +99,34 @@ public sealed class TerminalOutbox
             return Directory.EnumerateFiles(directory,"*.wfr").Order(StringComparer.Ordinal)
                 .Take(count).Select(f=>new Evidence(ReadFile(f),Digest(File.ReadAllBytes(f)))).ToArray();
     }
+    /// <summary>Reads retained terminal proof even after forwarding has acknowledged it.</summary>
+    public Evidence? FindEvidence(string matchId, string manifestHash)
+    {
+        if (matchId == null || manifestHash == null ||
+            !Regex.IsMatch(matchId, @"\A[a-zA-Z0-9_-]{1,64}\z") ||
+            !Regex.IsMatch(manifestHash, @"\A[0-9a-f]{64}\z"))
+        {
+            throw new ArgumentException("Invalid terminal lookup identity.");
+        }
+
+        lock (gate)
+        {
+            var snapshot = ReadIdentity(matchId);
+            if (snapshot == null)
+            {
+                return null;
+            }
+
+            if (snapshot.ManifestHash != manifestHash)
+            {
+                throw new InvalidDataException("Terminal lookup conflicts with frozen manifest authority.");
+            }
+
+            // Polling only pending pages can lose a race with the normal result forwarder.
+            return new Evidence(snapshot, War.Shared.TerminalResultDigest.Compute(snapshot.ToByteArray()));
+        }
+    }
+
     public string Acknowledge(string matchId,string digest)
     {
         if(!Regex.IsMatch(matchId,@"\A[a-zA-Z0-9_-]{1,64}\z") ||
