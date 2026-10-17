@@ -11,7 +11,8 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 The [portable observed-pose catalog](COOP_PORTABLE_POSE_CATALOG.md) now shares
 221 source-bound samples between the server and installed Unity SDK. B32 remains
 partial: default animation views reject references; the negotiated SDK/Unity path
-now dispatches verified catalog entries, while host publication remains open.
+now dispatches verified catalog entries. Host publication is connected for
+completed-return histories; partial/unknown histories and normal gameplay proof remain open.
 The local production renderer now reconstructs the captured body/rifle poses;
 its independent source comparison and remaining integration boundary are recorded
 in the same checkpoint. This does not close B32 or public co-op admission.
@@ -19,7 +20,8 @@ The production factory also supports recovered weapon model application before
 renderer initialization; a 17,680-case native compatibility matrix covers 80
 weapon selections and all 221 poses with one controlled body style.
 Observed-pose presenter dispatch now passes 221 native component comparisons;
-host publication and other body styles remain open.
+bounded host publication now passes controlled runtime-to-Unity comparison;
+other histories and body styles remain open.
 Transport now negotiates an exact catalog revision per authenticated session;
 Unity requests the installed revision; the portable SDK's default constructor
 remains clip-only.

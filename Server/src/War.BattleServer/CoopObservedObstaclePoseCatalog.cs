@@ -16,7 +16,7 @@ internal sealed partial class CoopObservedObstaclePoseCatalog
     private const int MaximumJsonBytes = 256 * 1024;
     private const int PhaseCount = 17;
     private const int ObservationCount = 13;
-    private const int SampleCount = PhaseCount * ObservationCount;
+    internal const int SampleCount = PhaseCount * ObservationCount;
     private const int SkeletonCount = 58;
     private readonly Sample[] _samples;
     private readonly string _enemyRevision;

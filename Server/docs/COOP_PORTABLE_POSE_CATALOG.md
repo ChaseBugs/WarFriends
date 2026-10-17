@@ -8,8 +8,9 @@ completed renderer or a new co-op admission path.
 
 `BattleInfantryAnimationFrame` retains its existing sample tick and clip fields.
 Its additive `observed_pose` field contains only a catalog revision and sample ID.
-The host does not publish this field yet. Arbitrary network transform arrays are
-not accepted as presentation authority.
+The host now captures this field for verified completed-return histories and
+delivers it only to negotiated connections. Arbitrary network transform arrays
+are not accepted as presentation authority.
 
 `coop-obstacle-fixed-step-pose-catalog.pb` is embedded in `War.Shared.dll`.
 The server exporter derives it from the validated source catalog. The server test
@@ -40,13 +41,11 @@ negotiated overload now accepts only the installed revision and exact source
 clips, as described in the dispatch checkpoint below. This prevents accidental
 clip-only presentation of a pose known to require hierarchy corrections.
 
-Before the host can publish references, capability and revision negotiation must
-be connected to the installed renderer: older protobuf clients ignore additive fields and could otherwise
-display an incorrect clip-only pose. Bind the actual Unity actor hierarchy,
-including weapon attachments, validate the complete sample before mutation, and
-verify source-equivalent local transforms. Then connect host history selection
-and the production presenter, with repeated-interruption and normal gameplay
-proof. Public co-op admission remains closed during this work.
+Publication requires exact capability negotiation and hierarchy binding: older
+protobuf clients ignore additive fields and could otherwise display an incorrect
+clip-only pose. The completed-return path now connects host selection and the
+production presenter under those checks. Repeated-interruption and normal
+gameplay proof remain open. Public co-op admission remains closed during this work.
 
 ## Production visual topology checkpoint
 
@@ -90,7 +89,7 @@ renamed bound transform must leave both mixer and transform state unchanged.
 
 This local renderer checkpoint initially had no negotiated wire support. The
 subsequent transport and dispatch checkpoints connect its SDK/presenter path.
-The host still publishes no references. Other appearances, repeated source
+The later host checkpoint adds bounded publication. Other appearances, repeated source
 interruption histories and normal gameplay proof remain necessary.
 No rendered-pixel or Android claim is made.
 
@@ -197,8 +196,8 @@ constructor requests a known installed catalog revision and rejects unknown or
 null revisions. Every complete reply must match the requested value: there is
 no silent downgrade to an unsupported rendering path. Unity now requests the
 installed revision when connecting and retains that choice when reconnecting.
-The SDK default constructor remains clip-only. The host still emits no references
-until source-history publication is connected and verified.
+The SDK default constructor remains clip-only. Host publication is limited to
+the completed-return history checkpoint below.
 
 Authenticated endpoint tests reject unknown content before admission, reject an
 in-session downgrade without consuming the valid retry, and verify that command
@@ -239,6 +238,44 @@ with the independent source capture. Model pivot/scale remain covered separately
 by the model matrix. The audit also enters a corrected interruption sample,
 returns to walking and compares with a fresh source sampler basis.
 
-These are controlled fixture/component checks. No live Worker has published a
-pose reference yet. Host source-history selection, terminal cleanup, broader
-interruption/appearance coverage and normal gameplay proof remain open.
+These are controlled fixture/component checks. No live Worker session has been
+verified publishing a pose reference. The later host checkpoint adds completed
+return selection and terminal cleanup; broader interruption/appearance coverage
+and normal gameplay proof remain open.
+
+## Completed-return host publication
+
+The runtime now reads the already validated observed catalog when projecting an
+Assaulter preparation snapshot. Publication requires a captured prior return at
+the completed phase (16), the existing live/stationary/root-turn guards, no newly
+emitted round and an observation inside the 13-entry domain. Partial returns
+remain nominal candidates only; their live transition histories are not yet
+verified. Initial attempts retain their existing separate presentation path.
+No unmeasured continuation is extrapolated beyond the catalog domain.
+
+The reference and exact source clips are captured at snapshot creation, including
+snapshots retained for command replay. Delivery never consults the current
+simulation clock to reinterpret an older snapshot. `MatchPresentationProjection`
+clones the reply and applies the authenticated session's revision before packet
+sizing and frozen chunk transfer. A clip-only connection receives no animation
+frame for an observed sample: removing only its reference would expose the known
+incorrect clip-only reconstruction. Root placement and gameplay state remain.
+
+Tests use the existing trusted runtime fixture, which accelerates readiness
+through test-only private timing controls. They check actual host references
+through the negotiated SDK projection, clip-only isolation, source-reply
+immutability, frozen delivery after the runtime advances, emitted-round cleanup
+and terminal evidence cleanup. A serialized controlled-host reply is also loaded
+in native Unity, decoded by the production adapter and rendered on the production
+source rig; non-root body transforms match the independent automatic capture.
+This component check excludes model pivot/scale, covered by the earlier matrix.
+
+This is not live UDP/Worker-to-Unity gameplay proof. Partial/unknown returns,
+additional source histories, other actor families and appearances, and public
+co-op admission remain open. No collision, muzzle, hit, score or reward authority
+is derived from the observed animation reference.
+
+The solution builds without warnings/errors. Focused combat passes 26,368
+assertions, including the new capture/delivery/lifecycle checks. Native smoke
+passes 1,144 protocol checks, 74 live MongoDB/HTTP/protobuf/UDP checks and restart
+recovery. The separate native Unity controlled-host snapshot comparison passes.

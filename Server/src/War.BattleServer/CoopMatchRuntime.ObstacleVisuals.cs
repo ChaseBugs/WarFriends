@@ -33,6 +33,12 @@ internal sealed partial class CoopMatchRuntime
         if (!infantryRoundIntents.TryGetValue(enemy.EntityId, out List<CoopInfantryRoundIntent>? rounds) ||
             rounds.Count == 0)
         {
+            if (HasObservedPreparationOrigin(windup))
+            {
+                // Capture the reference now, including in retained command replies; never retime it at delivery.
+                // Once the observed domain ends, absence is safer than extrapolating an unmeasured mixer pose.
+                return ProjectObservedPreparation(enemy.EntityId);
+            }
             return HasCompletedPriorCrawl(enemy)
                 ? _obstaclePoseCatalog?.PreparationAnimationFrame(tick - windup.StartTick, tick)
                 : null;

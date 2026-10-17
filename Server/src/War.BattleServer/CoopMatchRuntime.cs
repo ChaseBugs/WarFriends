@@ -372,6 +372,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
             PlayerWeapons = CoopPlayerWeaponCatalog.Bind(manifest, playerWeaponContent);
         enemyPoses = playerWeaponContent?.EnemyPoses;
         _obstaclePoseCatalog = playerWeaponContent?.CoopObstaclePoses;
+        _observedObstaclePoseCatalog = playerWeaponContent?.ObservedObstaclePoses;
         enemyMuzzles = playerWeaponContent?.CoopEnemyMuzzles;
         cornerQueuePoses = playerWeaponContent?.CoopCornerQueuePoses;
         assaulterWeapon = playerWeaponContent?.CoopAssaulterWeapon;

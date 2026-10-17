@@ -59,11 +59,24 @@ internal static class CoopObstaclePreparationRuntimeTests
         Require(ReferenceEquals(origin, runtime.InfantryShotWindup(enemyId)!.ObstaclePreparation) &&
             runtime.CurrentEnemyCollisionFrame().UnplacedEnemyIds.Contains(enemyId),
             "Replayed observation must preserve the immutable origin without opening hit authority.");
+        if (returnSteps == CompletedReturnPhase)
+        {
+            CoopObservedPosePublicationTests.Run(runtime, enemyId);
+        }
         ulong firstNewRound = runtime.InfantryShotWindup(enemyId)!.CallbackTick + 1;
         runtime.Advance(firstNewRound);
         Require(runtime.InfantryRoundIntents(enemyId).Count > 0 &&
             runtime.ObstaclePreparationSampleId(enemyId) == null && origin.PreviousRoundTick == completed.CompletedTick,
             "A confirmed new round must end preparation selection without overwriting the captured old round.");
+        if (returnSteps == CompletedReturnPhase)
+        {
+            Require(runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == enemyId)
+                .InfantryAnimation?.ObservedPose == null,
+                "An emitted round must not retain the preparation reference.");
+            Require(runtime.AbortForHostShutdown() && runtime.TerminalEvidenceSnapshot().Coop.EnemySpawns
+                .All(enemy => enemy.InfantryAnimation?.ObservedPose == null),
+                "Terminal evidence must not retain an active preparation reference.");
+        }
     }
 
     private static (CoopMatchRuntime Runtime, ulong EnemyId) Prepare(CoopObstacleVolleyRuntimeTests.Sources sources)

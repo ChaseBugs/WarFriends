@@ -4,6 +4,33 @@ namespace War.BattleServer;
 
 internal sealed partial class CoopMatchRuntime
 {
+    private const int CompletedObservedReturnPhase = 16;
+    private readonly CoopObservedObstaclePoseCatalog? _observedObstaclePoseCatalog;
+
+    private bool HasObservedPreparationOrigin(CoopInfantryShotWindup windup)
+    {
+        // Partial returns remain nominal candidates: their live transition histories are not yet verified.
+        return _observedObstaclePoseCatalog != null &&
+            windup.ObstaclePreparation?.PriorReturnTicks == CompletedObservedReturnPhase;
+    }
+
+    private BattleInfantryAnimationFrame? ProjectObservedPreparation(ulong entityId)
+    {
+        int? sampleId = ObstaclePreparationSampleId(entityId);
+        if (sampleId == null || _observedObstaclePoseCatalog == null)
+        {
+            return null;
+        }
+
+        BattleInfantryAnimationFrame frame = _observedObstaclePoseCatalog.GetSample(sampleId.Value).Animation(tick);
+        frame.ObservedPose = new BattleInfantryObservedPoseReference
+        {
+            CatalogRevision = _observedObstaclePoseCatalog.Revision,
+            SampleId = (uint)sampleId.Value
+        };
+        return frame;
+    }
+
     internal int? ObstaclePreparationSampleId(ulong entityId)
     {
         if (phase != BattlePhase.Running ||

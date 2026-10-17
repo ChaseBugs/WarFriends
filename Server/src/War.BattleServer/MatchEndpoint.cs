@@ -151,9 +151,7 @@ public sealed class MatchEndpoint
         }
         if (reply.MatchReply != null)
         {
-            // Presentation negotiation belongs to this connection, never a retained gameplay receipt.
-            reply.MatchReply = reply.MatchReply.Clone();
-            reply.MatchReply.ObservedPoseCatalogRevision = session.ObservedPoseRevision;
+            reply.MatchReply = MatchPresentationProjection.ForConnection(reply.MatchReply, session.ObservedPoseRevision);
         }
         MatchReply? complete=reply.MatchReply!=null &&
             reply.CalculateSize()+PacketCodec.MacBytes>PacketCodec.MaximumDatagramBytes
