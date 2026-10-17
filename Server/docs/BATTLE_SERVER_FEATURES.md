@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The [hash-bound cancellation control checkpoint](PAIRED_CANCELLATION_CONTROL.md)
+now compares the allocator's expected manifest hash inside the Worker simulation
+queue before prestart cancellation. A server-only signed client validates the
+exact durable acknowledgement; native HTTP smoke rejects a conflicting hash
+without aborting the match. Public paired queue cancellation still needs frozen
+pair coordination, validated terminal acceptance and durable pair release.
+
 The [matchmaking cancellation checkpoint](CLIENT_MATCHMAKING_CANCELLATION.md)
 now routes normal pending-search disconnects to the self-hosted adapter, retains
 HTTP ownership until cancellation acknowledgement, and prevents delayed/reset

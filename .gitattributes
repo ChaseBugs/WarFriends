@@ -105,3 +105,6 @@ Server/docs/CLIENT_MATCHMAKING_CANCELLATION.md text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedBattleClient.cs text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/GameControllerDeathMatch.cs text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs text eol=lf
+Server/src/War.Infrastructure/BattleMatchCancellationClient.cs text eol=lf
+Server/tests/War.Protocol.Tests/BattleMatchCancellationTests.cs text eol=lf
+Server/docs/PAIRED_CANCELLATION_CONTROL.md text eol=lf

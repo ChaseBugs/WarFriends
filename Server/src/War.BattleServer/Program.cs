@@ -109,19 +109,36 @@ app.MapPost("/internal/matches/cancel",async (HttpContext context,NetworkWorker 
     if(body.Length>256)return Results.StatusCode(413);
     if(!Authorized(context,body,controlKey,"war/match/control/v1/"))return Results.Unauthorized();
     string matchId;
+    string? expectedManifestHash = null;
     try
     {
         using var doc=JsonDocument.Parse(body);
         var root=doc.RootElement;
-        if(root.ValueKind!=JsonValueKind.Object || root.EnumerateObject().Count()!=1 ||
+        if(root.ValueKind!=JsonValueKind.Object || root.EnumerateObject().Count() is <1 or >2 ||
            !root.TryGetProperty("matchId",out var match) || match.ValueKind!=JsonValueKind.String)
             return Results.BadRequest(new {code="invalid-cancel"});
         matchId=match.GetString()!;
         if(matchId.Length is <1 or >64 || !matchId.All(c=>char.IsAsciiLetterOrDigit(c) || c is '_' or '-'))
             return Results.BadRequest(new {code="invalid-cancel"});
+        if (root.TryGetProperty("manifestHash", out var manifestHash))
+        {
+            if (root.EnumerateObject().Count() != 2 || manifestHash.ValueKind != JsonValueKind.String ||
+                !System.Text.RegularExpressions.Regex.IsMatch(manifestHash.GetString() ?? "", @"\A[0-9a-f]{64}\z"))
+            {
+                return Results.BadRequest(new { code = "invalid-cancel" });
+            }
+
+            expectedManifestHash = manifestHash.GetString();
+        }
+        else if (root.EnumerateObject().Count() != 1)
+        {
+            return Results.BadRequest(new { code = "invalid-cancel" });
+        }
     }
     catch(JsonException){return Results.BadRequest(new {code="invalid-cancel"});}
-    var result=await worker.CancelMatchBeforeStart(matchId,context.RequestAborted);
+    var result = expectedManifestHash == null
+        ? await worker.CancelMatchBeforeStart(matchId, context.RequestAborted)
+        : await worker.CancelMatchBeforeStart(matchId, expectedManifestHash, context.RequestAborted);
     return result.Code switch
     {
         "cancelled-before-start" or "already-cancelled"=>Results.Ok(new {code=result.Code,matchId,manifestHash=result.ManifestHash}),

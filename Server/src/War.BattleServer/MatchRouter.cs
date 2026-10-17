@@ -165,7 +165,17 @@ public sealed class MatchRouter
         =>Array.AsReadOnly(source.Select(grant=>grant.Clone()).ToArray());
     public MatchRegistrationResult CancelBeforeStart(string matchId)
     {
+        return CancelBeforeStart(matchId, null);
+    }
+
+    public MatchRegistrationResult CancelBeforeStart(string matchId, string? expectedManifestHash)
+    {
         if(!matches.TryGetValue(matchId,out var endpoint))return new("unknown-match","");
+        if (expectedManifestHash != null && expectedManifestHash != endpoint.ManifestHash)
+        {
+            return new MatchRegistrationResult("manifest-conflict", endpoint.ManifestHash);
+        }
+
         if(endpoint.CancelBeforeStart())return new("cancelled-before-start",endpoint.ManifestHash);
         return endpoint.TerminalSnapshot?.TerminalReason=="cancelled-before-start"
             ?new("already-cancelled",endpoint.ManifestHash)

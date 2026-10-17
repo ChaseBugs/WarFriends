@@ -108,3 +108,7 @@ success; that paired cancellation/result cleanup remains required BattleServer
 work. Region/ping-based bot routing, full recovered UI loading, two actual Unity
 clients, Android and Linux gameplay also remain open. B31/B32/B36 and the overall
 goal remain partial.
+
+The [next control checkpoint](PAIRED_CANCELLATION_CONTROL.md) adds a signed,
+hash-bound Worker cancellation request and pre-mutation manifest guard. It does
+not yet connect the public queue route to terminal acceptance/pair release.

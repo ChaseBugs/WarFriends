@@ -151,12 +151,44 @@ try {
     try { $null=Invoke-WebRequest $cancelUrl -Method Post -Body $cancelBody -ContentType 'application/json' -UseBasicParsing }
     catch { $unsignedCancel=[int]$_.Exception.Response.StatusCode }
     if($unsignedCancel -ne 401) { throw "Unsigned match cancellation returned $unsignedCancel" }
+    $wrongCancellationHash='0'+$registration.manifestHash.Substring(1)
+    if($registration.manifestHash.StartsWith('0')) {
+        $wrongCancellationHash='1'+$registration.manifestHash.Substring(1)
+    }
+    $wrongCancelBody=ConvertTo-Json @{matchId='smoke-control-match';manifestHash=$wrongCancellationHash} -Compress
+    $wrongCancelBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$stamp`n$wrongCancelBody")
+    $wrongCancelHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=(Get-MacHex $wrongCancelBytes)}
+    $wrongCancelRequest=@{
+        Uri=$cancelUrl
+        Method='Post'
+        Body=$wrongCancelBody
+        ContentType='application/json'
+        Headers=$wrongCancelHeaders
+        UseBasicParsing=$true
+    }
+    $wrongCancelStatus=0
+    try {
+        $null=Invoke-WebRequest @wrongCancelRequest
+    }
+    catch { $wrongCancelStatus=[int]$_.Exception.Response.StatusCode }
+    if($wrongCancelStatus -ne 409) { throw "Conflicting cancellation manifest returned $wrongCancelStatus" }
+    if(Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath 'smoke-control-match.wfr')) {
+        throw 'A rejected manifest hash canceled the registered match'
+    }
+    $cancelBody=ConvertTo-Json @{matchId='smoke-control-match';manifestHash=$registration.manifestHash} -Compress
     $cancelBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$stamp`n$cancelBody")
     $cancelHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=(Get-MacHex $cancelBytes)}
     $cancelled=(Invoke-WebRequest $cancelUrl -Method Post -Body $cancelBody -ContentType 'application/json' -Headers $cancelHeaders -UseBasicParsing).Content | ConvertFrom-Json
     $cancelRetry=(Invoke-WebRequest $cancelUrl -Method Post -Body $cancelBody -ContentType 'application/json' -Headers $cancelHeaders -UseBasicParsing).Content | ConvertFrom-Json
-    if($cancelled.code -ne 'cancelled-before-start' -or $cancelRetry.code -ne 'already-cancelled') { throw 'Prestart cancellation did not replay safely' }
+    if($cancelled.code -ne 'cancelled-before-start' -or $cancelRetry.code -ne 'already-cancelled' -or
+        $cancelled.manifestHash -ne $registration.manifestHash -or
+        $cancelRetry.manifestHash -ne $registration.manifestHash) {
+        throw 'Hash-bound prestart cancellation did not replay safely'
+    }
     if(!(Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath 'smoke-control-match.wfr'))) { throw 'Successful prestart cancellation returned before terminal evidence was durable' }
+    dotnet (Join-Path $serverRoot 'tests/War.Protocol.Tests/bin/Debug/net10.0/War.Protocol.Tests.dll') `
+        --worker-cancellation-live $cancelUrl 'smoke-control-match' $registration.manifestHash
+    if($LASTEXITCODE -ne 0) { throw 'Live signed cancellation client checks failed' }
     Write-Host 'PASS: authenticated match publication, cancellation, grant replay, unsigned/stale/malformed/conflict rejection'
     dotnet (Join-Path $serverRoot 'tests/War.Protocol.Tests/bin/Debug/net10.0/War.Protocol.Tests.dll')
     if($LASTEXITCODE -ne 0) { throw 'Protocol checks failed' }

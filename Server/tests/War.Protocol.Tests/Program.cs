@@ -5,7 +5,14 @@ using War.Protocol;
 using War.Protocol.Transport;
 using War.Shared;
 
+if (args is ["--worker-cancellation-live", var cancelEndpoint, var cancelMatchId, var cancelManifestHash])
+{
+    await BattleMatchCancellationTests.VerifyLiveReplayAsync(cancelEndpoint, cancelMatchId, cancelManifestHash);
+    return;
+}
+
 int checks = 0;
+checks += await BattleMatchCancellationTests.RunAsync();
 checks += await MatchmakingAttemptTests.RunAsync();
 checks += PvpMatchClockTests.Run();
 checks += CoopDeparturePresentationTests.Run();

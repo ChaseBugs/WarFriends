@@ -64,7 +64,10 @@ public sealed class NetworkWorker : BackgroundService
     }
     private sealed record Datagram(byte[] Bytes, IPEndPoint Endpoint, Packet Packet);
     private sealed record Registration(MatchManifest? Manifest,string? MatchId,string? PlayerId,string? RequestId,bool Cancel,CancellationToken Cancellation,
-        TaskCompletionSource<MatchRegistrationResult> Completion);
+        TaskCompletionSource<MatchRegistrationResult> Completion)
+    {
+        internal string? ExpectedCancellationHash { get; init; }
+    }
 
     public async Task<MatchRegistrationResult> RegisterMatch(
         MatchManifest manifest, CancellationToken ct)
@@ -129,6 +132,32 @@ public sealed class NetworkWorker : BackgroundService
     {
         var completion=new TaskCompletionSource<MatchRegistrationResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         return EnqueueRegistration(new Registration(null,matchId,null,null,true,ct,completion));
+    }
+
+    /// <summary>Queues cancellation bound to the allocator's frozen manifest, before any simulation mutation.</summary>
+    public Task<MatchRegistrationResult> CancelMatchBeforeStart(
+        string matchId, string expectedManifestHash, CancellationToken cancellationToken)
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(matchId ?? "", @"\A[a-zA-Z0-9_-]{1,64}\z") ||
+            !System.Text.RegularExpressions.Regex.IsMatch(expectedManifestHash ?? "", @"\A[0-9a-f]{64}\z"))
+        {
+            throw new InvalidDataException("Cancellation requires a canonical manifest hash.");
+        }
+
+        var completion = new TaskCompletionSource<MatchRegistrationResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var registration = new Registration(
+            Manifest: null,
+            MatchId: matchId,
+            PlayerId: null,
+            RequestId: null,
+            Cancel: true,
+            Cancellation: cancellationToken,
+            Completion: completion)
+        {
+            ExpectedCancellationHash = expectedManifestHash
+        };
+        return EnqueueRegistration(registration);
     }
     private Task<MatchRegistrationResult> EnqueueRegistration(Registration registration)
     {
@@ -296,7 +325,8 @@ public sealed class NetworkWorker : BackgroundService
                         {
                             try
                             {
-                                var result=match.CancelBeforeStart(registration.MatchId!);
+                                var result=match.CancelBeforeStart(
+                                    registration.MatchId!, registration.ExpectedCancellationHash);
                                 if(result.Code is "cancelled-before-start" or "already-cancelled")PersistTerminals();
                                 registration.Completion.TrySetResult(result);
                             }
