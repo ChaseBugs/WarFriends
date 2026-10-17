@@ -241,6 +241,13 @@ if(args is ["--reply-transfer-only"])
     return;
 }
 
+if (args is ["--presentation-ready-only"])
+{
+    int focused = PresentationReadinessTests.Run() + await LiveReplyTransferUdpTests.Run();
+    Console.WriteLine($"PASS: {focused} presentation/readiness and UDP transfer assertions");
+    return;
+}
+
 if(args is ["--shotgun-overlap-only"])
 {
     int focused=ShotgunOverlapTests.Run();
@@ -1056,6 +1063,7 @@ if(args is ["--sabotage-target-only"])
 }
 
 int checks = 0;
+checks += PresentationReadinessTests.Run();
 checks += SabotageTargetPolicyTests.Run();
 checks += SabotageKillCreditTests.Run();
 checks += MatchReplyTransferTests.Run();

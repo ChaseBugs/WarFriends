@@ -66,6 +66,13 @@ namespace War.Client
 
         public Task<MatchReply> ConnectAsync(CancellationToken ct) => Run(null, true, false, ct);
         public Task<MatchReply> ReadyAsync(CancellationToken ct) => Run(new MatchCommand { Ready = new ReadyCommand { ManifestHash = grant.ManifestHash } }, false, false, ct);
+
+        /// <summary>Reports only this authenticated participant's completed local start presentation.</summary>
+        public Task<MatchReply> MarkPresentationReadyAsync(CancellationToken cancellationToken)
+        {
+            var command = new MatchCommand { PresentationReady = new PresentationReadyCommand() };
+            return Run(command, false, false, cancellationToken);
+        }
         public Task<MatchReply> FireAsync(float x, float y, float z, CancellationToken ct) => Run(new MatchCommand { Fire = new FireCommand { TargetX = x, TargetY = y, TargetZ = z } }, false, false, ct);
         public Task<MatchReply> MinigunHoldAsync(bool pressed,float x,float y,float z,CancellationToken ct) => Run(new MatchCommand {MinigunHold=new MinigunHoldCommand {Pressed=pressed,TargetX=x,TargetY=y,TargetZ=z}},false,false,ct);
         public Task<MatchReply> SniperAimAsync(bool pressed,bool cancelled,float x,float y,float z,CancellationToken ct) => Run(new MatchCommand {SniperAim=new SniperAimCommand {Pressed=pressed,Cancelled=cancelled,TargetX=x,TargetY=y,TargetZ=z}},false,false,ct);

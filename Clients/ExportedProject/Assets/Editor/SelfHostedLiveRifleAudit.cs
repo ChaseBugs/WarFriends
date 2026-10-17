@@ -114,6 +114,7 @@ public static class SelfHostedLiveRifleAudit
                 {
                     await Task.Delay(100,ct.Token);await adapter.Refresh();
                 }
+                await VerifyStartPresentation(adapter, other, new[] { leftPlayer, rightPlayer }, ct.Token);
                 if(left.transform.position==right.transform.position || !left.activeInHierarchy || !right.activeInHierarchy ||
                     left.GetComponentsInChildren<Renderer>(true).Length==0 || right.GetComponentsInChildren<Renderer>(true).Length==0)
                     throw new InvalidOperationException("Two rendered rigs were not placed at distinct server covers.");
@@ -317,6 +318,8 @@ public static class SelfHostedLiveRifleAudit
 				staleVisual.GetType().GetField("AirShotEvent").SetValue(staleVisual,true);
 				allowSnapshotGap=true;
                 failReconnectPresentationOnce=true;
+                leftPlayer.networkStatus.startAnimationFinished = false;
+                rightPlayer.networkStatus.startAnimationFinished = false;
 				var update=typeof(SelfHostedBattleClient).GetMethod("Update",
 					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 				var grantField=typeof(MatchConnection).GetField("grant",
@@ -334,7 +337,12 @@ public static class SelfHostedLiveRifleAudit
 				}
 				var finalTransport=(MatchConnection)connectionField.GetValue(adapter);
 				var finalGrant=(MatchConnectionGrant)grantField.GetValue(finalTransport);
+                leftPlayer.networkStatus.startAnimationFinished = false;
+                rightPlayer.networkStatus.startAnimationFinished = false;
+                await adapter.Refresh();
 				if(!recoveryObserved || failReconnectPresentationOnce || !adapter.IsConnected ||
+                    !leftPlayer.networkStatus.startAnimationFinished ||
+                    !rightPlayer.networkStatus.startAnimationFinished ||
 					finalGrant.SessionId!=retrySession ||
 					activeVisuals.Contains(staleVisualId) ||
                     adapter.ProcessedEventId<latestBeforeExpiry ||
@@ -366,6 +374,38 @@ public static class SelfHostedLiveRifleAudit
             // Unity 2018 PlayerLoop and can crash the editor before Run exits.
         }
     }
+    private static async Task VerifyStartPresentation(SelfHostedBattleClient adapter, MatchConnection peer,
+        PlayerController[] actors, CancellationToken cancellationToken)
+    {
+        PlayerController local = actors[0];
+        PlayerController other = actors[1];
+        local.networkStatus = new PlayerNetworkStatus(local);
+        other.networkStatus = new PlayerNetworkStatus(other);
+        adapter.BindStartPresentationPlayers(local, other);
+        adapter.ReportStartCameraAnimationFinished();
+        do
+        {
+            await Task.Delay(30, cancellationToken);
+            await adapter.Refresh();
+        } while (!local.networkStatus.startAnimationFinished);
+
+        MatchReply observed = await peer.PollAsync(cancellationToken);
+        if (!observed.Snapshot.Players.Single(player => player.PlayerId == adapter.LocalPlayerId).PresentationReady ||
+            other.networkStatus.startAnimationFinished)
+        {
+            throw new InvalidOperationException("Unity camera completion did not reach only its authenticated peer.");
+        }
+
+        await peer.MarkPresentationReadyAsync(cancellationToken);
+        await adapter.Refresh();
+        if (!other.networkStatus.startAnimationFinished)
+        {
+            throw new InvalidOperationException(
+                "A host-confirmed peer camera completion did not reach the Unity actor.");
+        }
+        Debug.Log("PASS: actual Unity camera reporter, Worker receipt, independent peer and both actor flags.");
+    }
+
     private static void VerifyLiveScoreHud(SelfHostedBattleClient adapter, HudScreen hud)
     {
         BattlePlayerState local = adapter.State.Players.Single(player => player.PlayerId == adapter.LocalPlayerId);

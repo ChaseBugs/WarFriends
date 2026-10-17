@@ -328,7 +328,7 @@ public class GameControllerCoop : GameControllerOnline
 			SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
 			if (client == null)
 				throw new System.InvalidOperationException("Self-hosted co-op adapter is missing.");
-			client.DispatchRpc("StartCameraAnimationFinishedRPC");
+            client.ReportStartCameraAnimationFinished();
 		}
 		else
 		{

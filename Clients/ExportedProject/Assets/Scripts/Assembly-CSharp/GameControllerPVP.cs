@@ -46,7 +46,7 @@ public abstract class GameControllerPVP : GameControllerOnline
 		if (PhotonConnectionManager.IsSelfHostedActive)
 		{
 			SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
-			if (client != null) client.DispatchRpc("StartCameraAnimationFinishedRPC");
+            if (client != null) client.ReportStartCameraAnimationFinished();
 		}
 		else mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
 		StartCameraAnimationFinishedRPC(PlayerController.currentPlayer.playerNetworkId);

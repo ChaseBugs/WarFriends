@@ -8,12 +8,19 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
+command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop
+keep their immediate local callback and use the actual reporter instead of a
+no-op string alias. The live Unity/Worker/SDK-peer gate observes both actor flags
+and restores them from a fresh reconnect generation. Full normal camera/menu
+bootstrap, two Unity clients and report-specific failure injection remain open.
+
 The normal Online/PVP/Coop controller paths now resolve the canonical retained
 owner rather than an active-object search. The actual player-initialization
 negative gate reproduces and fixes loss of an inactive owner before roster
 ownership validation; it does not prove complete player bootstrap. Source review
-also corrected the RPC ledger: camera/time compatibility calls only return
-recognition, and remote camera-completion delivery remains open.
+also corrected the RPC ledger: time compatibility remains recognition-only;
+the former camera no-op is now replaced by the typed path described above.
 
 [Cached RPC lifetime](CACHED_RPC_BOUNDARY.md) now keeps one room-reset receiver
 per object, removes destroyed receivers and preserves inactive-cache invalidation.

@@ -1018,6 +1018,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         public ulong NextFire {get=>Current.NextFire;set=>Current.NextFire=value;}
         public bool Admitted;
         public bool Ready;
+        public bool PresentationReady;
         public ulong LastSeen;
         public bool Reconnecting;
         public uint ReconnectAttempts;
@@ -2223,8 +2224,12 @@ public sealed partial class MatchEngine : IMatchRuntime
     private string Apply(Player p, MatchCommand c)
     {
         if (Terminal) return "match-terminal";
-        if(players.Any(x=>x.Reconnecting) && c.IntentCase!=MatchCommand.IntentOneofCase.Forfeit)
+        bool isForfeit = c.IntentCase == MatchCommand.IntentOneofCase.Forfeit;
+        bool isPresentationReport = c.IntentCase == MatchCommand.IntentOneofCase.PresentationReady;
+        if (players.Any(player => player.Reconnecting) && !isForfeit && !isPresentationReport)
+        {
             return "reconnecting";
+        }
         if (c.IntentCase == MatchCommand.IntentOneofCase.Ready)
         {
             if (phase != BattlePhase.Waiting) return "wrong-phase";
@@ -2237,6 +2242,17 @@ public sealed partial class MatchEngine : IMatchRuntime
                 endTick = startTick + (ulong)manifest.DurationSeconds * MatchManifest.TickRate;
             }
             return "ready";
+        }
+        if (c.IntentCase == MatchCommand.IntentOneofCase.PresentationReady)
+        {
+            // The recovered camera runs after loading readiness has already started the battle.
+            if (phase != BattlePhase.Running || !p.Ready)
+            {
+                return "wrong-phase";
+            }
+
+            p.PresentationReady = true;
+            return "presentation-ready";
         }
         if (c.IntentCase == MatchCommand.IntentOneofCase.SelectCards)
         {
@@ -3323,6 +3339,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         snapshot.Players.AddRange(players.Select(p => new BattlePlayerState
         {
             PlayerId = p.Definition.PlayerId, Admitted = p.Admitted, Ready = p.Ready,
+            PresentationReady = p.PresentationReady,
             ClipAmmo = p.Clip, ReserveAmmo = p.Reserve, ReloadEndTick = p.ReloadEnd,
             NextFireTick = p.NextFire, ShotsFired = p.Shots, LastCommandId = p.LastCommand,
             CoverIndex = p.Cover, PositionX = p.Position.X, PositionY = p.Position.Y, PositionZ = p.Position.Z,

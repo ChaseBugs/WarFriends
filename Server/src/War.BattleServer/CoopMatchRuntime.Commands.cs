@@ -10,6 +10,8 @@ internal sealed partial class CoopMatchRuntime
         {
             case MatchCommand.IntentOneofCase.Ready:
                 return ApplyReady(participant, command);
+            case MatchCommand.IntentOneofCase.PresentationReady:
+                return ApplyPresentationReady(participant);
             case MatchCommand.IntentOneofCase.Forfeit:
                 return ApplyForfeit(participant);
             case MatchCommand.IntentOneofCase.MoveCover:
@@ -22,6 +24,17 @@ internal sealed partial class CoopMatchRuntime
             default:
                 return "coop-command-unavailable";
         }
+    }
+
+    private string ApplyPresentationReady(Participant participant)
+    {
+        if (phase != BattlePhase.Running || !participant.Ready)
+        {
+            return "wrong-phase";
+        }
+
+        participant.PresentationReady = true;
+        return "presentation-ready";
     }
 
     private string ApplyReady(Participant participant, MatchCommand command)

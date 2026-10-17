@@ -85,6 +85,8 @@ enum BattlePhase {
   BATTLE_PHASE_ENDED = 4; BATTLE_PHASE_ABORTED = 5;
 }
 message ReadyCommand { string manifest_hash = 1; }
+// Local camera presentation completes after Running; this never starts or scores a battle.
+message PresentationReadyCommand {}
 message FireCommand { float target_x = 1; float target_y = 2; float target_z = 3; }
 message ReloadCommand {}
 message SwitchWeaponCommand { int32 slot = 1; }
@@ -205,6 +207,7 @@ message MatchCommand {
     UseGrenadesBurstCommand use_grenades_burst = 52;
     UseScoreMultiplierCommand use_score_multiplier = 53;
     QueueBonusCardCommand queue_bonus_card = 54;
+    PresentationReadyCommand presentation_ready = 55;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -327,6 +330,8 @@ message BattlePlayerState {
   bool coop_departed = 56;
   // Source-backed co-op host death time. Presence distinguishes an actual tick-zero death from no death.
   optional uint64 coop_death_tick = 57;
+  // Authenticated participant presentation only, monotonic within this match.
+  bool presentation_ready = 58;
 }
 message BattleSkillShotCount {
   uint32 flag = 1;

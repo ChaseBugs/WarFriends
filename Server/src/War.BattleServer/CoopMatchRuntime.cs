@@ -117,6 +117,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         public string PlayerId => Definition.PlayerId;
         public bool Admitted;
         public bool Ready;
+        public bool PresentationReady;
         public bool Departed;
         public ulong LastCommandId;
         public int CoverIndex;
@@ -3409,6 +3410,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 PlayerId = participant.PlayerId,
                 Admitted = participant.Admitted,
                 Ready = participant.Ready,
+                PresentationReady = participant.PresentationReady,
                 CoopDeparted = participant.Departed,
                 LastCommandId = participant.LastCommandId,
                 ActiveWeaponSlot = weapon?.Slot ?? 0,

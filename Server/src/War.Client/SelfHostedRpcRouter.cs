@@ -25,8 +25,6 @@ namespace War.Client
                     return true;
                 case "ResyncTimeRPC":
                     return arguments.Length == 1 && TryFiniteDouble(arguments[0]);
-                case "StartCameraAnimationFinishedRPC":
-                    return arguments.Length == 0;
                 default:
                     return false;
             }

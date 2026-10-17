@@ -57,6 +57,7 @@ public static class UnitySessionReadAudit
                 "An inactive retained owner fell back to Photon or created a replacement adapter.");
             UnityCachedRpcAudit.VerifyOwnedBoundary();
             UnityControllerOwnerAudit.Verify(client);
+            UnityStartPresentationAudit.Verify(client);
             PhotonConnectionManager.Disconnect();
             Require(!client.OwnsMatch,
                 "Disconnect ignored the inactive canonical self-hosted owner.");

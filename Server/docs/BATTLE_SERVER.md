@@ -8,6 +8,8 @@ The Worker supports a [pinned combat content package](COMBAT_CONTENT.md), valida
 
 ## What runs
 
+- Typed participant camera-completion reporting and roster-bound Unity projection,
+  separate from loading readiness and combat authority; see [start presentation](START_PRESENTATION.md).
 - Existing connectivity-probe channel remains available.
 - Optional, operator-provisioned host with **1–32 isolated matches, two participants each**, on the same UDP socket.
 - Strict manifest validation, player/host/match/content-bound signed admission, separate ticket/key cryptographic domains from connectivity probes.

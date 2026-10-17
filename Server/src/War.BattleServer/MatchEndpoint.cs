@@ -273,6 +273,9 @@ public sealed class MatchEndpoint
                 {
                     case MatchCommand.IntentOneofCase.Ready:
                         clean.Ready=new ReadyCommand {ManifestHash=command.Ready.ManifestHash};break;
+                    case MatchCommand.IntentOneofCase.PresentationReady:
+                        clean.PresentationReady = new PresentationReadyCommand();
+                        break;
                     case MatchCommand.IntentOneofCase.Fire:
                         clean.Fire=new FireCommand {TargetX=command.Fire.TargetX,TargetY=command.Fire.TargetY,
                             TargetZ=command.Fire.TargetZ};break;

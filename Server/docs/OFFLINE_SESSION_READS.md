@@ -79,10 +79,11 @@ player initialization, card traffic, readiness or normal gameplay.
 
 An unreachable self-hosted camera branch inside ResyncPlayerStates was removed:
 that method already returns for self-hosted ownership. Source inspection also
-confirmed that SelfHostedRpcRouter's camera/time compatibility cases only return
-Boolean recognition, rather than transmitting or applying those callbacks. See
-the corrected [RPC ledger](BATTLE_RPC_MIGRATION.md); peer camera-completion flags
-and full start-animation/reconnect gating remain open. The lifetime scope of the
+confirmed that the old SelfHostedRpcRouter camera/time cases only returned
+Boolean recognition. The camera alias has since been removed in favor of the
+[typed presentation path](START_PRESENTATION.md); time compatibility still does
+not transmit or apply a clock change. Full normal camera/bootstrap proof remains
+open. The lifetime scope of the
 shared pool also prevents simply skipping view registration according to one
 temporary match owner; that migration still needs a complete lifecycle design.
 

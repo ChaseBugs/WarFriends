@@ -44,6 +44,14 @@ internal static class CoopDepartureUdpTests
         Require((await master.ReadyAsync(token)).Code == "ready", "The source master must become ready.");
         Require((await peer.ReadyAsync(token)).Snapshot.Coop.Started,
             "Both SDK clients must start the source mission.");
+        MatchReply completed = await master.MarkPresentationReadyAsync(token);
+        Require(completed.Code == "presentation-ready" &&
+            completed.Snapshot.Players.Single(player => player.PlayerId == master.LocalPlayerId).PresentationReady,
+            "The co-op master must report its own presentation through authenticated UDP.");
+        MatchReply observed = await peer.PollAsync(token);
+        Require(observed.Snapshot.Players.Single(player => player.PlayerId == master.LocalPlayerId).PresentationReady &&
+            !observed.Snapshot.Players.Single(player => player.PlayerId == peer.LocalPlayerId).PresentationReady,
+            "The co-op peer must observe its master's completion without completing itself.");
     }
 
     private static async Task LoseDepartureReply(MatchConnection peer, Host host)

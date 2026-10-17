@@ -15,6 +15,11 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 {
     private const int MinimumMatchmakingTimeoutSeconds = 5;
     private const int MaximumMatchmakingTimeoutSeconds = 300;
+    private const int MaximumPresentationReportAttempts = 3;
+    private readonly Dictionary<string, PlayerController> _startPresentationPlayers =
+        new Dictionary<string, PlayerController>(StringComparer.Ordinal);
+    private string _startPresentationMatchId;
+    private object _startPresentationReport;
     [SerializeField] private string backendEndpoint = "http://127.0.0.1:8080/";
     [SerializeField] private int matchmakingTimeoutSeconds = 120;
     [SerializeField] private bool allowLocalHttp = true;
@@ -668,6 +673,205 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     public Task Ready() { return ExecuteReady(); }
     public Task ReadyAsync() { return Ready(); }
+
+    /// <summary>Starts an observed reliable report without delaying the recovered local camera callback.</summary>
+    public void ReportStartCameraAnimationFinished()
+    {
+        if (Active != this || !OwnsMatch || State == null)
+        {
+            throw new InvalidOperationException("An owned battle snapshot is required for camera completion.");
+        }
+        if (_startPresentationReport != null)
+        {
+            return;
+        }
+        object owner = new object();
+        _startPresentationReport = owner;
+        ObserveStartPresentationReportAsync(owner, matchId);
+    }
+
+    private async void ObserveStartPresentationReportAsync(object owner, string ownerMatchId)
+    {
+        try
+        {
+            await SendStartPresentationReportAsync(owner, ownerMatchId);
+        }
+        catch (Exception exception)
+        {
+            if (OwnsStartPresentationReport(owner, ownerMatchId) &&
+                State.Phase != BattlePhase.Ended && State.Phase != BattlePhase.Aborted)
+            {
+                Debug.LogError("Self-hosted start presentation failed: " + exception.Message);
+                if (ConnectionError != null)
+                {
+                    ConnectionError(exception.Message);
+                }
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(_startPresentationReport, owner))
+            {
+                _startPresentationReport = null;
+            }
+        }
+    }
+
+    private async Task SendStartPresentationReportAsync(object owner, string ownerMatchId)
+    {
+        for (int attempt = 0; attempt < MaximumPresentationReportAttempts; attempt++)
+        {
+            if (!OwnsStartPresentationReport(owner, ownerMatchId) ||
+                State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted)
+            {
+                return;
+            }
+            try
+            {
+                if (await TryStartPresentationReportAsync(owner, ownerMatchId))
+                {
+                    return;
+                }
+            }
+            catch (TimeoutException) when (attempt + 1 < MaximumPresentationReportAttempts)
+            {
+                if (!OwnsStartPresentationReport(owner, ownerMatchId))
+                {
+                    return;
+                }
+                await ReconnectWithRecoveredSession();
+            }
+            catch (OperationCanceledException) when (attempt + 1 < MaximumPresentationReportAttempts &&
+                reconnectTask != null && OwnsStartPresentationReport(owner, ownerMatchId))
+            {
+                // The shared reconnect owns cancellation of the old transport, not a failed camera.
+                await reconnectTask;
+            }
+        }
+
+        throw new TimeoutException("Start presentation could not complete within its retry budget.");
+    }
+
+    private async Task<bool> TryStartPresentationReportAsync(object owner, string ownerMatchId)
+    {
+        if (!IsConnected)
+        {
+            await ReconnectWithRecoveredSession();
+        }
+        if (!OwnsStartPresentationReport(owner, ownerMatchId) ||
+            State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted)
+        {
+            return true;
+        }
+
+        MatchConnection active = connection;
+        try
+        {
+            if (await ResolvePendingBeforePresentationAsync(active, owner, ownerMatchId))
+            {
+                return false;
+            }
+            MatchReply reply = await active.MarkPresentationReadyAsync(lifetime.Token);
+            if (!OwnsStartPresentationReport(owner, ownerMatchId))
+            {
+                return true;
+            }
+            if (active != connection)
+            {
+                return false;
+            }
+
+            Apply(reply);
+            if (reply.Code != "presentation-ready" && reply.Code != "match-terminal")
+            {
+                throw new InvalidOperationException("Start presentation refused: " + reply.Code);
+            }
+            return true;
+        }
+        catch (OperationCanceledException) when (active != connection)
+        {
+            return false;
+        }
+        catch (ObjectDisposedException) when (active != connection)
+        {
+            return false;
+        }
+    }
+
+    private async Task<bool> ResolvePendingBeforePresentationAsync(MatchConnection active,
+        object owner, string ownerMatchId)
+    {
+        MatchPendingCommand pending = await active.CapturePendingAsync(lifetime.Token);
+        if (!OwnsStartPresentationReport(owner, ownerMatchId) || active != connection)
+        {
+            return true;
+        }
+        if (pending == null)
+        {
+            return false;
+        }
+
+        // A lost loading-ready receipt may still own the reliable cursor when the camera finishes.
+        MatchReply recovered = await active.RetryPendingAsync(lifetime.Token);
+        if (OwnsStartPresentationReport(owner, ownerMatchId) && active == connection)
+        {
+            Apply(recovered);
+        }
+        return true;
+    }
+
+    private bool OwnsStartPresentationReport(object owner, string ownerMatchId)
+    {
+        return ReferenceEquals(_startPresentationReport, owner) && Active == this && OwnsMatch &&
+            !destroyed && State != null && State.MatchId == ownerMatchId && matchId == ownerMatchId;
+    }
+
+    /// <summary>Binds only the two roster-owned actors; server completion never changes combat state.</summary>
+    public void BindStartPresentationPlayers(PlayerController local, PlayerController other)
+    {
+        if (!OwnsMatch || State == null || PlayerViews == null || PlayerViews.Count != 2 ||
+            local == null || other == null || local == other ||
+            local.networkStatus == null || other.networkStatus == null)
+        {
+            throw new InvalidOperationException("A complete owned presentation roster is required.");
+        }
+
+        var prepared = new Dictionary<string, PlayerController>(StringComparer.Ordinal);
+        foreach (BattlePlayerView view in PlayerViews)
+        {
+            prepared.Add(view.PlayerId, view.PlayerId == LocalPlayerId ? local : other);
+        }
+        if (!prepared.ContainsValue(local) || !prepared.ContainsValue(other))
+        {
+            throw new InvalidOperationException("Presentation actors must match local and opposing roster identities.");
+        }
+
+        _startPresentationPlayers.Clear();
+        foreach (KeyValuePair<string, PlayerController> entry in prepared)
+        {
+            _startPresentationPlayers.Add(entry.Key, entry.Value);
+        }
+        _startPresentationMatchId = State.MatchId;
+        ApplyStartPresentation(State);
+    }
+
+    private void ApplyStartPresentation(MatchSnapshot snapshot)
+    {
+        if (!OwnsMatch || snapshot == null || snapshot.MatchId != _startPresentationMatchId)
+        {
+            return;
+        }
+        foreach (BattlePlayerState state in snapshot.Players)
+        {
+            PlayerController player;
+            if (state.PresentationReady && _startPresentationPlayers.TryGetValue(state.PlayerId, out player) &&
+                player != null && player.networkStatus != null)
+            {
+                // Preserve the recovered local optimistic completion while waiting for its host receipt.
+                player.networkStatus.startAnimationFinished = true;
+            }
+        }
+    }
     public bool DispatchRpc(string method, params object[] arguments)
     {
         if (destroyed || !IsConnected) return false;
@@ -1291,6 +1495,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             if (player.RiflePose != null && rifleViews.TryGetValue(player.PlayerId, out renderer)) renderer.Apply(player);
         }
         State = next;
+        ApplyStartPresentation(State);
         CoopEnemies = enemyViews;
         if (_scoreManager != null)
         {
@@ -1342,6 +1547,9 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     private void Close()
     {
+        _startPresentationPlayers.Clear();
+        _startPresentationMatchId = null;
+        _startPresentationReport = null;
         bool hadMatch = connection != null || LocalPlayerId != null || CoopEnemies.Count != 0;
         CoopEnemies = Array.Empty<CoopEnemyViewState>();
         _missionManager = null;

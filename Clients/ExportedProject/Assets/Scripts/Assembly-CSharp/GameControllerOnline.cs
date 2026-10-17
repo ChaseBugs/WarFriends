@@ -511,6 +511,7 @@ public abstract class GameControllerOnline : IGameController
 		MatchManager.matchStartTime = Time.realtimeSinceStartup + (float)GameVariables.GetMatchStartTime(level);
 		MatchManager.invitationState = InvitationState.Accepted;
 
+        client.BindStartPresentationPlayers(mMainPlayerController, mOtherPlayerInstance);
         BindSelfHostedAbortRecovery(client);
 	}
 

@@ -50,11 +50,12 @@ internal static class LiveReplyTransferUdpTests
         for(int i=0;i<128;i++)
             Check(engine.TryRecordRibbon("R"+i.ToString("D3")+new string('x',55)),
                 "trusted host ribbon fixture remains within the recovered ledger cap");
-        MatchConnectionGrant Grant(string playerId,ulong sessionId)
+        MatchConnectionGrant Grant(string playerId,ulong sessionId,ulong generation=0)
         {
             long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var admission=new MatchAdmission{MatchId=manifest.MatchId,ServerId=manifest.ServerId,
                 PlayerId=playerId,SessionId=sessionId,ManifestHash=manifest.Digest(),
+                ConnectionGeneration=generation,
                 IssuedUnixSeconds=now,ExpiresUnixSeconds=now+120};
             return new MatchConnectionGrant{Host="127.0.0.1",Port=(uint)port,
                 PlayerId=playerId,SessionId=sessionId,MatchId=manifest.MatchId,
@@ -83,8 +84,48 @@ internal static class LiveReplyTransferUdpTests
             Check(ready.CommandId==1&&ready.Snapshot.Players.Single(x=>x.PlayerId==one).Ready&&
                   ready.Snapshot.RibbonIds.Count==128,
                   "mutation acknowledgement completes only after chunk reconstruction");
+            await b.ReadyAsync(timeout.Token);
+            checks += await VerifyPresentationAsync(a, b, one, timeout.Token);
+            using var reconnected = new MatchConnection(Grant(one, 9703, 1));
+            MatchReply resumed = await reconnected.ConnectAsync(timeout.Token);
+            Check(resumed.Snapshot.Players.Single(player => player.PlayerId == one).PresentationReady,
+                "Fresh authenticated admission restores the existing presentation flag.");
+            Check((await reconnected.MarkPresentationReadyAsync(timeout.Token)).Code == "presentation-ready",
+                "The fresh session restores its command cursor before repeating presentation.");
         }
         finally {await worker.StopAsync(CancellationToken.None);File.Delete(manifestFile);}
         return checks;
+    }
+
+    private static async Task<int> VerifyPresentationAsync(MatchConnection first, MatchConnection second,
+        string firstPlayerId, CancellationToken cancellationToken)
+    {
+        MatchReply state;
+        do
+        {
+            state = await second.PollAsync(cancellationToken);
+            if (state.Snapshot.Phase != BattlePhase.Running)
+            {
+                await Task.Delay(30, cancellationToken);
+            }
+        } while (state.Snapshot.Phase != BattlePhase.Running);
+
+        MatchReply accepted = await first.MarkPresentationReadyAsync(cancellationToken);
+        Require(accepted.Code == "presentation-ready" && accepted.Snapshot.Players.Single(
+            player => player.PlayerId == firstPlayerId).PresentationReady,
+            "The real Worker must accept the typed presentation intent.");
+        MatchReply peer = await second.PollAsync(cancellationToken);
+        Require(peer.Snapshot.Players.Single(player => player.PlayerId == firstPlayerId).PresentationReady &&
+            !peer.Snapshot.Players.Single(player => player.PlayerId != firstPlayerId).PresentationReady,
+            "An independent SDK peer must observe only the reporting participant's flag.");
+        return 2;
+    }
+
+    private static void Require(bool condition, string message)
+    {
+        if (!condition)
+        {
+            throw new InvalidDataException(message);
+        }
     }
 }

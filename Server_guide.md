@@ -160,6 +160,12 @@ For every extracted artifact record client version, source path, source SHA-256,
 
 ## 6. Battle Server requirements
 
+Current implementation addition: [start presentation](Server/docs/START_PRESENTATION.md)
+defines the empty PresentationReadyCommand (MatchCommand field 55) and per-player
+presentation_ready snapshot flag (field 58). This replaces the camera-finished
+RPC without turning local camera timing into combat or reward authority. It is
+separate from ReadyCommand and is accepted while Running, after loading readiness.
+
 ### Modes and lifecycle
 
 Solo campaign already simulates AI locally (`GameControllerCampaign` enables Photon offline mode). It can retain that Client-side simulation while Backend owns progression and reward policy; Battle Server hosting is not required for solo play. The shipped Missions table contains 75 rows over five map stages. Local Photon API replacement remains necessary to remove Photon. The Battle-host campaign/AI items below apply to shared co-op or an explicitly chosen future server-verified simulation, not a requirement to move every solo mission into this Worker.
