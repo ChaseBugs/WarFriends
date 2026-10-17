@@ -26,8 +26,8 @@ callback.
 
 ## Verification
 
-Seven portable checks cover first join, replacement, explicit leave, empty-room
-rejoin, disconnect, repeated disconnect and pre-enabled mode. The protocol executable passes 1,353
+Twelve portable checks cover lifecycle, callback cancellation and detached
+observation. The protocol executable passes 1,358
 checks. The native reference probe independently records SDK state synchronously
 inside each modeled callback kind, then compares every row and
 order with the portable model. It also compares explicit leave and rejoin.
@@ -84,5 +84,7 @@ regression also passes with the new event:
 `Server/.local/unity-local-disconnect-ui-regression.log`.
 The full Release solution build also passes with zero warnings/errors. Static
 asset checks remain at zero broken references/missing scripts with the same
-17 existing sprite mismatches. Listener exception behavior and callback-driven
-reentrant joins/cancellation remain separate characterization work.
+17 existing sprite mismatches. [Callback cancellation](LOCAL_SOLO_CALLBACK_CANCELLATION.md)
+now covers three disconnect phases and the actual manager's post-callback mirror.
+Listener exceptions and general callback-driven reentrant joins remain separate
+characterization work.

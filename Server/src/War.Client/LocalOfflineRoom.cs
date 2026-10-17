@@ -36,6 +36,19 @@ namespace War.Client
             IsOffline = true;
         }
 
+        /// <summary>Adopts an already-observed detached offline identity without replaying SDK callbacks.</summary>
+        public void ObserveDetachedOfflinePlayer(int localPlayerId)
+        {
+            if (localPlayerId != UnassignedPlayerId && localPlayerId != SoloPlayerId)
+            {
+                throw new ArgumentOutOfRangeException(nameof(localPlayerId));
+            }
+
+            IsOffline = true;
+            IsInRoom = false;
+            _localPlayerId = localPlayerId;
+        }
+
         public void JoinSoloRoom()
         {
             // PhotonNetwork.offlineMode emits this callback only when it changes
@@ -47,7 +60,16 @@ namespace War.Client
                 Callback?.Invoke(LocalRoomCallback.ConnectedToMaster);
             }
 
+            if (!IsOffline)
+            {
+                throw new InvalidOperationException("Local solo room could not enter offline mode.");
+            }
+
             LeaveRoom();
+            if (!IsOffline)
+            {
+                throw new InvalidOperationException("Local solo room could not be created.");
+            }
             IsInRoom = true;
             _localPlayerId = SoloPlayerId;
             Callback?.Invoke(LocalRoomCallback.CreatedRoom);
@@ -57,7 +79,9 @@ namespace War.Client
         public void LeaveRoom()
         {
             if (!IsOffline)
+            {
                 return;
+            }
 
             // The bundled PhotonNetwork.LeaveRoom sends OnLeftRoom even when
             // its offline room is already null.

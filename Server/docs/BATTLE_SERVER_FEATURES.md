@@ -8,6 +8,14 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Local callback cancellation](LOCAL_SOLO_CALLBACK_CANCELLATION.md) now preserves
+the recovered rejection after connection/leave cancellation and the unusual
+JoinedRoom notification after CreatedRoom cancellation. A second native
+counterexample fixed the actual manager recreating model membership after the
+SDK room was cancelled/left. Portable and native model/manager gates pass;
+normal scene dispatch, general reentrancy, listener exceptions and complete
+Photon-free solo gameplay remain open.
+
 The local callback reference now also observes general offline disconnection.
 It reproduced a missing model notification and now verifies reset-before-notify
 and no repeated notification. Seven portable cases and the native SDK comparison

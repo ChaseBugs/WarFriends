@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -11,6 +12,10 @@ using War.Client;
 public static class UnityLocalOfflineRoomAudit
 {
     private const string Active = "WarFriends.LocalOfflineRoomAudit";
+    private const string ExpectedCreateRefusal = "CreateRoom failed. Client is not on Master Server or not yet ready " +
+        "to call operations. Wait for callback: OnJoinedLobby or OnConnectedToMaster.";
+    private static readonly List<string> RuntimeErrors = new List<string>();
+    private static int _referenceRefusals;
 
     static UnityLocalOfflineRoomAudit()
     {
@@ -29,6 +34,13 @@ public static class UnityLocalOfflineRoomAudit
         EditorApplication.isPlaying = true;
     }
 
+    /// <summary>Runs only the actual manager's callback-cancelled SDK mirror cases.</summary>
+    public static void RunManagerCancellation()
+    {
+        SessionState.SetBool(Active + ".ManagerOnly", true);
+        Run();
+    }
+
     private static void RunInPlayMode()
     {
         if (!EditorApplication.isPlaying || EditorApplication.isPaused)
@@ -36,10 +48,22 @@ public static class UnityLocalOfflineRoomAudit
             return;
         }
         EditorApplication.update -= RunInPlayMode;
+        RuntimeErrors.Clear();
+        _referenceRefusals = 0;
+        Application.logMessageReceived += CaptureRuntimeError;
         try
         {
             var owner = new GameObject("LocalOfflineRoomCallbackProbe");
             var scenario = new Scenario(owner.AddComponent<LocalOfflineRoomCallbackProbe>());
+            if (SessionState.GetBool(Active + ".ManagerOnly", false))
+            {
+                VerifyManagerCancellation(scenario, PhotonNetwork.Disconnect);
+                VerifyManagerCancellation(scenario, () => PhotonNetwork.LeaveRoom());
+                VerifyRuntimeErrors(0);
+                Debug.Log("LOCAL_OFFLINE_MANAGER_CANCELLATION_PASSED");
+                Finish(0);
+                return;
+            }
             VerifyFirstJoin(scenario);
             VerifyReplacement(scenario);
             VerifyLeaveAndRejoin(scenario);
@@ -47,6 +71,12 @@ public static class UnityLocalOfflineRoomAudit
             VerifyRepeatedDisconnect(scenario);
             VerifyPreEnabledScene(scenario);
             VerifyDisconnect(scenario);
+            VerifyCallbackCancellation(scenario, LocalRoomCallback.ConnectedToMaster);
+            VerifyCallbackCancellation(scenario, LocalRoomCallback.LeftRoom);
+            VerifyCallbackCancellation(scenario, LocalRoomCallback.CreatedRoom);
+            VerifyManagerCancellation(scenario, PhotonNetwork.Disconnect);
+            VerifyManagerCancellation(scenario, () => PhotonNetwork.LeaveRoom());
+            VerifyRuntimeErrors(1);
             Debug.Log("LOCAL_OFFLINE_ROOM_AUDIT_PASSED");
             Finish(0);
         }
@@ -55,6 +85,32 @@ public static class UnityLocalOfflineRoomAudit
             Debug.LogException(failure);
             Finish(1);
         }
+        finally
+        {
+            Application.logMessageReceived -= CaptureRuntimeError;
+        }
+    }
+
+    private static void CaptureRuntimeError(string condition, string stack, LogType type)
+    {
+        if (type != LogType.Error && type != LogType.Exception && type != LogType.Assert)
+        {
+            return;
+        }
+        if (type == LogType.Error && condition == ExpectedCreateRefusal)
+        {
+            _referenceRefusals++;
+        }
+        else
+        {
+            RuntimeErrors.Add(condition);
+        }
+    }
+
+    private static void VerifyRuntimeErrors(int expectedRefusals)
+    {
+        Require(_referenceRefusals == expectedRefusals && RuntimeErrors.Count == 0,
+            "Unexpected reference/runtime errors: " + string.Join(" | ", RuntimeErrors.ToArray()));
     }
 
     private static void VerifyFirstJoin(Scenario scenario)
@@ -138,9 +194,102 @@ public static class UnityLocalOfflineRoomAudit
         }
     }
 
+    private static void VerifyCallbackCancellation(Scenario scenario, LocalRoomCallback cancelAt)
+    {
+        scenario.Clear();
+        scenario.Probe.AfterCallback = callback =>
+        {
+            if (callback == cancelAt.ToString())
+            {
+                PhotonNetwork.Disconnect();
+            }
+        };
+        Action<LocalRoomCallback> cancelModel = callback =>
+        {
+            if (callback == cancelAt)
+            {
+                scenario.Room.Disconnect();
+            }
+        };
+        scenario.Room.Callback += cancelModel;
+        try
+        {
+            bool referenceAccepted = TryReferenceJoin();
+            bool modelAccepted = true;
+            try
+            {
+                scenario.Room.JoinSoloRoom();
+            }
+            catch (InvalidOperationException)
+            {
+                modelAccepted = false;
+            }
+            scenario.Compare("cancellation in " + cancelAt);
+            Require(referenceAccepted == modelAccepted && !scenario.Room.IsOffline && !scenario.Room.IsInRoom,
+                "Callback cancellation published a room unlike the recovered join command.");
+        }
+        finally
+        {
+            scenario.Probe.AfterCallback = null;
+            scenario.Room.Callback -= cancelModel;
+        }
+    }
+
+    private static bool TryReferenceJoin()
+    {
+        // These are the actual guard and call order in PhotonConnectionManager.JoinOfflineGame.
+        PhotonNetwork.offlineMode = true;
+        if (!PhotonNetwork.offlineMode)
+        {
+            return false;
+        }
+        PhotonNetwork.LeaveRoom();
+        return PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName);
+    }
+
+    private static void VerifyManagerCancellation(Scenario scenario, Action cancel)
+    {
+        const BindingFlags StaticFields = BindingFlags.Static | BindingFlags.NonPublic;
+        FieldInfo singleton = typeof(Singleton<PhotonConnectionManager>).GetField("_instance", StaticFields);
+        object previousManager = singleton.GetValue(null);
+        var model = (LocalOfflineRoom)typeof(PhotonConnectionManager).GetField("mLocalOfflineRoom", StaticFields)
+            .GetValue(null);
+        var owner = new GameObject("InactiveLocalManagerCancellation");
+        owner.SetActive(false);
+        var manager = owner.AddComponent<PhotonConnectionManager>();
+        singleton.SetValue(null, manager);
+        scenario.Clear();
+        scenario.Probe.AfterCallback = callback =>
+        {
+            if (callback == nameof(LocalRoomCallback.CreatedRoom))
+            {
+                cancel();
+            }
+        };
+        bool isQuitting = Singleton.applicationIsQuitting;
+        try
+        {
+            PhotonConnectionManager.JoinOfflineGame();
+            Require(PhotonNetwork.room == null && !model.IsInRoom && model.PlayerCount == 0 &&
+                model.IsOffline == PhotonNetwork.offlineMode && model.PlayerId == PhotonNetwork.player.ID &&
+                !PhotonConnectionManager.isInRoom && PhotonConnectionManager.GetPlayerCount() == 0,
+                "The actual manager recreated model membership after its SDK room was cancelled in CreatedRoom.");
+        }
+        finally
+        {
+            scenario.Probe.AfterCallback = null;
+            PhotonNetwork.Disconnect();
+            model.Disconnect();
+            UnityEngine.Object.DestroyImmediate(owner);
+            Singleton.applicationIsQuitting = isQuitting;
+            singleton.SetValue(null, previousManager);
+        }
+    }
+
     private static void Finish(int code)
     {
         SessionState.SetBool(Active, false);
+        SessionState.SetBool(Active + ".ManagerOnly", false);
         EditorApplication.Exit(code);
     }
 

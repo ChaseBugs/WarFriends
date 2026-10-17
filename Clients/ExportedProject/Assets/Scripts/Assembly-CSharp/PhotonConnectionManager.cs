@@ -281,6 +281,18 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		{
 			mCreatingLocalSoloRoom = false;
 		}
+        // SDK callbacks can cancel or leave the room even when CreateRoom returned true.
+        if (!PhotonNetwork.offlineMode)
+        {
+            mLocalOfflineRoom.Disconnect();
+            return;
+        }
+        if (PhotonNetwork.room == null)
+        {
+            mLocalOfflineRoom.ObserveDetachedOfflinePlayer(PhotonNetwork.player.ID);
+            return;
+        }
+
 		mLocalOfflineRoom.JoinSoloRoom();
 	}
 

@@ -5,6 +5,15 @@ internal static class LocalOfflineRoomStateTests
 {
     internal static int Run()
     {
+        int checks = VerifyLifecycle();
+        checks += VerifyCallbackCancellation();
+        checks += VerifyDetachedObservation();
+        Console.WriteLine("PASS: " + checks + " local solo callback-visible identity checks");
+        return checks;
+    }
+
+    private static int VerifyLifecycle()
+    {
         var room = new LocalOfflineRoom();
         var observed = new List<RoomView>();
         room.Callback += callback => observed.Add(Capture(callback, room));
@@ -51,8 +60,84 @@ internal static class LocalOfflineRoomStateTests
             Detached(LocalRoomCallback.LeftRoom, -1), Joined(LocalRoomCallback.CreatedRoom),
             Joined(LocalRoomCallback.JoinedRoom)
         }), "A pre-enabled offline scene must not reconnect or retain a previous session's player identity.");
-        Console.WriteLine("PASS: 7 local solo callback-visible identity checks");
         return 7;
+    }
+
+    private static int VerifyCallbackCancellation()
+    {
+        int checks = 0;
+        foreach (LocalRoomCallback cancelAt in new[]
+            { LocalRoomCallback.ConnectedToMaster, LocalRoomCallback.LeftRoom, LocalRoomCallback.CreatedRoom })
+        {
+            var room = new LocalOfflineRoom();
+            var observed = new List<RoomView>();
+            room.Callback += callback =>
+            {
+                observed.Add(Capture(callback, room));
+                if (callback == cancelAt)
+                {
+                    room.Disconnect();
+                }
+            };
+            bool isAccepted = true;
+            try
+            {
+                room.JoinSoloRoom();
+            }
+            catch (InvalidOperationException)
+            {
+                isAccepted = false;
+            }
+            Require(observed.SequenceEqual(ExpectedCancellation(cancelAt)) &&
+                isAccepted == (cancelAt == LocalRoomCallback.CreatedRoom) && !room.IsOffline && !room.IsInRoom,
+                "Callback cancellation differs from the recovered join command at " + cancelAt + ".");
+            checks++;
+        }
+        return checks;
+    }
+
+    private static RoomView[] ExpectedCancellation(LocalRoomCallback cancelAt)
+    {
+        RoomView connected = Detached(LocalRoomCallback.ConnectedToMaster, -1);
+        RoomView left = Detached(LocalRoomCallback.LeftRoom, -1);
+        var disconnected = new RoomView { Callback = LocalRoomCallback.Disconnected };
+        switch (cancelAt)
+        {
+            case LocalRoomCallback.ConnectedToMaster:
+                return new[] { connected, disconnected };
+            case LocalRoomCallback.LeftRoom:
+                return new[] { connected, left, disconnected };
+            case LocalRoomCallback.CreatedRoom:
+                return new[] { connected, left, Joined(LocalRoomCallback.CreatedRoom), disconnected,
+                    new RoomView { Callback = LocalRoomCallback.JoinedRoom } };
+            default:
+                throw new ArgumentOutOfRangeException(nameof(cancelAt));
+        }
+    }
+
+    private static int VerifyDetachedObservation()
+    {
+        var room = new LocalOfflineRoom();
+        var observed = new List<LocalRoomCallback>();
+        room.Callback += observed.Add;
+        room.JoinSoloRoom();
+        observed.Clear();
+        room.ObserveDetachedOfflinePlayer(1);
+        Require(observed.Count == 0 && room.IsOffline && !room.IsInRoom && room.PlayerId == 1 &&
+            room.MasterPlayerId == 1 && room.PlayerCount == 0,
+            "Observing an SDK leave must not recreate membership or replay its callbacks.");
+        bool isRejected = false;
+        try
+        {
+            room.ObserveDetachedOfflinePlayer(2);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            isRejected = true;
+        }
+        Require(isRejected && room.IsOffline && !room.IsInRoom && room.PlayerId == 1 && observed.Count == 0,
+            "An invalid observed identity changed local room state before rejection.");
+        return 2;
     }
 
     private static RoomView Capture(LocalRoomCallback callback, LocalOfflineRoom room)

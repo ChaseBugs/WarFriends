@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using War.Client;
@@ -7,6 +8,7 @@ public sealed class LocalOfflineRoomCallbackProbe : MonoBehaviour
 {
     public List<string> Callbacks { get; } = new List<string>();
     public List<string> States { get; } = new List<string>();
+    public Action<string> AfterCallback { get; set; }
 
     private void OnConnectedToMaster()
     {
@@ -41,5 +43,6 @@ public sealed class LocalOfflineRoomCallbackProbe : MonoBehaviour
         Callbacks.Add(callback);
         States.Add(callback + "|" + PhotonNetwork.offlineMode + "|" + roomName + "|" +
             PhotonNetwork.player.ID + "|" + masterId + "|" + playerCount);
+        AfterCallback?.Invoke(callback);
     }
 }
