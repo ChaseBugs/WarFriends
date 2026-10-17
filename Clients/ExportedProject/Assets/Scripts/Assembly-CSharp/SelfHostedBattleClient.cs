@@ -262,16 +262,15 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         var preparedTracker = barrelCatalog == null ? null :
             new BarrelStateTracker(grant.MatchId, grant.ManifestHash, barrelCatalog);
         string poseRevision = ObservedInfantryPoseCatalogData.BuiltIn.Revision;
-        connection = new MatchConnection(grant, poseRevision);
+        MatchConnection ownedConnection = new MatchConnection(grant, poseRevision);
+        connection = ownedConnection;
         _observedPoseCatalogRevision = poseRevision;
         PlayerViews = connection.PlayerViews;
+        BeginSnapshotScope(grant);
         Active = this;
         roomLifecycle = new SelfHostedRoomLifecycle(connection);
         roomLifecycle.PhaseChanged += OnRoomPhaseChanged;
         PhotonCompatibility = new SelfHostedPhotonCompatibility(roomLifecycle);
-        matchId = grant.MatchId;
-        LocalPlayerId = grant.PlayerId;
-        manifestHash = grant.ManifestHash;
         barrelTracker = preparedTracker;
         lifetime = new CancellationTokenSource();
         ProcessedEventId = processedEventId;
@@ -279,17 +278,41 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         try
         {
             var reply = await roomLifecycle.ConnectAsync(token);
-            token.ThrowIfCancellationRequested();
+            RequireConnectionOwner(ownedConnection, token);
             Apply(reply);
+            RequireConnectionOwner(ownedConnection, token);
             IsConnected = true;
             if (barrelTracker != null) await RefreshBarrels();
             if (ArmyEntitiesReceived != null) await RefreshArmyEntities();
+            RequireConnectionOwner(ownedConnection, token);
         }
         catch
         {
-            Close();
+            if (ReferenceEquals(connection, ownedConnection))
+            {
+                Close();
+            }
             throw;
         }
+    }
+
+    private void RequireConnectionOwner(MatchConnection expected, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        if (!ReferenceEquals(connection, expected))
+        {
+            throw new OperationCanceledException(token);
+        }
+    }
+
+    private void BeginSnapshotScope(MatchConnectionGrant grant)
+    {
+        // Host ticks and revisions are ordered inside one match, not across successive grants.
+        State = null;
+        CoopEnemies = Array.Empty<CoopEnemyViewState>();
+        matchId = grant.MatchId;
+        LocalPlayerId = grant.PlayerId;
+        manifestHash = grant.ManifestHash;
     }
 
     /// <summary>Ask the Backend for a fresh capability using the recovered login session.</summary>
@@ -1055,6 +1078,12 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private void Apply(MatchReply reply)
     {
         if (destroyed) return;
+        if (!string.IsNullOrEmpty(matchId) &&
+            (reply.Snapshot.MatchId != matchId || reply.Snapshot.ManifestHash != manifestHash))
+        {
+            // A completed operation from a replaced connection must not publish into the current match.
+            return;
+        }
         // Replayed mutation responses intentionally contain their original state.
         // Do not rewind rendering when a newer poll snapshot already arrived.
         if (State != null && (reply.Snapshot.ServerTick < State.ServerTick ||

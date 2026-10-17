@@ -8,6 +8,11 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Unity match-scope isolation](CLIENT_MATCH_SCOPE.md) fixes component reuse across
+matches: a new grant resets snapshot ordering, foreign callbacks are ignored,
+and canceled admission cleanup cannot close a replacement connection. Native
+component checks pass; normal two-client loading remains unverified.
+
 The [portable observed-pose catalog](COOP_PORTABLE_POSE_CATALOG.md) now shares
 221 source-bound samples between the server and installed Unity SDK. B32 remains
 partial: default animation views reject references; the negotiated SDK/Unity path
