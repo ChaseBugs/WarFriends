@@ -10,6 +10,7 @@ public sealed class BattleResourceLoadScope
     [ThreadStatic]
     private static BattleResourceLoadScope _currentScope;
     private readonly List<PendingLoad> _pending = new List<PendingLoad>();
+    private readonly List<Exception> _cancellationFailures = new List<Exception>();
     private bool _isCancelled;
 
     /// <summary>Gets the number of tracked loaders still pending in this battle scope.</summary>
@@ -75,11 +76,7 @@ public sealed class BattleResourceLoadScope
         }
         if (_isCancelled)
         {
-            var disposable = loading as IDisposable;
-            if (disposable != null)
-            {
-                disposable.Dispose();
-            }
+            DisposeLoading(loading);
             return null;
         }
         var pending = new PendingLoad(owner, loading);
@@ -93,9 +90,16 @@ public sealed class BattleResourceLoadScope
             }
             return pending.Handle;
         }
-        catch
+        catch (Exception failure)
         {
-            Finish(pending);
+            try
+            {
+                Finish(pending);
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException("Battle loading start and cleanup failed.", failure, cleanupFailure);
+            }
             throw;
         }
     }
@@ -106,7 +110,6 @@ public sealed class BattleResourceLoadScope
         _isCancelled = true;
         PendingLoad[] pendingLoads = _pending.ToArray();
         _pending.Clear();
-        var failures = new List<Exception>();
         foreach (PendingLoad pending in pendingLoads)
         {
             try
@@ -115,16 +118,24 @@ public sealed class BattleResourceLoadScope
                 {
                     pending.Owner.StopCoroutine(pending.Handle);
                 }
+            }
+            catch (Exception failure)
+            {
+                RecordFailure(failure);
+            }
+            // Disposal is still required when Unity could not stop the coroutine handle.
+            try
+            {
                 Finish(pending);
             }
             catch (Exception failure)
             {
-                failures.Add(failure);
+                RecordFailure(failure);
             }
         }
-        if (failures.Count != 0)
+        if (_cancellationFailures.Count != 0)
         {
-            throw new AggregateException("Battle resource cancellation failed.", failures);
+            throw new AggregateException("Battle resource cancellation failed.", _cancellationFailures.ToArray());
         }
     }
 
@@ -168,10 +179,39 @@ public sealed class BattleResourceLoadScope
         }
         pending.IsFinished = true;
         _pending.Remove(pending);
-        var disposable = pending.Loading as IDisposable;
-        if (disposable != null)
+        DisposeLoading(pending.Loading);
+    }
+
+    private void DisposeLoading(IEnumerator loading)
+    {
+        // Cleanup still belongs to its battle; a finally callback must not reopen loading outside a cancelled scope.
+        BattleResourceLoadScope previousScope = _currentScope;
+        _currentScope = this;
+        try
         {
-            disposable.Dispose();
+            var disposable = loading as IDisposable;
+            if (disposable != null)
+            {
+                disposable.Dispose();
+            }
+        }
+        catch (Exception failure)
+        {
+            RecordFailure(failure);
+            throw;
+        }
+        finally
+        {
+            _currentScope = previousScope;
+        }
+    }
+
+    private void RecordFailure(Exception failure)
+    {
+        _isCancelled = true;
+        if (!_cancellationFailures.Contains(failure))
+        {
+            _cancellationFailures.Add(failure);
         }
     }
 

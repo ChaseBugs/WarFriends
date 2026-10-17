@@ -31,6 +31,10 @@ control. Original rocket/heavy turret preparation now also passes selector,
 delayed-scope cancellation and fresh texture-load checks using actual source
 component data. Controller/base readiness waits retain ownership across yields;
 full initial turret rendering and old mission RPC migration remain open.
+Managed cleanup now retains ownership and failure history through disposal;
+confirmed abort quiesces gameplay/transport before cleanup and keeps new
+admission blocked under injected failures in all four game states. Automatic repair and
+complete two-client error presentation remain open.
 
 [Game-atlas cancellation](ABORT_ATLAS_LOADING.md) now invalidates independently
 hosted game loaders at confirmed abort, leaving menu/common work unscoped.

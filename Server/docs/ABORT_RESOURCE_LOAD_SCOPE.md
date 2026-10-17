@@ -181,3 +181,59 @@ setup/failure and modal/message gates. The protocol executable passed 1,334
 checks and the static asset audit retained zero missing scripts and zero broken
 references. Full normal controller readiness/gameplay, initial-unit rendering,
 legacy RPC replacement and two real Unity peers remain open.
+
+## Cleanup callbacks and retained failure evidence
+
+Managed iterator disposal now runs under its original battle context, including
+cancellation. Previously a cleanup callback using StartNested ran outside that
+context and could reopen source visual loading after cancellation. The native
+fault control reproduced this by starting the real level/card visual chain from
+an injected iterator's Dispose callback; see
+`Server/.local/unity-resource-scope-fault-baseline.log`.
+
+The scope now retains stop/disposal failures for its lifetime. Cancellation still
+visits every recorded loader, attempts disposal even if stopping a handle fails,
+and disposes each pending iterator at most once. Repeated Cancel calls continue
+to report known failures instead of interpreting an empty pending list as clean
+completion. GameController.StartGame therefore cannot replace a failed old scope
+and run new setup through a retry. New loaders attempted during cancelled cleanup
+are disposed inside the same closed context. Cleanup context is restored even
+when disposal fails.
+
+UnityResourceScopeFailureAudit uses explicit fault iterators, not corrupted source
+assets. It checks a cleanup continuation against actual source visual loading,
+a failing disposer followed by another pending loader, retained failure on retry,
+real root start rejection before setup, and preservation of both setup and cleanup
+causes. These are managed lifecycle fault controls, not proof that every recovered
+loader currently throws or that arbitrary UI/native-operation errors recover.
+
+## Quiescence before failing resource cleanup
+
+The separate abort baseline reproduced another ordering problem: the original
+confirmed-abort entry cancelled resources before stopping game time or suspending
+the adapter. A managed cleanup exception could leave those states running;
+`Server/.local/unity-abort-cleanup-fault-baseline.log` records that counterexample.
+
+Confirmed abort now stops gameplay/time, clears the outcome, suspends its retained
+transport owner and selects Loading/GameCancelled before managed cancellation.
+Root/map coroutine stopping, atlas-scope invalidation and controller preparation
+run in finally, even if managed resource cleanup reports failure. The menu/resource
+recovery coroutine starts only after this stage succeeds. No failure is treated
+as a terminal reward, successful cleanup or released match admission.
+
+The routing audit injects a cleanup failure in each of the four source GameState
+values. Gameplay and transport must be quiescent, ownership retained and late
+outcome/new-admission paths blocked. The fixture destroys the adapter to isolate
+subsequent cases; this represents forced scene teardown and does not demonstrate
+automatic production recovery. Retained cleanup errors intentionally require a
+new scene/session lifecycle or a future reviewed repair path. Automatic repair,
+full menu/resource completion and two-client error presentation remain open.
+
+The final fault-enabled native runs passed without compiler errors:
+`Server/.local/UnityBattleVisualLoadingAudit.RunWithNativeBundleAsync-cleanup-fault-final.log`
+and `Server/.local/UnityAbortRecoveryRoutingAudit.RunAsync-cleanup-fault-final.log`.
+The combined run also checks real native bundle completion, original turret
+texture loading, source mission setup, scoped/unscoped visual lanes and modal
+handoff. Protocol regression checks passed 1,334 cases; serialized asset audits
+retained zero missing scripts and zero broken references. These checks do not
+close the full BattleServer, automatic repair or complete gameplay/UI gates.

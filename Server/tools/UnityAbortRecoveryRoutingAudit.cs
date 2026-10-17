@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -21,6 +22,7 @@ public static class UnityAbortRecoveryRoutingAudit
     private const string PlayerId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     private const int SessionKeyBytes = 32;
     private const int TicketLifetimeSeconds = 60;
+    private static bool _injectCleanupFailure;
     private static GameControllerCoop _coop;
     private static GameControllerWarArena _arena;
 
@@ -84,6 +86,12 @@ public static class UnityAbortRecoveryRoutingAudit
                 await VerifyStateAsync(game, controller, time, state);
             }
 
+            _injectCleanupFailure = true;
+            foreach (GameController.GameState state in Enum.GetValues(typeof(GameController.GameState)))
+            {
+                await VerifyStateAsync(game, controller, time, state);
+            }
+
             Require(outcomes == 0 && UnityEngine.Object.FindObjectOfType<BeanstalkServerManager>() == null &&
                 UnityEngine.Object.FindObjectOfType<Chat>() == null,
                 "Abort entry must not publish an outcome or start Backend/Photon Chat services.");
@@ -123,8 +131,19 @@ public static class UnityAbortRecoveryRoutingAudit
             VerifyRejectedOwners(game, controller, client, handler);
             var resourceScope = new BattleResourceLoadScope();
             SetGame(game, "_battleResourceLoads", resourceScope);
-            resourceScope.Start(game, PendingResourceRoutine());
+            System.Collections.IEnumerator loading = PendingResourceRoutine();
+            if (_injectCleanupFailure)
+            {
+                loading = UnityResourceScopeFailureAudit.CreateFailingLoad();
+            }
+            resourceScope.Start(game, loading);
             Require(resourceScope.PendingCount == 1, "The controlled resource loader did not become pending.");
+            if (_injectCleanupFailure)
+            {
+                VerifyInjectedAbortFailure(game, client, handler);
+                UnityEngine.Object.DestroyImmediate(adapterRoot);
+                return;
+            }
             var scopeField = typeof(AtlasPreparer).GetField("_gameLoadScope", InstanceFields);
             object previousAtlasScope = scopeField.GetValue(Singleton<AtlasPreparer>.instance);
             Apply(client, Snapshot(BattlePhase.Aborted));
@@ -150,6 +169,33 @@ public static class UnityAbortRecoveryRoutingAudit
         }
 
         UnityEngine.Object.DestroyImmediate(adapterRoot);
+    }
+
+    private static void VerifyInjectedAbortFailure(GameController game, SelfHostedBattleClient client,
+        Action<MatchSnapshot> handler)
+    {
+        GameController.GameState initialState = game.gameState;
+        AggregateException reported = null;
+        try
+        {
+            Apply(client, Snapshot(BattlePhase.Aborted));
+        }
+        catch (TargetInvocationException failure)
+        {
+            reported = failure.InnerException as AggregateException;
+        }
+        Require(reported != null && reported.Flatten().InnerExceptions.Any(error =>
+            error.Message == UnityResourceScopeFailureAudit.CleanupFailureMessage),
+            "The controlled abort did not report its injected resource cleanup failure.");
+        Require(game.IsSelfHostedAbortRecovery && game.gameState == GameController.GameState.Loading &&
+            !game.gameIsRunning && !TimeManager.instance.gameIsRunning &&
+            game.gameEndReason == GameController.GameEndReason.None &&
+            MatchManager.matchState == MatchState.GameCancelled && client.OwnsMatch && !client.IsConnected,
+            "Resource cleanup failure left confirmed-abort gameplay or transport running before recovery.");
+        VerifyBlockedReplacement(game, (GameControllerDeathMatch)game.mainController, client, handler);
+        Debug.Log("PASS: injected " + initialState + " abort cleanup failure retains a suspended owner, " +
+            "stopped gameplay and blocked " +
+            "admission; fixture forces adapter destruction instead of claiming successful recovery.");
     }
 
     private static System.Collections.IEnumerator PendingResourceRoutine()

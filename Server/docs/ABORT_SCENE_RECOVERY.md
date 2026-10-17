@@ -163,3 +163,12 @@ original cross-host level/card chain could repopulate visuals after they were
 cleared. [Managed loading ownership](ABORT_RESOURCE_LOAD_SCOPE.md) records the
 counterexample, exact source links and native unscoped-lane/fresh-scope controls.
 This does not establish complete resource/menu or mode-specific cleanup.
+
+## Resource cleanup failures
+
+The entry now quiesces gameplay/time and suspends the retained adapter before
+managed cleanup can throw. It stops root/map/controller loading and invalidates
+game-atlas publication in finally. Fault injection covers all four source game
+states; it must not release admission or claim recovery completed. See
+[retained cleanup failure evidence](ABORT_RESOURCE_LOAD_SCOPE.md) for cancellation
+history, source visual callback ownership and the still-open repair boundary.

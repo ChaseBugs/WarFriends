@@ -76,6 +76,7 @@ public static class UnityBattleVisualLoadingAudit
                 slots.cardVisuals.TrueForAll(visual => visual.materialTetxureBlue != null),
                 "A fresh battle scope did not load its original card visuals normally.");
             await UnityMissionLoadingAudit.VerifyAsync(level, slots);
+            await UnityResourceScopeFailureAudit.VerifyAsync(level, slots);
             Debug.Log("PASS: original level/card visual chain cancels across hosts without repopulating cleared " +
                 "visuals; unrelated same-host preview and a fresh battle scope finish normally.");
         }

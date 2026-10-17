@@ -181,3 +181,4 @@ Server/tools/UnityMissionLoadingAudit.cs text eol=lf
 Server/tools/AbortMissionSetupControllerProbe.cs text eol=lf
 Server/tools/UnityInitialTurretFixture.cs text eol=lf
 Server/tools/UnityInitialTurretLoadingAudit.cs text eol=lf
+Server/tools/UnityResourceScopeFailureAudit.cs text eol=lf

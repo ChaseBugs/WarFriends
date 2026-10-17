@@ -975,20 +975,27 @@ public class GameController : Singleton<GameController>
 
         GameState previousState = gameState;
         _isSelfHostedAbortRecovery = true;
-        if (_battleResourceLoads != null)
-        {
-            _battleResourceLoads.Cancel();
-        }
-        StopAllCoroutines();
-        Singleton<MapManager>.instance.StopAllCoroutines();
-        Singleton<AtlasPreparer>.instance.CancelGameLoadingForAbort();
-        controller.PrepareSelfHostedAbort(source);
+        // Quiesce gameplay and transport before any resource callback can fail.
         gameIsRunning = false;
         gameEndReason = GameEndReason.None;
         source.SuspendAbortedMatch();
         gameState = GameState.Loading;
         MatchManager.matchState = MatchState.GameCancelled;
         Screen.sleepTimeout = SleepTimeout.SystemSetting;
+        try
+        {
+            if (_battleResourceLoads != null)
+            {
+                _battleResourceLoads.Cancel();
+            }
+        }
+        finally
+        {
+            StopAllCoroutines();
+            Singleton<MapManager>.instance.StopAllCoroutines();
+            Singleton<AtlasPreparer>.instance.CancelGameLoadingForAbort();
+            controller.PrepareSelfHostedAbort(source);
+        }
         StartCoroutine(RecoverSelfHostedAbortRoutine(controller, source, previousState));
     }
 
