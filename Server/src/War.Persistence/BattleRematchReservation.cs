@@ -9,4 +9,7 @@ public sealed record BattleRematchReservation(
 {
     /// <summary>Supplies the validated frozen source order rather than the consent record's sorted membership.</summary>
     public IReadOnlyList<string>? PlayerOrder { get; init; }
+
+    /// <summary>Freezes the validated Backend-generated admission payload with participant reservation.</summary>
+    public byte[]? PreparedManifest { get; init; }
 }

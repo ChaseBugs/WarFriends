@@ -1,5 +1,9 @@
+using System.Text.Json;
+
 using MongoDB.Bson;
 using MongoDB.Driver;
+
+using War.BattleServer;
 using War.Persistence;
 using War.Shared;
 
@@ -56,7 +60,7 @@ internal static class RematchReservationStoreTests
         Require(await stores.Queue.Release(manifest.MatchId, players, cancellationToken), "Fixture pair release failed.");
         var now = DateTimeOffset.UtcNow;
         return new Fixture(new BattleRematchReservation(manifest.MatchId, players[0], "rematch.fixture", now),
-            players, digest);
+            players, digest, JsonSerializer.SerializeToUtf8Bytes(manifest));
     }
 
     private static async Task VerifyRequiredConsentAsync(Stores stores, CancellationToken cancellationToken)
@@ -86,7 +90,14 @@ internal static class RematchReservationStoreTests
         Fixture fixture = await PrepareAsync(stores, cancellationToken);
         fixture = fixture with
         {
-            Request = fixture.Request with { PlayerOrder = fixture.Players },
+            Request = fixture.Request with
+            {
+                PlayerOrder = fixture.Players,
+                PreparedManifest = JsonSerializer.SerializeToUtf8Bytes(MatchManifest.Parse(fixture.SourceManifest) with
+                {
+                    MatchId = "m" + Guid.NewGuid().ToString("N"),
+                }),
+            },
         };
         using var changes = await stores.Database.WatchAsync(
             new EmptyPipelineDefinition<ChangeStreamDocument<BsonDocument>>(),
@@ -97,6 +108,10 @@ internal static class RematchReservationStoreTests
             reserved[0].NextMatchId == reserved[1].NextMatchId && reserved[0].NextMatchId != fixture.Request.SourceMatchId,
             "Concurrent reservation must publish exactly one distinct match identity.");
         await VerifyTransactionAsync(changes, cancellationToken);
+        var snapshots = stores.Database.GetCollection<BattleManifestSnapshotDocument>("battle_manifest_snapshots");
+        var frozen = await snapshots.Find(row => row.Id == reserved[0].NextMatchId).SingleAsync(cancellationToken);
+        Require(frozen.Manifest.SequenceEqual(fixture.Request.PreparedManifest ?? []),
+            "The committed pair must already have its exact frozen admission payload.");
         Require(await TryReserveAsync(stores.First, fixture.Request with
         {
             CompatibilityKey = "changed-policy.fixture",
@@ -132,19 +147,20 @@ internal static class RematchReservationStoreTests
         IChangeStreamCursor<ChangeStreamDocument<BsonDocument>> changes, CancellationToken cancellationToken)
     {
         var writes = new List<BsonDocument>();
-        while (writes.Count < 2 && await changes.MoveNextAsync(cancellationToken))
+        while (writes.Count < 3 && await changes.MoveNextAsync(cancellationToken))
         {
             foreach (var change in changes.Current)
             {
-                if (change.CollectionNamespace.CollectionName is "battle_pairs" or "battle_rematch_consents")
+                if (change.CollectionNamespace.CollectionName is
+                    "battle_pairs" or "battle_rematch_consents" or "battle_manifest_snapshots")
                 {
                     writes.Add(change.BackingDocument);
                 }
             }
         }
-        Require(writes.Count == 2 && writes.All(write => write.Contains("txnNumber")) &&
-            writes[0]["txnNumber"] == writes[1]["txnNumber"] && writes[0]["lsid"] == writes[1]["lsid"],
-            "Consent consumption and participant reservation must share one committed Mongo transaction.");
+        Require(writes.Count == 3 && writes.All(write => write.Contains("txnNumber") &&
+            write["txnNumber"] == writes[0]["txnNumber"] && write["lsid"] == writes[0]["lsid"]),
+            "Consent, participant reservation and frozen manifest must share one committed Mongo transaction.");
     }
 
     private static async Task VerifyCancellationRaceAsync(Stores stores, CancellationToken cancellationToken)
@@ -218,7 +234,7 @@ internal static class RematchReservationStoreTests
         }
     }
 
-    private sealed record Fixture(BattleRematchReservation Request, string[] Players, string Digest);
+    private sealed record Fixture(BattleRematchReservation Request, string[] Players, string Digest, byte[] SourceManifest);
 
     private sealed class Stores
     {

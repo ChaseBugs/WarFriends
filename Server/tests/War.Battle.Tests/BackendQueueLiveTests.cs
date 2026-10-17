@@ -373,6 +373,11 @@ internal static class BackendQueueLiveTests
             using var loadingDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(45));
             await new LiveLoadingCancellationChecks(new Uri(backendUrl), tokens, queue, results)
                 .RunAsync(loadingDeadline.Token);
+            using var rematchAllocationDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+            await LiveSameOpponentRematchChecks.RunAsync(
+                new LiveSameOpponentRematchChecks.Settings(new Uri(backendUrl), tokens),
+                new LiveSameOpponentRematchChecks.Stores(results, queue,
+                    new BattleManifestSnapshotStore(mongoUri, database)), rematchAllocationDeadline.Token);
             if (unityExecutable != null && unityProject != null)
             {
                 using var unityDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));

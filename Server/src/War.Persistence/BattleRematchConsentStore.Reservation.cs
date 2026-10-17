@@ -1,4 +1,8 @@
+using System.Security.Cryptography;
+
 using MongoDB.Driver;
+
+using War.BattleServer;
 
 namespace War.Persistence;
 
@@ -12,7 +16,11 @@ public sealed partial class BattleRematchConsentStore
         BattleRematchReservation request, CancellationToken cancellationToken)
     {
         ValidateTime(request.ApplicationTime);
-        request = request with { PlayerOrder = request.PlayerOrder?.ToArray() };
+        request = request with
+        {
+            PlayerOrder = request.PlayerOrder?.ToArray(),
+            PreparedManifest = request.PreparedManifest?.ToArray(),
+        };
         DateTimeOffset now = DateTimeOffset.FromUnixTimeMilliseconds(request.ApplicationTime.ToUnixTimeMilliseconds());
         BattleResultDocument result = await _results.Get(request.SourceMatchId, cancellationToken)
             ?? throw new InvalidDataException("Rematch reservation requires accepted terminal evidence.");
@@ -27,6 +35,8 @@ public sealed partial class BattleRematchConsentStore
             throw new InvalidDataException("Rematch source order differs from accepted participants.");
         }
         BattlePairDocument pair = CreateReservedPair(request.CompatibilityKey, order, now);
+        BattleManifestSnapshotDocument? snapshot = PrepareSnapshot(request, pair);
+        var publication = new ReservationPublication(pair, snapshot);
         using IClientSessionHandle session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
         try
         {
@@ -50,7 +60,7 @@ public sealed partial class BattleRematchConsentStore
                     throw new InvalidDataException("Both participants must consent inside the rematch window.");
                 }
                 await RequireParticipantsAvailableAsync(transaction, players, token);
-                return await PublishReservationAsync(transaction, current, pair, token);
+                return await PublishReservationAsync(transaction, current, publication, token);
             }, ReservationTransaction, cancellationToken);
         }
         catch (MongoWriteException exception) when (exception.WriteError.Category == ServerErrorCategory.DuplicateKey)
@@ -78,8 +88,9 @@ public sealed partial class BattleRematchConsentStore
     }
 
     private async Task<BattleRematchConsentDocument> PublishReservationAsync(IClientSessionHandle session,
-        BattleRematchConsentDocument consent, BattlePairDocument pair, CancellationToken cancellationToken)
+        BattleRematchConsentDocument consent, ReservationPublication publication, CancellationToken cancellationToken)
     {
+        BattlePairDocument pair = publication.Pair;
         long previousRevision = consent.Revision;
         consent.Status = Allocated;
         consent.NextMatchId = pair.MatchId;
@@ -96,7 +107,36 @@ public sealed partial class BattleRematchConsentStore
         }
         await _consents.Database.GetCollection<BattlePairDocument>("battle_pairs")
             .InsertOneAsync(session, pair, cancellationToken: cancellationToken);
+        if (publication.Snapshot != null)
+        {
+            await _consents.Database.GetCollection<BattleManifestSnapshotDocument>("battle_manifest_snapshots")
+                .InsertOneAsync(session, publication.Snapshot, cancellationToken: cancellationToken);
+        }
         return consent;
+    }
+
+    private static BattleManifestSnapshotDocument? PrepareSnapshot(
+        BattleRematchReservation request, BattlePairDocument pair)
+    {
+        if (request.PreparedManifest == null)
+        {
+            return null;
+        }
+        MatchManifest manifest = MatchManifest.Parse(request.PreparedManifest);
+        if (manifest.MatchId == request.SourceMatchId || !manifest.Players.Select(player => player.PlayerId)
+            .SequenceEqual(pair.Players))
+        {
+            throw new InvalidDataException("Prepared rematch manifest differs from reserved identity or order.");
+        }
+        pair.MatchId = manifest.MatchId;
+        BattleMatchQueueStore.ValidatePairDocument(pair);
+        var snapshot = new BattleManifestSnapshotDocument
+        {
+            Id = pair.MatchId, Players = pair.Players.ToArray(), Manifest = request.PreparedManifest.ToArray(),
+            Sha256 = Convert.ToHexStringLower(SHA256.HashData(request.PreparedManifest)), CreatedUtc = pair.CreatedUtc,
+        };
+        BattleManifestSnapshotStore.Validate(snapshot, pair.MatchId, pair.Players);
+        return snapshot;
     }
 
     private static BattlePairDocument CreateReservedPair(string compatibilityKey, string[] players, DateTimeOffset now)
@@ -112,4 +152,6 @@ public sealed partial class BattleRematchConsentStore
         BattleMatchQueueStore.ValidatePairDocument(pair);
         return pair;
     }
+
+    private sealed record ReservationPublication(BattlePairDocument Pair, BattleManifestSnapshotDocument? Snapshot);
 }

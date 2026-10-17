@@ -104,6 +104,16 @@ if (!string.IsNullOrWhiteSpace(battleManifestTemplatePath))
     builder.Services.AddSingleton(services => new BattleManifestFactory(templateBytes,
         services.GetRequiredService<BattleAllocationStore>(),services.GetRequiredService<BattlePlayerPresentationSource>(),
         services.GetRequiredService<IBattleWeaponManifestCatalog>()));
+    if (matchmakingCompatibilityKey != null)
+    {
+        builder.Services.AddSingleton(services => new BattleRematchAllocator(
+            new BattleRematchAllocator.Stores(services.GetRequiredService<BattleRematchConsentStore>(),
+                services.GetRequiredService<BattleResultStore>(),
+                services.GetRequiredService<BattleManifestSnapshotStore>(),
+                services.GetRequiredService<BattleMatchQueueStore>()),
+            new BattleRematchAllocator.Hosting(services.GetRequiredService<BattleManifestFactory>(),
+                services.GetRequiredService<BattleMatchProvisioner>(), matchmakingCompatibilityKey)));
+    }
 }
 // Limits are configurable (RateLimiting:Api/Auth:PermitLimit/WindowSeconds) so an isolated test
 // harness sharing one IP across a long, fast, sequential script — e.g. LegacySmoke.ps1, which only

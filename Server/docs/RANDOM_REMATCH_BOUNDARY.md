@@ -51,9 +51,9 @@ digest remains unchanged. The native run passed in
 This uses the explicit authenticated SDK entry point without menu/profile
 stubs. It does not prove Dog Tag settlement, normal lobby-to-second-battle play
 or two Unity clients.
-End-to-end same-opponent friend/co-op rematch negotiation remains absent. Its required
-two-party consent, cancellation/expiry and fresh allocator grants must be built
-separately; the old Photon RematchRPC is not an accepted Worker command.
+Normal Unity friend/co-op rematch remains incomplete. Durable consent and fresh
+SDK allocation are implemented below; the old Photon RematchRPC is not an
+accepted Worker command or a substitute for the remaining controller handoff.
 
 ## Same-opponent consent foundation
 
@@ -78,10 +78,9 @@ and the Unix-millisecond deadline. A missing consent reads `not-requested`
 with zero revision/deadline; it does not create a window. Reads persist expiry
 without adding a vote. `BackendClient` has matching read/accept/cancel methods.
 
-These routes do not issue grants.
-`ready` means mutual intent only. The reservation primitive below can consume
-it atomically; the production allocator still needs to invoke that primitive,
-revalidate current loadouts and mode, and issue fresh Worker capabilities.
+`ready` means mutual intent only. `/v1/battle/rematch/allocate` consumes it
+through the source-compatible allocator described below. Connection grants
+remain on the existing `/v1/battle/grant` endpoint.
 No wallet or Dog Tag changes are made by consent. Normal Unity controllers
 still need typed consent/status/cancel integration; friend, human co-op
 and co-op bot policy must remain distinct. No same-opponent gameplay claim
@@ -94,13 +93,15 @@ unchanged duplicate deadlines, outsider rejection, cancellation, the exact
 expiry boundary, damaged-result binding rejection and terminal-result preservation.
 The native `--queue-live <mongo-uri>` suite additionally checks real Backend
 protobuf/SDK consent against an accepted Worker result, including unauthenticated,
-nonparticipant, malformed-ID and unknown-field rejection. This is not a second
-same-opponent allocation or Unity controller proof.
+nonparticipant, malformed-ID and unknown-field rejection. Those request checks
+alone do not prove a second allocation or Unity controller flow; the allocation
+gate below covers the supported SDK admission path separately.
 
 ## Atomic reservation foundation
 
 `ReserveAsync` consumes an unexpired `ready` record and inserts one new
-`battle_pairs` row in the same snapshot/majority MongoDB transaction. It binds
+`battle_pairs` row in the same snapshot/majority MongoDB transaction. When
+provided, its prepared manifest is inserted in that same transaction. It binds
 the accepted result digest and exact participant set, checks existing pairs
 and queue tickets, and relies on the allocator's unique participant index to
 exclude competing pairs. Queue indexes must be initialized before this call.
@@ -126,10 +127,8 @@ single-party consent, outsider rejection, busy/expired requests, exhausted
 revision rejection and replay after release. Its source result comes from a
 controlled real MatchEngine fixture, not a normal Unity rematch session.
 
-No HTTP allocation route calls this primitive yet. Production orchestration of
-current-loadout validation and original map/mode/player-slot preservation,
-Worker provisioning, fresh grants, post-reservation recovery and Unity
-controller handoff remain open.
+The HTTP allocator now calls this primitive with a prepared admission payload.
+Unity controller handoff and broader loadout/mode support remain open.
 No wallet or Dog Tag transition is implemented by this reservation layer.
 
 ## Source-bound manifest refresh foundation
@@ -146,7 +145,7 @@ The source must still use the configured host and weapon catalog. A manifest
 containing army/perk projections, shield levels or a PvP Gold-bonus admission
 counter is rejected until those current projections can be rebuilt; none is
 silently copied as current authority. This does not prove every loadout or mode
-is supported, and the method is not connected to an HTTP allocation route yet.
+is supported. The HTTP allocator uses this method before reserving participants.
 
 `--rematch-manifest-only <mongo-uri>` checks real Mongo-backed equipment/rank
 changes between rounds, reversed consent membership versus original slot
@@ -154,3 +153,45 @@ order, a second-slot scene master, original snapshot immutability and rejection
 of mismatched source hashes, reused match IDs and stale shield authority.
 The fixture uses reviewed rifle content and controlled account documents;
 it is not Worker registration, full menu or same-opponent Unity gameplay proof.
+
+## HTTP allocation and Worker handoff
+
+`BattleRematchAllocator` serves `/v1/battle/rematch/allocate` using only a
+canonical source match ID and authenticated account identity. The recovered
+and modern account authentication paths are shared with other battle routes.
+The configured catalog and compatibility key remain deployment-owned.
+
+Before reservation it reads accepted terminal evidence, validates the original
+ordered manifest, and prepares current supported equipment/profile projections.
+Consent consumption, participant reservation and the exact prepared manifest
+commit together. The allocator then invokes ordinary Worker registration and
+active-pair-fenced grant publication. A successful `MatchQueueReply` has code
+`paired` and a new match ID; `BackendClient.AllocateRematchAsync` exposes it.
+The caller must fetch its own fresh grant before UDP admission.
+
+Provisioning failures return `503 rematch_provision_deferred`; retries use the
+same reservation and frozen payload, not a newly queried loadout. Released or
+completed reservations return `completed` without registering the Worker again.
+Missing or unsupported source authority returns `409 rematch_unavailable`.
+Unconfigured allocation policy returns `503 rematch_disabled`.
+
+Unity controller integration, post-reservation cancel UI behavior, fault-injected
+registration/reply-loss recovery, admission expiry and all shield/army/bonus
+projection paths remain unverified or unfinished. This is not full gameplay
+or same-opponent friend/co-op feature completion.
+
+The native `--queue-live <mongo-uri>` gate now plays an unscored rifle source
+round and a same-opponent rematch through actual Backend HTTP, Worker UDP,
+accepted terminal evidence and Mongo pair release. It requires two consents,
+concurrent allocation convergence, distinct match/session/ticket/key identity,
+source slot preservation, unchanged grant replay and `completed` replay after
+the second terminal result. The original accepted result digest stays unchanged.
+The passing native run is
+`Server/.local/queue-live-5c8ee474b5404429a4dd557351ea3aba`.
+These are two portable .NET SDK peers, not two Unity Clients or normal friend UI.
+
+This gate initially exposed a Windows UDP `ConnectionReset (10054)` after a
+peer closed its port. The shared Worker receiver now continues after peer
+ConnectionReset/ConnectionRefused feedback without changing battle authority;
+other socket failures retain their existing handling. The rerun completes the
+second accepted result instead of stopping the entire Worker.

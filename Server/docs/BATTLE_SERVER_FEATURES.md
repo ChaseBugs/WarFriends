@@ -21,18 +21,19 @@ Same-opponent consent now has a separate durable persistence foundation:
 accepted Ended-result participant binding, thirty-second expiry, idempotent
 concurrent votes and irreversible cancellation. Authenticated protobuf
 read/accept/cancel endpoints and portable SDK methods now expose that state.
-They are not connected to Unity controllers or fresh allocation; `ready` is intent only.
+They are not connected to Unity controllers; `ready` is intent only until the separate allocation call.
 An additional transaction primitive now consumes mutual consent and reserves
 the exact two participants once, with cancel/reserve fencing and stable replay
 after pair release. Real Mongo change streams prove both writes share one
-transaction. Production allocator invocation, mode/loadout validation and
-Worker provisioning are not connected yet.
+transaction. The prepared admission manifest now commits in that transaction
+too. The authenticated allocator invokes source-compatible loadout refresh,
+Worker registration and active-pair-fenced grant publication.
 The source-bound rematch manifest builder now preserves map/mode, ordered
 player slots and the actual scene master while reading current weapon/profile
 and card-allocation stores. Source hash/identity and stale shield/army/bonus
 authority fail closed. Ordered reservation binding and Mongo-backed upgrade
-refresh checks exist; this builder still needs production allocation/Worker
-and Unity controller integration.
+refresh checks exist. Unity controller integration, the rejected shield/army/
+bonus projection paths and injected provisioning-failure recovery remain open.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

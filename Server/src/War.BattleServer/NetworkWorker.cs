@@ -470,6 +470,13 @@ public sealed class NetworkWorker : BackgroundService
             try { received = await socket.ReceiveFromAsync(buffer, SocketFlags.None, any, ct); }
             catch (SocketException e) when (e.SocketErrorCode == SocketError.MessageSize)
             {Interlocked.Increment(ref malformedDrops);continue;}
+            catch (SocketException exception) when (exception.SocketErrorCode is
+                SocketError.ConnectionReset or SocketError.ConnectionRefused)
+            {
+                // A closed UDP peer may produce ICMP feedback on this shared socket.
+                // It is not an authenticated command or authority to stop every running match.
+                continue;
+            }
             Interlocked.Increment(ref receivedDatagrams);
             if (!PacketMtuPolicy.Accept(received.ReceivedBytes,mtuBytes))
             {Interlocked.Increment(ref malformedDrops);continue;}

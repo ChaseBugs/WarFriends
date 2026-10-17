@@ -5,7 +5,7 @@ using static War.Backend.HttpProtocol;
 
 namespace War.Backend;
 
-/// <summary>Exposes participant-only rematch intent without issuing replacement battle grants.</summary>
+/// <summary>Exposes participant-only rematch intent and source-compatible fresh allocation.</summary>
 public static class BattleRematchEndpoints
 {
     /// <summary>Uses the same account authentication boundary as the existing battle allocation routes.</summary>
@@ -18,6 +18,40 @@ public static class BattleRematchEndpoints
             HandleAsync(context, store, authenticate, "accept"));
         routes.MapPost("/battle/rematch/cancel", (HttpContext context, BattleRematchConsentStore store) =>
             HandleAsync(context, store, authenticate, "cancel"));
+        Func<HttpContext, Task<IResult>> allocate = context => AllocateAsync(context, authenticate);
+        routes.MapPost("/battle/rematch/allocate", allocate);
+    }
+
+    private static async Task<IResult> AllocateAsync(
+        HttpContext context, Func<HttpContext, Task<string?>> authenticate)
+    {
+        string? playerId = await authenticate(context);
+        if (playerId == null)
+        {
+            return Error(401, "unauthorized", "Authentication required.");
+        }
+        MatchGrantRequest request = await Read(context, MatchGrantRequest.Parser);
+        if (!IsCanonicalRequest(request))
+        {
+            return Error(400, "invalid_rematch_request", "Only a canonical completed match ID is accepted.");
+        }
+        var allocator = context.RequestServices.GetService<BattleRematchAllocator>();
+        if (allocator == null)
+        {
+            return Error(503, "rematch_disabled", "Rematch allocation policy is not configured.");
+        }
+        try
+        {
+            return Proto(await allocator.AllocateAsync(request.MatchId, playerId, context.RequestAborted));
+        }
+        catch (InvalidDataException)
+        {
+            return Error(409, "rematch_unavailable", "Source-compatible rematch allocation is unavailable.");
+        }
+        catch (HttpRequestException)
+        {
+            return Error(503, "rematch_provision_deferred", "Reserved rematch provisioning must be retried.");
+        }
     }
 
     private static async Task<IResult> HandleAsync(HttpContext context, BattleRematchConsentStore store,
@@ -29,8 +63,7 @@ public static class BattleRematchEndpoints
             return Error(401, "unauthorized", "Authentication required.");
         }
         MatchGrantRequest request = await Read(context, MatchGrantRequest.Parser);
-        if (!Regex.IsMatch(request.MatchId, @"\Am[0-9a-f]{32}\z") ||
-            !request.Equals(new MatchGrantRequest { MatchId = request.MatchId }))
+        if (!IsCanonicalRequest(request))
         {
             return Error(400, "invalid_rematch_request", "Only a canonical completed match ID is accepted.");
         }
@@ -49,6 +82,12 @@ public static class BattleRematchEndpoints
         {
             return Error(409, "rematch_unavailable", "Completed battle consent is unavailable for this participant.");
         }
+    }
+
+    private static bool IsCanonicalRequest(MatchGrantRequest request)
+    {
+        return Regex.IsMatch(request.MatchId, @"\Am[0-9a-f]{32}\z") &&
+            request.Equals(new MatchGrantRequest { MatchId = request.MatchId });
     }
 
     private static MatchRematchConsent Project(string matchId, BattleRematchConsentDocument? consent)
