@@ -233,17 +233,45 @@ public class GameControllerDeathMatch : GameControllerPVP
 		{
 			FinishChoosingCards();
 		}
-		if (gameIsRunning && !TimeManager.instance.mIsFreezed)
-		{
-			time -= Time.deltaTime;
-		}
-		if (time <= 0f && gameIsRunning && !Singleton<PhotonConnectionManager>.instance.isClient && !mIsOverTime)
-		{
-			mIsOverTime = true;
-			Singleton<MatchManager>.instance.StartOverTime(base.mMainPlayerController, GameControllerOnline.mOtherPlayerInstance);
-		}
+        SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+        if (selfHosted != null && selfHosted.OwnsMatch)
+        {
+            ApplySelfHostedClock(selfHosted);
+        }
+        else
+        {
+            if (gameIsRunning && !TimeManager.instance.mIsFreezed)
+            {
+                time -= Time.deltaTime;
+            }
+
+            if (time <= 0f && gameIsRunning && !Singleton<PhotonConnectionManager>.instance.isClient && !mIsOverTime)
+            {
+                mIsOverTime = true;
+                Singleton<MatchManager>.instance.StartOverTime(
+                    base.mMainPlayerController, GameControllerOnline.mOtherPlayerInstance);
+            }
+        }
 		base.Update();
 	}
+
+    private void ApplySelfHostedClock(SelfHostedBattleClient client)
+    {
+        if (client.State == null)
+        {
+            return;
+        }
+
+        // Local frame time must not start overtime, destroy shields or send a retired Photon RPC.
+        War.Client.PvpMatchClock clock = War.Client.PvpMatchClock.FromSnapshot(client.State);
+        time = clock.RemainingSeconds;
+        mIsOverTime = clock.IsOvertime;
+        if (gameIsRunning)
+        {
+            // Preserve the recovered GameStarted-before-overtime UI callback order while loading.
+            Singleton<MatchManager>.instance.ApplySelfHostedOvertime(clock);
+        }
+    }
 
 	protected override void StartMatch()
 	{

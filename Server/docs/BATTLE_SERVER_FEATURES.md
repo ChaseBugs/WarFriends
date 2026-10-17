@@ -8,6 +8,14 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The [host-owned PvP clock checkpoint](PLAYER_PVP_CLOCK.md) now stops the normal
+DeathMatch controller from starting local overtime, destroying source shields
+or sending the legacy overtime RPC for an owned self-hosted match. Its time
+display and overtime notification follow the validated host phase/tick tuple,
+including reconnect pause and prestart cancellation. Controlled native source
+Update checks and real two-peer UDP clock projection cover this boundary;
+normal rendered HUD and complete scene boot remain open.
+
 [Player bazooka presentation](PLAYER_BAZOOKA_PRESENTATION.md) now carries the
 seven source weapon identities through host projectile rows, reliable impacts,
 the SDK and the normal Unity projectile presenter. A script-free derived source

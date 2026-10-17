@@ -93,3 +93,7 @@ Server/tools/UnityLiveBazookaPlayScene.cs text eol=lf
 Server/tools/UnityLiveBazookaEffectObservation.cs text eol=lf
 Server/tests/War.Battle.Tests/LiveBazookaUnityTests.cs text eol=lf
 Server/docs/PLAYER_BAZOOKA_LIVE_PLAY_MODE.md text eol=lf
+Server/src/War.Client/PvpMatchClock.cs text eol=lf
+Server/tests/War.Protocol.Tests/PvpMatchClockTests.cs text eol=lf
+Server/tools/UnityPvpClockAudit.cs text eol=lf
+Server/docs/PLAYER_PVP_CLOCK.md text eol=lf

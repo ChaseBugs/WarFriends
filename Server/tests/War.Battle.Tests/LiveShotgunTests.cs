@@ -194,7 +194,11 @@ internal static class LiveShotgunTests
             Check((await a.ConnectAsync(timeout.Token)).Code=="admitted" &&
                   (await b.ConnectAsync(timeout.Token)).Code=="admitted",
                   "overtime UDP peers admitted by signed grants");
-            await a.ReadyAsync(timeout.Token);await b.ReadyAsync(timeout.Token);
+            await a.ReadyAsync(timeout.Token);
+            MatchReply ready = await b.ReadyAsync(timeout.Token);
+            PvpMatchClock countdownClock = PvpMatchClock.FromSnapshot(ready.Snapshot);
+            Check(!countdownClock.IsOvertime && countdownClock.RemainingSeconds == manifest.DurationSeconds,
+                "the live countdown clock excludes its prestart delay");
             MatchReply state;
             do
             {
@@ -202,6 +206,11 @@ internal static class LiveShotgunTests
                 state=await a.PollAsync(timeout.Token);
             } while(state.Snapshot.Phase!=BattlePhase.Running || state.Snapshot.EndTick!=0);
             var other=await b.PollAsync(timeout.Token);
+            PvpMatchClock localClock = PvpMatchClock.FromSnapshot(state.Snapshot);
+            PvpMatchClock peerClock = PvpMatchClock.FromSnapshot(other.Snapshot);
+            Check(localClock.IsOvertime && peerClock.IsOvertime &&
+                localClock.RemainingSeconds == 0f && peerClock.RemainingSeconds == 0f,
+                "both live UDP peers project only confirmed host overtime");
             Check(state.Snapshot.Phase==BattlePhase.Running && !state.Snapshot.RewardEligible &&
                   state.Snapshot.Shields.Count==8 && state.Snapshot.Shields.All(s=>s.Destroyed) &&
                   other.Snapshot.Phase==BattlePhase.Running && other.Snapshot.EndTick==0 &&

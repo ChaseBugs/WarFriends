@@ -549,6 +549,21 @@ public class MatchManager : Singleton<MatchManager>
 		isOverTime = false;
 	}
 
+    /// <summary>Updates source overtime presentation while shield destruction and damage stay on the host.</summary>
+    public void ApplySelfHostedOvertime(War.Client.PvpMatchClock clock)
+    {
+        if (isOverTime == clock.IsOvertime)
+        {
+            return;
+        }
+
+        isOverTime = clock.IsOvertime;
+        if (clock.IsOvertime && OverTimeStarted != null)
+        {
+            OverTimeStarted();
+        }
+    }
+
 	public void StartOverTime(PlayerController player, PlayerController opponent)
 	{
 		mPlayer = player;
