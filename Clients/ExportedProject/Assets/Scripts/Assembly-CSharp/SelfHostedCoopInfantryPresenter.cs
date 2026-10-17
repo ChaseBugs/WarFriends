@@ -157,8 +157,9 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
 
         // The recovered SetSoldierStyle makes this cosmetic choice locally, once per created unit.
         int index = UnityEngine.Random.Range(0, styles.Count);
-        SelfHostedInfantryVisual visual = SelfHostedInfantryVisualFactory.Create(_source, styles[index],
-            "SelfHostedCoopInfantry_" + row.EntityId);
+        SelfHostedInfantryWeaponAppearance appearance = ResolveWeaponAppearance(row);
+        SelfHostedInfantryVisual visual = SelfHostedInfantryVisualFactory.CreateWithAppearance(
+            _source, styles[index], appearance, "SelfHostedCoopInfantry_" + row.EntityId);
         try
         {
             var sampler = new SelfHostedInfantryAnimationSampler(visual.AnimationRoot, _sourceAnimation);
@@ -169,6 +170,18 @@ public sealed class SelfHostedCoopInfantryPresenter : MonoBehaviour
             DestroyRoot(visual.Root);
             throw;
         }
+    }
+
+    private SelfHostedInfantryWeaponAppearance ResolveWeaponAppearance(CoopEnemyViewState row)
+    {
+        if (row.IsCardUnit)
+        {
+            return SelfHostedInfantryWeaponAppearance.ResolveCard(_family);
+        }
+
+        // Host OrdinaryStats uses this same zero-based normal upgrade index, not a displayed soldier level.
+        var upgrades = new UpgradeSlots.UnitUpgrades { slotUpgradeindex = row.Level };
+        return SelfHostedInfantryWeaponAppearance.ResolveOrdinary(_family, upgrades);
     }
 
     private void SampleActor(Actor actor, CoopEnemyViewState row)

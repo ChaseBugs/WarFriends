@@ -17,8 +17,11 @@ its independent source comparison and remaining integration boundary are recorde
 in the same checkpoint. This does not close B32 or public co-op admission.
 The production factory also supports recovered weapon model application before
 renderer initialization; a 17,680-case native compatibility matrix covers 80
-weapon selections and all 221 poses with one controlled body style. Normal
-presenter selection, other body styles and transport negotiation remain open.
+weapon selections and all 221 poses with one controlled body style.
+Observed-pose presenter dispatch, other body styles and transport negotiation remain open.
+The normal presenter now selects and displays the source ordinary/card weapon
+model using the host normal upgrade index or fixed card lane. This is separate
+from accepting observed-pose references and does not close B32.
 
 Live player snapshots publish server-owned PvP score and kill-streak progress.
 Terminal snapshots also publish the complete ordered skill-shot breakdown,

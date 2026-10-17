@@ -66,8 +66,9 @@ The existing 24-check production visual adapter audit still passes. Static
 asset audits report zero missing scripts, zero broken references and the same
 17 pre-existing atlas sprite mismatches.
 This establishes a supported binding candidate, not pose correction parity.
-The normal presenter still needs source-backed inventory selection before using
-this overload, and other weapons/styles require their own compatibility checks.
+At this checkpoint the normal presenter did not yet select source inventory.
+The later presenter checkpoint below adds that selection. Other weapons/styles
+still require their own compatibility checks.
 
 ## Local renderer checkpoint
 
@@ -119,8 +120,9 @@ lane, and applies the corresponding models to copied source weapon hierarchies:
 80 selections/applications. The card model resolves to
 `Weapons/AssaultRiffle_AK47/AK47_lp` in this source snapshot.
 
-This does not yet feed the normal presenter. Its battle level must be mapped to
-the exact recovered upgrade index. Model pivot and scale differ from the basic
+This selection checkpoint initially did not feed the normal presenter. The later
+checkpoint below binds its normal upgrade index and separate card lane.
+Model pivot and scale differ from the basic
 attachment used by the initial catalog audit; the subsequent checkpoint below
 tests that interaction. B32 remains partial.
 
@@ -147,5 +149,31 @@ This is a controlled compatibility matrix using the first ordinary body style.
 It does not capture automatic source gameplay anew with every upgraded model,
 validate Elite/card body appearances, map battle level to upgrade index, enable
 host references, or negotiate renderer capability. The renderer must be created
-after model application. Normal presenter integration and wider source-history
-coverage remain open.
+after model application. Observed-pose presenter integration and wider
+source-history coverage remain open.
+
+## Normal presenter weapon integration
+
+The production `SelfHostedCoopInfantryPresenter` now resolves the source weapon
+appearance when creating an Assaulter actor. For an ordinary unit, the wire
+`Level` is passed as `UnitUpgrades.slotUpgradeindex`: host `OrdinaryStats` uses
+that same zero-based normal row index, and recovered `Mission.GetUnitUpgrades`
+selects a bounded normal row index. It is not a display level or model number.
+Card units use the separate source inventory and fixed card visual selector;
+their interpolation fraction never chooses a model number.
+
+Actor creation uses `CreateWithAppearance` before installing its existing clip
+sampler. Existing actor identity checks still reject changing the level/card
+lane in place. No recovered inventory, sound or Photon controller runs for these
+visuals. The source appearance resolver rejects unavailable models explicitly.
+
+The isolated native integration audit decodes complete protobuf animation frames
+through `SelfHostedBattleClient.Apply` and observes the production presenter.
+It checks the ordinary visual-threshold range and one valid timed card spawn,
+including selected mesh/material/pivot/scale and absence of local gameplay
+scripts: 78 decoded selections pass, alongside the existing 24 visual adapter
+regression checks. Static asset audits retain zero missing scripts, zero broken
+references and the same 17 pre-existing atlas sprite mismatches.
+This is fixture-driven component integration, not a live Worker session
+or normal MainScene scheduling. Observed-pose references still remain rejected
+by the SDK until capability negotiation and presenter dispatch are connected.
