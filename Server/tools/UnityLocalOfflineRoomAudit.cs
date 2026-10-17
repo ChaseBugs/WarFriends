@@ -44,6 +44,7 @@ public static class UnityLocalOfflineRoomAudit
             VerifyReplacement(scenario);
             VerifyLeaveAndRejoin(scenario);
             VerifyDisconnect(scenario);
+            VerifyRepeatedDisconnect(scenario);
             VerifyPreEnabledScene(scenario);
             VerifyDisconnect(scenario);
             Debug.Log("LOCAL_OFFLINE_ROOM_AUDIT_PASSED");
@@ -100,9 +101,9 @@ public static class UnityLocalOfflineRoomAudit
         scenario.Room.Disconnect();
         Require(!PhotonNetwork.offlineMode && PhotonNetwork.room == null &&
             !scenario.Room.IsOffline && !scenario.Room.IsInRoom && scenario.Room.PlayerId == -1 &&
-            scenario.Room.MasterPlayerId == -1 && scenario.Probe.Callbacks.Count == 0 &&
-            scenario.ModelCallbacks.Count == 0,
-            "Disconnect did not reset the local state without a room callback.");
+            scenario.Room.MasterPlayerId == -1,
+            "Disconnect did not reset the local state.");
+        scenario.Compare("disconnect");
     }
 
     private static void VerifyPreEnabledScene(Scenario scenario)
@@ -110,7 +111,7 @@ public static class UnityLocalOfflineRoomAudit
         scenario.Clear();
         PhotonNetwork.offlineMode = true;
         scenario.Room.ObserveExistingOfflineMode();
-        Require(scenario.Probe.Callbacks.SequenceEqual(new[] { LocalRoomCallback.ConnectedToMaster }) &&
+        Require(scenario.Probe.Callbacks.SequenceEqual(new[] { nameof(LocalRoomCallback.ConnectedToMaster) }) &&
             scenario.Probe.States.Single() == scenario.ModelState(LocalRoomCallback.ConnectedToMaster),
             "The earlier offline transition has an unexpected callback or visible identity.");
         scenario.Clear();
@@ -118,6 +119,15 @@ public static class UnityLocalOfflineRoomAudit
         Require(PhotonNetwork.CreateRoom(LocalOfflineRoom.SoloRoomName), "The pre-enabled room was not created.");
         scenario.Room.JoinSoloRoom();
         scenario.Compare("pre-enabled offline mode");
+    }
+
+    private static void VerifyRepeatedDisconnect(Scenario scenario)
+    {
+        scenario.Clear();
+        PhotonNetwork.Disconnect();
+        scenario.Room.Disconnect();
+        scenario.Compare("repeated disconnect");
+        Require(scenario.Probe.Callbacks.Count == 0, "An already disconnected peer repeated its notification.");
     }
 
     private static void Require(bool condition, string message)
@@ -167,7 +177,10 @@ public static class UnityLocalOfflineRoomAudit
 
         internal void Compare(string scenario)
         {
-            Require(Probe.Callbacks.SequenceEqual(ModelCallbacks), "Room callback order differs on " + scenario);
+            Require(Probe.Callbacks.SequenceEqual(ModelCallbacks.Select(callback => callback.ToString())),
+                "Room callback order differs on " + scenario + ": reference=" +
+                string.Join(",", Probe.Callbacks.ToArray()) + " model=" +
+                string.Join(",", ModelCallbacks.Select(callback => callback.ToString()).ToArray()));
             Require(Probe.States.SequenceEqual(ModelStates),
                 "Callback-visible state differs on " + scenario + ": Photon=" +
                 string.Join(",", Probe.States.ToArray()) + " model=" + string.Join(",", ModelStates.ToArray()));

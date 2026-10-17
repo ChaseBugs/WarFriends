@@ -26,10 +26,10 @@ callback.
 
 ## Verification
 
-Six portable checks cover first join, replacement, explicit leave, empty-room
-rejoin, disconnect and pre-enabled mode. The protocol executable passes 1,352
+Seven portable checks cover first join, replacement, explicit leave, empty-room
+rejoin, disconnect, repeated disconnect and pre-enabled mode. The protocol executable passes 1,353
 checks. The native reference probe independently records SDK state synchronously
-inside each of the four modeled callback kinds, then compares every row and
+inside each modeled callback kind, then compares every row and
 order with the portable model. It also compares explicit leave and rejoin.
 
 `UnityLocalOfflineRoomAudit.Run` passes in the disposable Unity 2018 project:
@@ -42,7 +42,7 @@ The model and probe changes do not replace PhotonConnectionManager.JoinOfflineGa
 or GameController.Awake. Actual solo creation still uses the retained SDK, and
 normal scene callback dispatch, ownership/RPC/serialization, reentrant callback
 behavior and gameplay remain migration requirements. The comparison covers the
-four modeled room callbacks, not every general Photon disconnect/failure event.
+modeled room callbacks plus the general offline disconnect, not every Photon failure event.
 It is not a Photon-free campaign, Android or Unity 5.2 completion claim.
 
 The final installed SDK also passes the native comparison in
@@ -53,3 +53,36 @@ existing Chat/region/session/retry/cancellation modal regression in
 still report zero broken references/missing scripts; the 17 existing sprite
 mismatches remain unchanged. Original scenes, prefabs, GUIDs and Photon binaries
 were not changed.
+
+## General offline disconnect
+
+The first state comparison omitted OnDisconnectedFromPhoton entirely. Extending
+the native probe reproduced another missing callback in
+`Server/.local/unity-local-disconnect-baseline.log`: reference `Disconnected`,
+model empty. The bundled offline Disconnect clears mode/room/local ID, processes
+StatusCode.Disconnect synchronously, then emits that callback. It emits no
+LeftRoom and repeating Disconnect on the already disconnected reference peer
+does not notify again.
+
+LocalOfflineRoom now emits `LocalRoomCallback.Disconnected` after resetting all
+state, only when it was offline. The enum moved to its own source file with
+explicit existing values 0-3 preserved and the new value 4 appended; this is a
+local SDK event, not a new protobuf command or server settlement proof. The
+native probe records callback names independently so a missing enum notification
+cannot disappear from the comparison.
+
+The extended comparison passes first/replacement/explicit-leave/rejoin,
+disconnect, repeated disconnect and pre-enabled-mode cases in
+`Server/.local/unity-local-disconnect-final.log`. The active GameControllerOnline
+disconnect callback currently only warns when its controller is active; this
+change does not dispatch the model to game objects or migrate the actual solo
+entry/ownership/RPC path.
+
+The final installed SDK and native-tested files have matching hashes for all
+seven manifest entries. The existing Chat/region/session/retry/cancellation
+regression also passes with the new event:
+`Server/.local/unity-local-disconnect-ui-regression.log`.
+The full Release solution build also passes with zero warnings/errors. Static
+asset checks remain at zero broken references/missing scripts with the same
+17 existing sprite mismatches. Listener exception behavior and callback-driven
+reentrant joins/cancellation remain separate characterization work.

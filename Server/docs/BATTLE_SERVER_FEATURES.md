@@ -8,10 +8,16 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The local callback reference now also observes general offline disconnection.
+It reproduced a missing model notification and now verifies reset-before-notify
+and no repeated notification. Seven portable cases and the native SDK comparison
+pass. This remains model/contract work; normal solo scene dispatch and Photon
+ownership/RPC/serialization are not yet replaced.
+
 The [local solo callback-state comparison](LOCAL_SOLO_CALLBACK_STATE.md) now
 checks the state visible inside callbacks, not only their names/final roster.
 It reproduced and fixed loss of local/master ID during replacement/explicit
-leave. Native SDK/reference rows and six portable cases pass; actual solo
+leave. Native SDK/reference rows and seven portable cases pass; actual solo
 creation/scene dispatch and Photon ownership/RPC/serialization are still open.
 
 [Session reads](OFFLINE_SESSION_READS.md) now use the canonical retained owner,

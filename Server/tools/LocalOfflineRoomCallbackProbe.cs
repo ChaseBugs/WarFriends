@@ -5,30 +5,35 @@ using War.Client;
 /// <summary>Records the bundled SDK's synchronous callback-visible room state in a disposable scene.</summary>
 public sealed class LocalOfflineRoomCallbackProbe : MonoBehaviour
 {
-    public List<LocalRoomCallback> Callbacks { get; } = new List<LocalRoomCallback>();
+    public List<string> Callbacks { get; } = new List<string>();
     public List<string> States { get; } = new List<string>();
 
     private void OnConnectedToMaster()
     {
-        Record(LocalRoomCallback.ConnectedToMaster);
+        Record(nameof(LocalRoomCallback.ConnectedToMaster));
     }
 
     private void OnLeftRoom()
     {
-        Record(LocalRoomCallback.LeftRoom);
+        Record(nameof(LocalRoomCallback.LeftRoom));
     }
 
     private void OnCreatedRoom()
     {
-        Record(LocalRoomCallback.CreatedRoom);
+        Record(nameof(LocalRoomCallback.CreatedRoom));
     }
 
     private void OnJoinedRoom()
     {
-        Record(LocalRoomCallback.JoinedRoom);
+        Record(nameof(LocalRoomCallback.JoinedRoom));
     }
 
-    private void Record(LocalRoomCallback callback)
+    private void OnDisconnectedFromPhoton()
+    {
+        Record("Disconnected");
+    }
+
+    private void Record(string callback)
     {
         string roomName = PhotonNetwork.room == null ? string.Empty : PhotonNetwork.room.name;
         int masterId = PhotonNetwork.masterClient == null ? -1 : PhotonNetwork.masterClient.ID;

@@ -37,9 +37,13 @@ internal static class LocalOfflineRoomStateTests
 
         observed.Clear();
         room.Disconnect();
-        Require(observed.Count == 0 && !room.IsOffline && !room.IsInRoom && room.PlayerId == -1 &&
+        Require(observed.SequenceEqual(new[] { new RoomView { Callback = LocalRoomCallback.Disconnected } }) &&
+            !room.IsOffline && !room.IsInRoom && room.PlayerId == -1 &&
             room.MasterPlayerId == -1 && room.PlayerCount == 0,
-            "Disconnect must reset identities without inventing a room-leave callback.");
+            "Disconnect must publish its reset state once without inventing a room-leave callback.");
+        observed.Clear();
+        room.Disconnect();
+        Require(observed.Count == 0, "An already disconnected model must not repeat its disconnect notification.");
         room.ObserveExistingOfflineMode();
         room.JoinSoloRoom();
         Require(observed.SequenceEqual(new[]
@@ -47,8 +51,8 @@ internal static class LocalOfflineRoomStateTests
             Detached(LocalRoomCallback.LeftRoom, -1), Joined(LocalRoomCallback.CreatedRoom),
             Joined(LocalRoomCallback.JoinedRoom)
         }), "A pre-enabled offline scene must not reconnect or retain a previous session's player identity.");
-        Console.WriteLine("PASS: 6 local solo callback-visible identity checks");
-        return 6;
+        Console.WriteLine("PASS: 7 local solo callback-visible identity checks");
+        return 7;
     }
 
     private static RoomView Capture(LocalRoomCallback callback, LocalOfflineRoom room)

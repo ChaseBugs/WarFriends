@@ -2,14 +2,6 @@ using System;
 
 namespace War.Client
 {
-    public enum LocalRoomCallback
-    {
-        ConnectedToMaster,
-        LeftRoom,
-        CreatedRoom,
-        JoinedRoom
-    }
-
     /// <summary>
     /// The recovered Client creates one local solo room named OfflineRoom.
     /// This models its room state and callback order without Photon types.
@@ -77,10 +69,15 @@ namespace War.Client
         public void Disconnect()
         {
             // PhotonNetwork.Disconnect clears offlineMode and the room without
-            // sending the offline LeaveRoom callback.
+            // sending LeftRoom, then reports its general disconnect callback.
+            bool shouldNotify = IsOffline;
             IsInRoom = false;
             IsOffline = false;
             _localPlayerId = UnassignedPlayerId;
+            if (shouldNotify)
+            {
+                Callback?.Invoke(LocalRoomCallback.Disconnected);
+            }
         }
     }
 }
