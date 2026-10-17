@@ -87,3 +87,8 @@ and independent Play Mode source-timer comparison pass. This is not a complete
 visual-parity claim: normal Play Mode sound/explosion scheduling, rendered live
 Worker/Unity missile flight, broader ordering, Android, Unity 5.2 and two actual
 Unity clients remain unverified. B32 and overall completion remain open.
+
+The [subsequent live UDP Editor checkpoint](PLAYER_BAZOOKA_LIVE_UDP.md) connects
+the production Worker, SDK, adapter and normal battle bridge for five source
+flights/impacts and a mid-flight slot change. It verifies component binding,
+not rendered Play Mode effects or two Unity processes.

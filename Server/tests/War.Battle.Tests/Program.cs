@@ -735,6 +735,24 @@ if(args is ["--command-ack-only"])
     return;
 }
 
+if (args is ["--unity-bazooka-only", var bazookaUnityExecutable, var bazookaUnityProject])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+
+    if (root == null)
+    {
+        throw new Exception("Recovered battle content artifact not found.");
+    }
+
+    await LiveBazookaUnityTests.RunAsync(Path.Combine(root.FullName, "content"),
+        bazookaUnityExecutable, bazookaUnityProject);
+    return;
+}
+
 if(args is ["--unity-rifle-only",var unityExecutable,var unityProject])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

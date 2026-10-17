@@ -17,6 +17,11 @@ The [lifetime checkpoint](PLAYER_BAZOOKA_LIFETIME.md) now preserves the source
 owner/peer smoke delays and prevents completed flights from returning through
 late reads. Controlled checks and an isolated automatic Play Mode comparison
 against source pool timers pass, including pause and same-match reconnect.
+A [combined live UDP checkpoint](PLAYER_BAZOOKA_LIVE_UDP.md) now sends five
+actual M202/RPG flights and impacts through the normal Unity adapter and battle
+bridge. Source identity survives a mid-flight slot change; both admitted peers
+receive identical impact bytes. This is one Editor plus an SDK peer, with
+explicit polling; rendered/two-Unity-client play remains open.
 
 [RPG crate occlusion](PVP_RPG_CRATE_OCCLUSION.md) now reproduces a valid City
 spawn hidden from the initial cover. The host and original Unity Physics agree

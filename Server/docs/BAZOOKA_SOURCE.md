@@ -31,3 +31,8 @@ peers receive the launch identity. The [lifetime checkpoint](PLAYER_BAZOOKA_LIFE
 adds source owner/peer tails and scoped replay protection with controlled and
 automatic Play Mode timing checks. Normal Play Mode effects, a rendered live
 Unity UDP audit and Android/two-device proof remain open.
+
+The [live UDP Editor checkpoint](PLAYER_BAZOOKA_LIVE_UDP.md) now verifies five
+source flights, mid-flight model independence and identical two-peer impacts
+through the production adapter and battle bridge. Rendered Play Mode effects
+and two actual Unity clients are still separate release gates.
