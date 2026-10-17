@@ -51,14 +51,8 @@ namespace War.Client
             if (connection == null) throw new ArgumentNullException(nameof(connection));
             grant = connection.Clone();
             PlayerViews = connection.PlayerViews.Count==0 ? new List<BattlePlayerView>().AsReadOnly() : BattlePlayerViewProjection.Validate(connection);
-            IPAddress address;
-            if (!IPAddress.TryParse(grant.Host, out address) || grant.Port == 0 || grant.Port > 65535 ||
-                grant.SessionId == 0 || grant.SessionKey.Length != 32 || grant.Ticket.Length < 10 || grant.Ticket.Length > 1024 ||
-                grant.MatchId.Length < 1 || grant.MatchId.Length > 64 || !Guid.TryParseExact(grant.PlayerId, "N", out _) ||
-                !System.Text.RegularExpressions.Regex.IsMatch(grant.ManifestHash, @"\A[0-9a-f]{64}\z") ||
-                grant.ExpiresUnixSeconds <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() ||
-                grant.ExpiresUnixSeconds > 253402300679L)
-                throw new ArgumentException("Invalid match grant. An IP endpoint and unexpired participant capability are required.");
+            ValidateGrantEnvelope(grant);
+            IPAddress address = IPAddress.Parse(grant.Host);
             key = grant.SessionKey.ToByteArray();
             socket = new Socket(address.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
             socket.Connect(new IPEndPoint(address, (int)grant.Port));

@@ -281,3 +281,37 @@ The final scoped-cancellation native gate passed in
 `Server/.local/queue-live-5c18488a23e246b3beadfdf59f0b6410`.
 This prestart/stale-request proof does not verify every Running or reconnect
 race after cancellation intent.
+
+## Unity source operation owner
+
+The active Client now contains `SelfHostedRematchAttempt` and
+`SelfHostedRematchAuthority`. These plain C# classes retain one completed
+two-player source identity, authenticate consent, wait for the peer, obtain a
+fresh allocation and validate its local-player grant without opening UDP.
+Repeated grant reads return isolated copies. Transport-envelope validation is
+shared with `MatchConnection` through its socket-free `ValidateGrantEnvelope`.
+The pinned Unity networking DLLs and SDK manifest include these protocol APIs.
+
+Cancellation stops local discovery only after publishing the independent
+cleanup task. Unavailable cleanup remains unconfirmed and retryable against
+the same source. If consent was consumed, cleanup uses `cancel-allocation`,
+never generic account queue cancellation. Local disposal is not a remote
+cancellation receipt. The original source snapshot is not modified.
+
+`--rematch-attempt-client-only` checks failed consent/allocation cleanup and
+same-source retry using controlled HTTP failures. The native `--queue-live`
+gate links the exact active Unity source files and checks waiting cancellation,
+Worker-confirmed allocated cancellation, isolated grant copies and a fresh
+playable UDP round. This passed in
+`Server/.local/queue-live-9d153d3ecdce4ae39c07620947e77254`.
+
+The installed scripts and SDK also compile in the disposable Unity 2018.3.0f2
+project. `Server/.local/unity-rematch-ownership.log` records construction,
+Running-source rejection, socket-free envelope rejection and disposal without
+false confirmation. Static asset checks retain zero missing scripts/broken
+references and the same seventeen pre-existing NGUI atlas mismatches.
+
+These classes are not yet called by normal `GameControllerOnline.Rematch` or
+its cancel buttons. Mono transport handoff, actual lobby transitions, two Unity
+clients, original Unity 5.2/Android compatibility and admission-expiry UI behavior
+remain unverified. Linked source tests are not a normal-screen gameplay proof.

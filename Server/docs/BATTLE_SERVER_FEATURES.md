@@ -53,6 +53,12 @@ requests cannot select successor matches or delete waiting tickets. Completion
 requires existing Worker prestart proof and terminal acceptance. The native
 gate covers cancellation followed by harmless stale replay in a fresh match;
 Unity cancel-button integration remains open.
+The active Unity source now has a separate rematch operation owner for consent,
+validated fresh grants and retryable source-bound cancellation. Its real source
+is linked into native HTTP/UDP/Mongo tests; waiting/allocated cleanup and a new
+playable round pass. Disposable Unity compilation/construction and static asset
+audits pass as scoped in the rematch document. Normal controller/button wiring
+and Mono transport handoff remain open.
 
 [Start-camera completion](START_PRESENTATION.md) now has a typed authenticated
 command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop

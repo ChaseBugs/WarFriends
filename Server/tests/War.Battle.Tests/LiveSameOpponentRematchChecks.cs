@@ -110,7 +110,7 @@ internal static class LiveSameOpponentRematchChecks
         throw new InvalidDataException("One participant allocated a match without the opponent's consent.");
     }
 
-    private static async Task FinishRoundAsync(MatchConnectionGrant[] grants, CancellationToken cancellationToken)
+    internal static async Task FinishRoundAsync(MatchConnectionGrant[] grants, CancellationToken cancellationToken)
     {
         using var first = new MatchConnection(grants[0]);
         using var second = new MatchConnection(grants[1]);
@@ -128,7 +128,7 @@ internal static class LiveSameOpponentRematchChecks
             "The rematch Worker did not produce terminal evidence.");
     }
 
-    private static async Task<string> WaitForAcceptedAsync(
+    internal static async Task<string> WaitForAcceptedAsync(
         Stores stores, MatchConnectionGrant grant, CancellationToken cancellationToken)
     {
         while (true)
