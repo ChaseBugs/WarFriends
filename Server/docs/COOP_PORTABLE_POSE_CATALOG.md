@@ -92,3 +92,35 @@ frame path still rejects observed references, the presenter does not invoke this
 renderer, and the host publishes none. Capability negotiation, source inventory
 selection, other appearances, repeated source interruption histories and normal
 gameplay proof remain necessary. No rendered-pixel or Android claim is made.
+
+## Recovered weapon model selection
+
+`SelfHostedInfantryWeaponAppearance` separates model selection from combat level
+and attachment. Ordinary/Elite selection calls the recovered
+`upgradeSlots.GetVisuals(UnitUpgrades)` and takes weapon slot 2, matching
+`SoldierBehaviour.GetWeaponLevels`. Card selection instead uses `cardVisuals[2]`,
+matching `GetCardWeaponLevels`; card combat scaling is not a visual model number.
+The inventory's normal/card lane supplies the weapon prefab and attachment hand.
+This first implementation requires the Assaulter's single primary weapon.
+
+The matching `EnemyLeveledWeapon.weaponRecords` row supplies its model number,
+resource path and scale. Loading follows `PrepareAsync` exactly:
+`Weapons/<assetBundleName>/<weaponModelPath.Split('/')[1]>`. It does not start
+the recovered inventory, sound manager, model-unload flow or Photon service.
+Missing model/mesh/material/pivot evidence rejects selection instead of silently
+keeping a default rifle.
+
+Application changes only a script-free copied renderer's mesh, material, light
+probe setting, negative source pivot position and record scale, following
+`EnemyLeveledWeapon.SetLevel`. It rejects the source prefab itself. The native
+audit compares model numbers with the original protected selectors, checks all
+normal/Elite indices through the last visual threshold plus one and the card
+lane, and applies the corresponding models to copied source weapon hierarchies:
+80 selections/applications. The card model resolves to
+`Weapons/AssaultRiffle_AK47/AK47_lp` in this source snapshot.
+
+This does not yet feed the normal presenter. Its battle level must be mapped to
+the exact recovered upgrade index, and pose-catalog compatibility must be checked
+after model replacement: model pivot and scale differ from the basic attachment
+used by the existing catalog audit. Do not let a pose correction overwrite those
+appearance channels without a source-backed reconstruction. B32 remains partial.
