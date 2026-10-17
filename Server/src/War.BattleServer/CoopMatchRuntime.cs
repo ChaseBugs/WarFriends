@@ -68,6 +68,7 @@ internal sealed record CoopInfantryShotWindup(
     internal bool CallbackAimReady { get; init; }
     internal bool HasNavigationRotationConflict { get; init; }
     internal CoopCornerPreparationPlan? CornerPreparation { get; init; }
+    internal CoopObstaclePreparationStart? ObstaclePreparation { get; init; }
 }
 
 internal sealed record CoopInfantryRoundIntent(
@@ -1446,7 +1447,6 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 if (!exposed)
                     continue;
             }
-            BeginObstacleVolleyClock(entityId, arrival);
             infantryFirstTargets.TryAdd(entityId, plan);
             infantryFirstPlacedTargets.TryAdd(entityId, placedTarget);
             if (enemyPoses != null)
@@ -1454,6 +1454,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 // A new cover volley starts its own round sequence. Its
                 // projectile IDs remain unique across the whole match.
                 CoopInfantryShotWindup nextWindup = CreateInfantryShotWindup(arrival, placedTarget, batch);
+                BeginObstacleVolleyClock(entityId, arrival, nextWindup.ObstaclePreparation);
                 infantryRoundIntents.Remove(entityId);
                 infantryShotWindups[entityId] = nextWindup;
                 BeginObstacleRootTween(entityId, infantryShotWindups[entityId]);
@@ -1641,6 +1642,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         {
             TargetWasWalking = participants[target.PlayerId].Route != null,
             CornerPreparation = CaptureCornerPreparation(enemy, arrival, clipName, queuedFireClip),
+            ObstaclePreparation = CaptureObstaclePreparation(enemy.EntityId, arrival),
             // Native agent rotation continues after the source firing tween; a fixed target is not its live root.
             HasNavigationRotationConflict = arrival.State == CoopInfantryPointState.ObstacleHiding &&
                 IsObstacleRepositioning(target.EnemyEntityId)

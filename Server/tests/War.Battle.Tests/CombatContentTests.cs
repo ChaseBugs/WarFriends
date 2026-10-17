@@ -957,6 +957,7 @@ internal static class CombatContentTests
         CoopCornerCallbackTests.Run(directory, content);
         CoopObstacleProofIntegrityTests.Run(directory, content);
         CoopObstacleCrawlReturnClockTests.Run();
+        CoopObstaclePreparationStartTests.Run(directory, content.EnemyPoses);
         CoopObstacleTurnObservationTests.Run(directory, content);
         CoopShotRootTweenTests.Run(directory);
         CoopShotRootCompositionTests.Run(directory);
@@ -2882,6 +2883,7 @@ internal static class CombatContentTests
         CoopSurvivorRuntimeTests.Run(volleySources);
         CoopDepartureUdpTests.Run(volleySources).GetAwaiter().GetResult();
         CoopObstacleVolleyRuntimeTests.Run(volleySources);
+        CoopObstaclePreparationRuntimeTests.Run(volleySources);
         CoopDiagnosticRoundLifetimeTests.Run(volleySources, alliedShotWorld);
 
         var arrivalDestinations = new CoopEnemyDestinationState(

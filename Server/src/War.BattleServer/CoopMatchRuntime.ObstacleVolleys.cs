@@ -68,7 +68,8 @@ internal sealed partial class CoopMatchRuntime
         return shot.MinShootTime >= completeReturnSeconds;
     }
 
-    private void BeginObstacleVolleyClock(ulong entityId, CoopInfantryPointArrival arrival)
+    private void BeginObstacleVolleyClock(ulong entityId, CoopInfantryPointArrival arrival,
+        CoopObstaclePreparationStart? preparation)
     {
         if (arrival.State != CoopInfantryPointState.ObstacleHiding || enemyPoses == null)
         {
@@ -80,7 +81,7 @@ internal sealed partial class CoopMatchRuntime
         }
         clock.BeginShot(tick, chooseInfantryRepositionFraction());
         nextObstacleRepositionTicks[entityId] = clock.NextPositionTick;
-        BeginObstacleCrawlClock(entityId);
+        BeginObstacleCrawlClock(entityId, preparation);
     }
 
     private bool IsObstacleShotReady(ulong entityId, CoopInfantryPointArrival arrival)

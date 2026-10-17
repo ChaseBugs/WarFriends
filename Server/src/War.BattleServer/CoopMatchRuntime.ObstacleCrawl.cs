@@ -12,9 +12,10 @@ internal sealed partial class CoopMatchRuntime
             : null;
     }
 
-    private void BeginObstacleCrawlClock(ulong entityId)
+    private void BeginObstacleCrawlClock(ulong entityId, CoopObstaclePreparationStart? preparation)
     {
-        var state = new ObstacleCrawlState();
+        // Until observed poses are connected, a reversed or unknown prior attempt cannot use fresh-clock diagnostics.
+        var state = new ObstacleCrawlState { HasInterruptedReturn = preparation?.HasUnverifiedTransition == true };
         state.Clock.RecordShot(ObstacleScaledTime(), SourceInitialHideSeconds);
         _obstacleCrawlStates[entityId] = state;
     }

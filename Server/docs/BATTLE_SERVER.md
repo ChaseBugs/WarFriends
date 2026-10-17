@@ -223,3 +223,10 @@ The [fixed-step pose catalog](COOP_OBSTACLE_FIXED_STEP_CATALOG.md) now covers
 preservation passes the full matrix; eighteen clip-only failures remain.
 Runtime loading, prior-state retention and validated host/SDK selection are
 still required before this content becomes interruption support.
+
+Obstacle preparation now captures prior return and scoped confirmed-round
+identity before clock/history replacement. All 221 nominal catalog identities
+and three real runtime branches pass; unknown/partial histories cannot reuse
+fresh diagnostics, and selection stops when a new round is confirmed. This
+internal candidate is not a wire pose or loaded catalog. See
+[preparation origins](COOP_OBSTACLE_PREPARATION_ORIGIN.md).

@@ -48,10 +48,10 @@ Transform indexes retain their source hierarchy identity. Generated queue
 names and process-local clip instance IDs are never catalog identities.
 
 The catalog is a verified content artifact, not an installed runtime feature.
-It is not yet loaded by the Worker, SDK or Unity presenter. The host still
-needs to preserve its actual prior animation before resetting its crawl clock
-or round history, select only a supported phase/branch, and bind the catalog
-revision/sample identity in a validated protocol contract. The Client must
+It is not yet loaded by the Worker, SDK or Unity presenter. The host now preserves nominal prior return and scoped round context before
+resetting its clock/history; see [origin capture](COOP_OBSTACLE_PREPARATION_ORIGIN.md).
+It still needs complete branch/evaluation validation and a bound catalog
+revision/sample identity in the protocol contract. The Client must
 validate the entire source binding and override set before applying it and
 retain existing lifecycle/replay behavior. No arbitrary client pose array may
 become combat or economy authority.

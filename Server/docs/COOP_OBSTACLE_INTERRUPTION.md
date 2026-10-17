@@ -62,8 +62,8 @@ and the exact known counterexample. It does not certify pose parity. The
 second deliberately exits with failure while the mismatch exists and is the
 required promotion gate. Both compressed artifacts retain their own digests.
 
-The server currently resets its obstacle crawl clock before creating a new
-windup. Implementation must preserve the preceding animation before that
+At this observation checkpoint the server reset its obstacle crawl clock
+before creating a new windup. Implementation must preserve the preceding animation before that
 reset and before clearing old round history, then distinguish retained begin,
 fire restart, partial crawl reversal and fresh completed crawl. That data
 retention and a verified transition sampler remain future implementation;
@@ -125,3 +125,7 @@ twelve calibration poses on fresh hierarchies using source position/scale
 rows. Identical current mixer states can represent different prior histories,
 so host state retention and a complete phase catalog remain required. This
 is not implemented interruption transport or a passed clip-only parity gate.
+
+The subsequent [origin capture](COOP_OBSTACLE_PREPARATION_ORIGIN.md) now retains
+known prior crawl and scoped round context before reset. Retained begin/fire
+models, catalog loading and validated wire presentation remain required.
