@@ -65,3 +65,26 @@ exporter, replay helper, production sampler and plan bytes. It checks complete
 ordered observations, finite geometry, the partial-weight boundary and all
 reported replay error limits. No source DLL, SDK binary, wire schema, asset,
 economy, collider authority or public co-op admission changed in this increment.
+
+## Independent prefab replay control
+
+`UnityCoopObstacleFreshReplayAudit` now constructs a new script-free hierarchy
+from the original prefab for each of the 82 captured frames. It attaches the
+original weapon hierarchy as the source exporter does, creates a new production
+sampler, applies only that frame's enabled states, and destroys the hierarchy.
+No preparation, initial crawl sample or previous observation is applied.
+Hierarchy path/name/count checks bind all 59 transforms. Root placement is
+copied from the host observation separately from animation.
+
+All frames, including both partial-weight observations, pass the unchanged
+position/quaternion/relative-scale limits. This resolves the fresh-hierarchy
+and missing-intermediate-frame control for this captured fixture. It uses the
+same hierarchy copier and sampler as production, without rendered skins,
+normal AI, networking or procedural aiming. It is not a normal battle proof.
+
+The new audit reads the pinned compressed capture directly and writes its
+reference, prefab, sampler and audit hashes into its result. Validate both
+artifacts with `python Server/tools/verify_coop_obstacle_fresh_replay.py`.
+The SDK weight gate and host ticks zero/one are still unchanged; they are the
+next implementation step, with explicit partial-weight forms and rejection
+coverage required before installation into the Client.
