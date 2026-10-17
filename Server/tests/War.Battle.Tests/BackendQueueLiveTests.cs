@@ -13,7 +13,7 @@ using MongoDB.Driver;
 
 internal static class BackendQueueLiveTests
 {
-    public static async Task Run(string mongoUri)
+    public static async Task Run(string mongoUri, string? unityExecutable = null, string? unityProject = null)
     {
         var root=new DirectoryInfo(AppContext.BaseDirectory);
         while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/local-rifle-match-template.json")))root=root.Parent;
@@ -371,6 +371,15 @@ internal static class BackendQueueLiveTests
             using var loadingDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(45));
             await new LiveLoadingCancellationChecks(new Uri(backendUrl), tokens, queue, results)
                 .RunAsync(loadingDeadline.Token);
+            if (unityExecutable != null && unityProject != null)
+            {
+                using var unityDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                await LiveUnityLoadingAbortChecks.RunAsync(new LiveUnityLoadingAbortChecks.Settings
+                {
+                    BackendEndpoint = new Uri(backendUrl), AccessTokens = tokens,
+                    UnityExecutable = unityExecutable, ProjectPath = unityProject, RunDirectory = run
+                }, new LiveUnityLoadingAbortChecks.Stores(queue, results), unityDeadline.Token);
+            }
             using var recoveryDeadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
             var unattended = new UnattendedCancellationChecks(
                 queue, results, new BattleManifestSnapshotStore(mongoUri, database), recoveryDeadline.Token);

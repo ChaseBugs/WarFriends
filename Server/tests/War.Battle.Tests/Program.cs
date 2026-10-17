@@ -92,6 +92,11 @@ if (args is ["--atomic-terminal-only", var atomicTerminalMongoUri])
 }
 if(args is ["--queue-live",var queueMongoUri])
 {await BackendQueueLiveTests.Run(queueMongoUri);return;}
+if (args is ["--queue-live-unity", var unityMongoUri, var queueUnityExecutable, var queueUnityProject])
+{
+    await BackendQueueLiveTests.Run(unityMongoUri, queueUnityExecutable, queueUnityProject);
+    return;
+}
 
 if(args is ["--manifest-snapshot-only",var snapshotMongoUri])
 {await BattleManifestSnapshotTests.Run(snapshotMongoUri);return;}

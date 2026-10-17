@@ -156,3 +156,39 @@ adapter and retains its four normal/four cleanup-failure recovery controls. Log:
 Static asset checks still report zero broken references/missing scripts; the
 17 existing atlas sprite mismatches remain unchanged. These are separate modal
 and routing gates, not one real-service retry-to-menu gameplay session.
+
+## Real Unity and service integration
+
+`--queue-live-unity <mongo-replica-set-uri> <unity-executable> <disposable-project>`
+extends the native queue suite with an actual Unity Editor process and an SDK
+peer. Both use real authenticated scoped queue/grant routes and enter the same
+Worker over UDP. The Unity process uses the recovered controller methods with
+controlled local manager initialization; it does not run account boot or
+construct a full combat scene.
+
+After both participants are admitted, a Unity-hosted tracked iterator yields
+once and throws. The audit requires exactly that engine exception and rejects
+other runtime errors. The real scope closes, the original root dispatches its
+captured attempt's HTTP cancellation, normal UDP polling receives Aborted, and
+the original controller enters suspended, unscored recovery with no pending
+loaders. The SDK peer must independently receive the terminal state, and MongoDB
+must contain the matching accepted manifest evidence with both pair members
+released. Credentials pass through the owned child process environment rather
+than command-line arguments or checked-in files.
+
+The audit stops the recovery coroutine after its initial yield and before the
+profile-dependent resource/menu path. It therefore proves the combined engine
+fault/service/controller-entry boundary, not a full menu recovery, a normal
+battle bootstrap, Android, Unity 5.2 or two Unity clients. Existing backend/menu
+prerequisites remain recorded in [the dependency inventory](ABORT_MENU_DEPENDENCIES.md).
+
+The real integration passed in
+`Server/.local/queue-live-ca33b3c8e3ef49ae914b576a303903cc/UnityLoadingAbort.log`
+with the `UNITY_LIVE_LOADING_ABORT_PASSED` marker. The injected engine exception
+is intentional; the marker also requires no other runtime errors.
+
+The complete extended queue suite also passed Backend restarts, delayed grant
+publication, prestart races and unattended Worker-outage recovery. Suite log:
+`Server/.local/unity-loading-abort-live-30e4b80dff84498d8463ca12e703cc98/queue-live-unity.log`.
+The Release solution build passed with zero warnings/errors. The owned native
+processes and isolated MongoDB were stopped by their fixture cleanup.

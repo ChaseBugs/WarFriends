@@ -80,6 +80,14 @@ public static class UnityAbortRecoveryRoutingAudit
             typeof(TimeManager).GetField("mInstance", BindingFlags.Static | BindingFlags.NonPublic)
                 .SetValue(null, time);
             SetGame(game, "mMainController", controller);
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_LOADING_BACKEND_ENDPOINT")))
+            {
+                await VerifyLiveRunAsync(game, controller);
+                SessionState.SetBool(SessionKey, false);
+                Debug.Log("UNITY_LIVE_LOADING_ABORT_PASSED");
+                EditorApplication.Exit(0);
+                return;
+            }
             int outcomes = 0;
             game.GameEnded += _ => outcomes++;
             foreach (GameController.GameState state in Enum.GetValues(typeof(GameController.GameState)))
@@ -106,6 +114,104 @@ public static class UnityAbortRecoveryRoutingAudit
             SessionState.SetBool(SessionKey, false);
             Debug.LogException(failure);
             EditorApplication.Exit(1);
+        }
+    }
+
+    private static async Task VerifyLiveRunAsync(GameController game, GameControllerDeathMatch controller)
+    {
+        int expectedErrors = 0;
+        var unexpectedErrors = new System.Collections.Generic.List<string>();
+        Application.LogCallback capture = (condition, stack, type) =>
+        {
+            if (type != LogType.Exception && type != LogType.Error && type != LogType.Assert)
+            {
+                return;
+            }
+            if (condition == "InvalidOperationException: Injected live loading failure." ||
+                condition == "Injected live loading failure.")
+            {
+                expectedErrors++;
+            }
+            else
+            {
+                unexpectedErrors.Add(condition);
+            }
+        };
+        Application.logMessageReceived += capture;
+        try
+        {
+            await VerifyLiveLoadingFailureAsync(game, controller);
+            Require(expectedErrors == 1 && unexpectedErrors.Count == 0,
+                "Live Unity engine errors differ from the injected fault: " +
+                string.Join(" | ", unexpectedErrors.ToArray()));
+        }
+        finally
+        {
+            Application.logMessageReceived -= capture;
+        }
+    }
+
+    private static async Task VerifyLiveLoadingFailureAsync(
+        GameController game, GameControllerDeathMatch controller)
+    {
+        var adapterRoot = new GameObject("LiveLoadingFailureAdapter");
+        var client = adapterRoot.AddComponent<SelfHostedBattleClient>();
+        await client.MatchmakeAndConnect(Environment.GetEnvironmentVariable("WAR_LOADING_BACKEND_ENDPOINT"),
+            Environment.GetEnvironmentVariable("WAR_LOADING_BACKEND_TOKEN"), 10, true);
+        typeof(GameControllerOnline).GetField("mSelfHostedClient", InstanceFields).SetValue(controller, client);
+        typeof(GameControllerOnline).GetMethod("BindSelfHostedAbortRecovery", InstanceFields)
+            .Invoke(controller, new object[] { client });
+        await WaitForLiveConditionAsync(() => client.State != null && client.State.Players.Count == 2 &&
+            client.State.Players.All(player => player.Admitted));
+        var scope = new BattleResourceLoadScope();
+        SetGame(game, "_battleResourceLoads", scope);
+        SetGame(game, "_resourceLoadClient", client);
+        object attempt = typeof(SelfHostedBattleClient).GetProperty("LoadingCancellationOwner", InstanceFields)
+            .GetValue(client, null);
+        Require(attempt != null, "Live admission did not retain its exact cancellation owner.");
+        SetGame(game, "_resourceLoadCancellationOwner", attempt);
+        Action<MatchSnapshot> stopBeforeMenu = snapshot =>
+        {
+            if (snapshot.Phase == BattlePhase.Aborted)
+            {
+                // This gate ends at recovery entry; it does not fabricate profile/menu dependencies.
+                game.StopAllCoroutines();
+            }
+        };
+        client.StateReceived += stopBeforeMenu;
+        try
+        {
+            scope.Start(game, FailLiveLoadingRoutine());
+            await WaitForLiveConditionAsync(() => scope.FirstFailure != null);
+            typeof(GameController).GetMethod("LateUpdate", InstanceFields).Invoke(game, null);
+            await WaitForLiveConditionAsync(() => game.IsSelfHostedAbortRecovery);
+            Require(client.State.Phase == BattlePhase.Aborted && client.State.WinnerPlayerId.Length == 0 &&
+                !client.State.RewardEligible && client.OwnsMatch && !client.IsConnected && scope.PendingCount == 0,
+                "Live loading failure did not reach owned, unscored abort recovery with stopped resources.");
+            Require(scope.FirstFailure.Message == "Injected live loading failure.",
+                "The live recovery lost the original engine-dispatched loading failure.");
+        }
+        finally
+        {
+            client.StateReceived -= stopBeforeMenu;
+            game.StopAllCoroutines();
+            UnityEngine.Object.DestroyImmediate(adapterRoot);
+        }
+    }
+
+    private static System.Collections.IEnumerator FailLiveLoadingRoutine()
+    {
+        yield return null;
+        throw new InvalidOperationException("Injected live loading failure.");
+    }
+
+    private static async Task WaitForLiveConditionAsync(Func<bool> condition)
+    {
+        DateTime deadline = DateTime.UtcNow.AddSeconds(15);
+        while (!condition())
+        {
+            Require(DateTime.UtcNow < deadline, "The real Unity loading-abort boundary timed out.");
+            await Task.Yield();
         }
     }
 

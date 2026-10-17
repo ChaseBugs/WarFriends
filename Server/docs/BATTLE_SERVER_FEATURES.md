@@ -31,7 +31,13 @@ unverified.
 The actual plain C# Unity attempt owner now also passes real authenticated
 HTTP/UDP loading cancellation, accepted Mongo terminal/pair release and
 Running-first refusal checks. This supplements the controlled Unity dispatch
-gate; it does not combine resource failure and real services in one Unity run.
+gate; that SDK-only test does not execute a Unity resource failure.
+The new optional `--queue-live-unity` gate now combines an actual engine-hosted
+iterator fault, real authenticated queue cancellation, Worker UDP terminal
+delivery, original controller recovery entry and accepted Mongo pair release.
+It uses one Unity process plus an SDK peer and controlled local manager setup,
+and stops before the profile-dependent resource/menu coroutine. Two Unity
+clients, normal battle bootstrap and full menu recovery remain open.
 
 [Original abort notice](ABORT_NOTICE_UI.md) now runs the recovered modal's real
 labels, tweens and OK callback in Play Mode and has an inspected camera capture.

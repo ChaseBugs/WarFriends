@@ -66,6 +66,15 @@ video rewards, deal widgets or other source callers.
 
 ## Remaining full-graph gate
 
+Normal transitions still need a separate offline-service audit:
+`GameController.LoadAndStartNewMap` calls `Chat.Disconnect`, and ordinary `Free`
+later calls `Chat.Connect`. The abort release reason skips the latter call only.
+The existing Chat component constructs a Photon ChatClient in Awake and its
+Update services that client and may reconnect from menu state. Disconnect alone
+does not prove that this background component cannot reach Photon. The controlled
+loading-abort fixture omits normal account boot, so its real HTTP/UDP result does
+not verify this normal-transition chat boundary or full retirement of Photon.
+
 Use a real initialized profile and original manager initialization/callback order
 for the full MainScreen run, then execute the entire abort resource coroutine.
 Preserve serialized widget references, loaded inventory and actual asset pools.
