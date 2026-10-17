@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Session reads](OFFLINE_SESSION_READS.md) now use the canonical retained owner,
+including inactive objects, or the local solo model. Missing owned snapshots
+stay unknown; idle/local time preserves the recovered unsigned offline clock
+without reading a Photon peer/room. GetOrCreate reuses an inactive owned adapter.
+The native controlled metadata gate passes; local solo creation/callbacks,
+ordinary gameplay and the other direct Photon runtime callers remain open.
+
 The [offline region boundary](OFFLINE_REGION_BOUNDARY.md) now handles the
 Backend's omitted Regions without null access, invented Australia/zero-ping
 metadata or empty-list indexing in normal matchmaking. Only a real cached

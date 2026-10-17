@@ -10,6 +10,8 @@ using UnityEngine;
 public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 {
     private const int UnknownRegionPingMilliseconds = 4000;
+    private const double BattleTicksPerSecond = 30.0;
+    private const double MillisecondsPerSecond = 1000.0;
 	private static readonly LocalOfflineRoom mLocalOfflineRoom = new LocalOfflineRoom();
 	private static bool mCreatingLocalSoloRoom;
 
@@ -19,26 +21,32 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	private static SelfHostedBattleClient GetActiveSelfHostedClient()
 	{
-		SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		SelfHostedBattleClient client = GetOwnedSelfHostedClient();
 		return client != null && client.PhotonCompatibility != null && client.PhotonCompatibility.IsConnected ? client : null;
 	}
 
 	private static SelfHostedBattleClient GetOwnedSelfHostedClient()
 	{
-		SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		SelfHostedBattleClient client = SelfHostedBattleClient.Active;
 		return client != null && client.OwnsMatch ? client : null;
 	}
 
 	public static bool IsSelfHostedActive => GetOwnedSelfHostedClient() != null;
 
+    /// <summary>Uses only the owned server tick or the recovered unsigned local offline clock.</summary>
 	public static double GetNetworkTime()
 	{
 		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
-		if (selfHosted != null && selfHosted.State != null)
-			return selfHosted.State.ServerTick / 30.0;
-		return PhotonNetwork.time;
+        if (selfHosted != null)
+        {
+            // An owned session without its first snapshot has no authoritative clock yet.
+            return selfHosted.State == null ? 0.0 : selfHosted.State.ServerTick / BattleTicksPerSecond;
+        }
+        // The recovered offline Photon clock used this unsigned millisecond counter by default.
+        return unchecked((uint)Environment.TickCount) / MillisecondsPerSecond;
 	}
 
+    /// <summary>Reads the owned roster or local room model without consulting a retired Photon room.</summary>
 	public static int GetPlayerCount()
 	{
 		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
@@ -46,20 +54,16 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 			return selfHosted.State == null ? 0 : selfHosted.State.Players.Count;
 		if (mLocalOfflineRoom.IsOffline)
 			return mLocalOfflineRoom.PlayerCount;
-		return PhotonNetwork.room == null ? 0 : PhotonNetwork.room.playerCount;
+		return 0;
 	}
 
+    /// <summary>Returns only the battle ID confirmed by the owned self-hosted snapshot.</summary>
 	public static string GetBattleId()
 	{
 		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
 		if (selfHosted != null && selfHosted.State != null)
 			return selfHosted.State.MatchId;
-		if (IsLocalSoloRoom)
-			return string.Empty;
-		if (PhotonNetwork.room == null || PhotonNetwork.room.customProperties == null)
-			return string.Empty;
-		object value;
-		return PhotonNetwork.room.customProperties.TryGetValue("battleID", out value) ? value as string ?? string.Empty : string.Empty;
+        return string.Empty;
 	}
 
 	private static RoomConnection mCurrentRoomConnection;
@@ -89,7 +93,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 			SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
 			if (selfHosted != null) return true;
 			if (mLocalOfflineRoom.IsOffline) return mLocalOfflineRoom.IsInRoom;
-			return PhotonNetwork.connected && PhotonNetwork.inRoom && PhotonNetwork.room != null;
+			return false;
 		}
 	}
 

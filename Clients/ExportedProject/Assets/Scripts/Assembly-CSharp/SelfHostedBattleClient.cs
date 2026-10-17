@@ -163,8 +163,15 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         return false;
     }
 
+    /// <summary>Reuses an owned match even while its GameObject is inactive before finding a free adapter.</summary>
     public static SelfHostedBattleClient GetOrCreate()
     {
+        if (Active != null && Active.OwnsMatch)
+        {
+            // Scene inactivity does not release an admitted or recovering match's ownership.
+            return Active;
+        }
+
         SelfHostedBattleClient current = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
         if (current != null) return current;
         GameObject owner = new GameObject("SelfHostedBattleClient");
