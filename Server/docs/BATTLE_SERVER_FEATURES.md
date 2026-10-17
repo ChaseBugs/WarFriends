@@ -8,6 +8,12 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+[Queue attempt credentials](QUEUE_ATTEMPT_FENCING.md) now provide authenticated,
+stateless protobuf issuance with player-bound, purpose-separated signed tokens.
+Admission expires after five minutes while cancellation can still identify the
+original scope. Queue/pair binding, transactional cancellation receipts and
+normal Unity use remain required before distributed attempt fencing is active.
+
 Paired cancellation now captures the exact allocator pair inside its decision
 transaction. A signed, manifest-bound targeted Worker result lookup can retrieve
 both pending and acknowledged terminal proof, avoiding a race with normal result

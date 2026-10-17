@@ -38,6 +38,13 @@ namespace War.Client
         public Task<MatchConnectionGrant> ReconnectMatchAsync(string matchId, string requestId, string token, CancellationToken ct) =>
             Send("v1/battle/reconnect", new MatchReconnectRequest { MatchId = matchId, RequestId = requestId },
                 token, MatchConnectionGrant.Parser, ct);
+
+        /// <summary>Obtains a player-bound attempt credential without changing queue ownership.</summary>
+        public Task<MatchQueueAttemptGrant> CreateMatchQueueAttemptAsync(string token, CancellationToken ct)
+        {
+            return Send("v1/battle/queue/attempt", new MatchQueueRequest(), token, MatchQueueAttemptGrant.Parser, ct);
+        }
+
         public Task<MatchQueueReply> JoinMatchQueueAsync(string token, CancellationToken ct) => Send("v1/battle/queue/join", new MatchQueueRequest(), token, MatchQueueReply.Parser, ct);
         public Task<MatchQueueReply> CancelMatchQueueAsync(string token, CancellationToken ct) => Send("v1/battle/queue/cancel", new MatchQueueRequest(), token, MatchQueueReply.Parser, ct);
         public async Task<MatchConnectionGrant> FindMatchAsync(string token, TimeSpan timeout, CancellationToken ct)

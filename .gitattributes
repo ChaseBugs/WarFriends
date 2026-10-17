@@ -110,3 +110,8 @@ Server/tests/War.Protocol.Tests/BattleMatchCancellationTests.cs text eol=lf
 Server/docs/PAIRED_CANCELLATION_CONTROL.md text eol=lf
 
 Server/src/War.Backend/BattlePairedCancellation.cs text eol=lf
+
+Server/src/War.Infrastructure/BattleQueueAttemptIdentity.cs text eol=lf
+Server/src/War.Infrastructure/BattleQueueAttemptTokens.cs text eol=lf
+Server/tests/War.Protocol.Tests/BattleQueueAttemptTokenTests.cs text eol=lf
+Server/docs/QUEUE_ATTEMPT_FENCING.md text eol=lf

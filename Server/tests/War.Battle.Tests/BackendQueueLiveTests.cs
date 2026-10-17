@@ -82,6 +82,29 @@ internal static class BackendQueueLiveTests
             using var left=new BackendClient(new Uri(backendUrl),true);
             using var right=new BackendClient(new Uri(backendUrl),true);
             using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            try
+            {
+                await left.CreateMatchQueueAttemptAsync("invalid-session", deadline.Token);
+                throw new Exception("Unauthenticated player obtained a queue attempt credential.");
+            }
+            catch (HttpRequestException failure) when (failure.Message.Contains("Backend status 401", StringComparison.Ordinal))
+            {
+                // Issuance requires the same account authentication as queue admission.
+            }
+
+            var attemptGrant = await left.CreateMatchQueueAttemptAsync(tokens[0], deadline.Token);
+            var attemptIssuer = new BattleQueueAttemptTokens(Convert.FromBase64String(control));
+            var issuedAttempt = attemptIssuer.ValidateForJoin(
+                attemptGrant.Token, ids[0], DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            long ticketCount = await mongo.GetDatabase(database)
+                .GetCollection<BattleQueueTicketDocument>("battle_queue_tickets")
+                .CountDocumentsAsync(FilterDefinition<BattleQueueTicketDocument>.Empty, cancellationToken: deadline.Token);
+            if (issuedAttempt.ExpiresUnixSeconds != attemptGrant.ExpiresUnixSeconds || ticketCount != 0 ||
+                await new BattleMatchQueueStore(mongoUri, database).Existing(ids[0], deadline.Token) != null)
+            {
+                throw new Exception("Attempt issuance changed queue ownership or returned an inconsistent expiry.");
+            }
+
             var firstWaiting=await left.JoinMatchQueueAsync(tokens[0],deadline.Token);
             if(firstWaiting.Code!="waiting")throw new Exception("First player did not enter the durable queue.");
             try {await right.JoinMatchQueueAsync(tokens[1],deadline.Token);

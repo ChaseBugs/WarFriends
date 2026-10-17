@@ -55,6 +55,7 @@ if (matchmakingCompatibilityKey != null && !System.Text.RegularExpressions.Regex
 if (battleControlPort is < 1 or > 65535 || !Uri.TryCreate(controlEndpointText, UriKind.Absolute, out var battleControlEndpoint) ||
     battleControlEndpoint.Scheme is not ("http" or "https")) throw new InvalidOperationException("Invalid Battle control endpoint.");
 builder.Services.AddSingleton(new BattleMatchControlClient(new HttpClient { Timeout = TimeSpan.FromSeconds(5) }, battleControlKey));
+builder.Services.AddSingleton(new BattleQueueAttemptTokens(battleControlKey));
 builder.Services.AddSingleton(new BattleMatchCancellationClient(
     new HttpClient { Timeout = TimeSpan.FromSeconds(5) }, battleControlKey));
 builder.Services.AddSingleton(services => new BattlePairedCancellation(
@@ -242,6 +243,29 @@ api.MapPost("/battle/reconnect", async (HttpContext ctx, AccountStore accounts, 
     {return Error(503,"battle_reconnect_unavailable","The battle host did not issue a reconnect grant.");}
     catch(InvalidDataException)
     {return Error(409,"battle_reconnect_conflict","The reconnect grant conflicts with durable match authority.");}
+});
+api.MapPost("/battle/queue/attempt", async (HttpContext context, AccountStore accounts,
+    LegacyPlayerStore legacy, BattleQueueAttemptTokens attempts) =>
+{
+    string? playerId = await BattlePlayerId(context, accounts, legacy);
+    if (playerId == null)
+    {
+        return Error(401, "unauthorized", "Authentication required.");
+    }
+
+    var request = await Read(context, MatchQueueRequest.Parser);
+    if (request.CalculateSize() != 0)
+    {
+        return Error(400, "invalid_matchmaking_request", "Matchmaking request must be empty.");
+    }
+
+    long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    string token = attempts.Issue(playerId, now);
+    return Proto(new MatchQueueAttemptGrant
+    {
+        Token = token,
+        ExpiresUnixSeconds = now + BattleQueueAttemptTokens.LifetimeSeconds
+    });
 });
 api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy,
     BattleAllocationStore allocations, BattlePlayerPresentationSource presentations, BattleMatchQueueStore queue,

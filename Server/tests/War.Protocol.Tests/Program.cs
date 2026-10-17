@@ -12,6 +12,7 @@ if (args is ["--worker-cancellation-live", var cancelEndpoint, var cancelMatchId
 }
 
 int checks = 0;
+checks += BattleQueueAttemptTokenTests.Run();
 checks += await BattleMatchCancellationTests.RunAsync();
 checks += await MatchmakingAttemptTests.RunAsync();
 checks += PvpMatchClockTests.Run();
