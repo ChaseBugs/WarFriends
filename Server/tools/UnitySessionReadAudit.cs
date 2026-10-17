@@ -54,10 +54,13 @@ public static class UnitySessionReadAudit
             Require(PhotonConnectionManager.GetNetworkTime() == 2.5 && PhotonConnectionManager.GetPlayerCount() == 2 &&
                 PhotonConnectionManager.GetBattleId() == MatchId && SelfHostedBattleClient.GetOrCreate() == client,
                 "An inactive retained owner fell back to Photon or created a replacement adapter.");
-            client.LeaveMatch();
+            PhotonConnectionManager.Disconnect();
+            Require(!client.OwnsMatch,
+                "Disconnect ignored the inactive canonical self-hosted owner.");
             VerifyIdle();
             Debug.Log("PASS: idle/local-model/owned reads avoid Photon fallback, preserve unsigned local time, " +
-                "keep missing snapshots unknown and reuse the inactive canonical owner; controlled snapshots only.");
+                "keep missing snapshots unknown and reuse/disconnect the inactive canonical owner; " +
+                "controlled snapshots only.");
         }
         finally
         {

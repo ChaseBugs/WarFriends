@@ -299,7 +299,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static void Disconnect()
 	{
 		Debug.Log("PhotonConnectionManager: Disconnect");
-		SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+        // Disabling a scene object does not release its retained battle ownership.
+        SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+        if (selfHosted == null)
+        {
+            selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+        }
 		if (selfHosted != null && (selfHosted.OwnsMatch || selfHosted.IsMatchmaking))
 		{
 			selfHosted.LeaveMatch();

@@ -41,6 +41,25 @@ Photon callers elsewhere, ownership/serialization or ordinary full gameplay.
 Those remain separate requirements. Unity 5.2, Android and two Unity clients are
 not proved by the disposable Unity 2018 gate.
 
+## Inactive owner disconnection
+
+The actual Disconnect command now prefers the same canonical retained owner.
+Only when there is no canonical owner does it search active scene adapters,
+preserving the existing pre-admission matchmaking path. Disabling the owned
+GameObject must not route disconnection through legacy singleton/Photon cleanup.
+The original LeaveMatch recovery-suspension and queue-cancellation guards remain
+in force; this change does not assert that a local close cancels a server battle.
+
+The native baseline in `Server/.local/unity-inactive-disconnect-baseline.log`
+reproduced the actual command leaving the inactive connection owned and entering
+unrelated legacy initialization. The session audit now calls that command instead
+of directly calling LeaveMatch and requires ownership release followed by idle
+reads. Its controlled connection has no live Worker or matchmaking attempt.
+The fixed command and the existing combined NGUI/component regression pass in
+`Server/.local/unity-inactive-disconnect-final.log`, with no unexpected runtime
+errors. The same fixture still does not prove live-server cancellation or full
+menu boot.
+
 The existing four-state controller recovery and four injected cleanup-failure
 controls also pass with the canonical owner lookup:
 `Server/.local/unity-session-read-abort-routing.log`. Static asset checks still

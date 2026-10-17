@@ -8,6 +8,13 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The actual Disconnect command now uses the canonical retained self-hosted owner
+before scene discovery, matching the session-read boundary even while its object
+is inactive. A native baseline reproduced a leaked owned connection and legacy
+initialization; the corrected command and combined component/UI regression pass.
+This controlled connection check does not prove live cancellation or full menu
+boot. See [session reads](OFFLINE_SESSION_READS.md#inactive-owner-disconnection).
+
 [Local callback cancellation](LOCAL_SOLO_CALLBACK_CANCELLATION.md) now preserves
 the recovered rejection after connection/leave cancellation and the unusual
 JoinedRoom notification after CreatedRoom cancellation. A second native
