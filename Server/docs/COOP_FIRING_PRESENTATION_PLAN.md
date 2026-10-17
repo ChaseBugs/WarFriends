@@ -96,3 +96,35 @@ This is the initial preparation/queued-fire capture only. It does not yet
 exercise emitted-round resets, timer-driven cover return, interrupted return,
 live procedural aiming or a normal gameplay callback. No SDK mixer contract,
 firing presenter or authoritative projectile path is added by this checkpoint.
+
+## Source-method corner volley observation
+
+`RunCornerVolley` adds a separately named fixture, stored as
+`Server/content/coop-corner-volley-rig-reference.json.gz`. Use the same verifier
+command above with that filename. The initial obstacle scenario remains a
+queue-only control; only the two corner scenarios exercise round/return logic.
+
+`UnityCoopCornerVolleyProbe` calls the recovered public `ShotFromCover` method
+and the recovered private Update on an inactive disabled controller. It wires
+the existing Animation and the enabled/force-visible flags explicitly. Awake,
+Start, LateUpdate, gameplay AI and Photon do not run on that controller.
+The source controller digest is bound into this reference.
+
+The declared fixture starts with a 0.7-second hide delay and notifies the
+source animation of shots at ticks 18, 24 and 43, each with a 0.5-second hide
+delay. These are fixture notifications, not host-authorized emitted rounds.
+Source timer handling runs before notifications. Both operations occur after
+the recorded observation and before the next animation evaluation; the trace
+names them `commandsAfterObservation` to avoid confusing callback state with
+the displayed bone pose.
+
+Each scenario records 91 frames and 59 transforms. For both corner sides the
+verifier requires fire reset at observations 19/25, cover return at 41, reversed
+look during return interruption at 44, a later cover return at 60 and queued
+idle at 90. The reset observations have fire time 1/30 second. Full-rig finite,
+hierarchy, source-hash and clock checks still apply to all three scenarios.
+
+This supplies measured source-method reset/return/interruption poses under one
+explicit command order. It does not prove normal controller lifecycle, actual
+gameplay callback order, obstacle round resets, procedural aiming, network
+mixer reconstruction or Unity 5.2 parity. Those requirements remain open.

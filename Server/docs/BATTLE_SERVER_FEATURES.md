@@ -1515,3 +1515,11 @@ digests and validate clocks, hierarchy, finite transforms and mixer values.
 This closes the initial whole-rig observation prerequisite only; per-round
 resets, cover-return interruptions, a network mixer contract and firing actor
 integration remain open. See [firing requirements](COOP_FIRING_PRESENTATION_PLAN.md).
+
+A separate source-method corner fixture now captures 91 frames per scenario
+and invokes recovered ShotFromCover/Update on an inactive explicitly wired
+controller. Both sides verify round resets, timed cover return, interrupted
+return and queued idle, with commands identified as after-observation events.
+This is a declared animation fixture, not live AI round authority or normal
+controller lifecycle proof. Obstacle resets and network reconstruction remain
+open; see the same firing requirements for the exact observation boundary.

@@ -63,6 +63,29 @@ def validate_scenario(scenario):
     return len(frames), len(expected_paths)
 
 
+def validate_corner_volley(scenario):
+    frames = scenario["frames"]
+    require(len(frames) == 91, "Corner volley fixture duration changed.")
+    notifications = []
+    for tick, frame in enumerate(frames):
+        commands = frame["commandsAfterObservation"]
+        require(commands["tick"] == tick, "Corner command clock changed.")
+        notifications.extend(commands["events"])
+    require(notifications == [dict(kind="source-shot-notification", scheduledTick=tick, observedTick=tick)
+                              for tick in (18, 24, 43)], "Corner round notification history changed.")
+    side = "right" if scenario["startClip"] == "player_look_right3" else "left"
+    expected = ((19, scenario["fireClip"]), (25, scenario["fireClip"]),
+                (41, f"player_{side}_coverBack3"), (44, scenario["startClip"]),
+                (60, f"player_{side}_coverBack3"), (90, "idle - Queued Clone"))
+    for tick, name in expected:
+        states = frames[tick]["rig"]["states"]
+        require(any(state["name"] == name and state["weight"] > 0 for state in states),
+                f"Missing corner transition at tick {tick}: {name}")
+    for tick in (19, 25):
+        state = next(row for row in frames[tick]["rig"]["states"] if row["name"] == scenario["fireClip"])
+        require(abs(state["time"] - 1 / 30) < 0.0001, "Per-round fire restart did not take effect.")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -80,12 +103,18 @@ def main():
     scenarios = capture["scenarios"]
     require([row["startClip"] for row in scenarios] ==
             ["stand_up_begin", "player_look_right3", "player_look_left3"], "Scenario order changed.")
+    if capture.get("cornerVolleyFixture") is True:
+        source = arguments.project / "Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs"
+        require(hashlib.sha256(source.read_bytes()).hexdigest() == capture["animationControllerSha256"],
+                "Recovered animation controller source changed.")
     for scenario in scenarios:
         for field in ("priorClip", "startClip", "fireClip"):
             clip_path = arguments.project / "Assets/AnimationClip" / (scenario[field] + ".anim")
             require(hashlib.sha256(clip_path.read_bytes()).hexdigest() == scenario[field + "Sha256"],
                     "Source animation clip changed.")
         frames, transforms = validate_scenario(scenario)
+        if capture.get("cornerVolleyFixture") is True and scenario["startClip"] != "stand_up_begin":
+            validate_corner_volley(scenario)
         print(f"PASS: {scenario['startClip']}: {frames} frames, {transforms} transforms per frame")
 
 

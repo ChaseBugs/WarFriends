@@ -17,6 +17,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
     private const string Active = "WarFriends.CoopAssaulterAnimationQueue";
     private const string Primed = "WarFriends.CoopAssaulterQueuePrimed";
     private const string WholeRig = "WarFriends.CoopAssaulterWholeRig";
+    private const string CornerVolley = "WarFriends.CoopAssaulterCornerVolley";
     private const string EnemyPath = "Assets/GameObject/enemy.prefab";
     private const string WeaponPath =
         "Assets/GameObject/AssaultRifleEnemy.prefab";
@@ -36,6 +37,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
     private static Transform[] muzzles;
     private static Transform[] roots;
     private static float startTime;
+    private static UnityCoopCornerVolleyProbe[] volleyProbes;
 
     static UnityCoopAssaulterAnimationQueueExport()
     {
@@ -45,17 +47,27 @@ public static class UnityCoopAssaulterAnimationQueueExport
 
     public static void Run()
     {
+        SessionState.SetBool(CornerVolley, false);
         Begin(false);
     }
 
     public static void RunPrimed()
     {
+        SessionState.SetBool(CornerVolley, false);
         Begin(true);
     }
 
     /// <summary>Captures full local rig poses and mixer states from the source cover preparation.</summary>
     public static void RunWholeRig()
     {
+        SessionState.SetBool(CornerVolley, false);
+        Begin(true, true);
+    }
+
+    /// <summary>Observes source corner round resets and an interrupted cover return under a declared fixture.</summary>
+    public static void RunCornerVolley()
+    {
+        SessionState.SetBool(CornerVolley, true);
         Begin(true, true);
     }
 
@@ -151,10 +163,17 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 };
                 if (SessionState.GetBool(WholeRig, false))
                 {
+                    object rig = UnityCoopRigFrameCapture.Capture(root, animation);
+                    object commands = null;
+                    if (volleyProbes != null && volleyProbes[i] != null)
+                    {
+                        commands = volleyProbes[i].Advance(seconds);
+                    }
                     Frames[i].Add(new
                     {
                         observation = frame,
-                        rig = UnityCoopRigFrameCapture.Capture(root, animation)
+                        commandsAfterObservation = commands,
+                        rig
                     });
                 }
                 else
@@ -162,7 +181,8 @@ public static class UnityCoopAssaulterAnimationQueueExport
                     Frames[i].Add(frame);
                 }
             }
-            if (seconds < 1.3f)
+            float duration = SessionState.GetBool(CornerVolley, false) ? 3f : 1.3f;
+            if (seconds < duration)
                 return;
 
             string output = Environment.GetEnvironmentVariable(
@@ -198,6 +218,8 @@ public static class UnityCoopAssaulterAnimationQueueExport
                     enemySha256 = Hash(EnemyPath),
                     weaponSha256 = Hash(WeaponPath),
                     captureRate = 30,
+                    cornerVolleyFixture = SessionState.GetBool(CornerVolley, false),
+                    animationControllerSha256 = Hash("Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs"),
                     scenarios = primedScenarios
                 }, Formatting.Indented));
             }
@@ -216,6 +238,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
             SessionState.SetBool(Active, false);
             SessionState.SetBool(Primed, false);
             SessionState.SetBool(WholeRig, false);
+            SessionState.SetBool(CornerVolley, false);
             EditorApplication.update -= Update;
             Debug.Log("COOP_ASSAULTER_QUEUE_EXPORT_PASSED frames=" +
                 Frames.Sum(rows => rows.Count));
@@ -226,6 +249,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
             SessionState.SetBool(Active, false);
             SessionState.SetBool(Primed, false);
             SessionState.SetBool(WholeRig, false);
+            SessionState.SetBool(CornerVolley, false);
             EditorApplication.update -= Update;
             Debug.LogException(error);
             EditorApplication.Exit(1);
@@ -281,6 +305,12 @@ public static class UnityCoopAssaulterAnimationQueueExport
             animation.CrossFade(StartClips[i], FadeSeconds[i]);
             animation[FireClips[i]].wrapMode = WrapMode.ClampForever;
             animation.PlayQueued(FireClips[i]);
+        }
+        if (SessionState.GetBool(CornerVolley, false))
+        {
+            volleyProbes = new UnityCoopCornerVolleyProbe[3];
+            volleyProbes[1] = new UnityCoopCornerVolleyProbe(animations[1], true);
+            volleyProbes[2] = new UnityCoopCornerVolleyProbe(animations[2], false);
         }
         startTime = Time.time;
     }
