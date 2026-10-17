@@ -8,6 +8,12 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## Dependency-ordered work
 
+The actual-manager cancellation matrix now checks connection/leave rejection as
+well as CreatedRoom disconnect/leave, including callback-time membership and
+exact observer removal after both rejection and normal return. The full native
+comparison passes. This closes those scoped command cleanup checks, not the
+remaining boot-time mode assignments or Photon ownership/RPC/serialization.
+
 The actual-manager callback-time diagnostic reproduced CreatedRoom reporting an
 SDK member but no model room/zero players. A scoped pre-dispatch observer now
 publishes local state before recovered callbacks, including nested cancellation,

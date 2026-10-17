@@ -42,6 +42,29 @@ remain open.
 
 ## Verification
 
+### Actual manager cancellation and observer lifetime
+
+The native manager matrix now invokes the real JoinOfflineGame command for four
+cases: disconnect in ConnectedToMaster, LeftRoom and CreatedRoom, plus leave in
+CreatedRoom. It requires the exact recovered rejection message for the first two
+cases and a normal return for CreatedRoom cancellation. Every callback samples
+manager membership/count against SDK state, and every command checks final local
+identity and membership.
+
+The fixture also compares the complete pre-dispatch observer delegate before and
+after each command. Rejected joins must remove their temporary subscription just
+as successful returns do, preventing later SDK messages from mutating a stale
+command observer. The native full comparison passes in
+`Server/.local/unity-solo-cancellation-observer-lifetime.log`. Its exact expected
+CreateRoom refusal count is now two: the standalone reference and actual-manager
+LeftRoom-disconnect cases. The focused manager gate expects one. All other
+runtime errors fail the gate. Earlier logs below retain their historical counts.
+
+The active gameplay source search finds direct LeaveRoom/Disconnect calls only
+inside PhotonConnectionManager. The separate direct offline-mode assignments in
+GameController, GameControllerCampaign and GameControllerDeathMatch remain
+legacy dependencies; passing this scoped matrix does not migrate them.
+
 ### Transitional callback-time membership
 
 `UnityLocalOfflineRoomAudit.RunManagerVisibility` began as a failing diagnostic
