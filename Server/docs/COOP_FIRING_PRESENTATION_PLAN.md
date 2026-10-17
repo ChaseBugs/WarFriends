@@ -66,3 +66,33 @@ remove those guards or admit an enemy into moving collision.
 The native reference project currently uses Unity 2018.3.0f2. Its observations
 must retain that provenance; they do not establish shipped Unity 5.2 parity.
 No server economy or settlement transition depends on these visual samples.
+
+## Whole-rig queue observation checkpoint
+
+`UnityCoopAssaulterAnimationQueueExport.RunWholeRig` now records every local
+transform and enabled mixer state's time, normalized time, weight, speed,
+layer, wrap mode and blend mode. `UnityCoopRigFrameCapture` observes the
+already evaluated hierarchy; it does not call Sample or advance animation.
+The existing muzzle-only export modes remain available independently.
+
+Run in a disposable Unity project with `WAR_COOP_ASSAULTER_RIG_OUTPUT` set to
+an absolute JSON output path. The checked-in compressed reference is
+`Server/content/coop-assaulter-whole-rig-reference.json.gz`. Validate it with:
+
+```powershell
+python Server/tools/verify_coop_rig_capture.py `
+  Server/content/coop-assaulter-whole-rig-reference.json.gz `
+  --project Clients/ExportedProject
+```
+
+This checkpoint contains three source-cover-primed sequences with forty
+consecutive frames and 59 transforms each at 30 Hz. The verifier checks source
+prefab/clip hashes, ordered clocks, stable unique hierarchy paths, finite
+transforms, normalized quaternions, mixer scalars, changed poses and arrival
+in a weighted firing state. Indexed hierarchy paths distinguish duplicate
+bone names without renaming the source rig.
+
+This is the initial preparation/queued-fire capture only. It does not yet
+exercise emitted-round resets, timer-driven cover return, interrupted return,
+live procedural aiming or a normal gameplay callback. No SDK mixer contract,
+firing presenter or authoritative projectile path is added by this checkpoint.

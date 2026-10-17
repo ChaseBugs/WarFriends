@@ -16,6 +16,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
 {
     private const string Active = "WarFriends.CoopAssaulterAnimationQueue";
     private const string Primed = "WarFriends.CoopAssaulterQueuePrimed";
+    private const string WholeRig = "WarFriends.CoopAssaulterWholeRig";
     private const string EnemyPath = "Assets/GameObject/enemy.prefab";
     private const string WeaponPath =
         "Assets/GameObject/AssaultRifleEnemy.prefab";
@@ -52,11 +53,16 @@ public static class UnityCoopAssaulterAnimationQueueExport
         Begin(true);
     }
 
-    private static void Begin(bool primed)
+    /// <summary>Captures full local rig poses and mixer states from the source cover preparation.</summary>
+    public static void RunWholeRig()
+    {
+        Begin(true, true);
+    }
+
+    private static void Begin(bool primed, bool wholeRig = false)
     {
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(
-                primed ? "WAR_COOP_ASSAULTER_PRIMED_OUTPUT" :
-                    "WAR_COOP_ASSAULTER_QUEUE_OUTPUT")))
+                OutputVariable(primed, wholeRig))))
             throw new InvalidOperationException(
                 "Set the co-op Assaulter queue output path.");
 
@@ -106,6 +112,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
         }
         SessionState.SetBool(Active, true);
         SessionState.SetBool(Primed, primed);
+        SessionState.SetBool(WholeRig, wholeRig);
         EditorApplication.isPlaying = true;
     }
 
@@ -124,7 +131,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
                 Animation animation = animations[i];
                 Transform muzzle = muzzles[i];
                 Transform root = roots[i];
-                Frames[i].Add(new
+                object frame = new
                 {
                     frame = Time.frameCount,
                     seconds,
@@ -141,15 +148,25 @@ public static class UnityCoopAssaulterAnimationQueueExport
                             weight = state.weight,
                             enabled = state.enabled
                         }).ToArray()
-                });
+                };
+                if (SessionState.GetBool(WholeRig, false))
+                {
+                    Frames[i].Add(new
+                    {
+                        observation = frame,
+                        rig = UnityCoopRigFrameCapture.Capture(root, animation)
+                    });
+                }
+                else
+                {
+                    Frames[i].Add(frame);
+                }
             }
             if (seconds < 1.3f)
                 return;
 
             string output = Environment.GetEnvironmentVariable(
-                SessionState.GetBool(Primed, false)
-                    ? "WAR_COOP_ASSAULTER_PRIMED_OUTPUT"
-                    : "WAR_COOP_ASSAULTER_QUEUE_OUTPUT");
+                OutputVariable(SessionState.GetBool(Primed, false), SessionState.GetBool(WholeRig, false)));
             var scenarios = Enumerable.Range(0, 3).Select(i => new
             {
                 startClip = StartClips[i],
@@ -168,7 +185,9 @@ public static class UnityCoopAssaulterAnimationQueueExport
                         PriorClips[i] + ".anim"),
                     priorNormalizedTime = PriorNormalizedTimes[i],
                     startClip = StartClips[i],
+                    startClipSha256 = Hash("Assets/AnimationClip/" + StartClips[i] + ".anim"),
                     fireClip = FireClips[i],
+                    fireClipSha256 = Hash("Assets/AnimationClip/" + FireClips[i] + ".anim"),
                     fadeSeconds = FadeSeconds[i],
                     frames = Frames[i]
                 }).ToArray();
@@ -196,6 +215,7 @@ public static class UnityCoopAssaulterAnimationQueueExport
             }
             SessionState.SetBool(Active, false);
             SessionState.SetBool(Primed, false);
+            SessionState.SetBool(WholeRig, false);
             EditorApplication.update -= Update;
             Debug.Log("COOP_ASSAULTER_QUEUE_EXPORT_PASSED frames=" +
                 Frames.Sum(rows => rows.Count));
@@ -205,10 +225,25 @@ public static class UnityCoopAssaulterAnimationQueueExport
         {
             SessionState.SetBool(Active, false);
             SessionState.SetBool(Primed, false);
+            SessionState.SetBool(WholeRig, false);
             EditorApplication.update -= Update;
             Debug.LogException(error);
             EditorApplication.Exit(1);
         }
+    }
+
+    private static string OutputVariable(bool isPrimed, bool isWholeRig)
+    {
+        if (isWholeRig)
+        {
+            return "WAR_COOP_ASSAULTER_RIG_OUTPUT";
+        }
+        if (isPrimed)
+        {
+            return "WAR_COOP_ASSAULTER_PRIMED_OUTPUT";
+        }
+
+        return "WAR_COOP_ASSAULTER_QUEUE_OUTPUT";
     }
 
     private static void StartPlayback()

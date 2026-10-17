@@ -1506,3 +1506,12 @@ retires it, and reset/close clears owned roots. This is presentation-only source
 clip sampling: cross-fades, other states/families, full upgrade appearance,
 native movement parity, normal co-op admission/combat and settlement remain
 open. See [walking presentation](COOP_WALKING_PRESENTATION.md).
+
+B22's next source reference now captures the complete hierarchy and enabled
+Animation mixer states for obstacle/right-corner/left-corner preparation and
+queued firing: forty consecutive 30 Hz frames per scenario, 59 transforms
+per frame. The compressed reference and verifier bind source prefab/clip
+digests and validate clocks, hierarchy, finite transforms and mixer values.
+This closes the initial whole-rig observation prerequisite only; per-round
+resets, cover-return interruptions, a network mixer contract and firing actor
+integration remain open. See [firing requirements](COOP_FIRING_PRESENTATION_PLAN.md).
