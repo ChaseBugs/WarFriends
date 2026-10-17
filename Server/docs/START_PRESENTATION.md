@@ -58,6 +58,30 @@ not changed by this projection.
 
 ## Verification
 
+### Real reply-loss gate
+
+`--unity-rifle-presentation-loss-only <Unity executable> <disposable project>`
+runs the normal live-rifle gate through PresentationReplyLossProxy. The proxy
+forwards authenticated datagrams unchanged. It drops every initial local Ready
+reply until the SDK times out, then allows retries when the Editor starts polling.
+It also drops exactly the first presentation-ready reply. Fixture counters require
+multiple discarded Ready responses, exactly one discarded presentation response
+and the expected recovery boundary; it cannot pass merely because no loss occurred.
+
+The Editor confirms the independent SDK peer sees the Worker's consumed Ready
+while the local SDK still holds its original unresolved command. The production
+camera reporter then retries that command before submitting presentation. Both
+actor flags update, and no pending mutation remains. The existing automatic
+event-cursor reconnect and fresh-generation reconstruction also still pass.
+
+Native evidence: `Server/.local/unity-live-rifle-presentation-loss.log`.
+The Release test-project build reports zero warnings/errors. This fixture is
+test-only; the production Worker, SDK and Client behavior were not changed for
+the loss injection. It uses one Editor with copied source rigs and an independent
+SDK peer, not normal two-Unity-client menu/camera gameplay.
+
+### Other checkpoints
+
 - --presentation-ready-only passes 149 focused readiness/UDP transfer assertions:
   admission/phase rejection, owner isolation, no combat/tick change, immutable
   retry, terminal protection, and fresh authenticated generation/cursor restore.
@@ -85,7 +109,7 @@ not changed by this projection.
 The Unity gate uses one Editor process, two copied source rigs and an SDK peer;
 it invokes the production reporter but does not run GameCamera's entire startup
 animation or normal menu/controller bootstrap. Two normal Unity clients, dedicated
-camera-report timeout/exhaustion, prior-receipt loss and cancellation-race
+camera-report total-response-loss/retry exhaustion and cancellation-race
 injection, original Unity 5.2, Android and this
 feature's Linux runtime proof remain open. Existing full-gameplay and Photon
 retirement requirements are unchanged.

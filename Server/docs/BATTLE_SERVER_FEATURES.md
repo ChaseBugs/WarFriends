@@ -13,7 +13,11 @@ command and monotonic per-player snapshot flag in both host runtimes. PVP/Coop
 keep their immediate local callback and use the actual reporter instead of a
 no-op string alias. The live Unity/Worker/SDK-peer gate observes both actor flags
 and restores them from a fresh reconnect generation. Full normal camera/menu
-bootstrap, two Unity clients and report-specific failure injection remain open.
+bootstrap and two Unity clients remain open. A separate real reply-loss gate now
+drops all loading Ready responses until timeout and the first presentation reply;
+the production reporter restores the original cursor and completes both actor
+flags. Total presentation-response loss and cancellation-race injection remain
+open. See the native fixture and boundaries in the presentation document.
 
 The normal Online/PVP/Coop controller paths now resolve the canonical retained
 owner rather than an active-object search. The actual player-initialization

@@ -17,8 +17,22 @@ using Microsoft.AspNetCore.Http;
 
 internal static class LiveRifleTests
 {
-    internal static async Task RunUnity(string directory,string unityExe,string projectPath)
+    private enum UnityAuditMode { Normal, PresentationReplyLoss }
+
+    internal static Task RunUnity(string directory, string unityExe, string projectPath)
     {
+        return RunUnityCoreAsync(directory, unityExe, projectPath, UnityAuditMode.Normal);
+    }
+
+    internal static Task RunUnityPresentationLossAsync(string directory, string unityExe, string projectPath)
+    {
+        return RunUnityCoreAsync(directory, unityExe, projectPath, UnityAuditMode.PresentationReplyLoss);
+    }
+
+    private static async Task RunUnityCoreAsync(string directory, string unityExe, string projectPath,
+        UnityAuditMode auditMode)
+    {
+        bool isPresentationLossAudit = auditMode == UnityAuditMode.PresentationReplyLoss;
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         var map=content.Maps.Single(m=>m.Source.Contains("City_Multiplayer",StringComparison.Ordinal));
         var covers=new[] {map.Covers.First(c=>c.Main&&c.Fraction==1),map.Covers.First(c=>c.Main&&c.Fraction==2)};
@@ -37,11 +51,14 @@ internal static class LiveRifleTests
         };
         string prefix=Path.Combine(Path.GetTempPath(),"war-rifle-unity-"+Guid.NewGuid().ToString("N"));
         string manifestFile=prefix+".json",grantsFile=prefix+".jsonl";
-        string unityLog=Path.GetFullPath("Server/.local/unity-live-rifle.log");
+        string unityLog=Path.GetFullPath(isPresentationLossAudit
+            ? "Server/.local/unity-live-rifle-presentation-loss.log" : "Server/.local/unity-live-rifle.log");
         Directory.CreateDirectory(Path.GetDirectoryName(unityLog)!);
         await File.WriteAllTextAsync(manifestFile,JsonSerializer.Serialize(manifest));
         using var portProbe=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
         int port=((IPEndPoint)portProbe.Client.LocalEndPoint!).Port;portProbe.Close();
+        await using PresentationReplyLossProxy? replyLoss = isPresentationLossAudit
+            ? new PresentationReplyLossProxy(port) : null;
         string key=Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));var tokens=new MatchTokens(key);
         MatchConnectionGrant Grant(string id,ulong session,ulong generation=0)
         {
@@ -49,7 +66,8 @@ internal static class LiveRifleTests
             var claim=new MatchAdmission {MatchId=manifest.MatchId,ServerId=manifest.ServerId,PlayerId=id,SessionId=session,
                 ManifestHash=manifest.Digest(),IssuedUnixSeconds=now,ExpiresUnixSeconds=now+120,
                 ConnectionGeneration=generation};
-            var grant=new MatchConnectionGrant {Host="127.0.0.1",Port=(uint)port,PlayerId=id,SessionId=session,MatchId=claim.MatchId,
+            var grant=new MatchConnectionGrant {Host="127.0.0.1",Port=(uint)(replyLoss?.Port ?? port),
+                PlayerId=id,SessionId=session,MatchId=claim.MatchId,
                 ManifestHash=claim.ManifestHash,ExpiresUnixSeconds=claim.ExpiresUnixSeconds,
                 Ticket=tokens.Sign(claim),SessionKey=ByteString.CopyFrom(tokens.SessionKey(claim))};
             grant.PlayerViews.Add(View(ids[0],"Left",1));grant.PlayerViews.Add(View(ids[1],"Right",2));
@@ -114,6 +132,10 @@ internal static class LiveRifleTests
             start.Environment["WAR_RIFLE_LIVE_GRANTS_FILE"]=grantsFile;
             start.Environment["WAR_RIFLE_LIVE_BACKEND"]=backend.Urls.Single()+"/";
             start.Environment["WAR_RIFLE_RETRY_SESSION"]=secondReplacement.SessionId.ToString();
+            if (isPresentationLossAudit)
+            {
+                start.Environment["WAR_RIFLE_PRESENTATION_LOSS"] = "1";
+            }
             editor=System.Diagnostics.Process.Start(start)??throw new Exception("Unity did not start.");
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(105));
             await editor.WaitForExitAsync(timeout.Token);
@@ -122,6 +144,7 @@ internal static class LiveRifleTests
             if(issuedRequests.Count!=2 ||
                 issuedRequests.Values.Select(grant=>grant.SessionId).Distinct().Count()!=2)
                 throw new Exception("Unity did not request a fresh reconnect generation after an admitted callback failure.");
+            replyLoss?.VerifyInjectedLoss();
             Console.WriteLine("PASS: two rendered recovered Unity rigs over live UDP; "+unityLog);
         }
         finally

@@ -802,12 +802,21 @@ if (args is [var bazookaAuditCommand, var bazookaUnityExecutable, var bazookaUni
     return;
 }
 
-if(args is ["--unity-rifle-only",var unityExecutable,var unityProject])
+if(args is [var rifleUnityMode,var unityExecutable,var unityProject] &&
+    rifleUnityMode is "--unity-rifle-only" or "--unity-rifle-presentation-loss-only")
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
     while(root!=null && !File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
     if(root==null)throw new Exception("Recovered battle content artifact not found.");
-    await LiveRifleTests.RunUnity(Path.Combine(root.FullName,"content"),unityExecutable,unityProject);
+    if (rifleUnityMode == "--unity-rifle-presentation-loss-only")
+    {
+        await LiveRifleTests.RunUnityPresentationLossAsync(Path.Combine(root.FullName, "content"),
+            unityExecutable, unityProject);
+    }
+    else
+    {
+        await LiveRifleTests.RunUnity(Path.Combine(root.FullName, "content"), unityExecutable, unityProject);
+    }
     return;
 }
 

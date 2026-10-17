@@ -13,8 +13,10 @@ using War.Protocol;
 // Runs against a separate disposable Unity project and a live .NET UDP Worker.
 public static class SelfHostedLiveRifleAudit
 {
+    private const int PresentationLossAllowanceSeconds = 10;
     private static Task audit;
     private static double deadline;
+    private static bool _isPresentationLossAudit;
     public static void Run()
     {
         string path=Environment.GetEnvironmentVariable("WAR_RIFLE_LIVE_GRANTS_FILE");
@@ -28,7 +30,9 @@ public static class SelfHostedLiveRifleAudit
 		if(lines.Length!=2)throw new InvalidOperationException("Expected two initial grants.");
 		var first=JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
 		var second=JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
-		deadline=EditorApplication.timeSinceStartup+65;
+        _isPresentationLossAudit = Environment.GetEnvironmentVariable("WAR_RIFLE_PRESENTATION_LOSS") == "1";
+		deadline=EditorApplication.timeSinceStartup+65+
+            (_isPresentationLossAudit ? PresentationLossAllowanceSeconds : 0);
 		audit=Check(first,second,backendUrl,retrySession);
         EditorApplication.update+=Update;
     }
@@ -81,7 +85,8 @@ public static class SelfHostedLiveRifleAudit
             var leftPlayer=left.GetComponent<PlayerController>();var rightPlayer=right.GetComponent<PlayerController>();
             var leftAnimator=left.GetComponentInChildren<SoldierAnimationController>(true);
             var rightAnimator=right.GetComponentInChildren<SoldierAnimationController>(true);
-			using(var ct=new CancellationTokenSource(TimeSpan.FromSeconds(55)))
+			using(var ct=new CancellationTokenSource(TimeSpan.FromSeconds(55+
+                (_isPresentationLossAudit ? PresentationLossAllowanceSeconds : 0))))
             using(var other=new MatchConnection(peer))
             {
                 await adapter.Connect(local);
@@ -109,7 +114,7 @@ public static class SelfHostedLiveRifleAudit
                 adapter.ActivateDeathMatchScene(leftPlayer,rightPlayer);
                 if(leftPlayer.enabled || rightPlayer.enabled || leftAnimator.enabled || rightAnimator.enabled)
                     throw new InvalidOperationException("Production bridge retained a legacy scene writer.");
-                await adapter.Ready();await other.ReadyAsync(ct.Token);
+                await ReadyParticipantsAsync(adapter, other, ct.Token);
                 while(adapter.State.Phase!=BattlePhase.Running)
                 {
                     await Task.Delay(100,ct.Token);await adapter.Refresh();
@@ -374,6 +379,45 @@ public static class SelfHostedLiveRifleAudit
             // Unity 2018 PlayerLoop and can crash the editor before Run exits.
         }
     }
+    private static async Task ReadyParticipantsAsync(SelfHostedBattleClient adapter, MatchConnection peer,
+        CancellationToken cancellationToken)
+    {
+        if (!_isPresentationLossAudit)
+        {
+            await adapter.Ready();
+            await peer.ReadyAsync(cancellationToken);
+            return;
+        }
+
+        try
+        {
+            await adapter.Ready();
+            throw new InvalidOperationException("The fixture failed to lose all initial Ready replies.");
+        }
+        catch (TimeoutException)
+        {
+            MatchConnection transport = GetTransport(adapter);
+            MatchPendingCommand pending = await transport.CapturePendingAsync(cancellationToken);
+            MatchReply observed = await peer.PollAsync(cancellationToken);
+            BattlePlayerState consumed = observed.Snapshot.Players.Single(
+                player => player.PlayerId == adapter.LocalPlayerId);
+            if (pending == null || pending.CommandId != consumed.LastCommandId ||
+                !consumed.Ready || consumed.PresentationReady)
+            {
+                throw new InvalidOperationException("Lost Ready replies did not retain the consumed command identity.");
+            }
+            Debug.Log("PASS: Worker consumed Ready while its Unity sender retained the unresolved original command.");
+        }
+
+        await peer.ReadyAsync(cancellationToken);
+    }
+
+    private static MatchConnection GetTransport(SelfHostedBattleClient adapter)
+    {
+        return (MatchConnection)typeof(SelfHostedBattleClient).GetField("connection",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(adapter);
+    }
+
     private static async Task VerifyStartPresentation(SelfHostedBattleClient adapter, MatchConnection peer,
         PlayerController[] actors, CancellationToken cancellationToken)
     {
@@ -402,6 +446,10 @@ public static class SelfHostedLiveRifleAudit
         {
             throw new InvalidOperationException(
                 "A host-confirmed peer camera completion did not reach the Unity actor.");
+        }
+        if (await GetTransport(adapter).CapturePendingAsync(cancellationToken) != null)
+        {
+            throw new InvalidOperationException("Camera completion left an earlier command unresolved.");
         }
         Debug.Log("PASS: actual Unity camera reporter, Worker receipt, independent peer and both actor flags.");
     }
