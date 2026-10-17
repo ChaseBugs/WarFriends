@@ -100,11 +100,12 @@ references and the same 17 preexisting NGUI sprite mismatches.
 
 ## Remaining boundary
 
-The normal Unity attempt still uses account-scoped queue requests. New scoped
-HTTP/SDK paths now enforce distributed attempt ownership as detailed in
-[queue attempt fencing](QUEUE_ATTEMPT_FENCING.md), but the Unity adapter and its
-plugin binaries have not been migrated to them. Its serialization remains per
-adapter until that migration and native verification are complete.
+The normal Unity attempt now acquires and preserves a server-issued credential
+for scoped HTTP/SDK search and cleanup, as detailed in
+[queue attempt fencing](QUEUE_ATTEMPT_FENCING.md). Its updated SDK/protobuf plugin
+binaries, native cancellation Play Mode and HTTP-to-UDP admission checks pass.
+Actual Mongo allocator fencing has separate service tests. Full recovered UI
+boot and scoped ownership across a real Backend process restart still need proof.
 The server now cancels a registered prestart pair through hash-bound Worker
 control and accepts its validated terminal result before releasing both players.
 The Client accepts the resulting `cancelled` response; running or unavailable

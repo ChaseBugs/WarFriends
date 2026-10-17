@@ -8,12 +8,17 @@ internal static class MatchmakingAttemptTests
 {
     private const string AccessToken = "local-matchmaking-test-token";
     private const int TimeoutSeconds = 10;
+    private const long FixtureExpiryUnixSeconds = 2000;
 
     internal static async Task<int> RunAsync()
     {
         int checks = await VerifyPendingCleanupAsync();
         checks += await VerifyFailedCleanupRetryAsync();
         checks += await VerifyPairedCleanupAsync();
+        checks += await VerifyCancellationDuringIssuanceAsync();
+        checks += await VerifyFailedIssuanceAsync();
+        checks += await VerifyCancellationBeforeSearchAsync();
+        checks += await VerifyRepeatedSearchRejectedAsync();
         Console.WriteLine("PASS: " + checks + " recovered Client matchmaking cancellation checks");
         return checks;
     }
@@ -62,6 +67,74 @@ internal static class MatchmakingAttemptTests
         return 3;
     }
 
+    private static async Task<int> VerifyCancellationDuringIssuanceAsync()
+    {
+        var handler = new ControlledQueueHandler { HoldIssuance = true };
+        using var attempt = CreateAttempt(handler);
+        var search = attempt.FindAsync(TimeoutSeconds);
+        await handler.IssuanceObserved.Task;
+        var cancellation = attempt.CancelAsync();
+        Require(!cancellation.IsCompleted && handler.CancelRequests == 0 && !handler.IsDisposed,
+            "Pending issuance must retain HTTP ownership without account-wide cancellation.");
+        handler.AcceptIssuance();
+        await handler.CancellationObserved.Task;
+        Require(!handler.JoinObserved.Task.IsCompleted && handler.IssueRequests == 1,
+            "Cancellation during issuance must skip join and retain the one issued credential.");
+        handler.AcceptCancellation();
+        await cancellation;
+        await ExpectCanceledAsync(search);
+        await attempt.CompleteAsync();
+        Require(handler.IsDisposed, "Scoped cleanup after issuance must release its original HTTP owner.");
+        return 3;
+    }
+
+    private static async Task<int> VerifyFailedIssuanceAsync()
+    {
+        var handler = new ControlledQueueHandler { HoldIssuance = true };
+        using var attempt = CreateAttempt(handler);
+        var search = attempt.FindAsync(TimeoutSeconds);
+        await handler.IssuanceObserved.Task;
+        handler.RejectIssuance();
+        await ExpectHttpFailureAsync(search);
+        await attempt.CancelAsync();
+        await attempt.CompleteAsync();
+        Require(handler.CancelRequests == 0 && !handler.JoinObserved.Task.IsCompleted && handler.IsDisposed,
+            "Failed stateless issuance must not fall back to account-wide queue cleanup.");
+        return 1;
+    }
+
+    private static async Task<int> VerifyCancellationBeforeSearchAsync()
+    {
+        var handler = new ControlledQueueHandler();
+        using var attempt = CreateAttempt(handler);
+        await attempt.CancelAsync();
+        await ExpectCanceledAsync(attempt.FindAsync(TimeoutSeconds));
+        await attempt.CompleteAsync();
+        Require(handler.IssueRequests == 0 && handler.CancelRequests == 0 && handler.IsDisposed,
+            "An already cancelled owner must never issue a credential or send a join.");
+        return 1;
+    }
+
+    private static async Task<int> VerifyRepeatedSearchRejectedAsync()
+    {
+        var handler = new ControlledQueueHandler();
+        using var attempt = CreateAttempt(handler);
+        var search = attempt.FindAsync(TimeoutSeconds);
+        await handler.JoinObserved.Task;
+        await ExpectInvalidOperationAsync(attempt.FindAsync(TimeoutSeconds));
+        Task completion = attempt.CompleteAsync();
+        Require(handler.IssueRequests == 1 && !completion.IsCompleted && !handler.IsDisposed,
+            "A duplicate search must neither issue another scope nor complete the original search owner.");
+        Task cancellation = attempt.CancelAsync();
+        handler.AcceptCancellation();
+        await ExpectCanceledAsync(search);
+        await cancellation;
+        await completion;
+        Require(handler.IsDisposed && handler.CancelRequests == 1,
+            "The original search still owns and completes its single scoped cancellation.");
+        return 2;
+    }
+
     private static SelfHostedMatchmakingAttempt CreateAttempt(ControlledQueueHandler handler)
     {
         var backend = new BackendClient(new Uri("http://127.0.0.1:30001/"), handler, true);
@@ -77,8 +150,8 @@ internal static class MatchmakingAttemptTests
         Task cancellation = attempt.CancelAsync();
         handler.AcceptCancellation("already-paired");
         await ExpectCanceledAsync(search);
-        await ExpectUnconfirmedAsync(cancellation);
-        await ExpectUnconfirmedAsync(attempt.CompleteAsync());
+        await ExpectInvalidOperationAsync(cancellation);
+        await ExpectInvalidOperationAsync(attempt.CompleteAsync());
         Require(!handler.IsDisposed, "An allocated match is not a successful queue cancellation.");
         Task retry = attempt.CancelAsync();
         handler.AcceptCancellation("not-queued");
@@ -89,7 +162,7 @@ internal static class MatchmakingAttemptTests
         return 2;
     }
 
-    private static async Task ExpectUnconfirmedAsync(Task pending)
+    private static async Task ExpectInvalidOperationAsync(Task pending)
     {
         try
         {
@@ -100,7 +173,7 @@ internal static class MatchmakingAttemptTests
             return;
         }
 
-        throw new Exception("An already-paired response was accepted as queue cleanup.");
+        throw new Exception("An unconfirmed or duplicate matchmaking operation was accepted.");
     }
 
     private static async Task ExpectCanceledAsync(Task pending)
@@ -142,6 +215,32 @@ internal static class MatchmakingAttemptTests
     private sealed class ControlledQueueHandler : HttpMessageHandler
     {
         private TaskCompletionSource<HttpResponseMessage> _cancellation = NewResponse();
+        private readonly TaskCompletionSource<HttpResponseMessage> _issuance = NewResponse();
+        internal bool HoldIssuance { get; set; }
+        internal int IssueRequests { get; private set; }
+        internal TaskCompletionSource<bool> IssuanceObserved { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal TaskCompletionSource<bool> CancellationObserved { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        internal void AcceptIssuance()
+        {
+            _issuance.SetResult(IssueReply());
+        }
+
+        internal void RejectIssuance()
+        {
+            _issuance.SetException(new HttpRequestException("Controlled credential issuance failure."));
+        }
+
+        private static HttpResponseMessage IssueReply()
+        {
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(new MatchQueueAttemptGrant
+                    { Token = "fixture-attempt-token", ExpiresUnixSeconds = FixtureExpiryUnixSeconds }.ToByteArray())
+            };
+        }
 
         internal TaskCompletionSource<bool> JoinObserved { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -165,6 +264,16 @@ internal static class MatchmakingAttemptTests
         {
             Require(request.Headers.Authorization?.Parameter == AccessToken,
                 "Every queue request must retain the original bearer token.");
+            if (request.RequestUri?.AbsolutePath.EndsWith("/attempt", StringComparison.Ordinal) == true)
+            {
+                IssueRequests++;
+                IssuanceObserved.TrySetResult(true);
+                return HoldIssuance ? _issuance.Task : Task.FromResult(IssueReply());
+            }
+
+            var scoped = MatchQueueRequest.Parser.ParseFrom(
+                request.Content!.ReadAsByteArrayAsync().GetAwaiter().GetResult());
+            Require(scoped.AttemptToken == "fixture-attempt-token", "Search and cleanup must retain one attempt token.");
             if (request.RequestUri?.AbsolutePath.EndsWith("/join", StringComparison.Ordinal) == true)
             {
                 JoinObserved.TrySetResult(true);
@@ -179,6 +288,7 @@ internal static class MatchmakingAttemptTests
             }
 
             CancelRequests++;
+            CancellationObserved.TrySetResult(true);
             return _cancellation.Task;
         }
 

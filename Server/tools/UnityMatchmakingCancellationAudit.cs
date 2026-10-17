@@ -19,6 +19,7 @@ public static class UnityMatchmakingCancellationAudit
     private const string SessionKey = "WarFriends.MatchmakingCancellationAudit";
     private const string AccessToken = "native-queue-test-token";
     private const int TimeoutSeconds = 10;
+    private const long FixtureExpiryUnixSeconds = 2000;
     private const int PollMilliseconds = 20;
     private const int MaximumPolls = 100;
     private const float FirstDelaySeconds = 0.1f;
@@ -289,6 +290,18 @@ public static class UnityMatchmakingCancellationAudit
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Require(request.Headers.Authorization.Parameter == AccessToken, "Queue authentication must be preserved.");
+            if (request.RequestUri.AbsolutePath.EndsWith("/attempt", StringComparison.Ordinal))
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(new MatchQueueAttemptGrant
+                        { Token = "native-fixture-attempt", ExpiresUnixSeconds = FixtureExpiryUnixSeconds }.ToByteArray())
+                });
+            }
+
+            var scoped = MatchQueueRequest.Parser.ParseFrom(
+                request.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult());
+            Require(scoped.AttemptToken == "native-fixture-attempt", "Queue cleanup must retain its attempt scope.");
             if (request.RequestUri.AbsolutePath.EndsWith("/join", StringComparison.Ordinal))
             {
                 return Task.FromResult(Reply("waiting"));

@@ -23,6 +23,9 @@ internal sealed class LiveMatchmakingTestHost : IAsyncDisposable
         AccessToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(AccessTokenBytes));
     }
 
+    private const int AttemptLifetimeSeconds = 300;
+    private const string QueueAttemptToken = "live-play-mode-attempt";
+    private int _attemptRequests;
     internal string AccessToken { get; }
 
     internal string Endpoint => _application.Urls.Single().TrimEnd('/') + "/";
@@ -33,6 +36,7 @@ internal sealed class LiveMatchmakingTestHost : IAsyncDisposable
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         var host = new LiveMatchmakingTestHost(builder.Build(), grant);
+        host._application.MapPost("/v1/battle/queue/attempt", (Delegate)host.IssueAttemptAsync);
         host._application.MapPost("/v1/battle/queue/join", (Delegate)host.JoinAsync);
         host._application.MapPost("/v1/battle/grant", (Delegate)host.GrantAsync);
         host._application.MapPost("/v1/battle/queue/cancel", (Delegate)host.CancelAsync);
@@ -50,7 +54,7 @@ internal sealed class LiveMatchmakingTestHost : IAsyncDisposable
 
     internal void VerifySuccessfulAdmission()
     {
-        if (_joinRequests != 1 || _grantRequests != 1 || _cancelRequests != 0)
+        if (_attemptRequests != 1 || _joinRequests != 1 || _grantRequests != 1 || _cancelRequests != 0)
         {
             throw new Exception("Normal queue admission must join and fetch once without canceling its allocation.");
         }
@@ -62,10 +66,26 @@ internal sealed class LiveMatchmakingTestHost : IAsyncDisposable
         await _application.DisposeAsync();
     }
 
-    private async Task<IResult> JoinAsync(HttpContext context)
+    private async Task<IResult> IssueAttemptAsync(HttpContext context)
     {
         byte[]? body = await ReadAuthorizedAsync(context);
         if (body == null || body.Length != 0)
+        {
+            return Results.BadRequest();
+        }
+
+        Interlocked.Increment(ref _attemptRequests);
+        return Proto(new MatchQueueAttemptGrant
+        {
+            Token = QueueAttemptToken,
+            ExpiresUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + AttemptLifetimeSeconds
+        });
+    }
+
+    private async Task<IResult> JoinAsync(HttpContext context)
+    {
+        byte[]? body = await ReadAuthorizedAsync(context);
+        if (body == null || MatchQueueRequest.Parser.ParseFrom(body).AttemptToken != QueueAttemptToken)
         {
             return Results.BadRequest();
         }
@@ -91,7 +111,7 @@ internal sealed class LiveMatchmakingTestHost : IAsyncDisposable
     private async Task<IResult> CancelAsync(HttpContext context)
     {
         byte[]? body = await ReadAuthorizedAsync(context);
-        if (body == null || body.Length != 0)
+        if (body == null || MatchQueueRequest.Parser.ParseFrom(body).AttemptToken != QueueAttemptToken)
         {
             return Results.BadRequest();
         }

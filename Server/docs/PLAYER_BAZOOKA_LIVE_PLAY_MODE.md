@@ -98,3 +98,10 @@ The [subsequent matchmaking checkpoint](CLIENT_MATCHMAKING_CANCELLATION.md)
 adds `--unity-bazooka-matchmaking-only`. It enters through actual authenticated
 HTTP queue/grant requests to a test-only allocator facade, then the real Worker;
 the existing direct-grant Editor/Play Mode controls remain separate.
+
+The scoped queue checkpoint also reruns the matchmaking Play Mode scenario with
+normal `SelfHostedMatchmakingAttempt` credential issuance and scoped search.
+The test facade now requires one authenticated protobuf issuance and the same
+credential in its queue requests. Real Worker/UDP and automatic presentation
+still pass; this remains a preallocated facade rather than normal Mongo-backed
+login/UI or two actual Unity clients. See `QUEUE_ATTEMPT_FENCING.md`.

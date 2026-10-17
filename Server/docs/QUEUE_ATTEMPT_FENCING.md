@@ -15,9 +15,12 @@ queue entry. Queue join/cancel now accept the additive protobuf
 `MatchQueueRequest.attempt_token` field. The SDK has scoped join, cancel and
 `FindMatchAsync` overloads which retain the same token across polling/retries.
 These paths enforce attempt ownership in real Backend/Mongo/Worker tests.
-The normal Unity `SelfHostedMatchmakingAttempt` still calls the unscoped SDK
-path; the new SDK/protobuf binaries have not been installed into its plugin
-bundle yet. Distributed fencing is therefore not active in normal Unity play.
+The normal Unity `SelfHostedMatchmakingAttempt` now acquires one credential
+before its one permitted search and uses its scoped SDK overloads for search and cleanup. Matching
+SDK/protobuf binaries are installed in the active Unity plugin bundle with their
+existing asset identities and updated SHA-256 manifest. Controlled native Play
+Mode and real HTTP-to-Worker admission verify this integration boundary; full
+recovered UI boot and two actual Unity clients remain unverified.
 
 ## Token authority
 
@@ -102,9 +105,6 @@ match/roster tuple to cancellation; it never interprets it as a new match.
 
 ## Required remaining integration
 
-- Acquire and preserve one credential in normal Unity search/cancel ownership,
-  install matching SDK/protobuf binaries, and audit native Play Mode cancellation
-  and admission with the actual recovered adapter.
 - Exercise scoped requests across real Backend process restart and the full
   two-Unity-client gameplay path, including Android and Linux runtime coverage.
 - Coordinate cancellation intent with registration before a frozen manifest is
@@ -129,10 +129,42 @@ independent stores. `--queue-live` sends real authenticated protobuf requests,
 rejects a foreign player's credential, exercises scoped SDK search/grant download,
 cancels its registered Worker match, and verifies stale HTTP cancellation cannot
 delete the replacement ticket. Existing manifest/result regression tests remain
-separate. No normal Unity or Linux gameplay proof is inferred from these tests.
+separate. These service tests alone do not prove normal Unity or Linux gameplay.
 
 The standard Windows and Linux smoke scripts invoke `--queue-attempts-only`
 after initializing their disposable Mongo replica set. The Windows script and
 standalone live queue/manifest suites pass at this checkpoint; adding the same
 command to the Linux script is not Linux execution evidence. The current
-protocol total is 1,307, including eight additive wire/empty-scope SDK guards.
+protocol total is 1,314, including eight additive wire/empty-scope SDK guards
+and 16 linked-source Unity attempt ownership checks.
+
+## Normal Unity integration
+
+The recovered adapter's plain C# attempt starts stateless credential issuance,
+then checks local cancellation before submitting a scoped search. Search polls
+and cancellation retries share the same credential and bearer token. Cancellation
+while issuance is pending keeps its bounded HTTP request alive, skips admission,
+and cleans up only the returned scope. A failed issuance cannot have submitted
+a join, so cleanup sends no account-wide fallback. Cancellation before search
+starts likewise sends no queue mutation. The original search exception remains
+observable; cleanup only suppresses that issuance failure because no scope was
+admitted. Existing callback ownership, delayed lobby reset and resource disposal
+boundaries remain in effect.
+
+The protocol executable compiles the exact active Unity source. It now checks
+pending issuance cancellation, failed issuance, pre-search cancellation, pending
+cleanup ownership, rejection of repeated searches on the same owner, rejection of unconfirmed pair cleanup and same-token retry.
+The native `UnityMatchmakingCancellationAudit.RunAsync` enters actual Play Mode
+and checks normal disconnect, destruction, delayed reset/disable and retained
+HTTP scope. `UnityMatchScopeAudit.RunAsync` passes the ownership regression.
+
+`--unity-bazooka-matchmaking-only` now exposes a test-only authenticated protobuf
+credential endpoint as well as scoped queue/grant routes, requires exactly one
+issuance and validates the same opaque credential on queue requests. The normal
+Unity public matchmaking method reaches the actual UDP Worker, automatic adapter
+Update and five source explosions with interrupted-callback retry. The fixture
+still preallocates its Worker grant; it is not an actual Mongo allocator or
+normal recovered login/menu flow. Separate service tests cover real allocator
+fencing. Native results come from a disposable Unity 2018.3 project, not a Unity
+5.2/Android/Linux or rendered/audible gameplay claim. Static asset audits retain
+zero missing scripts/broken references and the same 17 preexisting sprite mismatches.

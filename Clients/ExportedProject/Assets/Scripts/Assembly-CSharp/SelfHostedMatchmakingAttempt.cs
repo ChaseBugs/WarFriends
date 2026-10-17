@@ -12,8 +12,10 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
     private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
     private readonly TaskCompletionSource<bool> _searchFinished =
         new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    private Task<string> _attemptToken;
     private Task _cancellation = Task.CompletedTask;
     private bool _hasCancellation;
+    private bool _hasSearch;
     private bool _isDisposed;
 
     internal SelfHostedMatchmakingAttempt(BackendClient backend, string accessToken)
@@ -26,10 +28,20 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
 
     internal async Task<MatchConnectionGrant> FindAsync(int timeoutSeconds)
     {
+        if (_hasSearch)
+        {
+            throw new InvalidOperationException("A matchmaking attempt can start only one search.");
+        }
+
+        _hasSearch = true;
         try
         {
+            _lifetime.Token.ThrowIfCancellationRequested();
+            _attemptToken = AcquireAttemptTokenAsync();
+            string attemptToken = await _attemptToken;
+            _lifetime.Token.ThrowIfCancellationRequested();
             return await _backend.FindMatchAsync(
-                _accessToken, TimeSpan.FromSeconds(timeoutSeconds), _lifetime.Token);
+                _accessToken, attemptToken, TimeSpan.FromSeconds(timeoutSeconds), _lifetime.Token);
         }
         finally
         {
@@ -55,9 +67,40 @@ internal sealed class SelfHostedMatchmakingAttempt : IDisposable
         return _cancellation;
     }
 
+    private async Task<string> AcquireAttemptTokenAsync()
+    {
+        // Issuance cannot enqueue a player. Keep its bounded HTTP request alive so cleanup knows its scope.
+        var grant = await _backend.CreateMatchQueueAttemptAsync(_accessToken, CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(grant.Token) || grant.ExpiresUnixSeconds <= 0)
+        {
+            throw new InvalidOperationException("The Backend returned an invalid queue attempt credential.");
+        }
+
+        return grant.Token;
+    }
+
     private async Task CancelQueueAsync()
     {
-        MatchQueueReply reply = await _backend.CancelMatchQueueAsync(_accessToken, CancellationToken.None);
+        Task<string> pendingToken = _attemptToken;
+        if (pendingToken == null)
+        {
+            // No credential request means this attempt could not submit a join.
+            return;
+        }
+
+        string attemptToken;
+        try
+        {
+            attemptToken = await pendingToken;
+        }
+        catch (Exception)
+        {
+            // A failed credential request cannot have reached FindMatchAsync or created a queue ticket.
+            return;
+        }
+
+        MatchQueueReply reply = await _backend.CancelMatchQueueAsync(
+            _accessToken, attemptToken, CancellationToken.None);
         if ((reply.Code != "cancelled" && reply.Code != "not-queued") ||
             reply.MatchId.Length != 0 || reply.PlayerIds.Count != 0)
         {

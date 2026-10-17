@@ -14,7 +14,9 @@ Admission expires after five minutes while cancellation can still identify the
 original scope. Scoped HTTP/SDK join/cancel/search now bind tickets and ordered
 pairs to attempts and write cancellation receipts transactionally. Real Mongo
 races and Backend/Worker HTTP checks cover old-request isolation. Normal Unity
-still uses the unscoped SDK path; its migration and native proof remain open.
+now preserves one issued credential through search and cancellation retries;
+updated portable binaries, native cancellation Play Mode and HTTP-to-Worker
+admission pass. Full recovered UI and actual two-Unity-client proof remain open.
 
 Paired cancellation now captures the exact allocator pair inside its decision
 transaction. A signed, manifest-bound targeted Worker result lookup can retrieve
