@@ -22,6 +22,13 @@ by Editor bootstrap success or by retaining Photon only for serialized type comp
 
 ## Dependency-ordered work
 
+Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via
+`ClientBootSmoke.ps1 -VerifyNormalQueue`. It preserves source bot-routing rules, logs in a
+synthetic returning account and observes its durable scoped queue ticket and validated allocation
+in MongoDB. The successful run has zero exceptions and 71 existing error-level diagnostics.
+This is one unpaired Unity participant; two-Unity card selection/loading/combat and cancellation
+acceptance remain open. See [normal queue evidence](CLIENT_LOBBY_BOOTSTRAP.md#normal-deathmatch-queue-admission).
+
 The [deployment clock migration](BATTLE_CLOCKS.md) now has a separate real-time
 ArmyDeploymentState path with shared energy/entity preflight and explicit source start/final-wait
 completion events. The state/frame group passes 100 checks and Sickness regression passes 265.

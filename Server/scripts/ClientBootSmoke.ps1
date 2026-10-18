@@ -4,9 +4,11 @@ param(
     [Parameter(Mandatory = $true)][string]$UnityProject,
     [string]$MongoExecutable = 'mongod',
     [switch]$ExportStarterLoadout,
-    [switch]$VerifyReturningPlayer
+    [switch]$VerifyReturningPlayer,
+    [switch]$VerifyNormalQueue
 )
 $ErrorActionPreference = 'Stop'
+if ($VerifyNormalQueue) { $VerifyReturningPlayer = $true }
 $serverRoot = Split-Path $PSScriptRoot -Parent
 $projectPath = (Resolve-Path -LiteralPath $UnityProject).Path
 $validationRoot = [IO.Path]::GetFullPath((Join-Path $serverRoot '.local')) + [IO.Path]::DirectorySeparatorChar
@@ -26,8 +28,14 @@ $variables = @(
     'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
     'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
     'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT',
-    'WAR_LOBBY_BOOT_IDENTITY'
+    'WAR_LOBBY_BOOT_IDENTITY', 'WAR_NORMAL_QUEUE_REPORT'
 )
+$battleContentFiles = @{
+    'Combat' = 'combat'; 'Shotgun' = 'shotgun'; 'Smg' = 'smg'; 'Pistol' = 'pistol';
+    'Lmg' = 'lmg'; 'Minigun' = 'minigun'; 'Sniper' = 'sniper'; 'Bazooka' = 'bazooka'; 'Grenade' = 'grenade'
+}
+$variables += @('Battle__MatchmakingCompatibilityKey', 'Battle__MatchManifestTemplatePath')
+foreach ($family in $battleContentFiles.Keys) { $variables += "Battle__${family}ContentManifestPath" }
 $prior = @{}
 foreach ($name in $variables) {
     $prior[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
@@ -68,6 +76,14 @@ try {
     $env:Battle__SigningKey = New-SigningKey
     $env:Battle__ControlKey = New-SigningKey
     $env:Legacy__ContentPath = Join-Path $serverRoot 'content/recovered-battle-content.json'
+    if ($VerifyNormalQueue) {
+        $env:Battle__MatchmakingCompatibilityKey = 'unscored-starter.fixture'
+        $env:Battle__MatchManifestTemplatePath = Join-Path $serverRoot 'content/local-starter-match-template.json'
+        foreach ($family in $battleContentFiles.Keys) {
+            $manifest = Join-Path $serverRoot ("content/" + $battleContentFiles[$family] + '-content-manifest.json')
+            [Environment]::SetEnvironmentVariable("Battle__${family}ContentManifestPath", $manifest, 'Process')
+        }
+    }
     $backendDll = Join-Path $serverRoot 'src/War.Backend/bin/Release/net10.0/War.Backend.dll'
     $backend = Start-Process dotnet -ArgumentList ('"' + $backendDll + '"') -WindowStyle Hidden -PassThru `
         -WorkingDirectory (Split-Path $backendDll -Parent) `
@@ -101,6 +117,7 @@ try {
     if (!(Test-Path -LiteralPath ($initialReport + '.ready'))) { throw 'Initial account observer did not become ready.' }
     $env:WARFRIENDS_BACKEND_URL = "http://127.0.0.1:$httpPort/"
     $env:WAR_LOBBY_BOOT_REQUIRE_ACCOUNT = '1'
+    $env:WAR_NORMAL_QUEUE_REPORT = $null
     $env:WAR_LOBBY_BOOT_IDENTITY = 'NormalBoot-' + [Guid]::NewGuid().ToString('N')
     $env:WAR_STARTER_LOADOUT_OUTPUT = $null
     if ($ExportStarterLoadout) {
@@ -148,6 +165,25 @@ try {
         dotnet $testDll --seed-returning-boot-player $env:Mongo__Uri $env:Mongo__Database `
             (Join-Path $runRoot 'returning-player-fixture.json')
         if ($LASTEXITCODE -ne 0) { throw 'Returning-player fixture creation failed.' }
+        if ($VerifyNormalQueue) {
+            $env:WAR_NORMAL_QUEUE_REPORT = Join-Path $runRoot 'normal-queue.json'
+            $queueArguments = @(
+                ('"' + $testDll + '"'), '--watch-normal-unity-queue', $env:Mongo__Uri, $env:Mongo__Database,
+                ('"' + $env:WAR_NORMAL_QUEUE_REPORT + '"')
+            )
+            $queueObserver = Start-Process dotnet -ArgumentList $queueArguments -WindowStyle Hidden -PassThru `
+                -RedirectStandardOutput (Join-Path $runRoot 'QueueObserver.log') `
+                -RedirectStandardError (Join-Path $runRoot 'QueueObserver.error.log')
+            $processes += $queueObserver
+            for ($attempt = 0; $attempt -lt 100 -and
+                !(Test-Path -LiteralPath ($env:WAR_NORMAL_QUEUE_REPORT + '.ready')); $attempt++) {
+                if ($queueObserver.HasExited) { throw 'Normal queue observer exited before readiness.' }
+                Start-Sleep -Milliseconds 100
+            }
+            if (!(Test-Path -LiteralPath ($env:WAR_NORMAL_QUEUE_REPORT + '.ready'))) {
+                throw 'Normal queue observer did not become ready.'
+            }
+        }
         Remove-Item -LiteralPath $reportPath
         $returningArguments = @(
             '-batchmode', '-nographics', '-noUpm', '-projectPath', ('"' + $projectPath + '"'),
@@ -171,6 +207,13 @@ try {
             throw "Returning-player normal data loading did not retain the fixture; inspect $runRoot"
         }
         Write-Output 'PASS: returning-player normal login satisfies recovered self-hosted matchmaking conditions'
+        if ($VerifyNormalQueue) {
+            if (!$queueObserver.WaitForExit(10000) -or $queueObserver.ExitCode -ne 0 -or
+                !$returning.normalQueueStarted -or !$returning.normalQueueObserved) {
+                throw "Normal controller queue admission was not observed; inspect $runRoot"
+            }
+            Write-Output 'PASS: normal Unity DeathMatch controller reached the real Backend queue'
+        }
     }
     Write-Output "PASS: actual isolated Client account/unit initialization boundary; $runRoot"
 }

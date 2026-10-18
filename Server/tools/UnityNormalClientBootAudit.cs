@@ -26,6 +26,7 @@ public static class UnityNormalClientBootAudit
     private static int _exceptions;
     private static int _errors;
     private static int _invalidBootstrapQueries;
+    private static bool _normalQueueStarted;
 
     static UnityNormalClientBootAudit()
     {
@@ -117,6 +118,22 @@ public static class UnityNormalClientBootAudit
         {
             _mainSceneFrame = Time.frameCount;
         }
+        string queueReport = Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT");
+        if (observedTarget && !string.IsNullOrEmpty(queueReport))
+        {
+            if (!_normalQueueStarted)
+            {
+                _normalQueueStarted = true;
+                GameController controller = Resources.FindObjectsOfTypeAll<GameController>()
+                    .First(candidate => candidate.gameObject.scene.IsValid());
+                controller.SwitchToDeathMatch();
+                controller.gameControllerDeathMatch.StartRandomMatchMaking();
+            }
+            if (!File.Exists(queueReport) && EditorApplication.timeSinceStartup <= _deadline)
+            {
+                return;
+            }
+        }
         if ((_mainSceneFrame >= 0 && Time.frameCount >= _mainSceneFrame + MainSceneObservationFrames) ||
             EditorApplication.timeSinceStartup > _deadline)
         {
@@ -183,6 +200,9 @@ public static class UnityNormalClientBootAudit
             initializedUnitRows = levels == null ? 0 : levels.unitsSortedByLevel.Count,
             initializedWeaponRows = levels == null ? 0 : levels.weaponsSortedByLevel.Count,
             cardDefinitionsReady = accountReady && HasCardDefinitions(),
+            normalQueueStarted = _normalQueueStarted,
+            normalQueueObserved = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT")) &&
+                File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT")),
             matchmakingReadiness = dataLoadComplete
                 ? WarFriends.Validation.UnityNormalMatchmakingReadinessAudit.Capture(game, levels)
                 : null,

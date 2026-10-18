@@ -614,3 +614,31 @@ The active controller remained Campaign. This proves returning-player data loadi
 eligibility for random PvP, not admission, a started match, rendering or combat. Next, use two
 separately isolated returning identities with the actual DeathMatch controller, real Backend and
 battle Worker; observe normal lobby/card-selection/loading/readiness before claiming gameplay acceptance.
+
+## Normal DeathMatch queue admission
+
+`ClientBootSmoke.ps1 -VerifyNormalQueue` extends the returning-player run by calling the original
+`SwitchToDeathMatch` and `GameControllerDeathMatch.StartRandomMatchMaking` entrypoints. A separate
+MongoDB change-stream observer starts before the second Unity launch. It requires a durable scoped
+queue-ticket insertion bound to the returning account and a validated battle allocation. The Unity
+audit waits for that observer's report; a lobby screen alone cannot pass the script.
+
+The first run at `Server/.local/client-boot-3be103d6f3c346b0a84a1c6378193eb5` failed:
+normal matchmaking reported `BackendStatusException` and no ticket was observed. Inspection found
+the boot-only harness had not configured matchmaking policy, which explicitly disables queue join
+in the Backend. The queue mode now supplies the existing starter mixed-combat template and all
+nine weapon content manifests, restoring inherited environment values during cleanup. It does not
+replace the account's four-weapon/four-unit starter ownership with the simpler rifle-only fixture.
+
+The configured run at `Server/.local/client-boot-3b4fd09182ce470d8f68e193899ca8ae` passed:
+
+- Release build had zero warnings/errors; fresh initial-state insertion and returning login passed.
+- `normal-queue.json` and `QueueObserver.log` record the durable scoped ticket/account/allocation binding.
+- `returning-report.json` records `normalQueueStarted=true`, `normalQueueObserved=true`, active
+  `GameControllerDeathMatch`, rank 5, saved FPS 30, zero exceptions and 71 error-level diagnostics.
+- The owned script exited successfully and cleaned up its processes. The disposable package
+  manifest retained its recorded SHA-256.
+
+This run has one Unity participant and no paired battle Worker. It does not prove two-client
+admission, card selection, loading/readiness, rendering, combat or acknowledged cancellation.
+Those remain the next integration gates; the full BattleServer checklist remains open.

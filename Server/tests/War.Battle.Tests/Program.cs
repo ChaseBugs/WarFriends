@@ -471,6 +471,11 @@ if (args is ["--seed-returning-boot-player", var fixtureUri, var fixtureDatabase
     await War.Battle.Tests.ReturningPlayerBootFixture.SeedAsync(fixtureUri, fixtureDatabase, fixtureReport);
     return;
 }
+if (args is ["--watch-normal-unity-queue", var queueUri, var queueDatabase, var queueReport])
+{
+    await War.Battle.Tests.NormalUnityQueueObserver.WatchAsync(queueUri, queueDatabase, queueReport);
+    return;
+}
 if (args is ["--watch-initial-loadout", var initialMongoUri, var initialDatabase, var initialReport])
 {
     await LegacyInitialLoadoutTests.WatchAccountInsertAsync(initialMongoUri, initialDatabase, initialReport);
