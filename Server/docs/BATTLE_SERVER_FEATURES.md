@@ -67,6 +67,11 @@ Mortar warning history now binds to physical host slot and observer fraction rat
 actor lifetime. The 13,319-check group verifies a natural successor's retained shrink state,
 reactivation frame and fresh launch identity. Terminal cleanup clears the bounded observer
 ledger. Wire/SDK/Unity observer presentation and normal two-Client acceptance remain open.
+Frozen opposing warning samples now travel in projectile scan field 9 independently of live
+projectile membership, with bounded packet sizing and SDK page/roster/sample validation.
+Mortar coverage passes 13,359 checks, protocol regression 1,360 and projectile row regression 42.
+Complete late-arrival clock checkpoints, real warning-bearing SDK UDP acceptance and Unity
+packaging/rendering are still required; sample transport alone does not complete presentation.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

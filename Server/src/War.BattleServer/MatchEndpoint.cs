@@ -35,7 +35,7 @@ public sealed class MatchEndpoint
         public ulong NextTransferId;
     }
     private sealed record ProjectileScan(ulong Id,ulong CreatedHostTick,ulong SnapshotTick,
-        BattleProjectileState[] Rows);
+        BattleProjectileState[] Rows, BattleMortarWarningState[] Warnings);
     private ulong tick;
     private ulong? terminalTick;
     internal double ObservedRealTimeSeconds { get; private set; }
@@ -227,7 +227,8 @@ public sealed class MatchEndpoint
             if(rows.Length>MatchEngine.MaximumProjectiles||rows.Any(x=>x.ProjectileId==0)||rows.Zip(rows.Skip(1),
                    (a,b)=>a.ProjectileId>=b.ProjectileId).Any(x=>x))
                 throw new InvalidDataException("Projectile scan exceeds host authority bounds.");
-            session.Projectiles=new ProjectileScan(poll.ScanId,tick,snapshot.ServerTick,rows);
+            var warnings = match.MortarWarnings(session.PlayerId).Select(row => row.Clone()).ToArray();
+            session.Projectiles=new ProjectileScan(poll.ScanId,tick,snapshot.ServerTick,rows,warnings);
         }
         var scan=session.Projectiles;
         if(scan==null||scan.Id!=poll.ScanId)
@@ -240,6 +241,7 @@ public sealed class MatchEndpoint
         }
         if(poll.AfterProjectileId!=0 && !scan.Rows.Any(x=>x.ProjectileId==poll.AfterProjectileId))
             return batch;
+        batch.MortarWarnings.AddRange(scan.Warnings.Select(row => row.Clone()));
         return PageProjectiles(batch,scan.Id,scan.SnapshotTick,scan.Rows,
             poll.AfterProjectileId,envelope);
     }
@@ -255,6 +257,7 @@ public sealed class MatchEndpoint
         batch.ActiveCount=checked((uint)rows.Count);
         batch.Code="projectiles";
         batch.HasMore=true; // Reserve the continuation bit while sizing pages.
+        envelope.MatchProjectileBatch = batch;
         foreach(var row in rows.Where(x=>x.ProjectileId>after))
         {
             batch.Projectiles.Add(row);
@@ -269,6 +272,10 @@ public sealed class MatchEndpoint
             throw new InvalidDataException("One projectile row exceeds the UDP page budget.");
         ulong last=batch.Projectiles.Count==0?after:batch.Projectiles[^1].ProjectileId;
         batch.HasMore=rows.Any(x=>x.ProjectileId>last);
+        if (envelope.CalculateSize() + PacketCodec.MacBytes > PacketCodec.MaximumDatagramBytes)
+        {
+            throw new InvalidDataException("Projectile scan metadata exceeds the UDP page budget.");
+        }
         return batch;
     }
     internal static bool ValidClientBody(Packet packet)

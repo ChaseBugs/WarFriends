@@ -594,3 +594,37 @@ previously native-validated clock; they are not a new original-Client pool alloc
 Warning transport, observer selection in the SDK, Unity physical-object binding, reconnect and
 forced observer resynchronization remain pending. Current MortarIndicators is internal host
 evidence for the opposing warning, not a new public protocol or proof of rendered acceptance.
+
+## Frozen warning sample transport
+
+`MatchProjectileBatch.mortar_warnings` (field 9) now carries up to four
+`BattleMortarWarningState` rows independently of its projectile array. Each row binds source
+actor, owner/fraction, admitted observer fraction, physical weapon slot, projectile identity,
+launch/observed ticks, frozen warning position/stop time/fake flag and sampled rotation/scale/alpha.
+An allied observer receives no warning for its own faction. Shooter removal does not remove a
+still-visible world warning, and an empty projectile page can carry that warning.
+
+The endpoint captures warnings with the scan's projectile rows and snapshot tick, deep-copies
+them on every page and includes their size when enforcing the 1,200-byte authenticated datagram
+budget. Retry pages retain the same samples even if live warning state changes. These rows do
+not change projectile ActiveCount, cursor identity or the existing scan expiration rules.
+Co-op currently publishes an explicitly empty warning projection, not inferred PvP warnings.
+
+The portable SDK validates observer/owner identity, roster ownership, source slot range/order,
+unique actor/projectile identities, snapshot/launch dates, finite bounded coordinates and
+source sample ranges. It rejects a changed warning list between pages and nonempty warnings
+on rejected scans. A warning is not required to refer to an active projectile or live actor.
+
+The Mortar group passes 13,359 checks at `Server/.local/mortar-warning-wire-tests.log`, including
+malformed sample rejection, protobuf round trip, four-warning packet budgets across 128
+projectiles, projectile-free warning pages, observer suppression, deep-copy isolation and
+publication after shooter death. Protocol regression passes 1,360 checks at
+`Server/.local/mortar-warning-protocol-tests.log`; projectile row regression passes 42 at
+`Server/.local/mortar-warning-projectile-tests.log`.
+
+This publishes authoritative samples, not a complete late-arrival clock checkpoint. Full tween
+phase/startup state for prediction/reconstruction, actual warning-bearing UDP SDK acceptance,
+Unity SDK packaging and rendering remain open. The active Unity plugin binaries were not
+replaced in this checkpoint. Do not extrapolate a fresh clock from launch age and claim it
+preserves the native slot/observer history, or describe these source/packet tests as rendered
+two-Client warning acceptance.

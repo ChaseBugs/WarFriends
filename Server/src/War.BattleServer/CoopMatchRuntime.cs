@@ -3869,6 +3869,12 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         };
     }
 
+    public IReadOnlyList<BattleMortarWarningState> MortarWarnings(string playerId)
+    {
+        RequireAdmitted(playerId);
+        return Array.Empty<BattleMortarWarningState>();
+    }
+
     public MatchArmyEntityBatch ArmyEntityBatch(
         string playerId, ulong afterEntityKey, ulong expectedRevision)
     {

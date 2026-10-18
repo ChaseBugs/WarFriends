@@ -592,6 +592,15 @@ message MatchProjectileBatch {
   uint64 scan_id = 3; uint64 snapshot_tick = 4;
   string code = 5; uint32 active_count = 6; bool has_more = 7;
   repeated BattleProjectileState projectiles = 8;
+  // Frozen with the scan, independently of projectile/actor lifetime; repeated unchanged on each page.
+  repeated BattleMortarWarningState mortar_warnings = 9;
+}
+message BattleMortarWarningState {
+  uint64 entity_key = 1; string owner_player_id = 2; int32 owner_fraction = 3;
+  int32 observer_fraction = 4; int32 weapon_slot = 5; uint64 projectile_id = 6;
+  uint64 launch_tick = 7; uint64 observed_tick = 8;
+  float x = 9; float y = 10; float z = 11; float stop_seconds = 12;
+  bool is_fake = 13; float rotation_factor = 14; float scale = 15; float alpha = 16;
 }
 message BattleAirEntityState {
   uint64 entity_key = 1; string owner_player_id = 2;

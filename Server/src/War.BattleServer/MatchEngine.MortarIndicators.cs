@@ -1,3 +1,6 @@
+using War.Protocol;
+using War.Shared;
+
 namespace War.BattleServer;
 
 public sealed partial class MatchEngine
@@ -20,6 +23,28 @@ public sealed partial class MatchEngine
     }
 
     internal int MortarIndicatorHistoryCount => _mortarIndicators.Count;
+
+    /// <summary>Copies only this admitted observer's opposing, currently visible weapon warnings.</summary>
+    public IReadOnlyList<BattleMortarWarningState> MortarWarnings(string playerId)
+    {
+        Player observer = Find(playerId) ?? throw new InvalidOperationException("Warning observer is unknown.");
+        if (!observer.Admitted)
+        {
+            throw new InvalidOperationException("Warning state requires admission.");
+        }
+        var rows = MortarIndicators().Where(row => row.OwnerFraction != observer.Definition.Fraction)
+            .Select(row => new BattleMortarWarningState
+            {
+                EntityKey = row.EntityKey, OwnerPlayerId = row.OwnerPlayerId, OwnerFraction = row.OwnerFraction,
+                ObserverFraction = observer.Definition.Fraction,
+                WeaponSlot = _mortarSlotActors.Single(slot => slot.Value == row.EntityKey).Key,
+                ProjectileId = row.ProjectileId, LaunchTick = row.LaunchTick, ObservedTick = row.ObservedTick,
+                X = row.Position.X, Y = row.Position.Y, Z = row.Position.Z, StopSeconds = row.StopSeconds,
+                IsFake = row.IsFake, RotationFactor = row.RotationFactor, Scale = row.Scale, Alpha = row.Alpha
+            }).OrderBy(row => row.WeaponSlot).ToArray();
+        MortarWarningPolicy.Validate(rows, tick, observer.Definition.Fraction);
+        return rows;
+    }
 
     private void BeginMortarIndicator(MortarMissileLaunch launch)
     {

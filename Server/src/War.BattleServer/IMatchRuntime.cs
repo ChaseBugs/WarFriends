@@ -29,6 +29,7 @@ internal interface IMatchRuntime
     MatchEventBatch EventBatch(string playerId, ulong afterEventId);
     MatchBarrelBatch BarrelBatch(string playerId);
     MatchArmyBatch ArmyBatch(string playerId);
+    IReadOnlyList<BattleMortarWarningState> MortarWarnings(string playerId);
     MatchArmyEntityBatch ArmyEntityBatch(
         string playerId, ulong afterEntityKey, ulong expectedRevision);
 }

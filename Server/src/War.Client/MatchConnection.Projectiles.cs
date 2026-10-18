@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using War.Protocol;
 using War.Protocol.Transport;
+using War.Shared;
 
 namespace War.Client
 {
@@ -47,7 +48,8 @@ namespace War.Client
                         result=page.Clone();result.Projectiles.Clear();result.HasMore=false;
                     }
                     else if(page.ScanId!=scanId||page.SnapshotTick!=result.SnapshotTick||
-                            page.ActiveCount!=result.ActiveCount)
+                            page.ActiveCount!=result.ActiveCount ||
+                            !page.MortarWarnings.SequenceEqual(result.MortarWarnings))
                         throw new InvalidOperationException("Projectile scan authority changed between pages.");
                     rows.AddRange(page.Projectiles.Select(x=>x.Clone()));
                     if(rows.Count>128)throw new InvalidOperationException("Projectile scan exceeded host cap.");
@@ -106,6 +108,17 @@ namespace War.Client
                        (batch.ScanId!=0||batch.ActiveCount!=0||batch.HasMore||batch.Projectiles.Count!=0))
                     throw new InvalidOperationException("Battle host returned invalid projectile scan authority.");
                 BattleProjectileRowPolicy.ValidateScanRows(batch,after);
+                int? observer = PlayerViews.FirstOrDefault(player => player.PlayerId == grant.PlayerId)?.Fraction;
+                MortarWarningPolicy.Validate(batch.MortarWarnings, batch.SnapshotTick, observer);
+                if (batch.MortarWarnings.Any(warning => !PlayerViews.Any(player =>
+                    player.PlayerId == warning.OwnerPlayerId && player.Fraction == warning.OwnerFraction)))
+                {
+                    throw new InvalidOperationException("A warning owner is absent from the admitted roster.");
+                }
+                if (batch.Code != "projectiles" && batch.MortarWarnings.Count != 0)
+                {
+                    throw new InvalidOperationException("A rejected projectile scan contained warning authority.");
+                }
                 return batch.Clone();
             }
             throw new TimeoutException("Battle host did not acknowledge projectile scan. Retry the read.");

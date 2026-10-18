@@ -16,7 +16,8 @@ internal static class MortarIndicatorHostTests
     {
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
         return CheckShooterDeath(content) + CheckTerminal(content) + CheckReconnectPause(content) +
-            MortarWeaponPoolHostTests.Run(directory) + CheckSlotReuse(content);
+            MortarWeaponPoolHostTests.Run(directory) + CheckSlotReuse(content) + MortarWarningWireTests.Run() +
+            CheckWarningProjection(content);
     }
 
     private static int CheckShooterDeath(BattleCombatContent content)
@@ -138,6 +139,23 @@ internal static class MortarIndicatorHostTests
             "The successor used a new slot history or retained its retired actor's launch identity.");
         checks += Require(reused!.RotationFactor == 0f && Math.Abs(reused.Scale - 0.65f) < 0.00001f,
             "Reused hidden warning lost the source reactivation frame and retained shrink scale.");
+        return checks;
+    }
+
+    private static int CheckWarningProjection(BattleCombatContent content)
+    {
+        MatchEngine host = CreateLaunch(content);
+        MortarIndicatorObservation launch = host.MortarIndicators().Single();
+        var row = host.MortarWarnings(OpponentId).Single();
+        int checks = Require(host.MortarWarnings(OwnerId).Count == 0 && row.ObserverFraction == 2 &&
+            row.ProjectileId == launch.ProjectileId && row.WeaponSlot == host.RetainedMortarWeaponSlot(launch.EntityKey),
+            "Warning projection lost allied suppression, launch identity or physical slot.");
+        row.Scale = float.NaN;
+        checks += Require(float.IsFinite(host.MortarWarnings(OpponentId).Single().Scale),
+            "A caller mutated the host warning through a returned protobuf row.");
+        host.ConfirmArmyDeath(launch.EntityKey, false);
+        checks += Require(host.MortarWarnings(OpponentId).Single().EntityKey == launch.EntityKey,
+            "Warning publication disappeared with its shooter's roster entry.");
         return checks;
     }
 
