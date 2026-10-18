@@ -238,7 +238,9 @@ in the restored source order. `WeaponLevelsSetup.bought` accepts source shop
 weapons with unlock index zero and zero ordinary/Gold prices even when the
 saved `bought` flag is false. `UpgradeSlots.GetArmySlot` also starts a missing
 record with `bought=false` and the source start tier. The current battle
-presentation projection only checks stored Bought/Borrowed flags. Reconcile
+unit presentation projection still only checks stored Bought/Borrowed flags.
+Weapon projection now evaluates the reviewed source free/tutorial/rank rules.
+Reconcile unit
 these source rules against validated catalogs instead of marking every
 default entry purchased just to satisfy that projection. Tutorial and
 try-out exceptions require their own authoritative mode/entitlement proof.

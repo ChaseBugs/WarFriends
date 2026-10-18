@@ -56,6 +56,11 @@ in their original Mongo insert, verified through a change stream during actual
 Unity account boot. This does not yet authorize implicit starter ownership or
 provide automatic fresh-account battle allocation. Existing accounts are not
 backfilled; unit lane projection and normal controller entry remain open.
+Weapon availability now follows the recovered free, purchased-rank, borrowed
+and tutorial-mode branches without changing purchase flags. All 66 initial
+observations and the complete rank/mode/flag matrix pass native checks.
+Unit ownership and lane projection remain separate open work; the presentation
+test isolates weapons and does not prove full starter admission.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

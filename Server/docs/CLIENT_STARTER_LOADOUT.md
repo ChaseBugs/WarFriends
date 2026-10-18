@@ -150,3 +150,32 @@ The real Mongo-backed legacy HTTP smoke passes all 248 assertions, including
 new-account blobs, login, buffered mutation replay and rollback contracts.
 This remains Unity 2018 disposable-project evidence, not original Unity 5.2,
 Android, rendered UI or complete normal battle-entry proof.
+
+## Weapon availability in normal battle presentation
+
+`BattleWeaponOwnership` now evaluates all 66 reviewed weapon identities from
+the hash-pinned observation's source metadata. It reads no Client-reported
+prices or computed ownership flags. The normal battle presentation supplies
+durable rank and a server-selected non-tutorial context. Tutorial mode remains
+an explicit separate evaluator input; account tutorial completion is not used
+as a substitute for the current gameplay mode.
+
+The recovered `WeaponLevelsSetup.bought` branch grants source-marked tutorial
+weapons outside tutorial. Inside tutorial those weapons require saved Bought;
+Borrowed does not bypass that branch. Other weapons allow source shop/free
+access, saved Bought with the source minimum purchase rank, or saved Borrowed.
+Checking availability never writes purchase or borrowing flags. Unknown source
+identities and ranks outside the supported zero-based range fail closed.
+
+Native checks cover all 66 actual Client initial observations, all 43 ranks,
+both gameplay modes and all purchase/borrowing flag combinations, including
+flag immutability. Presentation checks isolate the four initial weapons by
+unequipping units in the test fixture, reject an unowned paid rifle and accept
+its durable borrowed state. This isolation does not prove a complete starter
+presentation: unit ownership and special/Elite lane conversion still block
+normal fresh-account admission, and automatic allocations remain absent.
+
+Verification: Release solution build succeeds with zero warnings/errors;
+`--initial-loadout-only` passes 45,485 checks including the earlier initial
+state checks, and `--client-weapon-index-only` passes 268 identity checks.
+The source-hash/index generator also verifies the active Client metadata.

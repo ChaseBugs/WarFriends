@@ -33,12 +33,17 @@ public sealed class BattlePlayerPresentationSource
         DecalManagerData decals=ReadRequired<DecalManagerData>(player,"DecalManagerData");
         InventoryData inventory=ReadRequired<InventoryData>(player,"InventoryData");
         LevelManagerData levels=ReadRequired<LevelManagerData>(player,"LevelManagerData");
+        // This projection serves normal battle entry, not the separate tutorial controller.
+        var ownershipContext = new WeaponOwnershipContext(player.Level, IsTutorial: false);
         string[] visuals=Enumerable.Range(0,4).Select(i=>decals.Slots.TryGetValue(i,out var slot) ? slot.EquippedId ?? "" : "").ToArray();
         var weapons=inventory.Slots.OrderBy(x=>x.Key).Select(x=>
         {
             string source=x.Value.Name ?? "";
-            if(!levels.SavedWeapons.TryGetValue(source,out var saved) || !(saved.Bought || saved.Borrowed))
+            if (!levels.SavedWeapons.TryGetValue(source, out var saved) ||
+                !BattleWeaponOwnership.IsAvailable(source, saved, ownershipContext))
+            {
                 throw new InvalidDataException("Equipped weapon is not owned in durable level state.");
+            }
             // Legacy InventoryData stores the LevelManager order, not WeaponInventory.allWeapons.
             int inventoryIndex = BattleClientWeaponIndices.ResolveInventoryIndex(source, x.Value.WeaponIndex);
             return new BattleWeaponPresentation(x.Key,inventoryIndex,source,saved.BoughtIndex);

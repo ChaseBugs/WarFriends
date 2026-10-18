@@ -448,6 +448,7 @@ if (args is ["--initial-loadout-only"])
         throw new InvalidDataException("Recovered battle content artifact not found.");
     }
     int focused = LegacyInitialLoadoutTests.Run(Path.Combine(root.FullName, "content"));
+    focused += BattleWeaponOwnershipTests.Run(Path.Combine(root.FullName, "content"));
     Console.WriteLine($"PASS: {focused} initial loadout checks");
     return;
 }
@@ -3449,6 +3450,7 @@ checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += LegacyInitialLoadoutTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += BattleWeaponOwnershipTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleClientWeaponIndexTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleScoreSnapshotTests.Run();
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
