@@ -100,9 +100,11 @@ modified damage. Friendly health/shields stay unchanged as controls. In-ray frie
 host-scheduled cosmetic shots, moving-hit proof and warm/secondary animation transitions
 remain required, alongside UDP/Client and automatic Sickness integration.
 The [moving Grenadier correction](GRENADIER_MOVING_AIM.md) now removes the unsupported muzzle
-lookup, samples the current pistol base pose and retains source prediction inputs. Twenty-one
+lookup, samples the current pistol base pose and retains source prediction inputs. Twenty-five
 native checks prove moving-body acquisition and scheduled launch after a real MoveCover command;
-the source lead uses speed 5 plus both 0.1-second intervals. Native pistol conversion matches ten
+the source lead uses speed 5 plus both 0.1-second intervals. Tracking the first real flight through
+tick 461 proves this short-movement prediction misses without a synthetic hit or health loss and
+releases its damage authority. Native pistol conversion matches ten
 Unity observations. Combat regression still passes 26,395 assertions. Moving victim hits, warm/
 secondary overlays, cosmetic/in-ray friendly proof and normal Client/UDP gameplay remain open.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive

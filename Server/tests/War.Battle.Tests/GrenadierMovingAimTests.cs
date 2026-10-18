@@ -11,6 +11,7 @@ internal static class GrenadierMovingAimTests
     private const int PrimaryChoice = 400_000;
     private const int BodyChoice = 999_999;
     private const ulong MaximumWaitTick = 1200;
+    private const ulong MaximumFlightTicks = 20 * MatchManifest.TickRate;
     private const float PositionTolerance = 0.0001f;
     private static readonly string OwnerId = new('a', 32);
     private static readonly string OpponentId = new('b', 32);
@@ -158,6 +159,39 @@ internal static class GrenadierMovingAimTests
             projectile.ArmySourceCardId == "GREATGRENADIER" && projectile.Kind == "army-bullet" &&
             host.ArmyProjectileSpeed(projectile.ProjectileId) == GrenadierPrimaryWeapon.Instance.Speed),
             "Moving primary fire did not launch an authoritative pistol projectile.");
+        checks += CheckFlightResolution(host);
+        return checks;
+    }
+
+    private static int CheckFlightResolution(MatchEngine host)
+    {
+        ulong projectileId = host.Snapshot().Projectiles.Single(projectile =>
+            projectile.ArmySourceCardId == "GREATGRENADIER" && projectile.Kind == "army-bullet").ProjectileId;
+        float opponentHealth = host.Snapshot().Players.Single(player => player.PlayerId == OpponentId).Health;
+        ulong cursor = host.EventBatch(OwnerId, 0).LatestEventId;
+        var impacts = new List<MatchEvent>();
+        ulong deadline = host.Snapshot().ServerTick + MaximumFlightTicks;
+        while (!host.Terminal && host.Snapshot().ServerTick < deadline &&
+            host.Snapshot().Projectiles.Any(projectile => projectile.ProjectileId == projectileId))
+        {
+            host.Advance(host.Snapshot().ServerTick + 1);
+            MatchEventBatch batch = host.EventBatch(OwnerId, cursor);
+            impacts.AddRange(batch.Events.Where(item =>
+                item.ProjectileId == projectileId && item.Kind == MatchEventKind.Impact));
+            cursor = batch.LatestEventId;
+        }
+
+        int checks = Require(!host.Terminal && !host.Snapshot().Projectiles.Any(projectile =>
+            projectile.ProjectileId == projectileId), "The moving primary flight did not finish normally.");
+        // This source prediction overshoots after the short cover movement ends.
+        // A latched target is an aim point, never permission to award a hit.
+        checks += Require(impacts.Count == 0, "A missed moving prediction acquired a synthetic impact.");
+        checks += Require(host.Snapshot().Players.Single(player => player.PlayerId == OpponentId).Health ==
+            opponentHealth, "The missed moving prediction changed the opponent's health.");
+        checks += Require(host.ArmyProjectileLaunch(projectileId) == null,
+            "The completed moving shot retained its damage authority.");
+        Console.WriteLine($"PASS: moving prediction misses without damage; flight ends at " +
+            $"tick {host.Snapshot().ServerTick}.");
         return checks;
     }
 

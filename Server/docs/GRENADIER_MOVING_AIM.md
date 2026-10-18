@@ -34,7 +34,7 @@ does not rewrite the selected aim before the source shot callback.
 
 ## Verification
 
-`--grenadier-moving-only` passes 21 checks:
+`--grenadier-moving-only` passes 25 checks:
 
 - Reference-rifle replacement matches ten actual native pistol callback positions within 0.0001.
 - Invalid sampled position/rotation authority rejects.
@@ -45,6 +45,10 @@ does not rewrite the selected aim before the source shot callback.
 - The scheduled primary shot emits an authoritative pistol projectile and retains the acquired
   target and prediction inputs despite subsequent animation/movement. Acquisition is at tick 325
   and the shot is at tick 347 in this fixture.
+- The first real moving-latch projectile is tracked individually until it leaves the active
+  snapshot at tick 461. This fixed short cover movement ends before interception: the projectile
+  misses, emits no Impact event, leaves opponent health unchanged and releases its launch damage
+  authority. The source prediction is not silently redirected or treated as proof of a hit.
 
 Release build passes with zero warnings/errors. Existing damage checks pass all 20 assertions,
 callback/weapon checks pass 92, and `--combat-only` passes 26,395 assertions after the pose change.
@@ -52,7 +56,8 @@ The moving checks are registered in the default suite; the complete default suit
 
 ## Remaining boundary
 
-This proves acquisition and scheduled launch, not an actual moving-player hit. The sampled
+This proves acquisition, scheduled launch and a real missed-flight cleanup without damage,
+not an actual moving-player hit. The sampled
 acquisition transform follows the current published base pose; complete warm-state overlays,
 secondary-weapon pose transitions and normal Unity EnemyController comparisons remain required.
 The independent native rig data was observed with Unity 2018.3.0f2, not the original 5.2.5f1
