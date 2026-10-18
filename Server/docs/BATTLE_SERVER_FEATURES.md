@@ -196,6 +196,11 @@ its real-time continuation runs after LateUpdate during pause, while original sc
 callbacks run after Update and before LateUpdate after resume. The batch-mode continuation
 does not resume and is explicitly excluded as gameplay proof. Same-deadline spawn/return
 competition and actual pool admission remain open; the host ordering must preserve these phases.
+The later rendered single-slot competition now confirms original return and allocation on
+the same frame: DestroyPooled exposes the slot before LateUpdate and RadicalRoutine reuses
+it after LateUpdate. Native provenance and a managed regression pass 13,304 focused checks.
+The controlled hitch/plain-shell observation does not complete actual army admission or
+two-owner corpse exhaustion; independent host clocks and live hooks still remain open.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

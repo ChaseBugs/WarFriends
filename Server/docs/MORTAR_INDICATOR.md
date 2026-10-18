@@ -366,6 +366,32 @@ declaring live pool fidelity. The complete shared-preflight run is finished; a n
 including the clock/pool models is tracked at `Server/.local/mortar-clock-and-pool-full.log`
 and is not yet recorded as passing.
 
+The subsequent `UnityPoolReturnRaceExport` observes both actual source callbacks competing
+on one rendered frame, with a real one-slot ObjectPool and a plain PoolableObject. A controlled
+350 ms frame hitch aligns the real-time wait with the body's 2+1-game-second return; capture
+rate is one to accelerate the isolated timeline. No iterator or source clock is manually pumped.
+On frame four, the original DestroyPooled/FreeObject call exposes index zero before LateUpdate;
+the original RadicalRoutine continuation then sees that index after LateUpdate and Instantiate
+reuses the same object on that same frame. This is a callback/pool order observation, not a
+shipping frame-rate, latency, full army spawning or Mortar weapon attachment benchmark.
+
+`Server/content/pool-return-race-unity-reference.json` records the native sequence and eight
+matching active/executed source revisions. Its verifier rejects five changed frame, pool,
+phase and environment cases. The managed pool regression also consumes the pinned evidence:
+hide keeps the slot occupied, final return releases it, and same-frame admission succeeds only
+after that return. The focused group passes 13,304 checks at
+`Server/.local/mortar-pool-race-tests.log`; native evidence is
+`Server/.local/pool-return-race-unity.log`. The owned Editor exited and its private package
+manifest was restored. Actual host hooks, independent clock domains, real army-manager
+admission and two-owner/corpse exhaustion remain open.
+
+```powershell
+python -B Server/tools/verify_pool_return_race.py `
+  --project Server/.local/coop-geometry-project `
+  --log Server/.local/pool-return-race-unity.log `
+  --output Server/content/pool-return-race-unity-reference.json
+```
+
 ```powershell
 python -B Server/tools/verify_deployment_coroutine.py `
   --project Server/.local/coop-geometry-project `

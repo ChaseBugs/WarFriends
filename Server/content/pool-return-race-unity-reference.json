@@ -1,0 +1,98 @@
+{
+  "unityVersion": "2018.3.0f2",
+  "graphicsDevice": "Direct3D11",
+  "scope": "Original ObjectPool/PoolableObject, InvokeAfter and RadicalRoutine; controlled frame hitch, plain shells, no army manager or Photon.",
+  "observation": {
+    "sameFrame": true,
+    "reusedBody": true,
+    "aligned": true,
+    "captureRate": 1,
+    "alignmentMilliseconds": 350,
+    "batchMode": false,
+    "events": [
+      {
+        "transition": "hide-callback",
+        "frame": 3,
+        "gameTime": 2.0,
+        "realElapsed": 0.180358291,
+        "afterCurrentLateUpdate": false,
+        "returned": false,
+        "free": []
+      },
+      {
+        "transition": "deadline-aligned",
+        "frame": 4,
+        "gameTime": 3.0,
+        "realElapsed": 0.6132823,
+        "afterCurrentLateUpdate": false,
+        "returned": false,
+        "free": []
+      },
+      {
+        "transition": "return-callback",
+        "frame": 4,
+        "gameTime": 3.0,
+        "realElapsed": 0.613936067,
+        "afterCurrentLateUpdate": false,
+        "returned": true,
+        "free": [
+          0
+        ]
+      },
+      {
+        "transition": "spawn-continuation",
+        "frame": 4,
+        "gameTime": 3.0,
+        "realElapsed": 0.6186069,
+        "afterCurrentLateUpdate": true,
+        "returned": true,
+        "free": [
+          0
+        ]
+      },
+      {
+        "transition": "allocation-finished",
+        "frame": 4,
+        "gameTime": 3.0,
+        "realElapsed": 0.619311,
+        "afterCurrentLateUpdate": true,
+        "returned": true,
+        "free": []
+      }
+    ]
+  },
+  "sources": [
+    {
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs",
+      "normalizedUtf8LfSha256": "c9a499ac3672eb3be406e7170f345b08a0dc7835d42cb1090a1b79988e812723"
+    },
+    {
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/WaitForRealSeconds.cs",
+      "normalizedUtf8LfSha256": "4ce840bfc00c216677a27f6f951227424d4e223c44a17d3525a3ba924a0137eb"
+    },
+    {
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/CoroutineReturn.cs",
+      "normalizedUtf8LfSha256": "77ca98cfb3daadb14995218c740b95013273222ba43fe91a7c4f494d44a29618"
+    },
+    {
+      "source": "Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/RadicalRoutine.cs",
+      "normalizedUtf8LfSha256": "4108b79f7f6b250be727bb154f2045b14f02698db0cba66825aa95f366322499"
+    },
+    {
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/ObjectPool.cs",
+      "normalizedUtf8LfSha256": "7db8ebe40315a441d4892ddc9d4b1cb392aac1186289c0882e18e58f3263adf8"
+    },
+    {
+      "source": "Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PoolableObject.cs",
+      "normalizedUtf8LfSha256": "8341f400464de9abcaf2543707632b0f0c7338c0f87c01f7bdf918064b0a4dba"
+    },
+    {
+      "source": "Server/tools/UnityPoolReturnRaceProbe.cs",
+      "normalizedUtf8LfSha256": "731954fb2fade1268b7b4d10f0374262493aa27fe645afa13a866d4d922563e9"
+    },
+    {
+      "source": "Server/tools/UnityPoolReturnRaceExport.cs",
+      "normalizedUtf8LfSha256": "92f897ba3b52faaf958439d1d9d1a5db146bf3b7aa2aacd6600e16abf4abf743"
+    }
+  ]
+}

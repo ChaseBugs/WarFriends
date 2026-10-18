@@ -7,6 +7,7 @@ using War.BattleServer;
 internal static class MortarCorpseReturnClockTests
 {
     private const string ReferenceDigest = "99bb693df99b0a0afafda949705ccd8bbc46336228425d09ef6d3b4f281d9712";
+    private const string RaceDigest = "608d3307cb7b3211449a80be68569b19679a0370d61d0519f648dfb12584da37";
     private const int LastTick = 300;
     private const float FrameSeconds = 1f / 30f;
 
@@ -20,7 +21,8 @@ internal static class MortarCorpseReturnClockTests
         {
             checks += CompareNativeScenario(scenario);
         }
-        return checks + CheckRejectedInputs() + CheckFrameOvershoot() + CheckPoolRejections();
+        return checks + CheckRejectedInputs() + CheckFrameOvershoot() + CheckPoolRejections() +
+            CheckSameFrameRace(directory);
     }
 
     private static int CompareNativeScenario(JsonElement scenario)
@@ -157,6 +159,35 @@ internal static class MortarCorpseReturnClockTests
             return 1;
         }
         throw new InvalidOperationException("A stale or unowned corpse transition was accepted.");
+    }
+
+    private static int CheckSameFrameRace(string directory)
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine(directory, "pool-return-race-unity-reference.json"));
+        int checks = Require(Convert.ToHexStringLower(SHA256.HashData(bytes)) == RaceDigest,
+            "Same-frame native pool evidence changed without reviewing source callback order.");
+        using JsonDocument reference = JsonDocument.Parse(bytes);
+        JsonElement events = reference.RootElement.GetProperty("observation").GetProperty("events");
+        JsonElement returned = events.EnumerateArray().Single(row =>
+            row.GetProperty("transition").GetString() == "return-callback");
+        JsonElement spawn = events.EnumerateArray().Single(row =>
+            row.GetProperty("transition").GetString() == "spawn-continuation");
+        checks += Require(returned.GetProperty("frame").GetInt32() == spawn.GetProperty("frame").GetInt32() &&
+            !returned.GetProperty("afterCurrentLateUpdate").GetBoolean() &&
+            spawn.GetProperty("afterCurrentLateUpdate").GetBoolean(),
+            "Native source return did not precede same-frame end-of-frame admission.");
+
+        var pool = new MortarWeaponPool(1);
+        pool.TryAllocateForMaster(11, out _);
+        pool.BeginCorpseReturn(11, 0, 2f);
+        pool.AdvanceCorpseReturn(11, 1, 1f);
+        checks += Require(pool.AdvanceCorpseReturn(11, 2, 1f) == MortarCorpseReturnClock.Transition.Hidden &&
+            !pool.TryAllocateForPeer(22, out _), "Hide released the slot before the source's final wait.");
+        checks += Require(pool.AdvanceCorpseReturn(11, 3, 1f) == MortarCorpseReturnClock.Transition.Returned &&
+            pool.FreeSlots().SequenceEqual([0]), "The completed frame did not return its source slot.");
+        checks += Require(pool.TryAllocateForPeer(22, out int slot) && slot == 0 && pool.OccupiedCount == 1,
+            "Same-frame admission failed after the source return phase freed its slot.");
+        return checks;
     }
 
     private static int RequireRejected(Action action)
