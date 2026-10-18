@@ -17,6 +17,7 @@ string mongoUri = builder.Configuration["Mongo:Uri"] ?? "mongodb://127.0.0.1:270
 string mongoDatabase = builder.Configuration["Mongo:Database"] ?? "warfriends";
 builder.Services.AddSingleton(new AccountStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleAllocationStore(mongoUri, mongoDatabase));
+builder.Services.AddSingleton(new BattleAllocationPreparationStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<BattleAllocationSource>();
 builder.Services.AddSingleton(new BattleGrantStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleMatchQueueStore(mongoUri, mongoDatabase));
@@ -326,8 +327,19 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
         {
             try
             {
-                if(await allocations.Get(playerId,ctx.RequestAborted)==null)
-                    return Error(409,"battle_allocation_missing","A trusted battle allocation is required before matchmaking.");
+                if (await allocations.Get(playerId, ctx.RequestAborted) == null)
+                {
+                    LegacyPlayerDocument account = await legacy.ById(playerId, ctx.RequestAborted)
+                        ?? throw new InvalidDataException("A durable account is required for battle preparation.");
+                    BattleManifestFactory manifestFactory = services.GetRequiredService<BattleManifestFactory>();
+                    BattleAllocationPreparationStore preparation =
+                        services.GetRequiredService<BattleAllocationPreparationStore>();
+                    await preparation.PrepareAsync(playerId, account.Revision, snapshot =>
+                    {
+                        manifestFactory.ValidatePresentation(BattlePlayerPresentationSource.Project(snapshot));
+                        return BattleAllocationSource.Project(snapshot);
+                    }, ctx.RequestAborted);
+                }
             }
             catch(InvalidDataException){return Error(409,"battle_allocation_invalid","The trusted battle allocation is invalid.");}
             try

@@ -56,7 +56,6 @@ internal static class BackendQueueLiveTests
                     Serialized=new Dictionary<string,string>{["DecalManagerData"]=PlayerState.Write(decals),
                         ["InventoryData"]=PlayerState.Write(inventory),["LevelManagerData"]=PlayerState.Write(levels)}};
                 await legacy.Insert(player,LegacyPlayerStore.NewPassword(),CancellationToken.None);
-                await allocations.Put(new BattleAllocationProjection(ids[i],[],[],[],[],[]),CancellationToken.None);
             }
             var workerEnvironment=new Dictionary<string,string>
             {
@@ -109,6 +108,10 @@ internal static class BackendQueueLiveTests
 
             var firstWaiting=await left.JoinMatchQueueAsync(tokens[0],deadline.Token);
             if(firstWaiting.Code!="waiting")throw new Exception("First player did not enter the durable queue.");
+            BattleAllocationProjection initialAllocation = await allocations.Get(ids[0], deadline.Token)
+                ?? throw new Exception("Normal queue admission did not create initial battle allocation.");
+            if (initialAllocation.CardIds.Count != 0 || initialAllocation.NormalUpgradeIndexes.Count != 0)
+                throw new Exception("Normal queue admission invented card or unit ownership.");
             try {await right.JoinMatchQueueAsync(tokens[1],deadline.Token);
                 throw new Exception("Queue pairing succeeded while the Worker was unavailable.");}
             catch(HttpRequestException e) when(e.Message.Contains("Backend status 503",StringComparison.Ordinal)){}

@@ -317,3 +317,26 @@ allocation or an additional account revision. A fresh preparation then publishes
 This exercises an actual Mongo write conflict/retry boundary, not a sequential stale-read check.
 Build evidence is `Server/.local/allocation-account-race-build.log`, zero warnings/errors.
 Queue wiring and coherent paired manifest publication remain open.
+
+### Normal queue preparation wiring
+
+The current queue join route now prepares an absent allocation through the account-revision
+transaction instead of returning `battle_allocation_missing`. It validates the exact durable
+presentation against the configured manifest catalog inside the projection callback before
+writing. Unknown accounts, unsupported equipment and stale account revisions fail before
+queue admission. Existing allocations retain the previous validation/preservation path.
+
+`BackendQueueLiveTests` no longer seeds allocations directly. Its first real HTTP queue join
+must create allocation authority without inventing card or unit ownership. The fixture still
+provisions authenticated legacy accounts with a reviewed rifle loadout; it is not a new guest
+account or normal two-Unity-scene proof. Release build evidence is
+`Server/.local/normal-allocation-queue-build.log`, zero warnings/errors. Coherent paired
+manifest reads remain a separate required boundary.
+
+The real Backend/Worker/Mongo `--queue-live` run passes with exit zero at
+`Server/.local/allocation-create-mongo-33050281ea0b4b488e65b3f92db226ee/normal-queue-tests.log`.
+Runtime artifacts are in `Server/.local/queue-live-a500b36999bf40be93d9d1a698044798`.
+The run covers automatic initial allocation, stable grants, real HTTP/UDP readiness/cancellation,
+terminal acceptance, rematches, lost registration replies, process restart and unattended
+cancellation recovery. It uses source adapters in native tests; no two normal Unity scenes are
+launched by this mode. This evidence predates the subsequent coherent authority reader changes.
