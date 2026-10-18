@@ -31,6 +31,9 @@ public sealed class GrenadierPrimaryWeapon
     /// <summary>The exported resting baseline; firing uses observed corner samples instead.</summary>
     public Vector3 RestMuzzle { get; }
 
+    /// <summary>The selected spawn point in pistol-root space, before animated attachment.</summary>
+    internal Vector3 LocalMuzzle { get; }
+
     private GrenadierPrimaryWeapon(JsonElement root)
     {
         Speed = root.GetProperty("runtimeSpeed").GetSingle();
@@ -38,8 +41,11 @@ public sealed class GrenadierPrimaryWeapon
         CollisionDistance = root.GetProperty("collisionCheckDistance").GetSingle();
         JsonElement position = root.GetProperty("restMuzzlePosition");
         RestMuzzle = new Vector3(position[0].GetSingle(), position[1].GetSingle(), position[2].GetSingle());
+        JsonElement local = root.GetProperty("weaponSpawn").GetProperty("position");
+        LocalMuzzle = new Vector3(local[0].GetSingle(), local[1].GetSingle(), local[2].GetSingle());
         if (Speed != ExpectedSpeed || FakeSpeed != ExpectedFakeSpeed ||
-            CollisionDistance != ExpectedCollisionDistance || !PlayerHitbox.Finite(RestMuzzle))
+            CollisionDistance != ExpectedCollisionDistance || !PlayerHitbox.Finite(RestMuzzle) ||
+            !PlayerHitbox.Finite(LocalMuzzle))
         {
             throw new InvalidDataException("Grenadier primary setup is outside the recovered contract.");
         }

@@ -33,7 +33,14 @@ internal static class GrenadierPrimaryDamageTests
         return checks;
     }
 
-    private static MatchEngine CreateHost(BattleCombatContent content, RecoveredBattleMap map, Scenario scenario)
+    internal static MatchEngine CreateRealShotHost(BattleCombatContent content, RecoveredBattleMap map,
+        Func<int, int> armyChoice)
+    {
+        return CreateHost(content, map, Scenario.Normal, armyChoice);
+    }
+
+    private static MatchEngine CreateHost(BattleCombatContent content, RecoveredBattleMap map, Scenario scenario,
+        Func<int, int>? armyChoice = null)
     {
         ParticipantManifest owner = CreateParticipant(content, map, 1);
         ParticipantManifest opponent = CreateParticipant(content, map, 2);
@@ -59,7 +66,7 @@ internal static class GrenadierPrimaryDamageTests
             return readyDraws++ == 0 ? PrimaryWeaponDraw : 0;
         }
 
-        host = new MatchEngine(manifest, map, content, armyChoice: Draw, combatRandom: () => 1f);
+        host = new MatchEngine(manifest, map, content, armyChoice: armyChoice ?? Draw, combatRandom: () => 1f);
         SelectAndReady(host);
         if (scenario == Scenario.Overtime)
         {

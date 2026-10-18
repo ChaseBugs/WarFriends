@@ -97,8 +97,14 @@ The separate [Grenadier damage fixture](GRENADIER_PRIMARY_DAMAGE.md) now lets re
 continue beyond the first terrain hit. Twenty native checks prove opposing shield damage and
 destruction, actual player health loss with source normal/overtime coefficients, and Sickness-
 modified damage. Friendly health/shields stay unchanged as controls. In-ray friendly exclusion,
-host-scheduled cosmetic shots, moving-target muzzle binding and pistol/secondary animation policy
+host-scheduled cosmetic shots, moving-hit proof and warm/secondary animation transitions
 remain required, alongside UDP/Client and automatic Sickness integration.
+The [moving Grenadier correction](GRENADIER_MOVING_AIM.md) now removes the unsupported muzzle
+lookup, samples the current pistol base pose and retains source prediction inputs. Twenty-one
+native checks prove moving-body acquisition and scheduled launch after a real MoveCover command;
+the source lead uses speed 5 plus both 0.1-second intervals. Native pistol conversion matches ten
+Unity observations. Combat regression still passes 26,395 assertions. Moving victim hits, warm/
+secondary overlays, cosmetic/in-ray friendly proof and normal Client/UDP gameplay remain open.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

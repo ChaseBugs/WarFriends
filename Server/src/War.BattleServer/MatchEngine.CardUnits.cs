@@ -15,8 +15,13 @@ internal sealed record CardGrenadierLaunchAuthority(string OwnerPlayerId,
 
 public sealed partial class MatchEngine
 {
+    internal sealed record CardGrenadierMovingAim(Vector3? Muzzle, Vector3 TargetPosition,
+        Vector3 Velocity, float FlightSeconds);
     internal sealed record CardGrenadierAim(ArmyRusherTarget Target,
-        bool ThrowGrenade);
+        bool ThrowGrenade)
+    {
+        internal CardGrenadierMovingAim? Moving { get; init; }
+    }
     internal sealed record CardGrenadierShotIntent(ulong EntityKey,
         ulong Tick, CardGrenadierAim Aim, bool IsReal, int ShotIndex,
         int BatchSize, Vector3? GrenadeMuzzlePosition,
@@ -1503,21 +1508,28 @@ public sealed partial class MatchEngine
         {
             var source = playerShotTargets.Gameplay.Single(row => row.Type == 16);
             Vector3 velocity = HeavyTurretPlayerVelocity(opponent);
-            float flySeconds = .1f;
+            float flySeconds = GrenadierAimingPaddingSeconds;
+            Vector3? acquisitionMuzzle = null;
             if (!throwGrenade)
             {
-                Vector3 muzzle = armyWeapons.RestMuzzleOrigin(entity.UnitId,
-                    origin, moving.Position - origin);
+                Vector3 muzzle = CardGrenadierAcquisitionMuzzle(entityKey);
+                acquisitionMuzzle = muzzle;
                 // PistolEnemy BulletSetup speed is 5. Gun adds .1 seconds;
                 // PickPlayerOpponent passes another .1 to AimingHelper.
-                flySeconds += Vector3.Distance(muzzle, moving.Position) / 5f + .1f;
+                flySeconds += Vector3.Distance(muzzle, moving.Position) / GrenadierPrimaryWeapon.Instance.Speed +
+                    GrenadierGunPaddingSeconds;
             }
             Vector3 predicted = moving.Position + flySeconds * velocity;
             if (!PlayerHitbox.Finite(predicted))
                 throw new InvalidDataException("Card Grenadier moving aim left the map.");
             return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
                 opponent.Definition.PlayerId, source.TransformFileId,
-                point.ComponentFileId, predicted), throwGrenade);
+                point.ComponentFileId, predicted), throwGrenade)
+            {
+                // Acquisition precedes the next player-animation sample. Retain these
+                // exact inputs so a later pose cannot redefine the already latched aim.
+                Moving = new CardGrenadierMovingAim(acquisitionMuzzle, moving.Position, velocity, flySeconds)
+            };
         }
 
         var body = playerShotTargets.Nearest(9, origin,

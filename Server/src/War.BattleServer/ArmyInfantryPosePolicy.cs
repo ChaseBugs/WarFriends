@@ -12,7 +12,7 @@ internal static class ArmyInfantryPosePolicy
             ["ID_UNIT-SNIPER"]=new("sniper_idle","sniper_run","rifle_shot_loop"),
             ["ID_UNIT-ROCKETSOLDIER"]=new("bazooka_idle","bazooka_run","bazooka_shot_barrier"),
             ["ID_UNIT-SHOTGUNNER"]=new("shotgunner_idle","shotgunner_run","shotgunner_shot_loop"),
-            ["ID_UNIT-GRENADIER"]=new("idle_1","run_0","rifle_shot_loop"),
+            ["ID_UNIT-GRENADIER"]=new("pistol_idle","pistol_run","rifle_shot_loop"),
             ["ID_UNIT-PARATROOPER"]=new("idle_1","run_0","rifle_shot_loop"),
             ["ID_UNIT-SWAT"]=new("shield_idle","shield_run","shield_shot"),
             ["ID_UNIT-MINIGUNNER"]=new("minigun_idle","minigun_run","minigun_shot"),

@@ -51,10 +51,8 @@ lets source volleys continue through shield destruction and a later physical pla
 Geometry discovery also observed a shield hit after two normal movement commands in Aztec;
 the committed regression uses explicit Park cases instead of searching for any passing map.
 
-Remaining work includes in-ray friendly exclusions, host-scheduled cosmetic shots, moving-target
-lead and Client/UDP presentation. Source inspection found that Grenadier's moving-primary branch
-still calls the eight-family `ArmyWeaponBindingCatalog.RestMuzzleOrigin` lookup, which excludes
-Grenadier. That path needs source-current-pose binding before moving-target gameplay is complete;
-using a future firing pose for acquisition would change the recovered lead rule. The generic
-Grenadier animation policy also uses rifle idle/run aliases and needs a source-backed pistol/
-secondary pose migration. These remain required BattleServer work.
+The [moving-acquisition correction](GRENADIER_MOVING_AIM.md) now replaces the unsupported eight-family
+muzzle lookup with current-pose pistol binding, preserves source lead inputs and uses pistol
+idle/run aliases. Native proof covers moving-body acquisition and scheduled launch, not a moving
+victim hit. Remaining work includes warm/secondary pose transitions, in-ray friendly exclusions,
+host-scheduled cosmetic shots and Client/UDP presentation.

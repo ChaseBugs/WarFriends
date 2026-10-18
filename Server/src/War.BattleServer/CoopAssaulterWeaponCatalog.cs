@@ -17,6 +17,7 @@ internal sealed class CoopAssaulterWeaponCatalog
     internal string BulletPrefabGuid { get; }
     internal int MuzzleTransformFileId { get; }
     internal Vector3 MuzzleRestPosition { get; }
+    internal Quaternion MuzzleRestRotation { get; private init; }
     internal Vector3 ShotOffset { get; }
     internal float RealBulletSpeed { get; }
     internal float FakeBulletSpeed { get; }
@@ -164,7 +165,10 @@ internal sealed class CoopAssaulterWeaponCatalog
             row.GetProperty("collisionCheckDistance").GetSingle(),
             row.GetProperty("criticalProbability").GetSingle(),
             row.GetProperty("criticalAmount").GetSingle(),
-            row.GetProperty("cadenceSeconds").GetSingle());
+            row.GetProperty("cadenceSeconds").GetSingle())
+        {
+            MuzzleRestRotation = Quaternion.Normalize(muzzleRotation)
+        };
     }
 
     internal ulong NextRoundEligibleTick(ulong lastRoundTick)

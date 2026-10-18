@@ -69,7 +69,8 @@ native primary-choice fixture. The full default suite was not rerun.
 
 1. Extend native damage proof to in-ray friendly exclusions and host-scheduled cosmetic shots.
    The fixed Park fixture now verifies source shield and normal/overtime player coefficients.
-   Migrate the remaining moving-target muzzle lookup and rifle-based generic animation policy.
+   Moving acquisition now uses current-pose pistol binding and source idle/run aliases; moving
+   hit proof and warm/secondary animation transitions remain open. See [the report](GRENADIER_MOVING_AIM.md).
 2. Extend the direct native animation-controller observation to normal EnemyController execution,
    warm-state reuse and Client presentation. Five firing rounds on both sides are now observed.
 3. Add authenticated UDP and Client presentation proof before treating the complete unit behavior
