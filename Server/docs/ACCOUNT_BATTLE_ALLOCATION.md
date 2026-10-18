@@ -52,7 +52,7 @@ dotnet Server/tests/War.Battle.Tests/bin/Release/net10.0/War.Battle.Tests.dll --
 Release build passed with zero warnings/errors; both focused commands passed. The complete
 native suite was not rerun for this checkpoint.
 
-Normal matchmaking still requires a pre-existing trusted allocation. Automatic publication,
+At that checkpoint, normal matchmaking required a pre-existing trusted allocation. Automatic publication,
 concurrent inventory fencing, actual hand-slot/extra-slot entitlements, Buddy combat projection,
 complete cross-match consumption, and rendered Unity battle entry remain required work.
 This source is a prerequisite for those paths, not their completion.
@@ -65,3 +65,18 @@ The [complete card identity audit](ORDINARY_CARD_IDENTITIES.md) replaces the ear
 map used as an inventory validator. Valid persisted identities now cover all 67 ordinary rows;
 57 are Client-active, and 12 of those still lack host effect identity integration. Identity
 projection does not implement those missing effects or activate the inactive definitions.
+
+## Current admission integration
+
+Normal queue admission now creates an absent allocation through the account-revision preparation
+transaction, after validating source equipment against the configured manifest catalog. Existing
+allocations are preserved and checked against account ownership; they are not replenished on
+retry. Paired manifests use one Mongo snapshot for account and allocation reads. Actual Mongo
+tests force concurrent inventory changes and between-query successor publication.
+
+The first queue integration run passed without manually inserted allocations. A subsequent
+whole-queue run with coherent reads failed on a rematch Forfeit UDP timeout; diagnostic
+instrumentation and another run are in progress. Neither focused storage tests nor the earlier
+queue pass establish complete current gameplay acceptance. Safe inactive refresh after legitimate
+equipment changes, admission reservations, the remaining card effects, Buddy and normal Unity
+battle entry remain required. See [current boot/admission evidence](CLIENT_LOBBY_BOOTSTRAP.md).

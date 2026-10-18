@@ -120,7 +120,13 @@ The [account-derived allocation source](ACCOUNT_BATTLE_ALLOCATION.md) now reads 
 card quantities and equipped unit lanes from one durable account snapshot. Native and real Mongo
 tests cover all 45 source IDs, malformed-state rejection, and account-to-allocation storage. Nonempty
 Buddy state is explicitly unsupported until its complete combat metadata and summon path exist.
-Automatic queue publication, inventory fencing and durable consumption remain open.
+Normal queue admission now prepares absent allocations from a validated durable account in an
+account-revision transaction. Forced inventory-change and between-query publication checks pass.
+Paired manifests read accounts and allocations from one Mongo snapshot and reject ownership
+mismatches. The first real queue regression passed; the subsequent coherent-reader run failed
+on a rematch Forfeit UDP timeout. Its diagnostic rerun remains in progress. Inactive allocation
+refresh, admission reservations and normal two-Unity gameplay remain open. See
+[current integration evidence](CLIENT_LOBBY_BOOTSTRAP.md).
 The [paired-result card consumption](ATOMIC_CARD_CONSUMPTION.md) now debits confirmed ordinary
 cards with result insertion and pair deletion in one real Mongo transaction. Tests cover both
 players, concurrent replay, rollback/retry, final-copy zero rows and absent frozen ownership.
