@@ -85,8 +85,9 @@ connects the rifle-to-FRAG-to-rifle path to MatchEngine, including scheduled-sho
 suspension, source pose routing and in-flight grenade completion. Thirteen native
 host checks pass. A separate [two-peer UDP gate](MIXED_GRENADE_UDP.md) now verifies
 the same source starter path, invalid stage rejection and reliable lifecycle
-replay through signed SDK peers. Normal Unity gameplay, uncaptured grenade rig
-transforms, durable allocation and the remaining feature boundaries stay open.
+replay through signed SDK peers. The later [rig integration](GRENADE_RIG_OBSERVATION.md) and
+[delayed rifle scenarios](MIXED_GRENADE_LONGSHOT.md) supply the observed transforms and native kill proof.
+Normal Unity gameplay, durable allocation and the remaining feature boundaries stay open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted
@@ -113,11 +114,12 @@ after pair release. Real Mongo change streams prove both writes share one
 transaction. The prepared admission manifest now commits in that transaction
 too. The authenticated allocator invokes source-compatible loadout refresh,
 Worker registration and active-pair-fenced grant publication.
+The [mixed rematch army refresh](REMATCH_ARMY_REFRESH.md) now rebuilds equipped unit identities and all three lanes from current durable state. Real Mongo tests cover an upgrade, an unequipped unit, stale-allocation rejection, fresh host configuration, and modifier/new-unit/shield rejection. Automatic allocation, remaining modifier builders, and normal Unity second-battle proof remain open.
 The source-bound rematch manifest builder now preserves map/mode, ordered
 player slots and the actual scene master while reading current weapon/profile
-and card-allocation stores. Source hash/identity and stale shield/army/bonus
-authority fail closed. Ordered reservation binding and Mongo-backed upgrade
-refresh checks exist. Unity controller integration, the rejected shield/army/
+and card-allocation stores. Source hash/identity and stale shield/army-modifier/bonus
+authority fail closed; supported mixed army lanes now refresh through the builder above. Ordered reservation binding and Mongo-backed upgrade
+refresh checks exist. Unity controller integration, the rejected shield/army-modifier/
 bonus projection paths and admission expiry remain open.
 A real Worker-outage gate now proves deferred reservation retains both players
 without grants, then uses identical frozen admission/profile data after restart

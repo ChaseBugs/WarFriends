@@ -4,6 +4,11 @@ Updated 2026-09-19 from [Server_guide.md](../../Server_guide.md). This work adds
 
 The full active scope and completion gates are tracked in [BATTLE_SERVER_FEATURES.md](BATTLE_SERVER_FEATURES.md). The opt-in [live stationary rifle mode](LIVE_RIFLE_COMBAT.md) connects real UDP commands to source-bound animation, projectiles, collision and health changes.
 
+The [mixed rematch army refresh](REMATCH_ARMY_REFRESH.md) now rebuilds current equipped unit
+identities and upgrade lanes and rejects stale battle allocations before returning successor
+bytes. Real MongoDB tests cover upgrades, unequipping, host allocation configuration, and retained
+modifier/shield rejection. Automatic allocation and normal Unity second-battle gameplay remain open.
+
 The Worker supports a [pinned combat content package](COMBAT_CONTENT.md), validates source-bound rifle upgrades before admission and uses its canonical map in rifle combat. Two independent SDK clients verify damage through the real Worker; normal Unity gameplay wiring remains pending.
 
 ## What runs

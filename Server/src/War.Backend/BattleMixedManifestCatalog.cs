@@ -5,7 +5,7 @@ using War.Shared;
 namespace War.Backend;
 
 /// <summary>Allocates every durable equipped slot from the Worker's pinned mixed-combat package.</summary>
-public sealed class BattleMixedManifestCatalog : IBattleWeaponManifestCatalog
+public sealed class BattleMixedManifestCatalog : IBattleArmyManifestCatalog
 {
     private readonly BattleCombatContent content;
     public string PackageRevision => content.MixedRevision!;
@@ -21,6 +21,12 @@ public sealed class BattleMixedManifestCatalog : IBattleWeaponManifestCatalog
         if(template["Mode"]?.GetValue<string>()!=MatchManifest.MixedCombatMode ||
            template["CatalogRevision"]?.GetValue<string>()!=PackageRevision)
             throw new InvalidDataException("Battle template does not bind the recovered mixed combat package.");
+    }
+
+    /// <summary>Allows source unit identities and lanes while rejecting unprojected modifiers and new-unit flags.</summary>
+    public void RequireRefreshableArmyAuthority(JsonObject participant)
+    {
+        BattleArmyManifestProjection.RequireRefreshableAuthority(participant);
     }
 
     public void Bind(JsonObject participant,BattlePlayerPresentation view)

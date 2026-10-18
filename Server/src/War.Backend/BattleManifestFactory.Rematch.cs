@@ -29,8 +29,28 @@ public sealed partial class BattleManifestFactory
         PreserveSceneMaster(refreshed, previous);
         RefreshExistingRankFields(refreshed);
         byte[] result = JsonSerializer.SerializeToUtf8Bytes(refreshed);
-        MatchManifest.Parse(result);
+        ValidateRefreshedArmyAllocations(MatchManifest.Parse(result));
         return result;
+    }
+
+    private void ValidateRefreshedArmyAllocations(MatchManifest manifest)
+    {
+        if (weapons is not IBattleArmyManifestCatalog)
+        {
+            return;
+        }
+
+        foreach (ParticipantManifest player in manifest.Players)
+        {
+            var allocation = manifest.Allocations?.SingleOrDefault(row => row.PlayerId == player.PlayerId)
+                ?? throw new InvalidDataException("Refreshed rematch army allocation is absent.");
+            if (!allocation.NormalUpgradeIndexes.SequenceEqual(player.ArmyNormalUpgradeIndexes ?? []) ||
+                !allocation.SpecialUpgradeIndexes.SequenceEqual(player.ArmySpecialUpgradeIndexes ?? []) ||
+                !allocation.EliteUpgradeIndexes.SequenceEqual(player.ArmyEliteUpgradeIndexes ?? []))
+            {
+                throw new InvalidDataException("Rematch army allocation differs from current durable unit lanes.");
+            }
+        }
     }
 
     private void RequireRefreshableSource(JsonObject source, MatchManifest previous)
@@ -44,14 +64,23 @@ public sealed partial class BattleManifestFactory
         foreach (JsonNode? node in source["Players"]!.AsArray())
         {
             var player = node?.AsObject() ?? throw new InvalidDataException("Rematch participant is absent.");
-            bool hasUnrefreshedAuthority = player.Any(field => field.Value != null &&
+            bool hasArmyAuthority = player.Any(field => field.Value != null &&
                 (field.Key.StartsWith("Army", StringComparison.Ordinal) ||
-                    field.Key is "EquippedArmyUnitIds" or "NewArmyUnitIds" or "ShieldLevel"));
-            if (hasUnrefreshedAuthority)
+                    field.Key is "EquippedArmyUnitIds" or "NewArmyUnitIds"));
+            if (player["ShieldLevel"] != null)
             {
-                // Reusing expired perks, old army lanes or shield upgrades would invent current authority.
-                throw new InvalidDataException(
-                    "Rematch army and shield authority requires a fresh projection builder.");
+                throw new InvalidDataException("Rematch shield authority requires a fresh projection builder.");
+            }
+
+            if (hasArmyAuthority)
+            {
+                if (weapons is not IBattleArmyManifestCatalog armyCatalog)
+                {
+                    throw new InvalidDataException("The rematch catalog cannot refresh army authority.");
+                }
+
+                // Bind reconstructs these lanes from current state; source values never survive as authority.
+                armyCatalog.RequireRefreshableArmyAuthority(player);
             }
         }
     }

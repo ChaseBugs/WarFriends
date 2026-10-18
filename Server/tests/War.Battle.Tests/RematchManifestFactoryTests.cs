@@ -49,6 +49,7 @@ internal static class RematchManifestFactoryTests
             await UpdateEquipmentAsync(mongo.GetDatabase(databaseName), players[0], deadline.Token);
             await VerifyRebindingAsync(factory, saved, players, deadline.Token);
             Require(saved.SequenceEqual(bytes), "Rematch generation must not mutate source snapshot bytes.");
+            await RematchArmyManifestTests.RunAsync(uri, databaseName, content);
             Console.WriteLine("PASS: rematch source hash, slot/master preservation, " +
                 "current equipment and stale-authority rejection");
         }
@@ -88,6 +89,18 @@ internal static class RematchManifestFactoryTests
         };
         await RejectAsync(() => factory.CreateRematchAsync(JsonSerializer.SerializeToUtf8Bytes(staleShield),
             staleShield.Digest(), nextId, cancellationToken));
+        MatchManifest staleArmy = previous with
+        {
+            Players = previous.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-ASSAULT"],
+                ArmyNormalUpgradeIndexes = [0],
+                ArmySpecialUpgradeIndexes = [-1],
+                ArmyEliteUpgradeIndexes = [-1]
+            }).ToArray()
+        };
+        await RejectAsync(() => factory.CreateRematchAsync(JsonSerializer.SerializeToUtf8Bytes(staleArmy),
+            staleArmy.Digest(), nextId, cancellationToken));
     }
 
     private static async Task SeedAsync(LegacyPlayerStore store, string playerId, CancellationToken cancellationToken)

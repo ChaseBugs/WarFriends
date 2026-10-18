@@ -142,9 +142,12 @@ presentations by querying current durable stores. Existing participant rank
 fields refresh from those current presentations. The old snapshot is unchanged.
 
 The source must still use the configured host and weapon catalog. A manifest
-containing army/perk projections, shield levels or a PvP Gold-bonus admission
-counter is rejected until those current projections can be rebuilt; none is
-silently copied as current authority. This does not prove every loadout or mode
+containing unprojected army modifiers, shield levels or a PvP Gold-bonus admission
+counter is rejected until those current projections can be rebuilt. The later
+[mixed army refresh](REMATCH_ARMY_REFRESH.md) now replaces supported equipped
+unit identities and lanes from current durable presentation and rejects stale
+allocation lanes. Catalogs without that builder still reject army authority;
+none is silently copied as current authority. This does not prove every loadout or mode
 is supported. The HTTP allocator uses this method before reserving participants.
 
 `--rematch-manifest-only <mongo-uri>` checks real Mongo-backed equipment/rank
