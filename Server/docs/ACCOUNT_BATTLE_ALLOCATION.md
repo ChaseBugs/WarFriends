@@ -75,8 +75,8 @@ retry. Paired manifests use one Mongo snapshot for account and allocation reads.
 tests force concurrent inventory changes and between-query successor publication.
 
 The first queue integration run passed without manually inserted allocations. A subsequent
-whole-queue run with coherent reads failed on a rematch Forfeit UDP timeout; diagnostic
-instrumentation and another run are in progress. Neither focused storage tests nor the earlier
-queue pass establish complete current gameplay acceptance. Safe inactive refresh after legitimate
+whole-queue run with coherent reads failed on a rematch Forfeit UDP timeout. The diagnostic
+whole-queue rerun subsequently passed without widening timeouts; the earlier cause remains
+unproven. These tests do not establish complete current gameplay acceptance. Safe inactive refresh after legitimate
 equipment changes, admission reservations, the remaining card effects, Buddy and normal Unity
 battle entry remain required. See [current boot/admission evidence](CLIENT_LOBBY_BOOTSTRAP.md).

@@ -402,3 +402,15 @@ session credentials or replacing the original exception. The diagnostic Release 
 at `Server/.local/terminal-persistence-metrics-build.log`. The associated actual queue run writes
 `terminal-diagnostics-queue-tests.log` in the existing Mongo evidence directory; its final
 status must be inspected separately before claiming a resolved regression.
+
+The diagnostic whole-queue rerun now completes with exit zero at
+`terminal-diagnostics-queue-tests.log`. Runtime artifacts are in
+`Server/.local/queue-live-4dc45ecf68e544a5807dac67baed8759`. This run includes the coherent
+reader, account/allocation equality checks and terminal persistence diagnostics. Readiness,
+terminal acceptance, same-opponent rematches, lost registration replies, Backend/Worker
+restarts and unattended cancellation recovery pass. It does not launch two normal Unity scenes.
+The earlier Forfeit timeout did not recur; its cause remains unproven and its failed artifacts
+are retained. A mid-run metrics sample showed 197ms maximum terminal persistence for that
+Worker instance; this is not a run-wide maximum or proof excluding all storage delays.
+No timeout was widened and no durability guarantee was relaxed. Owned processes exited or
+were cleaned up after the test completed.

@@ -124,7 +124,8 @@ Normal queue admission now prepares absent allocations from a validated durable 
 account-revision transaction. Forced inventory-change and between-query publication checks pass.
 Paired manifests read accounts and allocations from one Mongo snapshot and reject ownership
 mismatches. The first real queue regression passed; the subsequent coherent-reader run failed
-on a rematch Forfeit UDP timeout. Its diagnostic rerun remains in progress. Inactive allocation
+on a rematch Forfeit UDP timeout. Its diagnostic rerun now passes the full real HTTP/UDP,
+rematch/restart and unattended-cancellation gate; the earlier timeout's cause remains unproven. Inactive allocation
 refresh, admission reservations and normal two-Unity gameplay remain open. See
 [current integration evidence](CLIENT_LOBBY_BOOTSTRAP.md).
 The [paired-result card consumption](ATOMIC_CARD_CONSUMPTION.md) now debits confirmed ordinary
