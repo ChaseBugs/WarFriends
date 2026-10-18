@@ -1,9 +1,9 @@
 # Source-ordered card weapon visual sets
 
 `SelfHostedInfantryWeaponSet` now constructs every weapon in a recovered card inventory and accepts
-an explicit visibility mask. It is a rendering building block; normal roster integration still
-requires host-owned weapon visibility/timing metadata. This checkpoint does not make the existing
-presenter display card weapons or infer a weapon from its animation clip.
+an explicit visibility mask. The subsequent [host-authority integration](INFANTRY_WEAPON_AUTHORITY.md)
+now connects it to the PvP roster using field 46 and source-derived Grenadier return timing.
+Complete normal two-client gameplay remains unverified; no weapon is inferred from an animation clip.
 
 ## Source inventory evidence
 
@@ -42,15 +42,16 @@ hand attachment and visibility against the original `EnemyBasicInventory.SwitchW
 state, and the actual copies contain no gameplay or physics components. Existing eighty weapon
 selector cases, Gunslinger weapon/holster checks and 192 card-skin checks also pass.
 
-The next integration must publish authoritative visibility rather than guess from clips:
+The host-authority integration follows these source requirements:
 
 - Grenadier's index zero is the basic gun. `PickTarget` can switch to index one, the grenade,
   before target selection completes. `Shooting` schedules a return to zero through `InvokeAfter`
-  with a half-second delay after a secondary shot. Native timing and host lifecycle proof remain required.
+  with a half-second delay after a secondary shot. The native fifteen-tick delay and host lifecycle
+  now have focused proof in the linked authority report.
 - Ordinary Commando enables both weapons through `SwitchWeapon(0)` and `EnableSecondaryWeapon(1)`.
   Its ordinary inventory migration remains separate; this does not introduce a new Commando card.
-- The current protobuf army row has no weapon visibility mask. Host state, SDK validation,
-  reconnect projection and production presenter binding remain required before this builder is used there.
+- The protobuf army row now carries field 46. Host state, SDK validation, paged recovery projection
+  and the production presenter binding are implemented; a normal rendered two-client recovery is not proven.
 
 Full normal two-client gameplay, all animation frames/effects, original Unity 5.2.5, Android and
 Linux runtime are not proven by these component checks. See the [feature checklist](BATTLE_SERVER_FEATURES.md).

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using War.Protocol;
+using War.Shared;
 
 // Renders ordinary infantry from recovered meshes and clips. No copied object
 // runs AI, collision, damage, pooling, or Photon behaviour.
@@ -23,6 +24,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public Material CanopyLandingMaterial;
         public SelfHostedGunslingerWeaponAttachment GunslingerAttachment { get; set; }
         public SelfHostedInfantrySkinAppearance SkinAppearance { get; set; }
+        public SelfHostedInfantryWeaponSet CardWeapons { get; set; }
     }
 
     private sealed class RetiredCanopy
@@ -107,6 +109,10 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             if (!behaviours.ContainsKey(row.UnitId))
                 throw new InvalidOperationException("The host sent an unknown infantry visual family.");
             Validate(row);
+            if (_upgradeSelection != null && !InfantryWeaponVisibility.IsValid(row))
+            {
+                throw new InvalidOperationException("The host infantry weapon projection is invalid.");
+            }
             if (!present.Add(row.EntityKey))
                 throw new InvalidOperationException("The infantry page contains a duplicate entity.");
 
@@ -290,6 +296,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         {
             model = SelfHostedInfantryVisualFactory.Create(source, style, rootName);
         }
+        SelfHostedInfantryWeaponSet cardWeapons = CreateCardWeapons(model, soldier, row);
         SelfHostedInfantrySkinAppearance skin = ApplySkin(model, soldier, row);
         model.Root.SetActive(true);
         return new Visual
@@ -298,8 +305,33 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             Motion = new SelfHostedRemoteTransformBuffer(),
             AnimationRoot = model.AnimationRoot,
             GunslingerAttachment = attachment,
-            SkinAppearance = skin
+            SkinAppearance = skin,
+            CardWeapons = cardWeapons
         };
+    }
+
+    private SelfHostedInfantryWeaponSet CreateCardWeapons(SelfHostedInfantryVisual model,
+        SoldierBehaviour family, BattleArmyEntityState actor)
+    {
+        if (_upgradeSelection == null || actor.SourceCardId.Length == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (!InfantryWeaponVisibility.IsValid(actor))
+            {
+                throw new InvalidOperationException("The host card weapon selection is invalid.");
+            }
+
+            return SelfHostedInfantryWeaponSet.CreateCard(family, source, model, actor.InfantryWeaponMask);
+        }
+        catch
+        {
+            DestroyVisual(model.Root);
+            throw;
+        }
     }
 
     private SelfHostedInfantrySkinAppearance ApplySkin(SelfHostedInfantryVisual model,
@@ -398,6 +430,16 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
 
     private static void ApplyWeaponAttachment(Visual visual, BattleArmyEntityState row)
     {
+        if (visual.CardWeapons != null)
+        {
+            if (!InfantryWeaponVisibility.IsValid(row))
+            {
+                throw new InvalidOperationException("The host card weapon update is invalid.");
+            }
+
+            visual.CardWeapons.ApplyVisibleMask(row.InfantryWeaponMask);
+        }
+
         if (visual.GunslingerAttachment == null)
         {
             return;

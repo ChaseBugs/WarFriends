@@ -1787,6 +1787,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             catch (InvalidDataException) { End("invalid-assaulter-volley", "", false); return; }
             if (Terminal) return;
         }
+        if (advanced && phase == BattlePhase.Running && _grenadierWeaponReturns.Count > 0)
+        {
+            try { AdvanceGrenadierWeaponReturns(); }
+            catch (InvalidDataException) { End("invalid-grenadier-weapon-return", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && _gunslingerHolsterDueTicks.Count > 0)
         {
             try { AdvanceGunslingerHolsters(); }
@@ -3649,6 +3654,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             var entity=row.Value.Clone();
             entity.IsColtHolstered = _gunslingerHolstered.Contains(row.Key);
+            entity.InfantryWeaponMask = InfantryWeaponMask(entity);
             if(infantryAnimations.TryGetValue(row.Key,out var animation))
             {
                 if(animation.StartTick>tick ||

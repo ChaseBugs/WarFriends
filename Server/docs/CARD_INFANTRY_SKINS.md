@@ -43,5 +43,6 @@ and Commando weapon selectors can return multiple levels. Do not reuse the exist
 Assaulter resolver for those layouts. See the [feature checklist](BATTLE_SERVER_FEATURES.md).
 
 The later [card weapon-set builder](CARD_WEAPON_SETS.md) now preserves those ordered layouts and
-passes native geometry/selection checks. Its authoritative host visibility and normal presenter
-integration remain pending; the card-skin proof above does not close those gates.
+passes native geometry/selection checks. [Host-owned visibility](INFANTRY_WEAPON_AUTHORITY.md)
+now connects it to the PvP presenter with a refreshed 240-check card component audit. Normal
+two-client rendering and complete battle entry remain open; the card-skin proof alone does not close those gates.

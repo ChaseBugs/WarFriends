@@ -123,9 +123,11 @@ comparisons and four production actors. Every upgrade threshold, card weapons, d
 normal two-client battle parity remain open; the source-constant Gunslinger weapon guard alone
 does not complete this appearance path.
 [Source-ordered card weapon sets](CARD_WEAPON_SETS.md) now construct all seven weapons in the six
-supported card inventories, with 53 native selector/geometry/visibility checks. They are not yet
-bound to normal roster presentation: Grenadier selection and delayed return, Commando's simultaneous
-weapons, host visibility metadata and SDK/reconnect projection remain required. The source Grenadier
+supported card inventories, with 53 native selector/geometry/visibility checks.
+[Host weapon authority](INFANTRY_WEAPON_AUTHORITY.md) now binds the six card inventories to the PvP
+presenter through protobuf field 46, source fifteen-tick Grenadier return timing and SDK validation.
+Nineteen host/protocol checks and 240 native card checks pass. Ordinary Commando's simultaneous
+weapons and normal two-client rendering/recovery remain required. The source Grenadier
 uses a static PistolEnemy at index zero and the selected grenade model at index one.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
@@ -165,8 +167,9 @@ volley is never interrupted. Complete cross-map runtime fixtures remain open.
 three actual 44.4-damage infantry head hits from raw damage 29.6, a projectile-caused death at
 tick 698, reservation/shooting cleanup and the surviving shooter's next automatic living target.
 This is one fixed opposing deployment; all unit matchups and normal Client integration remain open.
-The complete default Windows Battle test executable was rerun on 2026-10-18 and passed 247,760
-assertions with exit code zero, including the subsequent Gunslinger/Sickness changes. The Release
+The complete default Windows Battle test executable was rerun on 2026-10-18 after the host-owned
+card weapon projection and passed 247,726 assertions with exit code zero. Live UDP polling contributes
+variable assertion counts, so totals can differ between runs without a change in the test inventory. The Release
 solution build has zero warnings/errors and the protocol executable passes 1,360 checks. This run
 does not include the optional Unity Editor SDK audit or Linux runtime verification; it does not
 close the normal Client integration gate.

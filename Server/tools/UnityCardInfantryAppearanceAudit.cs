@@ -123,12 +123,41 @@ public static class UnityCardInfantryAppearanceAudit
             VerifyDetails(copy, definitions, fraction);
             Require(copy.GetComponentsInChildren<MonoBehaviour>(true).Length == 0,
                 "Card skin presentation must not activate recovered gameplay components.");
+            VerifyWeapons(copy, family, actor);
+            if (actor.SourceCardId == "GREATGRENADIER")
+            {
+                actor.InfantryWeaponMask = InfantryWeaponVisibility.SecondaryMask;
+                presenter.Apply(new[] { BattleArmyEntityState.Parser.ParseFrom(actor.ToByteArray()) });
+                VerifyWeapons(copy, family, actor);
+                actor.InfantryWeaponMask = InfantryWeaponVisibility.PrimaryMask;
+                presenter.Apply(new[] { BattleArmyEntityState.Parser.ParseFrom(actor.ToByteArray()) });
+                VerifyWeapons(copy, family, actor);
+                Require(body.sharedMaterial.mainTexture == Resources.Load<Texture2D>(path),
+                    "Weapon switching must preserve the actor's selected body appearance.");
+            }
             materials.Add(body.sharedMaterial);
         }
 
         presenter.Apply(new BattleArmyEntityState[0]);
         Require(materials.All(material => material == null), "Card actor removal must release cloned materials.");
         VerifyRejections(selection, family, card);
+    }
+
+    private static void VerifyWeapons(GameObject actor, SoldierBehaviour family, BattleArmyEntityState state)
+    {
+        SoldierParts parts = _source.GetComponentInChildren<SoldierParts>(true);
+        IReadOnlyList<SelfHostedInfantryWeaponAppearance> weapons =
+            SelfHostedInfantryWeaponAppearance.ResolveCardInventory(family);
+        for (int index = 0; index < weapons.Count; index++)
+        {
+            SelfHostedInfantryWeaponAppearance weapon = weapons[index];
+            Transform sourceSocket = weapon.IsLeftHand ? parts.gunSnapPointNotScaledLeft : parts.gunSnapPointNotScaled;
+            string path = AnimationUtility.CalculateTransformPath(sourceSocket, _source.transform);
+            Transform socket = actor.transform.Find("Rig/" + path);
+            Transform root = socket.Cast<Transform>().Single(item => item.name == weapon.WeaponPrefab.name);
+            Require(root.gameObject.activeSelf == ((state.InfantryWeaponMask & (1u << index)) != 0),
+                "A decoded host mask must control each source-ordered weapon in the production presenter.");
+        }
     }
 
     private static void VerifyDetails(GameObject actor, List<TechnologyVisualDefinition> definitions, int fraction)
@@ -196,7 +225,8 @@ public static class UnityCardInfantryAppearanceAudit
             EntityKey = (ulong)fraction, OwnerPlayerId = fraction == FirstFraction ? FirstPlayerId : SecondPlayerId,
             OwnerFraction = fraction, UnitId = unitId, SourceCardId = card.Key,
             SpawnTick = 60, PositionTick = 60, MaxHealth = 100, Health = 100,
-            InfantryClip = card.Value, InfantryClipStartTick = 60, InfantryFacingZ = 1, OptionIndex = -1
+            InfantryClip = card.Value, InfantryClipStartTick = 60, InfantryFacingZ = 1, OptionIndex = -1,
+            InfantryWeaponMask = InfantryWeaponVisibility.PrimaryMask
         };
     }
 

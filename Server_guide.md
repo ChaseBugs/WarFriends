@@ -18,6 +18,8 @@ Authoritative source indexes:
   remaining work.
 - [Gunslinger attachment DTO](Server/docs/GUNSLINGER_HOLSTER.md): additive protobuf field 45, lifecycle authority
   and SDK/rendering boundary.
+- [Card infantry weapon authority](Server/docs/INFANTRY_WEAPON_AUTHORITY.md): additive protobuf field 46,
+  source inventory masks, Grenadier return timing and the SDK/Unity presentation boundary.
 - Source appendices below cover all named actions, direct request-builder candidates, response-reader keys, serialized subsystem field declarations, RPC definitions and stream locations.
 
 ## 2. Architecture and responsibility boundary

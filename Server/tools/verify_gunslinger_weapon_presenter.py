@@ -24,6 +24,7 @@ SOURCES = {
         "SelfHostedRiflePoseRenderer", "SelfHostedInfantryUpgradeSelection", "FakeRigidBodySwapper",
         "SelfHostedInfantrySkinAppearance",
         "SelfHostedInfantryShieldAppearance",
+        "SelfHostedInfantryWeaponSet",
         "SoldierBehaviour", "UpgradeSlotsBaseSoldier",
         "UpgradeSlotsGunslicer", "SoldierParts", "SpawningManager",
     ]

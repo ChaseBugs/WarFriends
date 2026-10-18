@@ -371,7 +371,7 @@ namespace War.Client
                            : entity.OptionIndex != -1 ||
                              !CardUnitSourceIdentity.Matches(entity.SourceCardId, entity.UnitId)) ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
-                       !IsValidColtAttachment(entity) ||
+                       !IsValidColtAttachment(entity) || !InfantryWeaponVisibility.IsValid(entity) ||
                        !ValidParachute(entity,batch.ServerTick) ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):

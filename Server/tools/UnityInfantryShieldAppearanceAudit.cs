@@ -184,7 +184,8 @@ public static class UnityInfantryShieldAppearanceAudit
             UnitId = _family.unitDictionaryId, SourceCardId = selection == Selection.Card ? "ELITESWAT" : "",
             SpawnTick = 60, PositionTick = 60, MaxHealth = 100, Health = 100,
             InfantryClip = "shield_idle", InfantryClipStartTick = 60, InfantryFacingZ = 1,
-            OptionIndex = selection == Selection.Card ? -1 : 0
+            OptionIndex = selection == Selection.Card ? -1 : 0,
+            InfantryWeaponMask = selection == Selection.Card ? 1u : 0u
         };
         presenter.Apply(new[] { row });
         GameObject actor = GameObject.Find("SelfHostedInfantry_" + row.EntityKey);

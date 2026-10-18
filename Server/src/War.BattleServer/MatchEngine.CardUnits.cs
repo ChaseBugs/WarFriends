@@ -1464,7 +1464,15 @@ public sealed partial class MatchEngine
 
         // PickTarget chooses the secondary weapon before its Decoy/player
         // branch. The card has both source weapons and no external weapon.
-        bool throwGrenade = setup.ShouldThrowGrenade(NextArmyFloat(), false);
+        bool shouldSelectSecondary = setup.ShouldThrowGrenade(NextArmyFloat(), false);
+        if (shouldSelectSecondary)
+        {
+            // Source PickTarget switches before Decoy/player selection and Corner exposure checks.
+            _grenadierSecondaryWeapons.Add(entityKey);
+        }
+
+        // A failed target/exposure attempt does not switch the recovered inventory back to its primary weapon.
+        bool throwGrenade = _grenadierSecondaryWeapons.Contains(entityKey);
         Vector3 origin = new(entity.X, entity.Y, entity.Z);
         var enemyDecoys = decoys.Snapshot().Where(row =>
             row.OwnerFraction != entity.OwnerFraction)
@@ -1676,10 +1684,15 @@ public sealed partial class MatchEngine
             if (!attack.ShotDue) continue;
             if (!grenadierShotTargets.TryGetValue(entityKey, out var shot))
                 throw new InvalidDataException("Card Grenadier lost its latched target.");
+            // Shooting reads the current inventory, including any earlier InvokeAfter return during windup.
+            shot = shot with { ThrowGrenade = _grenadierSecondaryWeapons.Contains(entityKey) };
             Vector3? grenadeMuzzle = null;
             Vector3? grenadeVelocity = null;
             if (shot.ThrowGrenade)
             {
+                // Every secondary shot schedules its own source InvokeAfter callback, including overlapping timers.
+                _grenadierWeaponReturns.Add(new PendingGrenadierWeaponReturn(entityKey,
+                    checked(tick + GrenadierWeaponReturnTicks)));
                 ArmyWeaponBindingCatalog weapons = armyWeapons ??
                     throw new InvalidDataException("Card Grenadier lost its weapon binding.");
                 ArmyCardGrenadierRuntime throwSetup = cardGrenadierThrows[entityKey];
@@ -2328,6 +2341,7 @@ public sealed partial class MatchEngine
         grenadierAttacks.Remove(entityKey);
         grenadierShotTargets.Remove(entityKey);
         grenadierShotIntents.RemoveAll(intent => intent.EntityKey == entityKey);
+        RemoveGrenadierWeaponVisibility(entityKey);
         grenadierCornerChangeTicks.Remove(entityKey);
         rocketPointRetryTicks.Remove(entityKey);
         rocketWalks.Remove(entityKey);

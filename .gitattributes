@@ -256,3 +256,15 @@ Server/docs/INFANTRY_HELD_SHIELDS.md text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryWeaponSet.cs text eol=lf
 Server/tools/UnityCardWeaponSetAudit.cs text eol=lf
 Server/docs/CARD_WEAPON_SETS.md text eol=lf
+
+# Authoritative infantry weapon projection and native return-clock evidence.
+Server/src/War.BattleServer/MatchEngine.InfantryWeapons.cs text eol=lf
+Server/src/War.Shared/InfantryWeaponVisibility.cs text eol=lf
+Server/tests/War.Battle.Tests/InfantryWeaponVisibilityTests.cs text eol=lf
+Server/tools/UnityGrenadierWeaponReturnProbe.cs text eol=lf
+Server/tools/UnityGrenadierWeaponReturnExport.cs text eol=lf
+Server/tools/verify_grenadier_weapon_return.py text eol=lf
+Server/content/grenadier-weapon-return-unity-reference.json text eol=lf
+Server/docs/INFANTRY_WEAPON_AUTHORITY.md text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/EnemyBasicInventory.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviourGrennader.cs text eol=crlf
