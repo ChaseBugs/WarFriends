@@ -186,6 +186,11 @@ group passes 13,284 checks. This clock is not yet a live corpse lease or slot-re
 The managed pool now retains corpse ownership through both waits and cancels pending returns
 on explicit release/reset, with 13,299 focused checks including native callback comparisons.
 Host admission, death-delay sampling, spawn/death hooks and per-slot observers remain open.
+Native clock-domain evidence now confirms real-time deployment readiness continues while
+scaled corpse waits remain paused. Cooldown uses another TimeManager clock. Actual
+RadicalRoutine polling and simultaneous spawn/return ordering remain unverified; one shared
+fixed-delta assumption cannot complete this integration. See the clock-domain section in
+[Mortar integration](MORTAR_INDICATOR.md).
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

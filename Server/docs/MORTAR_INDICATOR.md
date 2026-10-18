@@ -315,6 +315,39 @@ The final isolated-build indicator group passes 13,299 checks, recorded in
 `Server/.local/mortar-corpse-pool-tests-final.log`. This newer pool code is not included in the
 still-running full executable built at `caa517f2b`.
 
+### Deployment and corpse clock domains
+
+Source inspection found a required distinction before live slot integration:
+SpawningManagerDeathMatch.Spawn yields `WaitForRealSeconds(0.3f)` through RadicalRoutine,
+whose readiness tests `Time.realtimeSinceStartup > mFinishTime`. The body's two InvokeAfter
+calls instead yield Unity WaitForSeconds. These are different clocks. Deployment cooldown
+also uses TimeManager.realTimeWithoutPauses; it must not be conflated with either wait merely
+because all three can resemble nine ticks during ordinary 30 Hz play.
+
+The native `UnityDeploymentClockDomainExport` observes the original real-time readiness
+predicate and scaled InvokeAfter callbacks with timeScale zero, then resumes game time.
+The real wait becomes ready while game elapsed time and deltaTime remain exactly zero,
+with neither body callback executed. After resume, hide runs at two game seconds and return
+one further game second later. Seven active/disposable source hashes match. The validator
+also rejects five damaged clock-domain observations. The retained evidence is
+`Server/content/deployment-clock-domain-unity-reference.json`; the clean Unity 2018.3.0f2
+log is `Server/.local/deployment-clock-domain-unity-final.log`. The owned Editor exited and
+its package manifest was restored byte-for-byte.
+
+This is readiness/callback evidence only. RadicalRoutine itself, its WaitForEndOfFrame polling,
+the real spawn coroutine and simultaneous spawn/return ordering were not executed in this
+probe. The host's current fixed-tick deployment/reconnect model therefore cannot be treated as
+proof that pending spawns and retained corpses share a pause clock. Resolve their scheduling
+and pause policy before wiring the pool hooks; do not force both source timers through one
+delta merely to satisfy the existing fixed-rate tests.
+
+```powershell
+python -B Server/tools/verify_deployment_clock_domains.py `
+  --project Server/.local/coop-geometry-project `
+  --log Server/.local/deployment-clock-domain-unity-final.log `
+  --output Server/content/deployment-clock-domain-unity-reference.json
+```
+
 Exhaustion is not a recovered queue or automatic corpse-reclaim policy. The original
 `NetworkObjectPool.GetFirstFreeIndex` returns -1 when the free list is empty, and its
 instantiate path returns null. `SoldierParts.AttachWeapons` immediately accesses the returned
