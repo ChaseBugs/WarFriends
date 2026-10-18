@@ -25,8 +25,11 @@ by Editor bootstrap success or by retaining Photon only for serialized type comp
 The [deployment clock migration](BATTLE_CLOCKS.md) now has a separate real-time
 ArmyDeploymentState path with shared energy/entity preflight and explicit source start/final-wait
 completion events. The state/frame group passes 100 checks and Sickness regression passes 265.
-This remains partial: live MatchEngine scheduling, pause-excluding cooldown accumulation,
+This remains partial: live MatchEngine scheduling, pause-excluding cooldown consumers,
 corpse-return phase ordering and normal two-Unity gameplay acceptance still require integration.
+The pause-excluding stored-float accumulator is now observed in MatchEngine with the source
+0.2-second clamp and reconnect pause gates; focused coverage passes 118 checks. Deployment and
+auto-deploy consumers still use their previous clocks and are the next coordinated migration.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

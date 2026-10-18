@@ -13,7 +13,7 @@ internal static class BattleRealtimeTests
     internal static int Run(string directory)
     {
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
-        return CheckRunning(content) + CheckPaused(content) + CheckEndpointAndRegistry();
+        return CheckRunning(content) + CheckPaused(content) + CheckEndpointAndRegistry() + BattleCooldownClockTests.Run();
     }
 
     private static int CheckRunning(BattleCombatContent content)
@@ -24,7 +24,8 @@ internal static class BattleRealtimeTests
         int checks = Require(host.ObservedRealTimeSeconds == 10d && host.Snapshot().ServerTick == 62,
             "Catch-up ticks replaced their real-time sample with a derived tick time.");
         byte[] before = host.Snapshot().ToByteArray();
-        foreach (double invalid in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, -1d, 9d })
+        foreach (double invalid in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity,
+            -1d, 9d, double.MaxValue })
         {
             bool rejected = false;
             try
@@ -64,14 +65,15 @@ internal static class BattleRealtimeTests
             host.Advance(tick, tick / (double)MatchManifest.TickRate + 8d);
         }
         ulong frozenTick = host.Snapshot().ServerTick;
+        float frozenCooldown = host.ObservedCooldownSeconds;
         host.Advance(121, 20d);
         int checks = Require(host.Snapshot().PauseHostTick == 121 && host.Snapshot().ServerTick == frozenTick &&
-            host.ObservedRealTimeSeconds == 20d,
+            host.ObservedRealTimeSeconds == 20d && host.ObservedCooldownSeconds == frozenCooldown,
             "Reconnect pause froze raw real time or advanced the paused simulation.");
         bool resumed = host.Resume(SecondOwnerId);
         host.Advance(122, 20d);
         return checks + Require(resumed && host.Snapshot().ServerTick == frozenTick + 1 &&
-            host.ObservedRealTimeSeconds == 20d,
+            host.ObservedRealTimeSeconds == 20d && host.ObservedCooldownSeconds == frozenCooldown,
             "Resume replayed wall-time backlog as combat frames.");
     }
 

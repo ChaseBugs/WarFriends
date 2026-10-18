@@ -1073,6 +1073,10 @@ public sealed partial class MatchEngine : IMatchRuntime
     /// <summary>Gets the latest host-provided monotonic time, independently of paused simulation ticks.</summary>
     public double ObservedRealTimeSeconds { get; private set; }
 
+    private readonly BattleCooldownClock _cooldownClock = new();
+
+    internal float ObservedCooldownSeconds => _cooldownClock.ElapsedSeconds;
+
     private readonly Func<int,int> armyChoice;
     private readonly Func<int,int> bonusAreaChoice;
     private readonly Func<Vector3>? bonusPositionDraw;
@@ -1273,6 +1277,7 @@ public sealed partial class MatchEngine : IMatchRuntime
     {
         if (nextTick < hostTick || nextTick > 10000000) throw new ArgumentOutOfRangeException(nameof(nextTick));
         BattleRealtime.Validate(realTimeSeconds, ObservedRealTimeSeconds);
+        _cooldownClock.ValidateObservation(realTimeSeconds);
         ulong elapsed=nextTick-hostTick;
         // Reject a gap before changing either clock. A caller must be able
         // to replay each missed tick so delayed card spawns keep source time.
@@ -1321,6 +1326,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (Terminal) return; // Preserve the exact terminal tick and result projection.
         if (isReconnecting)
         {
+            _cooldownClock.Observe(realTimeSeconds, true);
             if (elapsed > 0) stateRevision++;
             var expiredPlayers = players.Where(player => player.Reconnecting &&
                 hostTick >= player.ReconnectDeadlineHostTick).ToArray();
@@ -1346,8 +1352,10 @@ public sealed partial class MatchEngine : IMatchRuntime
         // warning clocks must resume after the same last completed tick, not a half-applied idle tick.
         if (phase == BattlePhase.Running && TryPauseForIdleParticipant())
         {
+            _cooldownClock.Observe(realTimeSeconds, true);
             return;
         }
+        _cooldownClock.Observe(realTimeSeconds, false);
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;

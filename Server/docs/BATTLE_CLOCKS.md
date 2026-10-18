@@ -7,7 +7,7 @@ them separate while retaining server authority and the existing protobuf identit
 | --- | --- | --- |
 | Raw real time | `WaitForRealSeconds.finished` compares `Time.realtimeSinceStartup` with its stored float deadline. Army spawn intervals use this wait through RadicalRoutine. | Worker now forwards its actual monotonic Stopwatch sample through Router and Endpoint to both runtime types. |
 | Scaled game time | EnemyController schedules hide with InvokeAfter; MainGameEntity schedules final return the same way. Core_BaseScript yields WaitForSeconds. | The source-bound corpse clock is tested, but live corpse ownership is not connected to MatchEngine. |
-| Pause-excluding real time | TimeManager.Update adds a real-frame delta clamped to 0-0.2 seconds when timeScale is nonzero and it is not frozen; otherwise its delta is zero. | Deployment state accepts a separate cooldown clock. The stored-float TimeManager accumulator is not migrated. |
+| Pause-excluding real time | TimeManager.Update adds a real-frame delta clamped to 0-0.2 seconds when timeScale is nonzero and it is not frozen; otherwise its delta is zero. | MatchEngine now observes a stored-float cooldown accumulator. Deployment deadlines and auto-deploy have not switched to consuming it. |
 
 The source references are under `Clients/ExportedProject/Assets`. Detailed native clock,
 coroutine-phase and same-frame pool observations are recorded in
@@ -38,6 +38,21 @@ semantics. Raw observation during reconnect does not mean pending deployment alr
 while paused. The two clocks are now available for that subsequent integration.
 
 ## Required timer consumers
+
+`BattleCooldownClock` now reproduces the source float timestamp subtraction, 0.2-second frame
+clamp and float accumulation. Its first observation establishes the allocation baseline. Repeated
+Worker catch-up samples contribute zero additional time. Both an existing reconnect pause and
+the frame that enters an idle pause update the observation with zero delta, discarding paused
+backlog. A resumed frame can add only the interval since that last observation. Nonzero source
+timeScale does not multiply this clock. The host validates float representability before publishing
+the new raw observation or host tick. Terminal matches do not advance the cooldown accumulator.
+
+This observer is internal and not a wire clock. Source cooldown deadlines, strict availability
+comparisons, auto-deploy progress and their snapshot projection still require a coordinated
+consumer migration. Observing the accumulator alone does not close that feature.
+The focused frame/deployment group passes 118 checks at
+`Server/.local/battle-cooldown-clock-tests.log`, including source float rounding, catch-up,
+hitches, pause/resume and malformed input rejection before host snapshot mutation.
 
 The new `ArmyDeploymentRealtimeRoutine` supplies the source coroutine kernel for the first
 requirement below. Its first iteration is immediately ready. Later readiness uses a strict
