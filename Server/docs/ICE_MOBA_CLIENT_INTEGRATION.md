@@ -2,8 +2,39 @@
 
 Reviewed 2026-10-19 against `E:/Github/Mobile/Ice_Moba/client` and the active recovered
 `Clients/ExportedProject`. This is source/attachment research and an executable inventory.
-It does not claim either a new successful Unity session or complete removal of retired SDKs.
+The research alone does not prove runtime behavior or complete removal of retired SDKs.
 The companion [server review](ICE_MOBA_SERVER_REFERENCE.md) explains the different authority model.
+
+## Implemented launcher boundary
+
+`GameLauncher` now loads the recovered bundled assets without Terms callbacks, Google Play/Game
+Center authentication, Fuse session calls, Play OBB downloading, or Android storage permission
+requests. It preserves the original logo timing, asynchronous MainScene activation, source GUID,
+and all eight serialized public fields. The unused `downloadOBB` field remains for scene compatibility.
+
+`Server/tools/UnityOfflineLauncherAudit.cs` runs only in a disposable project under `Server/.local`.
+The Unity 2018.3.0f2 run passed: 17 compiled launcher/nested methods inspected, twelve enabled
+scenes checked with zero missing script attachments, and eight launcher fields plus Splash object
+references checked. Compiled launcher IL contains no references to the audited retired provider
+types and does not read `downloadOBB`. This checks the launcher, not every provider consumer or
+every runtime serialization field. It is not original Unity 5.2.5 parity or an Android build proof.
+
+The native `ClientBootSmoke.ps1` run also passed after synchronizing the disposable project's
+stale C# sources with the active Client. It used isolated MongoDB and a real Backend: Splash to
+MainScene, account/player callbacks, 24 initialized units, 66 initialized weapons, and card
+definitions completed, with zero exceptions and zero invalid bootstrap queries. The report still
+contains 70 error-level diagnostics in the previously observed ragdoll/pool/preview/config paths;
+this is not a clean rendered lobby or multiplayer gameplay acceptance. Evidence is local at
+`Server/.local/client-boot-d2a6bb8fa3c84eae99073ff9f27aec33/report.json`.
+The asset audits found zero missing scripts and zero broken references across 288,258 references;
+the existing seventeen unmatched NGUI sprite selections remain unchanged. Private package
+manifest bytes were restored after all owned Unity validation processes exited.
+
+Fuse component auto-initialization, native plugins/manifests, other provider consumers, and the
+remaining Photon gameplay semantics still need migration. Preserve callback failure behavior and
+local notifications; never turn unavailable ads or identity providers into successful rewards or
+authenticated accounts. A denied-external-network device run remains necessary before declaring
+the complete boot/gameplay path offline.
 
 ## Patterns worth using
 
