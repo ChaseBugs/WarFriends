@@ -58,7 +58,8 @@ artifact/invalid pose rejection and collision-free fake flight. Native combat us
 host RNG: primary selection first, then real-shot draws. It verifies actual primary intent,
 projectile speed/damage, Sickness changes before/after launch, current-weapon cleanup on death
 and a subsequent actual host collision. The fixture does not assert a particular victim-health
-or shield delta; dedicated damage/friendly-exclusion fixtures remain required.
+or shield delta. The separate [native damage fixture](GRENADIER_PRIMARY_DAMAGE.md) now proves
+real shield destruction and player damage for normal, overtime and Sickness states.
 
 ## Remaining verification
 
@@ -66,8 +67,9 @@ Release build passes with zero warnings/errors. `--sickness-window-only` passes 
 including native muzzle/source verification. `--combat-only` passes 26,395 assertions with the
 native primary-choice fixture. The full default suite was not rerun.
 
-1. Verify victim health/shield deltas and friendly exclusions for actual primary shots, including
-   the source player/overtime coefficients. Extend fake-flight checks to host-scheduled fake shots.
+1. Extend native damage proof to in-ray friendly exclusions and host-scheduled cosmetic shots.
+   The fixed Park fixture now verifies source shield and normal/overtime player coefficients.
+   Migrate the remaining moving-target muzzle lookup and rifle-based generic animation policy.
 2. Extend the direct native animation-controller observation to normal EnemyController execution,
    warm-state reuse and Client presentation. Five firing rounds on both sides are now observed.
 3. Add authenticated UDP and Client presentation proof before treating the complete unit behavior

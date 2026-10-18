@@ -58,7 +58,9 @@ The complete default suite was not rerun.
 The existing Park fixture still collides with terrain: player and shield damage are both zero,
 with captured raw launch damage 38.18407. That negative observation is retained explicitly.
 It does not verify victim damage, friendly exclusions or overtime damage coefficients. A dedicated
-exposed-target fixture must prove those through actual host collision and durable player/shield state.
+exposed-target fixture was required. The subsequent [damage fixture](GRENADIER_PRIMARY_DAMAGE.md)
+now proves shield destruction and normal/overtime/Sickness player health changes through actual
+host collisions; explicit in-ray friendly and moving-target proof remains open.
 
 This observes the source animation controller and callback, not a normal complete EnemyController
 battle, warm-state reuse, authenticated UDP or Client rendering. It uses the available Unity 2018

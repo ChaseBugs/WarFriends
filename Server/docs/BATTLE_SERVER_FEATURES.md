@@ -93,6 +93,12 @@ pistol callback muzzles per side and the 22-tick first-shot delay. Combat verifi
 26,395 assertions. The fixed Park primary fixture still hits terrain with zero player/shield
 damage, so exposed-victim and friendly/overtime damage proof remains required; direct animation
 observations are not normal-controller, UDP, Android or complete Client gameplay verification.
+The separate [Grenadier damage fixture](GRENADIER_PRIMARY_DAMAGE.md) now lets real source volleys
+continue beyond the first terrain hit. Twenty native checks prove opposing shield damage and
+destruction, actual player health loss with source normal/overtime coefficients, and Sickness-
+modified damage. Friendly health/shields stay unchanged as controls. In-ray friendly exclusion,
+host-scheduled cosmetic shots, moving-target muzzle binding and pistol/secondary animation policy
+remain required, alongside UDP/Client and automatic Sickness integration.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the
