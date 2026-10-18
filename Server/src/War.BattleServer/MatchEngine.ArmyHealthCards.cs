@@ -7,6 +7,7 @@ public sealed partial class MatchEngine
     private const float ArmyHealthCardMultiplier = 1.2f;
     private const float ArmyHealthCardSeconds = 60f;
     private readonly Dictionary<string, HashSet<ulong>> armyHealthBuffedEntities = new(StringComparer.Ordinal);
+    private readonly ArmySpawnCallbacks armySpawnCallbacks = new();
 
     private string UseArmyHealthBuff(Player owner, string requestId, string cardId)
     {
@@ -38,6 +39,7 @@ public sealed partial class MatchEngine
         armyHealthBuffedEntities.Add(requestId, affected);
         foreach (ulong key in targets)
             IncreaseArmyMaximum(key, affected, refill: false);
+        armySpawnCallbacks.Subscribe(requestId, key => ApplyArmyHealthBuff(key, requestId));
         return "army-health-card-active";
     }
 
@@ -72,20 +74,35 @@ public sealed partial class MatchEngine
 
     private void ApplyActiveArmyHealthBuffs(ulong key)
     {
-        var entity = activeArmyEntities[key];
-        foreach (var effect in cardEffects.Snapshot())
+        armySpawnCallbacks.Invoke(key);
+    }
+
+    private void ApplyArmyHealthBuff(ulong key, string effectId)
+    {
+        if (!cardEffects.TryGet(effectId, out var effect) || effect == null)
         {
-            if (!effect.Lease.ActiveAt(tick) ||
-                Find(effect.OwnerPlayerId)?.Definition.Fraction != entity.OwnerFraction ||
-                !MatchesArmyHealthCard(effect.Definition.CardId, entity.UnitId)) continue;
-            if (!CanIncreaseArmyMaximum(armyVitality[key]))
-                throw new InvalidDataException("New army health exceeds the card vitality domain.");
-            IncreaseArmyMaximum(key, armyHealthBuffedEntities[effect.EffectId], refill: true);
+            return;
         }
+
+        var entity = activeArmyEntities[key];
+        if (!effect.Lease.ActiveAt(tick) ||
+            Find(effect.OwnerPlayerId)?.Definition.Fraction != entity.OwnerFraction ||
+            !MatchesArmyHealthCard(effect.Definition.CardId, entity.UnitId))
+        {
+            return;
+        }
+
+        if (!CanIncreaseArmyMaximum(armyVitality[key]))
+        {
+            throw new InvalidDataException("New army health exceeds the card vitality domain.");
+        }
+
+        IncreaseArmyMaximum(key, armyHealthBuffedEntities[effect.EffectId], refill: true);
     }
 
     private void RemoveArmyHealthBuff(ActiveWarCardEffect effect)
     {
+        armySpawnCallbacks.Unsubscribe(effect.EffectId);
         if (!armyHealthBuffedEntities.Remove(effect.EffectId, out var affected)) return;
         foreach (ulong key in affected)
         {

@@ -18,6 +18,39 @@ internal static class SicknessSpawnWindowTests
         checks += CheckInvalid(window, first);
         checks += CheckReusedDefinition(window, first);
         checks += CheckReverseOwner(catalog, first);
+        checks += CheckSpawnModifierOrder(catalog, first);
+        return checks;
+    }
+
+    private static int CheckSpawnModifierOrder(ArmyDeploymentCatalog catalog, ArmyDeploymentWave wave)
+    {
+        var sickness = new SicknessSpawnWindow(1, catalog);
+        sickness.Arm();
+        sickness.DeploymentStarted(2, wave);
+        var target = new SicknessSpawnTarget(2, true, true);
+        var state = new SicknessCombatState(100, 100, new float[] { 20 });
+        var callbacks = new ArmySpawnCallbacks();
+        Action<ulong> applySickness = _ => state = sickness.Apply(target, state);
+        Action<ulong> refillIncreasedMaximum = _ => state = state with
+        {
+            MaximumHealth = state.MaximumHealth * 1.2f,
+            Health = state.MaximumHealth * 1.2f
+        };
+
+        callbacks.Subscribe("z-health-first", refillIncreasedMaximum);
+        callbacks.Subscribe("a-sickness-second", applySickness);
+        callbacks.Invoke(1);
+        int checks = Check(Math.Abs(state.MaximumHealth - 120) < 0.001f &&
+            Math.Abs(state.Health - 60) < 0.001f && state.WeaponDamage[0] == 10,
+            "Health then Sickness did not leave half of the increased maximum.");
+
+        callbacks.Unsubscribe("z-health-first");
+        callbacks.Subscribe("z-health-first", refillIncreasedMaximum);
+        state = new SicknessCombatState(100, 100, new float[] { 20 });
+        callbacks.Invoke(1);
+        checks += Check(Math.Abs(state.MaximumHealth - 120) < 0.001f &&
+            Math.Abs(state.Health - 120) < 0.001f && state.WeaponDamage[0] == 10,
+            "Sickness then health did not refill the increased maximum.");
         return checks;
     }
 

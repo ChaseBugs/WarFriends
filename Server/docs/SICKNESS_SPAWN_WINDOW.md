@@ -39,10 +39,11 @@ arbitrary effect lease is introduced here.
 
 ## Verification and boundary
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 27 checks for
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 34 checks for
 arming, friendly/vehicle/immune exclusions, neutral and reversed fractions, replacement and
 reused-definition finishes, repeated callbacks, exact vitality/damage calculations, immutable
-output and invalid-event/state rejection. `--army-waves-only` also passes its 12 lifecycle checks.
+output, invalid-event/state rejection and ordered spawn subscriptions.
+`--army-waves-only` passes its 12 lifecycle checks.
 The new kernel test is registered in the default suite; the entire default suite was not rerun.
 
 This does not activate Sickness in a match. Typed protocol and portable SDK methods, authorized
@@ -51,3 +52,29 @@ UI/presentation, UDP proof and durable terminal consumption remain required. SIC
 the incomplete effect list until those paths are implemented and verified.
 Host integration must also verify callback ordering with other spawn-time health/weapon modifiers;
 this independent kernel does not establish that ordering.
+
+## Host subscription ordering
+
+`ArmySpawnCallbacks` now owns the host's spawn observer list. Successful army-health card use
+registers its observer after modifying existing entities; expiration or owner removal unregisters
+it. New entities invoke that list instead of sorting the health effects by opaque request ID.
+Subscription removal and re-subscription follow C# delegate ordering, including a captured
+invocation list when an observer removes another observer during dispatch.
+
+The recovered `CardHealthForSoldiers.ChangeMaxHealth` subscribes after its initial health update.
+Its `OnAfterSpawned` multiplies maximum health by 1.2 and refills current health. Therefore health
+then Sickness leaves maximum 120/current 60 from 100/100, whereas Sickness then health leaves
+120/120. Two calculation tests exercise both orders through the same dispatcher now used by the
+host. These composition tests do not claim actual host Sickness activation.
+
+`--combat-only` passes 26,369 assertions, including an actual host Assaulter deployment: the
+card heals an existing injured soldier by 20% of its old maximum, replay does not stack it,
+and later members of that same wave receive the increased maximum and full refill through
+the registered observer. This is native host verification, not a Unity scene or UDP proof.
+
+The current host health-card target predicates remain unchanged. They use family matching;
+the recovered soldier-card existing-unit predicate uses `canBeFreezed`, while its future-spawn
+callback only checks fraction and `EnemyController` identity. Auditing that distinction against
+every host entity classification remains necessary before claiming complete health-card parity.
+Sickness weapon bindings must also be initialized before its future observer is registered at
+the entity creation dispatch point. This change supplies ordering, not those missing bindings.

@@ -16680,7 +16680,11 @@ internal static class CombatContentTests
             "Random Kevlar absorbs the first host hit before soldier health");
         var healthCardMatch = new MatchEngine(flameManifest with
         {
-            MatchId = "allied-soldier-health-card"
+            MatchId = "allied-soldier-health-card",
+            Players = flameManifest.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = ["ID_UNIT-ASSAULT"]
+            }).ToArray()
         }, content: content, armyChoice: _ => 0);
         healthCardMatch.ConfigureBattleAllocations([
             new(soldierOwner, ["CardHealthForSoldiers"], [], [0], [-1], [-1]) { CardCounts = [1] },
@@ -16706,7 +16710,7 @@ internal static class CombatContentTests
         Check(healthCardMatch.Command(soldierOwner, new() { CommandId = 3,
                   DeployArmy = new() { OptionIndex = healthOption } }).Code == "army-deploying",
             "the owner deploys a soldier before applying the health card");
-        for (ulong healthTick = 61; healthTick <= 75; healthTick++) healthCardMatch.Advance(healthTick);
+        healthCardMatch.Advance(61);
         var healthSoldier = healthCardMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities
             .First(row => row.OwnerPlayerId == soldierOwner);
         float healthMaximum = healthSoldier.MaxHealth;
@@ -16725,6 +16729,18 @@ internal static class CombatContentTests
               healthCardMatch.Command(soldierOwner, new() { CommandId = 5,
                   UseSuperSoldiers = new() { RequestId = "94949494949494949494949494949494" } }).Code == "army-health-card-unavailable",
             "health card replay does not stack or consume another reservation");
+        for (ulong healthTick = 62; healthTick <= 100; healthTick++)
+        {
+            healthCardMatch.Advance(healthTick);
+        }
+
+        var laterHealthSoldiers = healthCardMatch.ArmyEntityBatch(soldierOwner, 0, 0).Entities
+            .Where(row => row.OwnerPlayerId == soldierOwner && row.EntityKey != healthSoldier.EntityKey)
+            .ToArray();
+        Check(laterHealthSoldiers.Length > 0 && laterHealthSoldiers.All(row =>
+                Math.Abs(row.MaxHealth - healthMaximum * 1.2f) < 0.001f &&
+                Math.Abs(row.Health - row.MaxHealth) < 0.001f),
+            "subscribed health card refills later wave members to the increased maximum");
         var flameInfantryMatch=new MatchEngine(flameManifest,content:content,armyChoice:_=>0);
         flameInfantryMatch.Admit(soldierOwner);flameInfantryMatch.Admit(helicopterOwner);
         flameInfantryMatch.Command(soldierOwner,new(){CommandId=1,Ready=new(){ManifestHash=flameInfantryMatch.ManifestHash}});
