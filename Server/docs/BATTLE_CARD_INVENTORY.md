@@ -86,8 +86,11 @@ requires both paths to reject it. The local run artifacts are under
 
 ## Remaining integration
 
-This adds explicit owned-quantity evidence to the allocation-to-host boundary; it does not create allocations from
-normal accounts. The durable inventory/progression projector, recovered gameplay hand-slot
+The [account allocation source](ACCOUNT_BATTLE_ALLOCATION.md) now projects positive ordinary-card
+quantities and equipped army lanes from durable account data, with real Mongo account-to-allocation
+proof. It rejects nonempty Buddy state pending full combat metadata projection. Normal matchmaking
+still requires a pre-existing trusted allocation; the source is not yet connected to automatic publication.
+Recovered gameplay hand-slot
 and entitlement limits, upgrade ordering, Buddy data authority,
 authoritative in-battle hand replenishment, transactional inventory consumption
 across matches, settlement and normal Unity battle entry remain unfinished. Match-local reservations do not decrement the

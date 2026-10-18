@@ -58,6 +58,7 @@ internal static class CardAllocationQuantityTests
                 single.CardCounts.Count == fullCatalog.Length && single.CardCounts.All(count => count == 1) &&
                 batch.Single().CardCounts.SequenceEqual(single.CardCounts),
                 "Mongo truncated the full source card catalog or lost its quantities.");
+            await BattleAllocationSourceTests.RunMongoAsync(connectionString, databaseName);
             Console.WriteLine("PASS: Mongo full card catalog and quantities round-trip; " +
                 "missing quantity authority rejected by both reads");
         }

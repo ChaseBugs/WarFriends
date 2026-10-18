@@ -1263,6 +1263,7 @@ var definition = new MatchManifest("test-match", "test-host", "fixture-map", has
     [new(a, new("fixture-rifle", 2, 3, 0.1, 0.2)), new(b, new("fixture-rifle", 2, 3, 0.1, 0.2))]);
 checks += CardAllocationQuantityTests.Run(definition);
 checks += CardCatalogCapacityTests.Run(definition);
+checks += BattleAllocationSourceTests.Run();
 if (args is ["--allocation-inventory-only"])
 {
     Console.WriteLine("PASS: full card catalog bounds, quantity validation, frozen snapshots, " +

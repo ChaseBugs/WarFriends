@@ -17,6 +17,7 @@ string mongoUri = builder.Configuration["Mongo:Uri"] ?? "mongodb://127.0.0.1:270
 string mongoDatabase = builder.Configuration["Mongo:Database"] ?? "warfriends";
 builder.Services.AddSingleton(new AccountStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleAllocationStore(mongoUri, mongoDatabase));
+builder.Services.AddSingleton<BattleAllocationSource>();
 builder.Services.AddSingleton(new BattleGrantStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleMatchQueueStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleManifestSnapshotStore(mongoUri, mongoDatabase));

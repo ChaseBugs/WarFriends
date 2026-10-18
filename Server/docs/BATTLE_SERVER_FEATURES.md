@@ -35,6 +35,11 @@ The owned-card capacity prerequisite now separates a full inventory from the sel
 the shared host catalog. All 45 source card IDs survive JSON, real Mongo single/batch reads,
 and native host configuration; inventory/catalog transport bounds and existing selection/message
 bounds are tested separately. This does not create normal-account allocations or complete card economy.
+The [account-derived allocation source](ACCOUNT_BATTLE_ALLOCATION.md) now reads positive ordinary
+card quantities and equipped unit lanes from one durable account snapshot. Native and real Mongo
+tests cover all 45 source IDs, malformed-state rejection, and account-to-allocation storage. Nonempty
+Buddy state is explicitly unsupported until its complete combat metadata and summon path exist.
+Automatic queue publication, inventory fencing and durable consumption remain open.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the
