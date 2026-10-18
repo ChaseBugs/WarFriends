@@ -816,7 +816,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     ["--gunslinger-aim-only"] or ["--gunslinger-shooting-only"] or ["--gunslinger-points-only"] or
     ["--gunslinger-holster-only"] or ["--infantry-weapons-only"] or ["--ordinary-rocket-only"] or
     ["--ordinary-mortar-only"] or ["--mortar-facing-only"] or ["--mortar-shooting-only"] or
-    ["--mortar-preparation-only"] or ["--mortar-indicator-only"])
+    ["--mortar-preparation-only"] or ["--mortar-indicator-only"] or ["--mortar-warning-udp-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);
     while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
@@ -826,6 +826,12 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (directory == null)
     {
         throw new FileNotFoundException("Recovered combat content is absent.");
+    }
+    if (args[0] == "--mortar-warning-udp-only")
+    {
+        int warningChecks = await LiveMortarWarningUdpTests.RunAsync(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {warningChecks} real Worker Mortar warning UDP checks");
+        return;
     }
     if (args[0] == "--mortar-indicator-only")
     {
@@ -3729,6 +3735,7 @@ checks += MortarIndicatorReuseTests.Run(Path.Combine(contentRoot.FullName, "cont
 checks += MortarWeaponPoolTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarIndicatorRuntimeTests.Run();
 checks += MortarIndicatorHostTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += await LiveMortarWarningUdpTests.RunAsync(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarAccumulatedClockReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleAbortReasonCoverageTests.Run(contentRoot.FullName);
 checks += MortarDetachedWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));

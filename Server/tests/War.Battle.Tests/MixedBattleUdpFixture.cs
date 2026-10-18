@@ -28,10 +28,20 @@ internal sealed class MixedBattleUdpFixture : IAsyncDisposable
 
     internal string RunDirectory { get; }
 
-    internal MixedBattleUdpFixture(string directory)
+    internal MixedBattleUdpFixture(string directory, string? armyUnitId = null)
     {
         Content = BattleArmyManifestProjectionTests.LoadContent(directory);
         MatchManifest starter = MixedGrenadeActorTests.CreateStarterManifest(Content, directory);
+        if (armyUnitId != null)
+        {
+            starter = starter with { Players = starter.Players.Select(player => player with
+            {
+                EquippedArmyUnitIds = [armyUnitId], ArmyNormalUpgradeIndexes = [0],
+                ArmySpecialUpgradeIndexes = [-1], ArmyEliteUpgradeIndexes = [-1],
+                ArmyHealthFactors = [new(1f, 1f)], ArmyDamageScales = [1f],
+                ArmySpeedCoefficients = [1f], ArmyAccuracyCoefficients = [1f], ArmyShotSpeedCoefficients = [1f]
+            }).ToArray() };
+        }
         Manifest = MatchManifest.Validate(starter with
         {
             MatchId = "mixed-udp-" + Guid.NewGuid().ToString("N"),
@@ -58,6 +68,32 @@ internal sealed class MixedBattleUdpFixture : IAsyncDisposable
 
     internal MatchConnection CreateConnection(string playerId, ulong sessionId)
     {
+        return new MatchConnection(CreateGrant(playerId, sessionId));
+    }
+
+    internal MatchConnection CreateViewedConnection(string playerId, ulong sessionId)
+    {
+        MatchConnectionGrant grant = CreateGrant(playerId, sessionId);
+        foreach (ParticipantManifest player in Manifest.Players)
+        {
+            var view = new BattlePlayerView
+            {
+                PlayerId = player.PlayerId, DisplayName = "UDP Observer " + player.Fraction,
+                Level = 1, ArmyPower = 1, Country = "US", Fraction = player.Fraction, DefendPosition = 0
+            };
+            view.VisualIds.Add(["v0", "v1", "v2", "v3"]);
+            view.Weapons.AddRange(player.WeaponSlots!.Select(weapon => new BattleWeaponView
+            {
+                Slot = weapon.Slot, WeaponIndex = weapon.WeaponIndex,
+                SourceId = weapon.Weapon.SourceId, UpgradeIndex = weapon.WeaponUpgrade
+            }));
+            grant.PlayerViews.Add(view);
+        }
+        return new MatchConnection(grant);
+    }
+
+    private MatchConnectionGrant CreateGrant(string playerId, ulong sessionId)
+    {
         if (!Manifest.Players.Any(player => player.PlayerId == playerId))
         {
             throw new InvalidDataException("The test grant participant is absent from the trusted manifest.");
@@ -68,13 +104,13 @@ internal sealed class MixedBattleUdpFixture : IAsyncDisposable
             MatchId = Manifest.MatchId, ServerId = Manifest.ServerId, PlayerId = playerId, SessionId = sessionId,
             ManifestHash = Manifest.Digest(), IssuedUnixSeconds = now, ExpiresUnixSeconds = now + GrantLifetimeSeconds
         };
-        return new MatchConnection(new MatchConnectionGrant
+        return new MatchConnectionGrant
         {
             Host = "127.0.0.1", Port = (uint)_port, MatchId = admission.MatchId, PlayerId = playerId,
             SessionId = sessionId, ManifestHash = admission.ManifestHash,
             ExpiresUnixSeconds = admission.ExpiresUnixSeconds,
             Ticket = _tokens.Sign(admission), SessionKey = ByteString.CopyFrom(_tokens.SessionKey(admission))
-        });
+        };
     }
 
     /// <summary>Stops and disposes only this fixture's Worker; retained artifacts stay under Server/.local.</summary>

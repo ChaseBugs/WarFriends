@@ -623,8 +623,8 @@ publication after shooter death. Protocol regression passes 1,360 checks at
 `Server/.local/mortar-warning-projectile-tests.log`.
 
 This sample-only milestone did not include late-arrival clock checkpoints; the subsequent
-checkpoint implementation is described below. Actual warning-bearing UDP SDK acceptance,
-Unity SDK packaging and rendering remain open. The active Unity plugin binaries were not
+checkpoint implementation is described below. Unity SDK packaging and rendering remain open;
+the subsequent real .NET Worker/SDK UDP proof is recorded below. Active Unity plugin binaries were not
 replaced. Do not extrapolate a fresh clock from launch age and claim it preserves source
 slot/observer history, or describe source/packet tests as rendered two-Client acceptance.
 
@@ -659,3 +659,27 @@ protocol/admission/replay regression passes 1,360 at
 `Server/.local/mortar-checkpoint-protocol-tests.log`. The sixty-second replay budget is explicit
 client recovery policy, not a recovered production timeout. Full regression is tracked at
 `Server/.local/mortar-checkpoint-full.log`; focused checks do not establish that run's result.
+
+## Real Worker and portable SDK UDP acceptance
+
+`LiveMortarWarningUdpTests` starts an isolated mixed NetworkWorker with source Mortar loadouts,
+two signed sessions and SDK-validated roster views. Both peers select trusted source lanes and
+become ready. A single issued Mortar option generates the warning naturally through server AI;
+no warning, launch or checkpoint is injected. The opposing SDK receives the complete checkpoint,
+while the owning faction's projectile scan contains no allied warning.
+
+After the caller mutates its received checkpoint, retrying the same scan still returns the
+original frozen row and snapshot tick. Decoded source state reconstructs to a later live match
+tick and hides when source playback reaches its expiry. This checks actual UDP/HMAC/protobuf,
+the endpoint projection, frozen scan storage, SDK roster/clock validation and reconstruction.
+It does not exercise Unity, Backend account admission, NAT, packet loss, reconnect, multi-page
+warning changes or natural reused-weapon checkpoints over UDP. Fixtures provision trusted
+grants directly; these are transport/host proofs, not production account/loadout ownership proofs.
+
+The run passes eleven checks with exit code zero at `Server/.local/mortar-warning-live-tests.log`.
+Its manifest/outbox artifacts are retained in
+`Server/.local/mixed-grenade-udp-5f5649621d4e4403b9b4efe3783f9719`.
+The shared fixture's existing mixed grenade path passes twelve checks at
+`Server/.local/mortar-warning-live-fixture-regression.log`. The new warning scenario is included
+in the full executable as well as `--mortar-warning-udp-only`. Full-suite results must be
+inspected separately; these focused runs do not establish complete gameplay acceptance.

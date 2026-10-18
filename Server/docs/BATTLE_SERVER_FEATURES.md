@@ -70,12 +70,13 @@ ledger. Wire/SDK/Unity observer presentation and normal two-Client acceptance re
 Frozen opposing warning samples now travel in projectile scan field 9 independently of live
 projectile membership, with bounded packet sizing and SDK page/roster/sample validation.
 Mortar coverage passes 13,359 checks, protocol regression 1,360 and projectile row regression 42.
-Complete late-arrival clock checkpoints, real warning-bearing SDK UDP acceptance and Unity
-packaging/rendering are still required; sample transport alone does not complete presentation.
+That sample-only milestone did not complete presentation; later checkpoint and real UDP
+evidence follow below. Unity packaging/rendering still require acceptance.
 The warning payload now includes complete source tween checkpoints, with immutable SDK
 reconstruction to current game time and explicit fresh-scan requirements for old state. First,
-reused and immediate-duration playback traces cover every stored phase. Actual warning-bearing
-UDP, Unity SDK packaging and rendered two-Client acceptance remain open.
+reused and immediate-duration playback traces cover every stored phase. Real .NET Worker/SDK
+warning delivery now passes eleven checks, including allied suppression, frozen retry isolation,
+decoded catch-up and expiry. Unity SDK packaging and rendered two-Client acceptance remain open.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same
