@@ -155,3 +155,16 @@ Subsequent runs at `live-army-clock-full.log` and `client-auto-deploy-full.log` 
 source-fingerprint guard after deliberate concurrent Client edits; neither is a full passing
 regression. The reviewed current fingerprint and fresh focused proof are recorded in
 [automatic deployment](CLIENT_AUTO_DEPLOY.md).
+
+The rebinding full run at `Server/.local/army-binding-race-full.log` reached the broad combat
+fixture and stopped at its obsolete second-spawn timing assumption. The fixture previously
+expected two confirmed entities by tick 70. With the live source coroutine, the first iteration
+runs at 61 and its float 0.3-second wait is still at equality on 70; the second becomes ready
+on 71. The fixture now explicitly checks one confirmed spawn and one pending iteration at 70,
+then advances to 71 before checking both insertions. Its later helicopter observation advances
+one additional frame as before. No runtime rule or spawn-count assertion was relaxed.
+
+The updated focused combat-content run passes 26,396 checks with exit code zero at
+`Server/.local/source-wait-combat-content.log`. This includes the formerly failing fixture and
+its subsequent vitality, death, helicopter pose and economy assertions. It is broad combat
+regression evidence, not a complete full-suite or rendered two-Unity acceptance claim.

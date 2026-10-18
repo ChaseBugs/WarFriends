@@ -17755,6 +17755,13 @@ internal static class CombatContentTests
         Check(deathMatch.Snapshot().Players.All(p=>p.ConfirmedArmySpawns==0 && p.ConfirmedArmyLosses==0),
               "accepted deployment does not masquerade as a confirmed spawned entity");
         for(ulong armyTick=61;armyTick<=70;armyTick++)deathMatch.Advance(armyTick);
+        // The first iteration runs at 61. Its freshly constructed float wait is still
+        // at equality on frame 70; the second source iteration becomes ready on 71.
+        Check(deathMatch.Snapshot().Players[0].ConfirmedArmySpawns == 1 &&
+              deathMatch.ArmyBatch(soldierOwner).PendingCount == 1,
+              "source deployment does not count a second entity at the strict wait boundary");
+        const ulong SecondArmyIterationTick = 71;
+        deathMatch.Advance(SecondArmyIterationTick);
         var beforeDeath=deathMatch.ArmyEntityBatch(soldierOwner,0,0);
         var soldierEntity=beforeDeath.Entities.First(x=>x.OwnerPlayerId==soldierOwner);
         var helicopterEntity=beforeDeath.Entities.Single(x=>x.OwnerPlayerId==helicopterOwner);
@@ -17763,7 +17770,7 @@ internal static class CombatContentTests
         Check(helicopterEntity.UnitId=="ID_UNIT-HELICOPTER"&&
               deathMatch.HasHelicopterPath(helicopterEntity.EntityKey)&&
               helicopterEntity.SpawnComponentFileId==helicopterSpawn.ArmySpawnComponentFileId&&
-              helicopterEntity.PositionTick==70&&
+              helicopterEntity.PositionTick==SecondArmyIterationTick&&
               helicopterEntity.HelicopterStopTick==0&&
               helicopterEntity.HelicopterCrewCount==2&&helicopterEntity.HelicopterCrewDropMask==0&&
               helicopterEntity.HelicopterRotation is { } helicopterRotation&&
@@ -17968,7 +17975,7 @@ internal static class CombatContentTests
         Check(deathMatch.Snapshot().Players[0].ConfirmedArmyLosses==1 &&
               deathMatch.Snapshot().Players[1].ConfirmedArmyLosses==0,
               "replayed fatal damage cannot credit another unit loss");
-        deathMatch.Advance(71);
+        deathMatch.Advance(SecondArmyIterationTick + 1);
         var movingAim=deathMatch.HelicopterTurretCurrentAimPose(helicopterEntity.EntityKey);
         var movingRest=deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey);
         Check(movingAim!=null&&movingRest!=null&&

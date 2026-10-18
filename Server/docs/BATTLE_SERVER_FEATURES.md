@@ -59,6 +59,10 @@ see [the live ownership boundary](MORTAR_INDICATOR.md#live-host-retained-weapon-
 The Mortar group passes 13,315 checks, including eleven new actual-host retention, return,
 pause, same-frame reuse and resource rejection assertions. This remains partial until the
 required Client presentation and ordinary two-Unity acceptance gates are satisfied.
+The broad combat fixture now asserts the source strict wait at tick 70 and second iteration
+at 71 instead of assuming a precomputed queue deadline. All 26,396 focused combat-content
+checks pass with the live source-time scheduler and retained Mortar pool; full-suite completion
+is tracked independently.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same
