@@ -42,6 +42,9 @@ Disposable Unity 2018.3.0f2 verification passes:
 
 The matrix does not enumerate every upgrade threshold or render a normal two-client battle.
 Full active Client compilation/Play Mode, runtime shader/pixel parity, original Unity 5.2.5,
-Android and Linux runtime remain unverified here. Card weapons/shields, Buddy camos, other infantry weapon
+Android and Linux runtime remain unverified here. Card weapons, detached shield death effects, Buddy camos and other weapon
 model lanes and complete normal battle presentation remain separate work. No server combat or
 protocol authority changed in this checkpoint. See the [feature checklist](BATTLE_SERVER_FEATURES.md).
+
+The later [held-shield integration](INFANTRY_HELD_SHIELDS.md) adds source ordinary/card SWAT shields
+after skin selection without activating their original physics or gameplay components.

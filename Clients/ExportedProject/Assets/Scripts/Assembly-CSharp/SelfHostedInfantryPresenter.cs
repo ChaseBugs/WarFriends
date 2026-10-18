@@ -323,6 +323,15 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
                 skin.ApplyOpponent(source, model, definitions);
             }
 
+            if (actor.SourceCardId.Length == 0)
+            {
+                SelfHostedInfantryShieldAppearance.AttachOrdinary(family, source, model);
+            }
+            else
+            {
+                SelfHostedInfantryShieldAppearance.AttachCard(family, source, model);
+            }
+
             return skin;
         }
         catch

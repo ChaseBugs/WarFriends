@@ -99,7 +99,7 @@ source spawn/arrival/one-second-after-final-shot state through protobuf field 45
 SDK, with native coroutine timing and live lifecycle checks.
 [Weapon presentation](GUNSLINGER_WEAPON_PRESENTATION.md) now selects source model 25 and binds its
 snapPoint to the copied hand/holster sockets, with native source-method and decoded-roster checks.
-Moving-victim/native blend proof, card weapons/shields and normal battle-controller integration remain open.
+Moving-victim/native blend proof, card weapons, detached shield death effects and normal battle integration remain open.
 For the remaining ordinary upgrade appearance, `BattlePlayerView.units` already carries the owning
 player's source ID, normal/special/Elite indexes and tier. `PlayerProperties.CreateFromBattleView`
 maps those indexes into recovered `UnitUpgrades`. The next presentation binding must match each
@@ -116,7 +116,10 @@ the corresponding source attachments and MatCap. The subsequent
 and helmet materials plus script-free upgrade attachments. It passes 1,223 checks over 128 source
 actors and seventeen owner/presenter checks. [Card infantry skins](CARD_INFANTRY_SKINS.md) now
 apply the fixed source lanes without requiring ordinary equipped units, with 192 checks over
-twenty-four actors across both local perspectives. Every upgrade threshold, card weapons/shields and rendered
+twenty-four actors across both local perspectives.
+[Held SWAT shields](INFANTRY_HELD_SHIELDS.md) now use ordinary/card inventory selection, exact source
+socket parenting and card-only body-material sharing. Fifty-six native checks cover four original-method
+comparisons and four production actors. Every upgrade threshold, card weapons, detached shield death effects and rendered
 normal two-client battle parity remain open; the source-constant Gunslinger weapon guard alone
 does not complete this appearance path.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction

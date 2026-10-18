@@ -292,6 +292,7 @@ public static class UnityGunslingerWeaponAttachmentAudit
             "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryPresenter.cs",
             "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryUpgradeSelection.cs",
             "Assets/Scripts/Assembly-CSharp/SelfHostedInfantrySkinAppearance.cs",
+            "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryShieldAppearance.cs",
             "Assets/Scripts/Assembly-CSharp/SelfHostedRiflePoseRenderer.cs",
             "Assets/Plugins/WarFriends.Networking/War.Shared.dll",
             "Assets/Plugins/WarFriends.Networking/War.Client.dll",

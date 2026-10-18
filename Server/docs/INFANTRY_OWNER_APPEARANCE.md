@@ -39,7 +39,7 @@ the same source weapon mesh; tuple assertions distinguish ownership without fabr
 This is a Unity 2018.3.0f2 component audit. It does not execute the complete PvP scene bridge or
 normal two-client match entry. [Ordinary team skins](INFANTRY_TEAM_SKINS.md) now cover body/helmet
 textures and attachments in a separate source matrix. Other infantry weapon lanes,
-card weapons/shields and original Unity 5.2.5 parity remain open. The subsequent
+card weapons, detached shield death effects and original Unity 5.2.5 parity remain open. The subsequent
 [card-skin integration](CARD_INFANTRY_SKINS.md) handles fixed body/helmet lanes without ordinary
 equipment. The existing source-constant Gunslinger
 weapon and its draw/holster binding remain separate. See the

@@ -23,6 +23,7 @@ SOURCES = {
         "SelfHostedInfantryVisualFactory", "SelfHostedInfantryVisual", "SelfHostedInfantryPresenter",
         "SelfHostedRiflePoseRenderer", "SelfHostedInfantryUpgradeSelection", "FakeRigidBodySwapper",
         "SelfHostedInfantrySkinAppearance",
+        "SelfHostedInfantryShieldAppearance",
         "SoldierBehaviour", "UpgradeSlotsBaseSoldier",
         "UpgradeSlotsGunslicer", "SoldierParts", "SpawningManager",
     ]

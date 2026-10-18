@@ -3,7 +3,8 @@
 The PvP infantry presenter now applies the fixed source card appearance lane to the six supported
 infantry cards: BIGROCKET, ELITEMINIGUN, ELITEPARA, ELITESNIPER, ELITESWAT and GREATGRENADIER.
 This checkpoint covers body/helmet team textures, MatCap and upgrade attachments, not card weapons
-or shields.
+or shields. The subsequent [held-shield integration](INFANTRY_HELD_SHIELDS.md) adds source SWAT
+shield selection and material sharing separately.
 
 ## Recovered contract
 
@@ -36,7 +37,7 @@ sixteen-family presenter regression and Gunslinger weapon/holster checks also pa
 source-hash fixture is refreshed after these shared runtime changes.
 
 This component audit does not establish normal two-client battle entry, complete shader/pixel
-parity, original Unity 5.2.5, Android or Linux runtime. Card weapons and SWAT shields remain
-separate: `EnemyBasicInventory` selects `cardWeapons`/`cardShield`, and the recovered Grenadier
+parity, original Unity 5.2.5, Android or Linux runtime. Card weapons remain
+separate: `EnemyBasicInventory` selects `cardWeapons`, and the recovered Grenadier
 and Commando weapon selectors can return multiple levels. Do not reuse the existing single-weapon
 Assaulter resolver for those layouts. See the [feature checklist](BATTLE_SERVER_FEATURES.md).
