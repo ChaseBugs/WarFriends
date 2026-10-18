@@ -73,6 +73,7 @@ public sealed partial class BattleRematchConsentStore
         IClientSessionHandle session, string[] players, CancellationToken cancellationToken)
     {
         IMongoDatabase database = _consents.Database;
+        await BattleAdmissionFence.AcquireAsync(database, session, players, cancellationToken);
         var pairs = database.GetCollection<BattlePairDocument>("battle_pairs");
         var pairFilter = Builders<BattlePairDocument>.Filter.AnyIn(row => row.Players, players);
         if (await pairs.Find(session, pairFilter).AnyAsync(cancellationToken))

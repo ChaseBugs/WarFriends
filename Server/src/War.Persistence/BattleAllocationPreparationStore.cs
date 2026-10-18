@@ -34,6 +34,8 @@ public sealed class BattleAllocationPreparationStore
         using IClientSessionHandle session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
         await session.WithTransactionAsync(async (transaction, token) =>
         {
+            await BattleAdmissionFence.AcquireAsync(_allocations.Database, transaction, [playerId], token);
+            await RequireInactiveAsync(transaction, playerId, token);
             LegacyPlayerDocument player = await _players.Find(transaction, row => row.Id == playerId)
                 .SingleOrDefaultAsync(token) ?? throw new InvalidDataException("Battle account is missing.");
             if (player.Revision != expectedRevision)
@@ -66,6 +68,21 @@ public sealed class BattleAllocationPreparationStore
             await _allocations.InsertOneAsync(transaction, CreateDocument(allocation), cancellationToken: token);
             return true;
         }, PreparationTransaction, cancellationToken);
+    }
+
+    private async Task RequireInactiveAsync(IClientSessionHandle session, string playerId,
+        CancellationToken cancellationToken)
+    {
+        IMongoDatabase database = _allocations.Database;
+        var pairs = database.GetCollection<BattlePairDocument>("battle_pairs");
+        bool hasPair = await pairs.Find(session,
+            Builders<BattlePairDocument>.Filter.AnyEq(row => row.Players, playerId)).AnyAsync(cancellationToken);
+        var tickets = database.GetCollection<BattleQueueTicketDocument>("battle_queue_tickets");
+        bool hasTicket = await tickets.Find(session, row => row.PlayerId == playerId).AnyAsync(cancellationToken);
+        if (hasPair || hasTicket)
+        {
+            throw new InvalidDataException("Active queue or battle ownership prevents allocation preparation.");
+        }
     }
 
     private static void ValidateExisting(BattleAllocationDocument document)

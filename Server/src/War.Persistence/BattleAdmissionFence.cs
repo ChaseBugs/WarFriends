@@ -6,6 +6,20 @@ namespace War.Persistence;
 public static class BattleAdmissionFence
 {
     private const int MaximumParticipants = 2;
+    private const int NamespaceExistsCode = 48;
+
+    /// <summary>Creates the shared namespace before concurrent admission transactions start.</summary>
+    public static async Task InitializeAsync(IMongoDatabase database, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await database.CreateCollectionAsync("battle_admission_fences", cancellationToken: cancellationToken);
+        }
+        catch (MongoCommandException failure) when (failure.Code == NamespaceExistsCode)
+        {
+            // NamespaceExists means another startup already created this exact collection.
+        }
+    }
 
     /// <summary>Touches canonical participants in a stable order; the caller must own an active transaction.</summary>
     public static async Task AcquireAsync(IMongoDatabase database, IClientSessionHandle session,

@@ -48,6 +48,7 @@ public sealed partial class BattleMatchQueueStore
         var hello=await client.GetDatabase("admin").RunCommandAsync<BsonDocument>(new BsonDocument("hello",1),cancellationToken:ct);
         if(!hello.TryGetValue("setName",out var replicaName) || !replicaName.IsString || string.IsNullOrWhiteSpace(replicaName.AsString))
             throw new InvalidOperationException("Battle matchmaking requires a MongoDB replica set for atomic pair publication and cancellation.");
+        await BattleAdmissionFence.InitializeAsync(tickets.Database, ct);
         await tickets.Indexes.CreateManyAsync([
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.PlayerId),new CreateIndexOptions{Unique=true}),
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.CompatibilityKey).Ascending(x=>x.JoinedUtc).Ascending(x=>x.PlayerId)),
@@ -61,39 +62,14 @@ public sealed partial class BattleMatchQueueStore
     public async Task<BattlePairingResult> Join(string playerId,string compatibilityKey,DateTimeOffset now,CancellationToken ct)
     {
         Validate(playerId,compatibilityKey,now);
-        var existingPair=await PairFor(playerId,ct);
-        if(existingPair!=null)return UnscopedResult(existingPair);
-        string? activeTicketId=null;
-        for(int admission=0;admission<16 && activeTicketId==null;admission++)
+        var admission = await FindUnscopedAdmissionAsync(playerId, compatibilityKey, now, ct);
+        if (admission.Pair != null)
         {
-            var ticket=new BattleQueueTicketDocument{Id=Guid.NewGuid().ToString("N"),PlayerId=playerId,
-                CompatibilityKey=compatibilityKey,JoinedUtc=now.UtcDateTime,ExpiresUtc=now.AddSeconds(120).UtcDateTime};
-            try
-            {
-                await tickets.InsertOneAsync(ticket,cancellationToken:ct);
-                activeTicketId=ticket.Id;
-            }
-            catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
-            {
-                var prior=await tickets.Find(x=>x.PlayerId==playerId).FirstOrDefaultAsync(ct);
-                if(prior==null)
-                {
-                    existingPair=await PairFor(playerId,ct);
-                    if(existingPair!=null)return UnscopedResult(existingPair);
-                    continue;
-                }
-                ValidateTicket(prior);
-                if(prior.AttemptId.Length!=0)throw new InvalidDataException("An attempt token owns this ticket.");
-                if(prior.ExpiresUtc<=now.UtcDateTime)
-                {
-                    await tickets.DeleteOneAsync(x=>x.Id==prior.Id && x.ExpiresUtc==prior.ExpiresUtc,ct);
-                    continue;
-                }
-                if(prior.CompatibilityKey!=compatibilityKey)throw new InvalidDataException("Player already has a different matchmaking ticket.");
-                activeTicketId=prior.Id;
-            }
+            return UnscopedResult(admission.Pair);
         }
-        if(activeTicketId==null)throw new InvalidDataException("Matchmaking ticket admission changed repeatedly; retry the request.");
+        string activeTicketId = admission.TicketId
+            ?? throw new InvalidDataException("Matchmaking ticket admission is unavailable.");
+        BattlePairDocument? existingPair;
         for(int attempt=0;attempt<16;attempt++)
         {
             using var session=await client.StartSessionAsync(cancellationToken:ct);
@@ -101,6 +77,7 @@ public sealed partial class BattleMatchQueueStore
             {
                 var result=await session.WithTransactionAsync(async (s,token)=>
                 {
+                    await BattleAdmissionFence.AcquireAsync(tickets.Database, s, [playerId], token);
                     var ownPair=await PairFor(s,playerId,token);
                     if(ownPair!=null)
                     {
@@ -114,6 +91,7 @@ public sealed partial class BattleMatchQueueStore
                         .SortBy(x=>x.JoinedUtc).ThenBy(x=>x.PlayerId).FirstOrDefaultAsync(token);
                     if(candidate==null)return new BattlePairingResult("waiting",null,null);
                     ValidateTicket(candidate);
+                    await BattleAdmissionFence.AcquireAsync(tickets.Database, s, [candidate.PlayerId], token);
                     if(await PairFor(s,candidate.PlayerId,token)!=null)
                     {
                         await tickets.DeleteOneAsync(s,x=>x.Id==candidate.Id,null,token);

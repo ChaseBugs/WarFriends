@@ -66,8 +66,9 @@ internal static class RematchArmyManifestTests
                 NewMatchId(), cancellationToken);
         }
         catch (InvalidDataException exception) when
-            (exception.Message == "Rematch army allocation differs from current durable unit lanes.")
+            (exception.Message == "Battle allocation differs from its durable account authority.")
         {
+            // The shared account/allocation check now rejects stale lanes before rematch-specific binding.
             return;
         }
 

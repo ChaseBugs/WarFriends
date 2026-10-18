@@ -35,6 +35,8 @@ public sealed partial class BattleMatchQueueStore
     private async Task<BattlePairingResult> JoinAttemptCoreAsync(
         BattleQueueAttemptIdentity attempt, string compatibilityKey, AttemptTransaction transaction)
     {
+        await BattleAdmissionFence.AcquireAsync(tickets.Database, transaction.Session,
+            [attempt.PlayerId], transaction.CancellationToken);
         var receipt = await ReadAttemptAsync(attempt.PlayerId, attempt.AttemptId, transaction);
         ValidateReceiptIdentity(receipt, attempt);
         if (receipt?.State is CancelledAttempt or ClosedAttempt or CancellingAttempt)
@@ -123,6 +125,8 @@ public sealed partial class BattleMatchQueueStore
         }
 
         ValidateTicket(candidate);
+        await BattleAdmissionFence.AcquireAsync(tickets.Database, transaction.Session,
+            [candidate.PlayerId], token);
         var candidateReceipt = await ReadAttemptAsync(candidate.PlayerId, candidate.AttemptId, transaction) ??
             throw new InvalidDataException("Scoped candidate has no durable attempt receipt.");
         if (candidateReceipt.ExpiresUtc != candidate.AttemptExpiresUtc ||

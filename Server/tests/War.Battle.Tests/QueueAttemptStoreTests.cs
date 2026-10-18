@@ -18,6 +18,7 @@ internal static class QueueAttemptStoreTests
             await other.Initialize(deadline.Token);
             await VerifyEarlyAndStaleCancellationAsync(queue, other, deadline.Token);
             await VerifyConcurrentPairingAsync(queue, other, deadline.Token);
+            await VerifyAdmissionFenceAsync(queue, mongo.GetDatabase(database), deadline.Token);
             await VerifyTicketReplacementAsync(queue, deadline.Token);
             await VerifyExpiredAndCorruptReceiptsAsync(queue, mongo.GetDatabase(database), deadline.Token);
             Console.WriteLine(
@@ -27,6 +28,36 @@ internal static class QueueAttemptStoreTests
         {
             await mongo.DropDatabaseAsync(database);
         }
+    }
+
+    private static async Task VerifyAdmissionFenceAsync(
+        BattleMatchQueueStore queue, IMongoDatabase database, CancellationToken cancellationToken)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        string playerId = Guid.NewGuid().ToString("N");
+        var attempt = CreateAttempt(playerId, now);
+        await queue.JoinAttemptAsync(attempt, "fence.fixture", now, cancellationToken);
+        var fences = database.GetCollection<BattleAdmissionFenceDocument>("battle_admission_fences");
+        BattleAdmissionFenceDocument row = await fences.Find(fence => fence.PlayerId == playerId)
+            .SingleAsync(cancellationToken);
+        Require(row.Revision > 0, "Scoped queue admission did not acquire its shared fence.");
+        await queue.CancelAttemptAsync(attempt, now, cancellationToken);
+        await fences.UpdateOneAsync(fence => fence.PlayerId == playerId,
+            Builders<BattleAdmissionFenceDocument>.Update.Set(fence => fence.Revision, 0),
+            cancellationToken: cancellationToken);
+
+        bool rejected = false;
+        try
+        {
+            await queue.JoinAttemptAsync(CreateAttempt(playerId, now), "fence.fixture", now, cancellationToken);
+        }
+        catch (InvalidDataException)
+        {
+            rejected = true;
+        }
+        bool hasTicket = await database.GetCollection<BattleQueueTicketDocument>("battle_queue_tickets")
+            .Find(ticket => ticket.PlayerId == playerId).AnyAsync(cancellationToken);
+        Require(rejected && !hasTicket, "Damaged fencing admitted a queue ticket.");
     }
 
     private static async Task VerifyEarlyAndStaleCancellationAsync(

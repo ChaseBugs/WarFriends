@@ -430,3 +430,30 @@ This primitive is not wired to production admissions yet. General queue ticket c
 pairing, scoped joins and rematch reservation must acquire the same fence before allocation
 refresh can depend on it. A read-only absence check is insufficient to prevent write skew.
 The inactive-refresh feature remains incomplete and is not enabled by this checkpoint.
+
+The current working tree wires this fence into unscoped ticket insertion/pairing, scoped join
+and candidate pairing, rematch participant reservation and initial allocation preparation.
+Unscoped ticket insertion now checks existing pair ownership in its transaction instead of
+publishing a ticket independently. Preparation rejects an existing queue ticket or pair under
+the same fence. General ticket admission was split into short methods; retry/expiry behavior
+is retained. Startup creates the fence collection before concurrent queue traffic.
+
+The first focused batch passed scoped queue and rematch reservation tests, then stopped because
+the rematch army stale-allocation test still expected its old feature-local error text. The
+shared account validator correctly rejected that state earlier; the expected rejection is now
+updated without broadening accepted exceptions. Final focused results are being collected in
+`*-fenced-final.log` in the existing Mongo evidence directory. This wiring does not yet enable
+allocation refresh. Active-ownership rejection and refresh-versus-admission races, plus prepared
+rematch manifest revision binding, remain required before refresh can be safely published.
+
+The final focused batch passes all five commands with exit zero: scoped queue attempts,
+rematch reservations, rematch manifests, manifest snapshots and inventory allocation. Evidence
+is the corresponding `*-fenced-final.log` files; the build at
+`Server/.local/admission-fence-wiring-build.log` has zero warnings/errors.
+
+The additional `active-ownership-tests.log` suite also passes with exit zero. It creates a real
+waiting ticket, verifies preparation rejection, forms a pair through the normal queue store,
+and verifies rejection again without an account revision change. Build evidence is
+`Server/.local/admission-active-ownership-build.log`. These are actual Mongo store transactions,
+not a running Worker or normal two-Unity match. Cross-path refresh races and prepared-rematch
+revision binding remain open; allocation refresh itself is still disabled.
