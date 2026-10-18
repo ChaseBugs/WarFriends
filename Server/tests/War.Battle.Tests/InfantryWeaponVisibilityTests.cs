@@ -21,6 +21,7 @@ internal static class InfantryWeaponVisibilityTests
         checks += CheckProtocol();
         checks += CheckIndependentReturns();
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
+        checks += OrdinaryGrenadierCompositionTests.Run(content.Army, directory);
         checks += CheckLifecycle(content);
         checks += CheckCancelledReturn(content);
         checks += CheckRetainedSelection(content);

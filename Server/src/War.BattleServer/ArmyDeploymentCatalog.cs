@@ -76,7 +76,7 @@ public sealed record ArmyDeploymentFamily(int BehaviorFileId,string BehaviorType
     IReadOnlyList<ArmyDeploymentOption> Options,ArmyBaseShotStats? BaseShot,ArmyVehicleShotStats? VehicleShot);
 
 /// <summary>The recovered scene's runtime army options, never a client-submitted catalog.</summary>
-public sealed class ArmyDeploymentCatalog
+public sealed partial class ArmyDeploymentCatalog
 {
     private static readonly HashSet<string> RusherTypes=new(StringComparer.Ordinal)
     {

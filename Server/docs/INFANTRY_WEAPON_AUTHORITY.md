@@ -104,3 +104,21 @@ owner-bound normal/special/Elite composition and reuse card-only balancing.
 After extraction, `--infantry-weapons-only` passes 24 checks, `--grenadier-damage-only` passes 23,
 and `--grenadier-moving-only` passes 25. The native coroutine fixture verifier also passes.
 These targeted runs do not replace a complete default suite or two-Unity-client match proof.
+
+## Ordinary grenade composition boundary
+
+`ArmyDeploymentCatalog.ComposeOrdinaryGrenadier` now composes the ordinary minimum/explosion
+fields from validated normal, optional special and optional Elite lanes. It applies the trusted
+mode damage scale after addition, matching `ScaleDamageAndHP`. It does not use card interpolation
+or its integer truncation. The fuse remains three seconds without a special lane; with special
+it uses `3 - 3 * ComposeSpecial(...)`, matching `ApplyWeaponsSetup`.
+
+The focused group now includes seventeen composition checks: nine source-sheet comparisons across
+normal indexes 0/39/100 and absent/first/last special with Elite, plus eight invalid scale/lane cases.
+The source sheet establishes special indexes 101-126 and Elite beginning at 127. This is validated
+composition for subsequent spawn integration, not a claim that ordinary Grenadier combat runs.
+Its use in ordinary MatchEngine initialization, attack/navigation, damage and presentation remains open.
+
+Verification: the rebuilt `--infantry-weapons-only` executable passes 41 checks, including the
+existing real card lifecycle and new ordinary composition cases. Full-suite and normal Unity match
+verification were not rerun for this composition-only increment.
