@@ -119,6 +119,11 @@ public sealed partial class MatchEngine
         attempt.CompletedTick = tick;
         ConsumeGunslingerCooldownDraw(entityKey);
         GunslingerArrival arrival = _gunslingerArrivals[entityKey];
+        if (arrival.ShotsRemaining == 0)
+        {
+            _gunslingerHolsterDueTicks[entityKey] = GunslingerFiringClock.HolsterTick(tick);
+        }
+
         // ReturnToPreviousStateFromShot generates a random cooldown before the
         // Gunslinger override replaces it with cadence and a two-second move clock.
         _gunslingerArrivals[entityKey] = arrival with

@@ -52,5 +52,6 @@ source-bound verifier remains unchanged. The full default suite and Linux runtim
 The numerical aim tests supply current poses directly. The subsequent
 [automatic shooting implementation](GUNSLINGER_SHOOTING.md) now executes source preparation,
 callback sampling and real/cosmetic projectile flight. [Point changes](GUNSLINGER_POINT_CHANGES.md)
-now preserve the weapon state across walking and fresh arrival. Holstering and remaining
+now preserve the weapon state across walking and fresh arrival. [Holster metadata](GUNSLINGER_HOLSTER.md)
+is now projected without changing weapon speed/damage. Visible attachment and remaining
 presentation/combat proofs are tracked on the feature checklist.

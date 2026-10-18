@@ -61,7 +61,8 @@ were not rerun for this checkpoint.
 The later [ordinary shooting path](GUNSLINGER_SHOOTING.md) now executes shot preparation,
 callback muzzle/aim prediction, one-shot attempts and real/cosmetic projectiles. Exhausted-attempt
 [point changes](GUNSLINGER_POINT_CHANGES.md) now transfer reservations and walk to a fresh firing
-cycle. Gun snapping and normal Client presentation remain open. Paratrooper descent/landing
+cycle. [Holster metadata](GUNSLINGER_HOLSTER.md) now follows spawn, arrival and final-shot timing;
+visible gun snapping and normal Client presentation remain open. Paratrooper descent/landing
 is a separate missing normal-unit path. These remain on the BattleServer feature checklist.
 
 [Stand timing evidence](GUNSLINGER_STAND_TIMING.md) verifies native animation callbacks,

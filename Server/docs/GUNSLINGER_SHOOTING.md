@@ -54,8 +54,9 @@ warnings/errors. Shared combat regression passes 26,395 assertions. Full default
 Unity 5.2.5 and Linux runtime validation were not rerun for this checkpoint.
 
 [Exhausted-attempt point changes](GUNSLINGER_POINT_CHANGES.md) now execute automatically and
-restart a fresh burst after authored arrival. This is not full Gunslinger completion: gun
-holstering remains unimplemented. Interrupted/failed animation preparations, native blend parity for
+restart a fresh burst after authored arrival. [Holster state](GUNSLINGER_HOLSTER.md) is now
+projected through protobuf and the SDK, while the actual visible weapon attachment remains open.
+This is not full Gunslinger completion. Interrupted/failed animation preparations, native blend parity for
 all presentation frames, moving player/infantry hit outcomes, Decoy and vehicle-specific live
 combat branches, and normal Client presentation need additional proof. A target removed before
 callback retains its last host-observed pose/velocity; post-death native ragdoll transform motion

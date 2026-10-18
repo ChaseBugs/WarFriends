@@ -430,6 +430,8 @@ message BattleArmyEntityState {
   float parachute_landing_x = 42;
   float parachute_landing_y = 43;
   float parachute_landing_z = 44;
+  // Normal Gunslinger SnapColt state; false for every other unit/card identity.
+  bool is_colt_holstered = 45;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

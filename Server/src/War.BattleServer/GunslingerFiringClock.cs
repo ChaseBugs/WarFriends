@@ -34,6 +34,13 @@ internal static class GunslingerFiringClock
         return checked(shotTick + (ulong)MathF.Floor(CadenceSeconds * MatchManifest.TickRate) + 1);
     }
 
+    internal static ulong HolsterTick(ulong finalShotTick)
+    {
+        // Native InvokeAfter(1f) resumes thirty ticks later; this is not the
+        // animation controller's strict Time.time > hide deadline.
+        return checked(finalShotTick + MatchManifest.TickRate);
+    }
+
     internal static ulong HideTick(ulong preparationTick)
     {
         const float TickSeconds = 1f / MatchManifest.TickRate;

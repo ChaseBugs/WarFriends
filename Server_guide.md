@@ -14,6 +14,10 @@ Authoritative source indexes:
 - [Machine-readable communication inventory](Server/docs/client-communication-inventory.json): action references, request builders, response consumers, RPC signatures, serialization locations and asset attachments.
 - [Architecture and accepted overrides](BACKEND_DESIGN.md).
 - [Server runtime instructions](Server/README.md).
+- [Current BattleServer feature coverage](Server/docs/BATTLE_SERVER_FEATURES.md): implementation evidence and
+  remaining work.
+- [Gunslinger attachment DTO](Server/docs/GUNSLINGER_HOLSTER.md): additive protobuf field 45, lifecycle authority
+  and SDK/rendering boundary.
 - Source appendices below cover all named actions, direct request-builder candidates, response-reader keys, serialized subsystem field declarations, RPC definitions and stream locations.
 
 ## 2. Architecture and responsibility boundary

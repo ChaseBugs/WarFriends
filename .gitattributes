@@ -1,3 +1,8 @@
+Server/content/gunslinger-holster-unity-reference.json text eol=lf
+Server/tools/UnityGunslingerHolsterProbe.cs text eol=lf
+Server/tools/UnityGunslingerHolsterExport.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierParts.cs text eol=crlf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/FakeRigidBodySwapper.cs text eol=crlf
 Server/content/gunslinger-stand-unity-reference.json text eol=lf
 Server/tools/UnityGunslingerStandProbe.cs text eol=lf
 Server/tools/UnityGunslingerBeforeControllerProbe.cs text eol=lf

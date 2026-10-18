@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "captureRate": 30,
+  "timeScale": 1.0,
+  "coroutineSha256": "3a42957a1560169dc96af028905d93f0a70aa7d84050d6d5b640b06507f60dce",
+  "probeSha256": "ec8baf87bb979f3d2faffd6521f331f5b0b5ceae0af4de3937261978411529f2",
+  "exporterSha256": "d8edfb1d41d0f8037f4685041950bdaa69d97375248085d1bf2b50cfeaeb12c4",
+  "observations": [
+    {
+      "scheduledTick": 1,
+      "scheduledTime": 0.0333333351,
+      "callbackTick": 31,
+      "callbackTime": 1.03333342
+    },
+    {
+      "scheduledTick": 324,
+      "scheduledTime": 10.8,
+      "callbackTick": 354,
+      "callbackTime": 11.8
+    },
+    {
+      "scheduledTick": 340,
+      "scheduledTime": 11.333334,
+      "callbackTick": 370,
+      "callbackTime": 12.333334
+    }
+  ],
+  "callerSourceBindings": {
+    "controllerSha256": "175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0",
+    "partsSha256": "c38466c5175bda0bb6da7df6d18d3d1c20ab2706c293142b5b1e15a2eee02b0f",
+    "swapperSha256": "bd579f3a1fec1636499723e81fc06af7a13f358f5ca0b909d3e5170f9a108fca"
+  }
+}

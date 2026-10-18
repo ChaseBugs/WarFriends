@@ -371,6 +371,7 @@ namespace War.Client
                            : entity.OptionIndex != -1 ||
                              !CardUnitSourceIdentity.Matches(entity.SourceCardId, entity.UnitId)) ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
+                       !IsValidColtAttachment(entity) ||
                        !ValidParachute(entity,batch.ServerTick) ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
@@ -416,6 +417,12 @@ namespace War.Client
         }
 
         private static bool FiniteCoordinate(float x)=>!float.IsNaN(x) && !float.IsInfinity(x) && Math.Abs(x)<=10000;
+        internal static bool IsValidColtAttachment(BattleArmyEntityState entity)
+        {
+            return !entity.IsColtHolstered ||
+                (entity.UnitId == "ID_UNIT-GUNSLINGER" && entity.SourceCardId.Length == 0);
+        }
+
         internal static bool ValidParachute(BattleArmyEntityState entity,
             ulong serverTick)
         {

@@ -1787,6 +1787,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             catch (InvalidDataException) { End("invalid-assaulter-volley", "", false); return; }
             if (Terminal) return;
         }
+        if (advanced && phase == BattlePhase.Running && _gunslingerHolsterDueTicks.Count > 0)
+        {
+            try { AdvanceGunslingerHolsters(); }
+            catch (InvalidDataException) { End("invalid-gunslinger-holster", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && _gunslingerArrivals.Count > 0)
         {
             try { AdvanceGunslingerPointChanges(); }
@@ -3643,6 +3648,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         foreach(var row in remaining.Take(pageSize))
         {
             var entity=row.Value.Clone();
+            entity.IsColtHolstered = _gunslingerHolstered.Contains(row.Key);
             if(infantryAnimations.TryGetValue(row.Key,out var animation))
             {
                 if(animation.StartTick>tick ||

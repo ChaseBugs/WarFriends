@@ -37,6 +37,12 @@ public sealed partial class MatchEngine
     private void InitializeGunslingerNavigation(ulong entityKey)
     {
         var entity = activeArmyEntities[entityKey];
+        if (entity.UnitId != "ID_UNIT-GUNSLINGER" || entity.SourceCardId.Length != 0)
+        {
+            throw new InvalidDataException("Normal Gunslinger attachment lost its source identity.");
+        }
+
+        _gunslingerHolstered.Add(entityKey);
         GunslingerPointCatalog catalog = _gunslingerPointCatalog ??
             throw new InvalidDataException("Normal Gunslinger lost its source point catalog.");
         Vector3 position = new(entity.X, entity.Y, entity.Z);
@@ -112,6 +118,7 @@ public sealed partial class MatchEngine
 
     private void EnterGunslingerState(ulong entityKey)
     {
+        _gunslingerHolstered.Remove(entityKey);
         float fraction = NextArmyFloat();
         if (!float.IsFinite(fraction) || fraction is < 0f or >= 1f)
         {
@@ -140,6 +147,8 @@ public sealed partial class MatchEngine
         _gunslingerArrivals.Remove(entityKey);
         _gunslingerAimWeapons.Remove(entityKey);
         _gunslingerAttempts.Remove(entityKey);
+        _gunslingerHolstered.Remove(entityKey);
+        _gunslingerHolsterDueTicks.Remove(entityKey);
     }
 
     private sealed record GunslingerWalk(CardSoldierWalkState Motion, ulong FirstTick);

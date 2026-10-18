@@ -94,8 +94,10 @@ it must not substitute the serialized player-child transform.
 [Exhausted-attempt point changes](GUNSLINGER_POINT_CHANGES.md) now select a source-ordered free
 point, transfer exclusive occupancy, walk there, restore attempt counters and fire a fresh burst
 on all five maps. Empty-list/no-draw and released-candidate behavior are checked separately without
-bypassing the normal two-unit limit. Holstering, moving-victim/native blend proof and normal
-Client presentation remain open.
+bypassing the normal two-unit limit. [Holster lifecycle](GUNSLINGER_HOLSTER.md) now publishes the
+source spawn/arrival/one-second-after-final-shot state through protobuf field 45 and the portable
+SDK, with native coroutine timing and live lifecycle checks. Visible weapon/snapPoint binding,
+moving-victim/native blend proof and normal Client presentation remain open.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

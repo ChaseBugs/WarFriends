@@ -44,6 +44,7 @@ and Assaulter volley (110) groups also pass. Shared combat regression passes 26,
 The full default suite, native Unity execution and Linux runtime were not rerun for this checkpoint.
 
 These are server execution checks, not native EnemyController/NavMesh parity or normal Client
-presentation proof. Gun holstering, interrupted/failed stand preparation and remaining moving-victim
-and special-target collision cases remain open. See [shooting](GUNSLINGER_SHOOTING.md) and the
+presentation proof. [Holster state](GUNSLINGER_HOLSTER.md) is now carried through protobuf/SDK;
+visible weapon binding, interrupted/failed stand preparation and remaining moving-victim and
+special-target collision cases remain open. See [shooting](GUNSLINGER_SHOOTING.md) and the
 [feature checklist](BATTLE_SERVER_FEATURES.md).
