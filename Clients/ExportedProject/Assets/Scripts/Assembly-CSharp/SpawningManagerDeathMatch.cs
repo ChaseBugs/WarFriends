@@ -249,7 +249,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 
 	public void BindSelfHosted(SelfHostedBattleClient client)
 	{
-		if (client == null || !client.IsConnected || mSelfHostedMode)
+		if (client == null || !client.IsConnected || mSelfHosted != null)
 		{
 			throw new InvalidOperationException("Bind one connected self-hosted army session.");
 		}

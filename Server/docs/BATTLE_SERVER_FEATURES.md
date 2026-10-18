@@ -47,6 +47,9 @@ binding through the managed loading scope; scene release and session Close share
 generation checks reject responses from retired bindings. Rendered timing and ordinary match
 acceptance remain open. Do not add
 a second server auto-spawn loop or mark this feature complete from the component audit.
+The real authenticated UDP same-manager rebind audit now passes four checks and exposed/fixed
+the retired-mode marker blocking a new owner. It verifies delayed initial army responses and
+successor cleanup without claiming normal rendered gameplay or Backend admission.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

@@ -59,6 +59,36 @@ fingerprint is `c834664a315867ecb1b1ea3fd53dba7d49cbe8e40706ebae7de55083231204b0
 The original spawn coroutine remains unchanged. Normal loading failure recovery, two-Client
 gameplay, delayed network responses and Android still require acceptance beyond this audit.
 
+## Real UDP rebinding regression
+
+`UnityArmyBindingRaceAudit` holds an authenticated SDK army-poll reply while the same Unity
+manager is unbound and rebound on the same connection. It verifies rejection of the retired
+reply without detaching the successor, exactly one successor publication and final cleanup.
+Four checks pass in Unity 2018.3.0f2 at `Server/.local/army-binding-race-unity.log`, with Editor
+exit code zero. The report is in the disposable project as `army-binding-race-unity-audit.json`.
+The fixture provisions SDK admission directly; it tests real localhost UDP/HMAC/protobuf and
+Unity continuations, not Backend admission, real combat, packet-loss tolerance or rendered UI.
+Queued retries are answered individually so a retired retry cannot be mistaken for the first
+successor poll. Every receive/continuation wait and the captured request count are bounded.
+
+The first run exposed that BindSelfHosted rejected a retired manager solely because its
+self-hosted mode marker remained set. The guard now checks for a current owner instead. The
+mode marker intentionally remains set after unbinding, keeping retired Photon paths closed.
+The current manager source digest is
+`a5af4723f0222252fb5eb0019b3941d67a9787e9bec8424a63ecb027312d5849`.
+
+The Mortar pool extractor binds that full source file. Regeneration changes only its manager
+source digest; capacity, slot policy and all other extracted values stay unchanged. Its new
+artifact SHA-256 is `ae80ede2b826ff009ea03f82e26ae63e751143816eea6deb7b1f40a1d3d2ea11`.
+Worker/test digest pins and the four local template CatalogRevision values follow the reviewed
+artifact. Native historical clock observations retain their original capture fingerprints.
+The reviewed source/time group passes 130 checks at `Server/.local/army-binding-race-source-tests.log`.
+The Mortar indicator/pool group passes 13,304 checks at
+`Server/.local/army-binding-race-mortar-tests.log`, including full current source bindings.
+The allocator mixed-content gate also passes at `Server/.local/army-binding-race-allocator-tests.log`.
+The previous full run stopped at the stale Mortar source binding rather than completing;
+these focused checks do not replace a fresh full run of the new artifact and templates.
+
 Then exercise both source modes through normal Unity controls: preselection at 0.7, dispatch
 at one, insufficient energy, stale offer replacement, outstanding command, reconnect, resume,
 terminal state and scene replacement. Verify authoritative energy and confirmed spawn counts.
