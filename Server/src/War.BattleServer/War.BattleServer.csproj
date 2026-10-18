@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <EmbeddedResource Include="..\..\content\recovered-grenade-rig.json"
+                      LogicalName="War.BattleServer.GrenadeRig" />
   </ItemGroup>
 
   <ItemGroup>

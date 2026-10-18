@@ -36,10 +36,29 @@ with the prior artifact. The published observation passed these checks.
 
 ## Verified boundary
 
-This is source data for the remaining grenade common-pose integration. Runtime pose interpolation,
-weapon-root queries during grenade selection, and delayed rifle LongShot evaluation do not yet
-consume this artifact. The recovered LongShot rule reads the weapon's current transform at kill
-time, so a launch-time weapon position is not a substitute.
+The BattleServer embeds and hash-verifies this artifact. `GrenadeShotTargetCatalog` loads the
+observed rig and checks target identities against combat authority. The common runtime grenade
+pose now exposes all weapon roots, full target poses, and the type-16 moving target. Sampling uses
+the existing 30 Hz floor/clamp clock and float clip lengths, including the final short sample.
+Placement uses captured root transforms; Unity matrices are transposed for System.Numerics.
+The flat observed node list is not treated as a parented skeleton or used for procedural blending.
+
+The recovered LongShot rule reads the weapon's current transform at kill time. The existing
+mixed-combat query can now obtain that root while a grenade is selected; it does not substitute
+a launch-time position. A delayed lethal rifle projectile crossing this exact host path still needs
+an explicit scenario test before claiming end-to-end LongShot verification.
+
+Verification after runtime integration:
+
+- Release rebuild: zero warnings and errors.
+- `--grenade-pose-view-only`: 49,144 checks, including every observed weapon/target position and rotation.
+- `--mixed-grenade-host-only`: 13 checks.
+- `--mixed-grenade-udp-only`: 12 checks with two signed SDK peers.
+- UDP artifacts: `.local/mixed-grenade-udp-7a31e9cb6bf642dc9fc66ceb9f91429b`.
+
+The focused grenade regression suite also passed 28,935 checks before the final rotation assertions
+were added. This is not a new full native-suite result; the complete BattleServer suite was not rerun
+for this checkpoint.
 
 This Editor observation does not prove original Unity 5.2.5f1, Android, rendered gameplay, or
 two running Unity Client parity. The broader BattleServer checklist remains incomplete.

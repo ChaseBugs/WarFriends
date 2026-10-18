@@ -33,6 +33,13 @@ internal sealed class GrenadeShotTargetCatalog
     private readonly IReadOnlyDictionary<string,PosedClip> clips;
     private readonly Vector3 sourceRoot;
     private readonly Quaternion sourceRotation;
+    private GrenadeRigCatalog? _rig;
+
+    internal PlayerAimPoseDetails PoseDetails(string clip, double seconds, bool loop, PlayerCollisionModel collision)
+    {
+        return (_rig ?? throw new InvalidDataException("Missing grenade rig authority."))
+            .Place(clip, seconds, loop, collision);
+    }
     private GrenadeShotTargetCatalog(Dictionary<string,PosedClip> clips,Vector3 root,Quaternion rotation)
     {this.clips=clips;sourceRoot=root;sourceRotation=rotation;}
 
@@ -95,7 +102,9 @@ internal sealed class GrenadeShotTargetCatalog
         }
         if(clips.Values.Sum(x=>x.Frames.Count)!=289)
             throw new InvalidDataException("Incomplete grenade target frames.");
-        return new(clips,root,rotation);
+        var result = new GrenadeShotTargetCatalog(clips, root, rotation);
+        result._rig = GrenadeRigCatalog.Load(targetCatalog);
+        return result;
     }
     private static Vector3 Vector(float[] value)
     {

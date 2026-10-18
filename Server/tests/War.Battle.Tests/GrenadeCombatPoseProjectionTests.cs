@@ -1,8 +1,9 @@
 using System.Numerics;
+using System.Text.Json;
 using War.BattleServer;
 using War.Protocol;
 
-/// <summary>Checks every exported grenade pose frame through the position-only common combat view.</summary>
+/// <summary>Checks position-only compatibility and complete observed grenade poses against Unity samples.</summary>
 internal static class GrenadeCombatPoseProjectionTests
 {
     private const int SampleRate = 30;
@@ -26,7 +27,87 @@ internal static class GrenadeCombatPoseProjectionTests
             }
         }
         checks += CheckRuntimeFrame(content);
+        checks += CheckObservedRig(content, directory);
         return checks;
+    }
+
+    private static int CheckObservedRig(BattleCombatContent content, string directory)
+    {
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "recovered-grenade-rig.json")));
+        JsonElement source = document.RootElement;
+        string[] weapons = source.GetProperty("weapons").EnumerateArray()
+            .Select(row => row.GetProperty("sourceId").GetString()!).ToArray();
+        Quaternion rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.7f);
+        int checks = 0;
+        foreach (JsonElement clip in source.GetProperty("clips").EnumerateArray())
+        {
+            string name = clip.GetProperty("name").GetString()!;
+            int index = 0;
+            foreach (JsonElement observed in clip.GetProperty("frames").EnumerateArray())
+            {
+                double duration = content.Grenades!.Poses.Duration(name);
+                double start = index++ / (double)SampleRate;
+                bool isLastFrame = index == clip.GetProperty("frames").GetArrayLength();
+                double seconds = isLastFrame ? duration : start + Math.Min(0.125 / SampleRate, (duration - start) / 2);
+                GrenadePoseFrame frame = content.Grenades!.Poses.Sample(name, seconds, false);
+                PlayerCollisionModel collision = frame.Collision.Place(FirstRoot, rotation);
+                PlayerAimPoseDetails details = content.GrenadeShotTargets!.PoseDetails(name, seconds, false, collision);
+                var view = new PlayerAimPose(collision, new Dictionary<string, RifleMuzzlePose>(), details);
+                Vector3 root = ReadPosition(observed.GetProperty("root"));
+                JsonElement rootRotation = observed.GetProperty("root").GetProperty("rotation");
+                var orientation = Quaternion.Normalize(new Quaternion(rootRotation[0].GetSingle(),
+                    rootRotation[1].GetSingle(), rootRotation[2].GetSingle(), rootRotation[3].GetSingle()));
+                Quaternion delta = Quaternion.Normalize(rotation * Quaternion.Inverse(orientation));
+                for (int weaponIndex = 0; weaponIndex < weapons.Length; weaponIndex++)
+                {
+                    Vector3 expected = FirstRoot + Vector3.Transform(
+                        ReadPosition(observed.GetProperty("weapons")[weaponIndex]) - root, delta);
+                    Require(Vector3.Distance(view.WeaponRoot(weapons[weaponIndex]).Position, expected) <
+                        PositionTolerance,
+                        $"Weapon root differs: {name} frame {index} {weapons[weaponIndex]}: " +
+                        $"{view.WeaponRoot(weapons[weaponIndex]).Position} vs {expected} at {seconds}.");
+                    CheckRotation(view.WeaponRoot(weapons[weaponIndex]).Rotation,
+                        observed.GetProperty("weapons")[weaponIndex], delta);
+                    checks += 2;
+                }
+
+                IReadOnlyList<Vector3> targets = content.GrenadeShotTargets.Place(
+                    name, seconds, false, FirstRoot, rotation);
+                for (int targetIndex = 0; targetIndex < targets.Count; targetIndex++)
+                {
+                    PlayerShotTarget identity = content.PlayerShotTargets.Gameplay[targetIndex];
+                    Require(Vector3.Distance(view.BodyTarget(identity.TransformFileId).Position,
+                        targets[targetIndex]) < PositionTolerance,
+                        $"Target differs: {name} frame {index} target {targetIndex}: " +
+                        $"{view.BodyTarget(identity.TransformFileId).Position} vs {targets[targetIndex]}.");
+                    CheckRotation(view.BodyTarget(identity.TransformFileId).Rotation,
+                        observed.GetProperty("targets")[targetIndex], delta);
+                    checks += 2;
+                }
+
+                Require(view.MovingTarget != null, "Observed type-16 target is missing from the common pose.");
+                checks++;
+            }
+        }
+
+        return checks;
+    }
+
+    private static Vector3 ReadPosition(JsonElement transform)
+    {
+        JsonElement position = transform.GetProperty("position");
+        return new Vector3(position[0].GetSingle(), position[1].GetSingle(), position[2].GetSingle());
+    }
+
+    private static void CheckRotation(Quaternion actual, JsonElement transform, Quaternion delta)
+    {
+        JsonElement rotation = transform.GetProperty("rotation");
+        var source = Quaternion.Normalize(new Quaternion(rotation[0].GetSingle(), rotation[1].GetSingle(),
+            rotation[2].GetSingle(), rotation[3].GetSingle()));
+        Quaternion expected = Quaternion.Normalize(delta * source);
+        Require(Math.Abs(Quaternion.Dot(actual, expected)) > 0.99999f,
+            "A placed grenade transform differs from the observed Unity rotation.");
     }
 
     private static int CheckRuntimeFrame(BattleCombatContent content)
@@ -60,6 +141,8 @@ internal static class GrenadeCombatPoseProjectionTests
         }
         PlayerAimPose release = simulation.CombatPose(owner, content.PlayerShotTargets);
         Require(!ReferenceEquals(initial, release), "A throw reused the cached idle grenade pose.");
+        Require(release.MovingTarget != null && PlayerHitbox.Finite(release.WeaponRoot(Launcher).Position),
+            "Runtime grenade projection omitted observed target or weapon-root authority.");
         double seconds = launch.LaunchTick / (double)MatchManifest.TickRate;
         IReadOnlyList<Vector3> expected = content.GrenadeShotTargets!.Place(gesture.WindupClip, seconds, false,
             covers[0].Position, covers[0].Rotation);
@@ -80,7 +163,7 @@ internal static class GrenadeCombatPoseProjectionTests
                 rifle.BodyTarget(identity.TransformFileId).Position,
                 "The position query changed the existing rifle target path.");
         }
-        return 3 + expected.Count + content.PlayerShotTargets.Gameplay.Count;
+        return 4 + expected.Count + content.PlayerShotTargets.Gameplay.Count;
     }
 
     private static int CheckFrame(BattleCombatContent content, string clip, double seconds)

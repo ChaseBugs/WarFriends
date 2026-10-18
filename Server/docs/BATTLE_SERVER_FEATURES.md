@@ -2169,3 +2169,8 @@ admission or hit-authority gate is removed.
 ### Grenade transform evidence checkpoint
 
 The reviewed [grenade rig observation](GRENADE_RIG_OBSERVATION.md) now contains actual root, weapon, and target transforms for 12 clips and 289 frames. All 1,445 target positions exactly match the prior samples, and all 66 weapon bindings and source animation hashes validate. Runtime common-pose integration and delayed-rifle LongShot proof remain open; this data checkpoint does not complete those features.
+
+
+### Grenade observed rig runtime integration
+
+The grenade common combat view now includes observed target rotations, the type-16 moving target, and all 66 weapon roots from the embedded hash-pinned rig observation. It uses the existing grenade float-length 30 Hz sample clock and rigid placement, without inventing skeleton parents or procedural animation. The mixed host can now resolve a previous rifle weapon root while the owner selects a grenade. A delayed lethal rifle projectile and its actual LongShot award still require an end-to-end scenario; this checkpoint does not close that proof or the remaining BattleServer feature list.

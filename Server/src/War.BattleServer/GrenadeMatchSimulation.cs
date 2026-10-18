@@ -111,7 +111,9 @@ internal sealed partial class GrenadeMatchSimulation
 
         IReadOnlyList<Vector3> positions = shotTargets.Place(actor.PoseClip, actor.PoseSeconds, Loops(actor.PoseClip),
             actor.Position, actor.Rotation);
-        PlayerAimPose view = GrenadeCombatPoseProjection.Create(actor.Pose, positions, targetIdentities);
+        PlayerAimPoseDetails details = shotTargets.PoseDetails(actor.PoseClip, actor.PoseSeconds,
+            Loops(actor.PoseClip), actor.Pose.Collision);
+        PlayerAimPose view = GrenadeCombatPoseProjection.Create(actor.Pose, positions, targetIdentities, details);
         actor.CachedCombatFrame = actor.Pose;
         actor.CachedTargetIdentities = targetIdentities;
         actor.CachedCombatView = view;
