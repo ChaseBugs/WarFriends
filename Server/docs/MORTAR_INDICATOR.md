@@ -283,6 +283,21 @@ The private package manifest was restored byte-for-byte after the owned Unity pr
 This proves these primitives only: no EnemyController death, NetworkObjectPool, cosmetic RNG,
 actual combat, Android or original Unity 5.2.5 behavior was executed by this probe.
 
+`MortarCorpseReturnClock` now models the two independently scheduled scaled waits. It consumes
+supplied frame deltas, emits the hide and delayed-return transitions once, and retires permanently
+on forced return. A second wait starts with zero elapsed time on the hide frame; a large first
+frame cannot consume part of that new wait. Accumulation uses double precision rather than the
+soldier controller's separate stored-float `mTime` clock. The native-reference test compares the
+complete callback sequence and ticks in all four captured pause/half-speed/reuse scenarios;
+it also rejects malformed delays/deltas and checks that a resumed wait does not return twice.
+This clock is not yet connected to live corpses, slot release or any Client wire state. Delay
+sampling, source-body ownership, host frame ordering and forced-reclaim application still need
+their integration before this can establish actual battlefield pool parity.
+The final isolated-build indicator group passes 13,284 checks including fifteen new return-clock
+checks; evidence is `Server/.local/mortar-corpse-clock-tests-final.log`. The simultaneously
+running full executable was built at `caa517f2b`, before this clock was added, and must not be
+reported as covering this later class.
+
 Exhaustion is not a recovered queue or automatic corpse-reclaim policy. The original
 `NetworkObjectPool.GetFirstFreeIndex` returns -1 when the free list is empty, and its
 instantiate path returns null. `SoldierParts.AttachWeapons` immediately accesses the returned

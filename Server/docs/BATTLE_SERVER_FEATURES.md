@@ -180,6 +180,9 @@ physical-slot admission, corpse leases and complete gameplay acceptance remain o
 The latest shared-preflight code also passes the complete solution build (zero warnings/errors),
 1,360 protocol assertions and 74 real isolated MongoDB/HTTP/protobuf/UDP smoke checks. Its own
 full Battle run is tracked separately and remains pending.
+The separate corpse-return clock now matches four native wait/cancellation scenarios and
+preserves independent stage waits without carrying frame overshoot. The focused indicator
+group passes 13,284 checks. This clock is not yet a live corpse lease or slot-release hook.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

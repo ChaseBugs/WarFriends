@@ -24,7 +24,7 @@ internal static class MortarWeaponPoolTests
             "The recovered pool lost its exact scene/prefab/capacity identity.");
         checks += CheckSources(directory, root);
         return checks + CheckMixedAllocation(root.GetProperty("capacity").GetInt32()) + CheckRejectedInputs() +
-            CheckStartupSource(directory, root);
+            CheckStartupSource(directory, root) + MortarCorpseReturnClockTests.Run(directory);
     }
 
     private static int CheckStartupSource(string directory, JsonElement root)
