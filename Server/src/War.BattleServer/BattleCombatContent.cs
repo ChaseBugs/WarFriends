@@ -75,6 +75,7 @@ public sealed class BattleCombatContent
     public GunslingerPointCatalog GunslingerPoints { get; private init; } = null!;
     public MortarPointCatalog MortarPoints { get; private init; } = null!;
     internal MortarWeaponSource MortarWeapon { get; private init; } = null!;
+    internal MortarPreparedPoseSource MortarPreparedPose { get; private init; } = null!;
     public ArmyMinigunnerPointCatalog ArmyMinigunnerPoints { get; }
     public PlayerShotTargetCatalog PlayerShotTargets { get; }
     public ArmyNavMeshSourceCatalog ArmyNavMeshes { get; }
@@ -184,6 +185,8 @@ public sealed class BattleCombatContent
         var mortarPoints = MortarPointCatalog.Load(Path.Combine(directory,
             "recovered-mortar-points.json"), maps);
         var mortarWeapon = MortarWeaponSource.Load(Path.Combine(directory, "recovered-mortar-weapon.json"));
+        var mortarPreparedPose = MortarPreparedPoseSource.Load(Path.Combine(directory,
+            "recovered-mortar-prepared-pose.json"));
         var playerShotTargets=PlayerShotTargetCatalog.Load(Path.Combine(directory,"recovered-player-shot-targets.json"),manifest.PlayerShotTargetsRevision,manifest.SceneRevision);
         poses.AttachPlayerShotTargets(playerShotTargets);
         var armyNavMeshes=ArmyNavMeshSourceCatalog.Load(Path.Combine(directory,"recovered-army-navmesh-sources.json"),manifest.ArmyNavMeshSourcesRevision,maps);
@@ -281,6 +284,7 @@ public sealed class BattleCombatContent
             GunslingerPoints = gunslingerPoints,
             MortarPoints = mortarPoints,
             MortarWeapon = mortarWeapon,
+            MortarPreparedPose = mortarPreparedPose,
             AssaultHelicopterWeapons=assaultHelicopterWeapons,
             AssaultHelicopterBoxCollider=assaultHelicopterBoxCollider,
             AssaultHelicopterMeshColliders=assaultHelicopterMeshColliders,

@@ -61,6 +61,7 @@ public sealed partial class MatchEngine
         _mortarConstruction.Remove(entityKey);
         _mortarFacings.Remove(entityKey);
         _mortarAttempts.Remove(entityKey);
+        _mortarDetachedWeapons.Remove(entityKey);
         _mortarWalks.Add(entityKey, new MortarWalk(motion, checked(tick + 1)));
     }
 }

@@ -1120,6 +1120,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             _gunslingerPointCatalog = content.GunslingerPoints;
             _mortarPointCatalog = content.MortarPoints;
             _mortarWeaponSource = content.MortarWeapon;
+            _mortarPreparedPoseSource = content.MortarPreparedPose;
             enemyShotTargets = content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armySpawnPoints=content.ArmySpawnPoints;
@@ -3125,6 +3126,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         grenadeProjectiles.Clear();
         rocketFlights.Clear();
         rocketLaunches.Clear();
+        _mortarDetachedWeapons.Clear();
         grenadierFlights.Clear();
         grenadierLaunches.Clear();
         grenadierExplosions.Clear();

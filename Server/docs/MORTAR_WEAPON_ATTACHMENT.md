@@ -45,19 +45,19 @@ is claimed from these Unity Editor checks.
 
 ## Required before connecting normal gameplay
 
-The current `SelfHostedInfantryPresenter` does not yet invoke this adapter. No new host
-attachment snapshot or protobuf field has been added in this stage. Therefore visible Mortar
-world/hand behavior is still an open integration requirement.
+The current `SelfHostedInfantryPresenter` does not yet invoke this adapter. The subsequent
+[preparation-pose stage](MORTAR_PREPARATION_POSE.md) now captures internal host world-transform
+authority and its hand deadline. No protobuf projection has been added yet, so visible Mortar
+world/hand behavior remains an open integration requirement.
 
 Do not infer the detached world transform from a late `mortar_hide` row and the receiver's
 current hand. The hand may already be sampling another animation phase, and Mortar can retarget
 its body during windup. A reconnect must restore the original captured world pose rather than
-detach at the receiver's current pose. The next stage needs source-backed preparation-pose
-sampling and an authoritative captured transform or an equally complete deterministic
-reconstruction contract, validated through SDK projection, replay and Unity rendering.
+detach at the receiver's current pose. Publish the complete captured transform with SDK
+validation, replay-safe lifetime and normal Unity presentation before closing this boundary.
 
 The existing native coroutine reference observes hand return 34 ticks after preparation for
-`mortar_hide` length 1.1000061 at 30 Hz. It does not prove the exact pre-detachment bone pose or
-the full EnemyController/animation/TweenRotation execution order. Verify those before choosing
-the host capture phase. The target indicator, missile particles/trails, normal two-Unity-player
-gameplay and Android acceptance also remain open.
+`mortar_hide` length 1.1000061 at 30 Hz. The preparation-pose observation now supplies the native
+snap-point pose in both animation-controller orders. Full EnemyController/animation/TweenRotation
+order remains separate from that stripped-rig evidence. The target indicator, missile particles/
+trails, normal two-Unity-player gameplay and Android acceptance also remain open.

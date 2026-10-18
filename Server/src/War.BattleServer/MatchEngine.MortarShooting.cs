@@ -22,6 +22,7 @@ public sealed partial class MatchEngine
 
     private void AdvanceMortarShooting()
     {
+        ReturnMortarWeaponsToHands();
         foreach (var (entityKey, attempt) in _mortarAttempts.OrderBy(row => row.Key).ToArray())
         {
             if (attempt.Target == null || attempt.CompletedTick.HasValue || tick < attempt.PollTick)
@@ -56,6 +57,8 @@ public sealed partial class MatchEngine
 
     private void PrepareMortarShot(ulong entityKey)
     {
+        // FireMortar freezes the weapon before target preparation and its random draws.
+        CaptureMortarWeaponAttachment(entityKey);
         MortarShotTarget? target = SelectMortarShotTarget(entityKey);
         bool isFake = false;
         if (target != null)

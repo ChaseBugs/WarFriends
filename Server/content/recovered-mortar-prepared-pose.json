@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "sourceReferenceSha256": "0caa927c7881476859e59153855dd90e5aa0a4357c758e5a8d221986f8376280",
+  "buildSeconds": 2.0,
+  "sources": [
+    {
+      "source": "Assets/GameObject/enemy.prefab",
+      "sha256": "79b59cb05abd3044c71f653e4bd09bb2bbb7481317d539e9388bc2860e239b94"
+    },
+    {
+      "source": "Assets/GameObject/MortarEnemy.prefab",
+      "sha256": "7b149ab87230ca831bdace965afc9f288e84518b1d749faf93d408a31e48745f"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs",
+      "sha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/FakeRigidBodySwapper.cs",
+      "sha256": "bd579f3a1fec1636499723e81fc06af7a13f358f5ca0b909d3e5170f9a108fca"
+    },
+    {
+      "source": "Assets/AnimationClip/mortar_down.anim",
+      "sha256": "3e9fa70d244344179e09b96b5d8f3aaeafb1ef75beeea1ea2beb7fe76159af47"
+    },
+    {
+      "source": "Assets/AnimationClip/mortar_down_idle.anim",
+      "sha256": "be5d82bd11b328fbf59c321064b21ab0a61f8f682335b9aef52ce5f06e26b24f"
+    },
+    {
+      "source": "Assets/AnimationClip/mortar_hide.anim",
+      "sha256": "1fa2938bc54e1ee17220131a331b6fd9607be19dc130f83a58ca8d9e0327b9a1"
+    },
+    {
+      "source": "Assets/AnimationClip/mortar_up.anim",
+      "sha256": "d7b59b225eb8dbcecda6fcedc099c2d0772490340d6d807095f7e1e5ff0c1464"
+    },
+    {
+      "source": "Assets/UnityMortarPreparationProbe.cs",
+      "sha256": "c4379399af4b18b6d7c37e64b6975cb678703956b826675b8ad9ebf7b1c47405"
+    },
+    {
+      "source": "Assets/UnityMortarBeforeControllerProbe.cs",
+      "sha256": "3328e9baaa3be1ebb431058351d89f58a95ba18d0e754305ccb0dfc00596918d"
+    },
+    {
+      "source": "Assets/Editor/UnityMortarPreparationExport.cs",
+      "sha256": "5c533257bf6d06645b00ec7ca31fb73755b698751df9242c794241eb324ba804"
+    }
+  ],
+  "observations": [
+    {
+      "scenario": "AfterController",
+      "buildTick": 5,
+      "preparedTick": 66,
+      "handReturnTick": 100,
+      "localPosition": [
+        0.06664552,
+        0.136648089,
+        0.248797
+      ],
+      "localRotation": [
+        0.273668468,
+        0.177422047,
+        0.236851513,
+        0.91516614
+      ],
+      "scale": [
+        0.999999464,
+        0.999994338,
+        0.99999404
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.317304641,
+        0.0,
+        0.948323667
+      ],
+      "worldPosition": [
+        3.20295525,
+        -0.113351911,
+        7.15859
+      ],
+      "worldRotation": [
+        0.334680378,
+        0.458639979,
+        0.137775615,
+        0.811576843
+      ]
+    },
+    {
+      "scenario": "AfterController",
+      "buildTick": 305,
+      "preparedTick": 366,
+      "handReturnTick": 400,
+      "localPosition": [
+        0.0666454658,
+        0.136648089,
+        0.24879697
+      ],
+      "localRotation": [
+        0.273668468,
+        0.177422091,
+        0.236851513,
+        0.9151661
+      ],
+      "scale": [
+        0.9999997,
+        0.999994338,
+        0.999994159
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.4539905,
+        0.0,
+        0.8910065
+      ],
+      "worldPosition": [
+        3.2404542,
+        -0.113351911,
+        7.092322
+      ],
+      "worldRotation": [
+        0.351368725,
+        0.573560953,
+        0.08679337,
+        0.73487103
+      ]
+    },
+    {
+      "scenario": "BeforeController",
+      "buildTick": 5,
+      "preparedTick": 66,
+      "handReturnTick": 100,
+      "localPosition": [
+        0.06664552,
+        0.136648089,
+        0.248797
+      ],
+      "localRotation": [
+        0.273668468,
+        0.177422047,
+        0.236851513,
+        0.91516614
+      ],
+      "scale": [
+        0.999999464,
+        0.999994338,
+        0.99999404
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.317304641,
+        0.0,
+        0.948323667
+      ],
+      "worldPosition": [
+        3.20295525,
+        -0.113351911,
+        7.15859
+      ],
+      "worldRotation": [
+        0.334680378,
+        0.458639979,
+        0.137775615,
+        0.811576843
+      ]
+    },
+    {
+      "scenario": "BeforeController",
+      "buildTick": 305,
+      "preparedTick": 366,
+      "handReturnTick": 400,
+      "localPosition": [
+        0.0666454658,
+        0.136648089,
+        0.24879697
+      ],
+      "localRotation": [
+        0.273668468,
+        0.177422091,
+        0.236851513,
+        0.9151661
+      ],
+      "scale": [
+        0.9999997,
+        0.999994338,
+        0.999994159
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.4539905,
+        0.0,
+        0.8910065
+      ],
+      "worldPosition": [
+        3.2404542,
+        -0.113351911,
+        7.092322
+      ],
+      "worldRotation": [
+        0.351368725,
+        0.573560953,
+        0.08679337,
+        0.73487103
+      ]
+    }
+  ]
+}

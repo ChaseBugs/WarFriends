@@ -135,6 +135,13 @@ native-clock reference. The protocol executable passed 1,360 assertions.
 copy resolution and a script-free detach/restore/lifetime adapter. Native transform comparison
 covers all 26 normal upgrade selections. The normal presenter is not yet connected to it:
 captured world-pose authority and replay-safe reconstruction must precede that connection.
+[Preparation-pose authority](MORTAR_PREPARATION_POSE.md) now records actual source animation and
+swapper observations in two controller orders/two cycles, corrects the queued construction clip's
+one-tick idle offset, and captures immutable host world transforms before target selection.
+Body retargeting cannot move that stored pose; hand return, death, relocation and terminal closure
+remove it. Protobuf/SDK projection and normal presentation/reconnect are still open.
+Capture is restricted to the observed 61-tick phase; original accumulated-float clock parity
+at every spawn time/frame rate remains unproven and must not be inferred from this probe.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

@@ -46,14 +46,7 @@ public sealed partial class MatchEngine
                 ("mortar_up", checked(attempt.PreparedTick + shotTicks));
         }
         float downSeconds = enemyPoses.Clip("mortar_down").Length;
-        float elapsedSeconds = (tick - state.EnteredTick) / (float)MatchManifest.TickRate;
-        if (elapsedSeconds < downSeconds)
-        {
-            return ("mortar_down", state.EnteredTick);
-        }
-
-        ulong downTicks = (ulong)MathF.Round(downSeconds * MatchManifest.TickRate);
-        return ("mortar_down_idle", checked(state.EnteredTick + downTicks));
+        return MortarConstructionClock.PoseAt(state.EnteredTick, tick, downSeconds);
     }
 
     private void InitializeMortarNavigation(ulong entityKey)
@@ -151,6 +144,7 @@ public sealed partial class MatchEngine
         _mortarFacings.Remove(entityKey);
         _mortarAttempts.Remove(entityKey);
         _mortarLastShotTicks.Remove(entityKey);
+        _mortarDetachedWeapons.Remove(entityKey);
     }
 
     private sealed record MortarWalk(CardSoldierWalkState Motion, ulong FirstTick);

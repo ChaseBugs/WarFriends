@@ -107,7 +107,9 @@ internal static class MortarShootingTests
         ArmyMortarRuntime current = host.OrdinaryMortarWeapon(entityKey)!;
         checks += Require(frozen.DirectDamage == current.DirectDamage &&
             frozen.ExplosionDamage == current.ExplosionDamage &&
+            host.MortarDetachedWeapon(entityKey)?.PreparedTick == shot.PreparedTick &&
             host.ConfirmArmyDeath(entityKey, false) && host.MortarAttempt(entityKey) == null &&
+            host.MortarDetachedWeapon(entityKey) == null &&
             host.OrdinaryMortarWeapon(entityKey) == null && host.CardRocketLaunchMissile(projectileId) == frozen,
             "Shooter death removed airborne Mortar authority or retained the dead soldier's shot attempt.");
         return checks + CheckImpact(host, projectileId);
