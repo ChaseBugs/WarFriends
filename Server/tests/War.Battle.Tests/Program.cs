@@ -811,7 +811,7 @@ if (args is ["--rifle-engine-only"])
 
 if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-damage-only"] or
     ["--grenadier-moving-only"] or ["--assaulter-navigation-only"] or ["--assaulter-targets-only"] or
-    ["--assaulter-aim-only"] or ["--assaulter-preparation-only"])
+    ["--assaulter-aim-only"] or ["--assaulter-preparation-only"] or ["--assaulter-volley-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);
     while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
@@ -821,6 +821,12 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (directory == null)
     {
         throw new FileNotFoundException("Recovered combat content is absent.");
+    }
+    if (args[0] == "--assaulter-volley-only")
+    {
+        int volleyChecks = AssaulterVolleyTests.Run(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {volleyChecks} normal Assaulter volley checks");
+        return;
     }
     if (args[0] == "--assaulter-preparation-only")
     {
@@ -3596,6 +3602,7 @@ checks += AssaulterNavigationTests.Run(Path.Combine(contentRoot.FullName, "conte
 checks += AssaulterTargetTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += AssaulterAimTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += AssaulterPreparationTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += AssaulterVolleyTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += ArmySpawnCallbackTests.Run();
 checks += GrenadierPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GrenadierPrimaryDamageTests.Run(Path.Combine(contentRoot.FullName, "content"));

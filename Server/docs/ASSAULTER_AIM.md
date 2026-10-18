@@ -53,10 +53,8 @@ Release build has zero warnings/errors. Target-selection checks pass 29, navigat
 pass 19 and combat regression passes 26,395 assertions after this component's initialization and
 cleanup changes. The new tests are registered in the default suite; that complete suite was not rerun.
 
-These aim tests explicitly call CaptureAssaulterAim and the calculation model. The later
-[automatic preparation path](ASSAULTER_PREPARATION.md) now invokes capture when the real Corner
-deadline matures, with separate host verification. It does not yet execute the callback calculation.
-Native queued
-callback muzzle/clock integration, current non-player velocity binding, volley execution,
-projectile/fake-trail launch, damage, complete warm-pose parity, UDP and normal Unity presentation
-remain required. The callback calculation tests are not normal-controller or actual-fire proof.
+These aim tests explicitly call CaptureAssaulterAim and the calculation model. The subsequent
+[automatic volley integration](ASSAULTER_VOLLEYS.md) now executes the scheduled callback using
+the latched position, current target velocity and native queued muzzle. The focused aim tests
+alone remain calculation evidence; actual fire has a separate host fixture. Complete native
+warm-pose parity, vehicle/air targets and normal Unity presentation remain unverified.

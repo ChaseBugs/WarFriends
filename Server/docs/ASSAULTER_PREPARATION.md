@@ -51,8 +51,8 @@ Release build has zero warnings/errors and combat regression passes 26,395 asser
 automatic preparation integration. The new checks are registered in the default suite; that
 complete suite was not rerun.
 
-This schedules a callback; it does not execute it. Source shot-root turning and look/fire/hide
-animation, native queued callback muzzle sampling, shot-start prediction/current non-player
-velocity, real/cosmetic launch, volley completion/cooldown, point changes, damage, UDP and normal
-Unity gameplay remain required. A successful attempt deliberately remains pending at this
-checkpoint. Neither callback metadata nor a pre-rolled real flag is evidence of a fired bullet.
+The subsequent [automatic volley integration](ASSAULTER_VOLLEYS.md) executes this callback,
+samples the queued muzzle, launches real/cosmetic rounds and schedules the next cooldown.
+The preparation checks above remain scoped to selection and scheduling; the separate volley
+fixture verifies actual shots and damage. Point changes, complete warm animation parity,
+vehicle/air target graphs and normal Unity gameplay remain open.

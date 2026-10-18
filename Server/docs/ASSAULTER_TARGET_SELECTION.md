@@ -88,9 +88,7 @@ to the source override. Grenadier's three actual damage scenarios now additional
 latched source Shield position. They pass 23 checks with unchanged damage amounts and impact ticks
 383, 413 and 492 for normal, overtime and Sickness respectively.
 
-A selected vehicle/air entity without an infantry target graph returns no transform; this does
-not select a replacement player. Those source target graphs, live Decoy/Moving/WholeBody fixtures,
-automatic callback prediction and actual Assaulter fire remain incomplete.
-The [preparation scheduler](ASSAULTER_PREPARATION.md) now performs automatic Corner attempts,
-including moving-player acquisition capture, source batch draws and side rejection/retry. It
-plans the callback deadline but does not execute the shot callback or launch a projectile.
+A selected vehicle/air entity without an infantry target graph returns no transform; it does
+not select a replacement player. Those graphs and live Decoy/Moving/WholeBody impact fixtures
+remain incomplete. The [preparation scheduler](ASSAULTER_PREPARATION.md) now feeds the
+[automatic volley path](ASSAULTER_VOLLEYS.md), including real callback execution and shots.

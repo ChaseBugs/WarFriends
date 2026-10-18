@@ -526,7 +526,14 @@ public sealed partial class MatchEngine
             if(!activeArmyEntities.TryGetValue(key,out var army))
                 throw new InvalidDataException("Infantry animation lost its host entity.");
             var clips=ArmyInfantryPosePolicy.For(army.UnitId);string clip=clips.Idle;Vector3? facing=null;
-            if (_assaulterWalks.TryGetValue(key, out var assaulterWalk))
+            ulong? assaulterClipStartTick = null;
+            if (_assaulterVolleys.ContainsKey(key) && AssaulterVolleyFrame(key) is { } assaulterFrame)
+            {
+                var sampledClip = assaulterFrame.Clips.Single();
+                clip = sampledClip.ClipName;
+                assaulterClipStartTick = tick - (ulong)MathF.Round(sampledClip.TimeSeconds * MatchManifest.TickRate);
+            }
+            else if (_assaulterWalks.TryGetValue(key, out var assaulterWalk))
             {
                 clip = clips.Walk;
                 facing = assaulterWalk.Motion.Facing;
@@ -593,6 +600,10 @@ public sealed partial class MatchEngine
                 facing=AttackFacing(key,army,minigunnerAttackTargets);
             }
             animation.Update(clip,facing,tick);
+            if (assaulterClipStartTick.HasValue)
+            {
+                animation.StartTick = assaulterClipStartTick.Value;
+            }
         }
     }
 
@@ -3926,6 +3937,13 @@ public sealed partial class MatchEngine
             Emit(MatchEventKind.Impact,impact.EntityKey.ToString(),
                 impact.Collision.PlayerId??impact.Collision.BonusBoxId??"",
                 impact.ProjectileId,impact.Collision.Position,0,"army");
+            if (launch.UnitId == "ID_UNIT-ASSAULT")
+            {
+                try { ApplyAssaulterEntityImpact(impact, launch); }
+                catch (InvalidDataException) { End("invalid-assaulter-impact", "", false); return; }
+                catch (InvalidOperationException) { End("assaulter-impact-backpressure", "", false); return; }
+                if (Terminal) return;
+            }
             if (impact.Collision.BonusBoxId != null)
             {
                 try { ApplyArmyProjectileBonusImpact(impact, launch.OwnerPlayerId,
@@ -3969,7 +3987,8 @@ public sealed partial class MatchEngine
                     pvpPlayerDamageReceiptId:pvpBonusProgress==null?null:
                         PvpHitReceiptId("army-projectile",impact.ProjectileId,proof.VictimPlayerId),
                     pvpDamageOwner:PvpPlayerDamageOwner.Army);
-                if (result is { Applied: true })
+                // A launched bullet survives its soldier; only a live soldier can later grant a revenge kill.
+                if (result is { Applied: true } && activeArmyEntities.ContainsKey(impact.EntityKey))
                 {
                     MarkArmyRevenge(impact.EntityKey, proof.VictimPlayerId);
                 }

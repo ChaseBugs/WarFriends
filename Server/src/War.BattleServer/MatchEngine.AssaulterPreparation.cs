@@ -3,7 +3,10 @@ using System.Numerics;
 namespace War.BattleServer;
 
 internal sealed record AssaulterCornerAttempt(AssaulterPreparedAim Aim, CoopInfantryShotBatch Batch,
-    ulong NextShotEligibleTick, ulong? CallbackTick);
+    ulong NextShotEligibleTick, ulong? CallbackTick)
+{
+    internal ulong? CompletedTick { get; init; }
+}
 
 public sealed partial class MatchEngine
 {
@@ -20,7 +23,7 @@ public sealed partial class MatchEngine
         foreach (var (entityKey, corner) in _assaulterCorners.OrderBy(row => row.Key))
         {
             AssaulterCornerAttempt? previous = AssaulterAttempt(entityKey);
-            if (previous?.CallbackTick != null)
+            if (_assaulterVolleys.TryGetValue(entityKey, out var volley) && !volley.CompletedTick.HasValue)
             {
                 // A successful preparation remains pending until its callback and
                 // volley complete. A new target must not overwrite that source latch.
@@ -69,5 +72,9 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Assaulter preparation lost its source uncover clip."))
             : null;
         _assaulterAttempts[entityKey] = new AssaulterCornerAttempt(aim, batch, nextTick, callback);
+        if (callback.HasValue)
+        {
+            BeginAssaulterVolley(entityKey, _assaulterAttempts[entityKey], point);
+        }
     }
 }

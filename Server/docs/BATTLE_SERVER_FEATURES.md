@@ -93,8 +93,11 @@ fake speed remains independent. Fourteen focused checks verify these calculation
 movement capture and death cleanup. [Automatic Corner attempts](ASSAULTER_PREPARATION.md) now
 consume real source deadlines, draw/clamp the complete batch before the side gate, retain successful
 latches and reschedule rejected sides. Twenty-four focused checks include actual accepted/rejected
-Park attempts at tick 199 and source retry timing. Callback execution, non-player velocity binding,
-vehicle/air transforms, shot-pose exposure and volley execution remain open.
+Park attempts at tick 199 and source retry timing. [Automatic volleys](ASSAULTER_VOLLEYS.md)
+now execute native-muzzle callbacks, retain current observed root velocity, fire the full source
+batch and reschedule after completion. Fifty-two focused checks verify real/cosmetic rounds,
+Sickness shield damage and actual overtime player damage after the firing soldier dies.
+Vehicle/air target graphs, repeated-volley/warm-pose parity and normal Client integration remain open.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical

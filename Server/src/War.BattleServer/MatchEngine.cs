@@ -1116,6 +1116,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             enemyPoses = content.EnemyPoses;
             enemyMuzzles = content.CoopEnemyMuzzles;
             assaulterWeapon = content.CoopAssaulterWeapon;
+            _assaulterQueue = content.CoopAssaulterQueue;
             enemyShotTargets = content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armySpawnPoints=content.ArmySpawnPoints;
@@ -1757,6 +1758,17 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try {AdvanceGroundVehicleRoutes();}
             catch(InvalidDataException){End("invalid-vehicle-route-authority","",false);return;}
+        }
+        if (advanced && phase == BattlePhase.Running && (activeArmyEntities.Count > 0 || _armyObservedMotion.Count > 0))
+        {
+            try { ObserveArmyRootMotion(); }
+            catch (InvalidDataException) { End("invalid-army-motion-observation", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && _assaulterVolleys.Count > 0)
+        {
+            try { AdvanceAssaulterVolleys(); }
+            catch (InvalidDataException) { End("invalid-assaulter-volley", "", false); return; }
+            if (Terminal) return;
         }
         if(advanced&&phase==BattlePhase.Running&&infantryAnimations.Count>0)
         {

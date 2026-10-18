@@ -39,6 +39,12 @@ internal static class GrenadierPrimaryDamageTests
         return CreateHost(content, map, Scenario.Normal, armyChoice);
     }
 
+    internal static MatchEngine CreateOvertimeShotHost(BattleCombatContent content, RecoveredBattleMap map,
+        Func<int, int> armyChoice)
+    {
+        return CreateHost(content, map, Scenario.Overtime, armyChoice);
+    }
+
     private static MatchEngine CreateHost(BattleCombatContent content, RecoveredBattleMap map, Scenario scenario,
         Func<int, int>? armyChoice = null)
     {
