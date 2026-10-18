@@ -131,6 +131,10 @@ natural fake/Sickness impact fixtures and Android acceptance remain open.
 The complete Battle executable passed 248,560 assertions for this firing/relocation stage;
 the subsequent final firing-focused group passed 119 assertions including the newly pinned
 native-clock reference. The protocol executable passed 1,360 assertions.
+[Mortar weapon attachment](MORTAR_WEAPON_ATTACHMENT.md) now supplies source-identity-preserving
+copy resolution and a script-free detach/restore/lifetime adapter. Native transform comparison
+covers all 26 normal upgrade selections. The normal presenter is not yet connected to it:
+captured world-pose authority and replay-safe reconstruction must precede that connection.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

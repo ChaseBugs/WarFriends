@@ -79,3 +79,7 @@ update/animation order, visible world/hand weapon detach/reattach, the target in
 particle/trail behavior, natural fake-shot and Sickness impact fixtures, and normal two-Unity-player
 gameplay/reconnect plus Android build/runtime acceptance. A shared explosion implementation and
 successful SDK validation do not prove all of those paths.
+
+The next [weapon attachment stage](MORTAR_WEAPON_ATTACHMENT.md) implements and compares the
+script-free detach/restore operations with the original swapper. It is not yet connected to
+normal presentation; reconnect requires a source-backed captured world-pose contract first.

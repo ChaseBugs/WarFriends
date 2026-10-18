@@ -8,13 +8,16 @@ public sealed class SelfHostedInfantryWeaponSet
     private const int MaskWidth = 32;
     private readonly List<GameObject> _roots;
     private readonly uint _allowedMask;
+    private readonly List<Dictionary<Transform, Transform>> _sourceTransforms;
 
     /// <summary>Gets the source-ordered weapon roots without exposing a mutable inventory list.</summary>
     public IReadOnlyList<GameObject> Roots { get; private set; }
 
-    private SelfHostedInfantryWeaponSet(List<GameObject> roots)
+    private SelfHostedInfantryWeaponSet(List<GameObject> roots,
+        List<Dictionary<Transform, Transform>> sourceTransforms)
     {
         _roots = roots;
+        _sourceTransforms = sourceTransforms;
         _allowedMask = roots.Count == MaskWidth ? uint.MaxValue : (1u << roots.Count) - 1u;
         Roots = roots.AsReadOnly();
     }
@@ -54,6 +57,7 @@ public sealed class SelfHostedInfantryWeaponSet
         }
 
         var roots = new List<GameObject>();
+        var sourceTransforms = new List<Dictionary<Transform, Transform>>();
         try
         {
             SoldierParts parts = source.GetComponentInChildren<SoldierParts>(true);
@@ -62,10 +66,10 @@ public sealed class SelfHostedInfantryWeaponSet
                 var root = new GameObject(appearance.WeaponPrefab.name);
                 root.SetActive(false);
                 roots.Add(root);
-                CopyWeapon(parts, visual, appearance, root);
+                sourceTransforms.Add(CopyWeapon(parts, visual, appearance, root));
             }
 
-            var result = new SelfHostedInfantryWeaponSet(roots);
+            var result = new SelfHostedInfantryWeaponSet(roots, sourceTransforms);
             result.ApplyVisibleMask(visibleMask);
             return result;
         }
@@ -109,7 +113,19 @@ public sealed class SelfHostedInfantryWeaponSet
         }
     }
 
-    private static void CopyWeapon(SoldierParts parts, SelfHostedInfantryVisual visual,
+    /// <summary>Resolves original identities even after held-state restoration reparents the copied snap point.</summary>
+    public Transform ResolveSource(int weaponIndex, Transform source)
+    {
+        Transform copy;
+        if (weaponIndex < 0 || weaponIndex >= _sourceTransforms.Count || source == null ||
+            !_sourceTransforms[weaponIndex].TryGetValue(source, out copy) || copy == null)
+        {
+            throw new InvalidOperationException("The source transform is absent from this copied weapon.");
+        }
+        return copy;
+    }
+
+    private static Dictionary<Transform, Transform> CopyWeapon(SoldierParts parts, SelfHostedInfantryVisual visual,
         SelfHostedInfantryWeaponAppearance appearance, GameObject root)
     {
         if (parts == null)
@@ -131,6 +147,7 @@ public sealed class SelfHostedInfantryWeaponSet
         root.transform.localScale = Vector3.one;
         RestoreHeldState(appearance.WeaponPrefab, copies);
         appearance.ApplyTo(root.transform, copies);
+        return copies;
     }
 
     private static void RestoreHeldState(Weapon prefab, Dictionary<Transform, Transform> copies)
