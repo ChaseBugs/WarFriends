@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "normalCases": 2,
+  "eliteCases": 2,
+  "presenterChecks": 4,
+  "sourceHashes": {
+    "Assets/Scripts/Assembly-CSharp/SelfHostedGunslingerWeaponAttachment.cs": "094f7fb8b0a5eacaef59e5e5f7e700ccb1beaba95295aa890fe7d83277a56413",
+    "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryWeaponAppearance.cs": "6bc6a12dfd3e72597b9a44b1be0192e473c7e34ec3c5ab247036ddb17410fc04",
+    "Assets/Scripts/Assembly-CSharp/SelfHostedVisualHierarchy.cs": "bfdf780729a3185cfbddc797fc31c1da850c524c9a4c6d65622f09c9ac5f3a0e",
+    "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryVisualFactory.cs": "fa43f8f61826f059a6631bf2d2fed4d9e6cc2c3818f1e328713c61bcbd37179a",
+    "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryVisual.cs": "9e8e61c4ab5d577001a3f3db9c25d22276f286c8981d81b5c45eee36ed310a22",
+    "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryPresenter.cs": "8ef7088399dfa30ee7b7df8d1b633c4c964a728fc9b6c2d22b8e6bf2395e995f",
+    "Assets/Scripts/Assembly-CSharp/SelfHostedRiflePoseRenderer.cs": "d748d5b444b9461029140d9222b765f6294f43e0b58928c5a4cd0c1b21faee2d",
+    "Assets/Plugins/WarFriends.Networking/War.Shared.dll": "c9fc576ec4d1f03f9b5a66fd150f0cf4eecf44716118f3491c0725a99f83f4ed",
+    "Assets/Plugins/WarFriends.Networking/War.Client.dll": "2f994c419b59c650959db892ed4df429ae002811341949304ab184093c0b6470",
+    "Assets/Scripts/Assembly-CSharp/FakeRigidBodySwapper.cs": "bd579f3a1fec1636499723e81fc06af7a13f358f5ca0b909d3e5170f9a108fca",
+    "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs": "d3da6f858f06c325ace44acb654163df0a47ed6c278b36b3b559c2801d03dccd",
+    "Assets/Scripts/Assembly-CSharp/UpgradeSlotsBaseSoldier.cs": "976d1f5086a1712f8e728546ff9b48c688c356d3580710cc757609ff7700378a",
+    "Assets/Scripts/Assembly-CSharp/UpgradeSlotsGunslicer.cs": "3784e133a1181e430372500248205d226bf3036a7edfb8de29f1cd37fa4675b3",
+    "Assets/Scripts/Assembly-CSharp/SoldierParts.cs": "c38466c5175bda0bb6da7df6d18d3d1c20ab2706c293142b5b1e15a2eee02b0f",
+    "Assets/Scripts/Assembly-CSharp/SpawningManager.cs": "b9e2e8c3c5f3b74130274fc20f68185ae71b1270412e266989072d99f6d7953b",
+    "Assets/Plugins/Assembly-CSharp-firstpass/SkinnedMeshTools.cs": "33be61abb4e1e358d353c44d03e50f8ad7d19bfdad394c310d7d5bec1625474f",
+    "Assets/GameObject/enemy.prefab": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+    "Assets/GameObject/AssaultRifleEnemy.prefab": "a55f77d5fc32e948951805b01e13c9193cf852171ec842a2caa6ad3338239de2",
+    "Assets/Scenes/MainScene.unity": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+    "Assets/Editor/UnityGunslingerWeaponAttachmentAudit.cs": "fe9e7e59dbbff5181a2bd4e621d5da27c73a5325cd7abc357ca80d64f31a2365",
+    "Assets/UnityGunslingerReferenceSwapper.cs": "dd47d97ef5a3d39d6702bf6c81de6845f415c69d6360cc66424b55f38883db44"
+  },
+  "cases": [
+    {
+      "Level": 0,
+      "IsElite": false,
+      "ModelNumber": 25,
+      "ResourcePath": "Weapons/Pistol_Gunslinger/gunslinger",
+      "modelPrefab": "Assets/Resources/weapons/pistol_gunslinger/gunslinger.prefab",
+      "modelPrefabSha256": "6bb439638d4eafda745f90f02ab1530aededbecbe6f610d5cfb6253e4cf893c4",
+      "mesh": "Assets/Mesh/gunslinger_weapon.asset",
+      "meshSha256": "907acb65ed8492a963b0c27b45f5aa299031bc39ebb5af604003455b87954fae",
+      "material": "Assets/Material/gunslinger_mat.mat",
+      "materialSha256": "aae36eecf1ab721d732afa5d03fe2e709f4083506108476bd66ceceefe84ae03",
+      "hand": [
+        0.240372211,
+        0.2026555,
+        -0.00880023651
+      ],
+      "holster": [
+        0.06957358,
+        0.137895077,
+        -0.0286325347
+      ]
+    },
+    {
+      "Level": 1,
+      "IsElite": false,
+      "ModelNumber": 25,
+      "ResourcePath": "Weapons/Pistol_Gunslinger/gunslinger",
+      "modelPrefab": "Assets/Resources/weapons/pistol_gunslinger/gunslinger.prefab",
+      "modelPrefabSha256": "6bb439638d4eafda745f90f02ab1530aededbecbe6f610d5cfb6253e4cf893c4",
+      "mesh": "Assets/Mesh/gunslinger_weapon.asset",
+      "meshSha256": "907acb65ed8492a963b0c27b45f5aa299031bc39ebb5af604003455b87954fae",
+      "material": "Assets/Material/gunslinger_mat.mat",
+      "materialSha256": "aae36eecf1ab721d732afa5d03fe2e709f4083506108476bd66ceceefe84ae03",
+      "hand": [
+        0.240372211,
+        0.2026555,
+        -0.00880023651
+      ],
+      "holster": [
+        0.06957358,
+        0.137895077,
+        -0.0286325347
+      ]
+    },
+    {
+      "Level": 0,
+      "IsElite": true,
+      "ModelNumber": 25,
+      "ResourcePath": "Weapons/Pistol_Gunslinger/gunslinger",
+      "modelPrefab": "Assets/Resources/weapons/pistol_gunslinger/gunslinger.prefab",
+      "modelPrefabSha256": "6bb439638d4eafda745f90f02ab1530aededbecbe6f610d5cfb6253e4cf893c4",
+      "mesh": "Assets/Mesh/gunslinger_weapon.asset",
+      "meshSha256": "907acb65ed8492a963b0c27b45f5aa299031bc39ebb5af604003455b87954fae",
+      "material": "Assets/Material/gunslinger_mat.mat",
+      "materialSha256": "aae36eecf1ab721d732afa5d03fe2e709f4083506108476bd66ceceefe84ae03",
+      "hand": [
+        0.240372211,
+        0.2026555,
+        -0.00880023651
+      ],
+      "holster": [
+        0.06957358,
+        0.137895077,
+        -0.0286325347
+      ]
+    },
+    {
+      "Level": 1,
+      "IsElite": true,
+      "ModelNumber": 25,
+      "ResourcePath": "Weapons/Pistol_Gunslinger/gunslinger",
+      "modelPrefab": "Assets/Resources/weapons/pistol_gunslinger/gunslinger.prefab",
+      "modelPrefabSha256": "6bb439638d4eafda745f90f02ab1530aededbecbe6f610d5cfb6253e4cf893c4",
+      "mesh": "Assets/Mesh/gunslinger_weapon.asset",
+      "meshSha256": "907acb65ed8492a963b0c27b45f5aa299031bc39ebb5af604003455b87954fae",
+      "material": "Assets/Material/gunslinger_mat.mat",
+      "materialSha256": "aae36eecf1ab721d732afa5d03fe2e709f4083506108476bd66ceceefe84ae03",
+      "hand": [
+        0.240372211,
+        0.2026555,
+        -0.00880023651
+      ],
+      "holster": [
+        0.06957358,
+        0.137895077,
+        -0.0286325347
+      ]
+    }
+  ],
+  "previewImages": {
+    "gunslinger-hand.png": "9f005dd015d748096e0c5c80a83a117150b2347189707c8a6e397cdff43d5561",
+    "gunslinger-holstered.png": "e0255c6ff1dcf07498d42ac37062c1db64e4023d8503969ffe16ce7c70ab8271"
+  }
+}

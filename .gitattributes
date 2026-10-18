@@ -210,3 +210,25 @@ Server/tools/UnityInitialTurretFixture.cs text eol=lf
 Server/tools/UnityInitialTurretLoadingAudit.cs text eol=lf
 Server/tools/UnityResourceScopeFailureAudit.cs text eol=lf
 Server/tools/UnityResourceExecutionFailureAudit.cs text eol=lf
+
+# Native Gunslinger weapon presentation evidence.
+Clients/ExportedProject/Assets/Material/gunslinger_mat.mat text eol=lf
+Clients/ExportedProject/Assets/Mesh/gunslinger_weapon.asset text eol=lf
+Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/SkinnedMeshTools.cs text eol=crlf
+Clients/ExportedProject/Assets/Resources/weapons/pistol_gunslinger/gunslinger.prefab text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedGunslingerWeaponAttachment.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryPresenter.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryVisual.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryVisualFactory.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryWeaponAppearance.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedRiflePoseRenderer.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedVisualHierarchy.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SpawningManager.cs text eol=crlf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/UpgradeSlotsBaseSoldier.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/UpgradeSlotsGunslicer.cs text eol=crlf
+Server/content/gunslinger-weapon-presenter-unity-reference.json text eol=lf
+Server/docs/GUNSLINGER_WEAPON_PRESENTATION.md text eol=lf
+Server/tools/UnityGunslingerReferenceSwapper.cs text eol=lf
+Server/tools/UnityGunslingerWeaponAttachmentAudit.cs text eol=lf
+Server/tools/verify_gunslinger_weapon_presenter.py text eol=lf

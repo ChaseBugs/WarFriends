@@ -8,6 +8,9 @@ public sealed class SelfHostedInfantryWeaponAppearance
     private const int WeaponVisualIndex = 2;
     private const int PrimaryWeaponIndex = 0;
 
+    /// <summary>Gets the recovered family identity that owns this appearance selection.</summary>
+    public string UnitId { get; private set; }
+
     /// <summary>Gets the recovered inventory weapon used for hierarchy attachment.</summary>
     public Weapon WeaponPrefab { get; private set; }
 
@@ -40,14 +43,52 @@ public sealed class SelfHostedInfantryWeaponAppearance
             throw new ArgumentOutOfRangeException("upgrades");
         }
 
-        return Resolve(family.GetComponent<EnemyBasicInventory>().weapons, family.upgradeSlots.GetVisuals(upgrades));
+        return ResolveForFamily(family, family.GetComponent<EnemyBasicInventory>().weapons,
+            family.upgradeSlots.GetVisuals(upgrades));
+    }
+
+    /// <summary>Resolves the ordinary Gunslinger weapon through its recovered visual upgrade lane.</summary>
+    public static SelfHostedInfantryWeaponAppearance ResolveOrdinary(
+        SoldierBehaviourGunslinger family, UpgradeSlots.UnitUpgrades upgrades)
+    {
+        ValidateFamily(family);
+        if (family.unitDictionaryId != "ID_UNIT-GUNSLINGER" || upgrades.slotUpgradeindex < 0)
+        {
+            throw new ArgumentException("A recovered Gunslinger family and nonnegative visual level are required.");
+        }
+
+        return ResolveForFamily(family, family.GetComponent<EnemyBasicInventory>().weapons,
+            family.upgradeSlots.GetVisuals(upgrades));
+    }
+
+    /// <summary>Resolves the source-constant Gunslinger model without inventing an untransmitted upgrade level.</summary>
+    public static SelfHostedInfantryWeaponAppearance ResolveGunslinger(SoldierBehaviourGunslinger family)
+    {
+        ValidateFamily(family);
+        UpgradeSlotsGunslicer slots = family.upgradeSlots as UpgradeSlotsGunslicer;
+        if (slots == null || slots.visualsWeapon == null || slots.eliteVisualsWeapon == null ||
+            slots.visualsWeapon.Count != 1 || slots.eliteVisualsWeapon.Count != 1)
+        {
+            throw new InvalidOperationException("Gunslinger presentation requires the recovered constant weapon lanes.");
+        }
+
+        TechnologyVisualDefinition normal = slots.visualsWeapon[0];
+        TechnologyVisualDefinition elite = slots.eliteVisualsWeapon[0];
+        if (normal == null || elite == null || normal.level != 0 || elite.level != 0 ||
+            normal.weaponNumber != elite.weaponNumber)
+        {
+            throw new InvalidOperationException("Variable Gunslinger weapon visuals require explicit upgrade authority.");
+        }
+
+        return ResolveOrdinary(family, new UpgradeSlots.UnitUpgrades { slotUpgradeindex = 0 });
     }
 
     /// <summary>Resolves card appearance from its fixed source lane, independent of card combat scaling.</summary>
     public static SelfHostedInfantryWeaponAppearance ResolveCard(SoldierBehaviourAssaulter family)
     {
         ValidateFamily(family);
-        return Resolve(family.GetComponent<EnemyBasicInventory>().cardWeapons, family.upgradeSlots.cardVisuals);
+        return ResolveForFamily(family, family.GetComponent<EnemyBasicInventory>().cardWeapons,
+            family.upgradeSlots.cardVisuals);
     }
 
     /// <summary>Applies the recovered model replacement to a script-free copy of this weapon hierarchy.</summary>
@@ -61,7 +102,7 @@ public sealed class SelfHostedInfantryWeaponAppearance
             throw new ArgumentException("A matching copied source weapon hierarchy is required.");
         }
 
-        Transform target = ResolveCopy(WeaponPrefab.transform, leveled.weaponRenderer.transform, copiedWeapon);
+        Transform target = SelfHostedVisualHierarchy.ResolveCopy(WeaponPrefab.transform, leveled.weaponRenderer.transform, copiedWeapon);
         MeshFilter filter = target.GetComponent<MeshFilter>();
         MeshRenderer renderer = target.GetComponent<MeshRenderer>();
         if (filter == null || renderer == null || Model == null || Model.pivot == null)
@@ -77,48 +118,20 @@ public sealed class SelfHostedInfantryWeaponAppearance
         target.localScale = Scale;
     }
 
-    private static Transform ResolveCopy(Transform sourceRoot, Transform sourceTarget, Transform copiedRoot)
-    {
-        var indexes = new Stack<int>();
-        Transform current = sourceTarget;
-        while (current != sourceRoot)
-        {
-            if (current == null)
-            {
-                throw new InvalidOperationException("The model renderer is outside its source weapon.");
-            }
-
-            indexes.Push(current.GetSiblingIndex());
-            current = current.parent;
-        }
-
-        Transform source = sourceRoot;
-        Transform copy = copiedRoot;
-        while (indexes.Count > 0)
-        {
-            int index = indexes.Pop();
-            if (copy.childCount != source.childCount || index >= copy.childCount)
-            {
-                throw new InvalidOperationException("The copied weapon renderer path is incomplete.");
-            }
-
-            source = source.GetChild(index);
-            copy = copy.GetChild(index);
-            if (source.name != copy.name)
-            {
-                throw new InvalidOperationException("The copied weapon renderer identity differs from its source.");
-            }
-        }
-
-        return copy;
-    }
-
-    private static void ValidateFamily(SoldierBehaviourAssaulter family)
+    private static void ValidateFamily(SoldierBehaviour family)
     {
         if (family == null || family.upgradeSlots == null || family.GetComponent<EnemyBasicInventory>() == null)
         {
-            throw new ArgumentException("A recovered Assaulter family, inventory and upgrade visuals are required.");
+            throw new ArgumentException("A recovered infantry family, inventory and upgrade visuals are required.");
         }
+    }
+
+    private static SelfHostedInfantryWeaponAppearance ResolveForFamily(SoldierBehaviour family,
+        List<EnemyBasicInventory.InventoryWeapon> inventory, List<TechnologyVisualDefinition> visuals)
+    {
+        SelfHostedInfantryWeaponAppearance appearance = Resolve(inventory, visuals);
+        appearance.UnitId = family.unitDictionaryId;
+        return appearance;
     }
 
     private static SelfHostedInfantryWeaponAppearance Resolve(
@@ -128,7 +141,7 @@ public sealed class SelfHostedInfantryWeaponAppearance
             inventory[PrimaryWeaponIndex].weapon == null || visuals == null ||
             visuals.Count <= WeaponVisualIndex || visuals[WeaponVisualIndex] == null)
         {
-            throw new InvalidOperationException("The supported Assaulter appearance requires one source weapon.");
+            throw new InvalidOperationException("The supported infantry appearance requires one source weapon.");
         }
 
         EnemyBasicInventory.InventoryWeapon selected = inventory[PrimaryWeaponIndex];

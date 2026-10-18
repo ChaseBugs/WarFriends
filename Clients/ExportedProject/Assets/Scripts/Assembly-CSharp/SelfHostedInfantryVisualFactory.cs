@@ -62,6 +62,8 @@ public static class SelfHostedInfantryVisualFactory
             rig.transform.SetParent(root.transform, false);
             var copies = new Dictionary<Transform, Transform>();
             SelfHostedVisualHierarchy.CopyRoot(source.transform, rig.transform, copies);
+            // SpawningManager.Spawn and SpawnAIObjectRPC reset the pooled source root scale.
+            rig.transform.localScale = Vector3.one;
             Transform weaponRoot = null;
             if (selectedWeapon != null)
             {
@@ -147,15 +149,10 @@ public static class SelfHostedInfantryVisualFactory
         SoldierMeshChanger.SoldierStyle style, Dictionary<Transform, Transform> copies)
     {
         SkinnedMeshRenderer body = copies[source.transform].gameObject.AddComponent<SkinnedMeshRenderer>();
-        body.sharedMesh = style.modelMeshRenderer.sharedMesh;
-        body.sharedMaterials = style.modelMeshRenderer.sharedMaterials;
-        var bones = new Transform[source.bones.Length];
-        for (int index = 0; index < bones.Length; index++)
-        {
-            bones[index] = copies[source.bones[index]];
-        }
-
-        body.bones = bones;
+        // ChangeSkins retains the destination material and resolves the selected model's
+        // bone order by name. Model-prefab materials and template bone order are not substitutes.
+        body.sharedMaterials = source.sharedMaterials;
+        SkinnedMeshTools.ChangeSkins(style.modelMeshRenderer, body);
         body.rootBone = copies[source.rootBone];
         body.localBounds = source.localBounds;
         body.updateWhenOffscreen = source.updateWhenOffscreen;

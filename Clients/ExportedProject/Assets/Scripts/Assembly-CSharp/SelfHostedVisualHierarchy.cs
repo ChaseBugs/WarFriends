@@ -28,6 +28,48 @@ public static class SelfHostedVisualHierarchy
         }
     }
 
+    /// <summary>Resolves a copied transform by its complete source sibling/name path.</summary>
+    public static Transform ResolveCopy(Transform sourceRoot, Transform sourceTarget, Transform copiedRoot)
+    {
+        if (sourceRoot == null || sourceTarget == null || copiedRoot == null)
+        {
+            throw new ArgumentException("A source root, source target and copied root are required.");
+        }
+
+        var indexes = new Stack<int>();
+        Transform current = sourceTarget;
+        while (current != sourceRoot)
+        {
+            if (current == null)
+            {
+                throw new InvalidOperationException("The model renderer is outside its source weapon.");
+            }
+
+            indexes.Push(current.GetSiblingIndex());
+            current = current.parent;
+        }
+
+        Transform source = sourceRoot;
+        Transform copy = copiedRoot;
+        while (indexes.Count > 0)
+        {
+            int index = indexes.Pop();
+            if (copy.childCount != source.childCount || index >= copy.childCount)
+            {
+                throw new InvalidOperationException("The copied weapon renderer path is incomplete.");
+            }
+
+            source = source.GetChild(index);
+            copy = copy.GetChild(index);
+            if (source.name != copy.name)
+            {
+                throw new InvalidOperationException("The copied weapon renderer identity differs from its source.");
+            }
+        }
+
+        return copy;
+    }
+
     private static void CopyRenderer(Transform source, Transform destination)
     {
         MeshFilter sourceFilter = source.GetComponent<MeshFilter>();

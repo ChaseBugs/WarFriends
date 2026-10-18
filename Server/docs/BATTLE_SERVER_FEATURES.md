@@ -96,8 +96,10 @@ point, transfer exclusive occupancy, walk there, restore attempt counters and fi
 on all five maps. Empty-list/no-draw and released-candidate behavior are checked separately without
 bypassing the normal two-unit limit. [Holster lifecycle](GUNSLINGER_HOLSTER.md) now publishes the
 source spawn/arrival/one-second-after-final-shot state through protobuf field 45 and the portable
-SDK, with native coroutine timing and live lifecycle checks. Visible weapon/snapPoint binding,
-moving-victim/native blend proof and normal Client presentation remain open.
+SDK, with native coroutine timing and live lifecycle checks.
+[Weapon presentation](GUNSLINGER_WEAPON_PRESENTATION.md) now selects source model 25 and binds its
+snapPoint to the copied hand/holster sockets, with native source-method and decoded-roster checks.
+Moving-victim/native blend proof, body/team textures and normal battle-controller integration remain open.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

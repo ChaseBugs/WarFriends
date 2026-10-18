@@ -55,11 +55,10 @@ Protocol tests pass 1,360 checks. Native Windows MongoDB/HTTP/protobuf/UDP smoke
 with independent clients and restart/replay coverage. Live UDP roster regression passes 21 checks,
 and shared combat regression passes 26,395 assertions. The solution builds with zero warnings/errors.
 
-Visible holstering remains incomplete. SelfHostedInfantryPresenter's current default creation
-path copies a body without selecting a weapon. Its existing appearance resolver is Assaulter-specific.
-A reviewed Gunslinger inventory/model selection and script-free snapPoint/coltSnap binding must
-be connected before this flag can display the actual source weapon. This checkpoint updates the
-Server, protocol and SDK, not that renderer or normal battle-controller wiring. Unity scene/prefab
-identities and the owner's concurrent library changes are preserved. Linux runtime, original-Unity
-validation and the full default Battle suite were not rerun. See the
-[feature checklist](BATTLE_SERVER_FEATURES.md).
+The subsequent [weapon presentation integration](GUNSLINGER_WEAPON_PRESENTATION.md) selects the
+source-constant model and connects this flag to script-free snapPoint/coltSnap binding. Its native
+audit verifies four source selections, twelve attachment comparisons and four decoded presenter
+checks. This does not establish normal battle-controller wiring, complete body/team textures or
+full gameplay. Unity scene/prefab identities and the owner's concurrent library changes are
+preserved. Linux runtime, original-Unity validation and the full default Battle suite were not
+rerun. See the [feature checklist](BATTLE_SERVER_FEATURES.md).

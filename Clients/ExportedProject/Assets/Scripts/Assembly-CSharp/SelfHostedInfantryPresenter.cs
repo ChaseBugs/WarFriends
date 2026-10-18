@@ -21,6 +21,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public bool CanopyAttached;
         public float CanopyExpiryAt;
         public Material CanopyLandingMaterial;
+        public SelfHostedGunslingerWeaponAttachment GunslingerAttachment { get; set; }
     }
 
     private sealed class RetiredCanopy
@@ -202,8 +203,11 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             !Finite(row.Health) || row.Health <= 0 || row.Health > row.MaxHealth ||
             !Finite(row.MaxKevlar) || row.MaxKevlar < 0 ||
             !Finite(row.Kevlar) || row.Kevlar < 0 || row.Kevlar > row.MaxKevlar ||
-            !ValidParachute(row))
+            !ValidParachute(row) ||
+            (row.IsColtHolstered && (row.UnitId != "ID_UNIT-GUNSLINGER" || row.SourceCardId.Length != 0)))
+        {
             throw new InvalidOperationException("Invalid authoritative infantry visual state.");
+        }
     }
 
     private static bool ValidParachute(BattleArmyEntityState row)
@@ -240,15 +244,50 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             throw new InvalidOperationException("Recovered infantry card style is absent.");
         int styleIndex = (int)(row.EntityKey % (ulong)styles.Count);
         var style = styles[styleIndex];
-        SelfHostedInfantryVisual model = SelfHostedInfantryVisualFactory.Create(source, style,
-            "SelfHostedInfantry_" + row.EntityKey);
+        string rootName = "SelfHostedInfantry_" + row.EntityKey;
+        SelfHostedGunslingerWeaponAttachment attachment = null;
+        SelfHostedInfantryVisual model;
+        if (row.UnitId == "ID_UNIT-GUNSLINGER" && row.SourceCardId.Length == 0)
+        {
+            model = CreateGunslingerModel(soldier, style, rootName, out attachment);
+        }
+        else
+        {
+            model = SelfHostedInfantryVisualFactory.Create(source, style, rootName);
+        }
         model.Root.SetActive(true);
         return new Visual
         {
             Root = model.Root,
             Motion = new SelfHostedRemoteTransformBuffer(),
-            AnimationRoot = model.AnimationRoot
+            AnimationRoot = model.AnimationRoot,
+            GunslingerAttachment = attachment
         };
+    }
+
+    private SelfHostedInfantryVisual CreateGunslingerModel(SoldierBehaviour soldier,
+        SoldierMeshChanger.SoldierStyle style, string rootName, out SelfHostedGunslingerWeaponAttachment attachment)
+    {
+        SoldierBehaviourGunslinger family = soldier as SoldierBehaviourGunslinger;
+        if (family == null)
+        {
+            throw new InvalidOperationException("Gunslinger presentation lost its recovered family type.");
+        }
+
+        SelfHostedInfantryWeaponAppearance appearance = SelfHostedInfantryWeaponAppearance.ResolveGunslinger(family);
+        SelfHostedInfantryVisual model = SelfHostedInfantryVisualFactory.CreateWithAppearance(
+            source, style, appearance, rootName);
+        try
+        {
+            attachment = SelfHostedGunslingerWeaponAttachment.Bind(source, appearance, model);
+            return model;
+        }
+        catch
+        {
+            // A rejected attachment must not leak a partly constructed actor into the next snapshot.
+            DestroyVisual(model.Root);
+            throw;
+        }
     }
 
     private void UpdateVisual(Visual visual, BattleArmyEntityState row)
@@ -275,7 +314,25 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             (float)((serverTick - visual.ClipStartTick) / 30.0) : 0f;
         visual.ReceivedAt = Time.realtimeSinceStartup;
         UpdateCanopy(visual, row, serverTick);
+        ApplyWeaponAttachment(visual, row);
         Sample(visual, visual.SecondsAtReceive);
+    }
+
+    private static void ApplyWeaponAttachment(Visual visual, BattleArmyEntityState row)
+    {
+        if (visual.GunslingerAttachment == null)
+        {
+            return;
+        }
+
+        if (row.IsColtHolstered)
+        {
+            visual.GunslingerAttachment.Holster();
+        }
+        else
+        {
+            visual.GunslingerAttachment.Draw();
+        }
     }
 
     private void UpdateCanopy(Visual visual, BattleArmyEntityState row,
