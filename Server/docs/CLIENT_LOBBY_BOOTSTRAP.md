@@ -308,3 +308,12 @@ quantity/corruption and card-pack concurrency checks also pass. Build evidence i
 `Server/.local/allocation-prepare-build.log`, zero warnings/errors. This is not yet registered
 in queue admission. Concurrent preparation/account mutation and coherent manifest publication
 still need executable scenarios before the normal route is enabled.
+
+The forced account-mutation scenario now passes in the full inventory Mongo suite at
+`account-race-tests.log` in that evidence directory, exit zero. The test pauses the pure
+projection after reading two owned cards, commits an empty card inventory through the normal
+account store, and releases preparation. The transaction rejects the old revision without an
+allocation or an additional account revision. A fresh preparation then publishes zero cards.
+This exercises an actual Mongo write conflict/retry boundary, not a sequential stale-read check.
+Build evidence is `Server/.local/allocation-account-race-build.log`, zero warnings/errors.
+Queue wiring and coherent paired manifest publication remain open.
