@@ -1,4 +1,4 @@
-"""Extract the four observed preparation poses without sampling an invented animation phase."""
+"""Extract observed absolute/accumulated-clock poses without inventing an animation phase."""
 
 import gzip
 import hashlib
@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-REFERENCE = ROOT / "Server/content/mortar-preparation-unity-reference.json.gz"
+REFERENCE = ROOT / "Server/content/mortar-accumulated-unity-reference.json.gz"
 OUTPUT = ROOT / "Server/content/recovered-mortar-prepared-pose.json"
-REVISION = "0caa927c7881476859e59153855dd90e5aa0a4357c758e5a8d221986f8376280"
+REVISION = "98346fe6745e76eed3dd1016c6fdab810941cebcefe8b5f65d62ecd505c7cd14"
 
 
 def extract():
@@ -35,7 +35,7 @@ def extract():
                 "rootRotation": prepared["rootRotation"], "worldPosition": prepared["snapPosition"],
                 "worldRotation": prepared["snapRotation"],
             })
-    if len(observations) != 4:
+    if len(observations) != 8:
         raise ValueError("Native Mortar preparation cases are incomplete")
     return {"version": 1, "sourceReferenceSha256": REVISION, "buildSeconds": 2.0,
             "sources": report["sources"], "observations": observations}

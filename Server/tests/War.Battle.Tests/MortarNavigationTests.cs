@@ -106,9 +106,10 @@ internal static class MortarNavigationTests
             ? entity.InfantryClip is "mortar_down" or "mortar_down_idle"
             : attempt.PreparedTick >= state.FirstFireEligibleTick &&
                 entity.InfantryClip is "mortar_hide" or "mortar_up";
+        ulong buildTicks = state.FirstFireEligibleTick - state.EnteredTick;
+        ulong minimumBuildTicks = (ulong)(SourceBuildSeconds * MatchManifest.TickRate);
         int checks = Require(Vector2.Distance(new(entity.X, entity.Z), new(point.Position.X, point.Position.Z)) <
-            ArrivalDistance && state.FirstFireEligibleTick == state.EnteredTick +
-                (ulong)(SourceBuildSeconds * MatchManifest.TickRate) + 1 &&
+            ArrivalDistance && buildTicks >= minimumBuildTicks && buildTicks <= minimumBuildTicks + 1 &&
             hasExpectedPose,
             "Mortar stopped outside the authored arrival or lost the strict source construction deadline.");
         checks += Require(host.ConfirmArmyDeath(entity.EntityKey, false) &&

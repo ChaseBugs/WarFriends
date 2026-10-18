@@ -30,6 +30,13 @@ public static class BattleTerminalPolicy
         "invalid-vehicle-projectile-authority", "invalid-vehicle-route-authority",
         "invalid-assault-helicopter-projectile-authority",
         "invalid-assault-helicopter-route-authority",
+        "invalid-assaulter-impact", "invalid-assaulter-navigation", "invalid-assaulter-preparation",
+        "invalid-assaulter-volley", "invalid-assaulter-point-change",
+        "invalid-gunslinger-navigation", "invalid-gunslinger-preparation", "invalid-gunslinger-shot",
+        "invalid-gunslinger-holster", "invalid-gunslinger-point-change",
+        "invalid-mortar-controller-time", "invalid-mortar-navigation", "invalid-mortar-shooting",
+        "invalid-army-motion-observation", "invalid-grenadier-weapon-return",
+        "assaulter-impact-backpressure", "assaulter-shot-backpressure", "gunslinger-shot-backpressure",
         "army-event-backpressure", "source-kill-backpressure",
         "pvp-score-backpressure",
         "overtime-event-backpressure"

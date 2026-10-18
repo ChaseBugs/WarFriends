@@ -44,7 +44,7 @@ internal static class MortarPreparationReferenceTests
             float.NaN, hideSeconds));
         checks += Reject(() => content.MortarPreparedPose.Capture(66, (5, Vector3.Zero, Vector3.UnitZ),
             NativeBuildSeconds, float.NaN));
-        checks += Reject(() => content.MortarPreparedPose.Capture(65, (5, Vector3.Zero, Vector3.UnitZ),
+        checks += Reject(() => content.MortarPreparedPose.Capture(64, (5, Vector3.Zero, Vector3.UnitZ),
             NativeBuildSeconds, hideSeconds));
         return checks;
     }

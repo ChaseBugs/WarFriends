@@ -1659,6 +1659,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceAssaulterPreparations(); }
             catch (InvalidDataException) { End("invalid-assaulter-preparation", "", false); return; }
         }
+        if (advanced && phase == BattlePhase.Running && _mortarControllerTimes.Count > 0)
+        {
+            try { AdvanceMortarControllerTimes(); }
+            catch (InvalidDataException) { End("invalid-mortar-controller-time", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && _mortarWalks.Count > 0)
         {
             try { AdvanceMortarNavigation(); }
@@ -3127,6 +3132,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         rocketFlights.Clear();
         rocketLaunches.Clear();
         _mortarDetachedWeapons.Clear();
+        _mortarControllerTimes.Clear();
+        _mortarRelocationTimes.Clear();
         grenadierFlights.Clear();
         grenadierLaunches.Clear();
         grenadierExplosions.Clear();

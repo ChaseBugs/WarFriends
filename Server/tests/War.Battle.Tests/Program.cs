@@ -830,6 +830,8 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (args[0] == "--mortar-preparation-only")
     {
         int preparationChecks = MortarPreparationReferenceTests.Run(Path.Combine(directory.FullName, "content"));
+        preparationChecks += MortarAccumulatedClockReferenceTests.Run(Path.Combine(directory.FullName, "content"));
+        preparationChecks += BattleAbortReasonCoverageTests.Run(directory.FullName);
         preparationChecks += MortarDetachedWeaponTests.Run(Path.Combine(directory.FullName, "content"));
         Console.WriteLine($"PASS: {preparationChecks} native Mortar construction and detach-phase checks");
         return;
@@ -853,6 +855,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (args[0] == "--ordinary-mortar-only")
     {
         int mortarChecks = MortarMissileFlightTests.Run();
+        mortarChecks += MortarAccumulatedClockReferenceTests.Run(Path.Combine(directory.FullName, "content"));
         mortarChecks += MortarDetachedWeaponTests.Run(Path.Combine(directory.FullName, "content"));
         mortarChecks += MortarPreparationReferenceTests.Run(Path.Combine(directory.FullName, "content"));
         mortarChecks += MortarClockReferenceTests.Run(Path.Combine(directory.FullName, "content"));
@@ -3706,6 +3709,8 @@ checks += SicknessPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "con
 checks += SicknessOrdinaryGrenadierTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += OrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarMissileFlightTests.Run();
+checks += MortarAccumulatedClockReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += BattleAbortReasonCoverageTests.Run(contentRoot.FullName);
 checks += MortarDetachedWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarPreparationReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarClockReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));

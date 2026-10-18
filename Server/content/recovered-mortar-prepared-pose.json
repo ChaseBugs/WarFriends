@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceReferenceSha256": "0caa927c7881476859e59153855dd90e5aa0a4357c758e5a8d221986f8376280",
+  "sourceReferenceSha256": "98346fe6745e76eed3dd1016c6fdab810941cebcefe8b5f65d62ecd505c7cd14",
   "buildSeconds": 2.0,
   "sources": [
     {
@@ -20,6 +20,10 @@
       "sha256": "bd579f3a1fec1636499723e81fc06af7a13f358f5ca0b909d3e5170f9a108fca"
     },
     {
+      "source": "Assets/Scripts/Assembly-CSharp/EnemyController.cs",
+      "sha256": "175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0"
+    },
+    {
       "source": "Assets/AnimationClip/mortar_down.anim",
       "sha256": "3e9fa70d244344179e09b96b5d8f3aaeafb1ef75beeea1ea2beb7fe76159af47"
     },
@@ -37,7 +41,7 @@
     },
     {
       "source": "Assets/UnityMortarPreparationProbe.cs",
-      "sha256": "c4379399af4b18b6d7c37e64b6975cb678703956b826675b8ad9ebf7b1c47405"
+      "sha256": "b14a4279f5d16634f71e4fde1c52e93309611c8fe23bc15927b3021e8cc1ed43"
     },
     {
       "source": "Assets/UnityMortarBeforeControllerProbe.cs",
@@ -45,12 +49,12 @@
     },
     {
       "source": "Assets/Editor/UnityMortarPreparationExport.cs",
-      "sha256": "5c533257bf6d06645b00ec7ca31fb73755b698751df9242c794241eb324ba804"
+      "sha256": "a808ed680f8e25981673e9a1a5d4fddef072e7a6655e9e458513e365bf284666"
     }
   ],
   "observations": [
     {
-      "scenario": "AfterController",
+      "scenario": "AfterAbsolute",
       "buildTick": 5,
       "preparedTick": 66,
       "handReturnTick": 100,
@@ -94,7 +98,7 @@
       ]
     },
     {
-      "scenario": "AfterController",
+      "scenario": "AfterAbsolute",
       "buildTick": 305,
       "preparedTick": 366,
       "handReturnTick": 400,
@@ -138,7 +142,7 @@
       ]
     },
     {
-      "scenario": "BeforeController",
+      "scenario": "AfterAccumulated",
       "buildTick": 5,
       "preparedTick": 66,
       "handReturnTick": 100,
@@ -182,7 +186,95 @@
       ]
     },
     {
-      "scenario": "BeforeController",
+      "scenario": "AfterAccumulated",
+      "buildTick": 305,
+      "preparedTick": 365,
+      "handReturnTick": 399,
+      "localPosition": [
+        0.06662433,
+        0.136625424,
+        0.248810872
+      ],
+      "localRotation": [
+        0.273731947,
+        0.17715089,
+        0.236765936,
+        0.9152219
+      ],
+      "scale": [
+        0.999999642,
+        0.999994457,
+        0.9999942
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.4539905,
+        0.0,
+        0.8910065
+      ],
+      "worldPosition": [
+        3.240453,
+        -0.113374576,
+        7.092347
+      ],
+      "worldRotation": [
+        0.351386428,
+        0.573344648,
+        0.0866883,
+        0.7350439
+      ]
+    },
+    {
+      "scenario": "BeforeAbsolute",
+      "buildTick": 5,
+      "preparedTick": 66,
+      "handReturnTick": 100,
+      "localPosition": [
+        0.06664552,
+        0.136648089,
+        0.248797
+      ],
+      "localRotation": [
+        0.273668468,
+        0.177422047,
+        0.236851513,
+        0.91516614
+      ],
+      "scale": [
+        0.999999464,
+        0.999994338,
+        0.99999404
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.317304641,
+        0.0,
+        0.948323667
+      ],
+      "worldPosition": [
+        3.20295525,
+        -0.113351911,
+        7.15859
+      ],
+      "worldRotation": [
+        0.334680378,
+        0.458639979,
+        0.137775615,
+        0.811576843
+      ]
+    },
+    {
+      "scenario": "BeforeAbsolute",
       "buildTick": 305,
       "preparedTick": 366,
       "handReturnTick": 400,
@@ -223,6 +315,94 @@
         0.573560953,
         0.08679337,
         0.73487103
+      ]
+    },
+    {
+      "scenario": "BeforeAccumulated",
+      "buildTick": 5,
+      "preparedTick": 66,
+      "handReturnTick": 100,
+      "localPosition": [
+        0.06664552,
+        0.136648089,
+        0.248797
+      ],
+      "localRotation": [
+        0.273668468,
+        0.177422047,
+        0.236851513,
+        0.91516614
+      ],
+      "scale": [
+        0.999999464,
+        0.999994338,
+        0.99999404
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.317304641,
+        0.0,
+        0.948323667
+      ],
+      "worldPosition": [
+        3.20295525,
+        -0.113351911,
+        7.15859
+      ],
+      "worldRotation": [
+        0.334680378,
+        0.458639979,
+        0.137775615,
+        0.811576843
+      ]
+    },
+    {
+      "scenario": "BeforeAccumulated",
+      "buildTick": 305,
+      "preparedTick": 365,
+      "handReturnTick": 399,
+      "localPosition": [
+        0.06662433,
+        0.136625424,
+        0.248810872
+      ],
+      "localRotation": [
+        0.273731947,
+        0.17715089,
+        0.236765936,
+        0.9152219
+      ],
+      "scale": [
+        0.999999642,
+        0.999994457,
+        0.9999942
+      ],
+      "rootPosition": [
+        3.0,
+        -0.25,
+        7.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.4539905,
+        0.0,
+        0.8910065
+      ],
+      "worldPosition": [
+        3.240453,
+        -0.113374576,
+        7.092347
+      ],
+      "worldRotation": [
+        0.351386428,
+        0.573344648,
+        0.0866883,
+        0.7350439
       ]
     }
   ]

@@ -26,6 +26,7 @@ Server/tools/UnityMortarPreparationProbe.cs text eol=lf
 Server/tools/UnityMortarBeforeControllerProbe.cs text eol=lf
 Server/tools/UnityMortarPreparationExport.cs text eol=lf
 Server/content/mortar-preparation-unity-reference.json.gz binary
+Server/content/mortar-accumulated-unity-reference.json.gz binary
 Server/content/recovered-mortar-prepared-pose.json text eol=lf
 Clients/ExportedProject/Assets/AnimationClip/mortar_hide.anim text eol=lf
 Clients/ExportedProject/Assets/AnimationClip/mortar_down.anim text eol=lf

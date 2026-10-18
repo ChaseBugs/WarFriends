@@ -140,8 +140,13 @@ swapper observations in two controller orders/two cycles, corrects the queued co
 one-tick idle offset, and captures immutable host world transforms before target selection.
 Body retargeting cannot move that stored pose; hand return, death, relocation and terminal closure
 remove it. Protobuf/SDK projection and normal presentation/reconnect are still open.
-Capture is restricted to the observed 61-tick phase; original accumulated-float clock parity
-at every spawn time/frame rate remains unproven and must not be inferred from this probe.
+[Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
+through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
+deadlines and verify the host arithmetic and both preparation poses. The focused group passes
+2,034 checks. Full variable-frame/activation-order parity and normal SDK presentation remain open.
+The complete accumulated-clock Battle run passed 249,842 assertions, including real two-peer UDP.
+Literal abort-reason coverage also guards the Worker/outbox allowlist; new error prefixes do not
+implicitly authorize a result.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

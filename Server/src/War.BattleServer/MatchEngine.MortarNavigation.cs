@@ -124,8 +124,9 @@ public sealed partial class MatchEngine
         if (Vector2.Distance(new(entity.X, entity.Z), new(point.Position.X, point.Position.Z)) < MortarArrivalDistance)
         {
             _mortarWalks.Remove(entityKey);
-            ulong buildTicks = (ulong)MathF.Floor(_mortarBuildSeconds[entityKey] * MatchManifest.TickRate);
-            _mortarConstruction.Add(entityKey, new MortarConstructionState(tick, checked(tick + buildTicks + 1)));
+            ulong buildTicks = _mortarControllerTimes[entityKey].Clock
+                .TicksUntilStrictDelay(_mortarBuildSeconds[entityKey]);
+            _mortarConstruction.Add(entityKey, new MortarConstructionState(tick, checked(tick + buildTicks)));
             BeginMortarFacing(entityKey, motion.Facing ?? infantryAnimations[entityKey].Facing);
         }
     }
@@ -145,6 +146,8 @@ public sealed partial class MatchEngine
         _mortarAttempts.Remove(entityKey);
         _mortarLastShotTicks.Remove(entityKey);
         _mortarDetachedWeapons.Remove(entityKey);
+        _mortarControllerTimes.Remove(entityKey);
+        _mortarRelocationTimes.Remove(entityKey);
     }
 
     private sealed record MortarWalk(CardSoldierWalkState Motion, ulong FirstTick);

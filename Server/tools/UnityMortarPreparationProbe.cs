@@ -19,8 +19,13 @@ public class UnityMortarPreparationProbe : Core_BaseScript
     private int _preparedTick = -1;
     private float _constructionDeadline;
     private bool _isBuilding;
+    private float _controllerTime;
+    private float _initialControllerTime;
+    private float _relocationDeadline;
+    private bool _hasRelocationDeadline;
 
     public Transform WorldRoot;
+    public bool UseAccumulatedClock;
     public bool IsComplete { get { return _tick >= MaximumTicks; } }
 
     protected override void Start()
@@ -38,6 +43,8 @@ public class UnityMortarPreparationProbe : Core_BaseScript
         _animation.Sample();
         _swapper.Swap(false);
         _startFrame = Time.frameCount;
+        _controllerTime = Time.time;
+        _initialControllerTime = _controllerTime;
     }
 
     protected void Update()
@@ -47,17 +54,23 @@ public class UnityMortarPreparationProbe : Core_BaseScript
         {
             return;
         }
+        _controllerTime = UseAccumulatedClock ? _controllerTime + Time.deltaTime : Time.time;
         Observe("update-entry");
         if (_tick == 5 || _tick == 305)
         {
             _controller.BuildMortar();
-            _constructionDeadline = Time.time + BuildSeconds;
+            _constructionDeadline = _controllerTime + BuildSeconds;
             _isBuilding = true;
             Observe("build-called");
         }
-        if (_isBuilding && Time.time > _constructionDeadline)
+        if (_isBuilding && _controllerTime > _constructionDeadline)
         {
             Prepare();
+        }
+        if (_hasRelocationDeadline && _controllerTime > _relocationDeadline)
+        {
+            Observe("relocation-due");
+            _hasRelocationDeadline = false;
         }
         if (_preparedTick >= 0 && _tick == _preparedTick + 2)
         {
@@ -75,6 +88,8 @@ public class UnityMortarPreparationProbe : Core_BaseScript
         Observe("after-animation-call");
         _swapper.SetParent(WorldRoot);
         Observe("after-world-detach");
+        _relocationDeadline = _controllerTime + _controller.mortarShotTime + _controller.mortarStandTime;
+        _hasRelocationDeadline = true;
         InvokeAfter(delegate
         {
             _swapper.Swap(false);
@@ -98,6 +113,8 @@ public class UnityMortarPreparationProbe : Core_BaseScript
             tick = _tick,
             phase,
             time = Time.time,
+            controllerTime = _controllerTime,
+            deltaTime = Time.deltaTime,
             rootPosition = Vector(transform.position),
             rootRotation = Rotation(transform.rotation),
             snapPosition = Vector(snap.position),
@@ -116,7 +133,13 @@ public class UnityMortarPreparationProbe : Core_BaseScript
     /// <summary>Returns observed engine state without asserting full native gameplay order.</summary>
     public object ExportObservation()
     {
-        return new { scenario = name, frames = _frames };
+        return new
+        {
+            scenario = name,
+            useAccumulatedClock = UseAccumulatedClock,
+            initialControllerTime = _initialControllerTime,
+            frames = _frames
+        };
     }
 
     private static float[] Vector(Vector3 value)

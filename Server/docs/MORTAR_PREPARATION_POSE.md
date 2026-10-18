@@ -32,8 +32,8 @@ The previous host idle start used a rounded down length, giving tick 31 instead 
 `MortarConstructionClock` now uses the observed ceiling boundary. This corrects the one-frame
 idle-phase offset without altering recovered clips or Client gameplay.
 
-The four observed preparation poses agree within 0.00001 in local position/scale and quaternion
-comparison. Their source-local position is approximately `(0.06664552, 0.136648089, 0.248797)`.
+The first four absolute-clock preparation poses agree within 0.00001 in local position/scale and
+quaternion comparison. Their source-local position is approximately `(0.06664552, 0.136648089, 0.248797)`.
 The capture retains source rotation and scale too; position alone is insufficient. The host
 composes these observed values with the soldier's authoritative root position and current
 planar facing, rather than with a receiver's current hand pose.
@@ -46,19 +46,19 @@ world/local transforms and detach/callback observations. Its SHA-256 is
 `0caa927c7881476859e59153855dd90e5aa0a4357c758e5a8d221986f8376280`.
 
 `tools/extract_mortar_prepared_pose.py --check` reproduces the compact
-`recovered-mortar-prepared-pose.json` from that pinned history. The runtime loader bounds its
-read, validates its digest and four-case agreement, and retains immutable source vectors.
+`recovered-mortar-prepared-pose.json` now comes from the subsequent
+[accumulated-clock comparison](MORTAR_CONTROLLER_TIME.md). The runtime loader bounds its
+read, validates its digest and within-phase agreement, and retains immutable source vectors.
 Capture requires the observed two-second build domain, bounded match time, finite root position,
-unit planar facing, the observed 61-tick preparation phase and hand-return projection.
+unit planar facing, an observed 60/61-tick preparation phase and hand-return projection.
 An unsupported source change fails
 instead of silently substituting a different weapon pose.
 
 The original `EnemyController` accumulates a private float `mTime` using `Time.deltaTime` after
-initialization from `Time.time`. This probe uses a synthetic strict `Time.time` deadline and
-does not establish accumulated-clock parity at every spawn time or frame rate. The current host
-uses its fixed 61-tick construction domain. Exact accumulated-clock/frame-phase parity remains
-open; a future timing change must supply its observed preparation pose rather than reuse this
-61-tick pose for a different phase.
+initialization from `Time.time`. The initial absolute-time probe did not establish that parity.
+The subsequent comparison observes both 60- and 61-frame deadlines and the host now preserves
+the stored-float rule. Full gameplay/activation-order and variable-frame parity remain open;
+see the controller-time report for the explicit authoritative server epoch policy.
 
 The prepared world transform is stored before target selection and random draws, matching the
 source `FireMortar` ordering even if target preparation cannot produce a shot. It stays unchanged
@@ -67,7 +67,8 @@ hand-return deadline, and is removed when the soldier or match can no longer own
 
 ## Verification and next integration
 
-The final native-reference/host-lifecycle run passed 440 checks, including terminal cleanup
+At the initial preparation-pose checkpoint, native-reference/host-lifecycle checks passed 440,
+including terminal cleanup
 and rejection of an unobserved preparation phase.
 The broader Mortar executable passed 1,127 checks before that terminal addition. These cover
 actual deployments, both native controller orders, every native construction frame, composed
@@ -78,6 +79,8 @@ smoke passed 74 live checks with two independent clients and no Photon; its prot
 1,360 checks. Its isolated data/logs are at
 `Server/.local/smoke-042fbe0da1b9445384e18bf178461a21`. This stage did not rerun the complete
 Battle executable; the earlier 248,560-assertion full run belongs to the firing/relocation checkpoint.
+See the subsequent [controller-time report](MORTAR_CONTROLLER_TIME.md) for the accumulated-clock
+implementation and its newer full-suite verification.
 
 Still required: protobuf/SDK projection and validation of this complete captured pose, replay and
 reconnect acceptance, and normal presenter attachment/lifetime integration. The receiver must

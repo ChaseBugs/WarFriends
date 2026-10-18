@@ -36,6 +36,7 @@ public sealed partial class MatchEngine
             owner.ArmyShotSpeedCoefficients?[index] ?? 1f);
         _ordinaryMortarWeapons.Add(entityKey, armyCatalog.ComposeOrdinaryMortar(selection));
         _mortarBuildSeconds.Add(entityKey, armyCatalog.ComposeMortarBuildTime(selection));
+        InitializeMortarControllerTime(entityKey);
     }
 
     /// <summary>Changes current contact damage and health while retaining explosion and timing fields.</summary>

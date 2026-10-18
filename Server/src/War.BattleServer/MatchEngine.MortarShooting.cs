@@ -59,6 +59,8 @@ public sealed partial class MatchEngine
     {
         // FireMortar freezes the weapon before target preparation and its random draws.
         CaptureMortarWeaponAttachment(entityKey);
+        _mortarRelocationTimes.Add(entityKey, _mortarControllerTimes[entityKey].Clock.Time +
+            enemyPoses!.Clip("mortar_hide").Length + enemyPoses.Clip("mortar_up").Length);
         MortarShotTarget? target = SelectMortarShotTarget(entityKey);
         bool isFake = false;
         if (target != null)

@@ -37,6 +37,33 @@ public static class UnityMortarPreparationExport
         var world = new GameObject("MortarWorld");
         CreateRig("BeforeController").AddComponent<UnityMortarBeforeControllerProbe>().WorldRoot = world.transform;
         CreateRig("AfterController").AddComponent<UnityMortarPreparationProbe>().WorldRoot = world.transform;
+        SessionState.SetInt(SessionKey + ".Count", 2);
+        SessionState.SetString(SessionKey + ".Output", "mortar-preparation-reference.json");
+        SessionState.SetBool(SessionKey, true);
+        EditorApplication.isPlaying = true;
+    }
+
+    /// <summary>Compares accumulated EnemyController time with the previous absolute-time probe.</summary>
+    public static void RunAccumulated()
+    {
+        if (!Application.dataPath.Replace('\\', '/').Contains("/Server/.local/"))
+        {
+            throw new InvalidOperationException("Use a disposable project under Server/.local.");
+        }
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        var world = new GameObject("MortarWorld");
+        foreach (bool accumulated in new[] { false, true })
+        {
+            string suffix = accumulated ? "Accumulated" : "Absolute";
+            var before = CreateRig("Before" + suffix).AddComponent<UnityMortarBeforeControllerProbe>();
+            before.WorldRoot = world.transform;
+            before.UseAccumulatedClock = accumulated;
+            var after = CreateRig("After" + suffix).AddComponent<UnityMortarPreparationProbe>();
+            after.WorldRoot = world.transform;
+            after.UseAccumulatedClock = accumulated;
+        }
+        SessionState.SetInt(SessionKey + ".Count", 4);
+        SessionState.SetString(SessionKey + ".Output", "mortar-accumulated-reference.json");
         SessionState.SetBool(SessionKey, true);
         EditorApplication.isPlaying = true;
     }
@@ -89,7 +116,8 @@ public static class UnityMortarPreparationExport
             return;
         }
         var probes = UnityEngine.Object.FindObjectsOfType<UnityMortarPreparationProbe>();
-        if (probes.Length != 2 || probes.Any(probe => !probe.IsComplete))
+        if (probes.Length != SessionState.GetInt(SessionKey + ".Count", 2) ||
+            probes.Any(probe => !probe.IsComplete))
         {
             return;
         }
@@ -98,18 +126,19 @@ public static class UnityMortarPreparationExport
             EnemyPath, WeaponPath,
             "Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs",
             "Assets/Scripts/Assembly-CSharp/FakeRigidBodySwapper.cs",
+            "Assets/Scripts/Assembly-CSharp/EnemyController.cs",
             "Assets/AnimationClip/mortar_down.anim", "Assets/AnimationClip/mortar_down_idle.anim",
             "Assets/AnimationClip/mortar_hide.anim", "Assets/AnimationClip/mortar_up.anim",
             "Assets/UnityMortarPreparationProbe.cs", "Assets/UnityMortarBeforeControllerProbe.cs",
             "Assets/Editor/UnityMortarPreparationExport.cs"
         };
         string output = Path.Combine(Directory.GetParent(Application.dataPath).FullName,
-            "mortar-preparation-reference.json");
+            SessionState.GetString(SessionKey + ".Output", "mortar-preparation-reference.json"));
         File.WriteAllText(output, (JsonConvert.SerializeObject(new
         {
             unityVersion = Application.unityVersion,
-            scope = "Source animation and swapper methods; " +
-                "synthetic strict build clock/root turn, no EnemyController or Photon.",
+            scope = "Source animation/swapper methods and copied EnemyController float accumulation; " +
+                "synthetic build/root turn, no full EnemyController or Photon execution.",
             captureRate = Time.captureFramerate,
             timeScale = Time.timeScale,
             sources = sources.Select(path => new { source = path, sha256 = Hash(path) }).ToArray(),

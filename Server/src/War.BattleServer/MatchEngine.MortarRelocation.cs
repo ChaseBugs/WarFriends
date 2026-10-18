@@ -6,16 +6,18 @@ public sealed partial class MatchEngine
 {
     private void AdvanceMortarRelocations()
     {
-        foreach (var (entityKey, attempt) in _mortarAttempts.OrderBy(row => row.Key).ToArray())
+        foreach (ulong entityKey in _mortarAttempts.Keys.Order().ToArray())
         {
             if (enemyPoses == null || _mortarPointCatalog == null)
             {
                 throw new InvalidDataException("Mortar relocation lost its source animation or point catalog.");
             }
-            // Preserve the left-associative binary32 deadline from FireMortar, then its strict Update comparison.
-            float deadline = attempt.PreparedTick / (float)MatchManifest.TickRate +
-                enemyPoses.Clip("mortar_hide").Length + enemyPoses.Clip("mortar_up").Length;
-            if (tick / (float)MatchManifest.TickRate <= deadline)
+            // FireMortar uses the soldier's accumulated mTime, not absolute tick-to-second conversion.
+            if (!_mortarRelocationTimes.TryGetValue(entityKey, out float deadline))
+            {
+                throw new InvalidDataException("Mortar relocation lost its accumulated source deadline.");
+            }
+            if (_mortarControllerTimes[entityKey].Clock.Time <= deadline)
             {
                 continue;
             }
@@ -62,6 +64,7 @@ public sealed partial class MatchEngine
         _mortarFacings.Remove(entityKey);
         _mortarAttempts.Remove(entityKey);
         _mortarDetachedWeapons.Remove(entityKey);
+        _mortarRelocationTimes.Remove(entityKey);
         _mortarWalks.Add(entityKey, new MortarWalk(motion, checked(tick + 1)));
     }
 }
