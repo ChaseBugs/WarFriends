@@ -40,6 +40,11 @@ card quantities and equipped unit lanes from one durable account snapshot. Nativ
 tests cover all 45 source IDs, malformed-state rejection, and account-to-allocation storage. Nonempty
 Buddy state is explicitly unsupported until its complete combat metadata and summon path exist.
 Automatic queue publication, inventory fencing and durable consumption remain open.
+The [paired-result card consumption](ATOMIC_CARD_CONSUMPTION.md) now debits confirmed ordinary
+cards with result insertion and pair deletion in one real Mongo transaction. Tests cover both
+players, concurrent replay, rollback/retry, final-copy zero rows and absent frozen ownership.
+Admission reservations, coordination with other legacy card writers, Buddy and granted-card
+consumption, automatic queue publication and normal Unity gameplay remain open.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

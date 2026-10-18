@@ -54,5 +54,8 @@ native suite was not rerun for this checkpoint.
 
 Normal matchmaking still requires a pre-existing trusted allocation. Automatic publication,
 concurrent inventory fencing, actual hand-slot/extra-slot entitlements, Buddy combat projection,
-transactional cross-match consumption, and rendered Unity battle entry remain required work.
+complete cross-match consumption, and rendered Unity battle entry remain required work.
 This source is a prerequisite for those paths, not their completion.
+The later [paired-result card debit](ATOMIC_CARD_CONSUMPTION.md) reuses the extracted
+`OrdinaryCardInventory` parser and provides atomic ordinary-card consumption at first terminal
+acceptance. It does not complete admission reservation or all legacy writer coordination.

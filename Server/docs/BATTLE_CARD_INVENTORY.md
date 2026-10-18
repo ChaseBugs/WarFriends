@@ -94,8 +94,11 @@ Recovered gameplay hand-slot
 and entitlement limits, upgrade ordering, Buddy data authority,
 authoritative in-battle hand replenishment, transactional inventory consumption
 across matches, settlement and normal Unity battle entry remain unfinished. Match-local reservations do not decrement the
-account wallet or durable card inventory. Do not describe these native checks
-as complete card economy or normal gameplay verification.
+account wallet or durable card inventory by themselves. The later
+[atomic paired-result debit](ATOMIC_CARD_CONSUMPTION.md) now consumes confirmed ordinary cards
+with result insertion and pair release in one transaction. Admission reservations, other legacy
+inventory writers, Buddy authority and normal gameplay integration remain open; this is not a
+complete card economy.
 
 The next projector must also bind the normal path's exact upgrade ordering.
 `GameControllerOnline.SubmitSelfHostedCards` echoes `local.Units` in the

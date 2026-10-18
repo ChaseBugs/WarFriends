@@ -33,9 +33,10 @@ public sealed partial class BattleResultStore
                     throw new InvalidDataException("Backend-allocated result has no durable pair.");
             }
 
-            await ValidateTerminalPairAsync(current, pair, terminal, token);
+            MatchManifest manifest = await ValidateTerminalPairAsync(current, pair, terminal, token);
             if (previous == null)
             {
+                await ConsumeOrdinaryCardsAsync(current, manifest, terminal, token);
                 var document = new BattleResultDocument
                 {
                     Id = Guid.NewGuid().ToString("N"),
@@ -60,7 +61,7 @@ public sealed partial class BattleResultStore
         }, transaction, cancellationToken);
     }
 
-    private async Task ValidateTerminalPairAsync(
+    private async Task<MatchManifest> ValidateTerminalPairAsync(
         IClientSessionHandle session, BattlePairDocument pair,
         War.Protocol.MatchSnapshot terminal, CancellationToken cancellationToken)
     {
@@ -82,5 +83,6 @@ public sealed partial class BattleResultStore
         }
 
         PvpBonusCurrencyManifestValidator.Validate(terminal, manifest);
+        return manifest;
     }
 }

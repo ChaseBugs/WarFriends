@@ -42,6 +42,7 @@ internal static class AtomicTerminalAcceptanceTests
                 await queue.ForMatch(manifest.MatchId, deadline.Token) == null,
                 "Concurrent exact replay must preserve the result without recreating the allocation.");
             await TerminalGrantRaceTests.RunAsync(uri, databaseName, deadline.Token);
+            await AtomicCardConsumptionTests.RunAsync(uri, databaseName, deadline.Token);
             Console.WriteLine("PASS: terminal insertion and pair removal share one Mongo transaction; " +
                 "concurrent replay is stable");
         }
