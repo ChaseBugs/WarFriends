@@ -18,7 +18,14 @@ SOURCES = (
     "Assets/Scripts/Assembly-CSharp/ObjectPool.cs",
     "Assets/Scripts/Assembly-CSharp/SoldierParts.cs",
     "Assets/Scripts/Assembly-CSharp/EnemyBasicInventory.cs",
+    "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
     "Assets/Scripts/Assembly-CSharp/Mortar.cs",
+    "Assets/Scripts/Assembly-CSharp/EnemyController.cs",
+    "Assets/Scripts/Assembly-CSharp/AIObject.cs",
+    "Assets/Scripts/Assembly-CSharp/MainGameEntity.cs",
+    "Assets/Scripts/Assembly-CSharp/PoolableObject.cs",
+    "Assets/Scripts/Assembly-CSharp/SpawningManagerDeathMatch.cs",
+    "Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs",
 )
 
 
@@ -54,8 +61,14 @@ def extract():
     component, game_object, weapon_component, capacity = candidates[0]
     if not 1 <= capacity <= 256:
         raise ValueError("Mortar pool capacity exceeds the recovered byte-index domain")
+    army_path = ROOT / "Server/content/recovered-army-deployment.json"
+    army_bytes = army_path.read_bytes()
+    army = json.loads(army_bytes)
+    families = [row for row in army["families"] if row["unitId"] == "ID_UNIT-MORTAR"]
+    if len(families) != 1 or families[0]["maxGeneratedCount"] * 2 != capacity:
+        raise ValueError("Mortar deployment limits no longer conserve the shared two-player weapon pool")
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "scene": SCENE,
         "poolComponentFileId": component,
         "poolGameObjectFileId": game_object,
@@ -64,11 +77,27 @@ def extract():
         "weaponPrefabGuid": weapon_guid,
         "weaponComponentFileId": weapon_component,
         "capacity": capacity,
+        "deployment": {
+            "revision": hashlib.sha256(army_bytes).hexdigest(),
+            "sceneRevision": army["sceneSha256"],
+            "behaviorFileId": families[0]["behaviorFileId"],
+            "maxPerOwner": families[0]["maxGeneratedCount"],
+        },
         "reviewedAllocation": {
             "initialOrder": "ascending",
             "master": "first-free",
             "peer": "last-free",
             "releasedSlot": "add-first",
+        },
+        "reviewedReturn": {
+            "deathReturnsWeapon": False,
+            "hideDelayMinimumSeconds": 2.0,
+            "hideDelayMaximumSeconds": 3.0,
+            "destroyDelayAfterHideSeconds": 1.0,
+            "returnHook": (
+                "EnemyController.DestroyPooled/"
+                "SoldierBehaviour.DestroyBehaviour/EnemyBasicInventory.DestroyWeapons"
+            ),
         },
         "sources": [
             {"source": path, "normalizedUtf8LfSha256": hashlib.sha256(read(path).encode("utf-8")).hexdigest()}

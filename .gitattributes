@@ -1,4 +1,12 @@
 Server/content/gunslinger-holster-unity-reference.json text eol=lf
+Server/content/pool-return-clock-unity-reference.json text eol=lf
+Server/tools/UnityPoolReturnClockProbe.cs text eol=lf
+Server/tools/UnityPoolReturnClockExport.cs text eol=lf
+Server/tools/verify_pool_return_clock.py text eol=lf
+Server/src/War.BattleServer/ArmyDeploymentState.cs text eol=lf
+Server/src/War.BattleServer/MatchEngine.cs text eol=lf
+Server/tests/War.Battle.Tests/ArmyDeploymentWaveTests.cs text eol=lf
+Server/tests/War.Battle.Tests/ArmySpawnPreflightTests.cs text eol=lf
 Server/tools/UnityGunslingerHolsterProbe.cs text eol=lf
 Server/tools/UnityGunslingerHolsterExport.cs text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierParts.cs text eol=crlf
@@ -374,4 +382,5 @@ Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PoolableObject.cs text eo
 Server/content/recovered-mortar-weapon-pool.json text eol=lf
 Server/tools/extract_mortar_weapon_pool.py text eol=lf
 Server/src/War.BattleServer/MortarWeaponPool.cs text eol=lf
+Server/src/War.BattleServer/MortarWeaponPoolSource.cs text eol=lf
 Server/tests/War.Battle.Tests/MortarWeaponPoolTests.cs text eol=lf

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "scene": "Assets/Scenes/MainScene.unity",
   "poolComponentFileId": 49549,
   "poolGameObjectFileId": 13060,
@@ -8,11 +8,24 @@
   "weaponPrefabGuid": "79ce5dcc1733e5a4eaac84b9e49f9994",
   "weaponComponentFileId": 11496012,
   "capacity": 4,
+  "deployment": {
+    "revision": "6373ad1809e2a3091f3a3f9b285d7e607653e2f6abc4822ed1c4eb9522fec9ec",
+    "sceneRevision": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+    "behaviorFileId": 41188,
+    "maxPerOwner": 2
+  },
   "reviewedAllocation": {
     "initialOrder": "ascending",
     "master": "first-free",
     "peer": "last-free",
     "releasedSlot": "add-first"
+  },
+  "reviewedReturn": {
+    "deathReturnsWeapon": false,
+    "hideDelayMinimumSeconds": 2.0,
+    "hideDelayMaximumSeconds": 3.0,
+    "destroyDelayAfterHideSeconds": 1.0,
+    "returnHook": "EnemyController.DestroyPooled/SoldierBehaviour.DestroyBehaviour/EnemyBasicInventory.DestroyWeapons"
   },
   "sources": [
     {
@@ -40,8 +53,36 @@
       "normalizedUtf8LfSha256": "872e1caa7e7a81fb5ef8e8b33a1fabbfd9ed04253416da6cb3674aba6bcc03f8"
     },
     {
+      "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
+      "normalizedUtf8LfSha256": "d3da6f858f06c325ace44acb654163df0a47ed6c278b36b3b559c2801d03dccd"
+    },
+    {
       "source": "Assets/Scripts/Assembly-CSharp/Mortar.cs",
       "normalizedUtf8LfSha256": "392916b8b135be21bbea108edcf9a77cd93bf66a303efacc1aa2f690f6b581e6"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/EnemyController.cs",
+      "normalizedUtf8LfSha256": "cf51669a27ef5c01c4847eb6aed0eb2c1b20b59870cae70073a617f211e76972"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/AIObject.cs",
+      "normalizedUtf8LfSha256": "3130f617fb1e45e19ef5e88914e6803ddea43231fdb604586b340f07fe854f80"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/MainGameEntity.cs",
+      "normalizedUtf8LfSha256": "f1d90da9d0429d34792084682aa116735e8897f40a6464586356ab70844d6634"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/PoolableObject.cs",
+      "normalizedUtf8LfSha256": "8341f400464de9abcaf2543707632b0f0c7338c0f87c01f7bdf918064b0a4dba"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/SpawningManagerDeathMatch.cs",
+      "normalizedUtf8LfSha256": "4ec96b46d54d335b6aaaed5b9388fcb29e563f8dae739a479f58ef696bbe20aa"
+    },
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs",
+      "normalizedUtf8LfSha256": "c9a499ac3672eb3be406e7170f345b08a0dc7835d42cb1090a1b79988e812723"
     }
   ]
 }

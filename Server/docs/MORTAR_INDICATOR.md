@@ -188,11 +188,11 @@ serialized configuration evidence, not a native recycled-slot gameplay observati
 
 `tools/extract_mortar_weapon_pool.py --check` now reproduces
 `content/recovered-mortar-weapon-pool.json` from this exact scene component and prefab. It
-records seven source/configuration digests after UTF-8 BOM removal and LF normalization, so
+Schema 2 records fourteen source/configuration digests after UTF-8 BOM removal and LF normalization, so
 Windows/Linux checkout line endings do not change source identity. Allocation labels are
 explicitly reviewed source rules; the extractor does not claim to interpret arbitrary C#.
 The artifact SHA-256 is
-`eb2726f6a612d44b8ca6272bb1c686cdb70e474113b4019979c1856ee5998eb6`.
+`2d9aedb6b3b5114698907371e537aecb2050c381262940b5a794870ddd6ca05a`.
 
 The new `MortarWeaponPool` primitive initializes indices in ascending order, allocates master
 from the front and peer from the back, and inserts every released slot at the front. Capacity
@@ -209,9 +209,131 @@ Local evidence is `Server/.local/mortar-weapon-pool-tests.log`. These are source
 and managed primitive tests; original NetworkObjectPool execution is not covered by this stage.
 The primitive is not yet called by live host spawning. Role must come from trusted scene-master
 ownership, not a client assertion or a guessed relationship between faction and master role.
-Deployment admission, resource-pool exhaustion behavior, catalog revision binding, actual
+Deployment admission, resource-pool exhaustion behavior, actual
 allocation/return observations and per-slot observer integration still need completion before
 publishing warning state. No live deployment limit was changed here.
+
+The subsequent startup gate now loads this artifact in both the allocator's rifle catalog and
+the Worker's combat package. `MortarWeaponPoolSource` bounds its size, verifies the complete
+reviewed SHA-256 and binds its deployment revision, historical scene revision and behavior
+component 41188 to the actual admitted army catalog. Mortar permits two live units per
+fraction: `SpawnHelper` keys generated-minus-killed counts by `Fractions`, and
+`SpawningManagerDeathMatch` tests this count against `maxGeneratedCount`. In ordinary two-sided
+PvP, `GameControllerPVP.GetPlayerFraction` assigns the Photon master to Allies and its peer to
+Enemies, so the server's per-owner reservation limit corresponds to that source fraction limit.
+The artifact's `maxPerOwner` field names that PvP projection; it does not establish a separate
+per-player allowance in a shared-fraction co-op game. Two opposing fractions fit the four-slot
+live bound. This is necessary capacity proof,
+not proof that corpse-held weapons have already returned.
+
+The complete pool artifact digest is included in both sides' `WarFriends/combat-content/v8`
+fingerprint before weapon-specific revisions are derived. Backend/Worker equality is tested;
+source packages missing this new sibling JSON or using a stale fingerprint must not admit
+new matches. The current normalized MainScene digest and historical deployment-scene digest
+remain distinct provenance identities rather than being silently treated as byte-identical.
+
+The rifle, shotgun, mixed and starter local match templates were regenerated through the
+existing `War.Battle.Tests` `--write-*-template` commands after this fingerprint change.
+Each generator validates its source-backed allocation before writing. A structural comparison
+against the preceding committed templates confirms that only `CatalogRevision` changed in
+all four files; gameplay fields and participant loadouts are unchanged. The mixed allocator
+check passes with fourteen starter-army host checks. The earlier full-suite run rejected the
+old rifle template as intended; the replacement run passed 263,304 Battle assertions with
+exit code zero, recorded at `Server/.local/mortar-pool-catalog-full-v8.log`. That executable
+predates the subsequent shared spawn-preflight change; it verifies the pool-source startup,
+v8 fingerprints and regenerated templates, not that later host change.
+
+Source inspection also confirms why allocation cannot yet be connected at the kill callback.
+EnemyController.OnDeath publishes OnKilled immediately; the spawning manager decrements its
+live count there. The weapon remains attached to the corpse until a later DestroyPooled call:
+normal death schedules HideUnderGround after Random.Range(2, 3) seconds, then schedules
+DestroyEntity one second later. SoldierBehaviour.DestroyBehaviour finally returns its weapons.
+Explicit resync/teardown can reclaim a body through other paths. Exact coroutine boundaries,
+cosmetic random ownership, corpse retention, resource-pool exhaustion and forced reclaim need
+their own integration proof. An immediate weapon release on kill is not implemented.
+
+Both delays use `Core_BaseScript.InvokeAfter`, whose coroutine yields `WaitForSeconds`,
+not its separate real-time wait helpers. Do not replace these with a single wall-clock
+three-to-four-second deadline: each scheduled wait resumes on a Unity frame boundary and
+uses scaled time. `AIObject.ReSyncRPC` destroys an instantiated dead body before reusing it;
+`ReSyncDisabledRPC` destroys any instantiated body. `MainGameEntity.DestroyEntity` still
+requires a PhotonView even though both master and peer branches perform the same local
+`DestroyPooled` call. The replacement must preserve the return transition while removing
+that runtime Photon gate, and a stale scheduled callback must not release a successor slot.
+
+The native `UnityPoolReturnClockExport` now observes the original `InvokeAfter`,
+`PoolableObject.DestroyPooled` and `ObjectPool` methods on plain one-slot shells. With
+30 Hz capture, a pause during ticks 30-59 and half speed during ticks 60-119, consecutive
+2+1-second waits return at tick 150; 3+1-second waits return at tick 180. Both are game-time
+boundaries. A forced return at tick 20 followed by immediate allocation reuses the same object;
+neither old callback runs through tick 300 and the successor still owns the slot. Native
+deactivation cancels the body-owned coroutine rather than leaving a callback for its successor.
+The fourth scenario forces return at tick 140, after the hide callback at tick 120 has scheduled
+the second wait. That pending return also cancels: no delayed-return callback occurs and the
+reallocated successor still owns the same slot at tick 300.
+
+The successful four-scenario Unity 2018.3.0f2 log is
+`Server/.local/pool-return-clock-four-unity.log`.
+`verify_pool_return_clock.py` rejects exception-bearing logs, unexpected frame boundaries,
+duplicate scenarios and source mismatches between active Client and disposable project. It
+produced `Server/content/pool-return-clock-unity-reference.json` with normalized source hashes
+for the three original classes and both executed probes. The first probe run failed because
+its pool was activated before Entries were configured; the corrected run has no exceptions.
+The private package manifest was restored byte-for-byte after the owned Unity process exited.
+This proves these primitives only: no EnemyController death, NetworkObjectPool, cosmetic RNG,
+actual combat, Android or original Unity 5.2.5 behavior was executed by this probe.
+
+Exhaustion is not a recovered queue or automatic corpse-reclaim policy. The original
+`NetworkObjectPool.GetFirstFreeIndex` returns -1 when the free list is empty, and its
+instantiate path returns null. `SoldierParts.AttachWeapons` immediately accesses the returned
+weapon's transform; it does not postpone attachment or release another corpse. The indexed
+remote attachment path uses `ReInstantiate` and likewise assumes a returned weapon. Before
+activating host leases, define an explicit fail-closed admission/error boundary for this
+source failure case and prove its ordering against energy consumption and actor publication.
+Do not silently manufacture a fifth slot, release on death, or claim an automatic retry was
+recovered from these methods.
+
+The current host advances `ArmyDeploymentState.Advance(tick)` before publishing each returned
+actor in `MatchEngine`. Advance validates the complete due batch, then consumes energy,
+dequeues reservations and issues entity IDs. A future physical-slot guard must participate in
+that preflight for the whole due batch across both players. Adding a pool check only inside
+`InitializeOrdinaryMortar` would run after these mutations and could leave a partially applied
+spawn. This preflight integration is still absent; the source startup check does not supply it.
+
+`ArmyDeploymentState.PreviewDueSpawns` now exposes that non-mutating preview using the same
+energy, reserved-count and entity-ID validation consumed by Advance. It returns immutable
+spawn records in source queue order and does not dequeue, spend energy, allocate IDs or finish
+deployment waves. The wave regression checks repeated/current/future previews and then compares
+both committed actors against the earlier preview. MatchEngine now validates both owners'
+due batches before advancing either queue. A fault-injection regression damages the second
+owner's reserved energy and checks that the host aborts unscored before spending the first
+owner's energy, consuming its reservation or committing either soldier. Physical-slot
+reservation and its exhaustion-specific rejection path remain unimplemented.
+The final isolated-build `--army-waves-only` run passes twenty wave/preflight assertions,
+including the damaged-second-owner host case, at
+`Server/.local/mortar-shared-preflight-tests-final.log`. The latest solution build passes with
+zero warnings/errors, protocol checks pass 1,360 assertions, and the native isolated smoke
+passes 74 real MongoDB/HTTP/protobuf/UDP checks. Smoke evidence is
+`Server/.local/smoke-01fe03d494c742e08eeb6bde62c61952` and
+`Server/.local/mortar-pool-v8-smoke.log`. Its MongoDB, Backend and Worker processes completed
+and were cleaned up by the script. A new full run including this later host change is running
+at `Server/.local/mortar-shared-preflight-full.log`; do not substitute the earlier 263,304
+result for its final result.
+
+After running the exporter in that disposable project, retain and validate its evidence with:
+
+```powershell
+python -B Server/tools/verify_pool_return_clock.py `
+  --project Server/.local/coop-geometry-project `
+  --log Server/.local/pool-return-clock-four-unity.log `
+  --output Server/content/pool-return-clock-unity-reference.json
+```
+
+The focused group now passes 13,269 checks, including startup rejection of truncated, oversized,
+unreviewed and wrong-scene artifacts, terminal pool reset and matching allocator/Worker catalog
+revisions. Source extraction `--check` also passes. Local evidence is
+`Server/.local/mortar-pool-catalog-tests-final.log`. This stage changes startup/package binding;
+it does not activate weapon-slot allocation or change the Client's corpse behavior.
 
 Mortar.OnInstancied hides the old world indicator but does not remove its tween components.
 Furthermore, StartIndicatorAnimation returns for the local fraction, so tween activation history

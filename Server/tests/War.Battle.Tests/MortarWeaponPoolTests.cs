@@ -3,11 +3,12 @@ using System.Text;
 using System.Text.Json;
 
 using War.BattleServer;
+using War.Backend;
 
-/// <summary>Checks the recovered four-slot source pool and rejects stale actor ownership at its authority boundary.</summary>
+/// <summary>Checks the recovered four-slot pool and rejects stale actor ownership.</summary>
 internal static class MortarWeaponPoolTests
 {
-    private const string ReferenceDigest = "eb2726f6a612d44b8ca6272bb1c686cdb70e474113b4019979c1856ee5998eb6";
+    private const string ReferenceDigest = "2d9aedb6b3b5114698907371e537aecb2050c381262940b5a794870ddd6ca05a";
 
     internal static int Run(string directory)
     {
@@ -16,12 +17,64 @@ internal static class MortarWeaponPoolTests
             "Mortar pool source evidence changed without a reviewed extraction.");
         using JsonDocument document = JsonDocument.Parse(bytes);
         JsonElement root = document.RootElement;
-        checks += Require(root.GetProperty("schemaVersion").GetInt32() == 1 &&
-            root.GetProperty("capacity").GetInt32() == 4 && root.GetProperty("poolComponentFileId").GetInt32() == 49549 &&
+        checks += Require(root.GetProperty("schemaVersion").GetInt32() == 2 &&
+            root.GetProperty("capacity").GetInt32() == 4 &&
+            root.GetProperty("poolComponentFileId").GetInt32() == 49549 &&
             root.GetProperty("weaponComponentFileId").GetInt32() == 11496012,
             "The recovered pool lost its exact scene/prefab/capacity identity.");
         checks += CheckSources(directory, root);
-        return checks + CheckMixedAllocation(root.GetProperty("capacity").GetInt32()) + CheckRejectedInputs();
+        return checks + CheckMixedAllocation(root.GetProperty("capacity").GetInt32()) + CheckRejectedInputs() +
+            CheckStartupSource(directory, root);
+    }
+
+    private static int CheckStartupSource(string directory, JsonElement root)
+    {
+        BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
+        string path = Path.Combine(directory, "recovered-mortar-weapon-pool.json");
+        string sceneRevision = root.GetProperty("deployment").GetProperty("sceneRevision").GetString()!;
+        int checks = Require(MortarWeaponPoolSource.Load(path, content.Army, sceneRevision).Capacity == 4 &&
+            content.MortarWeaponPool.Capacity == 4,
+            "Combat startup did not retain the verified pool capacity.");
+        checks += Require(BattleRifleManifestCatalog.Load(Path.Combine(directory, "combat-content-manifest.json"))
+            .PackageRevision == content.Revision,
+            "Backend admission and Worker content use different pool-bound catalog revisions.");
+        string temporary = Path.GetTempFileName();
+        try
+        {
+            byte[] valid = File.ReadAllBytes(path);
+            byte[] changed = (byte[])valid.Clone();
+            changed[0] ^= 1;
+            foreach (byte[] invalid in new[] { new byte[1], new byte[16385], changed })
+            {
+                File.WriteAllBytes(temporary, invalid);
+                bool rejected = false;
+                try
+                {
+                    MortarWeaponPoolSource.Load(temporary, content.Army, sceneRevision);
+                }
+                catch (InvalidDataException)
+                {
+                    rejected = true;
+                }
+                checks += Require(rejected, "Startup accepted a truncated, oversized or unreviewed pool artifact.");
+            }
+            File.WriteAllBytes(temporary, valid);
+            bool sceneRejected = false;
+            try
+            {
+                MortarWeaponPoolSource.Load(temporary, content.Army, new string('a', 64));
+            }
+            catch (InvalidDataException)
+            {
+                sceneRejected = true;
+            }
+            checks += Require(sceneRejected, "Pool capacity was attached to a different deployment scene.");
+        }
+        finally
+        {
+            File.Delete(temporary);
+        }
+        return checks;
     }
 
     private static int CheckSources(string directory, JsonElement root)
@@ -70,6 +123,10 @@ internal static class MortarWeaponPoolTests
         copied[0] = 999;
         checks += Require(pool.TryAllocateForMaster(15, out int final) && final == 0 && pool.ActiveCount == capacity,
             "A diagnostic free-list copy mutated pool authority.");
+        pool.Clear();
+        checks += Require(pool.ActiveCount == 0 && pool.SlotFor(15) == null && !pool.Release(15) &&
+            pool.FreeSlots().SequenceEqual(new[] { 0, 1, 2, 3 }),
+            "Terminal pool reset retained an actor binding or changed the next scene's initial index order.");
         return checks;
     }
 
@@ -92,7 +149,11 @@ internal static class MortarWeaponPoolTests
         var pool = new MortarWeaponPool(4);
         pool.TryAllocateForMaster(11, out _);
         foreach (Action action in new Action[]
-            { () => pool.TryAllocateForPeer(11, out _), () => pool.TryAllocateForMaster(0, out _), () => pool.Release(0) })
+            {
+                () => pool.TryAllocateForPeer(11, out _),
+                () => pool.TryAllocateForMaster(0, out _),
+                () => pool.Release(0)
+            })
         {
             bool rejected = false;
             try

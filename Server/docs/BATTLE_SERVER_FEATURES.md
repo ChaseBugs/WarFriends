@@ -163,6 +163,23 @@ The recovered four-slot weapon pool now has a reproducible scene/source artifact
 master-front/peer-back/release-front allocator with actor ownership protection. The indicator
 group passes 13,255 checks. Live spawn/return hooks, admission/exhaustion compatibility, catalog
 binding and per-slot observers are still open; this primitive does not impose a new live limit.
+Pool-source startup validation now binds capacity to the admitted deployment catalog and both
+allocator/Worker v8 combat fingerprints. The focused group passes 13,269 assertions. Source death
+returns army count immediately but retains corpse weapons until later destruction, so no live
+kill-to-release shortcut was added. Corpse timing, forced reclaim, exhaustion and slot/viewer
+hooks remain open before warning wire/Unity integration can be completed.
+Four native pool/coroutine scenarios now confirm scaled two-stage waits and cancellation of
+the old body-owned callback on forced return/reuse before and after hide. The source limit is per fraction, mapping
+to per-owner reservations only for opposing PvP players; this is not a shared-fraction co-op
+allowance. See the native evidence and its explicit primitive-only scope in
+[Mortar indicator integration](MORTAR_INDICATOR.md).
+The v8 startup/template checkpoint passes 263,304 full Battle assertions. The later shared
+spawn preflight validates both owners before either commits energy or actors, with twenty
+focused wave/fault-injection checks. The full v8 run predates that host preflight change;
+physical-slot admission, corpse leases and complete gameplay acceptance remain open.
+The latest shared-preflight code also passes the complete solution build (zero warnings/errors),
+1,360 protocol assertions and 74 real isolated MongoDB/HTTP/protobuf/UDP smoke checks. Its own
+full Battle run is tracked separately and remains pending.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

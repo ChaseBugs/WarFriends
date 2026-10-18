@@ -76,6 +76,7 @@ public sealed class BattleCombatContent
     public MortarPointCatalog MortarPoints { get; private init; } = null!;
     internal MortarWeaponSource MortarWeapon { get; private init; } = null!;
     internal MortarPreparedPoseSource MortarPreparedPose { get; private init; } = null!;
+    internal MortarWeaponPoolSource MortarWeaponPool { get; private init; } = null!;
     public ArmyMinigunnerPointCatalog ArmyMinigunnerPoints { get; }
     public PlayerShotTargetCatalog PlayerShotTargets { get; }
     public ArmyNavMeshSourceCatalog ArmyNavMeshes { get; }
@@ -114,6 +115,8 @@ public sealed class BattleCombatContent
         var explosions=ExplosionSourceCatalog.Load(Path.Combine(directory,"recovered-battle-content.json"),manifest.StatsRevision,manifest.SceneRevision);
         var barrelOverlap=BarrelOverlapOrderCatalog.Load(Path.Combine(directory,"unity-barrel-overlap-reference.json"),manifest.BarrelOverlapRevision,maps,barrels);
         var army=ArmyDeploymentCatalog.Load(Path.Combine(directory,"recovered-army-deployment.json"),manifest.ArmyDeploymentRevision,manifest.SceneRevision);
+        var mortarWeaponPool = MortarWeaponPoolSource.Load(Path.Combine(directory,
+            "recovered-mortar-weapon-pool.json"), army, manifest.SceneRevision);
         army.ValidateSourceSheet(Path.Combine(directory,"recovered-battle-content.json"));
         // A content release must carry every recovered card-unit endpoint,
         // including the sniper's source-defined row-zero fallback.
@@ -194,7 +197,9 @@ public sealed class BattleCombatContent
         var armyNavMeshPaths=ArmyNavMeshPathFixtureCatalog.Load(Path.Combine(directory,"recovered-navmesh-path-manifest.json"),manifest.ArmyNavMeshPathsRevision,
             maps,armyNavMeshes,armyNavMeshGeometry,armySpawnPoints,armyRusherPoints);
         var armyNavMeshConnectivity=ArmyNavMeshConnectivity.Build(maps,armyNavMeshGeometry,armyNavMeshPaths);
-        string revision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/combat-content/v7\n"+string.Join("\n",hashes))));
+        var boundRevisions = hashes.Append(MortarWeaponPoolSource.VerifiedRevision);
+        string revision = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
+            "WarFriends/combat-content/v8\n" + string.Join("\n", boundRevisions))));
         ShotgunCatalog? shotguns=null;string? shotgunRevision=null;
         if(shotgunManifestPath!=null)
         {
@@ -285,6 +290,7 @@ public sealed class BattleCombatContent
             MortarPoints = mortarPoints,
             MortarWeapon = mortarWeapon,
             MortarPreparedPose = mortarPreparedPose,
+            MortarWeaponPool = mortarWeaponPool,
             AssaultHelicopterWeapons=assaultHelicopterWeapons,
             AssaultHelicopterBoxCollider=assaultHelicopterBoxCollider,
             AssaultHelicopterMeshColliders=assaultHelicopterMeshColliders,

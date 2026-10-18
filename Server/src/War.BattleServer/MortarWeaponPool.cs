@@ -75,6 +75,16 @@ internal sealed class MortarWeaponPool
         return _freeSlots.ToArray();
     }
 
+    internal void Clear()
+    {
+        _actorSlots.Clear();
+        _freeSlots.Clear();
+        for (int index = 0; index < Capacity; index++)
+        {
+            _freeSlots.AddLast(index);
+        }
+    }
+
     private static void ValidateActorKey(ulong actorKey)
     {
         if (actorKey == 0)

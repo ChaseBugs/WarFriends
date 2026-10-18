@@ -1534,6 +1534,12 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try
             {
+                // Validate both owners before the first one spends energy or publishes a soldier.
+                // Physical weapon-slot admission must join this shared preflight, not attachment below.
+                foreach (var player in players)
+                {
+                    _ = player.Army!.PreviewDueSpawns(tick);
+                }
                 foreach(var p in players)
                 {
                     foreach(var spawned in p.Army!.Advance(tick))

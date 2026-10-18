@@ -63,6 +63,11 @@ public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
         byte[] crew=ReadBounded(crewPath,100,10_000,"Helicopter crew source");
         if(Convert.ToHexStringLower(SHA256.HashData(crew))!=manifest.HelicopterCrewPointsRevision)
             throw new InvalidDataException("Helicopter crew source revision mismatch.");
+        string directory = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
+        var army = ArmyDeploymentCatalog.Load(Path.Combine(directory, "recovered-army-deployment.json"),
+            manifest.ArmyDeploymentRevision, manifest.SceneRevision);
+        MortarWeaponPoolSource.Load(Path.Combine(directory, "recovered-mortar-weapon-pool.json"),
+            army, manifest.SceneRevision);
         var bindings=WeaponBindingGraphCatalog.Load(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,
             "recovered-all-weapon-bindings.json"),manifest.AllWeaponBindingsRevision,manifest.SceneRevision,contentPath);
         try
@@ -95,8 +100,9 @@ public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
                 }
                 result.Add(id,lane);
             }
-            string packageRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-                "WarFriends/combat-content/v7\n"+string.Join("\n",hashes))));
+            var boundRevisions = hashes.Append(MortarWeaponPoolSource.VerifiedRevision);
+            string packageRevision = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
+                "WarFriends/combat-content/v8\n" + string.Join("\n", boundRevisions))));
             return new(result,bindings,packageRevision,manifest.SceneRevision,manifest.StatsRevision);
         }
         catch(Exception e) when(e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or ArgumentException)

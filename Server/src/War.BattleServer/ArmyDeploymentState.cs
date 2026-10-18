@@ -213,29 +213,54 @@ public sealed class ArmyDeploymentState
         return "army-deploying";
     }
 
+    /// <summary>Validates due spawns without consuming energy, reservations or entity identities.</summary>
+    internal IReadOnlyList<ArmySpawn> PreviewDueSpawns(ulong tick)
+    {
+        int remainingEnergy = Energy;
+        int previewId = nextEntityId;
+        var previewReserved = new Dictionary<string, int>(reserved, StringComparer.Ordinal);
+        var previewAlive = new Dictionary<string, int>(alive, StringComparer.Ordinal);
+        var preview = new List<ArmySpawn>();
+        foreach (var scheduled in pending.TakeWhile(entry => entry.Tick <= tick))
+        {
+            if (scheduled.Option.Count <= 0 || scheduled.Option.Power <= 0 ||
+                scheduled.Option.Power % scheduled.Option.Count != 0 ||
+                !equipped.Contains(scheduled.Family.UnitId))
+            {
+                throw new InvalidDataException("Invalid pending army spawn authority.");
+            }
+            int unitPower = scheduled.Option.Power / scheduled.Option.Count;
+            if (unitPower > remainingEnergy)
+            {
+                throw new InvalidDataException("Reserved army energy was lost.");
+            }
+            remainingEnergy -= unitPower;
+            int count = previewReserved.GetValueOrDefault(scheduled.Family.UnitId);
+            if (count <= 0)
+            {
+                throw new InvalidDataException("Reserved army spawn count was lost.");
+            }
+            previewReserved[scheduled.Family.UnitId] = count - 1;
+            previewAlive[scheduled.Family.UnitId] = checked(previewAlive.GetValueOrDefault(scheduled.Family.UnitId) + 1);
+            if (previewId >= CardUnitEntityRegistry.FirstLocalEntityId - 1)
+            {
+                throw new InvalidDataException("Army entity ID entered the card-unit range.");
+            }
+            if (entities.ContainsKey(++previewId))
+            {
+                throw new InvalidDataException("Army entity ID already exists.");
+            }
+            preview.Add(new ArmySpawn(previewId, scheduled.Option.Index, scheduled.Family.UnitId,
+                unitPower, scheduled.Tick, scheduled.Family.IsAir));
+        }
+        return preview.AsReadOnly();
+    }
+
     public IReadOnlyList<ArmySpawn> Advance(ulong tick)
     {
-        var due=pending.TakeWhile(p=>p.Tick<=tick).ToArray();
-        int remainingEnergy=Energy;int previewId=nextEntityId;
-        var previewReserved=new Dictionary<string,int>(reserved,StringComparer.Ordinal);
-        var previewAlive=new Dictionary<string,int>(alive,StringComparer.Ordinal);
-        foreach(var scheduled in due)
-        {
-            if(scheduled.Option.Count<=0||scheduled.Option.Power<=0||
-               scheduled.Option.Power%scheduled.Option.Count!=0||
-               !equipped.Contains(scheduled.Family.UnitId))
-                throw new InvalidDataException("Invalid pending army spawn authority.");
-            int unitPower=scheduled.Option.Power/scheduled.Option.Count;
-            if(unitPower>remainingEnergy)throw new InvalidDataException("Reserved army energy was lost.");
-            remainingEnergy-=unitPower;
-            int count=previewReserved.GetValueOrDefault(scheduled.Family.UnitId);
-            if(count<=0)throw new InvalidDataException("Reserved army spawn count was lost.");
-            previewReserved[scheduled.Family.UnitId]=count-1;
-            previewAlive[scheduled.Family.UnitId]=checked(previewAlive.GetValueOrDefault(scheduled.Family.UnitId)+1);
-            if(previewId>=CardUnitEntityRegistry.FirstLocalEntityId-1)
-                throw new InvalidDataException("Army entity ID entered the card-unit range.");
-            if(entities.ContainsKey(++previewId))throw new InvalidDataException("Army entity ID already exists.");
-        }
+        // Keep the same authority checks available to shared resource preflight before either player commits.
+        _ = PreviewDueSpawns(tick);
+        var due = pending.TakeWhile(entry => entry.Tick <= tick).ToArray();
         var spawned=new List<ArmySpawn>();
         foreach(var expected in due)
         {

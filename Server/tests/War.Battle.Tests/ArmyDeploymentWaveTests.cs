@@ -18,8 +18,20 @@ internal static class ArmyDeploymentWaveTests
         ArmyDeploymentWave first = state.LastAcceptedWave!;
         Require(first.Id == 1 && first.StartedTick == 0 && first.FinishAfterTick == (ulong)large.Count * IntervalTicks &&
             first.IsSoldier && first.OptionIndex == large.Index, "First wave lost its source lifecycle identity.");
-        state.Advance(0);
-        state.Advance(IntervalTicks);
+        int energyBeforePreview = state.Energy;
+        int pendingBeforePreview = state.PendingCount;
+        IReadOnlyList<ArmySpawn> firstPreview = state.PreviewDueSpawns(0);
+        IReadOnlyList<ArmySpawn> futurePreview = state.PreviewDueSpawns(IntervalTicks);
+        Require(firstPreview.Count == 1 && futurePreview.Count == 2 &&
+            state.Energy == energyBeforePreview && state.PendingCount == pendingBeforePreview &&
+            state.ActiveCount == 0 && state.CompletedWaves.Count == 0 && state.LastAcceptedWave == first,
+            "Read-only preflight consumed energy, queue entries, actor IDs or deployment lifecycle state.");
+        Require(state.PreviewDueSpawns(0).SequenceEqual(firstPreview),
+            "A repeated preflight changed the expected actor identity.");
+        Require(state.Advance(0).SequenceEqual(firstPreview),
+            "The committed spawn differs from its non-mutating preflight.");
+        Require(state.Advance(IntervalTicks).Single() == futurePreview[1],
+            "A future preview consumed an actor ID or changed the second source wait.");
         state.SetOffers([small.Index, small.Index, small.Index]);
         Require(state.TryDeploy(small.Index, 1) == "army-cooldown" && state.LastAcceptedWave == first,
             "A rejected deployment changed source wave authority.");
@@ -50,7 +62,7 @@ internal static class ArmyDeploymentWaveTests
         Require(state.CompletedWaves.Count == 0, "A repeated advance published a completion twice.");
         state.RemoveEntity(early.EntityId);
         Require(state.WaveOf(early.EntityId) == null, "Removed entities retained source wave ownership.");
-        return 12;
+        return 16 + ArmySpawnPreflightTests.Run(directory);
     }
 
     private static void Require(bool condition, string message)

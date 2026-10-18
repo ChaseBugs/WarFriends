@@ -1,0 +1,255 @@
+{
+  "unityVersion": "2018.3.0f2",
+  "scope": "Recovered InvokeAfter/PoolableObject/ObjectPool on plain shells; no EnemyController death or Photon.",
+  "scenarios": [
+    {
+      "delay": 2.0,
+      "forcedReturn": true,
+      "forcedReturnTick": 140,
+      "events": [
+        {
+          "transition": "scheduled",
+          "tick": 0,
+          "time": 0.0,
+          "deltaTime": 0.02,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "hide-callback",
+          "tick": 120,
+          "time": 2.0,
+          "deltaTime": 0.0166666675,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "forced-return",
+          "tick": 140,
+          "time": 2.66666675,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": false,
+          "instantiated": false,
+          "sameObject": true,
+          "free": [
+            0
+          ]
+        },
+        {
+          "transition": "successor-allocated",
+          "tick": 140,
+          "time": 2.66666675,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "finished",
+          "tick": 300,
+          "time": 8.0,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        }
+      ]
+    },
+    {
+      "delay": 2.0,
+      "forcedReturn": true,
+      "forcedReturnTick": 20,
+      "events": [
+        {
+          "transition": "scheduled",
+          "tick": 0,
+          "time": 0.0,
+          "deltaTime": 0.02,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "forced-return",
+          "tick": 20,
+          "time": 0.6666667,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": false,
+          "instantiated": false,
+          "sameObject": true,
+          "free": [
+            0
+          ]
+        },
+        {
+          "transition": "successor-allocated",
+          "tick": 20,
+          "time": 0.6666667,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "finished",
+          "tick": 300,
+          "time": 8.0,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        }
+      ]
+    },
+    {
+      "delay": 3.0,
+      "forcedReturn": false,
+      "forcedReturnTick": 0,
+      "events": [
+        {
+          "transition": "scheduled",
+          "tick": 0,
+          "time": 0.0,
+          "deltaTime": 0.02,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "hide-callback",
+          "tick": 150,
+          "time": 3.00000024,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "delayed-return",
+          "tick": 180,
+          "time": 4.0,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": false,
+          "instantiated": false,
+          "sameObject": true,
+          "free": [
+            0
+          ]
+        },
+        {
+          "transition": "finished",
+          "tick": 300,
+          "time": 8.0,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": false,
+          "instantiated": false,
+          "sameObject": true,
+          "free": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "delay": 2.0,
+      "forcedReturn": false,
+      "forcedReturnTick": 0,
+      "events": [
+        {
+          "transition": "scheduled",
+          "tick": 0,
+          "time": 0.0,
+          "deltaTime": 0.02,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "hide-callback",
+          "tick": 120,
+          "time": 2.0,
+          "deltaTime": 0.0166666675,
+          "timeScale": 1.0,
+          "active": true,
+          "instantiated": true,
+          "sameObject": true,
+          "free": []
+        },
+        {
+          "transition": "delayed-return",
+          "tick": 150,
+          "time": 3.00000024,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": false,
+          "instantiated": false,
+          "sameObject": true,
+          "free": [
+            0
+          ]
+        },
+        {
+          "transition": "finished",
+          "tick": 300,
+          "time": 8.0,
+          "deltaTime": 0.0333333351,
+          "timeScale": 1.0,
+          "active": false,
+          "instantiated": false,
+          "sameObject": true,
+          "free": [
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs",
+      "normalizedUtf8LfSha256": "c9a499ac3672eb3be406e7170f345b08a0dc7835d42cb1090a1b79988e812723"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/ObjectPool.cs",
+      "normalizedUtf8LfSha256": "7db8ebe40315a441d4892ddc9d4b1cb392aac1186289c0882e18e58f3263adf8"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/PoolableObject.cs",
+      "normalizedUtf8LfSha256": "8341f400464de9abcaf2543707632b0f0c7338c0f87c01f7bdf918064b0a4dba"
+    },
+    {
+      "source": "Server/tools/UnityPoolReturnClockProbe.cs",
+      "normalizedUtf8LfSha256": "eb428e582de1169b70df3c78b87aca049f6d93a4add0afb45c733ea5dc5c45ed"
+    },
+    {
+      "source": "Server/tools/UnityPoolReturnClockExport.cs",
+      "normalizedUtf8LfSha256": "826d165acc8d8cb6c8f2721ca32bf0553d51e14ce1c7538d2a984b1a4dd01a94"
+    }
+  ]
+}
