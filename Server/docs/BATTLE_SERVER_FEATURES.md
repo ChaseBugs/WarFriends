@@ -72,10 +72,12 @@ The fixture explicitly arms/subscribes the window. Complete host entity mutation
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
 The same real spawn dispatcher now applies the normal Assaulter binding: opposing current health
 and weapon damage halve, maximum health stays unchanged, and friendly authority is preserved.
-The [ordinary gun binding](SICKNESS_PRIMARY_WEAPONS.md) now also supports normal Sniper and
-Minigunner current damage/vitality. Real spawn callbacks preserve friendly authority and actual
-automatic launches capture half damage after the window disconnects. The Sickness group passes
-128 checks. Other eligible weapon layouts and authorized SICKNESS activation remain open.
+The [ordinary gun binding](SICKNESS_PRIMARY_WEAPONS.md) covers nine ordinary layouts, including
+Paratrooper, SWAT, Gunslinger and Commando. SWAT and two consecutive Commando rounds capture
+half damage. Shotgunner/Warper instead preserve actual damage from their separate min/max fields,
+matching baseline hosts. Paratrooper/Gunslinger currently have spawn-mutation proof only: normal
+airborne descent/landing and ordinary Gunslinger attack initialization remain missing. The
+Sickness group passes 163 checks; other layouts and authorized card activation remain open.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host
@@ -116,7 +118,7 @@ tick 698, reservation/shooting cleanup and the surviving shooter's next automati
 This is one fixed opposing deployment; all unit matchups and normal Client integration remain open.
 The complete default Windows Battle test executable passed 247,551 assertions at checkpoint
 8ed268d3e after the moving-roster UDP comparison correction. The subsequent ordinary Sickness
-binding extension passes 128 Sickness checks, 110 Assaulter checks and 26,395 combat assertions;
+binding extension passes 163 Sickness checks, 110 Assaulter checks and 26,395 combat assertions;
 the complete default executable was not rerun for that extension. The optional Unity Editor audit and Linux runtime
 verification were not run; this test total does not close the normal Client integration gate.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the

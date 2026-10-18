@@ -1,8 +1,8 @@
 # Sickness callback and calculation kernel
 
 The later [ordinary gun bindings](SICKNESS_PRIMARY_WEAPONS.md) connect current damage/vitality
-for normal Assaulter, Sniper and Minigunner units. The combined focused Sickness group now
-passes 128 checks; authorized SICKNESS card activation remains incomplete.
+for nine ordinary layouts, with separate source shotgun min/max semantics. Paratrooper and
+Gunslinger automatic AI remain unbound. The combined focused Sickness group passes 163 checks; authorized SICKNESS card activation remains incomplete.
 
 `SicknessSpawnWindow` implements the recovered `CardSickness` event rules independently of
 network admission and mutable host entity state. It consumes the source option identities in
