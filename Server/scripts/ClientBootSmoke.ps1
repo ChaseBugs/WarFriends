@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$UnityExecutable,
     [Parameter(Mandatory = $true)][string]$UnityProject,
-    [string]$MongoExecutable = 'mongod'
+    [string]$MongoExecutable = 'mongod',
+    [switch]$ExportStarterLoadout
 )
 $ErrorActionPreference = 'Stop'
 $serverRoot = Split-Path $PSScriptRoot -Parent
@@ -14,6 +15,7 @@ if (!$projectPath.StartsWith($validationRoot, [StringComparison]::OrdinalIgnoreC
 $editorFolder = Join-Path $projectPath 'Assets/Editor'
 New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalClientBootAudit.cs') -Destination $editorFolder
+Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityStarterLoadoutExport.cs') -Destination $editorFolder
 $runRoot = Join-Path $validationRoot ('client-boot-' + [Guid]::NewGuid().ToString('N'))
 $mongoPath = Join-Path $runRoot 'mongo'
 New-Item -ItemType Directory -Path $mongoPath -Force | Out-Null
@@ -21,7 +23,7 @@ $processes = @()
 $variables = @(
     'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
     'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
-    'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT'
+    'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT'
 )
 $prior = @{}
 foreach ($name in $variables) {
@@ -82,6 +84,10 @@ try {
     if (!$ready) { throw "Backend readiness timed out; inspect $runRoot" }
     $env:WARFRIENDS_BACKEND_URL = "http://127.0.0.1:$httpPort/"
     $env:WAR_LOBBY_BOOT_REQUIRE_ACCOUNT = '1'
+    $env:WAR_STARTER_LOADOUT_OUTPUT = $null
+    if ($ExportStarterLoadout) {
+        $env:WAR_STARTER_LOADOUT_OUTPUT = Join-Path $runRoot 'starter-loadout.json'
+    }
     $reportPath = Join-Path $projectPath 'normal-client-boot.json'
     if (Test-Path -LiteralPath $reportPath) { Remove-Item -LiteralPath $reportPath }
     $unityArguments = @(
@@ -102,6 +108,14 @@ try {
         $report.initializedWeaponRows -ne $report.recoveredWeaponRows -or
         $report.recoveredUnitRows -le 0 -or $report.exceptions -ne 0) {
         throw "Client readiness evidence is incomplete; inspect $runRoot"
+    }
+    if ($ExportStarterLoadout) {
+        $starter = Get-Content -LiteralPath $env:WAR_STARTER_LOADOUT_OUTPUT -Raw | ConvertFrom-Json
+        if ($starter.schemaVersion -ne 1 -or $starter.weapons.Count -ne $report.recoveredWeaponRows -or
+            $starter.units.Count -ne $report.recoveredUnitRows -or $starter.hasMetadataSideEffects -or
+            $starter.weaponIndexChecks -ne (2 * $report.recoveredWeaponRows + 1)) {
+            throw "Starter export is incomplete; inspect $runRoot"
+        }
     }
     Write-Output "PASS: actual isolated Client account/unit initialization boundary; $runRoot"
 }

@@ -39,7 +39,9 @@ public sealed class BattlePlayerPresentationSource
             string source=x.Value.Name ?? "";
             if(!levels.SavedWeapons.TryGetValue(source,out var saved) || !(saved.Bought || saved.Borrowed))
                 throw new InvalidDataException("Equipped weapon is not owned in durable level state.");
-            return new BattleWeaponPresentation(x.Key,x.Value.WeaponIndex,source,saved.BoughtIndex);
+            // Legacy InventoryData stores the LevelManager order, not WeaponInventory.allWeapons.
+            int inventoryIndex = BattleClientWeaponIndices.ResolveInventoryIndex(source, x.Value.WeaponIndex);
+            return new BattleWeaponPresentation(x.Key,inventoryIndex,source,saved.BoughtIndex);
         }).ToArray();
         var units=levels.SavedArmies.Where(x=>x.Value.Equipped).OrderBy(x=>x.Key,StringComparer.Ordinal).Select(x=>
         {

@@ -48,7 +48,7 @@ internal static class BackendQueueLiveTests
                 string rifle="Google2u.AssaultRifle_AK47";
                 var decals=new DecalManagerData();
                 for(int slot=0;slot<4;slot++)decals.Slots[slot]=new SavedPlayerVisualSlot{EquippedId="VISUAL_"+slot};
-                var inventory=new InventoryData();inventory.Slots[0]=new SerializedSlotDetail{Name=rifle,WeaponIndex=11};
+                var inventory=new InventoryData();inventory.Slots[0]=new SerializedSlotDetail{Name=rifle,WeaponIndex=1};
                 var levels=new LevelManagerData();levels.SavedWeapons[rifle]=new SavedWeaponSlots{Bought=true,BoughtIndex=0};
                 var player=new LegacyPlayerDocument{Id=ids[i],Name="Queue"+i,Locale="en",Country="US",Level=1,
                     ArmyPower=1,LeagueId="1-local",SessionHash=LegacyPlayerStore.HashToken(tokens[i]),

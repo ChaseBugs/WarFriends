@@ -1,0 +1,124 @@
+# Recovered starter loadout and weapon index bridge
+
+The 1.4.0 Client has separate weapon index domains. Persisted
+`PlayerInventory.InventoryData.slots[*].weaponIndex` and
+`PlayerInventory.EquippedWeapon.weaponId` address `LevelManager.weaponLevelsSetups`.
+`WeaponInventory.SetWeapons` then resolves each setup's `indexInWeaponInventory`
+to its actual `allWeapons` object. The battle binding graph and
+`BattleWeaponView.weapon_index` use that latter domain.
+
+Previously the Backend copied a persisted index directly into the battle view,
+and `PlayerProperties.CreateFromBattleView` copied it directly back into an
+EquippedWeapon. This could reject a valid persisted loadout at manifest binding
+or display a different weapon from the signed battle identity.
+
+## Implemented conversion
+
+The Backend now resolves the stored source ID plus LevelManager index through
+`BattleClientWeaponIndices`. The Client resolves that same source ID plus battle
+inventory index against its initialized scene before building EquippedWeapon.
+Neither side guesses a weapon from the number alone or accepts a mismatched
+source ID/index pair. Existing Photon/legacy index semantics are preserved.
+
+| Equipped slot | Source identity | Persisted LevelManager index | Battle allWeapons index |
+|---|---|---:|---:|
+| 0 | Google2u.AssaultRifle_AK47 | 1 | 11 |
+| 1 | Google2u.SniperRifle_M24 | 3 | 2 |
+| 2 | Google2u.Grenade_FRAG | 6 | 5 |
+| 3 | Google2u.Pistol_Remmington51 | 13 | 12 |
+
+The [identity-only artifact](../content/recovered-player-weapon-indexes.json)
+contains all 66 source identities in LevelManager order. The allWeapons indexes
+span 0-66 with no mapped source at index 20; they are not a dense 0-65 domain.
+The artifact binds the reviewed combat graph and the actual Client observation.
+It is embedded in the Backend assembly and checked by digest, schema, complete
+count, ordered unique LevelManager indexes and unique supported inventory
+indexes during startup. It is independent of deployment working directories.
+
+Identity-map SHA-256:
+`adcd85fe32936e52d85a7d45bce982b7c58a94ec4b353b749ad00d07eaf3fa34`.
+No prices, ownership flags or rewards are published by this identity artifact.
+
+Manually seeded documents that stored a battle inventory number in the legacy
+field need explicit source-based repair. The runtime does not accept both index
+domains as aliases. The queue/rematch test fixtures now store the actual
+persisted AK47 index 1 and still produce battle index 11.
+
+## Observed initial state
+
+[The observation](client-starter-loadout-observation.json) was captured after
+original Splash/MainScene startup against a fresh real Backend and isolated
+Mongo database. It has 66 weapon definitions, 24 player-unit definitions,
+four slot masks and the exact InventoryData, LevelManagerData and
+DecalManagerData blobs. No account ID, password, token or wallet is exported.
+The configured server and Client rank indexes are both 1; the observed game
+controller is outside tutorial mode. This is a configured bootstrap reference,
+not proof of unknown original production account defaults.
+
+Two fresh accounts produced identical subsystem state. Reading metadata did
+not change it. The observation records MainScene SHA-256 and thirteen runtime
+rule-file hashes, all checked against the active Client. Its SHA-256 is
+`7e4d56b6dbbfdc832fe65c1a3320c15d4b9c7b80750d7e6ba36f4d45ccb923c5`.
+MainScene remains
+`5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff`.
+The existing combat graph retains its pre-pointer-restoration provenance;
+every one of its 66 source IDs and inventory indexes matches the observation.
+
+Important rules for subsequent authoritative materialization:
+
+- Missing inventory slots choose the compatible weapon with the lowest unlock
+  index, retaining source order for ties. All four observed slots match this rule.
+- Stored `bought=false` does not mean unavailable. Source zero-price/unlock-zero
+  weapons and units derive ownership without changing that saved flag.
+- Source-marked tutorial weapons/units have additional normal-versus-tutorial
+  rules. FRAG and Assaulter are available in this observed non-tutorial context
+  despite nonzero shop prices and false stored purchase flags. This does not
+  authorize a currency grant or mark a purchase receipt.
+- The selected initial units are Assaulter, Shotgunner, Grennader and
+  MachineGunner, retaining their exact source names and starting tier 1.
+- Saved special/Elite slot zero is not a battle upgrade entitlement. The source
+  computes separate absolute indexes and isBought flags; absent lanes must not
+  be emitted as purchased stage zero. Original negative inactive-lane sentinels
+  remain in the observation for review.
+- Initial cosmetic IDs are CAMOS_DEFAULT, HELMETS_EMPTY, HEAD_EMPTY and
+  BANDS_EMPTY. Preserve these exact identities.
+
+## Reproduction and verification
+
+Refresh a disposable Client under Server/.local with the current runtime, then
+run `ClientBootSmoke.ps1` with its usual Unity/Mongo arguments and
+`-ExportStarterLoadout`. The script copies the Editor exporter, restores the
+caller's environment and stops only its own processes. The optional export
+must stay under Server/.local. It fails if metadata reads alter state or any
+of the 133 actual Client index checks fails.
+
+After reviewing the resulting starter-loadout.json, copy it to the observation
+path and run:
+
+```powershell
+python Server/tools/build_player_weapon_index_map.py --write
+```
+
+The generator verifies active source hashes and every combat binding. Review
+and update the embedded catalog's observation/map digest constants when the
+reference changes. Without --write, the command verifies the committed bytes.
+
+The final solution builds with zero warnings/errors. Verification passed:
+
+- Actual Unity 2018.3 account bootstrap, complete data-loaded callbacks,
+  24 units, 66 weapons, zero runtime exceptions and 133 index checks.
+- 268 native bidirectional identity, invalid-pair and Backend-projection checks
+  (`--client-weapon-index-only`), plus 1,360 protocol checks.
+- Real Mongo rematch manifest refresh (`--rematch-manifest-only`) and actual
+  Backend/Worker HTTP/UDP queue, cancellation, restart, recovery and rematch
+  (`--queue-live`). Mongo artifacts are under
+  Server/.local/weapon-index-live-7c0a2c096465493f9d03c284089d51f3.
+- Static asset audit: no missing scripts/broken references. The same 17 NGUI
+  atlas mismatches remain; the boot still records 70 error-level diagnostics.
+
+The final Client reference run is
+Server/.local/client-boot-790c4cab61324591949cc147696d71a2.
+This does not prove original Unity 5.2, Android, rendered UI or normal battle
+controller entry. The observation is not imported as starter economy or
+ownership authority. Server-authored initial state, derived free/tutorial
+ownership, unit lane projection and automatic battle allocation remain open.

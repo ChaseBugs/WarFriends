@@ -98,7 +98,7 @@ internal static class RematchManifestFactoryTests
             decals.Slots[slot] = new SavedPlayerVisualSlot { EquippedId = "VISUAL_" + slot };
         }
         var inventory = new InventoryData();
-        inventory.Slots[0] = new SerializedSlotDetail { Name = RifleId, WeaponIndex = 11 };
+        inventory.Slots[0] = new SerializedSlotDetail { Name = RifleId, WeaponIndex = 1 };
         var levels = new LevelManagerData();
         levels.SavedWeapons[RifleId] = new SavedWeaponSlots { Bought = true, BoughtIndex = 0 };
         await store.Insert(new LegacyPlayerDocument

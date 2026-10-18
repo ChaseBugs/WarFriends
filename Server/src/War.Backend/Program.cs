@@ -29,6 +29,7 @@ builder.Services.AddSingleton<BattleTerminalAcceptance>();
 builder.Services.AddHostedService<BattleCancellationRecoveryService>();
 builder.Services.AddSingleton(new LegacyPlayerStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<BattlePlayerPresentationSource>();
+BattleClientWeaponIndices.Validate();
 builder.Services.AddSingleton(new LegacyBufferStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new LegacySquadStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<LegacyBufferProcessor>();

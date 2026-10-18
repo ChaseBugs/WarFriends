@@ -47,6 +47,13 @@ collision rule or completed normal gameplay integration.
 The subsequent final default native run passes 143,282 assertions, including
 selected-crate identity checks across asynchronous peer observations.
 
+The [starter loadout/index checkpoint](CLIENT_STARTER_LOADOUT.md) now captures
+actual new-account defaults and corrects both sides of the persisted
+LevelManager versus battle allWeapons index boundary. All 66 mappings are
+source-bound; actual Unity checks and live Mongo/Backend/Worker gates pass.
+This does not yet materialize initial account state, authorize implicit
+starter ownership or provide automatic fresh-account battle allocation.
+
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted
 owners reject before lobby/player mutation, and a controlled native terminal

@@ -187,6 +187,38 @@ public class PlayerProperties
 		return playerProperties;
 	}
 
+    /// <summary>Converts a signed allWeapons identity into the recovered LevelManager weapon index.</summary>
+    public static int ResolveBattleWeaponLevelIndex(BattleWeaponView weapon)
+    {
+        if (weapon == null)
+        {
+            throw new System.InvalidOperationException("The self-hosted weapon view is missing.");
+        }
+
+        // EquippedWeapon.weaponId addresses LevelManager; the battle binding addresses allWeapons.
+        List<WeaponLevelsSetup> setups = LevelManager.instance.weaponLevelsSetups;
+        int resolvedIndex = -1;
+        for (int i = 0; i < setups.Count; i++)
+        {
+            WeaponLevelsSetup setup = setups[i];
+            if (!string.Equals(setup.GetSheetName(), weapon.SourceId, System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+            if (resolvedIndex >= 0 || setup.indexInWeaponInventory != weapon.WeaponIndex)
+            {
+                throw new System.InvalidOperationException(
+                    "The self-hosted weapon identity differs from the local source.");
+            }
+            resolvedIndex = i;
+        }
+        if (resolvedIndex < 0 || resolvedIndex > byte.MaxValue)
+        {
+            throw new System.InvalidOperationException("The self-hosted weapon has no usable local source index.");
+        }
+        return resolvedIndex;
+    }
+
 	/// <summary>Constructs the recovered scene-facing player state from the authenticated
 	/// Backend projection. Combat authority remains on the BattleServer.</summary>
 	public static PlayerProperties CreateFromBattleView(BattlePlayerView view, Fractions fraction)
@@ -216,7 +248,7 @@ public class PlayerProperties
 			BattleWeaponView weapon = view.Weapons[i];
 			result.weapons[i] = new PlayerInventory.EquippedWeapon
 			{
-				weaponId = weapon.WeaponIndex,
+				weaponId = ResolveBattleWeaponLevelIndex(weapon),
 				weaponUpgrade = weapon.UpgradeIndex,
 				enabled = true
 			};

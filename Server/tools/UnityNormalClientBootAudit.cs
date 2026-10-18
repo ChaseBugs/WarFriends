@@ -191,6 +191,18 @@ public static class UnityNormalClientBootAudit
             " report=" + reportPath);
         bool completed = reachedMain && game != null && _exceptions == 0 && _invalidBootstrapQueries == 0 &&
             (!requireAccount || dataLoadComplete);
+        if (completed && requireAccount)
+        {
+            try
+            {
+                UnityStarterLoadoutExport.WriteIfRequested();
+            }
+            catch (Exception failure)
+            {
+                Debug.LogException(failure);
+                completed = false;
+            }
+        }
         EditorApplication.Exit(completed ? 0 : 1);
     }
 }

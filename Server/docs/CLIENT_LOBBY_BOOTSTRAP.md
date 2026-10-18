@@ -240,3 +240,14 @@ presentation projection only checks stored Bought/Borrowed flags. Reconcile
 these source rules against validated catalogs instead of marking every
 default entry purchased just to satisfy that projection. Tutorial and
 try-out exceptions require their own authoritative mode/entitlement proof.
+
+### Verified weapon index conversion
+
+The [starter observation and index bridge](CLIENT_STARTER_LOADOUT.md) now
+records the real initial slot choices and all 66 weapon identity pairs.
+The Backend projects stored LevelManager indexes into battle allWeapons
+indexes; PlayerProperties converts those authenticated views back into
+local LevelManager indexes. Actual Unity mapping checks, native identity
+checks and Mongo-backed live queue/rematch gates pass. Starter ownership
+and durable initial-state materialization are still required before a
+fresh normal account can enter matchmaking automatically.

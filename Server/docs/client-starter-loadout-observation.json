@@ -1,0 +1,2919 @@
+{
+  "schemaVersion": 1,
+  "scope": "fresh account after Splash/MainScene callbacks; observation only",
+  "source": {
+    "unityVersion": "2018.3.0f2",
+    "mainSceneSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+    "ruleSha256": {
+      "LevelManager.cs": "59524382c4d97406492fe42da3f8eb24d72c7e4314dfff6a5a05f027ef49f07d",
+      "PlayerInventory.cs": "a496e163a2e5fc5b2075dbceac7e35e8b395d6ac32b9e998ebd6d0686adb5132",
+      "WeaponLevelsSetup.cs": "2269129d3a2a7659270c551eed1b8e803f115447059df1138621f1d9db22264e",
+      "UpgradeSlots.cs": "b86a38f9755b3bdcf9080be9c87ef07931fc4579dba40c7debcfda4dfddcf7c6",
+      "ActiveUnitsManager.cs": "8d44f5f655a77bcfe613aecef20ff56d0187f77a8451bf7eb69e67c0e583ffe9",
+      "CamosManager.cs": "fd643fb9b216bfd6dc8c7c5db33c607cb9a9859188613c93840f9d849fe8f75f",
+      "DatabaseSerializedObjectGeneric.cs": "d5c548227b7d2d84fb6d346d74c189dace055c44997bb58633ad53db86656a70",
+      "GameController.cs": "c83ed60fcf3d023dda2e2e697efbd8beab9282a3c11556f31bf5509052f1449e",
+      "UpgradeSlot.cs": "5cc60f05cdf29a7e293dccbf4626af5bca359c46e07e65a9345ff10081d3548c",
+      "UpgradeSlotSpecial.cs": "9902f7c2c8492f37b926591802e985d9020b12f4d62b36c3330d0a0d3a0a632c",
+      "UpgradeSlotElite.cs": "174d1c4d519a54d5f2bb09b32874738a4c819860b75b17094e505514a907ad3b",
+      "PlayerProperties.cs": "503af4cd5cc3168c790e0604f2261c2ce06fe6ec7bd9885471099312e6f2d736",
+      "WeaponInventory.cs": "1a5d4502c4fb047b91157044d6f1c153c40c5e58f76c900f3b39eeb818549e43"
+    }
+  },
+  "context": {
+    "rankIndex": 1,
+    "serverRankIndex": 1,
+    "isTutorial": false
+  },
+  "hasMetadataSideEffects": false,
+  "weaponIndexChecks": 133,
+  "weapons": [
+    {
+      "sourceOrder": 0,
+      "sourceId": "Google2u.AssaultRifle_M16",
+      "inventoryIndex": 1,
+      "category": 1,
+      "unlockRankIndex": 8,
+      "minimumPurchaseRankIndex": 5,
+      "price": 0,
+      "goldPrice": 269,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 1,
+      "sourceId": "Google2u.AssaultRifle_AK47",
+      "inventoryIndex": 11,
+      "category": 1,
+      "unlockRankIndex": 0,
+      "minimumPurchaseRankIndex": -1,
+      "price": 0,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": true,
+      "hasImplicitFreeOwnership": true
+    },
+    {
+      "sourceOrder": 2,
+      "sourceId": "Google2u.AssaultRifle_Famas",
+      "inventoryIndex": 26,
+      "category": 1,
+      "unlockRankIndex": 16,
+      "minimumPurchaseRankIndex": 13,
+      "price": 0,
+      "goldPrice": 949,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 3,
+      "sourceId": "Google2u.SniperRifle_M24",
+      "inventoryIndex": 2,
+      "category": 8,
+      "unlockRankIndex": 0,
+      "minimumPurchaseRankIndex": -1,
+      "price": 0,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": true,
+      "hasImplicitFreeOwnership": true
+    },
+    {
+      "sourceOrder": 4,
+      "sourceId": "Google2u.Bazooka_RPG7",
+      "inventoryIndex": 3,
+      "category": 16,
+      "unlockRankIndex": 3,
+      "minimumPurchaseRankIndex": 0,
+      "price": 0,
+      "goldPrice": 89,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 5,
+      "sourceId": "Google2u.Shotgun_Saiga",
+      "inventoryIndex": 27,
+      "category": 32,
+      "unlockRankIndex": 21,
+      "minimumPurchaseRankIndex": 18,
+      "price": 0,
+      "goldPrice": 1599,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 6,
+      "sourceId": "Google2u.Grenade_FRAG",
+      "inventoryIndex": 5,
+      "category": 64,
+      "unlockRankIndex": 1,
+      "minimumPurchaseRankIndex": -1,
+      "price": 999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": true,
+      "isBought": true,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 7,
+      "sourceId": "Google2u.Grenade_SMOKE",
+      "inventoryIndex": 6,
+      "category": 64,
+      "unlockRankIndex": 23,
+      "minimumPurchaseRankIndex": 20,
+      "price": 0,
+      "goldPrice": 2499,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 8,
+      "sourceId": "Google2u.Grenade_FLASH",
+      "inventoryIndex": 7,
+      "category": 64,
+      "unlockRankIndex": 10,
+      "minimumPurchaseRankIndex": 7,
+      "price": 0,
+      "goldPrice": 199,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 9,
+      "sourceId": "Google2u.Grenade_POISON",
+      "inventoryIndex": 8,
+      "category": 64,
+      "unlockRankIndex": 17,
+      "minimumPurchaseRankIndex": 14,
+      "price": 239999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 10,
+      "sourceId": "Google2u.SMG_UMP45",
+      "inventoryIndex": 9,
+      "category": 2,
+      "unlockRankIndex": 20,
+      "minimumPurchaseRankIndex": 17,
+      "price": 0,
+      "goldPrice": 1129,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 11,
+      "sourceId": "Google2u.SniperRifle_M110",
+      "inventoryIndex": 10,
+      "category": 8,
+      "unlockRankIndex": 25,
+      "minimumPurchaseRankIndex": 22,
+      "price": 0,
+      "goldPrice": 1999,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 12,
+      "sourceId": "Google2u.Pistol_DesertEagle",
+      "inventoryIndex": 0,
+      "category": 128,
+      "unlockRankIndex": 32,
+      "minimumPurchaseRankIndex": 29,
+      "price": 6349999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 13,
+      "sourceId": "Google2u.Pistol_Remmington51",
+      "inventoryIndex": 12,
+      "category": 128,
+      "unlockRankIndex": 0,
+      "minimumPurchaseRankIndex": -1,
+      "price": 0,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": true,
+      "hasImplicitFreeOwnership": true
+    },
+    {
+      "sourceOrder": 14,
+      "sourceId": "Google2u.Pistol_Berreta",
+      "inventoryIndex": 13,
+      "category": 128,
+      "unlockRankIndex": 12,
+      "minimumPurchaseRankIndex": 9,
+      "price": 0,
+      "goldPrice": 119,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 15,
+      "sourceId": "Google2u.Pistol_M1911",
+      "inventoryIndex": 29,
+      "category": 128,
+      "unlockRankIndex": 19,
+      "minimumPurchaseRankIndex": 16,
+      "price": 203799,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 16,
+      "sourceId": "Google2u.SniperRifle_Dragunov",
+      "inventoryIndex": 14,
+      "category": 8,
+      "unlockRankIndex": 9,
+      "minimumPurchaseRankIndex": 6,
+      "price": 59999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 17,
+      "sourceId": "Google2u.LMG_PKMachinegun",
+      "inventoryIndex": 15,
+      "category": 4,
+      "unlockRankIndex": 4,
+      "minimumPurchaseRankIndex": 1,
+      "price": 14999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 18,
+      "sourceId": "Google2u.LMG_M249",
+      "inventoryIndex": 16,
+      "category": 4,
+      "unlockRankIndex": 10,
+      "minimumPurchaseRankIndex": 7,
+      "price": 199999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 19,
+      "sourceId": "Google2u.LMG_MG4",
+      "inventoryIndex": 23,
+      "category": 4,
+      "unlockRankIndex": 26,
+      "minimumPurchaseRankIndex": 23,
+      "price": 0,
+      "goldPrice": 2499,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 20,
+      "sourceId": "Google2u.LMG_SA80",
+      "inventoryIndex": 24,
+      "category": 4,
+      "unlockRankIndex": 18,
+      "minimumPurchaseRankIndex": 15,
+      "price": 1599999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 21,
+      "sourceId": "Google2u.LMG_Minigun",
+      "inventoryIndex": 25,
+      "category": 256,
+      "unlockRankIndex": 0,
+      "minimumPurchaseRankIndex": -1,
+      "price": 0,
+      "goldPrice": 0,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 22,
+      "sourceId": "Google2u.SMG_MP5",
+      "inventoryIndex": 17,
+      "category": 2,
+      "unlockRankIndex": 6,
+      "minimumPurchaseRankIndex": 3,
+      "price": 59999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 23,
+      "sourceId": "Google2u.SMG_MP7",
+      "inventoryIndex": 28,
+      "category": 2,
+      "unlockRankIndex": 24,
+      "minimumPurchaseRankIndex": 21,
+      "price": 0,
+      "goldPrice": 1999,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 24,
+      "sourceId": "Google2u.SMG_CPW",
+      "inventoryIndex": 18,
+      "category": 2,
+      "unlockRankIndex": 14,
+      "minimumPurchaseRankIndex": 11,
+      "price": 619999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 25,
+      "sourceId": "Google2u.GrenadeLauncher_M320",
+      "inventoryIndex": 19,
+      "category": 512,
+      "unlockRankIndex": 6,
+      "minimumPurchaseRankIndex": 3,
+      "price": 0,
+      "goldPrice": 139,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 26,
+      "sourceId": "Google2u.AssaultRifle_QBZ95",
+      "inventoryIndex": 30,
+      "category": 1,
+      "unlockRankIndex": 12,
+      "minimumPurchaseRankIndex": 9,
+      "price": 0,
+      "goldPrice": 799,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 27,
+      "sourceId": "Google2u.Shotgun_Benelli",
+      "inventoryIndex": 22,
+      "category": 32,
+      "unlockRankIndex": 5,
+      "minimumPurchaseRankIndex": 2,
+      "price": 8999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 28,
+      "sourceId": "Google2u.SniperRifle_AWMF",
+      "inventoryIndex": 21,
+      "category": 8,
+      "unlockRankIndex": 17,
+      "minimumPurchaseRankIndex": 14,
+      "price": 489999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 29,
+      "sourceId": "Google2u.AssaultRifle_G36",
+      "inventoryIndex": 31,
+      "category": 1,
+      "unlockRankIndex": 31,
+      "minimumPurchaseRankIndex": 28,
+      "price": 0,
+      "goldPrice": 4199,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 30,
+      "sourceId": "Google2u.SniperRifle_M90",
+      "inventoryIndex": 32,
+      "category": 8,
+      "unlockRankIndex": 32,
+      "minimumPurchaseRankIndex": 29,
+      "price": 0,
+      "goldPrice": 3139,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 31,
+      "sourceId": "Google2u.Shotgun_Striker",
+      "inventoryIndex": 33,
+      "category": 32,
+      "unlockRankIndex": 29,
+      "minimumPurchaseRankIndex": 26,
+      "price": 0,
+      "goldPrice": 2589,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 32,
+      "sourceId": "Google2u.AssaultRifle_SteyrAUG",
+      "inventoryIndex": 34,
+      "category": 1,
+      "unlockRankIndex": 22,
+      "minimumPurchaseRankIndex": 19,
+      "price": 0,
+      "goldPrice": 1499,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 33,
+      "sourceId": "Google2u.SMG_P90",
+      "inventoryIndex": 35,
+      "category": 2,
+      "unlockRankIndex": 28,
+      "minimumPurchaseRankIndex": 25,
+      "price": 0,
+      "goldPrice": 3999,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 34,
+      "sourceId": "Google2u.LMG_M60",
+      "inventoryIndex": 36,
+      "category": 4,
+      "unlockRankIndex": 34,
+      "minimumPurchaseRankIndex": 31,
+      "price": 0,
+      "goldPrice": 4499,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 35,
+      "sourceId": "Google2u.Bazooka_FGM",
+      "inventoryIndex": 37,
+      "category": 16,
+      "unlockRankIndex": 27,
+      "minimumPurchaseRankIndex": 24,
+      "price": 0,
+      "goldPrice": 2479,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 36,
+      "sourceId": "Google2u.Bazooka_HMV",
+      "inventoryIndex": 38,
+      "category": 16,
+      "unlockRankIndex": 14,
+      "minimumPurchaseRankIndex": 11,
+      "price": 179999,
+      "goldPrice": 0,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 37,
+      "sourceId": "Google2u.Pistol_Magnum357",
+      "inventoryIndex": 39,
+      "category": 128,
+      "unlockRankIndex": 24,
+      "minimumPurchaseRankIndex": 21,
+      "price": 0,
+      "goldPrice": 699,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 38,
+      "sourceId": "Google2u.Shotgun_SPAS",
+      "inventoryIndex": 4,
+      "category": 32,
+      "unlockRankIndex": 13,
+      "minimumPurchaseRankIndex": 10,
+      "price": 0,
+      "goldPrice": 429,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 39,
+      "sourceId": "Google2u.Grenade_Molotov",
+      "inventoryIndex": 40,
+      "category": 64,
+      "unlockRankIndex": 30,
+      "minimumPurchaseRankIndex": 27,
+      "price": 0,
+      "goldPrice": 2999,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 40,
+      "sourceId": "Google2u.Bazooka_Panzerfaust",
+      "inventoryIndex": 41,
+      "category": 16,
+      "unlockRankIndex": 20,
+      "minimumPurchaseRankIndex": 17,
+      "price": 0,
+      "goldPrice": 619,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 41,
+      "sourceId": "Google2u.Bazooka_M202",
+      "inventoryIndex": 42,
+      "category": 16,
+      "unlockRankIndex": 34,
+      "minimumPurchaseRankIndex": 31,
+      "price": 0,
+      "goldPrice": 3099,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 42,
+      "sourceId": "Google2u.SMG_MP5_elite",
+      "inventoryIndex": 43,
+      "category": 2,
+      "unlockRankIndex": 6,
+      "minimumPurchaseRankIndex": 3,
+      "price": 58000,
+      "goldPrice": 0,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 43,
+      "sourceId": "Google2u.AssaultRifle_AKS47U",
+      "inventoryIndex": 44,
+      "category": 1,
+      "unlockRankIndex": 38,
+      "minimumPurchaseRankIndex": 35,
+      "price": 0,
+      "goldPrice": 5299,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 44,
+      "sourceId": "Google2u.AssaultRifle_G36Elite",
+      "inventoryIndex": 45,
+      "category": 1,
+      "unlockRankIndex": 31,
+      "minimumPurchaseRankIndex": 28,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 45,
+      "sourceId": "Google2u.SniperRifle_M90Elite",
+      "inventoryIndex": 46,
+      "category": 8,
+      "unlockRankIndex": 32,
+      "minimumPurchaseRankIndex": 29,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 46,
+      "sourceId": "Google2u.LMG_M60Elite",
+      "inventoryIndex": 47,
+      "category": 4,
+      "unlockRankIndex": 34,
+      "minimumPurchaseRankIndex": 31,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 47,
+      "sourceId": "Google2u.LMG_M249Elite",
+      "inventoryIndex": 48,
+      "category": 4,
+      "unlockRankIndex": 40,
+      "minimumPurchaseRankIndex": 37,
+      "price": 0,
+      "goldPrice": 5999,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 48,
+      "sourceId": "Google2u.SMG_P90Elite",
+      "inventoryIndex": 49,
+      "category": 2,
+      "unlockRankIndex": 28,
+      "minimumPurchaseRankIndex": 25,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 49,
+      "sourceId": "Google2u.Shotgun_Blackhand",
+      "inventoryIndex": 50,
+      "category": 32,
+      "unlockRankIndex": 42,
+      "minimumPurchaseRankIndex": 39,
+      "price": 0,
+      "goldPrice": 3999,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 50,
+      "sourceId": "Google2u.Shotgun_SawnOff",
+      "inventoryIndex": 51,
+      "category": 32,
+      "unlockRankIndex": 24,
+      "minimumPurchaseRankIndex": 21,
+      "price": 0,
+      "goldPrice": 1799,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 51,
+      "sourceId": "Google2u.Pistol_Jester",
+      "inventoryIndex": 52,
+      "category": 128,
+      "unlockRankIndex": 41,
+      "minimumPurchaseRankIndex": 38,
+      "price": 0,
+      "goldPrice": 3499,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 52,
+      "sourceId": "Google2u.Grenade_M84",
+      "inventoryIndex": 53,
+      "category": 64,
+      "unlockRankIndex": 37,
+      "minimumPurchaseRankIndex": 34,
+      "price": 0,
+      "goldPrice": 3499,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 53,
+      "sourceId": "Google2u.Shotgun_StrikerElite",
+      "inventoryIndex": 54,
+      "category": 32,
+      "unlockRankIndex": 29,
+      "minimumPurchaseRankIndex": 26,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 54,
+      "sourceId": "Google2u.Shotgun_AA12",
+      "inventoryIndex": 55,
+      "category": 32,
+      "unlockRankIndex": 35,
+      "minimumPurchaseRankIndex": 32,
+      "price": 0,
+      "goldPrice": 3399,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 55,
+      "sourceId": "Google2u.SMG_Vector",
+      "inventoryIndex": 56,
+      "category": 2,
+      "unlockRankIndex": 36,
+      "minimumPurchaseRankIndex": 33,
+      "price": 0,
+      "goldPrice": 4999,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 56,
+      "sourceId": "Google2u.Bazooka_FGMElite",
+      "inventoryIndex": 57,
+      "category": 16,
+      "unlockRankIndex": 27,
+      "minimumPurchaseRankIndex": 24,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 57,
+      "sourceId": "Google2u.Bazooka_Hater",
+      "inventoryIndex": 58,
+      "category": 16,
+      "unlockRankIndex": 39,
+      "minimumPurchaseRankIndex": 36,
+      "price": 0,
+      "goldPrice": 3499,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 58,
+      "sourceId": "Google2u.SniperRifle_MSR",
+      "inventoryIndex": 59,
+      "category": 8,
+      "unlockRankIndex": 38,
+      "minimumPurchaseRankIndex": 35,
+      "price": 0,
+      "goldPrice": 3699,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 59,
+      "sourceId": "Google2u.AssaultRifle_FamasElite",
+      "inventoryIndex": 60,
+      "category": 1,
+      "unlockRankIndex": 16,
+      "minimumPurchaseRankIndex": 13,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 60,
+      "sourceId": "Google2u.AssaultRifle_QBZ95Elite",
+      "inventoryIndex": 61,
+      "category": 1,
+      "unlockRankIndex": 12,
+      "minimumPurchaseRankIndex": 9,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 61,
+      "sourceId": "Google2u.Grenade_SMOKEElite",
+      "inventoryIndex": 62,
+      "category": 64,
+      "unlockRankIndex": 23,
+      "minimumPurchaseRankIndex": 20,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 62,
+      "sourceId": "Google2u.Shotgun_SaigaElite",
+      "inventoryIndex": 63,
+      "category": 32,
+      "unlockRankIndex": 21,
+      "minimumPurchaseRankIndex": 18,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 63,
+      "sourceId": "Google2u.SniperRifle_M110Elite",
+      "inventoryIndex": 64,
+      "category": 8,
+      "unlockRankIndex": 25,
+      "minimumPurchaseRankIndex": 22,
+      "price": 0,
+      "goldPrice": 1,
+      "isShopWeapon": false,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 64,
+      "sourceId": "Google2u.AssaultRifle_AK47Elite",
+      "inventoryIndex": 65,
+      "category": 1,
+      "unlockRankIndex": 6,
+      "minimumPurchaseRankIndex": 3,
+      "price": 0,
+      "goldPrice": 139,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 65,
+      "sourceId": "Google2u.LMG_PKMachinegunElite",
+      "inventoryIndex": 66,
+      "category": 4,
+      "unlockRankIndex": 4,
+      "minimumPurchaseRankIndex": 1,
+      "price": 0,
+      "goldPrice": 99,
+      "isShopWeapon": true,
+      "isTutorialWeapon": false,
+      "isBought": false,
+      "hasImplicitFreeOwnership": false
+    }
+  ],
+  "units": [
+    {
+      "sourceOrder": 0,
+      "sourceId": "Google2u.DBUpgradeSlotsAssaulter",
+      "unitType": 0,
+      "unlockRankIndex": 2,
+      "minimumPurchaseRankIndex": -1,
+      "price": 1500,
+      "goldPrice": 0,
+      "startingTier": 1,
+      "specialStartIndex": 101,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": true,
+      "isBought": true,
+      "canUseInBattle": true,
+      "normalStageIndex": 0,
+      "specialStageIndex": 101,
+      "isSpecialBought": false,
+      "eliteStageIndex": -1,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 1,
+      "sourceId": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 3,
+      "unlockRankIndex": 0,
+      "minimumPurchaseRankIndex": -1,
+      "price": 0,
+      "goldPrice": 0,
+      "startingTier": 1,
+      "specialStartIndex": 101,
+      "eliteStartIndex": 127,
+      "isTutorialUnit": false,
+      "isBought": true,
+      "canUseInBattle": true,
+      "normalStageIndex": 0,
+      "specialStageIndex": 101,
+      "isSpecialBought": false,
+      "eliteStageIndex": 127,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": true
+    },
+    {
+      "sourceOrder": 2,
+      "sourceId": "Google2u.DBUpgradeSlotsSniper",
+      "unitType": 2,
+      "unlockRankIndex": 3,
+      "minimumPurchaseRankIndex": 0,
+      "price": 19999,
+      "goldPrice": 0,
+      "startingTier": 2,
+      "specialStartIndex": 96,
+      "eliteStartIndex": 117,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 96,
+      "isSpecialBought": false,
+      "eliteStageIndex": 117,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 3,
+      "sourceId": "Google2u.DBUpgradeSlotsSwat",
+      "unitType": 3,
+      "unlockRankIndex": 17,
+      "minimumPurchaseRankIndex": 14,
+      "price": 249999,
+      "goldPrice": 0,
+      "startingTier": 3,
+      "specialStartIndex": 86,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 86,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 4,
+      "sourceId": "Google2u.DBUpgradeSlotsBazooka",
+      "unitType": 1,
+      "unlockRankIndex": 5,
+      "minimumPurchaseRankIndex": 2,
+      "price": 25999,
+      "goldPrice": 0,
+      "startingTier": 2,
+      "specialStartIndex": 96,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 96,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 5,
+      "sourceId": "Google2u.DBUpgradeSlotsParachuter",
+      "unitType": 3,
+      "unlockRankIndex": 9,
+      "minimumPurchaseRankIndex": 6,
+      "price": 87999,
+      "goldPrice": 0,
+      "startingTier": 2,
+      "specialStartIndex": 96,
+      "eliteStartIndex": 117,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 96,
+      "isSpecialBought": false,
+      "eliteStageIndex": 117,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 6,
+      "sourceId": "Google2u.DBUpgradeSlotsGrennader",
+      "unitType": 1,
+      "unlockRankIndex": 0,
+      "minimumPurchaseRankIndex": -1,
+      "price": 0,
+      "goldPrice": 0,
+      "startingTier": 1,
+      "specialStartIndex": 101,
+      "eliteStartIndex": 127,
+      "isTutorialUnit": false,
+      "isBought": true,
+      "canUseInBattle": true,
+      "normalStageIndex": 0,
+      "specialStageIndex": 101,
+      "isSpecialBought": false,
+      "eliteStageIndex": 127,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": true
+    },
+    {
+      "sourceOrder": 7,
+      "sourceId": "Google2u.DBUpgradeSlotsMinigunner",
+      "unitType": 2,
+      "unlockRankIndex": 31,
+      "minimumPurchaseRankIndex": 28,
+      "price": 0,
+      "goldPrice": 2999,
+      "startingTier": 5,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 51,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 8,
+      "sourceId": "Google2u.DBUpgradeSlotsEngineer",
+      "unitType": 0,
+      "unlockRankIndex": 13,
+      "minimumPurchaseRankIndex": 10,
+      "price": 169999,
+      "goldPrice": 0,
+      "startingTier": 3,
+      "specialStartIndex": 86,
+      "eliteStartIndex": 102,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 86,
+      "isSpecialBought": false,
+      "eliteStageIndex": 102,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 9,
+      "sourceId": "Google2u.DBUpgradeSlotsMachineGunner",
+      "unitType": 2,
+      "unlockRankIndex": 0,
+      "minimumPurchaseRankIndex": -1,
+      "price": 0,
+      "goldPrice": 0,
+      "startingTier": 1,
+      "specialStartIndex": 101,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": true,
+      "canUseInBattle": true,
+      "normalStageIndex": 0,
+      "specialStageIndex": 101,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": true
+    },
+    {
+      "sourceOrder": 10,
+      "sourceId": "Google2u.DBUpgradeSlotsDrone",
+      "unitType": 0,
+      "unlockRankIndex": 7,
+      "minimumPurchaseRankIndex": 4,
+      "price": 0,
+      "goldPrice": 169,
+      "startingTier": 2,
+      "specialStartIndex": 96,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 96,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 11,
+      "sourceId": "Google2u.DBUpgradeSlotsHelicopter",
+      "unitType": 0,
+      "unlockRankIndex": 19,
+      "minimumPurchaseRankIndex": 16,
+      "price": 0,
+      "goldPrice": 799,
+      "startingTier": 4,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 71,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 12,
+      "sourceId": "Google2u.DBUpgradeSlotsTank",
+      "unitType": 1,
+      "unlockRankIndex": 33,
+      "minimumPurchaseRankIndex": 30,
+      "price": 0,
+      "goldPrice": 4999,
+      "startingTier": 5,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 51,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 13,
+      "sourceId": "Google2u.DBUpgradeSlotsTransporter",
+      "unitType": 2,
+      "unlockRankIndex": 23,
+      "minimumPurchaseRankIndex": 20,
+      "price": 0,
+      "goldPrice": 949,
+      "startingTier": 4,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 71,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 14,
+      "sourceId": "Google2u.DBUpgradeSlotsSciFi",
+      "unitType": 1,
+      "unlockRankIndex": 21,
+      "minimumPurchaseRankIndex": 18,
+      "price": 719999,
+      "goldPrice": 0,
+      "startingTier": 4,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 71,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 15,
+      "sourceId": "Google2u.DBUpgradeSlotsCarBuggy",
+      "unitType": 1,
+      "unlockRankIndex": 15,
+      "minimumPurchaseRankIndex": 12,
+      "price": 0,
+      "goldPrice": 399,
+      "startingTier": 3,
+      "specialStartIndex": 86,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 86,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 16,
+      "sourceId": "Google2u.DBUpgradeSlotsAssaultHeli",
+      "unitType": 2,
+      "unlockRankIndex": 11,
+      "minimumPurchaseRankIndex": 8,
+      "price": 0,
+      "goldPrice": 339,
+      "startingTier": 3,
+      "specialStartIndex": 86,
+      "eliteStartIndex": 102,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 86,
+      "isSpecialBought": false,
+      "eliteStageIndex": 102,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 17,
+      "sourceId": "Google2u.DBUpgradeSlotsCar",
+      "unitType": 0,
+      "unlockRankIndex": 27,
+      "minimumPurchaseRankIndex": 24,
+      "price": 0,
+      "goldPrice": 1999,
+      "startingTier": 5,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 51,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 18,
+      "sourceId": "Google2u.DBUpgradeSlotsFlamethrower",
+      "unitType": 3,
+      "unlockRankIndex": 29,
+      "minimumPurchaseRankIndex": 26,
+      "price": 0,
+      "goldPrice": 2499,
+      "startingTier": 5,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 51,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 19,
+      "sourceId": "Google2u.DBUpgradeSlotsCommando",
+      "unitType": 3,
+      "unlockRankIndex": 25,
+      "minimumPurchaseRankIndex": 22,
+      "price": 0,
+      "goldPrice": 1299,
+      "startingTier": 4,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 71,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 20,
+      "sourceId": "Google2u.DBUpgradeSlotsGunslinger",
+      "unitType": 0,
+      "unlockRankIndex": 35,
+      "minimumPurchaseRankIndex": 31,
+      "price": 0,
+      "goldPrice": 4999,
+      "startingTier": 6,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 26,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 21,
+      "sourceId": "Google2u.DBUpgradeSlotsMortar",
+      "unitType": 1,
+      "unlockRankIndex": 39,
+      "minimumPurchaseRankIndex": 35,
+      "price": 0,
+      "goldPrice": 6499,
+      "startingTier": 6,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 26,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 22,
+      "sourceId": "Google2u.DBUpgradeSlotsWarper",
+      "unitType": 3,
+      "unlockRankIndex": 37,
+      "minimumPurchaseRankIndex": 33,
+      "price": 0,
+      "goldPrice": 5999,
+      "startingTier": 6,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 26,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    },
+    {
+      "sourceOrder": 23,
+      "sourceId": "Google2u.DBUpgradeSlotsMech",
+      "unitType": 2,
+      "unlockRankIndex": 41,
+      "minimumPurchaseRankIndex": 37,
+      "price": 0,
+      "goldPrice": 7999,
+      "startingTier": 6,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "isTutorialUnit": false,
+      "isBought": false,
+      "canUseInBattle": false,
+      "normalStageIndex": 0,
+      "specialStageIndex": 26,
+      "isSpecialBought": false,
+      "eliteStageIndex": -2,
+      "isEliteBought": false,
+      "hasImplicitFreeOwnership": false
+    }
+  ],
+  "inventorySlots": [
+    {
+      "sourceOrder": 0,
+      "slotIndex": 0,
+      "category": 7
+    },
+    {
+      "sourceOrder": 1,
+      "slotIndex": 1,
+      "category": 296
+    },
+    {
+      "sourceOrder": 2,
+      "slotIndex": 2,
+      "category": 592
+    },
+    {
+      "sourceOrder": 3,
+      "slotIndex": 3,
+      "category": 128
+    }
+  ],
+  "serialized": {
+    "InventoryData": {
+      "slots": {
+        "0": {
+          "name": "Google2u.AssaultRifle_AK47",
+          "weaponIndex": 1
+        },
+        "1": {
+          "name": "Google2u.SniperRifle_M24",
+          "weaponIndex": 3
+        },
+        "2": {
+          "name": "Google2u.Grenade_FRAG",
+          "weaponIndex": 6
+        },
+        "3": {
+          "name": "Google2u.Pistol_Remmington51",
+          "weaponIndex": 13
+        }
+      }
+    },
+    "LevelManagerData": {
+      "savedArmies": {
+        "Google2u.DBUpgradeSlotsAssaulter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsDrone": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsEngineer": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsHelicopter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsCar": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsGunslinger": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsShotgunner": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": true,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsParachuter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsSwat": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsCommando": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsFlamethrower": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsWarper": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMachineGunner": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": true,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsSniper": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsAssaultHeli": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsTransporter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMinigunner": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMech": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsGrennader": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": true,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsBazooka": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsCarBuggy": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsSciFi": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsTank": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMortar": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        }
+      },
+      "savedWeapons": {
+        "Google2u.AssaultRifle_AK47": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M24": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        },
+        "Google2u.Grenade_FRAG": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Remmington51": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Blackhand": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Jester": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M249Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_Hater": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_AKS47U": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_MSR": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_M84": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_Vector": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_AA12": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M60": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M60Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_M202": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_DesertEagle": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M90Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M90": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_G36": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_G36Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_Molotov": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_StrikerElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Striker": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_P90": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_P90Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_FGM": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_FGMElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_MG4": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M110": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M110Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Magnum357": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_MP7": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_SawnOff": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_SMOKE": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_SMOKEElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_SteyrAUG": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Saiga": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_SaigaElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_Panzerfaust": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_UMP45": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_M1911": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_SA80": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_POISON": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_AWMF": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_FamasElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_Famas": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_CPW": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_HMV": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_SPAS": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_QBZ95": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_QBZ95Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Berreta": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_FLASH": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M249": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_Dragunov": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_M16": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_AK47Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.GrenadeLauncher_M320": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_MP5": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_MP5_elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Benelli": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_PKMachinegun": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_PKMachinegunElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_RPG7": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_Minigun": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        }
+      },
+      "unitDelivery": {
+        "activationNeeded": false,
+        "boughtIndex": 0,
+        "end": 0,
+        "itemId": null,
+        "slotId": 0,
+        "start": 0
+      },
+      "weaponDelivery": {
+        "activationNeeded": false,
+        "boughtIndex": 0,
+        "end": 0,
+        "itemId": null,
+        "slotId": 0,
+        "start": 0
+      }
+    },
+    "DecalManagerData": {
+      "visuals": {
+        "CAMOS_DEFAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_MACHINEGUNNER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_PARA": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ALIEN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_COWBOY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_NINJA": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SCIENTIST": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SUITGUY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ZOMBIE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SARAH": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_OREN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_RAPPER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_RAMBO": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SPECOPS": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_MADMAX": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_COMMANDO": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_DUSTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_BRUCELEE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ASSAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ELITEENGINEER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ELITEPARATROOPER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ROCKETLAUNCHER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SCIENTIST2": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_EMPTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_DEFAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_BLUEBARRET": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_BLACKCAP": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_EAGLE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_FOOTBALL": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_HAT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_HEADCOVER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_HORNS": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_JASON": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_PUNK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SKULL": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SPARTAN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SANTA": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ASSAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_VIETNAM": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_COWBOYHAT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ENGINEERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ENGINEER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_FLAMETHROWER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_GRENADIERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_GRENADIER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_MADMAX": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ROCKETLAUNCHERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ROCKETLAUNCHER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SCIFIMINIGUNNER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SCIFIMINIGUNNERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SHOTGUNNER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SWATELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SWATHAT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_CROWNBRONZE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_CROWNSILVER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_CROWNGOLD": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_EMPTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_CIGAR": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_SUNGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GLASSES_SNIPER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_BB_GLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_BEARD": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_CLOWN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GOOGLES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_LENNON": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_LOS_SANTOS": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_REBREATHER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_EYE_PATCH": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_WEST": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_ENGINEERELITEGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GRENADIERELITEMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GRENADIERMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_MACHINEGUNNERBAND": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_MACHINEGUNNERGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_MADMAXGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_ROCKETLAUNCHERMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_SCIFIGRENADIERMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_SWATGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_BAND": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_EMPTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_CRITICAL_0": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_CRITICAL_1": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_DAMAGE_0": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_DAMAGE_1": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_HEALTH_0": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_HEALTH_1": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        }
+      },
+      "slots": {
+        "0": {
+          "equippedID": "CAMOS_DEFAULT"
+        },
+        "1": {
+          "equippedID": "HELMETS_EMPTY"
+        },
+        "2": {
+          "equippedID": "HEAD_EMPTY"
+        },
+        "3": {
+          "equippedID": "BANDS_EMPTY"
+        }
+      },
+      "previousHeadDecal": ""
+    }
+  }
+}

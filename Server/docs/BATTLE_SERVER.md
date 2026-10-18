@@ -238,3 +238,13 @@ source-bound compressed matrix during content startup and exposes immutable
 samples/deep animation copies. All 221 entries match independent native data.
 Wire references and atomic Unity application remain unimplemented; no co-op
 admission or hit-authority gate is removed.
+
+## Recovered weapon index boundary
+
+The [starter/index checkpoint](CLIENT_STARTER_LOADOUT.md) now separates
+persisted LevelManager weapon indexes from battle allWeapons indexes on
+both Backend and Client. All 66 source pairs are reviewed and checked at
+Backend startup; unknown or mismatched pairs fail closed. Actual Unity
+mapping checks and live Mongo/HTTP/UDP queue/rematch gates pass. This does
+not materialize fresh-account ownership, replace missing initial blobs or
+prove normal battle-controller initialization.

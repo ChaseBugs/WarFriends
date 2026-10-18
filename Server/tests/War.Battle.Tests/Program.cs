@@ -431,6 +431,22 @@ if (args is ["--pvp-bonus-shotgun-udp-only"])
     return;
 }
 
+if (args is ["--client-weapon-index-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new InvalidDataException("Recovered battle content artifact not found.");
+    }
+    int focused = BattleClientWeaponIndexTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} Client/Backend weapon identity and index checks");
+    return;
+}
+
 if (args is ["--pvp-bonus-shared-box-only"])
 {
     Console.WriteLine($"PASS: {PvpBonusSharedBoxTests.Run()} asynchronous crate identity checks");
@@ -1301,7 +1317,7 @@ var durablePresentationPlayer=new LegacyPlayerDocument
         {
             Slots=new Dictionary<int,SerializedSlotDetail>
             {
-                {0,new SerializedSlotDetail{Name="Google2u.AssaultRifle_AK47",WeaponIndex=0}}
+                {0,new SerializedSlotDetail{Name="Google2u.AssaultRifle_AK47",WeaponIndex=1}}
             }
         }),
         ["LevelManagerData"]=PlayerState.Write(new LevelManagerData
@@ -3411,6 +3427,7 @@ checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"co
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += BattleClientWeaponIndexTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleScoreSnapshotTests.Run();
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += await GrenadeCatalogTests.RunTankUdp(Path.Combine(contentRoot.FullName,"content"));

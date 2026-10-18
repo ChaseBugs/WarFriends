@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "clientVersion": "1.4.0",
+  "observationSha256": "7e4d56b6dbbfdc832fe65c1a3320c15d4b9c7b80750d7e6ba36f4d45ccb923c5",
+  "mainSceneSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+  "combatBindingsSha256": "2b8e0b531a6bf46bac199218bc74440938f8d535000565eb197a2384aae7daaa",
+  "mappings": [
+    {
+      "sourceId": "Google2u.AssaultRifle_M16",
+      "levelManagerIndex": 0,
+      "inventoryIndex": 1
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_AK47",
+      "levelManagerIndex": 1,
+      "inventoryIndex": 11
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_Famas",
+      "levelManagerIndex": 2,
+      "inventoryIndex": 26
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_M24",
+      "levelManagerIndex": 3,
+      "inventoryIndex": 2
+    },
+    {
+      "sourceId": "Google2u.Bazooka_RPG7",
+      "levelManagerIndex": 4,
+      "inventoryIndex": 3
+    },
+    {
+      "sourceId": "Google2u.Shotgun_Saiga",
+      "levelManagerIndex": 5,
+      "inventoryIndex": 27
+    },
+    {
+      "sourceId": "Google2u.Grenade_FRAG",
+      "levelManagerIndex": 6,
+      "inventoryIndex": 5
+    },
+    {
+      "sourceId": "Google2u.Grenade_SMOKE",
+      "levelManagerIndex": 7,
+      "inventoryIndex": 6
+    },
+    {
+      "sourceId": "Google2u.Grenade_FLASH",
+      "levelManagerIndex": 8,
+      "inventoryIndex": 7
+    },
+    {
+      "sourceId": "Google2u.Grenade_POISON",
+      "levelManagerIndex": 9,
+      "inventoryIndex": 8
+    },
+    {
+      "sourceId": "Google2u.SMG_UMP45",
+      "levelManagerIndex": 10,
+      "inventoryIndex": 9
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_M110",
+      "levelManagerIndex": 11,
+      "inventoryIndex": 10
+    },
+    {
+      "sourceId": "Google2u.Pistol_DesertEagle",
+      "levelManagerIndex": 12,
+      "inventoryIndex": 0
+    },
+    {
+      "sourceId": "Google2u.Pistol_Remmington51",
+      "levelManagerIndex": 13,
+      "inventoryIndex": 12
+    },
+    {
+      "sourceId": "Google2u.Pistol_Berreta",
+      "levelManagerIndex": 14,
+      "inventoryIndex": 13
+    },
+    {
+      "sourceId": "Google2u.Pistol_M1911",
+      "levelManagerIndex": 15,
+      "inventoryIndex": 29
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_Dragunov",
+      "levelManagerIndex": 16,
+      "inventoryIndex": 14
+    },
+    {
+      "sourceId": "Google2u.LMG_PKMachinegun",
+      "levelManagerIndex": 17,
+      "inventoryIndex": 15
+    },
+    {
+      "sourceId": "Google2u.LMG_M249",
+      "levelManagerIndex": 18,
+      "inventoryIndex": 16
+    },
+    {
+      "sourceId": "Google2u.LMG_MG4",
+      "levelManagerIndex": 19,
+      "inventoryIndex": 23
+    },
+    {
+      "sourceId": "Google2u.LMG_SA80",
+      "levelManagerIndex": 20,
+      "inventoryIndex": 24
+    },
+    {
+      "sourceId": "Google2u.LMG_Minigun",
+      "levelManagerIndex": 21,
+      "inventoryIndex": 25
+    },
+    {
+      "sourceId": "Google2u.SMG_MP5",
+      "levelManagerIndex": 22,
+      "inventoryIndex": 17
+    },
+    {
+      "sourceId": "Google2u.SMG_MP7",
+      "levelManagerIndex": 23,
+      "inventoryIndex": 28
+    },
+    {
+      "sourceId": "Google2u.SMG_CPW",
+      "levelManagerIndex": 24,
+      "inventoryIndex": 18
+    },
+    {
+      "sourceId": "Google2u.GrenadeLauncher_M320",
+      "levelManagerIndex": 25,
+      "inventoryIndex": 19
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_QBZ95",
+      "levelManagerIndex": 26,
+      "inventoryIndex": 30
+    },
+    {
+      "sourceId": "Google2u.Shotgun_Benelli",
+      "levelManagerIndex": 27,
+      "inventoryIndex": 22
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_AWMF",
+      "levelManagerIndex": 28,
+      "inventoryIndex": 21
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_G36",
+      "levelManagerIndex": 29,
+      "inventoryIndex": 31
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_M90",
+      "levelManagerIndex": 30,
+      "inventoryIndex": 32
+    },
+    {
+      "sourceId": "Google2u.Shotgun_Striker",
+      "levelManagerIndex": 31,
+      "inventoryIndex": 33
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_SteyrAUG",
+      "levelManagerIndex": 32,
+      "inventoryIndex": 34
+    },
+    {
+      "sourceId": "Google2u.SMG_P90",
+      "levelManagerIndex": 33,
+      "inventoryIndex": 35
+    },
+    {
+      "sourceId": "Google2u.LMG_M60",
+      "levelManagerIndex": 34,
+      "inventoryIndex": 36
+    },
+    {
+      "sourceId": "Google2u.Bazooka_FGM",
+      "levelManagerIndex": 35,
+      "inventoryIndex": 37
+    },
+    {
+      "sourceId": "Google2u.Bazooka_HMV",
+      "levelManagerIndex": 36,
+      "inventoryIndex": 38
+    },
+    {
+      "sourceId": "Google2u.Pistol_Magnum357",
+      "levelManagerIndex": 37,
+      "inventoryIndex": 39
+    },
+    {
+      "sourceId": "Google2u.Shotgun_SPAS",
+      "levelManagerIndex": 38,
+      "inventoryIndex": 4
+    },
+    {
+      "sourceId": "Google2u.Grenade_Molotov",
+      "levelManagerIndex": 39,
+      "inventoryIndex": 40
+    },
+    {
+      "sourceId": "Google2u.Bazooka_Panzerfaust",
+      "levelManagerIndex": 40,
+      "inventoryIndex": 41
+    },
+    {
+      "sourceId": "Google2u.Bazooka_M202",
+      "levelManagerIndex": 41,
+      "inventoryIndex": 42
+    },
+    {
+      "sourceId": "Google2u.SMG_MP5_elite",
+      "levelManagerIndex": 42,
+      "inventoryIndex": 43
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_AKS47U",
+      "levelManagerIndex": 43,
+      "inventoryIndex": 44
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_G36Elite",
+      "levelManagerIndex": 44,
+      "inventoryIndex": 45
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_M90Elite",
+      "levelManagerIndex": 45,
+      "inventoryIndex": 46
+    },
+    {
+      "sourceId": "Google2u.LMG_M60Elite",
+      "levelManagerIndex": 46,
+      "inventoryIndex": 47
+    },
+    {
+      "sourceId": "Google2u.LMG_M249Elite",
+      "levelManagerIndex": 47,
+      "inventoryIndex": 48
+    },
+    {
+      "sourceId": "Google2u.SMG_P90Elite",
+      "levelManagerIndex": 48,
+      "inventoryIndex": 49
+    },
+    {
+      "sourceId": "Google2u.Shotgun_Blackhand",
+      "levelManagerIndex": 49,
+      "inventoryIndex": 50
+    },
+    {
+      "sourceId": "Google2u.Shotgun_SawnOff",
+      "levelManagerIndex": 50,
+      "inventoryIndex": 51
+    },
+    {
+      "sourceId": "Google2u.Pistol_Jester",
+      "levelManagerIndex": 51,
+      "inventoryIndex": 52
+    },
+    {
+      "sourceId": "Google2u.Grenade_M84",
+      "levelManagerIndex": 52,
+      "inventoryIndex": 53
+    },
+    {
+      "sourceId": "Google2u.Shotgun_StrikerElite",
+      "levelManagerIndex": 53,
+      "inventoryIndex": 54
+    },
+    {
+      "sourceId": "Google2u.Shotgun_AA12",
+      "levelManagerIndex": 54,
+      "inventoryIndex": 55
+    },
+    {
+      "sourceId": "Google2u.SMG_Vector",
+      "levelManagerIndex": 55,
+      "inventoryIndex": 56
+    },
+    {
+      "sourceId": "Google2u.Bazooka_FGMElite",
+      "levelManagerIndex": 56,
+      "inventoryIndex": 57
+    },
+    {
+      "sourceId": "Google2u.Bazooka_Hater",
+      "levelManagerIndex": 57,
+      "inventoryIndex": 58
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_MSR",
+      "levelManagerIndex": 58,
+      "inventoryIndex": 59
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_FamasElite",
+      "levelManagerIndex": 59,
+      "inventoryIndex": 60
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_QBZ95Elite",
+      "levelManagerIndex": 60,
+      "inventoryIndex": 61
+    },
+    {
+      "sourceId": "Google2u.Grenade_SMOKEElite",
+      "levelManagerIndex": 61,
+      "inventoryIndex": 62
+    },
+    {
+      "sourceId": "Google2u.Shotgun_SaigaElite",
+      "levelManagerIndex": 62,
+      "inventoryIndex": 63
+    },
+    {
+      "sourceId": "Google2u.SniperRifle_M110Elite",
+      "levelManagerIndex": 63,
+      "inventoryIndex": 64
+    },
+    {
+      "sourceId": "Google2u.AssaultRifle_AK47Elite",
+      "levelManagerIndex": 64,
+      "inventoryIndex": 65
+    },
+    {
+      "sourceId": "Google2u.LMG_PKMachinegunElite",
+      "levelManagerIndex": 65,
+      "inventoryIndex": 66
+    }
+  ]
+}
