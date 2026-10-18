@@ -1,3 +1,4 @@
+using System.Numerics;
 using War.BattleServer;
 using War.Protocol;
 
@@ -17,7 +18,8 @@ internal static class SicknessPrimaryWeaponTests
         foreach (string unitId in new[]
         {
             "ID_UNIT-SNIPER", "ID_UNIT-MINIGUNNER", "ID_UNIT-PARATROOPER", "ID_UNIT-SWAT",
-            "ID_UNIT-GUNSLINGER", "ID_UNIT-COMMANDO", "ID_UNIT-SHOTGUNNER", "ID_UNIT-WARPER"
+            "ID_UNIT-GUNSLINGER", "ID_UNIT-COMMANDO", "ID_UNIT-SHOTGUNNER", "ID_UNIT-WARPER",
+            "ID_UNIT-FLAMETHROWER"
         })
         {
             checks += CheckUnit(content, unitId);
@@ -53,7 +55,11 @@ internal static class SicknessPrimaryWeaponTests
             // claiming an automatic shot here would hide their independent gameplay backlog.
             Console.WriteLine($"PASS: Sickness {unitId} spawn mutation; normal automatic-fire proof remains open.");
         }
-        else if (PreservesShotgunRange(unitId))
+        else if (unitId == "ID_UNIT-FLAMETHROWER")
+        {
+            checks += CheckFlamePulse(content, host);
+        }
+        else if (PreservesDamageRange(unitId))
         {
             checks += CheckShotgunLaunch(content, host, unitId);
         }
@@ -92,7 +98,7 @@ internal static class SicknessPrimaryWeaponTests
             SpawnProof before = spawns[entity.EntityKey];
             bool isEnemy = entity.OwnerPlayerId == OpponentId;
             float factor = isEnemy ? Multiplier : 1f;
-            float damageFactor = PreservesShotgunRange(entity.UnitId) ? 1f : factor;
+            float damageFactor = PreservesDamageRange(entity.UnitId) ? 1f : factor;
             checks += Require(before.Changed == isEnemy && entity.MaxHealth == before.Entity.MaxHealth &&
                 entity.Health == before.Entity.MaxHealth * factor &&
                 host.ArmyDamage(entity.EntityKey) == before.Damage * damageFactor,
@@ -102,9 +108,61 @@ internal static class SicknessPrimaryWeaponTests
         return checks;
     }
 
-    private static bool PreservesShotgunRange(string unitId)
+    private static bool PreservesDamageRange(string unitId)
     {
-        return unitId is "ID_UNIT-SHOTGUNNER" or "ID_UNIT-WARPER";
+        return unitId is "ID_UNIT-SHOTGUNNER" or "ID_UNIT-WARPER" or "ID_UNIT-FLAMETHROWER";
+    }
+
+    private static int CheckFlamePulse(BattleCombatContent content, MatchEngine affected)
+    {
+        MatchEngine baseline = OrdinaryArmyTestHost.Create(content, "ID_UNIT-FLAMETHROWER");
+        Deploy(baseline, OwnerId);
+        Deploy(baseline, OpponentId);
+        while (!baseline.Terminal && baseline.Snapshot().ServerTick < affected.Snapshot().ServerTick)
+        {
+            baseline.Advance(baseline.Snapshot().ServerTick + 1);
+        }
+
+        Require(!baseline.Terminal, "The baseline flame host terminated before its matching observation tick.");
+        ulong expectedShot = FirstOpposingFlameShot(baseline);
+        ulong actualShot = FirstOpposingFlameShot(affected);
+        int checks = Require(actualShot == expectedShot,
+            "Sickness changed the ordinary flame actor's first automatic burst timing.");
+        float expected = ApplyOpposingFlamePulse(baseline);
+        float actual = ApplyOpposingFlamePulse(affected);
+        checks += Require(expected > 0f && MathF.Abs(actual - expected) < Tolerance,
+            "Sickness changed actual flame damage from the separate source min/max range.");
+        Console.WriteLine($"PASS: Sickness Flamethrower preserves trusted host pulse damage {actual}.");
+        return checks;
+    }
+
+    private static ulong FirstOpposingFlameShot(MatchEngine host)
+    {
+        MatchEvent? shot = null;
+        AdvanceUntil(host, () =>
+        {
+            shot = host.EventBatch(OwnerId, 0).Events.FirstOrDefault(item =>
+                item.Kind == MatchEventKind.Shot && item.ActorId == OpponentId && item.Reason == "army-flame");
+            return shot != null;
+        });
+        return shot?.Tick ?? throw new InvalidOperationException("The automatic flame burst lost its Shot event.");
+    }
+
+    private static float ApplyOpposingFlamePulse(MatchEngine host)
+    {
+        IEnumerable<BattleArmyEntityState> entities = host.ArmyEntityBatch(OwnerId, 0, 0).Entities;
+        BattleArmyEntityState source = entities.First(entity => entity.OwnerPlayerId == OpponentId);
+        BattleArmyEntityState victim = entities.First(entity => entity.OwnerPlayerId == OwnerId);
+        MatchEngine.ArmyInfantryPoseSnapshot pose = host.InfantryPose(victim.EntityKey) ??
+            throw new InvalidOperationException("The flame target lost its current host collision pose.");
+        // This is a trusted damage-transition test using real deployed entities, not natural AI aiming proof.
+        Vector3 origin = pose.Parts[0].Center - Vector3.UnitZ;
+        float before = host.ArmyHealth(victim.EntityKey) ??
+            throw new InvalidOperationException("The flame target lost its current health.");
+        Require(host.ApplyArmyFlameInfantryPulse(source.EntityKey, origin, Vector3.UnitZ) > 0,
+            "The trusted flame pulse did not reach an opposing deployed infantry collider.");
+        float after = host.ArmyHealth(victim.EntityKey) ?? 0f;
+        return before - after;
     }
 
     private static int CheckShotgunLaunch(BattleCombatContent content, MatchEngine affected, string unitId)

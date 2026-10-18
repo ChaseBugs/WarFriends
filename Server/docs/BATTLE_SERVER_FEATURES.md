@@ -72,13 +72,16 @@ The fixture explicitly arms/subscribes the window. Complete host entity mutation
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
 The same real spawn dispatcher now applies the normal Assaulter binding: opposing current health
 and weapon damage halve, maximum health stays unchanged, and friendly authority is preserved.
-The [ordinary gun binding](SICKNESS_PRIMARY_WEAPONS.md) covers nine ordinary layouts, including
+The [ordinary gun binding](SICKNESS_PRIMARY_WEAPONS.md) covers ten ordinary layouts, including
 Paratrooper, SWAT, Gunslinger and Commando. SWAT and two consecutive Commando rounds capture
 half damage. Shotgunner/Warper instead preserve actual damage from their separate min/max fields,
 matching baseline hosts. Paratrooper still has spawn-mutation proof only; normal airborne
 landing remains missing. Gunslinger now launches actual half-damage rounds after the window closes.
 Ordinary Grenadier now has a separate pistol/grenade adapter and real deployment/launch tests
 for base, special and Elite selections; separate explosion damage and fuse stay unchanged.
+Flamethrower also preserves real damage from its independent min/max fields while refilling
+current health; its first automatic burst and a trusted deployed-infantry pulse are compared
+with a baseline host. Natural flame contact remains separate from that trusted pulse test.
 Other layouts and authorized SICKNESS card activation remain open.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks

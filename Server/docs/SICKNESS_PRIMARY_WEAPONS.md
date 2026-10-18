@@ -1,8 +1,8 @@
 # Sickness ordinary gun bindings
 
 The ordinary binding now covers Assaulter, Sniper, Minigunner, Paratrooper, SWAT, Gunslinger,
-Commando, Shotgunner and Warper source layouts. `MatchEngine.SicknessPrimaryWeapons.cs` keeps an explicit
-nine-unit allowlist and a separate ordinary Grenadier adapter. It does not infer support for every SoldierBehaviour or enable SICKNESS
+Commando, Shotgunner, Warper and Flamethrower source layouts. `MatchEngine.SicknessPrimaryWeapons.cs` keeps an explicit
+ten-unit allowlist and a separate ordinary Grenadier adapter. It does not infer support for every SoldierBehaviour or enable SICKNESS
 card activation while other weapon layouts remain unbound.
 
 ## Source rules and authority
@@ -31,6 +31,21 @@ scale both range fields. `BulletShotGun.ShotRealAtPos` then overwrites `damageAm
 unchanged range fields before loading the real bullet. Accordingly Sickness refills current
 health but does not change the host shotgun range authority. Halving the host maximum would
 incorrectly halve both the minimum and maximum of every later real hit.
+
+## Flame field exception
+
+`SoldierBehaviourFlamethrower.ApplyWeaponsSetup` sets `FlameAmmoSetup.maxDamage` to
+composed damage divided by six and `minDamage` to one tenth of that maximum.
+`SoldierBehaviour.ImproveAllWeapons` does not change either field. `FlameAmmo.CheckHit`
+replaces `damageAmount` with its distance interpolation on every pulse before loading the
+setup and applying damage. The host therefore preserves the damage-range ledger while
+refilling current health. Calling `FlameAmmoSetup.ScaleDamage` or halving that ledger would
+invent a reduction in real flame damage absent from the recovered Sickness path.
+
+The ordinary flame test uses real deployment callbacks, compares the first automatic burst
+with a baseline host, and applies one trusted infantry damage pulse using real deployed
+collision poses. The pulse origin is chosen by the test; this is not proof of natural AI
+contact, every victim family, overtime or the separate death explosion.
 
 ## Verified scope
 
@@ -66,7 +81,7 @@ upgrades absent. This proves automatic changed gun damage after the window close
 critical behavior, every physical victim outcome or normal Unity presentation. Existing Assaulter
 tests separately prove changed shield damage through a real collision.
 
-The current Sickness group passes 182 checks and the infantry weapon group passes 150.
+The current Sickness group passes 189 checks and the infantry weapon group passes 150.
 The full default Battle suite was verified at the preceding checkpoint with 247,854 assertions;
 it was not rerun for this ordinary Grenadier binding checkpoint.
 
