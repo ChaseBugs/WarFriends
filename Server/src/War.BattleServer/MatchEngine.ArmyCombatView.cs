@@ -8,6 +8,18 @@ public sealed partial class MatchEngine
 
     private bool HasArmyCombatView => rifleCombat != null || grenadeCombat != null;
 
+    private Vector3 ArmyShieldShotTarget(Player opponent)
+    {
+        if (map == null || opponent.Cover < 0 || opponent.Cover >= map.Covers.Count)
+        {
+            throw new InvalidDataException("Army Shield target lost its current source cover.");
+        }
+
+        // GameShootableEntityPlayer.GetShotTargets replaces the player-child
+        // Shield slot with currentPlayerPoint.point.shield.shotPosition.
+        return map.Covers[opponent.Cover].ShotPosition;
+    }
+
     internal PlayerCollisionModel ArmyPlayerCollision(string playerId)
     {
         if (rifleCombat != null)

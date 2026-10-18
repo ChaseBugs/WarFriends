@@ -1114,7 +1114,7 @@ public sealed partial class MatchEngine
             var shield = playerShotTargets.Gameplay.Single(row => row.Type == 2);
             return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
                 shield.TransformFileId, point.ComponentFileId,
-                pose.BodyTargetPosition(shield.TransformFileId));
+                ArmyShieldShotTarget(opponent));
         }
         if (opponent.Route != null && pose.MovingTarget is { } moving)
         {
@@ -1500,7 +1500,7 @@ public sealed partial class MatchEngine
             return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
                 opponent.Definition.PlayerId, shield.TransformFileId,
                 point.ComponentFileId,
-                pose.BodyTargetPosition(shield.TransformFileId)), throwGrenade);
+                ArmyShieldShotTarget(opponent)), throwGrenade);
         }
 
         if (opponent.Route != null && pose.MovingTarget is { } moving)

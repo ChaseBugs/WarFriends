@@ -26,7 +26,7 @@ internal static class GrenadierPrimaryDamageTests
         foreach (Scenario scenario in Enum.GetValues<Scenario>())
         {
             MatchEngine host = CreateHost(content, map, scenario);
-            DamageObservation observed = ObserveDamage(host, content, scenario);
+            DamageObservation observed = ObserveDamage(host, content, map, scenario);
             checks += CheckDamage(observed, content, scenario);
         }
 
@@ -124,7 +124,8 @@ internal static class GrenadierPrimaryDamageTests
         host.Advance(StartTick);
     }
 
-    private static DamageObservation ObserveDamage(MatchEngine host, BattleCombatContent content, Scenario scenario)
+    private static DamageObservation ObserveDamage(MatchEngine host, BattleCombatContent content,
+        RecoveredBattleMap map, Scenario scenario)
     {
         Require(host.Command(OwnerId, new MatchCommand
         {
@@ -136,6 +137,11 @@ internal static class GrenadierPrimaryDamageTests
         }
 
         MatchSnapshot before = host.Snapshot();
+        int shieldTargetId = content.PlayerShotTargets.Gameplay.Single(target => target.Type == 2).TransformFileId;
+        int cover = before.Players.Single(player => player.PlayerId == OpponentId).CoverIndex;
+        var expectedShieldPosition = map.Covers[cover].ShotPosition;
+        ulong entityKey = ((ulong)1 << 32) | (uint)CardUnitEntityRegistry.FirstLocalEntityId;
+        bool observedSourceShield = false;
         var events = new List<MatchEvent>();
         var launches = new Dictionary<ulong, float>();
         ulong cursor = 0;
@@ -150,12 +156,22 @@ internal static class GrenadierPrimaryDamageTests
             }
 
             host.Advance(host.Snapshot().ServerTick + 1);
+            MatchEngine.CardGrenadierAim? aim = host.CardGrenadierLatchedAim(entityKey);
+            if (aim?.Target.TargetFileId == shieldTargetId)
+            {
+                Require(aim.Target.Position == expectedShieldPosition,
+                    "The actual Grenadier latch used the player-child Shield slot instead of its current cover.");
+                observedSourceShield = true;
+            }
             ReadEvents(host, events, ref cursor);
             MatchSnapshot after = host.Snapshot();
             if (after.Players.Single(player => player.PlayerId == OpponentId).Health <
                 before.Players.Single(player => player.PlayerId == OpponentId).Health)
             {
-                return new DamageObservation(before, after, events, launches);
+                return new DamageObservation(before, after, events, launches)
+                {
+                    ObservedSourceShield = observedSourceShield
+                };
             }
         }
 
@@ -206,7 +222,9 @@ internal static class GrenadierPrimaryDamageTests
         float coefficient = scenario == Scenario.Overtime ? policy.OvertimePlayerDamageRatio : policy.PlayerDamageRatio;
         MatchEvent[] impacts = observed.Events.Where(item => item.Kind == MatchEventKind.Impact &&
             item.TargetId == OpponentId && item.Tick == observed.After.ServerTick).ToArray();
-        int checks = Require(impacts.Length > 0 &&
+        int checks = Require(observed.ObservedSourceShield,
+            "The actual damage scenario never observed a source-correct Shield latch.");
+        checks += Require(impacts.Length > 0 &&
             impacts.All(item => observed.Launches.ContainsKey(item.ProjectileId)),
             "Player damage did not correlate with a real published primary projectile.");
         checks += Require(impacts.All(item => Math.Abs(observed.Launches[item.ProjectileId] - raw) < DamageTolerance),
@@ -267,5 +285,8 @@ internal static class GrenadierPrimaryDamageTests
     private enum Scenario { Normal, Overtime, Sickness }
 
     private sealed record DamageObservation(MatchSnapshot Before, MatchSnapshot After,
-        IReadOnlyList<MatchEvent> Events, IReadOnlyDictionary<ulong, float> Launches);
+        IReadOnlyList<MatchEvent> Events, IReadOnlyDictionary<ulong, float> Launches)
+    {
+        internal bool ObservedSourceShield { get; init; }
+    }
 }

@@ -2,8 +2,9 @@
 
 SoldierBehaviourAssaulter.PickTarget first calls TryPickDecoy, then
 PickRandomOpponent(UnitType.AttackerRusher). The new internal host selector preserves the entity
-selection part of that chain. It does not yet resolve a selected entity's shot-target transform,
-perform the two aim predictions, expose the Corner or launch a projectile.
+selection part of that chain. A second internal transition now resolves current infantry,
+Decoy and player target transforms. It does not perform the two aim predictions, expose the
+Corner or launch a projectile.
 
 ## Source candidate rules
 
@@ -20,7 +21,8 @@ therefore do not participate in either unit draw.
 
 There is no nearest-distance or line-of-sight preference at this stage. A chosen Decoy later
 draws a target from GetShotTargets(All); the ordinary unit branch draws from AllIn. Those later
-draws and the recovered player-specific shield/body selection are still required.
+draws now use a separate source-list selector. The player path retains its source Shield,
+Moving and nearest WholeBody branches.
 
 AssaulterTargetPolicy validates bounded unique finite registry facts and every random index.
 It uses the existing host registry ordering, without calling DroneTargetPolicy's different
@@ -44,17 +46,46 @@ the rest of the normal Assaulter firing controller remain required.
 
 ## Verification
 
---assaulter-targets-only passes nineteen checks. Source policy checks cover random Decoy and
+--assaulter-targets-only passes twenty-nine checks. Source policy checks cover random Decoy and
 Rusher priority, no distance sorting, dead/invisible/friendly exclusions, whole-list fallback
 draw counts/order, player exclusion from unit lists, owner-type buckets and malformed authority.
 
 A fixed Park host fixture admits/readies participants and sends normal deployment and
 GREATGRENADIER card commands. It verifies player fallback before opposing units exist, actual
 card registration, explosive-before-defender combined-list ordering, card/normal death cleanup,
-and restoration of player fallback when the spawned opposing set becomes empty. The death helper
+and restoration of player fallback when the spawned opposing set becomes empty. Additional checks
+verify AllIn excludes Out, All retains it, target draws preserve serialized order, malformed lists
+reject, a real player Shield branch uses its cover point, and card infantry targets use their
+current sampled Head transform both before and after movement. The death helper
 is an internal host-confirmed transition; these checks do not claim projectile kill evidence.
 
 Release build has zero warnings/errors and combat regression passes 26,395 assertions after common
-card target registration/cleanup. The new test is registered in the default suite; that complete
-suite was not rerun. These are internal policy/host checks, not automatic Corner shot attempts,
+card target registration/cleanup and the source Shield correction. The new test is registered in
+the default suite; that complete suite was not rerun. These are internal policy/host checks, not automatic Corner shot attempts,
 authenticated UDP target execution, normal Unity gameplay or complete Assaulter implementation.
+
+## Current transform projection and Shield correction
+
+SelectAssaulterShotTarget returns the owning entity, source target slot/type and current transform
+position. Infantry reads the pinned EnemyShotTargetCatalog through InfantryShotTargets, rather
+than using a hitbox center. Decoy uses its pinned sole Body target and current root rotation.
+The player branch consumes its separate player and Shield draws, halves shield probability while
+walking, and reads current sampled Moving/WholeBody positions. The returned TransformPosition is
+raw geometry, not a predicted aim. Moving selection and ShootJustStarted must apply their separate
+source prediction stages using the current muzzle and weapon speed state before firing.
+
+GameShootableEntityPlayer.GetShotTargets replaces the player-child Shield slot with
+currentPlayerPoint.point.shield.shotPosition. A new actual-host check exposed the old wrong
+player-child position. ArmyShieldShotTarget now supplies the canonical current-cover position to
+Assaulter, Sniper and Grenadier. Logical target-slot IDs remain unchanged; the position follows
+the source override. The battle map's shotPosition was already verified against each actual
+Shield reference by extract_card_grenade_origins.py, separately from grenade effect origins.
+
+The old full-regression Grenadier/Sniper checks expected the player-child target and were corrected
+to the source override. Grenadier's three actual damage scenarios now additionally observe the
+latched source Shield position. They pass 23 checks with unchanged damage amounts and impact ticks
+383, 413 and 492 for normal, overtime and Sickness respectively.
+
+A selected vehicle/air entity without an infantry target graph returns no transform; this does
+not select a replacement player. Those source target graphs, live Decoy/Moving/WholeBody fixtures,
+automatic Corner attempts, prediction and actual Assaulter fire remain incomplete.

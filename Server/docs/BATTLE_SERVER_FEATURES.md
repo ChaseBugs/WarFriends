@@ -80,12 +80,14 @@ observation identified this missing path. Initial Corner entry now uses the stri
 arrival test, half-second root position/rotation transition and source first-shot/point-change clocks.
 Normal Assaulter shot composition now reads its recovered selected upgrade lanes instead of being
 skipped by the older BaseShot-only condition. [Assaulter opponent entity selection](ASSAULTER_TARGET_SELECTION.md)
-now preserves random Decoy/Rusher priority and the combined [1,3,2,0] unit fallback list. Nineteen
+now preserves random Decoy/Rusher priority and the combined [1,3,2,0] unit fallback list. Twenty-nine
 focused checks include actual normal/card spawn registration, source bucket ordering and death
 cleanup. All seven card-unit paths now register shared source targets, with common removal.
 Unregistered opposing army authority explicitly blocks an incomplete unit selection instead of
-silently falling back to the player. Shot-target transforms, automatic attempts, exposure and
-volley execution remain open.
+silently falling back to the player. Current infantry/Decoy/player transforms now have a separate
+source-list projection: AllIn excludes Out, target draws preserve serialized order, and Shield
+uses GameShootableEntityPlayer's current-cover override. Sniper/Grenadier now share that correction.
+Moving prediction, vehicle/air transforms, automatic attempts, exposure and volley execution remain open.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical
@@ -115,7 +117,7 @@ pistol callback muzzles per side and the 22-tick first-shot delay. Combat verifi
 damage, so exposed-victim and friendly/overtime damage proof remains required; direct animation
 observations are not normal-controller, UDP, Android or complete Client gameplay verification.
 The separate [Grenadier damage fixture](GRENADIER_PRIMARY_DAMAGE.md) now lets real source volleys
-continue beyond the first terrain hit. Twenty native checks prove opposing shield damage and
+continue beyond the first terrain hit. Twenty-three native checks prove opposing shield damage and
 destruction, actual player health loss with source normal/overtime coefficients, and Sickness-
 modified damage. Friendly health/shields stay unchanged as controls. In-ray friendly exclusion,
 host-scheduled cosmetic shots, moving-hit proof and warm/secondary animation transitions

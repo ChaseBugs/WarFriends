@@ -12778,9 +12778,9 @@ internal static class CombatContentTests
             target.Type == 2).TransformFileId;
         Check(grenadierAim?.Target.TargetFileId == grenadierShieldId &&
               Vector3.Distance(grenadierAim.Target.Position,
-                  grenadierCardMatch.CombatPose(decoyOpponent)
-                      .BodyTarget(grenadierShieldId).Position) < .0001f,
-            "card Grenadier aims at the player's attached Shield shot target");
+                  park.Covers[grenadierCardMatch.Snapshot().Players.Single(player =>
+                      player.PlayerId == decoyOpponent).CoverIndex].ShotPosition) < .0001f,
+            "card Grenadier uses GameShootableEntityPlayer's current-cover Shield target override");
         MatchEngine.CardGrenadierShotIntent? grenadierIntent = null;
         ulong grenadierStartTick = grenadierCardMatch.Snapshot().ServerTick;
         for (ulong grenadierTick = grenadierStartTick + 1;
@@ -16557,11 +16557,12 @@ internal static class CombatContentTests
             target.Type == 2).TransformFileId;
         var movingShieldAim = normalSniperMatch.CardSniperTarget(
             normalSniper.EntityKey);
-        Vector3 currentShieldAim = normalSniperMatch.CombatPose(helicopterOwner)
-            .BodyTarget(shieldAimId).Position;
+        RecoveredBattleMap sniperShieldMap = content.Maps.Single(sourceMap =>
+            sourceMap.SourceHash == normalSniperManifest.MapRevision);
+        Vector3 currentShieldAim = sniperShieldMap.Covers[secondMovingPlayer.CoverIndex].ShotPosition;
         Check(movingShieldAim?.TargetFileId == shieldAimId &&
               Vector3.Distance(movingShieldAim.Position, currentShieldAim) < .0001f,
-            "Sniper follows the moving player's attached Shield shot target");
+            "Sniper preserves the current-cover Shield override while the player moves");
         Check(normalSniperMatch.ApplyArmyHostDamage(normalSniper.EntityKey,
                   arrivedSniper.MaxHealth + 1f) &&
               normalSniperMatch.CardEnemyPointOccupant(normalSniperPoint) == null &&

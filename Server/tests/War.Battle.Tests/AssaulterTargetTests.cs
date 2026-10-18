@@ -15,6 +15,7 @@ internal static class AssaulterTargetTests
         checks += CheckFallbackOrdering();
         checks += CheckSourceBuckets();
         checks += CheckRejectedAuthority();
+        checks += CheckShotTransformRules();
         checks += CheckHost(BattleArmyManifestProjectionTests.LoadContent(directory));
         return checks;
     }
@@ -107,6 +108,7 @@ internal static class AssaulterTargetTests
         ulong attacker = host.ArmyEntityBatch(OpponentId, 0, 0).Entities.Single().EntityKey;
         int checks = Require(host.SelectAssaulterOpponent(attacker).Kind == AssaulterOpponentKind.PlayerFallback,
             "A normal Assaulter without opposing units did not retain player fallback.");
+        checks += CheckPlayerTransform(host, attacker, map);
         Require(host.Command(OwnerId, new MatchCommand
         {
             CommandId = 3, UseUnitCard = new() { RequestId = new string('e', 32), SourceCardId = "GREATGRENADIER" }
@@ -115,6 +117,7 @@ internal static class AssaulterTargetTests
             row.SourceCardId == "GREATGRENADIER");
         checks += Require(host.SelectAssaulterOpponent(attacker).Candidate?.Id == ArmyId(grenadier.EntityKey),
             "An actually spawned card soldier was missing from Assaulter source opponents.");
+        checks += CheckInfantryTransform(host, attacker, grenadier.EntityKey);
         checks += CheckHostDeathCleanup(host, attacker, grenadier.EntityKey);
         return checks;
     }
@@ -129,6 +132,7 @@ internal static class AssaulterTargetTests
         host.Advance(62);
         int checks = Require(host.SelectAssaulterOpponent(attacker).Candidate?.Id == ArmyId(grenadier),
             "Source explosive-before-defender fallback ordering changed in the actual host.");
+        checks += CheckInfantryTransform(host, attacker, grenadier);
         checks += Require(host.ConfirmArmyDeath(grenadier, false) &&
             host.DroneTargetSnapshot().All(candidate => candidate.Id != ArmyId(grenadier)),
             "Host card-unit death left a stale source target registration.");
@@ -138,6 +142,55 @@ internal static class AssaulterTargetTests
         checks += Require(host.ConfirmArmyDeath(normal.EntityKey, false) &&
             host.SelectAssaulterOpponent(attacker).Kind == AssaulterOpponentKind.PlayerFallback,
             "Removing all spawned opponents did not restore source player fallback.");
+        return checks;
+    }
+
+    private static int CheckShotTransformRules()
+    {
+        DroneShotTarget[] targets =
+        [
+            new(454546, 8, new Vector3(0f, 1f, 0f)),
+            new(436299, 1, Vector3.Zero),
+            new(496281, 4, Vector3.UnitZ)
+        ];
+        int checks = Require(AssaulterTargetPolicy.SelectShotTarget(targets,
+            AssaulterTargetPolicy.AllInMask, count =>
+            {
+                Require(count == 2, "AllIn included the source Out target.");
+                return 1;
+            }) == targets[1], "Unit shot-target selection used nearest geometry instead of its random source index.");
+        checks += Require(AssaulterTargetPolicy.SelectShotTarget(targets,
+            AssaulterTargetPolicy.AllMask, _ => 2) == targets[2], "All incorrectly removed the source Out target.");
+        checks += Reject(() => AssaulterTargetPolicy.SelectShotTarget(targets,
+            AssaulterTargetPolicy.AllInMask, _ => 2));
+        checks += Reject(() => AssaulterTargetPolicy.SelectShotTarget([targets[0], targets[0]],
+            AssaulterTargetPolicy.AllInMask, _ => 0));
+        return checks;
+    }
+
+    private static int CheckPlayerTransform(MatchEngine host, ulong attacker, RecoveredBattleMap map)
+    {
+        AssaulterShotTarget target = host.SelectAssaulterShotTarget(attacker) ??
+            throw new InvalidOperationException("The source player fallback produced no current transform.");
+        int cover = host.Snapshot().Players.Single(player => player.PlayerId == OwnerId).CoverIndex;
+        int checks = Require(target.IsPlayer && target.OwnerPlayerId == OwnerId && target.ShotTargetType == 2,
+            "The fixed player fallback lost its source Shield target branch.");
+        checks += Require(Vector3.Distance(target.TransformPosition, map.Covers[cover].ShotPosition) < 0.0001f,
+            "The Shield target used a serialized player-child reference instead of the current cover shot position.");
+        return checks;
+    }
+
+    private static int CheckInfantryTransform(MatchEngine host, ulong attacker, ulong targetEntity)
+    {
+        AssaulterShotTarget target = host.SelectAssaulterShotTarget(attacker) ??
+            throw new InvalidOperationException("A selected infantry opponent produced no current source transform.");
+        DroneShotTarget head = host.InfantryShotTargets(targetEntity)?.Single(row => row.Type == 8) ??
+            throw new InvalidOperationException("The current source infantry Head target disappeared.");
+        int checks = Require(!target.IsPlayer && target.EntityId == ArmyId(targetEntity) &&
+            target.TransformFileId == head.TransformFileId && target.ShotTargetType == head.Type,
+            "The selected infantry transform lost its owning entity or serialized target identity.");
+        checks += Require(target.TransformPosition == head.Position,
+            "The selected infantry target used a stale/reference transform instead of its current sampled pose.");
         return checks;
     }
 

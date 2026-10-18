@@ -3,8 +3,11 @@ namespace War.BattleServer;
 /// <summary>Selects an entity using SoldierBehaviourAssaulter's source priority and registry ordering.</summary>
 internal static class AssaulterTargetPolicy
 {
+    internal const int AllInMask = 0xFFFFFB;
+    internal const int AllMask = 0xFFFFFF;
     private const int MaximumCandidates = 1000;
     private const int MaximumIdentityLength = 100;
+    private const int MaximumShotTargets = 100;
     private const int RusherUnitType = 3;
     private static readonly int[] FallbackUnitTypes = [1, 3, 2, 0];
 
@@ -43,6 +46,42 @@ internal static class AssaulterTargetPolicy
         }
 
         return candidates[index];
+    }
+
+    /// <summary>Draws a source shot transform in serialized order, independently of entity selection.</summary>
+    internal static DroneShotTarget? SelectShotTarget(IReadOnlyList<DroneShotTarget> targets, int mask,
+        Func<int, int> choose)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+        ArgumentNullException.ThrowIfNull(choose);
+        if (targets.Count > MaximumShotTargets || mask is not (AllInMask or AllMask))
+        {
+            throw new InvalidDataException("Assaulter shot-target list or source mask is invalid.");
+        }
+
+        var identities = new HashSet<int>();
+        foreach (DroneShotTarget target in targets)
+        {
+            if (target == null || target.TransformFileId <= 0 || !identities.Add(target.TransformFileId) ||
+                target.Type is < 0 or > AllMask || !PlayerHitbox.Finite(target.Position))
+            {
+                throw new InvalidDataException("Assaulter shot target lost its source identity or current pose.");
+            }
+        }
+
+        DroneShotTarget[] eligible = targets.Where(target => (target.Type & mask) == target.Type).ToArray();
+        if (eligible.Length == 0)
+        {
+            return null;
+        }
+
+        int index = choose(eligible.Length);
+        if (index < 0 || index >= eligible.Length)
+        {
+            throw new InvalidDataException("Assaulter shot-target draw left its source range.");
+        }
+
+        return eligible[index];
     }
 
     private static void ValidateRegistry(int fraction, IReadOnlyList<DroneTargetCandidate> registry)

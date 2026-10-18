@@ -16,9 +16,9 @@ ShieldDestroyed events with those exact projectile identities.
 
 | Scenario | Captured raw damage | Source player coefficient | Observed player health loss | Impact tick |
 | --- | ---: | ---: | ---: | ---: |
-| Normal | 76.36814 | 0.5 | 38.184082 | 384 |
-| Overtime | 76.36814 | 0.25 | 19.092041 | 414 |
-| Sickness | 38.18407 | 0.5 | 19.092041 | 493 |
+| Normal | 76.36814 | 0.5 | 38.184082 | 383 |
+| Overtime | 76.36814 | 0.25 | 19.092041 | 413 |
+| Sickness | 38.18407 | 0.5 | 19.092041 | 492 |
 
 The physical victim has weight one in this fixture. The test compares actual health loss with
 captured raw damage and the source player/overtime coefficient within 0.001, accounting for C#
@@ -42,9 +42,13 @@ controls, not proof of a friendly body deliberately placed inside the ray.
 
 ## Verification and limits
 
-Release build passes without warnings/errors. `--grenadier-damage-only` passes 20 outcome checks
+Release build passes without warnings/errors. `--grenadier-damage-only` passes 23 outcome checks
 plus selection/readiness/activation setup guards. It is registered in the default suite; the
-complete default suite was not rerun. No production combat code was changed for these fixtures.
+complete default suite was not rerun. The latest source correction replaces the old player-child
+Shield aim position with GameShootableEntityPlayer's current-cover Shield override. All three
+fixtures now also observe the actual latch at that canonical point; this changes the impact ticks
+by one while preserving source damage and coefficients. Original fixture creation changed no
+production combat code; the later Shield correction deliberately changes the target projection.
 
 The older fixture kills its Grenadier after its first shot, which hits terrain. This fixture
 lets source volleys continue through shield destruction and a later physical player hit.
