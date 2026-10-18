@@ -1,0 +1,385 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "captureRate": 30,
+  "timeScale": 1.0,
+  "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
+  "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "weaponSha256": "a82f28d711ba20b469b229f48d3580c563696c6388e60bea21d6e25a5518f5c1",
+  "coroutineSha256": "3a42957a1560169dc96af028905d93f0a70aa7d84050d6d5b640b06507f60dce",
+  "probeSha256": "fa04a07f322c77c7fec30d5e728c530155fa451c12b71ea9c3b203f583f8b6b4",
+  "exporterSha256": "922248936e50501b51723e6a4fe90055af4ee8809d26fc7550decf24dbfb441b",
+  "rigFactorySha256": "6dd753fbdcb44b3dad4eea9d90b723a1cb6ca0998034230de9ebceb6233551c5",
+  "clips": [
+    {
+      "name": "player_look_right3",
+      "sha256": "8e436ded13866414bf59a5595ce64f1a9ecb879d1bdb44eb51770d9a532246f7"
+    },
+    {
+      "name": "player_look_left3",
+      "sha256": "a7a6a25eda2068ca8d3031f6afb94a0460855e4675336690e9c95d1e228e4804"
+    },
+    {
+      "name": "player_fire_right3",
+      "sha256": "38141f384200d0ca1a51ac3ef3f09795e312ce4158bf0d062a168eb5f39261c7"
+    },
+    {
+      "name": "player_fire_left3",
+      "sha256": "a628bcbfb8eb228980ca5056f6c0c17178c6917d6871cfbb82a9d8dcdf7d6fe8"
+    },
+    {
+      "name": "idle_1",
+      "sha256": "fc75d82afa2e12a7119e53ddad5db550273f71e513f487cd17b5bca1d8518b04"
+    }
+  ],
+  "scenarios": [
+    {
+      "side": "left",
+      "startClip": "player_look_left_pistol",
+      "fireClip": "player_fire_left_pistol",
+      "delaySeconds": 0.7,
+      "preparationFrame": 1,
+      "callbackFrame": 22,
+      "callbackTick": 21,
+      "firstReadyTick": 22,
+      "callbackPose": {
+        "position": [
+          -0.3086173,
+          0.3269825,
+          -0.1435723
+        ],
+        "rotation": [
+          0.0455875881,
+          -0.998041868,
+          0.0427795649,
+          0.00214855
+        ],
+        "states": [
+          {
+            "name": "player_left_coverBack_pistol",
+            "time": 0.0,
+            "normalizedTime": 0.0,
+            "weight": 1.0
+          }
+        ]
+      },
+      "firstReadyPose": {
+        "position": [
+          -0.2848303,
+          0.3322548,
+          -0.175443023
+        ],
+        "rotation": [
+          0.0150882155,
+          -0.9990702,
+          0.0393960178,
+          -0.008917456
+        ],
+        "states": [
+          {
+            "name": "player_left_coverBack_pistol",
+            "time": 0.0,
+            "normalizedTime": 0.0,
+            "weight": 1.0
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "tick": 22,
+          "pose": {
+            "position": [
+              -0.2848303,
+              0.3322548,
+              -0.175443023
+            ],
+            "rotation": [
+              0.0150882155,
+              -0.9990702,
+              0.0393960178,
+              -0.008917456
+            ],
+            "states": [
+              {
+                "name": "player_left_coverBack_pistol",
+                "time": 0.0,
+                "normalizedTime": 0.0,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 33,
+          "pose": {
+            "position": [
+              -0.284831434,
+              0.332255363,
+              -0.175442874
+            ],
+            "rotation": [
+              0.0150882155,
+              -0.9990702,
+              0.0393960178,
+              -0.008917456
+            ],
+            "states": [
+              {
+                "name": "player_fire_left_pistol - Queued Clone",
+                "time": 0.333333343,
+                "normalizedTime": 0.99999243,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 44,
+          "pose": {
+            "position": [
+              -0.284831434,
+              0.332255363,
+              -0.175442874
+            ],
+            "rotation": [
+              0.0150882155,
+              -0.9990702,
+              0.0393960178,
+              -0.008917456
+            ],
+            "states": [
+              {
+                "name": "player_fire_left_pistol",
+                "time": 0.333333343,
+                "normalizedTime": 0.99999243,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 55,
+          "pose": {
+            "position": [
+              -0.284830362,
+              0.332255185,
+              -0.1754429
+            ],
+            "rotation": [
+              0.0150882155,
+              -0.9990702,
+              0.0393960178,
+              -0.008917456
+            ],
+            "states": [
+              {
+                "name": "player_fire_left_pistol",
+                "time": 0.366666675,
+                "normalizedTime": 1.09999168,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 66,
+          "pose": {
+            "position": [
+              -0.284830362,
+              0.332255185,
+              -0.1754429
+            ],
+            "rotation": [
+              0.0150882155,
+              -0.9990702,
+              0.0393960178,
+              -0.008917456
+            ],
+            "states": [
+              {
+                "name": "player_fire_left_pistol",
+                "time": 0.366666675,
+                "normalizedTime": 1.09999168,
+                "weight": 1.0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "side": "right",
+      "startClip": "player_look_right_pistol",
+      "fireClip": "player_fire_right_pistol",
+      "delaySeconds": 0.7,
+      "preparationFrame": 1,
+      "callbackFrame": 22,
+      "callbackTick": 21,
+      "firstReadyTick": 22,
+      "callbackPose": {
+        "position": [
+          0.274128884,
+          0.3335748,
+          -0.105888605
+        ],
+        "rotation": [
+          -0.0114606339,
+          0.999047756,
+          -0.0420619249,
+          0.00196737121
+        ],
+        "states": [
+          {
+            "name": "player_right_coverBack_pistol",
+            "time": 0.0,
+            "normalizedTime": 0.0,
+            "weight": 1.0
+          }
+        ]
+      },
+      "firstReadyPose": {
+        "position": [
+          0.278049,
+          0.3461129,
+          -0.1436967
+        ],
+        "rotation": [
+          -0.0162898935,
+          0.9994968,
+          -0.0268092453,
+          0.004735758
+        ],
+        "states": [
+          {
+            "name": "player_right_coverBack_pistol",
+            "time": 0.0,
+            "normalizedTime": 0.0,
+            "weight": 1.0
+          }
+        ]
+      },
+      "rounds": [
+        {
+          "tick": 22,
+          "pose": {
+            "position": [
+              0.278049,
+              0.3461129,
+              -0.1436967
+            ],
+            "rotation": [
+              -0.0162898935,
+              0.9994968,
+              -0.0268092453,
+              0.004735758
+            ],
+            "states": [
+              {
+                "name": "player_right_coverBack_pistol",
+                "time": 0.0,
+                "normalizedTime": 0.0,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 33,
+          "pose": {
+            "position": [
+              0.2780503,
+              0.3461132,
+              -0.14369598
+            ],
+            "rotation": [
+              -0.0162898935,
+              0.9994968,
+              -0.0268092453,
+              0.004735758
+            ],
+            "states": [
+              {
+                "name": "player_fire_right_pistol - Queued Clone",
+                "time": 0.333333343,
+                "normalizedTime": 0.999969542,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 44,
+          "pose": {
+            "position": [
+              0.2780503,
+              0.3461132,
+              -0.14369598
+            ],
+            "rotation": [
+              -0.0162898935,
+              0.9994968,
+              -0.0268092453,
+              0.004735758
+            ],
+            "states": [
+              {
+                "name": "player_fire_right_pistol",
+                "time": 0.333333343,
+                "normalizedTime": 0.999969542,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 55,
+          "pose": {
+            "position": [
+              0.2780492,
+              0.3461131,
+              -0.143696189
+            ],
+            "rotation": [
+              -0.0162898935,
+              0.9994968,
+              -0.0268092453,
+              0.004735758
+            ],
+            "states": [
+              {
+                "name": "player_fire_right_pistol",
+                "time": 0.366666675,
+                "normalizedTime": 1.09996653,
+                "weight": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "tick": 66,
+          "pose": {
+            "position": [
+              0.2780492,
+              0.3461131,
+              -0.143696189
+            ],
+            "rotation": [
+              -0.0162898935,
+              0.9994968,
+              -0.0268092453,
+              0.004735758
+            ],
+            "states": [
+              {
+                "name": "player_fire_right_pistol",
+                "time": 0.366666675,
+                "normalizedTime": 1.09996653,
+                "weight": 1.0
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

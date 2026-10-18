@@ -28,9 +28,11 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Grenadier primary projectile identities exhausted.");
         }
 
-        GrenadierPrimaryWeapon weapon = GrenadierPrimaryWeapon.Instance;
         Vector3 position = new(soldier.X, soldier.Y, soldier.Z);
-        Vector3 origin = weapon.PlaceMuzzle(position, intent.Aim.Target.Position - position);
+        CardUnitInitialPoint corner = cardEnemyPoints?.Find(intent.EntityKey) ??
+            throw new InvalidDataException("Grenadier primary shot lost its corner.");
+        Vector3 origin = GrenadierCornerMuzzleCatalog.Instance.Place(
+            corner, position, intent.Aim.Target.Position, intent.ShotIndex);
         AddGrenadierPrimaryFlight(intent, soldier, origin, damage);
     }
 

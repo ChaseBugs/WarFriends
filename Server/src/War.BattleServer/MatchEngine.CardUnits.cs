@@ -1654,7 +1654,8 @@ public sealed partial class MatchEngine
                             origin, aim.Target.Position))
                         attack.RetryAfterRejectedTarget();
                     else if (attack.TryBegin(true, 1,
-                                 (int)MathF.Ceiling(.7f * MatchManifest.TickRate),
+                                 aim.ThrowGrenade ? (int)MathF.Ceiling(.7f * MatchManifest.TickRate) :
+                                     GrenadierCornerMuzzleCatalog.FirstShotDelayTicks,
                                  singleShot: aim.ThrowGrenade))
                         grenadierShotTargets[entityKey] = aim;
                 }

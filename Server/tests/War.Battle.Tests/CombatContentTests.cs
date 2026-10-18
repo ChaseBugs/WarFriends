@@ -12900,6 +12900,7 @@ internal static class CombatContentTests
         MatchEngine? primaryDrawOwner = null;
         ulong primaryDrawEntity = 0;
         int primaryReadyDraws = 0;
+        ulong primaryPreparationTick = 0;
         int ChoosePrimaryArmyDraw(int maximum)
         {
             if (maximum != 1_000_000 || primaryDrawOwner?.CardGrenadierAttack(primaryDrawEntity)?.Phase !=
@@ -12910,6 +12911,10 @@ internal static class CombatContentTests
             }
 
             // PickTarget draws secondary choice first. Later target/batch/real-shot draws stay zero.
+            if (primaryReadyDraws == 0)
+            {
+                primaryPreparationTick = primaryDrawOwner.Snapshot().ServerTick;
+            }
             return primaryReadyDraws++ == 0 ? 400_000 : 0;
         }
 
@@ -12934,6 +12939,8 @@ internal static class CombatContentTests
         }
 
         Check(primaryIntent is { IsReal: true }, "forced primary choice reaches a real pistol shot intent");
+        Check(primaryIntent!.Tick == primaryPreparationTick + GrenadierCornerMuzzleCatalog.FirstShotDelayTicks,
+            "primary pistol waits for the native callback's following gameplay poll");
         var primaryProjectile = primaryGrenadierMatch.Snapshot().Projectiles.Single(row =>
             row.ArmySourceCardId == "GREATGRENADIER" && row.Kind == "army-bullet");
         Check(primaryGrenadierMatch.ArmyProjectileLaunch(primaryProjectile.ProjectileId)?.Damage ==
@@ -12950,6 +12957,7 @@ internal static class CombatContentTests
             primaryGrenadierMatch.ArmyProjectileLaunch(primaryProjectile.ProjectileId) != null,
             "Grenadier death removes current primary setup while preserving its launched round");
         ulong primaryCursor = primaryGrenadierMatch.EventBatch(decoyPlayer, 0).LatestEventId;
+        MatchSnapshot primaryBeforeImpact = primaryGrenadierMatch.Snapshot();
         for (ulong primaryTick = primaryIntent!.Tick + 1;
              primaryTick <= primaryIntent.Tick + 900 &&
                 primaryGrenadierMatch.ArmyProjectileLaunch(primaryProjectile.ProjectileId) != null; primaryTick++)
@@ -12960,6 +12968,13 @@ internal static class CombatContentTests
         Check(primaryGrenadierMatch.EventBatch(decoyPlayer, primaryCursor).Events.Any(item =>
                 item.Kind == MatchEventKind.Impact && item.ProjectileId == primaryProjectile.ProjectileId),
             "actual pistol flight reaches host collision after its Grenadier dies");
+        MatchSnapshot primaryAfterImpact = primaryGrenadierMatch.Snapshot();
+        float primaryPlayerDamage = primaryBeforeImpact.Players.Single(row => row.PlayerId == decoyOpponent).Health -
+            primaryAfterImpact.Players.Single(row => row.PlayerId == decoyOpponent).Health;
+        float primaryShieldDamage = primaryBeforeImpact.Shields.Sum(row => row.Health) -
+            primaryAfterImpact.Shields.Sum(row => row.Health);
+        Console.WriteLine($"Grenadier primary collision: player damage {primaryPlayerDamage}, " +
+            $"shield damage {primaryShieldDamage}, raw launch damage {grenadierStats.Combat.Damage * 0.5f}.");
         var shotGrenadierMatch = ReadyCardMatch(
             "host-card-grenadier-shot", "GREATGRENADIER");
         Check(shotGrenadierMatch.TryScheduleCardUnit(

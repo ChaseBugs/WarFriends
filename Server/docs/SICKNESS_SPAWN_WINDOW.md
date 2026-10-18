@@ -39,7 +39,7 @@ arbitrary effect lease is introduced here.
 
 ## Verification and boundary
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 61 checks for
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 92 checks for
 arming, friendly/vehicle/immune exclusions, neutral and reversed fractions, replacement and
 reused-definition finishes, repeated callbacks, exact vitality/damage calculations, immutable
 output, invalid-event/state rejection and ordered spawn subscriptions.
@@ -169,3 +169,6 @@ normal/card pistol binding and real/cosmetic launch path. Sickness now changes t
 primary damage together with secondary minimum and vitality. A native primary fixture verifies
 modified launch damage, immutable airborne authority, soldier death cleanup and collision;
 dedicated victim-damage, animated-pose, UDP and Client presentation proof remain open.
+The [native corner muzzle correction](GRENADIER_CORNER_MUZZLES.md) now supplies ten actual
+pistol callback poses and the first-shot delay. Normal-controller/warm-state and Client proof
+remain separate; the fixed Park fixture still hits terrain and proves no victim damage.

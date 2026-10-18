@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <EmbeddedResource Include="..\..\content\grenadier-corner-muzzle-unity-reference.json"
+                      LogicalName="War.BattleServer.GrenadierCornerMuzzles" />
     <EmbeddedResource Include="..\..\content\recovered-grenadier-primary-weapon.json"
                       LogicalName="War.BattleServer.GrenadierPrimaryWeapon" />
     <EmbeddedResource Include="..\..\content\recovered-grenade-rig.json"

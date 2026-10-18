@@ -10,7 +10,6 @@ public sealed class GrenadierPrimaryWeapon
     private const float ExpectedSpeed = 5f;
     private const float ExpectedFakeSpeed = 7.5f;
     private const float ExpectedCollisionDistance = 0.35f;
-    private const float MinimumPlanarDirectionSquared = 1e-10f;
     private const int MinimumArtifactBytes = 100;
     private const int MaximumArtifactBytes = 32768;
     /// <summary>The digest of the complete exported primary-weapon evidence.</summary>
@@ -29,7 +28,7 @@ public sealed class GrenadierPrimaryWeapon
     /// <summary>The slow bullet's extra collision-ray distance.</summary>
     public float CollisionDistance { get; }
 
-    /// <summary>The primary muzzle relative to the resting enemy rig.</summary>
+    /// <summary>The exported resting baseline; firing uses observed corner samples instead.</summary>
     public Vector3 RestMuzzle { get; }
 
     private GrenadierPrimaryWeapon(JsonElement root)
@@ -44,30 +43,6 @@ public sealed class GrenadierPrimaryWeapon
         {
             throw new InvalidDataException("Grenadier primary setup is outside the recovered contract.");
         }
-    }
-
-    /// <summary>Places the resting muzzle using the host's planar soldier facing.</summary>
-    public Vector3 PlaceMuzzle(Vector3 position, Vector3 forward)
-    {
-        if (!PlayerHitbox.Finite(position) || !PlayerHitbox.Finite(forward))
-        {
-            throw new InvalidDataException("Grenadier muzzle requires finite host pose authority.");
-        }
-
-        forward.Y = 0;
-        if (forward.LengthSquared() < MinimumPlanarDirectionSquared)
-        {
-            throw new InvalidDataException("Grenadier muzzle requires a planar facing direction.");
-        }
-
-        float yaw = MathF.Atan2(forward.X, forward.Z);
-        Vector3 placed = position + Vector3.Transform(RestMuzzle, Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw));
-        if (!PlayerHitbox.Finite(placed))
-        {
-            throw new InvalidDataException("Grenadier muzzle placement overflowed.");
-        }
-
-        return placed;
     }
 
     internal static GrenadierPrimaryWeapon Load(byte[] bytes)

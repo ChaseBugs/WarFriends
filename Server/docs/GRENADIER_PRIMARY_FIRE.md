@@ -38,7 +38,8 @@ The selected runtime speed is 5, collision check distance 0.35 and fake speed 7.
 other speed fields, which are not the same-GameObject selected AmmoSetup. The exported resting
 enemy-rig muzzle is approximately `(0.3178592, 0.18429394, 0.051513106)`; no animated-hand pose
 parity is claimed. `GrenadierPrimaryWeapon` validates the entire artifact hash before publishing
-immutable values and places that muzzle using the host's planar soldier facing.
+immutable values. The resting muzzle is retained as provenance; actual firing now uses the
+[native corner callback samples](GRENADIER_CORNER_MUZZLES.md).
 
 `LaunchCardGrenadierPrimary` uses current match-owned primary damage initialized from the card
 row. Real bullets use the ordinary army flight and collision authority. Fake bullets use the
@@ -52,7 +53,7 @@ It halves current primary damage and secondary minimum, preserves separate grena
 damage, and refills current health to half maximum. Death removes current primary damage while
 retaining already launched projectile authority. Subsequent Sickness cannot rewrite that authority.
 
-Focused checks cover exact selected fields, resting muzzle placement in two directions, corrupt
+Focused checks cover exact selected fields, native callback muzzles in two directions, corrupt
 artifact/invalid pose rejection and collision-free fake flight. Native combat uses an explicit
 host RNG: primary selection first, then real-shot draws. It verifies actual primary intent,
 projectile speed/damage, Sickness changes before/after launch, current-weapon cleanup on death
@@ -61,14 +62,14 @@ or shield delta; dedicated damage/friendly-exclusion fixtures remain required.
 
 ## Remaining verification
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 61 checks,
-including eight primary-weapon/flight checks. `--combat-only` passes 26,394 assertions with the
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 92 checks,
+including native muzzle/source verification. `--combat-only` passes 26,395 assertions with the
 native primary-choice fixture. The full default suite was not rerun.
 
 1. Verify victim health/shield deltas and friendly exclusions for actual primary shots, including
    the source player/overtime coefficients. Extend fake-flight checks to host-scheduled fake shots.
-2. Observe animated primary muzzles in Unity and compare the host placement across source poses;
-   the current muzzle is a resting rig projection.
+2. Extend the direct native animation-controller observation to normal EnemyController execution,
+   warm-state reuse and Client presentation. Five firing rounds on both sides are now observed.
 3. Add authenticated UDP and Client presentation proof before treating the complete unit behavior
    as finished. These are separate from both the native primary fixture and grenade fixture.
 

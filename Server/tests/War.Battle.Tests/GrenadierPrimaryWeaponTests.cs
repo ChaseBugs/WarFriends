@@ -1,4 +1,6 @@
 using System.Numerics;
+using System.Security.Cryptography;
+using System.Text.Json;
 
 using War.BattleServer;
 
@@ -14,17 +16,70 @@ internal static class GrenadierPrimaryWeaponTests
         var expected = new Vector3(0.3178592f, 0.18429394f, 0.051513106f);
         checks += Check(Vector3.Distance(weapon.RestMuzzle, expected) < 0.000001f,
             "The selected pistol spawn/rig chain changed.");
-        checks += Check(Vector3.Distance(weapon.PlaceMuzzle(Vector3.One, Vector3.UnitZ),
-            Vector3.One + expected) < 0.000001f, "Forward muzzle placement lost its source attachment.");
-        checks += Check(Vector3.Distance(weapon.PlaceMuzzle(Vector3.Zero, Vector3.UnitX),
-            new Vector3(expected.Z, expected.Y, -expected.X)) < 0.000001f,
-            "Sideways muzzle placement used the wrong planar rotation.");
         bytes[0] ^= 1;
         Reject(() => GrenadierPrimaryWeapon.Load(bytes));
-        Reject(() => weapon.PlaceMuzzle(Vector3.Zero, Vector3.UnitY));
-        Reject(() => weapon.PlaceMuzzle(new Vector3(float.NaN), Vector3.UnitZ));
-        checks += 3;
-        return checks + CheckCosmeticFlight(weapon);
+        checks++;
+        return checks + CheckCosmeticFlight(weapon) + CheckNativeMuzzles(directory);
+    }
+
+    private static int CheckNativeMuzzles(string directory)
+    {
+        using JsonDocument reference = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "grenadier-corner-muzzle-unity-reference.json")));
+        GrenadierCornerMuzzleCatalog catalog = GrenadierCornerMuzzleCatalog.Instance;
+        int checks = 0;
+        foreach (JsonElement scenario in reference.RootElement.GetProperty("scenarios").EnumerateArray())
+        {
+            bool isRight = scenario.GetProperty("side").GetString() == "right";
+            var corner = new CardUnitInitialPoint(0, 1, "EnemyPointCorner", 1, Vector3.Zero,
+                Quaternion.Identity, isRight ? -Vector3.UnitX : Vector3.UnitX, isRight);
+            foreach (JsonElement round in scenario.GetProperty("rounds").EnumerateArray())
+            {
+                int index = (round.GetProperty("tick").GetInt32() - 22) / 11;
+                JsonElement point = round.GetProperty("pose").GetProperty("position");
+                var expected = new Vector3(point[0].GetSingle(), point[1].GetSingle(), point[2].GetSingle());
+                checks += Check(catalog.Place(corner, Vector3.Zero, -Vector3.UnitZ, index) == expected,
+                    "A source callback muzzle no longer matches the actual native pistol observation.");
+                var rotatedCorner = corner with { CornerDirection = isRight ? -Vector3.UnitZ : Vector3.UnitZ };
+                Vector3 placed = catalog.Place(rotatedCorner, Vector3.One, Vector3.One + Vector3.UnitX, index);
+                checks += Check(Vector3.Distance(placed, Vector3.One +
+                    new Vector3(-expected.Z, expected.Y, expected.X)) < 0.000001f,
+                    "Corner muzzle placement lost the source facing-away rotation.");
+            }
+
+            Reject(() => catalog.Place(corner, Vector3.Zero, -Vector3.UnitZ, -1));
+            Reject(() => catalog.Place(corner, Vector3.Zero, -Vector3.UnitZ, 5));
+            Reject(() => catalog.Place(corner, Vector3.Zero, Vector3.Zero, 0));
+            Reject(() => catalog.Place(corner, new Vector3(float.NaN), -Vector3.UnitZ, 0));
+            checks += 4;
+        }
+
+        return checks + CheckNativeProvenance(directory, reference.RootElement);
+    }
+
+    private static int CheckNativeProvenance(string directory, JsonElement reference)
+    {
+        string server = Directory.GetParent(directory)!.FullName;
+        string client = Path.Combine(Directory.GetParent(server)!.FullName, "Clients/ExportedProject");
+        var paths = new Dictionary<string, string>
+        {
+            ["probeSha256"] = Path.Combine(server, "tools/UnityGrenadierCornerCallbackProbe.cs"),
+            ["exporterSha256"] = Path.Combine(server, "tools/UnityGrenadierCornerCallbackExport.cs"),
+            ["rigFactorySha256"] = Path.Combine(server, "tools/UnityCoopObstacleVolleyPoseExport.cs"),
+            ["coroutineSha256"] = Path.Combine(client, "Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs"),
+            ["controllerSha256"] = Path.Combine(client, "Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs"),
+            ["prefabSha256"] = Path.Combine(client, "Assets/GameObject/enemy.prefab"),
+            ["weaponSha256"] = Path.Combine(client, "Assets/GameObject/PistolEnemy.prefab")
+        };
+        int checks = 0;
+        foreach (var entry in paths)
+        {
+            string digest = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(entry.Value)));
+            checks += Check(digest == reference.GetProperty(entry.Key).GetString(),
+                "Native Grenadier observation source changed: " + entry.Key);
+        }
+
+        return checks;
     }
 
     private static int CheckCosmeticFlight(GrenadierPrimaryWeapon weapon)

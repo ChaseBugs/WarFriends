@@ -15,6 +15,14 @@ Server/content/recovered-drone-weapon.json text eol=crlf
 Server/content/recovered-grenade-bindings.json text eol=crlf
 Server/content/recovered-grenade-poses.json text eol=crlf
 Server/content/recovered-grenadier-primary-weapon.json text eol=lf
+Server/content/grenadier-corner-muzzle-unity-reference.json text eol=lf
+Server/tools/UnityGrenadierCornerCallbackProbe.cs text eol=lf
+Server/tools/UnityGrenadierCornerCallbackExport.cs text eol=lf
+# Preserve the observed source bytes on both Windows and Linux checkouts.
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs text eol=crlf
+Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs text eol=crlf
+Clients/ExportedProject/Assets/GameObject/enemy.prefab text eol=lf
+Clients/ExportedProject/Assets/GameObject/PistolEnemy.prefab text eol=lf
 Server/content/recovered-enemy-poses.json text eol=crlf
 Server/content/recovered-enemy-target-poses.json text eol=crlf
 Server/content/recovered-ground-vehicle-weapons.json text eol=crlf

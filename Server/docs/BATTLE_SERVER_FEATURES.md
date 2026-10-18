@@ -63,7 +63,7 @@ The [deployment wave lifecycle](ARMY_DEPLOYMENT_WAVES.md) now records accepted w
 entity provenance, and the final strict post-spawn wait. Overlapping pending spawns sort by source
 due tick instead of blocking behind an older wave's future entries. This is a prerequisite for the
 Sickness event window; its arming, actual health/damage modifiers and Client integration remain open.
-The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 61 focused
+The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 92 focused
 checks, including reused-option finishes, overlapping windows, neutral/reversed fractions, and
 current-health refill versus maximum-health preservation. Actual host entity mutation, authorized
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
@@ -88,6 +88,11 @@ pistol and launches real/cosmetic bullets instead of skipping primary intents. S
 both current weapon damage fields. Native proof covers actual primary launch, Sickness damage,
 airborne immutability, death cleanup and collision. Dedicated victim/friendly damage assertions,
 animated muzzle parity, authenticated UDP and Client presentation remain open.
+The [native Grenadier corner correction](GRENADIER_CORNER_MUZZLES.md) now binds five actual
+pistol callback muzzles per side and the 22-tick first-shot delay. Combat verification passes
+26,395 assertions. The fixed Park primary fixture still hits terrain with zero player/shield
+damage, so exposed-victim and friendly/overtime damage proof remains required; direct animation
+observations are not normal-controller, UDP, Android or complete Client gameplay verification.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the
