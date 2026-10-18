@@ -14,6 +14,11 @@ It compares those patterns with existing WarFriends implementations and prioriti
 reconnect acceptance, bounded server-owned reproduction artifacts and operational fault tests.
 It does not replace recovered Client rules, authorize client-result voting or add RakNet/MySQL.
 This is design evidence, not a completed feature or new runtime validation.
+The [Unity integration review](ICE_MOBA_CLIENT_INTEGRATION.md) adds source-backed main-thread,
+scene ownership and reconnect patterns plus a repeatable online-provider inventory. Splash still
+contains retired provider initialization/waits, and retained native SDK startup requires mobile
+auditing. Removing external online dependencies is an explicit migration gate, not established
+by Editor bootstrap success or by retaining Photon only for serialized type compatibility.
 
 ## Dependency-ordered work
 

@@ -9,6 +9,10 @@ The recovered WarFriends 1.4.0 Client remains the gameplay specification. Ice MO
 networking/operations reference, not replacement combat rules. Keep .NET 10, protobuf, MongoDB,
 Windows/Linux native deployment and the prohibition on runtime Photon and Docker.
 
+The [client integration review](ICE_MOBA_CLIENT_INTEGRATION.md) follows the corresponding Unity
+transport, scene/message lifecycle and reconnect code, and inventories remaining WarFriends
+online-provider dependencies before physical SDK removal.
+
 ## Main finding
 
 Ice MOBA uses C++ services, ACE queues/timers, RakNet UDP and protobuf. The inspected Room
