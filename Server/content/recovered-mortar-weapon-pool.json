@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "scene": "Assets/Scenes/MainScene.unity",
+  "poolComponentFileId": 49549,
+  "poolGameObjectFileId": 13060,
+  "poolScriptGuid": "edeb0caaa8af89e2e298e1f4b64245cc",
+  "weaponPrefab": "Assets/GameObject/MortarEnemy.prefab",
+  "weaponPrefabGuid": "79ce5dcc1733e5a4eaac84b9e49f9994",
+  "weaponComponentFileId": 11496012,
+  "capacity": 4,
+  "reviewedAllocation": {
+    "initialOrder": "ascending",
+    "master": "first-free",
+    "peer": "last-free",
+    "releasedSlot": "add-first"
+  },
+  "sources": [
+    {
+      "source": "Assets/Scenes/MainScene.unity",
+      "normalizedUtf8LfSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff"
+    },
+    {
+      "source": "Assets/GameObject/MortarEnemy.prefab",
+      "normalizedUtf8LfSha256": "7b149ab87230ca831bdace965afc9f288e84518b1d749faf93d408a31e48745f"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/NetworkObjectPool.cs",
+      "normalizedUtf8LfSha256": "d5e5e5d4a715f8f0b38a1c74c67e5047446a8e36746cea44c88ac1e0487f2e74"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/ObjectPool.cs",
+      "normalizedUtf8LfSha256": "7db8ebe40315a441d4892ddc9d4b1cb392aac1186289c0882e18e58f3263adf8"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/SoldierParts.cs",
+      "normalizedUtf8LfSha256": "1000f275de6e71fb190bc0bfc840323b93ff368f8a816b270ff58735a718cf33"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/EnemyBasicInventory.cs",
+      "normalizedUtf8LfSha256": "872e1caa7e7a81fb5ef8e8b33a1fabbfd9ed04253416da6cb3674aba6bcc03f8"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/Mortar.cs",
+      "normalizedUtf8LfSha256": "392916b8b135be21bbea108edcf9a77cd93bf66a303efacc1aa2f690f6b581e6"
+    }
+  ]
+}

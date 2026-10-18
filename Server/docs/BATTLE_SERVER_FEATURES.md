@@ -159,6 +159,10 @@ Observer-local reuse now matches 722 additional original callback/tween frames a
 changes, allied suppression and shrink/blink cancellation. The focused indicator group passes
 13,232 assertions. Actual pool allocation/return, host slot/viewer binding and wire/Unity warning
 integration remain open; these callbacks do not establish full original pool parity.
+The recovered four-slot weapon pool now has a reproducible scene/source artifact and a managed
+master-front/peer-back/release-front allocator with actor ownership protection. The indicator
+group passes 13,255 checks. Live spawn/return hooks, admission/exhaustion compatibility, catalog
+binding and per-slot observers are still open; this primitive does not impose a new live limit.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

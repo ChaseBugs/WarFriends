@@ -369,3 +369,9 @@ Server/tests/War.Battle.Tests/MortarIndicatorReuseTests.cs text eol=lf
 Server/src/War.Shared/MortarIndicatorObserver.cs text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Weapon.cs text eol=crlf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PoolableObject.cs text eol=crlf
+
+# Recovered Mortar weapon-slot capacity and allocation primitive.
+Server/content/recovered-mortar-weapon-pool.json text eol=lf
+Server/tools/extract_mortar_weapon_pool.py text eol=lf
+Server/src/War.BattleServer/MortarWeaponPool.cs text eol=lf
+Server/tests/War.Battle.Tests/MortarWeaponPoolTests.cs text eol=lf

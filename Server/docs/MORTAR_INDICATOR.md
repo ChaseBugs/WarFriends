@@ -186,6 +186,33 @@ selects the first free slot for the master/local-solo path and the last for the 
 to attach weapons, and EnemyBasicInventory returns them on destruction. This is source and
 serialized configuration evidence, not a native recycled-slot gameplay observation.
 
+`tools/extract_mortar_weapon_pool.py --check` now reproduces
+`content/recovered-mortar-weapon-pool.json` from this exact scene component and prefab. It
+records seven source/configuration digests after UTF-8 BOM removal and LF normalization, so
+Windows/Linux checkout line endings do not change source identity. Allocation labels are
+explicitly reviewed source rules; the extractor does not claim to interpret arbitrary C#.
+The artifact SHA-256 is
+`eb2726f6a612d44b8ca6272bb1c686cdb70e474113b4019979c1856ee5998eb6`.
+
+The new `MortarWeaponPool` primitive initializes indices in ascending order, allocates master
+from the front and peer from the back, and inserts every released slot at the front. Capacity
+is supplied from reviewed source data rather than silently growing the pool. A failed full-pool
+allocation creates no index or binding. Duplicate allocation rejects before mutation; stale
+actor releases cannot free a slot now owned by a successor. Returned diagnostic arrays are
+copies. Actor bindings are an explicit server authority invariant around the recovered free-list
+rules, not a claim that the original pointer-based pool enforced actor generations.
+
+The focused group passes 13,255 checks, including 23 new source/pool assertions. Mixed-role
+traces cover capacity exhaustion, multiple release ordering, peer selection of an older free
+slot, duplicate ownership, stale release, invalid inputs and immutable diagnostic copies.
+Local evidence is `Server/.local/mortar-weapon-pool-tests.log`. These are source/configuration
+and managed primitive tests; original NetworkObjectPool execution is not covered by this stage.
+The primitive is not yet called by live host spawning. Role must come from trusted scene-master
+ownership, not a client assertion or a guessed relationship between faction and master role.
+Deployment admission, resource-pool exhaustion behavior, catalog revision binding, actual
+allocation/return observations and per-slot observer integration still need completion before
+publishing warning state. No live deployment limit was changed here.
+
 Mortar.OnInstancied hides the old world indicator but does not remove its tween components.
 Furthermore, StartIndicatorAnimation returns for the local fraction, so tween activation history
 can differ between the two observers of the same recycled weapon. A global fresh-actor clock
