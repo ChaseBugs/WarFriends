@@ -43,12 +43,12 @@ battle entry remain open. The source primary slot must still be a supported
 non-grenade weapon; arbitrary mixed manifests beginning with a grenade are not
 supported by the rifle constructor.
 
-Grenade common views intentionally lack uncaptured moving-target and complete
-weapon-root transforms. A delayed rifle bullet that kills an army unit while
-the owner holds a grenade can reach the existing PvP skill-shot WeaponRoot
-query. Its required root is not in the current grenade export; this remains a
-source-data/integration requirement and must not be replaced by a fabricated
-rotation, static point or launch-time position. Additional mixed-class damage,
+The later [observed grenade rig](GRENADE_RIG_OBSERVATION.md) supplies target rotations,
+the moving target, and all 66 weapon roots to the runtime common view. The
+[delayed rifle host scenarios](MIXED_GRENADE_LONGSHOT.md) verify lethal contacts
+during FRAG selection, with a LongShot award and a non-award comparison. No
+static or launch-time weapon position substitutes for current pose authority.
+Additional mixed-class damage,
 status effects, movement, snapshots, UDP and rendered Client parity need their
 own evidence before the overall gameplay feature can be closed.
 

@@ -2,13 +2,15 @@
 
 Mixed weapon gameplay needs one way to read current player collision and
 animated target positions. The recovered grenade exports contain collision
-parts, weapon muzzles and five target positions. They do not contain the target
-rotations, a moving-target transform or a complete weapon-root rig.
+parts, weapon muzzles and five target positions. That initial export lacked target
+rotations and weapon-root transforms. The later [rig observation](GRENADE_RIG_OBSERVATION.md)
+now supplies actual target transforms and all 66 weapon roots to the runtime view.
 
 `PlayerAimPose.BodyTargetPosition` now supports position-only target authority
-while preserving the existing full-pose query for rifle poses. A grenade view
-rejects BodyTarget and WeaponRoot requests rather than supplying invented
-rotations or rig transforms. MovingTarget stays absent. Rigid placement carries
+while preserving the existing full-pose query. A position-only projection still
+rejects BodyTarget and WeaponRoot requests and leaves MovingTarget absent when
+no observed rig details are supplied. The runtime grenade projection now supplies
+those separately verified details. Rigid placement carries
 the position-only points into the new root transform, and the constructor copies
 the supplied positions so callers cannot change a cached view.
 

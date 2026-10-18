@@ -44,5 +44,6 @@ closes the still-open mixed grenade gameplay requirement.
 
 The [common combat view](GRENADE_COMMON_COMBAT_VIEW.md) now supplies grenade
 collision and target positions to shared army queries. It preserves sampled
-launch-frame identity and explicitly leaves uncaptured rotations/rigs unavailable.
+launch-frame identity. The later [observed rig integration](GRENADE_RIG_OBSERVATION.md)
+also supplies target rotations and weapon roots without fabricating transforms.
 This is another mixed-mode prerequisite, not a completed class coordinator.

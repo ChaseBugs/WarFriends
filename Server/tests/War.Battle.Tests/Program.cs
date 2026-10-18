@@ -1030,11 +1030,17 @@ if (args is ["--grenade-vehicles-only"] or ["--grenade-drone-only"])
 
 if (args is ["--grenade-only"] or ["--grenade-switch-only"] or
     ["--grenade-pose-view-only"] or ["--mixed-grenade-actors-only"] or ["--mixed-grenade-host-only"] or
-    ["--mixed-grenade-udp-only"])
+    ["--mixed-grenade-udp-only"] or ["--mixed-grenade-longshot-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
     while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/grenade-content-manifest.json")))root=root.Parent;
     if(root==null)throw new Exception("Recovered grenade content artifact not found.");
+    if (args[0] == "--mixed-grenade-longshot-only")
+    {
+        int longShotChecks = MixedGrenadeLongShotTests.Run(Path.Combine(root.FullName, "content"));
+        Console.WriteLine($"PASS: {longShotChecks} delayed rifle grenade LongShot checks");
+        return;
+    }
     if (args[0] == "--mixed-grenade-udp-only")
     {
         int udpChecks = await MixedGrenadeUdpTests.RunAsync(Path.Combine(root.FullName, "content"));
@@ -1070,6 +1076,7 @@ if (args is ["--grenade-only"] or ["--grenade-switch-only"] or
     focused += GrenadeCombatPoseProjectionTests.Run(Path.Combine(root.FullName, "content"));
     focused += MixedGrenadeActorTests.Run(Path.Combine(root.FullName, "content"));
     focused += MixedGrenadeHostTests.Run(Path.Combine(root.FullName, "content"));
+    focused += MixedGrenadeLongShotTests.Run(Path.Combine(root.FullName, "content"));
     focused+=GrenadeVehicleFlightTests.Run(Path.Combine(root.FullName,"content"));
     focused+=GrenadeDroneTests.Run(Path.Combine(root.FullName,"content"));
     focused+=await GrenadeCatalogTests.RunUdp(Path.Combine(root.FullName,"content"));
@@ -3515,6 +3522,7 @@ checks += GrenadeWeaponSwitchTests.Run(Path.Combine(contentRoot.FullName, "conte
 checks += GrenadeCombatPoseProjectionTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MixedGrenadeActorTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MixedGrenadeHostTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MixedGrenadeLongShotTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += await MixedGrenadeUdpTests.RunAsync(Path.Combine(contentRoot.FullName, "content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));

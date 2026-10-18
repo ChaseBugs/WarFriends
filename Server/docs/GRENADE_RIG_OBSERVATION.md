@@ -45,8 +45,9 @@ The flat observed node list is not treated as a parented skeleton or used for pr
 
 The recovered LongShot rule reads the weapon's current transform at kill time. The existing
 mixed-combat query can now obtain that root while a grenade is selected; it does not substitute
-a launch-time position. A delayed lethal rifle projectile crossing this exact host path still needs
-an explicit scenario test before claiming end-to-end LongShot verification.
+a launch-time position. The [delayed rifle host scenarios](MIXED_GRENADE_LONGSHOT.md) now verify
+lethal contacts during FRAG selection with one long-range award and one non-award comparison,
+including private terminal evidence. Rendered Unity gameplay remains outside that proof.
 
 Verification after runtime integration:
 

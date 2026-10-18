@@ -48,7 +48,9 @@ hand. Grants here omit the normal Backend presentation publication, so this
 does not substitute for the full account-to-lobby-to-battle path.
 
 Normal Unity/Android rendering, all other mixed weapon transitions and effects,
-packet-loss/reconnect variants, source grenade weapon-root/moving-target data,
+packet-loss/reconnect variants,
 durable card consumption, allocation and production settlement remain open.
-See the host command checkpoint for the concrete delayed rifle kill/WeaponRoot
-boundary; passing this source-starter UDP test does not close those requirements.
+The later [rig observation](GRENADE_RIG_OBSERVATION.md) and
+[delayed rifle host scenarios](MIXED_GRENADE_LONGSHOT.md) cover the previously
+missing weapon-root/moving-target data and native kill path. Those checks do not
+expand this UDP fixture into full Unity gameplay or production settlement proof.
