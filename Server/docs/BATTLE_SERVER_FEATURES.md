@@ -79,7 +79,13 @@ death, and avoid fabricated destinations on point-less Snow. The previous idle-t
 observation identified this missing path. Initial Corner entry now uses the strict authored-point
 arrival test, half-second root position/rotation transition and source first-shot/point-change clocks.
 Normal Assaulter shot composition now reads its recovered selected upgrade lanes instead of being
-skipped by the older BaseShot-only condition. Targeting, exposure and volley execution remain open.
+skipped by the older BaseShot-only condition. [Assaulter opponent entity selection](ASSAULTER_TARGET_SELECTION.md)
+now preserves random Decoy/Rusher priority and the combined [1,3,2,0] unit fallback list. Nineteen
+focused checks include actual normal/card spawn registration, source bucket ordering and death
+cleanup. All seven card-unit paths now register shared source targets, with common removal.
+Unregistered opposing army authority explicitly blocks an incomplete unit selection instead of
+silently falling back to the player. Shot-target transforms, automatic attempts, exposure and
+volley execution remain open.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical

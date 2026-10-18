@@ -228,6 +228,8 @@ public sealed partial class MatchEngine
                 InitializeCardSwat(entity);
             if (entity.SourceCardId == "ELITESNIPER")
                 InitializeCardSniper(entity);
+            var family = armyCatalog!.Families.Single(candidate => candidate.UnitId == entity.UnitId);
+            RegisterDroneArmyTarget(entity.EntityKey, family);
             armyEntityRevision++;
             stateRevision++;
             Emit(MatchEventKind.ArmySpawned, owner.Definition.PlayerId,
@@ -1395,8 +1397,6 @@ public sealed partial class MatchEngine
             0, runtime.ShieldHitProbability);
         var route = airWaypoints.ForSpawn(map, entity.SpawnComponentFileId);
         var position = new Vector3(entity.X, entity.Y, entity.Z);
-        var family = CardSpawnUnitSourceCatalog.Family(armyCatalog,
-            entity.SourceCardId);
 
         armyDamage.Add(entity.EntityKey, card.Combat.Damage);
         armySpeed.Add(entity.EntityKey, runtime.MovementSpeed);
@@ -1407,7 +1407,6 @@ public sealed partial class MatchEngine
         droneAttacks.Add(entity.EntityKey, new DroneAttackState(
             (float)((double)tick / MatchManifest.TickRate), shot,
             droneWeapon, droneProjectile, NextArmyFloat, DroneBatchRange));
-        RegisterDroneArmyTarget(entity.EntityKey, family);
     }
 
     private void InitializeCardRocket(BattleArmyEntityState entity)
@@ -2340,10 +2339,10 @@ public sealed partial class MatchEngine
 
         // Card Drone uses the same host flight/weapon systems as an ordinary
         // Drone, but its stats came from CardSpawnUnit's source rows.
+        if (droneArmyTargets.Remove(entityKey))
+            droneTargets.Disable(DroneArmyId(entityKey));
         if (entity.SourceCardId == "HEAVYDRONE")
         {
-            if (droneArmyTargets.Remove(entityKey))
-                droneTargets.Disable(DroneArmyId(entityKey));
             armyDronePaths.Remove(entityKey);
             armyDroneShots.Remove(entityKey);
             droneAttacks.Remove(entityKey);

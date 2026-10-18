@@ -53,6 +53,9 @@ source target priorities, both prediction stages, firing/cooldown and point-chan
 special healing, parachute entry, native avoidance/turning comparisons, actual projectile damage,
 UDP and normal Client presentation remain required. Arrival must not be reported as firing proof.
 The remaining three PvP maps also need normal-deployment movement fixtures.
+The later [opponent selector](ASSAULTER_TARGET_SELECTION.md) now supplies source entity priority
+and complete-list draws for registered opponents. It is not yet the automatic shot-target or
+firing controller.
 
 ## Initial Corner state
 
