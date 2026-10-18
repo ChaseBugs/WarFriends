@@ -2,7 +2,7 @@
 
 The ordinary binding now covers Assaulter, Sniper, Minigunner, Paratrooper, SWAT, Gunslinger,
 Commando, Shotgunner and Warper source layouts. `MatchEngine.SicknessPrimaryWeapons.cs` keeps an explicit
-nine-unit allowlist. It does not infer support for every SoldierBehaviour or enable SICKNESS
+nine-unit allowlist and a separate ordinary Grenadier adapter. It does not infer support for every SoldierBehaviour or enable SICKNESS
 card activation while other weapon layouts remain unbound.
 
 ## Source rules and authority
@@ -66,12 +66,25 @@ upgrades absent. This proves automatic changed gun damage after the window close
 critical behavior, every physical victim outcome or normal Unity presentation. Existing Assaulter
 tests separately prove changed shield damage through a real collision.
 
-The Sickness group now passes 164 checks, the Assaulter group passes 110 and shared combat regression
-passes 26,395 assertions. Release build has zero
-warnings/errors. The full default Battle suite was last verified at commit 8ed268d3e with
-247,551 assertions; it was not rerun for this binding checkpoint.
+The current Sickness group passes 182 checks and the infantry weapon group passes 150.
+The full default Battle suite was verified at the preceding checkpoint with 247,854 assertions;
+it was not rerun for this ordinary Grenadier binding checkpoint.
 
 SICKNESS remains incomplete: other eligible weapon layouts, the global source spawn categories,
 authorized card command/reservation consumption, SDK/normal Client activation, icon presentation
 and terminal inventory proof still need integration. These tests arm the internal window directly
 and must not be described as authorized card-use verification.
+
+## Ordinary Grenadier
+
+The ordinary Grenadier adapter validates current grenade authority before publishing the shared
+primary-weapon and vitality mutation. Ordinary grenade setup now completes before spawn
+observers, so callbacks cannot see missing grenade authority or have their changes overwritten. Source `SoldierBehaviour.ImproveAllWeapons` changes only
+`AmmoSetup.damageAmount`: pistol damage and grenade Minimum halve, while separate Explosion
+damage, fuse, throw setup and maximum health remain unchanged. Current health refills to half
+maximum rather than multiplying the current wounded value.
+
+`SicknessOrdinaryGrenadierTests` uses real Park deployment start/finish/spawn callbacks with an
+explicitly armed trusted window. Base, special and Elite upgrade selections verify the mutation,
+unchanged setup, real published grenade launch damage and rejection after window disconnection.
+These host tests do not prove authorized SICKNESS card activation or normal Unity gameplay.

@@ -3290,7 +3290,7 @@ public sealed partial class MatchEngine
     {
         if (unitId == "ID_UNIT-GRENADIER")
         {
-            InitializeOrdinaryGrenadier(entityKey);
+            // Its two weapons must already exist before the ordinary spawn observers execute.
             return;
         }
         if (unitId == "ID_UNIT-GUNSLINGER")

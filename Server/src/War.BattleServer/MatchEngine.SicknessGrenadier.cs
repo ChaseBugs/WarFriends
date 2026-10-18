@@ -16,6 +16,36 @@ public sealed partial class MatchEngine
         return grenadierLaunches.GetValueOrDefault(projectileId)?.Damage;
     }
 
+    /// <summary>Applies the ordinary Grenadier's pistol/minimum grenade modifier and current-health refill.</summary>
+    internal bool ApplySicknessToOrdinaryGrenadier(ulong entityKey, SicknessSpawnWindow window)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        if (phase != BattlePhase.Running || !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
+            entity.UnitId != "ID_UNIT-GRENADIER" || entity.SourceCardId.Length != 0)
+        {
+            return false;
+        }
+
+        var target = new SicknessSpawnTarget(entity.OwnerFraction, true, true);
+        if (!window.ShouldAffect(target))
+        {
+            return false;
+        }
+
+        if (!_cardGrenadierDamage.TryGetValue(entityKey, out ArmyGrenadeDamageStats? grenade) ||
+            grenade.Minimum > MaximumSicknessWeaponDamage || grenade.Explosion > MaximumSicknessWeaponDamage)
+        {
+            throw new InvalidDataException("Ordinary Grenadier lost its bounded current grenade authority.");
+        }
+
+        // ImproveAllWeapons changes AmmoSetup.damageAmount, not GrenadeAmmoSetup.explodeDamageAmount or its fuse.
+        // Compute grenade changes before the shared primary/vitality proof publishes either mutation.
+        ArmyGrenadeDamageStats changedGrenade = window.ApplyGrenadeDamage(target, grenade);
+        ApplyPrimaryWeaponSicknessAuthority(entityKey, window, target);
+        _cardGrenadierDamage[entityKey] = changedGrenade;
+        return true;
+    }
+
     /// <summary>Applies both weapon damage fields and current health; automatic card activation remains separate.</summary>
     internal bool ApplySicknessToCardGrenadier(ulong entityKey, SicknessSpawnWindow window)
     {

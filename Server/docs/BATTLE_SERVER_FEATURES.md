@@ -77,7 +77,9 @@ Paratrooper, SWAT, Gunslinger and Commando. SWAT and two consecutive Commando ro
 half damage. Shotgunner/Warper instead preserve actual damage from their separate min/max fields,
 matching baseline hosts. Paratrooper still has spawn-mutation proof only; normal airborne
 landing remains missing. Gunslinger now launches actual half-damage rounds after the window closes.
-The Sickness group passes 164 checks; other layouts and authorized card activation remain open.
+Ordinary Grenadier now has a separate pistol/grenade adapter and real deployment/launch tests
+for base, special and Elite selections; separate explosion damage and fuse stay unchanged.
+Other layouts and authorized SICKNESS card activation remain open.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

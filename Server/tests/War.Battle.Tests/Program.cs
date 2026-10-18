@@ -920,6 +920,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
         int sicknessChecks = SicknessSpawnWindowTests.Run(Path.Combine(directory.FullName, "content"));
         sicknessChecks += SicknessHostDeploymentTests.Run(Path.Combine(directory.FullName, "content"));
         sicknessChecks += SicknessPrimaryWeaponTests.Run(Path.Combine(directory.FullName, "content"));
+        sicknessChecks += SicknessOrdinaryGrenadierTests.Run(Path.Combine(directory.FullName, "content"));
         sicknessChecks += ArmySpawnCallbackTests.Run();
         sicknessChecks += GrenadierPrimaryWeaponTests.Run(Path.Combine(directory.FullName, "content"));
         Console.WriteLine($"PASS: {sicknessChecks} Sickness callback and damage calculation checks");
@@ -3651,6 +3652,7 @@ checks += ArmyDeploymentWaveTests.Run(Path.Combine(contentRoot.FullName, "conten
 checks += SicknessSpawnWindowTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessHostDeploymentTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += SicknessOrdinaryGrenadierTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerStandTimingTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerTargetTests.Run(Path.Combine(contentRoot.FullName, "content"));

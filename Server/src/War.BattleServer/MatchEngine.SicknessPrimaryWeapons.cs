@@ -18,6 +18,11 @@ public sealed partial class MatchEngine
     internal bool ApplySicknessToArmyPrimaryWeapon(ulong entityKey, SicknessSpawnWindow window)
     {
         ArgumentNullException.ThrowIfNull(window);
+        if (activeArmyEntities.TryGetValue(entityKey, out var candidate) && candidate.UnitId == "ID_UNIT-GRENADIER")
+        {
+            return ApplySicknessToOrdinaryGrenadier(entityKey, window);
+        }
+
         if (phase != BattlePhase.Running ||
             !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             entity.UnitId is not ("ID_UNIT-ASSAULT" or "ID_UNIT-SNIPER" or "ID_UNIT-MINIGUNNER" or

@@ -1569,6 +1569,11 @@ public sealed partial class MatchEngine : IMatchRuntime
                             MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0,
                             AssaultGlassMaxHealth=AssaultGlassMaximum(entityKey)??0,
                             AssaultGlassHealth=AssaultGlassHealth(entityKey)??0});
+                        // Source AfterSpawned observers run after the soldier has configured both weapons.
+                        if (spawned.UnitId == "ID_UNIT-GRENADIER")
+                        {
+                            InitializeOrdinaryGrenadier(entityKey);
+                        }
                         ApplyActiveArmyHealthBuffs(entityKey);
                         var vitality=armyVitality.GetValueOrDefault(entityKey);
                         if(vitality!=null)
