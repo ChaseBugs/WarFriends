@@ -3,6 +3,7 @@ namespace War.BattleServer;
 /// <summary>Selects an entity using SoldierBehaviourAssaulter's source priority and registry ordering.</summary>
 internal static class AssaulterTargetPolicy
 {
+    internal const int HeadMask = 8;
     internal const int AllInMask = 0xFFFFFB;
     internal const int AllMask = 0xFFFFFF;
     private const int MaximumCandidates = 1000;
@@ -54,7 +55,7 @@ internal static class AssaulterTargetPolicy
     {
         ArgumentNullException.ThrowIfNull(targets);
         ArgumentNullException.ThrowIfNull(choose);
-        if (targets.Count > MaximumShotTargets || mask is not (AllInMask or AllMask))
+        if (targets.Count > MaximumShotTargets || mask is not (HeadMask or AllInMask or AllMask))
         {
             throw new InvalidDataException("Assaulter shot-target list or source mask is invalid.");
         }

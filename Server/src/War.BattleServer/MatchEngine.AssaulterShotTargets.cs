@@ -42,6 +42,13 @@ public sealed partial class MatchEngine
 
     private AssaulterShotTarget? SelectAssaulterInfantryTransform(DroneTargetCandidate candidate)
     {
+        return SelectStationaryInfantryTransform(candidate, targets =>
+            AssaulterTargetPolicy.SelectShotTarget(targets, AssaulterTargetPolicy.AllInMask, armyChoice));
+    }
+
+    private AssaulterShotTarget? SelectStationaryInfantryTransform(DroneTargetCandidate candidate,
+        Func<IReadOnlyList<DroneShotTarget>, DroneShotTarget?> selectTransform)
+    {
         BattleArmyEntityState entity = activeArmyEntities.Values.SingleOrDefault(row =>
             DroneArmyId(row.EntityKey) == candidate.Id) ??
             throw new InvalidDataException("Selected Assaulter opponent lost its live army identity.");
@@ -53,8 +60,7 @@ public sealed partial class MatchEngine
             return null;
         }
 
-        DroneShotTarget? target = AssaulterTargetPolicy.SelectShotTarget(targets,
-            AssaulterTargetPolicy.AllInMask, armyChoice);
+        DroneShotTarget? target = selectTransform(targets);
         return target == null ? null : new AssaulterShotTarget(candidate.Id, entity.OwnerPlayerId,
             target.TransformFileId, target.Type, target.Position, false);
     }

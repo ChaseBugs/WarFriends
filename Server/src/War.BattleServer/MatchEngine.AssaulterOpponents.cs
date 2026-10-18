@@ -14,24 +14,29 @@ public sealed partial class MatchEngine
     /// <summary>Selects a source opponent without treating missing entity provenance as player fallback.</summary>
     internal AssaulterOpponentSelection SelectAssaulterOpponent(ulong entityKey)
     {
-        if (!activeArmyEntities.TryGetValue(entityKey, out var assaulter) ||
-            assaulter.UnitId != "ID_UNIT-ASSAULT" || assaulter.SourceCardId.Length != 0)
+        return SelectStationarySoldierOpponent(entityKey, "ID_UNIT-ASSAULT");
+    }
+
+    private AssaulterOpponentSelection SelectStationarySoldierOpponent(ulong entityKey, string expectedUnitId)
+    {
+        if (!activeArmyEntities.TryGetValue(entityKey, out var soldier) ||
+            soldier.UnitId != expectedUnitId || soldier.SourceCardId.Length != 0)
         {
-            throw new InvalidDataException("Assaulter target selection lost its normal source entity.");
+            throw new InvalidDataException("Stationary soldier target selection lost its normal source entity.");
         }
 
         IReadOnlyList<DroneTargetCandidate> registry = DroneTargetSnapshot();
         // A Decoy precedes every unit family, including a currently unresolved Mech.
-        bool hasDecoy = registry.Any(candidate => candidate.Fraction != assaulter.OwnerFraction &&
+        bool hasDecoy = registry.Any(candidate => candidate.Fraction != soldier.OwnerFraction &&
             candidate.Alive && candidate.Visible && candidate.IsDecoy);
         bool hasUnregisteredOpponent = activeArmyEntities.Values.Any(candidate =>
-            candidate.OwnerFraction != assaulter.OwnerFraction && !droneArmyTargets.ContainsKey(candidate.EntityKey));
+            candidate.OwnerFraction != soldier.OwnerFraction && !droneArmyTargets.ContainsKey(candidate.EntityKey));
         if (!hasDecoy && hasUnregisteredOpponent)
         {
             return new AssaulterOpponentSelection(AssaulterOpponentKind.Unavailable, null);
         }
 
-        DroneTargetCandidate? selected = AssaulterTargetPolicy.Select(assaulter.OwnerFraction, registry, armyChoice);
+        DroneTargetCandidate? selected = AssaulterTargetPolicy.Select(soldier.OwnerFraction, registry, armyChoice);
         return selected == null
             ? new AssaulterOpponentSelection(AssaulterOpponentKind.PlayerFallback, null)
             : new AssaulterOpponentSelection(AssaulterOpponentKind.Entity, selected);

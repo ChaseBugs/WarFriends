@@ -87,6 +87,10 @@ remain unimplemented; the entry clocks are not firing proof.
 [Stand timing evidence](GUNSLINGER_STAND_TIMING.md) now checks real native animation callbacks,
 next gameplay polls and muzzle phases in two update orders. The tested clock remains separate
 from actual ordinary Gunslinger shot execution.
+[Target selection](GUNSLINGER_TARGET_SELECTION.md) now exposes the source Decoy/Rusher priority,
+Head preference and retained headless fallback index through a match-owned selector. Live
+deployment checks cover current opposing Head poses and death cleanup. Automatic acquisition
+and firing are still pending.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host
