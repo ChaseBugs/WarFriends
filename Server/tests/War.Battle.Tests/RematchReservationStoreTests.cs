@@ -8,7 +8,7 @@ using War.Persistence;
 using War.Shared;
 
 /// <summary>Checks atomic participant reservation and cancellation fencing on a real replica set.</summary>
-internal static class RematchReservationStoreTests
+internal static partial class RematchReservationStoreTests
 {
     internal static async Task RunAsync(string uri)
     {

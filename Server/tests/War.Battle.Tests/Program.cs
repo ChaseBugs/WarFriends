@@ -126,6 +126,11 @@ if (args is ["--rematch-reservation-only", var reservationMongoUri])
     await RematchReservationStoreTests.RunAsync(reservationMongoUri);
     return;
 }
+if (args is ["--rematch-refresh-race-only", var refreshRaceMongoUri])
+{
+    await RematchReservationStoreTests.RunRefreshRaceAsync(refreshRaceMongoUri);
+    return;
+}
 
 if (args is ["--rematch-manifest-only", var rematchManifestMongoUri])
 {

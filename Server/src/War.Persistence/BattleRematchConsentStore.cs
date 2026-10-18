@@ -15,9 +15,19 @@ public sealed partial class BattleRematchConsentStore
     private const string Cancelled = "cancelled";
     private const string Expired = "expired";
     private const string Allocated = "allocated";
-    private readonly MongoClient _client;
+    private readonly IMongoClient _client;
     private readonly BattleResultStore _results;
     private readonly IMongoCollection<BattleRematchConsentDocument> _consents;
+
+    /// <summary>Uses configured database sessions and the same deployment's accepted-result store.</summary>
+    public BattleRematchConsentStore(IMongoDatabase database, BattleResultStore results)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        ArgumentNullException.ThrowIfNull(results);
+        _results = results;
+        _client = database.Client;
+        _consents = database.GetCollection<BattleRematchConsentDocument>("battle_rematch_consents");
+    }
 
     /// <summary>Uses one database for accepted result evidence and its separate consent records.</summary>
     public BattleRematchConsentStore(string uri, string databaseName)

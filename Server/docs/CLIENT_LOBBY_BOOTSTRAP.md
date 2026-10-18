@@ -516,3 +516,20 @@ snapshot race tests also pass. `Server/.local/inactive-refresh-build.log` record
 This is a storage API, not yet enabled in normal queue HTTP admission. Direct refresh-versus-
 rematch contention and the whole real queue/Worker regression remain necessary before wiring
 and declaring this integration complete. Normal two-Unity gameplay remains a separate gate.
+
+### Inactive refresh versus rematch reservation
+
+The native `--rematch-refresh-race-only` scenario now holds an actual inactive-refresh
+transaction after its account projection while a separate configured Mongo client attempts
+rematch reservation. A command observer confirms reservation reaches the shared fence write.
+It cannot publish a pair while refresh is held. After refresh commits, the old prepared account
+proof is rejected. The refreshed card quantity survives; no partial pair, frozen manifest or
+account revision write remains, and mutual consent stays ready for a fresh preparation.
+
+The final run passes with exit zero at `rematch-refresh-race-final-tests.log` in the existing
+evidence directory. Build evidence is `Server/.local/rematch-refresh-race-final-build.log`,
+zero warnings/errors. `BattleRematchConsentStore(IMongoDatabase, BattleResultStore)` permits
+configured session observation; the existing URI constructor retains its behavior. The
+accepted round and prepared payload are store fixtures, not normal Unity/Worker gameplay.
+This proves the refresh-winning ordering. HTTP queue refresh wiring, whole real queue/Worker
+regression with refresh enabled and normal two-Unity gameplay remain open.

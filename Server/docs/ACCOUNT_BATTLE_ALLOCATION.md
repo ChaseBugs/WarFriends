@@ -84,4 +84,5 @@ battle entry remain required. See [current boot/admission evidence](CLIENT_LOBBY
 Inactive refresh now exists as a tested storage API with account-revision and shared-admission
 fencing. It preserves identical replay, rejects active ownership and damaged prior authority,
 and never replenishes removed cards. It is not yet wired into normal queue HTTP admission;
-refresh-versus-rematch contention and full integration proof remain open.
+refresh-winning rematch contention now passes a native Mongo scenario. Normal queue HTTP
+wiring and full integration proof remain open.
