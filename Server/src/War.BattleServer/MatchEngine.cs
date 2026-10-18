@@ -1592,6 +1592,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                         row.ArmyReservationFileId=point.ReservationFileId;
                         stateRevision++;
                     }
+                    PublishArmyDeploymentFinished(p);
                 }
             }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
@@ -2556,7 +2557,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             if(availability!=null){p.Army.InvalidateOffers();return availability;}
             if(!EventCapacityForArmy(option.Count))return "event-backpressure";
             string deployment=p.Army.TryDeploy(index,tick);
-            if(deployment=="army-deploying")p.ArmyStats.RecordAccepted(index);
+            if (deployment == "army-deploying")
+            {
+                p.ArmyStats.RecordAccepted(index);
+                PublishArmyDeploymentStarted(p);
+            }
             return deployment;
         }
         if (c.IntentCase == MatchCommand.IntentOneofCase.VehicleAttack)

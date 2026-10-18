@@ -39,19 +39,39 @@ arbitrary effect lease is introduced here.
 
 ## Verification and boundary
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 92 checks for
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 100 checks for
 arming, friendly/vehicle/immune exclusions, neutral and reversed fractions, replacement and
 reused-definition finishes, repeated callbacks, exact vitality/damage calculations, immutable
-output, invalid-event/state rejection and ordered spawn subscriptions.
+output, invalid-event/state rejection, ordered spawn subscriptions and actual host deployment callbacks.
 `--army-waves-only` passes its 12 lifecycle checks.
 The new kernel test is registered in the default suite; the entire default suite was not rerun.
 
 This does not activate Sickness in a match. Typed protocol and portable SDK methods, authorized
-arming/card consumption, source-ordered host callbacks, actual weapon/vitality bindings, Client
+arming/card consumption, complete source-ordered spawn-effect dispatch, actual weapon/vitality bindings, Client
 UI/presentation, UDP proof and durable terminal consumption remain required. SICKNESS stays on
 the incomplete effect list until those paths are implemented and verified.
 Host integration must also verify callback ordering with other spawn-time health/weapon modifiers;
 this independent kernel does not establish that ordering.
+
+## Actual host deployment notifications
+
+`MatchEngine` now publishes internal start and finish notifications with the accepted source wave
+and owning fraction. Start runs after successful host eligibility/reservation and statistics, before
+the first entity is generated. Rejected commands do not notify. Finish runs after the returned
+spawn batch is fully initialized and the strict final wait has elapsed; observing the same tick
+again does not repeat a completion. These are host callbacks, not Client-supplied wave claims.
+
+`SicknessHostDeploymentTests` subscribes the actual kernel to these notifications in a fixed Park
+match. Both players use normal accepted DeployArmy commands. A friendly deployment leaves the
+window pending; an opposing Assaulter deployment opens it. The finish observer reads all roster
+pages and verifies the full opposing batch exists. Equality with the final wait keeps the window
+open; the next tick disconnects it exactly once. This adds eight checks to the previous 92.
+
+This test explicitly arms/subscribes the kernel. Production SICKNESS activation, automatic
+AfterSpawned mutation across all eligible units and subscription cleanup are still required.
+It does not prove network card consumption, Sickness UI or normal Unity gameplay.
+The Release build has zero warnings/errors, and `--combat-only` still passes 26,395 assertions
+after these host notification changes. The full default suite was not rerun.
 
 ## Host subscription ordering
 

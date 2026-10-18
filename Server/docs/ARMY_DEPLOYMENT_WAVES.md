@@ -17,6 +17,12 @@ finish boundary and then deployment ID, independently of acceptance order. `Wave
 source deployment while an entity remains alive and releases it when that entity is removed.
 These are native host fields; no Client command can choose a deployment ID.
 
+`MatchEngine` also publishes internal start/finish notifications for accepted commands. Start
+precedes the first generated entity; finish follows complete entity initialization and the final
+strict wait. Rejected deployments and repeated observations do not publish extra notifications.
+The [Sickness host callback fixture](SICKNESS_SPAWN_WINDOW.md) consumes these real notifications
+with the recovered window kernel, while card authorization and automatic spawn mutation remain open.
+
 ## Overlapping source coroutines
 
 The prior FIFO pending queue could put a newly accepted wave's due unit behind an earlier wave's

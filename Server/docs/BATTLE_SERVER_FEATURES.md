@@ -63,9 +63,12 @@ The [deployment wave lifecycle](ARMY_DEPLOYMENT_WAVES.md) now records accepted w
 entity provenance, and the final strict post-spawn wait. Overlapping pending spawns sort by source
 due tick instead of blocking behind an older wave's future entries. This is a prerequisite for the
 Sickness event window; its arming, actual health/damage modifiers and Client integration remain open.
-The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 92 focused
+The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 100 focused
 checks, including reused-option finishes, overlapping windows, neutral/reversed fractions, and
-current-health refill versus maximum-health preservation. Actual host entity mutation, authorized
+current-health refill versus maximum-health preservation. Actual accepted host deployment callbacks
+now open/close the kernel window in a fixed Park match: friendly starts are ignored, rejected
+commands do not notify, and finish follows every generated entity and the strict final wait.
+The fixture explicitly arms/subscribes the window. Complete host entity mutation, authorized
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical
 effect IDs. Focused composition checks prove health/Sickness ordering changes current health;
