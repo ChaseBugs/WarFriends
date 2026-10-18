@@ -15,6 +15,8 @@ internal sealed class MortarWeaponPool
 
     internal int PendingCorpseCount => _corpseReturns.Count;
 
+    internal ulong[] CorpseActors() => _corpseReturns.Keys.Order().ToArray();
+
     internal MortarWeaponPool(int capacity)
     {
         // EnemyBasicInventory's recovered attachment contract carries pool indices in a byte array.

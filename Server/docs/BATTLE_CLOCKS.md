@@ -6,7 +6,7 @@ them separate while retaining server authority and the existing protobuf identit
 | Domain | Client evidence | Current server boundary |
 | --- | --- | --- |
 | Raw real time | `WaitForRealSeconds.finished` compares `Time.realtimeSinceStartup` with its stored float deadline. Army spawn intervals use this wait through RadicalRoutine. | Worker now forwards its actual monotonic Stopwatch sample through Router and Endpoint to both runtime types. |
-| Scaled game time | EnemyController schedules hide with InvokeAfter; MainGameEntity schedules final return the same way. Core_BaseScript yields WaitForSeconds. | The source-bound corpse clock is tested, but live corpse ownership is not connected to MatchEngine. |
+| Scaled game time | EnemyController schedules hide with InvokeAfter; MainGameEntity schedules final return the same way. Core_BaseScript yields WaitForSeconds. | Live ordinary Mortar ownership advances its two body waits on unpaused host frames before spawn admission. Client physical-slot presentation remains pending. |
 | Pause-excluding real time | TimeManager.Update adds a real-frame delta clamped to 0-0.2 seconds when timeScale is nonzero and it is not frozen; otherwise its delta is zero. | MatchEngine observes the stored-float accumulator and uses it for deployment deadlines. Auto-deploy remains pending. |
 
 The source references are under `Clients/ExportedProject/Assets`. Detailed native clock,
@@ -113,7 +113,8 @@ The existing Sickness callback/host damage group also passes 265 checks at
    auto-deploy progress and audit remaining source pause/freeze consumers separately.
 3. Advance retained body waits on scaled frames, then process delayed spawn admission in the
    observed source phase order. Native evidence confirms return can free a slot before the
-   same frame's end-of-frame continuation consumes it.
+   same frame's end-of-frame continuation consumes it. The host ledger now uses this order;
+   Client physical-slot/observer integration remains open.
 4. Preserve snapshot timestamps in their documented domain. BattleArmyEntityState already
    publishes the actual simulation tick at actor creation; it does not copy ArmySpawn.Tick.
    Cooldown projection and paused queued spawning are wired; rendered Client parity remains unverified.

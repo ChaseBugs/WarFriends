@@ -14,10 +14,13 @@ public sealed partial class MatchEngine
         try
         {
             // Both owners must pass resource preflight before either publishes an entity.
+            var candidates = new List<(Player Owner, ArmySpawn Spawn)>();
             foreach (Player owner in players)
             {
-                _ = owner.Army!.PreviewRealtimeSpawns(realSeconds, tick);
+                candidates.AddRange(owner.Army!.PreviewRealtimeSpawns(realSeconds, tick)
+                    .Select(spawn => (owner, spawn)));
             }
+            PreflightMortarWeaponSlots(candidates);
             foreach (Player owner in players)
             {
                 foreach (ArmySpawn spawned in owner.Army!.AdvanceRealtime(realSeconds, tick))
@@ -51,6 +54,7 @@ public sealed partial class MatchEngine
             ReserveRusherSlot(entityKey, players.Single(other => other != owner).Cover, point.Position);
         }
         InitializeArmyVitality(owner.Definition, spawned.UnitId, entityKey);
+        AllocateMortarWeapon(owner, spawned, entityKey);
         activeArmyEntities.Add(entityKey, new BattleArmyEntityState
         {
             EntityKey = entityKey,

@@ -4621,10 +4621,15 @@ public sealed partial class MatchEngine
         _=recipient.Army!.PreviewKillEnergy(spawned.Power);
         if(!EventCapacityForArmyDeath())
         {End("army-event-backpressure","",false);return false;}
+        float? mortarHideDelay = PrepareMortarCorpseDelay(entityKey, row.UnitId);
         FreezeGunslingerTargetsForDeath(entityKey);
         if(owner.Army!.RemoveEntity(row.LocalEntityId)==null ||
            !armyReservations!.Release(entityKey) || !activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Army death compare-and-remove failed.");
+        if (mortarHideDelay.HasValue)
+        {
+            _mortarWeaponPool!.BeginCorpseReturn(entityKey, tick, mortarHideDelay.Value);
+        }
         armyVitality.Remove(entityKey);
         armyAssaultGlass.Remove(entityKey);
         if(droneArmyTargets.Remove(entityKey))droneTargets.Disable(DroneArmyId(entityKey));

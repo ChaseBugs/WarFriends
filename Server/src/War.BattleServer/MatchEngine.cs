@@ -1118,6 +1118,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             if(map==null || content==null)throw new InvalidDataException("Army authority needs the pinned scene.");
             armyCatalog=content.Army;
+            _mortarWeaponPool = new MortarWeaponPool(content.MortarWeaponPool.Capacity);
             armyWeapons=content.ArmyWeapons;
             _armyBulletBindings=content.Bindings;
             groundVehicleWeapons=content.GroundVehicleWeapons;
@@ -1361,6 +1362,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;
+        if (advanced && phase == BattlePhase.Running)
+        {
+            try { AdvanceMortarCorpseReturns(); }
+            catch (InvalidDataException) { End("invalid-army-authority", "", false); return; }
+        }
         foreach (ulong entityKey in deadParatrooperCanopies
             .Where(entry => tick >= entry.Value.LandingTick +
                 3u * MatchManifest.TickRate)
@@ -3077,6 +3083,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         rocketLaunches.Clear();
         _mortarDetachedWeapons.Clear();
         _mortarIndicators.Clear();
+        _mortarWeaponPool?.Clear();
         _mortarControllerTimes.Clear();
         _mortarRelocationTimes.Clear();
         grenadierFlights.Clear();

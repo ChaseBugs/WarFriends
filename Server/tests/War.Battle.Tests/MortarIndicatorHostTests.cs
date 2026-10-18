@@ -15,7 +15,8 @@ internal static class MortarIndicatorHostTests
     internal static int Run(string directory)
     {
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
-        return CheckShooterDeath(content) + CheckTerminal(content) + CheckReconnectPause(content);
+        return CheckShooterDeath(content) + CheckTerminal(content) + CheckReconnectPause(content) +
+            MortarWeaponPoolHostTests.Run(directory);
     }
 
     private static int CheckShooterDeath(BattleCombatContent content)

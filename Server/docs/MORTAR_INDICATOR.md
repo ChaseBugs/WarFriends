@@ -535,3 +535,36 @@ terminal/session cleanup, packet capacity, normal two-Unity gameplay and Android
 Original pool allocation/return and complete gameplay activation order also require native proof;
 the current binding retains history per self-hosted actor and does not claim original pool parity.
 These remain open; neither the sampler nor the native method audit completes this feature.
+
+## Live host retained weapon ownership
+
+MatchEngine now creates the source-capacity Mortar weapon ledger from the validated combat
+content. Both owners' ready real-time iterations pass energy/entity preview and combined
+physical-slot capacity checks before either deployment commits. Master-front and peer-back
+allocation follow the reviewed policy; no fifth slot or exhaustion retry is invented. Exhaustion
+aborts without a reward as invalid army authority before energy/entity publication. This is an
+explicit fail-closed boundary for the source attachment null dereference, not recovered retry behavior.
+
+Confirmed ordinary Mortar death releases live army capacity immediately but retains the weapon
+slot. The host owns a validated [0,1] draw from its combat random provider and maps it to the
+source [2,3]-second hide delay. Death installs that body's two-stage wait only after its entity
+and reward-energy proof pass. A completed unpaused host frame advances each retained body by
+1/30 scaled seconds, with no death-frame advance or paused wall-time catch-up. Return runs before
+the frame's real-time spawn continuation, allowing a returned slot to satisfy that same frame's
+admission. Terminal cleanup cancels waits and releases all logical ownership.
+
+This is a host ledger, not a claim that Unity presenters now bind matching physical slots or
+observer-specific warning history. Client corpse visibility, forced observer resynchronization,
+non-unit timeScale support, warning protocol fields, SDK presentation and normal two-Unity
+acceptance remain separate integration work. The earlier native phase evidence remains its
+original captured scope; the managed host does not recreate Unity's general player loop.
+
+The updated Mortar group passes 13,315 checks at `Server/.local/mortar-physical-host-tests.log`.
+Eleven new host assertions cover live acquisition, immediate army-count release with retained
+ownership, the three-plus-one-second body return, exhausted-pool preflight without energy or
+entity publication, pause/resume without wall-time catch-up, terminal cleanup and same-frame
+reuse of the returned front slot. The exhausted ledger is deliberately fixture-provisioned;
+it is a resource rejection proof, not a normal two-owner exhaustion gameplay recording.
+The Sickness callback/host damage regression also passes 265 checks at
+`Server/.local/mortar-physical-host-sickness.log`. Full regression for this newer host ledger
+is tracked separately; the earlier rebinding full executable predates this implementation.

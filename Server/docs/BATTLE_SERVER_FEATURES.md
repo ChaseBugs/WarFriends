@@ -51,6 +51,15 @@ The real authenticated UDP same-manager rebind audit now passes four checks and 
 the retired-mode marker blocking a new owner. It verifies delayed initial army responses and
 successor cleanup without claiming normal rendered gameplay or Backend admission.
 
+The Mortar host now retains source-capacity weapon slots through corpse hide/return waits,
+checks combined ready-spawn capacity before either owner commits and processes returns before
+that frame's spawn continuation. Army death frees live count while retaining the slot. This
+still lacks Client physical-slot/observer-history presentation and forced resynchronization;
+see [the live ownership boundary](MORTAR_INDICATOR.md#live-host-retained-weapon-ownership).
+The Mortar group passes 13,315 checks, including eleven new actual-host retention, return,
+pause, same-frame reuse and resource rejection assertions. This remains partial until the
+required Client presentation and ordinary two-Unity acceptance gates are satisfied.
+
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same
 self-hosted Backend address. The old URL builder's retired AWS production
