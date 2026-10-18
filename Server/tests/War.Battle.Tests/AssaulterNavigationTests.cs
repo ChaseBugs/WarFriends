@@ -53,10 +53,13 @@ internal static class AssaulterNavigationTests
                 entities.All(entity => entity.InfantryClip == "idle_1"))
             {
                 checks += CheckArrival(host, entities, start);
+                checks += CheckCornerEntry(host, entities, content);
                 checks += Require(host.ConfirmArmyDeath(first.EntityKey, false),
                     "The host could not remove its completed Assaulter.");
                 checks += Require(host.AssaulterPoint(first.EntityKey) == null,
                     "A removed Assaulter retained a shared destination reservation.");
+                checks += Require(host.AssaulterCorner(first.EntityKey) == null,
+                    "A removed Assaulter retained Corner entry state.");
                 Console.WriteLine($"PASS: normal Assaulter Corner arrival at tick {host.Snapshot().ServerTick}.");
                 return checks;
             }
@@ -83,6 +86,44 @@ internal static class AssaulterNavigationTests
                 "A normal Assaulter stayed at its initial spawn instead of navigating.");
         }
 
+        return checks;
+    }
+
+    private static int CheckCornerEntry(MatchEngine host, IEnumerable<BattleArmyEntityState> entities,
+        BattleCombatContent content)
+    {
+        BattleArmyEntityState entity = entities.MaxBy(row => host.AssaulterCorner(row.EntityKey)?.Entry.StartTick) ??
+            throw new InvalidOperationException("No actual normal Assaulter reached its Corner.");
+        AssaulterCornerState state = host.AssaulterCorner(entity.EntityKey) ??
+            throw new InvalidOperationException("An arrived normal Assaulter lost its Corner clocks.");
+        CardUnitInitialPoint point = host.AssaulterPoint(entity.EntityKey) ??
+            throw new InvalidOperationException("The Corner clock lost its shared source point.");
+        ArmyBaseShotStats shot = content.Army.ComposeShot("ID_UNIT-ASSAULT", 0, null, null, 1f);
+        ulong expectedShot = state.Entry.StartTick +
+            (ulong)MathF.Floor(shot.MinShootTime * MatchManifest.TickRate) + 1;
+        int checks = Require(state.FirstShotEligibleTick == expectedShot,
+            "The initial Corner shot clock lost its composed minimum or strict source time comparison.");
+        checks += Require(state.FirstPointChangeEligibleTick == state.Entry.StartTick + 10 * MatchManifest.TickRate + 1,
+            "The initial Corner change clock lost the source ten-second integer minimum or strict comparison.");
+        checks += Require(state.Entry.EndTick == state.Entry.StartTick + MatchManifest.TickRate / 2,
+            "The root Corner transition lost its source half-second duration.");
+
+        while (host.Snapshot().ServerTick <= state.Entry.EndTick)
+        {
+            host.Advance(host.Snapshot().ServerTick + 1);
+        }
+        BattleArmyEntityState after = host.ArmyEntityBatch(OpponentId, 0, 0).Entities.Single(row =>
+            row.EntityKey == entity.EntityKey);
+        checks += Require(after.X == point.Position.X && after.Z == point.Position.Z && after.Y == entity.Y,
+            "Corner entry did not reach the authored X/Z while preserving the agent's current Y.");
+        Vector3 facing = host.InfantryPose(entity.EntityKey)?.Facing ??
+            throw new InvalidOperationException("The Corner entry lost its actual host root pose.");
+        Vector3 sourceDirection = point.CornerDirection ??
+            throw new InvalidOperationException("The source Corner lost its direction.");
+        checks += Require(Vector3.Dot(facing, Vector3.Normalize(-sourceDirection)) > 0.9999f,
+            "Corner entry did not turn the real host root opposite the source direction.");
+        checks += Require(after.Health == entity.Health && after.MaxHealth == entity.MaxHealth,
+            "A presentation transition changed combat vitality.");
         return checks;
     }
 

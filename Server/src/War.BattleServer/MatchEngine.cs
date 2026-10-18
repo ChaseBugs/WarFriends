@@ -1634,7 +1634,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running &&
-            (_assaulterWalks.Count > 0 || _assaulterPointRetries.Count > 0))
+            (_assaulterWalks.Count > 0 || _assaulterPointRetries.Count > 0 || _assaulterCorners.Count > 0))
         {
             try { AdvanceAssaulterNavigation(); }
             catch (InvalidDataException) { End("invalid-assaulter-navigation", "", false); return; }

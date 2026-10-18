@@ -7,6 +7,7 @@ namespace War.BattleServer;
 public sealed partial class MatchEngine
 {
     private const ulong AssaulterPointRetryTicks = 5 * MatchManifest.TickRate;
+    private const float AssaulterArrivalDistance = 0.04f;
     private readonly Dictionary<ulong, AssaulterWalk> _assaulterWalks = [];
     private readonly Dictionary<ulong, ulong> _assaulterPointRetries = [];
 
@@ -71,12 +72,13 @@ public sealed partial class MatchEngine
         {
             AdvanceAssaulterWalk(entityKey, walk);
         }
+        AdvanceAssaulterCornerEntries();
     }
 
     private void AdvanceAssaulterWalk(ulong entityKey, AssaulterWalk walk)
     {
         if (!activeArmyEntities.TryGetValue(entityKey, out BattleArmyEntityState? entity) ||
-            cardEnemyPoints?.Find(entityKey)?.ComponentFileId != walk.Motion.PointFileId)
+            cardEnemyPoints?.Find(entityKey) is not { } point || point.ComponentFileId != walk.Motion.PointFileId)
         {
             throw new InvalidDataException("Normal Assaulter walk lost its entity or reserved point.");
         }
@@ -91,9 +93,14 @@ public sealed partial class MatchEngine
         entity.Y = walk.Motion.Position.Y;
         entity.Z = walk.Motion.Position.Z;
         entity.PositionTick = tick;
-        if (walk.Motion.Arrived)
+        var currentPosition = new Vector2(entity.X, entity.Z);
+        var authoredPosition = new Vector2(point.Position.X, point.Position.Z);
+        // EnemyPoint.IsEnemyPointReached compares with the authored point,
+        // not merely the projected NavMesh endpoint.
+        if (walk.Motion.Arrived && Vector2.Distance(currentPosition, authoredPosition) < AssaulterArrivalDistance)
         {
             _assaulterWalks.Remove(entityKey);
+            EnterAssaulterCorner(entityKey, walk.Motion.Facing);
         }
     }
 
@@ -101,6 +108,8 @@ public sealed partial class MatchEngine
     {
         _assaulterWalks.Remove(entityKey);
         _assaulterPointRetries.Remove(entityKey);
+        _assaulterCorners.Remove(entityKey);
+        _settledAssaulterCorners.Remove(entityKey);
         cardEnemyPoints?.Release(entityKey);
     }
 

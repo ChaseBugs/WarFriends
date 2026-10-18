@@ -2219,7 +2219,9 @@ public sealed partial class MatchEngine
         if(owner.ArmySpeedCoefficients is { } speedCoefficients)
             armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index],
                 owner.ArmyNormalUpgradeIndexes[index],special,elite));
-        if(family.BaseShot!=null)
+        // Assaulter has recovered upgrade shot lanes even though the older
+        // serialized base-shot artifact only included the other shooter families.
+        if(family.BaseShot!=null || family.BehaviorType=="SoldierBehaviourAssaulter")
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));

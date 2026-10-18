@@ -73,10 +73,13 @@ activation, protocol/Client integration and terminal proof remain open; SICKNESS
 The same real spawn dispatcher now applies the normal Assaulter binding: opposing current health
 and weapon damage halve, maximum health stays unchanged, and friendly authority is preserved.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
-Corners through shared occupancy and advances trusted NavMesh motion. Twelve focused checks prove
+Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host
 death, and avoid fabricated destinations on point-less Snow. The previous idle-through-3000
-observation identified this missing path; source hiding/targeting/volley execution is still open.
+observation identified this missing path. Initial Corner entry now uses the strict authored-point
+arrival test, half-second root position/rotation transition and source first-shot/point-change clocks.
+Normal Assaulter shot composition now reads its recovered selected upgrade lanes instead of being
+skipped by the older BaseShot-only condition. Targeting, exposure and volley execution remain open.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical
