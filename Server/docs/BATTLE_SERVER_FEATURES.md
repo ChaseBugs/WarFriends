@@ -91,6 +91,10 @@ from actual ordinary Gunslinger shot execution.
 Head preference and retained headless fallback index through a match-owned selector. Live
 deployment checks cover current opposing Head poses and death cleanup. Automatic acquisition
 and firing are still pending.
+[Colt aim and one-shot batch](GUNSLINGER_AIM.md) now preserve current-position callback math,
+half player speed, persistent actor-owned speed and all base real/fake draws before forcing one
+round. Normal deployments initialize and clean up that state; scheduled callbacks and actual
+projectile execution remain pending.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

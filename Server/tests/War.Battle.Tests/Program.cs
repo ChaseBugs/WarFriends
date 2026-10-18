@@ -812,7 +812,8 @@ if (args is ["--rifle-engine-only"])
 if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-damage-only"] or
     ["--grenadier-moving-only"] or ["--assaulter-navigation-only"] or ["--assaulter-targets-only"] or
     ["--assaulter-aim-only"] or ["--assaulter-preparation-only"] or ["--assaulter-volley-only"] or
-    ["--gunslinger-navigation-only"] or ["--gunslinger-stand-only"] or ["--gunslinger-targets-only"])
+    ["--gunslinger-navigation-only"] or ["--gunslinger-stand-only"] or ["--gunslinger-targets-only"] or
+    ["--gunslinger-aim-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);
     while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
@@ -822,6 +823,12 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (directory == null)
     {
         throw new FileNotFoundException("Recovered combat content is absent.");
+    }
+    if (args[0] == "--gunslinger-aim-only")
+    {
+        int aimChecks = GunslingerAimTests.Run(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {aimChecks} Gunslinger aim and single-shot batch checks");
+        return;
     }
     if (args[0] == "--gunslinger-targets-only")
     {
@@ -3622,6 +3629,7 @@ checks += SicknessPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "con
 checks += GunslingerNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerStandTimingTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerTargetTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += GunslingerAimTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += AssaulterNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += AssaulterTargetTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += AssaulterAimTests.Run(Path.Combine(contentRoot.FullName, "content"));

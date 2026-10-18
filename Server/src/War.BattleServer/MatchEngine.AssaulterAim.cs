@@ -34,14 +34,14 @@ public sealed partial class MatchEngine
         {
             Player player = Find(target.OwnerPlayerId) ??
                 throw new InvalidDataException("Assaulter moving target lost its source player.");
-            Vector3 muzzle = AssaulterAcquisitionMuzzle(entityKey);
+            Vector3 muzzle = StationarySoldierAcquisitionMuzzle(entityKey);
             prediction = weapon.SelectMovingPlayer(muzzle, target.TransformPosition, HeavyTurretPlayerVelocity(player));
         }
 
         return new AssaulterPreparedAim(entityKey, tick, target, prediction);
     }
 
-    private Vector3 AssaulterAcquisitionMuzzle(ulong entityKey)
+    private Vector3 StationarySoldierAcquisitionMuzzle(ulong entityKey)
     {
         if (enemyMuzzles == null || !infantryAnimations.TryGetValue(entityKey, out var animation) ||
             !activeArmyEntities.TryGetValue(entityKey, out var entity) || tick < animation.StartTick)

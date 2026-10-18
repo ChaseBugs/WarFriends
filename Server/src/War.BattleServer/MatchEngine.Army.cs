@@ -2241,6 +2241,12 @@ public sealed partial class MatchEngine
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));
+        if (family.BehaviorType == "SoldierBehaviourGunslinger")
+        {
+            float bulletSpeed = armyCatalog.EffectiveInfantryBulletSpeed(unitId,
+                owner.ArmyShotSpeedCoefficients?[index] ?? 1f);
+            _gunslingerAimWeapons.Add(entityKey, new GunslingerWeaponAimState(bulletSpeed));
+        }
         if(family.BehaviorType=="DroneBehaviour")
         {
             armyDroneShots.Add(entityKey,armyCatalog!.ComposeDroneShot(owner.ArmyNormalUpgradeIndexes[index],special,elite,

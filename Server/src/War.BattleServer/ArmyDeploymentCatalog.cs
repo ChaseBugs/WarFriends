@@ -524,6 +524,26 @@ public sealed class ArmyDeploymentCatalog
         return health;
     }
 
+    /// <summary>Reads source infantry bullet speed with the trusted perk coefficient applied once.</summary>
+    public float EffectiveInfantryBulletSpeed(string unitId, float coefficient)
+    {
+        ArmyDeploymentFamily? family = Families.SingleOrDefault(row => row.UnitId == unitId);
+        if (family == null || !family.IsSoldier || runtimeBulletSpeeds == null ||
+            !runtimeBulletSpeeds.TryGetValue(unitId, out float speed) ||
+            !float.IsFinite(coefficient) || coefficient <= 0f || coefficient > 10f)
+        {
+            throw new InvalidDataException("Infantry bullet speed lost its source family or trusted perk.");
+        }
+
+        float result = speed * coefficient;
+        if (!float.IsFinite(result) || result <= 0f || result > 10_000f)
+        {
+            throw new InvalidDataException("Infantry bullet speed exceeds the composed source domain.");
+        }
+
+        return result;
+    }
+
     private ArmyVehicleShotStats ComposeVehicleShotCore(string unitId,int normalIndex,int? specialIndex,
         int? eliteIndex,float accuracyCoefficient,float shotSpeedCoefficient,string? requiredAirBehavior)
     {
