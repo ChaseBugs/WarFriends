@@ -414,3 +414,19 @@ are retained. A mid-run metrics sample showed 197ms maximum terminal persistence
 Worker instance; this is not a run-wide maximum or proof excluding all storage delays.
 No timeout was widened and no durability guarantee was relaxed. Owned processes exited or
 were cleaned up after the test completed.
+
+### Inactive refresh admission fence prerequisite
+
+`BattleAdmissionFence` provides a player-keyed write within the caller's Mongo transaction.
+It requires canonical one/two-player identities, orders participants deterministically and
+validates the complete existing revision before incrementing it. Missing revision fields
+deserialize as zero and fail; they do not manufacture revision one. Transactions acquiring
+the same participant conflict and retry through Mongo's existing transaction policy.
+
+The inventory Mongo suite passes at `admission-fence-tests.log` in the existing evidence
+directory, exit zero. Eight competing transactions conserve all revisions, and a damaged
+zero revision is rejected without repair. Build evidence is `Server/.local/admission-fence-build.log`.
+This primitive is not wired to production admissions yet. General queue ticket creation,
+pairing, scoped joins and rematch reservation must acquire the same fence before allocation
+refresh can depend on it. A read-only absence check is insufficient to prevent write skew.
+The inactive-refresh feature remains incomplete and is not enabled by this checkpoint.
