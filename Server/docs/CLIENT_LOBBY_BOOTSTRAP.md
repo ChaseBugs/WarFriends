@@ -565,3 +565,23 @@ behavior-preserving naming/namespace cleanup also builds cleanly at
 `Server/.local/queue-inactive-refresh-final-build.log`. This closes the native integration gate
 for this queue refresh path, not fresh starter-profile rendering, normal two-Unity gameplay,
 Android or complete inventory/economy reservation against every legacy writer.
+# Normal matchmaking routing evidence — 2026-10-19
+
+The actual Splash-to-MainScene account boot passed with the read-only
+`UnityNormalMatchmakingReadinessAudit` included. Evidence:
+`Server/.local/client-boot-f191e9331e0d4e04977e1862f5da0113/report.json`.
+The Release build had zero warnings/errors. Unity initialized 24 unit rows and 66 weapon rows,
+with zero exceptions and the existing 70 error-level diagnostics. The disposable package manifest
+retained SHA-256 `7212bb6d4ae5db21b4fe5d10a4a0666d1f2c63618d8277b692254dd1c2c815a3`.
+
+The fresh account had display rank 2, while the recovered easy-bot threshold was 4.
+Its stored average match FPS was 0, below the recovered minimum of 20. Cached high ping and
+repeated losses were false. The active controller was `GameControllerCampaign`. These observations
+explain the random DeathMatch routing predicates; they do not report that a match was started.
+Calling random matchmaking with this account would select the recovered local-bot path rather
+than self-hosted UDP admission. The audit does not modify rank, device history or routing flags.
+
+Normal two-Unity PvP acceptance therefore needs an explicitly identified returning-player fixture
+whose progression and saved match FPS satisfy the source conditions, or prior source gameplay that
+earns that state. Do not disable the easy-bot/slow-device rules to force a passing test. Keep a
+separate fresh-account campaign/local-bot acceptance gate. Neither gate is completed by this boot run.

@@ -180,6 +180,9 @@ public static class UnityNormalClientBootAudit
             initializedUnitRows = levels == null ? 0 : levels.unitsSortedByLevel.Count,
             initializedWeaponRows = levels == null ? 0 : levels.weaponsSortedByLevel.Count,
             cardDefinitionsReady = accountReady && HasCardDefinitions(),
+            matchmakingReadiness = dataLoadComplete
+                ? WarFriends.Validation.UnityNormalMatchmakingReadinessAudit.Capture(game, levels)
+                : null,
             invalidBootstrapQueries = _invalidBootstrapQueries,
             exceptions = _exceptions,
             errors = _errors,

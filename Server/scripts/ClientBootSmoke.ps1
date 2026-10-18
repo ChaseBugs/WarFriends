@@ -15,6 +15,7 @@ if (!$projectPath.StartsWith($validationRoot, [StringComparison]::OrdinalIgnoreC
 $editorFolder = Join-Path $projectPath 'Assets/Editor'
 New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalClientBootAudit.cs') -Destination $editorFolder
+Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalMatchmakingReadinessAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityStarterLoadoutExport.cs') -Destination $editorFolder
 $runRoot = Join-Path $validationRoot ('client-boot-' + [Guid]::NewGuid().ToString('N'))
 $mongoPath = Join-Path $runRoot 'mongo'
@@ -126,7 +127,8 @@ try {
     $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
     if (!$report.mainSceneLoaded -or !$report.accountDataReady -or !$report.playerNetworkReady -or
         !$report.playerDataLoadComplete -or $report.initializedUnitRows -ne $report.recoveredUnitRows -or
-        !$report.cardDefinitionsReady -or $report.invalidBootstrapQueries -ne 0 -or
+        !$report.cardDefinitionsReady -or !$report.matchmakingReadiness.canEvaluate -or
+        $report.invalidBootstrapQueries -ne 0 -or
         $report.initializedWeaponRows -ne $report.recoveredWeaponRows -or
         $report.recoveredUnitRows -le 0 -or $report.exceptions -ne 0) {
         throw "Client readiness evidence is incomplete; inspect $runRoot"
