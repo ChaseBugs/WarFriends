@@ -54,7 +54,7 @@ internal static class OrdinaryGrenadierPrimaryDamageTests
             }
 
             host = OrdinaryGrenadierSpawnTests.CreateHost(content, map,
-                (selection.Normal, selection.Special, selection.Elite), Draw);
+                (selection.Normal, selection.Special, selection.Elite), new() { ArmyChoice = Draw });
             int option = host.ArmyBatch(OwnerId).OptionIndexes.First();
             Require(host.Command(OwnerId, new MatchCommand
             {

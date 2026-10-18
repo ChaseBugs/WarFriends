@@ -99,20 +99,22 @@ internal static class OrdinaryGrenadierSpawnTests
     }
 
     internal static MatchEngine CreateHost(BattleCombatContent content, RecoveredBattleMap map,
-        (int Normal, int Special, int Elite) selection, Func<int, int>? armyChoice = null)
+        (int Normal, int Special, int Elite) selection, HostOptions? options = null)
     {
+        options ??= new HostOptions();
         ParticipantManifest owner = Participant(content, map, 1) with
         {
             EquippedArmyUnitIds = ["ID_UNIT-GRENADIER"],
             ArmyNormalUpgradeIndexes = [selection.Normal],
             ArmySpecialUpgradeIndexes = [selection.Special], ArmyEliteUpgradeIndexes = [selection.Elite],
-            ArmyDamageScales = [DamageScale]
+            ArmyDamageScales = [options.DamageScale]
         };
         var manifest = new MatchManifest("ordinary-grenadier-spawn", "source-test",
             Path.GetFileNameWithoutExtension(map.Source),
             map.SourceHash, content.Revision, MatchManifest.RifleCombatMode, 10, 120, 120,
             [owner, Participant(content, map, 2)]) { SceneMasterPlayerId = OwnerId };
-        var host = new MatchEngine(manifest, map, content, armyChoice: armyChoice ?? (_ => 0), combatRandom: () => 1f);
+        var host = new MatchEngine(manifest, map, content,
+            armyChoice: options.ArmyChoice ?? (_ => 0), combatRandom: () => 1f);
         Admit(host, selection);
         return host;
     }
@@ -190,4 +192,11 @@ internal static class OrdinaryGrenadierSpawnTests
 
         return 1;
     }
+    internal sealed record HostOptions
+    {
+        public Func<int, int>? ArmyChoice { get; init; }
+
+        public float DamageScale { get; init; } = OrdinaryGrenadierSpawnTests.DamageScale;
+    }
+
 }

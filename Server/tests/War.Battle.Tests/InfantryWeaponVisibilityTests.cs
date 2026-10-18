@@ -24,6 +24,7 @@ internal static class InfantryWeaponVisibilityTests
         checks += OrdinaryGrenadierCompositionTests.Run(content.Army, directory);
         checks += OrdinaryGrenadierSpawnTests.Run(content);
         checks += OrdinaryGrenadierPrimaryDamageTests.Run(content);
+        checks += OrdinaryGrenadierExplosionTests.Run(content);
         checks += CheckLifecycle(content);
         checks += CheckCancelledReturn(content);
         checks += CheckRetainedSelection(content);

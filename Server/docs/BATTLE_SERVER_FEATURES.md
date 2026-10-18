@@ -137,7 +137,9 @@ its attachment to ordinary spawn is now implemented and exercised through normal
 [Ordinary Grenadier navigation and host launch](ORDINARY_GRENADIER_COMBAT.md) now use the shared
 Corner/attack lifecycle with owner-bound stats. [Ordinary pistol damage](ORDINARY_GRENADIER_PRIMARY_DAMAGE.md)
 now correlates actual player and shield impacts with frozen launches: one upgraded player-hit case
-and one covered basic-unit shield-only case. Ordinary sickness and grenade explosion outcomes remain open. Ordinary Grenadier weapon selection now reaches protobuf/SDK and retained Client weapon
+and one covered basic-unit shield-only case. [Ordinary grenade explosions](ORDINARY_GRENADIER_EXPLOSIONS.md)
+now verify actual contact/fuse timing, uncapped shield loss and upgraded shield destruction.
+Ordinary sickness, physical player blast damage and native grenade timing parity remain open. Ordinary Grenadier weapon selection now reaches protobuf/SDK and retained Client weapon
 sets, with 73 focused authority checks and 530 native ordinary appearance checks. The source Grenadier
 uses a static PistolEnemy at index zero and the selected grenade model at index one.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction

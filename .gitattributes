@@ -285,3 +285,6 @@ Server/docs/ORDINARY_GRENADIER_COMBAT.md text eol=lf
 
 Server/tests/War.Battle.Tests/OrdinaryGrenadierPrimaryDamageTests.cs text eol=lf
 Server/docs/ORDINARY_GRENADIER_PRIMARY_DAMAGE.md text eol=lf
+
+Server/tests/War.Battle.Tests/OrdinaryGrenadierExplosionTests.cs text eol=lf
+Server/docs/ORDINARY_GRENADIER_EXPLOSIONS.md text eol=lf

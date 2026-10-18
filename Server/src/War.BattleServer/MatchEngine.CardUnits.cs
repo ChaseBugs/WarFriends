@@ -1726,6 +1726,10 @@ public sealed partial class MatchEngine
         grenadierFlights.TryGetValue(grenadeId, out var flight)
             ? flight.ShotHealth : null;
 
+    /// <summary>Exposes the first physical contact tick for source fuse verification.</summary>
+    internal ulong? GrenadierFirstContactTick(ulong projectileId) =>
+        grenadierFlights.TryGetValue(projectileId, out var flight) ? flight.FirstContactTick : null;
+
     internal IReadOnlyList<CardGrenadierExplosion> CardGrenadierExplosions() =>
         grenadierExplosions.ToArray();
 
