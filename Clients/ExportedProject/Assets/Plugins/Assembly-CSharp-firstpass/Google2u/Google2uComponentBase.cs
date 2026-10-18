@@ -9,6 +9,7 @@ namespace Google2u
 {
 public class Google2uComponentBase : MonoBehaviour
 {
+    private const string RowPropertyPrefix = "Get_";
 	protected IList mRows;
 
 	private Dictionary<string, PropertyInfo> mRowProperties = new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase);
@@ -23,8 +24,11 @@ public class Google2uComponentBase : MonoBehaviour
 		{
 			if (mRowProperties.Count == 0)
 			{
-				object row = GetRow(0);
-				GetAllPropInfos(row);
+                Type rowType = GetRowType();
+                if (rowType != null)
+                {
+                    CacheRowProperties(rowType);
+                }
 			}
 			List<string> list = new List<string>();
 			foreach (KeyValuePair<string, PropertyInfo> mRowProperty in mRowProperties)
@@ -79,8 +83,11 @@ public class Google2uComponentBase : MonoBehaviour
 
 	public bool HasColumn(string fieldName)
 	{
-		object row = GetRow(0);
-		Type type = row.GetType();
+        Type type = GetRowType();
+        if (type == null)
+        {
+            return false;
+        }
 		if (!mRowProperties.TryGetValue(fieldName, out var value))
 		{
 			value = type.GetProperty("Get_" + fieldName.ToUpper());
@@ -191,16 +198,44 @@ public class Google2uComponentBase : MonoBehaviour
 		{
 			return;
 		}
-		Type type = row.GetType();
+		CacheRowProperties(row.GetType());
+    }
+
+    private void CacheRowProperties(Type type)
+    {
 		PropertyInfo[] properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 		PropertyInfo[] array = properties;
 		foreach (PropertyInfo propertyInfo in array)
 		{
 			string text = propertyInfo.Name;
-			string key = text.Replace("Get_", string.Empty);
+            if (!text.StartsWith(RowPropertyPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string key = text.Substring(RowPropertyPrefix.Length);
 			mRowProperties[key] = propertyInfo;
 		}
 	}
+
+    private Type GetRowType()
+    {
+        FieldInfo field = GetType().GetField("Rows");
+        if (field == null)
+        {
+            return null;
+        }
+
+        IList rows = field.GetValue(this) as IList;
+        if (rows != null && rows.Count > 0 && rows[0] != null)
+        {
+            return rows[0].GetType();
+        }
+
+        // Empty tables still declare their schema; no placeholder row is needed for column queries.
+        Type[] arguments = field.FieldType.GetGenericArguments();
+        return arguments.Length == 1 ? arguments[0] : null;
+    }
 
 	private object GetRow(int index)
 	{

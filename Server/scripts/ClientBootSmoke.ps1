@@ -98,6 +98,7 @@ try {
     $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
     if (!$report.mainSceneLoaded -or !$report.accountDataReady -or !$report.playerNetworkReady -or
         !$report.playerDataLoadComplete -or $report.initializedUnitRows -ne $report.recoveredUnitRows -or
+        !$report.cardDefinitionsReady -or $report.invalidBootstrapQueries -ne 0 -or
         $report.initializedWeaponRows -ne $report.recoveredWeaponRows -or
         $report.recoveredUnitRows -le 0 -or $report.exceptions -ne 0) {
         throw "Client readiness evidence is incomplete; inspect $runRoot"

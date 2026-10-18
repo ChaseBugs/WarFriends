@@ -154,8 +154,15 @@ public class CardManagerDeathmatchOffline : Singleton<CardManagerDeathmatchOffli
 	{
 		foreach (KeyValuePair<string, Card> botCard in botCards)
 		{
+            if (botCard.Value.isBuddyCard)
+            {
+                // Buddy templates use their separate data and intentionally have no ordinary card row.
+                botCard.Value.Init(null);
+                continue;
+            }
+
 			CardDefinitionsRow row = CardManager.instance.cardDefinitions.GetRow(botCard.Value.id);
-			if (row == null && !botCard.Value.isBuddyCard)
+			if (row == null)
 			{
 				Debug.LogError($"There is no definition for card {botCard.Value.id}");
 			}

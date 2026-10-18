@@ -24,6 +24,13 @@ passes account loading, complete sorted catalog initialization and data-loaded
 callback completion with zero observed exceptions. Error-level logs, selected
 cards, preview rendering and complete normal lobby/battle entry remain open.
 
+Empty Squads metadata and offline Buddy-template lookups are now repaired without
+inventing rows or ordinary Buddy definitions. The refreshed real account boot
+also verifies card definitions and zero invalid bootstrap queries; exceptions
+remain zero and error-level logs decrease from 72 to 70. Their bounded source
+counts are documented in the bootstrap report. Fresh-account authoritative
+battle-allocation projection, preview rendering and normal battle entry remain
+open; transport fixtures do not supply normal-flow proof.
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted
 owners reject before lobby/player mutation, and a controlled native terminal

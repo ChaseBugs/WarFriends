@@ -174,3 +174,47 @@ Successful real lobby entry, normal friend/Coop rematch, complete screen cancel
 and reset races, two Unity players, original Unity 5.2/Android compatibility and
 retired-service-independent full application boot remain unverified. SDK and
 empty-scene Editor passes do not close these requirements.
+
+## Empty-table and Buddy initialization checks
+
+The next actual boot isolated two invalid queries without changing game data:
+`GameConfigurationManager.Awake` requested column names from the legitimate empty
+`Google2u.Squads` table, and offline card loading looked up the separate `BUDDY`
+template in ordinary `CardDefinitions`.
+
+`Google2uComponentBase` now discovers empty-table metadata from its declared row
+type and includes only generated `Get_` column properties. Structural `Length`
+and `Item` properties are not columns. Missing row value access still fails;
+no placeholder row or squad progression is invented. Buddy templates retain
+their separate initialization and bypass ordinary card-definition lookup.
+
+`Server/tools/UnityEmptySheetSchemaAudit.cs`, installed only in the disposable
+project's `Assets/Editor`, passed with Unity 2018.3.0f2. It checks the exact five
+Squads columns, absent/structural column rejection, unchanged empty row count,
+intentional absent-value rejection, and populated-table value access. Its one
+intentional missing-row error is negative-test evidence, not a startup error.
+
+A refreshed real Backend/Mongo/Splash-to-MainScene run passed at
+`Server/.local/client-boot-74f53bbb6792486186d5f172e795aadb/report.json`.
+It records complete account callbacks, 24 initialized units, 66 initialized
+weapons, ordinary and offline card definitions ready, zero invalid bootstrap
+queries and zero exceptions. Error-level logs decreased from 72 to 70. Their
+bounded stack-source counts are 33 KinematicRagdoll, 11 NetworkObjectPool,
+11 ArmyPreviewCamera.PlayerDataLoaded, 11 preview texture coroutines, and one
+each from account-response diagnostics, Fuse configuration, WarningDialog and
+ServerResultsCache. These remaining logs are not treated as successful rendering
+or harmless errors without inspection. Reports retain source locations rather
+than raw account response messages.
+
+The smoke gate now requires card definitions and rejects either invalid query.
+The solution builds with no warnings/errors and the protocol executable passes.
+This remains disposable Unity 2018 account/catalog proof, not original Unity 5.2,
+Android, rendered lobby, two-player or normal battle-entry verification.
+
+Normal matchmaking also remains blocked for a newly created account until a
+server-authoritative battle allocation is projected from durable client-shaped
+inventory/progression. `Program.cs` currently rejects absent allocation with
+`battle_allocation_missing`; native transport fixtures supplying allocation do
+not prove that normal account path. Implement this alongside the existing
+player-initialization failure/rollback boundary, preserving card ownership and
+upgrade authority rather than granting a test loadout.

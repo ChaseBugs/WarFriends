@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -15,11 +16,16 @@ public static class UnityNormalClientBootAudit
     private const int MaximumStartupSeconds = 75;
     private const int MainSceneObservationFrames = 12;
     private const int MaximumExceptionSamples = 12;
+    private const int MaximumErrorSources = 32;
     private static readonly List<string> ExceptionSources = new List<string>();
+    private static readonly Dictionary<string, int> ErrorSources = new Dictionary<string, int>();
+    private static readonly FieldInfo CardDefinitionField = typeof(Card).GetField(
+        "mCardDefinition", BindingFlags.Instance | BindingFlags.NonPublic);
     private static double _deadline;
     private static int _mainSceneFrame = -1;
     private static int _exceptions;
     private static int _errors;
+    private static int _invalidBootstrapQueries;
 
     static UnityNormalClientBootAudit()
     {
@@ -58,6 +64,21 @@ public static class UnityNormalClientBootAudit
         if (type == LogType.Error || type == LogType.Assert)
         {
             _errors++;
+            string source = stackTrace.Split('\n').FirstOrDefault(frame => frame.Contains("Assets")) ?? "native/no-source";
+            if (ErrorSources.ContainsKey(source))
+            {
+                ErrorSources[source]++;
+            }
+            else if (ErrorSources.Count < MaximumErrorSources)
+            {
+                ErrorSources.Add(source, 1);
+            }
+            if (condition == "BUDDY is not stored in translate dictionary." ||
+                condition.StartsWith("Row index 0 out of range for sheet ", StringComparison.Ordinal) &&
+                condition.EndsWith(" Google2u.Squads", StringComparison.Ordinal))
+            {
+                _invalidBootstrapQueries++;
+            }
         }
         if (type != LogType.Exception)
         {
@@ -111,7 +132,20 @@ public static class UnityNormalClientBootAudit
             levels.weaponLevelsSetups != null && levels.weaponLevelsSetups.Count > 0 &&
             levels.unitsSortedByLevel.Count == levels.behaviours.Count &&
             levels.weaponsSortedByLevel.Count == levels.weaponLevelsSetups.Count &&
-            server != null && !server.loadingPlayerData;
+            server != null && !server.loadingPlayerData && HasCardDefinitions();
+    }
+
+    private static bool HasCardDefinitions()
+    {
+        CardManager cards = Resources.FindObjectsOfTypeAll<CardManager>()
+            .FirstOrDefault(manager => manager.gameObject.scene.IsValid());
+        CardManagerDeathmatchOffline bots = Resources.FindObjectsOfTypeAll<CardManagerDeathmatchOffline>()
+            .FirstOrDefault(manager => manager.gameObject.scene.IsValid());
+        return cards != null && cards.cards != null && cards.cards.Count > 0 &&
+            bots != null && bots.botCards.Count > 0 &&
+            cards.cards.All(card => card != null && CardDefinitionField.GetValue(card) != null) &&
+            bots.botCards.Values.All(card => card != null &&
+                (card.isBuddyCard || CardDefinitionField.GetValue(card) != null));
     }
 
     private static void Finish()
@@ -145,14 +179,17 @@ public static class UnityNormalClientBootAudit
             playerDataLoadComplete = dataLoadComplete,
             initializedUnitRows = levels == null ? 0 : levels.unitsSortedByLevel.Count,
             initializedWeaponRows = levels == null ? 0 : levels.weaponsSortedByLevel.Count,
+            cardDefinitionsReady = accountReady && HasCardDefinitions(),
+            invalidBootstrapQueries = _invalidBootstrapQueries,
             exceptions = _exceptions,
             errors = _errors,
+            errorSources = ErrorSources,
             exceptionSources = ExceptionSources
         }, Formatting.Indented) + "\n");
         bool reachedMain = Application.loadedLevelName == "MainScene";
         Debug.Log("UNITY_NORMAL_BOOT_OBSERVED mainScene=" + reachedMain + " exceptions=" + _exceptions +
             " report=" + reportPath);
-        bool completed = reachedMain && game != null && _exceptions == 0 &&
+        bool completed = reachedMain && game != null && _exceptions == 0 && _invalidBootstrapQueries == 0 &&
             (!requireAccount || dataLoadComplete);
         EditorApplication.Exit(completed ? 0 : 1);
     }
