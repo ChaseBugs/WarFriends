@@ -95,10 +95,9 @@ exhaustive third-party SDK catalog.
 
 Concrete boundaries requiring continued migration:
 
-- `GameLauncher` is attached to SplashScene. Its Awake initializes Terms and subscribes social
-  callbacks; `OnAgeVerificationCriteriaMet` calls Google Play initialization and Fuse StartSession.
-  `ChangeSplashes` waits for Terms completion and then Google Play completion/timeout. This
-  platform-specific boot path must not be made dependent on internet callbacks.
+- `GameLauncher` is attached to SplashScene. Its former Terms, social-authentication and Fuse
+  startup gates have been removed as described above. The retained serialized fields preserve
+  scene compatibility; this launcher change does not disable other SDK auto-initializers.
 - `GooglePlayGameService.Init` activates the platform and requests silent authentication. Its
   source still exists even though the direct serialized attachment count is zero.
 - `FuseSDK` has two scene attachments. Its Awake creates an Android Java plugin and its Start
