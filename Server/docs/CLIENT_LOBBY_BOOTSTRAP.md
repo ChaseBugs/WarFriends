@@ -290,3 +290,21 @@ bootstrap helper now accepts an already initialized replica, waits for writable 
 verifies the requested replica-set name. Its readiness proof is separate from allocation tests;
 production server selection limits are unchanged. The owned Mongo process was stopped after
 the successful run, and the final build has zero warnings and errors.
+
+### Account-revision preparation transaction
+
+`BattleAllocationPreparationStore.PrepareAsync` now reads the account and initial allocation
+inside one snapshot/majority transaction. It requires a trusted expected account revision,
+projects from that transaction's account document and reserves the revision with a real write
+before inserting absent allocation authority. Concurrent account writes therefore conflict with
+the transaction rather than allowing an old read to publish silently. Existing validated
+allocations are preserved; initial preparation does not refresh or replenish battle inventory.
+The supplied projection must be pure because Mongo may retry the transaction callback.
+
+The native Mongo suite passes at the existing evidence directory's `prepare-tests.log`, exit
+zero. It rejects a stale revision without creating an allocation, verifies creation alongside
+one account revision advance and checks replay without another revision advance. Existing
+quantity/corruption and card-pack concurrency checks also pass. Build evidence is
+`Server/.local/allocation-prepare-build.log`, zero warnings/errors. This is not yet registered
+in queue admission. Concurrent preparation/account mutation and coherent manifest publication
+still need executable scenarios before the normal route is enabled.
