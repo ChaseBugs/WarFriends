@@ -73,3 +73,8 @@ At this checkpoint, the Release solution builds with zero warnings/errors.
 army/host checks. `--initial-loadout-only` passes 54,236 checks.
 `--grenade-only` passes 267 checks including grenade-mode UDP and Tank impacts;
 those are single-class grenade tests, not mixed grenade gameplay proof.
+
+The [grenade selection prerequisite](GRENADE_WEAPON_SELECTION.md) now fixes
+grenade-only slot switching: launch identity, upgrade, gesture pose and active
+ammunition follow the selected slot rather than the initial participant weapon.
+Mixed-class coordination remains open.

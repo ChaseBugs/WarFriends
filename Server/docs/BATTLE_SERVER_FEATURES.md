@@ -68,6 +68,10 @@ that equipped-only unit order and its three lanes to Worker identities and
 combat rows. Exact starter validation also exposed missing mixed-grenade package
 wiring and binding classification. Admission wiring is repaired; mixed grenade
 switching/runtime, durable card allocation and normal matchmaking remain open.
+The [grenade selection prerequisite](GRENADE_WEAPON_SELECTION.md) now verifies
+FRAG-to-upgraded-M320-to-FRAG switching in a real grenade-mode host, preserving
+per-slot ammunition and rejecting changes during windup. Mixed-class combat
+coordination and normal Unity gameplay still remain open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

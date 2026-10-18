@@ -12,13 +12,27 @@ internal sealed class GrenadeMatchSimulation
 {
     private sealed class Actor
     {
-        internal readonly ParticipantManifest Definition;internal readonly GrenadeBinding Binding;
-        internal Vector3 Position;internal Quaternion Rotation;internal string Clip;internal ulong ClipStarted;
+        internal readonly ParticipantManifest Definition;
+        internal GrenadeBinding Binding;
+        internal int WeaponUpgrade;
+        internal Vector3 Position;
+        internal Quaternion Rotation;
+        internal string Clip;
+        internal ulong ClipStarted;
         internal bool Moving;
-        internal ScheduledGrenadeLaunch? Pending;internal GrenadePoseFrame Pose;
-        internal Actor(ParticipantManifest definition,CoverNode cover,GrenadeBinding binding,GrenadePoseCatalog poses)
-        {Definition=definition;Binding=binding;Position=cover.Position;Rotation=cover.Rotation;
-         Clip=binding.Swipe?"grenade_idle":"grenadelauncher_idle";Pose=Place(poses.Sample(Clip,0,true),Position,Rotation);}
+        internal ScheduledGrenadeLaunch? Pending;
+        internal GrenadePoseFrame Pose;
+
+        internal Actor(ParticipantManifest definition, CoverNode cover, GrenadeBinding binding, GrenadePoseCatalog poses)
+        {
+            Definition = definition;
+            Binding = binding;
+            WeaponUpgrade = definition.WeaponUpgrade!.Value;
+            Position = cover.Position;
+            Rotation = cover.Rotation;
+            Clip = binding.Swipe ? "grenade_idle" : "grenadelauncher_idle";
+            Pose = Place(poses.Sample(Clip, 0, true), Position, Rotation);
+        }
     }
     private readonly Actor[] actors;private readonly GrenadeCatalog catalog;private readonly RecoveredBattleMap map;
     private readonly Func<string,bool>? dynamicColliderEnabled;private readonly Func<int,bool>? indexedColliderEnabled;
@@ -54,6 +68,35 @@ internal sealed class GrenadeMatchSimulation
         actors=manifest.Players.Select(p=>new Actor(p,map.Covers[p.StartCover],catalog.Binding(p.Weapon.SourceId),catalog.Poses)).ToArray();
     }
     internal bool Busy(string id)=>ActorOf(id).Pending!=null;
+    internal void SelectWeapon(string playerId, WeaponManifest weapon, int upgrade, ulong tick)
+    {
+        Actor actor = ActorOf(playerId);
+        if (actor.Pending != null || actor.Moving)
+        {
+            throw new InvalidDataException("A moving or throwing grenade actor cannot change weapons.");
+        }
+
+        if ((lastTick.HasValue && tick != lastTick.Value) || (!lastTick.HasValue && tick != 0))
+        {
+            throw new InvalidDataException("Grenade weapon selection must use the current host tick.");
+        }
+
+        GrenadeBinding binding = catalog.Binding(weapon.SourceId);
+        if (catalog.CreateManifest(weapon.SourceId, upgrade) != weapon)
+        {
+            throw new InvalidDataException("Grenade weapon selection differs from the recovered source stage.");
+        }
+
+        string clip = binding.Swipe ? "grenade_idle" : "grenadelauncher_idle";
+        GrenadePoseFrame pose = Place(catalog.Poses.Sample(clip, 0, true), actor.Position, actor.Rotation);
+
+        // WeaponInventory changes the active weapon; launch authority cannot retain the initial manifest weapon.
+        actor.Binding = binding;
+        actor.WeaponUpgrade = upgrade;
+        actor.Clip = clip;
+        actor.ClipStarted = tick;
+        actor.Pose = pose;
+    }
     internal PlayerCollisionModel Collision(string id)=>ActorOf(id).Pose.Collision;
     internal RiflePoseState Snapshot(string id,ulong tick)
     {
@@ -74,8 +117,8 @@ internal sealed class GrenadeMatchSimulation
         actor.ClipStarted = tick;
         actor.Pending = new ScheduledGrenadeLaunch(id, gesture.Target,
             gesture.Right, gesture.LaunchTick,
-            actor.Definition.Weapon.SourceId,
-            actor.Definition.WeaponUpgrade!.Value);
+            actor.Binding.SourceId,
+            actor.WeaponUpgrade);
         actor.Pose = Place(catalog.Poses.Sample(actor.Clip, 0, false),
             actor.Position, actor.Rotation);
         return actor.Pending;
@@ -173,7 +216,7 @@ internal sealed class GrenadeMatchSimulation
         ArgumentNullException.ThrowIfNull(launch);
         Actor actor = ActorOf(launch.Owner);
         if (launch.WeaponSourceId != actor.Binding.SourceId ||
-            launch.Upgrade != actor.Definition.WeaponUpgrade)
+            launch.Upgrade != actor.WeaponUpgrade)
             throw new InvalidDataException(
                 "Grenade launch differs from the host weapon binding.");
 

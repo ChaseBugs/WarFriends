@@ -2418,7 +2418,16 @@ public sealed partial class MatchEngine : IMatchRuntime
             if(scheduledBazookas.Any(x=>x.Owner==p.Definition.PlayerId))return "shooting";
             if(grenadeCombat?.Busy(p.Definition.PlayerId)==true)return "shooting";
             if(p.ActiveSlot==slot)return "weapon-selected";
-            try {rifleCombat?.SwitchWeapon(p.Definition.PlayerId,weapon.Definition.Weapon,weapon.Definition.WeaponUpgrade);}
+            try
+            {
+                rifleCombat?.SwitchWeapon(p.Definition.PlayerId, weapon.Definition.Weapon,
+                    weapon.Definition.WeaponUpgrade);
+                if (rifleCombat == null && grenadeCombat != null)
+                {
+                    grenadeCombat.SelectWeapon(p.Definition.PlayerId, weapon.Definition.Weapon,
+                        weapon.Definition.WeaponUpgrade, tick);
+                }
+            }
             catch(InvalidDataException){End("invalid-combat-authority","",false);return "match-aborted";}
             p.ActiveSlot=slot;
             return "weapon-selected";
