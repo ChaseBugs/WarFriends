@@ -98,8 +98,8 @@ internal static class OrdinaryGrenadierSpawnTests
         throw new InvalidOperationException("Ordinary Grenadier did not launch: " + host.Snapshot().TerminalReason);
     }
 
-    private static MatchEngine CreateHost(BattleCombatContent content, RecoveredBattleMap map,
-        (int Normal, int Special, int Elite) selection)
+    internal static MatchEngine CreateHost(BattleCombatContent content, RecoveredBattleMap map,
+        (int Normal, int Special, int Elite) selection, Func<int, int>? armyChoice = null)
     {
         ParticipantManifest owner = Participant(content, map, 1) with
         {
@@ -112,7 +112,7 @@ internal static class OrdinaryGrenadierSpawnTests
             Path.GetFileNameWithoutExtension(map.Source),
             map.SourceHash, content.Revision, MatchManifest.RifleCombatMode, 10, 120, 120,
             [owner, Participant(content, map, 2)]) { SceneMasterPlayerId = OwnerId };
-        var host = new MatchEngine(manifest, map, content, armyChoice: _ => 0, combatRandom: () => 1f);
+        var host = new MatchEngine(manifest, map, content, armyChoice: armyChoice ?? (_ => 0), combatRandom: () => 1f);
         Admit(host, selection);
         return host;
     }

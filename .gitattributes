@@ -282,3 +282,6 @@ Server/src/War.BattleServer/MatchEngine.OrdinaryGrenadier.cs text eol=lf
 Server/tests/War.Battle.Tests/OrdinaryGrenadierSpawnTests.cs text eol=lf
 
 Server/docs/ORDINARY_GRENADIER_COMBAT.md text eol=lf
+
+Server/tests/War.Battle.Tests/OrdinaryGrenadierPrimaryDamageTests.cs text eol=lf
+Server/docs/ORDINARY_GRENADIER_PRIMARY_DAMAGE.md text eol=lf

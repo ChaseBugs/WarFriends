@@ -47,6 +47,8 @@ fifteen-tick primary return for all three ordinary deployment tuples. Disposable
 530 ordinary inventory checks, including both initial secondary visibility and later decoded
 primary/secondary updates. These component checks do not execute two normal Unity matches.
 
-Ordinary sickness, direct ordinary pistol and explosion outcome fixtures, complete source attack animation/effects, all Corner-change
+[Ordinary pistol outcome fixtures](ORDINARY_GRENADIER_PRIMARY_DAMAGE.md) now cover one upgraded
+physical player hit and one covered basic-unit shield-only control. Ordinary sickness and grenade
+explosion outcome fixtures, complete source attack animation/effects, all Corner-change
 scenarios and normal two-Unity-client gameplay validation remain open. The shared lifecycle does
 not establish original Unity timing or cross-platform runtime parity by itself.
