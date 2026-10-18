@@ -434,6 +434,17 @@ message BattleArmyEntityState {
   bool is_colt_holstered = 45;
   // Host-selected inventory bits for supported card infantry and ordinary Grenadier; zero for other entities.
   uint32 infantry_weapon_mask = 46;
+  // Present only during ordinary Mortar's detached weapon interval.
+  BattleMortarWeaponPose mortar_weapon_pose = 47;
+}
+message BattleMortarWeaponPose {
+  uint64 prepared_tick = 1;
+  uint64 hand_return_tick = 2;
+  // Each paged row retains the tick at which this observation was valid.
+  uint64 observed_tick = 3;
+  float x = 4; float y = 5; float z = 6;
+  BattleJointRotation rotation = 7;
+  float scale_x = 8; float scale_y = 9; float scale_z = 10;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

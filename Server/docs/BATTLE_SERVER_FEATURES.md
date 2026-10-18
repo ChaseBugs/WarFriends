@@ -133,17 +133,20 @@ the subsequent final firing-focused group passed 119 assertions including the ne
 native-clock reference. The protocol executable passed 1,360 assertions.
 [Mortar weapon attachment](MORTAR_WEAPON_ATTACHMENT.md) now supplies source-identity-preserving
 copy resolution and a script-free detach/restore/lifetime adapter. Native transform comparison
-covers all 26 normal upgrade selections. The normal presenter is not yet connected to it:
-captured world-pose authority and replay-safe reconstruction must precede that connection.
+covers all 26 normal upgrade selections. The production presenter now consumes the captured
+protobuf world pose, restores hands at host tick deadlines and disposes detached geometry.
 [Preparation-pose authority](MORTAR_PREPARATION_POSE.md) now records actual source animation and
 swapper observations in two controller orders/two cycles, corrects the queued construction clip's
 one-tick idle offset, and captures immutable host world transforms before target selection.
 Body retargeting cannot move that stored pose; hand return, death, relocation and terminal closure
-remove it. Protobuf/SDK projection and normal presentation/reconnect are still open.
+remove it. Protobuf/SDK projection, page-local observation validation and decoded production
+presenter replay now have focused coverage. Real two-Unity gameplay/reconnect remain open.
+The complete wire-stage Battle executable passed 250,286 assertions; the focused group passes
+1,462, including the final four-detached-row authenticated packet-budget regression.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes
-2,034 checks. Full variable-frame/activation-order parity and normal SDK presentation remain open.
+2,034 checks. Full variable-frame/activation-order parity and normal network gameplay remain open.
 The complete accumulated-clock Battle run passed 249,842 assertions, including real two-peer UDP.
 Literal abort-reason coverage also guards the Worker/outbox allowlist; new error prefixes do not
 implicitly authorize a result.

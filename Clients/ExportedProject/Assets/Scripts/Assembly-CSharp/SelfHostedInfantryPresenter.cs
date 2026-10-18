@@ -23,6 +23,8 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public float CanopyExpiryAt;
         public Material CanopyLandingMaterial;
         public SelfHostedGunslingerWeaponAttachment GunslingerAttachment { get; set; }
+        public SelfHostedMortarWeaponAttachment MortarAttachment { get; set; }
+        public ulong MortarHandReturnTick;
         public SelfHostedInfantrySkinAppearance SkinAppearance { get; set; }
         public SelfHostedInfantryWeaponSet Weapons { get; set; }
     }
@@ -238,6 +240,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             !Finite(row.MaxKevlar) || row.MaxKevlar < 0 ||
             !Finite(row.Kevlar) || row.Kevlar < 0 || row.Kevlar > row.MaxKevlar ||
             !ValidParachute(row) ||
+            !MortarWeaponPosePolicy.IsValid(row, row.MortarWeaponPose == null ? 0 : row.MortarWeaponPose.ObservedTick) ||
             (row.IsColtHolstered && (row.UnitId != "ID_UNIT-GUNSLINGER" || row.SourceCardId.Length != 0)))
         {
             throw new InvalidOperationException("Invalid authoritative infantry visual state.");
@@ -290,6 +293,12 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             model = SelfHostedInfantryVisualFactory.Create(source, style, rootName);
         }
         SelfHostedInfantryWeaponSet ordinaryWeapons = CreateOrdinaryWeapons(model, soldier, row);
+        SelfHostedMortarWeaponAttachment mortarAttachment = null;
+        if (row.UnitId == "ID_UNIT-MORTAR" && row.SourceCardId.Length == 0)
+        {
+            Weapon prefab = soldier.GetComponent<EnemyBasicInventory>().weapons[0].weapon;
+            mortarAttachment = SelfHostedMortarWeaponAttachment.Bind(prefab, ordinaryWeapons, model.Root);
+        }
         SelfHostedInfantryWeaponSet cardWeapons = CreateCardWeapons(model, soldier, row);
         SelfHostedInfantrySkinAppearance skin = ApplySkin(model, soldier, row);
         model.Root.SetActive(true);
@@ -299,6 +308,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             Motion = new SelfHostedRemoteTransformBuffer(),
             AnimationRoot = model.AnimationRoot,
             GunslingerAttachment = attachment,
+            MortarAttachment = mortarAttachment,
             SkinAppearance = skin,
             Weapons = cardWeapons ?? ordinaryWeapons
         };
@@ -446,12 +456,28 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             (float)((serverTick - visual.ClipStartTick) / 30.0) : 0f;
         visual.ReceivedAt = Time.realtimeSinceStartup;
         UpdateCanopy(visual, row, serverTick);
-        ApplyWeaponAttachment(visual, row);
+        ApplyWeaponAttachment(visual, row, serverTick);
         Sample(visual, visual.SecondsAtReceive);
     }
 
-    private static void ApplyWeaponAttachment(Visual visual, BattleArmyEntityState row)
+    private static void ApplyWeaponAttachment(Visual visual, BattleArmyEntityState row, ulong serverTick)
     {
+        if (visual.MortarAttachment != null)
+        {
+            BattleMortarWeaponPose pose = row.MortarWeaponPose;
+            if (pose != null && Math.Max(serverTick, pose.ObservedTick) < pose.HandReturnTick)
+            {
+                visual.MortarAttachment.ApplyWorldPose(new Vector3(pose.X, pose.Y, pose.Z),
+                    new Quaternion(pose.Rotation.X, pose.Rotation.Y, pose.Rotation.Z, pose.Rotation.W),
+                    new Vector3(pose.ScaleX, pose.ScaleY, pose.ScaleZ));
+                visual.MortarHandReturnTick = pose.HandReturnTick;
+            }
+            else
+            {
+                visual.MortarAttachment.RestoreHand();
+                visual.MortarHandReturnTick = 0;
+            }
+        }
         if (visual.Weapons != null && (row.SourceCardId.Length > 0 || row.UnitId == "ID_UNIT-GRENADIER"))
         {
             if (!InfantryWeaponVisibility.IsValid(row))
@@ -556,6 +582,12 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
                 realtime >= visual.CanopyExpiryAt)
                 DestroyCanopy(visual);
             float elapsed = Mathf.Max(0f, realtime - visual.ReceivedAt);
+            if (visual.MortarAttachment != null && visual.MortarAttachment.IsDetached && client != null &&
+                client.State != null && client.State.ServerTick >= visual.MortarHandReturnTick)
+            {
+                visual.MortarAttachment.RestoreHand();
+                visual.MortarHandReturnTick = 0;
+            }
             Sample(visual, visual.SecondsAtReceive + elapsed);
         }
         for (int index = retiredCanopies.Count - 1; index >= 0; index--)
@@ -598,6 +630,10 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
 
     private static void DestroyVisual(Visual visual)
     {
+        if (visual.MortarAttachment != null)
+        {
+            visual.MortarAttachment.Dispose();
+        }
         DestroyCanopy(visual);
         if (visual.SkinAppearance != null)
         {

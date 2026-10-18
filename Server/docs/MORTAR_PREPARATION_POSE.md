@@ -3,8 +3,9 @@
 The host now captures an immutable weapon world position, rotation and scale when ordinary
 Mortar preparation starts. It retains that exact pose during later body retargeting, expires it
 at the observed hand-return tick, and clears it on death, relocation or terminal match closure.
-This is internal host state. It is not yet published through protobuf or consumed by the normal
-Unity infantry presenter.
+The optional protobuf pose now publishes this capture to the SDK and the production Unity
+infantry presenter. See the [attachment integration](MORTAR_WEAPON_ATTACHMENT.md) for the
+verified replay, expiry and cleanup boundary; normal two-Unity gameplay is not yet acceptance-tested.
 
 ## Native observation
 
@@ -82,14 +83,13 @@ Battle executable; the earlier 248,560-assertion full run belongs to the firing/
 See the subsequent [controller-time report](MORTAR_CONTROLLER_TIME.md) for the accumulated-clock
 implementation and its newer full-suite verification.
 
-Still required: protobuf/SDK projection and validation of this complete captured pose, replay and
-reconnect acceptance, and normal presenter attachment/lifetime integration. The receiver must
-restore the captured world pose, not detach at its current animated hand. Full EnemyController/
+The subsequent wire/presenter stage restores the captured world pose rather than detaching at
+the receiver's current animated hand. Full network reconnect acceptance and EnemyController/
 TweenRotation execution-order parity, original Unity 5.2.5, rendered two-player gameplay,
 indicator/particle/trail behavior and Android acceptance remain unproven.
 
-The next wire change should be a read-only optional Mortar weapon-pose projection: preparation
-tick, hand-return tick, world position, unit rotation and world scale. It must be absent for other
-unit/card identities and after hand return, and bind to the same actor's spawn/preparation phase.
-SDK validation, complete snapshot/scan copying, replay reconstruction and presenter disposal
-must be implemented together. This paragraph describes required work, not an existing DTO.
+`BattleMortarWeaponPose` now carries preparation, hand-return and observation ticks plus world
+position, unit rotation and world scale. SDK validation binds each present pose to its actor,
+spawn/preparation phase and the containing page's observation tick. Earlier pages retain their
+own observation rather than acquiring the last page's tick. The presenter uses current match
+time to prevent an expired earlier-page pose from detaching a weapon again.

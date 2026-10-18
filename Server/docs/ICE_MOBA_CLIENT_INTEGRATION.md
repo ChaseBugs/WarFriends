@@ -72,19 +72,19 @@ attachments for selected provider types. It reports source hashes/GUIDs and boun
 without copying source lines or credential values. It complements `audit_photon_runtime.py`;
 it is not a substitute for binary/plugin, native manifest, call-graph or runtime network audits.
 
-The inspected worktree contains 1,380 top-level gameplay C# files and 1,701 readable YAML assets:
+The latest inventory contains 1,381 top-level gameplay C# files and 1,701 readable YAML assets:
 12 scenes, 782 prefabs and 907 asset files. Ten non-YAML files are explicitly reported as not
 parsed. These are current filesystem observations, not a revision of historical recovery counts.
 
 | Lexical category | References | Files |
 | --- | ---: | ---: |
 | photon_api | 161 | 49 |
-| fuse_api | 107 | 4 |
+| fuse_api | 106 | 3 |
 | kochava_api | 10 | 2 |
 | google_play_api | 11 | 2 |
 | aws_analytics_type | 3 | 1 |
 | social_api | 21 | 2 |
-| platform_service_api | 87 | 25 |
+| platform_service_api | 74 | 24 |
 
 Matches can include comments, compatibility paths and unreachable code. For example, the
 retained `PhotonConnectionManager.ConnectToPhotonSafe` already refuses cloud connections and

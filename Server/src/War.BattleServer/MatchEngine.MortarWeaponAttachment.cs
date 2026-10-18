@@ -1,5 +1,8 @@
 using System.Numerics;
 
+using War.Protocol;
+using War.Shared;
+
 namespace War.BattleServer;
 
 public sealed partial class MatchEngine
@@ -35,6 +38,37 @@ public sealed partial class MatchEngine
             {
                 _mortarDetachedWeapons.Remove(entityKey);
             }
+        }
+    }
+
+    private void ProjectMortarWeaponPose(BattleArmyEntityState actor)
+    {
+        MortarDetachedWeaponPose? frozen = MortarDetachedWeapon(actor.EntityKey);
+        if (frozen == null)
+        {
+            actor.MortarWeaponPose = null;
+            return;
+        }
+        var pose = new BattleMortarWeaponPose
+        {
+            PreparedTick = frozen.PreparedTick,
+            HandReturnTick = frozen.HandReturnTick,
+            ObservedTick = tick,
+            X = frozen.Position.X,
+            Y = frozen.Position.Y,
+            Z = frozen.Position.Z,
+            Rotation = new BattleJointRotation
+            {
+                X = frozen.Rotation.X, Y = frozen.Rotation.Y, Z = frozen.Rotation.Z, W = frozen.Rotation.W
+            },
+            ScaleX = frozen.Scale.X,
+            ScaleY = frozen.Scale.Y,
+            ScaleZ = frozen.Scale.Z
+        };
+        actor.MortarWeaponPose = pose;
+        if (!MortarWeaponPosePolicy.IsValid(actor, tick))
+        {
+            throw new InvalidDataException("Mortar roster lost its valid captured world-pose authority.");
         }
     }
 }

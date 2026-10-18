@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using War.Protocol;
+using War.Shared;
 
 namespace War.Client
 {
@@ -45,6 +46,8 @@ namespace War.Client
             {
                 if (entity.EntityKey <= priorKey)
                     throw new InvalidOperationException("Army entity pages are not ordered.");
+                if (!MortarWeaponPosePolicy.IsValid(entity, page.ServerTick))
+                    throw new InvalidOperationException("Army page contains an invalid Mortar pose observation.");
                 entities.Add(entity.Clone());
                 priorKey = entity.EntityKey;
             }

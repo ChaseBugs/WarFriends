@@ -3705,6 +3705,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                 entity.InfantryFacingY=animation.Facing.Y;
                 entity.InfantryFacingZ=animation.Facing.Z;
             }
+            ProjectMortarWeaponPose(entity);
             if(parachuteFlights.TryGetValue(row.Key,out var flight))
             {
                 if(entity.SourceCardId!="ELITEPARA")

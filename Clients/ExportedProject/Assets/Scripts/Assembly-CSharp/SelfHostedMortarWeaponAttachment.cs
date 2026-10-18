@@ -6,6 +6,7 @@ using UnityEngine;
 public sealed class SelfHostedMortarWeaponAttachment : IDisposable
 {
     private const int PrimaryWeaponIndex = 0;
+    private const float UnitTransformTolerance = 0.001f;
     private readonly Transform _snapPoint;
     private readonly Transform _handSocket;
     private readonly Transform _lifetimeRoot;
@@ -60,6 +61,27 @@ public sealed class SelfHostedMortarWeaponAttachment : IDisposable
         IsDetached = true;
     }
 
+    /// <summary>Restores a validated host capture without depending on the receiver's current hand pose.</summary>
+    public void ApplyWorldPose(Vector3 position, Quaternion rotation, Vector3 scale)
+    {
+        EnsureUsable();
+        float length = rotation.x * rotation.x + rotation.y * rotation.y +
+            rotation.z * rotation.z + rotation.w * rotation.w;
+        if (!Finite(position.x) || !Finite(position.y) || !Finite(position.z) ||
+            !Finite(rotation.x) || !Finite(rotation.y) || !Finite(rotation.z) || !Finite(rotation.w) ||
+            Mathf.Abs(length - 1f) > UnitTransformTolerance || !Finite(scale.x) || !Finite(scale.y) || !Finite(scale.z) ||
+            Mathf.Abs(scale.x - 1f) > UnitTransformTolerance || Mathf.Abs(scale.y - 1f) > UnitTransformTolerance ||
+            Mathf.Abs(scale.z - 1f) > UnitTransformTolerance)
+        {
+            throw new ArgumentException("A finite source-unit Mortar world transform is required.");
+        }
+        _snapPoint.SetParent(null, true);
+        _snapPoint.position = position;
+        _snapPoint.rotation = rotation;
+        _snapPoint.localScale = scale;
+        IsDetached = true;
+    }
+
     /// <summary>Applies source Swap(false), restoring the source hand with its identity local pose.</summary>
     public void RestoreHand()
     {
@@ -105,5 +127,10 @@ public sealed class SelfHostedMortarWeaponAttachment : IDisposable
         {
             throw new InvalidOperationException("The copied Mortar attachment has been disposed or destroyed.");
         }
+    }
+
+    private static bool Finite(float value)
+    {
+        return !float.IsNaN(value) && !float.IsInfinity(value);
     }
 }

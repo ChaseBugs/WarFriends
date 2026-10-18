@@ -40,21 +40,48 @@ The private package manifest was restored byte-for-byte after the Unity process 
 Local evidence is `Server/.local/mortar-attachment-unity-final.log` and
 `Server/.local/coop-geometry-project/mortar-weapon-attachment-audit.json`. The compiled reference
 `FakeRigidBodySwapper.cs` and `SoldierParts.cs` were byte-identical to the active recovered source.
-No .NET/protobuf contract changed in this stage, and no new Battle/Mongo or Android acceptance
-is claimed from these Unity Editor checks.
+That initial attachment-only stage changed no .NET/protobuf contract. The wire integration below
+is a subsequent stage; neither Editor audit establishes Android acceptance.
 
-## Required before connecting normal gameplay
+## Protobuf and production presenter integration
 
-The current `SelfHostedInfantryPresenter` does not yet invoke this adapter. The subsequent
-[preparation-pose stage](MORTAR_PREPARATION_POSE.md) now captures internal host world-transform
-authority and its hand deadline. No protobuf projection has been added yet, so visible Mortar
-world/hand behavior remains an open integration requirement.
+The [preparation-pose stage](MORTAR_PREPARATION_POSE.md) captures host world-transform authority
+and its hand deadline. `BattleArmyEntityState.mortar_weapon_pose` now carries that immutable
+capture and the page's observation tick. The host omits it after hand return or terminal cleanup.
+`MortarWeaponPosePolicy` checks unit/card identity, clip phase, lifetime, finite bounded position,
+unit rotation and source-scale bounds. Both SDK row receipt and paged roster assembly enforce it.
 
-Do not infer the detached world transform from a late `mortar_hide` row and the receiver's
-current hand. The hand may already be sampling another animation phase, and Mortar can retarget
-its body during windup. A reconnect must restore the original captured world pose rather than
-detach at the receiver's current pose. Publish the complete captured transform with SDK
-validation, replay-safe lifetime and normal Unity presentation before closing this boundary.
+`SelfHostedInfantryPresenter` binds the adapter to the admitted ordinary Mortar inventory and
+applies the absolute captured pose even when the actor first appears mid-windup. Later body
+motion cannot move the detached weapon. Hand return follows authoritative match ticks, not a
+local wall clock. An older page cannot resurrect a detachment once current match time has
+reached its deadline. Removal disposes detached geometry before destroying the actor.
+
+The private Unity 2018.3.0f2 production-presenter audit passed nine decoded protobuf checks:
+late reconstruction, world rotation/scale, independence from body movement, removal, recreated
+reconnect-state reconstruction, tick expiry, stale observation rejection and malformed input.
+It also reran the source attachment and ordinary inventory audits. Evidence is local at
+`Server/.local/mortar-pose-wire-unity-final.log`. This is an Editor adapter audit with synthetic
+decoded rows, not a real two-Client network reconnect or rendered battle proof.
+
+The preparation-focused .NET group passes 1,462 assertions, including actual host capture
+serialization throughout windup, expiry and terminal cleanup, SDK malformed-pose rejection,
+independent page observations and cloned replay rows. The protocol executable passes 1,360
+assertions. The final focused Release run also encodes four independent copies of each real
+detached host row in one authenticated page, verifying the existing 1,200-byte packet limit
+throughout windup. This exercises page capacity without claiming four naturally deployed actors.
+Active asset audits still resolve 1,052 script files and 288,258 references with
+zero missing scripts or broken references; the existing seventeen unmatched sprite selections
+remain. The private package manifest was restored after the owned Unity process exited.
+
+The complete Battle executable passed 250,286 assertions with the wire/presenter production
+changes. Its log is `Server/.local/mortar-pose-wire-full.log`. The additional four-row packet
+budget assertion was then verified in the focused Release run without changing production code.
+The final solution build passed with zero warnings/errors, and the native Windows isolated
+MongoDB/HTTP/protobuf/UDP smoke passed all 74 live checks with two independent clients and no
+Photon. It includes reconnect and restart/replay paths, not normal Unity gameplay. Its data/logs
+are at `Server/.local/smoke-9f300b8a2689442582cbc521b124772e`; the aggregate log is
+`Server/.local/mortar-pose-wire-smoke.log`.
 
 The existing native coroutine reference observes hand return 34 ticks after preparation for
 `mortar_hide` length 1.1000061 at 30 Hz. The preparation-pose observation now supplies the native
