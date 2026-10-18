@@ -39,6 +39,21 @@ while paused. The two clocks are now available for that subsequent integration.
 
 ## Required timer consumers
 
+The new `ArmyDeploymentRealtimeRoutine` supplies the source coroutine kernel for the first
+requirement below. Its first iteration is immediately ready. Later readiness uses a strict
+float comparison against a freshly constructed 0.3-second deadline. Preview is non-mutating;
+CommitIteration records actual iteration completion and starts the next wait there. A late
+callback cannot consume a later wait or emit multiple iterations at the same timestamp.
+The final iteration still has a post-spawn wait before CommitFinished. An iteration count is
+not proof that an entity spawned or that currency/energy/rewards were applied.
+
+The deployment/frame group now passes 75 checks at
+`Server/.local/army-realtime-routine-tests-final.log`, including source hashes for the original
+wait, RadicalRoutine and spawning manager, float equality/next-representable-time boundaries,
+hitches, actual completion versus preview time, invalid inputs and duplicate commits. This
+kernel is not yet wired into ArmyDeploymentState or live MatchEngine scheduling; the legacy
+queue remains active. The full real-time pipeline run below predates this newer kernel.
+
 1. Migrate coroutine readiness to raw observations, preserving strict source float readiness
    and beginning each new wait after the actual preceding callback. The existing nominal
    nine-tick queue must not carry a frame hitch into later source waits as precomputed deadlines.

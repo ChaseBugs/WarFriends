@@ -427,6 +427,15 @@ before the later independent deployment inputs and real-time pipeline. A new com
 for those changes is tracked at `Server/.local/battle-realtime-full.log` and is not yet recorded
 as passing.
 
+The next timer component, ArmyDeploymentRealtimeRoutine, now implements the original source
+loop's immediate first iteration and a new strict float 0.3-second wait after each actual
+iteration completion, including the final iteration. Preview does not reserve or commit a
+spawn. Separate CommitIteration/CommitFinished methods reject premature or duplicate use;
+an overdue callback cannot consume the following wait or create a catch-up burst. The
+source-bound deployment/frame group passes 75 checks at
+`Server/.local/army-realtime-routine-tests-final.log`. This is a coroutine kernel checkpoint,
+not active army scheduling or live slot integration; see [clock integration](BATTLE_CLOCKS.md).
+
 ```powershell
 python -B Server/tools/verify_pool_return_race.py `
   --project Server/.local/coop-geometry-project `
