@@ -87,7 +87,11 @@ Unregistered opposing army authority explicitly blocks an incomplete unit select
 silently falling back to the player. Current infantry/Decoy/player transforms now have a separate
 source-list projection: AllIn excludes Out, target draws preserve serialized order, and Shield
 uses GameShootableEntityPlayer's current-cover override. Sniper/Grenadier now share that correction.
-Moving prediction, vehicle/air transforms, automatic attempts, exposure and volley execution remain open.
+[Assaulter prediction](ASSAULTER_AIM.md) now captures a real moving player's acquisition inputs
+from the current rig muzzle and models the later callback's persistent 1/3 real-speed coefficient;
+fake speed remains independent. Fourteen focused checks verify these calculations, actual host
+movement capture and death cleanup. Automatic attempts/callbacks, non-player velocity binding,
+vehicle/air transforms, exposure and volley execution remain open.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical

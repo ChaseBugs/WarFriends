@@ -4,7 +4,9 @@ SoldierBehaviourAssaulter.PickTarget first calls TryPickDecoy, then
 PickRandomOpponent(UnitType.AttackerRusher). The new internal host selector preserves the entity
 selection part of that chain. A second internal transition now resolves current infantry,
 Decoy and player target transforms. It does not perform the two aim predictions, expose the
-Corner or launch a projectile.
+Corner or launch a projectile. The later [prediction component](ASSAULTER_AIM.md) now captures
+moving-player lead and models the separate callback speed/lead calculation, without an automatic
+normal Corner callback or projectile launch.
 
 ## Source candidate rules
 

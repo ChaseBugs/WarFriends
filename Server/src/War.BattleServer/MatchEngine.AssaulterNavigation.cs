@@ -27,6 +27,11 @@ public sealed partial class MatchEngine
         }
 
         var position = new Vector3(entity.X, entity.Y, entity.Z);
+        if (!_assaulterAimWeapons.ContainsKey(entityKey))
+        {
+            _assaulterAimWeapons.Add(entityKey, new AssaulterWeaponAimState(assaulterWeapon ??
+                throw new InvalidDataException("Normal Assaulter lost its source rifle binding.")));
+        }
         CardUnitInitialPoint? point = cardEnemyPoints.TryAssignAssaulter(entityKey, entity.OwnerFraction, position);
         if (point == null)
         {
@@ -110,6 +115,7 @@ public sealed partial class MatchEngine
         _assaulterPointRetries.Remove(entityKey);
         _assaulterCorners.Remove(entityKey);
         _settledAssaulterCorners.Remove(entityKey);
+        _assaulterAimWeapons.Remove(entityKey);
         cardEnemyPoints?.Release(entityKey);
     }
 
