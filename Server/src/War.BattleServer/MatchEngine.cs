@@ -1787,6 +1787,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             catch (InvalidDataException) { End("invalid-assaulter-volley", "", false); return; }
             if (Terminal) return;
         }
+        if (advanced && phase == BattlePhase.Running && _gunslingerArrivals.Count > 0)
+        {
+            try { AdvanceGunslingerPointChanges(); }
+            catch (InvalidDataException) { End("invalid-gunslinger-point-change", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && _assaulterCorners.Count > 0)
         {
             try { AdvanceAssaulterPointChanges(); }

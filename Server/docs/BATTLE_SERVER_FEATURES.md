@@ -90,8 +90,12 @@ callback math, half player speed and the base real/fake draws before forcing one
 [Ordinary Gunslinger shooting](GUNSLINGER_SHOOTING.md) now connects those rules to actual automatic
 preparation, callbacks, three single-shot attempts, real/cosmetic flights, authoritative shield
 hits and shooter-death cleanup. The Shield callback retains its captured cover shotPosition;
-it must not substitute the serialized player-child transform. Exhausted-attempt point changes,
-holstering, moving-victim/native blend proof and normal Client presentation remain open.
+it must not substitute the serialized player-child transform.
+[Exhausted-attempt point changes](GUNSLINGER_POINT_CHANGES.md) now select a source-ordered free
+point, transfer exclusive occupancy, walk there, restore attempt counters and fire a fresh burst
+on all five maps. Empty-list/no-draw and released-candidate behavior are checked separately without
+bypassing the normal two-unit limit. Holstering, moving-victim/native blend proof and normal
+Client presentation remain open.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

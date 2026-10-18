@@ -56,5 +56,6 @@ suite and Linux runtime were not rerun for this checkpoint.
 
 The clock is now wired into the [automatic normal-unit shooting path](GUNSLINGER_SHOOTING.md).
 The native probe remains animation/coroutine evidence only; actual server projectile proof comes
-from the separate ordinary-deployment shooting fixture. Point changes, interrupted/failed
-preparations and normal Client presentation remain open.
+from the separate ordinary-deployment shooting fixture. [Point changes](GUNSLINGER_POINT_CHANGES.md)
+now restart the fresh stand sequence after walking. Interrupted/failed preparations and normal
+Client presentation remain open.

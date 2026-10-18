@@ -46,4 +46,5 @@ The native stand source-bound verifier also remains unchanged and passes.
 
 These focused selector tests call the match-owned selector directly. The later
 [automatic shooting path](GUNSLINGER_SHOOTING.md) now also uses it during ordinary gameplay ticks.
-Point changes, holstering and normal Client presentation remain open.
+[Point changes](GUNSLINGER_POINT_CHANGES.md) now run through ordinary ticks. Holstering and normal
+Client presentation remain open.

@@ -22,7 +22,13 @@ public sealed partial class MatchEngine
         return _gunslingerPoints.GetValueOrDefault(entityKey);
     }
 
-    /// <summary>Reads source arrival counters; the attack executor remains a separate integration.</summary>
+    /// <summary>Reads the match-owned reservation used by spawn, movement and death cleanup.</summary>
+    internal ulong? GunslingerPointOccupant(int pointFileId)
+    {
+        return _gunslingerOccupants.TryGetValue(pointFileId, out ulong occupant) ? occupant : null;
+    }
+
+    /// <summary>Reads source arrival counters and the next strict gameplay deadlines.</summary>
     internal GunslingerArrival? GunslingerState(ulong entityKey)
     {
         return _gunslingerArrivals.GetValueOrDefault(entityKey);
@@ -44,13 +50,20 @@ public sealed partial class MatchEngine
             return;
         }
 
-        ArmyNavMeshCorridor route = PlanCardSoldierRoute(position, point.Position);
-        float speed = ArmySpeed(entityKey) ?? armyCatalog!.EffectiveSpeed(entity.UnitId, 1f);
-        var motion = new CardSoldierWalkState(point.ComponentFileId, route, armyCatalog!.InfantryAgent, speed);
+        CardSoldierWalkState motion = CreateGunslingerWalk(entityKey, point);
         _gunslingerOccupants.Add(point.ComponentFileId, entityKey);
         _gunslingerPoints.Add(entityKey, point);
         _gunslingerWalks.Add(entityKey, new GunslingerWalk(motion, checked(tick + 1)));
         _gunslingerRetries.Remove(entityKey);
+    }
+
+    private CardSoldierWalkState CreateGunslingerWalk(ulong entityKey, GunslingerPoint point)
+    {
+        var entity = activeArmyEntities[entityKey];
+        Vector3 position = new(entity.X, entity.Y, entity.Z);
+        ArmyNavMeshCorridor route = PlanCardSoldierRoute(position, point.Position);
+        float speed = ArmySpeed(entityKey) ?? armyCatalog!.EffectiveSpeed(entity.UnitId, 1f);
+        return new CardSoldierWalkState(point.ComponentFileId, route, armyCatalog!.InfantryAgent, speed);
     }
 
     private void AdvanceGunslingerNavigation()

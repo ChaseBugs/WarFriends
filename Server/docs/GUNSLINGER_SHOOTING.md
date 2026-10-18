@@ -53,8 +53,9 @@ Gunslinger navigation passes 50 checks across all five maps. The Release build h
 warnings/errors. Shared combat regression passes 26,395 assertions. Full default-suite, original
 Unity 5.2.5 and Linux runtime validation were not rerun for this checkpoint.
 
-This is not full Gunslinger completion. Exhausted attempts do not yet execute source point
-changes or gun holstering. Interrupted/failed animation preparations, native blend parity for
+[Exhausted-attempt point changes](GUNSLINGER_POINT_CHANGES.md) now execute automatically and
+restart a fresh burst after authored arrival. This is not full Gunslinger completion: gun
+holstering remains unimplemented. Interrupted/failed animation preparations, native blend parity for
 all presentation frames, moving player/infantry hit outcomes, Decoy and vehicle-specific live
 combat branches, and normal Client presentation need additional proof. A target removed before
 callback retains its last host-observed pose/velocity; post-death native ragdoll transform motion
