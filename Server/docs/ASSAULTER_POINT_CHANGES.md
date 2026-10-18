@@ -27,7 +27,7 @@ the existing route executor. Arrival reuses the source entry transition and fres
 ## Verification
 
 Release build passes with zero warnings/errors. Shared combat regression passes 26,395
-assertions. `--assaulter-volley-only` passes 99 checks. The ordinary Park deployment first fills
+assertions. `--assaulter-volley-only` passes 110 checks. The ordinary Park deployment first fills
 both friendly Corners. The tracked soldier cannot move early, and an unavailable destination
 adds exactly ten seconds. After the other soldier dies and releases its reservation, the tracked
 soldier transfers at tick 709, publishes the walking clip, traverses a real route, enters its

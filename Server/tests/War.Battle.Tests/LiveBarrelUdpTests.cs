@@ -105,7 +105,8 @@ internal static class LiveBarrelUdpTests
                   "both UDP peers see only host-confirmed soldier spawns, not accepted clicks");
             var activeArmy=await a.FetchArmyEntitiesAsync(timeout.Token);
             var otherArmy=await b.FetchArmyEntitiesAsync(timeout.Token);
-            Check(activeArmy.Count==expectedSoldiers && activeArmy.SequenceEqual(otherArmy) &&
+            // Independent scans can sample walking units on different host ticks.
+            Check(activeArmy.Count==expectedSoldiers && SameArmyIdentities(activeArmy, otherArmy) &&
                   activeArmy.All(x=>x.OwnerPlayerId==one && x.UnitId=="ID_UNIT-ASSAULT" &&
                     x.SpawnComponentFileId>0),
                   "both peers reconstruct the same complete active army entities");
@@ -147,7 +148,9 @@ internal static class LiveBarrelUdpTests
                   x.ArmyOptionIndex==selectedArmy && x.ArmyUnitId=="ID_UNIT-ASSAULT" &&
                   x.ArmyEntityId>0 && allowedSpawnIds.Contains(x.ArmySpawnComponentFileId)),
                   "both peers receive source-bound host soldier spawn records");
-            Check(first.SequenceEqual(second) &&
+            // The second reader may also receive events appended after the first reader finished.
+            ulong firstEventFence = first[^1].EventId;
+            Check(first.SequenceEqual(second.Where(item => item.EventId <= firstEventFence)) &&
                   first.Any(x=>x.Kind==MatchEventKind.BarrelDamaged && x.BarrelColliderIndex==82) &&
                   first.Any(x=>x.Kind==MatchEventKind.BarrelDestroyed && x.BarrelColliderIndex==82 &&
                       x.BarrelGameObjectFileId==tracker.Snapshot().Single(y=>y.ColliderIndex==82).GameObjectFileId &&
@@ -188,10 +191,35 @@ internal static class LiveBarrelUdpTests
                   "host-confirmed soldier and helicopter spawn totals survive the shared UDP snapshot");
             using var resumed=new MatchConnection(Grant(one,933,1));
             Check((await resumed.ConnectAsync(timeout.Token)).Code=="admitted" &&
-                  (await resumed.FetchArmyEntitiesAsync(timeout.Token)).SequenceEqual(completeArmy),
+                  SameArmyIdentities(await resumed.FetchArmyEntitiesAsync(timeout.Token), completeArmy),
                   "new signed session rebuilds active entities without relying on event history");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
         return checks;
+    }
+
+    private static bool SameArmyIdentities(IReadOnlyList<BattleArmyEntityState> first,
+        IReadOnlyList<BattleArmyEntityState> second)
+    {
+        if (first.Count != second.Count)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < first.Count; index++)
+        {
+            BattleArmyEntityState left = first[index];
+            BattleArmyEntityState right = second[index];
+            if (left.EntityKey != right.EntityKey || left.OwnerPlayerId != right.OwnerPlayerId ||
+                left.OwnerFraction != right.OwnerFraction || left.LocalEntityId != right.LocalEntityId ||
+                left.OptionIndex != right.OptionIndex || left.UnitId != right.UnitId ||
+                left.SourceCardId != right.SourceCardId || left.SpawnComponentFileId != right.SpawnComponentFileId ||
+                left.ReservationFileId != right.ReservationFileId || left.SpawnTick != right.SpawnTick)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

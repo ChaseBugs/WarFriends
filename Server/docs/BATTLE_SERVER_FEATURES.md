@@ -95,7 +95,7 @@ consume real source deadlines, draw/clamp the complete batch before the side gat
 latches and reschedule rejected sides. Twenty-four focused checks include actual accepted/rejected
 Park attempts at tick 199 and source retry timing. [Automatic volleys](ASSAULTER_VOLLEYS.md)
 now execute native-muzzle callbacks, retain current observed root velocity, fire the full source
-batch and reschedule after completion. Ninety-nine focused checks verify real/cosmetic rounds,
+batch and reschedule after completion. One hundred ten focused checks verify real/cosmetic rounds,
 Sickness shield damage and actual overtime player damage after the firing soldier dies.
 Three consecutive live volleys now verify the full batch/cadence, strict hide boundary,
 cover-back-to-idle transition and exact next preparation deadline for the same soldier.
@@ -106,6 +106,13 @@ A live Park fixture verifies unavailable-point retry, release by another soldier
 tick 709 and an actual new volley after arrival. A separate live fixture observes a first round
 at 493, a change deadline at 499 and the final round plus same-tick transfer at 504; the active
 volley is never interrupted. Complete cross-map runtime fixtures remain open.
+[Ordinary unit duels](ASSAULTER_DUELS.md) now prove automatic non-player speed-15 shots,
+three actual 44.4-damage infantry head hits from raw damage 29.6, a projectile-caused death at
+tick 698, reservation/shooting cleanup and the surviving shooter's next automatic living target.
+This is one fixed opposing deployment; all unit matchups and normal Client integration remain open.
+The complete default Windows Battle test executable now passes 247,551 assertions after the
+moving-roster UDP comparison correction. Its optional Unity Editor audit and Linux runtime
+verification were not run; this test total does not close the normal Client integration gate.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical
