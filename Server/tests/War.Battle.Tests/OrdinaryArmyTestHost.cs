@@ -25,6 +25,14 @@ internal static class OrdinaryArmyTestHost
         return CreateConfigured(content, new Setup(unitId, "Park", null, upgrades));
     }
 
+    internal static MatchEngine CreateWithIdleTimeout(BattleCombatContent content, string unitId, int seconds)
+    {
+        return CreateConfigured(content, new Setup(unitId, "Park", null, new UpgradeSelection(0, -1, -1))
+        {
+            IdleTimeoutSeconds = seconds
+        });
+    }
+
     private static MatchEngine CreateConfigured(BattleCombatContent content, Setup setup)
     {
         RecoveredBattleMap map = content.Maps.Single(candidate =>
@@ -36,7 +44,7 @@ internal static class OrdinaryArmyTestHost
         ];
         var manifest = new MatchManifest("ordinary-army-test", "native-test", $"{setup.Scene}_Multiplayer",
             map.SourceHash, content.Revision, MatchManifest.RifleCombatMode, AdmissionSeconds,
-            MatchDurationSeconds, IdleSeconds, players)
+            MatchDurationSeconds, setup.IdleTimeoutSeconds, players)
         {
             SceneMasterPlayerId = OwnerId
         };
@@ -60,7 +68,19 @@ internal static class OrdinaryArmyTestHost
             }).Code == "ready", "The primary-weapon fixture failed readiness.");
         }
 
-        host.Advance(StartTick);
+        if (setup.IdleTimeoutSeconds < 3)
+        {
+            for (ulong tick = 1; tick <= StartTick; tick++)
+            {
+                host.Resume(OwnerId);
+                host.Resume(OpponentId);
+                host.Advance(tick);
+            }
+        }
+        else
+        {
+            host.Advance(StartTick);
+        }
         return host;
     }
 
@@ -83,7 +103,10 @@ internal static class OrdinaryArmyTestHost
     internal sealed record UpgradeSelection(int Normal, int Special, int Elite, float DamageScale = 1f,
         float ShotSpeedCoefficient = 1f);
 
-    private sealed record Setup(string UnitId, string Scene, Func<int, int>? ArmyChoice, UpgradeSelection Upgrades);
+    private sealed record Setup(string UnitId, string Scene, Func<int, int>? ArmyChoice, UpgradeSelection Upgrades)
+    {
+        internal int IdleTimeoutSeconds { get; init; } = IdleSeconds;
+    }
 
     private static void Require(bool condition, string message)
     {

@@ -148,6 +148,13 @@ and a portable source-exact scale/alpha/rotation sampler. A stored-float lifecyc
 matches 1,205 native frames across first/repeated activation, overlapping replacement and
 nonpositive shrink durations; the focused group passes 8,353 assertions. Host launch projection,
 SDK and normal warning presentation remain open; this clock is not yet an active Client dependency.
+Host launch integration now retains a warning independently of its missile and soldier, preserves
+weapon reuse history, and clears terminal/dead hidden state. The focused group passes 8,727 checks.
+Idle detection now freezes the last completely applied frame before any Running-frame subsystem
+updates; an airborne pause/resume fixture covers the previously skipped missile/warning tick.
+Wire/SDK/Unity warning integration and recycled-source pool parity remain open.
+The complete host-warning/pause checkpoint passes 259,078 Battle assertions and 1,360 protocol
+assertions. This covers the host changes, not normal two-Unity warning gameplay.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

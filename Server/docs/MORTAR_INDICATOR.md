@@ -90,10 +90,68 @@ Its size is 36,485 compressed and 593,449 expanded bytes. Local evidence is
 `Server/.local/mortar-indicator-clock-tests.log` and
 `Server/.local/mortar-indicator-component-audit.log`. The private manifest was restored afterward.
 
+## Host ownership and pause boundary
+
+The host now creates one `MortarIndicatorRuntime` when an ordinary Mortar successfully launches.
+It copies the admitted owner/fraction, projectile identity, launch tick, final real/fake target,
+current stop time and native warning samples. Position includes the source 0.04-unit upward
+offset. Its immutable `MortarIndicatorObservation` exposes current presentation without sharing
+the mutable clock. Repeated shots reuse the same weapon history and replace its launch identity.
+
+Warnings advance once per completed simulation frame, independently of the construction map
+and live projectile collection. Soldier death preserves a still-visible world warning; its
+hidden history is removed once the dead weapon no longer owns a visible warning. Living
+weapons retain hidden history for reuse. Terminal closure clears every warning and history.
+The observed short-duration persistent-warning edge remains unchanged until explicit cleanup.
+
+The integration exposed a pre-existing pause-entry problem: idle detection previously occurred
+after the public simulation tick and some subsystems advanced, but before strict missile clocks
+advanced. Resuming could skip a missile/warning frame. Running-match presence checks now occur
+before the simulation frame begins. `ServerTick` remains the last completely applied frame;
+`PauseHostTick` and the existing 30/20/10-second reconnect windows advance on host wall time.
+Countdown cancellation and reconnect outcome rules remain in place. Tests now expect tick 299
+at a host pause entry of 300, and tick 118 at a host pause entry of 119.
+
+The focused indicator group passes 8,727 assertions. New coverage includes actual ordinary
+deployment/launch, final target offset and owner binding, same-tick reads, warning survival
+after shooter death, native expiry, terminal cleanup, retained observation independence and
+reused fake-shot targets. A deterministic physical-flight collision fixture confirms an early
+impact can finish while its warning remains visible; it is not a natural map collision proof.
+A live-engine idle test pauses during an airborne shot, advances four host seconds, resumes
+both peers and verifies the same next logical frame and retained missile authority. This is
+engine/API coverage, not real Unity reconnect acceptance. Local evidence is
+`Server/.local/mortar-indicator-host-tests-final.log`.
+The complete Battle executable subsequently passed 259,078 assertions, including existing
+authenticated UDP pause/resume, combat, source geometry and outcome regression coverage.
+Its log is `Server/.local/mortar-indicator-host-full.log`. The separate protocol executable
+passed 1,360 assertions at this checkpoint. These results do not establish Unity warning rendering.
+The final solution build completed with zero warnings/errors. The isolated Windows MongoDB,
+Backend and battle Worker smoke passed 74 live checks with two independent clients and no
+Photon, including reconnect and restart/replay evidence. Its aggregate log is
+`Server/.local/mortar-indicator-host-smoke.log`; isolated data/logs are at
+`Server/.local/smoke-fe879efb23c84c7ba16d1bc990a3a2cd`.
+
 ## Remaining production integration
 
 The sampler and lifecycle clock are not connected to Unity presentation yet. The installed SDK remains at the
 previous wire/weapon-pose checkpoint; this stage changes no active Client source, scene or prefab.
+The host now uses the clock internally, but does not yet publish warnings through protobuf.
+
+Pool identity must be resolved before fixing that wire contract. The active MainScene's
+NetworkObjectPool component 49549 references MortarEnemy component 11496012, prefab GUID
+`79ce5dcc1733e5a4eaac84b9e49f9994`, with Count 4. `NetworkObjectPool.Instantiate(int, ...)`
+selects the first free slot for the master/local-solo path and the last for the peer;
+`ObjectPool.FreeObject` adds a released slot at the front. SoldierParts uses this network pool
+to attach weapons, and EnemyBasicInventory returns them on destruction. This is source and
+serialized configuration evidence, not a native recycled-slot gameplay observation.
+
+Mortar.OnInstancied hides the old world indicator but does not remove its tween components.
+Furthermore, StartIndicatorAnimation returns for the local fraction, so tween activation history
+can differ between the two observers of the same recycled weapon. A global fresh-actor clock
+cannot establish original pool-slot or observer parity. The current internal host observation
+is therefore a first-actor/within-actor integration checkpoint, not the final warning wire
+contract. Keep that boundary explicit while adding pool allocation/return/reuse evidence and
+observer-specific state; do not infer original slot history from a new logical entity ID.
 
 The host already freezes `MortarMissileLaunch` target, launch tick, fake identity and weapon
 stop time, but current `BattleProjectileState` publishes only current pose/velocity and unit
@@ -110,4 +168,6 @@ explicit acceptance tests. Scene/session cleanup must remove any remaining owned
 Required gates include real/fake opposing warnings, allied suppression, normal combat frame
 timing, late receipt, reconnect, duplicate events, early impact, shooter death, repeat shots,
 terminal/session cleanup, packet capacity, normal two-Unity gameplay and Android rendering.
+Original recycled pool-slot ownership and activation history also require native gameplay proof;
+the current binding retains history per self-hosted actor and does not claim original pool parity.
 These remain open; neither the sampler nor the native method audit completes this feature.

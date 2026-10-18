@@ -127,6 +127,7 @@ public sealed partial class MatchEngine
         rocketFlights.Add(id, flight);
         rocketLaunches.Add(id, new CardRocketLaunchAuthority(entity.OwnerPlayerId, missile,
             armyCatalog.PlayerDamagePolicy(entity.UnitId)) { Mortar = weapon });
+        BeginMortarIndicator(launch);
         attempt.ProjectileId = id;
         Emit(MatchEventKind.Shot, entity.OwnerPlayerId, "", id, flight.Position, 0,
             attempt.IsFake ? "army-mortar-fake" : "army-mortar");

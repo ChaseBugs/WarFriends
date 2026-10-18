@@ -352,3 +352,11 @@ Server/tools/UnityMortarIndicatorProbe.cs text eol=lf
 Server/tools/UnityMortarIndicatorFrameExport.cs text eol=lf
 Server/src/War.Shared/MortarIndicatorClock.cs text eol=lf
 Server/tests/War.Battle.Tests/MortarIndicatorClockTests.cs text eol=lf
+
+# Host-owned warning lifetime and complete-frame reconnect pause.
+Server/src/War.BattleServer/MatchEngine.MortarIndicators.cs text eol=lf
+Server/src/War.BattleServer/MatchEngine.ReconnectPause.cs text eol=lf
+Server/src/War.BattleServer/MortarIndicatorObservation.cs text eol=lf
+Server/src/War.BattleServer/MortarIndicatorRuntime.cs text eol=lf
+Server/tests/War.Battle.Tests/MortarIndicatorHostTests.cs text eol=lf
+Server/tests/War.Battle.Tests/MortarIndicatorRuntimeTests.cs text eol=lf

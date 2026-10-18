@@ -831,6 +831,8 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     {
         int indicatorChecks = MortarIndicatorTweenTests.Run(Path.Combine(directory.FullName, "content"));
         indicatorChecks += MortarIndicatorClockTests.Run(Path.Combine(directory.FullName, "content"));
+        indicatorChecks += MortarIndicatorRuntimeTests.Run();
+        indicatorChecks += MortarIndicatorHostTests.Run(Path.Combine(directory.FullName, "content"));
         Console.WriteLine($"PASS: {indicatorChecks} native Mortar indicator tween checks");
         return;
     }
@@ -2015,10 +2017,10 @@ idle.Admit(a); idle.Admit(b); idle.Command(a, Ready(1, idle.ManifestHash)); idle
 idle.Advance(299); idle.Command(a, Poll()); idle.Advance(300);
 float pausedComboTime = idle.PlayerOwnedDeathGameTime;
 Check(idle.Snapshot().Players[1] is {Reconnecting:true,ReconnectAttempts:1,ReconnectDeadlineHostTick:1200} &&
-      idle.Snapshot().ServerTick==300 && idle.Snapshot().PauseHostTick==300,
+      idle.Snapshot().ServerTick==299 && idle.Snapshot().PauseHostTick==300,
       "first idle peer starts recovered 30-second grace and pauses simulation");
 idle.Advance(1199);
-Check(idle.Snapshot().ServerTick==300 && idle.Snapshot().PauseHostTick==1199 &&
+Check(idle.Snapshot().ServerTick==299 && idle.Snapshot().PauseHostTick==1199 &&
       idle.PlayerOwnedDeathGameTime == pausedComboTime &&
       idle.Command(a,Poll()).Code=="state", "reconnect grace advances wall time without simulation");
 idle.Advance(1200);
@@ -2050,7 +2052,7 @@ Check(overlappingLoss.Snapshot().Players[1] is
       "first peer gets the recovered 30-second reconnect window");
 overlappingLoss.Advance(1018); // A has also gone silent during B's grace window.
 Check(overlappingLoss.Snapshot().Phase == BattlePhase.Running &&
-      overlappingLoss.Snapshot().ServerTick == 119,
+      overlappingLoss.Snapshot().ServerTick == 118,
       "overlapping disconnects keep simulation paused until the host deadline");
 overlappingLoss.Advance(1019);
 Check(overlappingLoss.Snapshot() is
@@ -2200,7 +2202,7 @@ pausing.Advance(119);pausing.Advance(130);
 var pauseView=new Packet {Version=1,SessionId=pauseA.SessionId,Sequence=5,MatchCommand=Poll()};
 var pauseBytes=pausing.Handle(pauseView,PacketCodec.Encode(pauseView,tokens.SessionKey(pauseA)),sender,now);
 Check(PacketCodec.ReadUntrusted(pauseBytes!)?.MatchReply.Snapshot is
-      {ServerTick:119,PauseHostTick:130,Players:{Count:2}} pausedSnapshot &&
+      {ServerTick:118,PauseHostTick:130,Players:{Count:2}} pausedSnapshot &&
       pausedSnapshot.Players[1].Reconnecting,
       "authenticated UDP poll sees frozen simulation and opponent reconnect deadline");
 var pauseReplacement=PauseClaims(b,203UL,1);
@@ -3721,6 +3723,8 @@ checks += MortarMissileFlightTests.Run();
 checks += MortarWeaponPoseProjectionTests.Run();
 checks += MortarIndicatorTweenTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarIndicatorClockTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MortarIndicatorRuntimeTests.Run();
+checks += MortarIndicatorHostTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarAccumulatedClockReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleAbortReasonCoverageTests.Run(contentRoot.FullName);
 checks += MortarDetachedWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));

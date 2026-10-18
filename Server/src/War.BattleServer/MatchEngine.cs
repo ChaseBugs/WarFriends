@@ -1330,6 +1330,12 @@ public sealed partial class MatchEngine : IMatchRuntime
             }
             return;
         }
+        // Pause before publishing or partially advancing a simulation frame. Strict projectile and
+        // warning clocks must resume after the same last completed tick, not a half-applied idle tick.
+        if (phase == BattlePhase.Running && TryPauseForIdleParticipant())
+        {
+            return;
+        }
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;
@@ -1486,27 +1492,10 @@ public sealed partial class MatchEngine : IMatchRuntime
             BeginOvertime();
             if(Terminal)return;
         }
-        var idle = players.Where(p => hostTick - p.LastSeen >= (ulong)manifest.IdleSeconds * MatchManifest.TickRate).ToArray();
-        if (idle.Length > 0)
+        if (phase == BattlePhase.Countdown && players.Any(player =>
+            hostTick - player.LastSeen >= (ulong)manifest.IdleSeconds * MatchManifest.TickRate))
         {
-            if(phase==BattlePhase.Countdown)
-            {
-                End("prestart-disconnect","",false);
-                return;
-            }
-            if(idle.Length==2){End("both-disconnected","",false);return;}
-            var disconnected=idle[0];
-            disconnected.ReconnectAttempts++;
-            if(disconnected.ReconnectAttempts>3)
-            {
-                End("opponent-disconnected",players.Single(p=>p!=disconnected).Definition.PlayerId,true);
-                return;
-            }
-            RemoveOwnedDeployables(disconnected.Definition.PlayerId);
-            disconnected.Reconnecting=true;
-            uint grace=disconnected.ReconnectAttempts switch {1=>30,2=>20,_=>10};
-            disconnected.ReconnectDeadlineHostTick=hostTick+grace*MatchManifest.TickRate;
-            stateRevision++;
+            End("prestart-disconnect", "", false);
             return;
         }
         bool justStarted = phase == BattlePhase.Countdown && tick >= startTick;
@@ -1716,6 +1705,11 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             // Existing missiles advance before new launches, which first move on the next host tick.
             try { AdvanceMortarShooting(); }
+            catch (InvalidDataException) { End("invalid-mortar-shooting", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && _mortarIndicators.Count > 0)
+        {
+            try { AdvanceMortarIndicators(); }
             catch (InvalidDataException) { End("invalid-mortar-shooting", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running && rocketAttacks.Count > 0)
@@ -3132,6 +3126,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         rocketFlights.Clear();
         rocketLaunches.Clear();
         _mortarDetachedWeapons.Clear();
+        _mortarIndicators.Clear();
         _mortarControllerTimes.Clear();
         _mortarRelocationTimes.Clear();
         grenadierFlights.Clear();
