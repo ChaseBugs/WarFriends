@@ -15,6 +15,11 @@ reads mShotTarget.transform.position again, and predicts with zero extra time. T
 from Assaulter's frozen prepared aim, triple entity speed and extra 0.3 seconds at callback.
 A later moving-player acquisition retains the multiplier written by the previous callback.
 
+For Shield, GameShootableEntityPlayer.GetShotTargets creates a new ShotTarget whose transform
+is the selected cover's shotPosition. The callback therefore retains that captured cover binding,
+not the player's serialized Shield child and not a newly selected cover. The target descriptor
+now records the captured cover index for callback resolution.
+
 GunslingerWeaponAimState exposes those stages separately. Callback callers must provide the
 current raw source transform, current target velocity and current animated muzzle. Selection-time
 prediction must never be fed back as the callback's raw transform. Prediction validates all inputs
@@ -44,8 +49,7 @@ pass 50 and 16 checks respectively; the shared Assaulter aim group passes 14. Re
 zero warnings/errors. Shared combat regression passes 26,395 assertions; the native stand
 source-bound verifier remains unchanged. The full default suite and Linux runtime were not rerun.
 
-The numerical callback tests supply current poses directly. A scheduled normal Gunslinger
-callback, target-pose resampling in that scheduler, root turn, projectile launch, collision,
-point change and normal Client presentation are still pending. These helpers and captures are
-not proof of automatic firing. See the [feature checklist](BATTLE_SERVER_FEATURES.md),
-[target selection](GUNSLINGER_TARGET_SELECTION.md) and [native timing](GUNSLINGER_STAND_TIMING.md).
+The numerical aim tests supply current poses directly. The subsequent
+[automatic shooting implementation](GUNSLINGER_SHOOTING.md) now executes source preparation,
+callback sampling and real/cosmetic projectile flight. Point changes, holstering and the remaining
+presentation/combat proofs are tracked there and on the feature checklist.

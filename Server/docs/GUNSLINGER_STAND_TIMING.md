@@ -50,10 +50,11 @@ EnemyController, weapon readiness, projectiles, collisions, interrupted/reversed
 failed attempts are not executed by that probe. Unity 2018.3.0f2 observation is not a claim of
 original Unity 5.2.5f1 parity or normal Client gameplay validation.
 
-The Release build passes with zero warnings and errors. The focused stand group passes 54 checks,
+The Release build passes with zero warnings and errors. The focused stand group now passes 56 checks (including both native hide transitions),
 and normal Gunslinger navigation still passes all 50 checks across five maps. The complete default
 suite and Linux runtime were not rerun for this checkpoint.
 
-The server clock is tested independently and is not yet wired into ordinary Gunslinger combat.
-Actual target selection, callback aim, root turn, one-shot execution, point changes and normal
-Client presentation remain implementation work on the BattleServer feature checklist.
+The clock is now wired into the [automatic normal-unit shooting path](GUNSLINGER_SHOOTING.md).
+The native probe remains animation/coroutine evidence only; actual server projectile proof comes
+from the separate ordinary-deployment shooting fixture. Point changes, interrupted/failed
+preparations and normal Client presentation remain open.

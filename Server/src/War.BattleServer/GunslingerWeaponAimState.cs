@@ -17,6 +17,8 @@ internal sealed class GunslingerWeaponAimState
     private readonly float _baseSpeed;
     private float _speedMultiplier = EntitySpeedMultiplier;
 
+    internal float BaseBulletSpeed => _baseSpeed;
+
     internal float RealBulletSpeed => _baseSpeed * _speedMultiplier;
 
     internal GunslingerWeaponAimState(float baseSpeed)

@@ -126,6 +126,7 @@ public sealed partial class MatchEngine
         _gunslingerRetries.Remove(entityKey);
         _gunslingerArrivals.Remove(entityKey);
         _gunslingerAimWeapons.Remove(entityKey);
+        _gunslingerAttempts.Remove(entityKey);
     }
 
     private sealed record GunslingerWalk(CardSoldierWalkState Motion, ulong FirstTick);

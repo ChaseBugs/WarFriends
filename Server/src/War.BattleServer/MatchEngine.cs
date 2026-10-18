@@ -1648,6 +1648,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceGunslingerNavigation(); }
             catch (InvalidDataException) { End("invalid-gunslinger-navigation", "", false); return; }
         }
+        if (advanced && phase == BattlePhase.Running && _gunslingerArrivals.Count > 0)
+        {
+            try { AdvanceGunslingerPreparations(); }
+            catch (InvalidDataException) { End("invalid-gunslinger-preparation", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && grenadierWalks.Count > 0)
         {
             try { AdvanceCardGrenadierWalks(); }
@@ -1769,6 +1774,12 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try { ObserveArmyRootMotion(); }
             catch (InvalidDataException) { End("invalid-army-motion-observation", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && _gunslingerAttempts.Count > 0)
+        {
+            try { AdvanceGunslingerShots(); }
+            catch (InvalidDataException) { End("invalid-gunslinger-shot", "", false); return; }
+            if (Terminal) return;
         }
         if (advanced && phase == BattlePhase.Running && _assaulterVolleys.Count > 0)
         {

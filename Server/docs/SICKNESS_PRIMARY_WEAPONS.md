@@ -55,19 +55,18 @@ alternating-gun path. Separate affected/baseline hosts produce matching launch t
 identical actual Shotgunner damage 30.46239 and Warper damage 187.64558; Sickness changes
 current health but leaves the source shotgun falloff intact.
 
-Paratrooper and Gunslinger currently have spawn-mutation/disconnection proof only. Normal
-Paratrooper deployment can select an airborne spawn without initializing the existing card
-parachute/landing executor. [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) now reaches
-its source point and initializes entry counters, but has no ordinary shot/burst executor yet.
-Those independent gameplay paths remain explicit implementation work; their tests report no
-automatic-fire proof, and do not inject a shot or a ground position to conceal the missing AI.
+Paratrooper currently has spawn-mutation/disconnection proof only. Normal deployment can
+select an airborne spawn without initializing the existing card parachute/landing executor.
+The [ordinary Gunslinger shooting path](GUNSLINGER_SHOOTING.md) now supplies actual automatic
+projectile evidence: the affected actor launches damage 118.245 at tick 324 after the window
+closes. The test does not inject a shot or move the actor to conceal missing AI.
 
 Each conventional-gun launch is bound to the affected soldier and its captured pre-effect damage, with special
 upgrades absent. This proves automatic changed gun damage after the window closes, not special
 critical behavior, every physical victim outcome or normal Unity presentation. Existing Assaulter
 tests separately prove changed shield damage through a real collision.
 
-The Sickness group passes 163 checks, the Assaulter group passes 110 and shared combat regression
+The Sickness group now passes 164 checks, the Assaulter group passes 110 and shared combat regression
 passes 26,395 assertions. Release build has zero
 warnings/errors. The full default Battle suite was last verified at commit 8ed268d3e with
 247,551 assertions; it was not rerun for this binding checkpoint.

@@ -2,7 +2,7 @@
 
 Ordinary Gunslinger deployment now selects, reserves and walks to its original multiplayer
 destination rather than remaining idle at the spawn. This is ground navigation and source
-arrival-state initialization, not yet an executed Gunslinger volley.
+arrival-state initialization. Automatic shooting is verified separately below.
 
 ## Recovered evidence
 
@@ -53,15 +53,15 @@ recovered upgrade shot lanes; initialization now composes those lanes explicitly
 
 The checks cover nearest free selection at spawn, walking clips, separate reservations,
 same-fraction authored arrival, exact source entry counters/deadlines and death cleanup.
-The ordinary-unit test host is shared with Sickness fixtures, which continue to pass 163 checks.
+The ordinary-unit test host is shared with Sickness fixtures, which now pass 164 checks including a real Gunslinger launch.
 Shared combat regression also passes 26,395 assertions after the navigation integration.
 Release build has zero warnings/errors. The complete default suite, Unity and Linux runtime
 were not rerun for this checkpoint.
 
-Actual shot preparation, callback muzzle/aim prediction, one-shot attempts, speed coefficients,
-complete burst/point-change execution, gun snapping and normal Client presentation remain open.
-Arrival metadata must not be described as real firing. Paratrooper descent/landing is a separate
-missing normal-unit path. These requirements remain on the BattleServer feature checklist.
+The later [ordinary shooting path](GUNSLINGER_SHOOTING.md) now executes shot preparation,
+callback muzzle/aim prediction, one-shot attempts and real/cosmetic projectiles. Exhausted-attempt
+point changes, gun snapping and normal Client presentation remain open. Paratrooper descent/landing
+is a separate missing normal-unit path. These remain on the BattleServer feature checklist.
 
-[Stand timing evidence](GUNSLINGER_STAND_TIMING.md) now verifies native animation callbacks and
-next gameplay polls independently. It does not close the actual shot-execution work above.
+[Stand timing evidence](GUNSLINGER_STAND_TIMING.md) verifies native animation callbacks,
+next gameplay polls and both source hide transitions independently of real projectile tests.

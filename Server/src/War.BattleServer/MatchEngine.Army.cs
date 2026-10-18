@@ -533,6 +533,11 @@ public sealed partial class MatchEngine
                 clip = sampledClip.ClipName;
                 assaulterClipStartTick = tick - (ulong)MathF.Round(sampledClip.TimeSeconds * MatchManifest.TickRate);
             }
+            else if (GunslingerShotPose(key) is { } gunslingerPose)
+            {
+                clip = gunslingerPose.Clip;
+                assaulterClipStartTick = tick - (ulong)MathF.Round(gunslingerPose.Seconds * MatchManifest.TickRate);
+            }
             else if (_gunslingerWalks.TryGetValue(key, out var gunslingerWalk))
             {
                 clip = clips.Walk;
@@ -3953,7 +3958,7 @@ public sealed partial class MatchEngine
             Emit(MatchEventKind.Impact,impact.EntityKey.ToString(),
                 impact.Collision.PlayerId??impact.Collision.BonusBoxId??"",
                 impact.ProjectileId,impact.Collision.Position,0,"army");
-            if (launch.UnitId == "ID_UNIT-ASSAULT")
+            if (launch.UnitId is "ID_UNIT-ASSAULT" or "ID_UNIT-GUNSLINGER")
             {
                 try { ApplyAssaulterEntityImpact(impact, launch); }
                 catch (InvalidDataException) { End("invalid-assaulter-impact", "", false); return; }
@@ -4592,6 +4597,7 @@ public sealed partial class MatchEngine
         _=recipient.Army!.PreviewKillEnergy(spawned.Power);
         if(!EventCapacityForArmyDeath())
         {End("army-event-backpressure","",false);return false;}
+        FreezeGunslingerTargetsForDeath(entityKey);
         if(owner.Army!.RemoveEntity(row.LocalEntityId)==null ||
            !armyReservations!.Release(entityKey) || !activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Army death compare-and-remove failed.");

@@ -75,26 +75,23 @@ and weapon damage halve, maximum health stays unchanged, and friendly authority 
 The [ordinary gun binding](SICKNESS_PRIMARY_WEAPONS.md) covers nine ordinary layouts, including
 Paratrooper, SWAT, Gunslinger and Commando. SWAT and two consecutive Commando rounds capture
 half damage. Shotgunner/Warper instead preserve actual damage from their separate min/max fields,
-matching baseline hosts. Paratrooper/Gunslinger currently have spawn-mutation proof only: normal
-airborne descent/landing and ordinary Gunslinger shot execution remain missing. The
-Sickness group passes 163 checks; other layouts and authorized card activation remain open.
-[Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) now pins all 30 dedicated multiplayer
-points, reserves nearest same-fraction destinations, walks live routes and initializes the source
-arrival counters/deadlines. Fifty checks cover two actual arrivals on every map and death cleanup.
-The Desert route continues past its approximate projected-endpoint threshold until the original
-authored-point test passes. Actual Gunslinger shot/burst execution and normal Paratrooper landing
-remain unimplemented; the entry clocks are not firing proof.
-[Stand timing evidence](GUNSLINGER_STAND_TIMING.md) now checks real native animation callbacks,
-next gameplay polls and muzzle phases in two update orders. The tested clock remains separate
-from actual ordinary Gunslinger shot execution.
-[Target selection](GUNSLINGER_TARGET_SELECTION.md) now exposes the source Decoy/Rusher priority,
-Head preference and retained headless fallback index through a match-owned selector. Live
-deployment checks cover current opposing Head poses and death cleanup. Automatic acquisition
-and firing are still pending.
-[Colt aim and one-shot batch](GUNSLINGER_AIM.md) now preserve current-position callback math,
-half player speed, persistent actor-owned speed and all base real/fake draws before forcing one
-round. Normal deployments initialize and clean up that state; scheduled callbacks and actual
-projectile execution remain pending.
+matching baseline hosts. Paratrooper still has spawn-mutation proof only; normal airborne
+landing remains missing. Gunslinger now launches actual half-damage rounds after the window closes.
+The Sickness group passes 164 checks; other layouts and authorized card activation remain open.
+[Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
+reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
+cover two arrivals on every map and death cleanup. The Desert route continues past the projected
+endpoint threshold until the authored-point test passes.
+[Stand timing evidence](GUNSLINGER_STAND_TIMING.md) pins native callback/poll muzzle phases and
+binary32 hide transitions in two update orders (56 checks).
+[Target selection](GUNSLINGER_TARGET_SELECTION.md) preserves Decoy/Rusher priority, Head preference
+and the retained headless fallback index. [Colt aim](GUNSLINGER_AIM.md) preserves current-position
+callback math, half player speed and the base real/fake draws before forcing one round.
+[Ordinary Gunslinger shooting](GUNSLINGER_SHOOTING.md) now connects those rules to actual automatic
+preparation, callbacks, three single-shot attempts, real/cosmetic flights, authoritative shield
+hits and shooter-death cleanup. The Shield callback retains its captured cover shotPosition;
+it must not substitute the serialized player-child transform. Exhausted-attempt point changes,
+holstering, moving-victim/native blend proof and normal Client presentation remain open.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

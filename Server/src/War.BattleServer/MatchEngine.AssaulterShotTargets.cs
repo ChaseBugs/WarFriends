@@ -5,7 +5,10 @@ using War.Protocol;
 namespace War.BattleServer;
 
 internal sealed record AssaulterShotTarget(string EntityId, string OwnerPlayerId,
-    int TransformFileId, int ShotTargetType, Vector3 TransformPosition, bool IsPlayer);
+    int TransformFileId, int ShotTargetType, Vector3 TransformPosition, bool IsPlayer)
+{
+    internal int? CapturedShieldCoverIndex { get; init; }
+}
 
 public sealed partial class MatchEngine
 {
@@ -163,6 +166,9 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Assaulter player transform lost its source target list.");
         PlayerShotTarget target = targets.Nearest(mask, origin, Position);
         return new AssaulterShotTarget(DronePlayerId(playerId), playerId,
-            target.TransformFileId, target.Type, Position(target), true);
+            target.TransformFileId, target.Type, Position(target), true)
+        {
+            CapturedShieldCoverIndex = mask == AssaulterShieldMask ? opponent.Cover : null
+        };
     }
 }

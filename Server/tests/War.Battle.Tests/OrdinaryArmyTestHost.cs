@@ -14,7 +14,8 @@ internal static class OrdinaryArmyTestHost
     private static readonly string OwnerId = new('a', 32);
     private static readonly string OpponentId = new('b', 32);
 
-    internal static MatchEngine Create(BattleCombatContent content, string unitId, string scene = "Park")
+    internal static MatchEngine Create(BattleCombatContent content, string unitId, string scene = "Park",
+        Func<int, int>? armyChoice = null)
     {
         RecoveredBattleMap map = content.Maps.Single(candidate =>
             candidate.Source.EndsWith($"/{scene}_Multiplayer.unity", StringComparison.Ordinal));
@@ -25,7 +26,7 @@ internal static class OrdinaryArmyTestHost
         {
             SceneMasterPlayerId = OwnerId
         };
-        var host = new MatchEngine(manifest, map, content, armyChoice: _ => 0, combatRandom: () => 1f);
+        var host = new MatchEngine(manifest, map, content, armyChoice: armyChoice ?? (_ => 0), combatRandom: () => 1f);
         host.ConfigureBattleAllocations(players.Select(player => new BattleAllocationProjection(player.PlayerId,
             [], [], [0], [-1], [-1])).ToArray());
         foreach (ParticipantManifest player in players)

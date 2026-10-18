@@ -61,6 +61,13 @@ internal static class GunslingerStandTimingTests
             checks += CheckPose(shots[index], clock, content.CoopEnemyMuzzles);
         }
 
+        ulong lastPreparation = preparations[AttemptsPerScenario - 1].GetProperty("tick").GetUInt64();
+        JsonElement firstStop = scenario.GetProperty("frames").EnumerateArray().First(row =>
+            row.GetProperty("phase").GetString() == "probe-late-update" &&
+            row.GetProperty("pose").GetProperty("states").EnumerateArray().Any(state =>
+                state.GetProperty("name").GetString() == "colt_shooting_stop"));
+        checks += Require(GunslingerFiringClock.HideTick(lastPreparation) == firstStop.GetProperty("tick").GetUInt64(),
+            "The strict binary32 source hide clock diverged from the native stop transition.");
         string? scenarioName = scenario.GetProperty("scenario").GetString();
         Console.WriteLine($"PASS: native Gunslinger {scenarioName} callback/poll phases.");
         return checks;

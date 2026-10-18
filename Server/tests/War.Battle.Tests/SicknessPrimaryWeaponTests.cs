@@ -47,9 +47,9 @@ internal static class SicknessPrimaryWeaponTests
         AdvanceUntil(host, () => !window.IsArmed);
         int checks = CheckSpawns(host, spawns);
         checks += CheckDisconnected(host, window, spawns);
-        if (unitId is "ID_UNIT-PARATROOPER" or "ID_UNIT-GUNSLINGER")
+        if (unitId == "ID_UNIT-PARATROOPER")
         {
-            // These normal automatic-fire paths are not connected yet. Spawn mutation is valid evidence;
+            // The normal parachute descent/fire path is not connected yet. Spawn mutation is valid evidence;
             // claiming an automatic shot here would hide their independent gameplay backlog.
             Console.WriteLine($"PASS: Sickness {unitId} spawn mutation; normal automatic-fire proof remains open.");
         }

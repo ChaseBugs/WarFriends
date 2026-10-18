@@ -15,8 +15,10 @@ preserves this order, validates the empty-range result, and excludes Out transfo
 
 Player fallback retains the shared Shield/body/moving-target selection policy; it is not a
 universal player headshot. Selection-time Shield position is the current cover shot position.
-The later Gunslinger ShootJustStarted callback must separately resample the selected raw
-transform and current velocity before prediction. That callback is not implemented here.
+GameShootableEntityPlayer.GetShotTargets creates a new Shield target referencing that cover's
+shotPosition transform. The later Gunslinger callback retains the captured cover identity,
+even if the player subsequently moves. It must not substitute a serialized player-child target.
+Other selected transforms and the player's current velocity are sampled again at callback.
 
 ## Server implementation
 
@@ -42,7 +44,6 @@ The Release build passes with zero warnings/errors. The focused group passes 16 
 shared Assaulter target and real-volley regressions pass 29 and 110 checks respectively.
 The native stand source-bound verifier also remains unchanged and passes.
 
-These tests call the match-owned selector directly. Ordinary Gunslinger Update has not yet been
-connected to automatic target acquisition, preparation, callback prediction, one-shot projectiles
-or point changes. No normal Client gameplay, Linux runtime or full default suite is claimed.
-See [stand timing](GUNSLINGER_STAND_TIMING.md) and the [feature checklist](BATTLE_SERVER_FEATURES.md).
+These focused selector tests call the match-owned selector directly. The later
+[automatic shooting path](GUNSLINGER_SHOOTING.md) now also uses it during ordinary gameplay ticks.
+Point changes, holstering and normal Client presentation remain open.

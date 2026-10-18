@@ -34,6 +34,31 @@ internal static class GunslingerFiringClock
         return checked(shotTick + (ulong)MathF.Floor(CadenceSeconds * MatchManifest.TickRate) + 1);
     }
 
+    internal static ulong HideTick(ulong preparationTick)
+    {
+        const float TickSeconds = 1f / MatchManifest.TickRate;
+        const float HideSeconds = 1f;
+        const ulong MaximumSimulationTick = 10_000_000;
+        if (preparationTick > MaximumSimulationTick)
+        {
+            throw new InvalidDataException("Gunslinger hide clock exceeds bounded match time.");
+        }
+
+        // Native Time.captureFramerate advances a binary32 tick interval. Strict
+        // Time.time > preparationTime + 1 can select either elapsed tick 30 or 31.
+        float deadline = preparationTick * TickSeconds + HideSeconds;
+        for (ulong offset = MatchManifest.TickRate; offset <= MatchManifest.TickRate + 1; offset++)
+        {
+            ulong candidate = checked(preparationTick + offset);
+            if (candidate * TickSeconds > deadline)
+            {
+                return candidate;
+            }
+        }
+
+        throw new InvalidDataException("Gunslinger hide clock has no bounded strict successor.");
+    }
+
     internal static float? FireLoopSeconds(GunslingerFireLoopEntry entry, ulong elapsedTick, float startLength)
     {
         ValidateDelay(startLength);
