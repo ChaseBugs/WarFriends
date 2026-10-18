@@ -30,10 +30,20 @@ public sealed record BattlePairingResult(string Code,string? MatchId,IReadOnlyLi
 public sealed partial class BattleMatchQueueStore
 {
     private static readonly TransactionOptions QueueTransaction=new(readConcern:ReadConcern.Snapshot,writeConcern:WriteConcern.WMajority);
-    private readonly MongoClient client;
+    private readonly IMongoClient client;
     private readonly IMongoCollection<BattleQueueTicketDocument> tickets;
     private readonly IMongoCollection<BattlePairDocument> pairs;
     private readonly IMongoCollection<BattleQueueAttemptDocument> attempts;
+
+    /// <summary>Shares the configured database client's transaction and command-observation settings.</summary>
+    public BattleMatchQueueStore(IMongoDatabase database)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        client = database.Client;
+        tickets = database.GetCollection<BattleQueueTicketDocument>("battle_queue_tickets");
+        pairs = database.GetCollection<BattlePairDocument>("battle_pairs");
+        attempts = database.GetCollection<BattleQueueAttemptDocument>("battle_queue_attempts");
+    }
     public BattleMatchQueueStore(string uri,string databaseName)
     {
         var settings=MongoClientSettings.FromConnectionString(uri);settings.ServerSelectionTimeout=TimeSpan.FromSeconds(5);

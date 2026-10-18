@@ -62,6 +62,7 @@ internal static class CardAllocationQuantityTests
             await BattleAllocationPreparationTests.RunMongoAsync(connectionString, databaseName);
             await BattleAllocationPreparationRaceTests.RunMongoAsync(connectionString, databaseName);
             await BattleAllocationPreparationOwnershipTests.RunMongoAsync(connectionString, databaseName);
+            await BattlePreparationAdmissionRaceTests.RunMongoAsync(connectionString, databaseName);
             await BattleManifestAuthorityTests.RunMongoAsync(connectionString, databaseName);
             await BattleManifestSnapshotRaceTests.RunMongoAsync(connectionString, databaseName);
             await BattleAdmissionFenceTests.RunMongoAsync(connectionString, databaseName);

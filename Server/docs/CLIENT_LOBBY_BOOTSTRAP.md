@@ -457,3 +457,18 @@ and verifies rejection again without an account revision change. Build evidence 
 `Server/.local/admission-active-ownership-build.log`. These are actual Mongo store transactions,
 not a running Worker or normal two-Unity match. Cross-path refresh races and prepared-rematch
 revision binding remain open; allocation refresh itself is still disabled.
+
+The preparation-versus-general-queue race now passes in
+`preparation-admission-race-tests.log` in the existing evidence directory, exit zero.
+An actual preparation transaction holds the shared fence after reading its account. A separate
+configured Mongo client's command observer confirms normal queue admission attempts to insert
+that same fence before the gate is released. No ticket is visible and admission is incomplete
+while preparation is held. After release, preparation commits, admission returns waiting, and
+the persisted allocation matches the current account. The test then cancels its exact waiting
+ticket. No production pause hook is used. `BattleMatchQueueStore(IMongoDatabase)` reuses the
+configured client's sessions; the ordinary URI constructor retains its existing settings.
+
+The complete inventory suite still passes, including active-ownership, account mutation,
+paired snapshot and card-pack concurrency checks. Build evidence is
+`Server/.local/preparation-admission-race-build.log`, zero warnings/errors. This verifies one
+cross-path ordering; rematch-versus-refresh and prepared-rematch revision binding remain open.
