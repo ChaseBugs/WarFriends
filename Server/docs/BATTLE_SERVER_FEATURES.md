@@ -109,6 +109,12 @@ checks cover admitted upgrade rows, friendly/opposing Sickness callbacks, unchan
 and timing, final callback disconnection and death cleanup. Mortar navigation, construction,
 natural firing/flights/hits and normal Unity integration remain open; setup proof does not close them.
 The full default Battle suite passed 247,970 assertions after this change, including real two-peer UDP.
+[Mortar navigation](MORTAR_NAVIGATION.md) now binds forty ordered source destinations and forty
+native Unity NavMesh endpoint samples. Twenty ordinary Mortars from real deployments reach exclusive destinations
+across both fractions on all five maps, capture source construction deadlines and select the
+construction clips. The focused Mortar group passes 212 checks. Construction-facing rotation,
+automatic firing/flights/hits, post-shot relocation and normal Unity acceptance remain open.
+The full default Battle suite passes 248,137 assertions after the navigation change, including real two-peer UDP.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

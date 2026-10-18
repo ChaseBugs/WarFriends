@@ -829,7 +829,9 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (args[0] == "--ordinary-mortar-only")
     {
         int mortarChecks = OrdinaryMortarTests.Run(Path.Combine(directory.FullName, "content"));
-        Console.WriteLine($"PASS: {mortarChecks} ordinary Mortar setup checks");
+        mortarChecks += MortarNavigationTests.Run(Path.Combine(directory.FullName, "content"));
+        mortarChecks += MortarNavMeshReferenceTests.Run(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {mortarChecks} ordinary Mortar authority/navigation checks");
         return;
     }
     if (args[0] == "--ordinary-rocket-only")
@@ -3671,6 +3673,8 @@ checks += SicknessPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "con
 checks += SicknessOrdinaryGrenadierTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += OrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += OrdinaryMortarTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MortarNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MortarNavMeshReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessOrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerStandTimingTests.Run(Path.Combine(contentRoot.FullName, "content"));

@@ -732,6 +732,7 @@ public sealed partial class ArmyDeploymentCatalog
             x=>x.GetProperty("NAME").GetString()!,StringComparer.Ordinal);
         var sourceSheets=document.RootElement.GetProperty("sheets").EnumerateArray()
             .ToDictionary(x=>x.GetProperty("type").GetString()!,StringComparer.Ordinal);
+        IReadOnlyList<float> mortarBuildTimes = ReadMortarBuildTimes(sourceSheets["Google2u.DBUpgradeSlotsMortar"]);
         var acceptedStats=new Dictionary<string,IReadOnlyList<ArmyBaseCombatStats>>(StringComparer.Ordinal);
         var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
         var acceptedSpecials=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
@@ -925,6 +926,7 @@ public sealed partial class ArmyDeploymentCatalog
             if(cannons!=null)acceptedVehicleCannons.Add(family.UnitId,Array.AsReadOnly(cannons));
         }
         baseStats=acceptedStats;
+        _mortarBuildTimes = mortarBuildTimes;
         vehicleCannonStages=acceptedVehicleCannons;
         upgradeShots=acceptedShots;
         specialValues=acceptedSpecials;

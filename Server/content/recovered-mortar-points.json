@@ -1,0 +1,811 @@
+{
+  "version": 1,
+  "unitSource": {
+    "source": "Assets/Scenes/MainScene.unity",
+    "sha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+    "behaviorFileId": 41188,
+    "enemyPointMask": 4096
+  },
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "mapDefinitionFileId": 2666,
+      "collectionComponentFileId": 2334,
+      "points": [
+        {
+          "order": 22,
+          "componentFileId": 2228,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 351,
+          "transformFileId": 866,
+          "fraction": 2,
+          "worldPosition": [
+            2.9787999999999997,
+            -0.027122099999999927,
+            -2.502230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 23,
+          "componentFileId": 2495,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 599,
+          "transformFileId": 1231,
+          "fraction": 2,
+          "worldPosition": [
+            1.7038000000000002,
+            -0.1021221,
+            -0.923230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 24,
+          "componentFileId": 2261,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 389,
+          "transformFileId": 922,
+          "fraction": 2,
+          "worldPosition": [
+            3.1788,
+            0.1508779,
+            2.584769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 25,
+          "componentFileId": 2681,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 655,
+          "transformFileId": 1312,
+          "fraction": 2,
+          "worldPosition": [
+            1.9508,
+            0.010877899999999996,
+            2.688769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 55,
+          "componentFileId": 2455,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 549,
+          "transformFileId": 1150,
+          "fraction": 1,
+          "worldPosition": [
+            -3.1622000000000003,
+            -0.010122099999999912,
+            -2.510230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 56,
+          "componentFileId": 2285,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 409,
+          "transformFileId": 946,
+          "fraction": 1,
+          "worldPosition": [
+            -1.696200000000001,
+            -0.010122099999999912,
+            -0.820230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 57,
+          "componentFileId": 2436,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 528,
+          "transformFileId": 1116,
+          "fraction": 1,
+          "worldPosition": [
+            -1.696200000000001,
+            -0.010122099999999912,
+            1.409769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 58,
+          "componentFileId": 2252,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 372,
+          "transformFileId": 898,
+          "fraction": 1,
+          "worldPosition": [
+            -3.2341999999999995,
+            0.06187790000000004,
+            2.406769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "mapDefinitionFileId": 3249,
+      "collectionComponentFileId": 3292,
+      "points": [
+        {
+          "order": 26,
+          "componentFileId": 3000,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 537,
+          "transformFileId": 1356,
+          "fraction": 2,
+          "worldPosition": [
+            3.228916999999999,
+            0.09887790000000019,
+            -2.2567909999999998
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 27,
+          "componentFileId": 3093,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 595,
+          "transformFileId": 1426,
+          "fraction": 2,
+          "worldPosition": [
+            2.140916999999999,
+            0.10487790000000019,
+            -1.1387909999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 28,
+          "componentFileId": 3103,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 612,
+          "transformFileId": 1446,
+          "fraction": 2,
+          "worldPosition": [
+            3.167916999999999,
+            0.07487790000000027,
+            2.506209
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 29,
+          "componentFileId": 3213,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 687,
+          "transformFileId": 1538,
+          "fraction": 2,
+          "worldPosition": [
+            1.972916999999999,
+            0.12487790000000021,
+            1.1452090000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 58,
+          "componentFileId": 3252,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 746,
+          "transformFileId": 1602,
+          "fraction": 1,
+          "worldPosition": [
+            -3.1430830000000007,
+            0.12137800000000021,
+            2.397209
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 59,
+          "componentFileId": 3346,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 885,
+          "transformFileId": 1792,
+          "fraction": 1,
+          "worldPosition": [
+            -1.9110830000000014,
+            0.12137800000000021,
+            1.1692090000000002
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 60,
+          "componentFileId": 2990,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 517,
+          "transformFileId": 1334,
+          "fraction": 1,
+          "worldPosition": [
+            -3.697083000000001,
+            0.12137800000000021,
+            -1.9877909999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 61,
+          "componentFileId": 3106,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 621,
+          "transformFileId": 1461,
+          "fraction": 1,
+          "worldPosition": [
+            -2.8630830000000014,
+            0.12137800000000021,
+            0.29520900000000005
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "mapDefinitionFileId": 2553,
+      "collectionComponentFileId": 2661,
+      "points": [
+        {
+          "order": 27,
+          "componentFileId": 2592,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 443,
+          "transformFileId": 1130,
+          "fraction": 2,
+          "worldPosition": [
+            -22.245083,
+            -2.4391221,
+            -9.530791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 28,
+          "componentFileId": 2847,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 673,
+          "transformFileId": 1385,
+          "fraction": 2,
+          "worldPosition": [
+            -22.195083,
+            -2.4401221,
+            -7.966791000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 29,
+          "componentFileId": 2648,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 504,
+          "transformFileId": 1192,
+          "fraction": 2,
+          "worldPosition": [
+            -21.632083,
+            -2.2511221,
+            -11.998791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 30,
+          "componentFileId": 2530,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 369,
+          "transformFileId": 1053,
+          "fraction": 2,
+          "worldPosition": [
+            -20.727083,
+            -2.3531220999999998,
+            -5.724791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 62,
+          "componentFileId": 2646,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 502,
+          "transformFileId": 1190,
+          "fraction": 1,
+          "worldPosition": [
+            -26.559083,
+            -2.4521221,
+            -7.6817910000000005
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 63,
+          "componentFileId": 2744,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 558,
+          "transformFileId": 1256,
+          "fraction": 1,
+          "worldPosition": [
+            -26.596083,
+            -2.4291221,
+            -9.387791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 64,
+          "componentFileId": 2739,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 552,
+          "transformFileId": 1247,
+          "fraction": 1,
+          "worldPosition": [
+            -26.568083,
+            -2.3891221,
+            -11.994791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 65,
+          "componentFileId": 2612,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 465,
+          "transformFileId": 1153,
+          "fraction": 1,
+          "worldPosition": [
+            -26.378083,
+            -2.4381221,
+            -5.256791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "mapDefinitionFileId": 3572,
+      "collectionComponentFileId": 3153,
+      "points": [
+        {
+          "order": 23,
+          "componentFileId": 3540,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 787,
+          "transformFileId": 1633,
+          "fraction": 2,
+          "worldPosition": [
+            2.668918449999998,
+            0.08687802899999997,
+            3.092208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 24,
+          "componentFileId": 3413,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 589,
+          "transformFileId": 1374,
+          "fraction": 2,
+          "worldPosition": [
+            2.0669184499999984,
+            0.08687802899999997,
+            -2.173791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 25,
+          "componentFileId": 3399,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 573,
+          "transformFileId": 1353,
+          "fraction": 2,
+          "worldPosition": [
+            1.956918449999998,
+            0.08687802899999997,
+            1.6222089299999989
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 26,
+          "componentFileId": 3449,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 645,
+          "transformFileId": 1450,
+          "fraction": 2,
+          "worldPosition": [
+            2.764918449999998,
+            0.08687802899999997,
+            -0.3957910700000011
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 53,
+          "componentFileId": 3390,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 551,
+          "transformFileId": 1323,
+          "fraction": 1,
+          "worldPosition": [
+            -2.8930815500000016,
+            0.08687802899999997,
+            -3.141791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 54,
+          "componentFileId": 3247,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 504,
+          "transformFileId": 1248,
+          "fraction": 1,
+          "worldPosition": [
+            -2.8930815500000016,
+            0.08687802899999997,
+            1.988208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 55,
+          "componentFileId": 3606,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 880,
+          "transformFileId": 1766,
+          "fraction": 1,
+          "worldPosition": [
+            -2.032081550000001,
+            0.08687802899999997,
+            -1.626791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 56,
+          "componentFileId": 3396,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 567,
+          "transformFileId": 1344,
+          "fraction": 1,
+          "worldPosition": [
+            -2.0820815500000016,
+            0.08687802899999997,
+            0.6122089299999989
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "mapDefinitionFileId": 2756,
+      "collectionComponentFileId": 2793,
+      "points": [
+        {
+          "order": 24,
+          "componentFileId": 2626,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 348,
+          "transformFileId": 1082,
+          "fraction": 2,
+          "worldPosition": [
+            3.2778,
+            0.16858894999999996,
+            2.173769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 25,
+          "componentFileId": 2819,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 507,
+          "transformFileId": 1246,
+          "fraction": 2,
+          "worldPosition": [
+            2.4197999999999995,
+            0.16858894999999996,
+            2.032769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 26,
+          "componentFileId": 3105,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 736,
+          "transformFileId": 1488,
+          "fraction": 2,
+          "worldPosition": [
+            2.3877999999999995,
+            0.16858894999999996,
+            -0.058230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 27,
+          "componentFileId": 3026,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 627,
+          "transformFileId": 1369,
+          "fraction": 2,
+          "worldPosition": [
+            3.3308,
+            0.16858894999999996,
+            -1.881230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 60,
+          "componentFileId": 3034,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 635,
+          "transformFileId": 1378,
+          "fraction": 1,
+          "worldPosition": [
+            -3.382200000000001,
+            0.09940490000000002,
+            2.233769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 61,
+          "componentFileId": 2667,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 365,
+          "transformFileId": 1100,
+          "fraction": 1,
+          "worldPosition": [
+            -2.9862,
+            0.09940490000000002,
+            -1.684230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 62,
+          "componentFileId": 2625,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 345,
+          "transformFileId": 1079,
+          "fraction": 1,
+          "worldPosition": [
+            -2.4252000000000002,
+            0.09940490000000002,
+            -1.168230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 63,
+          "componentFileId": 2986,
+          "componentType": "EnemyPointMortar",
+          "gameObjectFileId": 568,
+          "transformFileId": 1307,
+          "fraction": 1,
+          "worldPosition": [
+            -2.366200000000001,
+            0.09940490000000002,
+            0.7667699999999991
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    }
+  ]
+}

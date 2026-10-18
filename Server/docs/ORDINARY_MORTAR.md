@@ -1,8 +1,9 @@
 # Ordinary Mortar weapon authority
 
-This checkpoint initializes current ordinary Mortar weapon authority before the real host spawn
-observers run. It does not implement Mortar navigation, construction, automatic firing, flights,
-collision, normal Unity presentation or authorized SICKNESS card use. Those remain required.
+The host initializes current ordinary Mortar weapon authority before the real spawn observers run.
+[Navigation and construction entry](MORTAR_NAVIGATION.md) now connect real deployments to authored
+destinations, construction deadlines and clips. Automatic firing, flights, collision, complete
+construction rotation/presentation, normal Unity gameplay and authorized SICKNESS use remain required.
 
 ## Recovered rules
 
@@ -34,7 +35,8 @@ Its contact field lives separately from the unchanged `armyDamage` explosion mir
 adapter validates missile and vitality authority before publishing either change. Death removes
 the current weapon row. No new client command or launch authorization is exposed.
 
-`dotnet run --project Server/tests/War.Battle.Tests -- --ordinary-mortar-only` passes 49 checks.
+The initial weapon/setup group passes 49 checks; `--ordinary-mortar-only` now includes navigation
+and native destination bindings for 212 checks in total.
 Actual accepted Park deployments exercise base, middle/special and final/special rows; damage
 scaling; faster/slower perk coefficients; friendly rejection; opposing current contact/health
 changes; unchanged explosion/timing/setup; final deployment callbacks; disconnected-window
@@ -48,8 +50,8 @@ Its local log is `Server/.local/ordinary-mortar-full.log`.
 
 ## Next required work
 
-Bind the ordinary point mask and navigation, source mortar construction time and animation
-callbacks, shield target selection with its vertical offset, delayed overhead missile flights,
+Complete construction-facing rotation and firing callbacks, shield target selection with its
+vertical offset, delayed overhead missile flights,
 contact and explosion authority, airborne shooter-death cleanup, protobuf/SDK presentation,
 and normal Unity gameplay. Compare source-backed baseline and Sickness launches after the
 window closes; preserve the independent explosion fields through actual impacts.

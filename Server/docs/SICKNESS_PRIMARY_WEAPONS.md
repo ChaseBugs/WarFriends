@@ -83,8 +83,8 @@ tests separately prove changed shield damage through a real collision.
 
 The ordinary Mortar group adds 49 setup/deployment checks; the combined Sickness group passes 265.
 The infantry weapon group retains 150.
-The current full default Battle suite passes 247,970 battle/admission/SDK/geometry and real
-two-peer UDP assertions, including ordinary Mortar setup, ordinary Rocket and card Rocket regressions.
+The current full default Battle suite passes 248,137 battle/admission/SDK/geometry and real
+two-peer UDP assertions, including Mortar setup/navigation, ordinary Rocket and card Rocket regressions.
 
 SICKNESS remains incomplete: other eligible weapon layouts, the global source spawn categories,
 authorized card command/reservation consumption, SDK/normal Client activation, icon presentation
@@ -126,7 +126,7 @@ their visible source expressions are requirements, not implementation:
 | Engineer | Base soldier weapon setup is separate from the turret it constructs. | Inventory layout, engineer lifecycle and exact spawned-owner scope. |
 | Machinegunner | Its gun uses base damageAmount; MachineGunPoint is explicitly excluded by canBeFreezed. | Spawn/current-state eligibility, gun binding and normal attacks. |
 | SciFi | ApplyWeaponsSetup writes grenade minimum and separate explosion; its initial Fly state is eligible. | Both current grenade fields, normal movement and actual flights. |
-| Mortar | Contact is 0.1 times damage, explosion is full damage, speed is 20 and stopTime is reciprocal shotSpeed. | [Current setup and real spawn mutation pass](ORDINARY_MORTAR.md); navigation, construction, actual shots/flights/hits and normal Client remain open. |
+| Mortar | Contact is 0.1 times damage, explosion is full damage, speed is 20 and stopTime is reciprocal shotSpeed. | [Setup/spawn mutation](ORDINARY_MORTAR.md) and [navigation/construction entry](MORTAR_NAVIGATION.md) pass; rotation, actual shots/flights/hits and normal Client remain open. |
 
 `EnemyController.StartEnemyBehaviour(state)` assigns the supplied state before raising the base
 AfterSpawned event. A future global adapter must test the actual spawn state rather than infer

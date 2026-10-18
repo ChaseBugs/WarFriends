@@ -538,6 +538,16 @@ public sealed partial class MatchEngine
                 clip = gunslingerPose.Clip;
                 assaulterClipStartTick = tick - (ulong)MathF.Round(gunslingerPose.Seconds * MatchManifest.TickRate);
             }
+            else if (_mortarWalks.TryGetValue(key, out var mortarWalk))
+            {
+                clip = clips.Walk;
+                facing = mortarWalk.Motion.Facing;
+            }
+            else if (MortarConstructionPose(key) is { } mortarPose)
+            {
+                clip = mortarPose.Clip;
+                assaulterClipStartTick = mortarPose.StartTick;
+            }
             else if (_gunslingerWalks.TryGetValue(key, out var gunslingerWalk))
             {
                 clip = clips.Walk;
@@ -3288,6 +3298,11 @@ public sealed partial class MatchEngine
 
     private void InitializeStationaryArmyCombat(ulong entityKey,string unitId)
     {
+        if (unitId == "ID_UNIT-MORTAR")
+        {
+            InitializeMortarNavigation(entityKey);
+            return;
+        }
         if (unitId == "ID_UNIT-GRENADIER")
         {
             // Its two weapons must already exist before the ordinary spawn observers execute.
@@ -4636,6 +4651,7 @@ public sealed partial class MatchEngine
         armySpeed.Remove(entityKey);
         armyShots.Remove(entityKey);
         _ordinaryMortarWeapons.Remove(entityKey);
+        RemoveMortarNavigation(entityKey);
         armyVehicleShots.Remove(entityKey);
         infantryAnimations.Remove(entityKey);
         if (row.UnitId == "ID_UNIT-ROCKETSOLDIER")

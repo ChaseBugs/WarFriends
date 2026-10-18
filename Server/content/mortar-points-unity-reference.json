@@ -1,0 +1,645 @@
+{
+  "unityVersion": "2018.3.0f2",
+  "points": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2228,
+      "isSampled": true,
+      "position": [
+        2.9788,
+        -0.0271221,
+        -2.50223
+      ],
+      "sampledPosition": [
+        2.9788,
+        -0.09360812,
+        -2.50223
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2495,
+      "isSampled": true,
+      "position": [
+        1.7038,
+        -0.1021221,
+        -0.92323
+      ],
+      "sampledPosition": [
+        1.7038,
+        -0.240964592,
+        -0.92323
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2261,
+      "isSampled": true,
+      "position": [
+        3.1788,
+        0.1508779,
+        2.58477
+      ],
+      "sampledPosition": [
+        3.1788,
+        0.0287414361,
+        2.58477
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2681,
+      "isSampled": true,
+      "position": [
+        1.9508,
+        0.0108779,
+        2.68877
+      ],
+      "sampledPosition": [
+        1.9508,
+        -0.07183029,
+        2.68877
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2455,
+      "isSampled": true,
+      "position": [
+        -3.1622,
+        -0.0101221,
+        -2.51023
+      ],
+      "sampledPosition": [
+        -3.1622,
+        -0.0746098757,
+        -2.51023
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2285,
+      "isSampled": true,
+      "position": [
+        -1.6962,
+        -0.0101221,
+        -0.82023
+      ],
+      "sampledPosition": [
+        -1.6962,
+        -0.169644251,
+        -0.82023
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2436,
+      "isSampled": true,
+      "position": [
+        -1.6962,
+        -0.0101221,
+        1.40977
+      ],
+      "sampledPosition": [
+        -1.6962,
+        -0.117941663,
+        1.40977
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "componentFileId": 2252,
+      "isSampled": true,
+      "position": [
+        -3.2342,
+        0.0618779,
+        2.40677
+      ],
+      "sampledPosition": [
+        -3.2342,
+        0.002618036,
+        2.40677
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 3000,
+      "isSampled": true,
+      "position": [
+        3.228917,
+        0.0988779,
+        -2.256791
+      ],
+      "sampledPosition": [
+        3.228917,
+        0.029496545,
+        -2.256791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 3093,
+      "isSampled": true,
+      "position": [
+        2.140917,
+        0.1048779,
+        -1.138791
+      ],
+      "sampledPosition": [
+        2.140917,
+        0.0409672558,
+        -1.138791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 3103,
+      "isSampled": true,
+      "position": [
+        3.167917,
+        0.0748779,
+        2.506209
+      ],
+      "sampledPosition": [
+        3.167917,
+        0.03532064,
+        2.506209
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 3213,
+      "isSampled": true,
+      "position": [
+        1.972917,
+        0.1248779,
+        1.145209
+      ],
+      "sampledPosition": [
+        1.972917,
+        0.04813063,
+        1.145209
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 3252,
+      "isSampled": true,
+      "position": [
+        -3.143083,
+        0.121378,
+        2.397209
+      ],
+      "sampledPosition": [
+        -3.143083,
+        0.118580878,
+        2.397209
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 3346,
+      "isSampled": true,
+      "position": [
+        -1.911083,
+        0.121378,
+        1.169209
+      ],
+      "sampledPosition": [
+        -1.911083,
+        0.0442152359,
+        1.169209
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 2990,
+      "isSampled": true,
+      "position": [
+        -3.697083,
+        0.121378,
+        -1.987791
+      ],
+      "sampledPosition": [
+        -3.697083,
+        0.0263736881,
+        -1.987791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "componentFileId": 3106,
+      "isSampled": true,
+      "position": [
+        -2.863083,
+        0.121378,
+        0.295209
+      ],
+      "sampledPosition": [
+        -2.863083,
+        0.04813063,
+        0.295209
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2592,
+      "isSampled": true,
+      "position": [
+        -22.2450829,
+        -2.4391222,
+        -9.530791
+      ],
+      "sampledPosition": [
+        -22.2450829,
+        -2.53008842,
+        -9.530791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2847,
+      "isSampled": true,
+      "position": [
+        -22.1950836,
+        -2.44012213,
+        -7.966791
+      ],
+      "sampledPosition": [
+        -22.1950836,
+        -2.52696252,
+        -7.966791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2648,
+      "isSampled": true,
+      "position": [
+        -21.6320839,
+        -2.251122,
+        -11.9987907
+      ],
+      "sampledPosition": [
+        -21.6320839,
+        -2.45941734,
+        -11.9987907
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2530,
+      "isSampled": true,
+      "position": [
+        -20.7270832,
+        -2.353122,
+        -5.724791
+      ],
+      "sampledPosition": [
+        -20.7270832,
+        -2.38544583,
+        -5.724791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2646,
+      "isSampled": true,
+      "position": [
+        -26.5590839,
+        -2.45212221,
+        -7.681791
+      ],
+      "sampledPosition": [
+        -26.5590839,
+        -2.538622,
+        -7.681791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2744,
+      "isSampled": true,
+      "position": [
+        -26.5960827,
+        -2.42912221,
+        -9.387791
+      ],
+      "sampledPosition": [
+        -26.5960827,
+        -2.51414943,
+        -9.387791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2739,
+      "isSampled": true,
+      "position": [
+        -26.5680828,
+        -2.389122,
+        -11.994791
+      ],
+      "sampledPosition": [
+        -26.5680828,
+        -2.52176452,
+        -11.994791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "componentFileId": 2612,
+      "isSampled": true,
+      "position": [
+        -26.3780823,
+        -2.438122,
+        -5.256791
+      ],
+      "sampledPosition": [
+        -26.3780823,
+        -2.55232382,
+        -5.256791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3540,
+      "isSampled": true,
+      "position": [
+        2.66891837,
+        0.08687803,
+        3.09220886
+      ],
+      "sampledPosition": [
+        2.66891837,
+        0.004543528,
+        3.09220886
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3413,
+      "isSampled": true,
+      "position": [
+        2.06691837,
+        0.08687803,
+        -2.17379117
+      ],
+      "sampledPosition": [
+        2.06691837,
+        0.004543528,
+        -2.17379117
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3399,
+      "isSampled": true,
+      "position": [
+        1.95691848,
+        0.08687803,
+        1.622209
+      ],
+      "sampledPosition": [
+        1.95691848,
+        0.004543528,
+        1.622209
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3449,
+      "isSampled": true,
+      "position": [
+        2.76491857,
+        0.08687803,
+        -0.395791084
+      ],
+      "sampledPosition": [
+        2.76491857,
+        0.004543528,
+        -0.395791084
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3390,
+      "isSampled": true,
+      "position": [
+        -2.89308167,
+        0.08687803,
+        -3.141791
+      ],
+      "sampledPosition": [
+        -2.89308167,
+        0.004543528,
+        -3.141791
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3247,
+      "isSampled": true,
+      "position": [
+        -2.89308167,
+        0.08687803,
+        1.98820889
+      ],
+      "sampledPosition": [
+        -2.89308167,
+        0.006590405,
+        1.98820889
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3606,
+      "isSampled": true,
+      "position": [
+        -2.0320816,
+        0.08687803,
+        -1.62679112
+      ],
+      "sampledPosition": [
+        -2.0320816,
+        0.004543528,
+        -1.62679112
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "componentFileId": 3396,
+      "isSampled": true,
+      "position": [
+        -2.08208156,
+        0.08687803,
+        0.6122089
+      ],
+      "sampledPosition": [
+        -2.08208156,
+        0.004543528,
+        0.6122089
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 2626,
+      "isSampled": true,
+      "position": [
+        3.2778,
+        0.168588951,
+        2.17377
+      ],
+      "sampledPosition": [
+        3.2778,
+        0.146418035,
+        2.17377
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 2819,
+      "isSampled": true,
+      "position": [
+        2.4198,
+        0.168588951,
+        2.03277
+      ],
+      "sampledPosition": [
+        2.4198,
+        0.09412593,
+        2.03277
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 3105,
+      "isSampled": true,
+      "position": [
+        2.3878,
+        0.168588951,
+        -0.05823
+      ],
+      "sampledPosition": [
+        2.3878,
+        0.095926255,
+        -0.05823
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 3026,
+      "isSampled": true,
+      "position": [
+        3.3308,
+        0.168588951,
+        -1.88123
+      ],
+      "sampledPosition": [
+        3.3308,
+        0.105567858,
+        -1.88123
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 3034,
+      "isSampled": true,
+      "position": [
+        -3.3822,
+        0.0994049,
+        2.23377
+      ],
+      "sampledPosition": [
+        -3.3822,
+        0.0602297336,
+        2.23377
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 2667,
+      "isSampled": true,
+      "position": [
+        -2.9862,
+        0.0994049,
+        -1.68423
+      ],
+      "sampledPosition": [
+        -2.9862,
+        0.0120939314,
+        -1.68423
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 2625,
+      "isSampled": true,
+      "position": [
+        -2.4252,
+        0.0994049,
+        -1.16823
+      ],
+      "sampledPosition": [
+        -2.4252,
+        -0.0213279948,
+        -1.16823
+      ],
+      "planarDistance": 0.0
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "componentFileId": 2986,
+      "isSampled": true,
+      "position": [
+        -2.3662,
+        0.0994049,
+        0.76677
+      ],
+      "sampledPosition": [
+        -2.3662,
+        -0.00677597243,
+        0.76677
+      ],
+      "planarDistance": 0.0
+    }
+  ]
+}
