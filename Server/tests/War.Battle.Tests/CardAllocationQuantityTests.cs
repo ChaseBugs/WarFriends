@@ -61,6 +61,7 @@ internal static class CardAllocationQuantityTests
             await BattleAllocationSourceTests.RunMongoAsync(connectionString, databaseName);
             await BattleAllocationPreparationTests.RunMongoAsync(connectionString, databaseName);
             await BattleAllocationPreparationRaceTests.RunMongoAsync(connectionString, databaseName);
+            await BattleManifestAuthorityTests.RunMongoAsync(connectionString, databaseName);
             await CardPackConcurrencyTests.RunAsync(connectionString, databaseName);
             Console.WriteLine("PASS: Mongo full card catalog and quantities round-trip; " +
                 "missing quantity authority rejected by both reads");

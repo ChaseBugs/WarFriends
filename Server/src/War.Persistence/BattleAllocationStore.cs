@@ -16,7 +16,7 @@ public sealed class BattleAllocationDocument
     public long Revision { get; set; } = 1;
 }
 
-public sealed class BattleAllocationStore
+public sealed partial class BattleAllocationStore
 {
     private readonly IMongoCollection<BattleAllocationDocument> allocations;
     public BattleAllocationStore(string uri, string databaseName)

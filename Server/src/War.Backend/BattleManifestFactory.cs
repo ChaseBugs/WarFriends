@@ -30,8 +30,10 @@ public sealed partial class BattleManifestFactory
         if(!System.Text.RegularExpressions.Regex.IsMatch(matchId??"",@"\Am[0-9a-f]{32}\z") || playerIds is not {Count:2} ||
             playerIds.Any(x=>!Guid.TryParseExact(x,"N",out _) || x!=x.ToLowerInvariant()) || playerIds.Distinct(StringComparer.Ordinal).Count()!=2)
             throw new InvalidDataException("Invalid paired manifest identity.");
-        IReadOnlyList<BattleAllocationProjection> trusted=await allocations.GetMany(playerIds,ct);
-        IReadOnlyList<BattlePlayerPresentation> views=await presentations.GetMany(playerIds,ct);
+        IReadOnlyList<BattleAllocationAccountSnapshot> authority = await allocations.GetAccountSnapshotsAsync(playerIds, ct);
+        IReadOnlyList<BattleAllocationProjection> trusted = authority.Select(row => row.Allocation).ToArray();
+        IReadOnlyList<BattlePlayerPresentation> views = authority
+            .Select(row => BattlePlayerPresentationSource.Project(row.Account)).ToArray();
         var root=(JsonObject)template.DeepClone();
         root["MatchId"]=matchId;
         var players=(JsonArray)root["Players"]!;

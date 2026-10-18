@@ -340,3 +340,18 @@ The run covers automatic initial allocation, stable grants, real HTTP/UDP readin
 terminal acceptance, rematches, lost registration replies, process restart and unattended
 cancellation recovery. It uses source adapters in native tests; no two normal Unity scenes are
 launched by this mode. This evidence predates the subsequent coherent authority reader changes.
+
+### Coherent paired authority reads
+
+`BattleManifestFactory.Create` now obtains both participants' allocations and durable accounts
+through `BattleAllocationStore.GetAccountSnapshotsAsync`. Both queries share one snapshot/majority
+Mongo transaction, and returned rows preserve the source roster order. Missing participants or
+damaged allocation quantities abort the whole read instead of publishing a partial manifest.
+Presentations are projected from those exact account documents, replacing separate store reads.
+This guarantees one read snapshot, not automatic refresh of an allocation after a later account change.
+
+The inventory Mongo suite passes with exit zero at `paired-authority-tests.log` in the same
+evidence directory. It includes roster ordering, empty ownership, missing participant and
+damaged participant rejection alongside prior preparation/card-pack concurrency checks.
+`Server/.local/paired-authority-build.log` records zero build warnings/errors. A second real
+queue run with this reader and a forced between-query mutation scenario remain required.
