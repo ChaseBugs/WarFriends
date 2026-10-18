@@ -96,21 +96,49 @@ public sealed class SelfHostedInfantryWeaponAppearance
     {
         ValidateFamily(family);
         List<EnemyBasicInventory.InventoryWeapon> inventory = family.GetComponent<EnemyBasicInventory>().cardWeapons;
-        List<TechnologyVisualDefinition> visuals = family.upgradeSlots.cardVisuals;
-        if (inventory == null || inventory.Count == 0 || visuals == null ||
-            visuals.Count <= WeaponVisualIndex || visuals[WeaponVisualIndex] == null)
+        if (inventory == null || inventory.Count == 0)
         {
-            throw new InvalidOperationException("A complete recovered card inventory and weapon lane are required.");
+            throw new InvalidOperationException("A recovered card inventory is required.");
         }
 
-        int number = visuals[WeaponVisualIndex].weaponNumber;
-        int[] levels = GetCardLevels(family, number);
-        if (inventory.Count != levels.Length)
+        return ResolveInventory(family, inventory, family.upgradeSlots.cardVisuals);
+    }
+
+    /// <summary>Resolves the ordinary owner's normal/Elite inventory without substituting a card lane.</summary>
+    public static IReadOnlyList<SelfHostedInfantryWeaponAppearance> ResolveOrdinaryInventory(
+        SoldierBehaviour family, UpgradeSlots.UnitUpgrades upgrades)
+    {
+        ValidateFamily(family);
+        if (upgrades.slotUpgradeindex < 0)
         {
-            throw new InvalidOperationException("Card inventory order must match the recovered weapon-level selector.");
+            throw new ArgumentOutOfRangeException("upgrades");
+        }
+
+        return ResolveInventory(family, family.GetComponent<EnemyBasicInventory>().weapons,
+            family.upgradeSlots.GetVisuals(upgrades));
+    }
+
+    private static IReadOnlyList<SelfHostedInfantryWeaponAppearance> ResolveInventory(SoldierBehaviour family,
+        List<EnemyBasicInventory.InventoryWeapon> inventory, List<TechnologyVisualDefinition> visuals)
+    {
+        if (inventory == null || inventory.Count == 0)
+        {
+            throw new InvalidOperationException("The recovered combat inventory is absent or empty.");
         }
 
         var result = new List<SelfHostedInfantryWeaponAppearance>();
+        if (visuals == null || visuals.Count <= WeaponVisualIndex || visuals[WeaponVisualIndex] == null)
+        {
+            throw new InvalidOperationException("The recovered inventory weapon lane is incomplete.");
+        }
+
+        int number = visuals[WeaponVisualIndex].weaponNumber;
+        int[] levels = GetInventoryLevels(family, number);
+        if (inventory.Count != levels.Length)
+        {
+            throw new InvalidOperationException("Inventory order must match the recovered weapon-level selector.");
+        }
+
         for (int index = 0; index < inventory.Count; index++)
         {
             result.Add(ResolveEntry(family, inventory[index], levels[index]));
@@ -144,7 +172,7 @@ public sealed class SelfHostedInfantryWeaponAppearance
                 leveled.weaponRecords.Find(item => item != null && item.level == level);
             if (record == null)
             {
-                throw new InvalidOperationException("The card weapon model number has no recovered record.");
+                throw new InvalidOperationException("The selected weapon model number has no recovered record.");
             }
 
             appearance = Load(entry, record);
@@ -154,7 +182,7 @@ public sealed class SelfHostedInfantryWeaponAppearance
         return appearance;
     }
 
-    private static int[] GetCardLevels(SoldierBehaviour family, int number)
+    private static int[] GetInventoryLevels(SoldierBehaviour family, int number)
     {
         if (family is SoldierBehaviourGrennader)
         {

@@ -108,8 +108,8 @@ entity's `owner_player_id` to that validated grant snapshot and resolve its fami
 the local player's upgrades, a fabricated zero level or a new client-authored upgrade command.
 The PvP bridge now binds this immutable owner selection before roster subscription, and ordinary
 Assaulter creation uses it to select the recovered normal/Elite weapon model. Missing equipment,
-unknown owners and conflicting fractions reject actor creation. Other families' weapon lanes and
-complete normal battle execution remain open.
+unknown owners and conflicting fractions reject actor creation. The subsequent ordinary startup
+weapon matrix covers the other families; complete normal battle execution remains open.
 `SoldierMeshChanger.SetSoldierVisual` then selects blue/red textures by local ownership and applies
 the corresponding source attachments and MatCap. The subsequent
 [ordinary team-skin integration](INFANTRY_TEAM_SKINS.md) now connects those selectors to cloned body
@@ -126,8 +126,10 @@ does not complete this appearance path.
 supported card inventories, with 53 native selector/geometry/visibility checks.
 [Host weapon authority](INFANTRY_WEAPON_AUTHORITY.md) now binds the six card inventories to the PvP
 presenter through protobuf field 46, source fifteen-tick Grenadier return timing and SDK validation.
-Nineteen host/protocol checks and 240 native card checks pass. Ordinary Commando's simultaneous
-weapons and normal two-client rendering/recovery remain required. The source Grenadier
+Nineteen host/protocol checks and 240 native card checks pass.
+[Ordinary startup weapon sets](ORDINARY_INFANTRY_WEAPONS.md) now cover all sixteen families,
+including Commando's simultaneous weapons, with 522 native checks. Authoritative ordinary weapon
+switching and normal two-client rendering/recovery remain required. The source Grenadier
 uses a static PistolEnemy at index zero and the selected grenade model at index one.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove

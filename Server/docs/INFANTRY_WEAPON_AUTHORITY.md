@@ -65,6 +65,7 @@ warnings/errors. The complete default run includes the retained-selection correc
 Deploy the updated Worker and portable SDK together: card rows from an older host omit the new
 required card mask and are rejected by the new SDK rather than guessed as a primary weapon.
 
-Ordinary Commando's simultaneous weapons, ordinary inventory migration, live two-client rendering,
+[Ordinary startup weapon sets](ORDINARY_INFANTRY_WEAPONS.md) now include Commando's simultaneous
+weapons. Authoritative ordinary weapon switching, live two-client rendering,
 full active Client/Android validation and Linux runtime remain open. See the
 [feature checklist](BATTLE_SERVER_FEATURES.md).

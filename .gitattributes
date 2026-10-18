@@ -268,3 +268,7 @@ Server/content/grenadier-weapon-return-unity-reference.json text eol=lf
 Server/docs/INFANTRY_WEAPON_AUTHORITY.md text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/EnemyBasicInventory.cs text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviourGrennader.cs text eol=crlf
+
+# Ordinary infantry startup weapon evidence.
+Server/tools/UnityOrdinaryInfantryWeaponsAudit.cs text eol=lf
+Server/docs/ORDINARY_INFANTRY_WEAPONS.md text eol=lf

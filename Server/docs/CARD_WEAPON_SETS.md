@@ -49,7 +49,8 @@ The host-authority integration follows these source requirements:
   with a half-second delay after a secondary shot. The native fifteen-tick delay and host lifecycle
   now have focused proof in the linked authority report.
 - Ordinary Commando enables both weapons through `SwitchWeapon(0)` and `EnableSecondaryWeapon(1)`.
-  Its ordinary inventory migration remains separate; this does not introduce a new Commando card.
+  Its [ordinary startup inventory](ORDINARY_INFANTRY_WEAPONS.md) is now connected separately;
+  this does not introduce a new Commando card.
 - The protobuf army row now carries field 46. Host state, SDK validation, paged recovery projection
   and the production presenter binding are implemented; a normal rendered two-client recovery is not proven.
 

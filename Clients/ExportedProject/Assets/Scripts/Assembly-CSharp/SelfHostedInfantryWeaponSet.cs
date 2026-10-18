@@ -25,6 +25,28 @@ public sealed class SelfHostedInfantryWeaponSet
     {
         IReadOnlyList<SelfHostedInfantryWeaponAppearance> appearances =
             SelfHostedInfantryWeaponAppearance.ResolveCardInventory(family);
+        return Create(source, visual, appearances, visibleMask);
+    }
+
+    /// <summary>Builds an already resolved ordinary inventory with its source startup visibility.</summary>
+    public static SelfHostedInfantryWeaponSet CreateOrdinary(SoldierBehaviour family, EnemyController source,
+        SelfHostedInfantryVisual visual, UpgradeSlots.UnitUpgrades upgrades)
+    {
+        IReadOnlyList<SelfHostedInfantryWeaponAppearance> appearances =
+            SelfHostedInfantryWeaponAppearance.ResolveOrdinaryInventory(family, upgrades);
+        uint initialMask = 1u;
+        if (family is SoldierBehaviourCommando)
+        {
+            // Commando.Restart enables its left weapon after selecting the right weapon.
+            initialMask = 3u;
+        }
+
+        return Create(source, visual, appearances, initialMask);
+    }
+
+    private static SelfHostedInfantryWeaponSet Create(EnemyController source, SelfHostedInfantryVisual visual,
+        IReadOnlyList<SelfHostedInfantryWeaponAppearance> appearances, uint visibleMask)
+    {
         if (source == null || visual == null || visual.Root == null || visual.Root == source.gameObject ||
             appearances.Count > MaskWidth || visual.Root.GetComponentsInChildren<MonoBehaviour>(true).Length != 0)
         {

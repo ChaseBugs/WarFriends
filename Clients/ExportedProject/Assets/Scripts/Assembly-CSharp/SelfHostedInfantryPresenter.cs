@@ -285,17 +285,11 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         {
             model = CreateGunslingerModel(soldier, style, rootName, out attachment);
         }
-        else if (_upgradeSelection != null && soldier is SoldierBehaviourAssaulter && row.SourceCardId.Length == 0)
-        {
-            UpgradeSlots.UnitUpgrades upgrades = _upgradeSelection.Resolve(row, soldier);
-            SelfHostedInfantryWeaponAppearance appearance = SelfHostedInfantryWeaponAppearance.ResolveOrdinary(
-                (SoldierBehaviourAssaulter)soldier, upgrades);
-            model = SelfHostedInfantryVisualFactory.CreateWithAppearance(source, style, appearance, rootName);
-        }
         else
         {
             model = SelfHostedInfantryVisualFactory.Create(source, style, rootName);
         }
+        CreateOrdinaryWeapons(model, soldier, row);
         SelfHostedInfantryWeaponSet cardWeapons = CreateCardWeapons(model, soldier, row);
         SelfHostedInfantrySkinAppearance skin = ApplySkin(model, soldier, row);
         model.Root.SetActive(true);
@@ -308,6 +302,27 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             SkinAppearance = skin,
             CardWeapons = cardWeapons
         };
+    }
+
+    private void CreateOrdinaryWeapons(SelfHostedInfantryVisual model,
+        SoldierBehaviour family, BattleArmyEntityState actor)
+    {
+        if (_upgradeSelection == null || actor.SourceCardId.Length != 0 || family is SoldierBehaviourGunslinger)
+        {
+            return;
+        }
+
+        try
+        {
+            // Field 46 remains unprojected for ordinary actors. Reproduce their source Restart state only.
+            UpgradeSlots.UnitUpgrades upgrades = _upgradeSelection.Resolve(actor, family);
+            SelfHostedInfantryWeaponSet.CreateOrdinary(family, source, model, upgrades);
+        }
+        catch
+        {
+            DestroyVisual(model.Root);
+            throw;
+        }
     }
 
     private SelfHostedInfantryWeaponSet CreateCardWeapons(SelfHostedInfantryVisual model,
