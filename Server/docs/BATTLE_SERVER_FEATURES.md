@@ -140,10 +140,12 @@ now correlates actual player and shield impacts with frozen launches: one upgrad
 and one covered basic-unit shield-only case. [Ordinary grenade explosions](ORDINARY_GRENADIER_EXPLOSIONS.md)
 now verify actual contact/fuse timing, uncapped shield loss and upgraded shield destruction.
 [Native grenade fuse evidence](GRENADIER_FUSE_CLOCK.md) now corrects float countdown timing and
-recontact resets in the shared flight; 107 focused checks pass. Ordinary sickness, physical player
-blast damage and full native grenade trajectory parity remain open.
+recontact resets in the shared flight. [Physical player grenade blasts](GRENADIER_PLAYER_BLAST.md)
+now verify three ordinary upgrade tuples, full-radius candidate ordering and the one-percent shield
+protection gate, with 150 focused checks. Ordinary sickness, broader moving/outer-ring/overtime
+blast scenarios and full native grenade trajectory parity remain open.
 [Multiple observed grenade supports](GRENADIER_CORNER_CONTACTS.md) now remain independent, with
-source-executed floor/wall evidence and 126 focused checks. Complete capsule overlap/contact
+source-executed floor/wall evidence at its 126-check checkpoint. Complete capsule overlap/contact
 acquisition remains open; this is not a full PhysX manifold implementation. Ordinary Grenadier weapon selection now reaches protobuf/SDK and retained Client weapon
 sets, with 73 focused authority checks and 530 native ordinary appearance checks. The source Grenadier
 uses a static PistolEnemy at index zero and the selected grenade model at index one.

@@ -40,8 +40,8 @@ fourteen native-clock/contact-entry checks and additional deployment/launch guar
 model with float countdown and contact-entry resets. The table above reflects that corrected model.
 
 The native fixture proves original contact/countdown methods in an isolated thirty-Hz setup, not
-complete native map physics or every Physics/Update ordering. Physical player explosion damage,
-ordinary sickness, other geometry and target families, full normal two-Unity-client matches and
+complete native map physics or every Physics/Update ordering. [Physical player explosion damage](GRENADIER_PLAYER_BLAST.md) is now verified in three ordinary Park
+fixtures. Broader player blast cases, ordinary sickness, other geometry and target families, full normal two-Unity-client matches and
 Android/Linux runtime remain open.
 
 After the source fuse correction, the complete default Windows Battle executable passes 247,810

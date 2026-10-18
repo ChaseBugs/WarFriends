@@ -7,6 +7,7 @@ internal sealed record ShieldMutation(int CoverIndex,int OwnerFraction,float Hea
 // can construct this state. Unknown dynamic map owners stay collidable.
 internal sealed class ShieldMatchSimulation
 {
+    private const float MinimumExplosionProtectionHealthRatio = 0.01f;
     private sealed class Entry(CoverNode cover,ShieldLifecycle lifecycle)
     {
         internal CoverNode Cover=cover;
@@ -36,6 +37,13 @@ internal sealed class ShieldMatchSimulation
     }
     internal bool ColliderEnabled(string dynamicOwner)=>!byOwner.TryGetValue(dynamicOwner,out var row) || row.Lifecycle.ColliderEnabled;
     internal bool IsLiveShield(string dynamicOwner)=>byOwner.TryGetValue(dynamicOwner,out var row) && !row.Lifecycle.Destroyed;
+    /// <summary>Explosion.MissileExplode enables player attenuation only above one percent shield health.</summary>
+    internal bool HasExplosionProtection(string dynamicOwner)
+    {
+        return byOwner.TryGetValue(dynamicOwner, out var shield) && !shield.Lifecycle.Destroyed &&
+            shield.Lifecycle.Health / shield.Lifecycle.MaxHealth > MinimumExplosionProtectionHealthRatio;
+    }
+
     internal bool Contains(string dynamicOwner)=>byOwner.ContainsKey(dynamicOwner);
     internal IReadOnlyList<ShieldMutation> ApplyShieldsUp(int ownerFraction)
     {

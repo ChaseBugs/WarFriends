@@ -95,7 +95,7 @@ public sealed partial class MatchEngine
         var closest = CardRocketExplosion.ClosestColliders(
             explosion.Position, overlaps);
         bool shieldNearby = shields != null && closest.Any(collider =>
-            shields.IsLiveShield(collider.DynamicOwner));
+            shields.HasExplosionProtection(collider.DynamicOwner));
 
         foreach (var collider in closest)
         {

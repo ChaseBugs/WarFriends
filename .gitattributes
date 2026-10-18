@@ -305,3 +305,11 @@ Server/tools/UnityGrenadierCornerContactExport.cs text eol=lf
 Server/tools/verify_grenadier_corner_contacts.py text eol=lf
 Server/content/grenadier-corner-contact-unity-reference.json text eol=lf
 Server/docs/GRENADIER_CORNER_CONTACTS.md text eol=lf
+
+# Physical player grenade outcomes and native overlap-boundary evidence.
+Server/tests/War.Battle.Tests/OrdinaryGrenadierPlayerBlastTests.cs text eol=lf
+Server/tests/War.Battle.Tests/GrenadierPlayerBlastRuleTests.cs text eol=lf
+Server/tools/UnityGrenadierExplosionOverlapAudit.cs text eol=lf
+Server/tools/verify_grenadier_explosion_overlap.py text eol=lf
+Server/content/grenadier-explosion-overlap-unity-reference.json text eol=lf
+Server/docs/GRENADIER_PLAYER_BLAST.md text eol=lf

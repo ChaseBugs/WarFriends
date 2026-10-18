@@ -26,9 +26,9 @@ internal static class CardGrenadierExplosionDamage
             throw new InvalidDataException(
                 "Card Grenadier needs a current player collision pose.");
 
-        float outerRadius = setup.OuterRadius * PlayerRadiusRatio;
+        // MissileExplode gathers with the full hurt radius before applying playerRadiusCoef to bounds distance.
         var nearest = pose.Parts
-            .Where(part => part.OverlapsSphere(explosion, outerRadius))
+            .Where(part => part.OverlapsSphere(explosion, setup.OuterRadius))
             .Select(part => new
             {
                 Part = part,
@@ -44,6 +44,11 @@ internal static class CardGrenadierExplosionDamage
         if (nearest.Distance < setup.InnerRadius * PlayerRadiusRatio)
             return new CardGrenadierBlastHit(CombatDamageType.Explosion,
                 damage.Explosion * shieldRatio);
+
+        if (nearest.Distance > setup.OuterRadius * PlayerRadiusRatio)
+        {
+            return null;
+        }
 
         float rootDistance = Vector3.Distance(playerRoot, explosion);
         return new CardGrenadierBlastHit(CombatDamageType.Shiver,

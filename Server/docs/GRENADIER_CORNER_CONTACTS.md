@@ -47,5 +47,5 @@ replace the complete PhysX manifold or acquire every capsule overlap: source con
 by the motion ray, perfectly overlapping colliders hidden by a nearer support ray, and full dynamic
 collision geometry still need broader overlap/contact acquisition and native map evidence.
 Controlled trace tests isolate contact state and do not claim trajectory parity. Original Unity
-5.2.5, other frame rates/time scales, physical player blast damage and two normal Unity Clients
+5.2.5, other frame rates/time scales, broader player blast scenarios and two normal Unity Clients
 remain unverified or incomplete. The native experiment uses Unity 2018.3.0f2 and time scale one.

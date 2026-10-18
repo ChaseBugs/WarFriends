@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "inspectedExplosionSha256": "56c2d403eef52ccc97ef79300097379ebe2b841745608071e99205b49ba073df",
+  "exporterSha256": "232313ea109ea1c3e077ed99a8738fb10edaa1e06d5287bf2eb834178b17e891",
+  "center": [
+    0.8,
+    0.0,
+    0.8
+  ],
+  "size": [
+    2.0,
+    0.1,
+    0.1
+  ],
+  "rotationY": 45.0,
+  "hurtRadius": 1.2,
+  "playerRadiusRatio": 0.7,
+  "fullOverlap": true,
+  "reducedOverlap": false,
+  "boundsDistance": 0.0813709,
+  "outsideGate": [
+    0.0,
+    0.0,
+    1.65
+  ],
+  "outsideFullOverlap": true,
+  "outsideBoundsDistance": 0.9075378
+}

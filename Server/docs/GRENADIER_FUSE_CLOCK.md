@@ -57,5 +57,5 @@ contacts, shield damage and upgraded destruction. Original recovered Client file
 
 This proves the observed source contact/countdown behavior at the captured clock. It does not
 prove the complete Unity collision manifold, real map trajectory, other frame rates/time scales,
-original Unity 5.2.5, Photon dispatch/effects, physical player blast damage or two normal Unity
+original Unity 5.2.5, Photon dispatch/effects, broader player blast scenarios or two normal Unity
 Clients. Those boundaries remain open; the retained Photon types are not a server runtime dependency.
