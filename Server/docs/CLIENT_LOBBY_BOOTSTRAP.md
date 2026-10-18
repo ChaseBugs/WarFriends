@@ -355,3 +355,13 @@ evidence directory. It includes roster ordering, empty ownership, missing partic
 damaged participant rejection alongside prior preparation/card-pack concurrency checks.
 `Server/.local/paired-authority-build.log` records zero build warnings/errors. A second real
 queue run with this reader and a forced between-query mutation scenario remain required.
+
+The between-query mutation scenario now passes in `snapshot-race-tests.log` in the existing
+evidence directory. A test-configured Mongo client's command observer commits a new account
+and allocation together, using a separate client, immediately after the account query returns
+and before the allocation query starts. The manifest read retains old account Gold and zero
+cards while independent post-read queries confirm new Gold and two owned cards. No production
+pause hook or fake database is used. `BattleAllocationStore(IMongoDatabase)` permits reuse of
+the configured client's session/command observer. The complete inventory suite exits zero.
+`Server/.local/paired-authority-race-build.log` records a clean Release build. The subsequent
+real queue regression is running separately and must not be inferred from this focused result.

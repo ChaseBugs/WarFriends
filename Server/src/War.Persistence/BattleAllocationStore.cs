@@ -19,6 +19,14 @@ public sealed class BattleAllocationDocument
 public sealed partial class BattleAllocationStore
 {
     private readonly IMongoCollection<BattleAllocationDocument> allocations;
+
+    /// <summary>Uses an existing database and its client session configuration.</summary>
+    public BattleAllocationStore(IMongoDatabase database)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        allocations = database.GetCollection<BattleAllocationDocument>("battle_allocations");
+    }
+
     public BattleAllocationStore(string uri, string databaseName)
     {
         var settings = MongoClientSettings.FromConnectionString(uri);
