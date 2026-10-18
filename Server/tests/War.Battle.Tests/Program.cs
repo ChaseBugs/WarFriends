@@ -165,6 +165,25 @@ if(args is ["--content-revisions"])
     return;
 }
 
+if (args is ["--write-starter-template", var starterTemplatePath])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new InvalidDataException("Recovered battle content root is missing.");
+    }
+    string directory = Path.Combine(root.FullName, "content");
+    var content = BattleArmyManifestProjectionTests.LoadContent(directory);
+    JsonObject template = BattleArmyManifestProjectionTests.CreateTemplate(content, directory);
+    await File.WriteAllBytesAsync(starterTemplatePath, JsonSerializer.SerializeToUtf8Bytes(template));
+    Console.WriteLine("PASS: wrote source-validated mixed template with the starter grenade package");
+    return;
+}
+
 if(args is ["--allocator-mixed-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -230,7 +249,9 @@ if(args is ["--allocator-mixed-only"])
     try {catalog.Bind(participant,badView);
         throw new Exception("Wrong mixed binding was admitted.");}
     catch(InvalidDataException){if(participant.ToJsonString()!=before)throw new Exception("Rejected mixed loadout mutated participant.");}
-    Console.WriteLine("PASS: mixed allocator binds eight source-backed slots atomically");return;
+    int armyChecks = BattleArmyManifestProjectionTests.Run(directory);
+    Console.WriteLine($"PASS: mixed allocator weapon binding and {armyChecks} starter army host checks");
+    return;
 }
 
 if(args is ["--allocator-shotgun-only"])
@@ -3459,6 +3480,7 @@ checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += LegacyInitialLoadoutTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleWeaponOwnershipTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleUnitProjectionTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += BattleArmyManifestProjectionTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleClientWeaponIndexTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleScoreSnapshotTests.Run();
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));

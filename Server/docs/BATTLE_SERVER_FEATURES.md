@@ -63,6 +63,11 @@ borrowed availability even when unequipped. Unit lane projection converts saved
 relative stages to absolute source indexes and emits -1 for inactive special
 or Elite lanes. Native checks project the full four-weapon/four-unit starter
 without purchase grants. Automatic allocation and normal battle entry remain open.
+The [starter army admission prerequisite](STARTER_ARMY_ADMISSION.md) now binds
+that equipped-only unit order and its three lanes to Worker identities and
+combat rows. Exact starter validation also exposed missing mixed-grenade package
+wiring and binding classification. Admission wiring is repaired; mixed grenade
+switching/runtime, durable card allocation and normal matchmaking remain open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

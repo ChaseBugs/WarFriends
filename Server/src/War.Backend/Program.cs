@@ -102,7 +102,8 @@ if (!string.IsNullOrWhiteSpace(battleManifestTemplatePath))
             builder.Configuration["Battle:LmgContentManifestPath"]??throw new InvalidOperationException("Set Battle__LmgContentManifestPath for a mixed template."),
             builder.Configuration["Battle:MinigunContentManifestPath"]??throw new InvalidOperationException("Set Battle__MinigunContentManifestPath for a mixed template."),
             builder.Configuration["Battle:SniperContentManifestPath"]??throw new InvalidOperationException("Set Battle__SniperContentManifestPath for a mixed template."),
-            builder.Configuration["Battle:BazookaContentManifestPath"])),
+            builder.Configuration["Battle:BazookaContentManifestPath"],
+            builder.Configuration["Battle:GrenadeContentManifestPath"])),
         _=>throw new InvalidOperationException("Unsupported battle manifest template mode.")
     };
     builder.Services.AddSingleton(battleWeapons);

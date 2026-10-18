@@ -26,6 +26,8 @@ public sealed class BattleMixedManifestCatalog : IBattleWeaponManifestCatalog
     public void Bind(JsonObject participant,BattlePlayerPresentation view)
     {
         view=BattlePlayerPresentation.Validate(view);
+        BattleArmyManifestProjection.RequireRefreshableAuthority(participant);
+        JsonObject armyFields = BattleArmyManifestProjection.Build(content.Army, view.Units);
         var resolved=view.Weapons.Select(equipped =>
         {
             WeaponManifest weapon=content.CreateMixedWeaponManifest(equipped.SourceId,equipped.UpgradeIndex);
@@ -41,5 +43,6 @@ public sealed class BattleMixedManifestCatalog : IBattleWeaponManifestCatalog
         participant["Weapon"]=System.Text.Json.JsonSerializer.SerializeToNode(resolved[0].weapon);
         participant["WeaponUpgrade"]=resolved[0].equipped.UpgradeIndex;
         participant["WeaponSlots"]=slots;
+        BattleArmyManifestProjection.Apply(participant, armyFields);
     }
 }

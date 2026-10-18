@@ -252,3 +252,6 @@ actual Unity boot and a change-stream observer verify this boundary. Existing
 accounts are not backfilled. Source-derived weapon/unit ownership and unit
 upgrade lane conversion now project the complete starter loadout without
 purchase grants. Automatic allocation and normal controller entry remain open.
+Mixed manifests now bind the presentation-ordered equipped army and lanes to
+source combat rows. See [starter army admission](STARTER_ARMY_ADMISSION.md) for
+the native selection proof and the still-open mixed grenade runtime boundary.

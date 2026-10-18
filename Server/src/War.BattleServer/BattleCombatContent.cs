@@ -319,7 +319,12 @@ public sealed class BattleCombatContent
             else if(minigun||mixed&&id==MinigunCatalog.SourceId)_=Minigun!.Binding;
             else if(sniper||mixed&&id.StartsWith("Google2u.SniperRifle_",StringComparison.Ordinal))Snipers!.Binding(id);
             else if(bazooka||mixed&&id.StartsWith("Google2u.Bazooka_",StringComparison.Ordinal))Bazookas!.Binding(id);
-            else if(grenade)Grenades!.Binding(id);
+            else if (grenade || mixed && (id.StartsWith("Google2u.Grenade_", StringComparison.Ordinal) ||
+                id.StartsWith("Google2u.GrenadeLauncher_", StringComparison.Ordinal)))
+            {
+                var catalog = Grenades ?? throw new InvalidDataException("Grenade content is not configured.");
+                catalog.Binding(id);
+            }
             else if(lmg||mixed&&id.StartsWith("Google2u.LMG_",StringComparison.Ordinal))Lmgs!.Binding(id);
             else Bindings.Get(id);
         }

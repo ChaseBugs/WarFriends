@@ -224,3 +224,9 @@ The final Release solution build has zero warnings/errors.
 `--initial-loadout-only` passes 54,236 combined initial-state, weapon and unit
 checks; `--client-weapon-index-only` passes 268 identity checks. The unit rule
 generator verifies the committed artifact against source hashes and lane bounds.
+
+The [army admission checkpoint](STARTER_ARMY_ADMISSION.md) now carries that
+equipped-only ordering into mixed manifests and verifies the source starter
+selection echo through the native host. It also fixes grenade package loading
+and mixed binding classification. Mixed grenade switching/runtime and automatic
+card/account allocation remain incomplete; admission is not full gameplay proof.

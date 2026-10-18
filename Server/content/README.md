@@ -108,3 +108,8 @@ normal/special/Elite lane bounds used by Backend presentation. Verify with
 `python Server/tools/build_battle_unit_rules.py`; `--write` regenerates it from
 reviewed source evidence. Inactive optional lanes never grant upgrades merely
 because the saved relative index is zero. See the starter checkpoint for scope.
+
+`local-starter-match-template.json` is a separate mixed-combat admission fixture
+including the grenade package in its revision. Generate it with the native test
+executable's `--write-starter-template` command. It does not prove mixed grenade
+runtime or automatic allocation; see [starter army admission](../docs/STARTER_ARMY_ADMISSION.md).
