@@ -8,7 +8,7 @@ internal sealed record ScheduledGrenadeLaunch(string Owner,Vector3 Target,bool R
 
 // Source-owned grenade gesture/animation clock. MatchEngine remains responsible
 // for ammunition, cooldown, projectile identity, damage, and terminal state.
-internal sealed class GrenadeMatchSimulation
+internal sealed partial class GrenadeMatchSimulation
 {
     private sealed class Actor
     {
@@ -20,6 +20,8 @@ internal sealed class GrenadeMatchSimulation
         internal string Clip;
         internal ulong ClipStarted;
         internal bool Moving;
+        internal bool IsActive = true;
+        internal int CoverIndex;
         internal ScheduledGrenadeLaunch? Pending;
         internal GrenadePoseFrame Pose;
         internal string PoseClip;
@@ -35,12 +37,17 @@ internal sealed class GrenadeMatchSimulation
             WeaponUpgrade = definition.WeaponUpgrade!.Value;
             Position = cover.Position;
             Rotation = cover.Rotation;
+            CoverIndex = cover.SourceIndex;
             Clip = binding.Swipe ? "grenade_idle" : "grenadelauncher_idle";
             PoseClip = Clip;
             Pose = Place(poses.Sample(Clip, 0, true), Position, Rotation);
         }
     }
-    private readonly Actor[] actors;private readonly GrenadeCatalog catalog;private readonly RecoveredBattleMap map;
+    private readonly Dictionary<string, Actor> _actors = new(StringComparer.Ordinal);
+    private readonly ParticipantManifest[] _participants;
+    private readonly bool _isMixedMode;
+    private Func<string, PlayerAimPose>? _activePlayerPoseProvider;
+    private readonly GrenadeCatalog catalog;private readonly RecoveredBattleMap map;
     private readonly Func<string,bool>? dynamicColliderEnabled;private readonly Func<int,bool>? indexedColliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;private ulong? lastTick;
     private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
@@ -67,43 +74,25 @@ internal sealed class GrenadeMatchSimulation
     internal GrenadeMatchSimulation(MatchManifest manifest,RecoveredBattleMap map,GrenadeCatalog catalog,
         Func<string,bool>? dynamicColliderEnabled=null,Func<int,bool>? indexedColliderEnabled=null,Func<int,int,int>? runtimeLayer=null)
     {
-        if(manifest.Mode!=MatchManifest.GrenadeCombatMode||manifest.Players.Any(p=>p.Combat==null||!p.WeaponUpgrade.HasValue))
+        if (manifest.Mode is not (MatchManifest.GrenadeCombatMode or MatchManifest.MixedCombatMode) ||
+            manifest.Players.Any(player => player.Combat == null || !player.WeaponUpgrade.HasValue) ||
+            manifest.Players.Select(player => player.PlayerId).Distinct(StringComparer.Ordinal).Count() !=
+                manifest.Players.Length)
+        {
             throw new InvalidDataException("Grenade simulation requires complete combat authority.");
+        }
         this.map=map;this.catalog=catalog;this.dynamicColliderEnabled=dynamicColliderEnabled;
         this.indexedColliderEnabled=indexedColliderEnabled;this.runtimeLayer=runtimeLayer;
-        actors=manifest.Players.Select(p=>new Actor(p,map.Covers[p.StartCover],catalog.Binding(p.Weapon.SourceId),catalog.Poses)).ToArray();
-    }
-    internal bool Busy(string id)=>ActorOf(id).Pending!=null;
-    internal void SelectWeapon(string playerId, WeaponManifest weapon, int upgrade, ulong tick)
-    {
-        Actor actor = ActorOf(playerId);
-        if (actor.Pending != null || actor.Moving)
+        _participants = manifest.Players.ToArray();
+        _isMixedMode = manifest.Mode == MatchManifest.MixedCombatMode;
+        foreach (ParticipantManifest player in _participants)
         {
-            throw new InvalidDataException("A moving or throwing grenade actor cannot change weapons.");
+            if (!_isMixedMode || catalog.Bindings.Any(binding => binding.SourceId == player.Weapon.SourceId))
+            {
+                _actors.Add(player.PlayerId,
+                    new Actor(player, map.Covers[player.StartCover], catalog.Binding(player.Weapon.SourceId), catalog.Poses));
+            }
         }
-
-        if ((lastTick.HasValue && tick != lastTick.Value) || (!lastTick.HasValue && tick != 0))
-        {
-            throw new InvalidDataException("Grenade weapon selection must use the current host tick.");
-        }
-
-        GrenadeBinding binding = catalog.Binding(weapon.SourceId);
-        if (catalog.CreateManifest(weapon.SourceId, upgrade) != weapon)
-        {
-            throw new InvalidDataException("Grenade weapon selection differs from the recovered source stage.");
-        }
-
-        string clip = binding.Swipe ? "grenade_idle" : "grenadelauncher_idle";
-        GrenadePoseFrame pose = Place(catalog.Poses.Sample(clip, 0, true), actor.Position, actor.Rotation);
-
-        // WeaponInventory changes the active weapon; launch authority cannot retain the initial manifest weapon.
-        actor.Binding = binding;
-        actor.WeaponUpgrade = upgrade;
-        actor.Clip = clip;
-        actor.ClipStarted = tick;
-        actor.Pose = pose;
-        actor.PoseClip = clip;
-        actor.PoseSeconds = 0;
     }
     internal PlayerCollisionModel Collision(string id)=>ActorOf(id).Pose.Collision;
     internal PlayerAimPose CombatPose(string playerId, PlayerShotTargetCatalog targetIdentities)
@@ -160,8 +149,12 @@ internal sealed class GrenadeMatchSimulation
         lastTick = tick;
 
         var dueLaunches = new List<ScheduledGrenadeLaunch>();
-        foreach (Actor actor in actors)
+        foreach (ParticipantManifest participant in _participants)
         {
+            if (!_actors.TryGetValue(participant.PlayerId, out Actor? actor) || !actor.IsActive)
+            {
+                continue;
+            }
             if (locate != null)
                 UpdateActorLocation(actor,
                     locate(actor.Definition.PlayerId), tick);
@@ -244,6 +237,7 @@ internal sealed class GrenadeMatchSimulation
         }
 
         actor.Moving = location.Moving;
+        actor.CoverIndex = location.CoverIndex;
         actor.Position = location.Position;
     }
     internal Vector3 Muzzle(ScheduledGrenadeLaunch launch)
@@ -263,9 +257,7 @@ internal sealed class GrenadeMatchSimulation
     }
     internal ShotCollision? Trace(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
     {
-        var players = actors.Select(actor => new CollisionPlayer(
-            actor.Definition.PlayerId, actor.Pose.Collision,
-            actor.Definition.Fraction == 1 ? 23 : 22));
+        var players = CurrentCollisionPlayers();
         var world = new ShotCollisionWorld(map, players,
             dynamicColliderEnabled, indexedColliderEnabled,
             runtimeLayer, dynamicTargets, bonusBoxes);
@@ -275,9 +267,7 @@ internal sealed class GrenadeMatchSimulation
     internal ShotCollision? TraceForArmy(
         string owner, Vector3 origin, Vector3 direction, float range, uint mask)
     {
-        var players = actors.Select(actor => new CollisionPlayer(
-            actor.Definition.PlayerId, actor.Pose.Collision,
-            actor.Definition.Fraction == 1 ? 23 : 22));
+        var players = CurrentCollisionPlayers();
         var world = new ShotCollisionWorld(map, players,
             dynamicColliderEnabled, indexedColliderEnabled,
             runtimeLayer, dynamicTargets);
@@ -303,9 +293,9 @@ internal sealed class GrenadeMatchSimulation
         // This mask excludes player body layers, so animated player poses are not blockers.
         if (dynamicTargets != null)
         {
-            foreach (Actor actor in actors)
+            foreach (ParticipantManifest participant in _participants)
             {
-                if (IsDroneSightBlocked(ray, dynamicTargets(actor.Definition.PlayerId)))
+                if (IsDroneSightBlocked(ray, dynamicTargets(participant.PlayerId)))
                 {
                     return false;
                 }
@@ -356,7 +346,14 @@ internal sealed class GrenadeMatchSimulation
         }
         return true;
     }
-    private Actor ActorOf(string id)=>actors.Single(x=>x.Definition.PlayerId==id);
+    private Actor ActorOf(string id)
+    {
+        if (!_actors.TryGetValue(id, out Actor? actor) || !actor.IsActive)
+        {
+            throw new InvalidDataException("The player has no active grenade weapon.");
+        }
+        return actor;
+    }
     private static bool Loops(string clip)=>clip is "grenade_idle" or "grenade_run" or "grenadelauncher_idle" or "run_grenadelauncher";
     private static GrenadePoseFrame Place(GrenadePoseFrame frame,Vector3 position,Quaternion rotation)=>new(frame.Seconds,
         frame.Collision.Place(position,rotation),frame.Left.Place(position,rotation),

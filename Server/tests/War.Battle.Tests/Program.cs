@@ -1028,11 +1028,18 @@ if (args is ["--grenade-vehicles-only"] or ["--grenade-drone-only"])
     return;
 }
 
-if (args is ["--grenade-only"] or ["--grenade-switch-only"] or ["--grenade-pose-view-only"])
+if (args is ["--grenade-only"] or ["--grenade-switch-only"] or
+    ["--grenade-pose-view-only"] or ["--mixed-grenade-actors-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
     while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/grenade-content-manifest.json")))root=root.Parent;
     if(root==null)throw new Exception("Recovered grenade content artifact not found.");
+    if (args[0] == "--mixed-grenade-actors-only")
+    {
+        int mixedChecks = MixedGrenadeActorTests.Run(Path.Combine(root.FullName, "content"));
+        Console.WriteLine($"PASS: {mixedChecks} mixed grenade actor checks");
+        return;
+    }
     if (args[0] == "--grenade-pose-view-only")
     {
         int poseChecks = GrenadeCombatPoseProjectionTests.Run(Path.Combine(root.FullName, "content"));
@@ -1048,6 +1055,7 @@ if (args is ["--grenade-only"] or ["--grenade-switch-only"] or ["--grenade-pose-
     int focused=GrenadeCatalogTests.Run(Path.Combine(root.FullName,"content"));
     focused += GrenadeWeaponSwitchTests.Run(Path.Combine(root.FullName, "content"));
     focused += GrenadeCombatPoseProjectionTests.Run(Path.Combine(root.FullName, "content"));
+    focused += MixedGrenadeActorTests.Run(Path.Combine(root.FullName, "content"));
     focused+=GrenadeVehicleFlightTests.Run(Path.Combine(root.FullName,"content"));
     focused+=GrenadeDroneTests.Run(Path.Combine(root.FullName,"content"));
     focused+=await GrenadeCatalogTests.RunUdp(Path.Combine(root.FullName,"content"));
@@ -3491,6 +3499,7 @@ checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"co
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeWeaponSwitchTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GrenadeCombatPoseProjectionTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MixedGrenadeActorTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += LegacyInitialLoadoutTests.Run(Path.Combine(contentRoot.FullName, "content"));

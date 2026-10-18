@@ -76,6 +76,11 @@ The [grenade common combat view](GRENADE_COMMON_COMBAT_VIEW.md) now exposes
 source collision and position-only targets without inventing target rotations.
 Grenade army queries use the cached view, including coherent launch-tick samples.
 Mixed active-class coordination and full gameplay verification remain open.
+The [mixed grenade actor lifecycle](MIXED_GRENADE_ACTORS.md) now supports lazy
+owned-slot activation, dormant re-entry at the host's current cover and collision
+queries against every participant's active class. Lifecycle and simultaneous
+release-order checks use real starter source data and rifle/grenade simulations.
+The MatchEngine command/coordinator integration is still open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

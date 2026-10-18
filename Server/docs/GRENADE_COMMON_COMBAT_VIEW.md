@@ -48,3 +48,7 @@ Verification at this checkpoint: Release build has zero warnings/errors;
 and Tank impacts), 2,435 live rifle engine checks, and the mixed allocator's
 existing weapon checks plus 14 starter army checks pass. No mixed-class grenade
 gameplay or normal Unity match is claimed by these scoped results.
+
+The [mixed actor lifecycle](MIXED_GRENADE_ACTORS.md) can now consume these cached
+poses through an explicit active-class provider. The MatchEngine coordinator
+and full mixed command path remain unimplemented.
