@@ -2164,3 +2164,8 @@ source-bound compressed matrix during content startup and exposes immutable
 samples/deep animation copies. All 221 entries match independent native data.
 Wire references and atomic Unity application remain unimplemented; no co-op
 admission or hit-authority gate is removed.
+
+
+### Grenade transform evidence checkpoint
+
+The reviewed [grenade rig observation](GRENADE_RIG_OBSERVATION.md) now contains actual root, weapon, and target transforms for 12 clips and 289 frames. All 1,445 target positions exactly match the prior samples, and all 66 weapon bindings and source animation hashes validate. Runtime common-pose integration and delayed-rifle LongShot proof remain open; this data checkpoint does not complete those features.
