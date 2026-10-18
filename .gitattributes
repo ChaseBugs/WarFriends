@@ -251,3 +251,8 @@ Server/docs/CARD_INFANTRY_SKINS.md text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryShieldAppearance.cs text eol=lf
 Server/tools/UnityInfantryShieldAppearanceAudit.cs text eol=lf
 Server/docs/INFANTRY_HELD_SHIELDS.md text eol=lf
+
+# Source-ordered card weapon visual sets.
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryWeaponSet.cs text eol=lf
+Server/tools/UnityCardWeaponSetAudit.cs text eol=lf
+Server/docs/CARD_WEAPON_SETS.md text eol=lf

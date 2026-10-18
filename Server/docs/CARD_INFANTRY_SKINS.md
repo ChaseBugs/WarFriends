@@ -41,3 +41,7 @@ parity, original Unity 5.2.5, Android or Linux runtime. Card weapons remain
 separate: `EnemyBasicInventory` selects `cardWeapons`, and the recovered Grenadier
 and Commando weapon selectors can return multiple levels. Do not reuse the existing single-weapon
 Assaulter resolver for those layouts. See the [feature checklist](BATTLE_SERVER_FEATURES.md).
+
+The later [card weapon-set builder](CARD_WEAPON_SETS.md) now preserves those ordered layouts and
+passes native geometry/selection checks. Its authoritative host visibility and normal presenter
+integration remain pending; the card-skin proof above does not close those gates.

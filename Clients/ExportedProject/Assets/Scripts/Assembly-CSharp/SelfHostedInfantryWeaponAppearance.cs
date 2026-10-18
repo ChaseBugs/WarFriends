@@ -91,18 +91,142 @@ public sealed class SelfHostedInfantryWeaponAppearance
             family.upgradeSlots.cardVisuals);
     }
 
+    /// <summary>Resolves every card inventory entry in source order, including non-leveled weapon geometry.</summary>
+    public static IReadOnlyList<SelfHostedInfantryWeaponAppearance> ResolveCardInventory(SoldierBehaviour family)
+    {
+        ValidateFamily(family);
+        List<EnemyBasicInventory.InventoryWeapon> inventory = family.GetComponent<EnemyBasicInventory>().cardWeapons;
+        List<TechnologyVisualDefinition> visuals = family.upgradeSlots.cardVisuals;
+        if (inventory == null || inventory.Count == 0 || visuals == null ||
+            visuals.Count <= WeaponVisualIndex || visuals[WeaponVisualIndex] == null)
+        {
+            throw new InvalidOperationException("A complete recovered card inventory and weapon lane are required.");
+        }
+
+        int number = visuals[WeaponVisualIndex].weaponNumber;
+        int[] levels = GetCardLevels(family, number);
+        if (inventory.Count != levels.Length)
+        {
+            throw new InvalidOperationException("Card inventory order must match the recovered weapon-level selector.");
+        }
+
+        var result = new List<SelfHostedInfantryWeaponAppearance>();
+        for (int index = 0; index < inventory.Count; index++)
+        {
+            result.Add(ResolveEntry(family, inventory[index], levels[index]));
+        }
+
+        return result.AsReadOnly();
+    }
+
+    private static SelfHostedInfantryWeaponAppearance ResolveEntry(SoldierBehaviour family,
+        EnemyBasicInventory.InventoryWeapon entry, int level)
+    {
+        if (entry == null || entry.weapon == null)
+        {
+            throw new InvalidOperationException("The recovered inventory weapon identity is absent.");
+        }
+
+        EnemyLeveledWeapon leveled = entry.weapon.GetComponent<EnemyLeveledWeapon>();
+        SelfHostedInfantryWeaponAppearance appearance;
+        if (leveled == null)
+        {
+            // SetWeaponsUpgrade skips entries without a root EnemyLeveledWeapon component.
+            appearance = new SelfHostedInfantryWeaponAppearance
+            {
+                WeaponPrefab = entry.weapon, IsLeftHand = entry.leftHand, ModelNumber = level,
+                ResourcePath = string.Empty, Scale = Vector3.one
+            };
+        }
+        else
+        {
+            EnemyLeveledWeapon.WeaponModelRecord record = leveled.weaponRecords == null ? null :
+                leveled.weaponRecords.Find(item => item != null && item.level == level);
+            if (record == null)
+            {
+                throw new InvalidOperationException("The card weapon model number has no recovered record.");
+            }
+
+            appearance = Load(entry, record);
+        }
+
+        appearance.UnitId = family.unitDictionaryId;
+        return appearance;
+    }
+
+    private static int[] GetCardLevels(SoldierBehaviour family, int number)
+    {
+        if (family is SoldierBehaviourGrennader)
+        {
+            return new[] { 0, number };
+        }
+
+        if (family is SoldierBehaviourCommando)
+        {
+            return new[] { number, number };
+        }
+
+        return new[] { number };
+    }
+
     /// <summary>Applies the recovered model replacement to a script-free copy of this weapon hierarchy.</summary>
     public void ApplyTo(Transform copiedWeapon)
     {
+        EnemyLeveledWeapon leveled = ValidateCopy(copiedWeapon);
+        if (leveled == null)
+        {
+            return;
+        }
+
+        Transform target = SelfHostedVisualHierarchy.ResolveCopy(WeaponPrefab.transform,
+            leveled.weaponRenderer.transform, copiedWeapon);
+        ApplyModel(target);
+    }
+
+    /// <summary>Applies SetLevel after swapper reset using identities captured before hierarchy changes.</summary>
+    public void ApplyTo(Transform copiedWeapon, Dictionary<Transform, Transform> copies)
+    {
+        EnemyLeveledWeapon leveled = ValidateCopy(copiedWeapon);
+        if (leveled == null)
+        {
+            return;
+        }
+
+        Transform target;
+        if (copies == null || !copies.TryGetValue(leveled.weaponRenderer.transform, out target) ||
+            target == null || !target.IsChildOf(copiedWeapon))
+        {
+            throw new ArgumentException("The copied model renderer identity is absent.");
+        }
+
+        ApplyModel(target);
+    }
+
+    private EnemyLeveledWeapon ValidateCopy(Transform copiedWeapon)
+    {
         EnemyLeveledWeapon leveled = WeaponPrefab.GetComponent<EnemyLeveledWeapon>();
         if (copiedWeapon == null || copiedWeapon == WeaponPrefab.transform ||
-            copiedWeapon.name != WeaponPrefab.name || leveled.weaponRenderer == null ||
+            copiedWeapon.name != WeaponPrefab.name ||
             copiedWeapon.GetComponentsInChildren<MonoBehaviour>(true).Length != 0)
         {
             throw new ArgumentException("A matching copied source weapon hierarchy is required.");
         }
 
-        Transform target = SelfHostedVisualHierarchy.ResolveCopy(WeaponPrefab.transform, leveled.weaponRenderer.transform, copiedWeapon);
+        if (leveled == null && Model == null)
+        {
+            return null;
+        }
+
+        if (leveled == null || leveled.weaponRenderer == null || Model == null || Model.pivot == null)
+        {
+            throw new InvalidOperationException("The selected source weapon replacement is incomplete.");
+        }
+
+        return leveled;
+    }
+
+    private void ApplyModel(Transform target)
+    {
         MeshFilter filter = target.GetComponent<MeshFilter>();
         MeshRenderer renderer = target.GetComponent<MeshRenderer>();
         if (filter == null || renderer == null || Model == null || Model.pivot == null)

@@ -6,7 +6,7 @@
   "presenterChecks": 4,
   "sourceHashes": {
     "Assets/Scripts/Assembly-CSharp/SelfHostedGunslingerWeaponAttachment.cs": "094f7fb8b0a5eacaef59e5e5f7e700ccb1beaba95295aa890fe7d83277a56413",
-    "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryWeaponAppearance.cs": "6bc6a12dfd3e72597b9a44b1be0192e473c7e34ec3c5ab247036ddb17410fc04",
+    "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryWeaponAppearance.cs": "ad3d8a36414a68b718c352e9982184ad8bb3d590d48ab2caf1812a8363e7673d",
     "Assets/Scripts/Assembly-CSharp/SelfHostedVisualHierarchy.cs": "bfdf780729a3185cfbddc797fc31c1da850c524c9a4c6d65622f09c9ac5f3a0e",
     "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryVisualFactory.cs": "dfac5161d2c097811901d3f2bfdbaf0f7025a346d409c6caaa2da3bfbe811439",
     "Assets/Scripts/Assembly-CSharp/SelfHostedInfantryVisual.cs": "7e9a0c68f73869acb5deeb5c235677a577f054b48bd21ef56aff9a81d6f34a54",

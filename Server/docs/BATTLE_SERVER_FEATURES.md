@@ -122,6 +122,11 @@ socket parenting and card-only body-material sharing. Fifty-six native checks co
 comparisons and four production actors. Every upgrade threshold, card weapons, detached shield death effects and rendered
 normal two-client battle parity remain open; the source-constant Gunslinger weapon guard alone
 does not complete this appearance path.
+[Source-ordered card weapon sets](CARD_WEAPON_SETS.md) now construct all seven weapons in the six
+supported card inventories, with 53 native selector/geometry/visibility checks. They are not yet
+bound to normal roster presentation: Grenadier selection and delayed return, Commando's simultaneous
+weapons, host visibility metadata and SDK/reconnect projection remain required. The source Grenadier
+uses a static PistolEnemy at index zero and the selected grenade model at index one.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host
