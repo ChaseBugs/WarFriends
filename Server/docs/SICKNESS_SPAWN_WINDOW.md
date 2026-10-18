@@ -39,7 +39,7 @@ arbitrary effect lease is introduced here.
 
 ## Verification and boundary
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 100 checks for
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 116 checks for
 arming, friendly/vehicle/immune exclusions, neutral and reversed fractions, replacement and
 reused-definition finishes, repeated callbacks, exact vitality/damage calculations, immutable
 output, invalid-event/state rejection, ordered spawn subscriptions and actual host deployment callbacks.
@@ -72,6 +72,33 @@ AfterSpawned mutation across all eligible units and subscription cleanup are sti
 It does not prove network card consumption, Sickness UI or normal Unity gameplay.
 The Release build has zero warnings/errors, and `--combat-only` still passes 26,395 assertions
 after these host notification changes. The full default suite was not rerun.
+
+## Normal Assaulter spawn mutation
+
+`ApplySicknessToArmyAssaulter` now binds the kernel to the normal ID_UNIT-ASSAULT's private
+current weapon and vitality ledgers. It checks the current public/private vitality mirrors and
+revision capacity before mutation. Current health becomes half the current maximum, the maximum
+stays unchanged, and current weapon damage halves. Other unit/weapon layouts are separate bindings;
+this method is not a general soldier-family eligibility inference.
+
+The host fixture now registers this binding in the existing shared `ArmySpawnCallbacks` dispatcher,
+alongside the real deployment start/finish notifications. Four actual generated Assaulters prove
+opposing-only modification, unchanged friendly weapon/health authority, retained maximum health,
+disconnected-window refusal and observer removal. Sixteen additional checks bring the focused
+suite to 116. Deployment lifecycle checks pass 12 and Grenadier damage checks pass 20; the Release
+build has zero warnings/errors. Combat/default suites were not rerun after this internal binding.
+
+This is automatic mutation during actual spawn dispatch after explicit test arming/subscription,
+not authorized SICKNESS card use. Card-spawned units still need shared source-ordered dispatch,
+and the remaining normal weapon/vitality layouts need individual bindings.
+
+A further fixed Park observation did not produce an opposing normal Assaulter shot through tick
+3000: all four entities retained idle_1. Inspection confirms InitializeStationaryArmyCombat only
+starts Sniper/Minigunner, while Rusher initialization requires an assigned Rusher slot. Normal
+Assaulter navigation/volley execution is not connected by this checkpoint. Therefore the new
+damage ledger mutation is not claimed as proof of an actual Assaulter projectile or victim hit.
+That missing normal PvP path remains required and must be implemented rather than bypassed by
+injecting a shot into this fixture.
 
 ## Host subscription ordering
 
