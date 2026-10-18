@@ -1908,7 +1908,7 @@ public sealed partial class MatchEngine
         if (phase != BattlePhase.Running || map == null ||
             !cardRocketMissiles.ContainsKey(entityKey) ||
             !activeArmyEntities.TryGetValue(entityKey, out var soldier) ||
-            soldier.SourceCardId != "BIGROCKET")
+            !IsRocketSoldier(soldier))
             return null;
 
         Player owner = Find(soldier.OwnerPlayerId) ??
@@ -1935,7 +1935,7 @@ public sealed partial class MatchEngine
         if (!rocketAttacks.ContainsKey(entityKey))
             return null;
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-            entity.SourceCardId != "BIGROCKET" ||
+            !IsRocketSoldier(entity) ||
             cardEnemyPoints?.Find(entityKey) is not { } corner ||
             enemyMuzzles == null || assaulterWeapon == null)
             throw new InvalidDataException(
@@ -1948,13 +1948,13 @@ public sealed partial class MatchEngine
 
     private void TryAssignCardRocketPoint(BattleArmyEntityState entity)
     {
-        if (entity.SourceCardId != "BIGROCKET" || cardEnemyPoints == null ||
+        if (!IsRocketSoldier(entity) || cardEnemyPoints == null ||
             armyCatalog == null)
             throw new InvalidDataException("Card Rocket has no source point authority.");
 
         Vector3 position = new(entity.X, entity.Y, entity.Z);
         CardUnitInitialPoint? point = cardEnemyPoints.TryAssign(
-            entity.EntityKey, entity.SourceCardId, entity.OwnerFraction, position);
+            entity.EntityKey, "BIGROCKET", entity.OwnerFraction, position);
         if (point == null)
         {
             // EnemyController.GenerateInitPoint retries after five seconds.
@@ -1966,7 +1966,7 @@ public sealed partial class MatchEngine
         try
         {
             ArmyNavMeshCorridor route = PlanCardSoldierRoute(position, point.Position);
-            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            float speed = ArmySpeed(entity.EntityKey) ?? armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
             rocketWalks.Add(entity.EntityKey, new CardSoldierWalkState(
                 point.ComponentFileId, route, armyCatalog.InfantryAgent, speed));
             rocketPointRetryTicks.Remove(entity.EntityKey);
@@ -1985,7 +1985,7 @@ public sealed partial class MatchEngine
             if (tick < dueTick)
                 continue;
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "BIGROCKET")
+                !IsRocketSoldier(entity))
                 throw new InvalidDataException("Card Rocket retry lost its soldier.");
             TryAssignCardRocketPoint(entity);
         }
@@ -1996,7 +1996,7 @@ public sealed partial class MatchEngine
         foreach (var (entityKey, walk) in rocketWalks.OrderBy(row => row.Key).ToArray())
         {
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "BIGROCKET" ||
+                !IsRocketSoldier(entity) ||
                 cardEnemyPoints?.Find(entityKey)?.ComponentFileId != walk.PointFileId)
                 throw new InvalidDataException("Card Rocket walk lost its point.");
 
@@ -2005,7 +2005,10 @@ public sealed partial class MatchEngine
             entity.Y = walk.Position.Y;
             entity.Z = walk.Position.Z;
             entity.PositionTick = tick;
-            cardUnitCombat?.UpdatePose(entity);
+            if (entity.SourceCardId.Length > 0)
+            {
+                cardUnitCombat?.UpdatePose(entity);
+            }
             if (walk.Arrived)
             {
                 rocketWalks.Remove(entityKey);
@@ -2020,15 +2023,13 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card Rocket reached no source Corner.");
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity))
             throw new InvalidDataException("Card Rocket reached a point without its soldier.");
-        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
-            throw new InvalidDataException("Card Rocket lost its card shot row.");
-        if (point.ComponentType != "EnemyPointCorner" ||
-            source.EntityKey != entityKey || source.SourceCardId != "BIGROCKET")
-            throw new InvalidDataException("Card Rocket has no Corner attack authority.");
+        if (point.ComponentType != "EnemyPointCorner" || !IsRocketSoldier(entity))
+            throw new InvalidDataException("Rocket Soldier has no Corner attack authority.");
+        ArmyBaseShotStats shot = ReadRocketShotStats(entity);
 
         // SoldierBehaviour.ApplyWeaponsSetup replaces the prefab's two-second
         // cadence with 0.35 seconds. CornerHiding draws the first delay.
-        var attack = new ArmyRusherAttackState(source.BaseStats.Shot,
+        var attack = new ArmyRusherAttackState(shot,
             NextArmyFloat, shotIntervalTicks:
                 (int)MathF.Ceiling(.35f * MatchManifest.TickRate));
         attack.BeginInitialCooldown();
@@ -2043,7 +2044,7 @@ public sealed partial class MatchEngine
         {
             CardUnitInitialPoint? point = cardEnemyPoints?.Find(entityKey);
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "BIGROCKET" ||
+                !IsRocketSoldier(entity) ||
                 rocketWalks.ContainsKey(entityKey) ||
                 point?.ComponentType != "EnemyPointCorner" ||
                 point.CornerDirection is not Vector3 ||
@@ -2095,7 +2096,7 @@ public sealed partial class MatchEngine
         {
             if (!activeArmyEntities.TryGetValue(intent.EntityKey,
                     out var soldier) ||
-                soldier.SourceCardId != "BIGROCKET" ||
+                !IsRocketSoldier(soldier) ||
                 !cardRocketMissiles.TryGetValue(intent.EntityKey,
                     out var missile))
                 throw new InvalidDataException("Card Rocket shot lost its owner.");

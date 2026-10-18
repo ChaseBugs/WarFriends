@@ -13543,7 +13543,7 @@ internal static class CombatContentTests
         Check(farRocket.TargetPosition == new Vector3(50, 0, 0),
             "Rocket launch caps the original target to fifty units");
         Reject(() => new CardRocketMissileFlight(84,
-            rocketEntity.EntityKey, rocketStats.Rocket! with { Speed = 4 },
+            rocketEntity.EntityKey, rocketStats.Rocket! with { Speed = CardRocketMissileFlight.MaximumSpeed + 1f },
             Vector3.Zero, Vector3.UnitX, 0, false, (_, _, _) => null));
         var rocketAim = rocketCardMatch.CardRocketAim(rocketEntity.EntityKey);
         CoverNode opposingCover = park.Covers.First(cover =>

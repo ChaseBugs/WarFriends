@@ -23,6 +23,11 @@ public sealed partial class MatchEngine
             return ApplySicknessToOrdinaryGrenadier(entityKey, window);
         }
 
+        if (activeArmyEntities.TryGetValue(entityKey, out var rocket) && rocket.UnitId == "ID_UNIT-ROCKETSOLDIER")
+        {
+            return ApplySicknessToOrdinaryRocket(entityKey, window);
+        }
+
         if (phase != BattlePhase.Running ||
             !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             entity.UnitId is not ("ID_UNIT-ASSAULT" or "ID_UNIT-SNIPER" or "ID_UNIT-MINIGUNNER" or
@@ -63,8 +68,10 @@ public sealed partial class MatchEngine
         // These families derive actual damage from separate minDamage/maxDamage fields.
         // ImproveAllWeapons changes only damageAmount. BulletShotGun and FlameAmmo overwrite
         // that value from their unchanged range before applying damage, so keep this range ledger.
+        // Rocket Soldier's ledger likewise represents the unchanged explosion; its current contact field
+        // lives in cardRocketMissiles and is changed separately after this shared vitality proof.
         bool preservesDamageRange = entity.UnitId is
-            "ID_UNIT-SHOTGUNNER" or "ID_UNIT-WARPER" or "ID_UNIT-FLAMETHROWER";
+            "ID_UNIT-SHOTGUNNER" or "ID_UNIT-WARPER" or "ID_UNIT-FLAMETHROWER" or "ID_UNIT-ROCKETSOLDIER";
         float[] currentWeaponFields = preservesDamageRange ? [] : [damage];
         var current = new SicknessCombatState(vitality.Maximum, vitality.Current, currentWeaponFields);
         SicknessCombatState changed = window.Apply(target, current);

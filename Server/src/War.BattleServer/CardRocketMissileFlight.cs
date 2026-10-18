@@ -12,6 +12,8 @@ internal sealed record CardRocketMissileImpact(ulong ProjectileId,
 /// </summary>
 internal sealed class CardRocketMissileFlight
 {
+    internal const float MaximumSpeed = 100f;
+
     private readonly ulong projectileId;
     private readonly ulong soldierEntityKey;
     private readonly Vector3 start;
@@ -35,7 +37,7 @@ internal sealed class CardRocketMissileFlight
         Func<Vector3, Vector3, float, ShotCollision?> trace)
     {
         if (projectileId == 0 || soldierEntityKey == 0 || missile == null ||
-            !float.IsFinite(missile.Speed) || missile.Speed != 3f ||
+            !float.IsFinite(missile.Speed) || missile.Speed <= 0f || missile.Speed > MaximumSpeed ||
             !float.IsFinite(missile.DirectDamage) || missile.DirectDamage < 0 ||
             !float.IsFinite(missile.ExplosionDamage) || missile.ExplosionDamage < 0 ||
             !float.IsFinite(missile.PlayerBehindShieldRatio) ||

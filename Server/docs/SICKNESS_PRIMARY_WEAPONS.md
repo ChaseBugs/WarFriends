@@ -2,7 +2,7 @@
 
 The ordinary binding now covers Assaulter, Sniper, Minigunner, Paratrooper, SWAT, Gunslinger,
 Commando, Shotgunner, Warper and Flamethrower source layouts. `MatchEngine.SicknessPrimaryWeapons.cs` keeps an explicit
-ten-unit allowlist and a separate ordinary Grenadier adapter. It does not infer support for every SoldierBehaviour or enable SICKNESS
+ten-unit allowlist and separate ordinary Grenadier and Rocket Soldier adapters. It does not infer support for every SoldierBehaviour or enable SICKNESS
 card activation while other weapon layouts remain unbound.
 
 ## Source rules and authority
@@ -81,9 +81,9 @@ upgrades absent. This proves automatic changed gun damage after the window close
 critical behavior, every physical victim outcome or normal Unity presentation. Existing Assaulter
 tests separately prove changed shield damage through a real collision.
 
-The current Sickness group passes 189 checks and the infantry weapon group passes 150.
-The full default Battle suite was verified at the preceding checkpoint with 247,854 assertions;
-it was not rerun for this ordinary Grenadier binding checkpoint.
+The current Sickness group passes 216 checks and the infantry weapon group passes 150.
+The current full default Battle suite passes 247,923 battle/admission/SDK/geometry and real
+two-peer UDP assertions, including ordinary Rocket and card Rocket regressions.
 
 SICKNESS remains incomplete: other eligible weapon layouts, the global source spawn categories,
 authorized card command/reservation consumption, SDK/normal Client activation, icon presentation
@@ -103,3 +103,31 @@ maximum rather than multiplying the current wounded value.
 explicitly armed trusted window. Base, special and Elite upgrade selections verify the mutation,
 unchanged setup, real published grenade launch damage and rejection after window disconnection.
 These host tests do not prove authorized SICKNESS card activation or normal Unity gameplay.
+
+## Ordinary Rocket Soldier
+
+The [ordinary Bazooka integration](ORDINARY_ROCKET_SOLDIER.md) binds source normal/special lanes
+to current missile setup before spawn observers. Its adapter changes only missile contact damage
+and current health. The shared `armyDamage` value represents the unchanged explosion authority;
+that mirror is checked before mutation. Special speed, behind-shield reduction and frozen airborne
+records stay unchanged. Real deployment/finish callbacks, natural Corner launches, shooter death
+and missile completion are checked for base, middle/special and final/special selections.
+
+## Remaining ordinary layouts
+
+The recovered deployment catalog has sixteen soldier families. Ten scalar/range layouts and the
+two specialized Grenadier/Rocket layouts above have reviewed host bindings. The remaining four
+are still closed here; their visible source expressions are requirements, not implementation:
+
+| Ordinary family | Recovered field or eligibility constraint | Missing host proof |
+| --- | --- | --- |
+| Engineer | Base soldier weapon setup is separate from the turret it constructs. | Inventory layout, engineer lifecycle and exact spawned-owner scope. |
+| Machinegunner | Its gun uses base damageAmount; MachineGunPoint is explicitly excluded by canBeFreezed. | Spawn/current-state eligibility, gun binding and normal attacks. |
+| SciFi | ApplyWeaponsSetup writes grenade minimum and separate explosion; its initial Fly state is eligible. | Both current grenade fields, normal movement and actual flights. |
+| Mortar | Contact is 0.1 times damage, explosion is full damage, speed is 20 and stopTime is reciprocal shotSpeed. | Current missile setup, unchanged timing/explosion and normal attacks. |
+
+`EnemyController.StartEnemyBehaviour(state)` assigns the supplied state before raising the base
+AfterSpawned event. A future global adapter must test the actual spawn state rather than infer
+eligibility from the unit name or later point type. Non-ordinary/card/crew spawn categories,
+ordered global event subscription, authorized SICKNESS consumption and Client icon presentation
+remain separate requirements. Completing this table alone will not complete the card.

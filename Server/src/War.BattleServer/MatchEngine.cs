@@ -1574,6 +1574,10 @@ public sealed partial class MatchEngine : IMatchRuntime
                         {
                             InitializeOrdinaryGrenadier(entityKey);
                         }
+                        if (spawned.UnitId == "ID_UNIT-ROCKETSOLDIER")
+                        {
+                            InitializeOrdinaryRocket(entityKey);
+                        }
                         ApplyActiveArmyHealthBuffs(entityKey);
                         var vitality=armyVitality.GetValueOrDefault(entityKey);
                         if(vitality!=null)

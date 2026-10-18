@@ -62,13 +62,13 @@ TRIGGERHAPPY and TURRET. Persisted identity validation is not implementation of 
 The [deployment wave lifecycle](ARMY_DEPLOYMENT_WAVES.md) now records accepted wave identities,
 entity provenance, and the final strict post-spawn wait. Overlapping pending spawns sort by source
 due tick instead of blocking behind an older wave's future entries. This is a prerequisite for the
-Sickness event window; its arming, actual health/damage modifiers and Client integration remain open.
+Sickness event window; authorized arming, global spawn coverage and Client integration remain open.
 The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 116 focused
 checks, including reused-option finishes, overlapping windows, neutral/reversed fractions, and
 current-health refill versus maximum-health preservation. Actual accepted host deployment callbacks
 now open/close the kernel window in a fixed Park match: friendly starts are ignored, rejected
 commands do not notify, and finish follows every generated entity and the strict final wait.
-The fixture explicitly arms/subscribes the window. Complete host entity mutation, authorized
+The fixture explicitly arms/subscribes the window. Complete global entity coverage, authorized
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
 The same real spawn dispatcher now applies the normal Assaulter binding: opposing current health
 and weapon damage halve, maximum health stays unchanged, and friendly authority is preserved.
@@ -82,7 +82,13 @@ for base, special and Elite selections; separate explosion damage and fuse stay 
 Flamethrower also preserves real damage from its independent min/max fields while refilling
 current health; its first automatic burst and a trusted deployed-infantry pulse are compared
 with a baseline host. Natural flame contact remains separate from that trusted pulse test.
-Other layouts and authorized SICKNESS card activation remain open.
+[Ordinary Rocket Soldier](ORDINARY_ROCKET_SOLDIER.md) now binds admitted normal/special upgrades
+to real normal deployment, Bazooka point navigation, Corner attacks and the shared missile path.
+Its source catalog has no Elite lane. Sickness changes current contact damage and health while
+preserving explosion damage and special speed. The ordinary Rocket group passes 46 checks and
+the Sickness group passes 216. Normal Unity presentation and authorized SICKNESS activation
+remain open. The [remaining-layout table](SICKNESS_PRIMARY_WEAPONS.md#remaining-ordinary-layouts)
+tracks Engineer, Machinegunner, SciFi and Mortar separately from global spawn categories.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected
