@@ -50,6 +50,15 @@ card/craft blobs together only when their exact read snapshots still match. Real
 an earlier-read overwrite after a battle debit and allow only one of two concurrent writers.
 The existing 248-assertion legacy HTTP smoke passes. Deposit/withdrawal, buffered inventory writers,
 admission reservations and full successful crafting-claim HTTP proof remain open.
+The [card-pack publication](CARD_PACK_PUBLICATION.md) now commits stock and wallet debit in one
+conditional update, retries conflicted plans from fresh state, and preserves failure replay rollback
+fields. Real Mongo tests cover one/two affordable competing purchases, overflow and stale writes
+after battle consumption; the 248-assertion legacy HTTP smoke passes.
+The [complete card definition audit](ORDINARY_CARD_IDENTITIES.md) corrects the earlier 45-ID subset:
+there are 67 ordinary definitions and 57 Client-active pack identities. Twelve active source IDs
+are absent from the current host effect map and remain required: BOOBYTRAP, CRITICALS, ELECTRICTRAPS,
+EXPLOSIVEPISTOL, EXPLOSIVETIMING, HEADAHEAD, MEATHEADS, PLAGUE, ROCKETTURRET, SICKNESS,
+TRIGGERHAPPY and TURRET. Persisted identity validation is not implementation of those effects.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

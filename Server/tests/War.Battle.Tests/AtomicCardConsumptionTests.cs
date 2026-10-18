@@ -188,6 +188,9 @@ internal static class AtomicCardConsumptionTests
             ?? throw new InvalidDataException("Subsystem concurrency fixture account is absent.");
         await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
             fixture.Payload, cancellationToken);
+        var stalePack = new LegacyCardPackUpdate(CardState(StartingCopies + 1), stale.Gold, stale.WarBucks);
+        Require(!await stores.Players.TryPurchaseCardPackAsync(stale, stalePack, cancellationToken),
+            "An earlier-read card pack overwrote a committed battle debit.");
         var proposed = new Dictionary<string, string>
         {
             ["CardManagerData"] = CardState(StartingCopies + 1),

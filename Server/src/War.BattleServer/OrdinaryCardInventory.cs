@@ -8,8 +8,8 @@ public static class OrdinaryCardInventory
 {
     private const int MaximumStateBytes = 65536;
     private const int MaximumJsonDepth = 16;
-    private static readonly HashSet<string> OrdinaryCardIds = WarCardSourceIdentityCatalog.All
-        .Select(row => row.SourceCardId).ToHashSet(StringComparer.Ordinal);
+    private static readonly HashSet<string> OrdinaryCardIds = OrdinaryCardIdentityCatalog.All
+        .ToHashSet(StringComparer.Ordinal);
     private static readonly HashSet<string> RootFields = new(StringComparer.Ordinal)
     {
         "cardData", "buddyCardData", "nextWithdraw", "nextBuddyDeposit", "extraSlot"

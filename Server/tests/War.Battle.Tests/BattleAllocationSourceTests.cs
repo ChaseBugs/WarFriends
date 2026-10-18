@@ -15,9 +15,9 @@ internal static class BattleAllocationSourceTests
         Require(empty.CardIds.Count == 0 && empty.BuddyCardIds.Count == 0 &&
             empty.NormalUpgradeIndexes.Count == 4, "Fresh source defaults did not project an empty card inventory.");
         var cards = new CardManagerData();
-        foreach (var identity in WarCardSourceIdentityCatalog.All)
+        foreach (var identity in OrdinaryCardIdentityCatalog.All)
         {
-            cards.CardData.Add(identity.SourceCardId, new SavedCardData { Amount = 1 });
+            cards.CardData.Add(identity, new SavedCardData { Amount = 1 });
         }
 
         string first = cards.CardData.Keys.Order(StringComparer.Ordinal).First();
@@ -26,7 +26,7 @@ internal static class BattleAllocationSourceTests
         string before = player.Serialized["CardManagerData"];
         BattleAllocationProjection full = BattleAllocationSource.Project(player);
         Require(full.CardIds.SequenceEqual(cards.CardData.Keys.Order(StringComparer.Ordinal)) &&
-            full.CardCounts[0] == int.MaxValue && full.CardIds.Count == WarCardSourceIdentityCatalog.All.Count,
+            full.CardCounts[0] == int.MaxValue && full.CardIds.Count == OrdinaryCardIdentityCatalog.All.Count,
             "Account projection lost source card identity, order, or quantity.");
         Require(player.Serialized["CardManagerData"] == before, "Account projection mutated durable inventory.");
         cards.CardData[first].Amount = 0;
@@ -43,9 +43,9 @@ internal static class BattleAllocationSourceTests
         await players.Initialize(deadline.Token);
         LegacyPlayerDocument player = CreatePlayer();
         var cards = new CardManagerData();
-        foreach (var identity in WarCardSourceIdentityCatalog.All)
+        foreach (var identity in OrdinaryCardIdentityCatalog.All)
         {
-            cards.CardData.Add(identity.SourceCardId, new SavedCardData { Amount = 2 });
+            cards.CardData.Add(identity, new SavedCardData { Amount = 2 });
         }
 
         player.Serialized["CardManagerData"] = PlayerState.Write(cards);

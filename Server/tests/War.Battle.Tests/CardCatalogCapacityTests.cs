@@ -11,7 +11,7 @@ internal static class CardCatalogCapacityTests
 
     internal static int Run(MatchManifest definition)
     {
-        string[] sourceIds = WarCardSourceIdentityCatalog.All.Select(row => row.SourceCardId).ToArray();
+        string[] sourceIds = OrdinaryCardIdentityCatalog.All.ToArray();
         Require(sourceIds.Length > SelectedCardLimit, "The fixture must exercise more than a selected hand.");
         string owner = definition.Players[0].PlayerId;
         string opponent = definition.Players[1].PlayerId;

@@ -49,7 +49,7 @@ internal static class CardAllocationQuantityTests
                 Builders<BattleAllocationDocument>.Update.Unset(row => row.CardCounts));
             await RejectAsync(async () => { await store.Get(playerId, CancellationToken.None); });
             await RejectAsync(async () => { await store.GetMany([playerId], CancellationToken.None); });
-            string[] fullCatalog = WarCardSourceIdentityCatalog.All.Select(row => row.SourceCardId).ToArray();
+            string[] fullCatalog = OrdinaryCardIdentityCatalog.All.ToArray();
             await store.Put(CardCatalogCapacityTests.CreateAllocation(playerId, fullCatalog), CancellationToken.None);
             single = await store.Get(playerId, CancellationToken.None);
             batch = await store.GetMany([playerId], CancellationToken.None);
@@ -59,6 +59,7 @@ internal static class CardAllocationQuantityTests
                 batch.Single().CardCounts.SequenceEqual(single.CardCounts),
                 "Mongo truncated the full source card catalog or lost its quantities.");
             await BattleAllocationSourceTests.RunMongoAsync(connectionString, databaseName);
+            await CardPackConcurrencyTests.RunAsync(connectionString, databaseName);
             Console.WriteLine("PASS: Mongo full card catalog and quantities round-trip; " +
                 "missing quantity authority rejected by both reads");
         }

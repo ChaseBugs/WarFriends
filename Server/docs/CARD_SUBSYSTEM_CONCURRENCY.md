@@ -38,7 +38,11 @@ Artifacts: `.local/card-craft-cas-ff03c84d81af4faaab476dc379065b85` and
 
 ## Remaining work
 
-Card deposit/withdrawal and buffered pack/reward writers still need coordinated conditional or
+Card deposit/withdrawal writers still need coordinated conditional or
 transactional updates. This change does not fence those writers, introduce admission inventory
 reservations, complete historical inventory reconciliation, or make every crafting retry return
 the original success response. Automatic battle allocation and normal Unity gameplay remain open.
+
+
+The later [card-pack publication](CARD_PACK_PUBLICATION.md) now fences the buffered pack writer
+and publishes its stock and wallet together. Its receipt/account crash gap remains separate work.

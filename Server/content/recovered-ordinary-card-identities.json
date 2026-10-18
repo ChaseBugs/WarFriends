@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "clientVersion": "1.4.0",
+  "sourceSha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "sheet": "Google2u.CardDefinitions",
+  "path": "MainSceneRootNew/Managers/Card Manager",
+  "cards": [
+    {
+      "id": "SLOWMOVE",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "FREEZE",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "HEAVYDRONE",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "APOCALYPSE",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "SHIELDRAFFLE",
+      "rarity": 2,
+      "implemented": false
+    },
+    {
+      "id": "MINEENEMY",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "BIGROCKET",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "ELITEMINIGUN",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "IMMORTAL",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "ROCKETTURRET",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "DISARMED",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "ELITESWAT",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "CHEMICALUNIT",
+      "rarity": 3,
+      "implemented": false
+    },
+    {
+      "id": "ELITETANK",
+      "rarity": 3,
+      "implemented": false
+    },
+    {
+      "id": "TOPBUILDERS",
+      "rarity": 3,
+      "implemented": false
+    },
+    {
+      "id": "BIGMEDKIT",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "AIRSTRIKE",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "MADGANG",
+      "rarity": 3,
+      "implemented": false
+    },
+    {
+      "id": "SABOTAGE",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "HEAVYTURRET",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "ELITESNIPER",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "CLUSTERGRENADE",
+      "rarity": 3,
+      "implemented": true
+    },
+    {
+      "id": "HEADAHEAD",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "HELISTRIKE",
+      "rarity": 2,
+      "implemented": false
+    },
+    {
+      "id": "KEVLARUP",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "MIRRORMYSELF",
+      "rarity": 2,
+      "implemented": false
+    },
+    {
+      "id": "REFLECTION",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "AMMOTHIEF",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "EMPTYMAG",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "GREATGRENADIER",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "MEATHEADS",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "INVISIBILITY",
+      "rarity": 2,
+      "implemented": false
+    },
+    {
+      "id": "BOOBYTRAP",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "ELECTRICTRAPS",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "SMALLMEDKIT",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "ELITEPARA",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "VEHICLEHEALTH",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "TURRETCRATE",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "HEALTHCRATE",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "KEVLARCRATE",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "BULLETHARMLESS",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "AMMOBOX",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "BACKSTAB",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "EXPLOSIVEPISTOL",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "MEDKIT",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "DECOY",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "MAXHEALTHINC",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "MINE",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "TURRET",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "RANDOMKEVLAR",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "EXPLOSIVETIMING",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "STREAKBOOST",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "DESTROYSHIELD",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "SHIELDSPAWNER",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "SHIELDSHEALTH",
+      "rarity": 2,
+      "implemented": true
+    },
+    {
+      "id": "SLOWDOWN",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "HEALINGSTORM",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "TRIGGERHAPPY",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "AMMOCRATE",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "SICKNESS",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "CRITICALS",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "SUPERSOLDIERS",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "PARALYZE",
+      "rarity": 1,
+      "implemented": false
+    },
+    {
+      "id": "CRATEBLOCKER",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "SHIELDGENERATOR",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "PLAGUE",
+      "rarity": 1,
+      "implemented": true
+    },
+    {
+      "id": "HEALTHYUNIT",
+      "rarity": 1,
+      "implemented": false
+    }
+  ]
+}

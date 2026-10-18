@@ -20,7 +20,8 @@ validated snapshot. A nonempty identity without positive ownership evidence is r
 
 ### Owned catalog capacity versus selected cards
 
-The complete recovered ordinary source-ID map currently contains 45 identities. Applying the
+The [complete identity audit](ORDINARY_CARD_IDENTITIES.md) now identifies 67 ordinary definitions,
+including 57 Client-active rows. The earlier 45-ID effect map was only a subset. Applying the
 32-entry selection-policy bound to owned allocations or the union of two players' inventories
 rejected valid full catalogs before selection. Those three boundaries are now separate:
 
@@ -33,12 +34,12 @@ The 128/256 limits are bounded transport capacities, not recovered game hand siz
 entitlements, or permission to select more cards. Buddy limits and durable consumption are unchanged.
 An enlarged owned catalog does not increase match-local uses of a selected card.
 
-`CardCatalogCapacityTests` transports all 45 source identities through allocation JSON and host
+`CardCatalogCapacityTests` transports all 67 defined identities through allocation JSON and host
 configuration, selects a representative three-card hand, checks the separate 32/33 policy boundary,
 and configures a union exceeding 32 even though each player's own list is smaller. It also checks
 the 128/129 allocation and 256/257 catalog boundaries. The real Mongo quantity test now replaces
-its owned test row with all 45 identities and verifies both read paths retain their order and counts.
-This verifies catalog capacity, not all 45 cards' gameplay effects or normal account projection.
+its owned test row with all 67 defined identities and verifies both read paths retain their order and counts.
+This verifies catalog capacity, not every defined card's gameplay effect or normal account projection.
 
 The Release build passed with zero warnings and errors. Both `--allocation-inventory-only` and
 `--allocation-inventory-mongo mongodb://127.0.0.1:27017` passed after the capacity change.
@@ -133,3 +134,8 @@ After the approach and asynchronous-observation fixes, the final default
 native run exits zero with 143,282 assertions. See the subsequent regression
 document for the verified scope and log. Normal-account projection and
 durable card economy remain unfinished.
+
+
+The [card-pack conditional publication](CARD_PACK_PUBLICATION.md) now writes stock and wallet
+debits together and prevents stale pack writes after a battle debit. Deposit/withdrawal and the
+receipt-to-account crash gap still need their own coordinated transitions.

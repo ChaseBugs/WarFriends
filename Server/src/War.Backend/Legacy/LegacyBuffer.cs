@@ -145,7 +145,12 @@ public sealed class LegacyBufferProcessor(LegacyPlayerStore players, LegacyBuffe
             if (recorded is { Result: not null })
             {
                 // Already applied on an earlier delivery of this buffer. Replay the same answer.
-                results.Add(Result(request.Action, (DatabaseResult)recorded.Result.Value));
+                DatabaseResult code = (DatabaseResult)recorded.Result.Value;
+                bool needsCardRollback = request.Action == DatabaseAction.BuyCardPack && code is
+                    DatabaseResult.NotEnoughWarbucks or DatabaseResult.CardPackNotFound or
+                    DatabaseResult.NoDiscountFound;
+                results.Add(needsCardRollback
+                    ? CardPackRollback(request, state, code).Item2 : Result(request.Action, code));
                 continue;
             }
 
@@ -160,7 +165,14 @@ public sealed class LegacyBufferProcessor(LegacyPlayerStore players, LegacyBuffe
             }
 
             var outcome = Execute(request, state);
-            await state.Flush(players, ct);
+            while (!await state.Flush(players, ct))
+            {
+                // A battle debit or another purchase changed this request's inputs. Nothing was published.
+                player = await players.ById(player.Id, ct)
+                    ?? throw new InvalidDataException("Buffered purchase account disappeared.");
+                state = new WorkingState(player);
+                outcome = Execute(request, state);
+            }
             await buffers.Complete(player.Id, buffer.BufferId, request.Index, (int)outcome.Code, ct);
             results.Add(outcome.Node);
         }
@@ -373,6 +385,21 @@ public sealed class LegacyBufferProcessor(LegacyPlayerStore players, LegacyBuffe
         var cardsWon = GenerateCardPack(packName, state.PlayerLevel, catalog);
         if (cardsWon == null) return CardPackRollback(request, state, DatabaseResult.CardPackNotFound);
 
+        if (state.Cards.CardData == null || state.Cards.CardData.Values.Any(slot => slot == null || slot.Amount < 0))
+        {
+            return Fail(request, DatabaseResult.ServerMaintenance);
+        }
+        var rewards = cardsWon.GroupBy(identity => identity)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        foreach (var reward in rewards)
+        {
+            int owned = state.Cards.CardData.TryGetValue(reward.Key, out var slot) ? slot.Amount : 0;
+            if (owned > int.MaxValue - reward.Value)
+            {
+                return CardPackRollback(request, state, DatabaseResult.CardPackNotFound);
+            }
+        }
+
         long priceGold = RowLong(packRow, "GOLD");
         long priceWarbucks = RowLong(packRow, "WARBUCKS");
         if (priceGold > 0)
@@ -384,7 +411,10 @@ public sealed class LegacyBufferProcessor(LegacyPlayerStore players, LegacyBuffe
             if (!state.TrySpendWarBucks(priceWarbucks)) return CardPackRollback(request, state, DatabaseResult.NotEnoughWarbucks);
         }
 
-        foreach (string cardName in cardsWon) Slot(state.Cards.CardData, cardName).Amount++;
+        foreach (var reward in rewards)
+        {
+            Slot(state.Cards.CardData, reward.Key).Amount += reward.Value;
+        }
         state.CardsChanged();
         return Ok(request);
     }
@@ -1433,8 +1463,12 @@ public sealed class LegacyBufferProcessor(LegacyPlayerStore players, LegacyBuffe
 
         private string? Blob(string key) => document.Serialized.GetValueOrDefault(key);
 
-        public async Task Flush(LegacyPlayerStore store, CancellationToken ct)
+        public async Task<bool> Flush(LegacyPlayerStore store, CancellationToken ct)
         {
+            if (dirty.Contains("CardManagerData"))
+            {
+                return await FlushCardPack(store, ct);
+            }
             foreach (string key in dirty)
             {
                 string json = key switch
@@ -1485,6 +1519,33 @@ public sealed class LegacyBufferProcessor(LegacyPlayerStore players, LegacyBuffe
                 scrapsDelta = 0;
             }
             if (updates.Count > 0) await store.Update(document.Id, Builders<LegacyPlayerDocument>.Update.Combine(updates), ct);
+            return true;
+        }
+
+        private async Task<bool> FlushCardPack(LegacyPlayerStore store, CancellationToken cancellationToken)
+        {
+            if (dirty.Count != 1 || scrapsDelta != 0 ||
+                clientArmyPower is int power && power != document.ArmyPower)
+            {
+                throw new InvalidDataException("Card-pack publication contains an unrelated mutation.");
+            }
+
+            var purchase = new LegacyCardPackUpdate(PlayerState.Write(Cards),
+                checked(document.Gold + goldDelta), checked(document.WarBucks + warBucksDelta));
+            if (!await store.TryPurchaseCardPackAsync(document, purchase, cancellationToken))
+            {
+                return false;
+            }
+
+            document.Serialized["CardManagerData"] = purchase.SerializedCards;
+            document.Gold = purchase.Gold;
+            document.WarBucks = purchase.WarBucks;
+            document.Revision = checked(document.Revision + 1);
+            goldDelta = 0;
+            warBucksDelta = 0;
+            clientArmyPower = null;
+            dirty.Clear();
+            return true;
         }
     }
 }

@@ -17,7 +17,7 @@ non-mutating projection. It does not accept packet-supplied inventory or publish
 The source validates the complete present card-state container before projecting positive
 quantities. It rejects unknown and duplicate fields, unknown ordinary source IDs, null containers,
 malformed records, non-integer/negative/out-of-Int32 amounts, and malformed flag/timer metadata.
-Zero quantities are omitted. All 45 ordinary source IDs are supported by the inventory map;
+Zero quantities are omitted. All 67 defined ordinary source IDs are supported by the inventory map;
 output IDs are ordinally sorted with counts in matching order. Allocation validation freezes the
 result. Existing malformed state is not reset, rewritten, or converted into ownership.
 
@@ -35,11 +35,11 @@ that an ID alone implements its combat behavior. Empty Buddy state remains valid
 
 ## Verification and integration state
 
-`BattleAllocationSourceTests` covers absent subsystem defaults, all 45 ordinary IDs, exact
+`BattleAllocationSourceTests` covers absent subsystem defaults, all 67 defined ordinary IDs, exact
 Int32 maximum quantity, zero ownership, deterministic ordering, immutable source data, malformed
 and duplicate JSON, oversized state, unknown IDs, and both zero/positive Buddy-row rejection.
 
-The real Mongo gate inserts an account with 45 source card rows, reads it through `GetAsync`,
+The real Mongo gate inserts an account with 67 defined ordinary card rows, reads it through `GetAsync`,
 stores the resulting allocation, and verifies quantities and army lanes on readback. This write
 is explicit test setup in the gate's owned temporary database; the source itself is read-only.
 
@@ -59,3 +59,9 @@ This source is a prerequisite for those paths, not their completion.
 The later [paired-result card debit](ATOMIC_CARD_CONSUMPTION.md) reuses the extracted
 `OrdinaryCardInventory` parser and provides atomic ordinary-card consumption at first terminal
 acceptance. It does not complete admission reservation or all legacy writer coordination.
+
+
+The [complete card identity audit](ORDINARY_CARD_IDENTITIES.md) replaces the earlier 45-ID effect
+map used as an inventory validator. Valid persisted identities now cover all 67 ordinary rows;
+57 are Client-active, and 12 of those still lack host effect identity integration. Identity
+projection does not implement those missing effects or activate the inactive definitions.
