@@ -46,6 +46,12 @@ internal static class CardAllocationQuantityTests
             var collection = mongo.GetDatabase(databaseName)
                 .GetCollection<BattleAllocationDocument>("battle_allocations");
             await collection.UpdateOneAsync(row => row.PlayerId == playerId,
+                Builders<BattleAllocationDocument>.Update.Set(row => row.Revision, 0));
+            await RejectAsync(async () => { await store.Get(playerId, CancellationToken.None); });
+            await RejectAsync(async () => { await store.GetMany([playerId], CancellationToken.None); });
+            await collection.UpdateOneAsync(row => row.PlayerId == playerId,
+                Builders<BattleAllocationDocument>.Update.Set(row => row.Revision, 1));
+            await collection.UpdateOneAsync(row => row.PlayerId == playerId,
                 Builders<BattleAllocationDocument>.Update.Unset(row => row.CardCounts));
             await RejectAsync(async () => { await store.Get(playerId, CancellationToken.None); });
             await RejectAsync(async () => { await store.GetMany([playerId], CancellationToken.None); });

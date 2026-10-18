@@ -36,12 +36,7 @@ public sealed partial class BattleAllocationStore
             {
                 LegacyPlayerDocument account = accounts.Single(row => row.Id == identity);
                 BattleAllocationDocument document = documents.Single(row => row.PlayerId == identity);
-                BattleAllocationProjection allocation = BattleAllocationProjection.Validate(
-                    new BattleAllocationProjection(document.PlayerId, document.CardIds, document.BuddyCardIds,
-                        document.NormalUpgradeIndexes, document.SpecialUpgradeIndexes, document.EliteUpgradeIndexes)
-                    {
-                        CardCounts = document.CardCounts
-                    });
+                BattleAllocationProjection allocation = ValidateDocument(document);
                 result.Add(new BattleAllocationAccountSnapshot(account, allocation));
             }
             return (IReadOnlyList<BattleAllocationAccountSnapshot>)result.AsReadOnly();

@@ -71,7 +71,7 @@ public sealed class BattleAllocationPreparationStore
                 .SingleOrDefaultAsync(token);
             if (existing != null)
             {
-                BattleAllocationProjection previous = ValidateExisting(existing);
+                BattleAllocationProjection previous = BattleAllocationStore.ValidateDocument(existing);
                 if (mode == PreparationMode.CreateOnly || HasSameContents(previous, allocation))
                 {
                     return false;
@@ -123,20 +123,6 @@ public sealed class BattleAllocationPreparationStore
         {
             throw new InvalidDataException("Battle allocation changed before inactive refresh.");
         }
-    }
-
-    private static BattleAllocationProjection ValidateExisting(BattleAllocationDocument document)
-    {
-        if (document.Revision < 1 || document.Revision == long.MaxValue)
-        {
-            throw new InvalidDataException("Invalid durable battle allocation revision.");
-        }
-        return BattleAllocationProjection.Validate(new BattleAllocationProjection(document.PlayerId,
-            document.CardIds, document.BuddyCardIds, document.NormalUpgradeIndexes,
-            document.SpecialUpgradeIndexes, document.EliteUpgradeIndexes)
-        {
-            CardCounts = document.CardCounts
-        });
     }
 
     private static bool HasSameContents(BattleAllocationProjection previous, BattleAllocationProjection current)

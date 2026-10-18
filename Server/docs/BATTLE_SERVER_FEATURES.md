@@ -125,8 +125,10 @@ account-revision transaction. Forced inventory-change and between-query publicat
 Paired manifests read accounts and allocations from one Mongo snapshot and reject ownership
 mismatches. The first real queue regression passed; the subsequent coherent-reader run failed
 on a rematch Forfeit UDP timeout. Its diagnostic rerun now passes the full real HTTP/UDP,
-rematch/restart and unattended-cancellation gate; the earlier timeout's cause remains unproven. Inactive allocation
-refresh, admission reservations and normal two-Unity gameplay remain open. See
+rematch/restart and unattended-cancellation gate; the earlier timeout's cause remains unproven.
+Inactive allocation refresh is now wired to normal HTTP admission. Its native gate verifies
+active-ticket rejection, cancellation/rejoin refresh and the complete HTTP/UDP rematch/recovery
+suite. Admission reservations across all legacy writers and normal two-Unity gameplay remain open. See
 [current integration evidence](CLIENT_LOBBY_BOOTSTRAP.md).
 The [paired-result card consumption](ATOMIC_CARD_CONSUMPTION.md) now debits confirmed ordinary
 cards with result insertion and pair deletion in one real Mongo transaction. Tests cover both

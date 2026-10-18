@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text.Json;
 using War.Backend.Legacy;
+using War.Battle.Tests;
 using War.Client;
 using War.BattleServer;
 using War.Infrastructure;
@@ -113,6 +114,9 @@ internal static class BackendQueueLiveTests
                 ?? throw new Exception("Normal queue admission did not create initial battle allocation.");
             if (initialAllocation.CardIds.Count != 0 || initialAllocation.NormalUpgradeIndexes.Count != 0)
                 throw new Exception("Normal queue admission invented card or unit ownership.");
+            await LiveInactiveRefreshChecks.RunAsync(left,
+                new LiveInactiveRefreshChecks.Settings(ids[0], tokens[0]),
+                new LiveInactiveRefreshChecks.Stores(legacy, allocations), deadline.Token);
             try {await right.JoinMatchQueueAsync(tokens[1],deadline.Token);
                 throw new Exception("Queue pairing succeeded while the Worker was unavailable.");}
             catch(HttpRequestException e) when(e.Message.Contains("Backend status 503",StringComparison.Ordinal)){}

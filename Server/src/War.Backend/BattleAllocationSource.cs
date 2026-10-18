@@ -42,18 +42,24 @@ public sealed class BattleAllocationSource
     /// <summary>Rejects stale allocation contents instead of granting ownership absent from the account snapshot.</summary>
     public static void ValidateMatchesAccount(LegacyPlayerDocument player, BattleAllocationProjection allocation)
     {
-        BattleAllocationProjection expected = Project(player);
-        BattleAllocationProjection supplied = BattleAllocationProjection.Validate(allocation);
-        if (expected.PlayerId != supplied.PlayerId ||
-            !expected.CardIds.SequenceEqual(supplied.CardIds, StringComparer.Ordinal) ||
-            !expected.CardCounts.SequenceEqual(supplied.CardCounts) ||
-            !expected.BuddyCardIds.SequenceEqual(supplied.BuddyCardIds, StringComparer.Ordinal) ||
-            !expected.NormalUpgradeIndexes.SequenceEqual(supplied.NormalUpgradeIndexes) ||
-            !expected.SpecialUpgradeIndexes.SequenceEqual(supplied.SpecialUpgradeIndexes) ||
-            !expected.EliteUpgradeIndexes.SequenceEqual(supplied.EliteUpgradeIndexes))
+        if (!HasMatchingAllocation(player, allocation))
         {
             throw new InvalidDataException("Battle allocation differs from its durable account authority.");
         }
+    }
+
+    /// <summary>Compares validated allocation contents with current source-derived account ownership.</summary>
+    public static bool HasMatchingAllocation(LegacyPlayerDocument player, BattleAllocationProjection allocation)
+    {
+        BattleAllocationProjection expected = Project(player);
+        BattleAllocationProjection supplied = BattleAllocationProjection.Validate(allocation);
+        return expected.PlayerId == supplied.PlayerId &&
+            expected.CardIds.SequenceEqual(supplied.CardIds, StringComparer.Ordinal) &&
+            expected.CardCounts.SequenceEqual(supplied.CardCounts) &&
+            expected.BuddyCardIds.SequenceEqual(supplied.BuddyCardIds, StringComparer.Ordinal) &&
+            expected.NormalUpgradeIndexes.SequenceEqual(supplied.NormalUpgradeIndexes) &&
+            expected.SpecialUpgradeIndexes.SequenceEqual(supplied.SpecialUpgradeIndexes) &&
+            expected.EliteUpgradeIndexes.SequenceEqual(supplied.EliteUpgradeIndexes);
     }
 
     private static IReadOnlyDictionary<string, int> ReadCards(LegacyPlayerDocument player)

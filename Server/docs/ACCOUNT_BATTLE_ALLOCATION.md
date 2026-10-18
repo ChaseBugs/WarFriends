@@ -83,6 +83,9 @@ battle entry remain required. See [current boot/admission evidence](CLIENT_LOBBY
 
 Inactive refresh now exists as a tested storage API with account-revision and shared-admission
 fencing. It preserves identical replay, rejects active ownership and damaged prior authority,
-and never replenishes removed cards. It is not yet wired into normal queue HTTP admission;
-refresh-winning rematch contention now passes a native Mongo scenario. Normal queue HTTP
-wiring and full integration proof remain open.
+and never replenishes removed cards. Refresh-winning rematch contention passes a native Mongo
+scenario. Normal queue HTTP admission now refreshes absent or mismatched inactive allocations;
+the real Backend/Worker regression passes active-ticket rejection, cancellation/rejoin refresh,
+UDP battle lifecycle, rematches and process recovery. Existing attempt outcomes are read before
+preparation so frozen pairs and cancelled attempts retain their ownership. Normal two-Unity
+gameplay and complete economy reservation across legacy writers remain open.

@@ -533,3 +533,35 @@ configured session observation; the existing URI constructor retains its behavio
 accepted round and prepared payload are store fixtures, not normal Unity/Worker gameplay.
 This proves the refresh-winning ordering. HTTP queue refresh wiring, whole real queue/Worker
 regression with refresh enabled and normal two-Unity gameplay remain open.
+
+### Normal HTTP inactive refresh wiring
+
+The current queue route now checks signed-attempt replay outcomes before preparing a loadout.
+`ExistingAttemptAsync` reads only that attempt's cancelled/completed/paired authority, validates
+its receipt and pair binding, and never creates a ticket. This prevents an already assigned
+attempt from refreshing current inventory instead of returning its frozen match. Old cancelled
+attempts cannot select a successor pair.
+
+For new admission, an absent or account-mismatched allocation now invokes `RefreshInactiveAsync`
+with the server-owned projection and manifest presentation validation. Equal contents retain
+the existing allocation. Active waiting tickets still prevent a changed loadout from being
+refreshed; the player must cancel that search first. The common allocation reader now validates
+durable revision bounds for single, batch and paired reads as well as refresh.
+
+Release build passes at `Server/.local/queue-inactive-refresh-build.log`. Focused queue and
+inventory suites pass at `queue-attempts-only-inactive-refresh-http.log` and
+`allocation-inventory-mongo-inactive-refresh-http.log` in the existing evidence directory.
+The real queue run is writing `queue-live-inactive-refresh-http.log`, with runtime artifacts
+in `Server/.local/queue-live-a2bfe1fbcdfe46a49d9f70913da5c3f3`; its final result remains pending.
+Its new HTTP scenario changes durable inventory as a server fixture, verifies rejection while
+waiting, cancels, then rejoins and checks the refreshed quantity. This is not purchase/economy
+authority proof or normal two-Unity gameplay acceptance.
+
+The real HTTP/UDP queue run now completes with exit zero at
+`queue-live-inactive-refresh-http.log`. Its explicit HTTP refresh scenario passes, followed by
+the existing readiness/cancellation, same-opponent rematch, lost registration reply, process
+restart and unattended recovery scenarios. Owned test processes were cleaned up. The final
+behavior-preserving naming/namespace cleanup also builds cleanly at
+`Server/.local/queue-inactive-refresh-final-build.log`. This closes the native integration gate
+for this queue refresh path, not fresh starter-profile rendering, normal two-Unity gameplay,
+Android or complete inventory/economy reservation against every legacy writer.

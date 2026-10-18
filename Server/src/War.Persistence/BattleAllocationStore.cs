@@ -93,12 +93,7 @@ public sealed partial class BattleAllocationStore
     {
         var document = await allocations.Find(x => x.PlayerId == playerId).FirstOrDefaultAsync(ct);
         if (document == null) return null;
-        return BattleAllocationProjection.Validate(new BattleAllocationProjection(document.PlayerId,
-            document.CardIds, document.BuddyCardIds, document.NormalUpgradeIndexes,
-            document.SpecialUpgradeIndexes, document.EliteUpgradeIndexes)
-        {
-            CardCounts = document.CardCounts
-        });
+        return ValidateDocument(document);
     }
     public async Task<IReadOnlyList<BattleAllocationProjection>> GetMany(IEnumerable<string> playerIds, CancellationToken ct)
     {
@@ -110,14 +105,20 @@ public sealed partial class BattleAllocationStore
         if (docs.Count != ids.Length || docs.Select(x => x.PlayerId).Distinct(StringComparer.Ordinal).Count() != ids.Length)
             throw new InvalidDataException("Battle allocation is incomplete.");
         var byId = docs.ToDictionary(x => x.PlayerId, StringComparer.Ordinal);
-        return Array.AsReadOnly(ids.Select(id =>
+        return Array.AsReadOnly(ids.Select(id => ValidateDocument(byId[id])).ToArray());
+    }
+
+    internal static BattleAllocationProjection ValidateDocument(BattleAllocationDocument document)
+    {
+        if (document.Revision < 1 || document.Revision == long.MaxValue)
         {
-            var d = byId[id];
-            return BattleAllocationProjection.Validate(new BattleAllocationProjection(d.PlayerId, d.CardIds, d.BuddyCardIds,
-                d.NormalUpgradeIndexes, d.SpecialUpgradeIndexes, d.EliteUpgradeIndexes)
-            {
-                CardCounts = d.CardCounts
-            });
-        }).ToArray());
+            throw new InvalidDataException("Invalid durable battle allocation revision.");
+        }
+        return BattleAllocationProjection.Validate(new BattleAllocationProjection(document.PlayerId,
+            document.CardIds, document.BuddyCardIds, document.NormalUpgradeIndexes,
+            document.SpecialUpgradeIndexes, document.EliteUpgradeIndexes)
+        {
+            CardCounts = document.CardCounts
+        });
     }
 }

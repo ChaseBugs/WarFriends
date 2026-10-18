@@ -9,6 +9,7 @@ using War.BattleServer;
 using War.Infrastructure;
 using War.Persistence;
 using War.Protocol;
+using War.Shared;
 using static War.Backend.HttpProtocol;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -321,20 +322,23 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
     BattlePairingResult result;
     try
     {
-        var existing=attempt.HasValue?null:await queue.ExistingUnscoped(playerId,ctx.RequestAborted);
+        BattlePairingResult? existing = attempt.HasValue
+            ? await queue.ExistingAttemptAsync(attempt.Value, now, ctx.RequestAborted)
+            : await queue.ExistingUnscoped(playerId, ctx.RequestAborted);
         if(existing!=null)result=existing;
         else
         {
             try
             {
-                if (await allocations.Get(playerId, ctx.RequestAborted) == null)
+                LegacyPlayerDocument account = await legacy.ById(playerId, ctx.RequestAborted)
+                    ?? throw new InvalidDataException("A durable account is required for battle preparation.");
+                BattleAllocationProjection? currentAllocation = await allocations.Get(playerId, ctx.RequestAborted);
+                if (currentAllocation == null || !BattleAllocationSource.HasMatchingAllocation(account, currentAllocation))
                 {
-                    LegacyPlayerDocument account = await legacy.ById(playerId, ctx.RequestAborted)
-                        ?? throw new InvalidDataException("A durable account is required for battle preparation.");
                     BattleManifestFactory manifestFactory = services.GetRequiredService<BattleManifestFactory>();
                     BattleAllocationPreparationStore preparation =
                         services.GetRequiredService<BattleAllocationPreparationStore>();
-                    await preparation.PrepareAsync(playerId, account.Revision, snapshot =>
+                    await preparation.RefreshInactiveAsync(playerId, account.Revision, snapshot =>
                     {
                         manifestFactory.ValidatePresentation(BattlePlayerPresentationSource.Project(snapshot));
                         return BattleAllocationSource.Project(snapshot);

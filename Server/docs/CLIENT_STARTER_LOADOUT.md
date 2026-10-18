@@ -230,3 +230,9 @@ equipped-only ordering into mixed manifests and verifies the source starter
 selection echo through the native host. It also fixes grenade package loading
 and mixed binding classification. Mixed grenade switching/runtime and automatic
 card/account allocation remain incomplete; admission is not full gameplay proof.
+
+The later [queue admission integration](CLIENT_LOBBY_BOOTSTRAP.md) now creates and refreshes
+inactive allocations from current durable account state. Native HTTP/UDP queue/rematch/restart
+checks pass, including refusing refresh while queued and updating ownership after cancellation.
+Those live fixtures use a reviewed rifle profile; they do not prove the complete recovered
+starter profile entering and rendering a normal Unity battle.

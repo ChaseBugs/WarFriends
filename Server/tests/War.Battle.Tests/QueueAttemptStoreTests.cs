@@ -69,6 +69,8 @@ internal static class QueueAttemptStoreTests
             "Cancellation before join must be acknowledged without a ticket.");
         Require((await other.JoinAttemptAsync(old, "early.fixture", now, cancellationToken)).Code == "cancelled",
             "A delayed first join must not recreate a cancelled attempt.");
+        Require((await queue.ExistingAttemptAsync(old, now, cancellationToken))?.Code == "cancelled",
+            "Existing-attempt lookup did not preserve cancellation before loadout preparation.");
         var current = CreateAttempt(old.PlayerId, now);
         Require((await queue.JoinAttemptAsync(current, "early.fixture", now, cancellationToken)).Code == "waiting",
             "A different attempt can enter after acknowledged cancellation.");
@@ -77,6 +79,10 @@ internal static class QueueAttemptStoreTests
         var peer = CreateAttempt(Guid.NewGuid().ToString("N"), now);
         var paired = await other.JoinAttemptAsync(peer, "early.fixture", now, cancellationToken);
         Require(paired.Code == "paired", "The surviving new ticket must still pair.");
+        Require((await queue.ExistingAttemptAsync(current, now, cancellationToken))?.MatchId == paired.MatchId,
+            "Existing-attempt lookup lost the current frozen pair.");
+        Require((await queue.ExistingAttemptAsync(old, now, cancellationToken))?.Code == "cancelled",
+            "An old attempt selected the successor pair during lookup.");
         Require((await queue.CancelAttemptAsync(old, now, cancellationToken)).Code == "not-queued" &&
             (await queue.Existing(current.PlayerId, cancellationToken))?.MatchId == paired.MatchId,
             "An old cancellation must not capture a newer pair.");
