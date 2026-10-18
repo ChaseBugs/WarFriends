@@ -12,6 +12,7 @@ internal interface IMatchRuntime
     string MatchId { get; }
     string ManifestHash { get; }
     bool Terminal { get; }
+    double ObservedRealTimeSeconds { get; }
     bool HasPlayer(string playerId);
     bool Admit(string playerId);
     bool CanResume(string playerId);
@@ -19,6 +20,7 @@ internal interface IMatchRuntime
     bool CancelBeforeStart();
     bool AbortForHostShutdown();
     void Advance(ulong tick);
+    void Advance(ulong tick, double realTimeSeconds);
     void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations);
     MatchReply Command(string playerId, MatchCommand command);
     MatchReply Reply(ulong commandId, string code);

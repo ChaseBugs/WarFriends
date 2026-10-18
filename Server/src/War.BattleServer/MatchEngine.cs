@@ -1069,6 +1069,10 @@ public sealed partial class MatchEngine : IMatchRuntime
     internal IReadOnlyList<BarrelMutation> BarrelState=>barrels?.Snapshot() ?? Array.Empty<BarrelMutation>();
     public string ManifestHash { get; }
     public bool Terminal => phase is BattlePhase.Ended or BattlePhase.Aborted;
+
+    /// <summary>Gets the latest host-provided monotonic time, independently of paused simulation ticks.</summary>
+    public double ObservedRealTimeSeconds { get; private set; }
+
     private readonly Func<int,int> armyChoice;
     private readonly Func<int,int> bonusAreaChoice;
     private readonly Func<Vector3>? bonusPositionDraw;
@@ -1261,7 +1265,14 @@ public sealed partial class MatchEngine : IMatchRuntime
     }
     public void Advance(ulong nextTick)
     {
+        Advance(nextTick, nextTick / (double)MatchManifest.TickRate);
+    }
+
+    /// <summary>Accepts a real-time observation while preserving the existing fixed-step combat clock.</summary>
+    public void Advance(ulong nextTick, double realTimeSeconds)
+    {
         if (nextTick < hostTick || nextTick > 10000000) throw new ArgumentOutOfRangeException(nameof(nextTick));
+        BattleRealtime.Validate(realTimeSeconds, ObservedRealTimeSeconds);
         ulong elapsed=nextTick-hostTick;
         // Reject a gap before changing either clock. A caller must be able
         // to replay each missed tick so delayed card spawns keep source time.
@@ -1305,6 +1316,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             }
         }
 
+        ObservedRealTimeSeconds = realTimeSeconds;
         hostTick=nextTick;
         if (Terminal) return; // Preserve the exact terminal tick and result projection.
         if (isReconnecting)

@@ -299,7 +299,8 @@ public sealed class NetworkWorker : BackgroundService
         lock(controlGate)
             if(!stoppingToken.IsCancellationRequested && Volatile.Read(ref controlClosed)==0)
                 Volatile.Write(ref ready,1);
-        long previous = Stopwatch.GetTimestamp();
+        long clockOrigin = Stopwatch.GetTimestamp();
+        long previous = clockOrigin;
         double accumulator = 0;
         try
         {
@@ -309,6 +310,7 @@ public sealed class NetworkWorker : BackgroundService
                     await maintainOutbox;
                 if (receive.IsCompleted) await receive;
                 long now = Stopwatch.GetTimestamp();
+                double realTimeSeconds = (now - clockOrigin) / (double)Stopwatch.Frequency;
                 accumulator += (now - previous) / (double)Stopwatch.Frequency;
                 previous = now;
                 if (accumulator > 4.0 / TickRate) { accumulator = 4.0 / TickRate;
@@ -362,7 +364,8 @@ public sealed class NetworkWorker : BackgroundService
                         }
                     }
                     int matchesBeforeAdvance = match.Count;
-                    match.Advance(tick);
+                    // Catch-up ticks may share one real-time sample; capped backlog must not erase real time.
+                    match.Advance(tick, realTimeSeconds);
                     if (match.Count != matchesBeforeAdvance)
                         PublishActiveMatchEndpoints();
                     PersistTerminals();

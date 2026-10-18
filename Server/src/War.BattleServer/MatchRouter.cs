@@ -30,6 +30,7 @@ public sealed class MatchRouter
     private readonly HashSet<ulong> issuedSessions=[];
     private readonly HashSet<string> publishedTerminals=new(StringComparer.Ordinal);
     private ulong currentTick;
+    internal double ObservedRealTimeSeconds { get; private set; }
     public int Count => matches.Count;
     public Dictionary<ulong,IPEndPoint> ActiveSessionEndpoints() => matches.Values
         .SelectMany(match=>match.ActiveSessionEndpoints).ToDictionary(pair=>pair.Key,pair=>pair.Value);
@@ -141,7 +142,7 @@ public sealed class MatchRouter
                     ExpiresUnixSeconds = claims.ExpiresUnixSeconds
                 };
             }
-            endpoint.Advance(currentTick);
+            endpoint.Advance(currentTick, ObservedRealTimeSeconds);
             matches.Add(manifest.MatchId, endpoint);
             issued.Add(manifest.MatchId, grants);
             issuedGenerations.Add(manifest.MatchId, new ulong[2]);
@@ -252,9 +253,17 @@ public sealed class MatchRouter
     }
     public void Advance(ulong tick)
     {
+        Advance(tick, tick / (double)MatchManifest.TickRate);
+    }
+
+    /// <summary>Forwards real Worker time separately from the executed fixed-step tick counter.</summary>
+    public void Advance(ulong tick, double realTimeSeconds)
+    {
         if(tick<currentTick)throw new InvalidOperationException("Match registry tick moved backwards.");
+        BattleRealtime.Validate(realTimeSeconds, ObservedRealTimeSeconds);
         currentTick=tick;
-        foreach(var match in matches.Values)match.Advance(tick);
+        ObservedRealTimeSeconds = realTimeSeconds;
+        foreach(var match in matches.Values)match.Advance(tick, realTimeSeconds);
         foreach(var id in matches.Where(x=>x.Value.Expired).Select(x=>x.Key).ToArray())
         {
             matches.Remove(id);

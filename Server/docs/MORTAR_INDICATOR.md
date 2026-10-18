@@ -410,7 +410,22 @@ neither Worker raw-time input nor full TimeManager stored-float/clamp behavior i
 The existing nominal nine-tick per-unit quantization is also unchanged; source float readiness
 and callback-frame placement must not be declared exact merely from these integer tests.
 Host snapshot/spawn-time projection, pause/resume behavior and live weapon-slot hooks remain
-required. The concurrently running full executable predates this later deployment-state change.
+required. The earlier full executable predates this later deployment-state change.
+
+The real-time input pipeline now reaches both runtimes from the Worker's actual Stopwatch
+observation through MatchRouter and MatchEndpoint. It is validated independently of executed
+or paused simulation ticks; repeated observations are allowed for catch-up steps. New
+allocations inherit the current sample instead of reconstructing it from the tick counter.
+The [clock integration guide](BATTLE_CLOCKS.md) records this implemented boundary and the
+remaining raw-wait, clamped cooldown, scaled-body and projection work. Existing timers have
+not been silently switched to the observed sample.
+
+The frame/deployment group passes 44 checks, the combat/co-op group passes 26,395, protocol
+checks pass 1,360, and native isolated MongoDB/HTTP/protobuf/UDP smoke passes 74 checks.
+The earlier full clock/pool executable completed with 263,399 assertions and exit code zero,
+before the later independent deployment inputs and real-time pipeline. A new complete run
+for those changes is tracked at `Server/.local/battle-realtime-full.log` and is not yet recorded
+as passing.
 
 ```powershell
 python -B Server/tools/verify_pool_return_race.py `

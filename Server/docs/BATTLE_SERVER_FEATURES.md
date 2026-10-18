@@ -206,6 +206,11 @@ current host keeps its original shared-tick call. Twenty-nine wave/preflight che
 queued spawning with a frozen cooldown and safe clock-domain rejection; 13,304 Mortar checks
 also pass. Worker raw-time input, TimeManager's clamped stored-float clock and snapshot/spawn
 projection remain open before live pool hooks can use this boundary correctly.
+The [real-time input pipeline](BATTLE_CLOCKS.md) now forwards actual Worker Stopwatch samples
+through registration, endpoint offsets and both runtimes. Forty-four frame/deployment checks,
+26,395 combat/co-op checks, 1,360 protocol checks and 74 real Mongo-backed UDP smoke checks
+pass. Timers still use their existing clocks; consuming the new observation is separate work.
+The earlier full clock/pool run passed 263,399 assertions before this later pipeline change.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

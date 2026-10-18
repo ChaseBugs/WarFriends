@@ -257,6 +257,9 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     public string ManifestHash { get; }
     public bool Terminal => phase is BattlePhase.Ended or BattlePhase.Aborted;
 
+    /// <summary>Gets the latest host real-time observation; co-op gameplay still uses its fixed-step clock.</summary>
+    public double ObservedRealTimeSeconds { get; private set; }
+
     internal CoopMatchRuntime(MatchManifest allocation, MissionCatalog catalog,
         CoopSpawnPointCatalog spawnPoints, CoopNavMeshPathCatalog paths,
         CoopEnemyCombatCatalog combat,
@@ -757,8 +760,15 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
 
     public void Advance(ulong nextTick)
     {
+        Advance(nextTick, nextTick / (double)MatchManifest.TickRate);
+    }
+
+    public void Advance(ulong nextTick, double realTimeSeconds)
+    {
         if (nextTick < tick)
             throw new InvalidOperationException("Co-op match tick moved backwards.");
+        BattleRealtime.Validate(realTimeSeconds, ObservedRealTimeSeconds);
+        ObservedRealTimeSeconds = realTimeSeconds;
         if (Terminal)
             return;
 

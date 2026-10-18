@@ -9,6 +9,7 @@ namespace War.BattleServer;
 // creation API. Two bounded sessions; no DB, rewards or production allocation.
 public sealed class MatchEndpoint
 {
+    private const ulong TerminalRetentionTicks = 120 * MatchManifest.TickRate;
     private readonly IMatchRuntime match;
     private readonly MatchTokens tokens;
     private readonly string serverId;
@@ -18,7 +19,7 @@ public sealed class MatchEndpoint
     public string MatchId => match.MatchId;
     public string ManifestHash => match.ManifestHash;
     public MatchSnapshot? TerminalSnapshot => match.Terminal ? match.TerminalEvidenceSnapshot() : null;
-    public bool Expired => terminalTick.HasValue && tick - terminalTick.Value > 120 * MatchManifest.TickRate;
+    public bool Expired => terminalTick.HasValue && tick - terminalTick.Value > TerminalRetentionTicks;
     private sealed class Session(string playerId, IPEndPoint endpoint, byte[] key, string poseRevision)
     {
         public string ObservedPoseRevision { get; } = poseRevision;
@@ -37,6 +38,7 @@ public sealed class MatchEndpoint
         BattleProjectileState[] Rows);
     private ulong tick;
     private ulong? terminalTick;
+    internal double ObservedRealTimeSeconds { get; private set; }
     public MatchEndpoint(MatchManifest manifest, string signingKey, RecoveredBattleMap? map = null,
         BattleCombatContent? content=null,ulong originTick=0)
         : this(manifest, signingKey,
@@ -80,10 +82,28 @@ public sealed class MatchEndpoint
     public bool AbortForHostShutdown() => !Expired && match.AbortForHostShutdown();
     public void Advance(ulong nextTick)
     {
+        Advance(nextTick, nextTick / (double)MatchManifest.TickRate);
+    }
+
+    /// <summary>Preserves allocation-relative ticks while forwarding the Worker's independent real-time sample.</summary>
+    public void Advance(ulong nextTick, double realTimeSeconds)
+    {
         if(nextTick<originTick)throw new InvalidOperationException("Match tick predates allocation.");
-        tick = nextTick-originTick;
-        if (Expired) return;
-        match.Advance(tick);
+        ulong relativeTick = nextTick - originTick;
+        if (relativeTick < tick)
+        {
+            throw new InvalidOperationException("Match endpoint tick moved backwards.");
+        }
+        BattleRealtime.Validate(realTimeSeconds, ObservedRealTimeSeconds);
+        if (terminalTick.HasValue && relativeTick - terminalTick.Value > TerminalRetentionTicks)
+        {
+            tick = relativeTick;
+            ObservedRealTimeSeconds = realTimeSeconds;
+            return;
+        }
+        match.Advance(relativeTick, realTimeSeconds);
+        tick = relativeTick;
+        ObservedRealTimeSeconds = realTimeSeconds;
         if (match.Terminal) terminalTick ??= tick;
     }
     public byte[]? Handle(Packet packet, byte[] datagram, IPEndPoint endpoint, long unixNow)

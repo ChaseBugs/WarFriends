@@ -13,7 +13,30 @@ internal static class CoopPrestartCancellationTests
         VerifyWaitingCancellation(sources);
         VerifyReadyPeerCancellation(sources);
         VerifyStartedForfeit(sources);
+        VerifyRealTimeObservation(sources);
         Console.WriteLine("PASS: co-op prestart cancellation, immutable replay and started-only forfeit evidence");
+    }
+
+    private static void VerifyRealTimeObservation(CoopObstacleVolleyRuntimeTests.Sources sources)
+    {
+        CoopMatchRuntime runtime = CreateRuntime(sources);
+        runtime.Advance(1, 10d);
+        byte[] before = runtime.Snapshot().ToByteArray();
+        bool rejected = false;
+        try
+        {
+            runtime.Advance(2, 9d);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            rejected = true;
+        }
+        Require(rejected && runtime.ObservedRealTimeSeconds == 10d &&
+            runtime.Snapshot().ToByteArray().AsSpan().SequenceEqual(before),
+            "Rejected co-op real time changed its snapshot or clock.");
+        runtime.Advance(2, 10d);
+        Require(runtime.ObservedRealTimeSeconds == 10d && runtime.Snapshot().ServerTick == 2,
+            "Co-op catch-up could not retain one raw sample for multiple fixed steps.");
     }
 
     private static void VerifyWaitingCancellation(CoopObstacleVolleyRuntimeTests.Sources sources)
