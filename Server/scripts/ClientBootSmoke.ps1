@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory = $true)][string]$UnityExecutable,
     [Parameter(Mandatory = $true)][string]$UnityProject,
     [string]$MongoExecutable = 'mongod',
-    [switch]$ExportStarterLoadout
+    [switch]$ExportStarterLoadout,
+    [switch]$VerifyReturningPlayer
 )
 $ErrorActionPreference = 'Stop'
 $serverRoot = Split-Path $PSScriptRoot -Parent
@@ -24,7 +25,8 @@ $processes = @()
 $variables = @(
     'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
     'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
-    'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT'
+    'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT',
+    'WAR_LOBBY_BOOT_IDENTITY'
 )
 $prior = @{}
 foreach ($name in $variables) {
@@ -99,6 +101,7 @@ try {
     if (!(Test-Path -LiteralPath ($initialReport + '.ready'))) { throw 'Initial account observer did not become ready.' }
     $env:WARFRIENDS_BACKEND_URL = "http://127.0.0.1:$httpPort/"
     $env:WAR_LOBBY_BOOT_REQUIRE_ACCOUNT = '1'
+    $env:WAR_LOBBY_BOOT_IDENTITY = 'NormalBoot-' + [Guid]::NewGuid().ToString('N')
     $env:WAR_STARTER_LOADOUT_OUTPUT = $null
     if ($ExportStarterLoadout) {
         $env:WAR_STARTER_LOADOUT_OUTPUT = Join-Path $runRoot 'starter-loadout.json'
@@ -140,6 +143,34 @@ try {
             $starter.weaponIndexChecks -ne (2 * $report.recoveredWeaponRows + 1)) {
             throw "Starter export is incomplete; inspect $runRoot"
         }
+    }
+    if ($VerifyReturningPlayer) {
+        dotnet $testDll --seed-returning-boot-player $env:Mongo__Uri $env:Mongo__Database `
+            (Join-Path $runRoot 'returning-player-fixture.json')
+        if ($LASTEXITCODE -ne 0) { throw 'Returning-player fixture creation failed.' }
+        Remove-Item -LiteralPath $reportPath
+        $returningArguments = @(
+            '-batchmode', '-nographics', '-noUpm', '-projectPath', ('"' + $projectPath + '"'),
+            '-executeMethod', 'UnityNormalClientBootAudit.Run',
+            '-logFile', ('"' + (Join-Path $runRoot 'Unity-returning.log') + '"')
+        )
+        $returningEditor = Start-Process $UnityExecutable -ArgumentList $returningArguments `
+            -WindowStyle Hidden -PassThru
+        $processes += $returningEditor
+        if (!$returningEditor.WaitForExit(150000)) { throw 'Returning-player Editor timed out.' }
+        if (Test-Path -LiteralPath $reportPath) {
+            Copy-Item -LiteralPath $reportPath -Destination (Join-Path $runRoot 'returning-report.json')
+        }
+        if ($returningEditor.ExitCode -ne 0) { throw "Returning-player boot failed; inspect $runRoot" }
+        $returning = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+        if (!$returning.playerDataLoadComplete -or $returning.exceptions -ne 0 -or
+            !$returning.matchmakingReadiness.canEvaluate -or
+            !$returning.matchmakingReadiness.canUseSelfHostedMatchmaking -or
+            $returning.matchmakingReadiness.displayRank -ne 5 -or
+            $returning.matchmakingReadiness.averageFps -ne 30) {
+            throw "Returning-player normal data loading did not retain the fixture; inspect $runRoot"
+        }
+        Write-Output 'PASS: returning-player normal login satisfies recovered self-hosted matchmaking conditions'
     }
     Write-Output "PASS: actual isolated Client account/unit initialization boundary; $runRoot"
 }

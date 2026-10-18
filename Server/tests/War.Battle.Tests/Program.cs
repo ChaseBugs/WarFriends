@@ -466,6 +466,11 @@ if (args is ["--pvp-bonus-shotgun-udp-only"])
     return;
 }
 
+if (args is ["--seed-returning-boot-player", var fixtureUri, var fixtureDatabase, var fixtureReport])
+{
+    await War.Battle.Tests.ReturningPlayerBootFixture.SeedAsync(fixtureUri, fixtureDatabase, fixtureReport);
+    return;
+}
 if (args is ["--watch-initial-loadout", var initialMongoUri, var initialDatabase, var initialReport])
 {
     await LegacyInitialLoadoutTests.WatchAccountInsertAsync(initialMongoUri, initialDatabase, initialReport);

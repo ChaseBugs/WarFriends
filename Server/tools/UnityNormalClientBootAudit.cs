@@ -43,7 +43,10 @@ public static class UnityNormalClientBootAudit
             throw new InvalidOperationException("Use a disposable project under Server/.local for this audit.");
         }
         PlayerSettings.companyName = "WarFriendsValidation";
-        PlayerSettings.productName = "NormalBoot-" + Guid.NewGuid().ToString("N");
+        string fixtureIdentity = Environment.GetEnvironmentVariable("WAR_LOBBY_BOOT_IDENTITY");
+        PlayerSettings.productName = string.IsNullOrEmpty(fixtureIdentity)
+            ? "NormalBoot-" + Guid.NewGuid().ToString("N")
+            : fixtureIdentity;
         EditorSceneManager.OpenScene("Assets/Scenes/SplashScene.unity");
         SessionState.SetBool(SessionKey, true);
         Attach();

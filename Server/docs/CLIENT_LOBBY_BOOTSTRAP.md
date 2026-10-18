@@ -585,3 +585,32 @@ Normal two-Unity PvP acceptance therefore needs an explicitly identified returni
 whose progression and saved match FPS satisfy the source conditions, or prior source gameplay that
 earns that state. Do not disable the easy-bot/slow-device rules to force a passing test. Keep a
 separate fresh-account campaign/local-bot acceptance gate. Neither gate is completed by this boot run.
+
+## Returning-player login fixture
+
+`ClientBootSmoke.ps1 -VerifyReturningPlayer` performs two real Unity launches against the same
+isolated Backend/database and persistent-data identity. The first launch retains the fresh
+account insertion proof. Between launches, a test-only command requires an isolated
+`war_client_boot_<GUID>` database, exactly one account and no battle tickets, pairs or allocations.
+A revision-conditional update seeds synthetic returning-player state, not earned progression.
+
+The fixture uses recovered rank index 4 (display rank 5), zero within-rank experience and total
+experience 215,960, the sum of the first four `Google2u.Levels.EXPERIENCE` rows. A saved device
+entry contains one 30 FPS sample. `UserDeviceManager.GetAverageMatchFPS` falls back to the first
+saved device if the current model is absent. No Client bot condition is overridden.
+
+The two-launch run passed at `Server/.local/client-boot-c0fbaf4815bd4372bbc7ddf0acc6d6a0`:
+
+- Release build: zero warnings/errors; original starter insertion proof passed.
+- `returning-report.json`: rank 5, saved FPS 30, all four bot-routing predicates false and
+  `canUseSelfHostedMatchmaking=true`; 24 unit rows and 66 weapon rows initialized, zero exceptions.
+- `Unity-returning.log`: normal successful-login callback present, account-creation callback absent.
+- Returning boot recorded 71 error-level logs. Compared with fresh boot, the create-account log
+  is absent and logs for missing Fusebox configuration and missing War Arena configuration appear
+  in `GetPlayerData`/`OnGetPlayerData`. Other diagnostics remain unresolved.
+- The disposable package manifest hash remained unchanged from the value recorded above.
+
+The active controller remained Campaign. This proves returning-player data loading and
+eligibility for random PvP, not admission, a started match, rendering or combat. Next, use two
+separately isolated returning identities with the actual DeathMatch controller, real Backend and
+battle Worker; observe normal lobby/card-selection/loading/readiness before claiming gameplay acceptance.
