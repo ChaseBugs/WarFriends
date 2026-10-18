@@ -385,3 +385,20 @@ The Mongo suite with the added mismatched-card rejection passes with exit zero a
 `account-match-tests.log`; `Server/.local/allocation-account-match-build.log` records a clean
 build. These results do not resolve the preceding live Forfeit timeout or replace a fresh
 whole-queue run against the changed admission and manifest checks.
+
+### Terminal response timeout investigation
+
+Worker source review confirms that a terminal command's outbox publication and active-journal
+completion occur before its UDP response is sent. Outbox publication includes write-through
+and a durable flush. This is a possible latency boundary, not a proven explanation for the
+observed Forfeit timeout. The terminal endpoint retains its session/reply authority; result
+acceptance alone does not immediately remove it in the inspected path.
+
+Worker health metrics now expose terminal persistence attempt count, total milliseconds and
+maximum milliseconds, with a warning for an attempt lasting at least one second. Persistence
+ordering and SDK retry deadlines remain unchanged. The live queue harness captures typed
+Worker metrics as `failure-worker-metrics.json` before cleanup if a scenario fails, without
+session credentials or replacing the original exception. The diagnostic Release build passes
+at `Server/.local/terminal-persistence-metrics-build.log`. The associated actual queue run writes
+`terminal-diagnostics-queue-tests.log` in the existing Mongo evidence directory; its final
+status must be inspected separately before claiming a resolved regression.

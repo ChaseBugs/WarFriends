@@ -10,7 +10,12 @@ using War.Protocol.Transport;
 namespace War.BattleServer;
 
 public sealed record BattleWorkerMetrics(bool Ready,long Received,long Handled,long MalformedDrops,
-    long UnownedDrops,long EndpointLimitDrops,long QueueFullDrops,int Pending,long TickBacklogs);
+    long UnownedDrops,long EndpointLimitDrops,long QueueFullDrops,int Pending,long TickBacklogs)
+{
+    public long TerminalPersistenceAttempts { get; init; }
+    public long TerminalPersistenceMilliseconds { get; init; }
+    public long TerminalPersistenceMillisecondsMax { get; init; }
+}
 
 public sealed class NetworkWorker : BackgroundService
 {
@@ -37,11 +42,19 @@ public sealed class NetworkWorker : BackgroundService
     private long receivedDatagrams,handledDatagrams,malformedDrops,unownedDrops,
         endpointLimitDrops,queueFullDrops,tickBacklogs;
     private int pendingDatagrams;
+    private long _terminalPersistenceAttempts;
+    private long _terminalPersistenceMilliseconds;
+    private long _terminalPersistenceMillisecondsMax;
     public BattleWorkerMetrics Metrics => new(IsReady,Interlocked.Read(ref receivedDatagrams),
         Interlocked.Read(ref handledDatagrams),Interlocked.Read(ref malformedDrops),
         Interlocked.Read(ref unownedDrops),Interlocked.Read(ref endpointLimitDrops),
         Interlocked.Read(ref queueFullDrops),Volatile.Read(ref pendingDatagrams),
-        Interlocked.Read(ref tickBacklogs));
+        Interlocked.Read(ref tickBacklogs))
+    {
+        TerminalPersistenceAttempts = Interlocked.Read(ref _terminalPersistenceAttempts),
+        TerminalPersistenceMilliseconds = Interlocked.Read(ref _terminalPersistenceMilliseconds),
+        TerminalPersistenceMillisecondsMax = Interlocked.Read(ref _terminalPersistenceMillisecondsMax)
+    };
     private readonly Channel<Registration> registrations=Channel.CreateBounded<Registration>(new BoundedChannelOptions(32)
         {SingleReader=true,SingleWriter=false,FullMode=BoundedChannelFullMode.Wait});
     private readonly SemaphoreSlim allocationReads = new(32, 32);
@@ -613,9 +626,39 @@ public sealed class NetworkWorker : BackgroundService
     {
         foreach(var snapshot in match.UnpublishedTerminals())
         {
-            terminalOutbox.Publish(snapshot);
-            match.MarkTerminalPublished(snapshot.MatchId);
-            activeJournal.Complete(snapshot.MatchId);
+            long started = Stopwatch.GetTimestamp();
+            try
+            {
+                terminalOutbox.Publish(snapshot);
+                match.MarkTerminalPublished(snapshot.MatchId);
+                activeJournal.Complete(snapshot.MatchId);
+            }
+            finally
+            {
+                RecordTerminalPersistence(Stopwatch.GetElapsedTime(started));
+            }
+        }
+    }
+
+    private void RecordTerminalPersistence(TimeSpan elapsed)
+    {
+        const long SlowPersistenceMilliseconds = 1000;
+        long milliseconds = (long)elapsed.TotalMilliseconds;
+        Interlocked.Increment(ref _terminalPersistenceAttempts);
+        Interlocked.Add(ref _terminalPersistenceMilliseconds, milliseconds);
+        long previous = Interlocked.Read(ref _terminalPersistenceMillisecondsMax);
+        while (milliseconds > previous)
+        {
+            long observed = Interlocked.CompareExchange(ref _terminalPersistenceMillisecondsMax, milliseconds, previous);
+            if (observed == previous)
+            {
+                break;
+            }
+            previous = observed;
+        }
+        if (milliseconds >= SlowPersistenceMilliseconds)
+        {
+            logger.LogWarning("Terminal persistence blocked battle processing for {ElapsedMilliseconds} ms", milliseconds);
         }
     }
 }

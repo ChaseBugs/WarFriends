@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text.Json;
 using War.Backend.Legacy;
 using War.Client;
 using War.BattleServer;
@@ -465,6 +466,11 @@ internal static class BackendQueueLiveTests
             await unattended.VerifyRecoveredAsync();
             Console.WriteLine("PASS: deferred pair, stable grants, terminal revocation, Worker crash recovery and rematch");
         }
+        catch
+        {
+            await CaptureWorkerMetricsAsync(controlPort, run);
+            throw;
+        }
         finally
         {
             Stop(backend);Stop(worker);
@@ -476,6 +482,28 @@ internal static class BackendQueueLiveTests
     {var listener=new TcpListener(IPAddress.Loopback,0);listener.Start();int port=((IPEndPoint)listener.LocalEndpoint).Port;listener.Stop();return port;}
     private static int FreeUdpPort()
     {using var socket=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));return ((IPEndPoint)socket.Client.LocalEndPoint!).Port;}
+    private static async Task CaptureWorkerMetricsAsync(int controlPort, string runDirectory)
+    {
+        try
+        {
+            using var client = new HttpClient(new SocketsHttpHandler { UseProxy = false })
+            {
+                Timeout = TimeSpan.FromSeconds(2)
+            };
+            string json = await client.GetStringAsync($"http://127.0.0.1:{controlPort}/health/metrics");
+            var metrics = JsonSerializer.Deserialize<BattleWorkerMetrics>(json,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web))
+                ?? throw new InvalidDataException("Worker metrics response is absent.");
+            await File.WriteAllTextAsync(Path.Combine(runDirectory, "failure-worker-metrics.json"),
+                JsonSerializer.Serialize(metrics));
+        }
+        catch (Exception diagnosticFailure)
+        {
+            // Diagnostics must never replace the original gameplay failure or expose session credentials.
+            Console.Error.WriteLine("Worker metrics unavailable: " + diagnosticFailure.GetType().Name);
+        }
+    }
+
     private static Process Start(string dll,string run,string label,IReadOnlyDictionary<string,string> environment)
     {
         var info=new ProcessStartInfo("dotnet") {UseShellExecute=false,CreateNoWindow=true,
