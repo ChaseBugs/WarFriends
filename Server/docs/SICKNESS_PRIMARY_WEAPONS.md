@@ -57,7 +57,8 @@ current health but leaves the source shotgun falloff intact.
 
 Paratrooper and Gunslinger currently have spawn-mutation/disconnection proof only. Normal
 Paratrooper deployment can select an airborne spawn without initializing the existing card
-parachute/landing executor. Normal Gunslinger does not enter an ordinary attack-state executor.
+parachute/landing executor. [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) now reaches
+its source point and initializes entry counters, but has no ordinary shot/burst executor yet.
 Those independent gameplay paths remain explicit implementation work; their tests report no
 automatic-fire proof, and do not inject a shot or a ground position to conceal the missing AI.
 

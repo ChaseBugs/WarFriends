@@ -1117,6 +1117,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             enemyMuzzles = content.CoopEnemyMuzzles;
             assaulterWeapon = content.CoopAssaulterWeapon;
             _assaulterQueue = content.CoopAssaulterQueue;
+            _gunslingerPointCatalog = content.GunslingerPoints;
             enemyShotTargets = content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armySpawnPoints=content.ArmySpawnPoints;
@@ -1641,6 +1642,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             catch (InvalidDataException) { End("invalid-assaulter-navigation", "", false); return; }
             try { AdvanceAssaulterPreparations(); }
             catch (InvalidDataException) { End("invalid-assaulter-preparation", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && (_gunslingerWalks.Count > 0 || _gunslingerRetries.Count > 0))
+        {
+            try { AdvanceGunslingerNavigation(); }
+            catch (InvalidDataException) { End("invalid-gunslinger-navigation", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running && grenadierWalks.Count > 0)
         {

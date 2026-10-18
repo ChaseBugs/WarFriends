@@ -1,17 +1,10 @@
 using War.BattleServer;
 using War.Protocol;
-using War.Shared;
 
 /// <summary>Checks source spawn modifiers and actual ordinary gun launch damage.</summary>
 internal static class SicknessPrimaryWeaponTests
 {
-    private const ulong StartTick = 60;
     private const ulong MaximumTick = 1800;
-    private const int PlayerLevel = 22;
-    private const int PlayerHealth = 1000;
-    private const int MatchDurationSeconds = 180;
-    private const int IdleSeconds = 120;
-    private const int AdmissionSeconds = 10;
     private const float Multiplier = 0.5f;
     private const float Tolerance = 0.0001f;
     private static readonly string OwnerId = new('a', 32);
@@ -35,7 +28,7 @@ internal static class SicknessPrimaryWeaponTests
 
     private static int CheckUnit(BattleCombatContent content, string unitId)
     {
-        MatchEngine host = CreateHost(content, unitId);
+        MatchEngine host = OrdinaryArmyTestHost.Create(content, unitId);
         var window = new SicknessSpawnWindow(1, content.Army);
         window.Arm();
         host.ArmyDeploymentStarted += window.DeploymentStarted;
@@ -56,7 +49,7 @@ internal static class SicknessPrimaryWeaponTests
         checks += CheckDisconnected(host, window, spawns);
         if (unitId is "ID_UNIT-PARATROOPER" or "ID_UNIT-GUNSLINGER")
         {
-            // These normal AI paths are not connected yet. Spawn mutation is valid evidence;
+            // These normal automatic-fire paths are not connected yet. Spawn mutation is valid evidence;
             // claiming an automatic shot here would hide their independent gameplay backlog.
             Console.WriteLine($"PASS: Sickness {unitId} spawn mutation; normal automatic-fire proof remains open.");
         }
@@ -116,7 +109,7 @@ internal static class SicknessPrimaryWeaponTests
 
     private static int CheckShotgunLaunch(BattleCombatContent content, MatchEngine affected, string unitId)
     {
-        MatchEngine baseline = CreateHost(content, unitId);
+        MatchEngine baseline = OrdinaryArmyTestHost.Create(content, unitId);
         Deploy(baseline, OwnerId);
         Deploy(baseline, OpponentId);
         float expected = FirstOpposingLaunch(baseline);
@@ -181,55 +174,6 @@ internal static class SicknessPrimaryWeaponTests
             throw new InvalidOperationException("The next Commando gun lost its source damage.");
         return Require(MathF.Abs(actual - expected) < Tolerance,
             "The same Commando's next alternating-gun round escaped the current Sickness damage.");
-    }
-
-    private static MatchEngine CreateHost(BattleCombatContent content, string unitId)
-    {
-        RecoveredBattleMap map = content.Maps.Single(candidate =>
-            candidate.Source.EndsWith("/Park_Multiplayer.unity", StringComparison.Ordinal));
-        var players = new[] { Participant(content, map, (1, unitId)), Participant(content, map, (2, unitId)) };
-        var manifest = new MatchManifest("sickness-primary", "native-test", "Park_Multiplayer", map.SourceHash,
-            content.Revision, MatchManifest.RifleCombatMode, AdmissionSeconds,
-            MatchDurationSeconds, IdleSeconds, players)
-        {
-            SceneMasterPlayerId = OwnerId
-        };
-        var host = new MatchEngine(manifest, map, content, armyChoice: _ => 0, combatRandom: () => 1f);
-        host.ConfigureBattleAllocations(players.Select(player => new BattleAllocationProjection(player.PlayerId,
-            [], [], [0], [-1], [-1])).ToArray());
-        foreach (ParticipantManifest player in players)
-        {
-            host.Admit(player.PlayerId);
-            var cards = new SelectCardsCommand();
-            cards.NormalUpgradeIndexes.Add(0);
-            cards.SpecialUpgradeIndexes.Add(-1);
-            cards.EliteUpgradeIndexes.Add(-1);
-            Require(host.Command(player.PlayerId, new() { CommandId = 1, SelectCards = cards }).Code ==
-                "cards-selected",
-                "The primary-weapon fixture could not select its trusted upgrade lanes.");
-            Require(host.Command(player.PlayerId, new()
-            {
-                CommandId = 2, Ready = new() { ManifestHash = host.ManifestHash }
-            }).Code == "ready", "The primary-weapon fixture failed readiness.");
-        }
-
-        host.Advance(StartTick);
-        return host;
-    }
-
-    private static ParticipantManifest Participant(BattleCombatContent content, RecoveredBattleMap map,
-        (int Fraction, string UnitId) source)
-    {
-        return new ParticipantManifest(source.Fraction == 1 ? OwnerId : OpponentId,
-            content.Stats.CreateManifest("Google2u.AssaultRifle_AK47", 0), source.Fraction,
-            map.Covers.First(cover => cover.Main && cover.Fraction == source.Fraction).SourceIndex,
-            1f, new PlayerCombatManifest(PlayerHealth), 0, 0, PlayerLevel)
-        {
-            EquippedArmyUnitIds = [source.UnitId], ArmyNormalUpgradeIndexes = [0],
-            ArmySpecialUpgradeIndexes = [-1], ArmyEliteUpgradeIndexes = [-1],
-            ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)], ArmyDamageScales = [1f],
-            ArmySpeedCoefficients = [1f], ArmyAccuracyCoefficients = [1f]
-        };
     }
 
     private static void Deploy(MatchEngine host, string playerId)

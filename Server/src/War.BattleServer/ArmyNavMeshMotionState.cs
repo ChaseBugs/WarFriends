@@ -66,6 +66,22 @@ public sealed class ArmyNavMeshMotionState
     public void AdvanceTick()
     {
         if(Arrived)return;
+        AdvanceRouteStep();
+    }
+
+    /// <summary>Continues a zero-stopping-distance agent when its caller still has not reached the authored point.</summary>
+    internal void AdvanceToRouteEndTick()
+    {
+        if (traveled >= Length)
+        {
+            return;
+        }
+
+        AdvanceRouteStep();
+    }
+
+    private void AdvanceRouteStep()
+    {
         const float step=1f/MatchManifest.TickRate;
         float remaining=Length-traveled;
         // This braking acceleration is a measured candidate, not a Unity

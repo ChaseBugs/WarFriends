@@ -76,8 +76,14 @@ The [ordinary gun binding](SICKNESS_PRIMARY_WEAPONS.md) covers nine ordinary lay
 Paratrooper, SWAT, Gunslinger and Commando. SWAT and two consecutive Commando rounds capture
 half damage. Shotgunner/Warper instead preserve actual damage from their separate min/max fields,
 matching baseline hosts. Paratrooper/Gunslinger currently have spawn-mutation proof only: normal
-airborne descent/landing and ordinary Gunslinger attack initialization remain missing. The
+airborne descent/landing and ordinary Gunslinger shot execution remain missing. The
 Sickness group passes 163 checks; other layouts and authorized card activation remain open.
+[Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) now pins all 30 dedicated multiplayer
+points, reserves nearest same-fraction destinations, walks live routes and initializes the source
+arrival counters/deadlines. Fifty checks cover two actual arrivals on every map and death cleanup.
+The Desert route continues past its approximate projected-endpoint threshold until the original
+authored-point test passes. Actual Gunslinger shot/burst execution and normal Paratrooper landing
+remain unimplemented; the entry clocks are not firing proof.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

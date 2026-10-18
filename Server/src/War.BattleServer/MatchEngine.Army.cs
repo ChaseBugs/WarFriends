@@ -533,6 +533,11 @@ public sealed partial class MatchEngine
                 clip = sampledClip.ClipName;
                 assaulterClipStartTick = tick - (ulong)MathF.Round(sampledClip.TimeSeconds * MatchManifest.TickRate);
             }
+            else if (_gunslingerWalks.TryGetValue(key, out var gunslingerWalk))
+            {
+                clip = clips.Walk;
+                facing = gunslingerWalk.Motion.Facing;
+            }
             else if (_assaulterWalks.TryGetValue(key, out var assaulterWalk))
             {
                 clip = clips.Walk;
@@ -2230,9 +2235,9 @@ public sealed partial class MatchEngine
         if(owner.ArmySpeedCoefficients is { } speedCoefficients)
             armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index],
                 owner.ArmyNormalUpgradeIndexes[index],special,elite));
-        // Assaulter has recovered upgrade shot lanes even though the older
+        // Assaulter and Gunslinger have recovered upgrade shot lanes even though the older
         // serialized base-shot artifact only included the other shooter families.
-        if(family.BaseShot!=null || family.BehaviorType=="SoldierBehaviourAssaulter")
+        if(family.BaseShot!=null || family.BehaviorType is "SoldierBehaviourAssaulter" or "SoldierBehaviourGunslinger")
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));
@@ -3271,6 +3276,11 @@ public sealed partial class MatchEngine
 
     private void InitializeStationaryArmyCombat(ulong entityKey,string unitId)
     {
+        if (unitId == "ID_UNIT-GUNSLINGER")
+        {
+            InitializeGunslingerNavigation(entityKey);
+            return;
+        }
         var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         if (unitId == "ID_UNIT-ASSAULT")
         {
@@ -4609,6 +4619,10 @@ public sealed partial class MatchEngine
         armyShots.Remove(entityKey);
         armyVehicleShots.Remove(entityKey);
         infantryAnimations.Remove(entityKey);
+        if (row.UnitId == "ID_UNIT-GUNSLINGER")
+        {
+            RemoveGunslingerNavigation(entityKey);
+        }
         if (row.UnitId == "ID_UNIT-ASSAULT")
         {
             RemoveAssaulterNavigation(entityKey);

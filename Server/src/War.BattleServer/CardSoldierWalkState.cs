@@ -54,9 +54,30 @@ internal sealed class CardSoldierWalkState
     {
         if (motion == null)
             return;
+        UpdateFacing();
+        motion.AdvanceTick();
+    }
+
+    internal void AdvanceToRouteEndTick()
+    {
+        if (motion == null)
+        {
+            return;
+        }
+
+        UpdateFacing();
+        motion.AdvanceToRouteEndTick();
+    }
+
+    private void UpdateFacing()
+    {
+        if (motion == null)
+        {
+            return;
+        }
+
         Vector2 direction = motion.PlanarDirection;
         if (direction.LengthSquared() > 0.00000001f)
             Facing = new Vector3(direction.X, 0f, direction.Y);
-        motion.AdvanceTick();
     }
 }

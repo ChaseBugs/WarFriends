@@ -72,6 +72,7 @@ public sealed class BattleCombatContent
     public DroneProjectileCatalog DroneProjectile { get; }
     public ArmyRusherPointCatalog ArmyRusherPoints { get; }
     public CardUnitInitialPointCatalog CardUnitInitialPoints { get; private init; } = null!;
+    public GunslingerPointCatalog GunslingerPoints { get; private init; } = null!;
     public ArmyMinigunnerPointCatalog ArmyMinigunnerPoints { get; }
     public PlayerShotTargetCatalog PlayerShotTargets { get; }
     public ArmyNavMeshSourceCatalog ArmyNavMeshes { get; }
@@ -176,6 +177,8 @@ public sealed class BattleCombatContent
             Path.Combine(directory,"recovered-multiplayer-card-enemy-points.json"),
             CardUnitInitialPointCatalog.VerifiedRevision,maps);
         var armyMinigunnerPoints=ArmyMinigunnerPointCatalog.Load(Path.Combine(directory,"recovered-army-minigunner-points.json"),manifest.ArmyMinigunnerPointsRevision,maps);
+        var gunslingerPoints = GunslingerPointCatalog.Load(Path.Combine(directory,
+            "recovered-gunslinger-points.json"), maps);
         var playerShotTargets=PlayerShotTargetCatalog.Load(Path.Combine(directory,"recovered-player-shot-targets.json"),manifest.PlayerShotTargetsRevision,manifest.SceneRevision);
         poses.AttachPlayerShotTargets(playerShotTargets);
         var armyNavMeshes=ArmyNavMeshSourceCatalog.Load(Path.Combine(directory,"recovered-army-navmesh-sources.json"),manifest.ArmyNavMeshSourcesRevision,maps);
@@ -270,6 +273,7 @@ public sealed class BattleCombatContent
                 Path.Combine(directory, "recovered-card-grenade-origins.json"), maps),
             HelicopterGunnerExplosions=helicopterGunnerExplosions,
             CardUnitInitialPoints=cardUnitInitialPoints,
+            GunslingerPoints = gunslingerPoints,
             AssaultHelicopterWeapons=assaultHelicopterWeapons,
             AssaultHelicopterBoxCollider=assaultHelicopterBoxCollider,
             AssaultHelicopterMeshColliders=assaultHelicopterMeshColliders,

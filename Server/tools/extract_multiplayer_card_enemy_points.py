@@ -46,7 +46,9 @@ def script_types_by_guid():
     return result
 
 
-def extract_map(source_map, script_types):
+def extract_map(source_map, script_types, point_types=None):
+    if point_types is None:
+        point_types = CARD_POINT_TYPES
     path = ROOT / "Clients/ExportedProject" / source_map["source"]
     source = path.read_bytes()
     digest = hashlib.sha256(source).hexdigest()
@@ -79,7 +81,7 @@ def extract_map(source_map, script_types):
         point_type = script_types.get(match.group(1)) if match else None
         if kind != 114 or point_type is None:
             raise ValueError("unresolved multiplayer EnemyPoint component")
-        if point_type not in CARD_POINT_TYPES:
+        if point_type not in point_types:
             continue
         game_object_id, transform_id, position, rotation = \
             game_object_transform(blocks, component)

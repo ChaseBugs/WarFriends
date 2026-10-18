@@ -1,0 +1,621 @@
+{
+  "version": 1,
+  "unitSource": {
+    "source": "Assets/Scenes/MainScene.unity",
+    "sha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+    "behaviorFileId": 36243,
+    "enemyPointMask": 2048
+  },
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "mapDefinitionFileId": 2666,
+      "collectionComponentFileId": 2334,
+      "points": [
+        {
+          "order": 19,
+          "componentFileId": 2312,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 449,
+          "transformFileId": 1007,
+          "fraction": 2,
+          "worldPosition": [
+            2.9438819999999994,
+            0.10687790000000008,
+            1.6377699999999988
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 20,
+          "componentFileId": 2282,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 405,
+          "transformFileId": 942,
+          "fraction": 2,
+          "worldPosition": [
+            1.4748,
+            -0.15912209999999993,
+            0.48376969999999897
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 21,
+          "componentFileId": 2482,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 584,
+          "transformFileId": 1207,
+          "fraction": 2,
+          "worldPosition": [
+            2.5628,
+            -0.12312210000000001,
+            -0.933230100000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 52,
+          "componentFileId": 2288,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 411,
+          "transformFileId": 949,
+          "fraction": 1,
+          "worldPosition": [
+            -2.5718379999999996,
+            -0.05312209999999995,
+            -1.294230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 53,
+          "componentFileId": 2406,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 496,
+          "transformFileId": 1069,
+          "fraction": 1,
+          "worldPosition": [
+            -1.4412000000000003,
+            -0.07112209999999997,
+            0.27076999999999896
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 54,
+          "componentFileId": 2648,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 618,
+          "transformFileId": 1256,
+          "fraction": 1,
+          "worldPosition": [
+            -2.7882,
+            0.029877900000000013,
+            2.015770199999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "mapDefinitionFileId": 3249,
+      "collectionComponentFileId": 3292,
+      "points": [
+        {
+          "order": 23,
+          "componentFileId": 3336,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 870,
+          "transformFileId": 1769,
+          "fraction": 2,
+          "worldPosition": [
+            3.038999999999999,
+            0.1685889000000002,
+            1.9310005000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 24,
+          "componentFileId": 3007,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 545,
+          "transformFileId": 1369,
+          "fraction": 2,
+          "worldPosition": [
+            1.4748003999999986,
+            0.10440470000000024,
+            0.4837701000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 25,
+          "componentFileId": 3137,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 659,
+          "transformFileId": 1500,
+          "fraction": 2,
+          "worldPosition": [
+            2.6520006999999985,
+            0.1685889000000002,
+            -1.7789996
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 55,
+          "componentFileId": 3208,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 681,
+          "transformFileId": 1529,
+          "fraction": 1,
+          "worldPosition": [
+            -2.5718380000000014,
+            0.10187790000000019,
+            -1.5382292
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 56,
+          "componentFileId": 3118,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 640,
+          "transformFileId": 1482,
+          "fraction": 1,
+          "worldPosition": [
+            -1.441200000000002,
+            0.10687790000000019,
+            0.2132090000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 57,
+          "componentFileId": 3313,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 834,
+          "transformFileId": 1716,
+          "fraction": 1,
+          "worldPosition": [
+            -2.4662830000000007,
+            0.12137790000000026,
+            1.749209
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "mapDefinitionFileId": 2553,
+      "collectionComponentFileId": 2661,
+      "points": [
+        {
+          "order": 24,
+          "componentFileId": 2524,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 355,
+          "transformFileId": 1039,
+          "fraction": 2,
+          "worldPosition": [
+            -22.110083,
+            -2.41805145,
+            -10.096791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 25,
+          "componentFileId": 2796,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 610,
+          "transformFileId": 1315,
+          "fraction": 2,
+          "worldPosition": [
+            -22.1100825,
+            -2.41805145,
+            -7.167791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 26,
+          "componentFileId": 2285,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 215,
+          "transformFileId": 883,
+          "fraction": 2,
+          "worldPosition": [
+            -22.839083000000002,
+            -2.4851221,
+            -8.646791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 59,
+          "componentFileId": 2764,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 573,
+          "transformFileId": 1272,
+          "fraction": 1,
+          "worldPosition": [
+            -26.527721,
+            -2.418051,
+            -10.001791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 60,
+          "componentFileId": 2537,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 380,
+          "transformFileId": 1064,
+          "fraction": 1,
+          "worldPosition": [
+            -26.527721,
+            -2.418051,
+            -7.138791
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 61,
+          "componentFileId": 2621,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 476,
+          "transformFileId": 1164,
+          "fraction": 1,
+          "worldPosition": [
+            -25.715083,
+            -2.418051,
+            -8.257791000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "mapDefinitionFileId": 3572,
+      "collectionComponentFileId": 3153,
+      "points": [
+        {
+          "order": 20,
+          "componentFileId": 3431,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 622,
+          "transformFileId": 1421,
+          "fraction": 2,
+          "worldPosition": [
+            2.3679184499999986,
+            0.08687792900000002,
+            -0.675791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 21,
+          "componentFileId": 3595,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 864,
+          "transformFileId": 1744,
+          "fraction": 2,
+          "worldPosition": [
+            0.9109184499999978,
+            0.08687802899999997,
+            0.5142089299999989
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 22,
+          "componentFileId": 3166,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 410,
+          "transformFileId": 1129,
+          "fraction": 2,
+          "worldPosition": [
+            2.668918449999998,
+            0.08687802899999997,
+            1.402208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 50,
+          "componentFileId": 3379,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 534,
+          "transformFileId": 1301,
+          "fraction": 1,
+          "worldPosition": [
+            -1.078081550000002,
+            0.08687802899999997,
+            0.359208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 51,
+          "componentFileId": 3601,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 875,
+          "transformFileId": 1758,
+          "fraction": 1,
+          "worldPosition": [
+            -2.243081550000001,
+            0.08687802899999997,
+            1.919208929999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 52,
+          "componentFileId": 3200,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 470,
+          "transformFileId": 1208,
+          "fraction": 1,
+          "worldPosition": [
+            -2.3720815500000025,
+            0.08687802899999997,
+            -0.872791070000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "mapDefinitionFileId": 2756,
+      "collectionComponentFileId": 2793,
+      "points": [
+        {
+          "order": 21,
+          "componentFileId": 3010,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 603,
+          "transformFileId": 1343,
+          "fraction": 2,
+          "worldPosition": [
+            2.9438819999999994,
+            0.16858894999999996,
+            1.6377699999999988
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 22,
+          "componentFileId": 3110,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 744,
+          "transformFileId": 1497,
+          "fraction": 2,
+          "worldPosition": [
+            1.4748,
+            0.10440479999999996,
+            0.4837699999999989
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 23,
+          "componentFileId": 3031,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 633,
+          "transformFileId": 1375,
+          "fraction": 2,
+          "worldPosition": [
+            2.7387999999999995,
+            0.16858894999999996,
+            -0.933230000000001
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 57,
+          "componentFileId": 2884,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 519,
+          "transformFileId": 1257,
+          "fraction": 1,
+          "worldPosition": [
+            -2.5718379999999996,
+            0.09940490000000002,
+            -1.5382300000000009
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 58,
+          "componentFileId": 2812,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 498,
+          "transformFileId": 1236,
+          "fraction": 1,
+          "worldPosition": [
+            -1.4412000000000003,
+            0.09940490000000002,
+            0.043769999999998976
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        },
+        {
+          "order": 59,
+          "componentFileId": 2766,
+          "componentType": "EnemyPointGunslinger",
+          "gameObjectFileId": 420,
+          "transformFileId": 1158,
+          "fraction": 1,
+          "worldPosition": [
+            -2.7882,
+            0.09940490000000002,
+            2.015769999999999
+          ],
+          "worldRotation": [
+            0.0,
+            -0.7071067811865476,
+            0.0,
+            0.7071067811865476
+          ]
+        }
+      ]
+    }
+  ]
+}
