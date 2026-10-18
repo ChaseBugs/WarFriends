@@ -7,7 +7,7 @@ internal sealed record CardGrenadierExplosion(ulong ProjectileId,
     bool ShotTriggered = false);
 
 /// <summary>
-/// GrenadeAmmoBase starts its fuse on the first static or destroyable contact.
+/// GrenadeAmmoBase rearms its fuse on each new static or destroyable contact.
 /// The body keeps moving with higher drag until the fuse expires.
 /// </summary>
 internal sealed class CardGrenadierFlight
@@ -17,13 +17,16 @@ internal sealed class CardGrenadierFlight
     private const float ContactDrag = 6f;
     // GrenadeEnemy's capsule radius .05486127 sits under a scale-two child.
     private const float ColliderRadius = .10972254f;
+    private const float ContactSeparationTolerance = 0.001f;
     // GrenadeAmmoEnemy.prefab's DestroyableObject starts at 1000 HP.
     internal const float SourceShotHealth = 1000f;
 
     private readonly ulong projectileId;
     private readonly ulong soldierEntityKey;
     private readonly Func<Vector3, Vector3, float, ShotCollision?> trace;
-    private readonly ulong fuseTicks;
+    private readonly GrenadierFuseClock _fuse;
+    private string? _contactSource;
+    private Vector3 _contactNormal;
     private readonly ulong expiryTick;
     private ulong tick;
     private ulong? firstContactTick;
@@ -34,6 +37,7 @@ internal sealed class CardGrenadierFlight
     internal bool Finished { get; private set; }
     internal float ShotHealth { get; private set; } = SourceShotHealth;
     internal ulong? FirstContactTick => firstContactTick;
+    internal ulong? LastContactTick { get; private set; }
     internal ulong CurrentTick => tick;
     internal bool ShotColliderEnabled => collisionEnabled;
 
@@ -56,7 +60,7 @@ internal sealed class CardGrenadierFlight
         tick = launchTick;
         Position = muzzlePosition;
         Velocity = launchVelocity;
-        fuseTicks = (ulong)MathF.Ceiling(setup.FuseSeconds * MatchManifest.TickRate);
+        _fuse = new GrenadierFuseClock(setup.FuseSeconds);
         expiryTick = checked(launchTick + 15u * MatchManifest.TickRate);
     }
 
@@ -76,6 +80,7 @@ internal sealed class CardGrenadierFlight
         if (!PlayerHitbox.Finite(Position) || !PlayerHitbox.Finite(Velocity))
             throw new InvalidDataException("Card grenade escaped finite flight authority.");
 
+        bool touchedSourceSurface = false;
         if (collisionEnabled)
         {
             Vector3 movement = Position - previousPosition;
@@ -84,15 +89,22 @@ internal sealed class CardGrenadierFlight
             {
                 ShotCollision? hit = trace(previousPosition, movement,
                     distance + .001f);
-                if (hit != null)
+                if (hit is { Static: true } or { SourceDestroyable: true })
+                {
                     ApplyContact(hit, movement, distance);
+                    touchedSourceSurface = true;
+                }
             }
         }
+        if (!touchedSourceSurface)
+        {
+            ReleaseSeparatedContact();
+        }
+
         if (Velocity.Y < 0f)
             collisionEnabled = true;
 
-        if (firstContactTick.HasValue &&
-            tick >= firstContactTick.Value + fuseTicks)
+        if (_fuse.AdvanceTick())
         {
             Finished = true;
             return new CardGrenadierExplosion(projectileId,
@@ -121,10 +133,33 @@ internal sealed class CardGrenadierFlight
             Position, impactTick, ShotTriggered: true);
     }
 
+    private void ReleaseSeparatedContact()
+    {
+        if (_contactSource == null)
+        {
+            return;
+        }
+
+        // A point ray may miss while the source capsule still rests against the same surface.
+        float range = ColliderRadius + ContactSeparationTolerance;
+        ShotCollision? support = trace(Position, -_contactNormal, range);
+        if (support != null && (!float.IsFinite(support.Distance) || support.Distance < 0f ||
+            support.Distance > range + ContactSeparationTolerance || string.IsNullOrEmpty(support.SourcePath)))
+        {
+            throw new InvalidDataException("Grenadier contact support lost its source collision authority.");
+        }
+
+        if (support == null || support.SourcePath != _contactSource ||
+            (!support.Static && !support.SourceDestroyable))
+        {
+            _contactSource = null;
+        }
+    }
+
     private void ApplyContact(ShotCollision hit, Vector3 movement,
         float distance)
     {
-        if (!float.IsFinite(hit.Distance) || hit.Distance < 0f ||
+        if (string.IsNullOrEmpty(hit.SourcePath) || !float.IsFinite(hit.Distance) || hit.Distance < 0f ||
             hit.Distance > distance + .001f ||
             !PlayerHitbox.Finite(hit.Position))
             throw new InvalidDataException("Invalid card grenade collision.");
@@ -137,6 +172,14 @@ internal sealed class CardGrenadierFlight
             throw new InvalidDataException("Invalid card grenade contact normal.");
         if (!firstContactTick.HasValue)
             firstContactTick = tick;
+        if (_contactSource != hit.SourcePath)
+        {
+            _fuse.ContactEntered();
+            LastContactTick = tick;
+        }
+
+        _contactSource = hit.SourcePath;
+        _contactNormal = normal;
 
         // The prefab has no PhysicMaterial, so no configured restitution.
         // Remove velocity entering the surface; retain tangent travel while

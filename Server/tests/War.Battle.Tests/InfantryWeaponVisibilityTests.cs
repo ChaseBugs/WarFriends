@@ -18,13 +18,14 @@ internal static class InfantryWeaponVisibilityTests
     internal static int Run(string directory)
     {
         int checks = CheckClock(directory);
+        checks += GrenadierFuseClockTests.Run(directory);
         checks += CheckProtocol();
         checks += CheckIndependentReturns();
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
         checks += OrdinaryGrenadierCompositionTests.Run(content.Army, directory);
         checks += OrdinaryGrenadierSpawnTests.Run(content);
         checks += OrdinaryGrenadierPrimaryDamageTests.Run(content);
-        checks += OrdinaryGrenadierExplosionTests.Run(content);
+        checks += OrdinaryGrenadierExplosionTests.Run(content, directory);
         checks += CheckLifecycle(content);
         checks += CheckCancelledReturn(content);
         checks += CheckRetainedSelection(content);

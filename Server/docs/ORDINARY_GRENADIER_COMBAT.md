@@ -50,6 +50,7 @@ primary/secondary updates. These component checks do not execute two normal Unit
 [Ordinary pistol outcome fixtures](ORDINARY_GRENADIER_PRIMARY_DAMAGE.md) now cover one upgraded
 physical player hit and one covered basic-unit shield-only control.
 [Ordinary grenade explosion fixtures](ORDINARY_GRENADIER_EXPLOSIONS.md) now verify real shield
-damage/destruction and host contact/fuse timing. Ordinary sickness, physical player blast outcomes, complete source attack animation/effects, all Corner-change
+damage/destruction and host contact/fuse timing.
+[Native fuse evidence](GRENADIER_FUSE_CLOCK.md) now binds source float countdown and recontact resets. Ordinary sickness, physical player blast outcomes, complete source attack animation/effects, all Corner-change
 scenarios and normal two-Unity-client gameplay validation remain open. The shared lifecycle does
 not establish original Unity timing or cross-platform runtime parity by itself.

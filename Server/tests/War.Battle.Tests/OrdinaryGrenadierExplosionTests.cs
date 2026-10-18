@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json;
 using War.BattleServer;
 using War.Protocol;
 
@@ -13,8 +14,14 @@ internal static class OrdinaryGrenadierExplosionTests
     private static readonly string OwnerId = new('a', 32);
     private static readonly string OpponentId = new('b', 32);
 
-    internal static int Run(BattleCombatContent content)
+    internal static int Run(BattleCombatContent content, string directory)
     {
+        using JsonDocument evidence = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory, "grenadier-fuse-unity-reference.json")));
+        Dictionary<float, ulong> observedOffsets = evidence.RootElement.GetProperty("observations").EnumerateArray()
+            .Where(row => !row.GetProperty("recontact").GetBoolean())
+            .ToDictionary(row => row.GetProperty("fuseSeconds").GetSingle(), row =>
+                row.GetProperty("expiryTick").GetUInt64() - row.GetProperty("lastContactTick").GetUInt64());
         int checks = 0;
         foreach (var selection in new (int Normal, int Special, int Elite)[]
         {
@@ -35,7 +42,7 @@ internal static class OrdinaryGrenadierExplosionTests
             Require(actor.SourceCardId.Length == 0, "The explosion fixture must use an ordinary actor.");
             ArmyCardGrenadierRuntime setup = host.CardGrenadierThrow(actor.EntityKey) ??
                 throw new InvalidOperationException("An ordinary spawn lost its grenade setup.");
-            checks += ObserveExplosion(host, (content, map, setup));
+            checks += ObserveExplosion(host, new Fixture(content, map, setup, observedOffsets[setup.FuseSeconds]));
             if (selection.Normal == 0)
             {
                 checks += Require(host.Snapshot().Shields.Any(shield => shield.OwnerFraction == 2 &&
@@ -48,7 +55,7 @@ internal static class OrdinaryGrenadierExplosionTests
     }
 
     private static int ObserveExplosion(MatchEngine host,
-        (BattleCombatContent Content, RecoveredBattleMap Map, ArmyCardGrenadierRuntime Setup) fixture)
+        Fixture fixture)
     {
         var launches = new Dictionary<ulong, ArmyGrenadeDamageStats>();
         var contacts = new Dictionary<ulong, ulong>();
@@ -62,7 +69,7 @@ internal static class OrdinaryGrenadierExplosionTests
             {
                 launches[projectile.ProjectileId] = host.CardGrenadierLaunchDamage(projectile.ProjectileId) ??
                     throw new InvalidOperationException("A published ordinary grenade lost frozen launch damage.");
-                if (host.GrenadierFirstContactTick(projectile.ProjectileId) is { } contact)
+                if (host.GrenadierLastContactTick(projectile.ProjectileId) is { } contact)
                 {
                     contacts[projectile.ProjectileId] = contact;
                 }
@@ -81,13 +88,13 @@ internal static class OrdinaryGrenadierExplosionTests
                 item.TargetId == OpponentId && launches.ContainsKey(item.ProjectileId)))
             {
                 CardGrenadierExplosion explosion = explosions.Single(item => item.ProjectileId == hit.ProjectileId);
-                ulong fuseTicks = (ulong)MathF.Ceiling(fixture.Setup.FuseSeconds * MatchManifest.TickRate);
+                ulong fuseTicks = fixture.FuseTicks;
                 int checks = Require(contacts.TryGetValue(hit.ProjectileId, out ulong contactTick) &&
                     explosion.Tick == contactTick + fuseTicks,
-                    "Ordinary grenade explosion must follow its first contact and composed source fuse.");
+                    "Ordinary grenade explosion must follow its most recent contact and observed source float countdown.");
                 checks += CheckShield(before, (hit, explosion, launches[hit.ProjectileId]), fixture);
                 Console.WriteLine($"Ordinary grenade: fuse {fixture.Setup.FuseSeconds}, " +
-                    $"contact {contactTick}, explosion {explosion.Tick}, shield health {hit.Health}.");
+                    $"last contact {contactTick}, explosion {explosion.Tick}, shield health {hit.Health}.");
                 return checks;
             }
         }
@@ -100,7 +107,7 @@ internal static class OrdinaryGrenadierExplosionTests
 
     private static int CheckShield(MatchSnapshot before,
         (MatchEvent Hit, CardGrenadierExplosion Explosion, ArmyGrenadeDamageStats Damage) observed,
-        (BattleCombatContent Content, RecoveredBattleMap Map, ArmyCardGrenadierRuntime Setup) fixture)
+        Fixture fixture)
     {
         (MatchEvent hit, CardGrenadierExplosion explosion, ArmyGrenadeDamageStats damage) = observed;
         string owner = fixture.Map.Covers[hit.ShieldCoverIndex].SourcePath + "/riot_shield";
@@ -139,4 +146,7 @@ internal static class OrdinaryGrenadierExplosionTests
 
         return 1;
     }
+    private sealed record Fixture(BattleCombatContent Content, RecoveredBattleMap Map,
+        ArmyCardGrenadierRuntime Setup, ulong FuseTicks);
+
 }

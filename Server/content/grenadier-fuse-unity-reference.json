@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "captureRate": 30,
+  "fixedDeltaTime": 0.0333333351,
+  "timeScale": 1.0,
+  "grenadeSha256": "99997d9d936f19883d9a04a718d976c13be5cfc5c3cb3a384213017e38599cc8",
+  "timeManagerSha256": "5196b3cd5b3ef3c4e519bd58dab6747e048a96f5ef7b15e703a989ae2a9c78af",
+  "probeSha256": "d7ad5a09c54cfcc7147b29a8a9aa444f58de5e55bbbac838be98bc5abc2fe841",
+  "exporterSha256": "7e679eb12b61889f7524cf17bb6e640349bf8af5d4ab562a9e73c4e5cde31419",
+  "observations": [
+    {
+      "fuseSeconds": 3.0,
+      "recontact": false,
+      "contacts": [
+        {
+          "tick": 7,
+          "remaining": 3.0
+        }
+      ],
+      "lastContactTick": 7,
+      "expiryTick": 97
+    },
+    {
+      "fuseSeconds": 2.4,
+      "recontact": false,
+      "contacts": [
+        {
+          "tick": 7,
+          "remaining": 2.4
+        }
+      ],
+      "lastContactTick": 7,
+      "expiryTick": 79
+    },
+    {
+      "fuseSeconds": 0.9000001,
+      "recontact": false,
+      "contacts": [
+        {
+          "tick": 7,
+          "remaining": 0.9000001
+        }
+      ],
+      "lastContactTick": 7,
+      "expiryTick": 33
+    },
+    {
+      "fuseSeconds": 3.0,
+      "recontact": true,
+      "contacts": [
+        {
+          "tick": 7,
+          "remaining": 3.0
+        },
+        {
+          "tick": 16,
+          "remaining": 3.0
+        }
+      ],
+      "lastContactTick": 16,
+      "expiryTick": 106
+    },
+    {
+      "fuseSeconds": 2.4,
+      "recontact": true,
+      "contacts": [
+        {
+          "tick": 7,
+          "remaining": 2.4
+        },
+        {
+          "tick": 16,
+          "remaining": 2.4
+        }
+      ],
+      "lastContactTick": 16,
+      "expiryTick": 88
+    },
+    {
+      "fuseSeconds": 0.9000001,
+      "recontact": true,
+      "contacts": [
+        {
+          "tick": 7,
+          "remaining": 0.9000001
+        },
+        {
+          "tick": 16,
+          "remaining": 0.9000001
+        }
+      ],
+      "lastContactTick": 16,
+      "expiryTick": 42
+    }
+  ]
+}

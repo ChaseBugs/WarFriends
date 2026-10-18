@@ -1730,6 +1730,10 @@ public sealed partial class MatchEngine
     internal ulong? GrenadierFirstContactTick(ulong projectileId) =>
         grenadierFlights.TryGetValue(projectileId, out var flight) ? flight.FirstContactTick : null;
 
+    /// <summary>Exposes the most recent contact entry because the recovered fuse rearms on recontact.</summary>
+    internal ulong? GrenadierLastContactTick(ulong projectileId) =>
+        grenadierFlights.TryGetValue(projectileId, out var flight) ? flight.LastContactTick : null;
+
     internal IReadOnlyList<CardGrenadierExplosion> CardGrenadierExplosions() =>
         grenadierExplosions.ToArray();
 

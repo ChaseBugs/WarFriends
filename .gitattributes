@@ -288,3 +288,12 @@ Server/docs/ORDINARY_GRENADIER_PRIMARY_DAMAGE.md text eol=lf
 
 Server/tests/War.Battle.Tests/OrdinaryGrenadierExplosionTests.cs text eol=lf
 Server/docs/ORDINARY_GRENADIER_EXPLOSIONS.md text eol=lf
+
+# Executed grenade contact/countdown evidence and shared clock.
+Server/src/War.BattleServer/GrenadierFuseClock.cs text eol=lf
+Server/tests/War.Battle.Tests/GrenadierFuseClockTests.cs text eol=lf
+Server/tools/UnityGrenadierFuseProbe.cs text eol=lf
+Server/tools/UnityGrenadierFuseExport.cs text eol=lf
+Server/tools/verify_grenadier_fuse.py text eol=lf
+Server/content/grenadier-fuse-unity-reference.json text eol=lf
+Server/docs/GRENADIER_FUSE_CLOCK.md text eol=lf
