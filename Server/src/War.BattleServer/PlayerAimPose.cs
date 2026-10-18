@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Numerics;
 
 namespace War.BattleServer;
@@ -25,8 +26,11 @@ internal sealed record PlayerAimPoseDetails(
 
 public sealed class PlayerAimPose
 {
+    private static readonly IReadOnlyDictionary<int, Vector3> EmptyTargetPositions =
+        new ReadOnlyDictionary<int, Vector3>(new Dictionary<int, Vector3>());
     private readonly Dictionary<string, RifleMuzzlePose> _muzzles;
     private readonly PlayerAimPoseDetails _details;
+    private readonly IReadOnlyDictionary<int, Vector3> _targetPositions;
 
     public PlayerCollisionModel Collision { get; }
     public RifleMuzzlePose? MovingTarget => _details.MovingTarget;
@@ -34,12 +38,19 @@ public sealed class PlayerAimPose
     internal PlayerAimPose(
         PlayerCollisionModel collision,
         Dictionary<string, RifleMuzzlePose> muzzles,
-        PlayerAimPoseDetails? details = null)
+        PlayerAimPoseDetails? details = null,
+        IReadOnlyDictionary<int, Vector3>? targetPositions = null)
     {
         Collision = collision;
         _muzzles = muzzles;
         _details = details ?? new PlayerAimPoseDetails(
             null, new Dictionary<int, RifleMuzzlePose>(), null);
+        _targetPositions = targetPositions?.ToDictionary(pair => pair.Key, pair => pair.Value)
+            ?? EmptyTargetPositions;
+        if (_targetPositions.Any(pair => pair.Key <= 0 || !PlayerHitbox.Finite(pair.Value)))
+        {
+            throw new InvalidDataException("Invalid position-only player target authority.");
+        }
     }
 
     public RifleMuzzlePose Muzzle(string rifle)
@@ -73,8 +84,20 @@ public sealed class PlayerAimPose
             : throw new InvalidDataException("Unknown posed Body target.");
     }
 
+    /// <summary>Reads an animated target position without asserting an unrecovered target rotation.</summary>
+    public Vector3 BodyTargetPosition(int transformFileId)
+    {
+        if (_targetPositions.TryGetValue(transformFileId, out Vector3 position))
+        {
+            return position;
+        }
+
+        return BodyTarget(transformFileId).Position;
+    }
+
     public PlayerAimPose Place(Vector3 position, Quaternion rotation)
     {
+        PlayerCollisionModel placedCollision = Collision.Place(position, rotation);
         var placedMuzzles = _muzzles.ToDictionary(
             pair => pair.Key,
             pair => pair.Value.Place(position, rotation),
@@ -97,7 +120,9 @@ public sealed class PlayerAimPose
             placedBodies,
             placedRoots);
 
-        return new PlayerAimPose(Collision.Place(position, rotation),
-            placedMuzzles, placedDetails);
+        Quaternion delta = Quaternion.Normalize(rotation * Quaternion.Inverse(Collision.RootRotation));
+        var placedTargets = _targetPositions.Count == 0 ? null : _targetPositions.ToDictionary(pair => pair.Key,
+            pair => position + Vector3.Transform(pair.Value - Collision.RootPosition, delta));
+        return new PlayerAimPose(placedCollision, placedMuzzles, placedDetails, placedTargets);
     }
 }

@@ -42,3 +42,8 @@ test passes 12 checks. The combined grenade suite passes 279 checks, including
 existing grenade-mode UDP and Tank impacts. Mixed allocator verification also
 passes its existing weapon checks and 14 starter army checks. None of these
 closes the still-open mixed grenade gameplay requirement.
+
+The [common combat view](GRENADE_COMMON_COMBAT_VIEW.md) now supplies grenade
+collision and target positions to shared army queries. It preserves sampled
+launch-frame identity and explicitly leaves uncaptured rotations/rigs unavailable.
+This is another mixed-mode prerequisite, not a completed class coordinator.

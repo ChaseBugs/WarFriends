@@ -72,6 +72,10 @@ The [grenade selection prerequisite](GRENADE_WEAPON_SELECTION.md) now verifies
 FRAG-to-upgraded-M320-to-FRAG switching in a real grenade-mode host, preserving
 per-slot ammunition and rejecting changes during windup. Mixed-class combat
 coordination and normal Unity gameplay still remain open.
+The [grenade common combat view](GRENADE_COMMON_COMBAT_VIEW.md) now exposes
+source collision and position-only targets without inventing target rotations.
+Grenade army queries use the cached view, including coherent launch-tick samples.
+Mixed active-class coordination and full gameplay verification remain open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

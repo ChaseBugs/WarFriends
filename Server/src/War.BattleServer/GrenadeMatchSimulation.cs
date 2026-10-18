@@ -22,6 +22,11 @@ internal sealed class GrenadeMatchSimulation
         internal bool Moving;
         internal ScheduledGrenadeLaunch? Pending;
         internal GrenadePoseFrame Pose;
+        internal string PoseClip;
+        internal double PoseSeconds;
+        internal GrenadePoseFrame? CachedCombatFrame;
+        internal PlayerShotTargetCatalog? CachedTargetIdentities;
+        internal PlayerAimPose? CachedCombatView;
 
         internal Actor(ParticipantManifest definition, CoverNode cover, GrenadeBinding binding, GrenadePoseCatalog poses)
         {
@@ -31,6 +36,7 @@ internal sealed class GrenadeMatchSimulation
             Position = cover.Position;
             Rotation = cover.Rotation;
             Clip = binding.Swipe ? "grenade_idle" : "grenadelauncher_idle";
+            PoseClip = Clip;
             Pose = Place(poses.Sample(Clip, 0, true), Position, Rotation);
         }
     }
@@ -55,8 +61,8 @@ internal sealed class GrenadeMatchSimulation
         var actor=ActorOf(id);
         if(shotTargets==null||lastTick==null||lastTick.Value<actor.ClipStarted)
             throw new InvalidDataException("Grenade target pose clock is unavailable.");
-        double seconds=(lastTick.Value-actor.ClipStarted)/(double)MatchManifest.TickRate;
-        return shotTargets.Place(actor.Clip,seconds,Loops(actor.Clip),actor.Position,actor.Rotation);
+        return shotTargets.Place(actor.PoseClip, actor.PoseSeconds, Loops(actor.PoseClip),
+            actor.Position, actor.Rotation);
     }
     internal GrenadeMatchSimulation(MatchManifest manifest,RecoveredBattleMap map,GrenadeCatalog catalog,
         Func<string,bool>? dynamicColliderEnabled=null,Func<int,bool>? indexedColliderEnabled=null,Func<int,int,int>? runtimeLayer=null)
@@ -96,8 +102,32 @@ internal sealed class GrenadeMatchSimulation
         actor.Clip = clip;
         actor.ClipStarted = tick;
         actor.Pose = pose;
+        actor.PoseClip = clip;
+        actor.PoseSeconds = 0;
     }
     internal PlayerCollisionModel Collision(string id)=>ActorOf(id).Pose.Collision;
+    internal PlayerAimPose CombatPose(string playerId, PlayerShotTargetCatalog targetIdentities)
+    {
+        Actor actor = ActorOf(playerId);
+        if (shotTargets == null)
+        {
+            throw new InvalidDataException("Grenade player target pose authority is unavailable.");
+        }
+
+        if (ReferenceEquals(actor.CachedCombatFrame, actor.Pose) &&
+            ReferenceEquals(actor.CachedTargetIdentities, targetIdentities) && actor.CachedCombatView != null)
+        {
+            return actor.CachedCombatView;
+        }
+
+        IReadOnlyList<Vector3> positions = shotTargets.Place(actor.PoseClip, actor.PoseSeconds, Loops(actor.PoseClip),
+            actor.Position, actor.Rotation);
+        PlayerAimPose view = GrenadeCombatPoseProjection.Create(actor.Pose, positions, targetIdentities);
+        actor.CachedCombatFrame = actor.Pose;
+        actor.CachedTargetIdentities = targetIdentities;
+        actor.CachedCombatView = view;
+        return view;
+    }
     internal RiflePoseState Snapshot(string id,ulong tick)
     {
         var actor=ActorOf(id);double seconds=(tick-actor.ClipStarted)/(double)MatchManifest.TickRate;
@@ -119,8 +149,7 @@ internal sealed class GrenadeMatchSimulation
             gesture.Right, gesture.LaunchTick,
             actor.Binding.SourceId,
             actor.WeaponUpgrade);
-        actor.Pose = Place(catalog.Poses.Sample(actor.Clip, 0, false),
-            actor.Position, actor.Rotation);
+        SampleActorPose(actor, 0);
         return actor.Pending;
     }
     internal IReadOnlyList<ScheduledGrenadeLaunch> Advance(ulong tick,Func<string,RifleActorLocation>? locate=null)
@@ -140,8 +169,7 @@ internal sealed class GrenadeMatchSimulation
             bool loop = Loops(actor.Clip);
             double seconds = (tick - actor.ClipStarted) /
                 (double)MatchManifest.TickRate;
-            actor.Pose = Place(catalog.Poses.Sample(actor.Clip,
-                seconds, loop), actor.Position, actor.Rotation);
+            SampleActorPose(actor, seconds);
 
             // Sample the windup before changing to the M320 fire clip. The
             // launch muzzle comes from that exact source animation frame.
@@ -163,11 +191,18 @@ internal sealed class GrenadeMatchSimulation
                 actor.Clip = actor.Binding.Swipe
                     ? "grenade_idle" : "grenadelauncher_idle";
                 actor.ClipStarted = tick;
-                actor.Pose = Place(catalog.Poses.Sample(actor.Clip, 0,
-                    true), actor.Position, actor.Rotation);
+                SampleActorPose(actor, 0);
             }
         }
         return dueLaunches;
+    }
+
+    private void SampleActorPose(Actor actor, double seconds)
+    {
+        actor.Pose = Place(catalog.Poses.Sample(actor.Clip, seconds, Loops(actor.Clip)),
+            actor.Position, actor.Rotation);
+        actor.PoseClip = actor.Clip;
+        actor.PoseSeconds = seconds;
     }
 
     private void UpdateActorLocation(Actor actor,

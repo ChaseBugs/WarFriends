@@ -15,34 +15,22 @@ public sealed partial class MatchEngine
             return rifleCombat.Pose(playerId).Collision;
         }
 
-        return grenadeCombat?.Collision(playerId) ??
-            throw new InvalidDataException("Army combat lacks current player collision authority.");
+        return GrenadePlayerCombatPose(playerId).Collision;
     }
 
     private Vector3 GrenadePlayerShotTarget(string playerId, int transformFileId)
     {
+        return GrenadePlayerCombatPose(playerId).BodyTargetPosition(transformFileId);
+    }
+
+    private PlayerAimPose GrenadePlayerCombatPose(string playerId)
+    {
         if (grenadeCombat == null || playerShotTargets == null)
         {
-            throw new InvalidDataException("Grenade army target authority is unavailable.");
+            throw new InvalidDataException("Grenade army player pose authority is unavailable.");
         }
 
-        int targetIndex = -1;
-        for (int index = 0; index < playerShotTargets.Gameplay.Count; index++)
-        {
-            if (playerShotTargets.Gameplay[index].TransformFileId == transformFileId)
-            {
-                targetIndex = index;
-                break;
-            }
-        }
-
-        IReadOnlyList<Vector3> positions = grenadeCombat.PlayerShotTargets(playerId);
-        if (targetIndex < 0 || positions.Count != playerShotTargets.Gameplay.Count)
-        {
-            throw new InvalidDataException("Grenade army target differs from the pinned player rig.");
-        }
-
-        return positions[targetIndex];
+        return grenadeCombat.CombatPose(playerId, playerShotTargets);
     }
 
     private Vector3 ArmyBodyShotTarget(string playerId, int transformFileId)
