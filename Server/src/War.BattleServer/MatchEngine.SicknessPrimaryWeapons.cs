@@ -8,26 +8,35 @@ public sealed partial class MatchEngine
     internal bool ApplySicknessToArmyAssaulter(ulong entityKey, SicknessSpawnWindow window)
     {
         ArgumentNullException.ThrowIfNull(window);
+        return activeArmyEntities.TryGetValue(entityKey, out var entity) && entity.UnitId == "ID_UNIT-ASSAULT" &&
+            ApplySicknessToArmyPrimaryWeapon(entityKey, window);
+    }
+
+    /// <summary>Changes the current gun damage and vitality of source-reviewed ordinary weapon layouts.</summary>
+    internal bool ApplySicknessToArmyPrimaryWeapon(ulong entityKey, SicknessSpawnWindow window)
+    {
+        ArgumentNullException.ThrowIfNull(window);
         if (phase != BattlePhase.Running ||
             !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-            entity.UnitId != "ID_UNIT-ASSAULT" || entity.SourceCardId.Length != 0)
+            entity.UnitId is not ("ID_UNIT-ASSAULT" or "ID_UNIT-SNIPER" or "ID_UNIT-MINIGUNNER") ||
+            entity.SourceCardId.Length != 0)
         {
             return false;
         }
 
-        // This source SoldierBehaviour is an EnemyController in Walk/Corner states.
-        // It has one ordinary gun; mechanical and other weapon layouts are separate bindings.
+        // Walk, Corner and Minigunner pass EnemyController.canBeFreezed. Their primary
+        // launch paths read armyDamage; critical probability and shot cadence stay unchanged.
         var target = new SicknessSpawnTarget(entity.OwnerFraction, true, true);
         if (!window.ShouldAffect(target))
         {
             return false;
         }
 
-        ApplyAssaulterSicknessAuthority(entityKey, window, target);
+        ApplyPrimaryWeaponSicknessAuthority(entityKey, window, target);
         return true;
     }
 
-    private void ApplyAssaulterSicknessAuthority(ulong entityKey, SicknessSpawnWindow window,
+    private void ApplyPrimaryWeaponSicknessAuthority(ulong entityKey, SicknessSpawnWindow window,
         SicknessSpawnTarget target)
     {
         var entity = activeArmyEntities[entityKey];
@@ -36,7 +45,7 @@ public sealed partial class MatchEngine
             !armyDamage.TryGetValue(entityKey, out float damage) ||
             entity.Health != vitality.Current || entity.MaxHealth != vitality.Maximum)
         {
-            throw new InvalidDataException("Sickness Assaulter lost its current combat authority.");
+            throw new InvalidDataException("Sickness primary weapon lost its current combat authority.");
         }
 
         var current = new SicknessCombatState(vitality.Maximum, vitality.Current, new[] { damage });
