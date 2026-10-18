@@ -83,8 +83,10 @@ release-order checks use real starter source data and rifle/grenade simulations.
 The [mixed starter host command checkpoint](MIXED_GRENADE_HOST_COMMANDS.md) now
 connects the rifle-to-FRAG-to-rifle path to MatchEngine, including scheduled-shot
 suspension, source pose routing and in-flight grenade completion. Thirteen native
-host checks pass. Mixed UDP/Unity gameplay, uncaptured grenade rig transforms,
-durable allocation and the remaining feature boundaries stay open.
+host checks pass. A separate [two-peer UDP gate](MIXED_GRENADE_UDP.md) now verifies
+the same source starter path, invalid stage rejection and reliable lifecycle
+replay through signed SDK peers. Normal Unity gameplay, uncaptured grenade rig
+transforms, durable allocation and the remaining feature boundaries stay open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

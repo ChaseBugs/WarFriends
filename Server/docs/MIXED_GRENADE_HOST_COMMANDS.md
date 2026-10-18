@@ -58,3 +58,7 @@ also pass. The full native executable completes successfully with 205,658
 assertions across battle admission, SDK, geometry and two-peer UDP coverage.
 That full result includes pre-existing diagnostic comparisons and does not
 prove all listed gameplay parity requirements or a normal Unity match.
+
+The subsequent [two-peer UDP gate](MIXED_GRENADE_UDP.md) now verifies the basic
+starter path through signed portable SDK connections. That gate has separate
+fixture/allocation limits and does not prove normal Backend or Unity publication.
