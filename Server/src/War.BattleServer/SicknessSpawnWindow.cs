@@ -85,6 +85,28 @@ public sealed class SicknessSpawnWindow
         return damage with { Minimum = damage.Minimum * DamageMultiplier };
     }
 
+    /// <summary>Scales missile contact damage while preserving the separate explosion and flight setup.</summary>
+    public ArmyCardRocketRuntime ApplyRocketDamage(SicknessSpawnTarget target, ArmyCardRocketRuntime missile)
+    {
+        ArgumentNullException.ThrowIfNull(missile);
+        if (!ShouldAffect(target))
+        {
+            return missile;
+        }
+
+        if (!float.IsFinite(missile.DirectDamage) || missile.DirectDamage < 0f ||
+            !float.IsFinite(missile.ExplosionDamage) || missile.ExplosionDamage < missile.DirectDamage ||
+            !float.IsFinite(missile.Speed) || missile.Speed <= 0f ||
+            !float.IsFinite(missile.PlayerBehindShieldRatio) || missile.PlayerBehindShieldRatio is < 0f or > 1f)
+        {
+            throw new InvalidDataException("Sickness requires valid current missile authority.");
+        }
+
+        // As with grenades, ImproveAllWeapons assigns damageAmount directly,
+        // bypassing MissileSetup.ScaleDamage and its explodeDamageAmount multiplication.
+        return missile with { DirectDamage = missile.DirectDamage * DamageMultiplier };
+    }
+
     /// <summary>Copies scaled damage and refills current health to half maximum; maximum health is preserved.</summary>
     public SicknessCombatState Apply(SicknessSpawnTarget target, SicknessCombatState state)
     {

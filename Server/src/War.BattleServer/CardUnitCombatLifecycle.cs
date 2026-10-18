@@ -67,6 +67,24 @@ internal sealed class CardUnitCombatLifecycle
         return row.Clone();
     }
 
+    /// <summary>Refills current health without changing source maximum health or kevlar.</summary>
+    internal BattleArmyEntityState? RefillHealth(ulong entityKey, float health)
+    {
+        if (!roster.TryGetValue(entityKey, out var row))
+        {
+            return null;
+        }
+
+        ValidateHealthAuthority(entityKey, row);
+        if (!float.IsFinite(health) || health <= 0f || health > row.MaxHealth)
+        {
+            throw new InvalidDataException("Card-unit refill requires valid current health within its maximum.");
+        }
+
+        row.Health = health;
+        return row.Clone();
+    }
+
     internal DamageResult? ConfirmDeath(ulong entityKey)
     {
         if (!roster.TryGetValue(entityKey, out var row))

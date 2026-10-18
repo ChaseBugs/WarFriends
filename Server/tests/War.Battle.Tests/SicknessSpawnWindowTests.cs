@@ -23,7 +23,33 @@ internal static class SicknessSpawnWindowTests
         checks += CheckSpawnModifierOrder(catalog, first);
         checks += CheckGrenadeFields(catalog, first);
         checks += CheckGrenadeBlastFields();
+        checks += CheckRocketFields(catalog, first);
         return checks;
+    }
+
+    private static int CheckRocketFields(ArmyDeploymentCatalog catalog, ArmyDeploymentWave wave)
+    {
+        var window = new SicknessSpawnWindow(1, catalog);
+        var target = new SicknessSpawnTarget(2, true, true);
+        var original = new ArmyCardRocketRuntime(20, 200, 3, 0.4f);
+        int checks = Check(ReferenceEquals(window.ApplyRocketDamage(target, original), original),
+            "An unarmed Sickness window changed missile authority.");
+        window.Arm();
+        window.DeploymentStarted(2, wave);
+
+        ArmyCardRocketRuntime changed = window.ApplyRocketDamage(target, original);
+        checks += Check(changed == original with { DirectDamage = 10 } && original.DirectDamage == 20,
+            "Sickness changed the missile explosion, speed, shield ratio or source row.");
+        checks += Check(window.ApplyRocketDamage(target, changed) == original with { DirectDamage = 5 },
+            "Repeated Sickness did not scale current missile contact damage.");
+        checks += Check(ReferenceEquals(window.ApplyRocketDamage(new(1, true, true), original), original),
+            "Sickness modified a friendly missile setup.");
+        Reject(() => window.ApplyRocketDamage(target, original with { DirectDamage = float.NaN }));
+        Reject(() => window.ApplyRocketDamage(target, original with { ExplosionDamage = float.PositiveInfinity }));
+        Reject(() => window.ApplyRocketDamage(target, original with { ExplosionDamage = 10 }));
+        Reject(() => window.ApplyRocketDamage(target, original with { Speed = 0 }));
+        Reject(() => window.ApplyRocketDamage(target, original with { PlayerBehindShieldRatio = float.NaN }));
+        return checks + 5;
     }
 
     private static int CheckGrenadeBlastFields()

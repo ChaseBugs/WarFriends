@@ -39,7 +39,7 @@ arbitrary effect lease is introduced here.
 
 ## Verification and boundary
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 44 checks for
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 53 checks for
 arming, friendly/vehicle/immune exclusions, neutral and reversed fractions, replacement and
 reused-definition finishes, repeated callbacks, exact vitality/damage calculations, immutable
 output, invalid-event/state rejection and ordered spawn subscriptions.
@@ -110,3 +110,41 @@ calculation assertions in the focused suite; no runtime code changed after the c
 This is only the secondary grenade binding. Primary weapon mutation, current/max vitality and
 death/immortality synchronization, automatic start/spawn/finish dispatch, authorized card use,
 other eligible units, protocol/SDK/Unity presentation and durable terminal proof remain open.
+
+## Rocket weapon and current-health binding
+
+`SoldierBehaviourBazooka.ApplyWeaponsSetup` assigns missile `damageAmount` to one tenth of
+the composed soldier damage and `explodeDamageAmount` to the full composed damage. As with
+grenades, `ImproveAllWeapons` bypasses the `MissileSetup.ScaleDamage` override. Sickness
+therefore halves current contact damage while leaving the separate explosion field intact.
+It does not change speed or the behind-shield damage ratio.
+
+`ApplyRocketDamage` copies that exact change and rejects invalid current damage, speed or
+shield-ratio authority. Focused tests cover unarmed and friendly exclusions, repeated callbacks,
+unchanged source/other fields, non-finite fields, inverted damage and invalid flight setup.
+
+The host-only `ApplySicknessToCardRocket` binding updates the existing match-owned
+`cardRocketMissiles` record for BIGROCKET. The source Bazooka EnemyController uses Walk at
+spawn and Corner after navigation, both accepted by `canBeFreezed`. Existing launch code reads
+the current record and freezes it in `rocketLaunches`; later weapon changes do not rewrite
+that captured record. Soldier death removes the current weapon but retains launched authority.
+
+The same binding validates that the public roster and card-unit damage authority agree,
+then refills current health to half maximum through `CardUnitCombatLifecycle.RefillHealth`.
+It preserves source maximum health and kevlar. Damage and vitality calculations validate before
+the first write, and the single-writer host publishes the updated roster and both revisions.
+Missing/dead entities or exhausted revisions cannot authorize the binding. Repeated callbacks
+refill current health to half maximum again rather than multiplying current health repeatedly.
+
+The final Release build passes with zero warnings/errors. `--sickness-window-only` passes 53
+checks and `--combat-only` passes 26,382 assertions. The native Rocket fixture injures the unit
+to one-quarter health, applies the binding, verifies unchanged maximum and half-maximum current
+health, then applies another authoritative hit from that updated health. It launches an actual
+missile with modified contact damage, reapplies Sickness without changing the airborne record,
+verifies the half-maximum refill again, disconnects, and removes the soldier while retaining
+the launched missile through its terminal impact. The complete default suite was not rerun.
+
+This supplies the Card Rocket weapon/current-health binding only. The test arms a source-backed
+window explicitly; no automatic Sickness subscription, authorized network card activation or
+Unity presentation is implied. Other eligible unit bindings and the complete automatic
+start/spawn/finish lifecycle remain required.

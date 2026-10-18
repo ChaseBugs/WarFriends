@@ -13273,6 +13273,26 @@ internal static class CombatContentTests
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) ==
                   rocketStats.Rocket,
             "card Rocket spawn binds its level-scaled missile setup to the host entity");
+        var rocketSickness = new SicknessSpawnWindow(
+            rocketEntity.OwnerFraction == 1 ? 2 : 1, content.Army);
+        Check(!rocketCardMatch.ApplySicknessToCardRocket(rocketEntity.EntityKey, rocketSickness),
+            "unarmed Sickness cannot modify a Rocket Soldier weapon");
+        rocketSickness.Arm();
+        rocketSickness.DeploymentStarted(rocketEntity.OwnerFraction, sicknessDeployment.LastAcceptedWave!);
+        Check(rocketCardMatch.ApplyArmyHostDamage(rocketEntity.EntityKey, rocketEntity.MaxHealth * 0.75f),
+            "host damage injures the Rocket Soldier before its Sickness callback");
+        Check(rocketCardMatch.ApplySicknessToCardRocket(rocketEntity.EntityKey, rocketSickness) &&
+            rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) ==
+                rocketStats.Rocket! with { DirectDamage = rocketStats.Rocket.DirectDamage * 0.5f },
+            "host Sickness modifies Rocket contact damage while preserving explosion and flight authority");
+        var sickRocket = rocketCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single();
+        Check(sickRocket.MaxHealth == rocketEntity.MaxHealth &&
+            sickRocket.Health == rocketEntity.MaxHealth * 0.5f,
+            "Sickness refills the injured Rocket to half maximum without reducing its maximum");
+        Check(rocketCardMatch.ApplyArmyHostDamage(rocketEntity.EntityKey, rocketEntity.MaxHealth * 0.25f) &&
+            rocketCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single().Health ==
+                rocketEntity.MaxHealth * 0.25f,
+            "subsequent host damage uses the updated Rocket vitality authority");
         var rocketBody = new PlayerHitbox("rocket-target/body",
             PlayerHitboxKind.Box, 1, Vector3.Zero,
             new Vector3(.4f, .4f, .4f), Quaternion.Identity, 0,
@@ -13508,6 +13528,20 @@ internal static class CombatContentTests
                   rocketProjectileRow.VelocityY,
                   rocketProjectileRow.VelocityZ).Length() - 3f) < .0001f,
             "Rocket snapshot publishes a source-speed projectile for reconnect");
+        ArmyCardRocketRuntime? frozenRocketMissile =
+            rocketCardMatch.CardRocketLaunchMissile(rocketProjectileRow.ProjectileId);
+        Check(frozenRocketMissile == rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey),
+            "actual Rocket launch captures the Sickness-modified contact damage");
+        Check(rocketCardMatch.ApplySicknessToCardRocket(rocketEntity.EntityKey, rocketSickness) &&
+            rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey)!.DirectDamage ==
+                rocketStats.Rocket!.DirectDamage * 0.25f &&
+            rocketCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single().Health ==
+                rocketEntity.MaxHealth * 0.5f &&
+            rocketCardMatch.CardRocketLaunchMissile(rocketProjectileRow.ProjectileId) == frozenRocketMissile,
+            "later Sickness changes future Rocket contact damage without rewriting an airborne missile");
+        rocketSickness.Disconnect();
+        Check(!rocketCardMatch.ApplySicknessToCardRocket(rocketEntity.EntityKey, rocketSickness),
+            "disconnected Sickness cannot modify a Rocket weapon");
         ulong rocketShotEventId = rocketCardMatch
             .EventBatch(decoyPlayer, 0).LatestEventId;
         var rocketShotEvent = rocketCardMatch
@@ -13522,6 +13556,7 @@ internal static class CombatContentTests
             "Rocket missile advances on the next host tick without an immediate impact");
         Check(rocketCardMatch.ConfirmArmyDeath(rocketEntity.EntityKey, false) &&
               rocketCardMatch.CardRocketMissile(rocketEntity.EntityKey) == null &&
+              rocketCardMatch.CardRocketLaunchMissile(rocketProjectileRow.ProjectileId) == frozenRocketMissile &&
               rocketCardMatch.CardRocketAim(rocketEntity.EntityKey) == null &&
               !rocketCardMatch.CardRocketWalking(rocketEntity.EntityKey) &&
               rocketCardMatch.CardRocketAttack(rocketEntity.EntityKey) == null &&
