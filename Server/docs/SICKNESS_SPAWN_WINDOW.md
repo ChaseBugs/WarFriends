@@ -39,7 +39,7 @@ arbitrary effect lease is introduced here.
 
 ## Verification and boundary
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 53 checks for
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 61 checks for
 arming, friendly/vehicle/immune exclusions, neutral and reversed fractions, replacement and
 reused-definition finishes, repeated callbacks, exact vitality/damage calculations, immutable
 output, invalid-event/state rejection and ordered spawn subscriptions.
@@ -107,8 +107,8 @@ source-backed deployment window explicitly; it does not activate a SICKNESS card
 network command. The final build also includes the three additional inner/outer/midpoint
 calculation assertions in the focused suite; no runtime code changed after the combat run.
 
-This initially supplied only the secondary grenade binding. The current-health extension below
-also applies. Primary weapon mutation, automatic start/spawn/finish dispatch, authorized card use,
+This initially supplied only the secondary grenade binding. The current-health and primary-weapon
+extensions below also apply. Automatic start/spawn/finish dispatch, authorized card use,
 other eligible units, protocol/SDK/Unity presentation and durable terminal proof remain open.
 
 ## Rocket weapon and current-health binding
@@ -164,7 +164,8 @@ continues movement and an actual grenade launch, and verifies another refill dur
 Sickness. The existing Rocket vitality/airborne-authority checks pass through the shared helper.
 The complete default suite was not rerun.
 
-Source inspection also identified a separate primary-fire gap: the host currently skips the
-non-grenade attack branch. The [primary-fire report](GRENADIER_PRIMARY_FIRE.md) records exact
-normal/card pistol identities, the missing binding/launch path and required verification. Neither
-this vitality extension nor the grenade fixture proves the missing primary weapon behavior.
+The [primary-fire report](GRENADIER_PRIMARY_FIRE.md) records the subsequently implemented
+normal/card pistol binding and real/cosmetic launch path. Sickness now changes that current
+primary damage together with secondary minimum and vitality. A native primary fixture verifies
+modified launch damage, immutable airborne authority, soldier death cleanup and collision;
+dedicated victim-damage, animated-pose, UDP and Client presentation proof remain open.

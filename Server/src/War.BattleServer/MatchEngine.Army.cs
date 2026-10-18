@@ -484,7 +484,10 @@ public sealed partial class MatchEngine
     }
     private sealed record ArmyProjectileAuthority(ulong EntityKey,
         string OwnerPlayerId, int OwnerFraction, float Damage, float PoisonRatio,
-        string UnitId, string SourceCardId, bool Fake);
+        string UnitId, string SourceCardId, bool Fake)
+    {
+        public ArmyPlayerDamagePolicy? PlayerPolicy { get; init; }
+    }
     private readonly Dictionary<ulong,ArmyProjectileAuthority> armyProjectileAuthority=[];
     internal (string OwnerPlayerId, int OwnerFraction, float Damage)? ArmyProjectileLaunch(
         ulong projectileId)
@@ -3856,7 +3859,7 @@ public sealed partial class MatchEngine
         {
             ulong fakeId=++projectileId;
             var flight=new ArmyProjectileFlight(fakeId,entityKey,origin,target,speed,tick,
-                (from,direction,range)=>null,shotgunFakePellet:true);
+                (from,direction,range)=>null,cosmeticTrail:true);
             armyProjectiles.Add(fakeId,flight);
             armyProjectileAuthority.Add(fakeId,new ArmyProjectileAuthority(
                 entityKey,ownerPlayerId,ownerFraction,0,0,unitId,sourceCardId,true));
@@ -3946,7 +3949,10 @@ public sealed partial class MatchEngine
                     launch.Damage);
                 var result=ApplyResolvedPlayerDamage(proof.AttackerPlayerId,
                     proof.VictimPlayerId,new ResolvedPlayerDamage(proof.Damage,
-                        CombatDamageType.Shot,proof.PartWeight),
+                        CombatDamageType.Shot,proof.PartWeight,
+                        PlayerCoefficient: launch.PlayerPolicy?.PlayerDamageRatio ?? 1f,
+                        PlayerOvertimeCoefficient: launch.PlayerPolicy?.OvertimePlayerDamageRatio ?? 1f,
+                        Overtime: overtime),
                     damageRoll?.Invoke()??1f,confirmedProjectileImpact:true,
                     pvpPlayerDamageReceiptId:pvpBonusProgress==null?null:
                         PvpHitReceiptId("army-projectile",impact.ProjectileId,proof.VictimPlayerId),

@@ -63,7 +63,7 @@ The [deployment wave lifecycle](ARMY_DEPLOYMENT_WAVES.md) now records accepted w
 entity provenance, and the final strict post-spawn wait. Overlapping pending spawns sort by source
 due tick instead of blocking behind an older wave's future entries. This is a prerequisite for the
 Sickness event window; its arming, actual health/damage modifiers and Client integration remain open.
-The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 53 focused
+The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 61 focused
 checks, including reused-option finishes, overlapping windows, neutral/reversed fractions, and
 current-health refill versus maximum-health preservation. Actual host entity mutation, authorized
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
@@ -83,9 +83,11 @@ from the changed vitality and a frozen airborne missile. Automatic callbacks, ot
 bindings and authorized Client activation remain incomplete.
 Grenadier secondary damage and current health now share the Rocket vitality implementation;
 native combat verification passes 26,385 assertions, including later damage and repeated refill.
-The [Grenadier primary-fire gap](GRENADIER_PRIMARY_FIRE.md) remains required: non-grenade attack
-intents are currently skipped. The source normal/card pistol identity is established, but primary
-damage binding, actual pistol launch, Sickness interaction and Client proof are not implemented.
+The [Grenadier primary-fire path](GRENADIER_PRIMARY_FIRE.md) now binds the source normal/card
+pistol and launches real/cosmetic bullets instead of skipping primary intents. Sickness updates
+both current weapon damage fields. Native proof covers actual primary launch, Sickness damage,
+airborne immutability, death cleanup and collision. Dedicated victim/friendly damage assertions,
+animated muzzle parity, authenticated UDP and Client presentation remain open.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

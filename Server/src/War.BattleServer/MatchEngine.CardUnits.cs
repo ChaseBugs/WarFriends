@@ -1435,6 +1435,7 @@ public sealed partial class MatchEngine
         if (!cardGrenadierThrows.TryAdd(entity.EntityKey, throwSetup))
             throw new InvalidDataException("Card Grenadier reused its throw identity.");
         _cardGrenadierDamage.Add(entity.EntityKey, source.BaseStats.Grenade);
+        armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
         TryAssignCardGrenadierPoint(entity);
     }
 
@@ -1712,7 +1713,10 @@ public sealed partial class MatchEngine
         foreach (CardGrenadierShotIntent intent in grenadierShotIntents)
         {
             if (!intent.Aim.ThrowGrenade)
+            {
+                LaunchCardGrenadierPrimary(intent);
                 continue;
+            }
             if (!activeArmyEntities.TryGetValue(intent.EntityKey,
                     out var soldier) ||
                 soldier.SourceCardId != "GREATGRENADIER" ||
@@ -2303,6 +2307,10 @@ public sealed partial class MatchEngine
         cardRocketMissiles.Remove(entityKey);
         cardGrenadierThrows.Remove(entityKey);
         _cardGrenadierDamage.Remove(entityKey);
+        if (entity.SourceCardId == "GREATGRENADIER")
+        {
+            armyDamage.Remove(entityKey);
+        }
         grenadierPointRetryTicks.Remove(entityKey);
         grenadierWalks.Remove(entityKey);
         grenadierAttacks.Remove(entityKey);

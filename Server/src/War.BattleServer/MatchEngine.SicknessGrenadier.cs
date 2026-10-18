@@ -16,7 +16,7 @@ public sealed partial class MatchEngine
         return grenadierLaunches.GetValueOrDefault(projectileId)?.Damage;
     }
 
-    /// <summary>Applies secondary damage and current health; primary firing and card activation remain separate.</summary>
+    /// <summary>Applies both weapon damage fields and current health; automatic card activation remains separate.</summary>
     internal bool ApplySicknessToCardGrenadier(ulong entityKey, SicknessSpawnWindow window)
     {
         ArgumentNullException.ThrowIfNull(window);
@@ -24,7 +24,8 @@ public sealed partial class MatchEngine
             stateRevision == ulong.MaxValue || armyEntityRevision == ulong.MaxValue ||
             !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             entity.SourceCardId != "GREATGRENADIER" ||
-            !_cardGrenadierDamage.TryGetValue(entityKey, out var damage))
+            !_cardGrenadierDamage.TryGetValue(entityKey, out var damage) ||
+            !armyDamage.TryGetValue(entityKey, out float primaryDamage))
         {
             return false;
         }
@@ -38,8 +39,11 @@ public sealed partial class MatchEngine
         }
 
         ArmyGrenadeDamageStats changedDamage = window.ApplyGrenadeDamage(target, damage);
+        var currentWeapons = new SicknessCombatState(entity.MaxHealth, entity.Health, new[] { primaryDamage });
+        float changedPrimary = window.Apply(target, currentWeapons).WeaponDamage[0];
         RefillSicknessCardUnit(entity, window, target);
         _cardGrenadierDamage[entityKey] = changedDamage;
+        armyDamage[entityKey] = changedPrimary;
         armyEntityRevision++;
         stateRevision++;
         return true;

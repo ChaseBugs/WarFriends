@@ -824,6 +824,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"])
     {
         int sicknessChecks = SicknessSpawnWindowTests.Run(Path.Combine(directory.FullName, "content"));
         sicknessChecks += ArmySpawnCallbackTests.Run();
+        sicknessChecks += GrenadierPrimaryWeaponTests.Run(Path.Combine(directory.FullName, "content"));
         Console.WriteLine($"PASS: {sicknessChecks} Sickness callback and damage calculation checks");
         return;
     }
@@ -3552,6 +3553,7 @@ checks += MixedGrenadeLongShotTests.Run(Path.Combine(contentRoot.FullName, "cont
 checks += ArmyDeploymentWaveTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessSpawnWindowTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += ArmySpawnCallbackTests.Run();
+checks += GrenadierPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += await MixedGrenadeUdpTests.RunAsync(Path.Combine(contentRoot.FullName, "content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));

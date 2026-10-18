@@ -12136,7 +12136,7 @@ internal static class CombatContentTests
                     fakeTraceCalls++;
                     return new ShotCollision(0f,Vector3.Zero,"player/body",
                         shotIntent.TargetPlayerId,.5f);
-                },shotgunFakePellet:true);
+                },cosmeticTrail:true);
             for(ulong flightTick=11;flightTick<=18;flightTick++)
             {
                 Check(fakeShotgunFlight.Advance(flightTick)==null,
@@ -12409,7 +12409,7 @@ internal static class CombatContentTests
         };
         MatchEngine ReadyCardMatch(string matchId, string sourceCardId = "HEAVYDRONE",
             RecoveredBattleMap? sourceMap = null,
-            string? opponentCardId = null, bool withBonusBox = false)
+            string? opponentCardId = null, bool withBonusBox = false, Func<int, int>? armyDraw = null)
         {
             RecoveredBattleMap battleMap = sourceMap ?? park;
             string otherCard = opponentCardId ?? sourceCardId;
@@ -12426,7 +12426,7 @@ internal static class CombatContentTests
                     StartCover = battleMap.Covers.First(cover =>
                         cover.Main && cover.Fraction == player.Fraction).SourceIndex
                 }).ToArray()
-            }, content: content, armyChoice: _ => 0,
+            }, content: content, armyChoice: armyDraw ?? (_ => 0),
                 combatRandom: withBonusBox ? () => 0f : null,
                 bonusAreaChoice: withBonusBox ? _ => 1 : null,
                 bonusPositionDraw: withBonusBox ?
@@ -12725,6 +12725,7 @@ internal static class CombatContentTests
                 grenadierEntity.EntityKey, sicknessWindow) &&
             grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey) ==
                 grenadierStats.Grenade! with { Minimum = grenadierStats.Grenade.Minimum * 0.5f } &&
+            grenadierCardMatch.ArmyDamage(grenadierEntity.EntityKey) == grenadierStats.Combat.Damage * 0.5f &&
             content.Army.CardBaseStats("GREATGRENADIER", 22, content.BarrelPolicy.MaxDisplayLevel) == grenadierStats,
             "host Sickness grenade binding scales current minimum without rewriting source or inner blast damage");
         var sickGrenadier = grenadierCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single();
@@ -12890,11 +12891,75 @@ internal static class CombatContentTests
               grenadierCardMatch.CardGrenadierAttack(
                   grenadierEntity.EntityKey) == null &&
               grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey) == null &&
+              grenadierCardMatch.ArmyDamage(grenadierEntity.EntityKey) == null &&
               !grenadierCardMatch.CardGrenadierWalking(
                   grenadierEntity.EntityKey) &&
               grenadierCardMatch.CardEnemyPointOccupant(
                   grenadierNextPointId) == null,
             "card Grenadier death releases its throw setup and point reservation");
+        MatchEngine? primaryDrawOwner = null;
+        ulong primaryDrawEntity = 0;
+        int primaryReadyDraws = 0;
+        int ChoosePrimaryArmyDraw(int maximum)
+        {
+            if (maximum != 1_000_000 || primaryDrawOwner?.CardGrenadierAttack(primaryDrawEntity)?.Phase !=
+                ArmyRusherAttackPhase.Ready)
+            {
+                primaryReadyDraws = 0;
+                return 0;
+            }
+
+            // PickTarget draws secondary choice first. Later target/batch/real-shot draws stay zero.
+            return primaryReadyDraws++ == 0 ? 400_000 : 0;
+        }
+
+        var primaryGrenadierMatch = ReadyCardMatch("host-grenadier-primary", "GREATGRENADIER",
+            armyDraw: ChoosePrimaryArmyDraw);
+        primaryDrawOwner = primaryGrenadierMatch;
+        Check(primaryGrenadierMatch.TryScheduleCardUnit("f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4", decoyPlayer,
+                "GREATGRENADIER"), "primary-fire fixture spawns its selected Grenadier");
+        var primarySoldier = primaryGrenadierMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single();
+        primaryDrawEntity = primarySoldier.EntityKey;
+        var primarySickness = new SicknessSpawnWindow(primarySoldier.OwnerFraction == 1 ? 2 : 1, content.Army);
+        primarySickness.Arm();
+        primarySickness.DeploymentStarted(primarySoldier.OwnerFraction, sicknessDeployment.LastAcceptedWave!);
+        Check(primaryGrenadierMatch.ApplySicknessToCardGrenadier(primarySoldier.EntityKey, primarySickness),
+            "primary-fire fixture applies Sickness before the first shot");
+        MatchEngine.CardGrenadierShotIntent? primaryIntent = null;
+        for (ulong primaryTick = 61; primaryTick <= 1200 && primaryIntent == null; primaryTick++)
+        {
+            primaryGrenadierMatch.Advance(primaryTick);
+            primaryIntent = primaryGrenadierMatch.CardGrenadierShotIntents()
+                .FirstOrDefault(intent => !intent.Aim.ThrowGrenade);
+        }
+
+        Check(primaryIntent is { IsReal: true }, "forced primary choice reaches a real pistol shot intent");
+        var primaryProjectile = primaryGrenadierMatch.Snapshot().Projectiles.Single(row =>
+            row.ArmySourceCardId == "GREATGRENADIER" && row.Kind == "army-bullet");
+        Check(primaryGrenadierMatch.ArmyProjectileLaunch(primaryProjectile.ProjectileId)?.Damage ==
+                grenadierStats.Combat.Damage * 0.5f &&
+            primaryGrenadierMatch.ArmyProjectileSpeed(primaryProjectile.ProjectileId) == 5f,
+            "actual pistol launch uses current Sickness damage and the selected weapon's speed");
+        Check(primaryGrenadierMatch.ApplySicknessToCardGrenadier(primarySoldier.EntityKey, primarySickness) &&
+            primaryGrenadierMatch.ArmyDamage(primarySoldier.EntityKey) == grenadierStats.Combat.Damage * 0.25f &&
+            primaryGrenadierMatch.ArmyProjectileLaunch(primaryProjectile.ProjectileId)?.Damage ==
+                grenadierStats.Combat.Damage * 0.5f,
+            "later Sickness changes future primary damage without rewriting the airborne pistol round");
+        Check(primaryGrenadierMatch.ConfirmArmyDeath(primarySoldier.EntityKey, false) &&
+            primaryGrenadierMatch.ArmyDamage(primarySoldier.EntityKey) == null &&
+            primaryGrenadierMatch.ArmyProjectileLaunch(primaryProjectile.ProjectileId) != null,
+            "Grenadier death removes current primary setup while preserving its launched round");
+        ulong primaryCursor = primaryGrenadierMatch.EventBatch(decoyPlayer, 0).LatestEventId;
+        for (ulong primaryTick = primaryIntent!.Tick + 1;
+             primaryTick <= primaryIntent.Tick + 900 &&
+                primaryGrenadierMatch.ArmyProjectileLaunch(primaryProjectile.ProjectileId) != null; primaryTick++)
+        {
+            primaryGrenadierMatch.Advance(primaryTick);
+        }
+
+        Check(primaryGrenadierMatch.EventBatch(decoyPlayer, primaryCursor).Events.Any(item =>
+                item.Kind == MatchEventKind.Impact && item.ProjectileId == primaryProjectile.ProjectileId),
+            "actual pistol flight reaches host collision after its Grenadier dies");
         var shotGrenadierMatch = ReadyCardMatch(
             "host-card-grenadier-shot", "GREATGRENADIER");
         Check(shotGrenadierMatch.TryScheduleCardUnit(

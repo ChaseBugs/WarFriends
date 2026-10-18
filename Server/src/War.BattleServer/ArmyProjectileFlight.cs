@@ -18,7 +18,7 @@ internal sealed class ArmyProjectileFlight
     private readonly float slowCollisionMargin;
     private readonly ShotCollision? preflightStaticHit;
     private readonly bool fastBullet;
-    private readonly bool shotgunFakePellet;
+    private readonly bool cosmeticTrail;
     private readonly ShotCollision? fastImpact;
     private readonly float fastDuration;
     private readonly Vector3 fastVelocity;
@@ -32,7 +32,7 @@ internal sealed class ArmyProjectileFlight
     internal ArmyProjectileFlight(ulong id,ulong entityKey,Vector3 origin,Vector3 target,
         float speed,ulong tick,Func<Vector3,Vector3,float,ShotCollision?> trace,
         float extraCollisionDistance=0,bool fastBullet=false,
-        Func<ShotCollision,Vector3>? targetVelocity=null,bool shotgunFakePellet=false)
+        Func<ShotCollision,Vector3>? targetVelocity=null,bool cosmeticTrail=false)
     {
         if(id==0 || entityKey==0 || !PlayerHitbox.Finite(origin) ||
            !PlayerHitbox.Finite(target) || Vector3.DistanceSquared(origin,target)<1e-8f ||
@@ -41,7 +41,7 @@ internal sealed class ArmyProjectileFlight
            !float.IsFinite(extraCollisionDistance) ||
            extraCollisionDistance is <0 or >5 ||
            (fastBullet && (extraCollisionDistance!=0 || targetVelocity==null)) ||
-           (shotgunFakePellet && (fastBullet || extraCollisionDistance!=0)))
+           (cosmeticTrail && (fastBullet || extraCollisionDistance!=0)))
             throw new InvalidDataException("Invalid army projectile launch.");
         this.id=id;this.entityKey=entityKey;
         // BulletSlow.Fire starts its collision ray 0.1 units in front of the
@@ -53,10 +53,10 @@ internal sealed class ArmyProjectileFlight
         // BulletSlow.Fire limits a shot to 50 units before its preflight ray.
         float checkedDistance=MathF.Min(requestedDistance,50f);
         this.fastBullet=fastBullet;
-        this.shotgunFakePellet=shotgunFakePellet;
+        this.cosmeticTrail=cosmeticTrail;
         startTick=tick;
         this.speed=speed;this.tick=tick;this.trace=trace;
-        if(shotgunFakePellet)
+        if(cosmeticTrail)
         {
             // BulletBase.AnimateShot sends fake shotgun trails through one
             // extra direction vector over twice the ordinary flight time.
@@ -152,8 +152,8 @@ internal sealed class ArmyProjectileFlight
         tick=nextTick;
         if(fastBullet)
             return AdvanceFastBullet();
-        if(shotgunFakePellet)
-            return AdvanceFakeShotgunPellet();
+        if(cosmeticTrail)
+            return AdvanceCosmeticTrail();
         if(slowCollisionMargin>0)
         {
             if(preflightStaticHit!=null)
@@ -165,7 +165,7 @@ internal sealed class ArmyProjectileFlight
         if(!float.IsFinite(distance)){finished=true;throw new InvalidDataException("Invalid army projectile distance.");}
         float step=Math.Min(distance,speed/MatchManifest.TickRate);
         var direction=Vector3.Normalize(delta);
-        var hit=shotgunFakePellet?null:trace(position,direction,step+0.002f);
+        var hit=cosmeticTrail?null:trace(position,direction,step+0.002f);
         if(hit!=null)
         {
             if(!float.IsFinite(hit.Distance) || hit.Distance<0 || hit.Distance>step+.002f ||
@@ -189,7 +189,7 @@ internal sealed class ArmyProjectileFlight
         return fastImpact==null?null:new(id,entityKey,fastImpact,tick);
     }
 
-    private ArmyProjectileImpact? AdvanceFakeShotgunPellet()
+    private ArmyProjectileImpact? AdvanceCosmeticTrail()
     {
         // BulletBase.AnimateShot uses one linear tween from the muzzle to
         // twice the aim distance. Its fake duration is twice distance/speed.

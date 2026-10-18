@@ -1,9 +1,9 @@
-# Grenadier primary fire gap
+# Card Grenadier primary fire
 
-The current Card Grenadier attack state can choose its primary pistol, but
-`LaunchCardGrenadierShotIntents` skips every intent whose `ThrowGrenade` is false.
-This is missing combat behavior, not a harmless presentation-only omission.
-Do not claim complete Grenadier combat or complete Sickness weapon integration.
+Card Grenadier primary choices now launch the selected pistol through the host's shared army
+projectile collision path. Earlier code skipped every non-grenade intent. The new binding also
+lets Sickness change both current weapon damage fields and current health together. Complete
+Grenadier combat and Sickness integration still require the remaining verification below.
 
 ## Recovered evidence
 
@@ -22,22 +22,56 @@ Do not claim complete Grenadier combat or complete Sickness weapon integration.
   player damage coefficients from upgrade slots and cadence 0.35 seconds. The Grenadier override
   uses BulletSlow and separately configures the secondary grenade's minimum/explosion fields.
 - The pinned `recovered-rusher-weapon-bindings.json` currently contains eight other families,
-  excluding `ID_UNIT-GRENADIER`. `InfantryProjectileSpeed` also excludes its behavior.
+  excluding `ID_UNIT-GRENADIER`. Its schema and revision are preserved. The separate embedded
+  Grenadier primary artifact supplies this unit's selected weapon instead.
 
-## Required implementation and verification
+## Implemented native path
 
-1. Export and validate the normal/card inventory match, selected AmmoSetup, weapon spawn transform,
-   rig attachment and runtime BulletSlow setup with source digests. Keep the existing eight-family
-   contract intact or explicitly version its expansion.
-2. Bind current primary damage separately from immutable card provenance; apply Sickness to that
-   `damageAmount` as well as the already bound secondary minimum. Preserve separate explosion damage.
-3. Launch primary real/fake rounds from the actual pistol muzzle through host collision authority,
-   using source cadence, batch and damage policy. Keep actual grenade selection and launch separate.
-4. Verify a forced primary choice produces a real host projectile and damage, friendly exclusions,
-   fake-shot behavior, Sickness-modified launch damage, immutable airborne authority and death cleanup.
-5. Add authenticated UDP and Client presentation proof before treating the complete unit behavior
-   as finished. These are separate from the existing grenade-only native fixture.
+`tools/extract_grenadier_primary_weapon.py` verifies normal/card inventory equality, inventory
+attachment to the actual Grenadier behavior, asset GUID metadata, the same-GameObject AmmoSetup,
+right-hand rig/weapon spawn chain, BulletSlow identity and runtime override source. It exports
+`content/recovered-grenadier-primary-weapon.json`, SHA-256
+`c2d37997ce348808aacc46ec0a484e45ac8ed7ab696abd2c1b4d8fe162c63edf`.
+Reproduce it with `python Server/tools/extract_grenadier_primary_weapon.py --check` from the root.
 
-The current Sickness callback can update Grenadier secondary damage and current health. Its primary
-weapon firing and primary damage binding remain incomplete; no substitute weapon or hit assertion
-has been introduced to conceal the missing path.
+The selected runtime speed is 5, collision check distance 0.35 and fake speed 7.5. The prefab has
+other speed fields, which are not the same-GameObject selected AmmoSetup. The exported resting
+enemy-rig muzzle is approximately `(0.3178592, 0.18429394, 0.051513106)`; no animated-hand pose
+parity is claimed. `GrenadierPrimaryWeapon` validates the entire artifact hash before publishing
+immutable values and places that muzzle using the host's planar soldier facing.
+
+`LaunchCardGrenadierPrimary` uses current match-owned primary damage initialized from the card
+row. Real bullets use the ordinary army flight and collision authority. Fake bullets use the
+same collision-free doubled-distance tween as `BulletBase.AnimateShot`, with fake speed 7.5.
+The shared flight flag is now named `cosmeticTrail` because it is used by both fake pistol shots
+and shotgun trails. Primary launches freeze raw damage and the source player/overtime damage
+policy. Shield hits keep raw weapon damage; player hits consume the separate source coefficients.
+
+`ApplySicknessToCardGrenadier` validates both weapon calculations and vitality before publication.
+It halves current primary damage and secondary minimum, preserves separate grenade explosion
+damage, and refills current health to half maximum. Death removes current primary damage while
+retaining already launched projectile authority. Subsequent Sickness cannot rewrite that authority.
+
+Focused checks cover exact selected fields, resting muzzle placement in two directions, corrupt
+artifact/invalid pose rejection and collision-free fake flight. Native combat uses an explicit
+host RNG: primary selection first, then real-shot draws. It verifies actual primary intent,
+projectile speed/damage, Sickness changes before/after launch, current-weapon cleanup on death
+and a subsequent actual host collision. The fixture does not assert a particular victim-health
+or shield delta; dedicated damage/friendly-exclusion fixtures remain required.
+
+## Remaining verification
+
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 61 checks,
+including eight primary-weapon/flight checks. `--combat-only` passes 26,394 assertions with the
+native primary-choice fixture. The full default suite was not rerun.
+
+1. Verify victim health/shield deltas and friendly exclusions for actual primary shots, including
+   the source player/overtime coefficients. Extend fake-flight checks to host-scheduled fake shots.
+2. Observe animated primary muzzles in Unity and compare the host placement across source poses;
+   the current muzzle is a resting rig projection.
+3. Add authenticated UDP and Client presentation proof before treating the complete unit behavior
+   as finished. These are separate from both the native primary fixture and grenade fixture.
+
+Automatic Sickness arming/start/spawn/finish dispatch and authorized card use remain separate
+incomplete work. The current host-only binding and native tests do not activate a SICKNESS card
+through a Client command.

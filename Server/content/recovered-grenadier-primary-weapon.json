@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "unitId": "ID_UNIT-GRENADIER",
+  "inventoryComponent": 41066,
+  "primaryWeaponComponent": 11431434,
+  "primaryWeaponGuid": "16439357c0b8cbc4a91424818b10119d",
+  "normalAndCardInventoryMatch": true,
+  "sources": [
+    {
+      "path": "Assets/GameObject/BulletSlow.prefab",
+      "sha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "path": "Assets/GameObject/BulletSlow.prefab.meta",
+      "sha256": "6d53c4671209d87493cc85cec8575a0f6e97a32847ded45fdd867f5284fad76d"
+    },
+    {
+      "path": "Assets/GameObject/enemy.prefab",
+      "sha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54"
+    },
+    {
+      "path": "Assets/GameObject/PistolEnemy.prefab",
+      "sha256": "a82f28d711ba20b469b229f48d3580c563696c6388e60bea21d6e25a5518f5c1"
+    },
+    {
+      "path": "Assets/GameObject/PistolEnemy.prefab.meta",
+      "sha256": "145d8aaefc884f543bf5d796ac30d4cdccbd87169a82dfad438070f479c77a9a"
+    },
+    {
+      "path": "Assets/Scenes/MainScene.unity",
+      "sha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/BulletBase.cs",
+      "sha256": "5c8cb92b8d53b577b4b765dc486d5b94d49cb2f8515dff72e4a8f7fbee5e7b6b"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/BulletSetup.cs",
+      "sha256": "89aae8dce8b79a4defda00618b9db3fccb27dc369d3b438f57c0435d92d4870a"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/BulletSlow.cs",
+      "sha256": "f53b338a904196c6020115a771529c59eeb7ffed49bffa78ad7f44f08b569195"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/Gun.cs",
+      "sha256": "2a3c8d6f42707bb8253e6b9f5e5e6ff50068a872b2d33b387520fb2d83efe281"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
+      "sha256": "d3da6f858f06c325ace44acb654163df0a47ed6c278b36b3b559c2801d03dccd"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourGrennader.cs",
+      "sha256": "81d0a361dbd8e7db5e55c042fc61dd895ce5758d9525f4f02be2773f31d79a67"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourGrennader.cs.meta",
+      "sha256": "7878d7ec981595edfb4c42d922fa5a276b4e9e932321e7dc3ffe968c394f8866"
+    },
+    {
+      "path": "Assets/Scripts/Assembly-CSharp/Weapon.cs",
+      "sha256": "acffa91aef2d597d24f8041f272d9c447ea6da1eefeba9bc0d433c3859dddf09"
+    }
+  ],
+  "gunAttachment": {
+    "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/GunPivot/gunSnapPoint",
+    "position": [
+      0.23802400281613292,
+      0.20228484655615722,
+      -0.01604441570568899
+    ],
+    "rotation": [
+      0.5347744730466595,
+      0.45776796718980417,
+      0.37989012542459133,
+      0.6001234815392363
+    ]
+  },
+  "weaponSpawn": {
+    "path": "PistolEnemy/HK416/MachinegunMuzzleFlash",
+    "position": [
+      -0.0033477374989319296,
+      0.06703727919337908,
+      0.08219577209928976
+    ],
+    "rotation": [
+      1.1847473152039387e-09,
+      4.440545003024178e-08,
+      0.026670731660027074,
+      0.9996442727654256
+    ]
+  },
+  "restMuzzlePosition": [
+    0.31785918896825527,
+    0.18429394439881572,
+    0.05151310691293208
+  ],
+  "runtimeSpeed": 5.0,
+  "collisionCheckDistance": 0.35,
+  "fakeSpeed": 7.5,
+  "cadenceSeconds": 0.35,
+  "poseScope": "resting right-hand rig; animated hand poses require separate Unity observation"
+}
