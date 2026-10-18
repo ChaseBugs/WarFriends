@@ -42,6 +42,9 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	private Weapon grenadierWeapon;
     private Weapon _mortarWeapon;
 
+    /// <summary>Gets the reviewed source weapon for independent world-warning presentation.</summary>
+    public Mortar MortarSource { get { return _mortarWeapon as Mortar; } }
+
 	public void Configure(PlayerController localPlayer, PlayerController otherPlayer,
         LevelBehaviourManager behaviourManager)
 	{

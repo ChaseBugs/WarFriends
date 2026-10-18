@@ -82,7 +82,12 @@ The active Unity networking SDK is now installed and hash-verified. Six native U
 checks decode an actual Worker/SDK checkpoint and compare .NET reconstruction, phase flags,
 expiry and malformed-rate rejection. This exposed/fixed a one-ULP Mono recomputation mismatch
 by preserving source binary32 storage boundaries. The .NET Mortar group remains 14,326 checks;
-the actual warning presentation adapter and rendered acceptance are still pending.
+the warning presentation adapter now binds four source visuals through the normal PvP bridge.
+Its isolated native audit passes eighteen pose/scan/render/lifecycle checks; a separate actual
+Play Mode run passes six automatic subscription/deactivation/destruction checks. Visual inspection
+confirmed the original red circular warning after binding its collection-owned atlas to an owned
+material copy. Original assets remain unchanged. See [Mortar evidence](MORTAR_INDICATOR.md).
+Normal two-Client battle/reconnect rendering, reused physical slots and Android acceptance remain open.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

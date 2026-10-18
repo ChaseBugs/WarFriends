@@ -29,6 +29,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private bool otherBlockIcon;
 	private float grenadeSwipeStartedAt;
 	private SelfHostedProjectilePresenter projectilePresenter;
+    private SelfHostedMortarWarningPresenter _mortarWarnings;
 	private SelfHostedDecoyPresenter decoyPresenter;
 	private SelfHostedBonusBoxPresenter bonusBoxPresenter;
 	private SelfHostedLandMinePresenter landMinePresenter;
@@ -65,6 +66,8 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		projectilePresenter = gameObject.AddComponent<SelfHostedProjectilePresenter>();
 		projectilePresenter.Configure(local, other,
             Singleton<LevelBehaviourManager>.instance);
+        _mortarWarnings = gameObject.AddComponent<SelfHostedMortarWarningPresenter>();
+        _mortarWarnings.Configure(client, projectilePresenter.MortarSource, Singleton<MainSceneRoot>.instance.transform);
 		decoyPresenter = gameObject.AddComponent<SelfHostedDecoyPresenter>();
 		decoyPresenter.Configure(client.LocalPlayerId);
 		bonusBoxPresenter = gameObject.AddComponent<SelfHostedBonusBoxPresenter>();
@@ -478,6 +481,10 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 
 	private void OnDestroy()
 	{
+        if (_mortarWarnings != null)
+        {
+            Destroy(_mortarWarnings);
+        }
 		HideScoreCardIndicators();
 		if (local != null && local.weaponInventory != null)
 			local.weaponInventory.SetSelfHostedWeaponLock(0f);

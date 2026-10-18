@@ -720,3 +720,52 @@ The disposable private package manifest was restored to its original hash after 
 This proves installed SDK compilation and native decoding/reconstruction of one natural live
 checkpoint, not on-screen warnings, every reused/blink phase in Mono, normal two-Client play,
 Android or original Unity 5.2.5 parity. The presentation adapter remains pending.
+
+## In-progress Unity presentation verification
+
+The working-tree presenter preallocates four source-derived warning visuals and binds them to
+the normal PvP bridge. Its isolated Unity 2018.3 audit reports fourteen component/lifecycle
+checks, including authoritative pose, deferred scans, stale-scan rejection and teardown.
+Evidence is `Server/.local/mortar-warning-presenter-unity.log` and the disposable project's
+`mortar-warning-presenter-audit.json`. The private package manifest was restored to its pinned hash.
+
+Visual inspection of `mortar-warning-presenter.png` found a solid gray quadrilateral rather
+than a recognizable warning. The existing nonblank-pixel assertion is insufficient and must
+not be cited as correct source artwork rendering. Material/texture fidelity and a stronger
+render acceptance condition remain open before this adapter is considered verified. No normal
+two-Unity match, Android rendering or original Unity 5.2.5 compatibility is established.
+
+Source inspection identified a concrete missing binding: the indicator renderer references
+`Assets/Material/atlas0 material_0.mat`, whose serialized `_MainTex` is null. This is present
+in the recovered source asset, not sufficient evidence that the copied hierarchy lost a texture.
+The audit now explicitly requires a nonnull sprite atlas texture before accepting rendering;
+its earlier fourteen-check report predates that stronger guard. Resolve the matching collection's
+atlas from recovered evidence before changing any asset or claiming visual completion.
+
+The follow-up adapter now clones the source material only when its texture is absent and
+binds the exact `collection.inst.textures[definition.materialId]` entry. `gameCollection`
+identifies sprite 2 as `game-mortar-indicator` and retains texture GUID
+`fe3e3d6bdaa319f41b2593332ef5c13b`; no filename inference or invented artwork is used.
+Owned material copies are disposed with the warning roots; source assets remain unchanged.
+
+The strengthened native run passed fifteen checks with Editor exit code zero at
+`Server/.local/mortar-warning-texture-unity.log`. Visual inspection of its updated
+`mortar-warning-presenter.png` confirms a red circular target with four outward marks rather
+than the former gray quad. This resolves the isolated atlas-binding defect, not the remaining
+normal two-Client, Android, reused-slot and original-version acceptance gates.
+
+The lifecycle follow-up passes eighteen checks with Editor exit zero at
+`Server/.local/mortar-warning-lifecycle-unity.log`. Invalid clock input preserves the accepted
+visual, terminal state hides it, and a delayed scan cannot revive a disabled presenter.
+Subscription setup now respects `isActiveAndEnabled`, including configuration while disabled.
+The harness explicitly invokes lifecycle methods in Edit Mode; it does not prove automatic
+Play Mode callback timing. An initial harness failure was caused by assuming Edit Mode would
+automatically run OnDisable when toggling enabled; the test now states and invokes that boundary.
+
+`UnityMortarWarningPresenterAudit.RunPlay` now exercises actual Unity lifecycle callbacks in
+an empty Play Mode scene using the same real UDP checkpoint. Six checks pass with Editor exit
+zero at `Server/.local/mortar-warning-play-unity.log`: disabled configuration does not subscribe,
+enabling subscribes, the checkpoint shows a warning, deactivation unsubscribes/hides, reactivation
+subscribes, and deferred destruction removes all four world roots. No lifecycle method is
+invoked manually in this path. This closes the isolated automatic-callback gate only; account
+admission, two normal Client scenes, real disconnect recovery and Android remain unverified here.

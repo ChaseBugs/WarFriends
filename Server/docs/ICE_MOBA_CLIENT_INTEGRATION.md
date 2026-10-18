@@ -57,6 +57,15 @@ not evidence of a completely external-service-free bootstrap.
 
 The follow-up source review confirmed these integration constraints:
 
+- `UdpSocketClient.Close` returns before `Dispose` when `is_connect_` is false.
+  Connection-attempt failures call that same method before a successful connection has set
+  the flag. This inspected path therefore skips native peer/stream cleanup. In addition,
+  `NetworkManager.UdpConnect` replaces a named dictionary entry without first closing its
+  previous client. Treat these as source-level lifecycle hazards, not measured runtime leaks.
+  WarFriends must dispose pending attempts as well as connected sessions, cancel replaced
+  attempts, and reject delayed callbacks from an old connection generation. Include failed
+  connect, cancellation during connect and repeated reconnect in the normal Unity acceptance gate.
+
 - `Assets/Lua/Net/BattleStateTcp.lua` opens a separate TCP connection for battle state.
   Its connection-failure callback immediately calls `Connect` again. WarFriends should retain
   its existing authenticated UDP recovery path; copying this callback would introduce an
@@ -102,7 +111,7 @@ attachments for selected provider types. It reports source hashes/GUIDs and boun
 without copying source lines or credential values. It complements `audit_photon_runtime.py`;
 it is not a substitute for binary/plugin, native manifest, call-graph or runtime network audits.
 
-The latest inventory contains 1,381 top-level gameplay C# files and 1,701 readable YAML assets:
+The latest inventory contains 1,383 top-level gameplay C# files and 1,701 readable YAML assets:
 12 scenes, 782 prefabs and 907 asset files. Ten non-YAML files are explicitly reported as not
 parsed. These are current filesystem observations, not a revision of historical recovery counts.
 
