@@ -3,7 +3,7 @@ using War.Shared;
 
 namespace War.Persistence;
 
-/// <summary>Creates initial battle authority from one locked durable account revision.</summary>
+/// <summary>Prepares battle authority from one locked durable account revision.</summary>
 public sealed class BattleAllocationPreparationStore
 {
     private static readonly TransactionOptions PreparationTransaction = new(
@@ -22,9 +22,27 @@ public sealed class BattleAllocationPreparationStore
     }
 
     /// <summary>Rejects stale account revisions and preserves any existing validated allocation.</summary>
-    public async Task PrepareAsync(string playerId, long expectedRevision,
+    public Task PrepareAsync(string playerId, long expectedRevision,
         Func<LegacyPlayerDocument, BattleAllocationProjection> project, CancellationToken cancellationToken)
     {
+        return ExecuteAsync(new PreparationRequest(playerId, expectedRevision, project),
+            PreparationMode.CreateOnly, cancellationToken);
+    }
+
+    /// <summary>Refreshes valid inactive authority from current account state without changing active battles.</summary>
+    public Task RefreshInactiveAsync(string playerId, long expectedRevision,
+        Func<LegacyPlayerDocument, BattleAllocationProjection> project, CancellationToken cancellationToken)
+    {
+        return ExecuteAsync(new PreparationRequest(playerId, expectedRevision, project),
+            PreparationMode.RefreshInactive, cancellationToken);
+    }
+
+    private async Task ExecuteAsync(PreparationRequest request, PreparationMode mode,
+        CancellationToken cancellationToken)
+    {
+        string playerId = request.PlayerId;
+        long expectedRevision = request.ExpectedRevision;
+        Func<LegacyPlayerDocument, BattleAllocationProjection> project = request.Project;
         if (!Guid.TryParseExact(playerId, "N", out Guid identity) || identity.ToString("N") != playerId ||
             expectedRevision < 1 || expectedRevision == long.MaxValue || project == null)
         {
@@ -53,19 +71,14 @@ public sealed class BattleAllocationPreparationStore
                 .SingleOrDefaultAsync(token);
             if (existing != null)
             {
-                ValidateExisting(existing);
-                return false;
+                BattleAllocationProjection previous = ValidateExisting(existing);
+                if (mode == PreparationMode.CreateOnly || HasSameContents(previous, allocation))
+                {
+                    return false;
+                }
             }
 
-            // A real account write makes concurrent inventory changes conflict with this transaction's snapshot.
-            UpdateResult locked = await _players.UpdateOneAsync(transaction,
-                row => row.Id == playerId && row.Revision == expectedRevision,
-                Builders<LegacyPlayerDocument>.Update.Inc(row => row.Revision, 1L), cancellationToken: token);
-            if (locked.ModifiedCount != 1)
-            {
-                throw new InvalidDataException("Battle account revision could not be reserved.");
-            }
-            await _allocations.InsertOneAsync(transaction, CreateDocument(allocation), cancellationToken: token);
+            await PublishAsync(transaction, new AllocationWrite(playerId, expectedRevision, allocation, existing), token);
             return true;
         }, PreparationTransaction, cancellationToken);
     }
@@ -85,14 +98,56 @@ public sealed class BattleAllocationPreparationStore
         }
     }
 
-    private static void ValidateExisting(BattleAllocationDocument document)
+    private async Task PublishAsync(IClientSessionHandle session, AllocationWrite write,
+        CancellationToken cancellationToken)
     {
-        _ = BattleAllocationProjection.Validate(new BattleAllocationProjection(document.PlayerId,
+        // A real account write makes concurrent inventory changes conflict with this transaction's snapshot.
+        UpdateResult locked = await _players.UpdateOneAsync(session,
+            row => row.Id == write.PlayerId && row.Revision == write.ExpectedRevision,
+            Builders<LegacyPlayerDocument>.Update.Inc(row => row.Revision, 1L), cancellationToken: cancellationToken);
+        if (locked.ModifiedCount != 1)
+        {
+            throw new InvalidDataException("Battle account revision could not be reserved.");
+        }
+        BattleAllocationDocument document = CreateDocument(write.Projection);
+        if (write.Prior == null)
+        {
+            await _allocations.InsertOneAsync(session, document, cancellationToken: cancellationToken);
+            return;
+        }
+        document.Revision = checked(write.Prior.Revision + 1);
+        ReplaceOneResult replaced = await _allocations.ReplaceOneAsync(session,
+            row => row.PlayerId == write.PlayerId && row.Revision == write.Prior.Revision,
+            document, cancellationToken: cancellationToken);
+        if (replaced.ModifiedCount != 1)
+        {
+            throw new InvalidDataException("Battle allocation changed before inactive refresh.");
+        }
+    }
+
+    private static BattleAllocationProjection ValidateExisting(BattleAllocationDocument document)
+    {
+        if (document.Revision < 1 || document.Revision == long.MaxValue)
+        {
+            throw new InvalidDataException("Invalid durable battle allocation revision.");
+        }
+        return BattleAllocationProjection.Validate(new BattleAllocationProjection(document.PlayerId,
             document.CardIds, document.BuddyCardIds, document.NormalUpgradeIndexes,
             document.SpecialUpgradeIndexes, document.EliteUpgradeIndexes)
         {
             CardCounts = document.CardCounts
         });
+    }
+
+    private static bool HasSameContents(BattleAllocationProjection previous, BattleAllocationProjection current)
+    {
+        return previous.PlayerId == current.PlayerId &&
+            previous.CardIds.SequenceEqual(current.CardIds, StringComparer.Ordinal) &&
+            previous.CardCounts.SequenceEqual(current.CardCounts) &&
+            previous.BuddyCardIds.SequenceEqual(current.BuddyCardIds, StringComparer.Ordinal) &&
+            previous.NormalUpgradeIndexes.SequenceEqual(current.NormalUpgradeIndexes) &&
+            previous.SpecialUpgradeIndexes.SequenceEqual(current.SpecialUpgradeIndexes) &&
+            previous.EliteUpgradeIndexes.SequenceEqual(current.EliteUpgradeIndexes);
     }
 
     private static BattleAllocationDocument CreateDocument(BattleAllocationProjection allocation)
@@ -109,4 +164,16 @@ public sealed class BattleAllocationPreparationStore
             Revision = 1
         };
     }
+
+    private enum PreparationMode
+    {
+        CreateOnly,
+        RefreshInactive
+    }
+
+    private readonly record struct PreparationRequest(string PlayerId, long ExpectedRevision,
+        Func<LegacyPlayerDocument, BattleAllocationProjection> Project);
+
+    private readonly record struct AllocationWrite(string PlayerId, long ExpectedRevision,
+        BattleAllocationProjection Projection, BattleAllocationDocument? Prior);
 }

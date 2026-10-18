@@ -495,3 +495,24 @@ equipment update. `Server/.local/rematch-account-proof-final-build.log` records 
 warnings/errors. The preceding inventory suite also passes at `allocation-inventory-mongo-account-proof.log`.
 This is focused store/factory evidence, not a fresh whole-queue or two-Unity gameplay run.
 Inactive allocation refresh and its direct race with rematch reservation remain unimplemented.
+
+### Inactive allocation refresh storage implementation
+
+`BattleAllocationPreparationStore.RefreshInactiveAsync` now updates a valid existing allocation
+from the supplied server-owned account projection. It shares the preparation fence, inactive
+ticket/pair checks and exact expected account revision. The prior allocation is validated before
+replacement; damaged or exhausted revisions fail rather than being normalized. A changed
+projection conditionally replaces its exact prior revision and advances the account revision
+in the same transaction. An identical projection changes neither account nor allocation revision.
+The create-only `PrepareAsync` boundary remains available and preserves existing allocations.
+
+The complete inventory Mongo suite passes with exit zero at `inactive-refresh-tests.log` in the
+existing evidence directory. Tests remove owned cards, reject a stale account revision, refresh
+to zero ownership, replay unchanged content, reject waiting-ticket/pair ownership and reject
+a damaged allocation revision without repair or account writes. A later valid inventory change
+is reflected only after cancellation of the waiting ticket. Existing preparation/admission and
+snapshot race tests also pass. `Server/.local/inactive-refresh-build.log` records zero warnings/errors.
+
+This is a storage API, not yet enabled in normal queue HTTP admission. Direct refresh-versus-
+rematch contention and the whole real queue/Worker regression remain necessary before wiring
+and declaring this integration complete. Normal two-Unity gameplay remains a separate gate.

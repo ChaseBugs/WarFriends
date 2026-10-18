@@ -80,3 +80,8 @@ whole-queue rerun subsequently passed without widening timeouts; the earlier cau
 unproven. These tests do not establish complete current gameplay acceptance. Safe inactive refresh after legitimate
 equipment changes, admission reservations, the remaining card effects, Buddy and normal Unity
 battle entry remain required. See [current boot/admission evidence](CLIENT_LOBBY_BOOTSTRAP.md).
+
+Inactive refresh now exists as a tested storage API with account-revision and shared-admission
+fencing. It preserves identical replay, rejects active ownership and damaged prior authority,
+and never replenishes removed cards. It is not yet wired into normal queue HTTP admission;
+refresh-versus-rematch contention and full integration proof remain open.
