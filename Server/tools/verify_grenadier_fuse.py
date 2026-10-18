@@ -46,6 +46,12 @@ def verify(observed):
                 row["lastContactTick"] != expected_ticks[-1] or \
                 row["expiryTick"] != expected_ticks[-1] + [90, 72, 26][index % 3]:
             raise ValueError("Native source fuse/reset observations changed")
+        if row["activeSources"] != ["FuseContactFloor"] or \
+                any(contact["source"] != "FuseContactFloor" for contact in contacts):
+            raise ValueError("Native floor contacts lost their observed collider identity")
+        expected_exits = [] if index < 3 else [{"tick": 11, "source": "FuseContactFloor"}]
+        if row["exits"] != expected_exits:
+            raise ValueError("Native floor separation observation changed")
         if any(not math.isfinite(contact["remaining"]) or
                single(contact["remaining"]) != fuses[index % 3] for contact in contacts):
             raise ValueError("A physical recontact did not reset the original countdown field")
@@ -62,7 +68,7 @@ def main():
     verify(observed)
     if args.publish:
         OUTPUT.write_text(json.dumps(observed, indent=2) + "\n", encoding="utf-8", newline="\n")
-    print("6 executed contact/countdown observations verified; Photon dispatch and full flight are outside this fixture")
+    print("6 executed contact/countdown observations verified; dispatch and full flight remain outside this fixture")
     print("SHA-256:", digest(OUTPUT))
 
 

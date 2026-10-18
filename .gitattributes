@@ -297,3 +297,11 @@ Server/tools/UnityGrenadierFuseExport.cs text eol=lf
 Server/tools/verify_grenadier_fuse.py text eol=lf
 Server/content/grenadier-fuse-unity-reference.json text eol=lf
 Server/docs/GRENADIER_FUSE_CLOCK.md text eol=lf
+
+# Multiple retained grenade contacts and executed corner observations.
+Server/src/War.BattleServer/GrenadierContactTracker.cs text eol=lf
+Server/tests/War.Battle.Tests/GrenadierCornerContactTests.cs text eol=lf
+Server/tools/UnityGrenadierCornerContactExport.cs text eol=lf
+Server/tools/verify_grenadier_corner_contacts.py text eol=lf
+Server/content/grenadier-corner-contact-unity-reference.json text eol=lf
+Server/docs/GRENADIER_CORNER_CONTACTS.md text eol=lf

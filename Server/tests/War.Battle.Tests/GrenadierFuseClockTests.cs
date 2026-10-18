@@ -6,7 +6,7 @@ using War.BattleServer;
 /// <summary>Replays native countdown observations and checks contact-entry semantics in the actual flight.</summary>
 internal static class GrenadierFuseClockTests
 {
-    private const string NativeRevision = "5fc37da2b73482423cb7927be2f9975241347d42945af0bb24a7d8a6ceba7e29";
+    private const string NativeRevision = "3c49c6a6cf137086d1df73a1cf7e7af15e75781c338cdd22b81bed858578acf3";
 
     internal static int Run(string directory)
     {

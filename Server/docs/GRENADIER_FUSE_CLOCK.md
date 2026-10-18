@@ -36,8 +36,9 @@ resets it. Each host tick subtracts `1f / TickRate` and expires only when remain
 and separately exposing the latest entry. A capsule-radius support ray distinguishes continued
 surface support from separation when the motion point-ray misses; continuous support cannot
 silently restart the fuse every frame. A different surface or contact after separation rearms it.
-The current flight tracks one active support surface; simultaneous contacts at corners or
-compound colliders still need a complete contact-set model and native geometry evidence.
+The subsequent [corner-contact ledger](GRENADIER_CORNER_CONTACTS.md) retains multiple observed
+support surfaces independently. Complete overlap acquisition and native map/manifold parity
+still remain open.
 
 The ordinary short-special fixture now explodes at tick 273 instead of the former tick 275.
 Its shield-destruction result remains valid. The three-second and 2.4-second fixture timings stay

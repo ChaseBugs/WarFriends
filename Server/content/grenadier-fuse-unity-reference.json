@@ -6,7 +6,7 @@
   "timeScale": 1.0,
   "grenadeSha256": "99997d9d936f19883d9a04a718d976c13be5cfc5c3cb3a384213017e38599cc8",
   "timeManagerSha256": "5196b3cd5b3ef3c4e519bd58dab6747e048a96f5ef7b15e703a989ae2a9c78af",
-  "probeSha256": "d7ad5a09c54cfcc7147b29a8a9aa444f58de5e55bbbac838be98bc5abc2fe841",
+  "probeSha256": "dea6b855312942eab6720fdfe92c851a4b5a711b4ea709d7e7fa9c035db589f2",
   "exporterSha256": "7e679eb12b61889f7524cf17bb6e640349bf8af5d4ab562a9e73c4e5cde31419",
   "observations": [
     {
@@ -15,8 +15,13 @@
       "contacts": [
         {
           "tick": 7,
+          "source": "FuseContactFloor",
           "remaining": 3.0
         }
+      ],
+      "exits": [],
+      "activeSources": [
+        "FuseContactFloor"
       ],
       "lastContactTick": 7,
       "expiryTick": 97
@@ -27,8 +32,13 @@
       "contacts": [
         {
           "tick": 7,
+          "source": "FuseContactFloor",
           "remaining": 2.4
         }
+      ],
+      "exits": [],
+      "activeSources": [
+        "FuseContactFloor"
       ],
       "lastContactTick": 7,
       "expiryTick": 79
@@ -39,8 +49,13 @@
       "contacts": [
         {
           "tick": 7,
+          "source": "FuseContactFloor",
           "remaining": 0.9000001
         }
+      ],
+      "exits": [],
+      "activeSources": [
+        "FuseContactFloor"
       ],
       "lastContactTick": 7,
       "expiryTick": 33
@@ -51,12 +66,23 @@
       "contacts": [
         {
           "tick": 7,
+          "source": "FuseContactFloor",
           "remaining": 3.0
         },
         {
           "tick": 16,
+          "source": "FuseContactFloor",
           "remaining": 3.0
         }
+      ],
+      "exits": [
+        {
+          "tick": 11,
+          "source": "FuseContactFloor"
+        }
+      ],
+      "activeSources": [
+        "FuseContactFloor"
       ],
       "lastContactTick": 16,
       "expiryTick": 106
@@ -67,12 +93,23 @@
       "contacts": [
         {
           "tick": 7,
+          "source": "FuseContactFloor",
           "remaining": 2.4
         },
         {
           "tick": 16,
+          "source": "FuseContactFloor",
           "remaining": 2.4
         }
+      ],
+      "exits": [
+        {
+          "tick": 11,
+          "source": "FuseContactFloor"
+        }
+      ],
+      "activeSources": [
+        "FuseContactFloor"
       ],
       "lastContactTick": 16,
       "expiryTick": 88
@@ -83,12 +120,23 @@
       "contacts": [
         {
           "tick": 7,
+          "source": "FuseContactFloor",
           "remaining": 0.9000001
         },
         {
           "tick": 16,
+          "source": "FuseContactFloor",
           "remaining": 0.9000001
         }
+      ],
+      "exits": [
+        {
+          "tick": 11,
+          "source": "FuseContactFloor"
+        }
+      ],
+      "activeSources": [
+        "FuseContactFloor"
       ],
       "lastContactTick": 16,
       "expiryTick": 42

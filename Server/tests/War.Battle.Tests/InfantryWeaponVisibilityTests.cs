@@ -19,6 +19,7 @@ internal static class InfantryWeaponVisibilityTests
     {
         int checks = CheckClock(directory);
         checks += GrenadierFuseClockTests.Run(directory);
+        checks += GrenadierCornerContactTests.Run(directory);
         checks += CheckProtocol();
         checks += CheckIndependentReturns();
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);

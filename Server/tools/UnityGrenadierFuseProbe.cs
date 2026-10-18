@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -12,11 +13,16 @@ public sealed class UnityGrenadierFuseProbe : GrenadeAmmoBase
     private static readonly BindingFlags PrivateFields = BindingFlags.Instance | BindingFlags.NonPublic;
     [SerializeField] private float _fuseSeconds;
     [SerializeField] private bool _hasRecontact;
+    [SerializeField] private Vector3 _initialVelocity;
+    [SerializeField] private Vector3 _contactAcceleration;
     private readonly List<object> _contacts = new List<object>();
+    private readonly List<object> _exits = new List<object>();
+    private readonly HashSet<string> _activeSources = new HashSet<string>();
     private int _startFrame;
     private int _tick;
     private int _lastContactTick;
     private bool _lifted;
+    private string _contactSourceName;
     private Rigidbody _body;
 
     /// <summary>Configures the source interval before entering Play Mode.</summary>
@@ -45,6 +51,32 @@ public sealed class UnityGrenadierFuseProbe : GrenadeAmmoBase
         }
     }
 
+    /// <summary>Supplies a controlled initial velocity for the isolated corner-contact observation.</summary>
+    public Vector3 InitialVelocity
+    {
+        get
+        {
+            return _initialVelocity;
+        }
+        set
+        {
+            _initialVelocity = value;
+        }
+    }
+
+    /// <summary>Maintains a controlled wall contact in the corner experiment; normal floor probes use zero.</summary>
+    public Vector3 ContactAcceleration
+    {
+        get
+        {
+            return _contactAcceleration;
+        }
+        set
+        {
+            _contactAcceleration = value;
+        }
+    }
+
     public bool IsComplete { get; private set; }
 
     public string Failure { get; private set; }
@@ -65,11 +97,16 @@ public sealed class UnityGrenadierFuseProbe : GrenadeAmmoBase
         Time.fixedDeltaTime = 1f / CaptureRate;
         _startFrame = Time.frameCount;
         mExplodeAfter = FuseSeconds;
+        _body.velocity = _initialVelocity;
     }
 
     private void FixedUpdate()
     {
-        // Collider is already enabled for this contact/countdown-only fixture.
+        // Collider is already enabled. Only the controlled corner experiment presses against its wall.
+        if (_contactAcceleration != Vector3.zero)
+        {
+            _body.AddForce(_contactAcceleration, ForceMode.Acceleration);
+        }
     }
 
     private new void Update()
@@ -118,6 +155,7 @@ public sealed class UnityGrenadierFuseProbe : GrenadeAmmoBase
             return;
         }
 
+        _contactSourceName = collision.gameObject.name;
         try
         {
             typeof(GrenadeAmmoBase).GetMethod("OnCollisionEnter", PrivateFields)
@@ -129,18 +167,35 @@ public sealed class UnityGrenadierFuseProbe : GrenadeAmmoBase
         }
     }
 
+    private void OnCollisionExit(Collision collision)
+    {
+        if (IsComplete || Failure != null)
+        {
+            return;
+        }
+
+        if (_activeSources.Remove(collision.gameObject.name))
+        {
+            _exits.Add(new { tick = Time.frameCount - _startFrame, source = collision.gameObject.name });
+        }
+    }
+
     protected override void GroundHitted()
     {
         // The original OnCollisionEnter calls this hook after resetting its countdown.
         _lastContactTick = Time.frameCount - _startFrame;
-        _contacts.Add(new { tick = _lastContactTick, remaining = (float)Field("mExplodeTime").GetValue(this) });
+        _activeSources.Add(_contactSourceName);
+        _contacts.Add(new { tick = _lastContactTick, source = _contactSourceName,
+            remaining = (float)Field("mExplodeTime").GetValue(this) });
     }
 
     /// <summary>Returns observed source contact and expiry frames without claiming explosion dispatch.</summary>
     public object ExportObservation()
     {
         return new { fuseSeconds = FuseSeconds, recontact = HasRecontact,
-            contacts = _contacts.ToArray(), lastContactTick = _lastContactTick, expiryTick = ExpiryTick };
+            contacts = _contacts.ToArray(), exits = _exits.ToArray(),
+            activeSources = _activeSources.OrderBy(source => source).ToArray(),
+            lastContactTick = _lastContactTick, expiryTick = ExpiryTick };
     }
 
     private static FieldInfo Field(string name)

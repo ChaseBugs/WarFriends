@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "unity": "2018.3.0f2",
+  "captureRate": 30,
+  "fixedDeltaTime": 0.0333333351,
+  "timeScale": 1.0,
+  "grenadeSha256": "99997d9d936f19883d9a04a718d976c13be5cfc5c3cb3a384213017e38599cc8",
+  "timeManagerSha256": "5196b3cd5b3ef3c4e519bd58dab6747e048a96f5ef7b15e703a989ae2a9c78af",
+  "probeSha256": "dea6b855312942eab6720fdfe92c851a4b5a711b4ea709d7e7fa9c035db589f2",
+  "exporterSha256": "db4d2446d0c9537e17f31d63881e994a6043b7b75d905d293740efae6907b132",
+  "observations": [
+    {
+      "fuseSeconds": 3.0,
+      "recontact": false,
+      "contacts": [
+        {
+          "tick": 1,
+          "source": "CornerWall",
+          "remaining": 3.0
+        },
+        {
+          "tick": 11,
+          "source": "CornerFloor",
+          "remaining": 3.0
+        }
+      ],
+      "exits": [],
+      "activeSources": [
+        "CornerFloor",
+        "CornerWall"
+      ],
+      "lastContactTick": 11,
+      "expiryTick": 101
+    },
+    {
+      "fuseSeconds": 0.9000001,
+      "recontact": false,
+      "contacts": [
+        {
+          "tick": 1,
+          "source": "CornerWall",
+          "remaining": 0.9000001
+        },
+        {
+          "tick": 11,
+          "source": "CornerFloor",
+          "remaining": 0.9000001
+        }
+      ],
+      "exits": [],
+      "activeSources": [
+        "CornerFloor",
+        "CornerWall"
+      ],
+      "lastContactTick": 11,
+      "expiryTick": 37
+    }
+  ]
+}
