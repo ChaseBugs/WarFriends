@@ -255,3 +255,6 @@ purchase grants. Automatic allocation and normal controller entry remain open.
 Mixed manifests now bind the presentation-ordered equipped army and lanes to
 source combat rows. See [starter army admission](STARTER_ARMY_ADMISSION.md) for
 the native selection proof and the still-open mixed grenade runtime boundary.
+The subsequent [mixed host command checkpoint](MIXED_GRENADE_HOST_COMMANDS.md)
+now verifies the starter FRAG transition and in-flight rifle return in the native
+engine. Mixed UDP/Unity parity and uncaptured rig transforms remain open.

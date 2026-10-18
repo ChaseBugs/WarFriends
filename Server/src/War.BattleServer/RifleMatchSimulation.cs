@@ -7,7 +7,7 @@ namespace War.BattleServer;
 internal sealed record RifleActorLocation(Vector3 Position,int CoverIndex,bool Moving);
 internal enum LiveWeaponClass { Rifle, Shotgun, Smg, Pistol, Lmg, Minigun, Sniper, Bazooka }
 internal sealed record SniperGestureResult(string Code,Vector3? FireTarget);
-internal sealed class RifleMatchSimulation
+internal sealed partial class RifleMatchSimulation
 {
     private sealed class Actor(ParticipantManifest definition,CoverNode cover,PlayerPoseCatalog poses,int animationFamily,LiveWeaponClass weaponClass)
     {
@@ -45,8 +45,10 @@ internal sealed class RifleMatchSimulation
     private Func<IReadOnlyList<DynamicShotTarget>>? visibilityTargets;
     private ulong? lastTick;
     private double now;
-    internal PlayerAimPose Pose(string id)=>actors.Single(a=>a.Definition.PlayerId==id).Pose;
-    internal RiflePoseState Snapshot(string id)=>actors.Single(a=>a.Definition.PlayerId==id).WirePose.Clone();
+    internal PlayerAimPose Pose(string id) => IsExternalActive(id)
+        ? _externalCombatView!.Pose(id) : actors.Single(actor => actor.Definition.PlayerId == id).Pose;
+    internal RiflePoseState Snapshot(string id) => IsExternalActive(id)
+        ? _externalCombatView!.Snapshot(id) : actors.Single(actor => actor.Definition.PlayerId == id).WirePose.Clone();
     internal void ConfigureDynamicTargets(Func<string,IReadOnlyList<DynamicShotTarget>> provider)
     {dynamicTargets=provider??throw new ArgumentNullException(nameof(provider));}
     internal void ConfigurePlayerShotTargets(
@@ -65,18 +67,34 @@ internal sealed class RifleMatchSimulation
     }
     internal void StopShooting(string id)
     {var actor=actors.Single(a=>a.Definition.PlayerId==id);actor.First.StopShooting();actor.Burst.Cancel();actor.Minigun.Release();actor.Sniper.Cancel();actor.Bazooka.Cancel();}
-    internal bool IsMinigun(string id)=>actors.Single(a=>a.Definition.PlayerId==id).WeaponClass==LiveWeaponClass.Minigun;
+    internal bool IsMinigun(string id) => HasActiveClass(id, LiveWeaponClass.Minigun);
     internal bool MinigunHeld(string id)=>actors.Single(a=>a.Definition.PlayerId==id).Minigun.Active;
-    internal bool IsSniper(string id)=>actors.Single(a=>a.Definition.PlayerId==id).WeaponClass==LiveWeaponClass.Sniper;
+    internal bool IsSniper(string id) => HasActiveClass(id, LiveWeaponClass.Sniper);
     internal bool SniperAiming(string id)=>actors.Single(a=>a.Definition.PlayerId==id).Sniper.Active;
     internal bool SniperScopeVisible(string id,ulong tick)
-    {var a=actors.Single(x=>x.Definition.PlayerId==id);return a.WeaponClass==LiveWeaponClass.Sniper&&a.Sniper.ScopeVisible(tick,content.Snipers!.Binding(a.Weapon.SourceId).ScopeShowSeconds);}
-    internal void UpdateSniperReady(string id,bool ready,ulong tick){var a=actors.Single(x=>x.Definition.PlayerId==id);if(a.WeaponClass==LiveWeaponClass.Sniper&&ready)a.Sniper.Arm(tick);}
-    internal bool IsBazooka(string id)=>actors.Single(a=>a.Definition.PlayerId==id).WeaponClass==LiveWeaponClass.Bazooka;
+    {
+        var actor = actors.Single(candidate => candidate.Definition.PlayerId == id);
+        return IsSniper(id) && actor.Sniper.ScopeVisible(tick,
+            content.Snipers!.Binding(actor.Weapon.SourceId).ScopeShowSeconds);
+    }
+
+    internal void UpdateSniperReady(string id, bool isReady, ulong tick)
+    {
+        if (IsSniper(id) && isReady)
+        {
+            actors.Single(actor => actor.Definition.PlayerId == id).Sniper.Arm(tick);
+        }
+    }
+
+    internal bool IsBazooka(string id) => HasActiveClass(id, LiveWeaponClass.Bazooka);
     internal bool BazookaTargeting(string id)=>actors.Single(a=>a.Definition.PlayerId==id).Bazooka.Active;
     internal string HoldBazooka(string id,bool pressed,Vector3 target,ulong tick)
     {
-        var a=actors.Single(x=>x.Definition.PlayerId==id);if(a.WeaponClass!=LiveWeaponClass.Bazooka)return "wrong-fire-mode";
+        if (!IsBazooka(id))
+        {
+            return "wrong-fire-mode";
+        }
+        var a = actors.Single(actor => actor.Definition.PlayerId == id);
         if(!pressed){a.Bazooka.Cancel();a.Timeline.ResetToIdle();return "bazooka-cancelled";}
         if(a.Bazooka.Active)return "bazooka-targeting";
         if(!ValidTarget(a,target,out bool right))return "invalid-target";
@@ -84,7 +102,11 @@ internal sealed class RifleMatchSimulation
     }
     internal SniperGestureResult SniperGesture(string id,bool pressed,bool cancelled,Vector3 target,ulong tick,bool ready)
     {
-        var a=actors.Single(x=>x.Definition.PlayerId==id);if(a.WeaponClass!=LiveWeaponClass.Sniper)return new("wrong-fire-mode",null);
+        if (!IsSniper(id))
+        {
+            return new("wrong-fire-mode", null);
+        }
+        var a = actors.Single(actor => actor.Definition.PlayerId == id);
         if(pressed)
         {
             if(!ValidTarget(a,target,out bool right))return new("invalid-target",null);
@@ -99,7 +121,10 @@ internal sealed class RifleMatchSimulation
     internal string HoldMinigun(string id,bool pressed,Vector3 target,ulong tick)
     {
         var a=actors.Single(x=>x.Definition.PlayerId==id);
-        if(a.WeaponClass!=LiveWeaponClass.Minigun)return "wrong-fire-mode";
+        if (!IsMinigun(id))
+        {
+            return "wrong-fire-mode";
+        }
         if(!pressed){a.Minigun.Release();return "minigun-released";}
         if(!ValidTarget(a,target,out bool right))return "invalid-target";
         if(a.Minigun.Active){a.Minigun.UpdateTarget(target);return "minigun-target-updated";}
@@ -125,6 +150,7 @@ internal sealed class RifleMatchSimulation
         if(family is not (0 or 2 or 4 or 5 or 7 or 9 or 10 or 13 or 15))throw new InvalidDataException("Unsupported weapon animation family.");
         actor.First.SelectionChanged();actor.Burst.Cancel();actor.Minigun.Release();actor.Sniper.Cancel();actor.Bazooka.Cancel();actor.Timeline=new RifleCoverTimeline(content.Poses,family);
         actor.Weapon=weapon;actor.WeaponUpgrade=upgrade;actor.WeaponClass=weaponClass;actor.RunSeconds=0;actor.WalkingShotStart=null;
+        RefreshSelectedPose(actor);
     }
     internal RifleMatchSimulation(MatchManifest manifest,RecoveredBattleMap map,BattleCombatContent content,
         Func<string,bool>? dynamicColliderEnabled=null,Func<int,bool>? indexedColliderEnabled=null,
@@ -179,6 +205,10 @@ internal sealed class RifleMatchSimulation
     };
     internal string Trigger(string id,Vector3 target)
     {
+        if (IsExternalActive(id))
+        {
+            return "wrong-fire-mode";
+        }
         var a=actors.Single(p=>p.Definition.PlayerId==id);
         if (a.First.Waiting) return "first-shot-pending";
         if(!ValidTarget(a,target,out bool right))return "invalid-target";
@@ -224,6 +254,13 @@ internal sealed class RifleMatchSimulation
                 map.Covers[state.CoverIndex].Fraction!=a.Definition.Fraction)
                 throw new InvalidDataException("Invalid moving player authority.");
             a.Cover=map.Covers[state.CoverIndex];
+            if (IsExternalActive(a.Definition.PlayerId))
+            {
+                a.Position = state.Position;
+                a.Rotation = a.Cover.Rotation;
+                a.Moving = state.Moving;
+                continue;
+            }
             if(state.Moving)
             {
                 if(!a.Moving){a.Timeline.ResetToIdle();a.First.SelectionChanged();a.RunSeconds=0;}
@@ -258,6 +295,10 @@ internal sealed class RifleMatchSimulation
         }
         foreach (var a in actors)
         {
+            if (IsExternalActive(a.Definition.PlayerId))
+            {
+                continue;
+            }
             var target=a.First.Advance(now,false);
             if (target.HasValue) _=fire(a.Definition.PlayerId,target.Value);
             if(a.WeaponClass is LiveWeaponClass.Smg or LiveWeaponClass.Lmg)
@@ -289,8 +330,9 @@ internal sealed class RifleMatchSimulation
     internal IReadOnlyList<PreparedProjectile> PrepareVolley(ulong id,string owner,Vector3 target,ulong tick)
     {
         var a=actors.Single(p=>p.Definition.PlayerId==owner);
-        var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
-            p.Definition.Fraction==1?23:22,p.Definition.Fraction)),
+        var world = new ShotCollisionWorld(map, actors.Select(participantActor => new CollisionPlayer(
+            participantActor.Definition.PlayerId, Pose(participantActor.Definition.PlayerId).Collision,
+            participantActor.Definition.Fraction == 1 ? 23 : 22, participantActor.Definition.Fraction)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,
             playerShotTargets ?? dynamicTargets,bonusBoxTargets);
         var muzzle=a.Pose.Muzzle(a.Weapon.SourceId).Position;
@@ -328,7 +370,8 @@ internal sealed class RifleMatchSimulation
         if(actor.WeaponClass!=LiveWeaponClass.Shotgun)
             return new(PrepareVolley(id,owner,target,tick),[]);
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(
-            p.Definition.PlayerId,p.Pose.Collision,p.Definition.Fraction==1?23:22,p.Definition.Fraction)),
+            p.Definition.PlayerId, Pose(p.Definition.PlayerId).Collision,
+            p.Definition.Fraction == 1 ? 23 : 22, p.Definition.Fraction)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,
             playerShotTargets ?? dynamicTargets,bonusBoxTargets);
         var binding=content.Shotguns!.Binding(actor.Weapon.SourceId);
@@ -352,7 +395,7 @@ internal sealed class RifleMatchSimulation
     {
         var actor=actors.Single(a=>a.Definition.PlayerId==owner);
         var world=new ShotCollisionWorld(map,
-            actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
+            actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,Pose(p.Definition.PlayerId).Collision,
                 p.Definition.Fraction==1?23:22)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         return world.Raycast(owner,origin,direction,range,
@@ -367,8 +410,9 @@ internal sealed class RifleMatchSimulation
     }
     internal ShotCollision? TraceForBazooka(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
     {
-        var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
-            p.Definition.Fraction==1?23:22)),
+        var world = new ShotCollisionWorld(map, actors.Select(participantActor => new CollisionPlayer(
+            participantActor.Definition.PlayerId, Pose(participantActor.Definition.PlayerId).Collision,
+            participantActor.Definition.Fraction == 1 ? 23 : 22)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets,bonusBoxTargets);
         return world.Raycast(owner,origin,direction,range,mask);
     }

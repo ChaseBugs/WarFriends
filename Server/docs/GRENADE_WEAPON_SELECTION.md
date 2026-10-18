@@ -31,11 +31,10 @@ dotnet Server/tests/War.Battle.Tests/bin/Release/net10.0/War.Battle.Tests.dll `
 ```
 
 These checks also run in --grenade-only and the default native suite. This is a
-dependency for mixed gameplay, not proof of it. Mixed mode still needs a shared
-active-class coordinator, source-correct collision/target poses across different
-weapon classes, grenade launch scheduling alongside rifle simulation, snapshots,
-and transitions to and from rifle/sniper/pistol slots. Normal Unity, Android and
-automatic account allocation remain unverified here.
+dependency for mixed gameplay, not proof of it by itself. The subsequent
+[host command checkpoint](MIXED_GRENADE_HOST_COMMANDS.md) connects the basic FRAG
+path to active-class routing and the combined native host. Normal Unity, Android,
+all weapon transitions and automatic account allocation remain unverified here.
 
 The Release solution builds with zero warnings/errors. The focused selection
 test passes 12 checks. The combined grenade suite passes 279 checks, including

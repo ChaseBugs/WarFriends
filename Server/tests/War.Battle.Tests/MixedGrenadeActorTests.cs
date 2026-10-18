@@ -67,7 +67,7 @@ internal static class MixedGrenadeActorTests
         return checks;
     }
 
-    private static MatchManifest CreateStarterManifest(BattleCombatContent content, string directory)
+    internal static MatchManifest CreateStarterManifest(BattleCombatContent content, string directory)
     {
         JsonObject root = BattleArmyManifestProjectionTests.CreateTemplate(content, directory);
         var catalog = new BattleMixedManifestCatalog(content);

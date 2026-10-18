@@ -1171,7 +1171,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                 // score, delay, collision and damage callbacks.
                 ConfigurePvpBonuses(content);
             }
-            if(manifest.Mode==MatchManifest.GrenadeCombatMode)
+            if (manifest.Mode == MatchManifest.GrenadeCombatMode ||
+                manifest.Mode == MatchManifest.MixedCombatMode && content.Grenades != null)
             {
                 grenadeCatalog=content.Grenades??throw new InvalidDataException("Grenade mode requires its pinned package.");
                 grenadeCombat=new GrenadeMatchSimulation(manifest,map,grenadeCatalog,
@@ -1185,7 +1186,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                 grenadeCombat.ConfigureShotTargets(content.GrenadeShotTargets??
                     throw new InvalidDataException("Grenade shot-target source is absent."));
             }
-            else
+            if (manifest.Mode != MatchManifest.GrenadeCombatMode)
             {
                 rifleCombat=new RifleMatchSimulation(manifest,map,content,
                     shields==null?null:shields.ColliderEnabled,
@@ -1200,6 +1201,13 @@ public sealed partial class MatchEngine : IMatchRuntime
                 ConfigureVisualVolley((id,owner,target,at)=>rifleCombat.PrepareVisualVolley(
                     id,owner,target,at,this.combatRandom),this.combatRandom);
                 bazookaCatalog=content.Bazookas;
+                if (grenadeCombat != null)
+                {
+                    rifleCombat.ConfigureExternalCombatView(new ExternalPlayerCombatView(grenadeCombat.IsActive,
+                        id => grenadeCombat.CombatPose(id, content.PlayerShotTargets),
+                        id => grenadeCombat.Snapshot(id, tick)));
+                    grenadeCombat.ConfigureMixedPlayerPoses(rifleCombat.Pose);
+                }
             }
         }
     }
@@ -1795,6 +1803,22 @@ public sealed partial class MatchEngine : IMatchRuntime
                     effect.Definition.CardId, 0, effect.Target, 0, effect.EffectId);
             }
         }
+        if(advanced&&phase==BattlePhase.Running&&grenadeCombat!=null)
+        {
+            try
+            {
+                IReadOnlyList<ScheduledGrenadeLaunch> launches = grenadeCombat.Advance(tick, id =>
+                {
+                    var actor = Find(id)!;
+                    return new(actor.Position, actor.Cover, actor.Route != null);
+                });
+                foreach (ScheduledGrenadeLaunch launch in launches)
+                {
+                    StartGrenadeProjectile(launch);
+                }
+            }
+            catch(InvalidDataException){End("invalid-projectile-authority","",false);return;}
+        }
         if (advanced && phase==BattlePhase.Running && rifleCombat!=null)
         {
             try {
@@ -1802,11 +1826,6 @@ public sealed partial class MatchEngine : IMatchRuntime
                 rifleCombat.Advance(tick,id=> { var actor=Find(id)!;return new(actor.Position,actor.Cover,actor.Route!=null); },
                 (id,target)=> Terminal ? "match-terminal" : Fire(Find(id)!,target)); }
             catch (InvalidDataException) { End("invalid-combat-authority","",false);return; }
-        }
-        if(advanced&&phase==BattlePhase.Running&&grenadeCombat!=null)
-        {
-            try{foreach(var launch in grenadeCombat.Advance(tick,id=>{var actor=Find(id)!;return new(actor.Position,actor.Cover,actor.Route!=null);}))StartGrenadeProjectile(launch);}
-            catch(InvalidDataException){End("invalid-projectile-authority","",false);return;}
         }
         if (advanced && phase == BattlePhase.Running && pvpBonusPlanner != null)
         {
@@ -2420,13 +2439,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             if(p.ActiveSlot==slot)return "weapon-selected";
             try
             {
-                rifleCombat?.SwitchWeapon(p.Definition.PlayerId, weapon.Definition.Weapon,
-                    weapon.Definition.WeaponUpgrade);
-                if (rifleCombat == null && grenadeCombat != null)
-                {
-                    grenadeCombat.SelectWeapon(p.Definition.PlayerId, weapon.Definition.Weapon,
-                        weapon.Definition.WeaponUpgrade, tick);
-                }
+                SelectCombatWeapon(p, weapon);
             }
             catch(InvalidDataException){End("invalid-combat-authority","",false);return "match-aborted";}
             p.ActiveSlot=slot;
@@ -2485,6 +2498,10 @@ public sealed partial class MatchEngine : IMatchRuntime
         if(c.IntentCase==MatchCommand.IntentOneofCase.GrenadeThrow)
         {
             if(grenadeCombat==null||grenadeCatalog==null)return "grenade-disabled";
+            if (!UsesGrenade(p.Definition.PlayerId))
+            {
+                return "wrong-fire-mode";
+            }
             if(p.Route!=null)return "moving";if(p.ReloadEnd!=0)return "reloading";
             if(tick<p.NextFire)return "cooldown";if(p.Clip==0)return "no-ammo";
             if(grenadeCombat.Busy(p.Definition.PlayerId))return "shooting";
@@ -2555,7 +2572,12 @@ public sealed partial class MatchEngine : IMatchRuntime
                 ? "vehicle-attack-accepted" : "vehicle-attack-unavailable";
         }
         if (c.IntentCase != MatchCommand.IntentOneofCase.Fire) return "unsupported-command";
-        if(grenadeCombat!=null||rifleCombat?.IsMinigun(p.Definition.PlayerId)==true||rifleCombat?.IsSniper(p.Definition.PlayerId)==true||rifleCombat?.IsBazooka(p.Definition.PlayerId)==true)return "wrong-fire-mode";
+        if (UsesGrenade(p.Definition.PlayerId) || rifleCombat?.IsMinigun(p.Definition.PlayerId) == true ||
+            rifleCombat?.IsSniper(p.Definition.PlayerId) == true ||
+            rifleCombat?.IsBazooka(p.Definition.PlayerId) == true)
+        {
+            return "wrong-fire-mode";
+        }
         // Original Fire(Vector3 to) uses a target POSITION, not a normalized direction.
         if (!Coordinate(c.Fire.TargetX) || !Coordinate(c.Fire.TargetY) || !Coordinate(c.Fire.TargetZ)) return "invalid-target";
         if (p.Route != null && rifleCombat==null) return "moving";
@@ -2855,7 +2877,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();var effect=GrenadeExplosion.ResolvePlayer(impact.Position,
-                grenadeCombat.Collision(victim.Definition.PlayerId),victim.Position,CombatFor(victim),victim.Health,
+                ArmyPlayerCollision(victim.Definition.PlayerId),victim.Position,CombatFor(victim),victim.Health,
                 projectile.Stage,shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,attacker==victim,roll);
             if(effect==null)continue;
             ApplyResolvedPlayerDamage(impact.OwnerId,victim.Definition.PlayerId,

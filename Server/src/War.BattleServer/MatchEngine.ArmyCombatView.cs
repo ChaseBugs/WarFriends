@@ -37,7 +37,7 @@ public sealed partial class MatchEngine
     {
         if (rifleCombat != null)
         {
-            return rifleCombat.Pose(playerId).BodyTarget(transformFileId).Position;
+            return rifleCombat.Pose(playerId).BodyTargetPosition(transformFileId);
         }
 
         return GrenadePlayerShotTarget(playerId, transformFileId);

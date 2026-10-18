@@ -23,8 +23,8 @@ internal sealed record CardParatrooperAirTarget(
             throw new InvalidDataException("Invalid airborne Paratrooper position.");
 
         PlayerShotTarget shield = targets.Nearest(2, parachutePosition,
-            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
-        Vector3 targetPosition = pose.BodyTarget(shield.TransformFileId).Position;
+            candidate => pose.BodyTargetPosition(candidate.TransformFileId));
+        Vector3 targetPosition = pose.BodyTargetPosition(shield.TransformFileId);
         float distance = Vector3.Distance(parachutePosition, targetPosition);
         if (shield.Type != 2 || !float.IsFinite(distance))
             throw new InvalidDataException("Invalid posed Paratrooper shield target.");

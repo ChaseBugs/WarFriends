@@ -80,7 +80,11 @@ The [mixed grenade actor lifecycle](MIXED_GRENADE_ACTORS.md) now supports lazy
 owned-slot activation, dormant re-entry at the host's current cover and collision
 queries against every participant's active class. Lifecycle and simultaneous
 release-order checks use real starter source data and rifle/grenade simulations.
-The MatchEngine command/coordinator integration is still open.
+The [mixed starter host command checkpoint](MIXED_GRENADE_HOST_COMMANDS.md) now
+connects the rifle-to-FRAG-to-rifle path to MatchEngine, including scheduled-shot
+suspension, source pose routing and in-flight grenade completion. Thirteen native
+host checks pass. Mixed UDP/Unity gameplay, uncaptured grenade rig transforms,
+durable allocation and the remaining feature boundaries stay open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

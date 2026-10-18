@@ -37,9 +37,9 @@ next tick invalidates the cached view. The existing rifle position path is also
 checked. These checks are included in --grenade-only and the default native suite.
 
 This is a shared-view prerequisite, not completed mixed-class gameplay. The
-mixed active-class coordinator, simultaneous rifle/grenade simulation, snapshot
-selection, transitions between classes, normal Unity proof and automatic account
-allocation remain open. The export provenance is the existing disposable Unity
+subsequent host checkpoint connects basic FRAG routing, while full transitions,
+normal Unity proof and automatic account allocation remain open.
+The export provenance is the existing disposable Unity
 2018 reference; this change does not prove original Unity 5.2, Android or rendered
 Client parity.
 
@@ -49,6 +49,7 @@ and Tank impacts), 2,435 live rifle engine checks, and the mixed allocator's
 existing weapon checks plus 14 starter army checks pass. No mixed-class grenade
 gameplay or normal Unity match is claimed by these scoped results.
 
-The [mixed actor lifecycle](MIXED_GRENADE_ACTORS.md) can now consume these cached
-poses through an explicit active-class provider. The MatchEngine coordinator
-and full mixed command path remain unimplemented.
+The [mixed actor lifecycle](MIXED_GRENADE_ACTORS.md) consumes these cached poses
+through an explicit active-class provider. The subsequent
+[host command checkpoint](MIXED_GRENADE_HOST_COMMANDS.md) connects that routing
+for the starter FRAG path. Full mixed gameplay remains unverified.

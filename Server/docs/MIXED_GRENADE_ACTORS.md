@@ -31,13 +31,11 @@ FRAG windup/release, pending-throw deselection rejection, inactive reads/throws,
 reactivation at another valid host cover, and stable simultaneous release order.
 These checks also run in --grenade-only and the default native suite.
 
-This tests simulation lifecycle APIs, not the MatchEngine command path or a
-normal Client match. MatchEngine still constructs the grenade engine only for
-the grenade-only mode. The next integration must wire the mixed active-class
-coordinator, suspend inactive rifle behavior, choose current snapshots/collision
-and target views, and connect grenade commands and damage to ordinary host
-inventory. Mixed transitions, in-flight effects across transitions, UDP and
-normal Unity gameplay still require proof. Automatic allocation remains open.
+These checks test simulation lifecycle APIs, not a normal Client match.
+The subsequent [host command checkpoint](MIXED_GRENADE_HOST_COMMANDS.md) now
+connects the basic starter FRAG transition, active-class views and in-flight
+completion to MatchEngine. Other mixed interactions, UDP and normal Unity
+gameplay still require proof. Automatic allocation remains open.
 
 At this checkpoint the Release solution builds with zero warnings/errors.
 The focused actor suite passes 18 checks; the combined grenade suite passes

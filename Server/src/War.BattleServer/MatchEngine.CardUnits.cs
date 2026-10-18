@@ -761,8 +761,8 @@ public sealed partial class MatchEngine
         var pose = rifleCombat.Pose(opponent.Definition.PlayerId);
         var position = new Vector3(entity.X, entity.Y, entity.Z);
         var target = playerShotTargets.Nearest(1, position,
-            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
-        Vector3 targetPosition = pose.BodyTarget(target.TransformFileId).Position;
+            candidate => pose.BodyTargetPosition(candidate.TransformFileId));
+        Vector3 targetPosition = pose.BodyTargetPosition(target.TransformFileId);
         if (!CornerShotPolicy.CanExpose(direction, rightSide,
             position, targetPosition))
             return null;
@@ -1106,7 +1106,7 @@ public sealed partial class MatchEngine
             var shield = playerShotTargets.Gameplay.Single(row => row.Type == 2);
             return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
                 shield.TransformFileId, point.ComponentFileId,
-                pose.BodyTarget(shield.TransformFileId).Position);
+                pose.BodyTargetPosition(shield.TransformFileId));
         }
         if (opponent.Route != null && pose.MovingTarget is { } moving)
         {
@@ -1125,10 +1125,10 @@ public sealed partial class MatchEngine
                 source.TransformFileId, point.ComponentFileId, predicted);
         }
         var body = playerShotTargets.Nearest(9, origin,
-            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
+            candidate => pose.BodyTargetPosition(candidate.TransformFileId));
         return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
             body.TransformFileId, point.ComponentFileId,
-            pose.BodyTarget(body.TransformFileId).Position);
+            pose.BodyTargetPosition(body.TransformFileId));
     }
 
     private void AdvanceCardSniperAttacks()
@@ -1319,10 +1319,10 @@ public sealed partial class MatchEngine
         var pose = rifleCombat.Pose(opponent.Definition.PlayerId);
         var position = new Vector3(entity.X, entity.Y, entity.Z);
         var target = playerShotTargets.Nearest(1, position,
-            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
+            candidate => pose.BodyTargetPosition(candidate.TransformFileId));
         return new ArmyRusherTarget(entityKey, opponent.Definition.PlayerId,
             target.TransformFileId, point.ComponentFileId,
-            pose.BodyTarget(target.TransformFileId).Position);
+            pose.BodyTargetPosition(target.TransformFileId));
     }
 
     private void AdvanceCardSwatAttacks()
@@ -1493,7 +1493,7 @@ public sealed partial class MatchEngine
             return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
                 opponent.Definition.PlayerId, shield.TransformFileId,
                 point.ComponentFileId,
-                pose.BodyTarget(shield.TransformFileId).Position), throwGrenade);
+                pose.BodyTargetPosition(shield.TransformFileId)), throwGrenade);
         }
 
         if (opponent.Route != null && pose.MovingTarget is { } moving)
@@ -1518,11 +1518,11 @@ public sealed partial class MatchEngine
         }
 
         var body = playerShotTargets.Nearest(9, origin,
-            candidate => pose.BodyTarget(candidate.TransformFileId).Position);
+            candidate => pose.BodyTargetPosition(candidate.TransformFileId));
         return new CardGrenadierAim(new ArmyRusherTarget(entityKey,
             opponent.Definition.PlayerId, body.TransformFileId,
             point.ComponentFileId,
-            pose.BodyTarget(body.TransformFileId).Position), throwGrenade);
+            pose.BodyTargetPosition(body.TransformFileId)), throwGrenade);
     }
 
     internal bool CardGrenadierWalking(ulong entityKey) =>

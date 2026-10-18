@@ -151,10 +151,8 @@ public sealed partial class MatchEngine
             string id=target.Id[7..];var player=Find(id)??throw new InvalidDataException("Drone player target disappeared.");
             if((rifleCombat==null&&grenadeCombat==null)||playerShotTargets==null||map==null)
                 throw new InvalidDataException("Drone player target lacks source poses.");
-            var grenadePositions=grenadeCombat?.PlayerShotTargets(id);
-            var rows=playerShotTargets.Gameplay.Select((t,index)=>new DroneShotTarget(t.TransformFileId,t.Type,
-                grenadePositions==null?rifleCombat!.Pose(id).BodyTarget(t.TransformFileId).Position:
-                    grenadePositions[index])).ToArray();
+            var rows = playerShotTargets.Gameplay.Select(target => new DroneShotTarget(target.TransformFileId,
+                target.Type, ArmyBodyShotTarget(id, target.TransformFileId))).ToArray();
             return new(Array.AsReadOnly(rows),true,player.Position,
                 -Vector3.Transform(Vector3.UnitZ,map.Covers[player.Cover].Rotation),player.Route==null,Vector3.Zero);
         }

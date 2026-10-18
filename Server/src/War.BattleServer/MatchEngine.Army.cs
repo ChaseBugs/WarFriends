@@ -4333,7 +4333,7 @@ public sealed partial class MatchEngine
         if(opponent.Dead)return null;
         var origin=new Vector3(army.X,army.Y,army.Z);
         Vector3 BodyPosition(PlayerShotTarget target) => rifleCombat != null
-            ? rifleCombat.Pose(opponent.Definition.PlayerId).BodyTarget(target.TransformFileId).Position
+            ? rifleCombat.Pose(opponent.Definition.PlayerId).BodyTargetPosition(target.TransformFileId)
             : GrenadePlayerShotTarget(opponent.Definition.PlayerId, target.TransformFileId);
         var source=playerShotTargets.Nearest(1,origin,BodyPosition);
         return new(entityKey,opponent.Definition.PlayerId,source.TransformFileId,slot,

@@ -230,8 +230,8 @@ public sealed partial class MatchEngine
         var forward=-Vector3.Transform(Vector3.UnitZ,map.Covers[player.Cover].Rotation);
         var towardTurret=origin-player.Position;
         int mask=HeavyTurretStationaryTargetMask(forward,towardTurret,heavyTurretSource!.ShieldHitProbability,NextArmyFloat);
-        var selected=playerShotTargets.Nearest(mask,origin,row=>pose.BodyTarget(row.TransformFileId).Position);
-        return pose.BodyTarget(selected.TransformFileId).Position;
+        var selected=playerShotTargets.Nearest(mask,origin,row=>pose.BodyTargetPosition(row.TransformFileId));
+        return pose.BodyTargetPosition(selected.TransformFileId);
     }
     internal static int HeavyTurretStationaryTargetMask(Vector3 forward,Vector3 towardTurret,float shieldProbability,Func<float> random)
     {
@@ -501,7 +501,7 @@ public sealed partial class MatchEngine
             // TurretSeesEnemy checks GetShotTargets(AllIn)[0], independently
             // of Fire's eventual Shield/WholeBody/Moving target choice.
             var first=playerShotTargets!.Gameplay.First(x=>(x.Type&0xFFFFFB)==x.Type);
-            sightPosition=rifleCombat!.Pose(target.Id).BodyTarget(first.TransformFileId).Position;
+            sightPosition=rifleCombat!.Pose(target.Id).BodyTargetPosition(first.TransformFileId);
         }
         var delta=sightPosition-origin;
         float distance=delta.Length();if(distance<.001f)return false;var direction=delta/distance;
