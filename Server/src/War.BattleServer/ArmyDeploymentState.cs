@@ -1,5 +1,6 @@
 namespace War.BattleServer;
 
+/// <summary>Records a realized unit and its deployment scheduling-clock tick.</summary>
 public sealed record ArmySpawn(int EntityId,int OptionIndex,string UnitId,int Power,ulong Tick,bool IsAir);
 
 /// <summary>Single-writer, host-owned deployment eligibility and 0.3-second spawn schedule.</summary>
@@ -25,6 +26,7 @@ public sealed class ArmyDeploymentState
     private int nextEntityId;
     private float cooldownMultiplier=1;
     public int Energy { get; private set; }
+    /// <summary>Gets the next eligible tick in the pause-excluding cooldown clock.</summary>
     public ulong NextDeployTick { get; private set; }
     public int ActiveCount=>entities.Count;
     public int PendingCount=>pending.Count;
@@ -174,29 +176,86 @@ public sealed class ArmyDeploymentState
         cooldownMultiplier=value;
     }
 
-    public string TryDeploy(int optionIndex,ulong tick)
+    /// <summary>Deploys using the existing shared-tick projection for both clock domains.</summary>
+    public string TryDeploy(int optionIndex, ulong tick)
     {
-        if(!offered.Contains(optionIndex))return "army-not-offered";
-        var family=FindFamily(optionIndex);
-        var option=catalog.Option(optionIndex);
-        if(!equipped.Contains(family.UnitId))return "army-not-equipped";
-        if(tick<NextDeployTick)return "army-cooldown";
-        if(!HasCapacity(family,option.Count))return "army-capacity";
-        int pendingPower=checked(pending.Sum(p=>p.Option.Power/p.Option.Count));
-        if(option.Power>Energy-pendingPower)return "army-energy";
-        ulong cooldown=Ticks((catalog.BaseCooldown+option.Cooldown)*cooldownMultiplier);
-        var due=Enumerable.Range(0,option.Count)
-            .Select(i=>checked(tick+(ulong)(i*SpawnIntervalTicks))).ToArray();
-        ulong nextDeploy=checked(tick+cooldown);
-        int nextReserved=checked(reserved.GetValueOrDefault(family.UnitId)+option.Count);
+        return TryDeploy(optionIndex, tick, tick);
+    }
+
+    /// <summary>Checks the pause-excluding cooldown clock while scheduling on the independent real-time clock.</summary>
+    internal string TryDeploy(int optionIndex, ulong cooldownTick, ulong spawnTick)
+    {
+        if (cooldownTick > spawnTick)
+        {
+            throw new InvalidDataException("Deployment clocks must share an epoch and preserve elapsed-time order.");
+        }
+        if (!offered.Contains(optionIndex))
+        {
+            return "army-not-offered";
+        }
+        ArmyDeploymentFamily family = FindFamily(optionIndex);
+        ArmyDeploymentOption option = catalog.Option(optionIndex);
+        string? rejection = GetDeploymentRejection(family, option, cooldownTick);
+        if (rejection != null)
+        {
+            return rejection;
+        }
+        ScheduleWave(family, option, cooldownTick, spawnTick);
+        return "army-deploying";
+    }
+
+    private string? GetDeploymentRejection(ArmyDeploymentFamily family, ArmyDeploymentOption option, ulong cooldownTick)
+    {
+        if (!equipped.Contains(family.UnitId))
+        {
+            return "army-not-equipped";
+        }
+        if (cooldownTick < NextDeployTick)
+        {
+            return "army-cooldown";
+        }
+        if (!HasCapacity(family, option.Count))
+        {
+            return "army-capacity";
+        }
+        int pendingPower = checked(pending.Sum(entry => entry.Option.Power / entry.Option.Count));
+        if (option.Power > Energy - pendingPower)
+        {
+            return "army-energy";
+        }
+        return null;
+    }
+
+    private void ScheduleWave(ArmyDeploymentFamily family, ArmyDeploymentOption option,
+        ulong cooldownTick, ulong spawnTick)
+    {
+        ulong cooldown = Ticks((catalog.BaseCooldown + option.Cooldown) * cooldownMultiplier);
+        ulong[] due = Enumerable.Range(0, option.Count)
+            .Select(index => checked(spawnTick + (ulong)(index * SpawnIntervalTicks))).ToArray();
+        ulong nextDeploy = checked(cooldownTick + cooldown);
+        int nextReserved = checked(reserved.GetValueOrDefault(family.UnitId) + option.Count);
         ulong waveId = checked(_nextWaveId + 1);
-        var wave = new ArmyDeploymentWave(waveId, optionIndex, family.UnitId, tick)
+        var wave = new ArmyDeploymentWave(waveId, option.Index, family.UnitId, spawnTick)
         {
             FinishAfterTick = checked(due[^1] + SpawnIntervalTicks),
             IsSoldier = family.IsSoldier
         };
-        // The first unit is due now; subsequent units follow at 0.3-second intervals.
-        foreach(ulong dueTick in due)pending.Enqueue((dueTick,family,option,waveId));
+        QueueWave(family, option, wave, due);
+        _activeWaves.Add(waveId, wave);
+        _nextWaveId = waveId;
+        LastAcceptedWave = wave;
+        reserved[family.UnitId] = nextReserved;
+        NextDeployTick = nextDeploy;
+        InvalidateOffers();
+    }
+
+    private void QueueWave(ArmyDeploymentFamily family, ArmyDeploymentOption option,
+        ArmyDeploymentWave wave, IEnumerable<ulong> due)
+    {
+        foreach (ulong dueTick in due)
+        {
+            pending.Enqueue((dueTick, family, option, wave.Id));
+        }
         // Source coroutines can overlap after cooldown modifiers; a later wave cannot wait behind future units.
         var ordered = pending.OrderBy(spawn => spawn.Tick).ThenBy(spawn => spawn.WaveId).ToArray();
         pending.Clear();
@@ -204,13 +263,6 @@ public sealed class ArmyDeploymentState
         {
             pending.Enqueue(spawn);
         }
-        _activeWaves.Add(waveId, wave);
-        _nextWaveId = waveId;
-        LastAcceptedWave = wave;
-        reserved[family.UnitId]=nextReserved;
-        NextDeployTick=nextDeploy;
-        InvalidateOffers();
-        return "army-deploying";
     }
 
     /// <summary>Validates due spawns without consuming energy, reservations or entity identities.</summary>
@@ -256,6 +308,7 @@ public sealed class ArmyDeploymentState
         return preview.AsReadOnly();
     }
 
+    /// <summary>Realizes due units and completed waves using deployment scheduling-clock time.</summary>
     public IReadOnlyList<ArmySpawn> Advance(ulong tick)
     {
         // Keep the same authority checks available to shared resource preflight before either player commits.

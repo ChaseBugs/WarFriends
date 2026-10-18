@@ -201,6 +201,11 @@ the same frame: DestroyPooled exposes the slot before LateUpdate and RadicalRout
 it after LateUpdate. Native provenance and a managed regression pass 13,304 focused checks.
 The controlled hitch/plain-shell observation does not complete actual army admission or
 two-owner corpse exhaustion; independent host clocks and live hooks still remain open.
+Deployment state now accepts separate cooldown and real-time scheduling ticks, while the
+current host keeps its original shared-tick call. Twenty-nine wave/preflight checks cover
+queued spawning with a frozen cooldown and safe clock-domain rejection; 13,304 Mortar checks
+also pass. Worker raw-time input, TimeManager's clamped stored-float clock and snapshot/spawn
+projection remain open before live pool hooks can use this boundary correctly.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes

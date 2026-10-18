@@ -62,7 +62,7 @@ internal static class ArmyDeploymentWaveTests
         Require(state.CompletedWaves.Count == 0, "A repeated advance published a completion twice.");
         state.RemoveEntity(early.EntityId);
         Require(state.WaveOf(early.EntityId) == null, "Removed entities retained source wave ownership.");
-        return 16 + ArmySpawnPreflightTests.Run(directory);
+        return 16 + ArmySpawnPreflightTests.Run(directory) + ArmyDeploymentClockTests.Run(directory);
     }
 
     private static void Require(bool condition, string message)

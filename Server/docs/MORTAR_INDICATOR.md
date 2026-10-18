@@ -385,6 +385,33 @@ after that return. The focused group passes 13,304 checks at
 manifest was restored. Actual host hooks, independent clock domains, real army-manager
 admission and two-owner/corpse exhaustion remain open.
 
+### Independent deployment clock inputs
+
+The source TimeManager.Update computes a third clock: when timeScale is nonzero and it is not
+frozen, it adds a real-frame delta clamped to 0-0.2 seconds to its stored-float mRealTime.
+During freeze/zero scale, its delta is zero. Deployment cooldown and auto-deploy use that
+pause-excluding clock; the per-unit coroutine waits use raw real time; corpse waits use scaled
+game time. The Worker's Stopwatch accumulator also caps catch-up at four 30 Hz ticks, so its
+executed tick counter cannot simply be relabeled as raw elapsed wall time after a backlog.
+
+ArmyDeploymentState now accepts separate cooldownTick and spawnTick inputs. Cooldown checks
+and NextDeployTick use the former; due-unit times and wave final waits use the latter. Its
+existing shared-tick API delegates to this implementation, preserving current host calls.
+Eligibility, checked scheduling and queue ordering are split into short ordinary methods.
+The regression holds cooldown time fixed while completing a four-unit wave on real-time
+schedule ticks, rejects another wave until cooldown resumes, checks the successor's separate
+real-time start and rejects reversed same-epoch clock inputs without consuming a hand or energy.
+The wave/preflight group passes 29 checks at `Server/.local/army-clock-domain-tests-final.log`.
+The later Mortar indicator/pool group also passes 13,304 checks with this deployment-state
+implementation at `Server/.local/army-clock-domain-mortar-tests.log`.
+
+This is a deployment-state separation checkpoint. MatchEngine still calls the shared-tick API;
+neither Worker raw-time input nor full TimeManager stored-float/clamp behavior is migrated.
+The existing nominal nine-tick per-unit quantization is also unchanged; source float readiness
+and callback-frame placement must not be declared exact merely from these integer tests.
+Host snapshot/spawn-time projection, pause/resume behavior and live weapon-slot hooks remain
+required. The concurrently running full executable predates this later deployment-state change.
+
 ```powershell
 python -B Server/tools/verify_pool_return_race.py `
   --project Server/.local/coop-geometry-project `
