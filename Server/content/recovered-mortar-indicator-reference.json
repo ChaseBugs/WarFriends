@@ -1,0 +1,128 @@
+{
+  "unityVersion": "2018.3.0f2",
+  "checks": 11,
+  "stopSeconds": 2.0,
+  "scope": "Original setup, Sample and callback/repetition methods; no Play Mode frame timing proof.",
+  "scaleMethod": "EaseInOut",
+  "colorMethod": "EaseInOut",
+  "samples": [
+    {
+      "factor": 0.0,
+      "rotation": [
+        0.7071068,
+        0.0,
+        0.0,
+        0.7071068
+      ],
+      "scale": [
+        1.5,
+        1.5,
+        1.5
+      ]
+    },
+    {
+      "factor": 0.25,
+      "rotation": [
+        0.5,
+        0.5,
+        -0.5,
+        0.5
+      ],
+      "scale": [
+        1.42278171,
+        1.42278171,
+        1.42278171
+      ]
+    },
+    {
+      "factor": 0.5,
+      "rotation": [
+        -3.09086232E-08,
+        0.7071068,
+        -0.7071068,
+        -3.09086232E-08
+      ],
+      "scale": [
+        1.075,
+        1.075,
+        1.075
+      ]
+    },
+    {
+      "factor": 0.75,
+      "rotation": [
+        -0.5,
+        0.5,
+        -0.5,
+        -0.5
+      ],
+      "scale": [
+        0.7272183,
+        0.7272183,
+        0.7272183
+      ]
+    },
+    {
+      "factor": 1.0,
+      "rotation": [
+        -0.7071068,
+        -6.18172464E-08,
+        6.18172464E-08,
+        -0.7071068
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    }
+  ],
+  "blinkSamples": [
+    {
+      "factor": 0.0,
+      "alpha": 0.35
+    },
+    {
+      "factor": 0.25,
+      "alpha": 0.318204224
+    },
+    {
+      "factor": 0.5,
+      "alpha": 0.175
+    },
+    {
+      "factor": 0.75,
+      "alpha": 0.0317957662
+    },
+    {
+      "factor": 1.0,
+      "alpha": 0.0
+    }
+  ],
+  "sources": [
+    {
+      "source": "Assets/GameObject/MortarEnemy.prefab",
+      "sha256": "7b149ab87230ca831bdace965afc9f288e84518b1d749faf93d408a31e48745f"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/Mortar.cs",
+      "sha256": "210babe06a1cfc0e1b12336ae6c00809b779f383cc84d8232b71a5ab6c1ed3d5"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/TweenRotationSpecial.cs",
+      "sha256": "84d54b075bc2d0bd227ac7e0097cdfcadbe439023310819ec3bfd5b020a91c97"
+    },
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/UITweener.cs",
+      "sha256": "9701b22bdb46bb2cf6e42f9d155dd5ad9453ce255b5a2bddd7a2d81ea576fef7"
+    },
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/TweenScale.cs",
+      "sha256": "f97b5d152310867defc446a02244dae3249186d79984ad6888d2b1dd1adab4f7"
+    },
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/TweenColorTk2d.cs",
+      "sha256": "c45c9faf5ba39247279b57bd1fce00690b7fdf7db419fae8b80f5c366c1421bd"
+    }
+  ]
+}

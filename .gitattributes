@@ -334,3 +334,14 @@ Server/tools/UnityGrenadierExplosionOverlapAudit.cs text eol=lf
 Server/tools/verify_grenadier_explosion_overlap.py text eol=lf
 Server/content/grenadier-explosion-overlap-unity-reference.json text eol=lf
 Server/docs/GRENADIER_PLAYER_BLAST.md text eol=lf
+
+# Native Mortar indicator observation and source byte provenance.
+Server/content/recovered-mortar-indicator-reference.json text eol=lf
+Server/tools/UnityMortarIndicatorAudit.cs text eol=lf
+Server/src/War.Shared/MortarIndicatorTween.cs text eol=lf
+Server/tests/War.Battle.Tests/MortarIndicatorTweenTests.cs text eol=lf
+Server/docs/MORTAR_INDICATOR.md text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TweenRotationSpecial.cs text eol=crlf
+Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/UITweener.cs text eol=crlf
+Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/TweenScale.cs text eol=crlf
+Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/TweenColorTk2d.cs text eol=crlf

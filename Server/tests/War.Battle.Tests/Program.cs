@@ -816,7 +816,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     ["--gunslinger-aim-only"] or ["--gunslinger-shooting-only"] or ["--gunslinger-points-only"] or
     ["--gunslinger-holster-only"] or ["--infantry-weapons-only"] or ["--ordinary-rocket-only"] or
     ["--ordinary-mortar-only"] or ["--mortar-facing-only"] or ["--mortar-shooting-only"] or
-    ["--mortar-preparation-only"])
+    ["--mortar-preparation-only"] or ["--mortar-indicator-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);
     while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
@@ -826,6 +826,12 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (directory == null)
     {
         throw new FileNotFoundException("Recovered combat content is absent.");
+    }
+    if (args[0] == "--mortar-indicator-only")
+    {
+        int indicatorChecks = MortarIndicatorTweenTests.Run(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {indicatorChecks} native Mortar indicator tween checks");
+        return;
     }
     if (args[0] == "--mortar-preparation-only")
     {
@@ -3712,6 +3718,7 @@ checks += SicknessOrdinaryGrenadierTests.Run(Path.Combine(contentRoot.FullName, 
 checks += OrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarMissileFlightTests.Run();
 checks += MortarWeaponPoseProjectionTests.Run();
+checks += MortarIndicatorTweenTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarAccumulatedClockReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleAbortReasonCoverageTests.Run(contentRoot.FullName);
 checks += MortarDetachedWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));

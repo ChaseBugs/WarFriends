@@ -143,6 +143,9 @@ remove it. Protobuf/SDK projection, page-local observation validation and decode
 presenter replay now have focused coverage. Real two-Unity gameplay/reconnect remain open.
 The complete wire-stage Battle executable passed 250,286 assertions; the focused group passes
 1,462, including the final four-detached-row authenticated packet-budget regression.
+[Target warning research](MORTAR_INDICATOR.md) now records original setup/tween/callback samples
+and a portable source-exact scale/alpha/rotation sampler. Host launch projection, frame lifecycle,
+SDK and normal warning presentation remain open; the sampler is not a completed warning feature.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes
