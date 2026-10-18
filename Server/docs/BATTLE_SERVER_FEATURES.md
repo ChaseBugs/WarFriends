@@ -90,8 +90,11 @@ uses GameShootableEntityPlayer's current-cover override. Sniper/Grenadier now sh
 [Assaulter prediction](ASSAULTER_AIM.md) now captures a real moving player's acquisition inputs
 from the current rig muzzle and models the later callback's persistent 1/3 real-speed coefficient;
 fake speed remains independent. Fourteen focused checks verify these calculations, actual host
-movement capture and death cleanup. Automatic attempts/callbacks, non-player velocity binding,
-vehicle/air transforms, exposure and volley execution remain open.
+movement capture and death cleanup. [Automatic Corner attempts](ASSAULTER_PREPARATION.md) now
+consume real source deadlines, draw/clamp the complete batch before the side gate, retain successful
+latches and reschedule rejected sides. Twenty-four focused checks include actual accepted/rejected
+Park attempts at tick 199 and source retry timing. Callback execution, non-player velocity binding,
+vehicle/air transforms, shot-pose exposure and volley execution remain open.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical

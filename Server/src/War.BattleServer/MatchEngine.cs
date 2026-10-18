@@ -1638,6 +1638,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try { AdvanceAssaulterNavigation(); }
             catch (InvalidDataException) { End("invalid-assaulter-navigation", "", false); return; }
+            try { AdvanceAssaulterPreparations(); }
+            catch (InvalidDataException) { End("invalid-assaulter-preparation", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running && grenadierWalks.Count > 0)
         {

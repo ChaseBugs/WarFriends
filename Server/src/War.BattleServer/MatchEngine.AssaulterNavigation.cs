@@ -116,6 +116,7 @@ public sealed partial class MatchEngine
         _assaulterCorners.Remove(entityKey);
         _settledAssaulterCorners.Remove(entityKey);
         _assaulterAimWeapons.Remove(entityKey);
+        _assaulterAttempts.Remove(entityKey);
         cardEnemyPoints?.Release(entityKey);
     }
 

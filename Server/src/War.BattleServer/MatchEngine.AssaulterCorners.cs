@@ -29,7 +29,7 @@ public sealed partial class MatchEngine
         // Diagnostic manifests may omit upgrade-lane combat authority. Do not
         // invent a shot clock from serialized placeholders for those entities.
         ulong? firstShot = armyShots.TryGetValue(entityKey, out ArmyBaseShotStats? shot)
-            ? FirstAssaulterShotTick(shot) : null;
+            ? NextAssaulterShotTick(shot) : null;
         int changeSeconds = MinimumAssaulterCornerSeconds + armyChoice(AssaulterCornerSecondsRange);
         if (changeSeconds < MinimumAssaulterCornerSeconds ||
             changeSeconds >= MinimumAssaulterCornerSeconds + AssaulterCornerSecondsRange)
@@ -41,7 +41,7 @@ public sealed partial class MatchEngine
         _assaulterCorners.Add(entityKey, new AssaulterCornerState(entry, firstShot, changeTick));
     }
 
-    private ulong FirstAssaulterShotTick(ArmyBaseShotStats shot)
+    private ulong NextAssaulterShotTick(ArmyBaseShotStats shot)
     {
         float fraction = NextArmyFloat();
         if (!float.IsFinite(fraction) || fraction is < 0f or >= 1f ||

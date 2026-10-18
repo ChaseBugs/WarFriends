@@ -90,4 +90,7 @@ latched source Shield position. They pass 23 checks with unchanged damage amount
 
 A selected vehicle/air entity without an infantry target graph returns no transform; this does
 not select a replacement player. Those source target graphs, live Decoy/Moving/WholeBody fixtures,
-automatic Corner attempts, prediction and actual Assaulter fire remain incomplete.
+automatic callback prediction and actual Assaulter fire remain incomplete.
+The [preparation scheduler](ASSAULTER_PREPARATION.md) now performs automatic Corner attempts,
+including moving-player acquisition capture, source batch draws and side rejection/retry. It
+plans the callback deadline but does not execute the shot callback or launch a projectile.
