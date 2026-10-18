@@ -31,6 +31,10 @@ remain zero and error-level logs decrease from 72 to 70. Their bounded source
 counts are documented in the bootstrap report. Fresh-account authoritative
 battle-allocation projection, preview rendering and normal battle entry remain
 open; transport fixtures do not supply normal-flow proof.
+The owned-card capacity prerequisite now separates a full inventory from the selected hand and
+the shared host catalog. All 45 source card IDs survive JSON, real Mongo single/batch reads,
+and native host configuration; inventory/catalog transport bounds and existing selection/message
+bounds are tested separately. This does not create normal-account allocations or complete card economy.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

@@ -9,6 +9,8 @@ namespace War.Shared
 /// <summary>Backend-to-BattleServer trusted allocation payload. Client assertions never create this object.</summary>
 public sealed class BattleAllocationProjection
 {
+    /// <summary>Bounds owned inventory transport independently of a player's selected hand.</summary>
+    public const int MaximumCardInventoryIdentities = 128;
     public string PlayerId { get; set; }
     public IReadOnlyList<string> CardIds { get; set; }
     /// <summary>Positive durable quantities in the exact order of CardIds; missing counts never grant cards.</summary>
@@ -24,7 +26,7 @@ public sealed class BattleAllocationProjection
     {
         if (value is null || string.IsNullOrWhiteSpace(value.PlayerId) || value.PlayerId.Length > 128)
             throw new InvalidDataException("Invalid battle allocation player.");
-        ValidateIds(value.CardIds, 32, "card");
+        ValidateIds(value.CardIds, MaximumCardInventoryIdentities, "card");
         if (value.CardCounts == null || value.CardCounts.Count != value.CardIds.Count ||
             value.CardCounts.Any(count => count <= 0))
         {

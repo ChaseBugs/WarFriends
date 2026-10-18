@@ -2212,7 +2212,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             throw new InvalidOperationException("Card selection is already active.");
         var ids = catalog?.ToArray() ?? throw new InvalidDataException("Missing card catalog.");
         cardCatalog = new HashSet<string>(ids, StringComparer.Ordinal);
-        BattleLoadoutPolicy.ValidateCardIds(ids, cardCatalog);
+        BattleLoadoutPolicy.ValidateCardCatalog(ids, cardCatalog);
         cardSelections = new BattleCardSelectionState();
     }
     public void ConfigureBuddySelection(IEnumerable<(string PlayerId, IEnumerable<string> BuddyIds)> provisioned)

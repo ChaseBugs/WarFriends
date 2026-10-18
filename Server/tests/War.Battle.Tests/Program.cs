@@ -1262,9 +1262,11 @@ var definition = new MatchManifest("test-match", "test-host", "fixture-map", has
     MatchManifest.PrototypeMode, 10, 60, 10,
     [new(a, new("fixture-rifle", 2, 3, 0.1, 0.2)), new(b, new("fixture-rifle", 2, 3, 0.1, 0.2))]);
 checks += CardAllocationQuantityTests.Run(definition);
+checks += CardCatalogCapacityTests.Run(definition);
 if (args is ["--allocation-inventory-only"])
 {
-    Console.WriteLine("PASS: card quantity validation, frozen snapshots, wire transport and one-use hand authority");
+    Console.WriteLine("PASS: full card catalog bounds, quantity validation, frozen snapshots, " +
+        "wire transport and one-use hand authority");
     return;
 }
 var localRoom = new LocalOfflineRoom();

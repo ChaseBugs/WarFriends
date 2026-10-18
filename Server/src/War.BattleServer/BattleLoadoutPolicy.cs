@@ -6,6 +6,8 @@ namespace War.BattleServer;
 /// identity lists are assertions and must be resolved against trusted catalogs.</summary>
 public static class BattleLoadoutPolicy
 {
+    private const int MaximumSelectedCards = 32;
+    private const int MaximumParticipants = 2;
     private static readonly Regex IdPattern = new(@"\A[A-Za-z0-9_.-]{1,64}\z", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public static IReadOnlyList<string> ValidateWeaponIds(IEnumerable<string> ids, IReadOnlySet<string> catalog)
@@ -15,7 +17,14 @@ public static class BattleLoadoutPolicy
         => Validate(ids, catalog, 0, 24, "army unit");
 
     public static IReadOnlyList<string> ValidateCardIds(IEnumerable<string> ids, IReadOnlySet<string> catalog)
-        => Validate(ids, catalog, 0, 32, "card");
+        => Validate(ids, catalog, 0, MaximumSelectedCards, "card");
+
+    /// <summary>Validates the union of owned inventories without applying the selected-hand limit.</summary>
+    public static IReadOnlyList<string> ValidateCardCatalog(IEnumerable<string> ids, IReadOnlySet<string> catalog)
+    {
+        int maximum = MaximumParticipants * War.Shared.BattleAllocationProjection.MaximumCardInventoryIdentities;
+        return Validate(ids, catalog, 0, maximum, "card catalog");
+    }
 
     private static IReadOnlyList<string> Validate(IEnumerable<string> ids, IReadOnlySet<string> catalog,
         int minimum, int maximum, string kind)

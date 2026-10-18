@@ -18,6 +18,32 @@ An empty card allocation requires an empty count array and grants nothing.
 Validation copies the counts as well as IDs so caller mutation cannot change the
 validated snapshot. A nonempty identity without positive ownership evidence is rejected.
 
+### Owned catalog capacity versus selected cards
+
+The complete recovered ordinary source-ID map currently contains 45 identities. Applying the
+32-entry selection-policy bound to owned allocations or the union of two players' inventories
+rejected valid full catalogs before selection. Those three boundaries are now separate:
+
+- Each allocation permits up to 128 owned ordinary-card identities with matching positive counts.
+- The host catalog permits their deduplicated two-participant union, bounded at 256 identities.
+- `BattleCardSelectionState` retains its existing 32-entry policy limit. Actual command transport
+  also retains the 256-byte message bound, and the UDP endpoint retains its selection count guard.
+
+The 128/256 limits are bounded transport capacities, not recovered game hand sizes, extra-slot
+entitlements, or permission to select more cards. Buddy limits and durable consumption are unchanged.
+An enlarged owned catalog does not increase match-local uses of a selected card.
+
+`CardCatalogCapacityTests` transports all 45 source identities through allocation JSON and host
+configuration, selects a representative three-card hand, checks the separate 32/33 policy boundary,
+and configures a union exceeding 32 even though each player's own list is smaller. It also checks
+the 128/129 allocation and 256/257 catalog boundaries. The real Mongo quantity test now replaces
+its owned test row with all 45 identities and verifies both read paths retain their order and counts.
+This verifies catalog capacity, not all 45 cards' gameplay effects or normal account projection.
+
+The Release build passed with zero warnings and errors. Both `--allocation-inventory-only` and
+`--allocation-inventory-mongo mongodb://127.0.0.1:27017` passed after the capacity change.
+The latter used only its generated temporary database and removed it on completion.
+
 Mongo `battle_allocations` stores these counts. Both single and batch reads
 validate them. Nonempty historical rows/manifests without counts are rejected;
 they need deliberate reprojection from authoritative durable inventory. Do not
@@ -61,8 +87,8 @@ requires both paths to reject it. The local run artifacts are under
 ## Remaining integration
 
 This adds explicit owned-quantity evidence to the allocation-to-host boundary; it does not create allocations from
-normal accounts. The durable inventory/progression projector, full owned-card
-catalog versus selection limits, upgrade ordering, Buddy data authority,
+normal accounts. The durable inventory/progression projector, recovered gameplay hand-slot
+and entitlement limits, upgrade ordering, Buddy data authority,
 authoritative in-battle hand replenishment, transactional inventory consumption
 across matches, settlement and normal Unity battle entry remain unfinished. Match-local reservations do not decrement the
 account wallet or durable card inventory. Do not describe these native checks
