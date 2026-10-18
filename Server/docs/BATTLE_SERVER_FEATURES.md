@@ -84,6 +84,9 @@ arrival counters/deadlines. Fifty checks cover two actual arrivals on every map 
 The Desert route continues past its approximate projected-endpoint threshold until the original
 authored-point test passes. Actual Gunslinger shot/burst execution and normal Paratrooper landing
 remain unimplemented; the entry clocks are not firing proof.
+[Stand timing evidence](GUNSLINGER_STAND_TIMING.md) now checks real native animation callbacks,
+next gameplay polls and muzzle phases in two update orders. The tested clock remains separate
+from actual ordinary Gunslinger shot execution.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

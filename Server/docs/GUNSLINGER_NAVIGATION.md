@@ -62,3 +62,6 @@ Actual shot preparation, callback muzzle/aim prediction, one-shot attempts, spee
 complete burst/point-change execution, gun snapping and normal Client presentation remain open.
 Arrival metadata must not be described as real firing. Paratrooper descent/landing is a separate
 missing normal-unit path. These requirements remain on the BattleServer feature checklist.
+
+[Stand timing evidence](GUNSLINGER_STAND_TIMING.md) now verifies native animation callbacks and
+next gameplay polls independently. It does not close the actual shot-execution work above.

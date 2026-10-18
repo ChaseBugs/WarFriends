@@ -58,6 +58,12 @@ public static class UnityCoopInfantryMotionExport
 
     static UnityCoopInfantryMotionExport()
     {
+        string[] arguments = Environment.GetCommandLineArgs();
+        if (Array.IndexOf(arguments, "-coopMotionInput") < 0 && Array.IndexOf(arguments, "-coopMotionOutput") < 0)
+        {
+            return;
+        }
+
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
         EditorApplication.update += OnEditorUpdate;
     }
