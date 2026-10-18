@@ -21,6 +21,8 @@ internal static class AssaulterVolleyTests
             checks += CheckHost(content, mode);
         }
 
+        checks += AssaulterRepeatedVolleyTests.Run(content);
+
         return checks;
     }
 
