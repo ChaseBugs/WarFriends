@@ -809,6 +809,22 @@ if (args is ["--rifle-engine-only"])
     return;
 }
 
+if(args is ["--army-waves-only"])
+{
+    var directory = new DirectoryInfo(AppContext.BaseDirectory);
+    while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
+    {
+        directory = directory.Parent;
+    }
+    if (directory == null)
+    {
+        throw new FileNotFoundException("Recovered combat content is absent.");
+    }
+    int waveChecks = ArmyDeploymentWaveTests.Run(Path.Combine(directory.FullName, "content"));
+    Console.WriteLine($"PASS: {waveChecks} source army wave lifecycle checks");
+    return;
+}
+
 if(args is ["--army-pages-only"])
 {
     int focused = ArmyEntityPageTests.Run();
@@ -3526,6 +3542,7 @@ checks += GrenadeCombatPoseProjectionTests.Run(Path.Combine(contentRoot.FullName
 checks += MixedGrenadeActorTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MixedGrenadeHostTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MixedGrenadeLongShotTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += ArmyDeploymentWaveTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += await MixedGrenadeUdpTests.RunAsync(Path.Combine(contentRoot.FullName, "content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));

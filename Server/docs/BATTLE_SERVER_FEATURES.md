@@ -59,6 +59,10 @@ there are 67 ordinary definitions and 57 Client-active pack identities. Twelve a
 are absent from the current host effect map and remain required: BOOBYTRAP, CRITICALS, ELECTRICTRAPS,
 EXPLOSIVEPISTOL, EXPLOSIVETIMING, HEADAHEAD, MEATHEADS, PLAGUE, ROCKETTURRET, SICKNESS,
 TRIGGERHAPPY and TURRET. Persisted identity validation is not implementation of those effects.
+The [deployment wave lifecycle](ARMY_DEPLOYMENT_WAVES.md) now records accepted wave identities,
+entity provenance, and the final strict post-spawn wait. Overlapping pending spawns sort by source
+due tick instead of blocking behind an older wave's future entries. This is a prerequisite for the
+Sickness event window; its arming, actual health/damage modifiers and Client integration remain open.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

@@ -5,6 +5,12 @@ public sealed record ArmySpawn(int EntityId,int OptionIndex,string UnitId,int Po
 /// <summary>Single-writer, host-owned deployment eligibility and 0.3-second spawn schedule.</summary>
 public sealed class ArmyDeploymentState
 {
+    private const int SpawnIntervalTicks = 9;
+    private readonly Dictionary<ulong, ArmyDeploymentWave> _activeWaves = [];
+    private readonly Dictionary<int, ArmyDeploymentWave> _entityWaves = [];
+    private ulong _nextWaveId;
+    private IReadOnlyList<ArmyDeploymentWave> _completedWaves = Array.Empty<ArmyDeploymentWave>();
+
     private readonly ArmyDeploymentCatalog catalog;
     private readonly HashSet<string> equipped;
     private readonly HashSet<string> newlyAcquired;
@@ -13,7 +19,8 @@ public sealed class ArmyDeploymentState
     private int[] hand=[];
     private readonly Dictionary<string,int> alive=new(StringComparer.Ordinal);
     private readonly Dictionary<string,int> reserved=new(StringComparer.Ordinal);
-    private readonly Queue<(ulong Tick,ArmyDeploymentFamily Family,ArmyDeploymentOption Option)> pending=[];
+    private readonly Queue<(ulong Tick, ArmyDeploymentFamily Family, ArmyDeploymentOption Option, ulong WaveId)>
+        pending = [];
     private readonly Dictionary<int,ArmySpawn> entities=[];
     private int nextEntityId;
     private float cooldownMultiplier=1;
@@ -27,6 +34,19 @@ public sealed class ArmyDeploymentState
     internal int PendingRusherDemand
         =>pending.Count(item=>ArmyRusherPointCatalog.IsRusher(item.Family.BehaviorType));
     public IReadOnlyList<int> OfferedOptions=>Array.AsReadOnly(hand);
+
+    /// <summary>The most recently accepted deployment; rejected commands do not replace it.</summary>
+    public ArmyDeploymentWave? LastAcceptedWave { get; private set; }
+
+    /// <summary>Deployments whose final source wait completed during the latest advance.</summary>
+    public IReadOnlyList<ArmyDeploymentWave> CompletedWaves => _completedWaves;
+
+    /// <summary>Accepted deployments still spawning or waiting after their final unit.</summary>
+    public IReadOnlyList<ArmyDeploymentWave> ActiveWaves =>
+        Array.AsReadOnly(_activeWaves.Values.OrderBy(wave => wave.Id).ToArray());
+
+    /// <summary>Retains the original deployment identity while its spawned entity remains alive.</summary>
+    public ArmyDeploymentWave? WaveOf(int entityId) => _entityWaves.GetValueOrDefault(entityId);
 
     public ArmyDeploymentState(ArmyDeploymentCatalog catalog,IEnumerable<string> equippedUnitIds,
         IEnumerable<string>? newUnitIds=null)
@@ -166,11 +186,27 @@ public sealed class ArmyDeploymentState
         if(option.Power>Energy-pendingPower)return "army-energy";
         ulong cooldown=Ticks((catalog.BaseCooldown+option.Cooldown)*cooldownMultiplier);
         var due=Enumerable.Range(0,option.Count)
-            .Select(i=>checked(tick+(ulong)(i*9))).ToArray();
+            .Select(i=>checked(tick+(ulong)(i*SpawnIntervalTicks))).ToArray();
         ulong nextDeploy=checked(tick+cooldown);
         int nextReserved=checked(reserved.GetValueOrDefault(family.UnitId)+option.Count);
+        ulong waveId = checked(_nextWaveId + 1);
+        var wave = new ArmyDeploymentWave(waveId, optionIndex, family.UnitId, tick)
+        {
+            FinishAfterTick = checked(due[^1] + SpawnIntervalTicks),
+            IsSoldier = family.IsSoldier
+        };
         // The first unit is due now; subsequent units follow at 0.3-second intervals.
-        foreach(ulong dueTick in due)pending.Enqueue((dueTick,family,option));
+        foreach(ulong dueTick in due)pending.Enqueue((dueTick,family,option,waveId));
+        // Source coroutines can overlap after cooldown modifiers; a later wave cannot wait behind future units.
+        var ordered = pending.OrderBy(spawn => spawn.Tick).ThenBy(spawn => spawn.WaveId).ToArray();
+        pending.Clear();
+        foreach (var spawn in ordered)
+        {
+            pending.Enqueue(spawn);
+        }
+        _activeWaves.Add(waveId, wave);
+        _nextWaveId = waveId;
+        LastAcceptedWave = wave;
         reserved[family.UnitId]=nextReserved;
         NextDeployTick=nextDeploy;
         InvalidateOffers();
@@ -211,13 +247,23 @@ public sealed class ArmyDeploymentState
             alive[scheduled.Family.UnitId]=alive.GetValueOrDefault(scheduled.Family.UnitId)+1;
             var entity=new ArmySpawn(++nextEntityId,scheduled.Option.Index,scheduled.Family.UnitId,unitPower,scheduled.Tick,scheduled.Family.IsAir);
             entities.Add(entity.EntityId,entity);spawned.Add(entity);
+            _entityWaves.Add(entity.EntityId, _activeWaves[scheduled.WaveId]);
         }
+        // SpawningManagerDeathMatch waits once after every unit, including the final unit.
+        var completed = _activeWaves.Values.Where(wave => wave.FinishAfterTick < tick)
+            .OrderBy(wave => wave.FinishAfterTick).ThenBy(wave => wave.Id).ToArray();
+        foreach (ArmyDeploymentWave wave in completed)
+        {
+            _activeWaves.Remove(wave.Id);
+        }
+        _completedWaves = Array.AsReadOnly(completed);
         return spawned;
     }
 
     public ArmySpawn? RemoveEntity(int entityId)
     {
         if(!entities.Remove(entityId,out var entity))return null;
+        _entityWaves.Remove(entityId);
         alive[entity.UnitId]--;
         return entity;
     }
