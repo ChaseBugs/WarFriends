@@ -58,3 +58,6 @@ Normal automatic allocation, inventory reservation at admission, and coordinated
 other legacy read-modify-write card operations remain open. A terminal transaction does not by
 itself prevent an unrelated legacy operation from later overwriting an earlier-read blob. Normal
 queue and rendered Unity gameplay proof therefore remain incomplete.
+The later [conditional crafting publication](CARD_SUBSYSTEM_CONCURRENCY.md) now protects the
+craft-start and crafted-card claim writers. Deposit/withdrawal and buffered inventory writers
+still require their own coordinated transitions.

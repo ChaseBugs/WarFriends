@@ -40,6 +40,7 @@ internal static class AtomicCardConsumptionTests
         await CheckRollbackAsync(stores, cancellationToken);
         await CheckLastCopyAsync(stores, cancellationToken);
         await CheckMissingAllocationAsync(stores, cancellationToken);
+        await CheckStaleSubsystemWriteAsync(stores, cancellationToken);
         Console.WriteLine("PASS: card debits/result/pair release share one transaction; " +
             "replay, rollback, and frozen-ownership rejection are safe");
     }
@@ -176,6 +177,38 @@ internal static class AtomicCardConsumptionTests
         Require(await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
             fixture.Payload, cancellationToken) == "accepted", "The final owned card could not be consumed.");
         await CheckCountsAsync(stores.Database, fixture, 0, cancellationToken);
+    }
+
+    private static async Task CheckStaleSubsystemWriteAsync(Stores stores, CancellationToken cancellationToken)
+    {
+        Fixture fixture = await CreateFixtureAsync(stores.Queue, cancellationToken);
+        await SaveFixtureAsync(stores.Database, stores.Players, fixture, cancellationToken);
+        string identity = fixture.Manifest.Players[0].PlayerId;
+        var stale = await stores.Players.ById(identity, cancellationToken)
+            ?? throw new InvalidDataException("Subsystem concurrency fixture account is absent.");
+        await stores.Results.AcceptAndReleasePairAsync(fixture.Manifest.MatchId, fixture.Digest,
+            fixture.Payload, cancellationToken);
+        var proposed = new Dictionary<string, string>
+        {
+            ["CardManagerData"] = CardState(StartingCopies + 1),
+            ["CraftData"] = PlayerState.Write(new CraftData())
+        };
+        Require(!await stores.Players.TryReplaceSubsystemsAsync(stale, proposed, cancellationToken),
+            "An earlier-read subsystem blob overwrote the committed battle debit.");
+        await CheckCountsAsync(stores.Database, fixture, StartingCopies - 1, cancellationToken);
+        var current = await stores.Players.ById(identity, cancellationToken)
+            ?? throw new InvalidDataException("Subsystem concurrency fixture account disappeared.");
+        Require(!current.Serialized.ContainsKey("CraftData"), "A rejected write published its companion subsystem.");
+        proposed["CardManagerData"] = CardState(StartingCopies);
+        bool[] writes = await Task.WhenAll(
+            stores.Players.TryReplaceSubsystemsAsync(current, proposed, cancellationToken),
+            stores.Players.TryReplaceSubsystemsAsync(current, proposed, cancellationToken));
+        Require(writes.Count(committed => committed) == 1,
+            "Two writers committed from the same subsystem snapshot.");
+        var final = await stores.Players.ById(identity, cancellationToken);
+        Require(OrdinaryCardInventory.Read(final!.Serialized["CardManagerData"])[SourceCard] == StartingCopies &&
+            final.Serialized.ContainsKey("CraftData"), "Conditional subsystem update lost its combined publication.");
+        Console.WriteLine("PASS: stale card subsystem writes cannot overwrite battle debits; one concurrent writer wins");
     }
 
     private static async Task CheckCountsAsync(IMongoDatabase database, Fixture fixture, int expected,

@@ -45,6 +45,11 @@ cards with result insertion and pair deletion in one real Mongo transaction. Tes
 players, concurrent replay, rollback/retry, final-copy zero rows and absent frozen ownership.
 Admission reservations, coordination with other legacy card writers, Buddy and granted-card
 consumption, automatic queue publication and normal Unity gameplay remain open.
+The [conditional card subsystem update](CARD_SUBSYSTEM_CONCURRENCY.md) now publishes crafting
+card/craft blobs together only when their exact read snapshots still match. Real Mongo tests reject
+an earlier-read overwrite after a battle debit and allow only one of two concurrent writers.
+The existing 248-assertion legacy HTTP smoke passes. Deposit/withdrawal, buffered inventory writers,
+admission reservations and full successful crafting-claim HTTP proof remain open.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

@@ -1143,8 +1143,15 @@ public static class LegacyEndpoints
         craft.Start = now;
         craft.End = now + minutes * 60;
 
-        await store.SetSerialized(player.Id, "CardManagerData", PlayerState.Write(cards), ct);
-        await store.SetSerialized(player.Id, "CraftData", PlayerState.Write(craft), ct);
+        bool committed = await store.TryReplaceSubsystemsAsync(player, new Dictionary<string, string>
+        {
+            ["CardManagerData"] = PlayerState.Write(cards),
+            ["CraftData"] = PlayerState.Write(craft)
+        }, ct);
+        if (!committed)
+        {
+            return LegacyResponse.Failure(DatabaseResult.WrongPlayerData);
+        }
         return LegacyResponse.Json(DatabaseResult.Success, new JsonObject { ["End"] = craft.End });
     }
 
@@ -1178,8 +1185,15 @@ public static class LegacyEndpoints
         craft.Start = 0;
         craft.End = 0;
 
-        await store.SetSerialized(player.Id, "CardManagerData", PlayerState.Write(cards), ct);
-        await store.SetSerialized(player.Id, "CraftData", PlayerState.Write(craft), ct);
+        bool committed = await store.TryReplaceSubsystemsAsync(player, new Dictionary<string, string>
+        {
+            ["CardManagerData"] = PlayerState.Write(cards),
+            ["CraftData"] = PlayerState.Write(craft)
+        }, ct);
+        if (!committed)
+        {
+            return LegacyResponse.Failure(DatabaseResult.WrongPlayerData);
+        }
         return LegacyResponse.Json(DatabaseResult.Success, new JsonObject { ["CardId"] = awardedCardId });
     }
 

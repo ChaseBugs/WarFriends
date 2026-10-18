@@ -135,7 +135,7 @@ public sealed class LegacyPlayerDocument
 /// <summary>
 /// Reads and writes <see cref="LegacyPlayerDocument"/>s for the legacy HTTP channel.
 /// </summary>
-public sealed class LegacyPlayerStore
+public sealed partial class LegacyPlayerStore
 {
     /// <summary>
     /// The 16 subsystem blob keys the 1.4.0 client registers, each the simple name of the
