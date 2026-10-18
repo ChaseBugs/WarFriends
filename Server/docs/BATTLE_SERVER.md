@@ -246,5 +246,8 @@ persisted LevelManager weapon indexes from battle allWeapons indexes on
 both Backend and Client. All 66 source pairs are reviewed and checked at
 Backend startup; unknown or mismatched pairs fail closed. Actual Unity
 mapping checks and live Mongo/HTTP/UDP queue/rematch gates pass. This does
-not materialize fresh-account ownership, replace missing initial blobs or
-prove normal battle-controller initialization.
+not prove normal battle-controller initialization. New guest accounts now
+receive all three initial loadout blobs in their original Mongo insert;
+actual Unity boot and a change-stream observer verify this boundary. Existing
+accounts are not backfilled. Derived ownership and automatic allocation remain
+open.

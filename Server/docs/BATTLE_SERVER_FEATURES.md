@@ -51,8 +51,11 @@ The [starter loadout/index checkpoint](CLIENT_STARTER_LOADOUT.md) now captures
 actual new-account defaults and corrects both sides of the persisted
 LevelManager versus battle allWeapons index boundary. All 66 mappings are
 source-bound; actual Unity checks and live Mongo/Backend/Worker gates pass.
-This does not yet materialize initial account state, authorize implicit
-starter ownership or provide automatic fresh-account battle allocation.
+New guest accounts now store all three source-derived initial subsystem blobs
+in their original Mongo insert, verified through a change stream during actual
+Unity account boot. This does not yet authorize implicit starter ownership or
+provide automatic fresh-account battle allocation. Existing accounts are not
+backfilled; unit lane projection and normal controller entry remain open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

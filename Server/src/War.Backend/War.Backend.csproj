@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <EmbeddedResource Include="../../content/recovered-initial-client-state.json"
+                      LogicalName="War.Backend.RecoveredInitialClientState" />
     <EmbeddedResource Include="../../content/recovered-player-weapon-indexes.json"
                       LogicalName="War.Backend.RecoveredPlayerWeaponIndexes" />
     <ProjectReference Include="..\War.Shared\War.Shared.csproj" />

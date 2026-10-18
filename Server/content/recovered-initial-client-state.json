@@ -1,0 +1,1441 @@
+{
+  "schemaVersion": 1,
+  "clientVersion": "1.4.0",
+  "observationSha256": "7e4d56b6dbbfdc832fe65c1a3320c15d4b9c7b80750d7e6ba36f4d45ccb923c5",
+  "mainSceneSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+  "serialized": {
+    "InventoryData": {
+      "slots": {
+        "0": {
+          "name": "Google2u.AssaultRifle_AK47",
+          "weaponIndex": 1
+        },
+        "1": {
+          "name": "Google2u.SniperRifle_M24",
+          "weaponIndex": 3
+        },
+        "2": {
+          "name": "Google2u.Grenade_FRAG",
+          "weaponIndex": 6
+        },
+        "3": {
+          "name": "Google2u.Pistol_Remmington51",
+          "weaponIndex": 13
+        }
+      }
+    },
+    "LevelManagerData": {
+      "savedArmies": {
+        "Google2u.DBUpgradeSlotsAssaulter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsShotgunner": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": true,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsSniper": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsSwat": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsBazooka": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsParachuter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsGrennader": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": true,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMinigunner": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsEngineer": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMachineGunner": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": true,
+          "tier": 1,
+          "borrowed": false,
+          "wasEquipped": true,
+          "equipped": true,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsDrone": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 2,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsHelicopter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsTank": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsTransporter": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsSciFi": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsCarBuggy": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsAssaultHeli": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 3,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsCar": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsFlamethrower": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 5,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsCommando": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 4,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsGunslinger": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMortar": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsWarper": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        },
+        "Google2u.DBUpgradeSlotsMech": {
+          "bought": false,
+          "boughtIndex": 0,
+          "specialSlot": 0,
+          "showed": false,
+          "tier": 6,
+          "borrowed": false,
+          "wasEquipped": false,
+          "equipped": false,
+          "eliteSlot": 0,
+          "parts": 0
+        }
+      },
+      "savedWeapons": {
+        "Google2u.AssaultRifle_M16": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_AK47": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_Famas": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M24": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_RPG7": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Saiga": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_FRAG": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_SMOKE": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_FLASH": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_POISON": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_UMP45": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M110": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_DesertEagle": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Remmington51": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Berreta": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_M1911": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_Dragunov": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_PKMachinegun": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M249": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_MG4": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_SA80": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_Minigun": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": true,
+          "borrowed": false
+        },
+        "Google2u.SMG_MP5": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_MP7": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_CPW": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.GrenadeLauncher_M320": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_QBZ95": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Benelli": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_AWMF": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_G36": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M90": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Striker": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_SteyrAUG": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_P90": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M60": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_FGM": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_HMV": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Magnum357": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_SPAS": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_Molotov": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_Panzerfaust": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_M202": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_MP5_elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_AKS47U": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_G36Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M90Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M60Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_M249Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_P90Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_Blackhand": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_SawnOff": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Pistol_Jester": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_M84": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_StrikerElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_AA12": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SMG_Vector": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_FGMElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Bazooka_Hater": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_MSR": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_FamasElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_QBZ95Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Grenade_SMOKEElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.Shotgun_SaigaElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.SniperRifle_M110Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.AssaultRifle_AK47Elite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        },
+        "Google2u.LMG_PKMachinegunElite": {
+          "bought": false,
+          "boughtIndex": 0,
+          "showed": false,
+          "borrowed": false
+        }
+      },
+      "unitDelivery": {
+        "activationNeeded": false,
+        "boughtIndex": 0,
+        "end": 0,
+        "itemId": null,
+        "slotId": 0,
+        "start": 0
+      },
+      "weaponDelivery": {
+        "activationNeeded": false,
+        "boughtIndex": 0,
+        "end": 0,
+        "itemId": null,
+        "slotId": 0,
+        "start": 0
+      }
+    },
+    "DecalManagerData": {
+      "visuals": {
+        "CAMOS_DEFAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_MACHINEGUNNER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_PARA": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ALIEN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_COWBOY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_NINJA": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SCIENTIST": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SUITGUY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ZOMBIE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SARAH": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_OREN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_RAPPER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_RAMBO": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SPECOPS": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_MADMAX": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_COMMANDO": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_DUSTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_BRUCELEE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ASSAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ELITEENGINEER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ELITEPARATROOPER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_ROCKETLAUNCHER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "CAMOS_SCIENTIST2": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_EMPTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_DEFAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_BLUEBARRET": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_BLACKCAP": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_EAGLE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_FOOTBALL": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_HAT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_HEADCOVER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_HORNS": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_JASON": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_PUNK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SKULL": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SPARTAN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SANTA": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ASSAULT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_VIETNAM": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_COWBOYHAT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ENGINEERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ENGINEER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_FLAMETHROWER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_GRENADIERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_GRENADIER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_MADMAX": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ROCKETLAUNCHERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_ROCKETLAUNCHER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SCIFIMINIGUNNER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SCIFIMINIGUNNERELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SHOTGUNNER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SWATELITE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_SWATHAT": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_CROWNBRONZE": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_CROWNSILVER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HELMETS_CROWNGOLD": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_EMPTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_CIGAR": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_SUNGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GLASSES_SNIPER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_BB_GLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_BEARD": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_CLOWN": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GOOGLES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_LENNON": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_LOS_SANTOS": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_REBREATHER": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_EYE_PATCH": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_WEST": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_ENGINEERELITEGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GRENADIERELITEMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_GRENADIERMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_MACHINEGUNNERBAND": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_MACHINEGUNNERGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_MADMAXGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_ROCKETLAUNCHERMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_SCIFIGRENADIERMASK": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_SWATGLASSES": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "HEAD_BAND": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_EMPTY": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_CRITICAL_0": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_CRITICAL_1": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_DAMAGE_0": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_DAMAGE_1": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_HEALTH_0": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        },
+        "BANDS_HEALTH_1": {
+          "bought": false,
+          "showed": false,
+          "expiresOn": 0,
+          "borrowed": false,
+          "parts": 0,
+          "notificate": false
+        }
+      },
+      "slots": {
+        "0": {
+          "equippedID": "CAMOS_DEFAULT"
+        },
+        "1": {
+          "equippedID": "HELMETS_EMPTY"
+        },
+        "2": {
+          "equippedID": "HEAD_EMPTY"
+        },
+        "3": {
+          "equippedID": "BANDS_EMPTY"
+        }
+      },
+      "previousHeadDecal": ""
+    }
+  }
+}

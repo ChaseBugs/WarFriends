@@ -94,3 +94,11 @@ bridge between persisted LevelManager indexes and battle allWeapons indexes.
 It is embedded and validated at Backend startup, with provenance and
 reproduction documented in [the starter checkpoint](../docs/CLIENT_STARTER_LOADOUT.md).
 It contains no economy, ownership or reward authority.
+
+`recovered-initial-client-state.json` contains the three source-derived initial
+loadout subsystem blobs embedded by Backend. Verify with
+`python Server/tools/build_initial_client_state.py`; use `--write` to regenerate.
+New guest accounts insert these with the account document. Purchase/borrowing
+flags remain false, deliveries inactive and progression/parts zero. Existing
+accounts are not reset. See the starter checkpoint for source provenance and
+actual Unity/Mongo insert verification; derived ownership is a separate rule.

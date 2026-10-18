@@ -221,13 +221,15 @@ upgrade authority rather than granting a test loadout.
 ### Fresh-account durable projection prerequisite
 
 The current `LegacyEndpoints.PlayerData` projection deliberately omits absent
-subsystem keys so the recovered Client takes `LoadEmpty()`. Fresh accounts
-therefore can finish local account/catalog initialization without durable
-`InventoryData`, `LevelManagerData` or `DecalManagerData`. In contrast,
+subsystem keys so the recovered Client takes `LoadEmpty()`. New guest account
+creation now supplies source-derived `InventoryData`, `LevelManagerData` and
+`DecalManagerData` in the original account insert. A Mongo change-stream observer
+verified all three during actual Unity account boot; resulting Client defaults
+are unchanged. Existing accounts are not backfilled. In contrast,
 `BattlePlayerPresentationSource.ReadRequired` requires those stored blobs.
 Creating an empty battle allocation alone cannot make a fresh account
 admissible. The normal-account path needs source-backed, server-authored
-starter loadout materialization and the matching battle projection; it
+matching battle projection and derived ownership; it
 must not accept a Client-generated starter inventory as proof of ownership.
 
 Materialization must preserve derived starter ownership. `PlayerInventory.Init`
@@ -249,5 +251,5 @@ The Backend projects stored LevelManager indexes into battle allWeapons
 indexes; PlayerProperties converts those authenticated views back into
 local LevelManager indexes. Actual Unity mapping checks, native identity
 checks and Mongo-backed live queue/rematch gates pass. Starter ownership
-and durable initial-state materialization are still required before a
+and automatic allocation projection are still required before a
 fresh normal account can enter matchmaking automatically.

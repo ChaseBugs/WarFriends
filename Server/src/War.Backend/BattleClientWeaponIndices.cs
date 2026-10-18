@@ -26,6 +26,12 @@ public static class BattleClientWeaponIndices
         }
     }
 
+    /// <summary>Checks membership without interpreting the source identity as ownership.</summary>
+    public static bool IsKnownSource(string sourceId)
+    {
+        return !string.IsNullOrEmpty(sourceId) && Mappings.ContainsKey(sourceId);
+    }
+
     /// <summary>Resolves a persisted source identity and LevelManager index into the battle inventory index.</summary>
     public static int ResolveInventoryIndex(string sourceId, int levelManagerIndex)
     {

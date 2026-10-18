@@ -392,7 +392,9 @@ public static class LegacyEndpoints
             BeginnersLeague = 1,
             LastAction = Now(),
             CreatedUtc = DateTime.UtcNow,
-            TutorialCompleted = false
+            TutorialCompleted = false,
+            // The three source-derived blobs commit in the same document insert as the account.
+            Serialized = LegacyInitialLoadout.CreateSerializedState()
         };
 
         await store.Insert(player, password, ct);

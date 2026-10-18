@@ -104,7 +104,10 @@ try {
     if ($catalogLoaded) { Assert ($created.PlayerData.WarBucks.N -eq '15000') 'PlayerData.WarBucks matches the verified Google2u.Constants StartingWarbucks value' }
     Assert ($null -eq $created.PlayerData.TutorialData) 'a new account omits TutorialData so the client runs the tutorial'
     # Absent subsystem blobs are the client's LoadEmpty() path, not an error.
-    Assert ($null -eq $created.PlayerData.CardManagerData) 'a new account omits subsystem blobs'
+    Assert ($null -eq $created.PlayerData.CardManagerData) 'uninitialized card state still uses the Client default path'
+    foreach ($subsystem in @('InventoryData', 'LevelManagerData', 'DecalManagerData')) {
+        Assert ($null -ne $created.PlayerData.$subsystem.S) "new account includes source-derived $subsystem"
+    }
     # The client reads these with Convert.ToInt32 straight off the dictionary, so they must be bare
     # numbers; an AttributeValue would deserialize to an object and throw.
     Assert ($created.Time -isnot [PSCustomObject]) 'Time is a plain number, not an AttributeValue'

@@ -431,6 +431,27 @@ if (args is ["--pvp-bonus-shotgun-udp-only"])
     return;
 }
 
+if (args is ["--watch-initial-loadout", var initialMongoUri, var initialDatabase, var initialReport])
+{
+    await LegacyInitialLoadoutTests.WatchAccountInsertAsync(initialMongoUri, initialDatabase, initialReport);
+    return;
+}
+if (args is ["--initial-loadout-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new InvalidDataException("Recovered battle content artifact not found.");
+    }
+    int focused = LegacyInitialLoadoutTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} initial loadout checks");
+    return;
+}
+
 if (args is ["--client-weapon-index-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -3427,6 +3448,7 @@ checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"co
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += LegacyInitialLoadoutTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleClientWeaponIndexTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleScoreSnapshotTests.Run();
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));

@@ -120,5 +120,33 @@ The final Client reference run is
 Server/.local/client-boot-790c4cab61324591949cc147696d71a2.
 This does not prove original Unity 5.2, Android, rendered UI or normal battle
 controller entry. The observation is not imported as starter economy or
-ownership authority. Server-authored initial state, derived free/tutorial
-ownership, unit lane projection and automatic battle allocation remain open.
+ownership authority. Derived free/tutorial ownership, unit lane projection
+and automatic battle allocation remain open.
+
+## Atomic initial account state
+
+New guest accounts now receive source-derived InventoryData, LevelManagerData
+and DecalManagerData in the account's original MongoDB insert. Existing accounts
+are not reset or backfilled. Other missing subsystem keys retain their existing
+Client default path.
+
+`python Server/tools/build_initial_client_state.py` verifies the generated
+`Server/content/recovered-initial-client-state.json`; `--write` regenerates it.
+The generator reconstructs defaults from reviewed source metadata and requires
+equality with the actual Client observation. Backend startup pins the artifact
+digest and validates complete subsystem shapes before accepting accounts.
+Every purchase/borrowing flag stays false, progression and parts stay zero,
+deliveries stay inactive, and wallet authority is unchanged. These blobs do not
+replace the Client's derived free/tutorial ownership rules.
+
+The actual Unity/Mongo run under
+Server/.local/client-boot-ab946193541c46a79f06a2f4f1d2a3e0 completed account
+callbacks with 24 units, 66 weapons, zero exceptions and the same 70 error-level
+diagnostics. Its change-stream observer verified all three complete blobs in
+the original insert, rather than a later repair. The Client's resulting
+serialized defaults equal the committed observation. Five focused native
+checks also verify source equality and independent account containers.
+The real Mongo-backed legacy HTTP smoke passes all 248 assertions, including
+new-account blobs, login, buffered mutation replay and rollback contracts.
+This remains Unity 2018 disposable-project evidence, not original Unity 5.2,
+Android, rendered UI or complete normal battle-entry proof.

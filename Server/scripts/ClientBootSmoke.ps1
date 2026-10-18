@@ -82,6 +82,20 @@ try {
         catch { Start-Sleep -Milliseconds 200 }
     }
     if (!$ready) { throw "Backend readiness timed out; inspect $runRoot" }
+    $initialReport = Join-Path $runRoot 'initial-state-insert.json'
+    $watchArguments = @(
+        ('"' + $testDll + '"'), '--watch-initial-loadout', $env:Mongo__Uri, $env:Mongo__Database,
+        ('"' + $initialReport + '"')
+    )
+    $watcher = Start-Process dotnet -ArgumentList $watchArguments -WindowStyle Hidden -PassThru `
+        -RedirectStandardOutput (Join-Path $runRoot 'InitialStateWatcher.log') `
+        -RedirectStandardError (Join-Path $runRoot 'InitialStateWatcher.error.log')
+    $processes += $watcher
+    for ($attempt = 0; $attempt -lt 100 -and !(Test-Path -LiteralPath ($initialReport + '.ready')); $attempt++) {
+        if ($watcher.HasExited) { throw "Initial account observer exited before readiness; inspect $runRoot" }
+        Start-Sleep -Milliseconds 100
+    }
+    if (!(Test-Path -LiteralPath ($initialReport + '.ready'))) { throw 'Initial account observer did not become ready.' }
     $env:WARFRIENDS_BACKEND_URL = "http://127.0.0.1:$httpPort/"
     $env:WAR_LOBBY_BOOT_REQUIRE_ACCOUNT = '1'
     $env:WAR_STARTER_LOADOUT_OUTPUT = $null
@@ -101,6 +115,13 @@ try {
         Copy-Item -LiteralPath $reportPath -Destination (Join-Path $runRoot 'report.json')
     }
     if ($editor.ExitCode -ne 0) { throw "Actual Client account boot failed; inspect $runRoot" }
+    if (!$watcher.WaitForExit(10000) -or $watcher.ExitCode -ne 0) {
+        throw "Initial account insert did not contain complete source state; inspect $runRoot"
+    }
+    $initialState = Get-Content -LiteralPath $initialReport -Raw | ConvertFrom-Json
+    if (!$initialState.hasCompleteInitialStateInInsert -or $initialState.subsystemCount -ne 3) {
+        throw "Initial account insertion evidence is incomplete; inspect $runRoot"
+    }
     $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
     if (!$report.mainSceneLoaded -or !$report.accountDataReady -or !$report.playerNetworkReady -or
         !$report.playerDataLoadComplete -or $report.initializedUnitRows -ne $report.recoveredUnitRows -or
