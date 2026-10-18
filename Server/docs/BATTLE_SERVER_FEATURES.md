@@ -63,6 +63,10 @@ The [deployment wave lifecycle](ARMY_DEPLOYMENT_WAVES.md) now records accepted w
 entity provenance, and the final strict post-spawn wait. Overlapping pending spawns sort by source
 due tick instead of blocking behind an older wave's future entries. This is a prerequisite for the
 Sickness event window; its arming, actual health/damage modifiers and Client integration remain open.
+The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 27 source-rule
+checks, including reused-option finishes, overlapping windows, neutral/reversed fractions, and
+current-health refill versus maximum-health preservation. Actual host entity mutation, authorized
+activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

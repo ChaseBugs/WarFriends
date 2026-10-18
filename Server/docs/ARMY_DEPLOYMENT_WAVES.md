@@ -50,6 +50,9 @@ and must not silently replace the Client's definition-reference semantics.
 
 The new lifecycle is a prerequisite. Sickness arming, modifiers, typed protocol, Client callback,
 unit presentation and inventory/terminal proof are not implemented by this checkpoint.
+The later [Sickness kernel](SICKNESS_SPAWN_WINDOW.md) now provides independent callback-state
+and exact health/damage calculations. It does not yet connect those calculations to host entities
+or authorize a card activation.
 
 ## Verification
 
