@@ -48,7 +48,13 @@ weapon values are not recovered balancing data. See
 - `RecoveredBattleMap` supports active non-trigger box, triangle-mesh and convex-mesh raycasts. The current fixtures match all 200 reference rays within 0.002 world units. This does not establish full PhysX parity or production performance. Dynamic destructibles still use their initial geometry.
 - Mapped matches enforce cover side, start location, adjacency, occupancy and server-timed movement over recovered paths. Movement speed remains trusted manifest input. Serialized cover health is a base value, not final combat health.
 - `War.Client.MatchConnection` provides signed UDP admission, ready/fire/reload/move/poll/forfeit calls, bounded retries and pending-command recovery. `SelfHostedBattleClient` exposes it through main-thread Unity events. SDK DLLs are installed under `Assets/Plugins/WarFriends.Networking`; signing code and server secrets are excluded.
-- **The adapter is not wired into the normal battle preparation, player, weapon or game-controller flow.** Existing Photon-dependent gameplay is not migrated simply by adding these DLLs. The Unity audit drives the SDK, not a rendered two-player battle.
+- The recovered self-hosted branch now initializes players in `GameControllerOnline`, activates
+  `SelfHostedBattleClient.ActivateDeathMatchScene` from `GameControllerPVP.StartGame`, and binds
+  roster events to infantry presentation in `SelfHostedDeathMatchBridge`. These source call sites
+  establish wiring, not successful normal two-player gameplay. Complete lobby-to-battle execution,
+  all unit/effect presentation and rendered two-client completion remain unverified. SDK admission
+  tests alone cannot close those gates. See [Gunslinger weapon presentation](GUNSLINGER_WEAPON_PRESENTATION.md)
+  for the narrower native component proof.
 
 Rebuild the DLLs with `python Server/tools/install_unity_sdk.py`. Re-export content using the Editor method `SelfHostedBattleExport.Run` and an absolute `WAR_BATTLE_CONTENT_OUTPUT` path, preferably in a disposable project. Export does not save scenes. Unity 2018.3 was used to validate the currently repaired workspace; this is not a claim about the original APK's Unity version.
 

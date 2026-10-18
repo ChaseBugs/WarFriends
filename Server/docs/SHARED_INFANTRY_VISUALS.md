@@ -23,11 +23,15 @@ mesh/material references and renderer enable flags. It never instantiates the
 source prefab or copies its gameplay components.
 
 `SelfHostedInfantryVisualFactory.Create` builds an inactive root for an explicit
-source `SoldierStyle`. It binds the selected body mesh/materials to the copied
-source skeleton, remaps every bone and root bone, restores both helmet forms,
+source `SoldierStyle`. It selects the style mesh while retaining the source destination materials,
+uses `SkinnedMeshTools.ChangeSkins` to bind bones in the selected model's name order, restores both helmet forms,
 and returns the source animation hierarchy for later explicit clip sampling.
 If construction fails, the partial root is destroyed. The caller owns the
 successful root and must supply placement/animation before activation.
+The copied actor root uses unit scale, matching `SpawningManager.Spawn` and `SpawnAIObjectRPC`.
+The lower-level hierarchy copier still preserves its input transform; spawn normalization belongs
+to the actor factory. [Native Gunslinger images](GUNSLINGER_WEAPON_PRESENTATION.md) demonstrate why
+model-prefab materials and template bone indexes cannot replace these recovered rules.
 
 The existing self-hosted infantry presenter now uses this same factory while
 retaining its previous style choice and activation flow. Its canopy paths use
@@ -41,9 +45,16 @@ detached form's reset scale, without adding rigid bodies or the source swapper.
 
 ## Verification boundary
 
+The current factory regression passes 197 assertions across all 23 required styles in disposable
+Unity 2018.3.0f2. It replaces the earlier incorrect model-material expectation with the recovered
+destination-material rule, checks selected-model bone order and unit spawn scale, and proves that
+construction leaves the original template's mesh, materials and bone references unchanged.
+The older 128-assertion count below describes the initial checkpoint, not this refreshed run.
+
 `UnityInfantryVisualFactoryAudit.Run` reads the actual MainScene registry and
 mission catalog. It checks all sixteen ordinary and seven mission-card styles:
-inactive construction, exact source body mesh/materials, remapped bone ownership,
+inactive construction, selected body mesh and retained destination materials, source model bone order,
+unit actor scale, unchanged original mesh/material/bone references, remapped bone ownership,
 absence of scripts/physics/autonomous animation, and both helmet forms. A
 separate no-helmet fixture verifies template meshes are cleared. It also checks
 the distinct Buddy route and requires all twenty-three active styles to be
@@ -56,13 +67,13 @@ written as `infantry-visual-factory-audit.json`. The existing
 sixteen normal families, five special-card visuals, host motion/removal and
 post-death/reconnect canopy handling.
 
-This prepares reusable geometry for co-op presentation. It does not yet bind
+This prepares reusable geometry for co-op presentation. The original checkpoint did not yet bind
 the common co-op enemy event to actors, implement their source animation state,
 render pixels, reconstruct full weapon/upgrade appearance or open Worker co-op
 admission. Buddy camos and specialized vehicle/air visuals remain separate.
 No local AI or combat authority is re-enabled.
 
-Windows verification: the final factory audit passes 128 assertions over all
+Windows verification: the initial factory audit passed 128 assertions over all
 23 source-required styles; the source registry still contains 17 families,
 with 16 style-driven combat families and the separate Buddy helper. The
 existing infantry presenter audit passes all sixteen normal families, five

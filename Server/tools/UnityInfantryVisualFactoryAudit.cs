@@ -109,6 +109,10 @@ public static class UnityInfantryVisualFactoryAudit
         for (int index = 0; index < styles.Count; index++)
         {
             SoldierMeshChanger.SoldierStyle style = styles[index];
+            SkinnedMeshRenderer template = source.meshChanger.skinnedMeshRenderer;
+            Mesh originalMesh = template.sharedMesh;
+            Material[] originalMaterials = template.sharedMaterials;
+            Transform[] originalBones = template.bones;
             SelfHostedInfantryVisual visual;
             try
             {
@@ -122,13 +126,11 @@ public static class UnityInfantryVisualFactoryAudit
             try
             {
                 Require(!visual.Root.activeSelf, "An unposed source rig must remain inactive.");
-                Require(visual.Body.sharedMesh == style.modelMeshRenderer.sharedMesh &&
-                    visual.Body.sharedMaterials.SequenceEqual(style.modelMeshRenderer.sharedMaterials),
-                    "Body mesh and materials must preserve the explicit source style.");
-                Require(visual.Body.bones.Length == source.meshChanger.skinnedMeshRenderer.bones.Length &&
-                    visual.Body.bones.All(bone => bone != null && bone.IsChildOf(visual.Root.transform)) &&
-                    visual.Body.rootBone.IsChildOf(visual.Root.transform),
-                    "Every skin bone must belong to the copied rig rather than the source prefab.");
+                VerifyBody(source, style, visual);
+                Require(template.sharedMesh == originalMesh &&
+                    template.sharedMaterials.SequenceEqual(originalMaterials) &&
+                    template.bones.SequenceEqual(originalBones),
+                    "Creating a visual must not mutate the recovered template mesh, materials or bones.");
                 Require(visual.Root.GetComponentsInChildren<MonoBehaviour>(true).Length == 0 &&
                     visual.Root.GetComponentsInChildren<Collider>(true).Length == 0 &&
                     visual.Root.GetComponentsInChildren<Rigidbody>(true).Length == 0 &&
@@ -143,6 +145,26 @@ public static class UnityInfantryVisualFactoryAudit
                 UnityEngine.Object.DestroyImmediate(visual.Root);
             }
         }
+    }
+
+    private static void VerifyBody(EnemyController source, SoldierMeshChanger.SoldierStyle style,
+        SelfHostedInfantryVisual visual)
+    {
+        SkinnedMeshRenderer template = source.meshChanger.skinnedMeshRenderer;
+        Require(visual.Body.sharedMesh == style.modelMeshRenderer.sharedMesh &&
+            visual.Body.sharedMaterials.SequenceEqual(template.sharedMaterials),
+            "ChangeSkins selects the style mesh while retaining the destination materials.");
+        Require(visual.Body.bones.All(bone => bone != null && bone.IsChildOf(visual.Root.transform)) &&
+            visual.Body.rootBone.IsChildOf(visual.Root.transform),
+            "Every skin bone must belong to the copied rig rather than the source prefab.");
+
+        // The mesh weights index the selected model's bones, not the template renderer's bone order.
+        string[] selectedBoneNames = style.modelMeshRenderer.bones.Select(bone => bone.name).ToArray();
+        string[] copiedBoneNames = visual.Body.bones.Select(bone => bone.name).ToArray();
+        Require(copiedBoneNames.SequenceEqual(selectedBoneNames),
+            "Copied skin bone order must preserve the selected source model's weight identities.");
+        Require(visual.AnimationRoot.transform.localScale == Vector3.one,
+            "SpawningManager resets the actor root scale before normal gameplay.");
     }
 
     private static void VerifyHelmet(EnemyController source, SoldierMeshChanger.SoldierStyle style,
