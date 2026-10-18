@@ -45,7 +45,7 @@ internal static class ArmyDeploymentClockTests
         Require(state.PreviewDueSpawns(secondRealTick - 1).Count == 0,
             "A future real-time reservation was admitted using its earlier cooldown timestamp.");
         return 8 + CheckReversedClocks(content.Army, family, large) + BattleRealtimeTests.Run(directory) +
-            ArmyDeploymentRealtimeRoutineTests.Run(directory);
+            ArmyDeploymentRealtimeRoutineTests.Run(directory) + ArmyDeploymentRealtimeStateTests.Run(directory);
     }
 
     private static int CheckReversedClocks(ArmyDeploymentCatalog catalog, ArmyDeploymentFamily family,

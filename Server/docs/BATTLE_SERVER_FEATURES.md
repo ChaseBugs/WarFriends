@@ -22,6 +22,12 @@ by Editor bootstrap success or by retaining Photon only for serialized type comp
 
 ## Dependency-ordered work
 
+The [deployment clock migration](BATTLE_CLOCKS.md) now has a separate real-time
+ArmyDeploymentState path with shared energy/entity preflight and explicit source start/final-wait
+completion events. The state/frame group passes 100 checks and Sickness regression passes 265.
+This remains partial: live MatchEngine scheduling, pause-excluding cooldown accumulation,
+corpse-return phase ordering and normal two-Unity gameplay acceptance still require integration.
+
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same
 self-hosted Backend address. The old URL builder's retired AWS production

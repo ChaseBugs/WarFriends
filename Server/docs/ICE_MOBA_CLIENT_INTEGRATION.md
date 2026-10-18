@@ -53,6 +53,36 @@ would not preserve the existing packet authentication, retries, MTU handling or 
 The reference client also initializes platform services, including recharge support, so it is
 not evidence of a completely external-service-free bootstrap.
 
+### Additional transport and reconnect checks
+
+The follow-up source review confirmed these integration constraints:
+
+- `Assets/Lua/Net/BattleStateTcp.lua` opens a separate TCP connection for battle state.
+  Its connection-failure callback immediately calls `Connect` again. WarFriends should retain
+  its existing authenticated UDP recovery path; copying this callback would introduce an
+  unbounded retry loop without a cancellation deadline or backoff.
+- `BattleTcp.Isconnect` delegates to `NetworkManager.Isconnect`, which checks dictionary
+  membership. The UDP entry is inserted immediately after starting a connection attempt.
+  This is not evidence that admission, scene loading or readiness has completed. Gate input
+  with the authoritative session phase rather than socket existence.
+- `UdpSocketClient.OnReceive` accumulates an eight-byte application header and its payload
+  across RakNet messages. The header carries compression, opcode and payload length. This
+  framing assumes reliable ordered delivery; protobuf by itself supplies none of that delivery
+  behavior. Preserve WarFriends packet authentication, bounded transfers and replay rules.
+- `src/room/room_manager.cpp` in the reference server binds a provisioned player/code to a
+  connection before processing battle commands and replaces an operation's supplied GUID with
+  the bound player GUID. Preserve that identity-binding principle using WarFriends signed
+  grants and authenticated commands rather than importing the reference code format.
+- `Battle.SMSG_BATTLE_LINK` restores protobuf actors/effects/items and queued operations from
+  a frame checkpoint. Apply the same separation between connection and state restoration, but
+  obtain WarFriends state from its authoritative host. Do not import reference frame seeds,
+  client-state voting or result selection as WarFriends gameplay rules.
+
+The dependency inventory was rerun successfully during this follow-up: 1,381 gameplay sources
+and 1,701 serialized files, with the same category totals listed below. This is a static scan;
+neither reference project was launched and no denied-external-network gameplay run was performed
+as part of this follow-up. No Client code, scene, prefab or external reference project was changed.
+
 WarFriends already has `SelfHostedBackendEndpoint`, `SelfHostedBattleClient`, the portable
 `MatchConnection` SDK, scene bridges and presentation adapters. In particular,
 `SelfHostedBattleClient` applies replies through Unity's synchronization context and ignores

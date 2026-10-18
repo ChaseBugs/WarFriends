@@ -1,10 +1,14 @@
 namespace War.BattleServer;
 
 /// <summary>Records a realized unit and its deployment scheduling-clock tick.</summary>
-public sealed record ArmySpawn(int EntityId,int OptionIndex,string UnitId,int Power,ulong Tick,bool IsAir);
+public sealed record ArmySpawn(int EntityId,int OptionIndex,string UnitId,int Power,ulong Tick,bool IsAir)
+{
+    /// <summary>Records an actual real-time iteration; Tick is then the supplied gameplay-frame timestamp.</summary>
+    public float? RealTimeSeconds { get; init; }
+}
 
 /// <summary>Single-writer, host-owned deployment eligibility and 0.3-second spawn schedule.</summary>
-public sealed class ArmyDeploymentState
+public sealed partial class ArmyDeploymentState
 {
     private const int SpawnIntervalTicks = 9;
     private readonly Dictionary<ulong, ArmyDeploymentWave> _activeWaves = [];
@@ -29,12 +33,12 @@ public sealed class ArmyDeploymentState
     /// <summary>Gets the next eligible tick in the pause-excluding cooldown clock.</summary>
     public ulong NextDeployTick { get; private set; }
     public int ActiveCount=>entities.Count;
-    public int PendingCount=>pending.Count;
+    public int PendingCount => checked(pending.Count + RealtimePendingCount);
     internal int PendingRouteDemand(string collection)
         =>pending.Count(item=>!item.Family.IsSoldier && item.Family.BehaviorType!="MechBehaviour" &&
-            ArmySpawnPointSelector.Collection(item.Family.BehaviorType)==collection);
+            ArmySpawnPointSelector.Collection(item.Family.BehaviorType)==collection) + RealtimeRouteDemand(collection);
     internal int PendingRusherDemand
-        =>pending.Count(item=>ArmyRusherPointCatalog.IsRusher(item.Family.BehaviorType));
+        =>pending.Count(item=>ArmyRusherPointCatalog.IsRusher(item.Family.BehaviorType)) + RealtimeRusherDemand;
     public IReadOnlyList<int> OfferedOptions=>Array.AsReadOnly(hand);
 
     /// <summary>The most recently accepted deployment; rejected commands do not replace it.</summary>
@@ -185,6 +189,7 @@ public sealed class ArmyDeploymentState
     /// <summary>Checks the pause-excluding cooldown clock while scheduling on the independent real-time clock.</summary>
     internal string TryDeploy(int optionIndex, ulong cooldownTick, ulong spawnTick)
     {
+        RequireLegacySchedule();
         if (cooldownTick > spawnTick)
         {
             throw new InvalidDataException("Deployment clocks must share an epoch and preserve elapsed-time order.");
@@ -218,7 +223,7 @@ public sealed class ArmyDeploymentState
         {
             return "army-capacity";
         }
-        int pendingPower = checked(pending.Sum(entry => entry.Option.Power / entry.Option.Count));
+        int pendingPower = checked(pending.Sum(entry => entry.Option.Power / entry.Option.Count) + RealtimePendingPower);
         if (option.Power > Energy - pendingPower)
         {
             return "army-energy";
@@ -268,13 +273,26 @@ public sealed class ArmyDeploymentState
     /// <summary>Validates due spawns without consuming energy, reservations or entity identities.</summary>
     internal IReadOnlyList<ArmySpawn> PreviewDueSpawns(ulong tick)
     {
+        RequireLegacySchedule();
+        return PreviewSpawns(pending.TakeWhile(entry => entry.Tick <= tick));
+    }
+
+    private IReadOnlyList<ArmySpawn> PreviewSpawns(
+        IEnumerable<(ulong Tick, ArmyDeploymentFamily Family, ArmyDeploymentOption Option, ulong WaveId)> due)
+    {
         int remainingEnergy = Energy;
         int previewId = nextEntityId;
         var previewReserved = new Dictionary<string, int>(reserved, StringComparer.Ordinal);
         var previewAlive = new Dictionary<string, int>(alive, StringComparer.Ordinal);
         var preview = new List<ArmySpawn>();
-        foreach (var scheduled in pending.TakeWhile(entry => entry.Tick <= tick))
+        foreach (var scheduled in due)
         {
+            if (!_activeWaves.TryGetValue(scheduled.WaveId, out ArmyDeploymentWave? wave) ||
+                wave.OptionIndex != scheduled.Option.Index || wave.UnitId != scheduled.Family.UnitId)
+            {
+                throw new InvalidDataException("Pending army spawn lost its active wave identity.");
+            }
+            wave.ValidateClockShape();
             if (scheduled.Option.Count <= 0 || scheduled.Option.Power <= 0 ||
                 scheduled.Option.Power % scheduled.Option.Count != 0 ||
                 !equipped.Contains(scheduled.Family.UnitId))
@@ -319,13 +337,7 @@ public sealed class ArmyDeploymentState
         {
             var scheduled=pending.Dequeue();
             if(scheduled!=expected)throw new InvalidDataException("Army spawn queue changed during host tick.");
-            int unitPower=scheduled.Option.Power/scheduled.Option.Count;
-            Energy-=unitPower;
-            reserved[scheduled.Family.UnitId]--;
-            alive[scheduled.Family.UnitId]=alive.GetValueOrDefault(scheduled.Family.UnitId)+1;
-            var entity=new ArmySpawn(++nextEntityId,scheduled.Option.Index,scheduled.Family.UnitId,unitPower,scheduled.Tick,scheduled.Family.IsAir);
-            entities.Add(entity.EntityId,entity);spawned.Add(entity);
-            _entityWaves.Add(entity.EntityId, _activeWaves[scheduled.WaveId]);
+            spawned.Add(CommitSpawn(scheduled));
         }
         // SpawningManagerDeathMatch waits once after every unit, including the final unit.
         var completed = _activeWaves.Values.Where(wave => wave.FinishAfterTick < tick)
@@ -336,6 +348,21 @@ public sealed class ArmyDeploymentState
         }
         _completedWaves = Array.AsReadOnly(completed);
         return spawned;
+    }
+
+    private ArmySpawn CommitSpawn(
+        (ulong Tick, ArmyDeploymentFamily Family, ArmyDeploymentOption Option, ulong WaveId) scheduled,
+        float? realTimeSeconds = null)
+    {
+        int unitPower = scheduled.Option.Power / scheduled.Option.Count;
+        Energy -= unitPower;
+        reserved[scheduled.Family.UnitId]--;
+        alive[scheduled.Family.UnitId] = alive.GetValueOrDefault(scheduled.Family.UnitId) + 1;
+        var entity = new ArmySpawn(++nextEntityId, scheduled.Option.Index, scheduled.Family.UnitId,
+            unitPower, scheduled.Tick, scheduled.Family.IsAir) { RealTimeSeconds = realTimeSeconds };
+        entities.Add(entity.EntityId, entity);
+        _entityWaves.Add(entity.EntityId, _activeWaves[scheduled.WaveId]);
+        return entity;
     }
 
     public ArmySpawn? RemoveEntity(int entityId)

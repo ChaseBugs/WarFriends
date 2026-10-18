@@ -40,6 +40,10 @@ public sealed class SicknessSpawnWindow
     public void DeploymentStarted(int fraction, ArmyDeploymentWave wave)
     {
         ValidateEvent(fraction, wave);
+        if (wave.FinishedRealTimeSeconds.HasValue)
+        {
+            throw new InvalidDataException("A completed real-time deployment cannot open a new Sickness window.");
+        }
         if (IsArmed && fraction != _ownerFraction && wave.IsSoldier)
         {
             _activeOptionIndex = wave.OptionIndex;
@@ -50,6 +54,10 @@ public sealed class SicknessSpawnWindow
     public void DeploymentFinished(int fraction, ArmyDeploymentWave wave)
     {
         ValidateEvent(fraction, wave);
+        if (wave.StartedRealTimeSeconds.HasValue && !wave.FinishedRealTimeSeconds.HasValue)
+        {
+            throw new InvalidDataException("A real-time deployment cannot close Sickness before its final wait.");
+        }
         // The Client compares reused ArmyUnitDefinition references, not a unique deployment ID.
         if (IsApplying && fraction != _ownerFraction && wave.OptionIndex == _activeOptionIndex)
         {
@@ -142,12 +150,13 @@ public sealed class SicknessSpawnWindow
     private void ValidateEvent(int fraction, ArmyDeploymentWave wave)
     {
         ValidateFraction(fraction);
-        if (wave == null || wave.Id == 0 || wave.FinishAfterTick <= wave.StartedTick ||
+        if (wave == null || wave.Id == 0 ||
             !_definitions.TryGetValue(wave.OptionIndex, out var definition) ||
             definition.UnitId != wave.UnitId || definition.IsSoldier != wave.IsSoldier)
         {
             throw new InvalidDataException("Sickness spawn event differs from recovered definition authority.");
         }
+        wave.ValidateClockShape();
     }
 
     private static void ValidateFraction(int fraction)

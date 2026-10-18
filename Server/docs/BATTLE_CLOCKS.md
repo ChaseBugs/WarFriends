@@ -51,8 +51,25 @@ The deployment/frame group now passes 75 checks at
 `Server/.local/army-realtime-routine-tests-final.log`, including source hashes for the original
 wait, RadicalRoutine and spawning manager, float equality/next-representable-time boundaries,
 hitches, actual completion versus preview time, invalid inputs and duplicate commits. This
-kernel is not yet wired into ArmyDeploymentState or live MatchEngine scheduling; the legacy
-queue remains active. The full real-time pipeline run below predates this newer kernel.
+kernel now has a separate ArmyDeploymentState real-time path. It preserves energy reservations,
+shared spawn preflight, entity provenance and actual final-wait completion metadata. Preview
+does not commit time or resources. Active legacy and real-time schedules cannot be mixed.
+The live MatchEngine still uses the legacy queue; the state path is an integration prerequisite,
+not proof that paused multiplayer spawning has migrated. The full pipeline run below predates it.
+
+Real-time start/completion events use explicit float timestamps, with legacy tick dates left
+unset (zero). A completion copies the original event and adds the actual completion timestamp;
+it does not mutate the published start. Sickness rejects premature completion and reopening
+with an already completed event, while retaining the recovered persistent definition comparison.
+Simultaneously ready waves use deadline/ID order as explicit deterministic host policy; native
+evidence does not establish general Unity ordering among multiple concurrent source coroutines.
+
+The latest state/routine/frame group passes 100 checks at
+`Server/.local/army-realtime-state-tests.log`. It includes frozen gameplay ticks, delayed frames,
+strict final waits, preview/commit equality, rejected malformed or backward samples, preserved
+Sickness event order, nonmutating energy-preflight failure and exclusive clock schedules.
+The existing Sickness callback/host damage group also passes 265 checks at
+`Server/.local/army-realtime-state-sickness.log` with the changed event validation.
 
 1. Migrate coroutine readiness to raw observations, preserving strict source float readiness
    and beginning each new wait after the actual preceding callback. The existing nominal
@@ -88,5 +105,5 @@ The earlier clock/pool full run passed 263,399 assertions with exit code zero at
 `Server/.local/mortar-clock-and-pool-full.log`. That executable predates the independent
 deployment inputs and this real-time pipeline. Do not substitute it for complete verification
 of those later changes.
-Their new full run is tracked separately at `Server/.local/battle-realtime-full.log` and is
-not yet recorded as passing.
+Their new full run passed 263,365 assertions at `Server/.local/battle-realtime-full.log`.
+It predates the real-time routine and state integration and cannot validate those later changes.
