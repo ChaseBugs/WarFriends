@@ -15,9 +15,9 @@ reconnect acceptance, bounded server-owned reproduction artifacts and operationa
 It does not replace recovered Client rules, authorize client-result voting or add RakNet/MySQL.
 This is design evidence, not a completed feature or new runtime validation.
 The [Unity integration review](ICE_MOBA_CLIENT_INTEGRATION.md) adds source-backed main-thread,
-scene ownership and reconnect patterns plus a repeatable online-provider inventory. Splash still
-contains retired provider initialization/waits, and retained native SDK startup requires mobile
-auditing. Removing external online dependencies is an explicit migration gate, not established
+scene ownership and reconnect patterns plus a repeatable online-provider inventory. Splash's
+retired provider initialization/waits are removed and account boot passes; retained native SDK
+startup requires mobile auditing. Removing external online dependencies is an explicit migration gate, not established
 by Editor bootstrap success or by retaining Photon only for serialized type compatibility.
 
 ## Dependency-ordered work
@@ -28,8 +28,8 @@ self-hosted Backend address. The old URL builder's retired AWS production
 destination is removed; requestId and legacy filenames remain unchanged.
 Process configuration tests and the actual recovered URL-builder/BestHTTP
 `check.php` acknowledgement pass alongside the real battle transport gate.
-Full MainScene account/profile/card/player initialization and normal lobby
-success remain open.
+The bounded MainScene account/player initialization gate passes below; complete rendered lobby
+and normal battle entry success remain open.
 The original Splash-to-MainScene Play Mode observation reproduced and fixed
 retired AWS analytics constructing a missing SQLite provider at startup. Direct
 APK/OBB metadata decoding now restores the original LevelManager's ordered 66
@@ -103,6 +103,12 @@ preserving explosion damage and special speed. The ordinary Rocket group passes 
 the Sickness group passes 216. Normal Unity presentation and authorized SICKNESS activation
 remain open. The [remaining-layout table](SICKNESS_PRIMARY_WEAPONS.md#remaining-ordinary-layouts)
 tracks Engineer, Machinegunner, SciFi and Mortar separately from global spawn categories.
+[Ordinary Mortar setup](ORDINARY_MORTAR.md) now captures separate contact/explosion fields,
+speed and perk-scaled reciprocal stop time before real deployment observers. Forty-nine focused
+checks cover admitted upgrade rows, friendly/opposing Sickness callbacks, unchanged explosion
+and timing, final callback disconnection and death cleanup. Mortar navigation, construction,
+natural firing/flights/hits and normal Unity integration remain open; setup proof does not close them.
+The full default Battle suite passed 247,970 assertions after this change, including real two-peer UDP.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

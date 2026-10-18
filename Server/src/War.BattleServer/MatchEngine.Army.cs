@@ -4635,6 +4635,7 @@ public sealed partial class MatchEngine
         sniperCriticalProbabilities.Remove(entityKey);
         armySpeed.Remove(entityKey);
         armyShots.Remove(entityKey);
+        _ordinaryMortarWeapons.Remove(entityKey);
         armyVehicleShots.Remove(entityKey);
         infantryAnimations.Remove(entityKey);
         if (row.UnitId == "ID_UNIT-ROCKETSOLDIER")

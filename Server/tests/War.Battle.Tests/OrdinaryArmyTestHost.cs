@@ -75,11 +75,13 @@ internal static class OrdinaryArmyTestHost
             EquippedArmyUnitIds = [source.UnitId], ArmyNormalUpgradeIndexes = [upgrades.Normal],
             ArmySpecialUpgradeIndexes = [upgrades.Special], ArmyEliteUpgradeIndexes = [upgrades.Elite],
             ArmyHealthFactors = [new ArmyHealthFactors(1f, 1f)], ArmyDamageScales = [upgrades.DamageScale],
-            ArmySpeedCoefficients = [1f], ArmyAccuracyCoefficients = [1f]
+            ArmySpeedCoefficients = [1f], ArmyAccuracyCoefficients = [1f],
+            ArmyShotSpeedCoefficients = [upgrades.ShotSpeedCoefficient]
         };
     }
 
-    internal sealed record UpgradeSelection(int Normal, int Special, int Elite, float DamageScale = 1f);
+    internal sealed record UpgradeSelection(int Normal, int Special, int Elite, float DamageScale = 1f,
+        float ShotSpeedCoefficient = 1f);
 
     private sealed record Setup(string UnitId, string Scene, Func<int, int>? ArmyChoice, UpgradeSelection Upgrades);
 

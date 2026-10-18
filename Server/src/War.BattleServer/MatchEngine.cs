@@ -1578,6 +1578,10 @@ public sealed partial class MatchEngine : IMatchRuntime
                         {
                             InitializeOrdinaryRocket(entityKey);
                         }
+                        if (spawned.UnitId == "ID_UNIT-MORTAR")
+                        {
+                            InitializeOrdinaryMortar(entityKey);
+                        }
                         ApplyActiveArmyHealthBuffs(entityKey);
                         var vitality=armyVitality.GetValueOrDefault(entityKey);
                         if(vitality!=null)

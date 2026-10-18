@@ -814,7 +814,8 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     ["--assaulter-aim-only"] or ["--assaulter-preparation-only"] or ["--assaulter-volley-only"] or
     ["--gunslinger-navigation-only"] or ["--gunslinger-stand-only"] or ["--gunslinger-targets-only"] or
     ["--gunslinger-aim-only"] or ["--gunslinger-shooting-only"] or ["--gunslinger-points-only"] or
-    ["--gunslinger-holster-only"] or ["--infantry-weapons-only"] or ["--ordinary-rocket-only"])
+    ["--gunslinger-holster-only"] or ["--infantry-weapons-only"] or ["--ordinary-rocket-only"] or
+    ["--ordinary-mortar-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);
     while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
@@ -824,6 +825,12 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (directory == null)
     {
         throw new FileNotFoundException("Recovered combat content is absent.");
+    }
+    if (args[0] == "--ordinary-mortar-only")
+    {
+        int mortarChecks = OrdinaryMortarTests.Run(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {mortarChecks} ordinary Mortar setup checks");
+        return;
     }
     if (args[0] == "--ordinary-rocket-only")
     {
@@ -929,6 +936,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
         sicknessChecks += SicknessPrimaryWeaponTests.Run(Path.Combine(directory.FullName, "content"));
         sicknessChecks += SicknessOrdinaryGrenadierTests.Run(Path.Combine(directory.FullName, "content"));
         sicknessChecks += SicknessOrdinaryRocketTests.Run(Path.Combine(directory.FullName, "content"));
+        sicknessChecks += OrdinaryMortarTests.Run(Path.Combine(directory.FullName, "content"));
         sicknessChecks += ArmySpawnCallbackTests.Run();
         sicknessChecks += GrenadierPrimaryWeaponTests.Run(Path.Combine(directory.FullName, "content"));
         Console.WriteLine($"PASS: {sicknessChecks} Sickness callback and damage calculation checks");
@@ -3662,6 +3670,7 @@ checks += SicknessHostDeploymentTests.Run(Path.Combine(contentRoot.FullName, "co
 checks += SicknessPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessOrdinaryGrenadierTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += OrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += OrdinaryMortarTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessOrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerStandTimingTests.Run(Path.Combine(contentRoot.FullName, "content"));
