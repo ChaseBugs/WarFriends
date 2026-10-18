@@ -42,8 +42,10 @@ corpse-return ordering are separate gates; this does not complete the whole depl
 
 [Automatic deployment](CLIENT_AUTO_DEPLOY.md) remains Client-owned intent generation. The bound
 self-hosted manager now retains full/semi mode, gates progress during pending/disconnected/paused
-sessions and discards stale preselected offers. Normal gameplay still needs a caller for the
-existing BindArmyManager API, plus rendered timing and ordinary match acceptance. Do not add
+sessions and discards stale preselected offers. Normal PvP StartGame now awaits the initial army
+binding through the managed loading scope; scene release and session Close share cleanup, and
+generation checks reject responses from retired bindings. Rendered timing and ordinary match
+acceptance remain open. Do not add
 a second server auto-spawn loop or mark this feature complete from the component audit.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered

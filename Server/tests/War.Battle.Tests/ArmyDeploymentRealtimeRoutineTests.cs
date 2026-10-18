@@ -9,7 +9,7 @@ internal static class ArmyDeploymentRealtimeRoutineTests
     private const float StartedSeconds = 2f;
     private const float HitchSeconds = 10f;
     private const string WaitSourceDigest = "4ce840bfc00c216677a27f6f951227424d4e223c44a17d3525a3ba924a0137eb";
-    private const string ManagerSourceDigest = "a7dffea87c5a66126ab11dbe5ff6bd2d903ca2695661484a3bb1883a19307e20";
+    private const string ManagerSourceDigest = "c834664a315867ecb1b1ea3fd53dba7d49cbe8e40706ebae7de55083231204b0";
     private const string WrapperSourceDigest = "4108b79f7f6b250be727bb154f2045b14f02698db0cba66825aa95f366322499";
 
     internal static int Run(string directory)

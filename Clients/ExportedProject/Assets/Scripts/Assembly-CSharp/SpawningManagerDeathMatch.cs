@@ -1028,8 +1028,9 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	{
 		if (mSelfHosted != null)
 		{
-			mSelfHosted.ArmyOffersReceived -= ApplySelfHostedArmy;
-			mSelfHosted = null;
+			SelfHostedBattleClient owner = mSelfHosted;
+			owner.UnbindArmyManager(this);
+			UnbindSelfHosted(owner);
 		}
 		base.OnDestroy();
 	}

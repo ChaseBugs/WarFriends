@@ -39,6 +39,8 @@ public abstract class GameControllerPVP : GameControllerOnline
 		{
 			SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
 			if (selfHosted == null) throw new System.InvalidOperationException("Self-hosted scene adapter is missing.");
+			yield return BattleResourceLoadScope.StartNested(this,
+				selfHosted.BindArmyManagerRoutine(Singleton<SpawningManagerDeathMatch>.instance));
 			selfHosted.ActivateDeathMatchScene(base.mMainPlayerController, GameControllerOnline.mOtherPlayerInstance);
 		}
 		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<GameStartScreen>.instance);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,6 +80,7 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
     private string matchId;
     private string manifestHash;
     private SpawningManagerDeathMatch armyManager;
+    private ulong _armyBindingGeneration;
     private SelfHostedDeathMatchBridge deathMatchBridge;
     private ScoreManager _scoreManager;
     private MissionsManager _missionManager;
@@ -345,17 +347,76 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
     /// match. The scene owner must call this after Connect and before play.</summary>
     public async Task BindArmyManager(SpawningManagerDeathMatch manager)
     {
-        if (!IsConnected || manager == null || armyManager != null)
+        if (!IsConnected || connection == null || manager == null || armyManager != null)
+        {
             throw new InvalidOperationException("Connect and bind one army manager per match.");
+        }
+        var active = connection;
+        CancellationToken cancellation = lifetime.Token;
+        ulong generation = checked(_armyBindingGeneration + 1);
         manager.BindSelfHosted(this);
         armyManager = manager;
-        try { await RefreshArmy(); }
+        _armyBindingGeneration = generation;
+        try
+        {
+            MatchArmyBatch batch = await active.PollArmyAsync(cancellation);
+            if (!IsConnected || active != connection || armyManager != manager ||
+                generation != _armyBindingGeneration)
+            {
+                throw new OperationCanceledException("Army scene ownership changed during binding.");
+            }
+            if (ArmyOffersReceived != null)
+            {
+                ArmyOffersReceived(batch.Clone());
+            }
+        }
         catch
         {
-            manager.UnbindSelfHosted(this);
-            armyManager = null;
+            if (active == connection && armyManager == manager && generation == _armyBindingGeneration)
+            {
+                UnbindArmyManager(manager);
+            }
             throw;
         }
+    }
+
+    /// <summary>Includes initial army readiness in the existing managed battle loading scope.</summary>
+    public IEnumerator BindArmyManagerRoutine(SpawningManagerDeathMatch manager)
+    {
+        var active = connection;
+        bool wasUnbound = armyManager == null;
+        Task binding = BindArmyManager(manager);
+        ulong generation = _armyBindingGeneration;
+        bool completed = false;
+        try
+        {
+            while (!binding.IsCompleted)
+            {
+                yield return null;
+            }
+            binding.GetAwaiter().GetResult();
+            completed = true;
+        }
+        finally
+        {
+            if (!completed && wasUnbound && active == connection && generation == _armyBindingGeneration)
+            {
+                UnbindArmyManager(manager);
+            }
+        }
+    }
+
+    /// <summary>Releases only the scene manager that still owns this session binding.</summary>
+    public void UnbindArmyManager(SpawningManagerDeathMatch manager)
+    {
+        if (armyManager != manager || manager == null)
+        {
+            return;
+        }
+        ulong generation = checked(_armyBindingGeneration + 1);
+        manager.UnbindSelfHosted(this);
+        armyManager = null;
+        _armyBindingGeneration = generation;
     }
 
     /// <summary>Bind a rig whose animation updates are owned by the self-hosted
@@ -1604,7 +1665,7 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         reconnectAttempts = 0;
         forfeitCommandPending = false;
         forfeitRecoveryActive = false;
-        if (armyManager != null) { armyManager.UnbindSelfHosted(this); armyManager = null; }
+        if (armyManager != null) UnbindArmyManager(armyManager);
         if (lifetime != null) { lifetime.Cancel(); lifetime.Dispose(); lifetime = null; }
         if (roomLifecycle != null)
         {

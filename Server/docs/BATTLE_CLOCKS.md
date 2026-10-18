@@ -148,3 +148,9 @@ deployment inputs and this real-time pipeline. Do not substitute it for complete
 of those later changes.
 Their new full run passed 263,365 assertions at `Server/.local/battle-realtime-full.log`.
 It predates the real-time routine and state integration and cannot validate those later changes.
+The later state integration run passed 263,419 assertions with exit code zero at
+`Server/.local/army-realtime-state-full.log`. It predates the live scheduling consumer migration.
+Subsequent runs at `live-army-clock-full.log` and `client-auto-deploy-full.log` stopped at the
+source-fingerprint guard after deliberate concurrent Client edits; neither is a full passing
+regression. The reviewed current fingerprint and fresh focused proof are recorded in
+[automatic deployment](CLIENT_AUTO_DEPLOY.md).

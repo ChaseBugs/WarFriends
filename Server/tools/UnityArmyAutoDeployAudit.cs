@@ -43,9 +43,10 @@ public static class UnityArmyAutoDeployAudit
             Require(!CanAdvance(army), "An empty host hand permits automatic input.");
             Require(!(bool)GetField(army, "mHasPregeneratedArmy") && GetField(army, "mPregenerated") == null,
                 "A removed host offer retained a stale preselected unit.");
+            VerifyOwnership(client, army, owner);
             File.WriteAllText(Path.Combine(Application.dataPath, "../army-auto-deploy-unity-audit.json"),
-                "{\"checks\":8,\"scope\":\"compiled Unity auto-deploy gate and stale candidate lifecycle\"}\n");
-            Debug.Log("PASS: 8 Unity auto-deploy gate and candidate checks; no rendered battle acceptance.");
+                "{\"checks\":12,\"scope\":\"compiled Unity auto-deploy gate and army scene ownership\"}\n");
+            Debug.Log("PASS: 12 Unity auto-deploy and scene ownership checks; no rendered battle acceptance.");
             EditorApplication.Exit(0);
         }
         catch (Exception failure)
@@ -60,6 +61,32 @@ public static class UnityArmyAutoDeployAudit
     }
 
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    private static void VerifyOwnership(SelfHostedBattleClient client, SpawningManagerDeathMatch army, GameObject owner)
+    {
+        SpawningManagerDeathMatch other = owner.AddComponent<SpawningManagerDeathMatch>();
+        SetField(client, "armyManager", army);
+        client.UnbindArmyManager(other);
+        Require(GetField(client, "armyManager") == army, "A foreign scene released the active army manager.");
+        var duplicate = client.BindArmyManagerRoutine(army);
+        bool rejected = false;
+        try
+        {
+            duplicate.MoveNext();
+        }
+        catch (InvalidOperationException)
+        {
+            rejected = true;
+        }
+        Require(rejected && GetField(client, "armyManager") == army,
+            "A failed duplicate loader released the existing army owner.");
+        client.UnbindArmyManager(army);
+        Require(GetField(client, "armyManager") == null && GetField(army, "mSelfHosted") == null,
+            "Scene release retained the client subscription or manager owner.");
+        client.UnbindArmyManager(army);
+        Require((ulong)GetField(client, "_armyBindingGeneration") == 1,
+            "Scene release failed to advance ownership once or replay advanced it again.");
+    }
 
     private static bool CanAdvance(SpawningManagerDeathMatch army)
     {

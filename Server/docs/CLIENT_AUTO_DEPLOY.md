@@ -27,7 +27,7 @@ because the Client's progress reached one. No new protobuf auto-mode command is 
 It does not run the complete Update flow, source constants, rendered UI, Android or two peers.
 The disposable package manifest must be restored after the owned Editor exits; use `-noUpm`
 with this installed legacy Editor to avoid its early package-manager launch failure.
-The audit passed eight checks with Editor exit code zero at
+The initial audit passed eight checks with Editor exit code zero at
 `Server/.local/auto-deploy-unity.log`; the report is
 `Server/.local/coop-geometry-project/army-auto-deploy-unity-audit.json`. The restored manifest
 matches its backup SHA-256 `7212bb6d4ae5db21b4fe5d10a4a0666d1f2c63618d8277b692254dd1c2c815a3`.
@@ -38,10 +38,26 @@ self-hosted mode preservation, dispatch gates and candidate lifecycle, not the o
 
 ## Remaining integration and acceptance
 
-Source search currently finds the `SelfHostedBattleClient.BindArmyManager` API but no normal
-gameplay caller. This is an explicit remaining integration requirement, not a working normal
-battle proof. Wire manager ownership into the normal scene/session lifecycle, with unbinding
-on exit and late-response isolation, before declaring this feature playable.
+`GameControllerPVP.StartGame` now waits for BindArmyManagerRoutine through the existing
+BattleResourceLoadScope before activating DeathMatch scene presentation. Initial offers are
+fetched under the connected session and bound manager's generation. A replaced session,
+released scene or newer binding rejects the late result before publishing offers. Generation
+identity also protects reuse of the same manager instance in the same connection.
+
+Cancelling the managed loading iterator releases only the binding it acquired. A failed
+duplicate loader cannot detach an already bound owner. Session Close and manager destruction
+use the same explicit UnbindArmyManager path; foreign and repeated releases are harmless.
+GameStarted still runs after the managed start coroutine, preserving the original source
+mode initialization order. Compilation and component ownership checks are not proof of normal
+rendered battle startup or of an actual delayed network response race.
+
+The updated component audit passes twelve checks with Editor exit code zero at
+`Server/.local/army-binding-unity.log`, including foreign release, rejected duplicate loading,
+subscription cleanup and exactly-once ownership generation advancement. The Server source/time
+group passes 130 checks at `Server/.local/army-scene-binding-tests.log`. The current manager
+fingerprint is `c834664a315867ecb1b1ea3fd53dba7d49cbe8e40706ebae7de55083231204b0`.
+The original spawn coroutine remains unchanged. Normal loading failure recovery, two-Client
+gameplay, delayed network responses and Android still require acceptance beyond this audit.
 
 Then exercise both source modes through normal Unity controls: preselection at 0.7, dispatch
 at one, insufficient energy, stale offer replacement, outstanding command, reconnect, resume,
