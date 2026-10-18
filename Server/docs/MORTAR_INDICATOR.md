@@ -41,13 +41,58 @@ byte-for-byte. Local logs are `Server/.local/mortar-indicator-tests-final.log` a
   on the fifth subsequent boundary; it does not run five complete forward/backward cycles.
 
 The sampler rejects non-finite or out-of-range normalized factors. Native setup uses a shrink
-duration of `stopTime - 0.3`, then a 0.1-second blink lane. Absolute frame deadlines, strict
-boundary behavior, reset/cancellation and nonpositive shrink durations still need real Update
-observations before implementing the lifecycle. Sampling alone cannot prove those behaviors.
+duration of `stopTime - 0.3`, then a 0.1-second blink lane. The frame observation below now
+checks lifecycle boundaries for five fixed-rate scenarios. Sampling alone cannot prove them.
+
+## Native frame lifecycle
+
+`UnityMortarIndicatorFrameExport` runs the original setup and actual tween Update methods in
+Play Mode. Inactive local/opponent shells retain Allies/Enemies fractions; the inactive weapon
+uses a real `MissileSetup` component. These shells never activate recovered combat/provider
+entrypoints. The earlier method audit also now uses AddComponent, eliminating its invalid
+MonoBehaviour construction without changing the existing pinned sample report.
+
+Five scenarios record 241 frames each at 30 Hz. First fire occurs at tick 5 and repeat fire at
+105; the probe executes before the source tweens. This is isolated warning timing, not the
+complete EnemyController/weapon/scene update order or variable-frame gameplay proof.
+
+| Stop seconds | Shrink completion ticks | Indicator hidden ticks |
+| --- | --- | --- |
+| 2 | 56, 157 | 70, 172 |
+| Native `1 / 0.43` | 65, 166 | 79, 181 |
+| 0.3 | None | None through tick 240 |
+| 0.2 | None | None through tick 240 |
+| 4 | 216; repeat replaces the first unfinished shrink | 230 |
+
+Reactivation misses the same-frame normal Update that the first activation received through
+Start. Likewise, the first enabled color tween advances through Start immediately; later blink
+enables wait one frame. At native base speed, the first warning ends 74 frames after fire and
+the reused warning ends 76 frames after fire. Strict factor comparisons, stored float addition
+and PingPong reflection also matter; a rounded total duration loses these observations.
+
+At `stopTime <= 0.3`, TweenScale samples its end and disables itself before Mortar attaches the
+completion callback. No blink starts. This persistent warning is an observed source edge case,
+not a new expiry rule. Do not silently shorten it. Production session cleanup must still own
+every visual; admission/content policy for that domain remains a separate decision.
+
+`War.Shared.MortarIndicatorClock` reproduces these rules independently of Unity. It preserves
+scale on positive-duration restarts, replaces an in-progress warning and retains source
+activation history. Visibility does not depend on current projectile membership. Stop time
+must be finite, positive and no greater than 1,800 seconds; frame delta must be finite from
+zero through one second. Damaged inputs are rejected rather than clamped.
+
+The focused executable passes 8,353 assertions: native histories, exact callback frames,
+per-frame scale/alpha/factors/phase flags, source/probe digests and invalid inputs. The complete
+1,205-frame report is `content/mortar-indicator-frames-unity-reference.json.gz`, with SHA-256
+`9c58d7f96c0b7d7e3cb101f5eb0954313a14b37e326e13ac5265ee011bdfcc08`.
+Its size is 36,485 compressed and 593,449 expanded bytes. Local evidence is
+`Server/.local/mortar-indicator-frames-unity-final.log`,
+`Server/.local/mortar-indicator-clock-tests.log` and
+`Server/.local/mortar-indicator-component-audit.log`. The private manifest was restored afterward.
 
 ## Remaining production integration
 
-The sampler is not connected to Unity presentation yet. The installed Unity SDK remains at the
+The sampler and lifecycle clock are not connected to Unity presentation yet. The installed SDK remains at the
 previous wire/weapon-pose checkpoint; this stage changes no active Client source, scene or prefab.
 
 The host already freezes `MortarMissileLaunch` target, launch tick, fake identity and weapon
@@ -62,7 +107,7 @@ expired shot replay must not restart a warning. The original weapon reuses one i
 weapon and reparents it to the world, so soldier removal and repeated-shot ownership need
 explicit acceptance tests. Scene/session cleanup must remove any remaining owned copies.
 
-Required gates include real/fake opposing warnings, allied suppression, native frame-by-frame
+Required gates include real/fake opposing warnings, allied suppression, normal combat frame
 timing, late receipt, reconnect, duplicate events, early impact, shooter death, repeat shots,
 terminal/session cleanup, packet capacity, normal two-Unity gameplay and Android rendering.
 These remain open; neither the sampler nor the native method audit completes this feature.

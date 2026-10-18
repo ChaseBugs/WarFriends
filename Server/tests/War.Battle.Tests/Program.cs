@@ -830,6 +830,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (args[0] == "--mortar-indicator-only")
     {
         int indicatorChecks = MortarIndicatorTweenTests.Run(Path.Combine(directory.FullName, "content"));
+        indicatorChecks += MortarIndicatorClockTests.Run(Path.Combine(directory.FullName, "content"));
         Console.WriteLine($"PASS: {indicatorChecks} native Mortar indicator tween checks");
         return;
     }
@@ -3719,6 +3720,7 @@ checks += OrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"))
 checks += MortarMissileFlightTests.Run();
 checks += MortarWeaponPoseProjectionTests.Run();
 checks += MortarIndicatorTweenTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MortarIndicatorClockTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarAccumulatedClockReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleAbortReasonCoverageTests.Run(contentRoot.FullName);
 checks += MortarDetachedWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));

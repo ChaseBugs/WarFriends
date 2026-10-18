@@ -57,7 +57,8 @@ public static class UnityMortarIndicatorAudit
 
     private static void WriteObservation(Mortar mortar, GameObject world, PlayerController player)
     {
-        var setup = new MissileSetup { stopTime = StopSeconds };
+        var setup = mortar.gameObject.AddComponent<MissileSetup>();
+        setup.stopTime = StopSeconds;
         var target = new Vector3(3f, 0.24f, -7f);
         InvokeSetup(mortar, setup, target);
         Require(mortar.indicator.activeSelf && mortar.indicator.transform.parent == world.transform,

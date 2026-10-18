@@ -345,3 +345,10 @@ Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/TweenRotationSpecial.cs t
 Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/UITweener.cs text eol=crlf
 Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/TweenScale.cs text eol=crlf
 Clients/ExportedProject/Assets/Plugins/Assembly-CSharp-firstpass/TweenColorTk2d.cs text eol=crlf
+
+# Source warning lifecycle, including first/repeated activation frame boundaries.
+Server/content/mortar-indicator-frames-unity-reference.json.gz -text
+Server/tools/UnityMortarIndicatorProbe.cs text eol=lf
+Server/tools/UnityMortarIndicatorFrameExport.cs text eol=lf
+Server/src/War.Shared/MortarIndicatorClock.cs text eol=lf
+Server/tests/War.Battle.Tests/MortarIndicatorClockTests.cs text eol=lf
