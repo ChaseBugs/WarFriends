@@ -122,3 +122,26 @@ Its use in ordinary MatchEngine initialization, attack/navigation, damage and pr
 Verification: the rebuilt `--infantry-weapons-only` executable passes 41 checks, including the
 existing real card lifecycle and new ordinary composition cases. Full-suite and normal Unity match
 verification were not rerun for this composition-only increment.
+
+## Ordinary spawn binding
+
+Ordinary Grenadier deployment now invokes `InitializeOrdinaryGrenadier` through the normal
+stationary-combat initialization hook. It resolves the actor's admitted owner and equipment index,
+requires composed pistol damage/shot authority, and stores the ordinary grenade damage/fuse.
+The recovered GrenadeEnemy throw shape is shared with the card; no card entity, card interpolation
+or fabricated owner level is introduced. Ordinary shot composition now explicitly includes
+`SoldierBehaviourGrennader`, absent from the older serialized BaseShot subset.
+
+Confirmed ordinary death removes the grenade setup and damage state. The new deployment fixture
+uses normal DeployArmy commands and three admitted tuples: normal zero, normal 39 plus special 101,
+and normal 39 plus special 126 and Elite 127, all with a trusted 1.5 damage scale. It checks the
+non-card actor identity, stored upgrade composition and death cleanup.
+
+This checkpoint binds ordinary spawn authority only. The card-only Corner navigation/attack
+conditions, launch paths, ordinary sickness handling and weapon-mask/presenter projection still
+require migration. An initialized ordinary Grenadier does not yet move or fire through this path;
+no ordinary combat completion or two-Client gameplay proof is claimed.
+
+This spawn checkpoint passes 50 focused authority/protobuf/composition checks, plus the existing
+23 actual card damage and 25 moving acquisition regressions. Full-suite and normal Unity gameplay
+verification were not rerun.

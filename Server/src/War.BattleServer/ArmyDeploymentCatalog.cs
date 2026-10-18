@@ -224,14 +224,14 @@ public sealed partial class ArmyDeploymentCatalog
             ? ComposeCardRocketRuntime(damage)
             : null;
         ArmyCardGrenadierRuntime? grenadier = source.UnitId == "ID_UNIT-GRENADIER"
-            ? ComposeCardGrenadierRuntime()
+            ? ComposeGrenadierRuntime()
             : null;
         return new ArmyCardBaseStats(source, progress,
             new ArmyBaseCombatStats(health, damage), shot, grenade, drone,
             rocket, grenadier);
     }
 
-    private ArmyCardGrenadierRuntime ComposeCardGrenadierRuntime()
+    internal ArmyCardGrenadierRuntime ComposeGrenadierRuntime(float fuseSeconds = 3f)
     {
         // SoldierBehaviourGrennader.ApplyWeaponsSetup overrides the prefab's
         // zero-second fuse. SpawnByCard has no special upgrade, so its normal
@@ -239,9 +239,10 @@ public sealed partial class ArmyDeploymentCatalog
         // the recovered GrenadeEnemy prefab.
         float behindShield = PlayerDamagePolicy(
             "ID_UNIT-GRENADIER").BehindShieldRatio;
-        if (!float.IsFinite(behindShield) || behindShield < 0)
-            throw new InvalidDataException("Grenadier card shield damage is invalid.");
-        return new ArmyCardGrenadierRuntime(3f, 45f, 0f, 0.9f, 1.2f,
+        if (!float.IsFinite(behindShield) || behindShield < 0 ||
+            !float.IsFinite(fuseSeconds) || fuseSeconds < 0f || fuseSeconds > 3f)
+            throw new InvalidDataException("Grenadier weapon fuse or shield damage is invalid.");
+        return new ArmyCardGrenadierRuntime(fuseSeconds, 45f, 0f, 0.9f, 1.2f,
             behindShield, 0.4f);
     }
 

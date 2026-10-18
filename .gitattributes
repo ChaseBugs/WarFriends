@@ -277,3 +277,6 @@ Server/src/War.BattleServer/GrenadierWeaponState.cs text eol=lf
 
 Server/src/War.BattleServer/ArmyDeploymentCatalog.Grenadier.cs text eol=lf
 Server/tests/War.Battle.Tests/OrdinaryGrenadierCompositionTests.cs text eol=lf
+
+Server/src/War.BattleServer/MatchEngine.OrdinaryGrenadier.cs text eol=lf
+Server/tests/War.Battle.Tests/OrdinaryGrenadierSpawnTests.cs text eol=lf

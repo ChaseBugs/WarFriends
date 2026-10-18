@@ -133,7 +133,8 @@ switching and normal two-client rendering/recovery remain required.
 The card path now uses a shared `GrenadierWeaponState` lifecycle with independent return callbacks;
 ordinary spawn/combat still needs the source-backed integration sequence in the authority document.
 Ordinary grenade damage/fuse composition now has a dedicated source-lane API and seventeen checks;
-its attachment to actual ordinary spawn, navigation, attack and presentation remains open. The source Grenadier
+its attachment to ordinary spawn is now implemented and exercised through normal deployment commands.
+Navigation, attack/launch, ordinary sickness and dynamic presentation remain open. The source Grenadier
 uses a static PistolEnemy at index zero and the selected grenade model at index one.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove

@@ -2240,9 +2240,10 @@ public sealed partial class MatchEngine
         if(owner.ArmySpeedCoefficients is { } speedCoefficients)
             armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index],
                 owner.ArmyNormalUpgradeIndexes[index],special,elite));
-        // Assaulter and Gunslinger have recovered upgrade shot lanes even though the older
+        // Assaulter, Gunslinger and Grenadier have recovered upgrade shot lanes even though the older
         // serialized base-shot artifact only included the other shooter families.
-        if(family.BaseShot!=null || family.BehaviorType is "SoldierBehaviourAssaulter" or "SoldierBehaviourGunslinger")
+        if(family.BaseShot!=null || family.BehaviorType is "SoldierBehaviourAssaulter" or
+            "SoldierBehaviourGunslinger" or "SoldierBehaviourGrennader")
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));
@@ -3287,6 +3288,11 @@ public sealed partial class MatchEngine
 
     private void InitializeStationaryArmyCombat(ulong entityKey,string unitId)
     {
+        if (unitId == "ID_UNIT-GRENADIER")
+        {
+            InitializeOrdinaryGrenadier(entityKey);
+            return;
+        }
         if (unitId == "ID_UNIT-GUNSLINGER")
         {
             InitializeGunslingerNavigation(entityKey);
@@ -4631,6 +4637,11 @@ public sealed partial class MatchEngine
         armyShots.Remove(entityKey);
         armyVehicleShots.Remove(entityKey);
         infantryAnimations.Remove(entityKey);
+        if (row.UnitId == "ID_UNIT-GRENADIER")
+        {
+            cardGrenadierThrows.Remove(entityKey);
+            _cardGrenadierDamage.Remove(entityKey);
+        }
         if (row.UnitId == "ID_UNIT-GUNSLINGER")
         {
             RemoveGunslingerNavigation(entityKey);
