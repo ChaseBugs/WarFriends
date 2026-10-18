@@ -77,7 +77,9 @@ public static class SelfHostedInfantryVisualFactory
                 throw new InvalidOperationException("Recovered infantry animation hierarchy is absent.");
             }
 
-            return new SelfHostedInfantryVisual(root, copies[animation.transform].gameObject, body, weaponRoot);
+            var visual = new SelfHostedInfantryVisual(root, copies[animation.transform].gameObject, body, weaponRoot);
+            visual.BindSourceTransforms(copies);
+            return visual;
         }
         catch
         {

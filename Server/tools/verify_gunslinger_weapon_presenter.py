@@ -22,6 +22,7 @@ SOURCES = {
         "SelfHostedGunslingerWeaponAttachment", "SelfHostedInfantryWeaponAppearance", "SelfHostedVisualHierarchy",
         "SelfHostedInfantryVisualFactory", "SelfHostedInfantryVisual", "SelfHostedInfantryPresenter",
         "SelfHostedRiflePoseRenderer", "SelfHostedInfantryUpgradeSelection", "FakeRigidBodySwapper",
+        "SelfHostedInfantrySkinAppearance",
         "SoldierBehaviour", "UpgradeSlotsBaseSoldier",
         "UpgradeSlotsGunslicer", "SoldierParts", "SpawningManager",
     ]

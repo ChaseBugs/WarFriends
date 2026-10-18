@@ -99,7 +99,7 @@ source spawn/arrival/one-second-after-final-shot state through protobuf field 45
 SDK, with native coroutine timing and live lifecycle checks.
 [Weapon presentation](GUNSLINGER_WEAPON_PRESENTATION.md) now selects source model 25 and binds its
 snapPoint to the copied hand/holster sockets, with native source-method and decoded-roster checks.
-Moving-victim/native blend proof, body/team textures and normal battle-controller integration remain open.
+Moving-victim/native blend proof, card appearance and normal battle-controller integration remain open.
 For the remaining ordinary upgrade appearance, `BattlePlayerView.units` already carries the owning
 player's source ID, normal/special/Elite indexes and tier. `PlayerProperties.CreateFromBattleView`
 maps those indexes into recovered `UnitUpgrades`. The next presentation binding must match each
@@ -108,11 +108,15 @@ entity's `owner_player_id` to that validated grant snapshot and resolve its fami
 the local player's upgrades, a fabricated zero level or a new client-authored upgrade command.
 The PvP bridge now binds this immutable owner selection before roster subscription, and ordinary
 Assaulter creation uses it to select the recovered normal/Elite weapon model. Missing equipment,
-unknown owners and conflicting fractions reject actor creation. This does not yet apply body or
-helmet upgrade visuals, other families' weapon lanes, or complete normal battle execution.
+unknown owners and conflicting fractions reject actor creation. Other families' weapon lanes and
+complete normal battle execution remain open.
 `SoldierMeshChanger.SetSoldierVisual` then selects blue/red textures by local ownership and applies
-the corresponding source attachments and MatCap. Body and helmet texture selection remains required;
-the source-constant Gunslinger weapon guard does not complete this appearance path.
+the corresponding source attachments and MatCap. The subsequent
+[ordinary team-skin integration](INFANTRY_TEAM_SKINS.md) now connects those selectors to cloned body
+and helmet materials plus script-free upgrade attachments. It passes 1,223 checks over 128 source
+actors and seventeen owner/presenter checks. Every upgrade threshold, card skins and rendered
+normal two-client battle parity remain open; the source-constant Gunslinger weapon guard alone
+does not complete this appearance path.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove
 two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host

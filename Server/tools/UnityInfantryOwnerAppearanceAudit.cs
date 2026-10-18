@@ -35,6 +35,9 @@ public static class UnityInfantryOwnerAppearanceAudit
             SelfHostedInfantryPresenter presenter = root.AddComponent<SelfHostedInfantryPresenter>();
             presenter.Configure(pool.enemy, pool.parachute, manager, client);
             presenter.BindPlayerAppearances(players);
+            Texture2D matCap = scene.GetRootGameObjects()
+                .SelectMany(item => item.GetComponentsInChildren<MatCapTextures>(true)).Single().menuMatCapTexture;
+            presenter.BindTeamAppearance(FirstPlayerId, matCap);
             VerifyPresenter(presenter, family, eliteLevel);
             Debug.Log("PASS: " + _checks + " owner-bound infantry appearance checks; no full gameplay proof.");
             EditorApplication.Exit(0);
@@ -108,6 +111,7 @@ public static class UnityInfantryOwnerAppearanceAudit
             CreateActor(FirstPlayerId, 1, 7101), CreateActor(SecondPlayerId, 2, 7102)
         };
         presenter.Apply(actors);
+        var ownedMaterials = new System.Collections.Generic.List<Material>();
         for (int index = 0; index < actors.Length; index++)
         {
             var upgrades = new UpgradeSlots.UnitUpgrades(1f)
@@ -124,11 +128,19 @@ public static class UnityInfantryOwnerAppearanceAudit
                 .Any(filter => filter.sharedMesh == mesh) &&
                 actor.GetComponentsInChildren<MonoBehaviour>(true).Length == 0,
                 "Production actor must display its owner's selected source weapon without gameplay components.");
+            TechnologyVisualDefinition body = family.upgradeSlots.GetVisuals(upgrades)[0];
+            string texturePath = index == 0 ? body.materialTextrePathBlue : body.materialTextrePathRed;
+            Material bodyMaterial = actor.GetComponentInChildren<SkinnedMeshRenderer>(true).sharedMaterial;
+            Require(bodyMaterial.mainTexture == Resources.Load<Texture2D>(texturePath),
+                "Production actor must use the recovered local/opponent body texture for its own upgrades.");
+            ownedMaterials.Add(bodyMaterial);
         }
 
         presenter.Apply(new BattleArmyEntityState[0]);
         Require(GameObject.Find("SelfHostedInfantry_7101") == null &&
             GameObject.Find("SelfHostedInfantry_7102") == null, "Removed owner actors must be destroyed.");
+        Require(ownedMaterials.All(material => material == null),
+            "Roster removal must release the production actors' skin materials.");
         ExpectRejected(() => presenter.Apply(new[] { CreateActor(FirstPlayerId, 2, 7103) }));
         Require(GameObject.Find("SelfHostedInfantry_7103") == null,
             "Rejected owner authority must not leave a partly created actor.");

@@ -88,6 +88,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 				Singleton<ObjectPoolDatabase>.instance.parachute,
 			Singleton<LevelBehaviourManager>.instance, client);
         infantryPresenter.BindPlayerAppearances(client.PlayerViews);
+        infantryPresenter.BindTeamAppearance(client.LocalPlayerId, Singleton<MatCapTextures>.instance.GetMatCap());
 		client.ArmyEntitiesReceived += infantryPresenter.Apply;
 		helicopterPresenter = gameObject.AddComponent<SelfHostedHelicopterPresenter>();
 		ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;

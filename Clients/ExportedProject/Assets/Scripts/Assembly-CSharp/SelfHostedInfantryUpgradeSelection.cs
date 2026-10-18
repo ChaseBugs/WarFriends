@@ -69,6 +69,12 @@ public sealed class SelfHostedInfantryUpgradeSelection
         throw new InvalidOperationException("The actor's unit is absent from its owner's admitted equipment.");
     }
 
+    /// <summary>Checks that a presentation perspective belongs to this admitted match.</summary>
+    public bool HasPlayer(string playerId)
+    {
+        return playerId != null && _players.ContainsKey(playerId);
+    }
+
     private static void ValidateUnits(BattlePlayerView player)
     {
         var sourceIds = new HashSet<string>(StringComparer.Ordinal);

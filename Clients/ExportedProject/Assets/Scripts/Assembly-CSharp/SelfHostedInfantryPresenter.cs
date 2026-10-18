@@ -22,6 +22,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public float CanopyExpiryAt;
         public Material CanopyLandingMaterial;
         public SelfHostedGunslingerWeaponAttachment GunslingerAttachment { get; set; }
+        public SelfHostedInfantrySkinAppearance SkinAppearance { get; set; }
     }
 
     private sealed class RetiredCanopy
@@ -40,6 +41,21 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     private Parachute parachuteSource;
     private SelfHostedBattleClient client;
     private SelfHostedInfantryUpgradeSelection _upgradeSelection;
+    private string _localAppearanceOwner;
+    private Texture2D _appearanceMatCap;
+
+    /// <summary>Binds the recovered map lighting and local perspective before any infantry is created.</summary>
+    public void BindTeamAppearance(string localPlayerId, Texture2D matCap)
+    {
+        if (_upgradeSelection == null || !_upgradeSelection.HasPlayer(localPlayerId) ||
+            _localAppearanceOwner != null || active.Count != 0)
+        {
+            throw new InvalidOperationException("Bind one admitted appearance perspective before infantry creation.");
+        }
+
+        _localAppearanceOwner = localPlayerId;
+        _appearanceMatCap = matCap;
+    }
 
     /// <summary>Binds immutable owner equipment before the PvP bridge subscribes to roster updates.</summary>
     public void BindPlayerAppearances(IReadOnlyList<BattlePlayerView> players)
@@ -274,14 +290,49 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         {
             model = SelfHostedInfantryVisualFactory.Create(source, style, rootName);
         }
+        SelfHostedInfantrySkinAppearance skin = ApplySkin(model, soldier, row);
         model.Root.SetActive(true);
         return new Visual
         {
             Root = model.Root,
             Motion = new SelfHostedRemoteTransformBuffer(),
             AnimationRoot = model.AnimationRoot,
-            GunslingerAttachment = attachment
+            GunslingerAttachment = attachment,
+            SkinAppearance = skin
         };
+    }
+
+    private SelfHostedInfantrySkinAppearance ApplySkin(SelfHostedInfantryVisual model,
+        SoldierBehaviour family, BattleArmyEntityState actor)
+    {
+        if (_localAppearanceOwner == null || actor.SourceCardId.Length != 0)
+        {
+            return null;
+        }
+
+        var skin = new SelfHostedInfantrySkinAppearance(_appearanceMatCap);
+        try
+        {
+            UpgradeSlots.UnitUpgrades upgrades = _upgradeSelection.Resolve(actor, family);
+            List<TechnologyVisualDefinition> definitions = family.upgradeSlots.GetVisuals(upgrades);
+            if (actor.OwnerPlayerId == _localAppearanceOwner)
+            {
+                skin.ApplyOwned(source, model, definitions);
+            }
+            else
+            {
+                skin.ApplyOpponent(source, model, definitions);
+            }
+
+            return skin;
+        }
+        catch
+        {
+            // Failed construction must release renderer-owned materials as well as the copied actor.
+            skin.Dispose();
+            DestroyVisual(model.Root);
+            throw;
+        }
     }
 
     private SelfHostedInfantryVisual CreateGunslingerModel(SoldierBehaviour soldier,
@@ -476,6 +527,10 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     private static void DestroyVisual(Visual visual)
     {
         DestroyCanopy(visual);
+        if (visual.SkinAppearance != null)
+        {
+            visual.SkinAppearance.Dispose();
+        }
         DestroyVisual(visual.Root);
     }
 

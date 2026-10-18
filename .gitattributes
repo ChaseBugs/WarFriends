@@ -237,3 +237,8 @@ Server/tools/verify_gunslinger_weapon_presenter.py text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryUpgradeSelection.cs text eol=lf
 Server/tools/UnityInfantryOwnerAppearanceAudit.cs text eol=lf
 Server/docs/INFANTRY_OWNER_APPEARANCE.md text eol=lf
+
+# Ordinary infantry team-skin sources.
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantrySkinAppearance.cs text eol=lf
+Server/tools/UnityInfantrySkinAppearanceAudit.cs text eol=lf
+Server/docs/INFANTRY_TEAM_SKINS.md text eol=lf

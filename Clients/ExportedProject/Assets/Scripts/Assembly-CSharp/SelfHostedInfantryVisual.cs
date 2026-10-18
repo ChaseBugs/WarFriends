@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Owns an inactive script-free infantry rig until its caller supplies a confirmed pose.</summary>
 public sealed class SelfHostedInfantryVisual
 {
+    private Dictionary<Transform, Transform> _sourceTransforms;
+
     /// <summary>Gets the visual root whose lifetime is owned by the caller.</summary>
     public GameObject Root { get; private set; }
 
@@ -22,5 +26,27 @@ public sealed class SelfHostedInfantryVisual
         AnimationRoot = animationRoot;
         Body = body;
         WeaponRoot = weaponRoot;
+    }
+
+    /// <summary>Resolves the original copied identity even after weapons and upgrades add hierarchy children.</summary>
+    public Transform ResolveSource(Transform source)
+    {
+        Transform copy;
+        if (source == null || _sourceTransforms == null || !_sourceTransforms.TryGetValue(source, out copy))
+        {
+            throw new InvalidOperationException("The source transform is absent from this copied infantry rig.");
+        }
+
+        return copy;
+    }
+
+    internal void BindSourceTransforms(Dictionary<Transform, Transform> sourceTransforms)
+    {
+        if (_sourceTransforms != null || sourceTransforms == null)
+        {
+            throw new InvalidOperationException("Bind the original transform identities once during construction.");
+        }
+
+        _sourceTransforms = sourceTransforms;
     }
 }

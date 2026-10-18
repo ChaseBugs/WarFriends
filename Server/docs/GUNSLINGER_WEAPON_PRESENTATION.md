@@ -47,3 +47,6 @@ are not established by these base-material images. Every animation frame, moving
 normal battle-controller wiring, full active Client compilation/Play Mode, Android, Linux runtime
 and original Unity 5.2.5 parity remain outside this audit. See the
 [feature checklist](BATTLE_SERVER_FEATURES.md) for the remaining BattleServer work.
+
+The later [team-skin integration](INFANTRY_TEAM_SKINS.md) verifies ordinary body/helmet textures
+and attachments separately; these original weapon/holster screenshots retain their narrower scope.

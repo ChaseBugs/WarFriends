@@ -25,7 +25,9 @@ binding a PvP admission context; the production bridge always supplies it.
 ## Native validation
 
 `UnityInfantryOwnerAppearanceAudit.Run` uses MainScene's actual Assaulter family and model records.
-The disposable native run passes fourteen checks and exits zero. The existing sixteen-family
+The refreshed disposable native run passes seventeen checks and exits zero. It now also binds the
+local appearance perspective, verifies production body textures and checks material disposal.
+The existing sixteen-family
 presenter regression and Gunslinger's four selections/twelve attachment comparisons/four decoded
 presenter checks also pass after this change; the Gunslinger source-hash fixture is refreshed.
 It compares two opposing owners with different normal/Elite upgrade tuples, exercises the production
@@ -35,7 +37,8 @@ that a rejected actor leaves no partly created visual. The inspected endpoint se
 the same source weapon mesh; tuple assertions distinguish ownership without fabricating different artwork.
 
 This is a Unity 2018.3.0f2 component audit. It does not execute the complete PvP scene bridge or
-normal two-client match entry. Body/helmet textures and attachments, other infantry weapon lanes,
-card weapons and original Unity 5.2.5 parity remain open. The existing source-constant Gunslinger
+normal two-client match entry. [Ordinary team skins](INFANTRY_TEAM_SKINS.md) now cover body/helmet
+textures and attachments in a separate source matrix. Other infantry weapon lanes,
+card appearances and original Unity 5.2.5 parity remain open. The existing source-constant Gunslinger
 weapon and its draw/holster binding remain separate. See the
 [feature checklist](BATTLE_SERVER_FEATURES.md).
