@@ -30,8 +30,9 @@ public sealed partial class MatchEngine
         }
         if (!_mortarIndicators.TryGetValue(actor.EntityKey, out MortarIndicatorRuntime? indicator))
         {
-            indicator = new MortarIndicatorRuntime(actor.EntityKey, actor.OwnerPlayerId,
-                actor.OwnerFraction, launch.LaunchTick);
+            var owner = new MortarIndicatorRuntime.Owner(actor.EntityKey, actor.OwnerPlayerId, actor.OwnerFraction);
+            indicator = new MortarIndicatorRuntime(owner, launch.LaunchTick,
+                OpposingMortarSlotClock(actor.EntityKey, actor.OwnerFraction));
             _mortarIndicators.Add(actor.EntityKey, indicator);
         }
         indicator.BeginLaunch(launch);
@@ -42,7 +43,7 @@ public sealed partial class MatchEngine
         foreach (var (entityKey, indicator) in _mortarIndicators.ToArray())
         {
             indicator.Advance(tick);
-            // OnInstancied hides a pooled indicator. A dead weapon needs no hidden reuse history.
+            // Retire actor metadata only; slot/observer clocks survive in the bounded slot ledger.
             // Visible world warnings remain independent of both the missile and the soldier roster.
             if (!indicator.IsVisible && !activeArmyEntities.ContainsKey(entityKey))
             {

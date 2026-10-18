@@ -41,13 +41,15 @@ public sealed partial class MatchEngine
             return;
         }
         var pool = _mortarWeaponPool ?? throw new InvalidDataException("Mortar weapon pool is not bound.");
+        int slot;
         bool allocated = owner.Definition.PlayerId == manifest.SceneMasterPlayerId
-            ? pool.TryAllocateForMaster(actorKey, out _)
-            : pool.TryAllocateForPeer(actorKey, out _);
+            ? pool.TryAllocateForMaster(actorKey, out slot)
+            : pool.TryAllocateForPeer(actorKey, out slot);
         if (!allocated)
         {
             throw new InvalidDataException("Mortar weapon admission changed after shared preflight.");
         }
+        BindMortarIndicatorSlot(slot, actorKey);
     }
 
     private float? PrepareMortarCorpseDelay(ulong actorKey, string unitId)

@@ -13,23 +13,31 @@ internal sealed class MortarIndicatorRuntime
     private readonly ulong _entityKey;
     private readonly string _ownerPlayerId;
     private readonly int _ownerFraction;
-    private readonly MortarIndicatorClock _clock = new();
+    private readonly MortarIndicatorClock _clock;
     private MortarMissileLaunch? _launch;
     private ulong _lastAdvanceTick;
 
     internal bool IsVisible => _clock.IsVisible;
 
     internal MortarIndicatorRuntime(ulong entityKey, string ownerPlayerId, int ownerFraction, ulong firstLaunchTick)
+        : this(new Owner(entityKey, ownerPlayerId, ownerFraction), firstLaunchTick, new MortarIndicatorClock())
     {
-        if (entityKey == 0 || !Guid.TryParseExact(ownerPlayerId, "N", out _) ||
-            ownerPlayerId != ownerPlayerId.ToLowerInvariant() || ownerFraction is < 1 or > 2 ||
+    }
+
+    internal MortarIndicatorRuntime(Owner owner, ulong firstLaunchTick, MortarIndicatorClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        ArgumentNullException.ThrowIfNull(clock);
+        if (owner.EntityKey == 0 || !Guid.TryParseExact(owner.PlayerId, "N", out _) ||
+            owner.PlayerId != owner.PlayerId.ToLowerInvariant() || owner.Fraction is < 1 or > 2 ||
             firstLaunchTick == 0 || firstLaunchTick > MaximumTick)
         {
             throw new InvalidDataException("Mortar warning lost its host actor, owner or initial tick.");
         }
-        _entityKey = entityKey;
-        _ownerPlayerId = ownerPlayerId;
-        _ownerFraction = ownerFraction;
+        _entityKey = owner.EntityKey;
+        _ownerPlayerId = owner.PlayerId;
+        _ownerFraction = owner.Fraction;
+        _clock = clock;
         _lastAdvanceTick = firstLaunchTick - 1;
     }
 
@@ -82,4 +90,6 @@ internal sealed class MortarIndicatorRuntime
             Alpha = _clock.Alpha
         };
     }
+
+    internal sealed record Owner(ulong EntityKey, string PlayerId, int Fraction);
 }

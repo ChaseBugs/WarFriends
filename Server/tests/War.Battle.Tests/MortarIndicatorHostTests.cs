@@ -16,7 +16,7 @@ internal static class MortarIndicatorHostTests
     {
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
         return CheckShooterDeath(content) + CheckTerminal(content) + CheckReconnectPause(content) +
-            MortarWeaponPoolHostTests.Run(directory);
+            MortarWeaponPoolHostTests.Run(directory) + CheckSlotReuse(content);
     }
 
     private static int CheckShooterDeath(BattleCombatContent content)
@@ -52,7 +52,8 @@ internal static class MortarIndicatorHostTests
     {
         MatchEngine host = CreateLaunch(content);
         host.Command(OwnerId, new MatchCommand { CommandId = 4, Forfeit = new ForfeitCommand() });
-        return Require(host.Terminal && host.MortarIndicators().Count == 0 && host.MortarIndicatorHistoryCount == 0,
+        return Require(host.Terminal && host.MortarIndicators().Count == 0 && host.MortarIndicatorHistoryCount == 0 &&
+            host.MortarSlotObserverHistoryCount == 0,
             "Terminal match retained live or hidden warning authority.");
     }
 
@@ -104,6 +105,39 @@ internal static class MortarIndicatorHostTests
             host.MortarIndicators().Single().ObservedTick == before.ObservedTick + 1 &&
             host.CardRocketLaunchMissile(before.ProjectileId) != null,
             "Resume skipped a source frame or invalidated the still-airborne missile.");
+        return checks;
+    }
+
+    private static int CheckSlotReuse(BattleCombatContent content)
+    {
+        MatchEngine host = CreateLaunch(content);
+        MortarIndicatorObservation first = host.MortarIndicators().Single();
+        int? originalSlot = host.RetainedMortarWeaponSlot(first.EntityKey);
+        host.ConfirmArmyDeath(first.EntityKey, false);
+        ulong returnedTick = host.Snapshot().ServerTick + 120;
+        while (!host.Terminal && host.Snapshot().ServerTick < returnedTick)
+        {
+            host.Advance(host.Snapshot().ServerTick + 1);
+        }
+        int checks = Require(!host.Terminal && host.RetainedMortarWeaponCount == 0 &&
+            host.MortarIndicators().Count == 0 && host.MortarSlotObserverHistoryCount == 2,
+            "Weapon return discarded observer history or retained a completed actor warning.");
+        checks += Require(host.Command(OwnerId, new MatchCommand
+        {
+            CommandId = 4, DeployArmy = new DeployArmyCommand { OptionIndex = host.ArmyBatch(OwnerId).OptionIndexes[0] }
+        }).Code == "army-deploying", "The source slot successor was not accepted.");
+        MortarIndicatorObservation? reused = null;
+        while (!host.Terminal && host.Snapshot().ServerTick < MaximumTick && reused == null)
+        {
+            host.Advance(host.Snapshot().ServerTick + 1);
+            reused = host.MortarIndicators().SingleOrDefault();
+        }
+        checks += Require(reused != null && reused.EntityKey != first.EntityKey &&
+            reused.ProjectileId > first.ProjectileId && host.RetainedMortarWeaponSlot(reused.EntityKey) == originalSlot &&
+            host.MortarSlotObserverHistoryCount == 2,
+            "The successor used a new slot history or retained its retired actor's launch identity.");
+        checks += Require(reused!.RotationFactor == 0f && Math.Abs(reused.Scale - 0.65f) < 0.00001f,
+            "Reused hidden warning lost the source reactivation frame and retained shrink scale.");
         return checks;
     }
 

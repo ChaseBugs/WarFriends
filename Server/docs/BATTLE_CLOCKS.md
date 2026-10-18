@@ -119,7 +119,9 @@ The existing Sickness callback/host damage group also passes 265 checks at
    publishes the actual simulation tick at actor creation; it does not copy ArmySpawn.Tick.
    Cooldown projection and paused queued spawning are wired; rendered Client parity remains unverified.
 5. Wire validated slot capacity, host-owned death-delay draws, corpse return/reclaim and
-   observer-local warning history, then publish and validate the required Client state.
+   observer-local warning history, then publish and validate the required Client state. Host
+   capacity, body return and slot/observer history are implemented; forced reclaim and Client
+   publication/presentation remain open.
 
 These are remaining implementation requirements, not claims that clock migration is complete.
 

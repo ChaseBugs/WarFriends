@@ -3083,6 +3083,8 @@ public sealed partial class MatchEngine : IMatchRuntime
         rocketLaunches.Clear();
         _mortarDetachedWeapons.Clear();
         _mortarIndicators.Clear();
+        _mortarSlotClocks.Clear();
+        _mortarSlotActors.Clear();
         _mortarWeaponPool?.Clear();
         _mortarControllerTimes.Clear();
         _mortarRelocationTimes.Clear();

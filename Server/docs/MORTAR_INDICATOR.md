@@ -568,3 +568,29 @@ it is a resource rejection proof, not a normal two-owner exhaustion gameplay rec
 The Sickness callback/host damage regression also passes 265 checks at
 `Server/.local/mortar-physical-host-sickness.log`. Full regression for this newer host ledger
 is tracked separately; the earlier rebinding full executable predates this implementation.
+
+## Host slot and observer warning history
+
+The host warning runtime now borrows a retained clock from `(physical slot, local fraction)`
+instead of creating a fresh clock for each army actor. The ledger creates at most two clocks
+per source pool slot. Assignment hides both observers' old indicators with HideForReuse and
+removes the retired actor's runtime, preventing two actors from advancing the same clock.
+Only the opposing observer's clock is used for a launch; the allied observer retains its own
+hidden history, matching the source early return. A different owner's opposing observer can
+therefore have different startup history even when the physical slot is the same.
+
+Body return releases capacity without resetting cached clocks. Hidden dead-actor metadata can
+retire independently while slot history stays available for the next assignment. Terminal
+cleanup clears both the slot actors and observer clocks. Immutable launch metadata is newly
+bound to each successor actor; an old projectile or actor identity is not reused with the clock.
+
+The Mortar group passes 13,319 checks at `Server/.local/mortar-slot-history-tests.log`. Four
+additional natural-host assertions cover death/return retaining exactly two observer histories,
+same-slot successor admission, new actor/projectile identity with bounded history, and retained
+0.65 scale plus the skipped reactivation frame on its first new warning. Existing terminal
+coverage now also requires the observer history ledger to be empty. These checks reuse the
+previously native-validated clock; they are not a new original-Client pool allocation recording.
+
+Warning transport, observer selection in the SDK, Unity physical-object binding, reconnect and
+forced observer resynchronization remain pending. Current MortarIndicators is internal host
+evidence for the opposing warning, not a new public protocol or proof of rendered acceptance.
