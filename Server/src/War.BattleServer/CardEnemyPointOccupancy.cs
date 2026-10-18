@@ -7,7 +7,7 @@ namespace War.BattleServer;
 /// from shield-linked Rusher slots. A point remains occupied until its soldier
 /// dies or transfers to another point.
 /// </summary>
-internal sealed class CardEnemyPointOccupancy
+internal sealed partial class CardEnemyPointOccupancy
 {
     private readonly CardUnitInitialPointCatalog catalog;
     private readonly RecoveredBattleMap map;

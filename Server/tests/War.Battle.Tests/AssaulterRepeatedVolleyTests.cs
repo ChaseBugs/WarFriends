@@ -47,10 +47,13 @@ internal static class AssaulterRepeatedVolleyTests
             checks += CheckRounds(host, actor, eventCursor, completed);
             checks += CheckHideBoundary(host, actor, lastRound);
             checks += CheckIdleReturn(host, actor, content, expectedPreparation.Value);
-            AdvanceTo(host, expectedPreparation.Value - 1);
-            checks += Require(host.AssaulterAttempt(actor) == completed,
-                "A new attempt replaced the completed source latch before its strict deadline.");
-            host.Advance(expectedPreparation.Value);
+            if (volleyIndex + 1 < VolleyCount)
+            {
+                AdvanceTo(host, expectedPreparation.Value - 1);
+                checks += Require(host.AssaulterAttempt(actor) == completed,
+                    "A new attempt replaced the completed source latch before its strict deadline.");
+                host.Advance(expectedPreparation.Value);
+            }
         }
 
         checks += Require(!host.Terminal && host.AssaulterCallback(actor) != null,

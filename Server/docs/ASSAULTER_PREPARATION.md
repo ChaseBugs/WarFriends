@@ -54,5 +54,6 @@ complete suite was not rerun.
 The subsequent [automatic volley integration](ASSAULTER_VOLLEYS.md) executes this callback,
 samples the queued muzzle, launches real/cosmetic rounds and schedules the next cooldown.
 The preparation checks above remain scoped to selection and scheduling; the separate volley
-fixture verifies actual shots and damage. Point changes, complete warm animation parity,
+fixture verifies actual shots and damage. [Point changes](ASSAULTER_POINT_CHANGES.md) now also
+advance through reservation transfer and fresh fire after arrival. Complete warm animation parity,
 vehicle/air target graphs and normal Unity gameplay remain open.

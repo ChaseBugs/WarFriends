@@ -240,6 +240,24 @@ public sealed class CardUnitInitialPointCatalog
             .ToArray();
     }
 
+    internal IReadOnlyList<CardUnitInitialPoint> NextAssaulterPoints(RecoveredBattleMap map,
+        int fraction, int currentPointFileId, Func<int, bool> available)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(available);
+        if (fraction is not (1 or 2) || currentPointFileId <= 0 ||
+            !maps.TryGetValue(map.Source, out var points))
+        {
+            throw new InvalidDataException("Invalid normal Assaulter point-change identity.");
+        }
+
+        // The recovered five maps contain no Hiding or Car points for the ordinary mask 14.
+        // GetNextFreeEnemyPoint retains collection order, rather than sorting by distance.
+        return points.Where(point => point.Fraction == fraction &&
+            point.ComponentFileId != currentPointFileId && point.ComponentType == "EnemyPointCorner" &&
+            available(point.ComponentFileId)).ToArray();
+    }
+
     private static Vector3 Position(JsonElement values)
     {
         float[] coordinates = values.EnumerateArray().Select(value => value.GetSingle()).ToArray();

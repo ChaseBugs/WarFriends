@@ -24,7 +24,7 @@ its already launched shot can still damage the player without aborting the match
 
 ## Verified scope
 
-`--assaulter-volley-only` passes 79 checks using normal Park deployment and automatic host ticks.
+`--assaulter-volley-only` passes 90 checks using normal Park deployment and automatic host ticks.
 Each first volley contains two rounds at source cadence. Actual shield damage is 88.79999 from
 raw damage 29.6; explicitly armed Sickness produces 44.400024 from raw 14.8. Cosmetic rounds
 leave player/shield health unchanged. An actual time-limit transition destroys shields and
@@ -37,7 +37,7 @@ For every volley it checks all actual Shot events against that soldier's launch 
 the source batch count and 11-tick cadence. The soldier remains in its fire clip at exactly
 half a second after the last round, enters cover-back on the following tick, and returns to
 queued idle only when that source clip finishes. Its completed latch survives until the next
-strict cooldown deadline; the subsequent preparation starts at that exact tick. Other soldiers
+strict cooldown deadline between volleys; the subsequent preparation starts at that exact tick. Other soldiers
 in the deployment remain active, so their shots cannot satisfy the tracked soldier's checks.
 
 Release build passes with zero warnings/errors. Shared combat regression passes 26,395
@@ -47,6 +47,9 @@ assertions; focused Grenadier damage, moving acquisition and Sickness checks pas
 Sickness is explicitly armed through the internal window in this fixture. This does not verify
 authorized card use, inventory consumption, protocol activation or normal Client presentation.
 The damage fixture does not prove every dynamic unit/vehicle impact branch. Interrupted warm
-layered animation parity, point changes, healing, parachutes, vehicle/air targeting and
+layered animation parity, healing, parachutes, vehicle/air targeting and
 normal Unity/Android controller integration remain open. Native muzzle evidence comes from the
 documented standalone observation, not original Unity 5.2.5f1 gameplay verification.
+
+[Automatic point changes](ASSAULTER_POINT_CHANGES.md) now connect the source change timer to
+shared reservation transfer, route movement and fresh automatic fire after arrival.

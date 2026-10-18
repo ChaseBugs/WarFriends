@@ -1,5 +1,8 @@
 # Normal Assaulter PvP navigation
 
+The later [point-change integration](ASSAULTER_POINT_CHANGES.md) extends the initial route below
+with automatic shared reservation transfer, walking to a new Corner and fresh fire after arrival.
+
 Normal ID_UNIT-ASSAULT deployments previously initialized vitality and a static idle pose without
 assigning any destination. InitializeStationaryArmyCombat handled Sniper/Minigunner, while the
 Rusher path required a separately assigned shield-linked slot. A fixed Park observation remained
