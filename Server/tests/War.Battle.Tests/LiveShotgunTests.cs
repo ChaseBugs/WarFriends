@@ -619,7 +619,7 @@ internal static class LiveShotgunTests
             Players=[manifest.Players[0] with {PlayerLevel=22},manifest.Players[1] with {PlayerLevel=22}]};
         var decoyMatch=new MatchEngine(decoyManifest,map,content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([
-            new(one,["CardDecoy"],[],[],[],[]),new(two,[],[],[],[],[])]);
+            new(one,["CardDecoy"],[],[],[],[]) { CardCounts = [1] },new(two,[],[],[],[],[])]);
         decoyMatch.Admit(one);decoyMatch.Admit(two);
         Check(decoyMatch.Command(one,new(){CommandId=1,
                   SelectCards=new SelectCardsCommand{CardIds={"CardDecoy"}}}).Code=="cards-selected"&&

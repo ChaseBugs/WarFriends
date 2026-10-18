@@ -518,7 +518,7 @@ internal static class CombatContentTests
         string secondPlayer = coop.Players[1].PlayerId;
         var cards = new List<string> { "card-a" };
         var first = new BattleAllocationProjection(firstPlayer,
-            cards, [], [], [], []);
+            cards, [], [], [], []) { CardCounts = [1] };
         var second = new BattleAllocationProjection(secondPlayer,
             [], [], [], [], []);
 
@@ -12432,8 +12432,8 @@ internal static class CombatContentTests
                 bonusPositionDraw: withBonusBox ?
                     () => new Vector3(1f, .5f, 0f) : null);
             match.ConfigureBattleAllocations([
-                new(decoyPlayer, [sourceCardId], [], [0], [133], [-1]),
-                new(decoyOpponent, [otherCard], [], [0], [-1], [-1])
+                new(decoyPlayer, [sourceCardId], [], [0], [133], [-1]) { CardCounts = [1] },
+                new(decoyOpponent, [otherCard], [], [0], [-1], [-1]) { CardCounts = [1] }
             ]);
             match.Admit(decoyPlayer);
             match.Admit(decoyOpponent);
@@ -14807,8 +14807,8 @@ internal static class CombatContentTests
         var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["DECOY"],[],[0],[133],[-1]),
-            new(decoyOpponent,["DECOY"],[],[0],[-1],[-1])]);
+            new(decoyPlayer,["DECOY"],[],[0],[133],[-1]) { CardCounts = [1] },
+            new(decoyOpponent,["DECOY"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         decoyMatch.Admit(decoyPlayer);decoyMatch.Admit(decoyOpponent);
         Check(decoyMatch.DroneTargetSnapshot().Select(r=>r.Id).SequenceEqual(new[]{"player:"+decoyPlayer,"player:"+decoyOpponent}),"admitted players register in recovered owner bucket order");
         decoyMatch.Admit(decoyPlayer);
@@ -14902,7 +14902,7 @@ internal static class CombatContentTests
             Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
         var landMineMatch=new MatchEngine(landMineManifest,content:content,armyChoice:_=>0);
         landMineMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["CardLandmine"],[],[0],[133],[-1]),
+            new(decoyPlayer,["CardLandmine"],[],[0],[133],[-1]) { CardCounts = [1] },
             new(decoyOpponent,[],[],[0],[-1],[-1])]);
         landMineMatch.Admit(decoyPlayer);landMineMatch.Admit(decoyOpponent);
         Check(landMineMatch.Command(decoyPlayer,new(){CommandId=1,SelectCards=new SelectCardsCommand
@@ -14954,7 +14954,7 @@ internal static class CombatContentTests
         };
         var timedMineMatch=new MatchEngine(timedMineManifest,content:content,armyChoice:_=>0);
         timedMineMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["CardMineYourStep"],[],[0],[133],[-1]),
+            new(decoyPlayer,["CardMineYourStep"],[],[0],[133],[-1]) { CardCounts = [1] },
             new(decoyOpponent,[],[],[0],[-1],[-1])
         ]);
         timedMineMatch.Admit(decoyPlayer);
@@ -15863,7 +15863,7 @@ internal static class CombatContentTests
               "host expiry restores damage and existing lethal removal lifecycle");
         var heavyTurretMatch=new MatchEngine(heavyTurretManifest,content:content,armyChoice:_=>0);
         heavyTurretMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),
+            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]) { CardCounts = [1] },
             new(decoyOpponent,[],[],[0],[-1],[-1])]);
         heavyTurretMatch.Admit(decoyPlayer);heavyTurretMatch.Admit(decoyOpponent);
         Check(heavyTurretMatch.Command(decoyPlayer,new(){CommandId=1,SelectCards=new SelectCardsCommand
@@ -15980,8 +15980,8 @@ internal static class CombatContentTests
               "lethal trusted damage destroys Heavy Turret state and releases its source slot");
         var turretDuel=new MatchEngine(heavyTurretManifest with {MatchId="turret-duel"},content:content,armyChoice:_=>0);
         turretDuel.ConfigureBattleAllocations([
-            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),
-            new(decoyOpponent,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]) { CardCounts = [1] },
+            new(decoyOpponent,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         turretDuel.Admit(decoyPlayer);turretDuel.Admit(decoyOpponent);
         foreach(var id in new[]{decoyPlayer,decoyOpponent})
         {
@@ -16565,7 +16565,7 @@ internal static class CombatContentTests
             MatchId = "allied-soldier-healing-storm"
         }, content: content, armyChoice: _ => 0);
         stormMatch.ConfigureBattleAllocations([
-            new(soldierOwner, ["CardHealingStorm"], [], [0], [-1], [-1]),
+            new(soldierOwner, ["CardHealingStorm"], [], [0], [-1], [-1]) { CardCounts = [1] },
             new(helicopterOwner, [], [], [0], [-1], [-1])
         ]);
         stormMatch.Admit(soldierOwner);
@@ -16619,7 +16619,7 @@ internal static class CombatContentTests
             MatchId = "enemy-soldier-backstab"
         }, content: content, armyChoice: _ => 0);
         backstabMatch.ConfigureBattleAllocations([
-            new(soldierOwner, ["CardBackstab", "CardRandomKevlar"], [], [0], [-1], [-1]),
+            new(soldierOwner, ["CardBackstab", "CardRandomKevlar"], [], [0], [-1], [-1]) { CardCounts = [1, 1] },
             new(helicopterOwner, [], [], [0], [-1], [-1])
         ]);
         backstabMatch.Admit(soldierOwner);
@@ -16683,7 +16683,7 @@ internal static class CombatContentTests
             MatchId = "allied-soldier-health-card"
         }, content: content, armyChoice: _ => 0);
         healthCardMatch.ConfigureBattleAllocations([
-            new(soldierOwner, ["CardHealthForSoldiers"], [], [0], [-1], [-1]),
+            new(soldierOwner, ["CardHealthForSoldiers"], [], [0], [-1], [-1]) { CardCounts = [1] },
             new(helicopterOwner, [], [], [0], [-1], [-1])
         ]);
         healthCardMatch.Admit(soldierOwner);
@@ -17396,8 +17396,8 @@ internal static class CombatContentTests
         content.ValidateAllocation(flameDecoyManifest);
         var flameDecoyMatch=new MatchEngine(flameDecoyManifest,content:content,armyChoice:_=>0);
         flameDecoyMatch.ConfigureBattleAllocations([
-            new(soldierOwner,["CardDecoy"],[],[0],[-1],[-1]),
-            new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1])]);
+            new(soldierOwner,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         flameDecoyMatch.Admit(soldierOwner);flameDecoyMatch.Admit(helicopterOwner);
         MatchCommand FlameDecoyCards()=>new(){CommandId=1,SelectCards=new()
             {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},
@@ -17488,8 +17488,8 @@ internal static class CombatContentTests
         var flameTurretManifest=flameDecoyManifest with {MatchId="army-flame-heavy-turret"};
         var flameTurretMatch=new MatchEngine(flameTurretManifest,content:content,armyChoice:_=>0);
         flameTurretMatch.ConfigureBattleAllocations([
-            new(soldierOwner,["CardHeavyTurret"],[],[0],[-1],[-1]),
-            new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+            new(soldierOwner,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         flameTurretMatch.Admit(soldierOwner);flameTurretMatch.Admit(helicopterOwner);
         MatchCommand FlameTurretCards()=>new(){CommandId=1,SelectCards=new()
             {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
@@ -19647,7 +19647,7 @@ internal static class CombatContentTests
             familyMatch.ConfigureBattleAllocations(
             [
                 new(soldierOwner, [], [], [0], [-1], [-1]),
-                new(helicopterOwner, ["SABOTAGE"], [], [0], [-1], [-1])
+                new(helicopterOwner, ["SABOTAGE"], [], [0], [-1], [-1]) { CardCounts = [1] }
             ]);
             familyMatch.Admit(soldierOwner);
             familyMatch.Admit(helicopterOwner);
@@ -19778,7 +19778,7 @@ internal static class CombatContentTests
             armyChoice:n=>n<=0?0:decoyChoice++%n,combatRandom:()=>0);
         humveeDecoyMatch.ConfigureBattleAllocations([
             new(soldierOwner,[],[],[0],[-1],[-1]),
-            new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1])]);
+            new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         humveeDecoyMatch.Admit(soldierOwner);humveeDecoyMatch.Admit(helicopterOwner);
         var emptyHumveeCards=new MatchCommand{CommandId=1,SelectCards=new SelectCardsCommand
             {NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}};
@@ -19845,7 +19845,7 @@ internal static class CombatContentTests
                 armyChoice:_=>0,combatRandom:()=>0);
             cannonDecoyMatch.ConfigureBattleAllocations([
                 new(soldierOwner,[],[],[0],[-1],[-1]),
-                new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1])]);
+                new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
             cannonDecoyMatch.Admit(soldierOwner);cannonDecoyMatch.Admit(helicopterOwner);
             Check(cannonDecoyMatch.Command(soldierOwner,emptyHumveeCards).Code=="cards-selected"&&
                   cannonDecoyMatch.Command(helicopterOwner,opposingDecoyCards).Code=="cards-selected",
@@ -19893,7 +19893,7 @@ internal static class CombatContentTests
         var turretVehicleManifest=humveeDecoyManifest with {MatchId="turret-ground-vehicle-priority"};
         var turretVehicleMatch=new MatchEngine(turretVehicleManifest,content:content,armyChoice:_=>0,combatRandom:()=>0);
         turretVehicleMatch.ConfigureBattleAllocations([
-            new(soldierOwner,[],[],[0],[-1],[-1]),new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+            new(soldierOwner,[],[],[0],[-1],[-1]),new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         turretVehicleMatch.Admit(soldierOwner);turretVehicleMatch.Admit(helicopterOwner);
         turretVehicleMatch.Command(soldierOwner,new(){CommandId=1,SelectCards=new(){NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}});
         turretVehicleMatch.Command(helicopterOwner,new(){CommandId=1,SelectCards=new(){CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}});
@@ -19957,7 +19957,7 @@ internal static class CombatContentTests
                 armyChoice:_=>0,combatRandom:()=>0);
             turretAirMatch.ConfigureBattleAllocations([
                 new(soldierOwner,[],[],[0],[-1],[-1]),
-                new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+                new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
             turretAirMatch.Admit(soldierOwner);turretAirMatch.Admit(helicopterOwner);
             Check(turretAirMatch.Command(soldierOwner,emptyHumveeCards).Code=="cards-selected"&&
                   turretAirMatch.Command(helicopterOwner,new(){CommandId=1,SelectCards=new()
@@ -20245,8 +20245,8 @@ internal static class CombatContentTests
         var missileDecoyManifest=missileDecoySource with {MatchId="vehicle-missile-decoy-blast"};
         var missileDecoyMatch=new MatchEngine(missileDecoyManifest,content:content,armyChoice:_=>0);
         missileDecoyMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["DECOY"],[],[0],[133],[-1]),
-            new(decoyOpponent,["DECOY"],[],[0],[-1],[-1])]);
+            new(decoyPlayer,["DECOY"],[],[0],[133],[-1]) { CardCounts = [1] },
+            new(decoyOpponent,["DECOY"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         missileDecoyMatch.Admit(decoyPlayer);missileDecoyMatch.Admit(decoyOpponent);
         Check(missileDecoyMatch.Command(decoyPlayer,SelectDecoy(1)).Code=="cards-selected"&&
               missileDecoyMatch.Command(decoyOpponent,opponentSelection).Code=="cards-selected",
@@ -20326,8 +20326,8 @@ internal static class CombatContentTests
             Players=missileDecoySource.Players.Select(value=>value with {ShieldLevel=0}).ToArray()};
         var missileTurretMatch=new MatchEngine(missileTurretManifest,content:content,armyChoice:_=>0);
         missileTurretMatch.ConfigureBattleAllocations([
-            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),
-            new(decoyOpponent,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]) { CardCounts = [1] },
+            new(decoyOpponent,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         missileTurretMatch.Admit(decoyPlayer);missileTurretMatch.Admit(decoyOpponent);
         Check(missileTurretMatch.Command(decoyPlayer,new(){CommandId=1,SelectCards=new()
             {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},

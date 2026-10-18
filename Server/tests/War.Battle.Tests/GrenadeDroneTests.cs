@@ -165,8 +165,8 @@ internal static class GrenadeDroneTests
     private static void StartMatch(MatchEngine match, ref int checks)
     {
         match.ConfigureBattleAllocations([
-            new(DefenderId, ["SABOTAGE"], [], [0], [-1], [-1]),
-            new(OwnerId, ["SABOTAGE"], [], [0], [-1], [-1])
+            new(DefenderId, ["SABOTAGE"], [], [0], [-1], [-1]) { CardCounts = [1] },
+            new(OwnerId, ["SABOTAGE"], [], [0], [-1], [-1]) { CardCounts = [1] }
         ]);
         foreach (string playerId in new[] { DefenderId, OwnerId })
         {

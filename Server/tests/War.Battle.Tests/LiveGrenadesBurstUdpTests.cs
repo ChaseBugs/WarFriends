@@ -34,8 +34,8 @@ internal static class LiveGrenadesBurstUdpTests
                 player with { PlayerLevel = 22 }).ToArray(),
             Allocations =
             [
-                new(attackerId, ["CLUSTERGRENADE", "STREAKBOOST", "HEALTHCRATE"], [], [0], [-1], [-1]),
-                new(defenderId, ["CLUSTERGRENADE", "CRATEBLOCKER"], [], [0], [-1], [-1])
+                new(attackerId, ["CLUSTERGRENADE", "STREAKBOOST", "HEALTHCRATE"], [], [0], [-1], [-1]) { CardCounts = [1, 1, 1] },
+                new(defenderId, ["CLUSTERGRENADE", "CRATEBLOCKER"], [], [0], [-1], [-1]) { CardCounts = [1, 1] }
             ]
         };
         content.ValidateAllocation(manifest);

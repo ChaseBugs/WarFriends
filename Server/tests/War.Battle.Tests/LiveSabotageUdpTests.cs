@@ -107,8 +107,11 @@ internal static class LiveSabotageUdpTests
             SceneMasterPlayerId = attackerId,
             Allocations =
             [
-                new(attackerId, ["SABOTAGE"], [], [0], [-1], [-1]),
+                new(attackerId, ["SABOTAGE"], [], [0], [-1], [-1]) { CardCounts = [1] },
                 new(defenderId, cardSpawned ? ["HEAVYDRONE"] : [], [], [0], [-1], [-1])
+                {
+                    CardCounts = cardSpawned ? [1] : []
+                }
             ]
         };
         content.ValidateAllocation(manifest);

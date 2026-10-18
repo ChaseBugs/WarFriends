@@ -18,7 +18,7 @@ internal static class BackendAllocationClientTests
         int checks=0;
         byte[] key=Enumerable.Range(1,32).Select(x=>(byte)x).ToArray();
         string[] ids={new string('a',32),new string('b',32)};
-        BattleAllocationProjection Row(string id)=>new(id,["ID_CARD-TEST"],[],[0],[-1],[-1]);
+        BattleAllocationProjection Row(string id)=>new(id,["ID_CARD-TEST"],[],[0],[-1],[-1]) { CardCounts = [3] };
         var endpoint=new Uri("https://backend.invalid/internal/battle/allocations/read");
         var handler=new Handler(request=>
         {
@@ -39,7 +39,8 @@ internal static class BackendAllocationClientTests
         });
         var client=new BackendAllocationClient(new HttpClient(handler),key,"test-host");
         var values=await client.ReadAsync(endpoint,ids,CancellationToken.None);
-        if(values.Length!=2 || !values.Select(x=>x.PlayerId).SequenceEqual(ids))throw new Exception("allocation response order");
+        if(values.Length!=2 || !values.Select(x=>x.PlayerId).SequenceEqual(ids) ||
+            values.Any(value => value.CardCounts.Single() != 3))throw new Exception("allocation response order or quantities");
         checks++;
 
         var reversed=new BackendAllocationClient(new HttpClient(new Handler(_=>new HttpResponseMessage(HttpStatusCode.OK)

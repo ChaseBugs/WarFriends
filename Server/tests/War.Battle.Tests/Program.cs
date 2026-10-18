@@ -22,6 +22,11 @@ using War.Persistence;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
+if (args is ["--allocation-inventory-mongo", var inventoryMongoUri])
+{
+    await CardAllocationQuantityTests.RunMongoAsync(inventoryMongoUri);
+    return;
+}
 if(args is ["--init-mongo-replica-set",var bootstrapUri,var replicaName,var memberHost])
 {
     var bootstrapClient=new MongoClient(bootstrapUri);
@@ -1132,6 +1137,12 @@ string hash = new string('a', 64);
 var definition = new MatchManifest("test-match", "test-host", "fixture-map", hash, hash,
     MatchManifest.PrototypeMode, 10, 60, 10,
     [new(a, new("fixture-rifle", 2, 3, 0.1, 0.2)), new(b, new("fixture-rifle", 2, 3, 0.1, 0.2))]);
+checks += CardAllocationQuantityTests.Run(definition);
+if (args is ["--allocation-inventory-only"])
+{
+    Console.WriteLine("PASS: card quantity validation, frozen snapshots, wire transport and one-use hand authority");
+    return;
+}
 var localRoom = new LocalOfflineRoom();
 var localCallbacks = new List<LocalRoomCallback>();
 localRoom.Callback += localCallbacks.Add;
@@ -1229,13 +1240,13 @@ Check(buddies.Submit(lifecycleGrant.PlayerId, new[] { "buddy-1" }).Single() == "
 Reject(() => buddies.Submit(lifecycleGrant.PlayerId, new[] { "buddy-2" }), "buddy selection retry conflict");
 Reject(() => buddies.Submit(lifecycleGrant.PlayerId, new[] { "not-owned" }), "buddy selection rejects unowned identity");
 var trustedProjection = BattleAllocationProjection.Validate(new BattleAllocationProjection(
-    lifecycleGrant.PlayerId, new[] { "card-a" }, new[] { "buddy-1" }, new[] { 0 }, Array.Empty<int>(), Array.Empty<int>()));
+    lifecycleGrant.PlayerId, new[] { "card-a" }, new[] { "buddy-1" }, new[] { 0 }, Array.Empty<int>(), Array.Empty<int>()) { CardCounts = [1] });
 Check(trustedProjection.CardIds.Single() == "card-a" && trustedProjection.BuddyCardIds.Single() == "buddy-1",
     "backend allocation projection freezes trusted loadout");
 var manifestWithAllocation = definition with { Allocations = new[]
 {
-    new BattleAllocationProjection(a, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>()),
-    new BattleAllocationProjection(b, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>())
+    new BattleAllocationProjection(a, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>()) { CardCounts = [1] },
+    new BattleAllocationProjection(b, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>()) { CardCounts = [1] }
 } };
 var manifestRoundTrip = MatchManifest.Parse(JsonSerializer.SerializeToUtf8Bytes(manifestWithAllocation));
 Check(manifestRoundTrip.Allocations != null && manifestRoundTrip.Allocations.Length == 2 &&
@@ -1290,8 +1301,8 @@ Reject(() => BattleAllocationProjection.Validate(new BattleAllocationProjection(
 var cardMatch = new MatchEngine(definition);
 cardMatch.ConfigureBattleAllocations(new[]
 {
-    new BattleAllocationProjection(a, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>()),
-    new BattleAllocationProjection(b, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>())
+    new BattleAllocationProjection(a, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>()) { CardCounts = [1] },
+    new BattleAllocationProjection(b, new[] { "card-a" }, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>()) { CardCounts = [1] }
 });
 Check(cardMatch.Admit(a) && cardMatch.Admit(b), "card match admission");
 var selectCards = new MatchCommand { CommandId = 1, SelectCards = new SelectCardsCommand() };

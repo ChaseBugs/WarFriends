@@ -9,6 +9,8 @@ namespace War.BattleServer;
 // Single writer: NetworkWorker's tick thread. Does not call Unity, Mongo or HTTP.
 public sealed partial class MatchEngine : IMatchRuntime
 {
+    private const int UsesPerSelectedHandCard = 1;
+
     bool IMatchRuntime.CancelBeforeStart() => CancelBeforeStart();
     bool IMatchRuntime.AbortForHostShutdown() => AbortForHostShutdown();
     MatchSnapshot IMatchRuntime.TerminalEvidenceSnapshot() => TerminalEvidenceSnapshot();
@@ -2219,7 +2221,10 @@ public sealed partial class MatchEngine : IMatchRuntime
         }
         ConfigureCardSelection(values.SelectMany(x => x.CardIds).Distinct(StringComparer.Ordinal));
         ConfigureBuddySelection(values.Select(x => (x.PlayerId, (IEnumerable<string>)x.BuddyCardIds)));
-        ConfigureCardInventory(values.SelectMany(x=>x.CardIds.Select(card=>(x.PlayerId,card,1))));
+        // CardManager.UseCard removes the identity from cardsForGame after one use.
+        // Durable copies prove ownership; they do not grant repeated uses of the same hand card.
+        ConfigureCardInventory(values.SelectMany(value => value.CardIds.Select(
+            cardId => (value.PlayerId, cardId, UsesPerSelectedHandCard))));
     }
     private string Apply(Player p, MatchCommand c)
     {

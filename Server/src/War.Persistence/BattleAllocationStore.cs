@@ -8,6 +8,7 @@ public sealed class BattleAllocationDocument
 {
     [BsonId] public string PlayerId { get; set; } = "";
     public string[] CardIds { get; set; } = Array.Empty<string>();
+    public int[] CardCounts { get; set; } = Array.Empty<int>();
     public string[] BuddyCardIds { get; set; } = Array.Empty<string>();
     public int[] NormalUpgradeIndexes { get; set; } = Array.Empty<int>();
     public int[] SpecialUpgradeIndexes { get; set; } = Array.Empty<int>();
@@ -36,12 +37,14 @@ public sealed class BattleAllocationStore
         var document = new BattleAllocationDocument
         {
             PlayerId = value.PlayerId, CardIds = value.CardIds.ToArray(), BuddyCardIds = value.BuddyCardIds.ToArray(),
+            CardCounts = value.CardCounts.ToArray(),
             NormalUpgradeIndexes = value.NormalUpgradeIndexes.ToArray(), SpecialUpgradeIndexes = value.SpecialUpgradeIndexes.ToArray(),
             EliteUpgradeIndexes = value.EliteUpgradeIndexes.ToArray()
         };
         var update = Builders<BattleAllocationDocument>.Update
             .SetOnInsert(x => x.PlayerId, document.PlayerId)
             .Set(x => x.CardIds, document.CardIds)
+            .Set(x => x.CardCounts, document.CardCounts)
             .Set(x => x.BuddyCardIds, document.BuddyCardIds)
             .Set(x => x.NormalUpgradeIndexes, document.NormalUpgradeIndexes)
             .Set(x => x.SpecialUpgradeIndexes, document.SpecialUpgradeIndexes)
@@ -56,7 +59,10 @@ public sealed class BattleAllocationStore
         if (document == null) return null;
         return BattleAllocationProjection.Validate(new BattleAllocationProjection(document.PlayerId,
             document.CardIds, document.BuddyCardIds, document.NormalUpgradeIndexes,
-            document.SpecialUpgradeIndexes, document.EliteUpgradeIndexes));
+            document.SpecialUpgradeIndexes, document.EliteUpgradeIndexes)
+        {
+            CardCounts = document.CardCounts
+        });
     }
     public async Task<IReadOnlyList<BattleAllocationProjection>> GetMany(IEnumerable<string> playerIds, CancellationToken ct)
     {
@@ -72,7 +78,10 @@ public sealed class BattleAllocationStore
         {
             var d = byId[id];
             return BattleAllocationProjection.Validate(new BattleAllocationProjection(d.PlayerId, d.CardIds, d.BuddyCardIds,
-                d.NormalUpgradeIndexes, d.SpecialUpgradeIndexes, d.EliteUpgradeIndexes));
+                d.NormalUpgradeIndexes, d.SpecialUpgradeIndexes, d.EliteUpgradeIndexes)
+            {
+                CardCounts = d.CardCounts
+            });
         }).ToArray());
     }
 }

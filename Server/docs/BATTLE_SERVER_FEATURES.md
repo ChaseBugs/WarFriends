@@ -31,6 +31,13 @@ remain zero and error-level logs decrease from 72 to 70. Their bounded source
 counts are documented in the bootstrap report. Fresh-account authoritative
 battle-allocation projection, preview rendering and normal battle entry remain
 open; transport fixtures do not supply normal-flow proof.
+[Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
+owned counts through allocation validation and Mongo storage. Nonempty
+allocations without quantities fail closed. Host reservations preserve the
+recovered one-use-per-hand-card rule even when more copies are owned.
+Normal-account projection, full catalog/selection limits,
+durable consumption and normal Unity card flow remain open.
+
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted
 owners reject before lobby/player mutation, and a controlled native terminal

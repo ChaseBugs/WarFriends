@@ -11,6 +11,8 @@ public sealed class BattleAllocationProjection
 {
     public string PlayerId { get; set; }
     public IReadOnlyList<string> CardIds { get; set; }
+    /// <summary>Positive durable quantities in the exact order of CardIds; missing counts never grant cards.</summary>
+    public IReadOnlyList<int> CardCounts { get; set; } = Array.Empty<int>();
     public IReadOnlyList<string> BuddyCardIds { get; set; }
     public IReadOnlyList<int> NormalUpgradeIndexes { get; set; }
     public IReadOnlyList<int> SpecialUpgradeIndexes { get; set; }
@@ -23,6 +25,11 @@ public sealed class BattleAllocationProjection
         if (value is null || string.IsNullOrWhiteSpace(value.PlayerId) || value.PlayerId.Length > 128)
             throw new InvalidDataException("Invalid battle allocation player.");
         ValidateIds(value.CardIds, 32, "card");
+        if (value.CardCounts == null || value.CardCounts.Count != value.CardIds.Count ||
+            value.CardCounts.Any(count => count <= 0))
+        {
+            throw new InvalidDataException("Card quantities must match the owned card identities.");
+        }
         ValidateIds(value.BuddyCardIds, 32, "buddy card");
         ValidateIndexes(value.NormalUpgradeIndexes, 0, "normal");
         ValidateIndexes(value.SpecialUpgradeIndexes, -1, "special");
@@ -33,7 +40,10 @@ public sealed class BattleAllocationProjection
         return new BattleAllocationProjection(value.PlayerId,
             Array.AsReadOnly(value.CardIds.ToArray()), Array.AsReadOnly(value.BuddyCardIds.ToArray()),
             Array.AsReadOnly(value.NormalUpgradeIndexes.ToArray()), Array.AsReadOnly(value.SpecialUpgradeIndexes.ToArray()),
-            Array.AsReadOnly(value.EliteUpgradeIndexes.ToArray()));
+            Array.AsReadOnly(value.EliteUpgradeIndexes.ToArray()))
+        {
+            CardCounts = Array.AsReadOnly(value.CardCounts.ToArray())
+        };
     }
     private static void ValidateIds(IReadOnlyList<string> ids, int max, string kind)
     {

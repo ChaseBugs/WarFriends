@@ -456,8 +456,8 @@ internal static class GrenadeCatalogTests
                      allocation.Players[1] with {PlayerLevel=0}]};
         var decoyMatch=new MatchEngine(decoyAllocation,map,combat);
         decoyMatch.ConfigureBattleAllocations([
-            new(one,["CardDecoy"],[],[0],[-1],[-1]),
-            new(two,["CardDecoy"],[],[0],[-1],[-1])]);
+            new(one,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(two,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         decoyMatch.Admit(one);
         decoyMatch.Admit(two);
         MatchCommand SelectDecoy()=>new(){CommandId=1,SelectCards=new()
@@ -502,8 +502,8 @@ internal static class GrenadeCatalogTests
                      decoyAllocation.Players[1] with {PlayerLevel=22}]};
         var turretMatch=new MatchEngine(turretAllocation,map,combat);
         turretMatch.ConfigureBattleAllocations([
-            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]),
-            new(two,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(two,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] }]);
         turretMatch.Admit(one);
         turretMatch.Admit(two);
         MatchCommand SelectTurret()=>new(){CommandId=1,SelectCards=new()

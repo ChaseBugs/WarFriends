@@ -455,8 +455,8 @@ internal static class BazookaCatalogTests
              repairAllocation.Players[1] with {PlayerLevel=0}]};
         var decoyMatch=new MatchEngine(decoyAllocation,map,content);
         decoyMatch.ConfigureBattleAllocations([
-            new(one,["CardDecoy"],[],[0],[-1],[-1]),
-            new(two,["CardDecoy"],[],[0],[71],[-1])]);
+            new(one,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(two,["CardDecoy"],[],[0],[71],[-1]) { CardCounts = [1] }]);
         decoyMatch.Admit(one);decoyMatch.Admit(two);
         foreach(var player in new[]{one,two})
         {
@@ -511,8 +511,8 @@ internal static class BazookaCatalogTests
         var naturalDecoyAllocation=decoyAllocation with {MatchId="bazooka-natural-decoy"};
         var naturalDecoy=new MatchEngine(naturalDecoyAllocation,map,content);
         naturalDecoy.ConfigureBattleAllocations([
-            new(one,["CardDecoy"],[],[0],[-1],[-1]),
-            new(two,["CardDecoy"],[],[0],[71],[-1])]);
+            new(one,["CardDecoy"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(two,["CardDecoy"],[],[0],[71],[-1]) { CardCounts = [1] }]);
         naturalDecoy.Admit(one);naturalDecoy.Admit(two);
         foreach(var player in new[]{one,two})
         {
@@ -557,8 +557,8 @@ internal static class BazookaCatalogTests
              decoyAllocation.Players[1] with {PlayerLevel=22}]};
         var turretMatch=new MatchEngine(turretAllocation,map,content);
         turretMatch.ConfigureBattleAllocations([
-            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]),
-            new(two,["CardHeavyTurret"],[],[0],[71],[-1])]);
+            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(two,["CardHeavyTurret"],[],[0],[71],[-1]) { CardCounts = [1] }]);
         turretMatch.Admit(one);turretMatch.Admit(two);
         foreach(var player in new[]{one,two})
         {
@@ -627,8 +627,8 @@ internal static class BazookaCatalogTests
         var naturalTurretAllocation=turretAllocation with {MatchId="bazooka-natural-heavy-turret"};
         var naturalTurret=new MatchEngine(naturalTurretAllocation,map,content);
         naturalTurret.ConfigureBattleAllocations([
-            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]),
-            new(two,["CardHeavyTurret"],[],[0],[71],[-1])]);
+            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]) { CardCounts = [1] },
+            new(two,["CardHeavyTurret"],[],[0],[71],[-1]) { CardCounts = [1] }]);
         naturalTurret.Admit(one);naturalTurret.Admit(two);
         foreach(var player in new[]{one,two})
         {

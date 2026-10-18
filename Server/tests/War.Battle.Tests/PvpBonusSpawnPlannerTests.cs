@@ -1700,8 +1700,8 @@ internal static class PvpBonusSpawnPlannerTests
             var match = new MatchEngine(cardManifest, map, content,
                 combatRandom: () => 1f);
             match.ConfigureBattleAllocations([
-                new(localId, [cardId], [], [0], [-1], [-1]),
-                new(enemyId, [cardId], [], [0], [-1], [-1])]);
+                new(localId, [cardId], [], [0], [-1], [-1]) { CardCounts = [1] },
+                new(enemyId, [cardId], [], [0], [-1], [-1]) { CardCounts = [1] }]);
             foreach (var player in cardManifest.Players)
             {
                 match.Admit(player.PlayerId);
