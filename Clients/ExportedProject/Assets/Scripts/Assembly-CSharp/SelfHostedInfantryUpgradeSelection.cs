@@ -39,15 +39,13 @@ public sealed class SelfHostedInfantryUpgradeSelection
         }
     }
 
-    /// <summary>Reproduces CreateFromBattleView's upgrade tuple for this actor's admitted owner and source sheet.</summary>
+    /// <summary>Reproduces the admitted owner's source-sheet upgrade tuple from CreateFromBattleView.</summary>
     public UpgradeSlots.UnitUpgrades Resolve(BattleArmyEntityState actor, SoldierBehaviour family)
     {
-        BattlePlayerView owner;
-        if (actor == null || family == null || family.upgradeSlots == null ||
-            actor.SourceCardId.Length != 0 || actor.UnitId != family.unitDictionaryId ||
-            !_players.TryGetValue(actor.OwnerPlayerId, out owner) || owner.Fraction != actor.OwnerFraction)
+        BattlePlayerView owner = GetOwner(actor, family);
+        if (actor.SourceCardId.Length != 0)
         {
-            throw new ArgumentException("An ordinary actor must belong to its admitted owner and recovered family.");
+            throw new ArgumentException("Card actors do not use admitted ordinary unit upgrades.");
         }
 
         string sourceId = family.upgradeSlots.GetSheetName();
@@ -69,10 +67,42 @@ public sealed class SelfHostedInfantryUpgradeSelection
         throw new InvalidOperationException("The actor's unit is absent from its owner's admitted equipment.");
     }
 
+    /// <summary>Selects the fixed source card lane or the ordinary owner's admitted upgrade lane.</summary>
+    public List<TechnologyVisualDefinition> ResolveVisuals(BattleArmyEntityState actor, SoldierBehaviour family)
+    {
+        GetOwner(actor, family);
+        if (actor.SourceCardId.Length == 0)
+        {
+            return family.upgradeSlots.GetVisuals(Resolve(actor, family));
+        }
+
+        if (!CardUnitSourceIdentity.Matches(actor.SourceCardId, actor.UnitId) ||
+            family.upgradeSlots.cardVisuals == null)
+        {
+            throw new ArgumentException("The card actor must preserve its recovered card/unit appearance identity.");
+        }
+
+        // UpdateVisual copies cardVisuals directly; card actors need no ordinary equipped-unit upgrade tuple.
+        return new List<TechnologyVisualDefinition>(family.upgradeSlots.cardVisuals);
+    }
+
     /// <summary>Checks that a presentation perspective belongs to this admitted match.</summary>
     public bool HasPlayer(string playerId)
     {
         return playerId != null && _players.ContainsKey(playerId);
+    }
+
+    private BattlePlayerView GetOwner(BattleArmyEntityState actor, SoldierBehaviour family)
+    {
+        BattlePlayerView owner;
+        if (actor == null || family == null || family.upgradeSlots == null ||
+            actor.UnitId != family.unitDictionaryId || !_players.TryGetValue(actor.OwnerPlayerId, out owner) ||
+            owner.Fraction != actor.OwnerFraction)
+        {
+            throw new ArgumentException("An actor must belong to its admitted owner and recovered family.");
+        }
+
+        return owner;
     }
 
     private static void ValidateUnits(BattlePlayerView player)

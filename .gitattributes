@@ -242,3 +242,7 @@ Server/docs/INFANTRY_OWNER_APPEARANCE.md text eol=lf
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantrySkinAppearance.cs text eol=lf
 Server/tools/UnityInfantrySkinAppearanceAudit.cs text eol=lf
 Server/docs/INFANTRY_TEAM_SKINS.md text eol=lf
+
+# Fixed card infantry skin verification.
+Server/tools/UnityCardInfantryAppearanceAudit.cs text eol=lf
+Server/docs/CARD_INFANTRY_SKINS.md text eol=lf

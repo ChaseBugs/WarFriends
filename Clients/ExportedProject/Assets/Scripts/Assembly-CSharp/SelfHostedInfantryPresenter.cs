@@ -305,7 +305,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     private SelfHostedInfantrySkinAppearance ApplySkin(SelfHostedInfantryVisual model,
         SoldierBehaviour family, BattleArmyEntityState actor)
     {
-        if (_localAppearanceOwner == null || actor.SourceCardId.Length != 0)
+        if (_localAppearanceOwner == null)
         {
             return null;
         }
@@ -313,8 +313,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         var skin = new SelfHostedInfantrySkinAppearance(_appearanceMatCap);
         try
         {
-            UpgradeSlots.UnitUpgrades upgrades = _upgradeSelection.Resolve(actor, family);
-            List<TechnologyVisualDefinition> definitions = family.upgradeSlots.GetVisuals(upgrades);
+            List<TechnologyVisualDefinition> definitions = _upgradeSelection.ResolveVisuals(actor, family);
             if (actor.OwnerPlayerId == _localAppearanceOwner)
             {
                 skin.ApplyOwned(source, model, definitions);

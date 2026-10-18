@@ -3,7 +3,8 @@
 The PvP bridge now supplies the admitted local player identity and the recovered scene's
 `MatCapTextures.GetMatCap()` result to the infantry presenter. For ordinary actors, the presenter
 uses the owning player's frozen upgrade tuple to call the source family's `GetVisuals` selector.
-Card actors retain their separate appearance path and are not covered by this integration.
+The later [card-skin integration](CARD_INFANTRY_SKINS.md) supplies fixed card lanes through the same
+material helper; the ordinary matrix described here does not itself prove those card cases.
 
 ## Recovered behavior
 
@@ -41,6 +42,6 @@ Disposable Unity 2018.3.0f2 verification passes:
 
 The matrix does not enumerate every upgrade threshold or render a normal two-client battle.
 Full active Client compilation/Play Mode, runtime shader/pixel parity, original Unity 5.2.5,
-Android and Linux runtime remain unverified here. Card skins, Buddy camos, other infantry weapon
+Android and Linux runtime remain unverified here. Card weapons/shields, Buddy camos, other infantry weapon
 model lanes and complete normal battle presentation remain separate work. No server combat or
 protocol authority changed in this checkpoint. See the [feature checklist](BATTLE_SERVER_FEATURES.md).
