@@ -120,8 +120,8 @@ The final Client reference run is
 Server/.local/client-boot-790c4cab61324591949cc147696d71a2.
 This does not prove original Unity 5.2, Android, rendered UI or normal battle
 controller entry. The observation is not imported as starter economy or
-ownership authority. Derived free/tutorial ownership, unit lane projection
-and automatic battle allocation remain open.
+ownership authority. Later sections describe the implemented derived ownership
+and unit lane projection; automatic battle allocation remains open.
 
 ## Atomic initial account state
 
@@ -172,10 +172,55 @@ both gameplay modes and all purchase/borrowing flag combinations, including
 flag immutability. Presentation checks isolate the four initial weapons by
 unequipping units in the test fixture, reject an unowned paid rifle and accept
 its durable borrowed state. This isolation does not prove a complete starter
-presentation: unit ownership and special/Elite lane conversion still block
-normal fresh-account admission, and automatic allocations remain absent.
+presentation by itself. The unit implementation below now checks the complete
+starter presentation; automatic allocations remain absent.
 
 Verification: Release solution build succeeds with zero warnings/errors;
 `--initial-loadout-only` passes 45,485 checks including the earlier initial
 state checks, and `--client-weapon-index-only` passes 268 identity checks.
 The source-hash/index generator also verifies the active Client metadata.
+
+## Unit ownership and upgrade lane projection
+
+`BattleUnitProjection` now follows UpgradeSlots.bought and canUseInBattle for
+all 24 source player units. Free/tutorial ownership does not write Bought.
+Borrowed units remain selectable even if their Equipped flag is false.
+Normal battle entry supplies a server-selected non-tutorial mode; tutorial
+mode remains separate and does not follow account completion flags.
+
+`build_battle_unit_rules.py` verifies the active rule/scene hashes, pins the
+reviewed sheet artifact, checks contiguous upgrade lanes against the observed
+offsets, and produces `content/recovered-battle-unit-rules.json`. Backend embeds
+and hashes that immutable rule set. Disabled Elite definitions can retain sheet
+rows, such as Assaulter; rows alone never enable the Elite lane.
+
+Normal stages stay relative because their source offset is zero. A special lane
+is active only after promotion above the starting tier; its wire index adds
+STARTINGSPECIAL to the saved relative stage. Elite needs STARTINGELITE > 0 and
+saved eliteSlot > 0; its wire index adds that offset. Inactive lanes emit -1,
+matching PlayerProperties' wire isSpecial/isElite checks. Legacy saved tier zero
+uses the source start tier. Negative or out-of-range stages, unavailable Elite
+progress and special progress on an unpromoted unit fail instead of being clamped
+into combat authority. No purchase, tier promotion or upgrade is written.
+
+Native checks compare all 24 initial ownership observations, exercise every
+supported rank/mode/purchase/borrowing combination, and verify normal lane
+endpoints, promoted special offsets and enabled/disabled Elite bounds. The full
+source starter account projects four weapons and four units with normal stage
+zero and both optional lanes inactive, without modifying saved state.
+Automatic allocation, other account selection limits, rendered Client parity
+and complete normal battle admission remain separate open requirements.
+
+Actual Unity/Mongo validation also passes at
+Server/.local/client-boot-f3ef05e1c6054248baf50ace9c0dc319. The change-stream
+observer projects all four weapons and four units directly from the original
+account insert and verifies no special/Elite upgrade grants. Account callbacks
+complete with 24 units, 66 weapons, zero exceptions and the same 70 error-level
+diagnostics. Final serialized Client defaults equal the committed observation.
+This does not verify upgraded-unit rendering, original Unity 5.2, Android or
+normal matchmaking; no allocation was supplied by this test.
+
+The final Release solution build has zero warnings/errors.
+`--initial-loadout-only` passes 54,236 combined initial-state, weapon and unit
+checks; `--client-weapon-index-only` passes 268 identity checks. The unit rule
+generator verifies the committed artifact against source hashes and lane bounds.

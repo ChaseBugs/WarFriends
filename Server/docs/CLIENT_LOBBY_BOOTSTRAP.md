@@ -238,12 +238,11 @@ in the restored source order. `WeaponLevelsSetup.bought` accepts source shop
 weapons with unlock index zero and zero ordinary/Gold prices even when the
 saved `bought` flag is false. `UpgradeSlots.GetArmySlot` also starts a missing
 record with `bought=false` and the source start tier. The current battle
-unit presentation projection still only checks stored Bought/Borrowed flags.
-Weapon projection now evaluates the reviewed source free/tutorial/rank rules.
-Reconcile unit
-these source rules against validated catalogs instead of marking every
-default entry purchased just to satisfy that projection. Tutorial and
-try-out exceptions require their own authoritative mode/entitlement proof.
+weapon and unit projections now evaluate reviewed source free/tutorial/rank
+rules without marking defaults purchased. Borrowed units remain available
+independently of the equipped flag, as UpgradeSlots.canUseInBattle requires.
+Unit special/Elite lanes use source offsets only when active; inactive lanes
+use the wire sentinel -1. Corrupt stages fail rather than being clamped.
 
 ### Verified weapon index conversion
 
@@ -252,6 +251,6 @@ records the real initial slot choices and all 66 weapon identity pairs.
 The Backend projects stored LevelManager indexes into battle allWeapons
 indexes; PlayerProperties converts those authenticated views back into
 local LevelManager indexes. Actual Unity mapping checks, native identity
-checks and Mongo-backed live queue/rematch gates pass. Starter ownership
-and automatic allocation projection are still required before a
+checks and Mongo-backed live queue/rematch gates pass. The full source starter
+presentation now passes native checks. Automatic allocation is still required before a
 fresh normal account can enter matchmaking automatically.

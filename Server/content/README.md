@@ -102,3 +102,9 @@ New guest accounts insert these with the account document. Purchase/borrowing
 flags remain false, deliveries inactive and progression/parts zero. Existing
 accounts are not reset. See the starter checkpoint for source provenance and
 actual Unity/Mongo insert verification; derived ownership is a separate rule.
+
+`recovered-battle-unit-rules.json` pins the 24 player-unit ownership rules and
+normal/special/Elite lane bounds used by Backend presentation. Verify with
+`python Server/tools/build_battle_unit_rules.py`; `--write` regenerates it from
+reviewed source evidence. Inactive optional lanes never grant upgrades merely
+because the saved relative index is zero. See the starter checkpoint for scope.

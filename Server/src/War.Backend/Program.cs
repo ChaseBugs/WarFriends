@@ -32,6 +32,7 @@ builder.Services.AddSingleton<BattlePlayerPresentationSource>();
 BattleClientWeaponIndices.Validate();
 LegacyInitialLoadout.Validate();
 BattleWeaponOwnership.Validate();
+BattleUnitProjection.Validate();
 builder.Services.AddSingleton(new LegacyBufferStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new LegacySquadStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<LegacyBufferProcessor>();

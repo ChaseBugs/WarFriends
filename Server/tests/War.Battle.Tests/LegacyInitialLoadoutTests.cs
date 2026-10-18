@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using MongoDB.Driver;
+using War.Backend;
 using War.Backend.Legacy;
 using War.Persistence;
 
@@ -51,7 +52,10 @@ internal static class LegacyInitialLoadoutTests
                 {
                     schemaVersion = 1,
                     hasCompleteInitialStateInInsert = true,
-                    subsystemCount = InitialSubsystemCount
+                    subsystemCount = InitialSubsystemCount,
+                    hasStarterBattlePresentation = true,
+                    weaponCount = 4,
+                    unitCount = 4
                 });
                 await File.WriteAllTextAsync(reportPath, report + "\n", deadline.Token);
                 Console.WriteLine("PASS: all three source-derived subsystems exist in the original account insert");
@@ -72,6 +76,10 @@ internal static class LegacyInitialLoadoutTests
                 JsonNode.DeepEquals(JsonNode.Parse(actual), JsonNode.Parse(entry.Value)),
                 "Initial subsystem state was absent or changed in the account insert.");
         }
+        var presentation = BattlePlayerPresentationSource.Project(player);
+        Require(presentation.Weapons.Count == 4 && presentation.Units.Count == 4 &&
+            presentation.Units.All(unit => unit.UpgradeIndex == 0 && unit.SpecialIndex == -1 && unit.EliteIndex == -1),
+            "The original account insert did not produce the source starter battle presentation.");
     }
 
     private static void Require(bool condition, string message)

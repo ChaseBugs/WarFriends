@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "observationSha256": "7e4d56b6dbbfdc832fe65c1a3320c15d4b9c7b80750d7e6ba36f4d45ccb923c5",
+  "sheetArtifactSha256": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "units": [
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsAssaulter",
+      "minimumPurchaseRankIndex": -1,
+      "startingTier": 1,
+      "isTutorialUnit": true,
+      "specialStartIndex": 101,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        101,
+        26,
+        6
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsShotgunner",
+      "minimumPurchaseRankIndex": -1,
+      "startingTier": 1,
+      "isTutorialUnit": false,
+      "specialStartIndex": 101,
+      "eliteStartIndex": 127,
+      "hasFreeAccess": true,
+      "laneCounts": [
+        101,
+        26,
+        6
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsSniper",
+      "minimumPurchaseRankIndex": 0,
+      "startingTier": 2,
+      "isTutorialUnit": false,
+      "specialStartIndex": 96,
+      "eliteStartIndex": 117,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        96,
+        21,
+        6
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsSwat",
+      "minimumPurchaseRankIndex": 14,
+      "startingTier": 3,
+      "isTutorialUnit": false,
+      "specialStartIndex": 86,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        86,
+        16,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsBazooka",
+      "minimumPurchaseRankIndex": 2,
+      "startingTier": 2,
+      "isTutorialUnit": false,
+      "specialStartIndex": 96,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        96,
+        21,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsParachuter",
+      "minimumPurchaseRankIndex": 6,
+      "startingTier": 2,
+      "isTutorialUnit": false,
+      "specialStartIndex": 96,
+      "eliteStartIndex": 117,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        96,
+        21,
+        6
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsGrennader",
+      "minimumPurchaseRankIndex": -1,
+      "startingTier": 1,
+      "isTutorialUnit": false,
+      "specialStartIndex": 101,
+      "eliteStartIndex": 127,
+      "hasFreeAccess": true,
+      "laneCounts": [
+        101,
+        26,
+        6
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsMinigunner",
+      "minimumPurchaseRankIndex": 28,
+      "startingTier": 5,
+      "isTutorialUnit": false,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        51,
+        6,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsEngineer",
+      "minimumPurchaseRankIndex": 10,
+      "startingTier": 3,
+      "isTutorialUnit": false,
+      "specialStartIndex": 86,
+      "eliteStartIndex": 102,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        86,
+        16,
+        6
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsMachineGunner",
+      "minimumPurchaseRankIndex": -1,
+      "startingTier": 1,
+      "isTutorialUnit": false,
+      "specialStartIndex": 101,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": true,
+      "laneCounts": [
+        101,
+        26,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsDrone",
+      "minimumPurchaseRankIndex": 4,
+      "startingTier": 2,
+      "isTutorialUnit": false,
+      "specialStartIndex": 96,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        96,
+        21,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsHelicopter",
+      "minimumPurchaseRankIndex": 16,
+      "startingTier": 4,
+      "isTutorialUnit": false,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        71,
+        11,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsTank",
+      "minimumPurchaseRankIndex": 30,
+      "startingTier": 5,
+      "isTutorialUnit": false,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        51,
+        6,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsTransporter",
+      "minimumPurchaseRankIndex": 20,
+      "startingTier": 4,
+      "isTutorialUnit": false,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        71,
+        11,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsSciFi",
+      "minimumPurchaseRankIndex": 18,
+      "startingTier": 4,
+      "isTutorialUnit": false,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        71,
+        11,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsCarBuggy",
+      "minimumPurchaseRankIndex": 12,
+      "startingTier": 3,
+      "isTutorialUnit": false,
+      "specialStartIndex": 86,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        86,
+        16,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsAssaultHeli",
+      "minimumPurchaseRankIndex": 8,
+      "startingTier": 3,
+      "isTutorialUnit": false,
+      "specialStartIndex": 86,
+      "eliteStartIndex": 102,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        86,
+        16,
+        6
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsCar",
+      "minimumPurchaseRankIndex": 24,
+      "startingTier": 5,
+      "isTutorialUnit": false,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        51,
+        6,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsFlamethrower",
+      "minimumPurchaseRankIndex": 26,
+      "startingTier": 5,
+      "isTutorialUnit": false,
+      "specialStartIndex": 51,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        51,
+        6,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsCommando",
+      "minimumPurchaseRankIndex": 22,
+      "startingTier": 4,
+      "isTutorialUnit": false,
+      "specialStartIndex": 71,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        71,
+        11,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsGunslinger",
+      "minimumPurchaseRankIndex": 31,
+      "startingTier": 6,
+      "isTutorialUnit": false,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        26,
+        6,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsMortar",
+      "minimumPurchaseRankIndex": 35,
+      "startingTier": 6,
+      "isTutorialUnit": false,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        26,
+        6,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsWarper",
+      "minimumPurchaseRankIndex": 33,
+      "startingTier": 6,
+      "isTutorialUnit": false,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        26,
+        6,
+        0
+      ]
+    },
+    {
+      "sourceId": "Google2u.DBUpgradeSlotsMech",
+      "minimumPurchaseRankIndex": 37,
+      "startingTier": 6,
+      "isTutorialUnit": false,
+      "specialStartIndex": 26,
+      "eliteStartIndex": -1,
+      "hasFreeAccess": false,
+      "laneCounts": [
+        26,
+        6,
+        0
+      ]
+    }
+  ]
+}

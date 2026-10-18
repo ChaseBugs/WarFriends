@@ -119,7 +119,8 @@ try {
         throw "Initial account insert did not contain complete source state; inspect $runRoot"
     }
     $initialState = Get-Content -LiteralPath $initialReport -Raw | ConvertFrom-Json
-    if (!$initialState.hasCompleteInitialStateInInsert -or $initialState.subsystemCount -ne 3) {
+    if (!$initialState.hasCompleteInitialStateInInsert -or $initialState.subsystemCount -ne 3 -or
+        !$initialState.hasStarterBattlePresentation -or $initialState.weaponCount -ne 4 -or $initialState.unitCount -ne 4) {
         throw "Initial account insertion evidence is incomplete; inspect $runRoot"
     }
     $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json

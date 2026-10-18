@@ -249,5 +249,6 @@ mapping checks and live Mongo/HTTP/UDP queue/rematch gates pass. This does
 not prove normal battle-controller initialization. New guest accounts now
 receive all three initial loadout blobs in their original Mongo insert;
 actual Unity boot and a change-stream observer verify this boundary. Existing
-accounts are not backfilled. Derived ownership and automatic allocation remain
-open.
+accounts are not backfilled. Source-derived weapon/unit ownership and unit
+upgrade lane conversion now project the complete starter loadout without
+purchase grants. Automatic allocation and normal controller entry remain open.

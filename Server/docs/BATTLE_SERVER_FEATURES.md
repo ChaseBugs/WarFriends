@@ -53,14 +53,16 @@ LevelManager versus battle allWeapons index boundary. All 66 mappings are
 source-bound; actual Unity checks and live Mongo/Backend/Worker gates pass.
 New guest accounts now store all three source-derived initial subsystem blobs
 in their original Mongo insert, verified through a change stream during actual
-Unity account boot. This does not yet authorize implicit starter ownership or
-provide automatic fresh-account battle allocation. Existing accounts are not
-backfilled; unit lane projection and normal controller entry remain open.
+Unity account boot. This does not provide automatic fresh-account battle
+allocation. Existing accounts are not backfilled; normal controller entry remains open.
 Weapon availability now follows the recovered free, purchased-rank, borrowed
 and tutorial-mode branches without changing purchase flags. All 66 initial
 observations and the complete rank/mode/flag matrix pass native checks.
-Unit ownership and lane projection remain separate open work; the presentation
-test isolates weapons and does not prove full starter admission.
+Unit ownership now follows the same source mode/rank distinctions and preserves
+borrowed availability even when unequipped. Unit lane projection converts saved
+relative stages to absolute source indexes and emits -1 for inactive special
+or Elite lanes. Native checks project the full four-weapon/four-unit starter
+without purchase grants. Automatic allocation and normal battle entry remain open.
 
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted

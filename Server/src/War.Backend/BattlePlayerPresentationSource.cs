@@ -48,11 +48,12 @@ public sealed class BattlePlayerPresentationSource
             int inventoryIndex = BattleClientWeaponIndices.ResolveInventoryIndex(source, x.Value.WeaponIndex);
             return new BattleWeaponPresentation(x.Key,inventoryIndex,source,saved.BoughtIndex);
         }).ToArray();
-        var units=levels.SavedArmies.Where(x=>x.Value.Equipped).OrderBy(x=>x.Key,StringComparer.Ordinal).Select(x=>
-        {
-            if(!(x.Value.Bought || x.Value.Borrowed))throw new InvalidDataException("Equipped unit is not owned in durable level state.");
-            return new BattleUnitPresentation(x.Key,x.Value.BoughtIndex,x.Value.SpecialSlot,x.Value.EliteSlot,x.Value.Tier);
-        }).ToArray();
+        var unitContext = new UnitOwnershipContext(player.Level, IsTutorial: false);
+        var units = levels.SavedArmies
+            .Where(unit => unit.Value.Equipped || unit.Value.Borrowed)
+            .OrderBy(unit => unit.Key, StringComparer.Ordinal)
+            .Select(unit => BattleUnitProjection.Project(unit.Key, unit.Value, unitContext))
+            .ToArray();
         return BattlePlayerPresentation.Validate(new BattlePlayerPresentation(player.Id,player.Name,player.Level,player.ArmyPower,
             player.Skill,player.MedalsBalance,player.BeginnersLeague,player.LeagueId,player.Country,player.Vip>0,visuals,weapons,units));
     }

@@ -449,6 +449,7 @@ if (args is ["--initial-loadout-only"])
     }
     int focused = LegacyInitialLoadoutTests.Run(Path.Combine(root.FullName, "content"));
     focused += BattleWeaponOwnershipTests.Run(Path.Combine(root.FullName, "content"));
+    focused += BattleUnitProjectionTests.Run(Path.Combine(root.FullName, "content"));
     Console.WriteLine($"PASS: {focused} initial loadout checks");
     return;
 }
@@ -1345,7 +1346,13 @@ var durablePresentationPlayer=new LegacyPlayerDocument
         ["LevelManagerData"]=PlayerState.Write(new LevelManagerData
         {
             SavedWeapons=new Dictionary<string,SavedWeaponSlots>{{"Google2u.AssaultRifle_AK47",new SavedWeaponSlots{Bought=true,BoughtIndex=2}}},
-            SavedArmies=new Dictionary<string,SavedArmySlots>{{"Google2u.DBUpgradeSlotsRifleman",new SavedArmySlots{Bought=true,Equipped=true,BoughtIndex=3,SpecialSlot=-1,EliteSlot=-1,Tier=1}}}
+            SavedArmies = new Dictionary<string, SavedArmySlots>
+            {
+                ["Google2u.DBUpgradeSlotsAssaulter"] = new SavedArmySlots
+                {
+                    Bought = true, Equipped = true, BoughtIndex = 3, SpecialSlot = 0, EliteSlot = 0, Tier = 1
+                }
+            }
         })
     }
 };
@@ -3451,6 +3458,7 @@ checks += GrenadeVehicleFlightTests.Run(Path.Combine(contentRoot.FullName,"conte
 checks += GrenadeDroneTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += LegacyInitialLoadoutTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleWeaponOwnershipTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += BattleUnitProjectionTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleClientWeaponIndexTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += BattleScoreSnapshotTests.Run();
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
