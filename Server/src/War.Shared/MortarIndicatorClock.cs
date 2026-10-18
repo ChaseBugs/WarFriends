@@ -3,7 +3,7 @@ using System;
 namespace War.Shared
 {
     /// <summary>Replays recovered warning updates while preserving stored-float boundaries and source reuse.</summary>
-    public sealed class MortarIndicatorClock
+    public sealed partial class MortarIndicatorClock
     {
         private const float MaximumStopSeconds = 1800f;
         private const float ShrinkLeadSeconds = 0.3f;

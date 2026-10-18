@@ -601,6 +601,15 @@ message BattleMortarWarningState {
   uint64 launch_tick = 7; uint64 observed_tick = 8;
   float x = 9; float y = 10; float z = 11; float stop_seconds = 12;
   bool is_fake = 13; float rotation_factor = 14; float scale = 15; float alpha = 16;
+  BattleMortarWarningClockState clock = 17;
+}
+// Full source tween startup/phase state, including history retained by a reused weapon.
+message BattleMortarWarningClockState {
+  bool has_begun = 1; bool has_blink_started = 2; bool skip_reactivation_frame = 3;
+  bool visible = 4; bool shrinking = 5; bool blinking = 6;
+  float rotation_factor = 7; float shrink_factor = 8; float blink_factor = 9;
+  float scale = 10; float alpha = 11; float shrink_speed = 12; float blink_speed = 13;
+  int32 blink_boundary_count = 14;
 }
 message BattleAirEntityState {
   uint64 entity_key = 1; string owner_player_id = 2;

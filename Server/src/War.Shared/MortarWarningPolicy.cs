@@ -48,6 +48,13 @@ namespace War.Shared
                     throw new InvalidOperationException("Malformed or observer-incompatible Mortar warning.");
                 }
                 previousSlot = row.WeaponSlot;
+                MortarIndicatorClock clock = MortarIndicatorClock.FromCheckpoint(row.Clock);
+                float expectedSpeed = row.StopSeconds > 0.3f ? 1f / (row.StopSeconds - 0.3f) : 0f;
+                if (!clock.IsVisible || !row.Clock.HasBegun || row.Clock.ShrinkSpeed != expectedSpeed ||
+                    clock.RotationFactor != row.RotationFactor || clock.Scale != row.Scale || clock.Alpha != row.Alpha)
+                {
+                    throw new InvalidOperationException("Warning sample disagrees with its source clock checkpoint.");
+                }
             }
         }
 

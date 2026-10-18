@@ -40,7 +40,8 @@ public sealed partial class MatchEngine
                 WeaponSlot = _mortarSlotActors.Single(slot => slot.Value == row.EntityKey).Key,
                 ProjectileId = row.ProjectileId, LaunchTick = row.LaunchTick, ObservedTick = row.ObservedTick,
                 X = row.Position.X, Y = row.Position.Y, Z = row.Position.Z, StopSeconds = row.StopSeconds,
-                IsFake = row.IsFake, RotationFactor = row.RotationFactor, Scale = row.Scale, Alpha = row.Alpha
+                IsFake = row.IsFake, RotationFactor = row.RotationFactor, Scale = row.Scale, Alpha = row.Alpha,
+                Clock = row.Clock.Clone()
             }).OrderBy(row => row.WeaponSlot).ToArray();
         MortarWarningPolicy.Validate(rows, tick, observer.Definition.Fraction);
         return rows;

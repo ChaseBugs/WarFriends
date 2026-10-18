@@ -1,4 +1,5 @@
 using System.Numerics;
+using War.Protocol;
 
 namespace War.BattleServer;
 
@@ -17,4 +18,5 @@ internal sealed record MortarIndicatorObservation
     internal required float RotationFactor { get; init; }
     internal required float Scale { get; init; }
     internal required float Alpha { get; init; }
+    internal required BattleMortarWarningClockState Clock { get; init; }
 }

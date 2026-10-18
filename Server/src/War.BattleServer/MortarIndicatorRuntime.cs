@@ -87,7 +87,8 @@ internal sealed class MortarIndicatorRuntime
             IsFake = _launch.IsFake,
             RotationFactor = _clock.RotationFactor,
             Scale = _clock.Scale,
-            Alpha = _clock.Alpha
+            Alpha = _clock.Alpha,
+            Clock = _clock.Capture()
         };
     }
 

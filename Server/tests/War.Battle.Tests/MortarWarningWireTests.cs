@@ -30,7 +30,8 @@ internal static class MortarWarningWireTests
             row => row.StopSeconds = 0,
             row => row.RotationFactor = -1,
             row => row.Scale = 2,
-            row => row.Alpha = 1
+            row => row.Alpha = 1,
+            row => row.Clock = null
         };
         foreach (Action<BattleMortarWarningState> mutate in mutations)
         {
@@ -45,7 +46,7 @@ internal static class MortarWarningWireTests
         Reject(() => MortarWarningPolicy.Validate([valid, duplicateActor], SnapshotTick, 2));
         Require(BattleMortarWarningState.Parser.ParseFrom(valid.ToByteArray()).Equals(valid),
             "Warning sample lost authority in protobuf serialization.");
-        return mutations.Length + 4 + CheckPages();
+        return mutations.Length + 4 + CheckPages() + MortarWarningCheckpointTests.Run();
     }
 
     private static int CheckPages()
@@ -86,12 +87,16 @@ internal static class MortarWarningWireTests
 
     private static BattleMortarWarningState Warning(int slot)
     {
+        var clock = new MortarIndicatorClock();
+        clock.BeginShot(2f);
+        clock.Advance(1f / 30f);
         return new BattleMortarWarningState
         {
             EntityKey = (1UL << 32) | (uint)(slot + 1), OwnerPlayerId = OwnerId,
             OwnerFraction = 1, ObserverFraction = 2, WeaponSlot = slot, ProjectileId = (ulong)slot + 1,
             LaunchTick = 60, ObservedTick = SnapshotTick, X = 1, Y = 1, Z = 1,
-            StopSeconds = 2, Scale = 1.2f, Alpha = 0.3f, RotationFactor = 0.5f
+            StopSeconds = 2, Scale = clock.Scale, Alpha = clock.Alpha, RotationFactor = clock.RotationFactor,
+            Clock = clock.Capture()
         };
     }
 

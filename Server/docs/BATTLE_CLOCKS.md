@@ -170,3 +170,7 @@ The updated focused combat-content run passes 26,396 checks with exit code zero 
 `Server/.local/source-wait-combat-content.log`. This includes the formerly failing fixture and
 its subsequent vitality, death, helicopter pose and economy assertions. It is broad combat
 regression evidence, not a complete full-suite or rendered two-Unity acceptance claim.
+That generation's complete run subsequently passed 263,463 checks with exit code zero at
+`Server/.local/source-wait-full-regression.log`. It includes the source-time/body-retention
+host and corrected fixture, but predates slot/observer warning history, warning transport
+and complete checkpoint reconstruction. Those later changes require their own evidence.

@@ -72,6 +72,10 @@ projectile membership, with bounded packet sizing and SDK page/roster/sample val
 Mortar coverage passes 13,359 checks, protocol regression 1,360 and projectile row regression 42.
 Complete late-arrival clock checkpoints, real warning-bearing SDK UDP acceptance and Unity
 packaging/rendering are still required; sample transport alone does not complete presentation.
+The warning payload now includes complete source tween checkpoints, with immutable SDK
+reconstruction to current game time and explicit fresh-scan requirements for old state. First,
+reused and immediate-duration playback traces cover every stored phase. Actual warning-bearing
+UDP, Unity SDK packaging and rendered two-Client acceptance remain open.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

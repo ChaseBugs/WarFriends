@@ -622,9 +622,40 @@ publication after shooter death. Protocol regression passes 1,360 checks at
 `Server/.local/mortar-warning-protocol-tests.log`; projectile row regression passes 42 at
 `Server/.local/mortar-warning-projectile-tests.log`.
 
-This publishes authoritative samples, not a complete late-arrival clock checkpoint. Full tween
-phase/startup state for prediction/reconstruction, actual warning-bearing UDP SDK acceptance,
+This sample-only milestone did not include late-arrival clock checkpoints; the subsequent
+checkpoint implementation is described below. Actual warning-bearing UDP SDK acceptance,
 Unity SDK packaging and rendering remain open. The active Unity plugin binaries were not
-replaced in this checkpoint. Do not extrapolate a fresh clock from launch age and claim it
-preserves the native slot/observer history, or describe these source/packet tests as rendered
-two-Client warning acceptance.
+replaced. Do not extrapolate a fresh clock from launch age and claim it preserves source
+slot/observer history, or describe source/packet tests as rendered two-Client acceptance.
+
+## Complete clock checkpoints and delayed reconstruction
+
+Warning field 17 now carries every stored MortarIndicatorClock field: first-use and blink-start
+flags, skipped reactivation frame, visibility and active phases, rotation/shrink/blink factors,
+scale/alpha, shrink and signed blink speeds, and blink boundary count. Capture copies state;
+FromCheckpoint validates and creates a separate clock without calling BeginShot. The outer
+sample must agree with the checkpoint, including the shrink rate derived from source stop time.
+Malformed initial states, impossible active phase combinations, nonfinite/range-invalid values,
+invalid blink counters/rates and absent checkpoints are rejected before restoration/publication.
+
+`MortarWarningReconstruction.AtTick` restores a validated sample at its observed game tick and
+advances the original clock one stored-float 1/30-second frame at a time. It returns null only
+when source playback hides the warning. It preserves target and actor/slot/observer/launch
+identity and never modifies the frozen input. Future samples and ticks beyond the host domain
+are rejected. Catch-up is bounded to sixty seconds; older state requires a fresh scan instead
+of a clamp, invented tween reset or silent expiration. A paused authoritative game tick adds
+no elapsed frames. Separately, a directly invoked zero-delta source Update can still sample
+scale; the checkpoint tests preserve that source lifecycle behavior rather than assuming all
+fields are invariant when delta is zero.
+
+Tests compare checkpoint restore/protobuf round trips and five-frame SDK catch-up against
+independent uninterrupted traces at every sampled first-use, reused and short-duration phase.
+The latter preserves the recovered immediate-duration path, which does not start blinking.
+Hidden state and retained blink startup flags are included. These are exact managed-source
+clock comparisons backed by the earlier native clock evidence, not a new Mono checkpoint or
+rendered Client acceptance run. Active Unity binaries and presenters still need migration.
+The latest Mortar group passes 14,326 checks at `Server/.local/mortar-checkpoint-tests.log`;
+protocol/admission/replay regression passes 1,360 at
+`Server/.local/mortar-checkpoint-protocol-tests.log`. The sixty-second replay budget is explicit
+client recovery policy, not a recovered production timeout. Full regression is tracked at
+`Server/.local/mortar-checkpoint-full.log`; focused checks do not establish that run's result.
