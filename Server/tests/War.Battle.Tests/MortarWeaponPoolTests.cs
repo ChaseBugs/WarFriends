@@ -100,10 +100,10 @@ internal static class MortarWeaponPoolTests
         checks += Require(pool.TryAllocateForMaster(11, out int masterFirst) && masterFirst == 0 &&
             pool.TryAllocateForPeer(21, out int peerFirst) && peerFirst == 3 &&
             pool.TryAllocateForMaster(12, out int masterSecond) && masterSecond == 1 &&
-            pool.TryAllocateForPeer(22, out int peerSecond) && peerSecond == 2 && pool.ActiveCount == capacity,
+            pool.TryAllocateForPeer(22, out int peerSecond) && peerSecond == 2 && pool.OccupiedCount == capacity,
             "Mixed master/peer allocation did not use opposing free-list ends.");
         checks += Require(!pool.TryAllocateForMaster(13, out int exhausted) && exhausted == -1 &&
-            pool.SlotFor(13) == null && pool.ActiveCount == capacity,
+            pool.SlotFor(13) == null && pool.OccupiedCount == capacity,
             "Exhaustion created a source index or consumed a future actor identity.");
         checks += Require(pool.Release(21) && pool.Release(12) &&
             pool.FreeSlots().SequenceEqual(new[] { 1, 3 }),
@@ -112,7 +112,7 @@ internal static class MortarWeaponPoolTests
             pool.TryAllocateForMaster(13, out int reusedMaster) && reusedMaster == 1,
             "A peer must not consume the most recently returned slot when an older free slot exists.");
         checks += Require(!pool.Release(21) && !pool.Release(99) && pool.SlotFor(23) == 3 &&
-            pool.ActiveCount == capacity,
+            pool.OccupiedCount == capacity,
             "An old actor release freed a slot now owned by a successor.");
         checks += Require(pool.Release(22) && pool.Release(11) && pool.Release(23) &&
             pool.FreeSlots().SequenceEqual(new[] { 3, 0, 2 }) &&
@@ -121,10 +121,10 @@ internal static class MortarWeaponPoolTests
             "Multi-return ordering was replaced with actor order or a FIFO policy.");
         int[] copied = pool.FreeSlots();
         copied[0] = 999;
-        checks += Require(pool.TryAllocateForMaster(15, out int final) && final == 0 && pool.ActiveCount == capacity,
+        checks += Require(pool.TryAllocateForMaster(15, out int final) && final == 0 && pool.OccupiedCount == capacity,
             "A diagnostic free-list copy mutated pool authority.");
         pool.Clear();
-        checks += Require(pool.ActiveCount == 0 && pool.SlotFor(15) == null && !pool.Release(15) &&
+        checks += Require(pool.OccupiedCount == 0 && pool.SlotFor(15) == null && !pool.Release(15) &&
             pool.FreeSlots().SequenceEqual(new[] { 0, 1, 2, 3 }),
             "Terminal pool reset retained an actor binding or changed the next scene's initial index order.");
         return checks;
@@ -164,7 +164,7 @@ internal static class MortarWeaponPoolTests
             {
                 rejected = true;
             }
-            checks += Require(rejected && pool.SlotFor(11) == 0 && pool.ActiveCount == 1 &&
+            checks += Require(rejected && pool.SlotFor(11) == 0 && pool.OccupiedCount == 1 &&
                 pool.FreeSlots().SequenceEqual(new[] { 1, 2, 3 }),
                 "Rejected allocation/release changed existing slot ownership.");
         }

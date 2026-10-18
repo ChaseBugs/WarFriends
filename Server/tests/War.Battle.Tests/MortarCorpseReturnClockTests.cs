@@ -20,7 +20,7 @@ internal static class MortarCorpseReturnClockTests
         {
             checks += CompareNativeScenario(scenario);
         }
-        return checks + CheckRejectedInputs() + CheckFrameOvershoot();
+        return checks + CheckRejectedInputs() + CheckFrameOvershoot() + CheckPoolRejections();
     }
 
     private static int CompareNativeScenario(JsonElement scenario)
@@ -28,16 +28,27 @@ internal static class MortarCorpseReturnClockTests
         var clock = new MortarCorpseReturnClock(scenario.GetProperty("delay").GetSingle());
         bool shouldForceReturn = scenario.GetProperty("forcedReturn").GetBoolean();
         int forcedTick = scenario.GetProperty("forcedReturnTick").GetInt32();
+        var pool = new MortarWeaponPool(1);
+        pool.TryAllocateForMaster(11, out _);
+        pool.BeginCorpseReturn(11, 0, scenario.GetProperty("delay").GetSingle());
+        bool hasRetainedOwnership = true;
         var events = new List<(string Transition, int Tick)> { ("scheduled", 0) };
         for (int tick = 1; tick <= LastTick; tick++)
         {
             if (shouldForceReturn && tick == forcedTick)
             {
                 clock.ForceReturn();
+                hasRetainedOwnership &= pool.Release(11) && pool.TryAllocateForPeer(22, out int slot) && slot == 0;
                 events.Add(("forced-return", tick));
                 events.Add(("successor-allocated", tick));
             }
             MortarCorpseReturnClock.Transition transition = clock.Advance(DeltaSeconds(tick));
+            hasRetainedOwnership &= pool.AdvanceCorpseReturn(11, (ulong)tick, DeltaSeconds(tick)) == transition;
+            if (!clock.HasReturned)
+            {
+                hasRetainedOwnership &= pool.OccupiedCount == 1 && pool.PendingCorpseCount == 1 &&
+                    !pool.TryAllocateForMaster(33, out _);
+            }
             if (transition == MortarCorpseReturnClock.Transition.Hidden)
             {
                 events.Add(("hide-callback", tick));
@@ -50,8 +61,11 @@ internal static class MortarCorpseReturnClockTests
         events.Add(("finished", LastTick));
         var expected = scenario.GetProperty("events").EnumerateArray()
             .Select(row => (row.GetProperty("transition").GetString()!, row.GetProperty("tick").GetInt32()));
-        return Require(events.SequenceEqual(expected) && clock.HasReturned,
+        int checks = Require(events.SequenceEqual(expected) && clock.HasReturned,
             "Corpse callbacks differ from native pause, slow motion or forced-reuse boundaries.");
+        return checks + Require(hasRetainedOwnership && pool.PendingCorpseCount == 0 &&
+            (shouldForceReturn ? pool.SlotFor(22) == 0 && pool.OccupiedCount == 1 : pool.OccupiedCount == 0),
+            "A retained corpse freed its slot early, or an old callback freed its reused successor.");
     }
 
     private static float DeltaSeconds(int tick)
@@ -94,6 +108,55 @@ internal static class MortarCorpseReturnClockTests
             clock.Advance(0.5f) == MortarCorpseReturnClock.Transition.Returned &&
             clock.Advance(1f) == MortarCorpseReturnClock.Transition.None,
             "The second wait reused the first wait's overshoot or returned twice.");
+    }
+
+    private static int CheckPoolRejections()
+    {
+        var pool = new MortarWeaponPool(1);
+        pool.TryAllocateForMaster(11, out _);
+        int checks = RequireRejected(() => pool.BeginCorpseReturn(11, 10, float.NaN));
+        checks += Require(pool.PendingCorpseCount == 0 && pool.SlotFor(11) == 0,
+            "A malformed death delay changed weapon ownership.");
+        pool.BeginCorpseReturn(11, 10, 2f);
+        checks += RequireAuthorityRejected(() => pool.BeginCorpseReturn(11, 11, 3f));
+        checks += RequireAuthorityRejected(() => pool.BeginCorpseReturn(12, 10, 2f));
+        checks += RequireAuthorityRejected(() => pool.AdvanceCorpseReturn(11, 12, FrameSeconds));
+        checks += Require(pool.AdvanceCorpseReturn(11, 10, FrameSeconds) == MortarCorpseReturnClock.Transition.None,
+            "The body consumed its death frame as a later coroutine frame.");
+        pool.AdvanceCorpseReturn(11, 11, FrameSeconds);
+        checks += RequireAuthorityRejected(() => pool.AdvanceCorpseReturn(11, 11, FrameSeconds));
+        checks += RequireAuthorityRejected(() => pool.AdvanceCorpseReturn(11, 10, FrameSeconds));
+        for (ulong tick = 12; tick < 70; tick++)
+        {
+            pool.AdvanceCorpseReturn(11, tick, FrameSeconds);
+        }
+        checks += Require(pool.AdvanceCorpseReturn(11, 70, FrameSeconds) ==
+            MortarCorpseReturnClock.Transition.Hidden && pool.OccupiedCount == 1,
+            "Rejected frames reset the original death clock or released its weapon at hide.");
+        pool.Release(11);
+        pool.TryAllocateForPeer(12, out _);
+        checks += Require(pool.AdvanceCorpseReturn(11, 71, FrameSeconds) ==
+            MortarCorpseReturnClock.Transition.None && pool.SlotFor(12) == 0,
+            "A retired actor advanced the successor's slot.");
+        pool.BeginCorpseReturn(12, 100, 2f);
+        pool.Clear();
+        checks += Require(pool.PendingCorpseCount == 0 && pool.OccupiedCount == 0 &&
+            pool.AdvanceCorpseReturn(12, 101, FrameSeconds) == MortarCorpseReturnClock.Transition.None,
+            "Terminal reset retained a delayed return from the old scene.");
+        return checks;
+    }
+
+    private static int RequireAuthorityRejected(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (InvalidDataException)
+        {
+            return 1;
+        }
+        throw new InvalidOperationException("A stale or unowned corpse transition was accepted.");
     }
 
     private static int RequireRejected(Action action)

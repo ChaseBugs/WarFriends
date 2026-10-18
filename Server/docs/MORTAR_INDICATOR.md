@@ -298,6 +298,23 @@ checks; evidence is `Server/.local/mortar-corpse-clock-tests-final.log`. The sim
 running full executable was built at `caa517f2b`, before this clock was added, and must not be
 reported as covering this later class.
 
+The managed `MortarWeaponPool` now owns each actor's pending corpse return. BeginCorpseReturn
+retains the occupied slot; hide does not release it. AdvanceCorpseReturn requires consecutive
+completed frame numbers, skips the death frame itself, and releases only on the final return.
+Explicit Release cancels either pending wait before the index can bind a successor, while Clear
+cancels every retained body. `OccupiedCount` includes both live owners and retained corpses;
+it must not be interpreted as the spawning manager's live-soldier count.
+
+The four native scenarios now also drive this actual managed pool: it stays exhausted while
+the corpse owns the slot, returns the slot on the source callback frame, and preserves the
+successor through stale callbacks after forced reuse. Additional rejection checks cover an
+unowned death, duplicate death, skipped/repeated/backward frame, malformed delay and terminal
+reset. No host spawn/death path calls these new pool methods yet; cross-player preflight,
+death-delay sampling and frame/callback ordering must be wired before live slot parity exists.
+The final isolated-build indicator group passes 13,299 checks, recorded in
+`Server/.local/mortar-corpse-pool-tests-final.log`. This newer pool code is not included in the
+still-running full executable built at `caa517f2b`.
+
 Exhaustion is not a recovered queue or automatic corpse-reclaim policy. The original
 `NetworkObjectPool.GetFirstFreeIndex` returns -1 when the free list is empty, and its
 instantiate path returns null. `SoldierParts.AttachWeapons` immediately accesses the returned

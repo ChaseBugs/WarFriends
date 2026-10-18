@@ -183,6 +183,9 @@ full Battle run is tracked separately and remains pending.
 The separate corpse-return clock now matches four native wait/cancellation scenarios and
 preserves independent stage waits without carrying frame overshoot. The focused indicator
 group passes 13,284 checks. This clock is not yet a live corpse lease or slot-release hook.
+The managed pool now retains corpse ownership through both waits and cancels pending returns
+on explicit release/reset, with 13,299 focused checks including native callback comparisons.
+Host admission, death-delay sampling, spawn/death hooks and per-slot observers remain open.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes
