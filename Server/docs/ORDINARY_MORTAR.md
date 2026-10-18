@@ -2,8 +2,9 @@
 
 The host initializes current ordinary Mortar weapon authority before the real spawn observers run.
 [Navigation and construction entry](MORTAR_NAVIGATION.md) now connect real deployments to authored
-destinations, construction deadlines and clips. Automatic firing, flights, collision, complete
-construction rotation/presentation, normal Unity gameplay and authorized SICKNESS use remain required.
+destinations, construction deadlines and clips. [Construction facing](MORTAR_FACING.md) now connects
+current/logical-cover rotation to collision and protobuf poses. Automatic firing, flights, collision,
+native frame-order/presentation, normal Unity gameplay and authorized SICKNESS use remain required.
 
 ## Recovered rules
 
@@ -35,8 +36,8 @@ Its contact field lives separately from the unchanged `armyDamage` explosion mir
 adapter validates missile and vitality authority before publishing either change. Death removes
 the current weapon row. No new client command or launch authorization is exposed.
 
-The initial weapon/setup group passes 49 checks; `--ordinary-mortar-only` now includes navigation
-and native destination bindings for 212 checks in total.
+The initial weapon/setup group passes 49 checks; `--ordinary-mortar-only` now includes navigation,
+native destination bindings and construction facing for 520 checks in total.
 Actual accepted Park deployments exercise base, middle/special and final/special rows; damage
 scaling; faster/slower perk coefficients; friendly rejection; opposing current contact/health
 changes; unchanged explosion/timing/setup; final deployment callbacks; disconnected-window
@@ -50,7 +51,7 @@ Its local log is `Server/.local/ordinary-mortar-full.log`.
 
 ## Next required work
 
-Complete construction-facing rotation and firing callbacks, shield target selection with its
+Validate normal Unity rotation/update order and connect firing callbacks, shield target selection with its
 vertical offset, delayed overhead missile flights,
 contact and explosion authority, airborne shooter-death cleanup, protobuf/SDK presentation,
 and normal Unity gameplay. Compare source-backed baseline and Sickness launches after the

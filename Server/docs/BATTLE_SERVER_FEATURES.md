@@ -112,9 +112,15 @@ The full default Battle suite passed 247,970 assertions after this change, inclu
 [Mortar navigation](MORTAR_NAVIGATION.md) now binds forty ordered source destinations and forty
 native Unity NavMesh endpoint samples. Twenty ordinary Mortars from real deployments reach exclusive destinations
 across both fractions on all five maps, capture source construction deadlines and select the
-construction clips. The focused Mortar group passes 212 checks. Construction-facing rotation,
-automatic firing/flights/hits, post-shot relocation and normal Unity acceptance remain open.
+construction clips. This navigation/setup/endpoint subset has 212 checks. Automatic
+firing/flights/hits, post-shot relocation and normal Unity acceptance remain open.
 The full default Battle suite passes 248,137 assertions after the navigation change, including real two-peer UDP.
+[Mortar construction facing](MORTAR_FACING.md) now uses native-verified NGUI easing, wrapped
+quaternion rotation and its near-angle interpolation branch. The 308 focused checks include
+175 native samples, both fractions on all maps, accepted logical-cover changes before physical
+arrival, collision/protobuf agreement, first-fire branch priority and cleanup. The combined Mortar
+group passes 520 checks. Actual firing/impacts, native update-order and normal Unity gameplay remain open.
+The full default Battle suite passes 248,439 assertions after construction facing, including real two-peer UDP.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

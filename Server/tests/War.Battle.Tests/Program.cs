@@ -815,7 +815,7 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     ["--gunslinger-navigation-only"] or ["--gunslinger-stand-only"] or ["--gunslinger-targets-only"] or
     ["--gunslinger-aim-only"] or ["--gunslinger-shooting-only"] or ["--gunslinger-points-only"] or
     ["--gunslinger-holster-only"] or ["--infantry-weapons-only"] or ["--ordinary-rocket-only"] or
-    ["--ordinary-mortar-only"])
+    ["--ordinary-mortar-only"] or ["--mortar-facing-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);
     while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
@@ -826,11 +826,20 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     {
         throw new FileNotFoundException("Recovered combat content is absent.");
     }
+    if (args[0] == "--mortar-facing-only")
+    {
+        int facingChecks = MortarFacingReferenceTests.Run(Path.Combine(directory.FullName, "content"));
+        facingChecks += MortarFacingTests.Run(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {facingChecks} Mortar rotation checks");
+        return;
+    }
     if (args[0] == "--ordinary-mortar-only")
     {
         int mortarChecks = OrdinaryMortarTests.Run(Path.Combine(directory.FullName, "content"));
         mortarChecks += MortarNavigationTests.Run(Path.Combine(directory.FullName, "content"));
         mortarChecks += MortarNavMeshReferenceTests.Run(Path.Combine(directory.FullName, "content"));
+        mortarChecks += MortarFacingReferenceTests.Run(Path.Combine(directory.FullName, "content"));
+        mortarChecks += MortarFacingTests.Run(Path.Combine(directory.FullName, "content"));
         Console.WriteLine($"PASS: {mortarChecks} ordinary Mortar authority/navigation checks");
         return;
     }
@@ -3675,6 +3684,8 @@ checks += OrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"))
 checks += OrdinaryMortarTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += MortarNavMeshReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MortarFacingReferenceTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += MortarFacingTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessOrdinaryRocketTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GunslingerStandTimingTests.Run(Path.Combine(contentRoot.FullName, "content"));

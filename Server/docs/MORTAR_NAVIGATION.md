@@ -2,8 +2,9 @@
 
 The host now moves ordinary Mortars from their real deployments to exclusive source-authored
 destinations on all five multiplayer maps. Arrival captures the construction deadline and selects
-the recovered construction clips. Automatic aiming/firing, position changes after firing, missile
-flight/contact/explosion, construction-facing rotation and normal Unity gameplay remain required.
+the recovered construction clips. [Construction facing](MORTAR_FACING.md) now rotates toward the
+opponent's logical point. Shot preparation/firing, position changes after firing, missile
+flight/contact/explosion, native frame-order acceptance and normal Unity gameplay remain required.
 
 ## Source rules
 
@@ -55,11 +56,12 @@ this does not claim exact native agent motion, avoidance, intermediate height or
 
 ## Verification boundary
 
-The focused Mortar group passes 212 checks: previous weapon/Sickness setup plus twenty naturally
+The navigation/setup/endpoint subset has 212 checks: weapon/Sickness setup plus twenty naturally
 arriving ordinary Mortars across both fractions on all five maps, nearest free destination selection,
 walking/construction clips, strict construction deadlines, exclusive occupancy and death cleanup,
 altered source-byte rejection, and all forty native endpoint bindings. Arrival ticks range from
 261 to 412 in these fixtures. Soldiers are neither teleported nor assigned artificial arrival points.
+The combined `--ordinary-mortar-only` group now includes construction facing for 520 checks.
 
 The source extractor's `--check` passes. The .NET solution build passes with zero warnings/errors.
 The full default Battle suite exited zero with 248,137 engine, admission, portable SDK, geometry
@@ -69,7 +71,7 @@ It does not prove original Unity 5.2.5 parity, Android or Linux runtime behavior
 manifest was restored byte-for-byte after the owned Unity audit exited; active Client assets,
 settings and concurrent library edits were untouched.
 
-Next, connect source construction-facing rotation, `FireMortar`/`PrepareToShoot` timing and target
+Next, connect `FireMortar`/`PrepareToShoot` timing and target
 selection, the delayed overhead missile, authoritative contact/explosion results, post-shot movement,
 SDK presentation and the actual Unity battle controllers. SICKNESS activation and inventory
 consumption remain separately incomplete.

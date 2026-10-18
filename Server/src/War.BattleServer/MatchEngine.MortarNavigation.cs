@@ -126,6 +126,7 @@ public sealed partial class MatchEngine
             _mortarWalks.Remove(entityKey);
             ulong buildTicks = (ulong)MathF.Floor(_mortarBuildSeconds[entityKey] * MatchManifest.TickRate);
             _mortarConstruction.Add(entityKey, new MortarConstructionState(tick, checked(tick + buildTicks + 1)));
+            BeginMortarFacing(entityKey, motion.Facing ?? infantryAnimations[entityKey].Facing);
         }
     }
 
@@ -140,6 +141,7 @@ public sealed partial class MatchEngine
         _mortarWalks.Remove(entityKey);
         _mortarBuildSeconds.Remove(entityKey);
         _mortarConstruction.Remove(entityKey);
+        _mortarFacings.Remove(entityKey);
     }
 
     private sealed record MortarWalk(CardSoldierWalkState Motion, ulong FirstTick);

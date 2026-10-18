@@ -547,6 +547,8 @@ public sealed partial class MatchEngine
             {
                 clip = mortarPose.Clip;
                 assaulterClipStartTick = mortarPose.StartTick;
+                facing = (_mortarFacings.GetValueOrDefault(key) ??
+                    throw new InvalidDataException("Mortar construction pose lost its rotation.")).FacingAt(tick);
             }
             else if (_gunslingerWalks.TryGetValue(key, out var gunslingerWalk))
             {

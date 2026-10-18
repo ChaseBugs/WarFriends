@@ -1662,6 +1662,11 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceMortarNavigation(); }
             catch (InvalidDataException) { End("invalid-mortar-navigation", "", false); return; }
         }
+        if (advanced && phase == BattlePhase.Running && _mortarConstruction.Count > 0)
+        {
+            try { AdvanceMortarFacing(); }
+            catch (InvalidDataException) { End("invalid-mortar-facing", "", false); return; }
+        }
         if (advanced && phase == BattlePhase.Running && (_gunslingerWalks.Count > 0 || _gunslingerRetries.Count > 0))
         {
             try { AdvanceGunslingerNavigation(); }
