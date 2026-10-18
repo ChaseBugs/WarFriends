@@ -31,6 +31,10 @@ public sealed partial class BattleManifestFactory
             playerIds.Any(x=>!Guid.TryParseExact(x,"N",out _) || x!=x.ToLowerInvariant()) || playerIds.Distinct(StringComparer.Ordinal).Count()!=2)
             throw new InvalidDataException("Invalid paired manifest identity.");
         IReadOnlyList<BattleAllocationAccountSnapshot> authority = await allocations.GetAccountSnapshotsAsync(playerIds, ct);
+        foreach (BattleAllocationAccountSnapshot participant in authority)
+        {
+            BattleAllocationSource.ValidateMatchesAccount(participant.Account, participant.Allocation);
+        }
         IReadOnlyList<BattleAllocationProjection> trusted = authority.Select(row => row.Allocation).ToArray();
         IReadOnlyList<BattlePlayerPresentation> views = authority
             .Select(row => BattlePlayerPresentationSource.Project(row.Account)).ToArray();

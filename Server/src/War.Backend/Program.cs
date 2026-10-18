@@ -295,7 +295,7 @@ api.MapPost("/battle/queue/attempt", async (HttpContext context, AccountStore ac
     });
 });
 api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy,
-    BattleAllocationStore allocations, BattlePlayerPresentationSource presentations, BattleMatchQueueStore queue,
+    BattleAllocationStore allocations, BattleMatchQueueStore queue,
     BattleManifestSnapshotStore snapshots,IServiceProvider services, BattleMatchProvisioner provisioner,
     BattleQueueAttemptTokens attemptTokens) =>
 {
@@ -344,7 +344,12 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
             catch(InvalidDataException){return Error(409,"battle_allocation_invalid","The trusted battle allocation is invalid.");}
             try
             {
-                var view=await presentations.Get(playerId,ctx.RequestAborted);
+                LegacyPlayerDocument account = await legacy.ById(playerId, ctx.RequestAborted)
+                    ?? throw new InvalidDataException("Battle account is missing.");
+                var allocation = await allocations.Get(playerId, ctx.RequestAborted)
+                    ?? throw new InvalidDataException("Battle allocation is missing.");
+                BattleAllocationSource.ValidateMatchesAccount(account, allocation);
+                var view = BattlePlayerPresentationSource.Project(account);
                 services.GetRequiredService<BattleManifestFactory>().ValidatePresentation(view);
             }
             catch(InvalidDataException){return Error(409,"battle_presentation_invalid","A complete durable player presentation is required before matchmaking.");}

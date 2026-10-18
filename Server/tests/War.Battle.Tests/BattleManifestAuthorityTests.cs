@@ -1,3 +1,4 @@
+using War.Backend;
 using War.Persistence;
 
 /// <summary>Checks complete roster ordering and rejects partial or damaged manifest authority.</summary>
@@ -14,6 +15,22 @@ internal static class BattleManifestAuthorityTests
             "Paired manifest authority changed source roster ordering.");
         Require(rows.All(row => row.Allocation.CardIds.Count == 0),
             "Paired manifest authority restored removed or unowned cards.");
+        foreach (BattleAllocationAccountSnapshot row in rows)
+        {
+            BattleAllocationSource.ValidateMatchesAccount(row.Account, row.Allocation);
+        }
+        rows[0].Allocation.CardIds = ["SLOWDOWN"];
+        rows[0].Allocation.CardCounts = [1];
+        bool mismatchRejected = false;
+        try
+        {
+            BattleAllocationSource.ValidateMatchesAccount(rows[0].Account, rows[0].Allocation);
+        }
+        catch (InvalidDataException)
+        {
+            mismatchRejected = true;
+        }
+        Require(mismatchRejected, "A stale allocation granted a card absent from its account snapshot.");
         await RejectAsync(store, [identities[0], new string('c', 32)]);
         await RejectAsync(store, [identities[0], new string('e', 32)]);
         Console.WriteLine("PASS: coherent manifest authority preserves roster and rejects missing or damaged participants");

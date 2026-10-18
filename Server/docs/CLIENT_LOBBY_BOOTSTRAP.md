@@ -365,3 +365,23 @@ pause hook or fake database is used. `BattleAllocationStore(IMongoDatabase)` per
 the configured client's session/command observer. The complete inventory suite exits zero.
 `Server/.local/paired-authority-race-build.log` records a clean Release build. The subsequent
 real queue regression is running separately and must not be inferred from this focused result.
+
+That subsequent queue regression terminated unsuccessfully: `coherent-normal-queue-tests.log`
+records a UDP command timeout in `LiveSameOpponentRematchChecks.FinishRoundAsync` at the second
+participant's Forfeit, during the lost-registration-reply/restart scenario. Runtime artifacts
+are in `Server/.local/queue-live-5be9dbcf5d6f4b378e8298afa9a886fe`. Worker logs contain a tick
+backlog warning, but that is not established as the cause. The earlier queue success does not
+prove the newer reader passes the complete gate. Preserve this failure for diagnosis rather
+than widening timeouts or declaring it harmless. Owned processes were cleaned up after exit.
+
+The current source additionally compares allocation identities, card quantities and all unit
+lanes with `BattleAllocationSource.Project` from the same durable account. Queue admission
+checks before joining, and manifest construction rechecks its transactional rows before
+freezing. A stale allocation is rejected rather than replenished or trusted. Legitimate later
+equipment changes still need an inactive-allocation refresh policy; this guard alone is not
+that policy and can reject such changes until refresh is implemented.
+
+The Mongo suite with the added mismatched-card rejection passes with exit zero at
+`account-match-tests.log`; `Server/.local/allocation-account-match-build.log` records a clean
+build. These results do not resolve the preceding live Forfeit timeout or replace a fresh
+whole-queue run against the changed admission and manifest checks.
