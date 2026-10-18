@@ -64,7 +64,41 @@ internal static class ArmyDeploymentRealtimeStateTests
         Require(!sickness.IsArmed, "The completed definition did not close Sickness.");
         state.AdvanceRealtime(now, FrozenGameTick);
         Require(state.CompletedWaves.Count == 0, "A terminal wave published completion twice.");
-        return 17 + option.Count - 1 + CheckRejectedCommit(content.Army, family, option);
+        Reject(() => state.Advance(FrozenGameTick));
+        return 18 + option.Count - 1 + CheckRejectedCommit(content.Army, family, option) +
+            CheckCooldown(content.Army, family);
+    }
+
+    private static int CheckCooldown(ArmyDeploymentCatalog catalog, ArmyDeploymentFamily family)
+    {
+        ArmyDeploymentOption option = family.Options.MinBy(row => row.Count)!;
+        var state = new ArmyDeploymentState(catalog, [family.UnitId]);
+        const float InitialCooldownSeconds = 0.125f;
+        const float Modifier = 0.5f;
+        state.SetCooldownMultiplier(Modifier);
+        state.SetOffers([option.Index, option.Index, option.Index]);
+        state.TryDeployRealtime(option.Index, InitialCooldownSeconds, StartedSeconds);
+        float deadline = InitialCooldownSeconds + (catalog.BaseCooldown + option.Cooldown) * Modifier;
+        Require(state.NextCooldownSeconds == deadline && state.NextDeployTick == 0,
+            "Source cooldown was rounded into a tick deadline.");
+
+        ulong remainingTicks = (ulong)Math.Ceiling((double)(deadline - InitialCooldownSeconds) * MatchManifest.TickRate);
+        Require(state.ProjectNextDeployTick(FrozenGameTick, InitialCooldownSeconds) == FrozenGameTick + remainingTicks &&
+            state.ProjectNextDeployTick(FrozenGameTick + 1, InitialCooldownSeconds) == FrozenGameTick + 1 + remainingTicks,
+            "Relative Client countdown confused frozen cooldown seconds with game ticks.");
+        state.SetOffers([option.Index, option.Index, option.Index]);
+        Require(state.TryDeployRealtime(option.Index, float.BitDecrement(deadline), StartedSeconds) == "army-cooldown" &&
+            state.PendingCount == option.Count && state.NextCooldownSeconds == deadline,
+            "A pre-deadline click changed reserved deployment authority.");
+        Require(state.ProjectNextDeployTick(FrozenGameTick, deadline) == FrozenGameTick &&
+            state.TryDeployRealtime(option.Index, deadline, StartedSeconds) == "army-deploying",
+            "Source progress zero did not permit deployment at exact cooldown equality.");
+        float acceptedDeadline = state.NextCooldownSeconds;
+        Reject(() => state.ProjectNextDeployTick(FrozenGameTick, float.NaN));
+        Reject(() => state.ProjectNextDeployTick(FrozenGameTick, InitialCooldownSeconds));
+        Require(state.NextCooldownSeconds == acceptedDeadline && state.PendingCount == option.Count * 2,
+            "Rejected countdown projection changed source reservations or cooldown.");
+        return 7;
     }
 
     private static int CheckRejectedCommit(ArmyDeploymentCatalog catalog, ArmyDeploymentFamily family,

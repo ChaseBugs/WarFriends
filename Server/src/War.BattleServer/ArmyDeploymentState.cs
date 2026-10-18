@@ -200,7 +200,7 @@ public sealed partial class ArmyDeploymentState
         }
         ArmyDeploymentFamily family = FindFamily(optionIndex);
         ArmyDeploymentOption option = catalog.Option(optionIndex);
-        string? rejection = GetDeploymentRejection(family, option, cooldownTick);
+        string? rejection = GetDeploymentRejection(family, option, cooldownTick < NextDeployTick);
         if (rejection != null)
         {
             return rejection;
@@ -209,13 +209,13 @@ public sealed partial class ArmyDeploymentState
         return "army-deploying";
     }
 
-    private string? GetDeploymentRejection(ArmyDeploymentFamily family, ArmyDeploymentOption option, ulong cooldownTick)
+    private string? GetDeploymentRejection(ArmyDeploymentFamily family, ArmyDeploymentOption option, bool isCoolingDown)
     {
         if (!equipped.Contains(family.UnitId))
         {
             return "army-not-equipped";
         }
-        if (cooldownTick < NextDeployTick)
+        if (isCoolingDown)
         {
             return "army-cooldown";
         }

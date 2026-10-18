@@ -30,6 +30,11 @@ corpse-return phase ordering and normal two-Unity gameplay acceptance still requ
 The pause-excluding stored-float accumulator is now observed in MatchEngine with the source
 0.2-second clamp and reconnect pause gates; focused coverage passes 118 checks. Deployment and
 auto-deploy consumers still use their previous clocks and are the next coordinated migration.
+The separate real-time deployment state now stores source float cooldown deadlines and offers
+an existing-wire countdown projection. Deadline equality, pre-deadline rejection and immutable
+clock selection pass in the 126-check frame/state group; Sickness regression remains 265 checks.
+Live deployment requests, shared spawn processing and countdown response construction still
+need to switch together before this source-time behavior is active in ordinary matches.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

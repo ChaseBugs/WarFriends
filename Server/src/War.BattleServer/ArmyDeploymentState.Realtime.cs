@@ -5,6 +5,17 @@ public sealed partial class ArmyDeploymentState
     private const ulong MaximumSimulationTick = 10_000_000;
     private readonly Dictionary<ulong, RealtimeWave> _realtimeWaves = [];
     private float _lastRealtimeSeconds;
+    private float _lastCooldownSeconds;
+
+    internal float NextCooldownSeconds { get; private set; }
+
+    /// <summary>Projects remaining source time onto the existing Client's relative tick countdown.</summary>
+    internal ulong ProjectNextDeployTick(ulong simulationTick, float cooldownSeconds)
+    {
+        BattleRealtime.Validate(cooldownSeconds, _lastCooldownSeconds);
+        float remaining = Math.Max(0f, NextCooldownSeconds - cooldownSeconds);
+        return checked(simulationTick + (ulong)Math.Ceiling((double)remaining * MatchManifest.TickRate));
+    }
 
     private int RealtimePendingCount => checked(_realtimeWaves.Values.Sum(wave => wave.Routine.RemainingIterations));
 
@@ -24,30 +35,35 @@ public sealed partial class ArmyDeploymentState
     }
 
     /// <summary>Accepts a source coroutine without projecting its real-time waits into gameplay ticks.</summary>
-    internal string TryDeployRealtime(int optionIndex, ulong cooldownTick, float realTimeSeconds)
+    internal string TryDeployRealtime(int optionIndex, float cooldownSeconds, float realTimeSeconds)
     {
         RequireRealtimeSchedule();
         BattleRealtime.Validate(realTimeSeconds, _lastRealtimeSeconds);
+        BattleRealtime.Validate(cooldownSeconds, _lastCooldownSeconds);
         if (!offered.Contains(optionIndex))
         {
             return "army-not-offered";
         }
         ArmyDeploymentFamily family = FindFamily(optionIndex);
         ArmyDeploymentOption option = catalog.Option(optionIndex);
-        string? rejection = GetDeploymentRejection(family, option, cooldownTick);
+        string? rejection = GetDeploymentRejection(family, option, cooldownSeconds < NextCooldownSeconds);
         if (rejection != null)
         {
             return rejection;
         }
-        AcceptRealtimeWave(family, option, cooldownTick, realTimeSeconds);
+        AcceptRealtimeWave(family, option, cooldownSeconds, realTimeSeconds);
         return "army-deploying";
     }
 
     private void AcceptRealtimeWave(ArmyDeploymentFamily family, ArmyDeploymentOption option,
-        ulong cooldownTick, float realTimeSeconds)
+        float cooldownSeconds, float realTimeSeconds)
     {
-        ulong cooldown = Ticks((catalog.BaseCooldown + option.Cooldown) * cooldownMultiplier);
-        ulong nextDeploy = checked(cooldownTick + cooldown);
+        float cooldown = (catalog.BaseCooldown + option.Cooldown) * cooldownMultiplier;
+        float nextDeploy = cooldownSeconds + cooldown;
+        if (!float.IsFinite(nextDeploy) || nextDeploy < cooldownSeconds)
+        {
+            throw new InvalidDataException("Source deployment cooldown exceeds the float time domain.");
+        }
         int nextReserved = checked(reserved.GetValueOrDefault(family.UnitId) + option.Count);
         ulong waveId = checked(_nextWaveId + 1);
         var wave = new ArmyDeploymentWave(waveId, option.Index, family.UnitId, 0)
@@ -62,7 +78,8 @@ public sealed partial class ArmyDeploymentState
         _nextWaveId = waveId;
         LastAcceptedWave = wave;
         reserved[family.UnitId] = nextReserved;
-        NextDeployTick = nextDeploy;
+        NextCooldownSeconds = nextDeploy;
+        _lastCooldownSeconds = cooldownSeconds;
         _lastRealtimeSeconds = realTimeSeconds;
         InvalidateOffers();
     }
@@ -134,7 +151,7 @@ public sealed partial class ArmyDeploymentState
 
     private void RequireLegacySchedule()
     {
-        if (_realtimeWaves.Count != 0)
+        if (LastAcceptedWave?.StartedRealTimeSeconds.HasValue == true)
         {
             throw new InvalidOperationException("Active real-time deployments cannot be advanced by legacy ticks.");
         }
@@ -142,7 +159,7 @@ public sealed partial class ArmyDeploymentState
 
     private void RequireRealtimeSchedule()
     {
-        if (_activeWaves.Values.Any(wave => !wave.StartedRealTimeSeconds.HasValue))
+        if (LastAcceptedWave != null && !LastAcceptedWave.StartedRealTimeSeconds.HasValue)
         {
             throw new InvalidOperationException("Active legacy deployments cannot be advanced as real-time coroutines.");
         }

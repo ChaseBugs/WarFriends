@@ -47,12 +47,29 @@ backlog. A resumed frame can add only the interval since that last observation. 
 timeScale does not multiply this clock. The host validates float representability before publishing
 the new raw observation or host tick. Terminal matches do not advance the cooldown accumulator.
 
-This observer is internal and not a wire clock. Source cooldown deadlines, strict availability
-comparisons, auto-deploy progress and their snapshot projection still require a coordinated
-consumer migration. Observing the accumulator alone does not close that feature.
+This observer is internal and not a wire clock. Live deployment, auto-deploy progress and
+snapshot projection still require a coordinated consumer migration. Observing the accumulator
+alone does not close that feature.
 The focused frame/deployment group passes 118 checks at
 `Server/.local/battle-cooldown-clock-tests.log`, including source float rounding, catch-up,
 hitches, pause/resume and malformed input rejection before host snapshot mutation.
+
+The separate real-time deployment state now consumes float cooldown seconds and stores
+`NextCooldownSeconds = now + (baseCooldown + optionCooldown) * multiplier`, preserving source
+float arithmetic rather than rounding authority to ticks. Recovered `canSendUnit` accepts
+`progress <= 0`, so an exact deadline is eligible; the strict `>` used for coroutine waits is
+a different contract. Rejected attempts leave the accepted deadline and reservations unchanged.
+`ProjectNextDeployTick` converts only the remaining duration to a ceiling-rounded relative
+game tick for the existing Client parser, which subtracts `State.ServerTick` and divides by 30.
+It is a presentation projection, not the authoritative cooldown. A deployment state cannot
+switch legacy/real-time scheduling after its first accepted wave, even after completion.
+Live MatchEngine deployment and response construction have not switched to these new methods;
+auto-deploy remains a separate pending consumer.
+The latest state/frame group passes 126 checks at
+`Server/.local/army-cooldown-consumer-tests.log`; Sickness callback/host damage regression passes
+265 checks at `Server/.local/army-cooldown-sickness-tests.log`. These focused runs cover the
+state consumer, deadline equality, remaining-time projection and schedule-switch rejection,
+not live normal-Client acceptance.
 
 The new `ArmyDeploymentRealtimeRoutine` supplies the source coroutine kernel for the first
 requirement below. Its first iteration is immediately ready. Later readiness uses a strict
