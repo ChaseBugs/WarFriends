@@ -53,6 +53,27 @@ public sealed class BattleAllocationStore
         await allocations.UpdateOneAsync(x => x.PlayerId == value.PlayerId, update,
             new UpdateOptions { IsUpsert = true }, ct);
     }
+
+    /// <summary>Creates absent authority without replacing an existing allocation or advancing its revision.</summary>
+    public async Task CreateIfMissing(BattleAllocationProjection projection, CancellationToken cancellationToken)
+    {
+        BattleAllocationProjection value = BattleAllocationProjection.Validate(projection);
+        var update = Builders<BattleAllocationDocument>.Update
+            .SetOnInsert(row => row.PlayerId, value.PlayerId)
+            .SetOnInsert(row => row.CardIds, value.CardIds.ToArray())
+            .SetOnInsert(row => row.CardCounts, value.CardCounts.ToArray())
+            .SetOnInsert(row => row.BuddyCardIds, value.BuddyCardIds.ToArray())
+            .SetOnInsert(row => row.NormalUpgradeIndexes, value.NormalUpgradeIndexes.ToArray())
+            .SetOnInsert(row => row.SpecialUpgradeIndexes, value.SpecialUpgradeIndexes.ToArray())
+            .SetOnInsert(row => row.EliteUpgradeIndexes, value.EliteUpgradeIndexes.ToArray())
+            .SetOnInsert(row => row.Revision, 1L);
+
+        await allocations.UpdateOneAsync(row => row.PlayerId == value.PlayerId, update,
+            new UpdateOptions { IsUpsert = true }, cancellationToken);
+        // Existing damaged authority must fail rather than being repaired into newly spendable inventory.
+        _ = await Get(value.PlayerId, cancellationToken)
+            ?? throw new InvalidDataException("Battle allocation disappeared after initialization.");
+    }
     public async Task<BattleAllocationProjection?> Get(string playerId, CancellationToken ct)
     {
         var document = await allocations.Find(x => x.PlayerId == playerId).FirstOrDefaultAsync(ct);

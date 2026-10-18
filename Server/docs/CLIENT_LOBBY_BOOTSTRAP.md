@@ -254,3 +254,27 @@ local LevelManager indexes. Actual Unity mapping checks, native identity
 checks and Mongo-backed live queue/rematch gates pass. The full source starter
 presentation now passes native checks. Automatic allocation is still required before a
 fresh normal account can enter matchmaking automatically.
+
+### Insert-only allocation preparation
+
+The working-tree `BattleAllocationStore.CreateIfMissing` validates the projection, uses only
+Mongo `$setOnInsert` fields and rereads through the shared allocation validator. Existing
+inventory and revisions are not replaced by initialization; malformed existing rows are not
+reset into new authority. The account projection Mongo test now repeats initialization with
+an empty card projection and checks that existing quantities remain intact.
+
+The isolated build at `Server/.local/allocation-create-build.log` passes with zero warnings
+and errors. The first isolated Mongo run did not reach the tests: replica-set initialization
+exceeded the existing thirty-second startup deadline. Its local `allocation-create-mongo-*`
+directory retains Mongo evidence; the owned Mongo process was stopped by finally cleanup.
+No Mongo test success or normal matchmaking completion is claimed. The queue route is
+unchanged pending durable account/allocation consistency and concurrent initialization proof.
+
+The subsequent complete `--allocation-inventory-mongo` run passes with exit zero at
+`Server/.local/allocation-create-mongo-33050281ea0b4b488e65b3f92db226ee/tests.log`.
+It covers account projection, repeated concurrent initialization preserving card quantities and
+revision one, rejection of damaged existing quantities, full-catalog quantity round trips and
+competing card-pack buffer conservation. The replica bootstrap test deadline is now 120 seconds
+to accommodate first storage checkpoints on the development disk; production timeouts are unchanged.
+The owned Mongo process was stopped after the tests. First-creation races and atomic account
+revision binding still require coverage before normal matchmaking is connected to this primitive.

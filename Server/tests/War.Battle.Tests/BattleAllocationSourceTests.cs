@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MongoDB.Driver;
 using War.Backend;
 using War.Backend.Legacy;
 using War.BattleServer;
@@ -53,12 +54,37 @@ internal static class BattleAllocationSourceTests
         var source = new BattleAllocationSource(players);
         BattleAllocationProjection projected = await source.GetAsync(player.Id, deadline.Token);
         var allocations = new BattleAllocationStore(uri, databaseName);
-        await allocations.Put(projected, deadline.Token);
+        await allocations.CreateIfMissing(projected, deadline.Token);
         BattleAllocationProjection saved = await allocations.Get(player.Id, deadline.Token)
             ?? throw new InvalidDataException("Projected account allocation is absent.");
         Require(saved.CardIds.SequenceEqual(projected.CardIds) && saved.CardCounts.All(count => count == 2) &&
             saved.NormalUpgradeIndexes.SequenceEqual(projected.NormalUpgradeIndexes),
             "Durable account-to-allocation projection lost inventory or army lanes.");
+        player.Serialized.Remove("CardManagerData");
+        BattleAllocationProjection empty = BattleAllocationSource.Project(player);
+        await Task.WhenAll(Enumerable.Range(0, 8).Select(_ =>
+            allocations.CreateIfMissing(empty, deadline.Token)));
+        BattleAllocationProjection retained = await allocations.Get(player.Id, deadline.Token)
+            ?? throw new InvalidDataException("Concurrent initialization removed battle authority.");
+        Require(retained.CardCounts.SequenceEqual(saved.CardCounts) && retained.CardIds.SequenceEqual(saved.CardIds),
+            "Repeated initialization overwrote existing card authority.");
+        var collection = new MongoClient(uri).GetDatabase(databaseName)
+            .GetCollection<BattleAllocationDocument>("battle_allocations");
+        BattleAllocationDocument stored = await collection.Find(row => row.PlayerId == player.Id)
+            .SingleAsync(deadline.Token);
+        Require(stored.Revision == 1, "Initialization retries advanced existing allocation authority.");
+        await collection.UpdateOneAsync(row => row.PlayerId == player.Id,
+            Builders<BattleAllocationDocument>.Update.Unset(row => row.CardCounts), cancellationToken: deadline.Token);
+        bool rejected = false;
+        try
+        {
+            await allocations.CreateIfMissing(projected, deadline.Token);
+        }
+        catch (InvalidDataException)
+        {
+            rejected = true;
+        }
+        Require(rejected, "Initialization repaired damaged authority into spendable card inventory.");
         Console.WriteLine("PASS: Mongo account inventory projects into durable battle allocation without card grants");
     }
 

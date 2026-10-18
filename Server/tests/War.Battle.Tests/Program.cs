@@ -30,7 +30,9 @@ if (args is ["--allocation-inventory-mongo", var inventoryMongoUri])
 if(args is ["--init-mongo-replica-set",var bootstrapUri,var replicaName,var memberHost])
 {
     var bootstrapClient=new MongoClient(bootstrapUri);
-    using var startup=new CancellationTokenSource(TimeSpan.FromSeconds(30));
+    // Replica initialization can include the first storage checkpoint on Windows development disks.
+    const int ReplicaStartupDeadlineSeconds = 120;
+    using var startup=new CancellationTokenSource(TimeSpan.FromSeconds(ReplicaStartupDeadlineSeconds));
     var initiate=new BsonDocument
     {
         {"replSetInitiate",new BsonDocument
