@@ -155,3 +155,30 @@ verification boundaries listed there are still open.
 
 This navigation/launch checkpoint passes 62 focused checks and the complete default Windows
 Battle executable (247,825 assertions, exit zero). Native coroutine evidence still verifies.
+
+## Ordinary Grenadier wire and presenter projection
+
+Field 46 now requires primary (1) or secondary (2) for an ordinary ID_UNIT-GRENADIER actor as well
+as the Grenadier card. Zero, both bits and unknown bits are rejected by the shared SDK policy.
+Other ordinary families still require zero; their source startup inventories are unchanged.
+MatchEngine projects the shared retained selection state, including the independent fifteen-tick
+return callbacks already used by actual ordinary shots.
+
+The presenter retains ordinary weapon sets and applies the projected mask at construction and
+on later updates. This also handles a newly observed actor already holding a grenade. Card sets
+use the same retained wrapper; Commando startup visibility and Gunslinger's dedicated holster
+binding remain separate. No client weapon-switch command was added.
+
+The focused executable passes 73 checks; the protocol executable passes 1,360. Native Unity
+ordinary inventory checks pass 530 across the existing source matrix, with decoded updates and
+initial secondary construction. Existing card appearance checks pass 240 and owner checks pass 17.
+These are disposable Unity 2018 component fixtures, not full active Client or two-Unity gameplay.
+
+Deploy the updated portable SDK with the Worker. Old hosts omit ordinary Grenadier masks, and old
+SDKs reject the newly projected ordinary bits; neither side should silently guess compatibility.
+The prior full Battle run belongs to the host-launch checkpoint, not this SDK/presenter increment.
+
+The final Release solution builds with zero warnings/errors. Source-bound Gunslinger evidence
+was refreshed and verifies four selections, twelve attachment comparisons and four decoded presenter
+checks. Static Client audits find zero missing scripts or broken references; seventeen existing
+NGUI sprite selections remain unchanged. No active-project full compilation or Android build is claimed.

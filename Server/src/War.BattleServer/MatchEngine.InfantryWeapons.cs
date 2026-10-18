@@ -9,7 +9,7 @@ public sealed partial class MatchEngine
 
     private uint InfantryWeaponMask(BattleArmyEntityState entity)
     {
-        if (entity.SourceCardId.Length == 0 || entity.SourceCardId == "HEAVYDRONE")
+        if ((entity.SourceCardId.Length == 0 && !IsGrenadier(entity)) || entity.SourceCardId == "HEAVYDRONE")
         {
             return 0;
         }

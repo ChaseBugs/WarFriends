@@ -432,7 +432,7 @@ message BattleArmyEntityState {
   float parachute_landing_z = 44;
   // Normal Gunslinger SnapColt state; false for every other unit/card identity.
   bool is_colt_holstered = 45;
-  // Host-selected source inventory bits for supported card infantry; zero for other entities.
+  // Host-selected inventory bits for supported card infantry and ordinary Grenadier; zero for other entities.
   uint32 infantry_weapon_mask = 46;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.

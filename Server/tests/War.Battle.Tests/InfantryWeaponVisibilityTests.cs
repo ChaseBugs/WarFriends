@@ -99,6 +99,21 @@ internal static class InfantryWeaponVisibilityTests
         decoded.InfantryWeaponMask = 0;
         checks += Require(InfantryWeaponVisibility.IsValid(decoded),
             "The ordinary omitted field must remain compatible.");
+        decoded.UnitId = UnitId;
+        foreach (uint mask in new uint[] { 1, 2 })
+        {
+            decoded.InfantryWeaponMask = mask;
+            checks += Require(InfantryWeaponVisibility.IsValid(decoded),
+                "An ordinary Grenadier lost its projected inventory state.");
+        }
+
+        foreach (uint mask in new uint[] { 0, 3, uint.MaxValue })
+        {
+            decoded.InfantryWeaponMask = mask;
+            checks += Require(!InfantryWeaponVisibility.IsValid(decoded),
+                "An ordinary Grenadier accepted an omitted or impossible inventory state.");
+        }
+
         return checks;
     }
 

@@ -1,4 +1,6 @@
+using Google.Protobuf;
 using War.BattleServer;
+using War.Shared;
 using War.Protocol;
 
 /// <summary>Exercises ordinary deployments without card entities or injected spawn callbacks.</summary>
@@ -74,7 +76,22 @@ internal static class OrdinaryGrenadierSpawnTests
             checks += Require(host.CardGrenadierActiveFlightCount > 0,
                 "An ordinary secondary shot did not create a real host grenade flight: " +
                 host.Snapshot().TerminalReason);
-            Console.WriteLine($"Ordinary Grenadier arrived and launched at tick {host.Snapshot().ServerTick}.");
+            BattleArmyEntityState decoded = BattleArmyEntityState.Parser.ParseFrom(current.ToByteArray());
+            checks += Require(decoded.InfantryWeaponMask == 2 && InfantryWeaponVisibility.IsValid(decoded),
+                "Ordinary secondary selection did not survive host/protobuf/SDK projection.");
+            ulong launchTick = host.Snapshot().ServerTick;
+            const ulong returnDelayTicks = 15;
+            while (host.Snapshot().ServerTick < launchTick + returnDelayTicks)
+            {
+                host.Advance(host.Snapshot().ServerTick + 1);
+            }
+
+            BattleArmyEntityState returned = host.ArmyEntityBatch(OwnerId, 0, 0).Entities
+                .Single(entity => entity.EntityKey == spawned.EntityKey);
+            checks += Require(returned.InfantryWeaponMask == 1,
+                "Ordinary Grenadier did not project primary after its source callback.");
+            Console.WriteLine($"Ordinary Grenadier launch {launchTick}, " +
+                $"primary return {launchTick + returnDelayTicks}.");
             return checks;
         }
 

@@ -9,7 +9,7 @@ namespace War.Shared
         public const uint PrimaryMask = 1;
         public const uint SecondaryMask = 2;
 
-        /// <summary>Checks the current six card-infantry projection; ordinary units and Drone retain zero.</summary>
+        /// <summary>Checks projected card and ordinary Grenadier inventories; other ordinary units retain zero.</summary>
         public static bool IsValid(BattleArmyEntityState entity)
         {
             if (entity == null)
@@ -19,6 +19,11 @@ namespace War.Shared
 
             if (entity.SourceCardId.Length == 0)
             {
+                if (entity.UnitId == "ID_UNIT-GRENADIER")
+                {
+                    return entity.InfantryWeaponMask == PrimaryMask || entity.InfantryWeaponMask == SecondaryMask;
+                }
+
                 return entity.InfantryWeaponMask == 0;
             }
 

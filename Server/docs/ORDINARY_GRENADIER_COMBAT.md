@@ -34,15 +34,19 @@ Three Park tuples cover normal zero, normal 39 plus special 101, and normal 39 p
 and Elite 127. Their actors walk to a real Corner and create real secondary grenade flights.
 The test checks source identity, composed authority, route ownership, actual movement, launch and
 actor removal/point release. A Snow fixture verifies missing-point retries without invented motion.
-The focused `--infantry-weapons-only` group passes 62 checks. The complete default Windows
-Battle executable passes 247,825 assertions with exit code zero, including real two-peer UDP;
+The host-integration checkpoint passed 62 focused checks. At that checkpoint, the complete default
+Windows Battle executable passed 247,825 assertions with exit code zero, including real two-peer UDP;
 its count varies with live polling. The native half-second return fixture verifier also passes.
 These are host tests, not rendered Unity matches or a physical ordinary-victim damage proof.
 
 ## Remaining integration
 
-Ordinary protobuf weapon masks still remain zero; retained Unity weapon sets therefore show the
-startup state rather than the selected ordinary grenade. Ordinary sickness, direct ordinary pistol
-and explosion outcome fixtures, complete source attack animation/effects, all Corner-change
+Ordinary weapon-mask projection is now connected through host, protobuf/SDK and retained Unity
+weapon sets. The latest focused group passes 73 checks, including decoded secondary state and
+fifteen-tick primary return for all three ordinary deployment tuples. Disposable Unity passes
+530 ordinary inventory checks, including both initial secondary visibility and later decoded
+primary/secondary updates. These component checks do not execute two normal Unity matches.
+
+Ordinary sickness, direct ordinary pistol and explosion outcome fixtures, complete source attack animation/effects, all Corner-change
 scenarios and normal two-Unity-client gameplay validation remain open. The shared lifecycle does
 not establish original Unity timing or cross-platform runtime parity by itself.

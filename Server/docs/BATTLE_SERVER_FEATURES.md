@@ -128,15 +128,16 @@ supported card inventories, with 53 native selector/geometry/visibility checks.
 presenter through protobuf field 46, source fifteen-tick Grenadier return timing and SDK validation.
 Nineteen host/protocol checks and 240 native card checks pass.
 [Ordinary startup weapon sets](ORDINARY_INFANTRY_WEAPONS.md) now cover all sixteen families,
-including Commando's simultaneous weapons, with 522 native checks. Authoritative ordinary weapon
-switching and normal two-client rendering/recovery remain required.
+including Commando's simultaneous weapons. The latest 530 native checks include ordinary Grenadier
+initial secondary visibility and decoded weapon updates. Normal two-client gameplay proof remains required.
 The card path now uses a shared `GrenadierWeaponState` lifecycle with independent return callbacks;
 ordinary spawn/combat still needs the source-backed integration sequence in the authority document.
 Ordinary grenade damage/fuse composition now has a dedicated source-lane API and seventeen checks;
 its attachment to ordinary spawn is now implemented and exercised through normal deployment commands.
 [Ordinary Grenadier navigation and host launch](ORDINARY_GRENADIER_COMBAT.md) now use the shared
 Corner/attack lifecycle with owner-bound stats. Ordinary sickness, physical damage outcome fixtures
-and dynamic Client weapon presentation remain open. The source Grenadier
+remain open. Ordinary Grenadier weapon selection now reaches protobuf/SDK and retained Client weapon
+sets, with 73 focused authority checks and 530 native ordinary appearance checks. The source Grenadier
 uses a static PistolEnemy at index zero and the selected grenade model at index one.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove

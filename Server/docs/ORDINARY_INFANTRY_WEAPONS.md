@@ -18,10 +18,11 @@ normal/Elite upgrades rather than the local player's equipment or a guessed zero
 
 ## Verification
 
-`UnityOrdinaryInfantryWeaponsAudit.Run` passes 522 checks in disposable Unity 2018.3.0f2.
+`UnityOrdinaryInfantryWeaponsAudit.Run` passes 530 checks in disposable Unity 2018.3.0f2.
 The matrix covers sixteen source families, normal/Elite lanes and upgrade indexes zero and 39:
 64 source constructions and 72 weapon copies. Another 32 production presenter actors exercise
-opposing owners, source sockets, startup visibility and removal. The audit also rejects missing
+opposing owners, source sockets, visibility and removal. Ordinary Grenadier now also verifies
+decoded primary/secondary updates and creation while already holding the secondary weapon. The audit also rejects missing
 inventory and verifies that visual copies contain no gameplay scripts or physics components.
 These component fixtures supply equipment views directly; they do not prove full Backend admission.
 
@@ -30,9 +31,9 @@ also pass. The Gunslinger source-bound fixture was refreshed for the modified pr
 
 ## Remaining work
 
-Protobuf field 46 remains zero and unprojected for ordinary actors. This increment supplies
-startup appearance, not authoritative ordinary Grenadier switching during combat. Card switching
-continues through its existing host projection. Firing effects, detached shield death effects,
-complete death/ragdoll presentation, every upgrade threshold, normal two-Unity-client matches,
-Android, Linux and original Unity 5.2.5 runtime parity remain unverified or incomplete.
-No server, protocol or SDK behavior changed in this increment.
+Protobuf field 46 now projects ordinary Grenadier selection through the host, portable SDK and
+retained presenter weapon sets. Other ordinary families retain field zero and source startup
+visibility, including both Commando weapons. Card switching continues through its host projection.
+Firing effects, detached shield death effects, complete death/ragdoll presentation, every upgrade
+threshold, normal two-Unity-client matches, Android, Linux and original Unity 5.2.5 runtime parity
+remain unverified or incomplete. See [weapon authority](INFANTRY_WEAPON_AUTHORITY.md).

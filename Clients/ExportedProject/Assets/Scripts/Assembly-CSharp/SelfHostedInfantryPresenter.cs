@@ -24,7 +24,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         public Material CanopyLandingMaterial;
         public SelfHostedGunslingerWeaponAttachment GunslingerAttachment { get; set; }
         public SelfHostedInfantrySkinAppearance SkinAppearance { get; set; }
-        public SelfHostedInfantryWeaponSet CardWeapons { get; set; }
+        public SelfHostedInfantryWeaponSet Weapons { get; set; }
     }
 
     private sealed class RetiredCanopy
@@ -289,7 +289,7 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         {
             model = SelfHostedInfantryVisualFactory.Create(source, style, rootName);
         }
-        CreateOrdinaryWeapons(model, soldier, row);
+        SelfHostedInfantryWeaponSet ordinaryWeapons = CreateOrdinaryWeapons(model, soldier, row);
         SelfHostedInfantryWeaponSet cardWeapons = CreateCardWeapons(model, soldier, row);
         SelfHostedInfantrySkinAppearance skin = ApplySkin(model, soldier, row);
         model.Root.SetActive(true);
@@ -300,23 +300,30 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
             AnimationRoot = model.AnimationRoot,
             GunslingerAttachment = attachment,
             SkinAppearance = skin,
-            CardWeapons = cardWeapons
+            Weapons = cardWeapons ?? ordinaryWeapons
         };
     }
 
-    private void CreateOrdinaryWeapons(SelfHostedInfantryVisual model,
+    private SelfHostedInfantryWeaponSet CreateOrdinaryWeapons(SelfHostedInfantryVisual model,
         SoldierBehaviour family, BattleArmyEntityState actor)
     {
         if (_upgradeSelection == null || actor.SourceCardId.Length != 0 || family is SoldierBehaviourGunslinger)
         {
-            return;
+            return null;
         }
 
         try
         {
-            // Field 46 remains unprojected for ordinary actors. Reproduce their source Restart state only.
+            // Only ordinary Grenadier projects live selection; other families retain their source Restart state.
             UpgradeSlots.UnitUpgrades upgrades = _upgradeSelection.Resolve(actor, family);
-            SelfHostedInfantryWeaponSet.CreateOrdinary(family, source, model, upgrades);
+            SelfHostedInfantryWeaponSet weapons =
+                SelfHostedInfantryWeaponSet.CreateOrdinary(family, source, model, upgrades);
+            if (actor.UnitId == "ID_UNIT-GRENADIER")
+            {
+                weapons.ApplyVisibleMask(actor.InfantryWeaponMask);
+            }
+
+            return weapons;
         }
         catch
         {
@@ -445,14 +452,14 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
 
     private static void ApplyWeaponAttachment(Visual visual, BattleArmyEntityState row)
     {
-        if (visual.CardWeapons != null)
+        if (visual.Weapons != null && (row.SourceCardId.Length > 0 || row.UnitId == "ID_UNIT-GRENADIER"))
         {
             if (!InfantryWeaponVisibility.IsValid(row))
             {
-                throw new InvalidOperationException("The host card weapon update is invalid.");
+                throw new InvalidOperationException("The host infantry weapon update is invalid.");
             }
 
-            visual.CardWeapons.ApplyVisibleMask(row.InfantryWeaponMask);
+            visual.Weapons.ApplyVisibleMask(row.InfantryWeaponMask);
         }
 
         if (visual.GunslingerAttachment == null)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Google.Protobuf;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -70,7 +71,8 @@ public static class UnityOrdinaryInfantryWeaponsAudit
                 BindingFlags.Instance | BindingFlags.NonPublic).Invoke(family, new object[] { upgrades });
             Require(appearances.Count == inventory.Count && appearances.Count <= expected.Length,
                 "Ordinary inventory must preserve every source entry and its available level.");
-            SelfHostedInfantryWeaponSet set = SelfHostedInfantryWeaponSet.CreateOrdinary(family, source, actor, upgrades);
+            SelfHostedInfantryWeaponSet set =
+                SelfHostedInfantryWeaponSet.CreateOrdinary(family, source, actor, upgrades);
             for (int index = 0; index < inventory.Count; index++)
             {
                 SelfHostedInfantryWeaponAppearance appearance = appearances[index];
@@ -194,7 +196,8 @@ public static class UnityOrdinaryInfantryWeaponsAudit
         {
             EntityKey = (ulong)player.Fraction, OwnerPlayerId = player.PlayerId, OwnerFraction = player.Fraction,
             UnitId = family.unitDictionaryId, SpawnTick = 60, PositionTick = 60, MaxHealth = 100, Health = 100,
-            InfantryClip = GetClip(family.unitDictionaryId), InfantryClipStartTick = 60, InfantryFacingZ = 1
+            InfantryClip = GetClip(family.unitDictionaryId), InfantryClipStartTick = 60, InfantryFacingZ = 1,
+            InfantryWeaponMask = family is SoldierBehaviourGrennader ? (uint)player.Fraction : 0u
         };
         presenter.Apply(new[] { row });
         GameObject actor = GameObject.Find("SelfHostedInfantry_" + row.EntityKey);
@@ -209,15 +212,42 @@ public static class UnityOrdinaryInfantryWeaponsAudit
             string path = AnimationUtility.CalculateTransformPath(sourceSocket, source.transform);
             Transform socket = actor.transform.Find("Rig/" + path);
             Transform root = socket.Cast<Transform>().Single(child => child.name == appearance.WeaponPrefab.name);
-            Require(root.gameObject.activeSelf == (index == 0 || family is SoldierBehaviourCommando),
-                "Production ordinary actors must retain source startup visibility for each admitted owner.");
+            bool expectedVisible = family is SoldierBehaviourGrennader
+                ? (row.InfantryWeaponMask & (1u << index)) != 0
+                : index == 0 || family is SoldierBehaviourCommando;
+            Require(root.gameObject.activeSelf == expectedVisible,
+                "Ordinary actors must use projected Grenadier state or source startup visibility.");
             Require(root.GetComponentsInChildren<MonoBehaviour>(true).Length == 0,
                 "Production weapons must remain free of source controllers.");
+        }
+
+        if (family is SoldierBehaviourGrennader)
+        {
+            string handPath = AnimationUtility.CalculateTransformPath(parts.gunSnapPointNotScaled, source.transform);
+            VerifyGrenadierUpdates(presenter, row, appearances, actor.transform.Find("Rig/" + handPath));
         }
 
         Material bodyMaterial = actor.GetComponentInChildren<SkinnedMeshRenderer>(true).sharedMaterial;
         presenter.Apply(new BattleArmyEntityState[0]);
         Require(actor == null && bodyMaterial == null, "Ordinary actor removal must release rig and owned materials.");
+    }
+
+    private static void VerifyGrenadierUpdates(SelfHostedInfantryPresenter presenter, BattleArmyEntityState row,
+        IReadOnlyList<SelfHostedInfantryWeaponAppearance> appearances, Transform socket)
+    {
+        foreach (uint mask in new uint[] { 2, 1 })
+        {
+            row.InfantryWeaponMask = mask;
+            BattleArmyEntityState decoded = BattleArmyEntityState.Parser.ParseFrom(row.ToByteArray());
+            presenter.Apply(new[] { decoded });
+            for (int index = 0; index < appearances.Count; index++)
+            {
+                Transform weapon = socket.Cast<Transform>()
+                    .Single(child => child.name == appearances[index].WeaponPrefab.name);
+                Require(weapon.gameObject.activeSelf == ((mask & (1u << index)) != 0),
+                    "Decoded ordinary selection must update existing pistol/grenade visibility.");
+            }
+        }
     }
 
     private static string GetClip(string unitId)
