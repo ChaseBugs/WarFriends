@@ -399,7 +399,7 @@ public sealed partial class MatchEngine
             Emit(destroyed ? MatchEventKind.HeavyTurretDestroyed :
                     MatchEventKind.HeavyTurretDamaged,
                 launch.OwnerPlayerId, changed.OwnerPlayerId, group.Key,
-                changed.Position, changed.Health, "card-rocket");
+                changed.Position, changed.Health, launch.ProjectileKind);
         }
     }
 

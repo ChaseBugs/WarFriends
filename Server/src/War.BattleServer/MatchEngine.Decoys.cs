@@ -253,7 +253,7 @@ public sealed partial class MatchEngine
                 droneTargets.Disable(DroneDecoyId(target.EntityId));
                 Emit(MatchEventKind.DecoyDestroyed, launch.OwnerPlayerId,
                     before.OwnerPlayerId, target.EntityId, before.Position, 0,
-                    "card-rocket");
+                    launch.ProjectileKind);
             }
         }
     }

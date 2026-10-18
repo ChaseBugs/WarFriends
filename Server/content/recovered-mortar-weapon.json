@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "source": "Assets/GameObject/MortarEnemy.prefab",
+      "sha256": "7b149ab87230ca831bdace965afc9f288e84518b1d749faf93d408a31e48745f"
+    },
+    {
+      "source": "Assets/GameObject/Missile.prefab",
+      "sha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/Mortar.cs",
+      "sha256": "210babe06a1cfc0e1b12336ae6c00809b779f383cc84d8232b71a5ab6c1ed3d5"
+    },
+    {
+      "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourMortar.cs",
+      "sha256": "233ce73283a557ed6ecf008247c1cd2aa03591e3abdbc7fb61e8bdcb75ac3aa2"
+    }
+  ],
+  "weaponFileId": 11496012,
+  "setupFileId": 11469566,
+  "policy": {
+    "cadenceSeconds": 2.0,
+    "deadRadius": 0.8,
+    "hurtRadius": 1.2,
+    "criticalProbability": 0.0,
+    "curvedTrajectory": false,
+    "friendKill": false,
+    "missileType": 2,
+    "shootOffset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

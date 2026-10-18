@@ -1119,6 +1119,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             _assaulterQueue = content.CoopAssaulterQueue;
             _gunslingerPointCatalog = content.GunslingerPoints;
             _mortarPointCatalog = content.MortarPoints;
+            _mortarWeaponSource = content.MortarWeapon;
             enemyShotTargets = content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armySpawnPoints=content.ArmySpawnPoints;
@@ -1662,11 +1663,6 @@ public sealed partial class MatchEngine : IMatchRuntime
             try { AdvanceMortarNavigation(); }
             catch (InvalidDataException) { End("invalid-mortar-navigation", "", false); return; }
         }
-        if (advanced && phase == BattlePhase.Running && _mortarConstruction.Count > 0)
-        {
-            try { AdvanceMortarFacing(); }
-            catch (InvalidDataException) { End("invalid-mortar-facing", "", false); return; }
-        }
         if (advanced && phase == BattlePhase.Running && (_gunslingerWalks.Count > 0 || _gunslingerRetries.Count > 0))
         {
             try { AdvanceGunslingerNavigation(); }
@@ -1709,6 +1705,12 @@ public sealed partial class MatchEngine : IMatchRuntime
         {
             try { AdvanceCardRocketFlights(); }
             catch (InvalidDataException) { End("invalid-card-unit-authority", "", false); return; }
+        }
+        if (advanced && phase == BattlePhase.Running && _mortarConstruction.Count > 0)
+        {
+            // Existing missiles advance before new launches, which first move on the next host tick.
+            try { AdvanceMortarShooting(); }
+            catch (InvalidDataException) { End("invalid-mortar-shooting", "", false); return; }
         }
         if (advanced && phase == BattlePhase.Running && rocketAttacks.Count > 0)
         {
@@ -3279,7 +3281,8 @@ public sealed partial class MatchEngine : IMatchRuntime
                 {
                     ProjectileId = row.Key,
                     OwnerPlayerId = launch.OwnerPlayerId,
-                    Kind = flight.IsFake ? "card-rocket-fake" : "card-rocket",
+                    Kind = flight.IsFake ? launch.ProjectileKind + "-fake" : launch.ProjectileKind,
+                    ArmyUnitId = launch.Mortar == null ? "" : "ID_UNIT-MORTAR",
                     X = flight.Position.X, Y = flight.Position.Y,
                     Z = flight.Position.Z,
                     VelocityX = flight.Velocity.X,

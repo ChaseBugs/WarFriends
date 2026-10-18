@@ -17,6 +17,16 @@ Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/EnemyController.cs text e
 Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviourGunslinger.cs text eol=crlf
 Server/content/recovered-gunslinger-points.json text eol=lf
 Server/content/recovered-mortar-points.json text eol=lf
+Server/content/recovered-mortar-weapon.json text eol=lf
+Server/content/mortar-clock-unity-reference.json text eol=lf
+Server/tools/UnityMortarClockProbe.cs text eol=lf
+Server/tools/UnityMortarClockExport.cs text eol=lf
+Server/tools/UnityMortarVisualAudit.cs text eol=lf
+Clients/ExportedProject/Assets/AnimationClip/mortar_hide.anim text eol=lf
+Clients/ExportedProject/Assets/AnimationClip/mortar_up.anim text eol=lf
+Clients/ExportedProject/Assets/GameObject/MortarEnemy.prefab text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Mortar.cs text eol=crlf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviourMortar.cs text eol=crlf
 Server/content/mortar-points-unity-reference.json text eol=lf
 Server/content/mortar-facing-unity-reference.json text eol=lf
 Server/content/recovered-air-unit-geometry.json text eol=crlf

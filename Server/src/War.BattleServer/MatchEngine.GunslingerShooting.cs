@@ -56,7 +56,7 @@ public sealed partial class MatchEngine
         RefreshGunslingerTarget(attempt);
         _gunslingerAttempts[entityKey] = attempt;
         _gunslingerArrivals[entityKey] = arrival with { ShotsRemaining = arrival.ShotsRemaining - 1 };
-        ConsumeGunslingerCooldownDraw(entityKey);
+        ConsumeArmyCooldownDraw(entityKey);
     }
 
     private static GunslingerFireLoopEntry NextGunslingerLoopEntry(GunslingerShotAttempt? previous)
@@ -117,7 +117,7 @@ public sealed partial class MatchEngine
     private void CompleteGunslingerShot(ulong entityKey, GunslingerShotAttempt attempt)
     {
         attempt.CompletedTick = tick;
-        ConsumeGunslingerCooldownDraw(entityKey);
+        ConsumeArmyCooldownDraw(entityKey);
         GunslingerArrival arrival = _gunslingerArrivals[entityKey];
         if (arrival.ShotsRemaining == 0)
         {
@@ -131,16 +131,6 @@ public sealed partial class MatchEngine
             FirstShotEligibleTick = GunslingerFiringClock.NextPreparationTick(tick),
             FirstPointChangeEligibleTick = checked(tick + 2 * MatchManifest.TickRate + 1)
         };
-    }
-
-    private void ConsumeGunslingerCooldownDraw(ulong entityKey)
-    {
-        ArmyBaseShotStats shot = armyShots[entityKey];
-        float seconds = shot.MinShootTime + NextArmyFloat() * (shot.MaxShootTime - shot.MinShootTime);
-        if (!float.IsFinite(seconds) || seconds < 0f)
-        {
-            throw new InvalidDataException("Gunslinger source cooldown draw lost its composed bounds.");
-        }
     }
 
     private void UpdateGunslingerTurn(ulong entityKey, GunslingerShotAttempt attempt)

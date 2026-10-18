@@ -2255,7 +2255,8 @@ public sealed partial class MatchEngine
         // These additional families have recovered upgrade shot lanes even though the older
         // serialized base-shot artifact only included the other shooter families.
         if(family.BaseShot!=null || family.BehaviorType is "SoldierBehaviourAssaulter" or
-            "SoldierBehaviourGunslinger" or "SoldierBehaviourGrennader" or "SoldierBehaviourBazooka")
+            "SoldierBehaviourGunslinger" or "SoldierBehaviourGrennader" or "SoldierBehaviourBazooka" or
+            "SoldierBehaviourMortar")
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));

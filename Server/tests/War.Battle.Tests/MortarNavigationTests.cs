@@ -101,10 +101,15 @@ internal static class MortarNavigationTests
             throw new InvalidOperationException("Arrived Mortar lost its destination.");
         MortarConstructionState state = host.MortarConstruction(entity.EntityKey) ??
             throw new InvalidOperationException("Arrived Mortar lost its construction state.");
+        MortarShotAttempt? attempt = host.MortarAttempt(entity.EntityKey);
+        bool hasExpectedPose = attempt == null
+            ? entity.InfantryClip is "mortar_down" or "mortar_down_idle"
+            : attempt.PreparedTick >= state.FirstFireEligibleTick &&
+                entity.InfantryClip is "mortar_hide" or "mortar_up";
         int checks = Require(Vector2.Distance(new(entity.X, entity.Z), new(point.Position.X, point.Position.Z)) <
             ArrivalDistance && state.FirstFireEligibleTick == state.EnteredTick +
                 (ulong)(SourceBuildSeconds * MatchManifest.TickRate) + 1 &&
-            entity.InfantryClip is "mortar_down" or "mortar_down_idle",
+            hasExpectedPose,
             "Mortar stopped outside the authored arrival or lost the strict source construction deadline.");
         checks += Require(host.ConfirmArmyDeath(entity.EntityKey, false) &&
             host.MortarDestination(entity.EntityKey) == null && host.MortarConstruction(entity.EntityKey) == null &&

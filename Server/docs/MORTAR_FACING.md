@@ -70,19 +70,24 @@ rotation ticks, final shield-facing direction, collision/protobuf agreement, sam
 priority and death cleanup. Protobuf is serialized and parsed using the existing infantry fields;
 this is not normal Unity SDK/gameplay acceptance.
 
-`--ordinary-mortar-only` now passes 520 checks including setup, navigation, native endpoints and
+At the construction-facing checkpoint, `--ordinary-mortar-only` passed 520 checks including setup, navigation, native endpoints and
 construction facing. The .NET solution build has zero warnings/errors and the protocol executable
 passes 1,360 checks. The private Unity package manifest was restored byte-for-byte after the owned
 audit exited. Active Client source, scenes, settings and owner library work were not changed.
 The full default Battle executable exited zero with 248,439 engine/admission/SDK/geometry and
 real two-peer UDP assertions; local evidence is `Server/.local/mortar-facing-full.log`.
 
-Next, implement `FireMortar` and `PrepareToShoot(false, false, 0)` with their source callback order,
-target selection, weapon cadence and world/hand attachment, then delayed overhead flight and
-authoritative contact/explosion. Validate native callback/poll timing and actual Unity battles
-before closing the complete Mortar feature.
+The subsequent [firing/relocation stage](MORTAR_SHOOTING.md) connects preparation, source callback
+timing, weapon cadence, delayed overhead flight and host impact handling. World/hand attachment,
+complete visual effects and actual Unity battles remain required before closing Mortar.
 
 The reviewed next-stage source chain is concrete:
+
+The pinned `recovered-mortar-weapon.json` extraction now guards the shared straight-missile
+launch factory used by ordinary Mortar combat. Focused tests cover stationary delay, descent,
+collision tracing, natural callbacks, launch admission, airborne shooter death and repeated
+relocation. A separate empty-scene Unity probe confirms the callback/poll offsets. These checks
+do not prove full native gameplay order or rendered normal battle presentation.
 
 - `FireMortar` plays `mortar_hide`/queued `mortar_up` and snaps the weapon into world space
   **before** `PrepareToShoot`. It schedules hand reattachment after `mortarShotTime` and

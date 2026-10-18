@@ -39,8 +39,11 @@ public sealed partial class MatchEngine
             Player opponent = players.Single(player => player.Definition.PlayerId != entity.OwnerPlayerId);
             int cover = opponent.Route == null ? opponent.Cover : opponent.Destination;
             // MortarUpdate's strict firing branch wins over its cover-change branch on the first eligible tick.
-            // Keep advancing an already captured tween, but do not invent a later construction retarget.
-            if (tick < construction.FirstFireEligibleTick && cover != facing.TargetCoverIndex)
+            // Shoot generates a new deadline during windup; EndShooting resets it to maximum.
+            MortarShotAttempt? attempt = MortarAttempt(entityKey);
+            bool canRetarget = tick < construction.FirstFireEligibleTick ||
+                (attempt != null && tick > attempt.PreparedTick && !attempt.CompletedTick.HasValue);
+            if (canRetarget && cover != facing.TargetCoverIndex)
             {
                 BeginMortarFacing(entityKey, facing.FacingAt(tick));
             }

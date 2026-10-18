@@ -1,0 +1,61 @@
+{
+  "unityVersion": "2018.3.0f2",
+  "scope": "Actual Core_BaseScript.InvokeAfter and strict deadline; no gameplay, animation or physics update-order proof.",
+  "captureRate": 30,
+  "hideSeconds": 1.1000061,
+  "upSeconds": 0.9000015,
+  "observations": [
+    {
+      "preparedTick": 5,
+      "preparedTime": 0.166666672,
+      "deadline": 2.16667438,
+      "callbackTick": 14,
+      "pollTick": 15,
+      "handReturnTick": 39,
+      "relocationTick": 66
+    },
+    {
+      "preparedTick": 65,
+      "preparedTime": 2.16666675,
+      "deadline": 4.16667461,
+      "callbackTick": 74,
+      "pollTick": 75,
+      "handReturnTick": 99,
+      "relocationTick": 126
+    },
+    {
+      "preparedTick": 305,
+      "preparedTime": 10.166667,
+      "deadline": 12.1666746,
+      "callbackTick": 314,
+      "pollTick": 315,
+      "handReturnTick": 339,
+      "relocationTick": 366
+    }
+  ],
+  "sources": [
+    {
+      "privateImportedSource": "Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs",
+      "sha256": "3a42957a1560169dc96af028905d93f0a70aa7d84050d6d5b640b06507f60dce",
+      "activeRecoveredSha256": "3a42957a1560169dc96af028905d93f0a70aa7d84050d6d5b640b06507f60dce"
+    },
+    {
+      "privateImportedSource": "Assets/AnimationClip/mortar_hide.anim",
+      "sha256": "1fa2938bc54e1ee17220131a331b6fd9607be19dc130f83a58ca8d9e0327b9a1",
+      "activeRecoveredSha256": "1fa2938bc54e1ee17220131a331b6fd9607be19dc130f83a58ca8d9e0327b9a1"
+    },
+    {
+      "privateImportedSource": "Assets/AnimationClip/mortar_up.anim",
+      "sha256": "d7b59b225eb8dbcecda6fcedc099c2d0772490340d6d807095f7e1e5ff0c1464",
+      "activeRecoveredSha256": "d7b59b225eb8dbcecda6fcedc099c2d0772490340d6d807095f7e1e5ff0c1464"
+    },
+    {
+      "privateImportedSource": "Assets/UnityMortarClockProbe.cs",
+      "sha256": "14041662623bcd1c3bf79efdd58b626231ed175887895a9c618de4a06d901562"
+    },
+    {
+      "privateImportedSource": "Assets/Editor/UnityMortarClockExport.cs",
+      "sha256": "bd8074e0c686f3803ae1b7e782b04a51265c53e4e5d4b90a3b1eda12f2778f51"
+    }
+  ]
+}

@@ -27,7 +27,8 @@ internal static class BattleProjectileRowPolicyTests
                 OwnerPlayerId = new string('a', 32),
                 Kind = kind,
                 ArmyUnitId = kind == "army-bullet" ? "ID_UNIT-SWAT" :
-                    kind == "army-fake-bullet" ? "ID_UNIT-SHOTGUNNER" : "",
+                    kind == "army-fake-bullet" ? "ID_UNIT-SHOTGUNNER" :
+                    kind == "army-mortar" || kind == "army-mortar-fake" ? "ID_UNIT-MORTAR" : "",
                 WeaponSourceId = kind.StartsWith("shotgun-", StringComparison.Ordinal) ?
                     "Google2u.Shotgun_SPAS" : "",
                 X = 1, Y = 2, Z = 3,
@@ -40,6 +41,7 @@ internal static class BattleProjectileRowPolicyTests
             "grenade", "grenade-molotov", "pvp-bonus-grenade", "card-rocket",
             "card-grenadier", "army-bullet", "army-fake-bullet",
             "card-rocket-fake", "heavy-turret-bullet",
+            "army-mortar", "army-mortar-fake",
             "helicopter-bullet", "helicopter-fake-bullet",
             "assault-helicopter-bullet", "assault-helicopter-fake-bullet",
             "drone-bullet", "drone-fake-bullet",
@@ -135,6 +137,17 @@ internal static class BattleProjectileRowPolicyTests
         badShotgun.Projectiles[0].WeaponSourceId = "Google2u.Shotgun_Unknown";
         Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(badShotgun),
             "shotgun requires a recovered source identity");
+
+        var mortar = new MatchSnapshot();
+        mortar.Projectiles.Add(Row(1, "army-mortar"));
+        mortar.Projectiles[0].ArmyUnitId = "ID_UNIT-ROCKETSOLDIER";
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(mortar), "Mortar cannot claim another unit identity");
+        mortar.Projectiles[0].ArmyUnitId = "ID_UNIT-MORTAR";
+        mortar.Projectiles[0].ArmySourceCardId = "BIGROCKET";
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(mortar), "Mortar cannot claim a card source");
+        mortar.Projectiles[0].ArmySourceCardId = "";
+        mortar.Projectiles[0].ArmyPoison = true;
+        Reject(() => BattleProjectileRowPolicy.ValidateSnapshot(mortar), "Mortar cannot claim poison damage");
 
         var tooMany = new MatchSnapshot();
         for (ulong id = 1; id <= 129; id++)

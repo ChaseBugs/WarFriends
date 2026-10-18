@@ -106,21 +106,31 @@ tracks Engineer, Machinegunner, SciFi and Mortar separately from global spawn ca
 [Ordinary Mortar setup](ORDINARY_MORTAR.md) now captures separate contact/explosion fields,
 speed and perk-scaled reciprocal stop time before real deployment observers. Forty-nine focused
 checks cover admitted upgrade rows, friendly/opposing Sickness callbacks, unchanged explosion
-and timing, final callback disconnection and death cleanup. Mortar navigation, construction,
-natural firing/flights/hits and normal Unity integration remain open; setup proof does not close them.
+and timing, final callback disconnection and death cleanup. These checks prove setup only;
+the later navigation, facing and firing checkpoints below have separate verification boundaries.
 The full default Battle suite passed 247,970 assertions after this change, including real two-peer UDP.
 [Mortar navigation](MORTAR_NAVIGATION.md) now binds forty ordered source destinations and forty
 native Unity NavMesh endpoint samples. Twenty ordinary Mortars from real deployments reach exclusive destinations
 across both fractions on all five maps, capture source construction deadlines and select the
-construction clips. This navigation/setup/endpoint subset has 212 checks. Automatic
-firing/flights/hits, post-shot relocation and normal Unity acceptance remain open.
+construction clips. This navigation/setup/endpoint subset has 212 checks; it does not by itself
+prove firing/flights/hits, post-shot relocation or normal Unity acceptance.
 The full default Battle suite passes 248,137 assertions after the navigation change, including real two-peer UDP.
 [Mortar construction facing](MORTAR_FACING.md) now uses native-verified NGUI easing, wrapped
 quaternion rotation and its near-angle interpolation branch. The 308 focused checks include
 175 native samples, both fractions on all maps, accepted logical-cover changes before physical
 arrival, collision/protobuf agreement, first-fire branch priority and cleanup. The combined Mortar
-group passes 520 checks. Actual firing/impacts, native update-order and normal Unity gameplay remain open.
+group passed 520 checks at this checkpoint. It does not by itself prove firing/impacts or normal Unity gameplay.
 The full default Battle suite passes 248,439 assertions after construction facing, including real two-peer UDP.
+[Mortar firing and relocation](MORTAR_SHOOTING.md) now connect captured Shield targeting, the
+0.3-second callback, overhead delayed missiles, shared host impacts and repeated movement/build
+cycles. The focused group passed 684 checks before native-clock assertions were added. Actual
+Unity coroutine observations confirm callback/poll offsets at three start phases; a native visual
+audit confirms the recovered Small mesh copy has no gameplay/collision components. Full normal
+gameplay order, weapon world/hand attachment, target indicator, particle/trail presentation,
+natural fake/Sickness impact fixtures and Android acceptance remain open.
+The complete Battle executable passed 248,560 assertions for this firing/relocation stage;
+the subsequent final firing-focused group passed 119 assertions including the newly pinned
+native-clock reference. The protocol executable passed 1,360 assertions.
 [Normal Gunslinger navigation](GUNSLINGER_NAVIGATION.md) pins all 30 dedicated multiplayer points,
 reserves nearest same-fraction destinations and walks to authored arrivals. Fifty focused checks
 cover two arrivals on every map and death cleanup. The Desert route continues past the projected

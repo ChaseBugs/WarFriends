@@ -40,6 +40,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	private PlayerController other;
 	private Weapon rocketWeapon;
 	private Weapon grenadierWeapon;
+    private Weapon _mortarWeapon;
 
 	public void Configure(PlayerController localPlayer, PlayerController otherPlayer,
         LevelBehaviourManager behaviourManager)
@@ -47,10 +48,19 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		local = localPlayer;
 		other = otherPlayer;
         infantryBullets.Clear();
+        _mortarWeapon = null;
         if (behaviourManager == null || behaviourManager.levelBehaviours == null)
             throw new System.InvalidOperationException("Recovered Rocket visual source is absent.");
         foreach (LevelBehaviourManager.BehaviourEntry entry in behaviourManager.levelBehaviours)
         {
+            if (entry.behaviour is SoldierBehaviourMortar)
+            {
+                EnemyBasicInventory inventory = entry.behaviour.GetComponent<EnemyBasicInventory>();
+                if (inventory == null || inventory.weapons == null || inventory.weapons.Count == 0 ||
+                    inventory.weapons[0].weapon == null || !(inventory.weapons[0].weapon.bulletPrefab is Missile))
+                    throw new System.InvalidOperationException("Recovered Mortar missile prefab is absent.");
+                _mortarWeapon = inventory.weapons[0].weapon;
+            }
             if (entry.behaviour is SoldierBehaviourBazooka)
             {
                 EnemyBasicInventory inventory = entry.behaviour.GetComponent<EnemyBasicInventory>();
@@ -158,6 +168,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 state.Kind != "assault-helicopter-bullet" && state.Kind != "assault-helicopter-fake-bullet" &&
                 state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet" &&
                 state.Kind != "card-rocket" && state.Kind != "card-rocket-fake" &&
+                state.Kind != "army-mortar" && state.Kind != "army-mortar-fake" &&
                 state.Kind != "card-grenadier" &&
                 !((state.Kind == "army-bullet" || state.Kind == "army-fake-bullet") &&
                   infantryBullets.ContainsKey(state.ArmyUnitId))) continue;
@@ -306,6 +317,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
              item.Reason != "drone" && item.Reason != "helicopter" &&
              item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner" &&
              item.Reason != "card-rocket" && item.Reason != "card-rocket-fake" &&
+             item.Reason != "army-mortar" && item.Reason != "army-mortar-fake" &&
              item.Reason != "card-grenadier" && item.Reason != "army")) return;
         if (item.Reason == "drone" || item.Reason == "helicopter" || item.Reason == "assault-helicopter")
         {
@@ -324,7 +336,9 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             item.Reason == "assault-helicopter" ||
 			item.Reason == "helicopter-gunner") return;
 		if (!Application.isPlaying) return;
-		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
+        bool isMortar = item.Reason == "army-mortar" || item.Reason == "army-mortar-fake";
+		Explosion.PlayEffects(isMortar ? Explosion.ExplosionType.Small :
+            item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
 	}
     private void Update()
@@ -495,6 +509,10 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	{
 		PlayerController owner = local != null && local.playerProperties != null && local.playerProperties.playerID == ownerId ? local : other;
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
+        if (kind == "army-mortar" || kind == "army-mortar-fake")
+        {
+            return CreateMortarVisual(projectileId);
+        }
 		if (kind == "bazooka" || kind == "bazooka-fake")
         {
             GameObject missileRoot = SelfHostedBazookaVisual.Create(
@@ -590,6 +608,23 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		if (bullet != null) CopyVisual(bullet.transform, root.transform, true);
 		return new Visual(root);
 	}
+
+    private Visual CreateMortarVisual(ulong projectileId)
+    {
+        Missile missile = _mortarWeapon == null ? null : _mortarWeapon.bulletPrefab as Missile;
+        if (missile == null || missile.projectileModel == null)
+        {
+            throw new System.InvalidOperationException("Recovered Mortar projectile model is absent.");
+        }
+        var root = new GameObject("SelfHostedProjectile_" + projectileId);
+        root.transform.rotation = Quaternion.LookRotation(Vector3.down);
+        var model = new GameObject(missile.projectileModel.name);
+        model.transform.SetParent(root.transform, false);
+        CopyVisual(missile.projectileModel.transform, model.transform, false);
+        // Missile.AnimateShot selects Small scale; never activate the original damage/Photon component.
+        model.transform.localScale = new Vector3(0.5f, 0.5f, 0.7f);
+        return new Visual(root);
+    }
 
 	private static void CopyVisual(Transform source, Transform destination, bool root)
 	{

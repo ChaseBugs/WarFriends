@@ -8,7 +8,11 @@ internal sealed record CardRocketShotIntent(ulong EntityKey, ulong Tick,
     int ShotIndex, int BatchSize);
 
 internal sealed record CardRocketLaunchAuthority(string OwnerPlayerId,
-    ArmyCardRocketRuntime Missile, ArmyPlayerDamagePolicy PlayerPolicy);
+    ArmyCardRocketRuntime Missile, ArmyPlayerDamagePolicy PlayerPolicy)
+{
+    internal ArmyMortarRuntime? Mortar { get; init; }
+    internal string ProjectileKind => Mortar == null ? "card-rocket" : "army-mortar";
+}
 internal sealed record CardGrenadierLaunchAuthority(string OwnerPlayerId,
     ArmyGrenadeDamageStats Damage, ArmyCardGrenadierRuntime Setup,
     ArmyPlayerDamagePolicy PlayerPolicy);
@@ -2140,7 +2144,7 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Card Rocket lost its launch authority.");
             Emit(MatchEventKind.Impact, launch.OwnerPlayerId,
                 impact.Collision?.PlayerId ?? "", id, impact.Position, 0,
-                impact.IsFake ? "card-rocket-fake" : "card-rocket");
+                impact.IsFake ? launch.ProjectileKind + "-fake" : launch.ProjectileKind);
             stateRevision++;
             if (!impact.IsFake)
                 ApplyCardRocketExplosion(impact, launch);
@@ -2196,8 +2200,8 @@ public sealed partial class MatchEngine
                 }
             }
         }
-        ApplyCardRocketBonusBoxes(launch.OwnerPlayerId,
-            impact.ProjectileId, impact.Position, launch.Missile);
+        ApplyMissileBonusBoxes(impact.ProjectileId, impact.Position,
+            (launch.OwnerPlayerId, launch.ProjectileKind, launch.Missile));
         ApplyCardRocketAssaultGlassExplosion(impact, launch,
             attacker.Definition.Fraction);
         if (Terminal)

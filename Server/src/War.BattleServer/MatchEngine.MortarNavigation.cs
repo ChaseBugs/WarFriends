@@ -38,6 +38,13 @@ public sealed partial class MatchEngine
         }
 
         // BuildMortar plays mortar_down immediately, then queues mortar_down_idle.
+        if (MortarAttempt(entityKey) is { } attempt)
+        {
+            float shotSeconds = enemyPoses.Clip("mortar_hide").Length;
+            ulong shotTicks = (ulong)MathF.Ceiling(shotSeconds * MatchManifest.TickRate);
+            return tick - attempt.PreparedTick < shotTicks ? ("mortar_hide", attempt.PreparedTick) :
+                ("mortar_up", checked(attempt.PreparedTick + shotTicks));
+        }
         float downSeconds = enemyPoses.Clip("mortar_down").Length;
         float elapsedSeconds = (tick - state.EnteredTick) / (float)MatchManifest.TickRate;
         if (elapsedSeconds < downSeconds)
@@ -142,6 +149,8 @@ public sealed partial class MatchEngine
         _mortarBuildSeconds.Remove(entityKey);
         _mortarConstruction.Remove(entityKey);
         _mortarFacings.Remove(entityKey);
+        _mortarAttempts.Remove(entityKey);
+        _mortarLastShotTicks.Remove(entityKey);
     }
 
     private sealed record MortarWalk(CardSoldierWalkState Motion, ulong FirstTick);

@@ -24,10 +24,11 @@ internal sealed class CardRocketMissileFlight
     private ulong tick;
     private float progress;
     private bool collisionEnabled;
+    private readonly Vector3 _velocity;
 
     internal Vector3 Position { get; private set; }
     internal Vector3 TargetPosition => end;
-    internal Vector3 Velocity { get; }
+    internal Vector3 Velocity => progress < 0f ? Vector3.Zero : _velocity;
     internal bool IsFake => isFake;
     internal bool Finished { get; private set; }
 
@@ -62,11 +63,34 @@ internal sealed class CardRocketMissileFlight
         if (!float.IsFinite(durationSeconds) || durationSeconds <= 0 ||
             durationSeconds > 1800)
             throw new InvalidDataException("Card Rocket has invalid flight duration.");
-        Velocity = Vector3.Normalize(end - start) * missile.Speed;
+        _velocity = Vector3.Normalize(end - start) * missile.Speed;
 
         // BazookaEnemy MissileSetup has stopTime = 0 and curvedTrajectory = 0.
         progress = 0;
         Position = from;
+    }
+
+    /// <summary>Uses the same straight Missile.Update with Mortar's source overhead origin and negative progress.</summary>
+    internal static CardRocketMissileFlight CreateMortar(MortarMissileLaunch launch,
+        Func<Vector3, Vector3, float, ShotCollision?> trace)
+    {
+        const float LaunchHeight = 5f;
+        const float MaximumStopSeconds = 1800f;
+        ArgumentNullException.ThrowIfNull(launch);
+        ArmyMortarRuntime weapon = launch.Weapon
+            ?? throw new InvalidDataException("Mortar launch lost its current weapon authority.");
+        if (!float.IsFinite(weapon.StopTime) || weapon.StopTime <= 0f || weapon.StopTime > MaximumStopSeconds)
+        {
+            throw new InvalidDataException("Mortar launch lost its bounded current stop time.");
+        }
+
+        var missile = new ArmyCardRocketRuntime(weapon.DirectDamage, weapon.ExplosionDamage,
+            weapon.Speed, weapon.PlayerBehindShieldRatio);
+        var flight = new CardRocketMissileFlight(launch.ProjectileId, launch.SoldierEntityKey, missile,
+            launch.TargetPosition + Vector3.UnitY * LaunchHeight, launch.TargetPosition,
+            launch.LaunchTick, launch.IsFake, trace);
+        flight.progress = -weapon.StopTime / flight.durationSeconds;
+        return flight;
     }
 
     internal CardRocketMissileImpact? Advance(ulong nextTick)
