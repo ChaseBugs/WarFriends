@@ -294,9 +294,9 @@ This clock is not yet connected to live corpses, slot release or any Client wire
 sampling, source-body ownership, host frame ordering and forced-reclaim application still need
 their integration before this can establish actual battlefield pool parity.
 The final isolated-build indicator group passes 13,284 checks including fifteen new return-clock
-checks; evidence is `Server/.local/mortar-corpse-clock-tests-final.log`. The simultaneously
-running full executable was built at `caa517f2b`, before this clock was added, and must not be
-reported as covering this later class.
+checks; evidence is `Server/.local/mortar-corpse-clock-tests-final.log`. The separate full
+executable built at `caa517f2b` passed 263,307 assertions, before this clock was added, and
+must not be reported as covering this later class.
 
 The managed `MortarWeaponPool` now owns each actor's pending corpse return. BeginCorpseReturn
 retains the occupied slot; hide does not release it. AdvanceCorpseReturn requires consecutive
@@ -313,7 +313,7 @@ reset. No host spawn/death path calls these new pool methods yet; cross-player p
 death-delay sampling and frame/callback ordering must be wired before live slot parity exists.
 The final isolated-build indicator group passes 13,299 checks, recorded in
 `Server/.local/mortar-corpse-pool-tests-final.log`. This newer pool code is not included in the
-still-running full executable built at `caa517f2b`.
+completed 263,307-assertion full executable built at `caa517f2b`.
 
 ### Deployment and corpse clock domains
 
@@ -340,6 +340,38 @@ probe. The host's current fixed-tick deployment/reconnect model therefore cannot
 proof that pending spawns and retained corpses share a pause clock. Resolve their scheduling
 and pause policy before wiring the pool hooks; do not force both source timers through one
 delta merely to satisfy the existing fixed-rate tests.
+
+The subsequent rendered observation now executes the original RadicalRoutine and real-time
+wait, without manually advancing the iterator. In the first batch-mode run, readiness became
+true but its WaitForEndOfFrame continuation did not resume within the bounded observation;
+that result is not treated as a gameplay scheduling proof. A non-batch Unity 2018.3.0f2 run
+with a Game View camera and Direct3D11 then resumed the real-time coroutine during game-time
+pause, after both Update and LateUpdate. The same rendered probe schedules original InvokeAfter
+hide/return waits: after resume, their callbacks occur after Update but before LateUpdate,
+at two game seconds and one further game second respectively.
+
+`Server/content/deployment-coroutine-unity-reference.json` retains this rendered result and
+six matching active/executed source hashes. `verify_deployment_coroutine.py` rejects batch-mode
+readiness-only results, missing callbacks, reversed phases and changed scaled wait durations;
+five damaged observations are rejected. Local evidence is
+`Server/.local/deployment-corpse-phases-unity.log`. Owned Editor processes have exited and
+the private manifest is restored byte-for-byte. The probe uses captureFramerate 30: its wall
+elapsed values are observations, not shipping frame-rate or network latency benchmarks.
+
+These phase observations support processing body returns before delayed end-of-frame spawn
+admission, rather than returning weapons only after that admission. They do not execute the
+real spawning manager, competing same-deadline callbacks, slot exhaustion or normal gameplay.
+Those acceptance cases and the host's independent real/scaled clocks remain required before
+declaring live pool fidelity. The complete shared-preflight run is finished; a newer full run
+including the clock/pool models is tracked at `Server/.local/mortar-clock-and-pool-full.log`
+and is not yet recorded as passing.
+
+```powershell
+python -B Server/tools/verify_deployment_coroutine.py `
+  --project Server/.local/coop-geometry-project `
+  --log Server/.local/deployment-corpse-phases-unity.log `
+  --output Server/content/deployment-coroutine-unity-reference.json
+```
 
 ```powershell
 python -B Server/tools/verify_deployment_clock_domains.py `
@@ -376,14 +408,14 @@ owner's energy, consuming its reservation or committing either soldier. Physical
 reservation and its exhaustion-specific rejection path remain unimplemented.
 The final isolated-build `--army-waves-only` run passes twenty wave/preflight assertions,
 including the damaged-second-owner host case, at
-`Server/.local/mortar-shared-preflight-tests-final.log`. The latest solution build passes with
+`Server/.local/mortar-shared-preflight-tests-final.log`. The shared-preflight solution build passes with
 zero warnings/errors, protocol checks pass 1,360 assertions, and the native isolated smoke
 passes 74 real MongoDB/HTTP/protobuf/UDP checks. Smoke evidence is
 `Server/.local/smoke-01fe03d494c742e08eeb6bde62c61952` and
 `Server/.local/mortar-pool-v8-smoke.log`. Its MongoDB, Backend and Worker processes completed
-and were cleaned up by the script. A new full run including this later host change is running
-at `Server/.local/mortar-shared-preflight-full.log`; do not substitute the earlier 263,304
-result for its final result.
+and were cleaned up by the script. Its full run passed 263,307 Battle assertions with exit code
+zero at `Server/.local/mortar-shared-preflight-full.log`. This verifies the shared host preflight
+at `caa517f2b`; the later corpse clock/pool models remain covered by their separate focused tests.
 
 After running the exporter in that disposable project, retain and validate its evidence with:
 

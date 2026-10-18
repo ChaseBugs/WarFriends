@@ -1,0 +1,104 @@
+{
+  "unityVersion": "2018.3.0f2",
+  "graphicsDevice": "Direct3D11",
+  "scope": "Actual RadicalRoutine/WaitForRealSeconds and InvokeAfter phases; no spawning manager, pool or same-frame return race.",
+  "sources": [
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/WaitForRealSeconds.cs",
+      "normalizedUtf8LfSha256": "4ce840bfc00c216677a27f6f951227424d4e223c44a17d3525a3ba924a0137eb"
+    },
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/CoroutineReturn.cs",
+      "normalizedUtf8LfSha256": "77ca98cfb3daadb14995218c740b95013273222ba43fe91a7c4f494d44a29618"
+    },
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/RadicalRoutine.cs",
+      "normalizedUtf8LfSha256": "4108b79f7f6b250be727bb154f2045b14f02698db0cba66825aa95f366322499"
+    },
+    {
+      "source": "Assets/Plugins/Assembly-CSharp-firstpass/Core_BaseScript.cs",
+      "normalizedUtf8LfSha256": "c9a499ac3672eb3be406e7170f345b08a0dc7835d42cb1090a1b79988e812723"
+    },
+    {
+      "source": "Assets/UnityDeploymentCoroutineProbe.cs",
+      "normalizedUtf8LfSha256": "5890951209a85a0b9d54f1cf2b8dce43967e3639e5c83a7437d1a5a3b4024481"
+    },
+    {
+      "source": "Assets/Editor/UnityDeploymentCoroutineExport.cs",
+      "normalizedUtf8LfSha256": "9e016b6001fed0352201969640e6ce2b4bedd32538c6b6d1116a7b8a68979aab"
+    }
+  ],
+  "observation": {
+    "coroutineResumed": true,
+    "realWaitFinished": true,
+    "bodyReturned": true,
+    "batchMode": false,
+    "events": [
+      {
+        "transition": "before-source-wait",
+        "frame": 1,
+        "gameTime": 0.0,
+        "realElapsed": 0.00159156322,
+        "timeScale": 0.0,
+        "realWaitFinished": false,
+        "hasResumed": false,
+        "hasHidden": false,
+        "hasReturned": false,
+        "afterCurrentUpdate": false,
+        "afterCurrentLateUpdate": false
+      },
+      {
+        "transition": "after-source-wait",
+        "frame": 13,
+        "gameTime": 0.0,
+        "realElapsed": 0.303349376,
+        "timeScale": 0.0,
+        "realWaitFinished": true,
+        "hasResumed": true,
+        "hasHidden": false,
+        "hasReturned": false,
+        "afterCurrentUpdate": true,
+        "afterCurrentLateUpdate": true
+      },
+      {
+        "transition": "hide-callback",
+        "frame": 73,
+        "gameTime": 2.0,
+        "realElapsed": 0.6464776,
+        "timeScale": 1.0,
+        "realWaitFinished": true,
+        "hasResumed": true,
+        "hasHidden": true,
+        "hasReturned": false,
+        "afterCurrentUpdate": true,
+        "afterCurrentLateUpdate": false
+      },
+      {
+        "transition": "return-callback",
+        "frame": 103,
+        "gameTime": 3.00000024,
+        "realElapsed": 0.823007464,
+        "timeScale": 1.0,
+        "realWaitFinished": true,
+        "hasResumed": true,
+        "hasHidden": true,
+        "hasReturned": true,
+        "afterCurrentUpdate": true,
+        "afterCurrentLateUpdate": false
+      },
+      {
+        "transition": "observation-ended",
+        "frame": 104,
+        "gameTime": 3.03333354,
+        "realElapsed": 0.828446269,
+        "timeScale": 1.0,
+        "realWaitFinished": true,
+        "hasResumed": true,
+        "hasHidden": true,
+        "hasReturned": true,
+        "afterCurrentUpdate": true,
+        "afterCurrentLateUpdate": false
+      }
+    ]
+  }
+}

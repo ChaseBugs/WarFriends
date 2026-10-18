@@ -179,7 +179,7 @@ focused wave/fault-injection checks. The full v8 run predates that host prefligh
 physical-slot admission, corpse leases and complete gameplay acceptance remain open.
 The latest shared-preflight code also passes the complete solution build (zero warnings/errors),
 1,360 protocol assertions and 74 real isolated MongoDB/HTTP/protobuf/UDP smoke checks. Its own
-full Battle run is tracked separately and remains pending.
+full Battle run passed 263,307 assertions at `caa517f2b`, before the later corpse clock/pool models.
 The separate corpse-return clock now matches four native wait/cancellation scenarios and
 preserves independent stage waits without carrying frame overshoot. The focused indicator
 group passes 13,284 checks. This clock is not yet a live corpse lease or slot-release hook.
@@ -191,6 +191,11 @@ scaled corpse waits remain paused. Cooldown uses another TimeManager clock. Actu
 RadicalRoutine polling and simultaneous spawn/return ordering remain unverified; one shared
 fixed-delta assumption cannot complete this integration. See the clock-domain section in
 [Mortar integration](MORTAR_INDICATOR.md).
+The subsequent rendering-enabled Unity observation executes the original RadicalRoutine:
+its real-time continuation runs after LateUpdate during pause, while original scaled body
+callbacks run after Update and before LateUpdate after resume. The batch-mode continuation
+does not resume and is explicitly excluded as gameplay proof. Same-deadline spawn/return
+competition and actual pool admission remain open; the host ordering must preserve these phases.
 [Accumulated controller time](MORTAR_CONTROLLER_TIME.md) now uses the source stored-float rule
 through the soldier's lifetime. Native comparisons reveal 60/61-frame construction and relocation
 deadlines and verify the host arithmetic and both preparation poses. The focused group passes
