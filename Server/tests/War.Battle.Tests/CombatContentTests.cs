@@ -12708,7 +12708,7 @@ internal static class CombatContentTests
             22, content.BarrelPolicy.MaxDisplayLevel);
         var sicknessWindow = new SicknessSpawnWindow(
             grenadierEntity.OwnerFraction == 1 ? 2 : 1, content.Army);
-        Check(!grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+        Check(!grenadierCardMatch.ApplySicknessToCardGrenadier(
                 grenadierEntity.EntityKey, sicknessWindow),
             "unarmed Sickness cannot modify a spawned Grenadier grenade");
         var sicknessFamily = content.Army.Families.Single(family => family.UnitId == "ID_UNIT-ASSAULT");
@@ -12718,12 +12718,24 @@ internal static class CombatContentTests
         sicknessDeployment.TryDeploy(sicknessOption, 0);
         sicknessWindow.Arm();
         sicknessWindow.DeploymentStarted(grenadierEntity.OwnerFraction, sicknessDeployment.LastAcceptedWave!);
-        Check(grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+        Check(grenadierCardMatch.ApplyArmyHostDamage(
+                grenadierEntity.EntityKey, grenadierEntity.MaxHealth * 0.75f),
+            "host damage injures the Grenadier before its Sickness callback");
+        Check(grenadierCardMatch.ApplySicknessToCardGrenadier(
                 grenadierEntity.EntityKey, sicknessWindow) &&
             grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey) ==
                 grenadierStats.Grenade! with { Minimum = grenadierStats.Grenade.Minimum * 0.5f } &&
             content.Army.CardBaseStats("GREATGRENADIER", 22, content.BarrelPolicy.MaxDisplayLevel) == grenadierStats,
             "host Sickness grenade binding scales current minimum without rewriting source or inner blast damage");
+        var sickGrenadier = grenadierCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single();
+        Check(sickGrenadier.MaxHealth == grenadierEntity.MaxHealth &&
+            sickGrenadier.Health == grenadierEntity.MaxHealth * 0.5f,
+            "Sickness refills the injured Grenadier to half maximum while preserving its maximum");
+        Check(grenadierCardMatch.ApplyArmyHostDamage(
+                grenadierEntity.EntityKey, grenadierEntity.MaxHealth * 0.25f) &&
+            grenadierCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single().Health ==
+                grenadierEntity.MaxHealth * 0.25f,
+            "subsequent host damage uses the updated Grenadier vitality authority");
         Check(grenadierCardMatch.CardGrenadierThrow(
                   grenadierEntity.EntityKey) == grenadierStats.Grenadier &&
               grenadierCardMatch.CardEnemyPoint(
@@ -12812,14 +12824,16 @@ internal static class CombatContentTests
             grenadierCardMatch.CardGrenadierLaunchDamage(grenadierProjectile.ProjectileId);
         Check(frozenGrenadierDamage == grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey),
             "actual host grenade launch captures the modified ammo setup");
-        Check(grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+        Check(grenadierCardMatch.ApplySicknessToCardGrenadier(
                 grenadierEntity.EntityKey, sicknessWindow) &&
             grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey)!.Minimum ==
                 grenadierStats.Grenade!.Minimum * 0.25f &&
+            grenadierCardMatch.ArmyEntityBatch(decoyPlayer, 0, 0).Entities.Single().Health ==
+                grenadierEntity.MaxHealth * 0.5f &&
             grenadierCardMatch.CardGrenadierLaunchDamage(grenadierProjectile.ProjectileId) == frozenGrenadierDamage,
             "a later weapon modification cannot rewrite the already launched grenade");
         sicknessWindow.Disconnect();
-        Check(!grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+        Check(!grenadierCardMatch.ApplySicknessToCardGrenadier(
                 grenadierEntity.EntityKey, sicknessWindow),
             "disconnected Sickness cannot modify the next grenade setup");
         Check(grenadierProjectile.OwnerPlayerId == decoyPlayer &&

@@ -16,11 +16,12 @@ public sealed partial class MatchEngine
         return grenadierLaunches.GetValueOrDefault(projectileId)?.Damage;
     }
 
-    /// <summary>Host-only grenade binding; full Sickness activation and vitality binding remain separate.</summary>
-    internal bool ApplySicknessToCardGrenadierGrenade(ulong entityKey, SicknessSpawnWindow window)
+    /// <summary>Applies secondary damage and current health; primary firing and card activation remain separate.</summary>
+    internal bool ApplySicknessToCardGrenadier(ulong entityKey, SicknessSpawnWindow window)
     {
         ArgumentNullException.ThrowIfNull(window);
-        if (phase != BattlePhase.Running ||
+        if (phase != BattlePhase.Running || cardUnitCombat == null ||
+            stateRevision == ulong.MaxValue || armyEntityRevision == ulong.MaxValue ||
             !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             entity.SourceCardId != "GREATGRENADIER" ||
             !_cardGrenadierDamage.TryGetValue(entityKey, out var damage))
@@ -36,7 +37,11 @@ public sealed partial class MatchEngine
             return false;
         }
 
-        _cardGrenadierDamage[entityKey] = window.ApplyGrenadeDamage(target, damage);
+        ArmyGrenadeDamageStats changedDamage = window.ApplyGrenadeDamage(target, damage);
+        RefillSicknessCardUnit(entity, window, target);
+        _cardGrenadierDamage[entityKey] = changedDamage;
+        armyEntityRevision++;
+        stateRevision++;
         return true;
     }
 }

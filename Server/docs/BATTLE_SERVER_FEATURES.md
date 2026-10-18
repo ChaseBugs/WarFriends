@@ -81,6 +81,11 @@ to half maximum through the same authority used for subsequent damage; maximum h
 unchanged. Native combat verification passes 26,382 assertions, including subsequent damage
 from the changed vitality and a frozen airborne missile. Automatic callbacks, other unit
 bindings and authorized Client activation remain incomplete.
+Grenadier secondary damage and current health now share the Rocket vitality implementation;
+native combat verification passes 26,385 assertions, including later damage and repeated refill.
+The [Grenadier primary-fire gap](GRENADIER_PRIMARY_FIRE.md) remains required: non-grenade attack
+intents are currently skipped. The source normal/card pistol identity is established, but primary
+damage binding, actual pistol launch, Sickness interaction and Client proof are not implemented.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

@@ -95,7 +95,7 @@ halve the current minimum again. Invalid non-finite or inverted damage fields re
 
 Card Grenadier now keeps its current secondary damage in a match-owned map initialized from
 immutable source stats. Actual grenade launches capture that current record. The host-only
-`ApplySicknessToCardGrenadierGrenade` binding changes the current setup only while the supplied
+`ApplySicknessToCardGrenadier` binding changes the current setup only while the supplied
 window affects this opposing EnemyController. This unit's Walk/Parachute/Corner states pass
 `canBeFreezed`. Death removes its current setup. No packet can directly invoke this binding.
 
@@ -107,8 +107,8 @@ source-backed deployment window explicitly; it does not activate a SICKNESS card
 network command. The final build also includes the three additional inner/outer/midpoint
 calculation assertions in the focused suite; no runtime code changed after the combat run.
 
-This is only the secondary grenade binding. Primary weapon mutation, current/max vitality and
-death/immortality synchronization, automatic start/spawn/finish dispatch, authorized card use,
+This initially supplied only the secondary grenade binding. The current-health extension below
+also applies. Primary weapon mutation, automatic start/spawn/finish dispatch, authorized card use,
 other eligible units, protocol/SDK/Unity presentation and durable terminal proof remain open.
 
 ## Rocket weapon and current-health binding
@@ -148,3 +148,23 @@ This supplies the Card Rocket weapon/current-health binding only. The test arms 
 window explicitly; no automatic Sickness subscription, authorized network card activation or
 Unity presentation is implied. Other eligible unit bindings and the complete automatic
 start/spawn/finish lifecycle remain required.
+
+## Grenadier current-health extension
+
+The Grenadier binding now shares `RefillSicknessCardUnit` with the Rocket binding. Both verify
+public/current damage-authority vitality mirrors, validate the calculated health before writing,
+refill current health to half maximum, preserve maximum health/kevlar, and advance both host
+revisions. Missing entities or exhausted revisions cannot authorize a mutation. The grenade's
+current minimum still scales separately while its explosion field and airborne records stay intact.
+
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 53 checks;
+`--combat-only` passes 26,385 assertions. The Grenadier fixture now injures the unit to one-quarter
+health, verifies a half-maximum refill, applies another authoritative hit from that new health,
+continues movement and an actual grenade launch, and verifies another refill during repeated
+Sickness. The existing Rocket vitality/airborne-authority checks pass through the shared helper.
+The complete default suite was not rerun.
+
+Source inspection also identified a separate primary-fire gap: the host currently skips the
+non-grenade attack branch. The [primary-fire report](GRENADIER_PRIMARY_FIRE.md) records exact
+normal/card pistol identities, the missing binding/launch path and required verification. Neither
+this vitality extension nor the grenade fixture proves the missing primary weapon behavior.
