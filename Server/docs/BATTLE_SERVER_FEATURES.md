@@ -40,6 +40,12 @@ and original entity initialization/callback order remain intact. The frame/state
 130 checks, including an actual paused host deployment. Normal two-Unity rendering and native
 corpse-return ordering are separate gates; this does not complete the whole deployment feature.
 
+[Automatic deployment](CLIENT_AUTO_DEPLOY.md) remains Client-owned intent generation. The bound
+self-hosted manager now retains full/semi mode, gates progress during pending/disconnected/paused
+sessions and discards stale preselected offers. Normal gameplay still needs a caller for the
+existing BindArmyManager API, plus rendered timing and ordinary match acceptance. Do not add
+a second server auto-spawn loop or mark this feature complete from the component audit.
+
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same
 self-hosted Backend address. The old URL builder's retired AWS production

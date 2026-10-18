@@ -256,8 +256,6 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 		mSelfHosted = client;
 		mSelfHostedMode = true;
 		mSelfHosted.ArmyOffersReceived += ApplySelfHostedArmy;
-		mAutoDeployEnabled = false;
-		semiAutoDeployEnabled = false;
 		mGenerateNewUnits = false;
 		mWaitingForClientUnitsSinceTime = null;
 	}
@@ -302,6 +300,11 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 			for (int i = 0; i < next.Count; i++)
 				if (currentArmyUnitDefinitions[i] != next[i]) { changed = true; break; }
 		currentArmyUnitDefinitions = next;
+		if (mHasPregeneratedArmy && !next.Contains(mPregenerated))
+		{
+			mHasPregeneratedArmy = false;
+			mPregenerated = null;
+		}
 		powerLeft = batch.Energy;
 		mGenerateNewUnits = false;
 		mWaitingForClientUnitsSinceTime = null;
@@ -360,7 +363,8 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 			sendUnit = false;
 			SendBotUnit(armyDefinitions[sendUnitNumber].unitsCounts[0], sendUnitFraction);
 		}
-		if (Application.isPlaying && mGenerationEnabled && Singleton<GameController>.instance.gameIsRunning)
+		if (Application.isPlaying && mGenerationEnabled && Singleton<GameController>.instance.gameIsRunning &&
+			(!mSelfHostedMode || CanAdvanceSelfHostedAutoDeploy()))
 		{
 			if (progress <= 0f && mGenerateNewUnits)
 			{
@@ -529,7 +533,6 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 		mNextTime = TimeManager.realTimeWithoutPauses;
 		mAutoDeployEnabled = DebugSettings.instance.data.autoDeploy;
 		semiAutoDeployEnabled = !DebugSettings.instance.data.autoDeploy;
-		if (mSelfHostedMode) { mAutoDeployEnabled = false; semiAutoDeployEnabled = false; }
 		mWaitingForClientUnitsSinceTime = null;
 		autoDeployProgress = 0f;
 	}
@@ -837,6 +840,8 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 			if (reply.Code == "army-deploying")
 			{
 				autoDeployProgress = 0f;
+				mHasPregeneratedArmy = false;
+				mPregenerated = null;
 				mCurrentDefinition = definition;
 				mCoolDown = (baseCoolDown + definition.coolDown) * mCoolDownMultiplier;
 				StatsManager.instance.matchStats.DeployUnit(
@@ -851,6 +856,13 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 			Debug.LogException(error);
 		}
 		finally { mSelfHostedDeployPending = false; }
+	}
+
+	private bool CanAdvanceSelfHostedAutoDeploy()
+	{
+		return mSelfHosted != null && mSelfHosted.IsConnected && !mSelfHostedDeployPending &&
+			mSelfHosted.State != null && mSelfHosted.State.Phase == BattlePhase.Running &&
+			mSelfHosted.State.PauseHostTick == 0 && currentArmyUnitDefinitions.Count > 0;
 	}
 
 	public void SendBotUnit(ArmyUnitDefinition definition, Fractions fraction)
