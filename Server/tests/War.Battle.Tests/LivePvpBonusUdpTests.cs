@@ -199,9 +199,12 @@ internal static class LivePvpBonusUdpTests
             var box = firstView.Snapshot.PvpBonusBoxes[0];
             ulong shotsBeforeBazooka = firstView.Snapshot.Players[0].ShotsFired;
             var secondView = await second.PollAsync(timeout.Token);
-            Check(secondView.Snapshot.PvpBonusBoxes.Select(item => item.BoxId)
-                      .SequenceEqual(firstView.Snapshot.PvpBonusBoxes.Select(item => item.BoxId)),
-                "both UDP peers receive the same bonus box identities");
+            Check(HasSameSelectedBox(firstView.Snapshot, secondView.Snapshot, box.BoxId),
+                "both UDP peers receive the same selected bonus identity and metadata: " +
+                $"first tick={firstView.Snapshot.ServerTick}, revision={firstView.Snapshot.StateRevision}, " +
+                $"boxes={string.Join(',', firstView.Snapshot.PvpBonusBoxes.Select(item => item.BoxId))}; " +
+                $"second tick={secondView.Snapshot.ServerTick}, revision={secondView.Snapshot.StateRevision}, " +
+                $"boxes={string.Join(',', secondView.Snapshot.PvpBonusBoxes.Select(item => item.BoxId))}");
 
             if (bazooka)
             {
@@ -210,11 +213,12 @@ internal static class LivePvpBonusUdpTests
                     "first UDP peer equips the source RPG slot");
             }
             var launchDiagnostics = new List<string>();
+            var rpgApproach = new PvpBonusRpgApproach(first, map);
             for (int attempt = 0; attempt < (bazooka ? 7 : 35); attempt++)
             {
                 if (bazooka)
                 {
-                    firstView = await PvpBonusRpgApproach.PrepareShotAsync(first, map, box.BoxId, timeout.Token);
+                    firstView = await rpgApproach.PrepareShotAsync(box.BoxId, timeout.Token);
                 }
                 else
                 {
@@ -230,7 +234,8 @@ internal static class LivePvpBonusUdpTests
                     MatchReply launch = await first.BazookaHoldAsync(true, box.X, box.Y, box.Z,
                         timeout.Token);
                     launchDiagnostics.Add($"tick={launch.Snapshot.ServerTick}, code={launch.Code}, " +
-                        $"target=({box.X},{box.Y},{box.Z}), phase={box.Phase}");
+                        $"target=({box.X},{box.Y},{box.Z}), phase={box.Phase}, " +
+                        $"cover={launch.Snapshot.Players.Single(row => row.PlayerId == firstId).CoverIndex}");
                     Check(launch.Code == "bazooka-targeting", "The approached crate accepts a real RPG hold.");
                     await Task.Delay(11_000, timeout.Token);
                 }
@@ -261,6 +266,10 @@ internal static class LivePvpBonusUdpTests
                   secondView.Snapshot.PvpBonusBoxes.All(item => item.BoxId != box.BoxId),
                 "both UDP peers observe host-confirmed box collection: " +
                 string.Join(";", launchDiagnostics));
+            if (bazooka)
+            {
+                Console.WriteLine("RPG crate attempts: " + string.Join(";", launchDiagnostics));
+            }
         }
         finally
         {
@@ -268,6 +277,22 @@ internal static class LivePvpBonusUdpTests
             File.Delete(manifestPath);
         }
         return checks;
+    }
+
+    internal static bool HasSameSelectedBox(MatchSnapshot first, MatchSnapshot second, string boxId)
+    {
+        var firstMatches = first.PvpBonusBoxes.Where(box => box.BoxId == boxId).ToArray();
+        var secondMatches = second.PvpBonusBoxes.Where(box => box.BoxId == boxId).ToArray();
+        if (firstMatches.Length != 1 || secondMatches.Length != 1 ||
+            firstMatches[0].OwnerPlayerId != secondMatches[0].OwnerPlayerId ||
+            firstMatches[0].PrefabIndex != secondMatches[0].PrefabIndex)
+        {
+            return false;
+        }
+        // Polls observe different server times; later publication may legitimately add another box.
+        // The same authority revision must still expose the exact same identity list.
+        return first.StateRevision != second.StateRevision || first.PvpBonusBoxes.Select(box => box.BoxId)
+            .SequenceEqual(second.PvpBonusBoxes.Select(box => box.BoxId));
     }
 
     private static async Task<IReadOnlyList<MatchEvent>> ReadEvents(

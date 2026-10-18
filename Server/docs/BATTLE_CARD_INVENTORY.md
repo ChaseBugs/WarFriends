@@ -77,11 +77,11 @@ combat manifest lanes are documented as matching `EquippedArmyUnitIds`.
 Do not copy the full 24-row list into an equipped-only signed lane or accept
 a nonempty selection echo when the manifest has no corresponding lane.
 
-## Current verification limit
+## Quantity checkpoint verification history
 
-The final solution builds with zero warnings/errors. Focused allocation/host
-checks and real Mongo quantity checks pass; protocol checks also pass. The
-full native regression is **not green**: its bazooka bonus UDP scenario
+At this checkpoint, the solution built with zero warnings/errors. Focused
+allocation/host checks, real Mongo quantity checks and protocol checks passed.
+The full native regression was **not green**: its bazooka bonus UDP scenario
 failed to collect the selected box at approximately `(0.583, 0.278, -0.735)`;
 repeated impacts occurred near `(-2.672, 0.277, -0.479)`. The failure log is
 `Server/.local/card-quantity-final-regression.log`. The unchanged isolated
@@ -90,3 +90,14 @@ repeated impacts occurred near `(-2.672, 0.277, -0.479)`. The failure log is
 regression pass or remove source geometry to force collection. Capture
 box placement and cover/missile evidence to determine whether the scenario
 selects an obstructed box or a runtime collision discrepancy exists.
+
+The subsequent [fixed-location approach regression](PVP_BONUS_RPG_APPROACH.md)
+reproduces the failed impact from cover 2, proves collection from other
+covers, and repairs the UDP driver's repeated blocked-cover selection.
+The original failed log above remains historical evidence, not a current
+full-regression success claim.
+
+After the approach and asynchronous-observation fixes, the final default
+native run exits zero with 143,282 assertions. See the subsequent regression
+document for the verified scope and log. Normal-account projection and
+durable card economy remain unfinished.

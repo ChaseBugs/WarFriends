@@ -38,6 +38,15 @@ recovered one-use-per-hand-card rule even when more copies are owned.
 Normal-account projection, full catalog/selection limits,
 durable consumption and normal Unity card flow remain open.
 
+The [RPG crate approach regression](PVP_BONUS_RPG_APPROACH.md) now reproduces
+the previously failing City location across four real source covers and three
+missile draws. Cover 2 remains blocked; the other covers collect it. The UDP
+driver remembers failed firing covers and completes normal movement before
+trying another one. This is a verification-driver repair, not a changed
+collision rule or completed normal gameplay integration.
+The subsequent final default native run passes 143,282 assertions, including
+selected-crate identity checks across asynchronous peer observations.
+
 [Random rematch handoff](RANDOM_REMATCH_BOUNDARY.md) now releases only a confirmed
 Ended local transport before the recovered random-search path. Live/aborted
 owners reject before lobby/player mutation, and a controlled native terminal

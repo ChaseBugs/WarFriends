@@ -218,3 +218,25 @@ inventory/progression. `Program.cs` currently rejects absent allocation with
 not prove that normal account path. Implement this alongside the existing
 player-initialization failure/rollback boundary, preserving card ownership and
 upgrade authority rather than granting a test loadout.
+### Fresh-account durable projection prerequisite
+
+The current `LegacyEndpoints.PlayerData` projection deliberately omits absent
+subsystem keys so the recovered Client takes `LoadEmpty()`. Fresh accounts
+therefore can finish local account/catalog initialization without durable
+`InventoryData`, `LevelManagerData` or `DecalManagerData`. In contrast,
+`BattlePlayerPresentationSource.ReadRequired` requires those stored blobs.
+Creating an empty battle allocation alone cannot make a fresh account
+admissible. The normal-account path needs source-backed, server-authored
+starter loadout materialization and the matching battle projection; it
+must not accept a Client-generated starter inventory as proof of ownership.
+
+Materialization must preserve derived starter ownership. `PlayerInventory.Init`
+chooses each missing slot's compatible weapon with the lowest unlock index
+in the restored source order. `WeaponLevelsSetup.bought` accepts source shop
+weapons with unlock index zero and zero ordinary/Gold prices even when the
+saved `bought` flag is false. `UpgradeSlots.GetArmySlot` also starts a missing
+record with `bought=false` and the source start tier. The current battle
+presentation projection only checks stored Bought/Borrowed flags. Reconcile
+these source rules against validated catalogs instead of marking every
+default entry purchased just to satisfy that projection. Tutorial and
+try-out exceptions require their own authoritative mode/entitlement proof.

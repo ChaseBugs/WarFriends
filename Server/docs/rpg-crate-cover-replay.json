@@ -1,0 +1,186 @@
+{
+  "scope": "fixed X/Z, forced source Kevlar box, normal cover movement, initial RPG curve sign",
+  "SourceHash": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+  "results": [
+    {
+      "CoverIndex": 0,
+      "MissileDraw": 0,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.276911,
+        "Z": -0.5958403
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 0,
+      "MissileDraw": 0.5,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.276911,
+        "Z": -0.5958403
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 0,
+      "MissileDraw": 1,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.276911,
+        "Z": -0.5958403
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 1,
+      "MissileDraw": 0,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.2773426,
+        "Z": -0.6692939
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 1,
+      "MissileDraw": 0.5,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.2773426,
+        "Z": -0.6692939
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 1,
+      "MissileDraw": 1,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.2773426,
+        "Z": -0.6692939
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 2,
+      "MissileDraw": 0,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": -2.6722121,
+        "Y": 0.27738833,
+        "Z": -0.47879574
+      },
+      "IsCollected": false
+    },
+    {
+      "CoverIndex": 2,
+      "MissileDraw": 0.5,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": -2.6722121,
+        "Y": 0.27738833,
+        "Z": -0.47879574
+      },
+      "IsCollected": false
+    },
+    {
+      "CoverIndex": 2,
+      "MissileDraw": 1,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": -2.6722121,
+        "Y": 0.27738833,
+        "Z": -0.47879574
+      },
+      "IsCollected": false
+    },
+    {
+      "CoverIndex": 3,
+      "MissileDraw": 0,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.27741402,
+        "Z": -0.7872679
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 3,
+      "MissileDraw": 0.5,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.27741402,
+        "Z": -0.7872679
+      },
+      "IsCollected": true
+    },
+    {
+      "CoverIndex": 3,
+      "MissileDraw": 1,
+      "BoxPosition": {
+        "X": 0.5833868,
+        "Y": 0.27757198,
+        "Z": -0.73505604
+      },
+      "ImpactPosition": {
+        "X": 0.34163815,
+        "Y": 0.27741402,
+        "Z": -0.7872679
+      },
+      "IsCollected": true
+    }
+  ]
+}
