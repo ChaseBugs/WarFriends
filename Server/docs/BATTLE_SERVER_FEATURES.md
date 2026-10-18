@@ -95,7 +95,7 @@ consume real source deadlines, draw/clamp the complete batch before the side gat
 latches and reschedule rejected sides. Twenty-four focused checks include actual accepted/rejected
 Park attempts at tick 199 and source retry timing. [Automatic volleys](ASSAULTER_VOLLEYS.md)
 now execute native-muzzle callbacks, retain current observed root velocity, fire the full source
-batch and reschedule after completion. Ninety focused checks verify real/cosmetic rounds,
+batch and reschedule after completion. Ninety-nine focused checks verify real/cosmetic rounds,
 Sickness shield damage and actual overtime player damage after the firing soldier dies.
 Three consecutive live volleys now verify the full batch/cadence, strict hide boundary,
 cover-back-to-idle transition and exact next preparation deadline for the same soldier.
@@ -103,8 +103,9 @@ Vehicle/air target graphs, interrupted warm-pose parity and normal Client integr
 [Automatic Corner changes](ASSAULTER_POINT_CHANGES.md) now preserve source collection-order
 random selection, defer while shooting, transfer shared occupancy and resume navigation/fire.
 A live Park fixture verifies unavailable-point retry, release by another soldier, transfer at
-tick 709 and an actual new volley after arrival. Dedicated active-volley deadline and complete
-cross-map runtime fixtures remain open.
+tick 709 and an actual new volley after arrival. A separate live fixture observes a first round
+at 493, a change deadline at 499 and the final round plus same-tick transfer at 504; the active
+volley is never interrupted. Complete cross-map runtime fixtures remain open.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical

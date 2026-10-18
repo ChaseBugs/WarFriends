@@ -23,6 +23,7 @@ internal static class AssaulterVolleyTests
 
         checks += AssaulterRepeatedVolleyTests.Run(content);
         checks += AssaulterPointChangeTests.Run(content);
+        checks += AssaulterDeferredPointChangeTests.Run(content);
 
         return checks;
     }

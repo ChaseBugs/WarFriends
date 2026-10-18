@@ -24,7 +24,7 @@ its already launched shot can still damage the player without aborting the match
 
 ## Verified scope
 
-`--assaulter-volley-only` passes 90 checks using normal Park deployment and automatic host ticks.
+`--assaulter-volley-only` passes 99 checks using normal Park deployment and automatic host ticks.
 Each first volley contains two rounds at source cadence. Actual shield damage is 88.79999 from
 raw damage 29.6; explicitly armed Sickness produces 44.400024 from raw 14.8. Cosmetic rounds
 leave player/shield health unchanged. An actual time-limit transition destroys shields and

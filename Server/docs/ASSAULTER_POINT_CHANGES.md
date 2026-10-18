@@ -27,7 +27,7 @@ the existing route executor. Arrival reuses the source entry transition and fres
 ## Verification
 
 Release build passes with zero warnings/errors. Shared combat regression passes 26,395
-assertions. `--assaulter-volley-only` passes 90 checks. The ordinary Park deployment first fills
+assertions. `--assaulter-volley-only` passes 99 checks. The ordinary Park deployment first fills
 both friendly Corners. The tracked soldier cannot move early, and an unavailable destination
 adds exactly ten seconds. After the other soldier dies and releases its reservation, the tracked
 soldier transfers at tick 709, publishes the walking clip, traverses a real route, enters its
@@ -39,7 +39,15 @@ The earlier repeated-volley fixture now stops its final cooldown observation bef
 point change can legitimately replace that Corner. It still checks exact preparation deadlines
 between the tracked volleys and every strict hide/idle boundary.
 
-This is host behavior, not normal Unity/Android controller proof. A change deadline expiring
-inside an active volley, interrupted layered warm animation and full cross-map runtime parity
-still need dedicated live fixtures. Original Unity NavMesh parity limits remain documented in
+The dedicated deferred-change fixture selects the source integer delay offset 3 and a valid
+0.2 random fraction for shot timing. Its first round launches at tick 493, the Corner deadline
+expires at 499 and the final round launches at 504. Every intervening tick retains the original
+reservation and shot latch. The final-round tick transfers the reservation, enters walking
+and preserves the airborne final projectile. Launch provenance is recorded when each event
+arrives, before collision can retire its private authority; a scheduled callback alone cannot
+satisfy the observed-first-round assertion. Neither clocks nor shot state are injected.
+
+This is host behavior, not normal Unity/Android controller proof. Interrupted layered warm
+animation and full cross-map runtime parity still need dedicated live fixtures.
+Original Unity NavMesh parity limits remain documented in
 the navigation evidence; no new paths or scene assets were fabricated for this feature.
