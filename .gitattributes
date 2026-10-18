@@ -232,3 +232,8 @@ Server/docs/GUNSLINGER_WEAPON_PRESENTATION.md text eol=lf
 Server/tools/UnityGunslingerReferenceSwapper.cs text eol=lf
 Server/tools/UnityGunslingerWeaponAttachmentAudit.cs text eol=lf
 Server/tools/verify_gunslinger_weapon_presenter.py text eol=lf
+
+# Owner-bound infantry appearance sources.
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SelfHostedInfantryUpgradeSelection.cs text eol=lf
+Server/tools/UnityInfantryOwnerAppearanceAudit.cs text eol=lf
+Server/docs/INFANTRY_OWNER_APPEARANCE.md text eol=lf

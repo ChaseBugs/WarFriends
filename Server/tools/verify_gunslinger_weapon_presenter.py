@@ -21,7 +21,8 @@ SOURCES = {
     for name in [
         "SelfHostedGunslingerWeaponAttachment", "SelfHostedInfantryWeaponAppearance", "SelfHostedVisualHierarchy",
         "SelfHostedInfantryVisualFactory", "SelfHostedInfantryVisual", "SelfHostedInfantryPresenter",
-        "SelfHostedRiflePoseRenderer", "FakeRigidBodySwapper", "SoldierBehaviour", "UpgradeSlotsBaseSoldier",
+        "SelfHostedRiflePoseRenderer", "SelfHostedInfantryUpgradeSelection", "FakeRigidBodySwapper",
+        "SoldierBehaviour", "UpgradeSlotsBaseSoldier",
         "UpgradeSlotsGunslicer", "SoldierParts", "SpawningManager",
     ]
 } | {

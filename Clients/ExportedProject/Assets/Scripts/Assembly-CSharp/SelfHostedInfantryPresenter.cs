@@ -39,6 +39,18 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     private EnemyController source;
     private Parachute parachuteSource;
     private SelfHostedBattleClient client;
+    private SelfHostedInfantryUpgradeSelection _upgradeSelection;
+
+    /// <summary>Binds immutable owner equipment before the PvP bridge subscribes to roster updates.</summary>
+    public void BindPlayerAppearances(IReadOnlyList<BattlePlayerView> players)
+    {
+        if (_upgradeSelection != null || active.Count != 0)
+        {
+            throw new InvalidOperationException("Bind admitted equipment once before infantry creation.");
+        }
+
+        _upgradeSelection = new SelfHostedInfantryUpgradeSelection(players);
+    }
 
     public void Configure(EnemyController enemyPrefab, Parachute parachutePrefab,
         LevelBehaviourManager behaviourManager, SelfHostedBattleClient battleClient)
@@ -250,6 +262,13 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
         if (row.UnitId == "ID_UNIT-GUNSLINGER" && row.SourceCardId.Length == 0)
         {
             model = CreateGunslingerModel(soldier, style, rootName, out attachment);
+        }
+        else if (_upgradeSelection != null && soldier is SoldierBehaviourAssaulter && row.SourceCardId.Length == 0)
+        {
+            UpgradeSlots.UnitUpgrades upgrades = _upgradeSelection.Resolve(row, soldier);
+            SelfHostedInfantryWeaponAppearance appearance = SelfHostedInfantryWeaponAppearance.ResolveOrdinary(
+                (SoldierBehaviourAssaulter)soldier, upgrades);
+            model = SelfHostedInfantryVisualFactory.CreateWithAppearance(source, style, appearance, rootName);
         }
         else
         {

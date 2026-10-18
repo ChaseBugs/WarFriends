@@ -106,6 +106,10 @@ maps those indexes into recovered `UnitUpgrades`. The next presentation binding 
 entity's `owner_player_id` to that validated grant snapshot and resolve its family through
 `UpgradeSlots.GetSheetName()` (the grant's source ID is a sheet identity, not `ID_UNIT-*`), rather than using
 the local player's upgrades, a fabricated zero level or a new client-authored upgrade command.
+The PvP bridge now binds this immutable owner selection before roster subscription, and ordinary
+Assaulter creation uses it to select the recovered normal/Elite weapon model. Missing equipment,
+unknown owners and conflicting fractions reject actor creation. This does not yet apply body or
+helmet upgrade visuals, other families' weapon lanes, or complete normal battle execution.
 `SoldierMeshChanger.SetSoldierVisual` then selects blue/red textures by local ownership and applies
 the corresponding source attachments and MatCap. Body and helmet texture selection remains required;
 the source-constant Gunslinger weapon guard does not complete this appearance path.
@@ -147,11 +151,11 @@ volley is never interrupted. Complete cross-map runtime fixtures remain open.
 three actual 44.4-damage infantry head hits from raw damage 29.6, a projectile-caused death at
 tick 698, reservation/shooting cleanup and the surviving shooter's next automatic living target.
 This is one fixed opposing deployment; all unit matchups and normal Client integration remain open.
-The complete default Windows Battle test executable passed 247,551 assertions at checkpoint
-8ed268d3e after the moving-roster UDP comparison correction. The subsequent ordinary Sickness
-binding extension passes 163 Sickness checks, 110 Assaulter checks and 26,395 combat assertions;
-the complete default executable was not rerun for that extension. The optional Unity Editor audit and Linux runtime
-verification were not run; this test total does not close the normal Client integration gate.
+The complete default Windows Battle test executable was rerun on 2026-10-18 and passed 247,760
+assertions with exit code zero, including the subsequent Gunslinger/Sickness changes. The Release
+solution build has zero warnings/errors and the protocol executable passes 1,360 checks. This run
+does not include the optional Unity Editor SDK audit or Linux runtime verification; it does not
+close the normal Client integration gate.
 Ledger mutation and navigation are not projectile proof; firing remains required alongside the
 other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical
