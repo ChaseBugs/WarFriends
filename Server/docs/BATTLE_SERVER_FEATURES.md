@@ -129,7 +129,9 @@ presenter through protobuf field 46, source fifteen-tick Grenadier return timing
 Nineteen host/protocol checks and 240 native card checks pass.
 [Ordinary startup weapon sets](ORDINARY_INFANTRY_WEAPONS.md) now cover all sixteen families,
 including Commando's simultaneous weapons, with 522 native checks. Authoritative ordinary weapon
-switching and normal two-client rendering/recovery remain required. The source Grenadier
+switching and normal two-client rendering/recovery remain required.
+The card path now uses a shared `GrenadierWeaponState` lifecycle with independent return callbacks;
+ordinary spawn/combat composition still needs the source-backed integration sequence in the authority document. The source Grenadier
 uses a static PistolEnemy at index zero and the selected grenade model at index one.
 [Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
 Corners through shared occupancy and advances trusted NavMesh motion. Nineteen focused checks prove

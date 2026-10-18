@@ -272,3 +272,5 @@ Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/SoldierBehaviourGrennader
 # Ordinary infantry startup weapon evidence.
 Server/tools/UnityOrdinaryInfantryWeaponsAudit.cs text eol=lf
 Server/docs/ORDINARY_INFANTRY_WEAPONS.md text eol=lf
+
+Server/src/War.BattleServer/GrenadierWeaponState.cs text eol=lf

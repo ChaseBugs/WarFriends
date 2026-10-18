@@ -1787,7 +1787,7 @@ public sealed partial class MatchEngine : IMatchRuntime
             catch (InvalidDataException) { End("invalid-assaulter-volley", "", false); return; }
             if (Terminal) return;
         }
-        if (advanced && phase == BattlePhase.Running && _grenadierWeaponReturns.Count > 0)
+        if (advanced && phase == BattlePhase.Running && _grenadierWeapons.HasPendingReturns)
         {
             try { AdvanceGrenadierWeaponReturns(); }
             catch (InvalidDataException) { End("invalid-grenadier-weapon-return", "", false); return; }

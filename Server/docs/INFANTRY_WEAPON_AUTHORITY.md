@@ -69,3 +69,38 @@ required card mask and are rejected by the new SDK rather than guessed as a prim
 weapons. Authoritative ordinary weapon switching, live two-client rendering,
 full active Client/Android validation and Linux runtime remain open. See the
 [feature checklist](BATTLE_SERVER_FEATURES.md).
+
+## Shared Grenadier selection lifecycle
+
+`GrenadierWeaponState` now owns retained secondary selection and independent return callbacks.
+The existing card combat path uses it for target selection, actual shooting, callback advancement
+and actor removal. The class deliberately has no card identity check; the owning MatchEngine
+adapter still verifies that every due callback belongs to a live GREATGRENADIER actor.
+It is ready for ordinary integration, but does not make that integration exist.
+
+The focused group adds five overlapping-callback checks: the first return does not cancel the
+second, a later selection survives until the next old callback, and actor removal cancels both
+selection and pending authority reads. Due actors are validated before applying the callback batch.
+
+### Ordinary integration sequence
+
+The current ordinary gap is larger than a missing protobuf bit. `InitializeCardGrenadier` requires
+`CardUnitEntity` and card base stats. `CardGrenadierChooseTarget`, attack advancement and the walking
+pose projection also explicitly require GREATGRENADIER. Removing those guards alone would bypass
+owner-bound normal/special/Elite composition and reuse card-only balancing.
+
+1. Compose ordinary grenade damage, shot fields, secondary probability and special fuse from the
+   admitted owner's recovered upgrade lanes. `SoldierBehaviourGrennader.ApplyWeaponsSetup` uses
+   three seconds without special and `3 - 3 * special` when special is enabled.
+2. Connect ordinary spawn, Corner navigation, target acquisition, latched attack and launch through
+   those composed values. Keep server RNG and outcomes authoritative.
+3. Reuse the shared selection lifecycle without resetting selection on an unsuccessful RNG draw.
+   Read the current held role at actual shooting, then run due returns after shooting.
+4. Project ordinary Grenadier masks through host, protobuf, SDK and retained presenter weapon sets.
+   Keep ordinary non-Grenadier policies explicit instead of treating every unit as two-weapon.
+5. Verify normal and Elite real deployments, special fuse, primary/secondary damage, callback/death
+   ordering and decoded Unity roster updates before claiming ordinary combat integration.
+
+After extraction, `--infantry-weapons-only` passes 24 checks, `--grenadier-damage-only` passes 23,
+and `--grenadier-moving-only` passes 25. The native coroutine fixture verifier also passes.
+These targeted runs do not replace a complete default suite or two-Unity-client match proof.

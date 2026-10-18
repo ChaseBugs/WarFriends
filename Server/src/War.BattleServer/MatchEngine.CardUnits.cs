@@ -1468,11 +1468,11 @@ public sealed partial class MatchEngine
         if (shouldSelectSecondary)
         {
             // Source PickTarget switches before Decoy/player selection and Corner exposure checks.
-            _grenadierSecondaryWeapons.Add(entityKey);
+            _grenadierWeapons.SelectSecondary(entityKey);
         }
 
         // A failed target/exposure attempt does not switch the recovered inventory back to its primary weapon.
-        bool throwGrenade = _grenadierSecondaryWeapons.Contains(entityKey);
+        bool throwGrenade = _grenadierWeapons.IsSecondary(entityKey);
         Vector3 origin = new(entity.X, entity.Y, entity.Z);
         var enemyDecoys = decoys.Snapshot().Where(row =>
             row.OwnerFraction != entity.OwnerFraction)
@@ -1685,14 +1685,13 @@ public sealed partial class MatchEngine
             if (!grenadierShotTargets.TryGetValue(entityKey, out var shot))
                 throw new InvalidDataException("Card Grenadier lost its latched target.");
             // Shooting reads the current inventory, including any earlier InvokeAfter return during windup.
-            shot = shot with { ThrowGrenade = _grenadierSecondaryWeapons.Contains(entityKey) };
+            shot = shot with { ThrowGrenade = _grenadierWeapons.IsSecondary(entityKey) };
             Vector3? grenadeMuzzle = null;
             Vector3? grenadeVelocity = null;
             if (shot.ThrowGrenade)
             {
                 // Every secondary shot schedules its own source InvokeAfter callback, including overlapping timers.
-                _grenadierWeaponReturns.Add(new PendingGrenadierWeaponReturn(entityKey,
-                    checked(tick + GrenadierWeaponReturnTicks)));
+                _grenadierWeapons.ScheduleReturn(entityKey, tick);
                 ArmyWeaponBindingCatalog weapons = armyWeapons ??
                     throw new InvalidDataException("Card Grenadier lost its weapon binding.");
                 ArmyCardGrenadierRuntime throwSetup = cardGrenadierThrows[entityKey];

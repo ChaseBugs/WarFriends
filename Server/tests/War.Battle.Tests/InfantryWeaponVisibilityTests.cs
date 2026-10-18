@@ -19,6 +19,7 @@ internal static class InfantryWeaponVisibilityTests
     {
         int checks = CheckClock(directory);
         checks += CheckProtocol();
+        checks += CheckIndependentReturns();
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
         checks += CheckLifecycle(content);
         checks += CheckCancelledReturn(content);
@@ -39,6 +40,36 @@ internal static class InfantryWeaponVisibilityTests
                 "The source coroutine callback must return fifteen gameplay ticks later.");
         }
 
+        return checks;
+    }
+
+    private static int CheckIndependentReturns()
+    {
+        const ulong actorKey = 1;
+        var state = new GrenadierWeaponState();
+        state.SelectSecondary(actorKey);
+        state.ScheduleReturn(actorKey, 100);
+        state.ScheduleReturn(actorKey, 105);
+
+        state.Advance(114, key => key == actorKey);
+        int checks = Require(state.IsSecondary(actorKey), "An overlapping return fired too early.");
+        state.Advance(115, key => key == actorKey);
+        checks += Require(!state.IsSecondary(actorKey) && state.HasPendingReturns,
+            "The first shot must return independently without cancelling the second callback.");
+
+        state.SelectSecondary(actorKey);
+        state.Advance(119, key => key == actorKey);
+        checks += Require(state.IsSecondary(actorKey), "A new selection must remain until the older callback.");
+        state.Advance(120, key => key == actorKey);
+        checks += Require(!state.IsSecondary(actorKey) && !state.HasPendingReturns,
+            "The older callback must restore primary even after a newer selection.");
+
+        state.SelectSecondary(actorKey);
+        state.ScheduleReturn(actorKey, 121);
+        state.Remove(actorKey);
+        state.Advance(136, _ => false);
+        checks += Require(!state.IsSecondary(actorKey) && !state.HasPendingReturns,
+            "Actor removal must cancel every callback before the next authority lookup.");
         return checks;
     }
 
