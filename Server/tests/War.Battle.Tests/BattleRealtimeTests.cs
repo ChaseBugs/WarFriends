@@ -2,6 +2,7 @@ using System.Reflection;
 
 using Google.Protobuf;
 using War.BattleServer;
+using War.Protocol;
 
 /// <summary>Checks that actual elapsed observations survive paused/catch-up ticks without changing combat time.</summary>
 internal static class BattleRealtimeTests
@@ -13,7 +14,48 @@ internal static class BattleRealtimeTests
     internal static int Run(string directory)
     {
         BattleCombatContent content = BattleArmyManifestProjectionTests.LoadContent(directory);
-        return CheckRunning(content) + CheckPaused(content) + CheckEndpointAndRegistry() + BattleCooldownClockTests.Run();
+        return CheckRunning(content) + CheckPaused(content) + CheckEndpointAndRegistry() +
+            BattleCooldownClockTests.Run() + CheckPausedDeployment(content);
+    }
+
+    private static int CheckPausedDeployment(BattleCombatContent content)
+    {
+        MatchEngine host = OrdinaryArmyTestHost.CreateWithIdleTimeout(content, "ID_UNIT-MORTAR", 2);
+        for (ulong tick = 61; tick < 119; tick++)
+        {
+            host.Resume(FirstOwnerId);
+            host.Advance(tick);
+        }
+        int option = host.ArmyBatch(FirstOwnerId).OptionIndexes[0];
+        int finished = 0;
+        host.ArmyDeploymentFinished += (_, wave) =>
+        {
+            if (!wave.FinishedRealTimeSeconds.HasValue)
+            {
+                throw new InvalidOperationException("Live host published a legacy completion.");
+            }
+            finished++;
+        };
+        string code = host.Command(FirstOwnerId, new MatchCommand
+        {
+            CommandId = 3,
+            DeployArmy = new DeployArmyCommand { OptionIndex = option }
+        }).Code;
+        int checks = Require(code == "army-deploying", "Paused deployment fixture was not accepted: " + code);
+        float frozenCooldown = host.ObservedCooldownSeconds;
+        ulong frozenTick = host.Snapshot().ServerTick;
+        host.Advance(119, 4d);
+        MatchArmyBatch spawned = host.ArmyBatch(FirstOwnerId);
+        checks += Require(host.Snapshot().ServerTick == frozenTick && spawned.ActiveCount == 1 &&
+            spawned.PendingCount == 0 && finished == 0 && host.ObservedCooldownSeconds == frozenCooldown,
+            "Pause blocked a raw-time source iteration or advanced its cooldown.");
+        ulong frozenDeadline = spawned.NextDeployTick;
+        host.Advance(120, 10d);
+        checks += Require(host.Snapshot().ServerTick == frozenTick && finished == 1 &&
+            host.ArmyBatch(FirstOwnerId).NextDeployTick == frozenDeadline,
+            "Final raw wait failed during pause or expired the source cooldown.");
+        host.Advance(121, 10d);
+        return checks + Require(finished == 1, "Paused repeated observation replayed completion.");
     }
 
     private static int CheckRunning(BattleCombatContent content)

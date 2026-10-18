@@ -7,7 +7,7 @@ them separate while retaining server authority and the existing protobuf identit
 | --- | --- | --- |
 | Raw real time | `WaitForRealSeconds.finished` compares `Time.realtimeSinceStartup` with its stored float deadline. Army spawn intervals use this wait through RadicalRoutine. | Worker now forwards its actual monotonic Stopwatch sample through Router and Endpoint to both runtime types. |
 | Scaled game time | EnemyController schedules hide with InvokeAfter; MainGameEntity schedules final return the same way. Core_BaseScript yields WaitForSeconds. | The source-bound corpse clock is tested, but live corpse ownership is not connected to MatchEngine. |
-| Pause-excluding real time | TimeManager.Update adds a real-frame delta clamped to 0-0.2 seconds when timeScale is nonzero and it is not frozen; otherwise its delta is zero. | MatchEngine now observes a stored-float cooldown accumulator. Deployment deadlines and auto-deploy have not switched to consuming it. |
+| Pause-excluding real time | TimeManager.Update adds a real-frame delta clamped to 0-0.2 seconds when timeScale is nonzero and it is not frozen; otherwise its delta is zero. | MatchEngine observes the stored-float accumulator and uses it for deployment deadlines. Auto-deploy remains pending. |
 
 The source references are under `Clients/ExportedProject/Assets`. Detailed native clock,
 coroutine-phase and same-frame pool observations are recorded in
@@ -33,9 +33,10 @@ Worker uses the real-time overload. Do not mix those providers after a backlog: 
 projection may be behind a previously observed real sample and must not roll it backward.
 
 ObservedRealTimeSeconds is currently server-side runtime state. Protobuf snapshots, admission
-claims, gameplay clocks, cooldown responses and reconnect deadlines retain their existing
-semantics. Raw observation during reconnect does not mean pending deployment already advances
-while paused. The two clocks are now available for that subsequent integration.
+claims, fixed combat clocks and reconnect deadlines retain their existing semantics. Army
+deployment now consumes raw observations even during reconnect pause; its source cooldown
+consumes pause-excluding seconds. The existing countdown wire field projects remaining seconds
+relative to the current game tick without changing that tick's domain.
 
 ## Required timer consumers
 
@@ -47,9 +48,8 @@ backlog. A resumed frame can add only the interval since that last observation. 
 timeScale does not multiply this clock. The host validates float representability before publishing
 the new raw observation or host tick. Terminal matches do not advance the cooldown accumulator.
 
-This observer is internal and not a wire clock. Live deployment, auto-deploy progress and
-snapshot projection still require a coordinated consumer migration. Observing the accumulator
-alone does not close that feature.
+This observer is internal and not a wire clock. Live deployment and countdown projection now
+consume it; auto-deploy progress still requires migration. This does not close every timer feature.
 The focused frame/deployment group passes 118 checks at
 `Server/.local/battle-cooldown-clock-tests.log`, including source float rounding, catch-up,
 hitches, pause/resume and malformed input rejection before host snapshot mutation.
@@ -63,8 +63,12 @@ a different contract. Rejected attempts leave the accepted deadline and reservat
 game tick for the existing Client parser, which subtracts `State.ServerTick` and divides by 30.
 It is a presentation projection, not the authoritative cooldown. A deployment state cannot
 switch legacy/real-time scheduling after its first accepted wave, even after completion.
-Live MatchEngine deployment and response construction have not switched to these new methods;
-auto-deploy remains a separate pending consumer.
+Live MatchEngine deployment and response construction now use these methods. Both players pass
+real-time spawn preflight before either commits, preserving the existing energy/entity guard.
+Entity setup and callbacks retain their original order in a dedicated partial class. Reconnect
+pause can create units and complete final waits at the frozen game tick; terminal grace expiry
+is resolved before that paused spawn processing. Corpses, movement and projectiles do not gain
+raw-time advancement from this change. Auto-deploy remains a separate pending consumer.
 The latest state/frame group passes 126 checks at
 `Server/.local/army-cooldown-consumer-tests.log`; Sickness callback/host damage regression passes
 265 checks at `Server/.local/army-cooldown-sickness-tests.log`. These focused runs cover the
@@ -86,8 +90,8 @@ hitches, actual completion versus preview time, invalid inputs and duplicate com
 kernel now has a separate ArmyDeploymentState real-time path. It preserves energy reservations,
 shared spawn preflight, entity provenance and actual final-wait completion metadata. Preview
 does not commit time or resources. Active legacy and real-time schedules cannot be mixed.
-The live MatchEngine still uses the legacy queue; the state path is an integration prerequisite,
-not proof that paused multiplayer spawning has migrated. The full pipeline run below predates it.
+The live MatchEngine now uses this real-time path. The legacy state API remains for explicit
+kernel fixtures. The full pipeline run below predates this live consumer migration.
 
 Real-time start/completion events use explicit float timestamps, with legacy tick dates left
 unset (zero). A completion copies the original event and adds the actual completion timestamp;
@@ -103,21 +107,26 @@ Sickness event order, nonmutating energy-preflight failure and exclusive clock s
 The existing Sickness callback/host damage group also passes 265 checks at
 `Server/.local/army-realtime-state-sickness.log` with the changed event validation.
 
-1. Migrate coroutine readiness to raw observations, preserving strict source float readiness
-   and beginning each new wait after the actual preceding callback. The existing nominal
-   nine-tick queue must not carry a frame hitch into later source waits as precomputed deadlines.
-2. Port TimeManager's pause/freeze and clamped stored-float accumulator for cooldown and
-   auto-deploy. Resume must discard paused elapsed time rather than applying it as catch-up.
+1. Live coroutine readiness now uses raw observations with strict float readiness and fresh
+   waits. Extend normal two-Unity acceptance to delayed frames and paused multi-unit waves.
+2. TimeManager's clamped stored-float accumulator now owns live deployment cooldowns. Migrate
+   auto-deploy progress and audit remaining source pause/freeze consumers separately.
 3. Advance retained body waits on scaled frames, then process delayed spawn admission in the
    observed source phase order. Native evidence confirms return can free a slot before the
    same frame's end-of-frame continuation consumes it.
 4. Preserve snapshot timestamps in their documented domain. BattleArmyEntityState already
    publishes the actual simulation tick at actor creation; it does not copy ArmySpawn.Tick.
-   Cooldown projection and queued spawning during pause still require explicit integration.
+   Cooldown projection and paused queued spawning are wired; rendered Client parity remains unverified.
 5. Wire validated slot capacity, host-owned death-delay draws, corpse return/reclaim and
    observer-local warning history, then publish and validate the required Client state.
 
 These are remaining implementation requirements, not claims that clock migration is complete.
+
+The live consumer change passes 130 frame/state checks at `Server/.local/live-army-clock-tests.log`
+and 265 Sickness callback/host damage checks at `Server/.local/live-army-sickness-tests.log`.
+The latter checks the actual completion timestamp and original deployment identity, rather than
+assuming a precomputed legacy finish tick. Full regression is tracked separately and must not
+be inferred from these focused groups.
 
 ## Verification
 

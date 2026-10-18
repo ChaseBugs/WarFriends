@@ -82,7 +82,9 @@ internal static class SicknessHostDeploymentTests
             if (fraction == OpponentFraction)
             {
                 finishes++;
-                Require(wave == accepted, "The finish callback changed the accepted definition.");
+                Require((wave with { FinishedRealTimeSeconds = null }) == accepted &&
+                    wave.FinishedRealTimeSeconds == (float)host.ObservedRealTimeSeconds,
+                    "The finish callback changed its accepted identity or actual completion time.");
                 Require(CountOpposingEntities(host) == content.Army.Option(option).Count,
                     "The source finish notification preceded its generated entities.");
             }
@@ -101,17 +103,20 @@ internal static class SicknessHostDeploymentTests
     private static int CheckFinalWait(MatchEngine host, SicknessSpawnWindow window,
         ArmyDeploymentWave accepted, Func<int> finishCount)
     {
-        while (!host.Terminal && host.Snapshot().ServerTick < accepted.FinishAfterTick)
+        while (!host.Terminal && host.ArmyBatch(OpponentId).PendingCount > 0)
         {
             host.Advance(host.Snapshot().ServerTick + 1);
         }
 
-        int checks = Require(!host.Terminal && window.IsApplying && finishCount() == 0,
+        float finalDeadline = (float)host.ObservedRealTimeSeconds + 0.3f;
+        host.Advance(host.Snapshot().ServerTick + 1, finalDeadline);
+        int checks = Require(accepted.StartedRealTimeSeconds.HasValue && !host.Terminal &&
+            window.IsApplying && finishCount() == 0,
             "The host closed Sickness at the final wait equality boundary.");
-        host.Advance(accepted.FinishAfterTick + 1);
+        host.Advance(host.Snapshot().ServerTick + 1, float.BitIncrement(finalDeadline));
         checks += Require(!host.Terminal && !window.IsArmed && finishCount() == 1,
             "The actual final source wait did not disconnect Sickness exactly once.");
-        host.Advance(accepted.FinishAfterTick + 1);
+        host.Advance(host.Snapshot().ServerTick, host.ObservedRealTimeSeconds);
         checks += Require(finishCount() == 1, "A repeated host observation replayed the source finish callback.");
         return checks;
     }

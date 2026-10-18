@@ -1346,6 +1346,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                     End("both-disconnected", "", false);
                 }
             }
+            if (!Terminal) AdvanceRealtimeArmyDeployments();
             return;
         }
         // Pause before publishing or partially advancing a simulation frame. Strict projectile and
@@ -1353,6 +1354,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         if (phase == BattlePhase.Running && TryPauseForIdleParticipant())
         {
             _cooldownClock.Observe(realTimeSeconds, true);
+            AdvanceRealtimeArmyDeployments();
             return;
         }
         _cooldownClock.Observe(realTimeSeconds, false);
@@ -1550,86 +1552,7 @@ public sealed partial class MatchEngine : IMatchRuntime
                 weapon.ReloadEnd=0;
             }
         }
-        if(phase==BattlePhase.Running && armySelector!=null)
-        {
-            try
-            {
-                // Validate both owners before the first one spends energy or publishes a soldier.
-                // Physical weapon-slot admission must join this shared preflight, not attachment below.
-                foreach (var player in players)
-                {
-                    _ = player.Army!.PreviewDueSpawns(tick);
-                }
-                foreach(var p in players)
-                {
-                    foreach(var spawned in p.Army!.Advance(tick))
-                    {
-                        var family=armyCatalog!.Families.Single(f=>f.Options.Any(o=>o.Index==spawned.OptionIndex));
-                        var point=armySelector.Select(map!,family,p.Definition.Fraction,
-                            players.Single(other=>other!=p).Position,armyChoice,armyReservations!.Available);
-                        ulong entityKey=((ulong)p.Definition.Fraction<<32)|(uint)spawned.EntityId;
-                        if(point==null || !armyReservations.TryReserve(point,entityKey))
-                            throw new InvalidDataException("Spawn point became unavailable after army acceptance.");
-                        if(ArmyRusherPointCatalog.IsRusher(family.BehaviorType))
-                            ReserveRusherSlot(entityKey,players.Single(other=>other!=p).Cover,point.Position);
-                        InitializeArmyVitality(p.Definition,spawned.UnitId,entityKey);
-                        activeArmyEntities.Add(entityKey,new BattleArmyEntityState
-                        {EntityKey=entityKey,OwnerPlayerId=p.Definition.PlayerId,
-                            OwnerFraction=p.Definition.Fraction,LocalEntityId=spawned.EntityId,
-                            OptionIndex=spawned.OptionIndex,UnitId=spawned.UnitId,
-                            SpawnComponentFileId=point.ComponentFileId,
-                            ReservationFileId=point.ReservationFileId,
-                            X=point.Position.X,Y=point.Position.Y,Z=point.Position.Z,SpawnTick=tick,
-                            PositionTick=tick,
-                            HelicopterCrewCount=(uint)(armyHelicopterCrew.GetValueOrDefault(entityKey)?.Seats??0),
-                            HelicopterRotation=spawned.UnitId=="ID_UNIT-HELICOPTER"?new BattleJointRotation{W=1}:null,
-                            DroneRotation=spawned.UnitId=="ID_UNIT-DRONE"?new BattleJointRotation{W=1}:null,
-                            MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0,
-                            AssaultGlassMaxHealth=AssaultGlassMaximum(entityKey)??0,
-                            AssaultGlassHealth=AssaultGlassHealth(entityKey)??0});
-                        // Source AfterSpawned observers run after the soldier has configured both weapons.
-                        if (spawned.UnitId == "ID_UNIT-GRENADIER")
-                        {
-                            InitializeOrdinaryGrenadier(entityKey);
-                        }
-                        if (spawned.UnitId == "ID_UNIT-ROCKETSOLDIER")
-                        {
-                            InitializeOrdinaryRocket(entityKey);
-                        }
-                        if (spawned.UnitId == "ID_UNIT-MORTAR")
-                        {
-                            InitializeOrdinaryMortar(entityKey);
-                        }
-                        ApplyActiveArmyHealthBuffs(entityKey);
-                        var vitality=armyVitality.GetValueOrDefault(entityKey);
-                        if(vitality!=null)
-                        {
-                            activeArmyEntities[entityKey].MaxKevlar=vitality.KevlarMaximum;
-                            activeArmyEntities[entityKey].Kevlar=vitality.Kevlar;
-                        }
-                        InitializeInfantryAnimation(entityKey);
-                        InitializeRusherMotionCandidate(entityKey,spawned.UnitId);
-                        InitializeStationaryArmyCombat(entityKey,spawned.UnitId);
-                        InitializeGroundVehicle(entityKey,family,point);
-                        InitializeDronePath(entityKey,family,point);
-                        InitializeAssaultHelicopterPath(entityKey,family,point);
-                        InitializeHelicopterPath(entityKey,family,point);
-                        RegisterDroneArmyTarget(entityKey,family);
-                        p.ArmyStats.RecordSpawn(spawned.OptionIndex,spawned.UnitId);
-                        p.ConfirmedArmySpawns=checked(p.ConfirmedArmySpawns+1);
-                        armyEntityRevision++;
-                        Emit(MatchEventKind.ArmySpawned,p.Definition.PlayerId,"",0,point.Position,0,"");
-                        var row=events[^1];
-                        row.ArmyEntityId=spawned.EntityId;row.ArmyOptionIndex=spawned.OptionIndex;
-                        row.ArmyUnitId=spawned.UnitId;row.ArmySpawnComponentFileId=point.ComponentFileId;
-                        row.ArmyReservationFileId=point.ReservationFileId;
-                        stateRevision++;
-                    }
-                    PublishArmyDeploymentFinished(p);
-                }
-            }
-            catch(InvalidDataException){End("invalid-army-authority","",false);return;}
-        }
+        if (!AdvanceRealtimeArmyDeployments()) return;
         if (phase == BattlePhase.Running && cardUnitSpawns.PendingCount > 0)
         {
             try { AdvanceCardUnitSpawns(); }
@@ -2665,7 +2588,8 @@ public sealed partial class MatchEngine : IMatchRuntime
             var availability=ArmyAvailabilityError(p,family,option);
             if(availability!=null){p.Army.InvalidateOffers();return availability;}
             if(!EventCapacityForArmy(option.Count))return "event-backpressure";
-            string deployment=p.Army.TryDeploy(index,tick);
+            string deployment = p.Army.TryDeployRealtime(index, _cooldownClock.ElapsedSeconds,
+                (float)ObservedRealTimeSeconds);
             if (deployment == "army-deploying")
             {
                 p.ArmyStats.RecordAccepted(index);
@@ -3649,7 +3573,7 @@ public sealed partial class MatchEngine : IMatchRuntime
         var army=player.Army;
         if(army==null){result.Code="army-disabled";return result;}
         result.Energy=army.Energy;
-        result.NextDeployTick=army.NextDeployTick;
+        result.NextDeployTick = army.ProjectNextDeployTick(tick, _cooldownClock.ElapsedSeconds);
         result.ActiveCount=army.ActiveCount;
         result.PendingCount=army.PendingCount;
         if(phase is not (BattlePhase.Countdown or BattlePhase.Running))

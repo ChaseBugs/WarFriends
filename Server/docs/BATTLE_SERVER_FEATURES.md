@@ -25,16 +25,20 @@ by Editor bootstrap success or by retaining Photon only for serialized type comp
 The [deployment clock migration](BATTLE_CLOCKS.md) now has a separate real-time
 ArmyDeploymentState path with shared energy/entity preflight and explicit source start/final-wait
 completion events. The state/frame group passes 100 checks and Sickness regression passes 265.
-This remains partial: live MatchEngine scheduling, pause-excluding cooldown consumers,
-corpse-return phase ordering and normal two-Unity gameplay acceptance still require integration.
+This remains partial: corpse-return phase ordering, auto-deploy and normal two-Unity gameplay
+acceptance still require integration.
 The pause-excluding stored-float accumulator is now observed in MatchEngine with the source
 0.2-second clamp and reconnect pause gates; focused coverage passes 118 checks. Deployment and
-auto-deploy consumers still use their previous clocks and are the next coordinated migration.
+auto-deploy remains a pending consumer.
 The separate real-time deployment state now stores source float cooldown deadlines and offers
 an existing-wire countdown projection. Deadline equality, pre-deadline rejection and immutable
 clock selection pass in the 126-check frame/state group; Sickness regression remains 265 checks.
-Live deployment requests, shared spawn processing and countdown response construction still
-need to switch together before this source-time behavior is active in ordinary matches.
+Live deployment requests, shared spawn processing and countdown response construction now use
+the source-time path together. Reconnect pause retains raw-time iterations/final waits at the
+frozen simulation tick while the source cooldown stays frozen. Both-owner resource preflight
+and original entity initialization/callback order remain intact. The frame/state group passes
+130 checks, including an actual paused host deployment. Normal two-Unity rendering and native
+corpse-return ordering are separate gates; this does not complete the whole deployment feature.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

@@ -13,6 +13,10 @@ public sealed partial class ArmyDeploymentState
     internal ulong ProjectNextDeployTick(ulong simulationTick, float cooldownSeconds)
     {
         BattleRealtime.Validate(cooldownSeconds, _lastCooldownSeconds);
+        if (LastAcceptedWave == null)
+        {
+            return 0;
+        }
         float remaining = Math.Max(0f, NextCooldownSeconds - cooldownSeconds);
         return checked(simulationTick + (ulong)Math.Ceiling((double)remaining * MatchManifest.TickRate));
     }
