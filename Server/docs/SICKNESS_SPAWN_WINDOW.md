@@ -99,6 +99,9 @@ Assaulter navigation/volley execution is not connected by this checkpoint. There
 damage ledger mutation is not claimed as proof of an actual Assaulter projectile or victim hit.
 That missing normal PvP path remains required and must be implemented rather than bypassed by
 injecting a shot into this fixture.
+The later [normal navigation implementation](ASSAULTER_PVP_NAVIGATION.md) now moves ground-spawned
+Assaulters to their source Corners. It does not yet connect the normal targeting/volley controller,
+so the Assaulter projectile boundary above remains open.
 
 ## Host subscription ordering
 

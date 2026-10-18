@@ -72,9 +72,13 @@ The fixture explicitly arms/subscribes the window. Complete host entity mutation
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
 The same real spawn dispatcher now applies the normal Assaulter binding: opposing current health
 and weapon damage halve, maximum health stays unchanged, and friendly authority is preserved.
-Normal Assaulter movement/volley execution is still not connected in PvP: a fixed Park observation
-retained idle_1 through tick 3000 without an opposing shot. Ledger mutation is not projectile proof;
-that normal AI path remains required alongside the other Sickness weapon layouts.
+[Normal Assaulter ground navigation](ASSAULTER_PVP_NAVIGATION.md) now assigns nearest same-fraction
+Corners through shared occupancy and advances trusted NavMesh motion. Twelve focused checks prove
+two real Park soldiers arrive at distinct Corners by tick 434, release the reservation on host
+death, and avoid fabricated destinations on point-less Snow. The previous idle-through-3000
+observation identified this missing path; source hiding/targeting/volley execution is still open.
+Ledger mutation and navigation are not projectile proof; firing remains required alongside the
+other Sickness weapon layouts and Client integration.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical
 effect IDs. Focused composition checks prove health/Sickness ordering changes current health;
 actual host Sickness bindings and the health-card entity-classification audit remain open.

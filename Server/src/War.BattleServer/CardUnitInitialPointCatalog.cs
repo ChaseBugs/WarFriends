@@ -153,6 +153,26 @@ public sealed class CardUnitInitialPointCatalog
             .FirstOrDefault();
     }
 
+    internal CardUnitInitialPoint? SelectAssaulter(RecoveredBattleMap map,
+        int fraction, Vector3 position, Func<int, bool> available)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(available);
+        if (fraction is not (1 or 2) || !PlayerHitbox.Finite(position) ||
+            !maps.TryGetValue(map.Source, out var points))
+        {
+            throw new InvalidDataException("Invalid normal Assaulter point selection.");
+        }
+
+        // MainScene's ordinary Assaulter mask is 14 (Hiding | Corner | Car).
+        // The pinned five-map inventory has no Hiding or Car points.
+        return points.Where(point => point.Fraction == fraction &&
+                point.ComponentType == "EnemyPointCorner" && available(point.ComponentFileId))
+            .OrderBy(point => Vector3.Distance(point.Position, position))
+            .ThenBy(point => point.Order)
+            .FirstOrDefault();
+    }
+
     internal CardUnitInitialPoint? SelectSniper(RecoveredBattleMap map,
         int fraction, Vector3 soldierPosition, Vector3 opponentPosition,
         Func<int, bool> available)

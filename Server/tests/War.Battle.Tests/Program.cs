@@ -810,7 +810,7 @@ if (args is ["--rifle-engine-only"])
 }
 
 if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-damage-only"] or
-    ["--grenadier-moving-only"])
+    ["--grenadier-moving-only"] or ["--assaulter-navigation-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);
     while (directory != null && !File.Exists(Path.Combine(directory.FullName, "content/combat-content-manifest.json")))
@@ -820,6 +820,12 @@ if(args is ["--army-waves-only"] or ["--sickness-window-only"] or ["--grenadier-
     if (directory == null)
     {
         throw new FileNotFoundException("Recovered combat content is absent.");
+    }
+    if (args[0] == "--assaulter-navigation-only")
+    {
+        int navigationChecks = AssaulterNavigationTests.Run(Path.Combine(directory.FullName, "content"));
+        Console.WriteLine($"PASS: {navigationChecks} normal Assaulter navigation checks");
+        return;
     }
     if (args[0] == "--grenadier-damage-only")
     {
@@ -3567,6 +3573,7 @@ checks += MixedGrenadeLongShotTests.Run(Path.Combine(contentRoot.FullName, "cont
 checks += ArmyDeploymentWaveTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessSpawnWindowTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += SicknessHostDeploymentTests.Run(Path.Combine(contentRoot.FullName, "content"));
+checks += AssaulterNavigationTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += ArmySpawnCallbackTests.Run();
 checks += GrenadierPrimaryWeaponTests.Run(Path.Combine(contentRoot.FullName, "content"));
 checks += GrenadierPrimaryDamageTests.Run(Path.Combine(contentRoot.FullName, "content"));

@@ -51,6 +51,35 @@ internal sealed class CardEnemyPointOccupancy
         return point;
     }
 
+    internal CardUnitInitialPoint? TryAssignAssaulter(ulong entityKey, int fraction, Vector3 position)
+    {
+        if (entityKey == 0 || fraction is not (1 or 2) ||
+            (int)(entityKey >> 32) != fraction || !PlayerHitbox.Finite(position))
+        {
+            throw new InvalidDataException("Normal Assaulter has no valid point identity.");
+        }
+
+        if (assigned.TryGetValue(entityKey, out CardUnitInitialPoint? existing))
+        {
+            if (existing.Fraction != fraction || existing.ComponentType != "EnemyPointCorner")
+            {
+                throw new InvalidDataException("Normal Assaulter changed its point identity.");
+            }
+
+            return existing;
+        }
+
+        CardUnitInitialPoint? point = catalog.SelectAssaulter(map, fraction, position,
+            pointFileId => !occupants.ContainsKey(pointFileId));
+        if (point != null)
+        {
+            occupants.Add(point.ComponentFileId, entityKey);
+            assigned.Add(entityKey, point);
+        }
+
+        return point;
+    }
+
     internal CardUnitInitialPoint? TryAssignSniper(ulong entityKey,
         int fraction, Vector3 soldierPosition, Vector3 opponentPosition)
     {

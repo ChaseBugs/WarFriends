@@ -526,7 +526,12 @@ public sealed partial class MatchEngine
             if(!activeArmyEntities.TryGetValue(key,out var army))
                 throw new InvalidDataException("Infantry animation lost its host entity.");
             var clips=ArmyInfantryPosePolicy.For(army.UnitId);string clip=clips.Idle;Vector3? facing=null;
-            if(army.SourceCardId=="ELITEPARA")
+            if (_assaulterWalks.TryGetValue(key, out var assaulterWalk))
+            {
+                clip = clips.Walk;
+                facing = assaulterWalk.Motion.Facing;
+            }
+            else if(army.SourceCardId=="ELITEPARA")
             {
                 (clip,facing)=CardParatrooperInfantryPose(key,clips);
             }
@@ -3254,6 +3259,11 @@ public sealed partial class MatchEngine
     private void InitializeStationaryArmyCombat(ulong entityKey,string unitId)
     {
         var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if (unitId == "ID_UNIT-ASSAULT")
+        {
+            InitializeAssaulterNavigation(entityKey);
+            return;
+        }
         if (family.BehaviorType == "SoldierBehaviourSniper")
         {
             InitializeNormalSniper(entityKey);
@@ -4578,6 +4588,10 @@ public sealed partial class MatchEngine
         armyShots.Remove(entityKey);
         armyVehicleShots.Remove(entityKey);
         infantryAnimations.Remove(entityKey);
+        if (row.UnitId == "ID_UNIT-ASSAULT")
+        {
+            RemoveAssaulterNavigation(entityKey);
+        }
         rusherMotionCandidates.Remove(entityKey);
         _armyRevengeWindows.Remove(entityKey);
         warperRelocations.Remove(entityKey);
