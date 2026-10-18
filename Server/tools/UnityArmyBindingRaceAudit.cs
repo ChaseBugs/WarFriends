@@ -20,6 +20,7 @@ public static class UnityArmyBindingRaceAudit
     private const int MaximumQueuedRequests = 32;
     private static readonly byte[] SessionKey = new byte[32];
     private static readonly string ManifestHash = new string('a', 64);
+    private static ulong _responseSequence;
 
     public static async void RunAsync()
     {
@@ -39,36 +40,14 @@ public static class UnityArmyBindingRaceAudit
                 SetField(client, "connection", transport);
                 SetField(client, "lifetime", lifetime);
                 typeof(SelfHostedBattleClient).GetProperty("IsConnected").SetValue(client, true, null);
-                int published = 0;
-                client.ArmyOffersReceived += _ => published++;
-
-                Task retired = client.BindArmyManager(army);
-                UdpReceiveResult first = await ReceiveAsync(server);
-                Packet firstRequest = ReadRequest(first);
-                client.UnbindArmyManager(army);
-                Task successor = client.BindArmyManager(army);
-                await ReplyAsync(server, first, firstRequest, 1);
-                bool rejected = false;
-                try
-                {
-                    await WithinDeadline(retired);
-                }
-                catch (OperationCanceledException)
-                {
-                    rejected = true;
-                }
-                Require(rejected && published == 0, "Retired reply reached the rebound manager.");
-                Require(ReferenceEquals(GetField(client, "armyManager"), army),
-                    "Retired bind cleanup detached the successor owner.");
-                await ReplyToSuccessorAsync(server, successor);
-                await WithinDeadline(successor);
-                Require(published == 1 && ReferenceEquals(GetField(client, "armyManager"), army),
-                    "The successor reply failed to publish exactly once to its owner.");
+                await VerifyBindingAndRefreshAsync(server, client, army);
+                await VerifyRetiredDeploymentAsync(server, client, army);
+                await VerifyManagerContinuationAsync(server, client, army);
                 client.UnbindArmyManager(army);
                 Require(GetField(army, "mSelfHosted") == null, "The completed race leaked a subscription.");
                 File.WriteAllText(Path.Combine(Application.dataPath, "../army-binding-race-unity-audit.json"),
-                    "{\"checks\":4,\"scope\":\"real authenticated UDP army replies during same-manager rebinding\"}\n");
-                Debug.Log("PASS: 4 real UDP army binding race checks; admission was fixture-provisioned.");
+                    "{\"checks\":8,\"scope\":\"authenticated UDP binding, refresh and deployment rebinding\"}\n");
+                Debug.Log("PASS: 8 real UDP army ownership checks; admission was fixture-provisioned.");
                 EditorApplication.Exit(0);
             }
             catch (Exception failure)
@@ -82,6 +61,129 @@ public static class UnityArmyBindingRaceAudit
                 if (transport != null) transport.Dispose();
             }
         }
+    }
+
+    private static async Task VerifyBindingAndRefreshAsync(UdpClient server, SelfHostedBattleClient client,
+        SpawningManagerDeathMatch army)
+    {
+        int published = 0;
+        client.ArmyOffersReceived += _ => published++;
+
+        Task retired = client.BindArmyManager(army);
+        UdpReceiveResult first = await ReceiveAsync(server);
+        Packet firstRequest = ReadRequest(first);
+        client.UnbindArmyManager(army);
+        Task successor = client.BindArmyManager(army);
+        await ReplyAsync(server, first, firstRequest, 1);
+        bool rejected = false;
+        try
+        {
+            await WithinDeadline(retired);
+        }
+        catch (OperationCanceledException)
+        {
+            rejected = true;
+        }
+        Require(rejected && published == 0, "Retired reply reached the rebound manager.");
+        Require(ReferenceEquals(GetField(client, "armyManager"), army),
+            "Retired bind cleanup detached the successor owner.");
+        await ReplyToSuccessorAsync(server, successor);
+        await WithinDeadline(successor);
+        Require(published == 1 && ReferenceEquals(GetField(client, "armyManager"), army),
+            "The successor reply failed to publish exactly once to its owner.");
+        Task refresh = client.RefreshArmy();
+        UdpReceiveResult refreshPacket = await ReceiveAsync(server);
+        Packet refreshRequest = ReadRequest(refreshPacket);
+        client.UnbindArmyManager(army);
+        Task rebound = client.BindArmyManager(army);
+        await ReplyAsync(server, refreshPacket, refreshRequest, 3);
+        bool refreshRejected = false;
+        try
+        {
+            await WithinDeadline(refresh);
+        }
+        catch (OperationCanceledException)
+        {
+            refreshRejected = true;
+        }
+        Require(refreshRejected && published == 1, "Retired army refresh reached a successor binding.");
+        await ReplyToSuccessorAsync(server, rebound);
+        await WithinDeadline(rebound);
+        Require(published == 2, "Rebound army did not retain independent publication ownership.");
+    }
+
+    private static async Task VerifyRetiredDeploymentAsync(UdpClient server, SelfHostedBattleClient client,
+        SpawningManagerDeathMatch army)
+    {
+        Task deployment = client.DeployArmyResult(0);
+        UdpReceiveResult received = await ReceiveAsync(server);
+        Packet request = PacketCodec.ReadUntrusted(received.Buffer);
+        Require(PacketCodec.Authenticate(received.Buffer, SessionKey) && request.MatchCommand != null,
+            "Expected an authenticated deployment command.");
+        client.UnbindArmyManager(army);
+        Task successor = client.BindArmyManager(army);
+        await ReplyDeploymentAsync(server, received, request);
+        bool rejected = false;
+        try
+        {
+            await WithinDeadline(deployment);
+        }
+        catch (OperationCanceledException)
+        {
+            rejected = true;
+        }
+        Require(rejected && client.State == null, "A retired deployment applied its snapshot to a successor.");
+        await ReplyToSuccessorAsync(server, successor);
+        await WithinDeadline(successor);
+    }
+
+    private static async Task VerifyManagerContinuationAsync(UdpClient server, SelfHostedBattleClient client,
+        SpawningManagerDeathMatch army)
+    {
+        var definition = new SpawningManagerDeathMatch.ArmyUnitDefinition();
+        var deployment = (Task)typeof(SpawningManagerDeathMatch)
+            .GetMethod("SendSelfHostedUnitAsync", PrivateInstance).Invoke(army, new object[] { definition, false });
+        UdpReceiveResult received = await ReceiveAsync(server);
+        Packet request = PacketCodec.ReadUntrusted(received.Buffer);
+        Require(PacketCodec.Authenticate(received.Buffer, SessionKey) && request.MatchCommand != null,
+            "Expected the manager's authenticated deployment command.");
+        client.UnbindArmyManager(army);
+        Task successor = client.BindArmyManager(army);
+        SetField(army, "mSelfHostedDeployPending", true);
+        SetField(army, "mSelfHostedForceRefresh", false);
+        SetField(army, "mCoolDown", 123f);
+        await ReplyDeploymentAsync(server, received, request);
+        await WithinDeadline(deployment);
+        Require((bool)GetField(army, "mSelfHostedDeployPending") &&
+            !(bool)GetField(army, "mSelfHostedForceRefresh") &&
+            (float)GetField(army, "mCoolDown") == 123f && GetField(army, "mCurrentDefinition") == null,
+            "Retired manager continuation changed the successor's pending, refresh or cooldown state.");
+        await ReplyToSuccessorAsync(server, successor);
+        await WithinDeadline(successor);
+    }
+
+    private static async Task ReplyDeploymentAsync(UdpClient server, UdpReceiveResult received, Packet request)
+    {
+        var snapshot = new MatchSnapshot
+        {
+            MatchId = "army-binding-race", ManifestHash = ManifestHash, Phase = BattlePhase.Running,
+            StateRevision = request.MatchCommand.CommandId
+        };
+        snapshot.Players.Add(new BattlePlayerState
+        {
+            PlayerId = new string('a', 32), LastCommandId = request.MatchCommand.CommandId
+        });
+        snapshot.Players.Add(new BattlePlayerState { PlayerId = new string('b', 32) });
+        var response = new Packet
+        {
+            Version = 1, SessionId = request.SessionId, Sequence = ++_responseSequence, Ack = request.Sequence,
+            MatchReply = new MatchReply
+            {
+                CommandId = request.MatchCommand.CommandId, Code = "army-deploying", Snapshot = snapshot
+            }
+        };
+        byte[] bytes = PacketCodec.Encode(response, SessionKey);
+        await server.SendAsync(bytes, bytes.Length, received.RemoteEndPoint);
     }
 
     private static MatchConnectionGrant CreateGrant(uint port)
@@ -130,7 +232,7 @@ public static class UnityArmyBindingRaceAudit
     {
         var reply = new Packet
         {
-            Version = 1, SessionId = request.SessionId, Sequence = sequence, Ack = request.Sequence,
+            Version = 1, SessionId = request.SessionId, Sequence = ++_responseSequence, Ack = request.Sequence,
             MatchArmyBatch = new MatchArmyBatch
             {
                 MatchId = "army-binding-race", ManifestHash = ManifestHash, Code = "army-unavailable", Energy = 8

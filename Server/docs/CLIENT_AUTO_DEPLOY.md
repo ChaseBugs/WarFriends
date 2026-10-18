@@ -95,3 +95,37 @@ terminal state and scene replacement. Verify authoritative energy and confirmed 
 Retain the recovered RandomArmySent subscriber condition unless separate Client evidence
 authorizes a behavior change. Full Server regression must also be rerun after the deliberate
 Client source fingerprint update; a prior process reading changed source is not a passing run.
+# Deployment continuation ownership
+
+The Unity manager now captures its bound client and a monotonically advancing binding generation
+before awaiting deployment. A reply, error or finally block from an older binding cannot update
+the successor's cooldown, statistics, refresh flag or pending flag, even when the same manager
+is rebound to the same client. Follow-up refresh uses the captured client. `RefreshArmy` also
+captures the client's army-binding generation before polling and rejects a response after rebinding.
+
+The native Unity 2018.3 authenticated UDP race audit passes six checks at
+`Server/.local/army-refresh-race-unity.log`, exit zero. It now delays a general army-refresh
+response across same-manager rebinding and confirms no stale publication and one successor
+publication. Admission is fixture-provisioned. This proves binding/refresh response isolation;
+it does not yet exercise a delayed deployment acknowledgement or normal two-Client gameplay.
+
+The subsequent deployment race now passes seven native authenticated UDP ownership checks at
+`Server/.local/army-deploy-race-unity.log`, exit zero. It delays a valid `army-deploying` reply
+until the same manager is rebound, then verifies `DeployArmyResult` cancels without applying
+its snapshot; the successor still finishes its own initial poll. The fixture uses monotonically
+increasing response sequences and acknowledges the consumed command in player/state cursors.
+`DeployArmyResult` now checks both connection identity and army-binding generation before Apply.
+This directly verifies the client adapter's stale-deployment rejection. The manager's statistics
+and pending-flag continuation branches still require their own delayed-request scenario;
+the adapter proof does not establish a full normal deployment/reconnect flow.
+
+The manager continuation is now exercised through its actual Task-returning deployment core;
+the original UI entrypoint awaits that same core. A delayed authenticated acknowledgement is
+released after same-manager rebinding while the successor pending flag is set. The eight-check
+audit confirms the retired continuation preserves that pending flag, refresh flag, cooldown and
+current definition; it also leaves the client snapshot unapplied and permits successor polling.
+The initial run passed at `Server/.local/army-manager-race-unity.log`. The fixture does not create
+StatsManager: remaining on the guarded cancellation path avoids accessing statistics, but this
+does not measure a live statistics ledger or validate successful ordinary deployments.
+After splitting the audit into short scenario methods, the same eight checks pass with Editor
+exit zero at `Server/.local/army-manager-race-final-unity.log`.

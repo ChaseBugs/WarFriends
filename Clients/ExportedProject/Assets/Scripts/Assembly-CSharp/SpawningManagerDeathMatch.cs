@@ -138,6 +138,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	private bool mSelfHostedMode;
 	private bool mSelfHostedDeployPending;
 	private bool mSelfHostedForceRefresh;
+	private ulong _selfHostedBindingGeneration;
 
 	private bool mAutoDeployEnabled;
 
@@ -254,6 +255,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 			throw new InvalidOperationException("Bind one connected self-hosted army session.");
 		}
 		mSelfHosted = client;
+		_selfHostedBindingGeneration = checked(_selfHostedBindingGeneration + 1);
 		mSelfHostedMode = true;
 		mSelfHosted.ArmyOffersReceived += ApplySelfHostedArmy;
 		mGenerateNewUnits = false;
@@ -263,6 +265,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	public void UnbindSelfHosted(SelfHostedBattleClient client)
 	{
 		if (mSelfHosted != client) return;
+		_selfHostedBindingGeneration = checked(_selfHostedBindingGeneration + 1);
 		mSelfHosted.ArmyOffersReceived -= ApplySelfHostedArmy;
 		mSelfHosted = null;
 		mSelfHostedDeployPending = false;
@@ -833,9 +836,20 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 
 	private async void SendSelfHostedUnit(ArmyUnitDefinition definition, bool clicked)
 	{
+		await SendSelfHostedUnitAsync(definition, clicked);
+	}
+
+	private async System.Threading.Tasks.Task SendSelfHostedUnitAsync(ArmyUnitDefinition definition, bool clicked)
+	{
+		SelfHostedBattleClient owner = mSelfHosted;
+		ulong generation = _selfHostedBindingGeneration;
 		try
 		{
-			MatchReply reply = await mSelfHosted.DeployArmyResult(definition.index);
+			MatchReply reply = await owner.DeployArmyResult(definition.index);
+			if (!OwnsSelfHostedDeployment(owner, generation))
+			{
+				return;
+			}
 			mSelfHostedForceRefresh = reply.Code != "army-deploying";
 			if (reply.Code == "army-deploying")
 			{
@@ -848,14 +862,29 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 					definition.armyUnit.behaviour.indexInLevelsManager,
 					definition.numberOfEnemies, clicked);
 			}
-			await mSelfHosted.RefreshArmy();
+			await owner.RefreshArmy();
 		}
 		catch (Exception error)
 		{
+			if (!OwnsSelfHostedDeployment(owner, generation))
+			{
+				return;
+			}
 			mSelfHostedForceRefresh = true;
 			Debug.LogException(error);
 		}
-		finally { mSelfHostedDeployPending = false; }
+		finally
+		{
+			if (OwnsSelfHostedDeployment(owner, generation))
+			{
+				mSelfHostedDeployPending = false;
+			}
+		}
+	}
+
+	private bool OwnsSelfHostedDeployment(SelfHostedBattleClient owner, ulong generation)
+	{
+		return this != null && mSelfHosted == owner && generation == _selfHostedBindingGeneration;
 	}
 
 	private bool CanAdvanceSelfHostedAutoDeploy()

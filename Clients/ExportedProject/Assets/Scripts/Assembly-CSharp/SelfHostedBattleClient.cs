@@ -1350,7 +1350,13 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
     {
         if (!IsConnected || connection == null)
             throw new InvalidOperationException("Connect to a self-hosted match first.");
-        var reply = await connection.DeployArmyAsync(optionIndex, lifetime.Token);
+        var active = connection;
+        ulong generation = _armyBindingGeneration;
+        var reply = await active.DeployArmyAsync(optionIndex, lifetime.Token);
+        if (!IsConnected || active != connection || generation != _armyBindingGeneration)
+        {
+            throw new OperationCanceledException("Army ownership changed during deployment.");
+        }
         Apply(reply);
         return reply.Clone();
     }
@@ -1380,8 +1386,9 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
         if (!IsConnected || connection == null)
             throw new InvalidOperationException("Connect to a self-hosted match first.");
         var active = connection;
+        ulong generation = _armyBindingGeneration;
         var batch = await active.PollArmyAsync(lifetime.Token);
-        if (!IsConnected || active != connection)
+        if (!IsConnected || active != connection || generation != _armyBindingGeneration)
             throw new OperationCanceledException("The battle session changed during the army scan.");
         if (ArmyOffersReceived != null) ArmyOffersReceived(batch.Clone());
         return batch;
