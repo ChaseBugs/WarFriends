@@ -472,3 +472,26 @@ The complete inventory suite still passes, including active-ownership, account m
 paired snapshot and card-pack concurrency checks. Build evidence is
 `Server/.local/preparation-admission-race-build.log`, zero warnings/errors. This verifies one
 cross-path ordering; rematch-versus-refresh and prepared-rematch revision binding remain open.
+
+### Prepared rematch account revision binding
+
+Manifest preparation now carries the exact ordered account revisions read with its allocations.
+The ordinary byte-returning factory APIs remain available; the rematch allocator uses the
+prepared result and supplies its revision proof to participant reservation. The proof stays
+server-side and does not alter Client protobuf or manifest JSON fields.
+
+A prepared rematch requires complete, ordered, positive and non-exhausted account revisions.
+After acquiring participant fences, reservation conditionally advances both matching account
+revisions inside the same transaction as consent, pair and frozen manifest publication.
+A stale second account aborts and rolls back the first account write too. Existing allocated
+reservation replay returns its frozen result without reserving the accounts a second time.
+Missing, reversed, zero, negative and exhausted proofs are rejected.
+
+Actual Mongo tests pass with exit zero at `rematch-reservation-only-account-proof-final.log`
+and `rematch-manifest-only-account-proof-final.log` in the existing evidence directory.
+The change-stream audit observes all seven writes (two accounts, two fences, consent, pair,
+manifest) sharing one transaction. Factory tests verify exact ordered revisions after a durable
+equipment update. `Server/.local/rematch-account-proof-final-build.log` records zero build
+warnings/errors. The preceding inventory suite also passes at `allocation-inventory-mongo-account-proof.log`.
+This is focused store/factory evidence, not a fresh whole-queue or two-Unity gameplay run.
+Inactive allocation refresh and its direct race with rematch reservation remain unimplemented.

@@ -20,6 +20,7 @@ public sealed partial class BattleRematchConsentStore
         {
             PlayerOrder = request.PlayerOrder?.ToArray(),
             PreparedManifest = request.PreparedManifest?.ToArray(),
+            ExpectedAccountRevisions = request.ExpectedAccountRevisions?.ToArray(),
         };
         DateTimeOffset now = DateTimeOffset.FromUnixTimeMilliseconds(request.ApplicationTime.ToUnixTimeMilliseconds());
         BattleResultDocument result = await _results.Get(request.SourceMatchId, cancellationToken)
@@ -60,6 +61,7 @@ public sealed partial class BattleRematchConsentStore
                     throw new InvalidDataException("Both participants must consent inside the rematch window.");
                 }
                 await RequireParticipantsAvailableAsync(transaction, players, token);
+                await ReserveAccountRevisionsAsync(transaction, request, pair.Players, token);
                 return await PublishReservationAsync(transaction, current, publication, token);
             }, ReservationTransaction, cancellationToken);
         }
@@ -121,8 +123,13 @@ public sealed partial class BattleRematchConsentStore
     {
         if (request.PreparedManifest == null)
         {
+            if (request.ExpectedAccountRevisions != null)
+            {
+                throw new InvalidDataException("Account revision proof requires a prepared rematch manifest.");
+            }
             return null;
         }
+        _ = ValidateAccountRevisionProof(request, pair.Players);
         MatchManifest manifest = MatchManifest.Parse(request.PreparedManifest);
         if (manifest.MatchId == request.SourceMatchId || !manifest.Players.Select(player => player.PlayerId)
             .SequenceEqual(pair.Players))

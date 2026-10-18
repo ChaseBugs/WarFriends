@@ -12,4 +12,7 @@ public sealed record BattleRematchReservation(
 
     /// <summary>Freezes the validated Backend-generated admission payload with participant reservation.</summary>
     public byte[]? PreparedManifest { get; init; }
+
+    /// <summary>Binds prepared equipment to the exact server-read accounts before participant reservation.</summary>
+    public IReadOnlyList<BattleAccountRevision>? ExpectedAccountRevisions { get; init; }
 }

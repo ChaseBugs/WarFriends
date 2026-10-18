@@ -27,6 +27,13 @@ public sealed partial class BattleManifestFactory
     }
     public async Task<byte[]> Create(string matchId,IReadOnlyList<string> playerIds,CancellationToken ct)
     {
+        return (await CreatePreparedAsync(matchId, playerIds, ct)).Manifest;
+    }
+
+    /// <summary>Retains source account revisions so reservation can reject a stale prepared loadout.</summary>
+    public async Task<PreparedBattleManifest> CreatePreparedAsync(
+        string matchId, IReadOnlyList<string> playerIds, CancellationToken ct)
+    {
         if(!System.Text.RegularExpressions.Regex.IsMatch(matchId??"",@"\Am[0-9a-f]{32}\z") || playerIds is not {Count:2} ||
             playerIds.Any(x=>!Guid.TryParseExact(x,"N",out _) || x!=x.ToLowerInvariant()) || playerIds.Distinct(StringComparer.Ordinal).Count()!=2)
             throw new InvalidDataException("Invalid paired manifest identity.");
@@ -52,7 +59,9 @@ public sealed partial class BattleManifestFactory
         root["Presentations"]=JsonSerializer.SerializeToNode(views);
         byte[] bytes=JsonSerializer.SerializeToUtf8Bytes(root);
         if(bytes.Length>65536)throw new InvalidDataException("Generated battle manifest exceeds control capacity.");
-        return bytes;
+        IReadOnlyList<BattleAccountRevision> revisions = Array.AsReadOnly(authority.Select(row =>
+            new BattleAccountRevision(row.Account.Id, row.Account.Revision)).ToArray());
+        return new PreparedBattleManifest(bytes, revisions);
     }
 
     // Queue admission must reject unsupported durable loadouts before a pair is

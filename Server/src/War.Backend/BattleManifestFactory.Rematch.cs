@@ -10,6 +10,14 @@ public sealed partial class BattleManifestFactory
     public async Task<byte[]> CreateRematchAsync(byte[] acceptedManifest, string acceptedManifestHash,
         string nextMatchId, CancellationToken cancellationToken)
     {
+        return (await PrepareRematchAsync(acceptedManifest, acceptedManifestHash,
+            nextMatchId, cancellationToken)).Manifest;
+    }
+
+    /// <summary>Preserves the source scene and carries fresh durable revisions into rematch reservation.</summary>
+    public async Task<PreparedBattleManifest> PrepareRematchAsync(byte[] acceptedManifest, string acceptedManifestHash,
+        string nextMatchId, CancellationToken cancellationToken)
+    {
         MatchManifest previous = MatchManifest.Parse(acceptedManifest);
         if (previous.Digest() != acceptedManifestHash || previous.MatchId == nextMatchId)
         {
@@ -23,14 +31,14 @@ public sealed partial class BattleManifestFactory
         var rematch = new BattleManifestFactory(JsonSerializer.SerializeToUtf8Bytes(source),
             allocations, presentations, weapons);
         string[] players = previous.Players.Select(player => player.PlayerId).ToArray();
-        byte[] bound = await rematch.Create(nextMatchId, players, cancellationToken);
-        var refreshed = JsonNode.Parse(bound)?.AsObject()
+        PreparedBattleManifest bound = await rematch.CreatePreparedAsync(nextMatchId, players, cancellationToken);
+        var refreshed = JsonNode.Parse(bound.Manifest)?.AsObject()
             ?? throw new InvalidDataException("Rematch projection is absent.");
         PreserveSceneMaster(refreshed, previous);
         RefreshExistingRankFields(refreshed);
         byte[] result = JsonSerializer.SerializeToUtf8Bytes(refreshed);
         ValidateRefreshedArmyAllocations(MatchManifest.Parse(result));
-        return result;
+        return new PreparedBattleManifest(result, bound.AccountRevisions);
     }
 
     private void ValidateRefreshedArmyAllocations(MatchManifest manifest)

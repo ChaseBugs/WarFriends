@@ -89,17 +89,7 @@ internal static class RematchReservationStoreTests
     private static async Task VerifyConcurrentReservationAsync(Stores stores, CancellationToken cancellationToken)
     {
         Fixture fixture = await PrepareAsync(stores, cancellationToken);
-        fixture = fixture with
-        {
-            Request = fixture.Request with
-            {
-                PlayerOrder = fixture.Players,
-                PreparedManifest = JsonSerializer.SerializeToUtf8Bytes(MatchManifest.Parse(fixture.SourceManifest) with
-                {
-                    MatchId = "m" + Guid.NewGuid().ToString("N"),
-                }),
-            },
-        };
+        fixture = await AttachAccountProofAsync(stores, fixture, cancellationToken);
         using var changes = await stores.Database.WatchAsync(
             new EmptyPipelineDefinition<ChangeStreamDocument<BsonDocument>>(),
             new ChangeStreamOptions { MaxAwaitTime = TimeSpan.FromSeconds(1) }, cancellationToken);
@@ -144,24 +134,77 @@ internal static class RematchReservationStoreTests
             "Reservation must preserve the old accepted result.");
     }
 
+    private static async Task<Fixture> AttachAccountProofAsync(
+        Stores stores, Fixture fixture, CancellationToken cancellationToken)
+    {
+        var accounts = stores.Database.GetCollection<LegacyPlayerDocument>("legacyPlayers");
+        await accounts.InsertManyAsync(fixture.Players.Select(playerId =>
+            new LegacyPlayerDocument { Id = playerId, Revision = 1 }), cancellationToken: cancellationToken);
+        fixture = fixture with
+        {
+            Request = fixture.Request with
+            {
+                PlayerOrder = fixture.Players,
+                PreparedManifest = JsonSerializer.SerializeToUtf8Bytes(MatchManifest.Parse(fixture.SourceManifest) with
+                {
+                    MatchId = "m" + Guid.NewGuid().ToString("N")
+                }),
+                ExpectedAccountRevisions = fixture.Players.Select(id => new BattleAccountRevision(id, 1)).ToArray()
+            }
+        };
+        Require(await TryReserveAsync(stores.First, fixture.Request with
+        {
+            ExpectedAccountRevisions = null
+        }, cancellationToken) == null, "A prepared rematch without account proof was reserved.");
+        Require(await TryReserveAsync(stores.First, fixture.Request with
+        {
+            ExpectedAccountRevisions = fixture.Players.Reverse()
+                .Select(id => new BattleAccountRevision(id, 1)).ToArray()
+        }, cancellationToken) == null, "Reversed account proof changed participant ownership.");
+        foreach (long invalidRevision in new[] { 0L, -1L, long.MaxValue })
+        {
+            Require(await TryReserveAsync(stores.First, fixture.Request with
+            {
+                ExpectedAccountRevisions = [new(fixture.Players[0], invalidRevision), new(fixture.Players[1], 1)]
+            }, cancellationToken) == null, "Malformed account proof authorized a rematch reservation.");
+        }
+        await accounts.UpdateOneAsync(row => row.Id == fixture.Players[1],
+            Builders<LegacyPlayerDocument>.Update.Inc(row => row.Revision, 1), cancellationToken: cancellationToken);
+        Require(await TryReserveAsync(stores.First, fixture.Request, cancellationToken) == null,
+            "A stale prepared account revision was reserved.");
+        LegacyPlayerDocument first = await accounts.Find(row => row.Id == fixture.Players[0])
+            .SingleAsync(cancellationToken);
+        Require(first.Revision == 1 && await stores.Queue.Existing(first.Id, cancellationToken) == null,
+            "Stale second-player proof left a first-player write or partial pair.");
+        return fixture with
+        {
+            Request = fixture.Request with
+            {
+                ExpectedAccountRevisions = [new(fixture.Players[0], 1), new(fixture.Players[1], 2)]
+            }
+        };
+    }
+
     private static async Task VerifyTransactionAsync(
         IChangeStreamCursor<ChangeStreamDocument<BsonDocument>> changes, CancellationToken cancellationToken)
     {
         var writes = new List<BsonDocument>();
-        while (writes.Count < 3 && await changes.MoveNextAsync(cancellationToken))
+        const int ReservationWriteCount = 7;
+        while (writes.Count < ReservationWriteCount && await changes.MoveNextAsync(cancellationToken))
         {
             foreach (var change in changes.Current)
             {
                 if (change.CollectionNamespace.CollectionName is
-                    "battle_pairs" or "battle_rematch_consents" or "battle_manifest_snapshots")
+                    "battle_pairs" or "battle_rematch_consents" or "battle_manifest_snapshots" or
+                    "legacyPlayers" or "battle_admission_fences")
                 {
                     writes.Add(change.BackingDocument);
                 }
             }
         }
-        Require(writes.Count == 3 && writes.All(write => write.Contains("txnNumber") &&
+        Require(writes.Count == ReservationWriteCount && writes.All(write => write.Contains("txnNumber") &&
             write["txnNumber"] == writes[0]["txnNumber"] && write["lsid"] == writes[0]["lsid"]),
-            "Consent, participant reservation and frozen manifest must share one committed Mongo transaction.");
+            "Account revisions, fences, consent, pair and frozen manifest must share one committed transaction.");
     }
 
     private static async Task VerifyCancellationRaceAsync(Stores stores, CancellationToken cancellationToken)

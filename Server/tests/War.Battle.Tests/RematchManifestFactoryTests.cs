@@ -64,7 +64,12 @@ internal static class RematchManifestFactoryTests
     {
         MatchManifest previous = MatchManifest.Parse(source);
         string nextId = "m" + Guid.NewGuid().ToString("N");
-        byte[] generated = await factory.CreateRematchAsync(source, previous.Digest(), nextId, cancellationToken);
+        PreparedBattleManifest prepared = await factory.PrepareRematchAsync(
+            source, previous.Digest(), nextId, cancellationToken);
+        byte[] generated = prepared.Manifest;
+        Require(prepared.AccountRevisions.Select(row => row.PlayerId).SequenceEqual(players) &&
+            prepared.AccountRevisions[0].Revision == 2 && prepared.AccountRevisions[1].Revision == 1,
+            "Prepared rematch lost its exact source-ordered account revisions.");
         MatchManifest next = MatchManifest.Parse(generated);
         Require(next.MatchId == nextId && next.MapId == previous.MapId && next.MapRevision == previous.MapRevision &&
             next.Mode == previous.Mode && next.SceneMasterPlayerId == players[1] &&
@@ -137,7 +142,8 @@ internal static class RematchManifestFactoryTests
         await database.GetCollection<LegacyPlayerDocument>("legacyPlayers").UpdateOneAsync(
             player => player.Id == playerId,
             Builders<LegacyPlayerDocument>.Update.Set("Serialized.LevelManagerData", PlayerState.Write(levels))
-                .Set(player => player.Name, "UpdatedPlayer").Set(player => player.Level, 2),
+                .Set(player => player.Name, "UpdatedPlayer").Set(player => player.Level, 2)
+                .Inc(player => player.Revision, 1),
             cancellationToken: cancellationToken);
     }
 

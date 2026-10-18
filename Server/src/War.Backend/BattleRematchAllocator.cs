@@ -47,13 +47,14 @@ public sealed class BattleRematchAllocator
         byte[] source = await _stores.Snapshots.GetForParticipantsAsync(consent.Id, consent.Players, cancellationToken)
             ?? throw new InvalidDataException("Accepted rematch source manifest is missing.");
         string nextMatchId = "m" + Guid.NewGuid().ToString("N");
-        byte[] prepared = await _hosting.Factory.CreateRematchAsync(
+        PreparedBattleManifest prepared = await _hosting.Factory.PrepareRematchAsync(
             source, terminal.ManifestHash, nextMatchId, cancellationToken);
         var request = new BattleRematchReservation(consent.Id, playerId,
             _hosting.CompatibilityKey, DateTimeOffset.UtcNow)
         {
             PlayerOrder = MatchManifest.Parse(source).Players.Select(player => player.PlayerId).ToArray(),
-            PreparedManifest = prepared,
+            PreparedManifest = prepared.Manifest,
+            ExpectedAccountRevisions = prepared.AccountRevisions,
         };
         return await _stores.Consents.ReserveAsync(request, cancellationToken);
     }
