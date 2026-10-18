@@ -360,3 +360,12 @@ Server/src/War.BattleServer/MortarIndicatorObservation.cs text eol=lf
 Server/src/War.BattleServer/MortarIndicatorRuntime.cs text eol=lf
 Server/tests/War.Battle.Tests/MortarIndicatorHostTests.cs text eol=lf
 Server/tests/War.Battle.Tests/MortarIndicatorRuntimeTests.cs text eol=lf
+
+# Observer-local warning reuse samples and source byte provenance.
+Server/content/mortar-indicator-reuse-unity-reference.json.gz -text
+Server/tools/UnityMortarIndicatorReuseProbe.cs text eol=lf
+Server/tools/UnityMortarIndicatorReuseExport.cs text eol=lf
+Server/tests/War.Battle.Tests/MortarIndicatorReuseTests.cs text eol=lf
+Server/src/War.Shared/MortarIndicatorObserver.cs text eol=lf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/Weapon.cs text eol=crlf
+Clients/ExportedProject/Assets/Scripts/Assembly-CSharp/PoolableObject.cs text eol=crlf

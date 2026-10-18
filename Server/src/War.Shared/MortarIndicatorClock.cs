@@ -41,6 +41,12 @@ namespace War.Shared
         /// <summary>Gets the source sprite alpha.</summary>
         public float Alpha { get; private set; }
 
+        /// <summary>Matches OnInstancied hiding the old warning while retaining the cached tween startup history.</summary>
+        public void HideForReuse()
+        {
+            IsVisible = false;
+        }
+
         /// <summary>Starts or replaces the weapon's warning without allocating a second indicator.</summary>
         public void BeginShot(float stopSeconds)
         {

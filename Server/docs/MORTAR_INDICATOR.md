@@ -131,6 +131,47 @@ Photon, including reconnect and restart/replay evidence. Its aggregate log is
 `Server/.local/mortar-indicator-host-smoke.log`; isolated data/logs are at
 `Server/.local/smoke-fe879efb23c84c7ba16d1bc990a3a2cd`.
 
+## Observer-local reuse callbacks
+
+The subsequent `UnityMortarIndicatorReuseExport` calls the original Mortar.OnInstancied,
+StartIndicatorAnimation and tween updates on two observer-local copies of one logical weapon.
+Both weapon/player shells remain inactive. This tests reuse callbacks and observer history;
+it does not allocate/free an ObjectPool slot, execute its master/peer selection, or run Photon.
+
+At 30 Hz, ownership is rebound at ticks 0, 85, 170, 220 and 285, alternating Enemies/Allies.
+Shots occur at 5, 90, 175, 200, 225 and 290, with a two-second test stop time. This covers allied
+suppression, completed warning reuse, an active-warning restart, and reuse during both shrink
+and blink. Each observer records 361 frames and retains the same indicator GameObject.
+
+| Local fraction | Shrink completion callbacks | Blink completion callbacks |
+| --- | --- | --- |
+| Allies (2) | 56, 342 | 70, 357 |
+| Enemies (1) | 141, 277 | 155; the second blink is hidden by reuse at 285 |
+
+OnInstancied hides visibility without clearing enabled flags, factors, scale, alpha or prior
+tween Start history. An allied shot returns without creating a new warning history. The two
+observers therefore cannot share one global fresh-actor clock. `MortarIndicatorClock.HideForReuse`
+now represents the original hide operation, and `MortarIndicatorObserver` retains an independent
+history for one local fraction, binding each new owner before accepting shots. Invalid or
+unbound owner input is rejected without clearing an existing warning.
+
+The focused executable passes 13,232 assertions, including the previous frame/host coverage and
+4,505 additional reuse, source-digest and owner-binding checks. It compares all 722 new native
+frames, including hidden retained tween state and exact callback histories. The report is
+`content/mortar-indicator-reuse-unity-reference.json.gz`, SHA-256
+`c39711ff2007ee3ab629d7985fbf22c3f267ab8739ffa51e5007f1214b456cf7`.
+Its size is 9,309 compressed and 312,630 expanded bytes. Local evidence is
+`Server/.local/mortar-indicator-reuse-unity-final.log` and
+`Server/.local/mortar-indicator-reuse-tests-final.log`. The private manifest was restored after
+the owned Unity process exited. These observations use Unity 2018.3.0f2, not original 5.2.5 parity.
+The portable networking Release build passes with zero warnings/errors. The active Unity SDK
+binaries were not replaced because no active Client source consumes the new observer yet.
+
+This stage adds reusable observer logic without changing active host/Client presentation flow.
+The observer must eventually live per real pool slot and viewer, not be recreated for every new
+logical soldier. Actual allocation/return/slot reuse remains the next authority boundary; the
+host's current per-actor warning observation is not silently promoted into that contract.
+
 ## Remaining production integration
 
 The sampler and lifecycle clock are not connected to Unity presentation yet. The installed SDK remains at the
@@ -168,6 +209,6 @@ explicit acceptance tests. Scene/session cleanup must remove any remaining owned
 Required gates include real/fake opposing warnings, allied suppression, normal combat frame
 timing, late receipt, reconnect, duplicate events, early impact, shooter death, repeat shots,
 terminal/session cleanup, packet capacity, normal two-Unity gameplay and Android rendering.
-Original recycled pool-slot ownership and activation history also require native gameplay proof;
+Original pool allocation/return and complete gameplay activation order also require native proof;
 the current binding retains history per self-hosted actor and does not claim original pool parity.
 These remain open; neither the sampler nor the native method audit completes this feature.
