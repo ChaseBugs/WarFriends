@@ -63,13 +63,18 @@ The [deployment wave lifecycle](ARMY_DEPLOYMENT_WAVES.md) now records accepted w
 entity provenance, and the final strict post-spawn wait. Overlapping pending spawns sort by source
 due tick instead of blocking behind an older wave's future entries. This is a prerequisite for the
 Sickness event window; its arming, actual health/damage modifiers and Client integration remain open.
-The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 34 focused
+The [Sickness callback/calculation kernel](SICKNESS_SPAWN_WINDOW.md) now passes 44 focused
 checks, including reused-option finishes, overlapping windows, neutral/reversed fractions, and
 current-health refill versus maximum-health preservation. Actual host entity mutation, authorized
 activation, protocol/Client integration and terminal proof remain open; SICKNESS is not complete.
 The host's army-health spawn callbacks now use activation/subscription order rather than lexical
 effect IDs. Focused composition checks prove health/Sickness ordering changes current health;
 actual host Sickness bindings and the health-card entity-classification audit remain open.
+The Card Grenadier secondary grenade now has mutable host damage separate from immutable
+source stats. Its host-only Sickness binding halves `damageAmount` while preserving the separate
+explosion field, and actual launches capture the changed record without rewriting airborne
+grenades. Native combat verification passes 26,374 assertions. Primary weapons, vitality,
+automatic callbacks, authorized activation and Client/terminal integration remain incomplete.
 [Card quantity authority](BATTLE_CARD_INVENTORY.md) now carries explicit positive
 owned counts through allocation validation and Mongo storage. Nonempty
 allocations without quantities fail closed. Host reservations preserve the

@@ -12706,6 +12706,24 @@ internal static class CombatContentTests
             decoyPlayer, 0, 0).Entities.Single();
         var grenadierStats = content.Army.CardBaseStats("GREATGRENADIER",
             22, content.BarrelPolicy.MaxDisplayLevel);
+        var sicknessWindow = new SicknessSpawnWindow(
+            grenadierEntity.OwnerFraction == 1 ? 2 : 1, content.Army);
+        Check(!grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+                grenadierEntity.EntityKey, sicknessWindow),
+            "unarmed Sickness cannot modify a spawned Grenadier grenade");
+        var sicknessFamily = content.Army.Families.Single(family => family.UnitId == "ID_UNIT-ASSAULT");
+        int sicknessOption = sicknessFamily.Options[0].Index;
+        var sicknessDeployment = new ArmyDeploymentState(content.Army, [sicknessFamily.UnitId]);
+        sicknessDeployment.SetOffers([sicknessOption, sicknessOption, sicknessOption]);
+        sicknessDeployment.TryDeploy(sicknessOption, 0);
+        sicknessWindow.Arm();
+        sicknessWindow.DeploymentStarted(grenadierEntity.OwnerFraction, sicknessDeployment.LastAcceptedWave!);
+        Check(grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+                grenadierEntity.EntityKey, sicknessWindow) &&
+            grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey) ==
+                grenadierStats.Grenade! with { Minimum = grenadierStats.Grenade.Minimum * 0.5f } &&
+            content.Army.CardBaseStats("GREATGRENADIER", 22, content.BarrelPolicy.MaxDisplayLevel) == grenadierStats,
+            "host Sickness grenade binding scales current minimum without rewriting source or inner blast damage");
         Check(grenadierCardMatch.CardGrenadierThrow(
                   grenadierEntity.EntityKey) == grenadierStats.Grenadier &&
               grenadierCardMatch.CardEnemyPoint(
@@ -12790,6 +12808,20 @@ internal static class CombatContentTests
         BattleProjectileState grenadierProjectile =
             grenadierCardMatch.Snapshot().Projectiles.Single(row =>
                 row.Kind == "card-grenadier");
+        ArmyGrenadeDamageStats? frozenGrenadierDamage =
+            grenadierCardMatch.CardGrenadierLaunchDamage(grenadierProjectile.ProjectileId);
+        Check(frozenGrenadierDamage == grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey),
+            "actual host grenade launch captures the modified ammo setup");
+        Check(grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+                grenadierEntity.EntityKey, sicknessWindow) &&
+            grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey)!.Minimum ==
+                grenadierStats.Grenade!.Minimum * 0.25f &&
+            grenadierCardMatch.CardGrenadierLaunchDamage(grenadierProjectile.ProjectileId) == frozenGrenadierDamage,
+            "a later weapon modification cannot rewrite the already launched grenade");
+        sicknessWindow.Disconnect();
+        Check(!grenadierCardMatch.ApplySicknessToCardGrenadierGrenade(
+                grenadierEntity.EntityKey, sicknessWindow),
+            "disconnected Sickness cannot modify the next grenade setup");
         Check(grenadierProjectile.OwnerPlayerId == decoyPlayer &&
               grenadierProjectile.ProjectileId > 0 &&
               Vector3.Distance(new Vector3(grenadierProjectile.X,
@@ -12843,6 +12875,7 @@ internal static class CombatContentTests
                   grenadierEntity.EntityKey) == null &&
               grenadierCardMatch.CardGrenadierAttack(
                   grenadierEntity.EntityKey) == null &&
+              grenadierCardMatch.CardGrenadierDamage(grenadierEntity.EntityKey) == null &&
               !grenadierCardMatch.CardGrenadierWalking(
                   grenadierEntity.EntityKey) &&
               grenadierCardMatch.CardEnemyPointOccupant(

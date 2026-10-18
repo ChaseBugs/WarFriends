@@ -65,6 +65,26 @@ public sealed class SicknessSpawnWindow
         return IsApplying && target.Fraction != _ownerFraction && target.IsEnemyController && target.CanBeFrozen;
     }
 
+    /// <summary>Scales the grenade's AmmoSetup damage without changing its separate explosion field.</summary>
+    public ArmyGrenadeDamageStats ApplyGrenadeDamage(SicknessSpawnTarget target, ArmyGrenadeDamageStats damage)
+    {
+        ArgumentNullException.ThrowIfNull(damage);
+        if (!ShouldAffect(target))
+        {
+            return damage;
+        }
+
+        if (!float.IsFinite(damage.Minimum) || damage.Minimum < 0f ||
+            !float.IsFinite(damage.Explosion) || damage.Explosion < damage.Minimum)
+        {
+            throw new InvalidDataException("Sickness requires valid current grenade damage fields.");
+        }
+
+        // ImproveAllWeapons writes AmmoSetup.damageAmount directly. It never calls
+        // GrenadeAmmoSetup.ScaleDamage, which would also scale explodeDamageAmount.
+        return damage with { Minimum = damage.Minimum * DamageMultiplier };
+    }
+
     /// <summary>Copies scaled damage and refills current health to half maximum; maximum health is preserved.</summary>
     public SicknessCombatState Apply(SicknessSpawnTarget target, SicknessCombatState state)
     {

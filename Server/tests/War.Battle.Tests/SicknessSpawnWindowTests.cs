@@ -1,3 +1,5 @@
+using System.Numerics;
+
 using War.BattleServer;
 
 /// <summary>Checks Sickness event-reference semantics separately from protocol and host integration.</summary>
@@ -19,7 +21,53 @@ internal static class SicknessSpawnWindowTests
         checks += CheckReusedDefinition(window, first);
         checks += CheckReverseOwner(catalog, first);
         checks += CheckSpawnModifierOrder(catalog, first);
+        checks += CheckGrenadeFields(catalog, first);
+        checks += CheckGrenadeBlastFields();
         return checks;
+    }
+
+    private static int CheckGrenadeBlastFields()
+    {
+        var original = new ArmyGrenadeDamageStats(20, 100);
+        var affected = new ArmyGrenadeDamageStats(10, 100);
+        var setup = new ArmyCardGrenadierRuntime(3, 30, 0, 1, 2, 1, 1);
+        CardGrenadierBlastHit? inner = CardGrenadierExplosionDamage.ResolveDynamic(
+            Vector3.Zero, 0, Vector3.Zero, affected, setup);
+        CardGrenadierBlastHit? outer = CardGrenadierExplosionDamage.ResolveDynamic(
+            Vector3.Zero, 2, new Vector3(2, 0, 0), affected, setup);
+        CardGrenadierBlastHit? middle = CardGrenadierExplosionDamage.ResolveDynamic(
+            Vector3.Zero, 1.5f, new Vector3(1.5f, 0, 0), affected, setup);
+        CardGrenadierBlastHit? originalMiddle = CardGrenadierExplosionDamage.ResolveDynamic(
+            Vector3.Zero, 1.5f, new Vector3(1.5f, 0, 0), original, setup);
+
+        int checks = Check(inner?.RawDamage == 100, "Sickness incorrectly reduced the inner explosion.");
+        checks += Check(outer?.RawDamage == 10, "Sickness did not reduce the outer-ring minimum.");
+        checks += Check(middle?.RawDamage == 32.5f && originalMiddle?.RawDamage == 40,
+            "Sickness incorrectly halved the composed falloff instead of its AmmoSetup minimum.");
+        return checks;
+    }
+
+    private static int CheckGrenadeFields(ArmyDeploymentCatalog catalog, ArmyDeploymentWave wave)
+    {
+        var window = new SicknessSpawnWindow(1, catalog);
+        var target = new SicknessSpawnTarget(2, true, true);
+        var source = new ArmyGrenadeDamageStats(20, 100);
+        int checks = Check(ReferenceEquals(window.ApplyGrenadeDamage(target, source), source),
+            "An unarmed window changed a grenade setup.");
+
+        window.Arm();
+        window.DeploymentStarted(2, wave);
+        ArmyGrenadeDamageStats first = window.ApplyGrenadeDamage(target, source);
+        checks += Check(first == new ArmyGrenadeDamageStats(10, 100) && source.Minimum == 20,
+            "Sickness changed explodeDamageAmount or the immutable source row.");
+        checks += Check(window.ApplyGrenadeDamage(target, first) == new ArmyGrenadeDamageStats(5, 100),
+            "Repeated callbacks did not scale the current minimum while preserving explosion damage.");
+        checks += Check(ReferenceEquals(window.ApplyGrenadeDamage(new(1, true, true), source), source),
+            "A friendly grenade setup was changed.");
+        Reject(() => window.ApplyGrenadeDamage(target, new(float.NaN, 100)));
+        Reject(() => window.ApplyGrenadeDamage(target, new(20, float.PositiveInfinity)));
+        Reject(() => window.ApplyGrenadeDamage(target, new(20, 10)));
+        return checks + 3;
     }
 
     private static int CheckSpawnModifierOrder(ArmyDeploymentCatalog catalog, ArmyDeploymentWave wave)

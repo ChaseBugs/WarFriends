@@ -39,7 +39,7 @@ arbitrary effect lease is introduced here.
 
 ## Verification and boundary
 
-Release build passes with zero warnings/errors. `--sickness-window-only` passes 34 checks for
+Release build passes with zero warnings/errors. `--sickness-window-only` passes 44 checks for
 arming, friendly/vehicle/immune exclusions, neutral and reversed fractions, replacement and
 reused-definition finishes, repeated callbacks, exact vitality/damage calculations, immutable
 output, invalid-event/state rejection and ordered spawn subscriptions.
@@ -78,3 +78,35 @@ callback only checks fraction and `EnemyController` identity. Auditing that dist
 every host entity classification remains necessary before claiming complete health-card parity.
 Sickness weapon bindings must also be initialized before its future observer is registered at
 the entity creation dispatch point. This change supplies ordering, not those missing bindings.
+
+## Grenadier secondary weapon binding
+
+`SoldierBehaviourGrennader.ApplyWeaponsSetup` sets the secondary grenade's `damageAmount`
+from `grenadeMinDamage` and its separate `explodeDamageAmount` from `grenadeExplodeDamage`.
+`GrenadeAmmoSetup.ScaleDamage` would scale both fields, but `ImproveAllWeapons` does not call
+that method: it directly assigns each weapon's `AmmoSetup.damageAmount`. Sickness therefore
+halves only the grenade minimum. `GrenadeAmmo` copies both fields into the explosion info.
+
+`SicknessSpawnWindow.ApplyGrenadeDamage` preserves the separate explosion field. For minimum
+20/explosion 100, the changed fields are 10/100. In the host's existing explosion calculation,
+inner damage stays 100, outer minimum becomes 10 and midpoint damage changes from 40 to 32.5;
+halving the final composed blast would produce the wrong result. Repeated actual callbacks
+halve the current minimum again. Invalid non-finite or inverted damage fields reject.
+
+Card Grenadier now keeps its current secondary damage in a match-owned map initialized from
+immutable source stats. Actual grenade launches capture that current record. The host-only
+`ApplySicknessToCardGrenadierGrenade` binding changes the current setup only while the supplied
+window affects this opposing EnemyController. This unit's Walk/Parachute/Corner states pass
+`canBeFreezed`. Death removes its current setup. No packet can directly invoke this binding.
+
+`--combat-only` passes 26,374 assertions with the native host binding: an unarmed window refuses,
+an armed window halves the current grenade minimum, the actual launched grenade captures it,
+a second modification changes future minimum without changing the airborne grenade's captured
+damage, disconnect prevents further changes, and death removes the setup. The test starts a
+source-backed deployment window explicitly; it does not activate a SICKNESS card through a
+network command. The final build also includes the three additional inner/outer/midpoint
+calculation assertions in the focused suite; no runtime code changed after the combat run.
+
+This is only the secondary grenade binding. Primary weapon mutation, current/max vitality and
+death/immortality synchronization, automatic start/spawn/finish dispatch, authorized card use,
+other eligible units, protocol/SDK/Unity presentation and durable terminal proof remain open.

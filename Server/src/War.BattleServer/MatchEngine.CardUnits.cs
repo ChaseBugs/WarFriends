@@ -49,6 +49,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong, LandedCanopy> deadParatrooperCanopies = [];
     private readonly Dictionary<ulong, ArmyCardRocketRuntime> cardRocketMissiles = [];
     private readonly Dictionary<ulong, ArmyCardGrenadierRuntime> cardGrenadierThrows = [];
+    private readonly Dictionary<ulong, ArmyGrenadeDamageStats> _cardGrenadierDamage = [];
     private readonly Dictionary<ulong, ulong> grenadierPointRetryTicks = [];
     private readonly Dictionary<ulong, CardSoldierWalkState> grenadierWalks = [];
     private readonly Dictionary<ulong, ArmyRusherAttackState> grenadierAttacks = [];
@@ -1433,6 +1434,7 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Card Grenadier lacks its grenade setup.");
         if (!cardGrenadierThrows.TryAdd(entity.EntityKey, throwSetup))
             throw new InvalidDataException("Card Grenadier reused its throw identity.");
+        _cardGrenadierDamage.Add(entity.EntityKey, source.BaseStats.Grenade);
         TryAssignCardGrenadierPoint(entity);
     }
 
@@ -1732,7 +1734,7 @@ public sealed partial class MatchEngine
                 soldier.LocalEntityId) ?? throw new InvalidDataException(
                     "Card Grenadier lost its launch damage row.");
             if (source.EntityKey != intent.EntityKey ||
-                source.BaseStats.Grenade is not { } damage ||
+                !_cardGrenadierDamage.TryGetValue(intent.EntityKey, out var damage) ||
                 armyCatalog == null)
                 throw new InvalidDataException(
                     "Card Grenadier lost its source explosion authority.");
@@ -2300,6 +2302,7 @@ public sealed partial class MatchEngine
         infantryAnimations.Remove(entityKey);
         cardRocketMissiles.Remove(entityKey);
         cardGrenadierThrows.Remove(entityKey);
+        _cardGrenadierDamage.Remove(entityKey);
         grenadierPointRetryTicks.Remove(entityKey);
         grenadierWalks.Remove(entityKey);
         grenadierAttacks.Remove(entityKey);
