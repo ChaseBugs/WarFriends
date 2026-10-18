@@ -6,6 +6,15 @@ Authority: [Server guide section 6](../../Server_guide.md), active `Clients/Expo
 
 Status meanings: **partial** = implemented evidence exists but the feature is not complete; **pending** = necessary work is not yet implemented/verified. A green kernel test alone does not close a gameplay feature. No feature below is declared production-complete yet.
 
+## External implementation references
+
+The [Ice MOBA source review](ICE_MOBA_SERVER_REFERENCE.md) records useful UDP/service lifecycle,
+checkpoint-plus-input-tail reconnect and diagnostic patterns, with exact external source hashes.
+It compares those patterns with existing WarFriends implementations and prioritizes normal Unity
+reconnect acceptance, bounded server-owned reproduction artifacts and operational fault tests.
+It does not replace recovered Client rules, authorize client-result voting or add RakNet/MySQL.
+This is design evidence, not a completed feature or new runtime validation.
+
 ## Dependency-ordered work
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
