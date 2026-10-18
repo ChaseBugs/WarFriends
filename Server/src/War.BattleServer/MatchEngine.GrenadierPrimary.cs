@@ -10,7 +10,7 @@ public sealed partial class MatchEngine
     private void LaunchCardGrenadierPrimary(CardGrenadierShotIntent intent)
     {
         if (!activeArmyEntities.TryGetValue(intent.EntityKey, out var soldier) ||
-            soldier.SourceCardId != "GREATGRENADIER" ||
+            !IsGrenadier(soldier) ||
             !armyDamage.TryGetValue(intent.EntityKey, out float damage) ||
             !float.IsFinite(damage) || damage < 0f || damage > MaximumGrenadierPrimaryDamage)
         {

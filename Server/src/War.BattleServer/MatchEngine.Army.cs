@@ -580,7 +580,7 @@ public sealed partial class MatchEngine
                 clip=clips.Walk;
                 facing=rocketWalk.Facing;
             }
-            else if(army.SourceCardId=="GREATGRENADIER" &&
+            else if(IsGrenadier(army) &&
                     grenadierWalks.TryGetValue(key,out var grenadierWalk))
             {
                 clip=clips.Walk;
@@ -4641,6 +4641,14 @@ public sealed partial class MatchEngine
         {
             cardGrenadierThrows.Remove(entityKey);
             _cardGrenadierDamage.Remove(entityKey);
+            grenadierPointRetryTicks.Remove(entityKey);
+            grenadierWalks.Remove(entityKey);
+            grenadierAttacks.Remove(entityKey);
+            grenadierShotTargets.Remove(entityKey);
+            grenadierShotIntents.RemoveAll(intent => intent.EntityKey == entityKey);
+            grenadierCornerChangeTicks.Remove(entityKey);
+            RemoveGrenadierWeaponVisibility(entityKey);
+            cardEnemyPoints?.Release(entityKey);
         }
         if (row.UnitId == "ID_UNIT-GUNSLINGER")
         {

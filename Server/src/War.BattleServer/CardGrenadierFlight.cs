@@ -43,7 +43,7 @@ internal sealed class CardGrenadierFlight
         Func<Vector3, Vector3, float, ShotCollision?> trace)
     {
         if (projectileId == 0 || soldierEntityKey == 0 || setup == null ||
-            setup.FuseSeconds != 3f ||
+            !float.IsFinite(setup.FuseSeconds) || setup.FuseSeconds < 0f || setup.FuseSeconds > 3f ||
             !PlayerHitbox.Finite(muzzlePosition) ||
             !PlayerHitbox.Finite(launchVelocity) ||
             launchVelocity.LengthSquared() < 1e-10f ||

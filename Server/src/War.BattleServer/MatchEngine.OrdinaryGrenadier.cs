@@ -4,6 +4,16 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private static bool IsGrenadier(BattleArmyEntityState entity)
+    {
+        return entity.UnitId == "ID_UNIT-GRENADIER" && entity.SourceCardId is "" or "GREATGRENADIER";
+    }
+
+    internal CardUnitInitialPoint? GrenadierPoint(ulong entityKey)
+    {
+        return cardEnemyPoints?.Find(entityKey);
+    }
+
     /// <summary>Binds ordinary spawn weapons to admitted owner upgrades, never to card interpolation.</summary>
     private void InitializeOrdinaryGrenadier(ulong entityKey)
     {
@@ -30,8 +40,9 @@ public sealed partial class MatchEngine
         ArmyCardGrenadierRuntime recoveredWeapon = armyCatalog.ComposeGrenadierRuntime(composed.FuseSeconds);
 
         // Both source variants use GrenadeEnemy. Only the ordinary special lane changes its fuse here.
-        // Navigation and attack admission remain separate until their card-only source guards are migrated.
+        // Shared movement and attacks consume these owner-bound values after source identity validation.
         cardGrenadierThrows.Add(entityKey, recoveredWeapon);
         _cardGrenadierDamage.Add(entityKey, composed.Damage);
+        TryAssignCardGrenadierPoint(entity);
     }
 }

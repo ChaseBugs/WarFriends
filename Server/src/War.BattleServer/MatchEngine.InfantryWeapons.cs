@@ -22,7 +22,7 @@ public sealed partial class MatchEngine
     {
         _grenadierWeapons.Advance(tick, entityKey =>
             activeArmyEntities.TryGetValue(entityKey, out BattleArmyEntityState? actor) &&
-            actor.SourceCardId == "GREATGRENADIER");
+            IsGrenadier(actor));
     }
 
     private void RemoveGrenadierWeaponVisibility(ulong entityKey)

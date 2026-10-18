@@ -17,7 +17,7 @@ public sealed partial class MatchEngine
     internal Vector3 CardGrenadierAcquisitionMuzzle(ulong entityKey)
     {
         if (enemyMuzzles == null || assaulterWeapon == null ||
-            !activeArmyEntities.TryGetValue(entityKey, out var entity) || entity.SourceCardId != "GREATGRENADIER" ||
+            !activeArmyEntities.TryGetValue(entityKey, out var entity) || !IsGrenadier(entity) ||
             !infantryAnimations.TryGetValue(entityKey, out var animation) || tick < animation.StartTick)
         {
             throw new InvalidDataException("Grenadier acquisition has no current source rig authority.");

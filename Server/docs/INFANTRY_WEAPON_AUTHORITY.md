@@ -145,3 +145,13 @@ no ordinary combat completion or two-Client gameplay proof is claimed.
 This spawn checkpoint passes 50 focused authority/protobuf/composition checks, plus the existing
 23 actual card damage and 25 moving acquisition regressions. Full-suite and normal Unity gameplay
 verification were not rerun.
+
+## Ordinary navigation and launch follow-up
+
+The subsequent [ordinary host integration](ORDINARY_GRENADIER_COMBAT.md) now connects spawn to
+shared Corner movement, attack selection and actual grenade launch. This supersedes the earlier
+spawn-only navigation/launch gap. Ordinary Client weapon-mask projection and the remaining
+verification boundaries listed there are still open.
+
+This navigation/launch checkpoint passes 62 focused checks and the complete default Windows
+Battle executable (247,825 assertions, exit zero). Native coroutine evidence still verifies.

@@ -1439,6 +1439,7 @@ public sealed partial class MatchEngine
         if (!cardGrenadierThrows.TryAdd(entity.EntityKey, throwSetup))
             throw new InvalidDataException("Card Grenadier reused its throw identity.");
         _cardGrenadierDamage.Add(entity.EntityKey, source.BaseStats.Grenade);
+        armyShots.Add(entity.EntityKey, source.BaseStats.Shot);
         armyDamage.Add(entity.EntityKey, source.BaseStats.Combat.Damage);
         TryAssignCardGrenadierPoint(entity);
     }
@@ -1451,7 +1452,7 @@ public sealed partial class MatchEngine
         if (rifleCombat == null || playerShotTargets == null || map == null ||
             armyCatalog == null || armyWeapons == null ||
             !activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-            entity.SourceCardId != "GREATGRENADIER" ||
+            !IsGrenadier(entity) ||
             grenadierWalks.ContainsKey(entityKey) ||
             cardEnemyPoints?.Find(entityKey) is not { } point ||
             !cardGrenadierThrows.TryGetValue(entityKey, out var setup))
@@ -1552,13 +1553,14 @@ public sealed partial class MatchEngine
 
     private void TryAssignCardGrenadierPoint(BattleArmyEntityState entity)
     {
-        if (entity.SourceCardId != "GREATGRENADIER" ||
+        if (!IsGrenadier(entity) ||
             cardEnemyPoints == null || armyCatalog == null)
             throw new InvalidDataException("Card Grenadier has no source point authority.");
 
         Vector3 position = new(entity.X, entity.Y, entity.Z);
+        // Both variants use the same source family mask 14; this key selects point policy, not actor identity.
         CardUnitInitialPoint? point = cardEnemyPoints.TryAssign(
-            entity.EntityKey, entity.SourceCardId, entity.OwnerFraction, position);
+            entity.EntityKey, "GREATGRENADIER", entity.OwnerFraction, position);
         if (point == null)
         {
             // EnemyController.GenerateInitPoint retries after five seconds.
@@ -1571,7 +1573,7 @@ public sealed partial class MatchEngine
         {
             ArmyNavMeshCorridor route = PlanCardSoldierRoute(position,
                 point.Position);
-            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            float speed = ArmySpeed(entity.EntityKey) ?? armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
             grenadierWalks.Add(entity.EntityKey, new CardSoldierWalkState(
                 point.ComponentFileId, route, armyCatalog.InfantryAgent, speed));
             grenadierPointRetryTicks.Remove(entity.EntityKey);
@@ -1590,7 +1592,7 @@ public sealed partial class MatchEngine
         {
             if (tick < dueTick) continue;
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "GREATGRENADIER")
+                !IsGrenadier(entity))
                 throw new InvalidDataException("Card Grenadier retry lost its soldier.");
             TryAssignCardGrenadierPoint(entity);
         }
@@ -1602,7 +1604,7 @@ public sealed partial class MatchEngine
             .OrderBy(row => row.Key).ToArray())
         {
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "GREATGRENADIER" ||
+                !IsGrenadier(entity) ||
                 cardEnemyPoints?.Find(entityKey)?.ComponentFileId != walk.PointFileId)
                 throw new InvalidDataException("Card Grenadier walk lost its point.");
 
@@ -1611,7 +1613,10 @@ public sealed partial class MatchEngine
             entity.Y = walk.Position.Y;
             entity.Z = walk.Position.Z;
             entity.PositionTick = tick;
-            cardUnitCombat?.UpdatePose(entity);
+            if (entity.SourceCardId.Length > 0)
+            {
+                cardUnitCombat?.UpdatePose(entity);
+            }
             if (walk.Arrived)
             {
                 grenadierWalks.Remove(entityKey);
@@ -1627,15 +1632,12 @@ public sealed partial class MatchEngine
         if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
             point.ComponentType != "EnemyPointCorner")
             throw new InvalidDataException("Card Grenadier reached no valid Corner.");
-        CardUnitEntity source = cardUnitEntities.Find(entity.LocalEntityId) ??
-            throw new InvalidDataException("Card Grenadier lost its shot row.");
-        if (source.EntityKey != entityKey ||
-            source.SourceCardId != "GREATGRENADIER")
-            throw new InvalidDataException("Card Grenadier lost its card identity.");
+        if (!IsGrenadier(entity) || !armyShots.TryGetValue(entityKey, out ArmyBaseShotStats? shot))
+            throw new InvalidDataException("Grenadier lost its composed shot authority.");
 
         // SoldierBehaviour.ApplyWeaponsSetup replaces the pistol cadence
         // with 0.35 seconds. A selected grenade has only one shot.
-        var attack = new ArmyRusherAttackState(source.BaseStats.Shot,
+        var attack = new ArmyRusherAttackState(shot,
             NextArmyFloat, shotIntervalTicks:
                 (int)MathF.Ceiling(.35f * MatchManifest.TickRate));
         attack.BeginInitialCooldown();
@@ -1655,7 +1657,7 @@ public sealed partial class MatchEngine
             .OrderBy(row => row.Key))
         {
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "GREATGRENADIER" ||
+                !IsGrenadier(entity) ||
                 grenadierWalks.ContainsKey(entityKey) ||
                 cardEnemyPoints?.Find(entityKey) is not { } point ||
                 point.ComponentType != "EnemyPointCorner" ||
@@ -1743,7 +1745,7 @@ public sealed partial class MatchEngine
             }
             if (!activeArmyEntities.TryGetValue(intent.EntityKey,
                     out var soldier) ||
-                soldier.SourceCardId != "GREATGRENADIER" ||
+                !IsGrenadier(soldier) ||
                 !cardGrenadierThrows.TryGetValue(intent.EntityKey,
                     out var setup) ||
                 intent.GrenadeMuzzlePosition is not Vector3 muzzle ||
@@ -1758,11 +1760,7 @@ public sealed partial class MatchEngine
 
             ulong id = ++projectileId;
             string ownerId = soldier.OwnerPlayerId;
-            CardUnitEntity source = cardUnitEntities.Find(
-                soldier.LocalEntityId) ?? throw new InvalidDataException(
-                    "Card Grenadier lost its launch damage row.");
-            if (source.EntityKey != intent.EntityKey ||
-                !_cardGrenadierDamage.TryGetValue(intent.EntityKey, out var damage) ||
+            if (!_cardGrenadierDamage.TryGetValue(intent.EntityKey, out var damage) ||
                 armyCatalog == null)
                 throw new InvalidDataException(
                     "Card Grenadier lost its source explosion authority.");
@@ -1847,7 +1845,7 @@ public sealed partial class MatchEngine
         {
             if (tick <= changeTick) continue;
             if (!activeArmyEntities.TryGetValue(entityKey, out var entity) ||
-                entity.SourceCardId != "GREATGRENADIER" ||
+                !IsGrenadier(entity) ||
                 !grenadierAttacks.TryGetValue(entityKey, out var attack))
                 throw new InvalidDataException("Card Grenadier lost its Corner state.");
             if (attack.Phase is ArmyRusherAttackPhase.Windup or
@@ -1871,7 +1869,7 @@ public sealed partial class MatchEngine
             Vector3 position = new(entity.X, entity.Y, entity.Z);
             ArmyNavMeshCorridor route = PlanCardSoldierRoute(position,
                 next.Position);
-            float speed = armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
+            float speed = ArmySpeed(entity.EntityKey) ?? armyCatalog.EffectiveSpeed(entity.UnitId, 1f);
             var walk = new CardSoldierWalkState(next.ComponentFileId, route,
                 armyCatalog.InfantryAgent, speed);
 
@@ -2334,6 +2332,7 @@ public sealed partial class MatchEngine
         if (entity.SourceCardId == "GREATGRENADIER")
         {
             armyDamage.Remove(entityKey);
+            armyShots.Remove(entityKey);
         }
         grenadierPointRetryTicks.Remove(entityKey);
         grenadierWalks.Remove(entityKey);
