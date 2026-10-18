@@ -9,6 +9,7 @@ using War.Shared;
 /// <summary>Checks non-granting account inventory projection before automatic matchmaking is enabled.</summary>
 internal static class BattleAllocationSourceTests
 {
+    private const int ConcurrentInitializers = 8;
     internal static int Run()
     {
         LegacyPlayerDocument player = CreatePlayer();
@@ -54,7 +55,8 @@ internal static class BattleAllocationSourceTests
         var source = new BattleAllocationSource(players);
         BattleAllocationProjection projected = await source.GetAsync(player.Id, deadline.Token);
         var allocations = new BattleAllocationStore(uri, databaseName);
-        await allocations.CreateIfMissing(projected, deadline.Token);
+        await Task.WhenAll(Enumerable.Range(0, ConcurrentInitializers).Select(_ =>
+            allocations.CreateIfMissing(projected, deadline.Token)));
         BattleAllocationProjection saved = await allocations.Get(player.Id, deadline.Token)
             ?? throw new InvalidDataException("Projected account allocation is absent.");
         Require(saved.CardIds.SequenceEqual(projected.CardIds) && saved.CardCounts.All(count => count == 2) &&
@@ -62,7 +64,7 @@ internal static class BattleAllocationSourceTests
             "Durable account-to-allocation projection lost inventory or army lanes.");
         player.Serialized.Remove("CardManagerData");
         BattleAllocationProjection empty = BattleAllocationSource.Project(player);
-        await Task.WhenAll(Enumerable.Range(0, 8).Select(_ =>
+        await Task.WhenAll(Enumerable.Range(0, ConcurrentInitializers).Select(_ =>
             allocations.CreateIfMissing(empty, deadline.Token)));
         BattleAllocationProjection retained = await allocations.Get(player.Id, deadline.Token)
             ?? throw new InvalidDataException("Concurrent initialization removed battle authority.");

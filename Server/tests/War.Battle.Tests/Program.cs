@@ -42,14 +42,21 @@ if(args is ["--init-mongo-replica-set",var bootstrapUri,var replicaName,var memb
     {
         startup.Token.ThrowIfCancellationRequested();
         try {await bootstrapClient.GetDatabase("admin").RunCommandAsync<BsonDocument>(initiate,cancellationToken:startup.Token);break;}
+        catch(MongoCommandException failure) when(failure.Code==23){break;}
         catch(MongoConnectionException){await Task.Delay(200,startup.Token);}
         catch(TimeoutException){await Task.Delay(200,startup.Token);}
     }
     while(true)
     {
         startup.Token.ThrowIfCancellationRequested();
-        var replicaHello=await bootstrapClient.GetDatabase("admin").RunCommandAsync<BsonDocument>(new BsonDocument("hello",1));
-        if(replicaHello.TryGetValue("isWritablePrimary",out var primary) && primary.ToBoolean())break;
+        var replicaHello=await bootstrapClient.GetDatabase("admin").RunCommandAsync<BsonDocument>(
+            new BsonDocument("hello",1),cancellationToken:startup.Token);
+        if(replicaHello.TryGetValue("isWritablePrimary",out var primary) && primary.ToBoolean())
+        {
+            if(!replicaHello.TryGetValue("setName",out var actualName) || actualName.AsString!=replicaName)
+                throw new InvalidDataException("The isolated Mongo replica identity does not match.");
+            break;
+        }
         await Task.Delay(200,startup.Token);
     }
     Console.WriteLine("PASS: isolated MongoDB replica set elected its primary");

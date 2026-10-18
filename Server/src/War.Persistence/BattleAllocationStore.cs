@@ -68,8 +68,15 @@ public sealed class BattleAllocationStore
             .SetOnInsert(row => row.EliteUpgradeIndexes, value.EliteUpgradeIndexes.ToArray())
             .SetOnInsert(row => row.Revision, 1L);
 
-        await allocations.UpdateOneAsync(row => row.PlayerId == value.PlayerId, update,
-            new UpdateOptions { IsUpsert = true }, cancellationToken);
+        try
+        {
+            await allocations.UpdateOneAsync(row => row.PlayerId == value.PlayerId, update,
+                new UpdateOptions { IsUpsert = true }, cancellationToken);
+        }
+        catch (MongoWriteException failure) when (failure.WriteError.Category == ServerErrorCategory.DuplicateKey)
+        {
+            // A concurrent initializer may win the primary-key insert; its complete row still must validate below.
+        }
         // Existing damaged authority must fail rather than being repaired into newly spendable inventory.
         _ = await Get(value.PlayerId, cancellationToken)
             ?? throw new InvalidDataException("Battle allocation disappeared after initialization.");

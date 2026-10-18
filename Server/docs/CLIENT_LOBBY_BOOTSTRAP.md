@@ -278,3 +278,15 @@ competing card-pack buffer conservation. The replica bootstrap test deadline is 
 to accommodate first storage checkpoints on the development disk; production timeouts are unchanged.
 The owned Mongo process was stopped after the tests. First-creation races and atomic account
 revision binding still require coverage before normal matchmaking is connected to this primitive.
+
+First creation now runs eight concurrent initializer calls against an absent allocation. The
+complete inventory Mongo suite passes with exit zero at the same directory's
+`race-ready-tests.log`; initial ownership, retry preservation, revision one and damaged-row
+rejection remain checked. Duplicate-key races are handled only by rereading and validating the
+winner, never by replacing it. This does not bind allocation to a durable account revision.
+
+The preceding `race-tests.log` run failed before tests because Mongo was not ready. The test
+bootstrap helper now accepts an already initialized replica, waits for writable Primary and
+verifies the requested replica-set name. Its readiness proof is separate from allocation tests;
+production server selection limits are unchanged. The owned Mongo process was stopped after
+the successful run, and the final build has zero warnings and errors.
