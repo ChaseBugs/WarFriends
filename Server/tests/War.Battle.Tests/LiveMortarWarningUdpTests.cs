@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using War.BattleServer;
 using War.Client;
 using War.Protocol;
@@ -40,6 +41,9 @@ internal static class LiveMortarWarningUdpTests
         Require((await owner.FetchProjectilesAsync(deadline.Token)).MortarWarnings.Count == 0,
             "An allied warning leaked through the live endpoint.");
         await CheckFrozenRetryAsync(observer, scan, frozen, deadline.Token);
+        File.WriteAllBytes(Path.Combine(fixture.RunDirectory, "mortar-warning.pb"), frozen.ToByteArray());
+        BattleMortarWarningState future = MortarWarningReconstruction.AtTick(frozen, frozen.ObservedTick + 5);
+        File.WriteAllBytes(Path.Combine(fixture.RunDirectory, "mortar-warning-future.pb"), future.ToByteArray());
         Console.WriteLine("Mortar warning UDP artifacts: " + fixture.RunDirectory);
         return 11;
     }

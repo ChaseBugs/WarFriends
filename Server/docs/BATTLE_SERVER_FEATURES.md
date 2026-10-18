@@ -76,7 +76,13 @@ The warning payload now includes complete source tween checkpoints, with immutab
 reconstruction to current game time and explicit fresh-scan requirements for old state. First,
 reused and immediate-duration playback traces cover every stored phase. Real .NET Worker/SDK
 warning delivery now passes eleven checks, including allied suppression, frozen retry isolation,
-decoded catch-up and expiry. Unity SDK packaging and rendered two-Client acceptance remain open.
+decoded catch-up and expiry. Unity SDK installation and native decoding follow below;
+rendered two-Client acceptance remains open.
+The active Unity networking SDK is now installed and hash-verified. Six native Unity Mono
+checks decode an actual Worker/SDK checkpoint and compare .NET reconstruction, phase flags,
+expiry and malformed-rate rejection. This exposed/fixed a one-ULP Mono recomputation mismatch
+by preserving source binary32 storage boundaries. The .NET Mortar group remains 14,326 checks;
+the actual warning presentation adapter and rendered acceptance are still pending.
 
 [Normal lobby bootstrap](CLIENT_LOBBY_BOOTSTRAP.md) now routes recovered
 account/configuration HTTP and normal battle-session entry to the same

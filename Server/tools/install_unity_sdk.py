@@ -23,6 +23,8 @@ for source in files:
     dest = destination/source.name
     shutil.copyfile(source, dest)
     manifest[source.name] = hashlib.sha256(dest.read_bytes()).hexdigest()
-(destination/'sdk-manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
-(destination/'.gitignore').write_text('!*.dll\n')
+(destination/'sdk-manifest.json').write_text(
+    json.dumps(manifest, indent=2)+'\n', encoding='utf-8', newline='\n'
+)
+(destination/'.gitignore').write_text('!*.dll\n', encoding='utf-8', newline='\n')
 print('Installed portable Unity SDK:', ', '.join(manifest))

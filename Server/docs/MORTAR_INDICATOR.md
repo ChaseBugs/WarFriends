@@ -164,8 +164,8 @@ Its size is 9,309 compressed and 312,630 expanded bytes. Local evidence is
 `Server/.local/mortar-indicator-reuse-unity-final.log` and
 `Server/.local/mortar-indicator-reuse-tests-final.log`. The private manifest was restored after
 the owned Unity process exited. These observations use Unity 2018.3.0f2, not original 5.2.5 parity.
-The portable networking Release build passes with zero warnings/errors. The active Unity SDK
-binaries were not replaced because no active Client source consumes the new observer yet.
+The portable networking Release build at this earlier checkpoint passed with zero warnings/errors.
+It did not replace active Unity SDK binaries; the later installed SDK audit is recorded below.
 
 This stage adds reusable observer logic without changing active host/Client presentation flow.
 The observer must eventually live per real pool slot and viewer, not be recreated for every new
@@ -623,9 +623,9 @@ publication after shooter death. Protocol regression passes 1,360 checks at
 `Server/.local/mortar-warning-projectile-tests.log`.
 
 This sample-only milestone did not include late-arrival clock checkpoints; the subsequent
-checkpoint implementation is described below. Unity SDK packaging and rendering remain open;
-the subsequent real .NET Worker/SDK UDP proof is recorded below. Active Unity plugin binaries were not
-replaced. Do not extrapolate a fresh clock from launch age and claim it preserves source
+checkpoint implementation is described below. Subsequent SDK installation and real .NET
+Worker/SDK UDP proofs are recorded below; rendered warning acceptance remains open.
+Do not extrapolate a fresh clock from launch age and claim it preserves source
 slot/observer history, or describe source/packet tests as rendered two-Client acceptance.
 
 ## Complete clock checkpoints and delayed reconstruction
@@ -653,7 +653,8 @@ independent uninterrupted traces at every sampled first-use, reused and short-du
 The latter preserves the recovered immediate-duration path, which does not start blinking.
 Hidden state and retained blink startup flags are included. These are exact managed-source
 clock comparisons backed by the earlier native clock evidence, not a new Mono checkpoint or
-rendered Client acceptance run. Active Unity binaries and presenters still need migration.
+rendered Client acceptance run. The subsequent SDK installation is recorded below; presenters
+still need migration.
 The latest Mortar group passes 14,326 checks at `Server/.local/mortar-checkpoint-tests.log`;
 protocol/admission/replay regression passes 1,360 at
 `Server/.local/mortar-checkpoint-protocol-tests.log`. The sixty-second replay budget is explicit
@@ -683,3 +684,39 @@ The shared fixture's existing mixed grenade path passes twelve checks at
 `Server/.local/mortar-warning-live-fixture-regression.log`. The new warning scenario is included
 in the full executable as well as `--mortar-warning-udp-only`. Full-suite results must be
 inspected separately; these focused runs do not establish complete gameplay acceptance.
+
+## Installed Unity SDK and Mono compatibility
+
+The active Client's War.Client.dll and War.Shared.dll now include warning transport/checkpoints
+and reconstruction. `install_unity_sdk.py` built Release with zero warnings/errors and refreshed
+sdk-manifest.json. Existing DLL/meta identities and the five pinned runtime dependency binaries
+were preserved. Installed file hashes were verified against the manifest before backup and again
+after installation. Current hashes are:
+
+- War.Client.dll: `1b1b1c1445545e1f5713543a3d228d06c4066cb95c575363cd2c4d1d056b8be3`.
+- War.Shared.dll: `4c19136472ba80b30ff509c5ca039e8c11a5e2ad561fe5e8bdfbc080e1498aa4`.
+
+The real UDP fixture now retains `mortar-warning.pb` and its five-frame .NET projection as
+`mortar-warning-future.pb`. `UnityMortarCheckpointSdkAudit` loads those actual Worker/SDK bytes
+in the disposable Unity 2018.3.0f2 project, validates them, reconstructs the same authority/time,
+compares .NET/Mono samples and phase flags, checks expiry, and rejects an altered source rate.
+The six checks pass with Editor exit code zero at
+`Server/.local/mortar-checkpoint-sdk-unity.log`; the report is
+`Server/.local/coop-geometry-project/mortar-checkpoint-sdk-audit.json`. Fixture input is retained
+at `Server/.local/mixed-grenade-udp-759904412b364714ae464bfe88b3aeaa`.
+
+That native run exposed a real validation incompatibility: a stored rate of `0.493685424`
+(bits 1056752726) was compared with a Mono expression yielding `0.493685454` (bits 1056752727).
+Rotation, scale and alpha checkpoint/sample pairs already agreed. Validation now forces the
+duration subtraction and inverse rate through binary32 storage, matching source NGUI float
+fields, before exact comparison. It does not widen rate tolerance or accept an altered rate.
+The failed native evidence remains at `Server/.local/mortar-checkpoint-sdk-unity-before-fix.log`.
+
+The updated .NET Mortar group passes 14,326 checks at
+`Server/.local/mortar-unity-sdk-mortar-tests.log`; the input-producing real UDP run passes eleven
+checks at `Server/.local/mortar-unity-sdk-udp-tests.log`. Asset audit reports zero missing scripts
+and broken references, with the existing seventeen unmatched NGUI sprite selections unchanged.
+The disposable private package manifest was restored to its original hash after the Editor exited.
+This proves installed SDK compilation and native decoding/reconstruction of one natural live
+checkpoint, not on-screen warnings, every reused/blink phase in Mono, normal two-Client play,
+Android or original Unity 5.2.5 parity. The presentation adapter remains pending.

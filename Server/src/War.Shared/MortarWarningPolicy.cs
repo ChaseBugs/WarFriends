@@ -15,6 +15,7 @@ namespace War.Shared
         private const float MaximumScale = 1.5f;
         private const float MaximumAlpha = 0.35f;
         private const float SampleTolerance = 0.00001f;
+        private const float SourceShrinkLeadSeconds = 0.3f;
 
         /// <summary>Rejects mixed observers, unordered slots, duplicate launches and malformed sampled values.</summary>
         public static void Validate(IReadOnlyList<BattleMortarWarningState> rows, ulong snapshotTick, int? observerFraction)
@@ -49,7 +50,8 @@ namespace War.Shared
                 }
                 previousSlot = row.WeaponSlot;
                 MortarIndicatorClock clock = MortarIndicatorClock.FromCheckpoint(row.Clock);
-                float expectedSpeed = row.StopSeconds > 0.3f ? 1f / (row.StopSeconds - 0.3f) : 0f;
+                float duration = StoredSingle(row.StopSeconds - SourceShrinkLeadSeconds);
+                float expectedSpeed = duration > 0f ? StoredSingle(1f / duration) : 0f;
                 if (!clock.IsVisible || !row.Clock.HasBegun || row.Clock.ShrinkSpeed != expectedSpeed ||
                     clock.RotationFactor != row.RotationFactor || clock.Scale != row.Scale || clock.Alpha != row.Alpha)
                 {
@@ -61,6 +63,13 @@ namespace War.Shared
         private static bool Bounded(float value, float minimum, float maximum)
         {
             return !float.IsNaN(value) && !float.IsInfinity(value) && value >= minimum && value <= maximum;
+        }
+
+        private static float StoredSingle(float value)
+        {
+            // Mono can retain extra precision between subtraction and division. Source
+            // NGUI stores duration/rate in float fields; preserve those binary32 boundaries.
+            return BitConverter.ToSingle(BitConverter.GetBytes(value), 0);
         }
     }
 }
