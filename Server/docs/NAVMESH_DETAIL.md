@@ -1160,3 +1160,28 @@ nearest-point retry and executing movement remain separate integration gates.
 Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
 native helpers with zero build warnings/errors. Evidence is
 `.local/crew-retry-clock-windows.log` and `.local/crew-retry-clock-linux.log`.
+
+### Composed fallback retry owner
+
+`CoopHelicopterFallbackRetry` owns one unassigned host actor identity, its scaled
+retry clock and a reference to shared destination state. It accepts explicit host
+frame/time/position observations. A due wait calls RetryHelicopterAssaulterPoint;
+no point schedules another wait from that callback time, while a successful point
+sets Assigned and returns the same destination on later observations.
+
+Cancel stops Waiting owners without claiming future free points. Assigned targets
+are not released by timer cancellation: normal actor death/despawn owns that
+destination lifecycle. Finite pose/time validation occurs before consuming a wait.
+Selection or rescheduling exceptions propagate and mark the owner Faulted; they
+are not silently converted into a new successful wait or an invented assignment.
+
+The shared-reservation fixture keeps the only point occupied through the first
+callback, frees it before the next deadline and verifies no early claim followed
+by a due assignment. It also checks stable repeated results, pending cancellation,
+preserved assigned ownership and a rejected malformed pose followed by a valid
+same-frame callback. These checks use authored observations, not a new original
+actor/WaitForSeconds capture. Actor life/registry wiring, cancellation on death,
+Worker delivery of source scaled observations and movement remain pending.
+Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
+fallback-owner helper checks with zero build warnings/errors. Evidence is
+`.local/crew-fallback-owner-windows.log` and `.local/crew-fallback-owner-linux.log`.

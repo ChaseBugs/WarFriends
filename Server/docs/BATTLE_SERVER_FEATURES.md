@@ -36,6 +36,20 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The fallback retry owner now composes the observed scaled wait with shared
+nearest-point reservations. It attempts only when due, schedules the next wait
+when no point is free and retains one accepted assignment on success. Pending
+cancellation prevents later claims; cancelling a completed timer does not revoke
+the destination now owned by the actor. Invalid poses are rejected before clock
+consumption, and reservation/callback failure is explicit Faulted state rather
+than a silently renewed wait. Tests cover repeat waits, a point freed before the
+next deadline, single assignment, pending cancellation and valid same-frame
+recovery after a malformed pose. Normal actor registry, life/cancellation hooks,
+movement and Worker observation delivery remain pending.
+Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
+the new fallback-owner checks with zero build warnings/errors. Logs:
+`.local/crew-fallback-owner-windows.log` and `.local/crew-fallback-owner-linux.log`.
+
 The scaled retry clock now has original coroutine evidence. An isolated Unity
 probe invokes Core_BaseScript.InvokeAfter twice, including ten paused frames
 and changed time scales. `HelicopterCrewRetryClock` reproduces all 235 observed

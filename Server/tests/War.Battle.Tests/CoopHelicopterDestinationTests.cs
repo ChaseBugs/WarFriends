@@ -43,6 +43,7 @@ internal static class CoopHelicopterDestinationTests
         VerifyRollback(map, masks, combat, point);
         VerifyExitBranches(map, masks, combat, spawns);
         VerifyRetrySelection(map, masks, combat);
+        CoopHelicopterFallbackRetryTests.Run(map, masks, combat);
         Console.WriteLine("PASS: helicopter Assaulter destinations share reservations and roll back failed placement.");
     }
 
