@@ -13,7 +13,7 @@ internal sealed partial class CoopMatchRuntime
     internal void EnableTransportRopes()
     {
         if (Terminal || tick != 0 || participants.Values.Any(player => player.Admitted) || _transportRopes != null ||
-            _transportLandingNavigation == null || _transportRopeDefinition == null)
+            _transportLandingNavigation == null || _transportRopeDefinition == null || _transportCrewPoolFrame == null)
         {
             throw new InvalidOperationException("Native transport ropes require pre-admission source binding.");
         }

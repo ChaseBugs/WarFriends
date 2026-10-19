@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "scene": "Assets/Scenes/MainScene.unity",
+  "sceneSha256": "5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff",
+  "source": "Assets/Scripts/Assembly-CSharp/NetworkObjectPool.cs",
+  "sourceSha256": "518db4d032e775c4a755c71c376905d25268f36965d778025008cc046b1f03ed",
+  "fixture": "Edit Mode scene pool plus original parenting/reset operations; no pool lifecycle.",
+  "observation": {
+    "poolName": "NetworkPool",
+    "poolParent": "Pools",
+    "pool": {
+      "position": [
+        0.489697456,
+        -0.88899827,
+        -4.32201052
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "localPosition": [
+        0.489697456,
+        -0.88899827,
+        -4.32201052
+      ],
+      "localRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "container": {
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "localPosition": [
+        -0.489697456,
+        0.88899827,
+        4.32201052
+      ],
+      "localRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "initialized": {
+      "position": [
+        0.489697456,
+        -0.88899827,
+        -4.32201052
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "localPosition": [
+        0.489697456,
+        -0.88899827,
+        -4.32201052
+      ],
+      "localRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "reused": {
+      "position": [
+        2.0,
+        10.0,
+        3.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "localPosition": [
+        2.0,
+        10.0,
+        3.0
+      ],
+      "localRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "poolComponents": [
+      "UnityEngine.Transform",
+      "NetworkObjectPool",
+      "PhotonView"
+    ],
+    "enemyEntries": [
+      {
+        "Name": "enemy",
+        "Count": 130,
+        "prefab": "Assets/GameObject/enemy.prefab"
+      }
+    ]
+  }
+}

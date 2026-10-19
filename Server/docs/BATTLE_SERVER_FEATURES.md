@@ -36,6 +36,21 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The actual MainScene initial pool frame is now source-bound. Its NetworkPool has
+a nonzero world translation, but the source's newly parented crew container
+preserves world identity. ReInstantiate resets the soldier's world rotation to
+identity. BattleCombatContent validates the pinned capture before publication;
+native enablement requires it, and actual drop records retain initial parent and
+spawn-reset rotations separately from crew-point pose. This resolves the initial
+pool frame only: source actor lifecycle, later parent motion, canonical entry
+endpoints and automatic coroutine/update order remain open. The capture repeats
+source Transform operations in Edit Mode rather than running a Photon pool.
+Windows and actual Ubuntu WSL each pass the native-enabled combat-content suite:
+28,059 reported assertions plus drop/lifecycle helper checks. Both runs confirm
+two actual drop records with initial pool/reset inputs and complete native registry
+reuse. Logs: `.local/pool-frame-content.log` and `.local/pool-frame-linux-content.log`.
+Build warnings/errors remain zero.
+
 Entry rotation now combines the verified NGUI realtime delta with source easing,
 strict completion, reusable component state and local/world parent composition.
 All 33 original Start/Update invocations match, including exact factor values.

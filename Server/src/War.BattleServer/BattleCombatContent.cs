@@ -12,6 +12,7 @@ public sealed record CombatContentManifest(int Version,string SceneRevision,stri
 
 public sealed class BattleCombatContent
 {
+    internal HelicopterCrewPoolFrame HelicopterCrewPoolFrame { get; private init; } = null!;
     public RifleStatCatalog Stats { get; }
     public PvpSkillShotScoreCatalog PvpScores { get; private init; } = null!;
     public PvpScoreStreakPolicy PvpScoreStreak { get; private init; } = null!;
@@ -302,6 +303,8 @@ public sealed class BattleCombatContent
             CoopCornerQueuePoses=coopCornerQueuePoses,
             CoopObstaclePoses = coopObstaclePoses,
             ObservedObstaclePoses = observedObstaclePoses,
+            HelicopterCrewPoolFrame = HelicopterCrewPoolFrame.Load(Path.Combine(directory,
+                "recovered-helicopter-pool-frame-unity-reference.json")),
             HelicopterRope = HelicopterRopeDefinition.Load(Path.Combine(directory,
                 "recovered-helicopter-rope-definition.json"))};
     }

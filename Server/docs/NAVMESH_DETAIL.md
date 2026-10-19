@@ -429,3 +429,39 @@ Normal crew runtime registration still requires canonical entry endpoints,
 actual pool parent transforms and the source spawn/Start/Update/coroutine order.
 The existing scaled shot tween is unchanged; its first-frame callback handling
 must not be copied as repeated unscaled fixed deltas into the entry path.
+
+## Actual MainScene initial pool frame
+
+`UnityHelicopterPoolFrameExport` opens the disposable MainScene in Edit Mode and
+requires its unique `NetworkPool`. The source `NetworkObjectPool.Init` creates a
+new container and assigns `transform.parent` with world-position preservation;
+it then parents spawned objects into that container. ReInstantiate resets the
+soldier's world position/rotation without changing its parent. The exporter
+repeats these Transform operations on plain objects, not a running actor pool.
+Edit Mode component initialization may run, but Play Mode, pool actor creation,
+Photon allocation and original spawn callbacks are not exercised.
+
+The real scene's NetworkPool world position is approximately
+`(0.489697456, -0.88899827, -4.32201052)`, with identity rotation/unit scale.
+Despite that offset, the new crew container retains world origin, identity
+rotation and unit scale; its local translation cancels the pool offset. A reused
+soldier at `(2, 10, 3)` has equal local/world position and identity local/world
+rotation. The scene enemy entry points to the recovered enemy prefab with count
+130. This is initial parent-space evidence, not a guarantee against subsequent
+ancestor movement or a runtime capacity policy for the new server.
+
+The active scene SHA-256 matches the disposable capture:
+`5b159bba5105203cd2a771385a110e63820a840d232e6a027b52b577604495ff`.
+The LF reference digest is
+`34433001337ce0aaa8f504c97ccec6acdd6344abcd06b6524221b7879a1fd96a`.
+The Unity process exits zero; log: `.local/helicopter-pool-frame-unity.log`.
+
+`HelicopterCrewPoolFrame` pins that reference and validates the supported initial
+container/reset rotations before BattleCombatContent publication. Native transport
+enablement requires this binding. Actual mission drop records now carry
+`InitialPoolParentRotation` and `SpawnResetRotation` separately from `CrewPoint`;
+neither is relabeled as the soldier's current rotation. The real native-enabled
+mission fixture verifies those inputs alongside both drops, direct landing
+queries, live leases and cleanup. Original actor initialization, later pool
+movement, entry endpoint capture and source callback/coroutine ordering remain
+required before normal crew descent authority can be registered.

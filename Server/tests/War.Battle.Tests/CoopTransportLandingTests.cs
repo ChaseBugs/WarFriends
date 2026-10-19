@@ -157,6 +157,7 @@ internal static class CoopTransportLandingTests
             if (drop.StartTick != descents.Single(descent => descent.Slot == drop.Slot).StartTick ||
                 Vector3.Distance(drop.RopeMarker, marker) > 0.000001f ||
                 Vector3.Distance(drop.CrewPoint.Position, root) > 0.000001f || drop.LandingSurface == null ||
+                drop.InitialPoolParentRotation != Quaternion.Identity || drop.SpawnResetRotation != Quaternion.Identity ||
                 drop.RopeLease != rope.Lease || drop.PhysicsSequence == 0 ||
                 drop.PhysicsSequence > physics.PhysicsSteps)
             {

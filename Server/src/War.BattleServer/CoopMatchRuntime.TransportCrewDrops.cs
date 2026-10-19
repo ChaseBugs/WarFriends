@@ -11,6 +11,8 @@ internal sealed partial class CoopMatchRuntime
         internal required ulong StartTick { get; init; }
         internal required HelicopterRopeBodyPose Aircraft { get; init; }
         internal required HelicopterRopeBodyPose CrewPoint { get; init; }
+        internal required Quaternion InitialPoolParentRotation { get; init; }
+        internal required Quaternion SpawnResetRotation { get; init; }
         internal required Vector3 RopeMarker { get; init; }
         internal required Vector3? LandingSurface { get; init; }
         internal required HelicopterPhysicsLease RopeLease { get; init; }
@@ -18,6 +20,7 @@ internal sealed partial class CoopMatchRuntime
     }
 
     private readonly Dictionary<(ulong EntityId, int Slot), TransportCrewDrop> _transportCrewDrops = new();
+    private readonly HelicopterCrewPoolFrame? _transportCrewPoolFrame;
 
     internal IReadOnlyList<TransportCrewDrop> TransportCrewDrops(ulong entityId)
     {
@@ -27,7 +30,7 @@ internal sealed partial class CoopMatchRuntime
 
     private void CaptureTransportCrewDrops(HelicopterPhysicsWorldSnapshot physics)
     {
-        if (_transportLandingNavigation == null || transportCrewPoints == null ||
+        if (_transportLandingNavigation == null || transportCrewPoints == null || _transportCrewPoolFrame == null ||
             manifest.MissionIndex is not int missionIndex)
         {
             throw new InvalidDataException("Native crew drop lost its mission and source placement bindings.");
@@ -61,6 +64,8 @@ internal sealed partial class CoopMatchRuntime
                     Aircraft = aircraft,
                     // Driving follows point position only; this rotation is the point's, not the soldier's.
                     CrewPoint = new HelicopterRopeBodyPose(pose.Position, pose.Rotation),
+                    InitialPoolParentRotation = _transportCrewPoolFrame.ParentRotation,
+                    SpawnResetRotation = _transportCrewPoolFrame.SpawnResetRotation,
                     RopeMarker = pose.RopePosition,
                     LandingSurface = surface,
                     RopeLease = rope.Lease,
