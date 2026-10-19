@@ -27,6 +27,7 @@ namespace WarFriends.Validation
         private static string _loadingFailureType;
         private static string _loadingFailureSource;
         private static readonly Dictionary<string, double> LoadingStages = new Dictionary<string, double>();
+        private static bool _hasCompletedReconnect;
 
         /// <summary>Gets whether this disposable process participates in the normal two-Unity battle gate.</summary>
         public static bool IsEnabled
@@ -39,7 +40,8 @@ namespace WarFriends.Validation
         {
             get
             {
-                return _hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER"));
+                return _hasReachedRunning && _hasCompletedReconnect &&
+                    File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER"));
             }
         }
 
@@ -126,6 +128,10 @@ namespace WarFriends.Validation
                 File.WriteAllText(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_SELF"),
                     JsonConvert.SerializeObject(new { matchId = client.State.MatchId }) + "\n");
             }
+            if (_hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER")))
+            {
+                _hasCompletedReconnect = UnityNormalBattleReconnectAudit.Observe(_game, client);
+            }
             return HasCompletedEntry;
         }
 
@@ -168,6 +174,7 @@ namespace WarFriends.Validation
                 loadingFailureType = _loadingFailureType,
                 loadingFailureSource = _loadingFailureSource,
                 loadingStages = LoadingStages,
+                reconnect = UnityNormalBattleReconnectAudit.Capture(),
                 phase = client == null || client.State == null ? null : client.State.Phase.ToString(),
                 matchState = MatchManager.matchState.ToString(),
                 players = PlayerController.players.Count

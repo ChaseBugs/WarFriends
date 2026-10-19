@@ -16,6 +16,8 @@ if (!$secondPath.StartsWith($validationRoot, [StringComparison]::OrdinalIgnoreCa
 }
 $owned = @()
 $previousContentPath = $env:Battle__ContentPath
+$previousReconnectMarker = $env:WAR_NORMAL_BATTLE_RECONNECT_MARKER
+$previousReconnectSelf = $env:WAR_NORMAL_BATTLE_RECONNECT_SELF
 $firstIdentity = $env:WAR_LOBBY_BOOT_IDENTITY
 $secondIdentity = 'NormalBoot-' + [Guid]::NewGuid().ToString('N')
 function Start-OwnedUnity([string]$project, [string]$identity, [string]$label) {
@@ -45,7 +47,7 @@ try {
     $editorFolder = Join-Path $secondPath 'Assets/Editor'
     New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
     foreach ($name in @('UnityNormalClientBootAudit', 'UnityNormalMatchmakingReadinessAudit',
-        'UnityNormalBattleEntryAudit', 'UnityStarterLoadoutExport')) {
+        'UnityNormalBattleEntryAudit', 'UnityNormalBattleReconnectAudit', 'UnityStarterLoadoutExport')) {
         Copy-Item -LiteralPath (Join-Path $serverRoot ("tools/$name.cs")) -Destination $editorFolder
     }
     $secondBoot = Start-OwnedUnity $secondPath $secondIdentity 'Unity-second-boot'
@@ -82,10 +84,13 @@ try {
     $secondRunning = Join-Path $RunRoot 'second-running.json'
     $env:WAR_NORMAL_BATTLE_SELF = $firstRunning
     $env:WAR_NORMAL_BATTLE_PEER = $secondRunning
+    $env:WAR_NORMAL_BATTLE_RECONNECT_MARKER = Join-Path $RunRoot 'reconnect-complete.json'
+    $env:WAR_NORMAL_BATTLE_RECONNECT_SELF = '1'
     $first = Start-OwnedUnity $FirstProject $firstIdentity 'Unity-first-battle'
     $owned += $first
     $env:WAR_NORMAL_BATTLE_SELF = $secondRunning
     $env:WAR_NORMAL_BATTLE_PEER = $firstRunning
+    $env:WAR_NORMAL_BATTLE_RECONNECT_SELF = '0'
     $second = Start-OwnedUnity $secondPath $secondIdentity 'Unity-second-battle'
     $owned += $second
     Complete-OwnedUnity $first $FirstProject 'Unity-first-battle'
@@ -95,7 +100,8 @@ try {
     }
     foreach ($report in $reports) {
         if (!$report.normalBattle.hasReachedRunning -or !$report.normalBattle.hasSubmittedCards -or
-            $report.normalBattle.players -ne 2 -or $report.exceptions -ne 0) {
+            $report.normalBattle.players -ne 2 -or $report.exceptions -ne 0 -or
+            !$report.normalBattle.reconnect.hasCompleted) {
             throw "Normal two-Unity entry did not reach running; inspect $RunRoot"
         }
     }
@@ -103,7 +109,12 @@ try {
         $reports[0].normalBattle.matchId -ne $reports[1].normalBattle.matchId) {
         throw 'Normal Unity participants did not observe the same authoritative match.'
     }
-    Write-Output "PASS: two normal Unity controllers completed cards/loading and reached the same running match; $RunRoot"
+    $reconnect = $reports[0].normalBattle.reconnect
+    if (!$reconnect.isInitiator -or !$reconnect.hasStarted -or $reconnect.rebuildCount -ne 1 -or
+        $reconnect.failureType -or $reports[1].normalBattle.reconnect.isInitiator) {
+        throw 'Normal Unity reconnect did not complete the designated one-peer snapshot rebuild.'
+    }
+    Write-Output "PASS: two normal Unity controllers reached Running and completed live reconnect; $RunRoot"
 }
 finally {
     [array]::Reverse($owned)
@@ -115,4 +126,6 @@ finally {
     $env:WAR_NORMAL_BATTLE_SELF = $null
     $env:WAR_NORMAL_BATTLE_PEER = $null
     $env:Battle__ContentPath = $previousContentPath
+    $env:WAR_NORMAL_BATTLE_RECONNECT_MARKER = $previousReconnectMarker
+    $env:WAR_NORMAL_BATTLE_RECONNECT_SELF = $previousReconnectSelf
 }

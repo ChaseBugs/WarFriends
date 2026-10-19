@@ -38,6 +38,14 @@ now awaits its actual reply inside the managed loading scope and rejects retired
 Do not count diagnostic timeout changes as gameplay verification. See [map assignment evidence](BATTLE_MAP_ASSIGNMENT.md)
 and the [original entry failure](CLIENT_LOBBY_BOOTSTRAP.md#two-normal-unity-participants-current-failed-entry-gate).
 
+The paired gate now also includes [normal Unity transport replacement](NORMAL_UNITY_RECONNECT.md)
+after entry: one participant requests a real Backend reconnect grant, retains its scene/player
+objects, rebuilds snapshot state and observes ninety resumed simulation ticks while the other
+participant stays connected. The normal two-Unity run exits zero with one rebuild, no reconnect
+failure and zero exceptions, while existing error-level diagnostics remain. This intentionally
+requested replacement is separate from packet-loss,
+network-outage and Android acceptance; its actual run result is recorded in the linked document.
+
 Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via
 `ClientBootSmoke.ps1 -VerifyNormalQueue`. It preserves source bot-routing rules, logs in a
 synthetic returning account and observes its durable scoped queue ticket and validated allocation

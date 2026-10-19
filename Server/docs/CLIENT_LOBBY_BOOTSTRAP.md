@@ -726,8 +726,10 @@ sprite mismatches remain. This is not a rerun of two-normal-Unity gameplay or or
 
 Trusted map identity/revision delivery now replaces the Photon-dependent `mMapIdSet` wait.
 Both normal Unity participants load the assigned
-City scene. The subsequent run still fails before Running, with durable `admission-timeout` proof
-and no accepted readiness. See [map assignment and current evidence](BATTLE_MAP_ASSIGNMENT.md).
+City scene. The initial default-limit run failed with durable `admission-timeout` proof and no
+accepted readiness. The corrected rendered-Editor gate subsequently reached host Running and
+local `gameIsRunning` on both sides using a diagnostic thirty-second admission window, with zero
+exceptions and remaining error-level diagnostics. See [map assignment and current evidence](BATTLE_MAP_ASSIGNMENT.md).
 
 The final native run exited zero:
 `Server/.local/legacy-start-native-final-418b52e0a82c48bc8bb15701bf4d36f8/queue-tests.log`.
