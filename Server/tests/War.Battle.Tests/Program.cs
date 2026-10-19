@@ -1453,6 +1453,22 @@ if (args is ["--observed-obstacle-catalog-only"])
     return;
 }
 
+if (args is ["--helicopter-rope-alignment-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName,
+        "content/recovered-helicopter-rope-alignment-unity-reference.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new FileNotFoundException("The recovered rope alignment reference was not found.");
+    }
+    HelicopterRopeAlignmentTests.Run(Path.Combine(root.FullName, "content"));
+    return;
+}
+
 if(args is ["--combat-content-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

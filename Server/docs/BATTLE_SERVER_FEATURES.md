@@ -34,6 +34,16 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now has the source `GetRopePosition` alignment calculation, checked against 24 actual
+recovered Unity method calls and guarded by 56 native tests. It preserves first-joint and
+segment crossings, the source hand/root offsets and the below-rope/null-rope behavior.
+No straight-rope substitute, landing or collision authority is inferred. Current rope joints,
+left-palm animation and root update ordering still need integration. See
+[rope alignment evidence](HELICOPTER_ROPE_ALIGNMENT.md) for provenance and remaining gates.
+The Windows combat-content run exits zero with 26,452 assertions and protocol tests pass.
+The self-contained Linux runner separately executes the 56 rope checks under Ubuntu WSL,
+also exiting zero; no rope physics, live descending hitboxes or landing authority is claimed.
+
 B22's transport collision diagnostics now include the living resting turret soldier's three
 sampled hitboxes, separate from the eleven aircraft body boxes. Source `Helicopter.GenerateMachineGunner`
 creates a separate soldier at `enemyPointVehicle`; `EnemyController.SwitchStateToVehicle` calls

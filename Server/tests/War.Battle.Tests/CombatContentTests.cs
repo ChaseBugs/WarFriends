@@ -7677,6 +7677,7 @@ internal static class CombatContentTests
     internal static int Run(string directory)
     {
         int count=0;
+        count += HelicopterRopeAlignmentTests.Run(directory);
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         count += VerifyMissionCatalog(directory, content);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
