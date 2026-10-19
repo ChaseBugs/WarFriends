@@ -36,14 +36,30 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Co-op now reserves distinct secondary crew IDs at transport spawn through the
+same allocator used by SpawnEnemy. Immutable aircraft/seat/point bindings exist
+with or without native rope opt-in; native birth records carry the reserved actor
+ID and descent start rejects zero/parent aliases. Invalid/exhausted ID batches
+cannot wrap to zero or partially consume a range. Flight/drop retain the cohort;
+parent removal and match end clear current bindings without reusing IDs.
+These are reservations, not registered infantry entities: mission generated/kill
+counters, damage/collision, health mutation, protocol projection and detached-actor
+survival remain pending. Source death handling only kills actors still bound to
+the original seat, so completed animation alone must not imply detachment.
+Windows and actual Ubuntu WSL pass 28,870 focused combat-content assertions plus
+native helpers and 9,997 native ownership/motion checks. Windows also passes the
+28,870-assertion suite with native transport opt-in disabled. Builds have zero
+warnings/errors. Logs: `.local/crew-identity-windows.log`, `.local/crew-identity-linux.log`,
+`.local/crew-identity-default-windows.log` and `.local/crew-identity-native-*.log`.
+
 Fallback-owner failure checks now prove that invalid obstacle placement publishes
 no destination, releases its point and leaves the owner Faulted even after input
 repair/cancellation. Another actor can claim the released point. An unrepresentable
 next deadline with a full point list also becomes Faulted without changing another
-actor's reservation. Runtime integration audit confirms crew births currently have
+actor's reservation. The earlier runtime integration audit found crew births had
 aircraft/seat identity but no independently allocated infantry entity ID. The retry
 API's actor ID must not be filled with the parent aircraft ID or an arbitrary
-existing Assaulter ID; independent actor allocation/provenance remains a gate.
+existing Assaulter ID; ID reservation now exists, but live actor registration remains a gate.
 Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
 the new fault/rollback checks with zero build warnings/errors. Logs:
 `.local/crew-retry-fault-windows.log` and `.local/crew-retry-fault-linux.log`.

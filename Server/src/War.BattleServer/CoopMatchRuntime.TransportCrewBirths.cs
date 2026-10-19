@@ -9,6 +9,7 @@ internal sealed partial class CoopMatchRuntime
     /// <summary>Immutable host spawn publication; canonical Client entry callbacks still require observation.</summary>
     internal sealed record TransportCrewBirth
     {
+        internal required ulong ActorEntityId { get; init; }
         internal required int Slot { get; init; }
         internal required ulong SpawnTick { get; init; }
         internal required float SpawnRealtime { get; init; }
@@ -48,6 +49,7 @@ internal sealed partial class CoopMatchRuntime
         float spawnRealtime = _transportSpawnRealtime[entityId];
         TransportCrewBirth[] births = points.Select(point => new TransportCrewBirth
         {
+            ActorEntityId = TransportCrewIdentities(entityId).Single(identity => identity.Slot == point.Slot).EntityId,
             Slot = point.Slot,
             SpawnTick = tick,
             SpawnRealtime = spawnRealtime,

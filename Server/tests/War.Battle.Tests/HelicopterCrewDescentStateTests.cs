@@ -71,7 +71,7 @@ internal static class HelicopterCrewDescentStateTests
             Slot = 0, StartTick = 1, Aircraft = aircraft, CrewPoint = seat,
             Birth = new CoopMatchRuntime.TransportCrewBirth
             {
-                Slot = 0, SpawnTick = 0, SpawnRealtime = 0, Aircraft = aircraft, CrewPoint = seat,
+                ActorEntityId = 2, Slot = 0, SpawnTick = 0, SpawnRealtime = 0, Aircraft = aircraft, CrewPoint = seat,
             },
             InitialPoolParentRotation = Quaternion.Identity, SpawnResetRotation = Quaternion.Identity,
             RopeMarker = new Vector3(0, StartingHeight + 10, 0),
@@ -85,6 +85,14 @@ internal static class HelicopterCrewDescentStateTests
     {
         Action[] invalid =
         {
+            () => HelicopterCrewDescentState.FromDrop(drop with
+            {
+                Birth = drop.Birth with { ActorEntityId = 0 },
+            }, root, physics),
+            () => HelicopterCrewDescentState.FromDrop(drop with
+            {
+                Birth = drop.Birth with { ActorEntityId = drop.RopeLease.EntityId },
+            }, root, physics),
             () => HelicopterCrewDescentState.FromDrop(drop with { PhysicsSequence = physics.PhysicsSteps + 1 },
                 root, physics),
             () => HelicopterCrewDescentState.FromDrop(drop with { RenderFrame = physics.RenderFrames + 1 },

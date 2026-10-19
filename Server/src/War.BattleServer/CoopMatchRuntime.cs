@@ -247,7 +247,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
     private CoopBossCombatState? boss;
     internal CoopBossAttackCadence? BossAttackCadence { get; private set; }
     internal CoopBossArsenal? BossArsenal { get; private set; }
-    private ulong nextEnemyId = 1;
+    private readonly CoopEntityIdAllocator _enemyIds = new();
     private BattlePhase phase = BattlePhase.Waiting;
     private ulong tick;
     private ulong stateRevision;
@@ -1026,7 +1026,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             : combat.OrdinaryStats(behaviour, level).Health;
         var enemy = new BattleCoopEnemySpawn
         {
-            EntityId = nextEnemyId++,
+            EntityId = _enemyIds.Allocate(),
             Behaviour = behaviour,
             Level = level,
             SpawnComponentFileId = point.ComponentFileId,
@@ -1127,6 +1127,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
                 ArmyHelicopterCrewStats crew = combat.TransportCrew(level);
                 transportHelicopterCrew.Add(enemy.EntityId,
                     new HelicopterCrewState(crew, transportCrewPoints, tick));
+                ReserveTransportCrewIdentities(enemy.EntityId, transportHelicopterCrew[enemy.EntityId]);
                 CaptureTransportCrewBirths(enemy.EntityId, crew.Seats, point.SourceRotation);
                 enemy.CrewCount = (uint)crew.Seats;
                 var gunner = new HelicopterGunnerState(
@@ -3936,6 +3937,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportCrewDrops.Clear();
         _transportCrewDescents.Clear();
         _transportCrewBirths.Clear();
+        _transportCrewIdentities.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
         infantryPointArrivals.Clear();

@@ -83,6 +83,7 @@ internal sealed partial class CoopMatchRuntime
     private void RemoveTransportCrewDrops(ulong entityId)
     {
         _transportCrewBirths.Remove(entityId);
+        _transportCrewIdentities.Remove(entityId);
         foreach (var key in _transportCrewDrops.Keys.Where(key => key.EntityId == entityId).ToArray())
         {
             _transportCrewDescents.Remove(key);

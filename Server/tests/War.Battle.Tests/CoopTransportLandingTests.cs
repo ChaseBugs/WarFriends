@@ -52,6 +52,7 @@ internal static class CoopTransportLandingTests
     {
         BattleCoopEnemySpawn previous = initial;
         var crewDescent = new CoopTransportCrewDescentTests();
+        CoopMatchRuntime.TransportCrewIdentity[] crewIdentities = CaptureCrewIdentities(runtime, initial.EntityId);
         CoopMatchRuntime.TransportCrewBirth[] birthsAtSpawn = runtime.TransportCrewBirths(initial.EntityId).ToArray();
         if (runtime.HasNativeTransportRopes && (birthsAtSpawn.Length == 0 ||
             birthsAtSpawn.Any(birth => birth.SpawnTick != initial.SpawnTick)))
@@ -114,6 +115,10 @@ internal static class CoopTransportLandingTests
                     throw new Exception("Flight or drop rewrote the original crew birth evidence.");
                 }
                 crewDescent.RequireObserved(runtime, initial.EntityId);
+                if (!runtime.TransportCrewIdentities(initial.EntityId).SequenceEqual(crewIdentities))
+                {
+                    throw new Exception("Flight or drop replaced its reserved crew actor identities.");
+                }
                 return endTick;
             }
             previous = runtime.Snapshot().Coop.EnemySpawns.Single(enemy => enemy.EntityId == initial.EntityId);
@@ -140,6 +145,20 @@ internal static class CoopTransportLandingTests
         }
     }
 
+    private static CoopMatchRuntime.TransportCrewIdentity[] CaptureCrewIdentities(CoopMatchRuntime runtime,
+        ulong entityId)
+    {
+        CoopMatchRuntime.TransportCrewIdentity[] identities = runtime.TransportCrewIdentities(entityId).ToArray();
+        HashSet<ulong> missionActors = runtime.Snapshot().Coop.EnemySpawns.Select(actor => actor.EntityId).ToHashSet();
+        if (identities.Length != runtime.TransportCrewMembers(entityId).Count || identities.Length == 0 ||
+            identities.Select(identity => identity.EntityId).Distinct().Count() != identities.Length ||
+            identities.Any(identity => identity.EntityId == 0 || missionActors.Contains(identity.EntityId)))
+        {
+            throw new Exception("Transport crew lacks distinct reserved identities outside its mission actor records.");
+        }
+        return identities;
+    }
+
     internal static void AdvanceTo(CoopMatchRuntime runtime, ulong endTick)
     {
         if (!runtime.HasNativeTransportRopes)
@@ -157,6 +176,10 @@ internal static class CoopTransportLandingTests
 
     internal static void Finish(CoopMatchRuntime runtime, ulong entityId, HelicopterRopeDefinition definition)
     {
+        if (runtime.TransportCrewIdentities(entityId).Count != 0)
+        {
+            throw new Exception("Removed transport retained its crew identity cohort.");
+        }
         if (!runtime.HasNativeTransportRopes)
         {
             return;
@@ -209,6 +232,9 @@ internal static class CoopTransportLandingTests
             Vector3 birthPoint = birth.Aircraft.Position + Vector3.Transform(slot.RestPosition, birth.Aircraft.Rotation);
             if (drop.StartTick != descents.Single(descent => descent.Slot == drop.Slot).StartTick ||
                 drop.Birth != birth || birth.SpawnTick >= drop.StartTick ||
+                birth.ActorEntityId == 0 || birth.ActorEntityId == entityId ||
+                runtime.TransportCrewIdentities(entityId).Single(identity => identity.Slot == drop.Slot).EntityId !=
+                    birth.ActorEntityId ||
                 !float.IsFinite(birth.SpawnRealtime) || birth.SpawnRealtime < 0 ||
                 birth.SpawnRealtime != (float)ObservedTimeForTick(birth.SpawnTick) ||
                 birth.SpawnRealtime == (float)(birth.SpawnTick / (double)MatchManifest.TickRate) ||

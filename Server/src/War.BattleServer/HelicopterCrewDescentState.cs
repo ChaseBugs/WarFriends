@@ -41,7 +41,8 @@ internal sealed class HelicopterCrewDescentState
         ArgumentNullException.ThrowIfNull(observedRoot);
         ArgumentNullException.ThrowIfNull(physics);
         float rotationLength = observedRoot.Rotation.LengthSquared();
-        if (drop.PhysicsSequence != physics.PhysicsSteps || drop.RenderFrame != physics.RenderFrames ||
+        if (drop.Birth.ActorEntityId == 0 || drop.Birth.ActorEntityId == drop.RopeLease.EntityId ||
+            drop.PhysicsSequence != physics.PhysicsSteps || drop.RenderFrame != physics.RenderFrames ||
             !PlayerHitbox.Finite(observedRoot.Position) || !float.IsFinite(rotationLength) ||
             MathF.Abs(rotationLength - 1f) > RootRotationUnitTolerance ||
             drop.LandingSurface is not Vector3 surface || !PlayerHitbox.Finite(surface))

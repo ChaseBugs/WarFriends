@@ -1195,9 +1195,9 @@ Cancel/input repair cannot silently resume that failed owner. A full point list
 with an unrepresentable subsequent deadline also faults without changing the
 existing occupant's destination or fabricating one for the retrying actor.
 
-The next runtime connection needs an independent infantry identity: current
-TransportCrewBirth records bind aircraft/seat/root/time but allocate no child
-entity. CoopMatchRuntime currently allocates mission enemy IDs through nextEnemyId
+The earlier integration audit identified the missing independent infantry identity:
+TransportCrewBirth records then bound aircraft/seat/root/time without a child
+entity. CoopMatchRuntime then allocated mission enemy IDs through nextEnemyId
 in SpawnEnemy. Passing the parent aircraft ID to the fallback owner would conflate
 actors; borrowing a mission Assaulter ID would steal another actor's destination.
 Neither is an authorized substitute for a real crew identity. Source SpawnAssaulter
@@ -1207,3 +1207,37 @@ pool life and death cleanup must be bound deliberately before automatic registra
 Windows and actual Ubuntu WSL pass 28,861 focused combat-content assertions plus
 fault/rollback checks with zero build warnings/errors. Evidence is
 `.local/crew-retry-fault-windows.log` and `.local/crew-retry-fault-linux.log`.
+
+### Reserved secondary crew identities
+
+`CoopEntityIdAllocator` now replaces SpawnEnemy's raw counter and reserves a
+non-overlapping range for each transport crew cohort. Reservation occurs for
+both native and default co-op paths, before optional native birth publication.
+`TransportCrewIdentities` binds actor ID, source slot and point component ID in
+immutable rows. Native TransportCrewBirth adds ActorEntityId; FromDrop rejects
+zero identity or reuse of the aircraft's identity. These fields are internal;
+there is no new protobuf projection or independent combat-body registration.
+
+ID batches preflight size/capacity before advancing the sequence. The final ulong
+value is an exhausted sentinel, never a wrap to zero. Allocator checks prove
+mission/crew/next-mission ordering, unchanged state after invalid or oversized
+batches and exhaustion without partial consumption. Runtime tests verify positive,
+unique crew IDs outside current mission actor records, stable identity through
+flight/drop, matching birth IDs and retirement of the current cohort on removal.
+
+Source lifecycle inspection matters before expanding this reservation into actors.
+Helicopter.OnOnDeath calls Vehicle.DestroySoldier, which checks that the soldier's
+current enemyPoint still equals the original seat. SetFinalTarget frees that seat;
+an actor in the no-point fallback can still reference it. KillMission reads all-type
+ScoreManager kills, while WaveManager also observes AIObjectKilled by prepared
+behaviour. Treating a secondary actor as an ordinary automatic spawn would change
+generation/scene limits; ignoring its real death can also miss objective credit.
+No such mission/health/combat transition is inferred from ID reservation here.
+Independent actor registration, source-aware death/objective accounting, health,
+detachment survival and pool reuse remain separate implementation work.
+Windows and actual Ubuntu WSL pass 28,870 focused combat-content assertions plus
+native helpers and 9,997 native ownership/motion checks. Windows separately passes
+28,870 assertions with native transport opt-in disabled. Build warnings/errors
+remain zero. Evidence is `.local/crew-identity-windows.log`,
+`.local/crew-identity-linux.log`, `.local/crew-identity-default-windows.log`,
+`.local/crew-identity-native-windows.log` and `.local/crew-identity-native-linux.log`.
