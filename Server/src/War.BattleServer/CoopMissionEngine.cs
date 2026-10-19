@@ -180,6 +180,12 @@ public sealed partial class CoopMissionEngine
             spawns.ConfirmInitialTransportCrew(aircraftId, actorIds, tick);
     }
 
+    internal bool ConfirmTransportGunner(ulong aircraftId, ulong actorId, ulong tick)
+    {
+        return Started && Outcome == MissionOutcome.InProgress &&
+            spawns.ConfirmTransportGunner(aircraftId, actorId, tick);
+    }
+
     /// <summary>
     /// Records a Score-mission death only after host combat has established the
     /// killer and the source damage branch. No client score or flag is accepted.

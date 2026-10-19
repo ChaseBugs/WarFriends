@@ -5475,6 +5475,8 @@ internal static class CombatContentTests
                 { PointComponentFileId: > 0 } ||
             flownBodies.Any(body => body.Hitbox.TransformPosition != transportPosition))
             throw new Exception("Co-op transport Helicopter lost its flight, stop, or body pose.");
+        ulong initialGunnerId = transportRuntime.TransportGunnerActorId(transport.EntityId) ??
+            throw new Exception("Initial transport gunner has no host identity.");
         if (transportRuntime.ApplyHostTransportGunnerDamage(transport.EntityId,
                 float.NaN, afterFlight) ||
             !transportRuntime.ApplyHostTransportGunnerDamage(transport.EntityId,
@@ -5511,6 +5513,15 @@ internal static class CombatContentTests
             transportRuntime.PlaceTransportGunner(transport.EntityId) == null)
             throw new Exception("Co-op gunner did not return at the source respawn tick.");
         TransportCrewHostDamageTests.Verify(transportRuntime, transport.EntityId, gunnerDue);
+        ulong respawnedGunnerId = transportRuntime.TransportGunnerActorId(transport.EntityId) ??
+            throw new Exception("Respawned transport gunner has no host identity.");
+        if (transportRuntime.TransportCrewIdentities(transport.EntityId)
+                .Any(identity => identity.EntityId == respawnedGunnerId) || respawnedGunnerId == transport.EntityId ||
+            respawnedGunnerId == initialGunnerId ||
+            transportRuntime.ApplyHostEnemyDamage(initialGunnerId, 1, gunnerDue))
+        {
+            throw new Exception("Turret soldier reused its aircraft or rope-crew identity.");
+        }
         ulong[] initialCrewIds = transportRuntime.TransportCrewIdentities(transport.EntityId)
             .Select(identity => identity.EntityId).ToArray();
         if (!transportRuntime.ApplyHostEnemyDamage(transport.EntityId,
@@ -5527,6 +5538,11 @@ internal static class CombatContentTests
         if (initialCrewIds.Any(actorId => transportRuntime.TransportCrewActor(actorId) is not { Health: 0 }))
         {
             throw new Exception("Source aircraft destruction retained a living attached crew actor.");
+        }
+        if (transportRuntime.TransportGunnerActorId(transport.EntityId) != null ||
+            transportRuntime.ApplyHostEnemyDamage(respawnedGunnerId, 1, gunnerDue))
+        {
+            throw new Exception("Aircraft death retained a live turret identity.");
         }
         CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, transport.EntityId);
         CoopTransportLandingTests.Finish(transportRuntime, transport.EntityId, content.HelicopterRope);

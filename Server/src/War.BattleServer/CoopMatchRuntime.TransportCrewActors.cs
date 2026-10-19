@@ -105,6 +105,7 @@ internal sealed partial class CoopMatchRuntime
         {
             _transportCrewActors.Add(actor.EntityId, actor);
         }
+        RegisterTransportGunnerActor(aircraftId);
     }
 
     private void DestroyAttachedTransportCrew(ulong aircraftId, ulong impactTick, CoopHostEnemyHitCredit? credit)

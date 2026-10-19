@@ -56,10 +56,27 @@ check both target-crossing modes. A full runtime target-crossing/attributed-scor
 cascade still needs acceptance coverage. Detached-survivor host transitions are
 covered by the separate fixture above; normal automatic gameplay remains pending.
 
-The source turret soldier dies after the aircraft's `OnKilled`. Its existing
-cleanup disables gunner health/respawn, but a distinct turret actor identity and
-mission/score death are still absent. Do not describe this as the complete source
-death cascade or complete crew integration.
+The source turret soldier dies after the aircraft's `OnKilled`. A separate
+match-wide actor ID is now allocated for initial gunner creation and each confirmed
+respawn. The mission state permits one live gunner per live aircraft, rejects
+reused IDs, and accounts for its prepared Assaulter family without increasing wave
+generation. Host gunner hits confirm lethal mission credit before health changes.
+The existing credited enemy-hit seam can resolve the current gunner actor ID;
+retired IDs cannot damage the next gunner life. Parent destruction confirms the
+living turret soldier after aircraft death, inside the same deferred-completion
+scope, and removes its current ID binding during cleanup.
+
+Focused tests cover overlapping lives, replay, distinct respawn IDs, death
+accounting and dead-parent rejection. The actual co-op fixture checks initial and
+respawn identities, old-ID rejection and parent cleanup. Attributed Score runtime
+cascades, target-crossing runtime teardown, wire projection of these secondary
+identities and normal gameplay hit routing still need acceptance coverage. This
+does not close complete crew integration.
+
+Validation: zero-warning/error build; native-enabled Windows and actual WSL Linux
+combat-content runs each passed 28,908 counted assertions plus fixture checks.
+Logs: `.local/transport-gunner-identity-windows.log` and
+`.local/transport-gunner-identity-linux.log`.
 
 Validation: build passed with zero warnings/errors. Native-enabled Windows and
 actual WSL Linux combat-content runs each passed 28,903 counted assertions plus

@@ -10,9 +10,10 @@ internal static class MissionTransportCrewTests
         VerifyWaveBalance(catalog.Get(0));
         VerifyUnlistedAircraft(catalog.Get(0));
         VerifyCrewWithoutWaveFamily(catalog.Get(0));
+        VerifyGunnerLifetimes(catalog.Get(0));
         VerifyKillObjective(catalog);
         Console.WriteLine("PASS: initial transport crew preserves generation accounting and one-time kill credit.");
-        return 17;
+        return 22;
     }
 
     private static void VerifyWaveBalance(MissionRule source)
@@ -83,6 +84,28 @@ internal static class MissionTransportCrewTests
         state.Finish();
         Require(!state.ConfirmInitialTransportCrew(700, new ulong[] { 702 }, 0),
             "A finished mission accepted crew registration.");
+    }
+
+    private static void VerifyGunnerLifetimes(MissionRule source)
+    {
+        MissionRule rule = source with
+        {
+            Behaviours = new[] { new MissionSpawnBehaviour("Assaulter", 1, 1, 1) },
+            Events = new[] { new MissionTimedEvent(0, "DeployHeli", 1, true, 1, "") },
+        };
+        var state = new MissionAutomaticSpawnState(rule, null);
+        Require(state.Start(0) && state.DueTimedEvents(0).Contains(0) &&
+            state.ConfirmTimedEventSpawn(0, 800, 0), "Gunner fixture did not create its source aircraft.");
+        Require(state.ConfirmTransportGunner(800, 801, 0) && state.LiveCount == 0 &&
+            !state.ConfirmTransportGunner(800, 802, 0),
+            "Gunner creation changed generated count or allowed overlapping lives.");
+        Require(state.ConfirmDeath(801) && !state.ConfirmDeath(801) &&
+            !state.ConfirmTransportGunner(800, 801, 0),
+            "Gunner death was replayed or its actor identity reused.");
+        Require(state.ConfirmTransportGunner(800, 802, 0) && state.ConfirmDeath(802) && state.LiveCount == -2,
+            "A distinct gunner respawn did not retain independent source death accounting.");
+        Require(state.ConfirmDeath(800) && !state.ConfirmTransportGunner(800, 803, 0),
+            "A dead aircraft created another turret soldier.");
     }
 
     private static void VerifyKillObjective(MissionCatalog catalog)

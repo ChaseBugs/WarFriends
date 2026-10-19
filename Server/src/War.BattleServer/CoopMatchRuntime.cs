@@ -953,7 +953,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             }
             if (transportGunners.TryGetValue(entityId, out HelicopterGunnerState? gunner))
             {
-                gunner.Advance(tick);
+                if (gunner.Advance(tick))
+                {
+                    RegisterTransportGunnerActor(entityId);
+                }
                 PublishTransportGunner(enemy, gunner.Snapshot());
             }
             HelicopterOrientationState orientation =
@@ -2793,18 +2796,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
     internal bool ApplyHostTransportGunnerDamage(ulong entityId, float damage,
         ulong impactTick)
     {
-        if (phase != BattlePhase.Running || impactTick != tick ||
-            impactTick >= mission.DeadlineTick ||
-            !transportGunners.TryGetValue(entityId, out HelicopterGunnerState? gunner))
-            return false;
-        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(spawn =>
-            spawn.EntityId == entityId && spawn.Behaviour == "DeployHeli" &&
-            spawn.Health > 0 && spawn.DeathTick == 0);
-        if (enemy == null || !gunner.Damage(damage, impactTick))
-            return false;
-        PublishTransportGunner(enemy, gunner.Snapshot());
-        stateRevision++;
-        return true;
+        return ApplyHostTransportGunnerDamage(entityId, damage, impactTick, null);
     }
 
     /// <summary>
@@ -2835,6 +2827,12 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             return ApplyHostCrewDamage(crewActor, damage, impactTick, credit);
         }
 
+        ulong gunnerAircraftId = _transportGunnerActorIds.FirstOrDefault(pair => pair.Value == entityId).Key;
+        if (gunnerAircraftId != 0)
+        {
+            return ApplyHostTransportGunnerDamage(gunnerAircraftId, damage, impactTick, credit);
+        }
+
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(
             spawned => spawned.EntityId == entityId);
         if (enemy == null || enemy.SpawnTick > impactTick ||
@@ -2862,6 +2860,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
                         throw new InvalidDataException("Confirmed transport death cascade lost its parent identity.");
                     }
                     return false;
+                }
+                if (enemy.Behaviour == "DeployHeli")
+                {
+                    DestroyTransportGunnerAfterAircraft(enemy.EntityId, impactTick, credit);
                 }
             }
 
@@ -2923,6 +2925,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             _transportSpawnRealtime.Remove(entityId);
             transportCrewSchedules.Remove(entityId);
             transportGunners.Remove(entityId);
+            _transportGunnerActorIds.Remove(entityId);
             // DestroyPooled also destroys its attached turret soldier.
             enemy.GunnerHealth = 0;
             enemy.GunnerRespawnTick = 0;
@@ -3969,6 +3972,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportCrewBirths.Clear();
         _transportCrewIdentities.Clear();
         _transportCrewActors.Clear();
+        _transportGunnerActorIds.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
         infantryPointArrivals.Clear();

@@ -169,6 +169,7 @@ public sealed partial class MissionAutomaticSpawnState
         if (!liveEntities.Remove(entityId, out int behaviourIndex))
             return false;
         _liveBehaviourNames.Remove(entityId);
+        _transportGunnerParents.Remove(entityId);
         if (behaviourIndex >= 0)
             killed[behaviourIndex] = checked(killed[behaviourIndex] + 1);
         return true;
