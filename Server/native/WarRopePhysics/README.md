@@ -4,7 +4,7 @@
 explicit; the battle Worker does not register or load it automatically. The existing
 PhysX reference build scripts build both the diagnostic executable and this library.
 It implements unit-scale aircraft attachment, generated rope bodies and direct aircraft
-Transform inheritance. Flight steering integration, extension/insertion, collisions, crew, landing, signed
+Transform inheritance and source extension/insertion. Flight scheduling, collisions, crew, landing, signed
 content selection and live Client acceptance remain separate work.
 
 ## Ownership and failure
@@ -23,7 +23,7 @@ simulation authority; failed simulation cannot be retried as though it rolled ba
 SDK parameter/operation/allocation/internal/abort errors latch the shared runtime into
 failure, while cleanup remains permitted. This is fail-closed behavior, not crash recovery.
 
-## C ABI version 2
+## C ABI version 3
 
 Lifecycle operations return `0` for success, `1` for invalid input/identity, `2` for capacity,
 and `3` for SDK/internal failure. No C++ exception crosses the boundary. Identities use
@@ -31,7 +31,8 @@ and `3` for SDK/internal failure. No C++ exception crosses the boundary. Identit
 
 | Export | Contract |
 | --- | --- |
-| `war_rope_abi_version()` | Returns `2`; managed construction rejects any other version before exchanging buffers. |
+| `war_rope_abi_version()` | Returns `3`; managed construction rejects any other version before exchanging buffers. |
+| `war_rope_extend(handle, values, length, expectedBodyCount)` | Applies one prepared command against the current count. |
 | `war_rope_set_aircraft_transform(handle, values, length)` | Applies exactly seven pose floats without advancing time. |
 | `war_rope_create(values, length, bodyCount, outHandle)` | Requires `14 + 7 * bodyCount` floats. |
 | `war_rope_step(handle)` | Completes exactly one 0.02-second simulation step. |
@@ -50,7 +51,17 @@ the root and terminal rope body in aircraft-local space, leaves generated middle
 unparented, and preserves existing velocities. It does not use a kinematic target or
 recompute joint rest frames. All resulting child poses validate before the first write.
 It assumes the measured original unit-scale hierarchy, not arbitrary caller-owned parenting.
-ABI 1 libraries must be rebuilt; no compatibility fallback selects different behavior.
+Older ABI libraries must be rebuilt; no compatibility fallback selects different behavior.
+
+Extension input has three floats for the moved first-body position, optionally followed
+by seven pose floats for exactly one new body. The managed owner prepares these values
+from the current snapshot and original measured spacing using `HelicopterRopeExtension`.
+It retains the original root constraint identity while disconnecting/reconnecting actors;
+replacing that joint changes solver order and does not match the source. The temporary
+kinematic transition resets the old first body's velocities. Inserted bodies use default
+Rigidbody linear drag zero, rather than the initial chain's 0.2. New objects and vector
+capacity allocate before existing body mutation; SDK failure still closes authority.
+The new body remains unparented and the original terminal body retains aircraft inheritance.
 
 ## Verification
 

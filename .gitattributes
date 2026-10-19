@@ -418,3 +418,4 @@ Server/tools/UnityArmyPerkAudit.cs text eol=lf
 
 # Source aircraft Transform inheritance and physical rope motion capture.
 Server/content/recovered-helicopter-rope-motion-unity-reference.json text eol=lf
+Server/content/recovered-helicopter-rope-extension-physics-unity-reference.json text eol=lf

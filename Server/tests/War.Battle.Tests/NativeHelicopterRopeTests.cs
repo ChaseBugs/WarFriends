@@ -30,7 +30,7 @@ internal static class NativeHelicopterRopeTests
         }
         checks += VerifyOwnership(initial[0]);
         checks += VerifyCapacity(initial[0]);
-        if (NativeRopeMethods.GetAbiVersion() != 2 ||
+        if (NativeRopeMethods.GetAbiVersion() != 3 ||
             NativeRopeMethods.Create(Array.Empty<float>(), 0, 4, out IntPtr invalid) != 1 || invalid != IntPtr.Zero ||
             NativeRopeMethods.Destroy(IntPtr.Zero) != 1)
         {
@@ -100,8 +100,9 @@ internal static class NativeHelicopterRopeTests
         RequireDisposed(() => first.Snapshot());
         RequireDisposed(() => first.ApplyAircraftTransform(
             new HelicopterRopeBodyPose(Vector3.Zero, Quaternion.Identity)));
+        RequireDisposed(() => first.Extend(0.03f));
         second.Advance();
-        return 6;
+        return 7;
     }
 
     private static int VerifyCapacity(JsonElement initial)
@@ -136,7 +137,7 @@ internal static class NativeHelicopterRopeTests
         return MaximumRopes + 3;
     }
 
-    private static NativeHelicopterRope Create(JsonElement scenario)
+    internal static NativeHelicopterRope Create(JsonElement scenario)
     {
         JsonElement joints = scenario.GetProperty("joints");
         HelicopterRopeInitialState initial = HelicopterRopeInitialization.Create(

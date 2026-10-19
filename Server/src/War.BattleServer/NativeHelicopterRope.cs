@@ -9,13 +9,14 @@ internal sealed class NativeHelicopterRope : IDisposable
     private const int HeaderSize = 14;
     private const int PoseSize = 7;
     private const int MotionSize = 13;
-    private const int ExpectedAbiVersion = 2;
+    private const int ExpectedAbiVersion = 3;
     private const float UnitRotationTolerance = 0.0001f;
     private static readonly HelicopterRopeBodySetup SourceBody = new(1f, 0.2f, 0.05f, true);
     private static readonly HelicopterRopeAngularLimits SourceLimits = new(-60f, 60f, 35f, 35f);
     private readonly object _gate = new();
     private readonly NativeRopeHandle _handle;
-    private readonly int _bodyCount;
+    private readonly float _initialJointDistance;
+    private int _bodyCount;
     private bool _hasFailed;
 
     internal ulong StepCount { get; private set; }
@@ -36,6 +37,7 @@ internal sealed class NativeHelicopterRope : IDisposable
             throw new NotSupportedException("The native rope ABI version does not match this host.");
         }
         _bodyCount = initial.Joints.Count;
+        _initialJointDistance = initial.InitialJointDistance;
         float[] input = PrepareInput(initial, aircraft, setup);
         int status = NativeRopeMethods.Create(input, input.Length, _bodyCount, out IntPtr identity);
         if (status != 0)
@@ -66,6 +68,40 @@ internal sealed class NativeHelicopterRope : IDisposable
         }
     }
 
+    /// <summary>Applies one source render-update extension command without advancing the physical clock.</summary>
+    internal void Extend(float deltaTime)
+    {
+        lock (_gate)
+        {
+            RequireAvailable();
+            if (_bodyCount < 3)
+            {
+                throw new InvalidOperationException("Source rope extension requires at least three bodies.");
+            }
+            IReadOnlyList<HelicopterRopeMotionBody> bodies = Snapshot();
+            var head = new HelicopterRopeHead(
+                bodies[0].Pose.Position, bodies[1].Pose.Position, bodies[2].Pose.Position);
+            HelicopterRopeExtensionResult command = HelicopterRopeExtension.Prepare(
+                head, _initialJointDistance, deltaTime);
+            var values = new List<float> { command.MovedFirst.X, command.MovedFirst.Y, command.MovedFirst.Z };
+            if (command.InsertedPosition is Vector3 position)
+            {
+                if (_bodyCount == MaximumBodies)
+                {
+                    throw new InvalidOperationException("Native rope cannot insert beyond its body capacity.");
+                }
+                Vector3 facing = head.Anchor - command.MovedFirst;
+                Quaternion rotation = HelicopterRopeInitialization.CreateJointRotation(Vector3.Normalize(facing));
+                AddPose(values, position, rotation);
+            }
+            RequireSuccess(NativeRopeMethods.Extend(_handle, values.ToArray(), values.Count, _bodyCount));
+            if (command.InsertedPosition != null)
+            {
+                _bodyCount++;
+            }
+        }
+    }
+
     internal void Advance()
     {
         lock (_gate)
@@ -93,6 +129,7 @@ internal sealed class NativeHelicopterRope : IDisposable
         }
     }
 
+    /// <summary>Releases this scene's native bodies and constraints once.</summary>
     public void Dispose()
     {
         lock (_gate)

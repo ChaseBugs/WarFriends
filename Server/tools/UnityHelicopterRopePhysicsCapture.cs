@@ -17,6 +17,8 @@ public static class UnityHelicopterRopePhysicsCapture
     private const float PhysicsStep = 0.02f;
     private const int DiagnosticSteps = 10;
     private const float MotionYawDegrees = 3f;
+    private const int ExtensionSteps = 18;
+    private const float ExtensionVelocity = 0.7f;
     private static readonly Vector3 MotionTranslation = new Vector3(0.04f, 0.01f, -0.02f);
     private static GameObject[] _parents;
     private static QuickRope2[] _ropes;
@@ -107,6 +109,11 @@ public static class UnityHelicopterRopePhysicsCapture
 
     private static void WriteReference()
     {
+        if (Environment.GetEnvironmentVariable("WAR_ROPE_CAPTURE_EXTENSION") == "1")
+        {
+            WriteExtensionReference();
+            return;
+        }
         if (Environment.GetEnvironmentVariable("WAR_ROPE_CAPTURE_MOTION") == "1")
         {
             WriteMotionReference();
@@ -171,6 +178,50 @@ public static class UnityHelicopterRopePhysicsCapture
         }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
         File.WriteAllText(Environment.GetEnvironmentVariable("WAR_ROPE_PHYSICS_OUTPUT"), reference);
         Debug.Log("PASS: recovered moving-aircraft rope frames=" + frames.Count);
+    }
+
+    private static void WriteExtensionReference()
+    {
+        object[] initial = ExtensionStates();
+        var frames = new List<object>();
+        for (int step = 1; step <= ExtensionSteps; step++)
+        {
+            object[] before = ExtensionStates();
+            foreach (QuickRope2 rope in _ropes)
+            {
+                rope.ExtendRope(ExtensionVelocity);
+            }
+            Physics.SyncTransforms();
+            object[] command = ExtensionStates();
+            Physics.Simulate(PhysicsStep);
+            object[] after = ExtensionStates();
+            frames.Add(new { step, before, command, after });
+        }
+        string reference = JsonConvert.SerializeObject(new
+        {
+            version = 1, client = "1.4.0", unity = Application.unityVersion,
+            prefabSource = PrefabSource, prefabSha256 = Hash(PrefabSource),
+            ropeSource = "Assets/Plugins/Assembly-CSharp-firstpass/QuickRope2.cs",
+            ropeSha256 = Hash("Assets/Plugins/Assembly-CSharp-firstpass/QuickRope2.cs"),
+            fixture = "Original ExtendRope command, SyncTransforms, then one native fixed step; stationary aircraft.",
+            deltaTime = Time.deltaTime, velocity = ExtensionVelocity, physicsStep = PhysicsStep, initial, frames
+        }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
+        File.WriteAllText(Environment.GetEnvironmentVariable("WAR_ROPE_PHYSICS_OUTPUT"), reference);
+        Debug.Log("PASS: recovered physical rope extension frames=" + frames.Count);
+    }
+
+    private static object[] ExtensionStates()
+    {
+        return _ropes.Select((rope, index) => new
+        {
+            state = Capture(rope, _attachmentRestRotations[index]),
+            settings = rope.Joints.Select(joint =>
+            {
+                Rigidbody body = joint.GetComponent<Rigidbody>();
+                return new { mass = body.mass, drag = body.drag, angularDrag = body.angularDrag,
+                    useGravity = body.useGravity, isKinematic = body.isKinematic };
+            }).ToArray()
+        }).Cast<object>().ToArray();
     }
 
     private static object Capture(QuickRope2 rope, Quaternion attachmentRestRotation)

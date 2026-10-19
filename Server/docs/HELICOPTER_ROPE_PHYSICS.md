@@ -117,7 +117,7 @@ registration or live gameplay acceptance exists yet.
 ## Native host adapter
 
 `NativeHelicopterRope` now owns an isolated native scene through `WarRopePhysics` C ABI
-version 2. It validates and snapshots the source initialization, preserves the attachment's
+version 3. It validates and snapshots the source initialization, preserves the attachment's
 creation-time rest rotation, advances exactly 0.02 seconds per call, and returns copied
 body snapshots. A SafeHandle releases joints, actors and scene. Scene operations and disposal
 are synchronized; stale native registry identities are never reused. The explicit adapter
@@ -180,7 +180,7 @@ position difference about 0.4081, quaternion-component distance 0.5286, velocity
 and angular velocity 16.3039. Finite output is not tilted-trajectory acceptance. No live
 crew, landing, collision, or Worker integration is established by this new setter.
 
-The expanded native runner now passes 1,131 checks on Windows and actual Ubuntu WSL:
+The aircraft-motion checkpoint passed 1,131 checks on Windows and actual Ubuntu WSL:
 467 stationary/ownership checks and 664 motion/validation checks. The new guards also
 reject NaN positions, zero/non-unit rotations and access after disposal, while retaining
 unchanged physics time and snapshots after rejected input. Linux normal/yaw position
@@ -189,6 +189,58 @@ differences remain below 0.0000015; its tilted maximum position difference is ab
 These substantial tilted differences remain an open fidelity issue, not a passing trajectory.
 Evidence is `.local/rope-native-motion-windows.log`, `.local/rope-native-motion-linux.log`,
 and the zero-warning/error build at `.local/rope-native-motion-dotnet.log`.
+
+## Physical extension and insertion
+
+The adapter now connects the previously verified `HelicopterRopeExtension` geometry to
+real bodies and constraints. `Extend(deltaTime)` is a render-update command; it does not
+advance the physical clock. It uses the initialization's measured spacing, moves the
+first body, inserts at most one body after the strict 1.5-spacing threshold, and reconnects
+the original root constraint. Body count changes publish only after successful native
+application; capacity exhaustion and malformed time reject without changing the scene.
+
+The original `QuickRope2.ExtendRope` disconnects `connectedBody`, temporarily makes the
+old first body kinematic, moves it, restores dynamic state, and reconnects the same joint.
+Destroying/replacing that root joint changed native solver ordering and failed the source
+comparison. Retaining its identity and changing actors/local connected frame resolves
+that positional difference. The temporary kinematic transition resets both velocities,
+even when delta time is zero. A new body receives default Rigidbody drag zero; the source
+does not apply the initial chain's 0.2 drag to inserted objects.
+
+The new capture runs eighteen original commands at captured `deltaTime=0.0333333351`,
+each followed by a manual 0.02-second physics step. It records before-command,
+after-command and after-physics states, plus body mass/drag/gravity/kinematic settings.
+All three fixtures insert their first new body on command nine and end with five bodies.
+The capture is a controlled source command/physics sequence, not normal waypoint flight.
+
+`recovered-helicopter-rope-extension-physics-unity-reference.json` has normalized-LF digest
+`afad253ab565ae80c3add9d230dbe160615bf0f8a46ebc59ef5a61ec7d9eb97a`.
+The owned Unity process exits zero at `.local/rope-extension-physics-unity.log`.
+Use `WAR_ROPE_CAPTURE_EXTENSION=1` and a distinct `WAR_ROPE_PHYSICS_OUTPUT` with
+`UnityHelicopterRopeExtensionExport.RunPhysics` in the disposable project to reproduce.
+
+Command and solved positions in all three Windows cases match within 0.00002, with
+maximum solved position differences about 0.0000011. Solved linear velocities in all
+three cases and identity/yaw rotations/angular velocities match that threshold too.
+The tilted quaternion-component difference reaches 0.16747, so tilted
+rotations and angular velocities remain diagnostic. The pre-existing moving-aircraft
+tilted discrepancy is not resolved by this stationary-aircraft extension fixture.
+Worker activation, complete flight/render/physics scheduling, map collisions, crew
+attachment, descent and landing remain required.
+
+The expanded native runner passes 2,707 checks on both Windows and actual Ubuntu WSL:
+468 initial/ownership, 664 aircraft-transform and 1,575 extension/capacity checks.
+It verifies source commands and solved positions, one insertion on command nine,
+velocity reset, malformed delta rejection, access after disposal, zero-delta behavior,
+and rejection at the explicit 128-body cap without consuming a physical step or changing
+the retained scene. Capacity is adapter policy, not a recovered maximum rope length.
+Windows and Linux maximum solved extension position errors stay below 0.0000011;
+Linux tilted rotation difference remains about 0.16747. Logs are
+`.local/rope-native-extension-windows.log` and `.local/rope-native-extension-linux.log`.
+The Linux run executes the self-contained publish in `.local/linux-native-rope-extension`
+with the actual ABI 3 shared library. `.local/rope-native-extension-dotnet.log` records
+the full solution build with zero warnings/errors. This is not a normal Client match,
+native mobile build, complete collision world or Mongo settlement proof.
 
 ## Verification and remaining work
 

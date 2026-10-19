@@ -25,7 +25,7 @@ namespace
     constexpr int HeaderSize = 14;
     constexpr int MotionSize = 13;
     constexpr float FixedDelta = 0.02f;
-    constexpr int AbiVersion = 2;
+    constexpr int AbiVersion = 3;
     constexpr float MaximumCoordinate = 10000.0f;
     constexpr int Success = 0;
     constexpr int InvalidInput = 1;
@@ -185,6 +185,81 @@ namespace
         return body;
     }
 
+    struct ReleasePhysicsObject
+    {
+        template<class T> void operator()(T* object) const
+        {
+            if (object)
+            {
+                object->release();
+            }
+        }
+    };
+
+    using OwnedBody = std::unique_ptr<PxRigidDynamic, ReleasePhysicsObject>;
+    using OwnedJoint = std::unique_ptr<PxJoint, ReleasePhysicsObject>;
+
+    PxD6Joint* CreateLink(Runtime& runtime, PxRigidDynamic* first, PxRigidDynamic* second,
+        const PxTransform& connectedFrame)
+    {
+        PxD6Joint* joint = PxD6JointCreate(*runtime.physics, first, PxTransform(PxIdentity), second, connectedFrame);
+        if (!joint)
+        {
+            throw std::bad_alloc();
+        }
+        const float radians = PxPi / 180.0f;
+        joint->setMotion(PxD6Axis::eTWIST, PxD6Motion::eLIMITED);
+        joint->setMotion(PxD6Axis::eSWING1, PxD6Motion::eLIMITED);
+        joint->setMotion(PxD6Axis::eSWING2, PxD6Motion::eLIMITED);
+        joint->setTwistLimit(PxJointAngularLimitPair(-60 * radians, 60 * radians, 0));
+        joint->setSwingLimit(PxJointLimitCone(35 * radians, 35 * radians, 0));
+        return joint;
+    }
+
+    int ExtendRope(Runtime& runtime, Rope& rope, const float* values, int length)
+    {
+        bool shouldInsert = length == 10;
+        if (shouldInsert && rope.bodies.size() == MaximumBodies)
+        {
+            return CapacityExceeded;
+        }
+        rope.bodies.reserve(rope.bodies.size() + 1);
+        rope.joints.reserve(rope.joints.size() + 1);
+        PxRigidDynamic* first = rope.bodies[1];
+        PxTransform moved(PxVec3(values[0], values[1], values[2]), first->getGlobalPose().q);
+        OwnedBody inserted;
+        OwnedJoint insertedLink;
+        if (shouldInsert)
+        {
+            inserted.reset(CreateBody(runtime, rope, ReadPose(values + 3)));
+            // AddConfigJoint implicitly adds a default Rigidbody; ExtendRope never applies the initial drag=0.2.
+            inserted->setLinearDamping(0.0f);
+            insertedLink.reset(CreateLink(runtime, inserted.get(), first,
+                moved.transformInv(inserted->getGlobalPose())));
+        }
+        PxRigidDynamic* newHead = shouldInsert ? inserted.get() : first;
+        PxTransform newHeadPose = shouldInsert ? inserted->getGlobalPose() : moved;
+        PxTransform connectedFrame = newHeadPose.transformInv(rope.bodies[0]->getGlobalPose());
+        if (runtime.errors.hasFailed.load())
+        {
+            return PhysicsFailure;
+        }
+        // Retain the root constraint identity, as connectedBody reassignment does in the source.
+        PxJoint* headJoint = rope.joints[1];
+        headJoint->setActors(rope.bodies[0], nullptr);
+        first->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+        first->setGlobalPose(moved);
+        first->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+        headJoint->setLocalPose(PxJointActorIndex::eACTOR1, connectedFrame);
+        headJoint->setActors(rope.bodies[0], newHead);
+        if (shouldInsert)
+        {
+            rope.bodies.insert(rope.bodies.begin() + 1, inserted.release());
+            rope.joints.insert(rope.joints.begin() + 2, insertedLink.release());
+        }
+        return runtime.errors.hasFailed.load() ? PhysicsFailure : Success;
+    }
+
     std::unique_ptr<Rope> CreateRope(Runtime& runtime, const float* values, int bodyCount)
     {
         std::unique_ptr<Rope> rope(new Rope());
@@ -214,23 +289,12 @@ namespace
             throw std::bad_alloc();
         }
         rope->joints.push_back(fixed);
-        const float radians = PxPi / 180.0f;
         for (int index = 0; index < bodyCount - 1; index++)
         {
             PxTransform connected = rope->bodies[index + 1]->getGlobalPose().transformInv(
                 rope->bodies[index]->getGlobalPose());
-            PxD6Joint* joint = PxD6JointCreate(*runtime.physics, rope->bodies[index], PxTransform(PxIdentity),
-                rope->bodies[index + 1], connected);
-            if (!joint)
-            {
-                throw std::bad_alloc();
-            }
+            PxD6Joint* joint = CreateLink(runtime, rope->bodies[index], rope->bodies[index + 1], connected);
             rope->joints.push_back(joint);
-            joint->setMotion(PxD6Axis::eTWIST, PxD6Motion::eLIMITED);
-            joint->setMotion(PxD6Axis::eSWING1, PxD6Motion::eLIMITED);
-            joint->setMotion(PxD6Axis::eSWING2, PxD6Motion::eLIMITED);
-            joint->setTwistLimit(PxJointAngularLimitPair(-60 * radians, 60 * radians, 0));
-            joint->setSwingLimit(PxJointLimitCone(35 * radians, 35 * radians, 0));
         }
         return rope;
     }
@@ -334,6 +398,42 @@ ROPE_API int war_rope_set_aircraft_transform(uintptr_t handle, const float* valu
             children[index]->setGlobalPose(poses[index]);
         }
         return runtime.errors.hasFailed.load() ? PhysicsFailure : Success;
+    }
+    catch (...)
+    {
+        return PhysicsFailure;
+    }
+}
+
+ROPE_API int war_rope_extend(uintptr_t handle, const float* values, int length, int expectedBodyCount)
+{
+    if (!values || (length != 3 && length != 10))
+    {
+        return InvalidInput;
+    }
+    for (int index = 0; index < length; index++)
+    {
+        if (!std::isfinite(values[index]) || std::abs(values[index]) > MaximumCoordinate)
+        {
+            return InvalidInput;
+        }
+    }
+    if (length == 10 && !ReadPose(values + 3).isValid())
+    {
+        return InvalidInput;
+    }
+    try
+    {
+        Runtime& runtime = GetRuntime();
+        std::lock_guard<std::mutex> lock(runtime.gate);
+        auto found = runtime.ropes.find(handle);
+        if (found == runtime.ropes.end() || expectedBodyCount < 3 ||
+            found->second->bodies.size() != expectedBodyCount) return InvalidInput;
+        if (runtime.errors.hasFailed.load())
+        {
+            return PhysicsFailure;
+        }
+        return ExtendRope(runtime, *found->second, values, length);
     }
     catch (...)
     {

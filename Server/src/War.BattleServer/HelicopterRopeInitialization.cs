@@ -78,7 +78,7 @@ internal static class HelicopterRopeInitialization
             {
                 throw new InvalidDataException("Generated Helicopter rope has a degenerate joint facing.");
             }
-            Quaternion rotation = LookRotation(facing / facingLength);
+            Quaternion rotation = CreateJointRotation(facing / facingLength);
             float rotationLength = rotation.LengthSquared();
             if (!float.IsFinite(rotationLength) || MathF.Abs(rotationLength - 1f) > UnitRotationTolerance)
             {
@@ -120,8 +120,15 @@ internal static class HelicopterRopeInitialization
         return samples.ToArray();
     }
 
-    private static Quaternion LookRotation(Vector3 forward)
+    /// <summary>Matches the source's generated joint orientation for a normalized world direction.</summary>
+    internal static Quaternion CreateJointRotation(Vector3 forward)
     {
+        float length = forward.LengthSquared();
+        if (!PlayerHitbox.Finite(forward) || !float.IsFinite(length) ||
+            MathF.Abs(length - 1f) > UnitRotationTolerance)
+        {
+            throw new InvalidDataException("Rope joint orientation requires a normalized finite direction.");
+        }
         Vector3 right = Vector3.Cross(Vector3.UnitY, forward);
         float rightLength = right.Length();
         if (rightLength < MinimumRightLength)

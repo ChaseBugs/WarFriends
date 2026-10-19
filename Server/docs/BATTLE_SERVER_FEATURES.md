@@ -34,6 +34,16 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now applies original physical rope extension and one-body insertion through ABI 3.
+The source fixture records eighteen render commands with physical steps, including
+the first insertion on command nine in all three poses. The adapter retains root
+constraint identity, resets the moved body's velocities through the source kinematic
+transition, and gives inserted bodies the measured default drag zero. Initial chain
+drag remains 0.2. Windows/Linux native runners pass 2,707 checks each. Positions,
+linear velocities and normal/yaw rotations/angular velocities match the bounded sequence;
+tilted rotations and the previous moving-aircraft discrepancy remain open. No live
+Worker/crew/landing acceptance is implied. See [physical extension evidence](HELICOPTER_ROPE_PHYSICS.md).
+
 B22 now applies source aircraft Transform inheritance in the native adapter: root
 and terminal rope bodies move with their aircraft; generated middle bodies do not.
 Original Unity before/after-physics captures prove that hierarchy and unchanged
