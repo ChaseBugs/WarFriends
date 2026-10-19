@@ -36,6 +36,22 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Animation-state research now covers disabling the Animation component mid-slide
+fade and enabling it again. Actual Unity observations hold layer clocks/weights
+and sampled local pose while disabled, then catch up on resume. The new 30 Hz
+`HelicopterSlideMixerState` passes both the prior continuous and new visibility
+captures, including the different exact idle-disable boundary without an epsilon
+cutoff. The captured controller is byte-identical to the active Client controller.
+Visibility policy, arbitrary starting mixers/speeds, renderer-based culling,
+procedural bone modifications and connection to actual crew descent remain open.
+The runtime does not assume an idle phase from spawn age or publish a soldier
+collision target from this clock alone.
+
+Windows and actual Ubuntu WSL each pass 7,247 native/query checks including both
+mixer captures and lifecycle guards. Logs are `.local/helicopter-slide-mixer-windows.log`
+and `.local/helicopter-slide-mixer-linux.log`. The build has zero warnings/errors.
+These checks establish the observed mixer boundary, not full crew descent fidelity.
+
 Actual native runtime drop boundaries now capture each regular crew slot's start
 tick, attached-source root pose, crew rope marker, direct sampled surface, active
 rope lease and physics sequence. `SpawnFromHelicopter` samples the crew marker

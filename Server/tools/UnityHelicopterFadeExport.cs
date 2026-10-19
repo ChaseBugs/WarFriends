@@ -18,6 +18,7 @@ public static class UnityHelicopterFadeExport
     private const string PalmKey = ActiveKey + ".Palm";
     private const string FinishedKey = ActiveKey + ".Finished";
     private const string ExitCodeKey = ActiveKey + ".ExitCode";
+    private const string VisibilityKey = ActiveKey + ".Visibility";
     private const string Source = "Assets/GameObject/enemy.prefab";
     private const string Controller = "Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs";
     private const string OutputVariable = "WAR_HELICOPTER_FADE_OUTPUT";
@@ -53,6 +54,8 @@ public static class UnityHelicopterFadeExport
             throw new InvalidOperationException("Use a disposable project and an explicit output path.");
         }
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        SessionState.SetBool(VisibilityKey,
+            Environment.GetEnvironmentVariable("WAR_HELICOPTER_FADE_VISIBILITY") == "1");
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Source);
         for (int scenario = 0; scenario < IdlePhases.Length; scenario++)
         {
@@ -131,6 +134,7 @@ public static class UnityHelicopterFadeExport
                 scenarios = _animations.Select((animation, scenario) => new
                 {
                     idlePhase = IdlePhases[scenario],
+                    componentEnabled = animation.enabled,
                     palm = Values(_palms[scenario].position),
                     states = animation.Cast<AnimationState>()
                         .Where(state => state.enabled || state.name == Idle || state.name == Slide)
@@ -139,6 +143,13 @@ public static class UnityHelicopterFadeExport
                             blendMode = state.blendMode.ToString() }).ToArray()
                 }).ToArray()
             });
+            if (SessionState.GetBool(VisibilityKey, false) && (Frames.Count == 3 || Frames.Count == 7))
+            {
+                foreach (Animation animation in _animations)
+                {
+                    animation.enabled = Frames.Count == 7;
+                }
+            }
             if (elapsed >= Duration)
             {
                 WriteReference();
@@ -190,6 +201,7 @@ public static class UnityHelicopterFadeExport
             source = Source, sourceSha256 = Hash(Source),
             controller = Controller, controllerSha256 = Hash(Controller),
             captureRate = CaptureRate, physicsFrozen = true,
+            visibilityProbe = SessionState.GetBool(VisibilityKey, false),
             fixture = "Fully weighted canonical idle alias, then one-argument CrossFade; no gameplay scripts.",
             clipSources = JsonConvert.DeserializeObject(SessionState.GetString(ActiveKey + ".Sources", "")),
             crossFadeIl = Convert.ToBase64String(method.GetMethodBody().GetILAsByteArray()),
@@ -206,6 +218,10 @@ public static class UnityHelicopterFadeExport
         SessionState.SetInt(ExitCodeKey, exitCode);
         EditorApplication.update -= Observe;
         EditorApplication.update += ExitWhenStopped;
+        // The JSON is already saved; do not retain sampled Unity objects across Play Mode asset unloading.
+        Frames.Clear();
+        _animations = null;
+        _palms = null;
         EditorApplication.isPlaying = false;
     }
 

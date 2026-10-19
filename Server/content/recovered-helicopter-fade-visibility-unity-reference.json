@@ -1,0 +1,1543 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "source": "Assets/GameObject/enemy.prefab",
+  "sourceSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "controller": "Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs",
+  "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
+  "captureRate": 30,
+  "physicsFrozen": true,
+  "visibilityProbe": true,
+  "fixture": "Fully weighted canonical idle alias, then one-argument CrossFade; no gameplay scripts.",
+  "clipSources": [
+    {
+      "name": "idle_1",
+      "source": "Assets/AnimationClip/idle_1.anim",
+      "sha256": "fc75d82afa2e12a7119e53ddad5db550273f71e513f487cd17b5bca1d8518b04",
+      "length": 1.0,
+      "wrap": "Loop"
+    },
+    {
+      "name": "helicopter_jump_pose",
+      "source": "Assets/AnimationClip/helicopter_jump_pose.anim",
+      "sha256": "9f4bcc438ad3a51c2008994f22c5e301e16cc8b2a49783218b326267e6d42b0d",
+      "length": 0.0333328247,
+      "wrap": "ClampForever"
+    },
+    {
+      "name": "T_pose",
+      "source": "Assets/AnimationClip/T_pose.anim",
+      "sha256": "9ca7a5a1ea196960f641b7861eb6dc86a38ffc023502068e357452e48d19e8e6",
+      "length": 0.06667328,
+      "wrap": "Clamp"
+    }
+  ],
+  "crossFadeIl": "ABYKIpqZmT4LAgMHBihRAAAGKg==",
+  "frames": [
+    {
+      "frame": 2,
+      "elapsed": 0.0,
+      "deltaTime": 0.02,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.085739,
+            0.192614049,
+            0.115109712
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.08647125,
+            0.194775984,
+            0.113404438
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.08574734,
+            0.192590371,
+            0.115101673
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.966666639,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "elapsed": 0.0333333351,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.08628492,
+            0.219283164,
+            0.119707
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0333333351,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0333333351,
+              "weight": 0.111111112,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.08676788,
+            0.22102353,
+            0.1182153
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.533333361,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0333333351,
+              "weight": 0.111111112,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.08628169,
+            0.219216347,
+            0.119755626
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0333333351,
+              "weight": 0.111111112,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "elapsed": 0.06666668,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.08501744,
+            0.24793008,
+            0.122200876
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.08530215,
+            0.249198109,
+            0.120985895
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.08501522,
+            0.2478388,
+            0.122267336
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "elapsed": 0.100000009,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501744,
+            0.24793008,
+            0.122200876
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            -0.08530215,
+            0.249198109,
+            0.120985895
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501522,
+            0.2478388,
+            0.122267336
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "elapsed": 0.13333334,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501744,
+            0.24793008,
+            0.122200876
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            -0.08530215,
+            0.249198109,
+            0.120985895
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501522,
+            0.2478388,
+            0.122267336
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 7,
+      "elapsed": 0.166666672,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501744,
+            0.24793008,
+            0.122200876
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            -0.08530215,
+            0.249198109,
+            0.120985895
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501522,
+            0.2478388,
+            0.122267336
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 8,
+      "elapsed": 0.200000018,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501744,
+            0.24793008,
+            0.122200876
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            -0.08530215,
+            0.249198109,
+            0.120985895
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            -0.08501522,
+            0.2478388,
+            0.122267336
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 9,
+      "elapsed": 0.233333334,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.05109543,
+            0.396647722,
+            0.09474036
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.233333349,
+              "weight": 0.222222209,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.233333349,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.05118273,
+            0.396564424,
+            0.09474346
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.733333349,
+              "weight": 0.222222209,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.233333349,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.051117342,
+            0.396612942,
+            0.0947738
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.19999993,
+              "weight": 0.222222209,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.233333349,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 10,
+      "elapsed": 0.266666681,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0402507931,
+            0.422729552,
+            0.08187175
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.266666681,
+              "weight": 0.1111111,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.266666681,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0403187536,
+            0.4226618,
+            0.0819053054
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.766666651,
+              "weight": 0.1111111,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.266666681,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0402635746,
+            0.422714144,
+            0.08188748
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.23333335,
+              "weight": 0.1111111,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.266666681,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 11,
+      "elapsed": 0.3,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288483948,
+            0.446472615,
+            0.0674347
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288484842,
+            0.446472526,
+            0.0674347
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288484059,
+            0.446472645,
+            0.06743467
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 12,
+      "elapsed": 0.333333343,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 13,
+      "elapsed": 0.366666675,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 14,
+      "elapsed": 0.4,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 15,
+      "elapsed": 0.433333337,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.433333337,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.433333337,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.433333337,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 16,
+      "elapsed": 0.466666669,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 17,
+      "elapsed": 0.50000006,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0288380142,
+            0.446492642,
+            0.06742108
+          ],
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

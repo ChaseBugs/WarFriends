@@ -234,3 +234,38 @@ rope poses each frame, and transfer completed units into independent navigation
 and collision ownership. In particular, the attached-source placement recorded
 here is not proof of the precise animated EnemyController root at coroutine resume.
 Animation progress reaching one alone cannot authorize landing or a combat entity.
+
+## Disabled animation and slide mixer clock
+
+`SwitchStateToHelicopter` calls Idle and begins the rotation tween. RopeSlide later
+calls the one-argument CrossFade. `SoldierAnimationController.Reset` enables
+renderer-based culling, and CheckIfInScreen can disable the Animation component.
+ForceInScreen is a separate path; it is not called by the recovered helicopter
+Driving/Spawning transition itself. Consequently, spawn age alone is insufficient
+evidence of the current sampled idle/slide state.
+
+The disposable fade exporter now supports `WAR_HELICOPTER_FADE_VISIBILITY=1`:
+after recording sample two it disables the component, then enables it after sample
+six. It retains AlwaysAnimate culling to isolate the component-enabled effect.
+The reference has sixteen observations for three initial idle phases and LF digest
+`4659dcd8e160092abfd4aec09a9d4e7ab3e72327329dc44eb10eaa718b8209c2`.
+The first attempt saved its capture but crashed during Play Mode asset unloading;
+that provisional run is not the acceptance evidence. Clearing exporter static
+references after writing allowed the subsequent run to exit zero. The accepted
+log is `.local/helicopter-fade-visibility-unity.log`; the failed log is retained
+locally as `.local/helicopter-fade-visibility-first.log`.
+
+Samples three through six preserve clocks, weights and local sampled palm. On
+sample seven, clocks and weights catch up over the hidden interval in one update.
+Subsequent enabled frames use their normal fixed delta. This grouping changes
+float residuals: idle disables at sample nine in the resumed capture while the
+continuous control retains a tiny positive weight for one more sample. The model
+preserves that difference without a generic small-weight cutoff.
+
+`HelicopterSlideMixerState` now reproduces those clocks/flags for both captures
+at speed one and 30 Hz, with the existing 0.0000002 clock/weight tolerance. It
+does not choose visibility, infer an initial phase, evaluate skeleton bones or
+change the runtime's crew collision gate. Disabled local bone sampling in this
+stripped rig is not proof that procedural source-controller bone updates also
+freeze. Renderer-based culling, initially disabled transitions, arbitrary speeds/
+frame timing and full Driving-to-Spawning phase order still require separate proof.

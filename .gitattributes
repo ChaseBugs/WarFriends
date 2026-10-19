@@ -433,3 +433,4 @@ Server/content/recovered-coop-navmesh-detail.json text eol=lf
 Server/tools/UnityNavMeshTileExport.cs text eol=lf
 Server/content/recovered-helicopter-landing-holdout-unity-reference.json text eol=lf
 Server/content/recovered-helicopter-rope-definition.json text eol=lf
+Server/content/recovered-helicopter-fade-visibility-unity-reference.json text eol=lf
