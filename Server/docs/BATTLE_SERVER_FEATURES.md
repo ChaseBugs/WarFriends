@@ -28,8 +28,9 @@ third-party removal. Details are in the Unity integration review above.
 
 Fuse configuration now comes only from the existing Backend snapshot and bundled fallback;
 the forty-second remote configuration wait and remote configuration publication path are removed.
-Ten selected compiled methods and six real getter checks pass in Unity. Fuse native/session/ad
-startup and service teardown remain pending; see the Unity integration review for the exact scope.
+Ten selected compiled methods and six real getter checks pass in Unity. The service now uses explicit disposal and per-scene subscription ownership instead of a GC
+finalizer; 17 lifecycle checks pass, including delayed old-owner cleanup. Fuse native/session/ad
+startup and normal rendered teardown acceptance remain pending; see the Unity integration review for the exact scope.
 
 ## Dependency-ordered work
 

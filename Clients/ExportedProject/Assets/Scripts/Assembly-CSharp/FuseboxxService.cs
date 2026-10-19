@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class FuseboxxService
+public class FuseboxxService : IDisposable
 {
 	private class FuseboxxConfigurationKey
 	{
@@ -85,12 +85,21 @@ public class FuseboxxService
 
 	public event Action AdvertisementVideoRewardError;
 
+    private BeanstalkServerManager _serverEvents;
+    private GameController _gameEvents;
+    private int _bindingGeneration;
+    private bool _isDisposed;
+
 	public FuseboxxService()
 	{
 	}
 
-	public FuseboxxService(FuseSDK fuseSdk)
-	{
+    public FuseboxxService(FuseSDK fuseSdk)
+    {
+        if (fuseSdk == null)
+        {
+            throw new ArgumentNullException(nameof(fuseSdk));
+        }
 		FuseSDK.SessionStartReceived += SessionStarted;
 		FuseSDK.SessionLoginError += SessionLoginError;
 		FuseSDK.AdDeclined += AdDeclined;
@@ -118,12 +127,78 @@ public class FuseboxxService
 		}
 	}
 
-	public void SceneLoadedAndPreset()
-	{
-		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnDataLoaded;
-		Singleton<BeanstalkServerManager>.instance.DataLoaded += InstanceOnDataLoaded;
-		Singleton<GameController>.instance.GameEnded += OnGameEnded;
-	}
+    public void SceneLoadedAndPreset()
+    {
+        BindSceneEvents();
+    }
+
+    /// <summary>Replaces scene subscriptions and returns ownership of that exact binding.</summary>
+    public IDisposable BindSceneEvents()
+    {
+        if (_isDisposed)
+        {
+            throw new ObjectDisposedException(nameof(FuseboxxService));
+        }
+        if (Singleton.applicationIsQuitting)
+        {
+            throw new InvalidOperationException("Cannot bind scene events during application shutdown.");
+        }
+        BeanstalkServerManager server = Singleton<BeanstalkServerManager>.instance;
+        GameController game = Singleton<GameController>.instance;
+        if (server == null || game == null)
+        {
+            throw new InvalidOperationException("Configuration events require both live scene owners.");
+        }
+        int generation = checked(_bindingGeneration + 1);
+        UnbindSceneEvents();
+        _bindingGeneration = generation;
+        _serverEvents = server;
+        _gameEvents = game;
+        _serverEvents.AfterPlayerDataLoaded += OnDataLoaded;
+        _serverEvents.DataLoaded += InstanceOnDataLoaded;
+        _gameEvents.GameEnded += OnGameEnded;
+        return new SceneSubscription(this, _bindingGeneration);
+    }
+
+    private void UnbindSceneEvents()
+    {
+        if (_serverEvents != null)
+        {
+            _serverEvents.AfterPlayerDataLoaded -= OnDataLoaded;
+            _serverEvents.DataLoaded -= InstanceOnDataLoaded;
+        }
+        if (_gameEvents != null)
+        {
+            _gameEvents.GameEnded -= OnGameEnded;
+        }
+        _serverEvents = null;
+        _gameEvents = null;
+    }
+
+    private sealed class SceneSubscription : IDisposable
+    {
+        private FuseboxxService _owner;
+        private readonly int _generation;
+
+        internal SceneSubscription(FuseboxxService owner, int generation)
+        {
+            _owner = owner;
+            _generation = generation;
+        }
+
+        public void Dispose()
+        {
+            if (_owner == null)
+            {
+                return;
+            }
+            if (_owner._bindingGeneration == _generation)
+            {
+                _owner.UnbindSceneEvents();
+            }
+            _owner = null;
+        }
+    }
 
 	private void InstanceOnDataLoaded(DatabaseAction databaseAction)
 	{
@@ -466,11 +541,15 @@ public class FuseboxxService
 		return FuseSDK.IsAdAvailableForZoneID(mZoneReward);
 	}
 
-	~FuseboxxService()
-	{
-		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded -= OnDataLoaded;
-		Singleton<GameController>.instance.GameEnded -= OnGameEnded;
-		Singleton<BeanstalkServerManager>.instance.DataLoaded -= InstanceOnDataLoaded;
+    /// <summary>Releases cached scene owners and retired SDK subscriptions on the owning Unity thread.</summary>
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+        UnbindSceneEvents();
 		FuseSDK.SessionStartReceived -= SessionStarted;
 		FuseSDK.SessionLoginError -= SessionLoginError;
 		FuseSDK.AdDeclined -= AdDeclined;

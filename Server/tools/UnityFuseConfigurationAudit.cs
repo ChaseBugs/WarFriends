@@ -22,8 +22,6 @@ namespace WarFriends.Validation
                 }
                 VerifyCompiledConfiguration();
                 var service = new FuseboxxService();
-                // The recovered finalizer resolves Unity objects; this test owns no scene subscriptions.
-                GC.SuppressFinalize(service);
                 Require(Invoke(service, "GetConfigVariant") as string == string.Empty,
                     "Absent Backend variant must retain bundled configuration.");
                 Require(Invoke(service, "GetStartingCurrency") == null,
@@ -39,6 +37,7 @@ namespace WarFriends.Validation
                 var rewards = (Dictionary<string, object>)Invoke(service, "GetBattleWarbucksRewards");
                 Require(Convert.ToInt32(rewards["win"]) == 123,
                     "JSON configuration must preserve the supplied value without granting currency.");
+                service.Dispose();
                 Debug.Log("PASS: 10 compiled configuration methods and 6 Backend configuration checks.");
                 EditorApplication.Exit(0);
             }

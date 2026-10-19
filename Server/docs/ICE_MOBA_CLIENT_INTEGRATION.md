@@ -83,10 +83,33 @@ configuration boundary, not every transitive manager call, provider method or ne
 No asset was saved and no source GUID or serialized field was renamed.
 
 This does **not** disable FuseSDK Awake/Start, advertising, session telemetry, currency telemetry,
-push or native auto-initializers. Those remain explicit migration work. The retained service's
-finalizer also still resolves Unity singletons and needs lifecycle repair; this focused test
-suppresses finalization for its unsubscribed temporary service rather than claiming that defect
-fixed. Normal rendered boot/terminal and denied-external-network device acceptance remain open.
+push or native auto-initializers. Those remain explicit migration work. The lifecycle repair below replaces the retained service finalizer. The configuration test
+now explicitly disposes its temporary service; it no longer suppresses finalization. Normal rendered boot/terminal and denied-external-network device acceptance remain open.
+
+## Explicit Fuse service ownership
+
+`FuseboxxService` now implements `IDisposable`; its GC finalizer is removed. Disposal releases
+subscriptions through cached publishers rather than looking up Unity singletons on a finalizer
+thread or during shutdown. `BindSceneEvents` replaces the previous binding and returns a small
+disposable ownership token. A retired token cannot detach the successor binding, and repeated
+bind/dispose operations cannot accumulate callbacks. Binding a disposed service or binding during
+application shutdown is rejected before changing subscriptions. Constructor argument validation
+also precedes static provider-event subscription.
+
+`ObjectHolderOnSceneChange` disposes its service and clears its singleton only if it still owns
+that reference. `EventTrackingManager` releases its own scene token, service callbacks and static
+LevelUp handler; it disposes the service only when it constructed it itself. A borrowed persistent
+service therefore survives ordinary scene-owner teardown. Its inherited singleton destruction
+still runs explicitly. Existing serialized fields and GUIDs remain unchanged.
+
+`UnityFuseLifecycleAudit` checks actual MainScene event publishers: initial and duplicate binding,
+old-token disposal after replacement, repeated current-token disposal, shutdown-time explicit
+disposal and rejection of reuse, plus absence of a declared finalizer. Unity 2018.3.0f2 passes 17 lifecycle checks at
+`.local/UnityFuseLifecycleAudit-final.log`; the same final source also passes ten compiled
+configuration methods and six getter checks at `.local/UnityFuseConfigurationAudit-final.log`.
+Both owned processes exit zero. These are focused Editor checks, not a normal rendered
+scene-transition or Android proof. Remote Fuse session,
+advertising and native initialization are still pending migration.
 
 ## Patterns worth using
 

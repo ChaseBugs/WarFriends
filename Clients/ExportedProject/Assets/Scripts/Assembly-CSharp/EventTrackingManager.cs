@@ -214,6 +214,9 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 
 	public event Action AdLimitsChanged;
 
+    private IDisposable _sceneSubscription;
+    private bool _ownsFuseboxService;
+
 	protected override void Awake()
 	{
 		base.Awake();
@@ -224,14 +227,35 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 		else
 		{
 			fuseboxxService = new FuseboxxService(GetComponentInChildren<FuseSDK>());
+            _ownsFuseboxService = true;
 		}
-		fuseboxxService.SceneLoadedAndPreset();
+		_sceneSubscription = fuseboxxService.BindSceneEvents();
 		mFlurryService = new FlurryService();
 		LevelManager.LevelUp += OnLevelUp;
 		fuseboxxService.RewardVideoPreloaded += OnRewardVideoPreloaded;
 		fuseboxxService.AdvertisementVideoRewardError += OnAdvertisementVideoRewardError;
 		adLimits = new AdLimitHolder();
 	}
+
+    public new void OnDestroy()
+    {
+        if (_sceneSubscription != null)
+        {
+            _sceneSubscription.Dispose();
+            _sceneSubscription = null;
+        }
+        LevelManager.LevelUp -= OnLevelUp;
+        if (fuseboxxService != null)
+        {
+            fuseboxxService.RewardVideoPreloaded -= OnRewardVideoPreloaded;
+            fuseboxxService.AdvertisementVideoRewardError -= OnAdvertisementVideoRewardError;
+            if (_ownsFuseboxService)
+            {
+                fuseboxxService.Dispose();
+            }
+        }
+        base.OnDestroy();
+    }
 
 	public void getAdlimits(JToken item)
 	{

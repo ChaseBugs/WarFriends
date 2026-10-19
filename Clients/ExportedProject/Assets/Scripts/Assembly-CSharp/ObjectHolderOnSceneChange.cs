@@ -20,6 +20,13 @@ public class ObjectHolderOnSceneChange : MonoBehaviour
 
 	public void OnDestroy()
 	{
-		instance = null;
+        if (fuseboxxService != null)
+        {
+            fuseboxxService.Dispose();
+        }
+        if (instance == this)
+        {
+            instance = null;
+        }
 	}
 }
