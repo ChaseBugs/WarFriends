@@ -36,6 +36,16 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Source-derived clock transition guards now cover active Begin calls that switch
+unscaled to scaled work and back without inventing OnEnable. Scaled work must
+not advance the retained unscaled origin/residual; subsequent Begin resets only
+tween progress. Four malformed/overflowing scaled observations must leave the
+next unscaled pose identical to an untouched control. These are unit boundary
+checks, not a new Unity mixed-mode lifecycle capture or normal runtime wiring.
+Windows and actual Ubuntu WSL pass 9,990 native ownership/motion checks with
+zero build warnings/errors. Logs: `.local/crew-entry-clock-windows.log` and
+`.local/crew-entry-clock-linux.log`.
+
 Interrupted entry reuse now has automatic Unity evidence: six tween-only objects
 are deactivated after three callbacks while still rotating, remain inactive for
 three frames, then reactivate and restart using the same component/clock.

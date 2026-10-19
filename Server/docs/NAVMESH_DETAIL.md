@@ -902,3 +902,23 @@ execution of NetworkObjectPool, EnemyController, animation/camera or combat life
 Windows and actual Ubuntu WSL pass 9,985 native ownership/motion checks at
 `.local/crew-entry-interrupted-windows.log` and `.local/crew-entry-interrupted-linux.log`;
 build warnings/errors remain zero.
+
+### Active Begin clock isolation
+
+`HelicopterCrewEntryClockTests` checks source-derived composition boundaries.
+An active component first accumulates a sub-millisecond unscaled residual, then
+restarts with scaled work and restarts again with unscaled work. There is no
+OnEnable between these Begin calls. The later unscaled update must consume the
+interval from its last actual unscaled observation, retaining that residual.
+The test uses the source rounded `10 * 0.001f` value rather than the distinct
+`0.01f` literal, preserving an exact comparison without relaxing tolerance.
+
+Four rejected scaled deltas cover negative, NaN, infinity and finite input whose
+derived factor overflows. Each must preserve pose, completion and clock residual
+for the next valid unscaled observation. These tests derive from UITweener.Update's
+conditional UpdateRealTimeDelta call and Begin's retained clock fields; they are
+not an additional automatic Unity mixed-mode capture. They cover clock changes
+with a new Begin, not arbitrary in-flight mode changes with retained start/delay state.
+Windows and actual Ubuntu WSL pass 9,990 native ownership/motion checks with
+zero build warnings/errors at `.local/crew-entry-clock-windows.log` and
+`.local/crew-entry-clock-linux.log`.

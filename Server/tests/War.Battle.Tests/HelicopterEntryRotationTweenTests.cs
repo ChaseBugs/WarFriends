@@ -35,7 +35,7 @@ internal static class HelicopterEntryRotationTweenTests
         VerifyGuards();
         Console.WriteLine("PASS: 33 original entry tween updates, unscaled clock reuse and parent-space rotations.");
         return checks + 5 + VerifyEntryGuards() + VerifyRestartResidual() + VerifyScaledCapture(directory) +
-            HelicopterCrewEntryLifecycleTests.Run(directory);
+            HelicopterCrewEntryLifecycleTests.Run(directory) + HelicopterCrewEntryClockTests.Run();
     }
 
     private static int VerifyCycle(JsonElement cycle, Quaternion parent,
