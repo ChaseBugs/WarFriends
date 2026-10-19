@@ -1,6 +1,6 @@
 namespace War.BattleServer;
 
-/// <summary>Observed component state and layer clocks; visibility policy and bone evaluation remain caller-owned.</summary>
+/// <summary>Observed component state and layer clocks; visibility and bone evaluation remain caller-owned.</summary>
 internal sealed record HelicopterSlideMixerSnapshot(HelicopterSlideFadeSnapshot Layers,
     bool IsAnimationEnabled, ulong RenderFrames, ulong EvaluatedFrames);
 
@@ -10,22 +10,52 @@ internal sealed class HelicopterSlideMixerState
     private const float FrameDelta = 1f / MatchManifest.TickRate;
     private const float FadeSeconds = 0.3f;
     private readonly float _initialIdlePhase;
+    private readonly float _initialIdleWeight;
+    private readonly float _initialSlideWeight;
     private float _lastEvaluatedTime;
-    private float _idleWeight = 1f;
+    private float _idleWeight;
     private float _slideWeight;
 
-    internal HelicopterSlideMixerState(float initialIdlePhase)
+    internal HelicopterSlideMixerSnapshot Current { get; private set; }
+
+    internal HelicopterSlideMixerState(float initialIdlePhase) : this(FullyWeightedStart(initialIdlePhase))
+    {
+    }
+
+    private HelicopterSlideMixerState(HelicopterSlideFadeSnapshot initial)
+    {
+        ArgumentNullException.ThrowIfNull(initial);
+        ArgumentNullException.ThrowIfNull(initial.Idle);
+        ArgumentNullException.ThrowIfNull(initial.Slide);
+        if (!float.IsFinite(initial.Idle.RawTime) || initial.Idle.RawTime < 0 ||
+            !float.IsFinite(initial.Idle.Weight) || initial.Idle.Weight is < 0 or > 1 || !initial.Idle.IsEnabled ||
+            initial.Slide.RawTime != 0 || initial.Slide.Weight is not (0 or 1) || !initial.Slide.IsEnabled)
+        {
+            throw new InvalidDataException("Slide transition requires observed idle and newly enabled slide layers.");
+        }
+        _initialIdlePhase = initial.Idle.RawTime;
+        _initialIdleWeight = initial.Idle.Weight;
+        _idleWeight = initial.Idle.Weight;
+        _initialSlideWeight = initial.Slide.Weight;
+        _slideWeight = initial.Slide.Weight;
+        Current = new HelicopterSlideMixerSnapshot(initial, true, 0, 0);
+    }
+
+    /// <summary>Starts from an enabled host-observed command boundary without inferring phase from spawn age.</summary>
+    internal static HelicopterSlideMixerState FromObservedTransition(HelicopterSlideFadeSnapshot initial)
+    {
+        return new HelicopterSlideMixerState(initial);
+    }
+
+    private static HelicopterSlideFadeSnapshot FullyWeightedStart(float initialIdlePhase)
     {
         if (!float.IsFinite(initialIdlePhase) || initialIdlePhase < 0 || initialIdlePhase >= 1)
         {
             throw new InvalidDataException("Slide mixer requires a phase inside the captured ordinary idle loop.");
         }
-        _initialIdlePhase = initialIdlePhase;
-        Current = new HelicopterSlideMixerSnapshot(new HelicopterSlideFadeSnapshot(
-            new HelicopterFadeLayer(initialIdlePhase, 1, true), new HelicopterFadeLayer(0, 0, true)), true, 0, 0);
+        return new HelicopterSlideFadeSnapshot(new HelicopterFadeLayer(initialIdlePhase, 1, true),
+            new HelicopterFadeLayer(0, 0, true));
     }
-
-    internal HelicopterSlideMixerSnapshot Current { get; private set; }
 
     internal HelicopterSlideMixerSnapshot AdvanceEnabledFrame()
     {
@@ -35,10 +65,14 @@ internal sealed class HelicopterSlideMixerState
         float time = (float)elapsed;
         // Re-enabling evaluates the elapsed interval once, rather than replaying every hidden frame.
         float evaluationDelta = Current.IsAnimationEnabled ? FrameDelta : time - _lastEvaluatedTime;
-        float idle = Math.Clamp(_idleWeight - evaluationDelta / FadeSeconds, 0, 1);
-        float slide = Math.Clamp(_slideWeight + evaluationDelta / FadeSeconds, 0, 1);
+        float fadeFraction = evaluationDelta / FadeSeconds;
+        float nextIdle = _idleWeight - _initialIdleWeight * fadeFraction;
+        float idle = Math.Clamp(nextIdle, 0, 1);
+        float slide = Math.Clamp(_slideWeight + (1f - _initialSlideWeight) * fadeFraction, 0, 1);
+        // A positive outgoing weight that reaches exact zero remains enabled until the next overshoot.
+        bool isIdleEnabled = Current.Layers.Idle.IsEnabled && _initialIdleWeight > 0 && nextIdle >= 0;
         var layers = new HelicopterSlideFadeSnapshot(
-            new HelicopterFadeLayer(idle > 0 ? (float)(_initialIdlePhase + elapsed) : 0, idle, idle > 0),
+            new HelicopterFadeLayer(isIdleEnabled ? (float)(_initialIdlePhase + elapsed) : 0, idle, isIdleEnabled),
             new HelicopterFadeLayer(time, slide, true));
         Current = new HelicopterSlideMixerSnapshot(layers, true, nextFrame, nextEvaluation);
         _lastEvaluatedTime = time;

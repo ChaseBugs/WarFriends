@@ -620,3 +620,41 @@ Reset output. Neither this fixed-rate enabled profile nor the earlier slide
 profile may infer an active phase from spawn age while visibility, culling,
 pool lifecycle and callback order remain unobserved. Subsequent RopeSlide entry
 and the real normal crew descent/collision registration are still open.
+
+## RopeSlide during the initial Idle fade
+
+`WAR_HELICOPTER_IDLE_TO_SLIDE=1` extends the Reset-to-Idle fixture with original
+RopeSlide commands immediately, after sample two and after sample ten. Each
+command records both layers before and immediately after the call. Incoming
+slide weight is not forcibly reset to zero: the sampled/stopped slide retains
+weight one and is activated with that same weight. Outgoing Idle fades from its
+current weight, including zero, 0.222222224 and one in these cases.
+
+`HelicopterSlideMixerState.FromObservedTransition` now starts from those enabled,
+host-observed command states. Fade increments derive from the captured starting
+weights. A positive outgoing Idle that reaches exact zero stays enabled for that
+evaluation and disables only on the next overshoot; an initially zero-weight Idle
+disables on the first evaluation. The original fully weighted/zero-slide API and
+its continuous/disabled/resumed reference checks remain intact. The observed
+transition API rejects malformed time/weight/flags and unsupported intermediate
+incoming slide weights rather than inventing a mixer history.
+
+The continuous capture has 111 frame/scenario snapshots and LF digest
+`057da06e2d77ad8d10e7dfa03020ae05f63cf6aa1f0e2a385b67471e63a707b0`.
+Its Unity process exits zero: `.local/idle-to-slide-unity.log`.
+The visibility variant disables only the partial-Idle scenario for samples three
+through six, then resumes it. It has another 111 snapshots and digest
+`e1b0f1532531da3a61d272c2675158681f684c1f5b52bd913681154529ecebdb`.
+The first visibility attempt failed in old Mono TypeDescriptor conversion while
+writing JSON and produced no accepted capture. The fixture serializer now chooses
+contracts explicitly for its primitive, array, JToken and plain observation
+objects, avoiding that string-converter path. The subsequent process exits zero:
+`.local/idle-to-slide-visibility-unity-final.log`; the failed log remains
+`.local/idle-to-slide-visibility-unity.log`.
+
+Both captures preserve exact flags and the existing 0.0000002 clock/weight
+tolerance. They connect source Reset/Idle/RopeSlide layer transitions, including
+component pause/resume, without assuming fully weighted Idle or zero incoming
+Slide. They still use controlled commands and AlwaysAnimate, not normal actor
+creation, real camera/renderer culling or source coroutine timing. No independent
+landed soldier or collision authority is enabled by these mixer checks.

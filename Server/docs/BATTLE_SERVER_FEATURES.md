@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Reset/Idle now connects to original RopeSlide calls during zero, partial and
+completed Idle fades. The slide can reactivate at its retained weight one;
+outgoing Idle fades from its actual current weight. The mixer accepts observed
+command boundaries and preserves exact-zero enable/disable ordering instead of
+forcing every transition to one/zero weights. Continuous and component-paused
+variants cover 222 snapshots, with prior full-Idle captures still passing.
+Normal creation/coroutine timing, true camera/culling and bone evaluation remain
+pending; these explicit controlled source calls do not enable live crew collision.
+Windows and actual Ubuntu WSL each pass 9,382 native/query checks. Logs:
+`.local/idle-to-slide-windows.log` and `.local/idle-to-slide-linux.log`.
+Build warnings/errors remain zero.
+
 Original Reset followed by Idle(Riffle) now has a separate observed layer profile.
 Across three prior sampled-slide phases and 37 frames, Idle starts at weight zero
 and fades in; the stopped slide retains weight one but stays disabled at time zero.

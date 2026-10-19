@@ -9,6 +9,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 /// <summary>Observes the source one-argument CrossFade on stripped recovered rigs in Play Mode.</summary>
 [InitializeOnLoad]
@@ -29,6 +30,7 @@ public static class UnityHelicopterFadeExport
     private const float IdleResetDuration = 1.2f;
     private static readonly float[] IdlePhases = { 0f, 0.5f, 29f / CaptureRate };
     private static readonly List<object> Frames = new List<object>();
+    private static readonly List<object> SlideCommands = new List<object>();
     private static Animation[] _animations;
     private static Transform[] _palms;
     private static float _startTime;
@@ -146,11 +148,29 @@ public static class UnityHelicopterFadeExport
                             blendMode = state.blendMode.ToString() }).ToArray()
                 }).ToArray()
             });
+            if (Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_TO_SLIDE") == "1")
+            {
+                if (Frames.Count == 3)
+                {
+                    InvokeRopeSlide(_animations[1], 1, 2);
+                }
+                if (Frames.Count == 11)
+                {
+                    InvokeRopeSlide(_animations[2], 2, 10);
+                }
+            }
             if (SessionState.GetBool(VisibilityKey, false) && (Frames.Count == 3 || Frames.Count == 7))
             {
-                foreach (Animation animation in _animations)
+                if (Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_TO_SLIDE") == "1")
                 {
-                    animation.enabled = Frames.Count == 7;
+                    _animations[1].enabled = Frames.Count == 7;
+                }
+                else
+                {
+                    foreach (Animation animation in _animations)
+                    {
+                        animation.enabled = Frames.Count == 7;
+                    }
                 }
             }
             float duration = Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_RESET") == "1"
@@ -223,6 +243,10 @@ public static class UnityHelicopterFadeExport
             BindResetRoot(controller, enemy.transform, source.rootBoneInner, "Inner");
             controller.Reset();
             controller.Idle(Weapon.WeaponType.Riffle);
+            if (scenario == 0 && Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_TO_SLIDE") == "1")
+            {
+                InvokeRopeSlide(animation, scenario, -1);
+            }
         }
         finally
         {
@@ -261,6 +285,33 @@ public static class UnityHelicopterFadeExport
         field.SetValue(controller, value);
     }
 
+    private static void InvokeRopeSlide(Animation animation, int scenario, int afterSample)
+    {
+        object[] before = TransitionLayers(animation);
+        var owner = new GameObject("InactiveRopeSlideOwner");
+        owner.SetActive(false);
+        try
+        {
+            SoldierAnimationController controller = owner.AddComponent<SoldierAnimationController>();
+            SetControllerField(controller, "mAnimation", animation);
+            controller.RopeSlide();
+            SlideCommands.Add(new { scenario, afterSample, before, after = TransitionLayers(animation) });
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(owner);
+        }
+    }
+
+    private static object[] TransitionLayers(Animation animation)
+    {
+        return new[] { Idle, Slide }.Select(name =>
+        {
+            AnimationState state = animation[name];
+            return (object)new { name, time = state.time, weight = state.weight, enabled = state.enabled };
+        }).ToArray();
+    }
+
     private static void WriteReference()
     {
         var method = typeof(Animation).GetMethod("CrossFade", new[] { typeof(string) });
@@ -272,13 +323,17 @@ public static class UnityHelicopterFadeExport
             captureRate = CaptureRate, physicsFrozen = true,
             visibilityProbe = SessionState.GetBool(VisibilityKey, false),
             idleResetProbe = Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_RESET") == "1",
+            idleToSlideProbe = Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_TO_SLIDE") == "1",
             descentControllerSha256 = Hash("Assets/Scripts/Assembly-CSharp/EnemyController.cs"),
             descentNativeInputSha256 = UnityHelicopterDescentObservation.NativeInputDigest,
             fixture = FixtureDescription(),
             clipSources = JsonConvert.DeserializeObject(SessionState.GetString(ActiveKey + ".Sources", "")),
             crossFadeIl = Convert.ToBase64String(method.GetMethodBody().GetILAsByteArray()),
-            frames = Frames
-        }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
+            commands = SlideCommands, frames = Frames
+        }, Formatting.Indented, new JsonSerializerSettings
+        {
+            ContractResolver = new FixtureContractResolver()
+        }).Replace("\r\n", "\n") + "\n";
         File.WriteAllText(Environment.GetEnvironmentVariable(OutputVariable), reference);
         Debug.Log("PASS: native Helicopter fade observations=" + Frames.Count);
     }
@@ -306,6 +361,7 @@ public static class UnityHelicopterFadeExport
         EditorApplication.update += ExitWhenStopped;
         // The JSON is already saved; do not retain sampled Unity objects across Play Mode asset unloading.
         Frames.Clear();
+        SlideCommands.Clear();
         UnityHelicopterDescentObservation.Clear();
         _animations = null;
         _palms = null;
@@ -335,5 +391,23 @@ public static class UnityHelicopterFadeExport
     private static float[] Values(Vector3 value)
     {
         return new[] { value.x, value.y, value.z };
+    }
+
+    private sealed class FixtureContractResolver : DefaultContractResolver
+    {
+        protected override JsonContract CreateContract(Type type)
+        {
+            if (type.IsPrimitive || type.IsEnum || type == typeof(string) ||
+                typeof(Newtonsoft.Json.Linq.JToken).IsAssignableFrom(type))
+            {
+                return base.CreateContract(type);
+            }
+            if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
+            {
+                return CreateArrayContract(type);
+            }
+            // The fixture only contains plain observation objects; avoid old Mono TypeDescriptor string converters.
+            return CreateObjectContract(type);
+        }
     }
 }
