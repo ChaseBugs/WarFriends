@@ -392,6 +392,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
         groundVehicleBodies = playerWeaponContent?.GroundVehicleWeapons;
         transportHelicopterBodies = playerWeaponContent?.HelicopterBodyColliders;
         transportCrewPoints = playerWeaponContent?.HelicopterCrewPoints;
+        _transportRopeDefinition = playerWeaponContent?.HelicopterRope;
         if (missionRule.MissionType == "Score" && skillShotScores == null)
             throw new InvalidDataException("Score mission needs recovered skill-shot points.");
         this.skillShotScores = skillShotScores;

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "source": "Assets/GameObject/Helicopter.prefab",
+  "sourceSha256": "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408",
+  "helicopterComponent": 11475216,
+  "ropeComponent": 11471338,
+  "rootTransform": 436455,
+  "endTransform": 446016,
+  "rootPosition": [
+    0.37255955,
+    0.331,
+    -0.009
+  ],
+  "rootRotation": [
+    -0.4961792,
+    0.5037919,
+    0.4961792,
+    0.50379187
+  ],
+  "endPosition": [
+    0.35657787,
+    -0.7185707,
+    -0.009
+  ],
+  "endRotation": [
+    -0.49618012,
+    0.503791,
+    0.49618012,
+    0.5037909
+  ],
+  "jointSpacing": 0.35
+}

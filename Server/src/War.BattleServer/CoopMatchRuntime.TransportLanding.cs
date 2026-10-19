@@ -9,13 +9,15 @@ internal sealed partial class CoopMatchRuntime
 
     private readonly Dictionary<ulong, TransportLanding> _transportLandings = new();
     private CoopNavMeshConnectivity? _transportLandingNavigation;
+    private readonly HelicopterRopeDefinition? _transportRopeDefinition;
 
     /// <summary>Binds trusted detail geometry before admission; no client command can select this source.</summary>
     internal void BindTransportLandingNavigation(CoopNavMeshConnectivity navigation)
     {
         ArgumentNullException.ThrowIfNull(navigation);
         if (tick != 0 || participants.Values.Any(player => player.Admitted) ||
-            _transportLandingNavigation != null || !navigation.HasHelicopterLandingDetails)
+            _transportLandingNavigation != null || !navigation.HasHelicopterLandingDetails ||
+            _transportRopeDefinition == null)
         {
             throw new InvalidOperationException("Transport landing geometry must bind once before admission.");
         }
@@ -33,7 +35,7 @@ internal sealed partial class CoopMatchRuntime
         {
             return;
         }
-        if (transportCrewPoints == null || manifest.MissionIndex is not int missionIndex)
+        if (_transportRopeDefinition == null || manifest.MissionIndex is not int missionIndex)
         {
             throw new InvalidDataException("Transport landing lost its source rope or mission identity.");
         }
@@ -45,8 +47,8 @@ internal sealed partial class CoopMatchRuntime
             throw new InvalidDataException("Transport landing lost the source master's current player point.");
         }
         Vector3 playerPoint = playerPositions[coverIndex].Position;
-        Vector3 ropeOrigin = previousPosition + Vector3.Transform(
-            transportCrewPoints.Slots[0].RopeRestPosition, previousRotation);
+        Vector3 ropeOrigin = _transportRopeDefinition.RootPositionAt(
+            new HelicopterRopeBodyPose(previousPosition, previousRotation));
         var query = new HelicopterRopeLandingQuery(ropeOrigin, playerPoint);
         Vector3? surface = _transportLandingNavigation.SampleHelicopterLanding(missionCatalog, missionIndex, query);
         if (!_transportLandings.TryAdd(entityId, new TransportLanding(tick, ropeOrigin, playerPoint, surface)))

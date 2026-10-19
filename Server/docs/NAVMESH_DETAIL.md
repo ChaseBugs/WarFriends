@@ -114,8 +114,8 @@ callback, it records the surface result, tick and query points. The source rope
 origin uses the aircraft pose before this render's flight/orientation writes,
 matching `ShowRope` inside `Steer`. The player plane comes from the source master's
 current selected point, including a locked route destination rather than the
-player's intermediate walking position. The source crew catalog binds the rope
-rest offset and prefab identity.
+player's intermediate walking position. The source rope definition binds the actual
+QuickRope root offset and prefab identity.
 
 The decision is not replaced by later frames and is removed on transport death.
 Tests run mission 46's transport through real runtime admission, flight and arrival;
@@ -129,3 +129,23 @@ collision/combat world is still closed. This integration does not open that gate
 instantiate native ropes, settle combat or land crew. A later runtime factory must
 bind the verified navigation before admission and own native world cleanup before
 normal UDP co-op is enabled.
+
+### Correct rope origin identity
+
+The initial runtime integration incorrectly used the crew's `ropePosition` marker
+Transform 480871 (`y = -0.1304485777` relative to the aircraft). Source `ShowRope`
+instead reads the QuickRope component's own Transform 436455 (`y = 0.331`). The
+current code corrects that reference through `HelicopterRopeDefinition`, loaded
+with the combat content. Crew alignment still uses its distinct marker.
+
+`tools/extract_helicopter_rope.py --check` verifies the definition against the
+unchanged original prefab. The artifact pins component 11471338, root 436455,
+end 446016, spacing 0.35 and creation rest rotation. Its LF digest is
+`8b1e4872243ad6aa489227fd080f5cfb73bf40145245d7caeb4f2d95fd9697ec`.
+Tests compare generated joints and attachment rest rotation with all three existing
+Unity initial physics captures, independent of the earlier crew-marker extraction.
+
+`Helicopter.OnInstancied` activates the rope through `InvokeAfterRealTime(..., 2f)`.
+That callback and QuickRope `OnEnable` must own initial world pose and physical
+birth time in the next integration stage. The new definition is not permission to
+create a rope at spawn or reset the match's existing physics clock.

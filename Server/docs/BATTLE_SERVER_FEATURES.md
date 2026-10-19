@@ -36,6 +36,21 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Prefab verification corrected the arrival query origin: `ShowRope` uses QuickRope
+root Transform 436455, not crew alignment marker 480871. A new source-bound rope
+definition supplies actual root/end positions, creation rest rotation and spacing.
+The co-op landing query now uses that definition; crew alignment retains its separate
+marker. Definition-generated initial ropes match all three existing Unity initial
+pose captures. The source activates the rope after a two-second realtime callback;
+runtime native creation must still honor that delay rather than creating physics
+at enemy spawn. This checkpoint corrects geometry and supplies initialization data,
+not native Worker lifecycle or full landing acceptance.
+Windows and actual Ubuntu WSL each pass 6,743 native/definition checks and the full
+combat-content runner (28,059 reported assertions plus arrival helper checks).
+Build has zero warnings/errors. Logs: `.local/rope-definition-native.log`,
+`.local/rope-definition-linux-native.log`, `.local/rope-definition-content.log`,
+and `.local/rope-definition-linux-content.log`.
+
 The co-op runtime now supports one pre-admission binding of validated landing
 navigation. Transport arrival records a detail-sampled surface using the previous
 aircraft pose, source rope rest offset and the source master's current locked player

@@ -68,6 +68,7 @@ public sealed class BattleCombatContent
     internal AssaultHelicopterWeaponCatalog AssaultHelicopterWeapons { get; private init; }=null!;
     internal AirShotTargetCatalog AirShotTargets { get; }
     public HelicopterCrewPointCatalog HelicopterCrewPoints { get; }
+    internal HelicopterRopeDefinition HelicopterRope { get; private init; } = null!;
     internal HelicopterGunnerExplosionCatalog HelicopterGunnerExplosions { get; private init; }=null!;
     public DroneProjectileCatalog DroneProjectile { get; }
     public ArmyRusherPointCatalog ArmyRusherPoints { get; }
@@ -300,7 +301,9 @@ public sealed class BattleCombatContent
             CoopAssaulterQueue=coopAssaulterQueue,
             CoopCornerQueuePoses=coopCornerQueuePoses,
             CoopObstaclePoses = coopObstaclePoses,
-            ObservedObstaclePoses = observedObstaclePoses};
+            ObservedObstaclePoses = observedObstaclePoses,
+            HelicopterRope = HelicopterRopeDefinition.Load(Path.Combine(directory,
+                "recovered-helicopter-rope-definition.json"))};
     }
     public void ValidateAllocation(MatchManifest manifest)
     {

@@ -5439,7 +5439,7 @@ internal static class CombatContentTests
             throw new Exception("Co-op transport Helicopter needs eleven enemy body boxes.");
         ulong afterFlight = transportTick + 15 * MatchManifest.TickRate;
         CoopTransportLandingTests.AdvanceAndVerify(transportRuntime, transport, afterFlight,
-            content.HelicopterCrewPoints);
+            content.HelicopterRope);
         BattleCoopEnemySpawn flownTransport = transportRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.EntityId == transport.EntityId);
         Vector3 transportStart = new(transport.X, transport.Y, transport.Z);

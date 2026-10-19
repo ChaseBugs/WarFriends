@@ -26,7 +26,7 @@ internal static class CoopTransportLandingTests
     }
 
     internal static void AdvanceAndVerify(CoopMatchRuntime runtime, BattleCoopEnemySpawn initial,
-        ulong endTick, HelicopterCrewPointCatalog crewPoints)
+        ulong endTick, HelicopterRopeDefinition rope)
     {
         BattleCoopEnemySpawn previous = initial;
         for (ulong next = initial.PoseTick + 1; next <= endTick; next++)
@@ -38,7 +38,7 @@ internal static class CoopTransportLandingTests
                 var position = new Vector3(previous.CurrentX, previous.CurrentY, previous.CurrentZ);
                 BattleJointRotation source = previous.CurrentRotation;
                 var rotation = new Quaternion(source.X, source.Y, source.Z, source.W);
-                Vector3 expected = position + Vector3.Transform(crewPoints.Slots[0].RopeRestPosition, rotation);
+                Vector3 expected = position + Vector3.Transform(rope.RootPosition, rotation);
                 if (landing.StopTick != next || Vector3.Distance(landing.RopeOrigin, expected) > 0.000001f ||
                     landing.Surface == null)
                 {
