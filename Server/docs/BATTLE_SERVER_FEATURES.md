@@ -36,6 +36,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Root reset policy now matches the original sampled rig exactly: Reset restores
+only bound root positions/rotations, retaining scales and other sampled bones.
+The actual enemy prefab has one bound root and no inner root. A controlled stale
+pose prevents a full bind-pose replacement from passing the test. The sampled
+slide clip also stops at time zero while retaining its weight; that observation
+does not generalize every clip state. Incoming pooled pose, following idle
+crossfade and real initialization order remain open before live crew authority.
+Windows and actual Ubuntu WSL each pass 8,045 native/query checks. Logs:
+`.local/soldier-root-reset-windows.log` and `.local/soldier-root-reset-linux.log`.
+Build warnings/errors remain zero.
+
 Source animation reset/control visibility ordering is now modeled and checked
 against 27 original method calls: fresh/reused Reset, OnEnable, screen checks,
 Pause/Resume/Stop and forced visibility. The previous private enabled flag governs

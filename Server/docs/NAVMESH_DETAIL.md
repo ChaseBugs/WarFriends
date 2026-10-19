@@ -547,3 +547,40 @@ The model covers visibility flags only: source Animation.Stop/Play clip effects,
 bone resets, renderer-based culling, camera spring/projection state and actual
 OnInstancied callback timing remain separate work. It is not yet connected to
 normal crew animation authority, and viewport evidence must remain host-owned.
+
+## Reset restores selected roots, not the entire sampled skeleton
+
+`SoldierAnimationController.Awake` caches local position and rotation for its
+optional rootBone/rootBoneInner references. Reset restores those fields only;
+it does not sample T_pose, restore their scales or reset every other bone.
+The actual recovered enemy prefab binds rootBone but leaves rootBoneInner null.
+Consequently, treating Reset as a full bind-pose reset invents an initial palm
+pose and discards legitimate previous animation/procedural state.
+
+`UnitySoldierPoseResetExport` samples the real slide clip on an inactive rig,
+then introduces a controlled stale non-root position and root scale. It invokes
+the original Reset once in its fresh disabled-controller state, which avoids a
+camera lookup without altering the method. The nine-node observed palm chain
+retains the sampled non-root transforms and changed scale while restoring the
+bound root's cached position/rotation. The second root index is -1 because the
+source prefab has no rootBoneInner. The slide state changes from enabled at its
+clip length to disabled at time zero, retaining weight one.
+
+The Unity process exits zero; log: `.local/soldier-pose-reset-unity.log`.
+The LF reference digest is
+`5a18328895cb24379ee407c0ceacef714bcd88c072a2d255e2b42bd24d48cf98`.
+`SoldierAnimationRootReset` restores explicit host-bound root positions/rotations
+without mutating the supplied local pose, preserving every scale and unbound
+node. It validates each local transform without inventing a skeleton hierarchy.
+Tests compare every resulting local transform exactly with the original method,
+require a genuinely changed sampled pose and retained stale state, and reject
+duplicate/out-of-range bindings without input mutation.
+
+This model covers the root restoration policy, not all Animation.Stop semantics,
+automatic clip evaluation, later idle crossfades, source actor initialization or
+normal renderer/camera state. The clip state row is an observation for this
+sampled slide case, not proof of every clip/weight combination. Existing sampling
+fixtures that explicitly use T_pose remain clip-extraction fixtures; they must
+not be reinterpreted as evidence that the live controller performs that reset.
+Normal crew descent/collision registration still requires the true incoming
+pose and its subsequent source callback/animation order.
