@@ -1474,6 +1474,7 @@ if (args is ["--native-helicopter-rope-only"])
     nativeRopeChecks += NativeHelicopterPhysicsWorldTests.Run();
     nativeRopeChecks += HelicopterFlightClockTests.Run();
     nativeRopeChecks += HelicopterFlightRopeFrameTests.Run();
+    nativeRopeChecks += HelicopterRopeLandingTests.Run();
     Console.WriteLine($"PASS: {nativeRopeChecks} native rope ownership and motion checks");
     return;
 }

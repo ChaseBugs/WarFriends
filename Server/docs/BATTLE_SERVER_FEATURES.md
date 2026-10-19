@@ -36,6 +36,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The landing-query checkpoint implements `ShowRope`'s downward ray/player-plane
+projection followed by a ten-unit nearest surface query. Both Army and co-op
+navigation expose this helper over their validated area-zero meshes, matching
+the recovered mask of one. Synthetic stacked-surface tests cover lower-floor
+projection, an above-origin plane that must not project, missing surfaces, and
+malformed origins. Worker arrival still does not invoke this path. Unity nearest
+surface comparisons on recovered maps and the source's ignored failed-sample
+return remain unverified. The helper returns no target on a missing surface;
+it does not invent zero-height landing authority or claim failure-path parity.
+The focused test project builds with zero warnings/errors, and Windows plus actual
+Ubuntu WSL each pass 5,983 native/geometry checks. Logs are `.local/rope-landing-windows.log`
+and `.local/rope-landing-linux.log`.
+
 The 2026-10-20 composition checkpoint adds an arrival-frame extension target to the
 native world's render input. Recovered `Helicopter.Update` tests `mShowRope` before
 `Steer` invokes `StopPointReached`/`ShowRope`; activation therefore takes effect on

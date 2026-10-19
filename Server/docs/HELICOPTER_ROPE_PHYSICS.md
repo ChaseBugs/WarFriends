@@ -471,3 +471,21 @@ invalid bank quaternion has a guard; no paused orientation is inferred from an
 infinite bank angle. Full Unity flight/pause capture is still required to establish
 rendered fidelity. The composition uses an explicit test landing height, not a
 recovered NavMesh sample. Worker registration and real landing remain pending.
+
+## Landing query reconstruction — 2026-10-20
+
+`HelicopterRopeLanding` reconstructs the query position in `ShowRope` from the
+trusted pre-flight rope origin and current player's selected point. A downward
+ray intersects the horizontal plane only if the player point is below the rope;
+otherwise the source origin is retained. The nearest surface query uses radius
+ten. Army and co-op catalogs reject all nonzero areas, so their mesh queries
+match the source's area mask one without accepting unrelated areas.
+
+Tests use the existing triangle nearest-point implementation on two stacked
+surfaces. They check floor selection after projection, the no-forward-intersection
+case, absent surfaces, and invalid origins. This is host geometry evidence, not
+Unity `NavMesh.SamplePosition` equivalence on baked source maps. The original
+method ignores SamplePosition's Boolean result and uses `hit.position`; its
+failure output needs an actual source-runtime capture. The host currently returns
+null on no surface, explicitly leaving that compatibility path unresolved.
+No Worker landing or crew spawn authority is enabled by this helper.

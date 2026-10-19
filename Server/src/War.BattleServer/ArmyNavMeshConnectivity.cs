@@ -62,6 +62,12 @@ public sealed class ArmyNavMeshConnectivity
             ? graph.SampleNearest(point,radius)
             : throw new InvalidDataException("Unknown pinned navigation map.");
 
+    internal Vector3? SampleHelicopterLanding(RecoveredBattleMap map, HelicopterRopeLandingQuery query)
+    {
+        // Loaded Army geometry rejects nonzero areas, matching ShowRope's area mask of one.
+        return HelicopterRopeLanding.Resolve(query, (point, radius) => SampleNearest(map, point, radius));
+    }
+
     public static ArmyNavMeshConnectivity Build(IReadOnlyList<RecoveredBattleMap> sourceMaps,
         ArmyNavMeshTriangulationCatalog geometry,ArmyNavMeshPathFixtureCatalog fixtures)
     {

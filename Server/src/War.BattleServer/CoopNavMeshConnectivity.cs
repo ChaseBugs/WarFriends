@@ -80,6 +80,14 @@ public sealed class CoopNavMeshConnectivity
         return graphs[index].SampleNearest(position, radius);
     }
 
+    internal Vector3? SampleHelicopterLanding(MissionCatalog missions,
+        int missionIndex, HelicopterRopeLandingQuery query)
+    {
+        int index = MapIndex(missions, missionIndex);
+        // Co-op geometry also accepts only area zero; use the same source query for both game modes.
+        return HelicopterRopeLanding.Resolve(query, graphs[index].SampleNearest);
+    }
+
     public ArmyNavMeshCorridor? PlanCorridor(MissionCatalog missions,
         int missionIndex, Vector3 start, Vector3 end)
     {
