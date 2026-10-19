@@ -3,8 +3,14 @@ namespace War.BattleServer;
 internal sealed partial class CoopMatchRuntime
 {
     /// <summary>Immutable host spawn publication; canonical Client entry callbacks still require observation.</summary>
-    internal sealed record TransportCrewBirth(int Slot, ulong SpawnTick,
-        HelicopterRopeBodyPose Aircraft, HelicopterRopeBodyPose CrewPoint);
+    internal sealed record TransportCrewBirth
+    {
+        internal required int Slot { get; init; }
+        internal required ulong SpawnTick { get; init; }
+        internal required float SpawnRealtime { get; init; }
+        internal required HelicopterRopeBodyPose Aircraft { get; init; }
+        internal required HelicopterRopeBodyPose CrewPoint { get; init; }
+    }
 
     private readonly Dictionary<ulong, IReadOnlyList<TransportCrewBirth>> _transportCrewBirths = new();
 
@@ -27,8 +33,15 @@ internal sealed partial class CoopMatchRuntime
             transportHelicopterOrientations[entityId].Rotation);
         IReadOnlyList<HelicopterCrewPose> points = transportCrewPoints.PlaceAttached(
             aircraft.Position, aircraft.Rotation, seats);
-        TransportCrewBirth[] births = points.Select(point => new TransportCrewBirth(point.Slot, tick,
-            aircraft, new HelicopterRopeBodyPose(point.Position, point.Rotation))).ToArray();
+        float spawnRealtime = _transportSpawnRealtime[entityId];
+        TransportCrewBirth[] births = points.Select(point => new TransportCrewBirth
+        {
+            Slot = point.Slot,
+            SpawnTick = tick,
+            SpawnRealtime = spawnRealtime,
+            Aircraft = aircraft,
+            CrewPoint = new HelicopterRopeBodyPose(point.Position, point.Rotation),
+        }).ToArray();
         if (!_transportCrewBirths.TryAdd(entityId, Array.AsReadOnly(births)))
         {
             throw new InvalidDataException("Transport crew birth cannot replace an existing spawn publication.");

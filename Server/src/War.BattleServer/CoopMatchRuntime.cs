@@ -771,6 +771,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         if (nextTick < tick)
             throw new InvalidOperationException("Co-op match tick moved backwards.");
         BattleRealtime.Validate(realTimeSeconds, ObservedRealTimeSeconds);
+        if (_transportRopes != null)
+        {
+            _ = BattleRealtime.ToUnitySeconds(realTimeSeconds);
+        }
         ObservedRealTimeSeconds = realTimeSeconds;
         if (Terminal)
             return;
@@ -1116,7 +1120,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
                 new HelicopterOrientationState());
             if (_transportRopes != null)
             {
-                _transportSpawnRealtime.Add(enemy.EntityId, (float)ObservedRealTimeSeconds);
+                _transportSpawnRealtime.Add(enemy.EntityId, BattleRealtime.ToUnitySeconds(ObservedRealTimeSeconds));
             }
             if (transportCrewPoints != null)
             {

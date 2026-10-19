@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Crew births now retain the aircraft's original observed realtime independently
+of tick age. Native admission/Advance reject finite-double timestamps that would
+overflow Unity's float clock before mutating time or executing a tick. The
+mission fixture uses an eleven-second observation offset and rejects a retained
+timestamp reconstructed as `SpawnTick / 30`; malformed input checks also prove
+rejected time does not consume native match state. This is the modeled spawn
+epoch, not an observed original TweenRotation OnEnable time/residual, so source
+callback and normal entry/descent registration remain pending.
+Windows and actual Ubuntu WSL each pass 28,059 reported combat-content assertions
+plus native lifecycle/clock helpers. Logs: `.local/crew-birth-clock-content.log`
+and `.local/crew-birth-clock-linux-content.log`. Build warnings/errors remain zero.
+
 Actual native-enabled co-op spawns now retain immutable crew birth publications
 separately from later drop poses. Each drop binds its original slot/tick/aircraft/
 point record, and death/terminal cleanup removes both lifetimes. The mission

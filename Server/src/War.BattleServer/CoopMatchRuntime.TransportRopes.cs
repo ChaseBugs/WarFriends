@@ -17,6 +17,7 @@ internal sealed partial class CoopMatchRuntime
         {
             throw new InvalidOperationException("Native transport ropes require pre-admission source binding.");
         }
+        _ = BattleRealtime.ToUnitySeconds(ObservedRealTimeSeconds);
         _transportRopes = new CoopTransportRopeWorld(_transportRopeDefinition);
     }
 

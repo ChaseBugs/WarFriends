@@ -489,3 +489,26 @@ fed into the entry tween as an Euler-roundtripped target, nor used as a current
 soldier pose. Existing animation reset, pooled TweenRotation state, callback order
 and the subsequent coroutine transition must still be observed before enabling
 normal independent crew descent and collision authority.
+
+## Crew spawn observation time and Unity clock range
+
+Birth publications now retain `SpawnRealtime` from the same immutable aircraft
+spawn observation used by native rope activation. They do not derive it from
+`SpawnTick`, recapture it during a drop, or substitute the later flight clock.
+The birth record uses named required fields so its point/aircraft/time inputs
+are explicit. This is a host spawn epoch, not yet proof of the original pooled
+TweenRotation OnEnable timestamp or its carried fractional residual.
+
+`BattleRealtime.ToUnitySeconds` rejects a finite double that would become an
+infinite Unity float. Native transport enablement and Advance check this before
+allocation or clock publication. Previously a finite `double.MaxValue` passed
+the shared double validation and could poison the native float clock after the
+match had begun advancing. Other double-only paths keep their existing contract.
+
+The real native mission fixture now observes time with an eleven-second offset
+from tick-derived time. It requires each retained birth timestamp to match that
+observation and differ from `SpawnTick / 30`, while still verifying strict rope
+activation, both drops and cleanup. Negative, NaN, infinite and float-overflowing
+observations reject at tick zero without changing the observed clock or executing
+a tick. Thus a tick-derived implementation cannot pass merely because the old
+fixture happened to give realtime and simulation time identical values.

@@ -6,6 +6,7 @@ using War.Protocol;
 internal static class CoopTransportLandingTests
 {
     private const float SourceActivationDelaySeconds = 2f;
+    private const double NativeClockOffsetSeconds = 11d;
     private const ulong NativeRegistryCapacity = 64;
     private const ulong SourceFirstDropDelayTicks = 5UL * MatchManifest.TickRate;
     private const ulong SourceDropSpacingTicks = 2UL * MatchManifest.TickRate;
@@ -21,6 +22,7 @@ internal static class CoopTransportLandingTests
         if (Environment.GetEnvironmentVariable("WAR_TEST_NATIVE_TRANSPORT_ROPES") == "1")
         {
             runtime.EnableTransportRopes();
+            VerifyRejectedRealtime(runtime);
             try
             {
                 runtime.Advance(2);
@@ -60,8 +62,8 @@ internal static class CoopTransportLandingTests
             AdvanceTo(runtime, next);
             if (runtime.TransportRopeSnapshot is HelicopterPhysicsWorldSnapshot ropes)
             {
-                bool shouldBeActive = (float)(next / (double)MatchManifest.TickRate) >
-                    (float)(initial.SpawnTick / (double)MatchManifest.TickRate) + SourceActivationDelaySeconds;
+                bool shouldBeActive = (float)ObservedTimeForTick(next) >
+                    (float)ObservedTimeForTick(initial.SpawnTick) + SourceActivationDelaySeconds;
                 if (ropes.Members.Any(member => member.Lease.EntityId == initial.EntityId) != shouldBeActive)
                 {
                     throw new Exception("Runtime native rope activation differs from the source realtime deadline.");
@@ -101,6 +103,25 @@ internal static class CoopTransportLandingTests
         throw new Exception("Co-op transport did not produce its arrival landing decision.");
     }
 
+    private static void VerifyRejectedRealtime(CoopMatchRuntime runtime)
+    {
+        foreach (double invalid in new[] { -1d, double.NaN, double.PositiveInfinity, double.MaxValue })
+        {
+            try
+            {
+                runtime.Advance(1, invalid);
+                throw new Exception("Native transport accepted invalid or float-overflowing realtime.");
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                if (runtime.ObservedRealTimeSeconds != 0 || runtime.Snapshot().ServerTick != 0)
+                {
+                    throw new Exception("Rejected realtime changed the native match clock or executed a tick.");
+                }
+            }
+        }
+    }
+
     internal static void AdvanceTo(CoopMatchRuntime runtime, ulong endTick)
     {
         if (!runtime.HasNativeTransportRopes)
@@ -111,7 +132,7 @@ internal static class CoopTransportLandingTests
         ulong current = runtime.Snapshot().ServerTick;
         for (ulong next = current + 1; next <= endTick; next++)
         {
-            runtime.Advance(next, next / (double)MatchManifest.TickRate);
+            runtime.Advance(next, ObservedTimeForTick(next));
             runtime.RenderTransportRopes(1f / MatchManifest.TickRate);
         }
     }
@@ -169,6 +190,10 @@ internal static class CoopTransportLandingTests
             Vector3 birthPoint = birth.Aircraft.Position + Vector3.Transform(slot.RestPosition, birth.Aircraft.Rotation);
             if (drop.StartTick != descents.Single(descent => descent.Slot == drop.Slot).StartTick ||
                 drop.Birth != birth || birth.SpawnTick >= drop.StartTick ||
+                !float.IsFinite(birth.SpawnRealtime) || birth.SpawnRealtime < 0 ||
+                birth.SpawnRealtime != (float)ObservedTimeForTick(birth.SpawnTick) ||
+                birth.SpawnRealtime == (float)(birth.SpawnTick / (double)MatchManifest.TickRate) ||
+                birth.SpawnRealtime >= (float)runtime.ObservedRealTimeSeconds ||
                 Vector3.Distance(birth.CrewPoint.Position, birthPoint) > 0.000001f ||
                 Vector3.Distance(drop.RopeMarker, marker) > 0.000001f ||
                 Vector3.Distance(drop.CrewPoint.Position, root) > 0.000001f || drop.LandingSurface == null ||
@@ -184,5 +209,10 @@ internal static class CoopTransportLandingTests
             throw new Exception("Crew birth fixture never separated the original spawn point from the later drop point.");
         }
         Console.WriteLine($"PASS: {drops.Count} source crew drop inputs bound to native rope and direct surface lookup.");
+    }
+
+    private static double ObservedTimeForTick(ulong tick)
+    {
+        return NativeClockOffsetSeconds + tick / (double)MatchManifest.TickRate;
     }
 }
