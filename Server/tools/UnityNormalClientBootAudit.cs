@@ -14,6 +14,7 @@ public static class UnityNormalClientBootAudit
 {
     private const string SessionKey = "WarFriends.NormalClientBootAudit";
     private const int MaximumStartupSeconds = 75;
+    private const int MaximumPairedStartupSeconds = 150;
     private const int MainSceneObservationFrames = 12;
     private const int MaximumExceptionSamples = 12;
     private const int MaximumErrorSources = 32;
@@ -56,7 +57,9 @@ public static class UnityNormalClientBootAudit
 
     private static void Attach()
     {
-        _deadline = EditorApplication.timeSinceStartup + MaximumStartupSeconds;
+        _deadline = EditorApplication.timeSinceStartup +
+            (WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled
+                ? MaximumPairedStartupSeconds : MaximumStartupSeconds);
         EditorApplication.update -= Observe;
         EditorApplication.update += Observe;
         Application.logMessageReceived -= ObserveLog;
@@ -119,6 +122,12 @@ public static class UnityNormalClientBootAudit
             _mainSceneFrame = Time.frameCount;
         }
         string queueReport = Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT");
+        if (observedTarget && WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled &&
+            !WarFriends.Validation.UnityNormalBattleEntryAudit.Observe() &&
+            EditorApplication.timeSinceStartup <= _deadline)
+        {
+            return;
+        }
         if (observedTarget && !string.IsNullOrEmpty(queueReport))
         {
             if (!_normalQueueStarted)
@@ -200,6 +209,8 @@ public static class UnityNormalClientBootAudit
             initializedUnitRows = levels == null ? 0 : levels.unitsSortedByLevel.Count,
             initializedWeaponRows = levels == null ? 0 : levels.weaponsSortedByLevel.Count,
             cardDefinitionsReady = accountReady && HasCardDefinitions(),
+            normalBattle = WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled
+                ? WarFriends.Validation.UnityNormalBattleEntryAudit.Capture() : null,
             normalQueueStarted = _normalQueueStarted,
             normalQueueObserved = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT")) &&
                 File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT")),

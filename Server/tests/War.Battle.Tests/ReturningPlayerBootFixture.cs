@@ -15,6 +15,17 @@ internal static class ReturningPlayerBootFixture
     /// <summary>Updates only an unused smoke database after its original starter insertion has been verified.</summary>
     internal static async Task SeedAsync(string uri, string databaseName, string reportPath)
     {
+        await SeedAccountsAsync(uri, databaseName, reportPath, 1);
+    }
+
+    /// <summary>Seeds exactly two already booted identities for the normal two-Unity admission gate.</summary>
+    internal static async Task SeedPairAsync(string uri, string databaseName, string reportPath)
+    {
+        await SeedAccountsAsync(uri, databaseName, reportPath, 2);
+    }
+
+    private static async Task SeedAccountsAsync(string uri, string databaseName, string reportPath, int accountCount)
+    {
         if (!databaseName.StartsWith(DatabasePrefix, StringComparison.Ordinal) ||
             !Guid.TryParseExact(databaseName[DatabasePrefix.Length..], "N", out _))
         {
@@ -24,16 +35,21 @@ internal static class ReturningPlayerBootFixture
         IMongoDatabase database = new MongoClient(uri).GetDatabase(databaseName);
         await RequireUnusedBattleStateAsync(database);
         IMongoCollection<LegacyPlayerDocument> players = database.GetCollection<LegacyPlayerDocument>("legacyPlayers");
-        List<LegacyPlayerDocument> accounts = await players.Find(_ => true).Limit(2).ToListAsync();
-        if (accounts.Count != 1 || accounts[0].Revision < 1 || accounts[0].Revision == long.MaxValue)
+        List<LegacyPlayerDocument> accounts = await players.Find(_ => true).Limit(accountCount + 1).ToListAsync();
+        if (accounts.Count != accountCount || accounts.Any(account => account.Revision < 1 ||
+            account.Revision == long.MaxValue))
         {
-            throw new InvalidDataException("Expected exactly one valid boot account.");
+            throw new InvalidDataException("The isolated boot roster has an unexpected count or revision.");
         }
 
-        await UpdateAccountAsync(players, accounts[0]);
+        foreach (LegacyPlayerDocument account in accounts)
+        {
+            await UpdateAccountAsync(players, account);
+        }
         await File.WriteAllTextAsync(reportPath, JsonSerializer.Serialize(new
         {
             schemaVersion = 1,
+            accountCount,
             scope = "synthetic returning-player state; not earned progression or battle acceptance",
             rankIndex = ReturningRankIndex,
             experience = ReturningExperience,

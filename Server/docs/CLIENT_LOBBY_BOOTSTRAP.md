@@ -642,3 +642,59 @@ The configured run at `Server/.local/client-boot-3b4fd09182ce470d8f68e193899ca8a
 This run has one Unity participant and no paired battle Worker. It does not prove two-client
 admission, card selection, loading/readiness, rendering, combat or acknowledged cancellation.
 Those remain the next integration gates; the full BattleServer checklist remains open.
+
+## Two normal Unity participants: current failed entry gate
+
+The new `ClientBootSmoke.ps1 -SecondUnityProject <disposable-project>` mode runs the ordinary
+account boot for two separate persistent identities, seeds exactly two synthetic returning accounts,
+starts a real battle Worker and launches both normal DeathMatch controllers. Each participant
+publishes lobby readiness before either starts searching, preserving the source matchmaking wait
+and bot-fallback rules. The audit calls the normal card-selection completion method and requires
+both authoritative `Running` and the normal Client's `gameIsRunning`, with the same match ID.
+It does not pass merely because both sockets connect.
+
+Use distinct projects under `Server/.local` with independent Assets and Library directories.
+`NormalUnityPairSmoke.ps1` is a child of the parent boot script; it depends on that parent's isolated
+Backend/database/environment and owns only its Worker and Unity processes. The Worker receives
+the recovered map data and the existing mixed starter weapon manifests. Control registration uses
+`/internal/matches`, separately from `/health/ready`. No active Client assets or reference projects
+were changed to build this harness.
+
+The initial attempts are retained as failed evidence:
+
+- `client-boot-3a6b6d31233b439db9e96f255aaffa12`: second-project initialization exceeded the
+  owned process limit. Separate prewarming subsequently exited normally; this is not gameplay proof.
+- `client-boot-07b3c37fd607442296b323e0bb0f0685`: second boot reached account creation but did
+  not finish unit/weapon initialization before its audit deadline. Logs also record prefab updates;
+  they do not establish the sole cause. The next run completed both ordinary boots without changing
+  their audit deadlines.
+- `client-boot-62e36f278c784ce09f4903f04cf13542`: the first harness configuration sent control
+  registration to `/`, producing Worker 404 responses. Subsequent bot fallback/card errors do not
+  prove successful UDP admission. The harness control URL was corrected before the following run.
+
+The configured run at `Server/.local/client-boot-3bac052f04284c60b4fb34563de5af84` **failed** its
+complete entry gate. Release build had zero warnings/errors; both booted accounts and pair-fixture
+setup passed. Both logs contain `ALL PLAYERS CONNECTED`, both reports contain two players and
+`hasSubmittedCards=true`, and both controllers entered the post-selection loading path. Neither
+report has `hasReachedRunning=true`; both ultimately record `GameCancelled`. Error-level counts
+are 107 and 108, with zero uncaught exceptions. The script exited nonzero and cleaned up its owned
+processes. Both disposable package manifests retain SHA-256
+`7212bb6d4ae5db21b4fe5d10a4a0666d1f2c63618d8277b692254dd1c2c815a3`.
+
+Source-backed integration gaps exposed by this run:
+
+1. `GameControllerPVP.LoadLevelAndStartGame` still sends `GameStartedMaster` (64) or
+   `GameStartedClient` (65). The Backend logs both as unimplemented and returns `Result:503`.
+   `GameController.WaitForServerResponse` waits for `mGameCreated`, which is set by the successful
+   `OnGameStarted` callback. A success response requires `Time`; it may also update `BattleId`
+   and the paired dog-tag fields. Implement this acknowledgement against the authenticated current
+   pair/frozen manifest, preserving the recovered callback order and server-owned economy. Do not
+   fabricate successful receipts for an unallocated match or skip the Client's wait.
+2. `GameControllerOnline.AquireLevelName` still waits for `mMapIdSet`, historically supplied by
+   Photon map RPCs. The self-hosted roster initializer does not set it. The current protobuf grant
+   has no map identity/revision fields. This is a separate pending contract gap even after the
+   HTTP acknowledgement is supplied; bind the trusted manifest's map to the existing local map
+   entries rather than selecting an arbitrary/default scene.
+
+These are actionable prerequisites, not a claim that they are the only remaining loading failures.
+Normal rendered combat, mobile execution, reconnect, outcomes and the full feature checklist remain open.

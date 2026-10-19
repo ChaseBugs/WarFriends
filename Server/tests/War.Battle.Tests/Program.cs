@@ -471,6 +471,11 @@ if (args is ["--seed-returning-boot-player", var fixtureUri, var fixtureDatabase
     await War.Battle.Tests.ReturningPlayerBootFixture.SeedAsync(fixtureUri, fixtureDatabase, fixtureReport);
     return;
 }
+if (args is ["--seed-returning-boot-pair", var pairUri, var pairDatabase, var pairReport])
+{
+    await War.Battle.Tests.ReturningPlayerBootFixture.SeedPairAsync(pairUri, pairDatabase, pairReport);
+    return;
+}
 if (args is ["--watch-normal-unity-queue", var queueUri, var queueDatabase, var queueReport])
 {
     await War.Battle.Tests.NormalUnityQueueObserver.WatchAsync(queueUri, queueDatabase, queueReport);

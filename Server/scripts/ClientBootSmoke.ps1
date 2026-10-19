@@ -5,7 +5,8 @@ param(
     [string]$MongoExecutable = 'mongod',
     [switch]$ExportStarterLoadout,
     [switch]$VerifyReturningPlayer,
-    [switch]$VerifyNormalQueue
+    [switch]$VerifyNormalQueue,
+    [string]$SecondUnityProject
 )
 $ErrorActionPreference = 'Stop'
 if ($VerifyNormalQueue) { $VerifyReturningPlayer = $true }
@@ -19,6 +20,7 @@ $editorFolder = Join-Path $projectPath 'Assets/Editor'
 New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalClientBootAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalMatchmakingReadinessAudit.cs') -Destination $editorFolder
+Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalBattleEntryAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityStarterLoadoutExport.cs') -Destination $editorFolder
 $runRoot = Join-Path $validationRoot ('client-boot-' + [Guid]::NewGuid().ToString('N'))
 $mongoPath = Join-Path $runRoot 'mongo'
@@ -28,7 +30,9 @@ $variables = @(
     'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'Mongo__Uri', 'Mongo__Database',
     'Battle__SigningKey', 'Battle__ControlKey', 'Legacy__ContentPath',
     'WARFRIENDS_BACKEND_URL', 'WAR_LOBBY_BOOT_REQUIRE_ACCOUNT', 'WAR_STARTER_LOADOUT_OUTPUT',
-    'WAR_LOBBY_BOOT_IDENTITY', 'WAR_NORMAL_QUEUE_REPORT'
+    'WAR_LOBBY_BOOT_IDENTITY', 'WAR_NORMAL_QUEUE_REPORT', 'WAR_NORMAL_BATTLE_SELF', 'WAR_NORMAL_BATTLE_PEER',
+    'Battle__Port', 'Battle__ControlPort', 'Battle__ControlEndpoint', 'Battle__ServerId', 'Battle__PublicHost',
+    'Battle__BindAddress', 'Battle__ResultOutboxPath', 'Battle__BackendResultEndpoint'
 )
 $battleContentFiles = @{
     'Combat' = 'combat'; 'Shotgun' = 'shotgun'; 'Smg' = 'smg'; 'Pistol' = 'pistol';
@@ -76,12 +80,23 @@ try {
     $env:Battle__SigningKey = New-SigningKey
     $env:Battle__ControlKey = New-SigningKey
     $env:Legacy__ContentPath = Join-Path $serverRoot 'content/recovered-battle-content.json'
-    if ($VerifyNormalQueue) {
+    if ($VerifyNormalQueue -or $SecondUnityProject) {
         $env:Battle__MatchmakingCompatibilityKey = 'unscored-starter.fixture'
         $env:Battle__MatchManifestTemplatePath = Join-Path $serverRoot 'content/local-starter-match-template.json'
         foreach ($family in $battleContentFiles.Keys) {
             $manifest = Join-Path $serverRoot ("content/" + $battleContentFiles[$family] + '-content-manifest.json')
             [Environment]::SetEnvironmentVariable("Battle__${family}ContentManifestPath", $manifest, 'Process')
+        }
+        if ($SecondUnityProject) {
+            $env:Battle__Port = Get-FreePort
+            do { $env:Battle__ControlPort = Get-FreePort }
+            while ($env:Battle__ControlPort -eq $env:Battle__Port)
+            $env:Battle__ControlEndpoint = "http://127.0.0.1:$($env:Battle__ControlPort)/internal/matches"
+            $env:Battle__ServerId = 'local-1'
+            $env:Battle__PublicHost = '127.0.0.1'
+            $env:Battle__BindAddress = '127.0.0.1'
+            $env:Battle__ResultOutboxPath = Join-Path $runRoot 'outbox'
+            $env:Battle__BackendResultEndpoint = "http://127.0.0.1:$httpPort/internal/battle/results/accept"
         }
     }
     $backendDll = Join-Path $serverRoot 'src/War.Backend/bin/Release/net10.0/War.Backend.dll'
@@ -118,6 +133,8 @@ try {
     $env:WARFRIENDS_BACKEND_URL = "http://127.0.0.1:$httpPort/"
     $env:WAR_LOBBY_BOOT_REQUIRE_ACCOUNT = '1'
     $env:WAR_NORMAL_QUEUE_REPORT = $null
+    $env:WAR_NORMAL_BATTLE_SELF = $null
+    $env:WAR_NORMAL_BATTLE_PEER = $null
     $env:WAR_LOBBY_BOOT_IDENTITY = 'NormalBoot-' + [Guid]::NewGuid().ToString('N')
     $env:WAR_STARTER_LOADOUT_OUTPUT = $null
     if ($ExportStarterLoadout) {
@@ -161,7 +178,11 @@ try {
             throw "Starter export is incomplete; inspect $runRoot"
         }
     }
-    if ($VerifyReturningPlayer) {
+    if ($SecondUnityProject) {
+        & (Join-Path $PSScriptRoot 'NormalUnityPairSmoke.ps1') -UnityExecutable $UnityExecutable `
+            -FirstProject $projectPath -SecondProject $SecondUnityProject -RunRoot $runRoot -TestDll $testDll
+    }
+    elseif ($VerifyReturningPlayer) {
         dotnet $testDll --seed-returning-boot-player $env:Mongo__Uri $env:Mongo__Database `
             (Join-Path $runRoot 'returning-player-fixture.json')
         if ($LASTEXITCODE -ne 0) { throw 'Returning-player fixture creation failed.' }
