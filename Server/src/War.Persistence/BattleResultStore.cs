@@ -89,9 +89,8 @@ public sealed partial class BattleResultStore
         return result;
     }
     /// <summary>
-    /// Reads one bounded page of completed, unsettled terminal evidence.
-    /// The next cursor advances past every inspected row, including older
-    /// aborted rows that have no stored phase yet.
+    /// Validates one bounded page of unsettled evidence and returns its completed battles.
+    /// The next cursor advances past every inspected row, including valid aborts.
     /// </summary>
     public async Task<BattlePendingResultPage> ReadPendingSettlementPage(
         BattleResultCursor? after, CancellationToken ct)
@@ -103,9 +102,9 @@ public sealed partial class BattleResultStore
             throw new InvalidDataException("Invalid pending battle result cursor.");
 
         var filter = Builders<BattleResultDocument>.Filter;
-        var pending = filter.Ne(x => x.Settled, true) &
-            (filter.Eq(x => x.TerminalPhase, BattlePhase.Ended) |
-             filter.Eq(x => x.TerminalPhase, null));
+        // The phase mirror is validated against the payload below. Filtering by it
+        // first would let a damaged mirror hide an unsettled completed battle.
+        var pending = filter.Ne(x => x.Settled, true);
         if (after != null)
         {
             var laterDate = filter.Gt(x => x.AcceptedUtc, after.AcceptedUtc);

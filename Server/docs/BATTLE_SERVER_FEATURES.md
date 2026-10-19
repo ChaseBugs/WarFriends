@@ -34,6 +34,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B26 pending settlement discovery no longer filters on the unvalidated terminal-phase mirror.
+It reads at most 256 unsettled rows, validates each full row and protobuf, then returns completed
+battles and advances past valid aborts. A completed payload whose mirror is changed to Aborted
+or Running must now fail the page rather than disappear from discovery. This retains cursor
+ordering and bounded reads; it does not implement account or wallet settlement. The fresh
+MongoDB replica-set `--manifest-snapshot-only` regression passes at
+`.local/result-discovery-f426e3b955474becb6a19d4702ef8aa5`, including the existing 10,001-row
+backlog and payload-corruption checks. The solution build and protocol executable also pass.
+The Windows native smoke exits zero at `.local/smoke-df6d1e898ca2405e9bb36a2e681c0f85`,
+including 74 live checks, signed control publication/cancellation and result-outbox restart replay.
+
 B34/B36 native Linux integration on 2026-10-19 now passes the isolated MongoDB 8.0.34
 replica-set smoke with self-contained Backend and Worker: transactional queue/card/terminal
 checks, the protocol executable, and 74 live HTTP/protobuf/UDP checks with two independent

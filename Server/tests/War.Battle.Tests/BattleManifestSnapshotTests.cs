@@ -469,6 +469,26 @@ internal static class BattleManifestSnapshotTests
                    secondPending.Results.Select(x=>x.MatchId)).Any())
                 throw new Exception("Pending settlement pages were not bounded and disjoint.");
             var damagedPending=firstPending.Results[0];
+            foreach (BattlePhase damagedPhase in new[] { BattlePhase.Aborted, BattlePhase.Running })
+            {
+                await resultRows.UpdateOneAsync(
+                    row => row.MatchId == damagedPending.MatchId,
+                    Builders<BattleResultDocument>.Update.Set(row => row.TerminalPhase, damagedPhase));
+
+                try
+                {
+                    await resultStore.ReadPendingSettlementPage(null, CancellationToken.None);
+                    throw new Exception("Pending settlement scan hid a damaged phase mirror.");
+                }
+                catch (InvalidDataException)
+                {
+                    // The same bounded page must reject the row before returning any authority.
+                }
+            }
+
+            await resultRows.UpdateOneAsync(
+                row => row.MatchId == damagedPending.MatchId,
+                Builders<BattleResultDocument>.Update.Set(row => row.TerminalPhase, damagedPending.TerminalPhase));
             await resultRows.UpdateOneAsync(x=>x.MatchId==damagedPending.MatchId,
                 Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,new byte[]{1,2,3}));
             try {await resultStore.ReadPendingSettlementPage(null,CancellationToken.None);
