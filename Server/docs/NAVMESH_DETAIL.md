@@ -512,3 +512,38 @@ activation, both drops and cleanup. Negative, NaN, infinite and float-overflowin
 observations reject at tick zero without changing the observed clock or executing
 a tick. Thus a tick-derived implementation cannot pass merely because the old
 fixture happened to give realtime and simulation time identical values.
+
+## Original animation reset and visibility control ordering
+
+`OnInstancied` invokes `SoldierAnimationController.Reset`. Reset stops animation,
+sets in-screen/animation-enabled true and forced visibility false, performs its
+screen check, then sets the private controller-enabled flag true. A fresh
+controller therefore skips that first check; a controller whose previous enabled
+flag is true evaluates it immediately. Pause and Stop clear that flag, Resume
+sets it, and ForceInScreen enables animation without changing it. OnEnable resets
+in-screen/animation-enabled state then checks using the retained controller flag.
+These transitions cannot be collapsed into one generic enable Boolean.
+
+`SoldierAnimationVisibilityState` preserves those flag transitions. It accepts an
+explicit trusted viewport projection, not an inferred camera or client assertion.
+The source widens float coordinates to double before comparison with -0.1/1.1;
+the exact floats `-0.1f` and `1.1f` are outside, while their adjacent inner floats
+are inside. Replacing the comparisons with float bounds changes that behaviour.
+Malformed projection inputs reject before changing state.
+
+`UnitySoldierAnimationResetExport` calls the original Awake/OnEnable/Reset/screen
+and control methods on an inactive recovered actor, with a controlled real Camera
+and explicitly supplied GameCamera singleton. It does not run enemy initialization,
+weapon attachment, Photon calls, the normal PlayerLoop or a real scene camera.
+The final zero-exit capture has 27 rows; log:
+`.local/soldier-animation-reset-unity-final.log`. Earlier successful captures had
+11/23 rows and were superseded when pause/stop/reactivation coverage was added.
+The committed LF reference digest is
+`134a96ee59e081aaf076f16f1106a11546b48bcff98291e96403702d98f9a16d`.
+Its original controller hash matches the active source:
+`f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a`.
+
+The model covers visibility flags only: source Animation.Stop/Play clip effects,
+bone resets, renderer-based culling, camera spring/projection state and actual
+OnInstancied callback timing remain separate work. It is not yet connected to
+normal crew animation authority, and viewport evidence must remain host-owned.

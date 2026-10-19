@@ -36,6 +36,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Source animation reset/control visibility ordering is now modeled and checked
+against 27 original method calls: fresh/reused Reset, OnEnable, screen checks,
+Pause/Resume/Stop and forced visibility. The previous private enabled flag governs
+Reset's first screen check. Float coordinates widened against double bounds also
+preserve the source boundary behaviour. This is flag-policy evidence with an
+explicit controlled Camera; real scene projection, clip/bone reset effects and
+normal actor initialization remain open before crew animation authority can use it.
+Windows and actual Ubuntu WSL each pass 8,029 native/query checks. Logs:
+`.local/animation-visibility-windows.log` and `.local/animation-visibility-linux.log`.
+Build warnings/errors remain zero.
+
 Crew births now retain the aircraft's original observed realtime independently
 of tick age. Native admission/Advance reject finite-double timestamps that would
 overflow Unity's float clock before mutating time or executing a tick. The

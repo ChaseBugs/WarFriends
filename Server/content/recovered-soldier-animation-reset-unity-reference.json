@@ -1,0 +1,306 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "sourceSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
+  "fixture": "Original controller methods, inactive actor, controlled Camera singleton; no actor lifecycle.",
+  "rows": [
+    {
+      "operation": "OnEnable",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "ForceInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": true,
+      "culling": "AlwaysAnimate"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": true,
+      "culling": "AlwaysAnimate"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        0.5,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        0.5,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        -0.100000381,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        1.10000038,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        0.5,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Pause",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Pause",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "ForceInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": true,
+      "culling": "AlwaysAnimate"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": true,
+      "culling": "AlwaysAnimate"
+    },
+    {
+      "operation": "Resume",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": true,
+      "culling": "AlwaysAnimate"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        0.5,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Stop",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": true,
+      "inScreen": true,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "OnEnable",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "Reset",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    },
+    {
+      "operation": "CheckIfInScreen",
+      "viewport": [
+        -0.199999809,
+        0.5
+      ],
+      "enabled": false,
+      "inScreen": false,
+      "forced": false,
+      "culling": "BasedOnRenderers"
+    }
+  ]
+}
