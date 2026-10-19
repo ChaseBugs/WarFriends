@@ -1091,6 +1091,7 @@ internal static class CombatContentTests
         CoopEnemyPointMaskCatalog enemyPointMasks = CoopEnemyPointMaskCatalog.Load(
             Path.Combine(directory, "recovered-coop-enemy-point-masks.json"),
             army);
+        CoopHelicopterDestinationTests.Run(enemyPointCatalog.MapForMission(catalog, 0), enemyPointMasks, enemyCombat);
         CoopRusherPointCatalog rusherPointCatalog = CoopRusherPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-rusher-points.json"),
             catalog, spawnPoints);

@@ -1034,3 +1034,29 @@ pending; animation completion alone must not fabricate them or authorize rewards
 Windows and actual Ubuntu WSL pass 28,610 focused combat-content assertions plus
 native helpers with zero build warnings/errors. Evidence is
 `.local/crew-next-point-windows.log` and `.local/crew-next-point-linux.log`.
+
+### Shared reservations for helicopter Assaulters
+
+The active MainScene LevelBehaviourManager list starts with
+SoldierBehaviourAssaulter, behaviour file ID 35664. Helicopter.SpawnAssaulter uses
+that first entry. `CoopEnemyDestinationState.TryAssignHelicopterAssaulter` now
+binds this branch through the existing combat UnitIdFor mapping and loaded mask
+catalog, rejecting a different behaviour family rather than borrowing its rules.
+It uses the ordinary co-op mask, not tutorial or specialist acceptance overrides.
+
+Selection uses the external-seat random-choice helper and this destination state's
+existing occupied-point set. The point is reserved before GeneratePosition,
+matching SetFinalTarget's source order. Failed placement releases the reservation
+and publishes no assigned destination; a valid retry can subsequently succeed.
+Successful assignments use the existing assigned map and Release/ReleaseAll
+paths, so they share occupancy with ordinary infantry rather than creating an
+isolated crew reservation list. Existing assignments reject a second claim.
+
+The fixture uses one source-shaped obstacle point to prove crew-to-ordinary and
+ordinary-to-crew occupancy exclusion, unchanged destination after repeated claim,
+failed obstacle placement without a reservation leak, and successful later retry.
+This proves the shared destination API, not the actor completion callback, a new
+infantry identity, NavMesh movement, five-second fallback or combat eligibility.
+Windows and actual Ubuntu WSL pass 28,610 focused combat-content assertions plus
+reservation helper checks with zero build warnings/errors. Evidence is
+`.local/crew-destination-windows.log` and `.local/crew-destination-linux.log`.

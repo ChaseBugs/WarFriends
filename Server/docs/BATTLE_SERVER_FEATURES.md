@@ -36,6 +36,21 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The destination state now supports the source-backed helicopter Assaulter branch
+with shared scene reservations. MainScene LevelBehaviourManager entry zero is
+SoldierBehaviourAssaulter (file ID 35664), matching SpawnAssaulter's indexed family.
+`TryAssignHelicopterAssaulter` derives that family's validated mask, selects the
+random free point, reserves it before GeneratePosition and rolls the reservation
+back if placement fails. Crew and ordinary soldiers now compete through the same
+reservation state; a repeated entity assignment cannot overwrite its destination.
+Tests cover occupancy in both directions, duplicate rejection, failed obstacle
+placement without leaked occupancy, and a later valid retry. This remains an
+explicit destination-state API; automatic completion handoff, independent crew
+entity identity/health, fallback movement and normal client integration are pending.
+Windows and actual Ubuntu WSL pass 28,610 focused combat-content assertions plus
+the new reservation helper checks with zero build warnings/errors. Logs:
+`.local/crew-destination-windows.log` and `.local/crew-destination-linux.log`.
+
 The source completion callback has been traced beyond animation progress.
 `OnHeliSpawnFinished` returns for a dead soldier; an ordinary live soldier calls
 GetNextFreeEnemyPoint, which chooses randomly from free accepted points in source
@@ -43,8 +58,8 @@ order rather than using initial placement's nearest-point rule. The new
 `SelectFromExternalPoint` implements that ordinary selection without treating a
 prefab-local seat ID as a scene-local current point. Tests cover source order,
 non-nearest selection, occupied/all-occupied lists and invalid host draws.
-No point reservation, infantry entity creation or completion callback is wired
-yet. The no-point branch still requires source normal-spawn fallback and the
+The selection/reservation APIs are not yet invoked by automatic infantry entity
+creation or completion callbacks. The no-point branch still requires source normal-spawn fallback and the
 five-scaled-second GenerateInitPoint retry (`InvokeAfter` uses WaitForSeconds).
 Windows and actual Ubuntu WSL pass 28,610 focused combat-content assertions plus
 native helpers with zero build warnings/errors at `.local/crew-next-point-windows.log`

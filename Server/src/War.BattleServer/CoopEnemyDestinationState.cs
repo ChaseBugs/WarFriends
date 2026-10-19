@@ -10,7 +10,7 @@ public sealed record CoopAssignedEnemyDestination(
 /// enemyAtPoint in EnemyController.SetFinalTarget before walking. Movement and
 /// later behavior-specific retargeting are separate host transitions.
 /// </summary>
-public sealed class CoopEnemyDestinationState
+public sealed partial class CoopEnemyDestinationState
 {
     private readonly CoopMapEnemyPoints map;
     private readonly CoopEnemyPointMaskCatalog masks;
