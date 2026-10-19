@@ -13,7 +13,7 @@ internal sealed class NavigationDetailCatalog
     private const int MaximumPolygonVertices = 6;
     internal sealed record Triangle(Vector3 First, Vector3 Second, Vector3 Third);
     internal sealed record Polygon(IReadOnlyList<Vector3> Boundary, IReadOnlyList<Triangle> Details);
-    internal sealed record Map(string Name, IReadOnlyList<Polygon> Polygons);
+    internal sealed record Map(string Name, string SourceSha256, IReadOnlyList<Polygon> Polygons);
 
     private NavigationDetailCatalog(Map[] maps)
     {
@@ -76,7 +76,7 @@ internal sealed class NavigationDetailCatalog
         {
             throw new InvalidDataException("Navigation detail polygon or triangle totals changed.");
         }
-        return new Map(Path.GetFileNameWithoutExtension(filename), polygons.AsReadOnly());
+        return new Map(Path.GetFileNameWithoutExtension(filename), Text(entry, "sourceSha256"), polygons.AsReadOnly());
     }
 
     private static void VerifyTileSource(JsonElement tile, byte[] source)

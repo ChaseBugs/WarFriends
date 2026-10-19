@@ -12,15 +12,18 @@ public sealed class CoopNavMeshConnectivity
     private readonly IReadOnlyList<ArmyNavMeshConnectivity.Graph> graphs;
     private readonly CoopNavMeshTriangulationCatalog geometry;
     private readonly CoopInfantryPathFixtureCatalog? sourcePaths;
+    private readonly IReadOnlyList<NavigationDetailSampler>? _landingSamplers;
 
     private CoopNavMeshConnectivity(
         CoopNavMeshTriangulationCatalog geometry,
         ArmyNavMeshConnectivity.Graph[] graphs,
-        CoopInfantryPathFixtureCatalog? sourcePaths)
+        CoopInfantryPathFixtureCatalog? sourcePaths,
+        NavigationDetailSampler[]? landingSamplers = null)
     {
         this.geometry = geometry;
         this.graphs = Array.AsReadOnly(graphs);
         this.sourcePaths = sourcePaths;
+        _landingSamplers = landingSamplers == null ? null : Array.AsReadOnly(landingSamplers);
     }
 
     public static CoopNavMeshConnectivity Build(
@@ -66,6 +69,25 @@ public sealed class CoopNavMeshConnectivity
         return graphs[index].ComponentCount;
     }
 
+    internal static CoopNavMeshConnectivity BuildWithDetails(CoopNavMeshTriangulationCatalog geometry,
+        NavigationDetailCatalog details, CoopInfantryPathFixtureCatalog? sourcePaths = null)
+    {
+        ArgumentNullException.ThrowIfNull(details);
+        CoopNavMeshConnectivity verified = Build(geometry, sourcePaths);
+        var samplers = new List<NavigationDetailSampler>();
+        foreach (CoopNavMeshTriangulation map in geometry.Maps)
+        {
+            NavigationDetailCatalog.Map[] candidates = details.Maps.Where(
+                candidate => candidate.SourceSha256 == map.NavMeshSha256).ToArray();
+            if (candidates.Length != 1)
+            {
+                throw new InvalidDataException("Co-op landing detail must bind exactly one original map digest.");
+            }
+            samplers.Add(new NavigationDetailSampler(candidates[0]));
+        }
+        return new CoopNavMeshConnectivity(geometry, verified.graphs.ToArray(), sourcePaths, samplers.ToArray());
+    }
+
     public ArmyNavMeshConnection Classify(MissionCatalog missions,
         int missionIndex, Vector3 start, Vector3 end)
     {
@@ -84,8 +106,11 @@ public sealed class CoopNavMeshConnectivity
         int missionIndex, HelicopterRopeLandingQuery query)
     {
         int index = MapIndex(missions, missionIndex);
-        // Co-op geometry also accepts only area zero; use the same source query for both game modes.
-        return HelicopterRopeLanding.Resolve(query, graphs[index].SampleNearest);
+        if (_landingSamplers == null)
+        {
+            throw new InvalidOperationException("Co-op helicopter landing requires validated polygon/detail geometry.");
+        }
+        return HelicopterRopeLanding.Resolve(query, _landingSamplers[index].Sample);
     }
 
     public ArmyNavMeshCorridor? PlanCorridor(MissionCatalog missions,

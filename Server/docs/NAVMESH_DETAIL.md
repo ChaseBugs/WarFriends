@@ -80,3 +80,28 @@ sample heights on the loaded detail triangles within 0.0001 units. This validate
 loading and represented heights, not query-to-polygon selection. The native runner
 still reports the eighteen old sampler discrepancies separately. No Worker routing
 or deployment packaging is changed by this loader.
+
+## Polygon/detail sampler
+
+`NavigationDetailSampler` projects to the polygon boundary in XZ, tests horizontal
+coverage, and interpolates Y from the polygon's detail triangles. Within the bounded
+radius, covering polygons take priority; otherwise boundary candidates are compared
+by distance. The rule was inferred from captured Unity behavior and then tested on
+a separate capture after implementation. It is not presented as Unity source code
+or complete equivalence for arbitrary navigation assets.
+
+The implementation passes all 275 successful development queries. The additional
+`recovered-helicopter-landing-holdout-unity-reference.json` contains 105 newly chosen
+positions, the original 50 map queries and one empty-mesh failure. All 155 successful
+queries pass the same 0.002-unit tolerance. The new capture has LF digest
+`e43d48abf790fb58756d336ae33b0562492f5e929e5cfbb8412e0eb8df9ca757`;
+Unity exited zero at `.local/landing-holdout-unity.log`. Set
+`WAR_ROPE_LANDING_HOLDOUT=1` and `WAR_ROPE_LANDING_EXTENDED=0` to reproduce it.
+
+`CoopNavMeshConnectivity.BuildWithDetails` requires each detail map's source digest
+to match exactly one stage's original navigation asset. The helicopter landing
+method rejects use without that binding. Other conservative corridor/nearest-point
+methods retain their existing behavior. Tests exercise the bound co-op entry point
+and reject the previous approximate fallback. Worker construction and arrival do
+not yet use this builder. PvP detail-map extraction, additional near-edge/stacked
+surface/radius-boundary source probes, and normal crew landing acceptance remain open.

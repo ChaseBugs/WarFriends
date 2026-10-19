@@ -48,6 +48,16 @@ public static class UnityHelicopterLandingExport
         try
         {
             Vector3[] vertices = NavMesh.CalculateTriangulation().vertices;
+            if (Environment.GetEnvironmentVariable("WAR_ROPE_LANDING_HOLDOUT") == "1")
+            {
+                for (int index = 0; index < 7; index++)
+                foreach (float height in new[] { 0.125f, 2f, 6f })
+                {
+                    Vector3 origin = vertices[(index * 137 + 31) % vertices.Length] +
+                        new Vector3(1.3f, height, -0.7f);
+                    rows.Add(Query(name, origin, origin + Vector3.up * 20));
+                }
+            }
             for (int index = 0; index < 5; index++)
             {
                 Vector3 surface = vertices[index * (vertices.Length - 1) / 4];

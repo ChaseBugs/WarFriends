@@ -36,6 +36,23 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The polygon/detail sampler now matches all 275 development queries and 155 queries
+in a separately captured set, including 105 newly chosen positions. It retains the
+existing 0.002-unit comparison tolerance. The observed rule prioritizes a polygon
+covering the query's horizontal point, interpolates its detail height, and compares
+boundary distances when no covering candidate exists. This is source-compared
+behavior over the captured domain, not proof of every Unity polygon query.
+
+`CoopNavMeshConnectivity.BuildWithDetails` now binds each stage's sampler by the
+original NavMesh asset digest. Its helicopter landing entry point requires this
+detail binding and cannot silently use the old approximate triangle sampler.
+The old sampler's eighteen diagnostics remain as a baseline comparison; the new
+sampler passes those same queries. Worker construction/arrival, PvP detail assets,
+crew landing and full Unity match acceptance still remain open.
+Windows and actual Ubuntu WSL each pass 6,728 accepted native/detail checks.
+The focused build has zero warnings/errors. Logs: `.local/navigation-sampler-windows.log`
+and `.local/navigation-sampler-linux.log`.
+
 The immutable .NET `NavigationDetailCatalog` now loads all five pinned detail maps
 and their source payloads, conserves 5,693 polygons/26,081 detail triangles, rejects
 damaged artifacts before publication and keeps published geometry read-only.
