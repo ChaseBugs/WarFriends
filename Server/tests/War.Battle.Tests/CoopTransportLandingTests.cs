@@ -163,7 +163,7 @@ internal static class CoopTransportLandingTests
         }
         if (runtime.TransportRopeSnapshot?.Members.Any(member => member.Lease.EntityId == entityId) != false ||
             runtime.TransportCrewDrops(entityId).Count != 0 || runtime.TransportCrewBirths(entityId).Count != 0 ||
-            runtime.TransportCrewDescentCount != 0)
+            runtime.TransportCrewDescentCount != 0 || runtime.TransportCrewDescentSnapshots(entityId).Count != 0)
         {
             throw new Exception("Transport death retained its native scene.");
         }

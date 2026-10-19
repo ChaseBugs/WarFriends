@@ -36,6 +36,20 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Match-owned crew descents now retain immutable internal pose snapshots: seat,
+drop start tick, last accepted render/physics counters, root pose and progress.
+Start publishes the exact observed root at zero progress. Accepted updates
+replace the snapshot; rejected replay leaves it unchanged. Read access returns
+seat-ordered immutable records without exposing mutable descent owners. Aircraft
+removal and match end use the same owner registry, so pose snapshots cannot
+outlive their descent state. Real co-op/native-world tests check initial pose,
+counter continuity, advancing progress, stable prior records and death cleanup.
+These snapshots are internal only: they are not a protobuf projection, landed
+soldier, reconnect contract or proof of animation-generated pose inputs.
+Windows and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Logs:
+`.local/crew-descent-snapshot-windows.log` and `.local/crew-descent-snapshot-linux.log`.
+
 The co-op match now owns descent states keyed by aircraft/seat. Its explicit
 host-observation API starts from the current captured drop exactly once and
 advances using only the match-owned native snapshot. Invalid starts leave the

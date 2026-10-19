@@ -976,3 +976,26 @@ native helpers with zero build warnings/errors. Logs:
 `.local/match-crew-descent-windows.log` and `.local/match-crew-descent-linux.log`.
 Normal actor/entry/animation observations, worker scheduling, landed infantry
 creation and combat collision ownership are still required for live gameplay.
+
+### Retained internal descent poses
+
+Each match descent owner now keeps a `TransportCrewDescentSnapshot` alongside
+its private progress state. The immutable record contains seat, original drop
+tick, last accepted render/physics publication and calculated root pose/progress.
+Begin publishes the validated observed root with zero progress. Advance replaces
+the record only after the descent update succeeds. Rejected updates do not
+replace the last accepted pose or consume publication counters.
+
+`TransportCrewDescentSnapshots` returns a read-only seat-ordered snapshot list;
+callers cannot mutate the stored records or the native/progress owners. End and
+aircraft-death cleanup remove these records through the same owner dictionary.
+The co-op integration fixture verifies exact initial pose/counters, one-render
+continuity, increasing progress, preserved prior records, unchanged replay result
+and no remaining snapshot after aircraft removal.
+
+This is internal host state, not a new protobuf message or normal client visual
+integration. AnimationComplete remains an animation boundary; it must not grant
+NavMesh landing, infantry collision, damage eligibility or settlement authority.
+Windows and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Evidence is
+`.local/crew-descent-snapshot-windows.log` and `.local/crew-descent-snapshot-linux.log`.

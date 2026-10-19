@@ -22,10 +22,22 @@ internal sealed class CoopTransportCrewDescentTests
         foreach ((int slot, HelicopterRopeBodyPose root) in _pending.ToArray())
         {
             HelicopterDescentFrame frame = Frame(root);
+            CoopMatchRuntime.TransportCrewDescentSnapshot before = Snapshot(runtime, entityId, slot);
             HelicopterDescentResult result = runtime.AdvanceTransportCrewDescent(entityId, slot, frame, FrameDelta);
+            CoopMatchRuntime.TransportCrewDescentSnapshot accepted = Snapshot(runtime, entityId, slot);
+            if (accepted.Pose != result || accepted.RenderFrame != before.RenderFrame + 1 ||
+                accepted.StartTick != before.StartTick || accepted.PhysicsSequence < before.PhysicsSequence ||
+                before.Pose.Progress >= accepted.Pose.Progress)
+            {
+                throw new Exception("Match did not publish the accepted crew pose without mutating prior snapshot.");
+            }
             if (_updates == 0)
             {
                 Reject(() => runtime.AdvanceTransportCrewDescent(entityId, slot, frame, FrameDelta));
+                if (Snapshot(runtime, entityId, slot) != accepted)
+                {
+                    throw new Exception("Rejected crew replay replaced its last accepted pose.");
+                }
             }
             _updates++;
             if (result.AnimationComplete)
@@ -60,6 +72,13 @@ internal sealed class CoopTransportCrewDescentTests
             Quaternion.Identity);
         Reject(() => runtime.BeginTransportCrewDescent(entityId, drop.Slot, root with { Rotation = default }));
         runtime.BeginTransportCrewDescent(entityId, drop.Slot, root);
+        CoopMatchRuntime.TransportCrewDescentSnapshot started = Snapshot(runtime, entityId, drop.Slot);
+        if (started.StartTick != drop.StartTick || started.RenderFrame != drop.RenderFrame ||
+            started.PhysicsSequence != drop.PhysicsSequence || started.Pose.Progress != 0 ||
+            started.Pose.Position != root.Position || started.Pose.Rotation != root.Rotation)
+        {
+            throw new Exception("Descent start did not retain the original root pose and drop publication.");
+        }
         Reject(() => runtime.BeginTransportCrewDescent(entityId, drop.Slot, root));
         Reject(() => runtime.AdvanceTransportCrewDescent(entityId, drop.Slot, Frame(root), FrameDelta));
         _pending.Add(drop.Slot, root);
@@ -69,6 +88,12 @@ internal sealed class CoopTransportCrewDescentTests
     private static HelicopterDescentFrame Frame(HelicopterRopeBodyPose root)
     {
         return new HelicopterDescentFrame(root.Position, root.Rotation, root.Position + Vector3.UnitY, Vector3.UnitX);
+    }
+
+    private static CoopMatchRuntime.TransportCrewDescentSnapshot Snapshot(CoopMatchRuntime runtime,
+        ulong entityId, int slot)
+    {
+        return runtime.TransportCrewDescentSnapshots(entityId).Single(snapshot => snapshot.Slot == slot);
     }
 
     private static void Reject(Action action)
