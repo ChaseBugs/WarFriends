@@ -36,14 +36,26 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Actual Unity 2018.3 landing-query capture now exists for all five recovered co-op
+NavMeshData assets (51 rows). Empty-mesh SamplePosition returns positive infinity
+on all position axes; the original next-frame `ropeEnd.y > target.y` test is false.
+Thus no zero-height fallback is source-backed. Fifty successful map samples expose
+a real navigation gap: 32 match the host within two millimeters, while 18 unprojected
+above-plane queries differ. All 25 player-plane projected samples match. The host's
+Euclidean closest-triangle metric must not be described as Unity SamplePosition
+equivalence. The diagnostic cases remain visible and are excluded from accepted
+check counts; changing the tolerance is not the resolution. Windows currently passes
+6,016 accepted native/reference checks with those 18 unresolved diagnostics.
+See `HELICOPTER_ROPE_PHYSICS.md` for evidence and next work.
+
 The landing-query checkpoint implements `ShowRope`'s downward ray/player-plane
 projection followed by a ten-unit nearest surface query. Both Army and co-op
 navigation expose this helper over their validated area-zero meshes, matching
 the recovered mask of one. Synthetic stacked-surface tests cover lower-floor
 projection, an above-origin plane that must not project, missing surfaces, and
-malformed origins. Worker arrival still does not invoke this path. Unity nearest
-surface comparisons on recovered maps and the source's ignored failed-sample
-return remain unverified. The helper returns no target on a missing surface;
+malformed origins. Worker arrival still does not invoke this path. The later Unity
+capture above records actual surface differences and the failed-sample output.
+The helper returns no target on a missing surface;
 it does not invent zero-height landing authority or claim failure-path parity.
 The focused test project builds with zero warnings/errors, and Windows plus actual
 Ubuntu WSL each pass 5,983 native/geometry checks. Logs are `.local/rope-landing-windows.log`

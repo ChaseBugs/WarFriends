@@ -486,6 +486,33 @@ surfaces. They check floor selection after projection, the no-forward-intersecti
 case, absent surfaces, and invalid origins. This is host geometry evidence, not
 Unity `NavMesh.SamplePosition` equivalence on baked source maps. The original
 method ignores SamplePosition's Boolean result and uses `hit.position`; its
-failure output needs an actual source-runtime capture. The host currently returns
+failure output is recorded in the later Unity capture below. The host currently returns
 null on no surface, explicitly leaving that compatibility path unresolved.
 No Worker landing or crew spawn authority is enabled by this helper.
+
+### Actual Unity landing capture
+
+`UnityHelicopterLandingExport.Run` runs only in a disposable project. It executes
+the Plane/Ray/SamplePosition operations from ShowRope in an empty scene, first
+without navigation, then with each of the five original co-op navigation assets.
+It does not invoke the Photon-coupled ShowRope method itself. The capture at
+`content/recovered-helicopter-landing-unity-reference.json` has normalized-LF SHA-256
+`221ab86577105cc0c76a8046d688aa73898669ea59b8ae9b1c269dec04b48ff2`.
+Unity 2018.3.0f2 exited zero (`.local/rope-landing-unity.log`). This is not original
+Unity 5.2.5 fidelity or a rendered game test.
+
+The failed empty-mesh query returns `(Infinity, Infinity, Infinity)`. Source code
+then arms ShowRope, but its next render's height comparison is false and disables
+extension. The host currently returns null; wiring the explicit cancellation at
+the same callback boundary remains pending.
+
+All 25 projected surface queries agree with host geometry within 0.002 units.
+Of 25 non-projected queries, seven agree and eighteen differ. For example,
+NavMesh_7 origin `(-33.600002, 5.6498957, -12.725)` returns Unity's vertically aligned
+surface `(-33.600002, -2.3501046, -12.725)`, while Euclidean triangle distance picks
+`(-33.600002, -1.1626046, -13.200001)`. This is a surface-selection discrepancy,
+not floating-point tolerance noise. The test reports each difference as unresolved
+and excludes it from accepted counts. Next work must reproduce source polygon
+sampling and compare it against these cases before enabling Worker landing.
+The Windows native runner reports 6,016 accepted checks with eighteen diagnostics;
+Linux was not rerun for this capture checkpoint.
