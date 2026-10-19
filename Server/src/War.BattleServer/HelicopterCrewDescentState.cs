@@ -9,6 +9,8 @@ internal sealed record HelicopterCrewDescentObservation(
 /// <summary>Owns descent progress without inferring animation phase, visibility, landing or combat authority.</summary>
 internal sealed class HelicopterCrewDescentState
 {
+    private const float RootRotationUnitTolerance = 0.0002f;
+
     private readonly HelicopterPhysicsLease _ropeLease;
     private readonly HelicopterDescentState _descent;
     private ulong _lastRenderFrame;
@@ -30,6 +32,25 @@ internal sealed class HelicopterCrewDescentState
     }
 
     internal float Progress => _descent.Progress;
+
+    /// <summary>Binds source drop inputs to the actual root height and the exact live publication at drop.</summary>
+    internal static HelicopterCrewDescentState FromDrop(CoopMatchRuntime.TransportCrewDrop drop,
+        HelicopterRopeBodyPose observedRoot, HelicopterPhysicsWorldSnapshot physics)
+    {
+        ArgumentNullException.ThrowIfNull(drop);
+        ArgumentNullException.ThrowIfNull(observedRoot);
+        ArgumentNullException.ThrowIfNull(physics);
+        float rotationLength = observedRoot.Rotation.LengthSquared();
+        if (drop.PhysicsSequence != physics.PhysicsSteps || drop.RenderFrame != physics.RenderFrames ||
+            !PlayerHitbox.Finite(observedRoot.Position) || !float.IsFinite(rotationLength) ||
+            MathF.Abs(rotationLength - 1f) > RootRotationUnitTolerance ||
+            drop.LandingSurface is not Vector3 surface || !PlayerHitbox.Finite(surface))
+        {
+            throw new InvalidDataException("Crew descent start lost its observed root, landing surface or drop frame.");
+        }
+        // SpawnFromHelicopter reads the soldier's actual transform Y, not the seat or rope marker Y.
+        return new HelicopterCrewDescentState(drop.RopeLease, physics, observedRoot.Position.Y, surface.Y);
+    }
 
     internal HelicopterDescentResult Advance(HelicopterCrewDescentObservation observation)
     {

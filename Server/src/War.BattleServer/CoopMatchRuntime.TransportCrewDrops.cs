@@ -18,6 +18,7 @@ internal sealed partial class CoopMatchRuntime
         internal required Vector3? LandingSurface { get; init; }
         internal required HelicopterPhysicsLease RopeLease { get; init; }
         internal required ulong PhysicsSequence { get; init; }
+        internal required ulong RenderFrame { get; init; }
     }
 
     private readonly Dictionary<(ulong EntityId, int Slot), TransportCrewDrop> _transportCrewDrops = new();
@@ -73,6 +74,7 @@ internal sealed partial class CoopMatchRuntime
                     LandingSurface = surface,
                     RopeLease = rope.Lease,
                     PhysicsSequence = physics.PhysicsSteps,
+                    RenderFrame = physics.RenderFrames,
                 });
             }
         }

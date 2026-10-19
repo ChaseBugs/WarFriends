@@ -36,6 +36,23 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+`HelicopterCrewDescentState.FromDrop` now binds a drop to the explicit observed
+soldier root and exact native publication. Drop records retain RenderFrame as
+well as PhysicsSequence: equal physics-step counters alone cannot identify a
+render when no fixed step ran. Start height comes from the observed soldier
+root, matching SpawnFromHelicopter, rather than the seat or rope-marker height.
+Missing/invalid landing evidence, damaged root rotation, mismatched frame/step
+or foreign rope ownership fails before descent creation. A native joint test
+uses deliberately different root/seat/marker heights and compares the resulting
+step with the existing source-derived descent reference. This factory is not
+yet invoked by normal co-op crew scheduling; observed entry pose ownership and
+actual actor/pool callback order remain required before live runtime wiring.
+Windows and actual Ubuntu WSL pass 9,995 native ownership/motion checks and
+28,605 focused combat-content assertions plus native helpers. Build warnings/errors
+remain zero. Logs: `.local/crew-drop-transition-windows.log`,
+`.local/crew-drop-transition-linux.log`, `.local/crew-drop-transition-content-windows.log`
+and `.local/crew-drop-transition-content-linux.log`.
+
 Source-derived clock transition guards now cover active Begin calls that switch
 unscaled to scaled work and back without inventing OnEnable. Scaled work must
 not advance the retained unscaled origin/residual; subsequent Begin resets only

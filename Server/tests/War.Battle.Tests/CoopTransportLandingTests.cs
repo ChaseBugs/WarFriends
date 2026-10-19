@@ -210,6 +210,7 @@ internal static class CoopTransportLandingTests
                 Vector3.Distance(drop.CrewPoint.Position, root) > 0.000001f || drop.LandingSurface == null ||
                 drop.InitialPoolParentRotation != Quaternion.Identity || drop.SpawnResetRotation != Quaternion.Identity ||
                 drop.RopeLease != rope.Lease || drop.PhysicsSequence == 0 ||
+                drop.RenderFrame == 0 || drop.RenderFrame > physics.RenderFrames ||
                 drop.PhysicsSequence > physics.PhysicsSteps)
             {
                 throw new Exception("Crew drop lost its marker, crew point, surface or live rope binding.");

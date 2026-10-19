@@ -17,9 +17,12 @@ internal static class HelicopterCrewDescentStateTests
         HelicopterPhysicsLease lease = world.Add(1, initial, aircraft, Quaternion.Identity);
         var input = new HelicopterPhysicsRenderInput(lease, aircraft);
         HelicopterPhysicsWorldSnapshot birth = world.Snapshot();
-        var state = new HelicopterCrewDescentState(lease, birth, StartingHeight, LandingHeight);
         var root = new HelicopterDescentFrame(new Vector3(0, StartingHeight, 0), Quaternion.Identity,
             new Vector3(0, StartingHeight + 1, 0), Vector3.UnitX);
+        CoopMatchRuntime.TransportCrewDrop drop = CreateDrop(lease, birth, aircraft);
+        var observedRoot = new HelicopterRopeBodyPose(root.RootPosition, root.RootRotation);
+        int startGuards = VerifyStartGuards(drop, observedRoot, birth);
+        HelicopterCrewDescentState state = HelicopterCrewDescentState.FromDrop(drop, observedRoot, birth);
         Reject(state, new HelicopterCrewDescentObservation(root, birth, FrameDelta));
 
         HelicopterPhysicsWorldSnapshot physics = world.AdvanceFrame(
@@ -56,7 +59,56 @@ internal static class HelicopterCrewDescentStateTests
             HelicopterPhysicsMode.Normal);
         Reject(state, observation with { Physics = reused });
         Console.WriteLine("PASS: crew descent uses real native joints and rejects replay, gaps and reused leases.");
-        return 9;
+        return 9 + startGuards;
+    }
+
+    private static CoopMatchRuntime.TransportCrewDrop CreateDrop(HelicopterPhysicsLease lease,
+        HelicopterPhysicsWorldSnapshot physics, HelicopterRopeBodyPose aircraft)
+    {
+        var seat = new HelicopterRopeBodyPose(new Vector3(0, StartingHeight + 3, 0), Quaternion.Identity);
+        return new CoopMatchRuntime.TransportCrewDrop
+        {
+            Slot = 0, StartTick = 1, Aircraft = aircraft, CrewPoint = seat,
+            Birth = new CoopMatchRuntime.TransportCrewBirth
+            {
+                Slot = 0, SpawnTick = 0, SpawnRealtime = 0, Aircraft = aircraft, CrewPoint = seat,
+            },
+            InitialPoolParentRotation = Quaternion.Identity, SpawnResetRotation = Quaternion.Identity,
+            RopeMarker = new Vector3(0, StartingHeight + 10, 0),
+            LandingSurface = new Vector3(0, LandingHeight, 0), RopeLease = lease,
+            PhysicsSequence = physics.PhysicsSteps, RenderFrame = physics.RenderFrames,
+        };
+    }
+
+    private static int VerifyStartGuards(CoopMatchRuntime.TransportCrewDrop drop,
+        HelicopterRopeBodyPose root, HelicopterPhysicsWorldSnapshot physics)
+    {
+        Action[] invalid =
+        {
+            () => HelicopterCrewDescentState.FromDrop(drop with { PhysicsSequence = physics.PhysicsSteps + 1 },
+                root, physics),
+            () => HelicopterCrewDescentState.FromDrop(drop with { RenderFrame = physics.RenderFrames + 1 },
+                root, physics),
+            () => HelicopterCrewDescentState.FromDrop(drop with { LandingSurface = null }, root, physics),
+            () => HelicopterCrewDescentState.FromDrop(drop, root with { Rotation = default }, physics),
+            () => HelicopterCrewDescentState.FromDrop(drop with
+            {
+                RopeLease = drop.RopeLease with { WorldId = Guid.NewGuid() },
+            }, root, physics),
+        };
+        foreach (Action action in invalid)
+        {
+            try
+            {
+                action();
+                throw new Exception("Crew descent start accepted missing evidence or a mismatched drop publication.");
+            }
+            catch (InvalidDataException)
+            {
+                // Rejection must leave the same native publication available for the valid start below.
+            }
+        }
+        return invalid.Length;
     }
 
     private static void Reject(HelicopterCrewDescentState state, HelicopterCrewDescentObservation observation)

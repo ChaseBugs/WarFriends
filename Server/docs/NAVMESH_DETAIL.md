@@ -922,3 +922,30 @@ with a new Begin, not arbitrary in-flight mode changes with retained start/delay
 Windows and actual Ubuntu WSL pass 9,990 native ownership/motion checks with
 zero build warnings/errors at `.local/crew-entry-clock-windows.log` and
 `.local/crew-entry-clock-linux.log`.
+
+### Binding the drop to an observed descent start
+
+Drop records now retain the native RenderFrame in addition to PhysicsSequence.
+`HelicopterCrewDescentState.FromDrop` requires both to equal the supplied live
+publication, then reuses the existing world/entity/generation validation. Multiple
+renders can share a physics-step count, so step identity alone is insufficient.
+
+The caller supplies the actual soldier root pose at SpawnFromHelicopter. The
+source records that transform's Y as mHeliStartYPos; it does not select seat or
+rope-marker Y. The factory requires finite root position, unit rotation and a
+finite non-null host landing surface before creating progress state. A missing
+surface is not fabricated into a successful landing or a combat-ready soldier.
+
+The real native-joint descent test now constructs its state from this boundary,
+with root/seat/marker heights deliberately different. Its next accepted step
+must still match the existing descent reference using the actual root height.
+Five rejected starts cover wrong physics step, wrong render frame, absent surface,
+damaged root rotation and foreign world lease; the original native publication
+remains usable afterward. Real co-op drop tests also validate recorded render
+frames against the current publication. This is a start-binding factory, not a
+normal actor/entry-to-descent scheduler or independent combat-body registration.
+Windows and actual Ubuntu WSL pass 9,995 native ownership/motion checks and
+28,605 focused combat-content assertions plus native helpers, with zero build
+warnings/errors. Logs are `.local/crew-drop-transition-windows.log`,
+`.local/crew-drop-transition-linux.log`, `.local/crew-drop-transition-content-windows.log`
+and `.local/crew-drop-transition-content-linux.log`.
