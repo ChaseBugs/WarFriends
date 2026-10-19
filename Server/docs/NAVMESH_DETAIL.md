@@ -584,3 +584,39 @@ fixtures that explicitly use T_pose remain clip-extraction fixtures; they must
 not be reinterpreted as evidence that the live controller performs that reset.
 Normal crew descent/collision registration still requires the true incoming
 pose and its subsequent source callback/animation order.
+
+## Reset followed by the original Idle call
+
+The fade exporter now has `WAR_HELICOPTER_IDLE_RESET=1`. Three rigs begin from
+different sampled slide fractions. Inactive temporary original controllers receive
+the actual prefab root bindings and cached rest fields, then invoke Reset and
+Idle(Riffle). Those owners are destroyed immediately after the calls. The rigs
+continue animation for 1.2 seconds with an explicit AlwaysAnimate override to
+isolate mixer calculation from unresolved renderer/camera visibility. No actor
+initialization, weapon attachment, controller Update or normal pool dispatch runs.
+
+The first attempt selected the controller on the wrong hierarchy object and
+exited one without a capture. Retaining a controller in the probe scene then
+produced captures but crashed on Play Mode asset unloading; explicit later
+component destruction did not resolve that variant. Those provisional files/runs
+are not acceptance evidence. The inactive temporary-owner variant exits zero;
+accepted log: `.local/soldier-reset-idle-unity-isolated.log`. A provisional file
+remains locally as `.local/soldier-reset-idle-provisional.json`, with the failed
+unload log `.local/soldier-reset-idle-unity-unload-failed.log`.
+
+The LF accepted reference digest is
+`8490940e2e5173766160714a483dbbd43a6b08db09a027eb0d7c0f21d48d26c1`.
+It contains 37 frames for three stale-pose scenarios. Idle starts enabled at time
+zero with weight zero, then uses the ordinary default CrossFade incoming-weight
+accumulation. The stopped slide remains disabled at time zero with weight one.
+The raw idle clock passes one second rather than clamping to its clip length.
+`SoldierResetIdleMixer` reuses the already source-checked incoming fade calculation
+for this particular transition. Every time/weight/flag matches within the existing
+0.0000002 clock tolerance; no tolerance expansion or outgoing-weight cutoff is used.
+
+This resolves the sampled-slide Reset-to-Idle layer profile, not all previous
+clip states or a full incoming pose. A fully weighted Idle is not the immediate
+Reset output. Neither this fixed-rate enabled profile nor the earlier slide
+profile may infer an active phase from spawn age while visibility, culling,
+pool lifecycle and callback order remain unobserved. Subsequent RopeSlide entry
+and the real normal crew descent/collision registration are still open.

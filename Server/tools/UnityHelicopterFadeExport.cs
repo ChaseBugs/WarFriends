@@ -26,6 +26,7 @@ public static class UnityHelicopterFadeExport
     private const string Slide = "helicopter_jump_pose";
     private const int CaptureRate = 30;
     private const float Duration = 0.5f;
+    private const float IdleResetDuration = 1.2f;
     private static readonly float[] IdlePhases = { 0f, 0.5f, 29f / CaptureRate };
     private static readonly List<object> Frames = new List<object>();
     private static Animation[] _animations;
@@ -152,7 +153,9 @@ public static class UnityHelicopterFadeExport
                     animation.enabled = Frames.Count == 7;
                 }
             }
-            if (elapsed >= Duration)
+            float duration = Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_RESET") == "1"
+                ? IdleResetDuration : Duration;
+            if (elapsed >= duration)
             {
                 WriteReference();
                 Finish(0);
@@ -177,6 +180,13 @@ public static class UnityHelicopterFadeExport
             SoldierAnimationController.RestoreRecoveredBaseAliases(animation);
             animation.cullingType = AnimationCullingType.AlwaysAnimate;
             animation.Stop();
+            if (Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_RESET") == "1")
+            {
+                StartIdleAfterReset(enemy, animation, scenario);
+                _animations[scenario] = animation;
+                _palms[scenario] = enemy.transform.Find(SessionState.GetString(PalmKey, ""));
+                continue;
+            }
             AnimationState reset = animation["T_pose"];
             reset.enabled = true;
             reset.weight = 1;
@@ -194,6 +204,63 @@ public static class UnityHelicopterFadeExport
         _startTime = Time.time;
     }
 
+    private static void StartIdleAfterReset(GameObject enemy, Animation animation, int scenario)
+    {
+        AnimationState previous = animation[Slide];
+        previous.enabled = true;
+        previous.weight = 1;
+        previous.time = IdlePhases[scenario] * previous.length;
+        animation.Sample();
+        GameObject owner = new GameObject("InactiveIdleResetOwner");
+        owner.SetActive(false);
+        try
+        {
+            SoldierAnimationController controller = owner.AddComponent<SoldierAnimationController>();
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Source);
+            SoldierAnimationController source = prefab.GetComponent<EnemyController>().mSoldierAnimationController;
+            SetControllerField(controller, "mAnimation", animation);
+            BindResetRoot(controller, enemy.transform, source.rootBone, "");
+            BindResetRoot(controller, enemy.transform, source.rootBoneInner, "Inner");
+            controller.Reset();
+            controller.Idle(Weapon.WeaponType.Riffle);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(owner);
+        }
+        // Isolate Reset-to-Idle mixer behaviour from unresolved renderer visibility in a headless capture.
+        animation.cullingType = AnimationCullingType.AlwaysAnimate;
+    }
+
+    private static void BindResetRoot(SoldierAnimationController controller, Transform enemy,
+        Transform sourceRoot, string suffix)
+    {
+        if (sourceRoot == null)
+        {
+            return;
+        }
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Source);
+        string path = AnimationUtility.CalculateTransformPath(sourceRoot, prefab.transform);
+        Transform root = enemy.Find(path);
+        if (suffix == "Inner")
+        {
+            controller.rootBoneInner = root;
+        }
+        else
+        {
+            controller.rootBone = root;
+        }
+        SetControllerField(controller, "mRootPos" + suffix, sourceRoot.localPosition);
+        SetControllerField(controller, "mRootRot" + suffix, sourceRoot.localRotation);
+    }
+
+    private static void SetControllerField(SoldierAnimationController controller, string name, object value)
+    {
+        var field = typeof(SoldierAnimationController).GetField(name,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        field.SetValue(controller, value);
+    }
+
     private static void WriteReference()
     {
         var method = typeof(Animation).GetMethod("CrossFade", new[] { typeof(string) });
@@ -204,17 +271,30 @@ public static class UnityHelicopterFadeExport
             controller = Controller, controllerSha256 = Hash(Controller),
             captureRate = CaptureRate, physicsFrozen = true,
             visibilityProbe = SessionState.GetBool(VisibilityKey, false),
+            idleResetProbe = Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_RESET") == "1",
             descentControllerSha256 = Hash("Assets/Scripts/Assembly-CSharp/EnemyController.cs"),
             descentNativeInputSha256 = UnityHelicopterDescentObservation.NativeInputDigest,
-            fixture = Environment.GetEnvironmentVariable("WAR_HELICOPTER_FADE_DESCENT") == "1"
-                ? "Animated rig plus inactive source HelicopterUpdate owner; supplied joints, no gameplay lifecycle."
-                : "Fully weighted canonical idle alias, then one-argument CrossFade; no gameplay scripts.",
+            fixture = FixtureDescription(),
             clipSources = JsonConvert.DeserializeObject(SessionState.GetString(ActiveKey + ".Sources", "")),
             crossFadeIl = Convert.ToBase64String(method.GetMethodBody().GetILAsByteArray()),
             frames = Frames
         }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
         File.WriteAllText(Environment.GetEnvironmentVariable(OutputVariable), reference);
         Debug.Log("PASS: native Helicopter fade observations=" + Frames.Count);
+    }
+
+    private static string FixtureDescription()
+    {
+        if (Environment.GetEnvironmentVariable("WAR_HELICOPTER_IDLE_RESET") == "1")
+        {
+            return "Original Reset then Idle(Riffle), stale sampled slide fractions; " +
+                "AlwaysAnimate override, inactive temporary controller with source cached root fields.";
+        }
+        if (Environment.GetEnvironmentVariable("WAR_HELICOPTER_FADE_DESCENT") == "1")
+        {
+            return "Animated rig plus inactive source HelicopterUpdate owner; supplied joints, no gameplay lifecycle.";
+        }
+        return "Fully weighted canonical idle alias, then one-argument CrossFade; no gameplay scripts.";
     }
 
     private static void Finish(int exitCode)

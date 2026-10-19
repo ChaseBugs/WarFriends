@@ -36,6 +36,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Original Reset followed by Idle(Riffle) now has a separate observed layer profile.
+Across three prior sampled-slide phases and 37 frames, Idle starts at weight zero
+and fades in; the stopped slide retains weight one but stays disabled at time zero.
+The raw idle clock also matches beyond its first loop. `SoldierResetIdleMixer`
+reuses the verified incoming CrossFade accumulation for this specific transition.
+The accepted Unity run exits zero with inactive temporary source controllers and
+an explicit AlwaysAnimate override. Normal camera/culling, arbitrary prior clips,
+incoming pose and actual initialization/RopeSlide order remain open; the fully
+weighted-idle slide fixture is not reclassified as immediate Reset behaviour.
+Windows and actual Ubuntu WSL each pass 8,489 native/query checks. Logs:
+`.local/reset-idle-windows.log` and `.local/reset-idle-linux.log`.
+Build warnings/errors remain zero.
+
 Root reset policy now matches the original sampled rig exactly: Reset restores
 only bound root positions/rotations, retaining scales and other sampled bones.
 The actual enemy prefab has one bound root and no inner root. A controlled stale
