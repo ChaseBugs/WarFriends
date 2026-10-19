@@ -66,6 +66,14 @@ Unity checks pass, including the real City Crane teardown target. The new normal
 in either completed log. The harness now rejects post-report exceptions. Full normal terminal,
 results and rematch acceptance remain open; the earlier failures remain historical evidence.
 
+[Normal terminal acceptance](NORMAL_UNITY_TERMINAL.md) now has an opt-in continuation after
+reconnect: authenticated host Forfeit, Ended observation, recovered HTTP completion and active
+EndScreen must all occur. Its first attempt compiles but fails before matchmaking while the
+second Editor never publishes lobby readiness; no terminal behavior is verified. Source review
+also finds ordinary legacy GameEnded (62) absent from the current endpoint, so accepted host
+result and retry-safe result-response integration remain necessary. Do not bypass that boundary
+with client outcome assertions or a fabricated success.
+
 [Army perk projection](ARMY_PERK_PROJECTION.md) now binds complete bilateral combat factors in
 initial mixed allocations and recalculates them from fresh durable snapshots on rematch.
 The catalog preserves source order, target membership and binary32 multiplication, validates

@@ -28,6 +28,7 @@ namespace WarFriends.Validation
         private static string _loadingFailureSource;
         private static readonly Dictionary<string, double> LoadingStages = new Dictionary<string, double>();
         private static bool _hasCompletedReconnect;
+        private static bool _hasCompletedTerminal;
 
         /// <summary>Gets whether this disposable process participates in the normal two-Unity battle gate.</summary>
         public static bool IsEnabled
@@ -41,6 +42,7 @@ namespace WarFriends.Validation
             get
             {
                 return _hasReachedRunning && _hasCompletedReconnect &&
+                    (!UnityNormalTerminalAudit.IsEnabled || _hasCompletedTerminal) &&
                     File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER"));
             }
         }
@@ -128,6 +130,11 @@ namespace WarFriends.Validation
                 File.WriteAllText(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_SELF"),
                     JsonConvert.SerializeObject(new { matchId = client.State.MatchId }) + "\n");
             }
+            if (_hasCompletedReconnect)
+            {
+                _hasCompletedTerminal = UnityNormalTerminalAudit.Observe(_game, client);
+                return HasCompletedEntry;
+            }
             if (_hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER")) &&
                 UnityNormalWeaponSelectionAudit.Observe(_game, client) &&
                 UnityNormalReloadAudit.Observe(_game, client))
@@ -179,6 +186,7 @@ namespace WarFriends.Validation
                 reconnect = UnityNormalBattleReconnectAudit.Capture(),
                 weaponSelection = UnityNormalWeaponSelectionAudit.Capture(),
                 reload = UnityNormalReloadAudit.Capture(),
+                terminal = UnityNormalTerminalAudit.Capture(),
                 phase = client == null || client.State == null ? null : client.State.Phase.ToString(),
                 matchState = MatchManager.matchState.ToString(),
                 players = PlayerController.players.Count

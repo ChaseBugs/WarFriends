@@ -59,7 +59,7 @@ try {
     New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
     foreach ($name in @('UnityNormalClientBootAudit', 'UnityNormalMatchmakingReadinessAudit',
         'UnityNormalBattleEntryAudit', 'UnityNormalBattleReconnectAudit', 'UnityNormalWeaponSelectionAudit',
-        'UnityNormalReloadAudit', 'UnityStarterLoadoutExport')) {
+        'UnityNormalReloadAudit', 'UnityNormalTerminalAudit', 'UnityStarterLoadoutExport')) {
         Copy-Item -LiteralPath (Join-Path $serverRoot ("tools/$name.cs")) -Destination $editorFolder
     }
     $secondBoot = Start-OwnedUnity $secondPath $secondIdentity 'Unity-second-boot'
@@ -121,6 +121,16 @@ try {
         if (!$report.normalBattle.reload.hasObservedPending -or !$report.normalBattle.reload.hasCompleted -or
             $report.normalBattle.reload.failureType) {
             throw "Normal HUD reload did not complete on both peers; inspect $RunRoot"
+        }
+    }
+    if ($env:WAR_NORMAL_BATTLE_TERMINAL -eq '1') {
+        foreach ($report in $reports) {
+            if (!$report.normalBattle.terminal.hasObservedEnded -or
+                !$report.normalBattle.terminal.hasShownResults -or
+                $report.normalBattle.terminal.serverResponse -ne 'Success' -or
+                $report.normalBattle.terminal.failureType) {
+                throw "Normal result screen did not follow authoritative termination; inspect $RunRoot"
+            }
         }
     }
     if (!$reports[0].normalBattle.matchId -or

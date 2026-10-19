@@ -25,6 +25,7 @@ Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalBattleEntryAudit
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalBattleReconnectAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalWeaponSelectionAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalReloadAudit.cs') -Destination $editorFolder
+Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityNormalTerminalAudit.cs') -Destination $editorFolder
 Copy-Item -LiteralPath (Join-Path $serverRoot 'tools/UnityStarterLoadoutExport.cs') -Destination $editorFolder
 $runRoot = Join-Path $validationRoot ('client-boot-' + [Guid]::NewGuid().ToString('N'))
 $mongoPath = Join-Path $runRoot 'mongo'
