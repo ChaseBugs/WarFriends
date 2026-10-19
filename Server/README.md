@@ -76,6 +76,14 @@ The recovered Unity client speaks its own channel, served from `src/War.Backend/
 `POST /index_09_25_2015.php` (a form POST whose `requestId` selects the action) and `GET|POST
 /check.php`. It runs alongside `/v1`, which stays the new protobuf API.
 
+Actions `GameStartedMaster` (64) and `GameStartedClient` (65) additionally support a scoped,
+read-only loading acknowledgement for published self-hosted random PvP assignments. They require
+the exact current `BattleId`, source transport flags and source dog-tag policy assertions, and
+return `Time`/`BattleId` only after checking the current pair, frozen manifest and issued assignment.
+They do not create a battle, charge entry twice or grant rewards. Bot, Arena and friend starts remain outside
+this adapter. Normal two-Unity loading is still incomplete: trusted map delivery must replace the
+remaining Photon map-selection wait. See [entry evidence](docs/CLIENT_LOBBY_BOOTSTRAP.md).
+
 Implemented: **85 of 175 named actions.** The boot chain — reachability, `GetConfigurations` (157),
 `CreateAccount` (118), `LoginToCustomAccount` (30), `GetPlayerData` (34), `GetAllMessages` (5) and
 `SetPlayerStatus` (29); claim-then-apply idempotent replay of 25 of 29 buffered actions

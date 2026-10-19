@@ -463,7 +463,8 @@ public abstract partial class GameControllerOnline : IGameController
 	{
 		if (mBothPlayersConnected) throw new InvalidOperationException("All players already connected.");
 		SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
-		if (client == null || !client.IsConnected || client.PlayerViews == null || client.PlayerViews.Count != 2)
+		if (client == null || !client.IsConnected || client.State == null ||
+            client.PlayerViews == null || client.PlayerViews.Count != 2)
 			throw new InvalidOperationException("A complete self-hosted player roster is required.");
 		BattlePlayerView local = null;
 		BattlePlayerView other = null;
@@ -476,6 +477,8 @@ public abstract partial class GameControllerOnline : IGameController
 			else { other = candidate; otherNetworkId = i + 1; }
 		}
 		if (local == null || other == null) throw new InvalidOperationException("Self-hosted roster ownership is invalid.");
+        // The legacy start callback must name this allocation, including after rematch replaces the room.
+        Singleton<GameController>.instance.battleId = client.State.MatchId;
 		mBothPlayersConnected = true;
 		mIsWaitingToAcceptInvitation = false;
 		mSelfHostedClient = client;

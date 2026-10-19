@@ -698,3 +698,37 @@ Source-backed integration gaps exposed by this run:
 
 These are actionable prerequisites, not a claim that they are the only remaining loading failures.
 Normal rendered combat, mobile execution, reconnect, outcomes and the full feature checklist remain open.
+
+## Scoped legacy start acknowledgement
+
+`LegacyBattleStartService` now handles actions 64/65 for self-hosted random PvP. It preserves the
+legacy `OnGameStarted` callback with `Result`, signed-client-width `Time` and the server's current
+`BattleId`. The recovered Client's self-hosted roster initialization assigns that ID from the
+accepted snapshot so a replacement room cannot submit the previous battle's identity.
+
+The handler authenticates through the existing legacy session boundary. It requires canonical
+source `IsMatchMaking=1`, `IsWarArenaBattle=0`, the source dog-tag refill/cap assertions and the
+action-specific `IsHitList` shape. Bot start payloads are closed. A supplied BattleId must exactly
+match the current non-cancelling pair; absent identities cannot implicitly select that pair.
+The issued assignment and validated frozen manifest must agree in hash, identity and roster, with
+no durable terminal result. The pair is re-read before responding. This read-only acknowledgement
+does not replace the UDP host's phase/readiness decisions, create a match, debit entry, reset dog
+tags or grant a reward. An invalid/unavailable assignment returns recovered failure 3004.
+
+Validation includes real legacy HTTP requests inside the existing native queue/Worker scenario:
+both actions with their source IsHitList field presence, retries, conflicting match IDs, noncanonical
+flags/policy assertions, bot payloads, missing BattleId and invalid sessions. Successful requests
+leave the account revision unchanged. The original grant/restart/cancellation/rematch scenarios
+also run with this gate. Unity 2018.3 compilation of the Client ID binding exited zero at
+`Server/.local/legacy-start-unity-compile.log`. Static asset auditing still reports 1,052 script
+targets, 288,258 references, zero missing scripts and zero broken references; the existing 17 NGUI
+sprite mismatches remain. This is not a rerun of two-normal-Unity gameplay or original Unity 5.2/Android proof.
+
+Trusted map identity/revision delivery and the Photon-dependent `mMapIdSet` wait remain the next
+entry contract to migrate. The earlier two-Unity failure remains recorded above.
+
+The final native run exited zero:
+`Server/.local/legacy-start-native-final-418b52e0a82c48bc8bb15701bf4d36f8/queue-tests.log`.
+Its Release build had zero warnings/errors. The preliminary run at
+`Server/.local/legacy-start-native-8ff905b7b04a4893bf9fcdfa22bc0b7c` also passed; the final run adds
+the required-ID, invalid-session and source Master field-presence checks.

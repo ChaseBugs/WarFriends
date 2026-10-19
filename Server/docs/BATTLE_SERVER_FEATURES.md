@@ -24,10 +24,14 @@ by Editor bootstrap success or by retaining Photon only for serialized type comp
 
 The two-normal-Unity gate now executes via `ClientBootSmoke.ps1 -SecondUnityProject ...` and
 currently fails before Running. Both normal controllers connect, submit cards and enter loading;
-the recovered HTTP start acknowledgements (64/65) return 503, and the subsequent map acquisition
-still depends on a Photon RPC flag absent from self-hosted initialization. Implement authenticated
-current-match start acknowledgement and trusted manifest map delivery next. The grant currently
-has no map identity fields. Preserve the source callback order; do not bypass these waits or mark
+the first run exposed unimplemented HTTP start acknowledgements (64/65), and subsequent map acquisition
+still depends on a Photon RPC flag absent from self-hosted initialization. The HTTP acknowledgement
+now validates the current pair, published grant, frozen manifest and absence of durable terminal
+evidence before returning the source callback fields. The Client binds `battleId` to its newly
+admitted match, including replacement rooms. Native HTTP/replay tests and Unity compilation cover
+this increment; the two-normal-Unity entry gate has not been rerun with it. Implement trusted
+manifest map delivery next. The grant currently has no map identity fields. Preserve the source callback order;
+do not bypass these waits or mark
 the feature complete. See [two-Unity evidence](CLIENT_LOBBY_BOOTSTRAP.md#two-normal-unity-participants-current-failed-entry-gate).
 
 Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via

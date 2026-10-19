@@ -126,6 +126,11 @@ public static class LegacyEndpoints
 
             switch (request.Action)
             {
+                case DatabaseAction.GameStartedMaster:
+                case DatabaseAction.GameStartedClient:
+                    return await app.Services.GetRequiredService<LegacyBattleStartService>()
+                        .AcknowledgeAsync(request, player, catalog, ct);
+
                 case DatabaseAction.GetPlayerData:
                     return await GetPlayerData(request, player, bufferProcessor, ct);
 

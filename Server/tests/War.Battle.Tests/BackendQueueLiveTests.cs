@@ -78,13 +78,15 @@ internal static class BackendQueueLiveTests
                 ["Battle__ControlEndpoint"]=registrationProxy.Endpoint.AbsoluteUri,
                 ["Battle__MatchmakingCompatibilityKey"]="unscored-rifle.fixture",
                 ["Battle__MatchManifestTemplatePath"]=Path.Combine(content,"local-rifle-match-template.json"),
-                ["Battle__CombatContentManifestPath"]=Path.Combine(content,"combat-content-manifest.json")
+                ["Battle__CombatContentManifestPath"]=Path.Combine(content,"combat-content-manifest.json"),
+                ["Legacy__ContentPath"]=Path.Combine(content,"recovered-battle-content.json")
             };
             backend=Start(backendDll,run,"Backend",backendEnvironment);
             await Ready(backendUrl+"health/ready",backend);
             using var left=new BackendClient(new Uri(backendUrl),true);
             using var right=new BackendClient(new Uri(backendUrl),true);
             using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            await LegacyBattleStartChecks.RequireUnavailableAsync(new Uri(backendUrl), ids[0], tokens[0]);
             try
             {
                 await left.CreateMatchQueueAttemptAsync("invalid-session", deadline.Token);
@@ -146,6 +148,11 @@ internal static class BackendQueueLiveTests
             var first=left.FindMatchAsync(tokens[0],TimeSpan.FromSeconds(25),deadline.Token);
             var second=right.FindMatchAsync(tokens[1],TimeSpan.FromSeconds(25),deadline.Token);
             var grants=await Task.WhenAll(first,second);
+            var accountBeforeStart=await legacy.ById(ids[0],deadline.Token);
+            await LegacyBattleStartChecks.VerifyPublishedAsync(new Uri(backendUrl), ids[0], tokens[0], grants[0].MatchId);
+            var accountAfterStart=await legacy.ById(ids[0],deadline.Token);
+            if(accountBeforeStart==null || accountAfterStart==null || accountBeforeStart.Revision!=accountAfterStart.Revision)
+                throw new Exception("Read-only battle start acknowledgement changed the account revision.");
             if(grants[0].MatchId!=frozenPair.MatchId||grants[0].MatchId!=grants[1].MatchId||
                grants[0].PlayerId!=ids[0]||grants[1].PlayerId!=ids[1]||
                grants.Any(x=>x.PlayerViews.Count!=2)||grants[0].ManifestHash!=grants[1].ManifestHash ||
