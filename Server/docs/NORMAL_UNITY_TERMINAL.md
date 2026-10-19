@@ -42,3 +42,36 @@ its last log entries include Unity login-page CEF errors. The first participant 
 bounded deadline and the script cleans up its owned processes. This does not establish the
 cause of the Editor delay or a runtime failure in the game's terminal path. Rerun the same gate
 before drawing a result-screen conclusion. No success or complete feature is claimed.
+
+## Repeated startup boundary
+
+The retry at `.local/client-boot-c4f08a8f33ae478e903cc0c0d5fb0cdd` also builds without
+warnings/errors and completes both ordinary account boots. Its rendered battle Editors do not
+publish either readiness marker or a battle report. The first Editor times out at the script's
+240-second process boundary; its log contains Unity login-page CEF failures, while the second
+log remains at early native startup. The script exits nonzero and stops its owned Editors,
+Worker, Backend and Mongo processes. No game terminal command was observed. The presence of
+login-page errors is not proof of the exact startup cause; do not interpret this as a result
+handler failure or repeat launches without investigating the Editor startup boundary.
+
+## Result response dependencies from active 1.4.0 sources
+
+| Source consumer | Required contract |
+| --- | --- |
+| `ServerResponseHandler.OnClassicGameEnded` | Always indexes top-level `LevelExperience`, even when reward fields are absent. |
+| Random-match result branch | Expects `Skill`; that branch also indexes `PlacementMatchesRequired` and `MedalsBalance` and uses `lastGameReward`. A partial medal tuple is unsafe. |
+| `WinCount` branch | Also indexes `TimeStamp`; publish the pair from validated durable streak authority. |
+| `DatabaseGameReward(JToken)` Warbucks object | Requires `BattleRewards`, `ExtraRewards`, `Winstreak` and `League` together. |
+| Reward Xp object | Requires `BattleRewards`, `ExtraRewards`, `Winstreak` and `Time` together. |
+| Reward GameGold object | Requires `BattleRewards` and `League`; the alternative `Gold` is a scalar. |
+| Root `WaitForGameEndResponse` | Waits for animation and then HTTP Success/Error before level release and result presentation. |
+
+These are parser dependencies, not a reward policy. The current result store already exposes
+`GetOutcomeStats` from validated accepted terminal payloads. `AcceptAndReleasePairAsync` checks
+the frozen manifest and player roster and consumes ordinary cards atomically with result
+publication. Reuse that evidence and card receipt rather than consuming cards again in action 62.
+Do not mark its `Scored`/`Settled` flags merely because the UI requested results: those flags
+represent distinct durable scoring/settlement authority. An authenticated result request must
+bind BattleId and the exact participant, wait/retry if host publication is not yet accepted,
+and replay one recorded settlement response without granting rewards twice. Client EndReason,
+score, currency, obtained cards and progression updates remain assertions.
