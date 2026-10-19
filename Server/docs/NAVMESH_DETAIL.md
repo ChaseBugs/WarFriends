@@ -396,3 +396,36 @@ return the one-second cap. Every delta and residual compares exactly; non-finite
 negative and overflowing observations must leave the next valid result unchanged.
 This is clock calculation evidence under Unity 2018.3, not a completed real-time
 entry tween, source Start/Update ordering or original Unity 5.2 proof.
+
+## Entry rotation with unscaled clock and parent composition
+
+`HelicopterEntryRotationTween` now consumes one validated NGUI unscaled delta per
+original Update invocation. It uses the source 0.3-second duration and default
+EaseInOut, preserves the strict `factor > 1` completion rule, and keeps local
+rotation separate from parent composition. Begin accepts captured Euler-roundtripped
+local endpoints; it does not convert a guessed world target or infer parent pose.
+Clock observation and lifecycle dispatch remain explicit caller responsibilities.
+
+`UnityHelicopterEntryTweenExport` invokes the original Start for the first cycle's
+first update and Update for subsequent/reused calls on inactive components. Prior
+clock origins are controlled, actual realtime/deltas are recorded, and the clock
+residual survives reuse. Three parent/arc scenarios cover 33 calls: ten ordinary
+updates and one capped long-frame reused update per scenario. Local and composed
+world rotations are captured. This is explicit source-method dispatch, not a
+recording of normal Unity PlayerLoop scheduling, pool reuse or coroutine resume.
+The accepted Unity process exits zero; log: `.local/helicopter-entry-tween-unity.log`.
+The LF reference digest is
+`66efb96220882345c7029fb4eac040e5a1f78b61404920273647b309608ee82e`.
+
+An initial server implementation rounded the multiplication before adding the
+factor and diverged at update four. Retaining intermediate product precision and
+rounding at assignment matches all captured factors exactly; the rotation
+tolerance remains 0.00001 sign-invariant quaternion component distance. This is
+the observed Unity 2018.3 Mono calculation boundary, not proof of original Unity
+5.2 arithmetic. Guards also retain state after invalid deltas and test that factor
+one remains enabled until a later positive update exceeds it.
+
+Normal crew runtime registration still requires canonical entry endpoints,
+actual pool parent transforms and the source spawn/Start/Update/coroutine order.
+The existing scaled shot tween is unchanged; its first-frame callback handling
+must not be copied as repeated unscaled fixed deltas into the entry path.

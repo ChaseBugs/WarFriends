@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Entry rotation now combines the verified NGUI realtime delta with source easing,
+strict completion, reusable component state and local/world parent composition.
+All 33 original Start/Update invocations match, including exact factor values.
+A multiplication-rounding drift found at update four was corrected in arithmetic,
+not hidden with a wider tolerance. Endpoints are explicitly captured after the
+source Euler round trip; normal pool transforms and automatic callback/coroutine
+dispatch are still unverified, so this model is not registered as live crew pose
+authority. See `NAVMESH_DETAIL.md` for the fixture and its boundary.
+Windows and actual Ubuntu WSL each pass 7,915 native/query checks. Logs:
+`.local/entry-tween-windows.log` and `.local/entry-tween-linux.log`.
+Build warnings/errors remain zero.
+
 Helicopter entry's default NGUI clock is now explicit: unscaled realtime,
 millisecond rounding with a carried residual, and a one-second cap applied after
 the full interval is subtracted. `NguiRealtimeClock` reproduces the original
