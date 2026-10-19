@@ -36,6 +36,21 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Crew birth now explicitly receives the source aircraft spawn rotation instead
+of reading the flight orientation accumulator before its first update.
+`Helicopter.Spawn` applies the selected spawn-point rotation before invoking
+`SpawnAssaulter`; subsequent Helicopter.Update replaces the aircraft transform
+from separately retained horizontal/vertical state. The runtime preserves these
+two boundaries without seeding the flight accumulator from the spawn rotation.
+Native birth validation requires a finite unit source rotation, and real co-op
+tests compare every birth aircraft pose to the published original spawn pose.
+All current recovered helicopter spawn points have identity rotation, so these
+map tests do not prove non-identity spawn behavior or a visible existing-map fix.
+Actor/pool callback execution and live crew entry/descent remain pending.
+Windows and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus
+native helpers, with zero build warnings/errors. Logs:
+`.local/crew-birth-rotation-windows.log` and `.local/crew-birth-rotation-linux.log`.
+
 `HelicopterCrewEntryDispatch` now preserves component Start lifetime separately
 from host frame identity. It accepts fresh Start plus normal Update in the same
 frame, retains Start history across entry restart, and rejects repeated Start,

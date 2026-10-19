@@ -57,6 +57,17 @@ internal static class CoopTransportLandingTests
         {
             throw new Exception("Native transport did not publish its original crew births at spawn.");
         }
+        if (runtime.HasNativeTransportRopes)
+        {
+            BattleJointRotation source = initial.SourceRotation;
+            var sourceRotation = new Quaternion(source.X, source.Y, source.Z, source.W);
+            var sourcePosition = new Vector3(initial.X, initial.Y, initial.Z);
+            if (birthsAtSpawn.Any(birth => birth.Aircraft.Rotation != sourceRotation ||
+                birth.Aircraft.Position != sourcePosition))
+            {
+                throw new Exception("Crew birth used the first flight-update orientation instead of source spawn pose.");
+            }
+        }
         for (ulong next = initial.PoseTick + 1; next <= endTick; next++)
         {
             AdvanceTo(runtime, next);

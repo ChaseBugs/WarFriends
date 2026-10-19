@@ -1,7 +1,11 @@
+using System.Numerics;
+
 namespace War.BattleServer;
 
 internal sealed partial class CoopMatchRuntime
 {
+    private const float CrewBirthRotationUnitTolerance = 0.0002f;
+
     /// <summary>Immutable host spawn publication; canonical Client entry callbacks still require observation.</summary>
     internal sealed record TransportCrewBirth
     {
@@ -19,7 +23,7 @@ internal sealed partial class CoopMatchRuntime
         return _transportCrewBirths.GetValueOrDefault(entityId) ?? Array.Empty<TransportCrewBirth>();
     }
 
-    private void CaptureTransportCrewBirths(ulong entityId, int seats)
+    private void CaptureTransportCrewBirths(ulong entityId, int seats, Quaternion? sourceSpawnRotation)
     {
         if (_transportRopes == null)
         {
@@ -29,8 +33,16 @@ internal sealed partial class CoopMatchRuntime
         {
             throw new InvalidDataException("Native crew birth lost its source point or initial pool binding.");
         }
+        if (sourceSpawnRotation is not Quaternion rotation ||
+            !float.IsFinite(rotation.LengthSquared()) ||
+            MathF.Abs(rotation.LengthSquared() - 1f) > CrewBirthRotationUnitTolerance)
+        {
+            throw new InvalidDataException("Native crew birth requires the source aircraft spawn rotation.");
+        }
+        // Helicopter.Spawn sets the spawn-point rotation before SpawnAssaulter. Its first Update later
+        // replaces that transform from the separately retained horizontal/vertical orientation state.
         var aircraft = new HelicopterRopeBodyPose(transportHelicopterFlights[entityId].Position,
-            transportHelicopterOrientations[entityId].Rotation);
+            rotation);
         IReadOnlyList<HelicopterCrewPose> points = transportCrewPoints.PlaceAttached(
             aircraft.Position, aircraft.Rotation, seats);
         float spawnRealtime = _transportSpawnRealtime[entityId];

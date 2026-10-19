@@ -838,3 +838,35 @@ zero build warnings/errors. Evidence is `.local/crew-entry-dispatch-windows.log`
 and `.local/crew-entry-dispatch-linux.log`.
 The dispatcher does not infer actor birth, create a host scheduler, select a
 clock mode from client packets, or register independently descended combat bodies.
+
+### Crew spawn pose and callback source trace
+
+The active source establishes this order:
+
+1. `Helicopter.Spawn` sets aircraft position/rotation from its selected
+   SpawnPointHelicopter, selects the route, then invokes SpawnAssaulter per seat.
+2. `SpawnAssaulter` invokes SpawningManager.Spawn with startBehaviour=false.
+   SpawningManager passes Quaternion.identity for the soldier to ReInstantiate.
+3. `NetworkObjectPool.ReInstantiate` applies soldier world position/rotation,
+   enables its controller, runs Init/BeforeInstancied, activates the GameObject,
+   then calls OnInstancied before returning. Activation can therefore enable a
+   retained TweenRotation before the later helicopter-entry Begin call.
+4. SpawningManager resets local scale to one. SpawnAssaulter assigns the seat
+   and invokes StartEnemyBehaviour(Helicopter), then sets/refills health.
+5. StartEnemyBehaviour invokes the base AfterSpawn callback before its default
+   helicopter switch. `AIObject.AfterSpawned` subscribers are synchronous and
+   can affect the actor; this is not a coroutine-only boundary.
+6. The helicopter switch stops the agent, starts Idle and begins the entry
+   TweenRotation. OnInstancied disables TweenPosition, not TweenRotation.
+
+This is static source ordering, not an executed full actor/pool trace. The
+automatic tween-only capture cannot establish those intervening callbacks.
+`CaptureTransportCrewBirths` now consumes source spawn rotation explicitly for
+birth aircraft and seat transforms. It does not read the initial identity flight
+accumulator or initialize that accumulator differently from the source.
+All recovered helicopter spawn rotations in the five co-op maps are identity;
+the added native runtime assertion verifies their birth pose against the original
+published spawn pose but does not exercise a non-identity map configuration.
+Windows and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Evidence is
+`.local/crew-birth-rotation-windows.log` and `.local/crew-birth-rotation-linux.log`.
