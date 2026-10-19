@@ -9,6 +9,11 @@ Run commands from the repository root. Downloads and build outputs stay under `S
 The SDK is pinned to `5e42a5f112351a223c19c17bb331e6c55037b8eb`.
 An existing checkout at another revision is rejected without resetting it.
 
+The same CMake project also builds the `WarRopePhysics` shared library for deliberate
+.NET adapter validation. This does not register a solver in the Worker. See the
+[ownership and ABI contract](../../native/WarRopePhysics/README.md) for the separate
+`--native-helicopter-rope-only` acceptance mode.
+
 ## Windows
 
 Install Git, Python 3, and Visual Studio 2022 C++ tools with CMake and Windows SDK 10.

@@ -1453,6 +1453,23 @@ if (args is ["--observed-obstacle-catalog-only"])
     return;
 }
 
+if (args is ["--native-helicopter-rope-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName,
+        "content/recovered-helicopter-rope-physics-unity-reference.json")))
+    {
+        root = root.Parent;
+    }
+    if (root == null)
+    {
+        throw new FileNotFoundException("The native rope fixture was not found.");
+    }
+    int nativeRopeChecks = NativeHelicopterRopeTests.Run(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {nativeRopeChecks} native rope ownership and motion checks");
+    return;
+}
+
 if (args is ["--helicopter-rope-initialization-only"])
 {
     var root = new DirectoryInfo(AppContext.BaseDirectory);

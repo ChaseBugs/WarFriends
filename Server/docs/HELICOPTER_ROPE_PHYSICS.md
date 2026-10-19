@@ -111,7 +111,40 @@ parity claim even for this shared SDK. Evidence is `.local/physx-sdk-linux-build
 `.local/native-rope-probe-linux-build.log`, and `.local/rope-native-linux-comparison.json`.
 Linux compatibility changes correct a const return type and keep compiler warnings;
 the probe uses a non-constexpr SDK pi constant to satisfy both compilers. No physics
-equations were changed. No native runtime bridge or Worker registration exists yet.
+equations were changed. A deliberate native bridge is now implemented below; no Worker
+registration or live gameplay acceptance exists yet.
+
+## Native host adapter
+
+`NativeHelicopterRope` now owns an isolated native scene through `WarRopePhysics` C ABI
+version 1. It validates and snapshots the source initialization, preserves the attachment's
+creation-time rest rotation, advances exactly 0.02 seconds per call, and returns copied
+body snapshots. A SafeHandle releases joints, actors and scene. Scene operations and disposal
+are synchronized; stale native registry identities are never reused. The explicit adapter
+limits are 64 simultaneous ropes and 128 bodies per rope. Unsupported source settings and
+capacity overflow reject rather than selecting a different solver or truncating a chain.
+
+SDK errors latch runtime failure; a failed managed operation cannot retry unproven native
+state as though simulation rolled back. No RPC, HTTP endpoint or battle command exposes
+the C ABI buffers. The ordinary Worker does not load or select this adapter yet.
+See [the native ownership/ABI contract](../native/WarRopePhysics/README.md).
+
+The separate `--native-helicopter-rope-only` mode exercises the actual .NET/native boundary,
+not the CLI probe. Identity/yaw trajectories use the same 0.00002 comparison threshold;
+the tilted transient remains diagnostic. It also checks independent scenes, retained
+snapshots, repeated disposal, access after disposal, capacity rejection and reallocation,
+malformed input, unknown handles, and the ABI version. This mode requires native libraries;
+it never silently skips an unavailable adapter. Platform results are recorded after actual
+execution, separately from cross-publishing and from normal Unity match acceptance.
+
+Actual Windows and Ubuntu WSL .NET/native runs pass 466 checks each. Adapter maximum
+position errors are about 0.00000043 (identity), 0.00000095 (yaw), and 0.000496 (tilted)
+on each platform. The adapter starts from host-generated initial poses in one scene per
+rope; the CLI probe starts from recorded poses with three ropes sharing a scene. Their
+near-singular tilted diagnostics therefore are not interchangeable or parity thresholds.
+Logs are `.local/rope-native-adapter-windows.log` and `.local/rope-native-adapter-linux.log`.
+The latter executes `.local/linux-native-rope-adapter/War.Battle.Tests` with the real
+Linux shared library. Flight/extension, full collision geometry and live combat are unverified.
 
 ## Verification and remaining work
 

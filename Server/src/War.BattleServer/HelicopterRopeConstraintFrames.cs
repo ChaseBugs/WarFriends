@@ -8,7 +8,7 @@ internal sealed record HelicopterRopeBodyPose(Vector3 Position, Quaternion Rotat
 /// <summary>A local constraint origin and rest orientation, relative to its owning body.</summary>
 internal sealed record HelicopterRopeLocalFrame(Vector3 Position, Quaternion Rotation);
 
-/// <summary>Two local frames that coincide in world space at creation.</summary>
+/// <summary>Local frames bound to their bodies; aircraft rest rotation precedes source rope activation.</summary>
 internal sealed record HelicopterRopeConstraintFrame(int BodyIndex, int ConnectedBodyIndex,
     HelicopterRopeLocalFrame BodyFrame, HelicopterRopeLocalFrame ConnectedFrame);
 

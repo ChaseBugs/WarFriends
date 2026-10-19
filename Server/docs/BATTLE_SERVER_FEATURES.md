@@ -34,6 +34,14 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now includes an explicit .NET-to-PhysX rope adapter with versioned C ABI,
+isolated scene ownership, SafeHandle disposal, immutable snapshots and bounded
+capacity. Its dedicated native tests exercise real library calls separately from
+the managed prototype and CLI comparison; actual Windows and Linux runs pass 466
+adapter checks each. Worker registration, moving aircraft,
+extension/insertion coupling, collisions, crew/landing and normal Unity acceptance
+remain pending. See [adapter boundary](HELICOPTER_ROPE_PHYSICS.md).
+
 B22 now has a stationary-aircraft managed dynamics prototype and explicit creation-time
 aircraft attachment rest rotation. Focused tests pass 1,111 checks, including full
 ten-step identity/yaw trajectories; the tilted transient still diverges and remains
