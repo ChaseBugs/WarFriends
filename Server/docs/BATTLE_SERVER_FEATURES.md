@@ -8,6 +8,26 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Initial transport crew mission accounting
+
+`MissionAutomaticSpawnState.ConfirmInitialTransportCrew` accepts a host-confirmed
+initial cohort once for a live DeployHeli. It rejects invalid or previously used
+identities before mutation. Registration does not increment wave generation:
+the recovered WaveManager counts matching Assaulter deaths independently of origin.
+Its generated-minus-killed balance can therefore become negative; this is not a
+physical live-actor count. The existing mission death path credits each registered
+identity at most once. Catalog-backed tests use a timed aircraft event in a real
+KillXEnemies mission rather than inventing an automatic aircraft wave.
+
+This is an accounting boundary, not a completed crew lifecycle. Reserved crew IDs
+do not automatically register actors. Normal Worker creation, health, colliders,
+landing, detached-seat behavior and parent-death cascades still need integration
+and gameplay proof.
+
+Validation: Windows build completed with zero warnings/errors; the native-enabled
+combat-content executable passed 28,882 focused assertions. Linux validation for
+this accounting change has not yet run.
+
 The [Ice MOBA source review](ICE_MOBA_SERVER_REFERENCE.md) records useful UDP/service lifecycle,
 checkpoint-plus-input-tail reconnect and diagnostic patterns, with exact external source hashes.
 It compares those patterns with existing WarFriends implementations and prioritizes normal Unity

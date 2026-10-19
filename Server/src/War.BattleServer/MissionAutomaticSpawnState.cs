@@ -5,7 +5,7 @@ namespace War.BattleServer;
 /// The host creates AI entities; this state accepts only confirmed creations
 /// and deaths, and never accepts a client-submitted spawn or kill.
 /// </summary>
-public sealed class MissionAutomaticSpawnState
+public sealed partial class MissionAutomaticSpawnState
 {
     private readonly MissionRule mission;
     private readonly Func<int, int> chooseBehaviour;
@@ -89,6 +89,7 @@ public sealed class MissionAutomaticSpawnState
         pendingAutomaticBehaviour = null;
         generated[behaviourIndex] = checked(generated[behaviourIndex] + 1);
         liveEntities.Add(entityId, behaviourIndex);
+        _liveBehaviourNames.Add(entityId, mission.Behaviours[behaviourIndex].Name);
         seenEntityIds.Add(entityId);
         return true;
     }
@@ -158,6 +159,7 @@ public sealed class MissionAutomaticSpawnState
         }
         // -1 means the timed behavior was absent from WaveManager's list.
         liveEntities.Add(entityId, behaviourIndex);
+        _liveBehaviourNames.Add(entityId, timedEvent.Behaviour);
         seenEntityIds.Add(entityId);
         return true;
     }
@@ -166,6 +168,7 @@ public sealed class MissionAutomaticSpawnState
     {
         if (!liveEntities.Remove(entityId, out int behaviourIndex))
             return false;
+        _liveBehaviourNames.Remove(entityId);
         if (behaviourIndex >= 0)
             killed[behaviourIndex] = checked(killed[behaviourIndex] + 1);
         return true;

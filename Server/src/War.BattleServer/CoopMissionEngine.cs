@@ -173,6 +173,13 @@ public sealed class CoopMissionEngine
         return true;
     }
 
+    /// <summary>Accepts separately created initial crew after its aircraft was confirmed by the host.</summary>
+    internal bool ConfirmInitialTransportCrew(ulong aircraftId, IReadOnlyList<ulong> actorIds, ulong tick)
+    {
+        return Started && Outcome == MissionOutcome.InProgress &&
+            spawns.ConfirmInitialTransportCrew(aircraftId, actorIds, tick);
+    }
+
     /// <summary>
     /// Records a Score-mission death only after host combat has established the
     /// killer and the source damage branch. No client score or flag is accepted.
