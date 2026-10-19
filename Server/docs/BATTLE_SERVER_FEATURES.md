@@ -60,6 +60,12 @@ with ninety resumed ticks. Report-time exception counts are zero; error-level di
 and both Editor logs contain post-report shutdown exceptions. Default admission timing, ordinary
 pointer firing, terminal card indexing and clean shutdown remain open.
 
+[Army HUD lifecycle repair](ARMY_HUD_LIFECYCLE.md) now avoids retired-controller lookup during
+shutdown and stops card animation at the available offer/slot boundary. Nine actual-component
+Unity checks pass, including the real City Crane teardown target. The previous normal-run
+shutdown and terminal indexing failures remain historical evidence; a new normal terminal and
+whole-process shutdown run is required before closing those acceptance gates.
+
 [Army perk projection](ARMY_PERK_PROJECTION.md) now binds complete bilateral combat factors in
 initial mixed allocations and recalculates them from fresh durable snapshots on rematch.
 The catalog preserves source order, target membership and binary32 multiplication, validates

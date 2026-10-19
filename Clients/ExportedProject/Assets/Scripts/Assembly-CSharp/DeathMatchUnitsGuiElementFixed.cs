@@ -5,7 +5,19 @@ public class DeathMatchUnitsGuiElementFixed : DeathMatchUnitsGuiElement
 {
 	protected override float mAnimDelay => 0f;
 
-	protected override bool isActive => Singleton<GameController>.instance.mainController.spawningType == SpawningType.Fixed;
+	protected override bool isActive
+    {
+        get
+        {
+            if (Singleton.applicationIsQuitting)
+            {
+                return false;
+            }
+            GameController controller = Singleton<GameController>.instance;
+            return controller != null && controller.mainController != null &&
+                controller.mainController.spawningType == SpawningType.Fixed;
+        }
+    }
 
 	private SpawningManagerDeathMatch.ArmyUnitDefinition FindNew(List<SpawningManagerDeathMatch.ArmyUnitDefinition> findIn, List<SpawningManagerDeathMatch.ArmyUnitDefinition> curent)
 	{

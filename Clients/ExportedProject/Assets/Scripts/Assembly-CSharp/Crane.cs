@@ -38,24 +38,36 @@ public class Crane : Core_BaseScript
 
 	private PhotonView mPhotonView;
 
+    private GameController _gameController;
+
 	private float mStartTime;
 
 	protected override void Awake()
 	{
 		base.Awake();
 		mPhotonView = GetComponent<PhotonView>();
-		Singleton<GameController>.instance.GameStarted += InstanceOnGameStarted;
+        _gameController = Singleton<GameController>.instance;
+        _gameController.GameStarted += InstanceOnGameStarted;
 		mStartPos = base.transform.position;
 	}
 
 	private void OnDestroy()
 	{
-		Singleton<GameController>.instance.GameStarted -= InstanceOnGameStarted;
+        UnsubscribeGameStarted();
 	}
+
+    private void UnsubscribeGameStarted()
+    {
+        // Teardown must not resolve a singleton that may already have been destroyed.
+        if (_gameController != null)
+        {
+            _gameController.GameStarted -= InstanceOnGameStarted;
+        }
+    }
 
 	private void InstanceOnGameStarted()
 	{
-		Singleton<GameController>.instance.GameStarted -= InstanceOnGameStarted;
+        UnsubscribeGameStarted();
 		if (mPhotonView.isMine)
 		{
 			StartCrane(3f);

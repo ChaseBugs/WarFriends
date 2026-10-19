@@ -53,7 +53,19 @@ public class DeathMatchUnitsGuiElement : GuiElement
 
 	protected virtual float mAnimDelay => 0.25f;
 
-	protected virtual bool isActive => Singleton<GameController>.instance.mainController.spawningType == SpawningType.Classic;
+	protected virtual bool isActive
+    {
+        get
+        {
+            if (Singleton.applicationIsQuitting)
+            {
+                return false;
+            }
+            GameController controller = Singleton<GameController>.instance;
+            return controller != null && controller.mainController != null &&
+                controller.mainController.spawningType == SpawningType.Classic;
+        }
+    }
 
 	public event Action onSendUnit;
 
@@ -125,13 +137,7 @@ public class DeathMatchUnitsGuiElement : GuiElement
 		if (mIsShowingCards && Time.unscaledTime > mNextShowUpdateTime)
 		{
 			mNextShowUpdateTime = Time.unscaledTime + mAnimDelay;
-			mShowingCardIndex++;
-			SpawningManagerDeathMatch.ArmyUnitDefinition armyUnitDefinition3 = mUnits[mShowingCardIndex];
-			guiCards[mShowingCardIndex].Show(armyUnitDefinition3);
-			if (mShowingCardIndex == 2)
-			{
-				mIsShowingCards = false;
-			}
+            ShowNextCard();
 		}
 		if (Singleton<SpawningManagerDeathMatch>.instance.autoDeployProgress > 0.05f && !mCanAutoDeploy && mShowingCardIndex > 1 && (Singleton<SpawningManagerDeathMatch>.instance.autoDeployEnabled || Singleton<SpawningManagerDeathMatch>.instance.semiAutoDeployEnabled))
 		{
@@ -146,6 +152,20 @@ public class DeathMatchUnitsGuiElement : GuiElement
 		}
 		autoDeployProgress.fillAmount = Singleton<SpawningManagerDeathMatch>.instance.autoDeployProgress;
 	}
+
+    private void ShowNextCard()
+    {
+        int cardCount = Mathf.Min(mUnits.Count, guiCards.Count);
+        int nextIndex = mShowingCardIndex + 1;
+        if (nextIndex >= cardCount)
+        {
+            mIsShowingCards = false;
+            return;
+        }
+        mShowingCardIndex = nextIndex;
+        guiCards[nextIndex].Show(mUnits[nextIndex]);
+        mIsShowingCards = nextIndex + 1 < cardCount;
+    }
 
 	private void InstanceOnArmyChanged()
 	{
@@ -269,6 +289,7 @@ public class DeathMatchUnitsGuiElement : GuiElement
 
 	public void HideCards()
 	{
+        mIsShowingCards = false;
 		foreach (DeathMatchGuiCard guiCard in guiCards)
 		{
 			if (guiCard.isSelected)
@@ -299,7 +320,7 @@ public class DeathMatchUnitsGuiElement : GuiElement
 		HideCards();
 		if (mIsFirstShowCards)
 		{
-			for (int i = 0; i < mUnits.Count; i++)
+			for (int i = 0; i < Mathf.Min(mUnits.Count, guiCards.Count); i++)
 			{
 				SpawningManagerDeathMatch.ArmyUnitDefinition armyUnitDefinition = mUnits[i];
 				guiCards[i].Show(armyUnitDefinition, instant: true);
@@ -323,7 +344,7 @@ public class DeathMatchUnitsGuiElement : GuiElement
 		TweenPosition.Begin(progressHandle, 0.5f, mProgressesInitPos).delay = 0.8f;
 		if (Singleton<GameController>.instance.mainController.spawningType == SpawningType.Classic)
 		{
-			for (int j = 0; j < mUnits.Count; j++)
+			for (int j = 0; j < Mathf.Min(mUnits.Count, guiCards.Count); j++)
 			{
 				SpawningManagerDeathMatch.ArmyUnitDefinition armyUnitDefinition2 = mUnits[j];
 				guiCards[j].PreShowPowerProgress(armyUnitDefinition2);
