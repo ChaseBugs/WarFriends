@@ -128,7 +128,8 @@ namespace WarFriends.Validation
                 File.WriteAllText(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_SELF"),
                     JsonConvert.SerializeObject(new { matchId = client.State.MatchId }) + "\n");
             }
-            if (_hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER")))
+            if (_hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER")) &&
+                UnityNormalWeaponSelectionAudit.Observe(_game, client))
             {
                 _hasCompletedReconnect = UnityNormalBattleReconnectAudit.Observe(_game, client);
             }
@@ -175,6 +176,7 @@ namespace WarFriends.Validation
                 loadingFailureSource = _loadingFailureSource,
                 loadingStages = LoadingStages,
                 reconnect = UnityNormalBattleReconnectAudit.Capture(),
+                weaponSelection = UnityNormalWeaponSelectionAudit.Capture(),
                 phase = client == null || client.State == null ? null : client.State.Phase.ToString(),
                 matchState = MatchManager.matchState.ToString(),
                 players = PlayerController.players.Count

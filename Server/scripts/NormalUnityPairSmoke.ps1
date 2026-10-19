@@ -47,7 +47,8 @@ try {
     $editorFolder = Join-Path $secondPath 'Assets/Editor'
     New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
     foreach ($name in @('UnityNormalClientBootAudit', 'UnityNormalMatchmakingReadinessAudit',
-        'UnityNormalBattleEntryAudit', 'UnityNormalBattleReconnectAudit', 'UnityStarterLoadoutExport')) {
+        'UnityNormalBattleEntryAudit', 'UnityNormalBattleReconnectAudit', 'UnityNormalWeaponSelectionAudit',
+        'UnityStarterLoadoutExport')) {
         Copy-Item -LiteralPath (Join-Path $serverRoot ("tools/$name.cs")) -Destination $editorFolder
     }
     $secondBoot = Start-OwnedUnity $secondPath $secondIdentity 'Unity-second-boot'
@@ -101,7 +102,9 @@ try {
     foreach ($report in $reports) {
         if (!$report.normalBattle.hasReachedRunning -or !$report.normalBattle.hasSubmittedCards -or
             $report.normalBattle.players -ne 2 -or $report.exceptions -ne 0 -or
-            !$report.normalBattle.reconnect.hasCompleted) {
+            !$report.normalBattle.reconnect.hasCompleted -or
+            !$report.normalBattle.weaponSelection.hasObservedSelection -or
+            $report.normalBattle.weaponSelection.failureType) {
             throw "Normal two-Unity entry did not reach running; inspect $RunRoot"
         }
     }
@@ -111,10 +114,12 @@ try {
     }
     $reconnect = $reports[0].normalBattle.reconnect
     if (!$reconnect.isInitiator -or !$reconnect.hasStarted -or $reconnect.rebuildCount -ne 1 -or
-        $reconnect.failureType -or $reports[1].normalBattle.reconnect.isInitiator) {
+        $reconnect.failureType -or $reports[1].normalBattle.reconnect.isInitiator -or
+        !$reports[0].normalBattle.weaponSelection.hasRequestedHudClick -or
+        !$reports[0].normalBattle.weaponSelection.hasCheckedReconnectBlock) {
         throw 'Normal Unity reconnect did not complete the designated one-peer snapshot rebuild.'
     }
-    Write-Output "PASS: two normal Unity controllers reached Running and completed live reconnect; $RunRoot"
+    Write-Output "PASS: two normal Unity controllers completed HUD selection and live reconnect; $RunRoot"
 }
 finally {
     [array]::Reverse($owned)

@@ -46,6 +46,13 @@ failure and zero exceptions, while existing error-level diagnostics remain. This
 requested replacement is separate from packet-loss,
 network-outage and Android acceptance; its actual run result is recorded in the linked document.
 
+[Normal HUD weapon selection](NORMAL_UNITY_WEAPON_SELECTION.md) now passes through the recovered
+`InventoryItem.OnClick` callback, authenticated host switch, both peers' inventory/ammunition
+presentation, and retained selection after live reconnect. The setter uses the retained canonical
+self-hosted owner and refuses reconnect-time or non-local inventory requests without falling
+through to Photon. The combined gate exits zero with zero exceptions and existing diagnostics.
+One alternate starter weapon does not complete firing, reload, all weapon families or pointer input.
+
 Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via
 `ClientBootSmoke.ps1 -VerifyNormalQueue`. It preserves source bot-routing rules, logs in a
 synthetic returning account and observes its durable scoped queue ticket and validated allocation

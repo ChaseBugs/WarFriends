@@ -12,6 +12,12 @@ it requests a replacement grant using its recovered Backend session, replaces th
 restores snapshot/entity/offer state and resumes event delivery through the existing presenters.
 The other participant keeps its scene alive until a match-bound completion marker is observed.
 
+The current paired gate first requires a recovered HUD weapon click and both peers' confirmation
+of its authoritative selection, then rejects a selection during reconnect and verifies the chosen
+weapon remains presented afterward. See [HUD selection evidence](NORMAL_UNITY_WEAPON_SELECTION.md).
+The original checkpoint below predates those additional assertions; the linked document records
+the later combined run rather than retroactively attributing them to the older result.
+
 The gate requires the same adapter, match, local player object and opponent object, two retained
 players, a nondecreasing simulation tick and processed-event cursor, exactly one full snapshot
 rebuild, and at least ninety simulation ticks after restoration. A failed task or violated invariant

@@ -67,13 +67,12 @@ public class WeaponInventory : Core_BaseScript
 			{
 				return;
 			}
-			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
-			if (selfHosted != null && selfHosted.IsConnected)
-			{
-				for (int i = 0; i < usedWeapons.Count; i++)
-					if (usedWeapons[i] == value) { selfHosted.RequestWeaponSwitch(i); return; }
-				return;
-			}
+            SelfHostedBattleClient selfHosted = PhotonConnectionManager.GetOwnedSelfHostedClient();
+            if (selfHosted != null)
+            {
+                RequestSelfHostedSelection(selfHosted, value);
+                return;
+            }
 			currentWeapon.gameObject.SetActive(value: false);
 			for (int i = 0; i < usedWeapons.Count; i++)
 			{
@@ -138,6 +137,24 @@ public class WeaponInventory : Core_BaseScript
 			usedWeapon.DestroyModel();
 		}
 	}
+
+    private void RequestSelfHostedSelection(SelfHostedBattleClient client, PlayerWeapon selectedWeapon)
+    {
+        // A retained reconnect owner must never fall through to the recovered Photon RPC path.
+        if (!client.IsConnected || client.IsReconnecting || PlayerController.currentPlayer == null ||
+            PlayerController.currentPlayer.ResolveSelfHostedInventory() != this)
+        {
+            return;
+        }
+        for (int weaponIndex = 0; weaponIndex < usedWeapons.Count; weaponIndex++)
+        {
+            if (usedWeapons[weaponIndex] == selectedWeapon)
+            {
+                client.RequestWeaponSwitch(weaponIndex);
+                return;
+            }
+        }
+    }
 
 	private void InitWeapons()
 	{

@@ -139,6 +139,7 @@ namespace WarFriends.Validation
             _beforeEventId = client.ProcessedEventId;
             client.FullSnapshotRebuild += RecordRebuild;
             _reconnect = client.ReconnectWithRecoveredSession();
+            UnityNormalWeaponSelectionAudit.RequireSelectionBlockedDuringReconnect(client);
         }
 
         private static void RequireRetainedScene(GameController game, SelfHostedBattleClient client)
