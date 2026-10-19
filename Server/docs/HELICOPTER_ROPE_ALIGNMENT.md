@@ -151,6 +151,43 @@ Before live use, include its source identity in the signed battle-content packag
 and establish current blend state, physical rope joints, root update ordering and
 landing authority. Co-op Fire and Worker registration remain closed.
 
+## Explicit sampled palm blends
+
+`HelicopterPalmBlendCatalog` composes eleven original local bone transforms after
+blending each local position, rotation and scale. It never interpolates the two
+world-space hand points. The owned arrays remain private, and frame indexes and
+weights must be explicit valid inputs; no animation time rounding or wrapping is inferred.
+`CreateSampledFrame` places that palm at a validated unit-scale world root and
+returns the same descent-frame type used by the settled-palm path.
+
+`UnityHelicopterPalmBlendExport` captures 31 idle frames, two slide frames and
+30 actual `Animation.Sample` comparisons across three idle phases, both slide
+samples and five weights. Each comparison includes both root-relative and rotated,
+translated world-space palms. Before each sample it resets with the original
+`T_pose`; the artifact records that clip's source hash, length, wrap, layer and
+blend mode as well as both sampled clips and the original prefab identity.
+The source reset hash is `9ca7a5a1ea196960f641b7861eb6dc86a38ffc023502068e357452e48d19e8e6`.
+The normalized-LF artifact digest is
+`663c3260d0f833716b46e6fd42bc2507f1e97d43f2b2a6234a7f31f02b9e8f8f`.
+The final disposable Unity 2018.3.0f2 capture exits zero with no logged exceptions
+at `.local/helicopter-palm-blend-provenance.log`. No active Client asset was changed.
+
+The solution builds with zero warnings/errors and protocol tests pass. The Windows
+combat-content group exits zero with 26,574 assertions at
+`.local/helicopter-palm-blend-host-final.log`. The 30 local/world comparisons have a
+maximum position error of `4.7683716E-07`; malformed selections, placement inputs
+and private-frame isolation are also checked. Existing native physics/navigation
+diagnostics retain their documented differences from Unity.
+The self-contained Linux executable at `.local/linux-palm-blend` runs the same
+combat-content group under Ubuntu WSL and exits zero with 26,574 assertions at
+`.local/helicopter-palm-blend-linux.log`. Its local/world palm maximum error is
+also `4.7683716E-07`. This does not cover normal Unity gameplay or Mongo integration.
+
+The comparisons validate explicit captured frames and weights, not automatic
+`CrossFade` scheduling, interpolation between frames, procedural animation edits,
+runtime scaling, physical rope joints or landing. This catalog is not yet part of
+the signed battle-content manifest or the live co-op collision world.
+
 ## Remaining integration
 
 The server still needs current rope-joint physics, the current blended left-palm

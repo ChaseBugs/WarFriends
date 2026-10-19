@@ -34,6 +34,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now blends the actual eleven-node palm chain from captured idle/slide local
+transforms, then composes and places it at the world root. Thirty native Unity
+comparisons cover explicit frame/weight combinations in local and rotated world
+coordinates, with maximum error `4.7683716E-07`. The original reset `T_pose` is
+recorded as an input rather than hidden sampling state. Invalid selections and
+placements are rejected without repairing them. Windows combat-content tests
+exit zero with 26,574 assertions, as does the self-contained Linux run under
+Ubuntu WSL; the build and protocol tests pass. See
+[sampled palm blends](HELICOPTER_ROPE_ALIGNMENT.md). Automatic fade timing,
+between-frame interpolation, procedural animation, signed content binding,
+physical rope and landing integration remain open; live co-op Fire stays closed.
+
 B22 now has a reviewed source binding for the slide clip's actual left-palm end pose.
 The exporter uses the original restored prefab/controller binding, records both input and
 loaded source identities, and invokes the recovered rope method with the sampled hand at a

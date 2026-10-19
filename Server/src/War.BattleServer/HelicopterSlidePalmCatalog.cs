@@ -10,7 +10,6 @@ internal sealed class HelicopterSlidePalmCatalog
 {
     private const string ReferenceDigest = "8a3c1f5d3022c0bd05165e71b443fcf056b9203ba4ead45c7498ae636b716760";
     private const string ClipName = "helicopter_jump_pose";
-    private const float RotationTolerance = 0.0001f;
     private readonly Vector3 _endPalm;
 
     internal float ClipLength { get; }
@@ -55,18 +54,7 @@ internal sealed class HelicopterSlidePalmCatalog
     internal HelicopterDescentFrame CreateSettledFrame(
         Vector3 rootPosition, Quaternion rootRotation, Vector3 helicopterRight)
     {
-        float rotationLength = rootRotation.LengthSquared();
-        if (!PlayerHitbox.Finite(rootPosition) || !PlayerHitbox.Finite(helicopterRight) ||
-            !float.IsFinite(rotationLength) || MathF.Abs(rotationLength - 1f) > RotationTolerance)
-        {
-            throw new InvalidDataException("Invalid settled slide palm placement.");
-        }
-        Vector3 palm = rootPosition + Vector3.Transform(_endPalm, rootRotation);
-        if (!PlayerHitbox.Finite(palm))
-        {
-            throw new InvalidDataException("Slide palm placement overflow.");
-        }
-        return new HelicopterDescentFrame(rootPosition, rootRotation, palm, helicopterRight);
+        return HelicopterPalmFramePlacement.Create(_endPalm, rootPosition, rootRotation, helicopterRight);
     }
 
     private static Vector3 ReadVector(JsonElement vector)
