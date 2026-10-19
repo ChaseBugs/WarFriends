@@ -169,6 +169,39 @@ touching the replacement. The activated lease belongs to the match world; callin
 lease owner. Allocation failure closes the activation state instead of retrying.
 
 This is native scheduling acceptance driven by source code, not a new Unity
-coroutine timing capture. The co-op runtime still needs to own pending states,
-invoke activation at its actual render boundary, cancel them on removal, and release
-the native world on match termination. The normal Worker gate remains closed.
+coroutine timing capture. The later native ownership checkpoint below adds pending
+state ownership, explicit normal render calls, removal and termination cleanup.
+General runtime frame timing and the normal Worker gate remain open work.
+
+## Native ownership in the mission runtime
+
+`CoopMatchRuntime.EnableTransportRopes` now installs a `CoopTransportRopeWorld`
+only after landing navigation and prefab definition are bound, before admission.
+The native ABI must be present; no alternative solver is selected. Generic
+`Advance` rejects catch-up and advancing past a frame whose rope render has not
+completed. The driver calls `RenderTransportRopes` after each new normal host tick.
+The tested contract is 30 Hz; unchanged-tick pause renders and source hitch replay
+still need a complete runtime frame driver and source comparisons.
+
+The owner synchronizes the live transport roster, stamps delayed activation from
+the actual spawn observation, applies sampled or failed arrival exactly once, and
+allocates due ropes after rendering. Aircraft death removes active scenes or
+cancels pending states immediately. Terminal mission paths and `Dispose` release
+the world and pending callbacks. A failed native frame or explicit disposal uses
+the existing `host-shutdown` abort path, preserving the terminal validator's known
+reason contract rather than inventing a new settlement reason.
+Arrival before rope activation remains explicitly rejected pending source proof;
+it is not silently deferred into a different source callback order.
+
+For native end-to-end verification, set `WAR_TEST_NATIVE_TRANSPORT_ROPES=1` and run
+`--combat-content-only` with the same PhysX/native loader paths as the native runner.
+The mission-46 fixture uses real runtime admission, spawning, per-frame flight,
+activation, arrival and gunner timing. It checks the strict activation boundary,
+current native roster after death and idempotent disposal, then allocates all 64
+native slots before the old runtime leaves scope. This is a host lifecycle test,
+not rendered Unity play, complete collision authority or normal UDP Worker admission.
+
+Source `QuickRope2.OnEnable` reconstructs joints, while the prefab/pool can have an
+earlier enable before `OnInstancied` disables the rope. A full source pooling/activation
+capture is still required to audit that pre-activation joint state; this runtime
+checkpoint does not establish parity for that interval or all possible short routes.

@@ -105,7 +105,7 @@ internal sealed record CoopWalkingShotStartAim(
 /// cannot accept combat commands until host AI and player controls are wired.
 /// Registration remains closed while this runtime is incomplete.
 /// </summary>
-internal sealed partial class CoopMatchRuntime : IMatchRuntime
+internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
 {
     private const float CornerHideAfterSeconds = 0.7f;
     private const float CornerHideAfterRoundSeconds = 0.5f;
@@ -766,6 +766,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
 
     public void Advance(ulong nextTick, double realTimeSeconds)
     {
+        RequireTransportFrameBoundary(nextTick);
         if (nextTick < tick)
             throw new InvalidOperationException("Co-op match tick moved backwards.");
         BattleRealtime.Validate(realTimeSeconds, ObservedRealTimeSeconds);
@@ -1112,6 +1113,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                     combat.MovementSpeed(behaviour)));
             transportHelicopterOrientations.Add(enemy.EntityId,
                 new HelicopterOrientationState());
+            if (_transportRopes != null)
+            {
+                _transportSpawnRealtime.Add(enemy.EntityId, (float)ObservedRealTimeSeconds);
+            }
             if (transportCrewPoints != null)
             {
                 ArmyHelicopterCrewStats crew = combat.TransportCrew(level);
@@ -2871,6 +2876,8 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
                 transportHelicopterOrientations.Remove(entityId);
                 transportHelicopterCrew.Remove(entityId);
                 _transportLandings.Remove(entityId);
+                _transportRopes?.Remove(entityId);
+                _transportSpawnRealtime.Remove(entityId);
                 transportCrewSchedules.Remove(entityId);
                 transportGunners.Remove(entityId);
                 // DestroyPooled also destroys its attached turret soldier.
@@ -3915,6 +3922,10 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime
     {
         if (Terminal)
             return;
+        _transportRopes?.Dispose();
+        _transportRopes = null;
+        _transportSpawnRealtime.Clear();
+        _transportLandings.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
         infantryPointArrivals.Clear();

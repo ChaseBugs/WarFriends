@@ -36,6 +36,27 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Co-op native ownership now connects to the real mission runtime behind explicit
+pre-admission `EnableTransportRopes`. The runtime records each spawn's observed
+realtime, requires one rendered native frame per newly executed host tick, and
+rejects catch-up that would invent missing render observations. A match-owned
+`CoopTransportRopeWorld` creates delayed ropes at current poses, applies each arrival
+once, removes pending/active members on death and releases all scenes on terminal
+state or `Dispose`. A failed native frame aborts rather than publishing partial state.
+
+The native-enabled mission-46 regression follows actual admission/spawn/flight,
+strict activation deadline, sampled arrival, gunner lifecycle and aircraft death.
+It then disposes the runtime twice and fills all 64 native slots with a replacement
+world. Normal Worker registration is still closed: collision/crew authority,
+source end-to-end pooling/activation capture, paused runtime frames, hitch handling,
+PvP integration and deployment packaging remain unverified. The native runtime
+currently has a tested normal 30 Hz frame contract, not general Unity frame parity.
+Native-enabled full combat-content runs pass on Windows and actual Ubuntu WSL,
+reporting 28,059 assertions plus native lifecycle checks. The fixture prints a
+separate success marker for activation/arrival/death/disposal/full registry reuse.
+The final build has zero warnings/errors. Logs: `.local/coop-native-rope-content.log`
+and `.local/coop-native-rope-linux-content.log`.
+
 `HelicopterRopeActivationState` now connects the recovered realtime wait to actual
 native world allocation. It preserves float `spawnRealtime + 2f` and strict `>`
 from `WaitForRealSeconds`, and is called after world rendering because RadicalRoutine

@@ -5390,7 +5390,7 @@ internal static class CombatContentTests
         transportRuntime.Command(firstPlayer, transportReady);
         transportRuntime.Command(secondPlayer, transportReady);
         ulong transportTick = 10 * MatchManifest.TickRate;
-        transportRuntime.Advance(transportTick);
+        CoopTransportLandingTests.AdvanceTo(transportRuntime, transportTick);
         BattleCoopEnemySpawn transport = transportRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.Behaviour == "DeployHeli");
         IReadOnlyList<DynamicShotTarget> transportBodies = transportRuntime
@@ -5490,12 +5490,12 @@ internal static class CombatContentTests
             transportRuntime.ApplyHostTransportGunnerDamage(transport.EntityId,
                 1, afterFlight))
             throw new Exception("Gunner death changed transport body health or left its turret active.");
-        transportRuntime.Advance(gunnerDue - 1);
+        CoopTransportLandingTests.AdvanceTo(transportRuntime, gunnerDue - 1);
         CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, transport.EntityId);
         if (transportRuntime.TransportGunner(transport.EntityId) is not
                 { Health: 0, RespawnTick: > 0 })
             throw new Exception("Co-op gunner respawned before its source delay.");
-        transportRuntime.Advance(gunnerDue);
+        CoopTransportLandingTests.AdvanceTo(transportRuntime, gunnerDue);
         CoopTransportGunnerTargetTests.RequireLivingTargets(transportRuntime, content, transport.EntityId);
         BattleCoopEnemySpawn gunnerRestored = transportRuntime.Snapshot()
             .Coop.EnemySpawns.Single(enemy => enemy.EntityId == transport.EntityId);
@@ -5516,6 +5516,7 @@ internal static class CombatContentTests
                 enemy.EntityId == transport.EntityId).GunnerHealth != 0)
             throw new Exception("Co-op transport Helicopter death retained its path or hitboxes.");
         CoopTransportGunnerTargetTests.RequireNoTargets(transportRuntime, transport.EntityId);
+        CoopTransportLandingTests.Finish(transportRuntime, transport.EntityId, content.HelicopterRope);
         var scoreRuntime = new CoopMatchRuntime(scoreAllocation, catalog,
             spawnPoints, routes, enemyCombat, chooseBehaviour: _ => 0,
             choosePoint: _ => 0, skillShotScores: skillShots);

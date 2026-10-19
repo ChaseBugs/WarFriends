@@ -15,7 +15,7 @@ internal sealed partial class CoopMatchRuntime
     internal void BindTransportLandingNavigation(CoopNavMeshConnectivity navigation)
     {
         ArgumentNullException.ThrowIfNull(navigation);
-        if (tick != 0 || participants.Values.Any(player => player.Admitted) ||
+        if (Terminal || tick != 0 || participants.Values.Any(player => player.Admitted) ||
             _transportLandingNavigation != null || !navigation.HasHelicopterLandingDetails ||
             _transportRopeDefinition == null)
         {
