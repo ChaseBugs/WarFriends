@@ -7,7 +7,8 @@ internal static class CoopHelicopterDestinationTests
 {
     private const float ObstacleFraction = 0.5f;
 
-    internal static void Run(CoopMapEnemyPoints source, CoopEnemyPointMaskCatalog masks, CoopEnemyCombatCatalog combat)
+    internal static void Run(CoopMapEnemyPoints source, CoopEnemyPointMaskCatalog masks,
+        CoopEnemyCombatCatalog combat, CoopAiSpawnSelector spawns)
     {
         CoopEnemyPoint point = source.Points.First(row => row.ComponentType == "EnemyPointObstacle");
         CoopMapEnemyPoints map = source with { Points = new[] { point } };
@@ -38,6 +39,7 @@ internal static class CoopHelicopterDestinationTests
             throw new Exception("Helicopter soldier ignored an ordinary soldier's point reservation.");
         }
         VerifyRollback(map, masks, combat, point);
+        VerifyExitBranches(map, masks, combat, spawns);
         Console.WriteLine("PASS: helicopter Assaulter destinations share reservations and roll back failed placement.");
     }
 
@@ -67,6 +69,41 @@ internal static class CoopHelicopterDestinationTests
         if (state.TryAssignHelicopterAssaulter(400) == null)
         {
             throw new Exception("Valid crew retry could not claim a released scene point.");
+        }
+    }
+
+    private static void VerifyExitBranches(CoopMapEnemyPoints map, CoopEnemyPointMaskCatalog masks,
+        CoopEnemyCombatCatalog combat, CoopAiSpawnSelector spawns)
+    {
+        var state = new CoopEnemyDestinationState(map, masks, combat, () => ObstacleFraction);
+        CoopHelicopterExitTarget first = state.ResolveHelicopterAssaulterExit(600, spawns,
+            _ => throw new Exception("Available scene point consumed a fallback spawn draw."));
+        if (first is not CoopHelicopterEnemyTarget target || state.ForEnemy(600) != target.Destination)
+        {
+            throw new Exception("Live exit target was not reserved through the shared destination state.");
+        }
+        CoopHelicopterExitTarget full = state.ResolveHelicopterAssaulterExit(700, spawns, _ => 0);
+        if (full is not CoopHelicopterFallbackTarget fallback || fallback.Spawn.Fraction != 1 ||
+            fallback.Spawn.ComponentType != "SpawnPoint" || state.ForEnemy(700) != null)
+        {
+            throw new Exception("Full scene points failed to produce an unreserved enemy Normal fallback.");
+        }
+        try
+        {
+            state.ResolveHelicopterAssaulterExit(800, spawns, _ => -1);
+            throw new Exception("Exit target accepted a malformed fallback draw.");
+        }
+        catch (InvalidDataException)
+        {
+            if (state.ForEnemy(800) != null || state.ForEnemy(600) != target.Destination)
+            {
+                throw new Exception("Rejected exit fallback changed shared scene reservations.");
+            }
+        }
+        state.Release(600);
+        if (state.ResolveHelicopterAssaulterExit(700, spawns, _ => 0) is not CoopHelicopterEnemyTarget)
+        {
+            throw new Exception("Fallback choice leaked occupancy or prevented later free-point selection.");
         }
     }
 }

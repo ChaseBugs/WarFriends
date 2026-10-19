@@ -36,6 +36,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The completion target resolver now combines shared point reservation and Normal
+spawn fallback as separate result types. It requires matching spawn/destination
+scene identities before selection. A free point returns a reserved enemy target
+without consuming fallback randomness; a full point list returns an unreserved
+Normal spawn and the source five-scaled-second retry requirement. Failed fallback
+draws leave other reservations intact. The caller still owns actor-life and
+single-transition guards, movement and coroutine scheduling; this is not yet a
+normal runtime handoff. Source retry inspection also confirms GenerateInitPoint
+uses nearest initial selection, not another random completion-target selection.
+Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
+the combined exit-branch checks with zero build warnings/errors. Logs:
+`.local/crew-exit-target-windows.log` and `.local/crew-exit-target-linux.log`.
+
 The no-free-point branch now has an explicit source Normal-spawn selector.
 `SelectHelicopterCrewFallback` reuses the co-op ordinary Assaulter candidates:
 enemy fraction, ordinary collection and Normal anchors only. Host choice retains

@@ -9,6 +9,10 @@ public sealed class CoopAiSpawnSelector
 {
     private readonly CoopMapSpawnPoints map;
 
+    internal string Scene => map.Scene;
+
+    internal string SceneSha256 => map.SceneSha256;
+
     public CoopAiSpawnSelector(
         MissionCatalog missions, CoopSpawnPointCatalog spawns, int missionIndex)
     {

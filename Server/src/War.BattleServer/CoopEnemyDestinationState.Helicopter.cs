@@ -3,6 +3,27 @@ namespace War.BattleServer;
 public sealed partial class CoopEnemyDestinationState
 {
     /// <summary>
+    /// Resolves one live completion callback after the caller validates actor life and transition ownership.
+    /// </summary>
+    internal CoopHelicopterExitTarget ResolveHelicopterAssaulterExit(ulong entityId,
+        CoopAiSpawnSelector spawns, Func<int, int> chooseSpawn)
+    {
+        ArgumentNullException.ThrowIfNull(spawns);
+        ArgumentNullException.ThrowIfNull(chooseSpawn);
+        if (spawns.Scene != Scene || spawns.SceneSha256 != SceneSha256)
+        {
+            throw new InvalidDataException("Helicopter exit spawn and destination geometry must belong to one scene.");
+        }
+        CoopAssignedEnemyDestination? destination = TryAssignHelicopterAssaulter(entityId);
+        if (destination != null)
+        {
+            return new CoopHelicopterEnemyTarget(destination);
+        }
+        // No target was reserved on this branch. The caller must schedule the source scaled-time retry separately.
+        return new CoopHelicopterFallbackTarget(spawns.SelectHelicopterCrewFallback(chooseSpawn));
+    }
+
+    /// <summary>
     /// Reserves the ordinary Assaulter's random next scene point after leaving an external helicopter seat.
     /// </summary>
     internal CoopAssignedEnemyDestination? TryAssignHelicopterAssaulter(ulong entityId)

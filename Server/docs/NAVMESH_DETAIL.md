@@ -1078,3 +1078,29 @@ The five-scaled-second GenerateInitPoint retry and NavMesh path remain pending.
 Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
 native helpers with zero build warnings/errors. Evidence is
 `.local/crew-fallback-windows.log` and `.local/crew-fallback-linux.log`.
+
+### Combined completion target resolution
+
+`ResolveHelicopterAssaulterExit` returns either a reserved enemy destination or
+an unreserved Normal fallback spawn. It checks selector/destination scene and
+source digest identity before any point mutation. It first uses the existing
+Assaulter point reservation path; fallback spawn randomness is never consumed
+when that succeeds. Full points select the Normal fallback, whose result type
+records the source five-scaled-second retry requirement. The resolver does not
+execute movement, schedule a coroutine or infer actor life/completion eligibility.
+
+Tests exercise both branches with a one-point source-shaped scene, forbid a
+fallback draw when a target exists, preserve reservations after an invalid fallback
+draw and show that a fallback result does not block later point availability.
+That later selection checks occupancy only; it does not model the timed retry.
+
+Further source inspection distinguishes the retry: GenerateInitPoint calls
+SoldierBehaviour.GetInitPoint, which ordinarily uses nearest-point GetPoint.
+If a target exists it calls SetFinalTarget and switches to Walk; otherwise it
+schedules GenerateInitPoint again with another scaled five-second WaitForSeconds.
+The future retry handler must use that initial-selection path rather than invoking
+the random completion resolver again. Actor life, transition replay, normal
+NavMesh movement and repeatable scaled coroutine timing remain pending.
+Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
+the new exit-branch checks with zero build warnings/errors. Evidence is
+`.local/crew-exit-target-windows.log` and `.local/crew-exit-target-linux.log`.
