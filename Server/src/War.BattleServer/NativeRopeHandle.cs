@@ -29,7 +29,7 @@ internal static class NativeRopeMethods
     internal static extern int Create([In] float[] values, int length, int bodyCount, out IntPtr handle);
 
     [DllImport(LibraryName, EntryPoint = "war_rope_step", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int Step(NativeRopeHandle handle);
+    internal static extern int Step(NativeRopeHandle handle, float deltaTime);
 
     [DllImport(LibraryName, EntryPoint = "war_rope_set_aircraft_transform",
         CallingConvention = CallingConvention.Cdecl)]

@@ -25,7 +25,8 @@ namespace
     constexpr int HeaderSize = 14;
     constexpr int MotionSize = 13;
     constexpr float FixedDelta = 0.02f;
-    constexpr int AbiVersion = 3;
+    constexpr int AbiVersion = 4;
+    constexpr float RagdollDelta = 0.004f;
     constexpr float MaximumCoordinate = 10000.0f;
     constexpr int Success = 0;
     constexpr int InvalidInput = 1;
@@ -441,8 +442,12 @@ ROPE_API int war_rope_extend(uintptr_t handle, const float* values, int length, 
     }
 }
 
-ROPE_API int war_rope_step(uintptr_t handle)
+ROPE_API int war_rope_step(uintptr_t handle, float deltaTime)
 {
+    if (!std::isfinite(deltaTime) || (deltaTime != FixedDelta && deltaTime != RagdollDelta))
+    {
+        return InvalidInput;
+    }
     try
     {
         Runtime& runtime = GetRuntime();
@@ -456,7 +461,7 @@ ROPE_API int war_rope_step(uintptr_t handle)
         {
             return PhysicsFailure;
         }
-        found->second->scene->simulate(FixedDelta);
+        found->second->scene->simulate(deltaTime);
         bool completed = found->second->scene->fetchResults(true);
         return completed && !runtime.errors.hasFailed.load() ? Success : PhysicsFailure;
     }

@@ -111,6 +111,11 @@ public static class UnityHelicopterRopePhysicsCapture
 
     private static void WriteReference()
     {
+        if (Environment.GetEnvironmentVariable("WAR_ROPE_CAPTURE_TIMING") == "1")
+        {
+            WriteTimingReference();
+            return;
+        }
         if (Environment.GetEnvironmentVariable("WAR_ROPE_CAPTURE_COMBINED") == "1")
         {
             WriteCombinedReference();
@@ -278,6 +283,51 @@ public static class UnityHelicopterRopePhysicsCapture
                         velocity = Values(body.velocity), angularVelocity = Values(body.angularVelocity) };
                 }).ToArray() };
         }).Cast<object>().ToArray();
+    }
+
+    private static void WriteTimingReference()
+    {
+        float previousDelta = Time.fixedDeltaTime;
+        if (previousDelta != PhysicsStep)
+        {
+            throw new InvalidOperationException(
+                "Timing capture requires the active Client's 20ms TimeManager profile.");
+        }
+        var timingObject = new GameObject("InactiveSourcePhysicsTiming");
+        timingObject.SetActive(false);
+        TimeManager timing = timingObject.AddComponent<TimeManager>();
+        try
+        {
+            // Seed the value Awake normally caches, without starting Photon or the base manager lifecycle.
+            typeof(TimeManager).GetField("mDefaultFixedDeltaTime", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(timing, previousDelta);
+            object[] initial = _ropes.Select((rope, index) => Capture(rope, _attachmentRestRotations[index])).ToArray();
+            bool[] ragdollModes = { false, true, true, true, true, true, false, false, true, true, true, true };
+            var frames = new List<object>();
+            for (int index = 0; index < ragdollModes.Length; index++)
+            {
+                timing.SetupPhysicsTiming(ragdollModes[index]);
+                Physics.Simulate(Time.fixedDeltaTime);
+                frames.Add(new { step = index + 1, ragdoll = ragdollModes[index], deltaTime = Time.fixedDeltaTime,
+                    ropes = _ropes.Select((rope, ropeIndex) => Capture(rope,
+                        _attachmentRestRotations[ropeIndex])).ToArray() });
+            }
+            string reference = JsonConvert.SerializeObject(new
+            {
+                version = 1, client = "1.4.0", unity = Application.unityVersion,
+                timeSource = "Assets/Scripts/Assembly-CSharp/TimeManager.cs",
+                timeSha256 = Hash("Assets/Scripts/Assembly-CSharp/TimeManager.cs"),
+                fixture = "Original SetupPhysicsTiming called on an inactive manager; manual native physics steps.",
+                defaultDeltaTime = previousDelta, initial, frames
+            }, Formatting.Indented).Replace("\r\n", "\n") + "\n";
+            File.WriteAllText(Environment.GetEnvironmentVariable("WAR_ROPE_PHYSICS_OUTPUT"), reference);
+            Debug.Log("PASS: source normal/ragdoll physics timing steps=" + frames.Count);
+        }
+        finally
+        {
+            Time.fixedDeltaTime = previousDelta;
+            UnityEngine.Object.DestroyImmediate(timingObject);
+        }
     }
 
     private static object[] ExtensionStates()

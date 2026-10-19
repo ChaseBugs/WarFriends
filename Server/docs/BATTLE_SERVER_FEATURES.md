@@ -34,6 +34,14 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now supports both recovered global physics quanta: normal 20ms and player-ragdoll
+4ms, with explicit mode selection and ABI 4 validation. A corrected active-profile
+Unity capture invokes original TimeManager switching and restoration through twelve
+steps totaling 96 nominal milliseconds. Windows/Linux native runners pass 4,796 checks
+each. Mode selection does not move bodies or consume
+either clock. This fixes the hard-coded-20ms limitation; automatic scheduling, lifecycle
+fan-out and actual ragdoll-body simulation remain pending. See [timing evidence](HELICOPTER_ROPE_PHYSICS.md).
+
 B22 now composes the source render height gate, rope extension and aircraft Transform
 in their original order, with render and physical clocks kept separate. Combined
 Unity captures verify insertion on frames 7/16 and 9/18, an already-reached target,

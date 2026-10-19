@@ -117,8 +117,8 @@ registration or live gameplay acceptance exists yet.
 ## Native host adapter
 
 `NativeHelicopterRope` now owns an isolated native scene through `WarRopePhysics` C ABI
-version 3. It validates and snapshots the source initialization, preserves the attachment's
-creation-time rest rotation, advances exactly 0.02 seconds per call, and returns copied
+version 4. It validates and snapshots the source initialization, preserves the attachment's
+creation-time rest rotation, advances one selected 0.02/0.004-second step, and returns copied
 body snapshots. A SafeHandle releases joints, actors and scene. Scene operations and disposal
 are synchronized; stale native registry identities are never reused. The explicit adapter
 limits are 64 simultaneous ropes and 128 bodies per rope. Unsupported source settings and
@@ -270,7 +270,7 @@ The stripped fixture drives the recovered branch explicitly; it does not invoke 
 Helicopter.Update/base Update stack, derive waypoint poses, perform NavMesh sampling,
 or prove Unity's automatic render/fixed scheduling. The active Client was not changed.
 
-Actual Windows and Ubuntu WSL native runners pass 4,192 checks each: 471 initial/ownership,
+The combined-render checkpoint passed 4,192 checks on Windows and actual Ubuntu WSL: 471 initial/ownership,
 664 aircraft motion, 1,575 physical extension and 1,482 combined render-order checks.
 Combined source topology, gate state and positions pass on all three fixtures, and
 identity/yaw rotations pass, at the existing 0.00002 threshold. Maximum combined position
@@ -284,6 +284,61 @@ and the zero-warning/error solution build at `.local/rope-native-render-build.lo
 The Linux run executes the self-contained output at `.local/linux-native-rope-render`.
 Normal flight scheduling, signed content, map collision, current crew/palm attachment,
 descent, landing and live Worker/Client integration remain required.
+
+## Source normal/ragdoll physics mode
+
+Further timing inspection found a real missing mode in the former fixed-20ms adapter.
+`PlayerController` calls `TimeManager.SetupPhysicsTiming(true)` when activating ragdoll.
+`GameControllerCoop` and TimeManager cleanup restore false. The method selects 0.004
+seconds for ragdoll or the default cached in Awake. The active recovered
+`ProjectSettings/TimeManager.asset` specifies 0.02 seconds. A scan of the active gameplay
+and firstpass sources finds no other fixedDeltaTime assignment outside this method.
+
+`HelicopterPhysicsTiming` now defines those two explicit modes. Selection does not
+advance time or change body state. Native `war_rope_step` accepts the exact selected
+float quantum; malformed/unsupported values reject before simulation. ABI 4 prevents
+loading the old one-argument step signature. The checked nominal-millisecond counter
+publishes together with StepCount only after successful simulation, independently of
+RenderFrameCount. This adds mode support, not automatic global lifecycle fan-out.
+
+The capture invokes the original TimeManager method on an inactive component, seeding
+only the cached default normally assigned by Awake. It avoids Photon/base-manager
+startup, then performs twelve native physics calls through normal/ragdoll/normal/ragdoll
+transitions totaling 96 nominal milliseconds. No full player-death or ragdoll-body
+simulation is implied. `recovered-helicopter-rope-timing-unity-reference.json` has
+normalized-LF digest `bbb4eaa63fc13b2a51f4a6d7228805d267f050c9400d2e0b2aba1666fb10d8d7`.
+Its TimeManager.cs digest matches the active Client. The owned corrected Unity process
+exits zero at `.local/rope-timing-unity.log` with twelve captured timing steps.
+
+The initial disposable project retained a 1/30-second profile from earlier probes.
+That unsuitable capture was rejected and kept only under `.local/rope-timing-stale-profile-*`.
+For the accepted run, the active TimeManager.asset bytes were copied into the disposable
+project before startup, then the disposable's prior bytes were restored after the owned
+Editor exited. The active Client was not changed. Timing capture now explicitly rejects
+a non-20ms default instead of silently treating the stale profile as source authority.
+Reproduction uses `WAR_ROPE_CAPTURE_TIMING=1`, a distinct `WAR_ROPE_PHYSICS_OUTPUT`,
+the existing RunPhysics entry point, and an isolated project with the active 20ms profile.
+
+Windows identity/yaw timing poses pass the existing 0.00002 comparison threshold.
+Speeds and the tilted transient remain diagnostic: the tilted maximum position error
+is about 0.000100, quaternion-component distance 0.15497, and angular-velocity difference
+67.01471. Mixed-step support does not resolve the earlier tilted-motion fidelity gap.
+Automatic render/fixed scheduling, pause/time-scale handling, global ragdoll-mode fan-out,
+crew/landing and normal gameplay acceptance remain pending.
+
+The native runner passes 4,796 checks on both Windows and actual Ubuntu WSL:
+472 initial/ownership, 664 aircraft motion, 1,575 extension, 1,482 render-order,
+and 603 timing-mode checks. The new checks prove mode persistence, rejection of
+unknown modes, restoration to normal timing, unchanged bodies during mode selection,
+96 nominal milliseconds across twelve mixed steps, independent render time, and
+rejection of unsupported raw ABI intervals. Identity/yaw mixed-step position and
+rotation comparisons use the unchanged 0.00002 threshold on both platforms.
+Linux tilted diagnostics remain substantial: quaternion-component difference about
+0.15497 and angular-velocity difference 67.01344. They are not trajectory acceptance.
+Evidence is `.local/rope-native-timing-windows.log`, `.local/rope-native-timing-linux.log`,
+and the zero-warning/error solution build at `.local/rope-native-timing-dotnet.log`.
+The Linux evidence runs `.local/linux-native-rope-timing/War.Battle.Tests` with the
+actual ABI 4 shared library; cross-publishing alone is not the claimed proof.
 
 ## Verification and remaining work
 

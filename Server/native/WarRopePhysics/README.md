@@ -23,7 +23,7 @@ simulation authority; failed simulation cannot be retried as though it rolled ba
 SDK parameter/operation/allocation/internal/abort errors latch the shared runtime into
 failure, while cleanup remains permitted. This is fail-closed behavior, not crash recovery.
 
-## C ABI version 3
+## C ABI version 4
 
 Lifecycle operations return `0` for success, `1` for invalid input/identity, `2` for capacity,
 and `3` for SDK/internal failure. No C++ exception crosses the boundary. Identities use
@@ -31,11 +31,11 @@ and `3` for SDK/internal failure. No C++ exception crosses the boundary. Identit
 
 | Export | Contract |
 | --- | --- |
-| `war_rope_abi_version()` | Returns `3`; managed construction rejects any other version before exchanging buffers. |
+| `war_rope_abi_version()` | Returns `4`; managed construction rejects any other version before exchanging buffers. |
 | `war_rope_extend(handle, values, length, expectedBodyCount)` | Applies one prepared command against the current count. |
 | `war_rope_set_aircraft_transform(handle, values, length)` | Applies exactly seven pose floats without advancing time. |
 | `war_rope_create(values, length, bodyCount, outHandle)` | Requires `14 + 7 * bodyCount` floats. |
-| `war_rope_step(handle)` | Completes exactly one 0.02-second simulation step. |
+| `war_rope_step(handle, deltaTime)` | Completes one exact 0.02- or 0.004-second simulation step. |
 | `war_rope_snapshot(handle, output, length)` | Requires exactly `13 * bodyCount` output floats. |
 | `war_rope_destroy(handle)` | Releases one owned scene and its objects. |
 
@@ -72,12 +72,32 @@ current terminal height, applies extension only while that height is strictly ab
 target, then changes the aircraft Transform. Reaching the target disables extension
 until another explicit BeginExtension call, even if a later aircraft move raises the end.
 The checked render counter advances only after that sequence succeeds. `Advance()`
-remains a separate 0.02-second physics operation; no render/fixed-step ratio is invented.
-The managed composition uses existing ABI 3 exports and does not change the native ABI.
+remains a separate physics operation; no render/fixed-step ratio is invented.
+The render composition uses the current ABI exports without an additional native operation.
 
 The combined capture drives this specific recovered branch with original ExtendRope
 calls and synthetic aircraft poses. It is not a complete Helicopter.Update execution,
 waypoint flight, automatic Unity fixed-update schedule, NavMesh query or crew proof.
+
+## Normal and ragdoll timing
+
+The active Client's TimeManager profile starts at 0.02 seconds. Its original
+`SetupPhysicsTiming` switches to 0.004 seconds for player ragdoll and restores the
+cached default afterward. `SetPhysicsMode` selects either recovered mode without
+moving bodies or advancing a clock; subsequent `Advance` calls retain that selection.
+The caller must fan out host-owned lifecycle changes to the relevant scenes. Global
+match timing, automatic fixed/render scheduling and ragdoll body simulation are not
+implemented by this rope adapter.
+
+ABI 4 requires the step delta explicitly and rejects every other float, including
+zero, NaN, Infinity and a render interval such as 1/30. It never rounds an unsupported
+interval or silently substitutes 20ms. Pause must stop physical calls rather than send
+zero. Older native libraries must be rebuilt because the step signature changed.
+
+`NominalPhysicsMilliseconds` accumulates the exact nominal 20/4ms quanta only after
+successful simulation. This is not wall time or a Unix timestamp, and StepCount must
+not be multiplied by one fixed duration after timing transitions. The SDK receives the
+original float constants directly, not milliseconds multiplied by a float conversion.
 
 ## Verification
 

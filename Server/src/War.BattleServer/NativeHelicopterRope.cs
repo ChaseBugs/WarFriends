@@ -9,7 +9,7 @@ internal sealed class NativeHelicopterRope : IDisposable
     private const int HeaderSize = 14;
     private const int PoseSize = 7;
     private const int MotionSize = 13;
-    private const int ExpectedAbiVersion = 3;
+    private const int ExpectedAbiVersion = 4;
     private const float UnitRotationTolerance = 0.0001f;
     private static readonly HelicopterRopeBodySetup SourceBody = new(1f, 0.2f, 0.05f, true);
     private static readonly HelicopterRopeAngularLimits SourceLimits = new(-60f, 60f, 35f, 35f);
@@ -19,9 +19,11 @@ internal sealed class NativeHelicopterRope : IDisposable
     private int _bodyCount;
     private bool _hasFailed;
     private float? _extensionTargetHeight;
+    private HelicopterPhysicsMode _physicsMode;
 
     internal ulong StepCount { get; private set; }
     internal ulong RenderFrameCount { get; private set; }
+    internal ulong NominalPhysicsMilliseconds { get; private set; }
     internal bool IsExtending
     {
         get
@@ -154,14 +156,28 @@ internal sealed class NativeHelicopterRope : IDisposable
         }
     }
 
+    /// <summary>Selects source timing without stepping physics or changing the render clock.</summary>
+    internal void SetPhysicsMode(HelicopterPhysicsMode mode)
+    {
+        _ = HelicopterPhysicsTiming.Seconds(mode);
+        lock (_gate)
+        {
+            RequireAvailable();
+            _physicsMode = mode;
+        }
+    }
+
     internal void Advance()
     {
         lock (_gate)
         {
             RequireAvailable();
             ulong nextStep = checked(StepCount + 1);
-            RequireSuccess(NativeRopeMethods.Step(_handle));
+            ulong nextMilliseconds = checked(NominalPhysicsMilliseconds +
+                HelicopterPhysicsTiming.Milliseconds(_physicsMode));
+            RequireSuccess(NativeRopeMethods.Step(_handle, HelicopterPhysicsTiming.Seconds(_physicsMode)));
             StepCount = nextStep;
+            NominalPhysicsMilliseconds = nextMilliseconds;
         }
     }
 

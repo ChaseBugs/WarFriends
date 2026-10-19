@@ -30,7 +30,7 @@ internal static class NativeHelicopterRopeTests
         }
         checks += VerifyOwnership(initial[0]);
         checks += VerifyCapacity(initial[0]);
-        if (NativeRopeMethods.GetAbiVersion() != 3 ||
+        if (NativeRopeMethods.GetAbiVersion() != 4 ||
             NativeRopeMethods.Create(Array.Empty<float>(), 0, 4, out IntPtr invalid) != 1 || invalid != IntPtr.Zero ||
             NativeRopeMethods.Destroy(IntPtr.Zero) != 1)
         {
@@ -102,6 +102,7 @@ internal static class NativeHelicopterRopeTests
             new HelicopterRopeBodyPose(Vector3.Zero, Quaternion.Identity)));
         RequireDisposed(() => first.Extend(0.03f));
         RequireDisposed(() => first.BeginExtension(0));
+        RequireDisposed(() => first.SetPhysicsMode(HelicopterPhysicsMode.Normal));
         RequireDisposed(() => first.UpdateRenderFrame(0.03f,
             new HelicopterRopeBodyPose(Vector3.Zero, Quaternion.Identity)));
         RequireDisposed(() =>
@@ -109,7 +110,7 @@ internal static class NativeHelicopterRopeTests
             _ = first.IsExtending;
         });
         second.Advance();
-        return 10;
+        return 11;
     }
 
     private static int VerifyCapacity(JsonElement initial)
