@@ -17,6 +17,12 @@ public static class UnityCrewEntryLifecycleExport
     private static readonly List<CrewEntryLifecycleProbe> Probes = new List<CrewEntryLifecycleProbe>();
     private static readonly List<object> First = new List<object>();
     private static int _cycle;
+    private static int _resumeFrame;
+
+    private static bool IsInterrupted
+    {
+        get { return Environment.GetEnvironmentVariable("WAR_CREW_ENTRY_INTERRUPT") == "1"; }
+    }
 
     static UnityCrewEntryLifecycleExport()
     {
@@ -51,6 +57,31 @@ public static class UnityCrewEntryLifecycleExport
             if (Probes.Count == 0)
             {
                 Create();
+                return;
+            }
+            if (IsInterrupted && _cycle == 0 && Probes.All(probe => probe.UpdateCount >= 3))
+            {
+                foreach (CrewEntryLifecycleProbe probe in Probes)
+                {
+                    First.Add(probe.Capture());
+                    probe.gameObject.SetActive(false);
+                }
+                _resumeFrame = Time.frameCount + 3;
+                _cycle = 1;
+                return;
+            }
+            if (IsInterrupted && _cycle == 1)
+            {
+                if (Time.frameCount < _resumeFrame)
+                {
+                    return;
+                }
+                foreach (CrewEntryLifecycleProbe probe in Probes)
+                {
+                    probe.gameObject.SetActive(true);
+                    probe.BeginCycle(Quaternion.Euler(0, 45, 0));
+                }
+                _cycle = 2;
                 return;
             }
             if (Probes.Any(probe => probe.enabled))
@@ -108,6 +139,7 @@ public static class UnityCrewEntryLifecycleExport
         {
             version = 1, client = "1.4.0", unity = Application.unityVersion,
             fixture = "Automatic Unity Start/Update on source TweenRotation subclass; no actor or pool lifecycle.",
+            interrupted = IsInterrupted,
             tweenSha256 = Hash("TweenRotation.cs"), updateSha256 = Hash("UITweener.cs"),
             clockSha256 = Hash("IgnoreTimeScale.cs"),
             scenarios

@@ -36,6 +36,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Interrupted entry reuse now has automatic Unity evidence: six tween-only objects
+are deactivated after three callbacks while still rotating, remain inactive for
+three frames, then reactivate and restart using the same component/clock.
+All 185 observations match at the existing quaternion tolerance. The dispatcher
+now rejects callbacks while inactive, retains Start history on deactivation,
+and applies an observed OnEnable clock origin before restart. Source completion
+also disables further tween callbacks until observed reactivation. Three guard
+checks cover inactive callbacks and malformed reactivation origins without
+consuming the next valid update. Actor/pool execution and runtime descent remain pending.
+Windows and actual Ubuntu WSL pass 9,985 native ownership/motion checks; builds
+have zero warnings/errors. Logs: `.local/crew-entry-interrupted-windows.log` and
+`.local/crew-entry-interrupted-linux.log`.
+
 Crew birth now explicitly receives the source aircraft spawn rotation instead
 of reading the flight orientation accumulator before its first update.
 `Helicopter.Spawn` applies the selected spawn-point rotation before invoking

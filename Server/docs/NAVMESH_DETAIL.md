@@ -870,3 +870,35 @@ published spawn pose but does not exercise a non-identity map configuration.
 Windows and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus
 native helpers with zero build warnings/errors. Evidence is
 `.local/crew-birth-rotation-windows.log` and `.local/crew-birth-rotation-linux.log`.
+
+### Interrupted entry activation and reuse
+
+`WAR_CREW_ENTRY_INTERRUPT=1` extends the automatic tween exporter: after three
+observed callbacks, all six objects remain unfinished and are deactivated. They
+remain inactive for three frames, reactivate, then invoke source Begin with the
+new target. Capture contains 18 interrupted and 167 resumed observations, 185
+total, with no new Start for the same reused component. Quaternion error remains
+below the unchanged 0.00001 tolerance (maximum approximately 0.000000134).
+
+`HelicopterCrewEntryDispatch.Deactivate` retains Start/frame history and blocks
+callbacks. `ReactivateAt` applies the observed OnEnable origin before restart;
+malformed origins leave the dispatcher inactive. Tween completion disables its
+dispatch owner until reactivation. The underlying entry retains clock residual
+across both interrupted reuse and completion. Tests also reject inactive callbacks
+and malformed origins before accepting the unchanged next valid update.
+
+The final Unity process exits zero at `.local/crew-entry-interrupted-unity-final.log`.
+Reference LF SHA-256:
+`94da02fe4add7905c59bda61ac9c63f82925005a3b10e1805e330e862619bd85`.
+Copy `UnityCrewEntryLifecycleExport.cs` into the disposable project's Assets/Editor
+and `CrewEntryLifecycleProbe.cs` into Assets outside Editor. The prior failed run
+at `.local/crew-entry-interrupted-unity.log` placed the separate attachable probe
+in Editor, so Unity rejected AddComponent; it supplies no accepted pose evidence.
+This placement requirement also applies when reproducing the earlier completed
+automatic-lifecycle capture with the now-separated tool files.
+
+These are normal Unity activation and tween callbacks on isolated objects, not
+execution of NetworkObjectPool, EnemyController, animation/camera or combat lifecycle.
+Windows and actual Ubuntu WSL pass 9,985 native ownership/motion checks at
+`.local/crew-entry-interrupted-windows.log` and `.local/crew-entry-interrupted-linux.log`;
+build warnings/errors remain zero.

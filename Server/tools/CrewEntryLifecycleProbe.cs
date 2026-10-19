@@ -12,6 +12,15 @@ public sealed class CrewEntryLifecycleProbe : TweenRotation
     private float _beginRealtime;
     private float _enabledAt;
 
+    /// <summary>Exposes observed invocation count for controlled interruption after automatic dispatch.</summary>
+    public int UpdateCount
+    {
+        get
+        {
+            return _rows.Count;
+        }
+    }
+
     protected override void OnEnable()
     {
         base.OnEnable();

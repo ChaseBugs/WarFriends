@@ -30,6 +30,7 @@ internal sealed class HelicopterCrewEntryDispatch
 {
     private readonly HelicopterCrewEntryState _entry;
     private bool _hasStarted;
+    private bool _isActive = true;
     private bool _hasUpdatedFrame;
     private ulong? _lastFrame;
 
@@ -39,10 +40,31 @@ internal sealed class HelicopterCrewEntryDispatch
         _entry = entry;
     }
 
+    /// <summary>Stops callback consumption without discarding Start history, tween progress or clock residual.</summary>
+    internal void Deactivate()
+    {
+        _isActive = false;
+    }
+
+    /// <summary>Consumes an actual OnEnable before a reused Begin; rejected origins leave the owner inactive.</summary>
+    internal void ReactivateAt(float realtime)
+    {
+        if (_isActive)
+        {
+            throw new InvalidOperationException("Active crew entry cannot invent another OnEnable.");
+        }
+        _entry.ReenableAt(realtime);
+        _isActive = true;
+    }
+
     /// <summary>Validates dispatch order before advancing the owned entry state.</summary>
     internal HelicopterRopeBodyPose Advance(CrewEntryInvocation invocation)
     {
         ArgumentNullException.ThrowIfNull(invocation);
+        if (!_isActive)
+        {
+            throw new InvalidOperationException("Inactive crew entry cannot consume tween callbacks.");
+        }
         if (!Enum.IsDefined(invocation.Callback) || !Enum.IsDefined(invocation.ClockMode) ||
             !float.IsFinite(invocation.Realtime) || invocation.Realtime < 0 ||
             !float.IsFinite(invocation.ScaledDelta) || invocation.ScaledDelta < 0)
@@ -63,6 +85,7 @@ internal sealed class HelicopterCrewEntryDispatch
         _hasStarted = true;
         _hasUpdatedFrame = !isStart;
         _lastFrame = invocation.Frame;
+        _isActive = _entry.IsRotating;
         return pose;
     }
 }
