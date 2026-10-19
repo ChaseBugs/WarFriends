@@ -96,6 +96,16 @@ namespace WarFriends.Validation
             };
         }
 
+        /// <summary>Invokes the selected recovered HUD item's ordinary reload callback.</summary>
+        public static void ClickSelectedWeaponForReload()
+        {
+            if (!IsInitiator || _clickedItem == null || !_hasObservedSelection)
+            {
+                throw new InvalidOperationException("The selected normal weapon HUD item is unavailable.");
+            }
+            _clickedItem.SendMessage("OnClick", SendMessageOptions.RequireReceiver);
+        }
+
         private static void Bind(GameController game, SelfHostedBattleClient client)
         {
             PlayerController player = IsInitiator ? game.mainPlayerController : game.opponent;

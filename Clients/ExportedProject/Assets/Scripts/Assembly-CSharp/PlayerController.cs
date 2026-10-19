@@ -6,7 +6,7 @@ using War.Protocol;
 
 public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, IGameMainEntity, ICharacter
 {
-	public void ApplySelfHostedSnapshot(BattlePlayerState state, int selectedWeaponIndex = -1)
+	public void ApplySelfHostedSnapshot(BattlePlayerState state, int selectedWeaponIndex = -1, ulong serverTick = 0)
 	{
 		if (state == null || playerProperties == null || state.PlayerId != playerProperties.playerID || !state.CombatEnabled ||
 			float.IsNaN(state.Health) || float.IsInfinity(state.Health) || float.IsNaN(state.MaxHealth) || float.IsInfinity(state.MaxHealth) ||
@@ -28,6 +28,7 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 			{
 				selected.weapon.ammoLeftInClip = state.ClipAmmo;
 				selected.weapon.ammoLeft = state.ReserveAmmo;
+                selected.weapon.ApplySelfHostedReload(serverTick, state.ReloadEndTick);
 			}
 		}
 	}

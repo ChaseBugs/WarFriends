@@ -1,6 +1,8 @@
 # Battle Server: implementation and remaining work
 
-Updated 2026-09-19 from [Server_guide.md](../../Server_guide.md). This work adds Battle Server code and a portable Unity networking adapter. Backend gameplay is outside this task. **This is not yet a complete playable replacement for the recovered Photon battle runtime.**
+Updated 2026-10-19 from [Server_guide.md](../../Server_guide.md) and the linked executable checkpoints.
+This work adds Battle Server code and a portable Unity networking adapter. Backend gameplay is
+outside this task. **This is not yet a complete playable replacement for the recovered Photon battle runtime.**
 
 The full active scope and completion gates are tracked in [BATTLE_SERVER_FEATURES.md](BATTLE_SERVER_FEATURES.md). The opt-in [live stationary rifle mode](LIVE_RIFLE_COMBAT.md) connects real UDP commands to source-bound animation, projectiles, collision and health changes.
 
@@ -9,7 +11,12 @@ identities and upgrade lanes and rejects stale battle allocations before returni
 bytes. Real MongoDB tests cover upgrades, unequipping, host allocation configuration, and retained
 modifier/shield rejection. Automatic allocation and normal Unity second-battle gameplay remain open.
 
-The Worker supports a [pinned combat content package](COMBAT_CONTENT.md), validates source-bound rifle upgrades before admission and uses its canonical map in rifle combat. Two independent SDK clients verify damage through the real Worker; normal Unity gameplay wiring remains pending.
+The Worker supports a [pinned combat content package](COMBAT_CONTENT.md), validates source-bound
+rifle upgrades before admission and uses its canonical map in rifle combat. Two independent SDK
+clients verify damage through the real Worker. Two normal Unity controllers now also pass assigned
+scene entry, [HUD weapon selection](NORMAL_UNITY_WEAPON_SELECTION.md) and intentional live
+[transport replacement](NORMAL_UNITY_RECONNECT.md) with a diagnostic thirty-second admission
+window. Full combat, fault recovery and clean rendering remain separate gates.
 
 ## What runs
 
@@ -51,9 +58,9 @@ weapon values are not recovered balancing data. See
 - The recovered self-hosted branch now initializes players in `GameControllerOnline`, activates
   `SelfHostedBattleClient.ActivateDeathMatchScene` from `GameControllerPVP.StartGame`, and binds
   roster events to infantry presentation in `SelfHostedDeathMatchBridge`. These source call sites
-  establish wiring, not successful normal two-player gameplay. Complete lobby-to-battle execution,
-  all unit/effect presentation and rendered two-client completion remain unverified. SDK admission
-  tests alone cannot close those gates. See [Gunslinger weapon presentation](GUNSLINGER_WEAPON_PRESENTATION.md)
+  establish wiring. The diagnostic normal entry/HUD/reconnect gates above now pass; full battle
+  completion and all unit/effect presentation remain unverified. SDK admission tests alone cannot
+  close those gates. See [Gunslinger weapon presentation](GUNSLINGER_WEAPON_PRESENTATION.md)
   for the narrower native component proof.
 
 Rebuild the DLLs with `python Server/tools/install_unity_sdk.py`. Re-export content using the Editor method `SelfHostedBattleExport.Run` and an absolute `WAR_BATTLE_CONTENT_OUTPUT` path, preferably in a disposable project. Export does not save scenes. Unity 2018.3 was used to validate the currently repaired workspace; this is not a claim about the original APK's Unity version.

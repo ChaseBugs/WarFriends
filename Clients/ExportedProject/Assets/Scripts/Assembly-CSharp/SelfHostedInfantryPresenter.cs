@@ -231,20 +231,52 @@ public sealed class SelfHostedInfantryPresenter : MonoBehaviour
     {
         var facing = new Vector3(row.InfantryFacingX,
             row.InfantryFacingY, row.InfantryFacingZ);
-        if (row.EntityKey == 0 || row.PositionTick < row.SpawnTick ||
-            !Finite(row.X) || !Finite(row.Y) || !Finite(row.Z) ||
-            !Finite(facing.x) || !Finite(facing.y) || !Finite(facing.z) ||
-            Mathf.Abs(facing.sqrMagnitude - 1f) > .001f ||
-            !Finite(row.MaxHealth) || row.MaxHealth <= 0 ||
-            !Finite(row.Health) || row.Health <= 0 || row.Health > row.MaxHealth ||
-            !Finite(row.MaxKevlar) || row.MaxKevlar < 0 ||
-            !Finite(row.Kevlar) || row.Kevlar < 0 || row.Kevlar > row.MaxKevlar ||
-            !ValidParachute(row) ||
-            !MortarWeaponPosePolicy.IsValid(row, row.MortarWeaponPose == null ? 0 : row.MortarWeaponPose.ObservedTick) ||
-            (row.IsColtHolstered && (row.UnitId != "ID_UNIT-GUNSLINGER" || row.SourceCardId.Length != 0)))
+        if (row.EntityKey == 0 || row.PositionTick < row.SpawnTick)
         {
-            throw new InvalidOperationException("Invalid authoritative infantry visual state.");
+            throw CreateInvalidVisualState("identity-or-tick");
         }
+        if (!Finite(row.X) || !Finite(row.Y) || !Finite(row.Z))
+        {
+            throw CreateInvalidVisualState("position");
+        }
+        if (!Finite(facing.x) || !Finite(facing.y) || !Finite(facing.z) ||
+            Mathf.Abs(facing.sqrMagnitude - 1f) > .001f)
+        {
+            throw CreateInvalidVisualState("facing");
+        }
+        ValidateVisualHealth(row);
+        if (!ValidParachute(row))
+        {
+            throw CreateInvalidVisualState("parachute");
+        }
+        if (!MortarWeaponPosePolicy.IsValid(row, row.MortarWeaponPose == null ? 0 : row.MortarWeaponPose.ObservedTick))
+        {
+            throw CreateInvalidVisualState("mortar-pose");
+        }
+        if (row.IsColtHolstered && (row.UnitId != "ID_UNIT-GUNSLINGER" || row.SourceCardId.Length != 0))
+        {
+            throw CreateInvalidVisualState("colt-identity");
+        }
+    }
+
+    private static void ValidateVisualHealth(BattleArmyEntityState row)
+    {
+        if (!Finite(row.MaxHealth) || row.MaxHealth <= 0 ||
+            !Finite(row.Health) || row.Health <= 0 || row.Health > row.MaxHealth)
+        {
+            throw CreateInvalidVisualState("health");
+        }
+        if (!Finite(row.MaxKevlar) || row.MaxKevlar < 0 ||
+            !Finite(row.Kevlar) || row.Kevlar < 0 || row.Kevlar > row.MaxKevlar)
+        {
+            throw CreateInvalidVisualState("kevlar");
+        }
+    }
+
+    private static InvalidOperationException CreateInvalidVisualState(string field)
+    {
+        // Retain the same rejection rules while identifying the failed field without logging a roster payload.
+        return new InvalidOperationException("Invalid authoritative infantry visual state: " + field + ".");
     }
 
     private static bool ValidParachute(BattleArmyEntityState row)

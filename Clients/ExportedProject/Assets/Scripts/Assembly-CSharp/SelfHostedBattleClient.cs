@@ -1003,6 +1003,14 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
     public Task GrenadeLauncherThrow(Vector3 target) { return Execute(c => c.GrenadeLauncherThrowAsync(target.x,target.y,target.z,lifetime.Token)); }
     public Task GrenadeSwipeThrow(Vector3 start,Vector3 end,float heldSeconds) { return Execute(c => c.GrenadeSwipeThrowAsync(start.x,start.y,start.z,end.x,end.y,end.z,heldSeconds,lifetime.Token)); }
     public Task Reload() { return Execute(c => c.ReloadAsync(lifetime.Token)); }
+    /// <summary>Routes the recovered weapon/HUD reload callback through its retained scene input owner.</summary>
+    public void RequestWeaponReload(Weapon weapon)
+    {
+        if (deathMatchBridge != null)
+        {
+            deathMatchBridge.RequestReload(weapon);
+        }
+    }
     public Task SwitchWeapon(int slot) { return Execute(c => c.SwitchWeaponAsync(slot, lifetime.Token)); }
     public async void RequestWeaponSwitch(int inventoryIndex)
     {

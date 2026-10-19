@@ -48,7 +48,7 @@ try {
     New-Item -ItemType Directory -Path $editorFolder -Force | Out-Null
     foreach ($name in @('UnityNormalClientBootAudit', 'UnityNormalMatchmakingReadinessAudit',
         'UnityNormalBattleEntryAudit', 'UnityNormalBattleReconnectAudit', 'UnityNormalWeaponSelectionAudit',
-        'UnityStarterLoadoutExport')) {
+        'UnityNormalReloadAudit', 'UnityStarterLoadoutExport')) {
         Copy-Item -LiteralPath (Join-Path $serverRoot ("tools/$name.cs")) -Destination $editorFolder
     }
     $secondBoot = Start-OwnedUnity $secondPath $secondIdentity 'Unity-second-boot'
@@ -107,6 +107,10 @@ try {
             $report.normalBattle.weaponSelection.failureType) {
             throw "Normal two-Unity entry did not reach running; inspect $RunRoot"
         }
+        if (!$report.normalBattle.reload.hasObservedPending -or !$report.normalBattle.reload.hasCompleted -or
+            $report.normalBattle.reload.failureType) {
+            throw "Normal HUD reload did not complete on both peers; inspect $RunRoot"
+        }
     }
     if (!$reports[0].normalBattle.matchId -or
         $reports[0].normalBattle.matchId -ne $reports[1].normalBattle.matchId) {
@@ -118,6 +122,10 @@ try {
         !$reports[0].normalBattle.weaponSelection.hasRequestedHudClick -or
         !$reports[0].normalBattle.weaponSelection.hasCheckedReconnectBlock) {
         throw 'Normal Unity reconnect did not complete the designated one-peer snapshot rebuild.'
+    }
+    if (!$reports[0].normalBattle.reload.hasCompletedShotRequest -or
+        !$reports[0].normalBattle.reload.hasObservedShot -or !$reports[0].normalBattle.reload.hasClickedReload) {
+        throw 'Normal reload did not consume a host shot and invoke the selected recovered HUD callback.'
     }
     Write-Output "PASS: two normal Unity controllers completed HUD selection and live reconnect; $RunRoot"
 }

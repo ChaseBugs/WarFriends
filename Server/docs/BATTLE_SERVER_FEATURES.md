@@ -53,6 +53,14 @@ self-hosted owner and refuses reconnect-time or non-local inventory requests wit
 through to Photon. The combined gate exits zero with zero exceptions and existing diagnostics.
 One alternate starter weapon does not complete firing, reload, all weapon families or pointer input.
 
+[Manual reload authority](NORMAL_UNITY_RELOAD.md) now routes the recovered selected HUD callback
+through the host, projects reload timing from snapshot ticks and prevents local completion from
+granting ammunition. Ten actual-component checks pass. The combined normal run observes a real
+diagnostic sniper shot and completed HUD reload on both peers, but fails afterward while restoring
+infantry on reconnect. It is not a passing combined gate. Resolve the normal army combat-modifier
+projection and identify the rejected visual field without weakening validation; terminal card GUI
+indexing and a later second-Editor startup stall also remain separately recorded in the evidence.
+
 Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via
 `ClientBootSmoke.ps1 -VerifyNormalQueue`. It preserves source bot-routing rules, logs in a
 synthetic returning account and observes its durable scoped queue ticket and validated allocation

@@ -103,6 +103,7 @@ public class WeaponInventory : Core_BaseScript
 		if (usedWeapons == null || index < 0 || index >= usedWeapons.Count)
 			throw new InvalidOperationException("Invalid authoritative weapon selection.");
 		if (weaponIndex == index) return;
+		currentWeapon.weapon.ClearSelfHostedReload();
 		currentWeapon.gameObject.SetActive(value: false);
 		currentWeapon.isActiveWeapon = false;
 		weaponIndex = index;

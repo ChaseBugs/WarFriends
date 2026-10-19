@@ -64,6 +64,9 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 	private AmmoSetup mAmmoSetup;
 
 	private bool mIsReloading;
+    private bool _hasSelfHostedReloadState;
+    private float _selfHostedReloadProgress;
+    private float _selfHostedReloadSecondsLeft;
 
 	protected float mLastShotTime;
 
@@ -112,6 +115,10 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 	{
 		get
 		{
+            if (_hasSelfHostedReloadState)
+            {
+                return mIsReloading;
+            }
 			if (reloadableWeapon)
 			{
 				return mIsReloading;
@@ -159,6 +166,10 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 	{
 		get
 		{
+            if (_hasSelfHostedReloadState && reloadableWeapon)
+            {
+                return _selfHostedReloadProgress;
+            }
 			if (reloadableWeapon)
 			{
 				if (mReloadStartTime == 0f)
@@ -180,6 +191,10 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 	{
 		get
 		{
+            if (_hasSelfHostedReloadState && reloadableWeapon)
+            {
+                return _selfHostedReloadSecondsLeft;
+            }
 			if (reloadableWeapon)
 			{
 				if (!mIsReloading)
@@ -299,6 +314,10 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 
 	private void FinishReload()
 	{
+        if (_hasSelfHostedReloadState)
+        {
+            return;
+        }
 		int num = Math.Min((int)clipSize - ammoLeftInClip, ammoLeft);
 		ammoLeftInClip += num;
 		ammoLeft -= num;
@@ -308,6 +327,12 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 
 	public void Reload()
 	{
+        SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
+        if (client != null && owner is PlayerController)
+        {
+            client.RequestWeaponReload(this);
+            return;
+        }
 		if ((reloadableWeapon || !mIsReloading) && ammoLeft > 0)
 		{
 			mIsReloading = true;
@@ -318,6 +343,49 @@ public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 			}, 0.5f);
 		}
 	}
+
+    /// <summary>Projects host reload timing without allowing a local clock to replenish ammunition.</summary>
+    public void ApplySelfHostedReload(ulong serverTick, ulong reloadEndTick)
+    {
+        const float BattleTicksPerSecond = 30f;
+        if (!reloadableWeapon)
+        {
+            ClearSelfHostedReload();
+            return;
+        }
+        bool isReloading = reloadEndTick > serverTick;
+        float secondsLeft = isReloading
+            ? (reloadEndTick - serverTick) / BattleTicksPerSecond : 0f;
+        float progress = 0f;
+        if (isReloading)
+        {
+            float duration = reloadTime;
+            if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0f)
+            {
+                throw new InvalidOperationException("The authoritative weapon has no valid reload duration.");
+            }
+            progress = Mathf.Clamp01(1f - secondsLeft / duration);
+        }
+        _hasSelfHostedReloadState = true;
+        mIsReloading = isReloading;
+        _selfHostedReloadSecondsLeft = secondsLeft;
+        _selfHostedReloadProgress = progress;
+        mReloadStartTime = 0f;
+    }
+
+    /// <summary>Releases only the reload projection when its battle scene owner is destroyed.</summary>
+    public void ClearSelfHostedReload()
+    {
+        if (!_hasSelfHostedReloadState)
+        {
+            return;
+        }
+        _hasSelfHostedReloadState = false;
+        mIsReloading = false;
+        _selfHostedReloadProgress = 0f;
+        _selfHostedReloadSecondsLeft = 0f;
+        mReloadStartTime = 0f;
+    }
 
 	public virtual float ComputeFlyTimeToTarget(Vector3 position)
 	{

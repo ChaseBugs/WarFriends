@@ -116,6 +116,20 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (client.State != null) Apply(client.State);
 	}
 
+    /// <summary>Accepts only a live local active weapon and shares normal input's pending-command guard.</summary>
+    public void RequestReload(Weapon weapon)
+    {
+        if (client == null || !client.IsConnected || client.IsReconnecting || commandPending ||
+            terminalPresented || !Singleton<GameController>.instance.gameIsRunning ||
+            TimeManager.instance.mIsFreezed || local == null || local.weaponInventory == null ||
+            local.weaponInventory.currentWeapon.weapon != weapon || weapon.owner != local ||
+            !weapon.reloadableWeapon || weapon.isReloading)
+        {
+            return;
+        }
+        Run(client.Reload());
+    }
+
 	private void Update()
 	{
 		if (client == null || !client.IsConnected || commandPending || terminalPresented ||
@@ -295,7 +309,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 						for (int i = 0; i < view.Weapons.Count; i++)
 							if (view.Weapons[i].Slot == state.ActiveWeaponSlot) { selected = i; break; }
 				if (selected < 0) throw new InvalidOperationException("Authoritative weapon slot is absent from the player view.");
-				player.ApplySelfHostedSnapshot(state, selected);
+				player.ApplySelfHostedSnapshot(state, selected, snapshot.ServerTick);
 				ApplyWeaponLock(player, state.PlayerId, snapshot);
 				if (player == local) ApplyMinigunMotor(player, state.MinigunHeld, ref localMinigunMotor);
 				else ApplyMinigunMotor(player, state.MinigunHeld, ref otherMinigunMotor);
@@ -481,6 +495,8 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 
 	private void OnDestroy()
 	{
+        ClearReloadProjection(local);
+        ClearReloadProjection(other);
         if (_mortarWarnings != null)
         {
             Destroy(_mortarWarnings);
@@ -506,6 +522,21 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (local != null && local.playerProperties != null) client.UnbindRifleView(local.playerProperties.playerID);
 		if (other != null && other.playerProperties != null) client.UnbindRifleView(other.playerProperties.playerID);
 	}
+
+    private static void ClearReloadProjection(PlayerController player)
+    {
+        if (player == null || player.weaponInventory == null || player.weaponInventory.usedWeapons == null)
+        {
+            return;
+        }
+        foreach (PlayerWeapon weapon in player.weaponInventory.usedWeapons)
+        {
+            if (weapon != null && weapon.weapon != null)
+            {
+                weapon.weapon.ClearSelfHostedReload();
+            }
+        }
+    }
 
 	private void HideScoreCardIndicators()
 	{
