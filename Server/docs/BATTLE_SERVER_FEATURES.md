@@ -35,6 +35,11 @@ current `enemyPoint` still equals that seat. A detached actor must not be killed
 merely because its original aircraft disappears. Current identity reservations
 and descent snapshots alone do not establish this lifetime behavior.
 
+The initial crew schedule now names its five-second initial wait and two-second
+seat interval in terms of `MatchManifest.TickRate`, with explicit seat and final
+deadline validation. This preserves the existing fixed-tick projection; it does
+not prove Unity coroutine resumption timing or implement special repeated cohorts.
+
 Validation: Windows build completed with zero warnings/errors. Windows and actual
 WSL Linux native-enabled combat-content runs each passed 28,887 focused assertions.
 The published Linux assembly was checked for the added boundary test before running.
