@@ -15,7 +15,8 @@ internal static class BattleMatchControlClientTests
         string[] players={Guid.NewGuid().ToString("N"),Guid.NewGuid().ToString("N")};
         byte[] manifest=Encoding.UTF8.GetBytes("{\"matchId\":\"allocator-match\"}");
         object Grant(string player,ulong session,long expiry=2000)=>new {host="127.0.0.1",port=30000,ticket=new string('t',10),
-            sessionKey=Convert.ToBase64String(new byte[32]),sessionId=session,matchId,playerId=player,manifestHash=hash,expiresUnixSeconds=expiry};
+            sessionKey=Convert.ToBase64String(new byte[32]),sessionId=session,matchId,playerId=player,manifestHash=hash,
+            expiresUnixSeconds=expiry,mapId="City_Multiplayer",mapRevision=hash};
         HttpResponseMessage Response(IEnumerable<string> order)=>new(HttpStatusCode.Created)
         {Content=new StringContent(JsonSerializer.Serialize(new {code="registered",matchId,manifestHash=hash,
             grants=order.Select((p,i)=>Grant(p,(ulong)i+1)).ToArray()}),Encoding.UTF8,"application/json")};
@@ -32,7 +33,9 @@ internal static class BattleMatchControlClientTests
         });
         var client=new BattleMatchControlClient(new HttpClient(handler),key);
         var result=await client.RegisterAsync(new Uri("http://127.0.0.1:30001/internal/matches"),manifest,matchId,players,CancellationToken.None);
-        if(result.Code!="registered" || !result.Grants.Select(x=>x.PlayerId).SequenceEqual(players))throw new Exception("valid registration response");
+        if(result.Code!="registered" || !result.Grants.Select(x=>x.PlayerId).SequenceEqual(players) ||
+            result.Grants.Any(grant=>grant.MapId!="City_Multiplayer" || grant.MapRevision!=hash))
+            throw new Exception("valid registration response");
         checks++;
         var reversed=new BattleMatchControlClient(new HttpClient(new Handler(_=>Response(players.Reverse()))),key);
         try {await reversed.RegisterAsync(new Uri("http://127.0.0.1:30001/internal/matches"),manifest,matchId,players,CancellationToken.None);throw new Exception("reordered grants accepted");}
@@ -63,7 +66,8 @@ internal static class BattleMatchControlClientTests
         var restored=await reconnect.ReconnectAsync(
             new Uri("http://127.0.0.1:30001/internal/matches/reconnect"),
             matchId,players[0],requestId,CancellationToken.None);
-        if(restored.PlayerId!=players[0] || restored.SessionId!=42)
+        if(restored.PlayerId!=players[0] || restored.SessionId!=42 ||
+            restored.MapId!="City_Multiplayer" || restored.MapRevision!=hash)
             throw new Exception("Trusted reconnect grant was not returned.");
         checks++;
         try

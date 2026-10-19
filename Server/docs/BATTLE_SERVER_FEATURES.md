@@ -23,16 +23,14 @@ by Editor bootstrap success or by retaining Photon only for serialized type comp
 ## Dependency-ordered work
 
 The two-normal-Unity gate now executes via `ClientBootSmoke.ps1 -SecondUnityProject ...` and
-currently fails before Running. Both normal controllers connect, submit cards and enter loading;
-the first run exposed unimplemented HTTP start acknowledgements (64/65), and subsequent map acquisition
-still depends on a Photon RPC flag absent from self-hosted initialization. The HTTP acknowledgement
-now validates the current pair, published grant, frozen manifest and absence of durable terminal
-evidence before returning the source callback fields. The Client binds `battleId` to its newly
-admitted match, including replacement rooms. Native HTTP/replay tests and Unity compilation cover
-this increment; the two-normal-Unity entry gate has not been rerun with it. Implement trusted
-manifest map delivery next. The grant currently has no map identity fields. Preserve the source callback order;
-do not bypass these waits or mark
-the feature complete. See [two-Unity evidence](CLIENT_LOBBY_BOOTSTRAP.md#two-normal-unity-participants-current-failed-entry-gate).
+currently fails before Running. Start acknowledgements 64/65 and trusted map identity/revision
+delivery now work through the normal controllers: both participants select the source map index 2
+and load `City_Multiplayer`. Grants, durable reads and reconnect replacements bind metadata to the
+frozen manifest. The current two-Unity run ends at host tick 300 with `admission-timeout`, two
+admitted participants and zero ready participants. Next, trace source loading/readiness order and
+its timing before changing the ten-second prototype policy. Do not bypass the waits or count
+timeout changes as gameplay verification. See [map assignment evidence](BATTLE_MAP_ASSIGNMENT.md)
+and the [original entry failure](CLIENT_LOBBY_BOOTSTRAP.md#two-normal-unity-participants-current-failed-entry-gate).
 
 Normal recovered DeathMatch now has a real Unity-to-Backend queue admission gate via
 `ClientBootSmoke.ps1 -VerifyNormalQueue`. It preserves source bot-routing rules, logs in a

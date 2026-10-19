@@ -81,8 +81,10 @@ read-only loading acknowledgement for published self-hosted random PvP assignmen
 the exact current `BattleId`, source transport flags and source dog-tag policy assertions, and
 return `Time`/`BattleId` only after checking the current pair, frozen manifest and issued assignment.
 They do not create a battle, charge entry twice or grant rewards. Bot, Arena and friend starts remain outside
-this adapter. Normal two-Unity loading is still incomplete: trusted map delivery must replace the
-remaining Photon map-selection wait. See [entry evidence](docs/CLIENT_LOBBY_BOOTSTRAP.md).
+this adapter. Trusted map ID/revision delivery now replaces the Photon map-selection wait and both
+normal Unity participants load the assigned City scene. Entry still fails at the prototype admission
+deadline before readiness is accepted. See [map assignment](docs/BATTLE_MAP_ASSIGNMENT.md) and
+[entry evidence](docs/CLIENT_LOBBY_BOOTSTRAP.md).
 
 Implemented: **85 of 175 named actions.** The boot chain — reachability, `GetConfigurations` (157),
 `CreateAccount` (118), `LoginToCustomAccount` (30), `GetPlayerData` (34), `GetAllMessages` (5) and

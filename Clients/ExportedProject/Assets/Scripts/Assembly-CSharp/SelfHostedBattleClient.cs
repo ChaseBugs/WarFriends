@@ -45,6 +45,10 @@ public sealed partial class SelfHostedBattleClient : MonoBehaviour, SelfHostedBa
     public event Action CardsSelectedByBoth;
     public MatchSnapshot State { get; private set; }
     public string LocalPlayerId { get; private set; }
+    /// <summary>Gets the scene assigned to the currently owned connection.</summary>
+    public string MapId { get { return connection == null ? string.Empty : connection.MapId; } }
+    /// <summary>Gets the required source revision for the assigned scene.</summary>
+    public string MapRevision { get { return connection == null ? string.Empty : connection.MapRevision; } }
     public IReadOnlyList<BattlePlayerView> PlayerViews { get; private set; }
     public ulong ProcessedEventId { get; private set; }
     public bool IsConnected { get; private set; }

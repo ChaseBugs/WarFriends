@@ -38,6 +38,7 @@ public sealed partial class BattleGrantStore
     public async Task<string> Publish(string matchId,string manifestHash,IEnumerable<MatchConnectionGrant> values,CancellationToken ct)
     {
         var doc=CreateDocument(matchId,manifestHash,values);
+        await RequireFrozenMapAsync(doc,ct);
         try {await grants.InsertOneAsync(doc,cancellationToken:ct);return "published";}
         catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
         {
@@ -53,6 +54,7 @@ public sealed partial class BattleGrantStore
         var row=await grants.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct);
         if(row==null)return null;
         var (first,second)=ValidateDocument(row);
+        await RequireFrozenMapAsync(row,ct);
         var selected=playerId==row.PlayerA?first:playerId==row.PlayerB?second:null;
         if(selected?.ExpiresUnixSeconds<=unixNow)
             throw new InvalidDataException("Persisted battle grant has expired.");
@@ -66,6 +68,7 @@ public sealed partial class BattleGrantStore
         var row=await grants.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct);
         if(row==null)return null;
         var (first,second)=ValidateDocument(row);
+        await RequireFrozenMapAsync(row,ct);
         if(row.ExpiresUtc<=DateTimeOffset.FromUnixTimeSeconds(unixNow).UtcDateTime)return null;
         return playerId==row.PlayerA?first:playerId==row.PlayerB?second:null;
     }
@@ -84,13 +87,14 @@ public sealed partial class BattleGrantStore
             var row=await grants.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct)
                 ?? throw new InvalidDataException("Battle grant assignment is missing.");
             var (first,second)=ValidateDocument(row);
+            await RequireFrozenMapAsync(row,ct);
             if(row.ExpiresUtc<=DateTimeOffset.FromUnixTimeSeconds(unixNow).UtcDateTime)
                 throw new InvalidDataException("Battle grant assignment has expired.");
             var prior=playerId==row.PlayerA?first:playerId==row.PlayerB?second:
                 throw new InvalidDataException("Player is not in the battle grant assignment.");
             if(next.ManifestHash!=row.ManifestHash || next.Host!=prior.Host || next.Port!=prior.Port ||
                next.SessionId==(playerId==row.PlayerA?second:first).SessionId ||
-               next.PlayerViews.Count!=0)
+               next.PlayerViews.Count!=0 || next.MapId!=prior.MapId || next.MapRevision!=prior.MapRevision)
                 throw new InvalidDataException("Reconnect grant differs from durable match authority.");
             next.PlayerViews.AddRange(prior.PlayerViews);
             byte[] replacementBytes=next.ToByteArray();
@@ -142,6 +146,7 @@ public sealed partial class BattleGrantStore
            first.PlayerId!=row.PlayerA || second.PlayerId!=row.PlayerB ||
            first.SessionId==second.SessionId ||
            first.Host!=second.Host || first.Port!=second.Port ||
+           first.MapId!=second.MapId || first.MapRevision!=second.MapRevision ||
            first.Ticket==second.Ticket || first.SessionKey.Equals(second.SessionKey) ||
            (row.ExpiresUtc!=DateTimeOffset.FromUnixTimeSeconds(Math.Max(first.ExpiresUnixSeconds,second.ExpiresUnixSeconds)).UtcDateTime &&
             row.ExpiresUtc!=RetentionDate(Math.Max(first.ExpiresUnixSeconds,second.ExpiresUnixSeconds))) ||
@@ -160,6 +165,7 @@ public sealed partial class BattleGrantStore
             Uri.CheckHostName(value.Host)==UriHostNameType.Unknown || value.Port is <1 or >65535 || value.Ticket.Length is <10 or >4096 ||
             value.SessionKey.Length!=32 || value.SessionId==0 || value.ExpiresUnixSeconds is <1 or >253402300799)
             throw new InvalidDataException("Invalid battle grant.");
+        War.Shared.BattleMapIdentity.Require(value.MapId,value.MapRevision);
         if(value.PlayerViews.Count!=0)
         {
             if(value.PlayerViews.Count!=2 || value.PlayerViews.Select(x=>x.PlayerId).Distinct(StringComparer.Ordinal).Count()!=2)

@@ -133,6 +133,7 @@ internal static class TerminalGrantRaceTests
             var grant = new MatchConnectionGrant
             {
                 MatchId = manifest.MatchId, ManifestHash = manifest.Digest(), PlayerId = player.PlayerId,
+                MapId = manifest.MapId, MapRevision = manifest.MapRevision,
                 Host = "127.0.0.1", Port = FixturePort, SessionId = (ulong)index + 1,
                 Ticket = "fixture-ticket-" + index,
                 SessionKey = ByteString.CopyFrom(Enumerable.Repeat((byte)(index + 1), SessionKeyBytes).ToArray()),

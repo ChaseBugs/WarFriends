@@ -37,24 +37,21 @@ public sealed partial class BattleGrantStore
                 throw new InvalidDataException("Grant publication roster differs from its durable pair.");
             }
 
-            await ValidateFrozenGrantAsync(current, pair, manifestHash, token);
+            await ValidateFrozenGrantAsync(current, pair, document, token);
             await TouchPublicationPairAsync(current, pair, token);
             return await PublishDocumentAsync(current, document, token);
         }, transaction, cancellationToken);
     }
 
     private async Task ValidateFrozenGrantAsync(
-        IClientSessionHandle session, BattlePairDocument pair, string manifestHash, CancellationToken cancellationToken)
+        IClientSessionHandle session, BattlePairDocument pair, BattleGrantDocument document, CancellationToken cancellationToken)
     {
         var snapshots = _database.GetCollection<BattleManifestSnapshotDocument>("battle_manifest_snapshots");
         var snapshot = await snapshots.Find(session, row => row.Id == pair.MatchId)
             .FirstOrDefaultAsync(cancellationToken) ??
             throw new InvalidDataException("Active pair has no frozen manifest.");
         byte[] frozen = BattleManifestSnapshotStore.Validate(snapshot, pair.MatchId, pair.Players);
-        if (MatchManifest.Parse(frozen).Digest() != manifestHash)
-        {
-            throw new InvalidDataException("Grant publication differs from frozen match authority.");
-        }
+        RequireMatchingMap(document, MatchManifest.Parse(frozen));
     }
 
     private async Task TouchPublicationPairAsync(

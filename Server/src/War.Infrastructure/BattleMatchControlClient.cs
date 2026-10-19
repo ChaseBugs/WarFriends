@@ -56,6 +56,8 @@ public sealed class BattleMatchControlClient
                 throw new InvalidDataException("Battle registration grant identity or order differs from the roster.");
         if(grants.Select(x=>x.SessionId).Distinct().Count()!=2)
             throw new InvalidDataException("Battle registration grants share a session identity.");
+        if(grants.Any(grant=>grant.MapId!=grants[0].MapId || grant.MapRevision!=grants[0].MapRevision))
+            throw new InvalidDataException("Battle registration grants disagree on scene identity.");
         return new BattleMatchRegistration(codeNode.GetString()!,expectedMatchId,hash,Array.AsReadOnly(grants));
     }
 
@@ -96,7 +98,7 @@ public sealed class BattleMatchControlClient
     }
     private static MatchConnectionGrant ParseGrant(JsonElement row)
     {
-        if(row.ValueKind!=JsonValueKind.Object || row.EnumerateObject().Count()!=9)throw new InvalidDataException("Invalid battle grant shape.");
+        if(row.ValueKind!=JsonValueKind.Object || row.EnumerateObject().Count()!=11)throw new InvalidDataException("Invalid battle grant shape.");
         try
         {
             var grant=new MatchConnectionGrant
@@ -105,7 +107,8 @@ public sealed class BattleMatchControlClient
                 Ticket=row.GetProperty("ticket").GetString()!,SessionKey=Google.Protobuf.ByteString.CopyFrom(Convert.FromBase64String(row.GetProperty("sessionKey").GetString()!)),
                 SessionId=row.GetProperty("sessionId").GetUInt64(),MatchId=row.GetProperty("matchId").GetString()!,
                 PlayerId=row.GetProperty("playerId").GetString()!,ManifestHash=row.GetProperty("manifestHash").GetString()!,
-                ExpiresUnixSeconds=row.GetProperty("expiresUnixSeconds").GetInt64()
+                ExpiresUnixSeconds=row.GetProperty("expiresUnixSeconds").GetInt64(),
+                MapId=row.GetProperty("mapId").GetString()!,MapRevision=row.GetProperty("mapRevision").GetString()!
             };
             if(Uri.CheckHostName(grant.Host)==UriHostNameType.Unknown || grant.Port is <1 or >65535 || grant.Ticket.Length is <10 or >4096 ||
                 grant.SessionKey.Length!=32 || grant.SessionId==0 || !ValidMatchId(grant.MatchId) ||
@@ -113,6 +116,7 @@ public sealed class BattleMatchControlClient
                 !System.Text.RegularExpressions.Regex.IsMatch(grant.ManifestHash,@"\A[0-9a-f]{64}\z") ||
                 grant.ExpiresUnixSeconds is <0 or >253402300799)
                 throw new InvalidDataException("Invalid battle grant authority.");
+            War.Shared.BattleMapIdentity.Require(grant.MapId,grant.MapRevision);
             return grant;
         }
         catch(Exception e) when(e is KeyNotFoundException or InvalidOperationException or FormatException or OverflowException)

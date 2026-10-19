@@ -57,7 +57,8 @@ app.MapPost("/internal/matches",async (HttpContext context,NetworkWorker worker)
     object[] grants=result.Grants?.Select(grant=>(object)new {host=grant.Host,port=grant.Port,
         ticket=grant.Ticket,sessionKey=Convert.ToBase64String(grant.SessionKey.ToByteArray()),
         sessionId=grant.SessionId,matchId=grant.MatchId,playerId=grant.PlayerId,
-        manifestHash=grant.ManifestHash,expiresUnixSeconds=grant.ExpiresUnixSeconds}).ToArray()??[];
+        manifestHash=grant.ManifestHash,expiresUnixSeconds=grant.ExpiresUnixSeconds,
+        mapId=grant.MapId,mapRevision=grant.MapRevision}).ToArray()??[];
     return result.Code switch
     {
         "registered" or "existing-match"=>Results.Json(new {code=result.Code,matchId=manifest.MatchId,
@@ -98,7 +99,8 @@ app.MapPost("/internal/matches/reconnect",async (HttpContext context,NetworkWork
     return Results.Ok(new {code=result.Code,grant=new {host=grant.Host,port=grant.Port,
         ticket=grant.Ticket,sessionKey=Convert.ToBase64String(grant.SessionKey.ToByteArray()),
         sessionId=grant.SessionId,matchId=grant.MatchId,playerId=grant.PlayerId,
-        manifestHash=grant.ManifestHash,expiresUnixSeconds=grant.ExpiresUnixSeconds}});
+        manifestHash=grant.ManifestHash,expiresUnixSeconds=grant.ExpiresUnixSeconds,
+        mapId=grant.MapId,mapRevision=grant.MapRevision}});
 });
 app.MapPost("/internal/matches/cancel",async (HttpContext context,NetworkWorker worker)=>
 {

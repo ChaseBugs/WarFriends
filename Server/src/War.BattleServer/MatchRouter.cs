@@ -138,6 +138,8 @@ public sealed class MatchRouter
                     SessionId = session,
                     MatchId = manifest.MatchId,
                     PlayerId = claims.PlayerId,
+                    MapId = manifest.MapId,
+                    MapRevision = manifest.MapRevision,
                     ManifestHash = endpoint.ManifestHash,
                     ExpiresUnixSeconds = claims.ExpiresUnixSeconds
                 };
@@ -215,7 +217,8 @@ public sealed class MatchRouter
             var next=new MatchConnectionGrant {Host=publicHost,Port=publicPort,
                 Ticket=tokens.Sign(claims),SessionKey=ByteString.CopyFrom(tokens.SessionKey(claims)),
                 SessionId=session,MatchId=matchId,PlayerId=playerId,
-                ManifestHash=endpoint.ManifestHash,ExpiresUnixSeconds=claims.ExpiresUnixSeconds};
+                ManifestHash=endpoint.ManifestHash,ExpiresUnixSeconds=claims.ExpiresUnixSeconds,
+                MapId=priorGrant.MapId,MapRevision=priorGrant.MapRevision};
             var resultGrant=next.Clone();
             issuedGenerations[matchId][index]=generation+1;
             grants[index]=next;

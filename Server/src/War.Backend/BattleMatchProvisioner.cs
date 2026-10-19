@@ -48,6 +48,10 @@ public sealed class BattleMatchProvisioner
         catch(Exception e) when(e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or ArgumentOutOfRangeException)
         {throw new InvalidDataException("Invalid match manifest JSON.",e);}
         var registration=await control.RegisterAsync(endpoint,canonicalManifest,matchId,players,ct);
+        var checkedManifest=War.BattleServer.MatchManifest.Parse(canonicalManifest);
+        if(registration.Grants.Any(grant=>grant.MapId!=checkedManifest.MapId ||
+            grant.MapRevision!=checkedManifest.MapRevision))
+            throw new InvalidDataException("Worker map identity differs from the frozen match manifest.");
         var deliverable=registration.Grants.Select(grant=>
         {
             var copy=grant.Clone();

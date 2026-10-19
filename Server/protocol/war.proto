@@ -79,6 +79,9 @@ message MatchConnectionGrant {
   string manifest_hash = 8; int64 expires_unix_seconds = 9;
   // Backend-owned recovered profile/loadout view for both roster members.
   repeated BattlePlayerView player_views = 10;
+  // Allocator/Worker-owned scene identity from the frozen match manifest.
+  string map_id = 11;
+  string map_revision = 12;
 }
 // weapon_index addresses WeaponInventory.allWeapons, not the persisted LevelManager setup list.
 // Source identity must agree with both indexes when projecting legacy inventory or resolving Client presentation.

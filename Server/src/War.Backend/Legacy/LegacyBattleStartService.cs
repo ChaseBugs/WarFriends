@@ -70,6 +70,7 @@ public sealed class LegacyBattleStartService
             ?? throw new InvalidDataException("The battle manifest is unavailable.");
         MatchManifest manifest = MatchManifest.Parse(bytes);
         if (manifest.MatchId != pair.MatchId || manifest.Digest() != grant.ManifestHash ||
+            manifest.MapId != grant.MapId || manifest.MapRevision != grant.MapRevision ||
             manifest.Mode is not ("unscored-rifle-combat" or "unscored-shotgun-combat" or "unscored-mixed-combat") ||
             !manifest.Players.Select(participant => participant.PlayerId).SequenceEqual(pair.Players) ||
             await _results.Get(pair.MatchId, cancellationToken) != null)

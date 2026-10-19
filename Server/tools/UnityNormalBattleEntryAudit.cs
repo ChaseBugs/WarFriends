@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 using UnityEngine;
 
@@ -17,11 +18,27 @@ namespace WarFriends.Validation
         private static bool _hasSubmittedCards;
         private static bool _hasReachedRunning;
         private static GameController _game;
+        private static readonly FieldInfo ResourceLoads = typeof(GameController).GetField(
+            "_battleResourceLoads", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static string _assignedMapId;
+        private static string _assignedMapRevision;
+        private static string _assignedMatchId;
+        private static string _loadingFailureType;
+        private static string _loadingFailureSource;
 
         /// <summary>Gets whether this disposable process participates in the normal two-Unity battle gate.</summary>
         public static bool IsEnabled
         {
             get { return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_SELF")); }
+        }
+
+        /// <summary>Requires both normal participants to have observed authoritative and local Running state.</summary>
+        public static bool HasCompletedEntry
+        {
+            get
+            {
+                return _hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER"));
+            }
         }
 
         /// <summary>Starts source matchmaking and waits for source loading plus authoritative running state.</summary>
@@ -36,6 +53,7 @@ namespace WarFriends.Validation
             {
                 return false;
             }
+            CaptureLoadingFailure();
             if (!_hasStartedSearch)
             {
                 _hasStartedSearch = true;
@@ -44,6 +62,12 @@ namespace WarFriends.Validation
             }
 
             SelfHostedBattleClient client = SelfHostedBattleClient.Active;
+            if (client != null && client.IsConnected && client.State != null)
+            {
+                _assignedMapId = client.MapId;
+                _assignedMapRevision = client.MapRevision;
+                _assignedMatchId = client.State.MatchId;
+            }
             if (!_hasSubmittedCards && client != null && client.IsConnected && _game.opponent != null &&
                 MatchManager.matchState == MatchState.BothPlayersConnected)
             {
@@ -57,7 +81,20 @@ namespace WarFriends.Validation
                 File.WriteAllText(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_SELF"),
                     JsonConvert.SerializeObject(new { matchId = client.State.MatchId }) + "\n");
             }
-            return _hasReachedRunning && File.Exists(Environment.GetEnvironmentVariable("WAR_NORMAL_BATTLE_PEER"));
+            return HasCompletedEntry;
+        }
+
+        private static void CaptureLoadingFailure()
+        {
+            BattleResourceLoadScope scope = ResourceLoads.GetValue(_game) as BattleResourceLoadScope;
+            if (_loadingFailureType != null || scope == null || scope.FirstFailure == null)
+            {
+                return;
+            }
+            Exception failure = scope.FirstFailure.GetBaseException();
+            _loadingFailureType = failure.GetType().Name;
+            _loadingFailureSource = (failure.StackTrace ?? "").Split('\n')
+                .FirstOrDefault(frame => frame.Contains("Assets"));
         }
 
         private static bool BothLobbiesAreReady()
@@ -80,7 +117,11 @@ namespace WarFriends.Validation
                 hasSubmittedCards = _hasSubmittedCards,
                 hasReachedRunning = _hasReachedRunning,
                 isConnected = client != null && client.IsConnected,
-                matchId = client == null || client.State == null ? null : client.State.MatchId,
+                matchId = _assignedMatchId,
+                mapId = _assignedMapId,
+                mapRevision = _assignedMapRevision,
+                loadingFailureType = _loadingFailureType,
+                loadingFailureSource = _loadingFailureSource,
                 phase = client == null || client.State == null ? null : client.State.Phase.ToString(),
                 matchState = MatchManager.matchState.ToString(),
                 players = PlayerController.players.Count

@@ -22,6 +22,7 @@ namespace War.Client
             {
                 throw new ArgumentNullException(nameof(candidate));
             }
+            War.Shared.BattleMapIdentity.ValidateOptional(candidate.MapId, candidate.MapRevision);
             IPAddress address;
             if (!IPAddress.TryParse(candidate.Host, out address) || candidate.Port == 0 ||
                 candidate.Port > MaximumPort ||

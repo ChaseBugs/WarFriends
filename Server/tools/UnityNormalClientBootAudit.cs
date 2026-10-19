@@ -122,10 +122,14 @@ public static class UnityNormalClientBootAudit
             _mainSceneFrame = Time.frameCount;
         }
         string queueReport = Environment.GetEnvironmentVariable("WAR_NORMAL_QUEUE_REPORT");
-        if (observedTarget && WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled &&
-            !WarFriends.Validation.UnityNormalBattleEntryAudit.Observe() &&
-            EditorApplication.timeSinceStartup <= _deadline)
+        if (_mainSceneFrame >= 0 && WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled)
         {
+            if (!WarFriends.Validation.UnityNormalBattleEntryAudit.Observe() &&
+                EditorApplication.timeSinceStartup <= _deadline)
+            {
+                return;
+            }
+            Finish();
             return;
         }
         if (observedTarget && !string.IsNullOrEmpty(queueReport))
@@ -188,7 +192,9 @@ public static class UnityNormalClientBootAudit
             .FirstOrDefault(manager => manager.gameObject.scene.IsValid());
         string reportPath = Path.Combine(Application.dataPath, "../normal-client-boot.json");
         bool requireAccount = Environment.GetEnvironmentVariable("WAR_LOBBY_BOOT_REQUIRE_ACCOUNT") == "1";
-        bool accountReady = Application.loadedLevelName == "MainScene" && GameLoginManager.currentPlayer != null;
+        bool pairedEntry = WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled;
+        bool accountReady = GameLoginManager.currentPlayer != null &&
+            (Application.loadedLevelName == "MainScene" || pairedEntry && _mainSceneFrame >= 0);
         bool dataLoadComplete = accountReady && HasAccountAndUnits();
         File.WriteAllText(reportPath, JsonConvert.SerializeObject(new
         {
@@ -226,9 +232,12 @@ public static class UnityNormalClientBootAudit
         bool reachedMain = Application.loadedLevelName == "MainScene";
         Debug.Log("UNITY_NORMAL_BOOT_OBSERVED mainScene=" + reachedMain + " exceptions=" + _exceptions +
             " report=" + reportPath);
-        bool completed = reachedMain && game != null && _exceptions == 0 && _invalidBootstrapQueries == 0 &&
-            (!requireAccount || dataLoadComplete);
-        if (completed && requireAccount)
+        bool reachedTarget = pairedEntry
+            ? WarFriends.Validation.UnityNormalBattleEntryAudit.HasCompletedEntry : reachedMain;
+        bool hasRequiredData = !requireAccount || (pairedEntry ? _mainSceneFrame >= 0 : dataLoadComplete);
+        bool completed = reachedTarget && game != null && _exceptions == 0 && _invalidBootstrapQueries == 0 &&
+            hasRequiredData;
+        if (completed && requireAccount && !pairedEntry)
         {
             try
             {

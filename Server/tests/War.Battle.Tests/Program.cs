@@ -22,6 +22,12 @@ using War.Persistence;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
+if (args is ["--battle-map-only"])
+{
+    War.Battle.Tests.BattleMapIdentityTests.Run();
+    return;
+}
+
 if (args is ["--allocation-inventory-mongo", var inventoryMongoUri])
 {
     await CardAllocationQuantityTests.RunMongoAsync(inventoryMongoUri);

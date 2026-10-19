@@ -33,6 +33,12 @@ namespace War.Client
         /// <summary>Gets the local participant identity from the owned grant copy.</summary>
         public string LocalPlayerId => grant.PlayerId;
 
+        /// <summary>Gets the allocator-owned scene identity without exposing the mutable grant.</summary>
+        public string MapId => grant.MapId;
+
+        /// <summary>Gets the required source scene revision from the owned grant copy.</summary>
+        public string MapRevision => grant.MapRevision;
+
         public MatchConnection(MatchConnectionGrant connection)
             : this(connection, string.Empty)
         {

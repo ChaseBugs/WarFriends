@@ -724,8 +724,10 @@ also run with this gate. Unity 2018.3 compilation of the Client ID binding exite
 targets, 288,258 references, zero missing scripts and zero broken references; the existing 17 NGUI
 sprite mismatches remain. This is not a rerun of two-normal-Unity gameplay or original Unity 5.2/Android proof.
 
-Trusted map identity/revision delivery and the Photon-dependent `mMapIdSet` wait remain the next
-entry contract to migrate. The earlier two-Unity failure remains recorded above.
+Trusted map identity/revision delivery now replaces the Photon-dependent `mMapIdSet` wait.
+Both normal Unity participants load the assigned
+City scene. The subsequent run still fails before Running, with durable `admission-timeout` proof
+and no accepted readiness. See [map assignment and current evidence](BATTLE_MAP_ASSIGNMENT.md).
 
 The final native run exited zero:
 `Server/.local/legacy-start-native-final-418b52e0a82c48bc8bb15701bf4d36f8/queue-tests.log`.

@@ -148,6 +148,9 @@ internal static class BackendQueueLiveTests
             var first=left.FindMatchAsync(tokens[0],TimeSpan.FromSeconds(25),deadline.Token);
             var second=right.FindMatchAsync(tokens[1],TimeSpan.FromSeconds(25),deadline.Token);
             var grants=await Task.WhenAll(first,second);
+            var frozenMap=MatchManifest.Parse(frozen);
+            if(grants.Any(grant=>grant.MapId!=frozenMap.MapId || grant.MapRevision!=frozenMap.MapRevision))
+                throw new Exception("Published grants differ from the frozen scene assignment.");
             var accountBeforeStart=await legacy.ById(ids[0],deadline.Token);
             await LegacyBattleStartChecks.VerifyPublishedAsync(new Uri(backendUrl), ids[0], tokens[0], grants[0].MatchId);
             var accountAfterStart=await legacy.ById(ids[0],deadline.Token);
@@ -162,6 +165,15 @@ internal static class BackendQueueLiveTests
                grants[1].Ticket!=registered.Grants[1].Ticket)
                 throw new Exception("Live queue returned inconsistent player-only grants.");
             var inconsistent=grants.Select(x=>x.Clone()).ToArray();
+            var wrongMap=grants.Select(x=>x.Clone()).ToArray();
+            foreach(var grant in wrongMap)grant.MapRevision=new string('0',64);
+            try
+            {
+                await new BattleGrantStore(mongoUri,database).Publish(frozenPair.MatchId,
+                    grants[0].ManifestHash,wrongMap,deadline.Token);
+                throw new Exception("A different scene was published with the original manifest hash.");
+            }
+            catch(InvalidDataException){}
             inconsistent[1].PlayerViews[0].DisplayName+="forged";
             try
             {
@@ -256,6 +268,8 @@ internal static class BackendQueueLiveTests
             var resumedRetry=await left.ReconnectMatchAsync(grants[0].MatchId,
                 reconnectRequestId,tokens[0],deadline.Token);
             if(resumedGrant.SessionId==grants[0].SessionId ||
+               resumedGrant.MapId!=grants[0].MapId || resumedGrant.MapRevision!=grants[0].MapRevision ||
+               resumedRetry.MapId!=resumedGrant.MapId || resumedRetry.MapRevision!=resumedGrant.MapRevision ||
                resumedGrant.SessionId!=resumedRetry.SessionId ||
                resumedGrant.PlayerViews.Count!=2 ||
                !resumedGrant.PlayerViews.SequenceEqual(grants[0].PlayerViews) ||

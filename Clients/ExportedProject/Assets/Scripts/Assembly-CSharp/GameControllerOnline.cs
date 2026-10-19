@@ -1472,6 +1472,19 @@ public abstract partial class GameControllerOnline : IGameController
 
 	public override IEnumerator AquireLevelName()
 	{
+        if (PhotonConnectionManager.IsSelfHostedActive)
+        {
+            SelfHostedBattleClient client = PhotonConnectionManager.GetOwnedSelfHostedClient();
+            MapManager maps = Singleton<MapManager>.instance;
+            List<string> sceneNames = new List<string>();
+            foreach (MapManager.MapEntry entry in maps.mapEntries)
+            {
+                sceneNames.Add(entry.levelPVPName);
+            }
+            // The recovered RPC carries an array index, not MapEntry.id. Preserve that local lookup contract.
+            mMapId = War.Client.InstalledBattleMaps.ResolveIndex(sceneNames, client.MapId, client.MapRevision);
+            mMapIdSet = true;
+        }
 		float mYieldStartTime = Time.realtimeSinceStartup;
 		while (!mMapIdSet)
 		{
