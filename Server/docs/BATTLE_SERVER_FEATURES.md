@@ -34,6 +34,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now has a source-checked ordinary-idle to rope-slide transition clock.
+The original APK's managed wrapper confirms the 0.3-second default, and a final
+clean-exit Unity Play Mode fixture records sixteen frames at three idle phases.
+The host matches all 48 layer pairs, including raw clocks across an idle loop end,
+exact weights and state retirement. Tick nine retains the outgoing float residual;
+the host's settled flag stays false until tick ten. Windows combat-content tests
+exit zero with 26,916 assertions, and the self-contained Linux run under Ubuntu
+WSL passes the same group and count; build and protocol checks pass. See
+[native slide clock](HELICOPTER_ROPE_ALIGNMENT.md). Other weapon idle clips,
+interrupted mixers, gameplay update ordering, physical rope, signed content and
+live co-op Fire integration remain pending. This is not complete crew placement.
+
 B22 now blends the actual eleven-node palm chain from captured idle/slide local
 transforms, then composes and places it at the world root. Thirty native Unity
 comparisons cover explicit frame/weight combinations in local and rotated world

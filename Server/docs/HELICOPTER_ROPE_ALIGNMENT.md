@@ -188,6 +188,56 @@ The comparisons validate explicit captured frames and weights, not automatic
 runtime scaling, physical rope joints or landing. This catalog is not yet part of
 the signed battle-content manifest or the live co-op collision world.
 
+## Native slide transition clock
+
+`UnityHelicopterFadeExport` now observes Play Mode after a fully weighted ordinary
+idle alias at phases 0, 0.5 and 29/30, followed by the exact one-argument
+`Animation.CrossFade("helicopter_jump_pose")` call used by `RopeSlide`.
+It strips gameplay scripts, freezes physics and records sixteen distinct frames
+at 30 Hz, including enabled states, raw clocks, weights and diagnostic hand positions.
+The canonical `idle` alias resolves to the recorded `idle_1` source clip.
+
+The original APK's `Clients/AuxiliaryFiles/GameAssemblies/UnityEngine.dll` has SHA-256
+`e428db4e8652f5d548024ccbbb994dc1636a3c4ad374bac48e18e2fd5db6c76b`.
+Reading its method metadata and IL with `System.Reflection.Metadata` shows the
+one-string `CrossFade` wrapper (signature `2001010E`) has IL
+`160A229A99993E0B0203070628971600062A`: it loads float 0.3 and integer play-mode zero
+before forwarding the call. The captured Unity 2018 wrapper agrees on that default;
+the different wrapper bytes are recorded in the native artifact.
+
+`HelicopterSlideFade` projects this two-layer, fixed-step starting condition.
+Weights accumulate independently as floats, while double-precision elapsed time
+matches the exposed raw float clocks, including an idle crossing its loop end.
+Slide weight reaches one at tick nine, but outgoing idle still has weight
+`4.47034836E-08` and remains enabled. Only tick ten retires idle and resets its raw
+clock to zero. `IsSettled` therefore requires the outgoing state to be disabled;
+a nominal 0.3-second timer alone must not select the unblended hand catalog.
+
+The reference digest is `0a9f8eae7a74d4d7353af3e411055ab7f73537fa4184e88790553090b9ea161c`.
+The final capture exits zero at `.local/helicopter-fade-unity-verified.log` with no
+logged exceptions. Component stripping reports dependency-removal diagnostics
+before subsequent passes remove all scripts. An earlier export tried to hash
+transient Play Mode clip paths; source identities are now captured before entry.
+Another attempt wrote observations but crashed during Editor Mono finalization.
+The final tool leaves Play Mode before exiting; failed attempts are not clean runs.
+
+The solution builds with zero warnings/errors and protocol tests pass. The Windows
+combat-content run exits zero with 26,916 assertions at `.local/helicopter-fade-host.log`.
+New checks compare all 48 layer pairs, the settled boundary and invalid initial phases.
+They retain the existing physics/navigation diagnostic limitations and do not prove
+the complete Unity battle lifecycle.
+The self-contained executable at `.local/linux-helicopter-fade` also exits zero
+under Ubuntu WSL with the same 26,916 combat-content assertions; its log is
+`.local/helicopter-fade-linux.log`. This is not the full Battle executable,
+Mongo integration or a normal Unity match acceptance run.
+
+This does not yet place live crew: other weapon idle clips, interrupted/additive
+mixers, arbitrary frame deltas, between-frame bone evaluation, procedural edits
+and the gameplay/animation update order still require evidence and integration.
+The observed Unity 2018 transition does not establish original Unity 5.2 native
+animation equivalence, despite the matching managed default. Hand positions in
+this temporal artifact are diagnostic; the clock tests do not validate them.
+
 ## Remaining integration
 
 The server still needs current rope-joint physics, the current blended left-palm
