@@ -36,6 +36,19 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Actual source-method replay now checks 45 consecutive descent updates across three
+animated rigs. Inactive isolated owners invoke the recovered `HelicopterUpdate`
+against supplied joint transforms; each row records the current palm, old root
+pose, aircraft right, output pose and float progress. The source controller hash
+matches the active Client. Animation is disabled and resumed mid-descent while
+the source method continues to run, preserving the distinction between animation
+evaluation and descent updates. This fixture verifies math/order for supplied
+inputs, not normal spawn/coroutine lifecycle or native moving-rope parity.
+See `NAVMESH_DETAIL.md` for capture provenance and the remaining boundary.
+Windows and actual Ubuntu WSL each pass 7,391 native/query checks with these
+source-method comparisons. Logs: `.local/descent-reference-windows.log` and
+`.local/descent-reference-linux.log`; build warnings/errors remain zero.
+
 The next descent boundary now consumes a complete native world publication and a
 fresh host-observed soldier/palm frame through `HelicopterCrewDescentState`. It
 owns the original rope lease and ordered render cursor; replayed/skipped frames,

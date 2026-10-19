@@ -1,0 +1,4520 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unity": "2018.3.0f2",
+  "source": "Assets/GameObject/enemy.prefab",
+  "sourceSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "controller": "Assets/Scripts/Assembly-CSharp/SoldierAnimationController.cs",
+  "controllerSha256": "f6971fe49c7717a96aedddc4ae41605b1f17da350f49828b1d2329462b9efe8a",
+  "captureRate": 30,
+  "physicsFrozen": true,
+  "visibilityProbe": true,
+  "descentControllerSha256": "175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0",
+  "fixture": "Animated rig plus inactive source HelicopterUpdate owner; supplied joints, no gameplay lifecycle.",
+  "clipSources": [
+    {
+      "name": "idle_1",
+      "source": "Assets/AnimationClip/idle_1.anim",
+      "sha256": "fc75d82afa2e12a7119e53ddad5db550273f71e513f487cd17b5bca1d8518b04",
+      "length": 1.0,
+      "wrap": "Loop"
+    },
+    {
+      "name": "helicopter_jump_pose",
+      "source": "Assets/AnimationClip/helicopter_jump_pose.anim",
+      "sha256": "9f4bcc438ad3a51c2008994f22c5e301e16cc8b2a49783218b326267e6d42b0d",
+      "length": 0.0333328247,
+      "wrap": "ClampForever"
+    },
+    {
+      "name": "T_pose",
+      "source": "Assets/AnimationClip/T_pose.anim",
+      "sha256": "9ca7a5a1ea196960f641b7861eb6dc86a38ffc023502068e357452e48d19e8e6",
+      "length": 0.06667328,
+      "wrap": "Clamp"
+    }
+  ],
+  "crossFadeIl": "ABYKIpqZmT4LAgMHBihRAAAGKg==",
+  "frames": [
+    {
+      "frame": 2,
+      "elapsed": 0.0,
+      "deltaTime": 0.02,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.085739,
+            0.192614049,
+            0.115109712
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                0.0,
+                10.0,
+                0.0
+              ],
+              "rotation": [
+                0.0,
+                0.258819073,
+                0.0,
+                0.9659259
+              ],
+              "palm": [
+                -0.0166972876,
+                10.1926136,
+                0.142557442
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": false,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              0.0,
+              10.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.258819073,
+              0.0,
+              0.9659259
+            ],
+            "progress": 0.0
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.08647125,
+            0.194775984,
+            0.113404438
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                0.0,
+                10.0,
+                0.0
+              ],
+              "rotation": [
+                0.0,
+                0.258819073,
+                0.0,
+                0.9659259
+              ],
+              "palm": [
+                -0.0181840733,
+                10.1947756,
+                0.141446754
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": false,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              0.0,
+              10.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.258819073,
+              0.0,
+              0.9659259
+            ],
+            "progress": 0.0
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.08574734,
+            0.192590371,
+            0.115101673
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                0.0,
+                10.0,
+                0.0
+              ],
+              "rotation": [
+                0.0,
+                0.258819073,
+                0.0,
+                0.9659259
+              ],
+              "palm": [
+                -0.0167085268,
+                10.1925907,
+                0.142554641
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": false,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              0.0,
+              10.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.258819073,
+              0.0,
+              0.9659259
+            ],
+            "progress": 0.0
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.966666639,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "elapsed": 0.0333333351,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            -0.0148714185,
+            10.2192831,
+            0.146811768
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                0.0,
+                10.0,
+                0.0
+              ],
+              "rotation": [
+                0.0,
+                0.258819073,
+                0.0,
+                0.9659259
+              ],
+              "palm": [
+                -0.0148714185,
+                10.2192831,
+                0.146811768
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.12736535,
+              9.666667,
+              2.890509
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.0333333351
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0333333351,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0333333351,
+              "weight": 0.111111112,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            -0.01603553,
+            10.2210236,
+            0.1457614
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                0.0,
+                10.0,
+                0.0
+              ],
+              "rotation": [
+                0.0,
+                0.258819073,
+                0.0,
+                0.9659259
+              ],
+              "palm": [
+                -0.01603553,
+                10.2210236,
+                0.1457614
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.12847161,
+              9.666667,
+              2.89155912
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.0333333351
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.533333361,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0333333351,
+              "weight": 0.111111112,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            -0.0148443058,
+            10.2192163,
+            0.146852255
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                0.0,
+                10.0,
+                0.0
+              ],
+              "rotation": [
+                0.0,
+                0.258819073,
+                0.0,
+                0.9659259
+              ],
+              "palm": [
+                -0.0148443058,
+                10.2192163,
+                0.146852255
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.12734056,
+              9.666667,
+              2.89046836
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.0333333351
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.0333333351,
+              "weight": 0.111111112,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "elapsed": 0.06666668,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.25105619,
+            9.924304,
+            2.846305
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.12736535,
+                9.666667,
+                2.890509
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.25105619,
+                9.924304,
+                2.846305
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.06787944,
+              9.335076,
+              3.04694963
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.06666667
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.22963548,
+            9.925462,
+            2.8090663
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.12847161,
+                9.666667,
+                2.89155912
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.22963548,
+                9.925462,
+                2.8090663
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.08861732,
+              9.335076,
+              3.06981754
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.06666667
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.19366431,
+            9.924219,
+            2.77702641
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.12734056,
+                9.666667,
+                2.89046836
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.19366431,
+                9.924219,
+                2.77702641
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.11657929,
+              9.335076,
+              3.08687472
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.06666667
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "elapsed": 0.100000009,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            2.19157028,
+            9.592713,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.06787944,
+                9.335076,
+                3.04694963
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.19157028,
+                9.592713,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.0789907,
+              9.001743,
+              3.04694963
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.100000009
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            2.18978119,
+            9.593871,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.08861732,
+                9.335076,
+                3.06981754
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.18978119,
+                9.593871,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.09972858,
+              9.001743,
+              3.06981754
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.100000009
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            2.182903,
+            9.59262848,
+            2.97343278
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.11657929,
+                9.335076,
+                3.08687472
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.182903,
+                9.59262848,
+                2.97343278
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.12769032,
+              9.001743,
+              3.08687472
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.100000009
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "elapsed": 0.13333334,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            2.20268154,
+            9.25938,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.0789907,
+                9.001743,
+                3.04694963
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.20268154,
+                9.25938,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.09010172,
+              8.66841,
+              3.04694963
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.13333334
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            2.20089245,
+            9.260538,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.09972858,
+                9.001743,
+                3.06981754
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.20089245,
+                9.260538,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.11083961,
+              8.66841,
+              3.06981754
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.13333334
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            2.194014,
+            9.259295,
+            2.97343278
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.12769032,
+                9.001743,
+                3.08687472
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.194014,
+                9.259295,
+                2.97343278
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.13880157,
+              8.66841,
+              3.08687472
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.13333334
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 7,
+      "elapsed": 0.166666672,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            2.21379256,
+            8.926047,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.09010172,
+                8.66841,
+                3.04694963
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.21379256,
+                8.926047,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.10121322,
+              8.335076,
+              3.04694963
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.166666672
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            2.21200347,
+            8.927205,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.11083961,
+                8.66841,
+                3.06981754
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.21200347,
+                8.927205,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.12195086,
+              8.335076,
+              3.06981754
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.166666672
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            2.20512533,
+            8.925962,
+            2.97343278
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.13880157,
+                8.66841,
+                3.08687472
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.20512533,
+                8.925962,
+                2.97343278
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.1499126,
+              8.335076,
+              3.08687472
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.166666672
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 8,
+      "elapsed": 0.200000018,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": false,
+          "palm": [
+            2.224904,
+            8.592713,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.10121322,
+                8.335076,
+                3.04694963
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.224904,
+                8.592713,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.112324,
+              8.001743,
+              3.04694963
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.2
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.06666667,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": false,
+          "palm": [
+            2.22311473,
+            8.593871,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.12195086,
+                8.335076,
+                3.06981754
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.22311473,
+                8.593871,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.133062,
+              8.001743,
+              3.06981754
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.2
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.566666663,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": false,
+          "palm": [
+            2.21623635,
+            8.59262848,
+            2.97343278
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.1499126,
+                8.335076,
+                3.08687472
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.21623635,
+                8.59262848,
+                2.97343278
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.16102386,
+              8.001743,
+              3.08687472
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.2
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.0333333,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.06666667,
+              "weight": 0.222222224,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 9,
+      "elapsed": 0.233333334,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.18647885,
+            8.405139,
+            3.02070069
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.112324,
+                8.001743,
+                3.04694963
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.18647885,
+                8.405139,
+                3.02070069
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.16811275,
+              7.66841,
+              3.02899432
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.233333334
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.233333349,
+              "weight": 0.222222209,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.233333349,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.19385481,
+            8.405056,
+            3.019794
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.133062,
+                8.001743,
+                3.06981754
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.19385481,
+                8.405056,
+                3.019794
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.1797266,
+              7.66841,
+              3.03734827
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.233333334
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.733333349,
+              "weight": 0.222222209,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.233333349,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.20097256,
+            8.4051075,
+            3.01906133
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.16102386,
+                8.001743,
+                3.08687472
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.20097256,
+                8.4051075,
+                3.01906133
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.19364929,
+              7.66841,
+              3.04124618
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.233333334
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.19999993,
+              "weight": 0.222222209,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.233333349,
+              "weight": 0.7777778,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 10,
+      "elapsed": 0.266666681,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.2253294,
+            8.096666,
+            3.01039386
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.16811275,
+                7.66841,
+                3.02899432
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.2253294,
+                8.096666,
+                3.01039386
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.19533324,
+              7.33507633,
+              3.02134585
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.266666681
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.266666681,
+              "weight": 0.1111111,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.266666681,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.22720456,
+            8.09660149,
+            3.00027323
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.1797266,
+                7.66841,
+                3.03734827
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.22720456,
+                8.09660149,
+                3.00027323
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.2033236,
+              7.33507633,
+              3.02439976
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.266666681
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.766666651,
+              "weight": 0.1111111,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.266666681,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.22553325,
+            8.096652,
+            2.9902
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.19364929,
+                7.66841,
+                3.04124618
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.22553325,
+                8.096652,
+                2.9902
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.21199584,
+              7.33507633,
+              3.02447867
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.266666681
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 1.23333335,
+              "weight": 0.1111111,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.266666681,
+              "weight": 0.8888889,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 11,
+      "elapsed": 0.3,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.23444939,
+            7.7857275,
+            3.0112915
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.19533324,
+                7.33507633,
+                3.02134585
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.23444939,
+                7.7857275,
+                3.0112915
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.22379827,
+              7.00174332,
+              3.0127995
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.3
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.23664212,
+            7.785727,
+            3.00157332
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.2033236,
+                7.33507633,
+                3.02439976
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.23664212,
+                7.785727,
+                3.00157332
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.22784543,
+              7.00174332,
+              3.010151
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.3
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.23549771,
+            7.7857275,
+            2.99163318
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.21199584,
+                7.33507633,
+                3.02447867
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.23549771,
+                7.7857275,
+                2.99163318
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.23074245,
+              7.00174332,
+              3.00627828
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.3
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.3,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 12,
+      "elapsed": 0.333333343,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.26289773,
+            7.452413,
+            3.00275326
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.22379827,
+                7.00174332,
+                3.0127995
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.26289773,
+                7.452413,
+                3.00275326
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.23492527,
+              6.66841,
+              3.01279187
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.333333343
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.26115084,
+            7.452413,
+            2.98733759
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.22784543,
+                7.00174332,
+                3.010151
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.26115084,
+                7.452413,
+                2.98733759
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.23896861,
+              6.66841,
+              3.010138
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.333333343
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.2542367,
+            7.452413,
+            2.97344971
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.23074245,
+                7.00174332,
+                3.00627828
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.2542367,
+                7.452413,
+                2.97344971
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.24186039,
+              6.66841,
+              3.00626159
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.333333343
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.333333343,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 13,
+      "elapsed": 0.366666675,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.27402472,
+            7.11907959,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.23492527,
+                6.66841,
+                3.01279187
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.27402472,
+                7.11907959,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.24603653,
+              6.33507633,
+              3.01279187
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.366666675
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.272274,
+            7.11907959,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.23896861,
+                6.66841,
+                3.010138
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.272274,
+                7.11907959,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.25007987,
+              6.33507633,
+              3.010138
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.366666675
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.26535463,
+            7.11907959,
+            2.973433
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.24186039,
+                6.66841,
+                3.00626159
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.26535463,
+                7.11907959,
+                2.973433
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.25297165,
+              6.33507633,
+              3.00626159
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.366666675
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.366666675,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 14,
+      "elapsed": 0.4,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.285136,
+            6.785746,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.24603653,
+                6.33507633,
+                3.01279187
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.285136,
+                6.785746,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.25714755,
+              6.00174332,
+              3.01279187
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.4
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.28338528,
+            6.785746,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.25007987,
+                6.33507633,
+                3.010138
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.28338528,
+                6.785746,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.261191,
+              6.00174332,
+              3.010138
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.4
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.276466,
+            6.785746,
+            2.973433
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.25297165,
+                6.33507633,
+                3.00626159
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.276466,
+                6.785746,
+                2.973433
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.26408267,
+              6.00174332,
+              3.00626159
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.4
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 15,
+      "elapsed": 0.433333337,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.296247,
+            6.452413,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.25714755,
+                6.00174332,
+                3.01279187
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.296247,
+                6.452413,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.26825929,
+              5.66841,
+              3.01279187
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.433333337
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.433333337,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.2944963,
+            6.452413,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.261191,
+                6.00174332,
+                3.010138
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.2944963,
+                6.452413,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.27230263,
+              5.66841,
+              3.010138
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.433333337
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.433333337,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.287577,
+            6.452413,
+            2.973433
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.26408267,
+                6.00174332,
+                3.00626159
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.287577,
+                6.452413,
+                2.973433
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.275194,
+              5.66841,
+              3.00626159
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.433333337
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.433333337,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 16,
+      "elapsed": 0.466666669,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.30735874,
+            6.11907959,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.26825929,
+                5.66841,
+                3.01279187
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.30735874,
+                6.11907959,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.27937031,
+              5.335077,
+              3.01279187
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.466666669
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.305608,
+            6.11907959,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.27230263,
+                5.66841,
+                3.010138
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.305608,
+                6.11907959,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.28341365,
+              5.335077,
+              3.010138
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.466666669
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.29868817,
+            6.11907959,
+            2.973433
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.275194,
+                5.66841,
+                3.00626159
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.29868817,
+                6.11907959,
+                2.973433
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.286305,
+              5.335077,
+              3.00626159
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.466666669
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.4666667,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 17,
+      "elapsed": 0.50000006,
+      "deltaTime": 0.0333333351,
+      "scenarios": [
+        {
+          "idlePhase": 0.0,
+          "componentEnabled": true,
+          "palm": [
+            2.31846976,
+            5.78574657,
+            3.00274563
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.27937031,
+                5.335077,
+                3.01279187
+              ],
+              "rotation": [
+                -0.0112895295,
+                0.96500653,
+                0.0421331078,
+                0.2585727
+              ],
+              "palm": [
+                2.31846976,
+                5.78574657,
+                3.00274563
+              ],
+              "helicopterRight": [
+                0.498097271,
+                0.08715576,
+                -0.862729967
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.29048085,
+              5.00174332,
+              3.01279187
+            ],
+            "rotation": [
+              -0.0112895295,
+              0.96500653,
+              0.0421331078,
+              0.2585727
+            ],
+            "progress": 0.5
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.5,
+          "componentEnabled": true,
+          "palm": [
+            2.316719,
+            5.78574657,
+            2.98732471
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.28341365,
+                5.335077,
+                3.010138
+              ],
+              "rotation": [
+                -0.003801681,
+                0.9952466,
+                0.0434534065,
+                0.08707282
+              ],
+              "palm": [
+                2.316719,
+                5.78574657,
+                2.98732471
+              ],
+              "helicopterRight": [
+                0.172987446,
+                0.0871557444,
+                -0.981060266
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.29452419,
+              5.00174332,
+              3.010138
+            ],
+            "rotation": [
+              -0.003801681,
+              0.9952466,
+              0.0434534065,
+              0.08707282
+            ],
+            "progress": 0.5
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        },
+        {
+          "idlePhase": 0.966666639,
+          "componentEnabled": true,
+          "palm": [
+            2.30979919,
+            5.78574657,
+            2.973433
+          ],
+          "descent": {
+            "input": {
+              "root": [
+                2.286305,
+                5.335077,
+                3.00626159
+              ],
+              "rotation": [
+                0.0038016818,
+                0.9952466,
+                0.0434534065,
+                -0.0870728344
+              ],
+              "palm": [
+                2.30979919,
+                5.78574657,
+                2.973433
+              ],
+              "helicopterRight": [
+                -0.172987476,
+                0.0871557444,
+                -0.9810603
+              ],
+              "joints": [
+                [
+                  2.0,
+                  14.0,
+                  3.0
+                ],
+                [
+                  2.2,
+                  8.0,
+                  3.0
+                ],
+                [
+                  2.4,
+                  2.0,
+                  3.0
+                ],
+                [
+                  2.6,
+                  -4.0,
+                  3.0
+                ]
+              ]
+            },
+            "advanced": true,
+            "startHeight": 10.0,
+            "landingHeight": 0.0,
+            "position": [
+              2.297416,
+              5.00174332,
+              3.00626159
+            ],
+            "rotation": [
+              0.0038016818,
+              0.9952466,
+              0.0434534065,
+              -0.0870728344
+            ],
+            "progress": 0.5
+          },
+          "states": [
+            {
+              "name": "idle",
+              "time": 0.0,
+              "weight": 0.0,
+              "enabled": false,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            },
+            {
+              "name": "helicopter_jump_pose",
+              "time": 0.5,
+              "weight": 1.0,
+              "enabled": true,
+              "speed": 1.0,
+              "layer": 0,
+              "blendMode": "Blend"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

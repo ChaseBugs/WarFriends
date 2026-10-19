@@ -136,6 +136,8 @@ public static class UnityHelicopterFadeExport
                     idlePhase = IdlePhases[scenario],
                     componentEnabled = animation.enabled,
                     palm = Values(_palms[scenario].position),
+                    descent = UnityHelicopterDescentObservation.Capture(
+                        animation.transform.root, _palms[scenario], scenario, Frames.Count > 0),
                     states = animation.Cast<AnimationState>()
                         .Where(state => state.enabled || state.name == Idle || state.name == Slide)
                         .Select(state => new { name = state.name, time = state.time, weight = state.weight,
@@ -202,7 +204,10 @@ public static class UnityHelicopterFadeExport
             controller = Controller, controllerSha256 = Hash(Controller),
             captureRate = CaptureRate, physicsFrozen = true,
             visibilityProbe = SessionState.GetBool(VisibilityKey, false),
-            fixture = "Fully weighted canonical idle alias, then one-argument CrossFade; no gameplay scripts.",
+            descentControllerSha256 = Hash("Assets/Scripts/Assembly-CSharp/EnemyController.cs"),
+            fixture = Environment.GetEnvironmentVariable("WAR_HELICOPTER_FADE_DESCENT") == "1"
+                ? "Animated rig plus inactive source HelicopterUpdate owner; supplied joints, no gameplay lifecycle."
+                : "Fully weighted canonical idle alias, then one-argument CrossFade; no gameplay scripts.",
             clipSources = JsonConvert.DeserializeObject(SessionState.GetString(ActiveKey + ".Sources", "")),
             crossFadeIl = Convert.ToBase64String(method.GetMethodBody().GetILAsByteArray()),
             frames = Frames
@@ -220,6 +225,7 @@ public static class UnityHelicopterFadeExport
         EditorApplication.update += ExitWhenStopped;
         // The JSON is already saved; do not retain sampled Unity objects across Play Mode asset unloading.
         Frames.Clear();
+        UnityHelicopterDescentObservation.Clear();
         _animations = null;
         _palms = null;
         EditorApplication.isPlaying = false;

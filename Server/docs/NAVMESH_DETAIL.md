@@ -269,3 +269,39 @@ change the runtime's crew collision gate. Disabled local bone sampling in this
 stripped rig is not proof that procedural source-controller bone updates also
 freeze. Renderer-based culling, initially disabled transitions, arbitrary speeds/
 frame timing and full Driving-to-Spawning phase order still require separate proof.
+
+## Source descent with live animated palm observations
+
+`UnityHelicopterDescentObservation` extends the disposable fade exporter when
+`WAR_HELICOPTER_FADE_DESCENT=1`. Three stripped animated rigs retain their original
+clip playback. Separate inactive owners contain the original `EnemyController`,
+`SoldierAnimationController`, `EnemyPointHelicopter` and `Helicopter` types. Their
+global lifecycle does not run. Reflection calls the original private
+`HelicopterUpdate`, with an explicit Spawning phase, start/end heights and four
+supplied joint transforms. No replacement descent formula runs in the exporter.
+
+The capture records sixteen samples per scenario, including fifteen updates.
+Each update consumes the previous output root pose and the currently sampled
+world palm. Output rotation follows alignment, including a tilted aircraft right
+vector. Disabling animation for samples three through six does not pause source
+descent; bones retain their local sample while their world position follows the
+moving root. The fixture stops before completion callbacks to avoid inventing
+navigation, point selection or singleton state.
+
+The first attempt produced a provisional file but exited abnormally and had no
+accepted log. That file is retained locally as
+`.local/helicopter-descent-provisional.json`. Explicit destruction of the inactive
+owners/aircraft/joints before exiting Play Mode and clearing static references
+allowed a subsequent zero-exit run. Its accepted log is
+`.local/helicopter-descent-unity-final.log`. The committed LF reference digest is
+`5b34f17ec3bb4c85ccbd785e6957473a6d25bbfc0d5a0af991b34a6cd90dd0ca`.
+The active and disposable EnemyController sources have the same SHA-256:
+`175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0`.
+
+`HelicopterDescentReferenceTests` replays all 45 updates, checks exact float
+progress and previous-output continuity, and compares position and sign-invariant
+quaternion component distance at 0.00001 tolerance. This establishes the supplied
+input calculation under Unity 2018.3, not original Unity 5.2 parity, native rope
+motion fidelity or the real Driving-to-Spawning callback order. Normal runtime
+registration, inferred animation phase, complete descent/landing and independent
+combat entity ownership remain open.
