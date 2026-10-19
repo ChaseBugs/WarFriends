@@ -1,0 +1,8 @@
+# Keep the native research build reproducible from Windows and Linux checkouts.
+BuildPhysXReference.sh text eol=lf
+BuildPhysXReference.ps1 text eol=lf
+CompareNativeRopeProbe.py text eol=lf
+PrepareNativeRopeProbe.py text eol=lf
+NativeRopeProbe.cpp text eol=lf
+NativeRopeProbe/CMakeLists.txt text eol=lf
+NativeRopeProbe/README.md text eol=lf

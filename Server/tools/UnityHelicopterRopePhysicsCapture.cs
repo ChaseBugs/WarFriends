@@ -18,6 +18,7 @@ public static class UnityHelicopterRopePhysicsCapture
     private const int DiagnosticSteps = 10;
     private static GameObject[] _parents;
     private static QuickRope2[] _ropes;
+    private static Quaternion[] _attachmentRestRotations;
     private static int _createdFrame;
     private static bool _previousAutoSimulation;
 
@@ -54,6 +55,7 @@ public static class UnityHelicopterRopePhysicsCapture
         Physics.autoSimulation = false;
         _parents = new GameObject[3];
         _ropes = new QuickRope2[3];
+        _attachmentRestRotations = new Quaternion[3];
         CreateFixture(0, Vector3.zero, Quaternion.identity);
         CreateFixture(1, new Vector3(3, 7, 11), Quaternion.Euler(0, 90, 0));
         CreateFixture(2, new Vector3(-4, 2, -5), Quaternion.Euler(15, 35, 20));
@@ -75,6 +77,8 @@ public static class UnityHelicopterRopePhysicsCapture
         StripGameplay(helicopter, rope);
         helicopter.GetComponent<Rigidbody>().isKinematic = true;
         parent.SetActive(true);
+        _attachmentRestRotations[index] = Quaternion.Inverse(helicopter.GetComponent<Rigidbody>().rotation) *
+            rope.GetComponent<Rigidbody>().rotation;
         // Source OnEnable creates active bodies and automatic anchors. Inactive captures cannot realize these frames.
         rope.enabled = true;
         typeof(QuickRope2).GetMethod("Start", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(rope, null);
@@ -101,12 +105,13 @@ public static class UnityHelicopterRopePhysicsCapture
 
     private static void WriteReference()
     {
-        object[] initial = _ropes.Select(Capture).ToArray();
+        object[] initial = _ropes.Select((rope, index) => Capture(rope, _attachmentRestRotations[index])).ToArray();
         var frames = new List<object>();
         for (int step = 1; step <= DiagnosticSteps; step++)
         {
             Physics.Simulate(PhysicsStep);
-            frames.Add(new { step, ropes = _ropes.Select(Capture).ToArray() });
+            frames.Add(new { step, ropes = _ropes.Select((rope, index) =>
+                Capture(rope, _attachmentRestRotations[index])).ToArray() });
         }
         string reference = JsonConvert.SerializeObject(new
         {
@@ -125,7 +130,7 @@ public static class UnityHelicopterRopePhysicsCapture
         Debug.Log("PASS: activated rope frames and native diagnostic steps=" + DiagnosticSteps);
     }
 
-    private static object Capture(QuickRope2 rope)
+    private static object Capture(QuickRope2 rope, Quaternion attachmentRestRotation)
     {
         Rigidbody[] bodies = rope.Joints.Select(joint => joint.GetComponent<Rigidbody>()).ToArray();
         FixedJoint attachment = rope.GetComponent<FixedJoint>();
@@ -134,6 +139,7 @@ public static class UnityHelicopterRopePhysicsCapture
             requestedSpacing = rope.jointSpacing,
             initialDistance = (float)typeof(QuickRope2)
                 .GetField("distBetweenJoints", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(rope),
+            attachmentConnectedRestRotation = Values(attachmentRestRotation),
             attachment = JointFrame(attachment),
             joints = bodies.Select(body => new
             {
@@ -189,6 +195,7 @@ public static class UnityHelicopterRopePhysicsCapture
         }
         _parents = null;
         _ropes = null;
+        _attachmentRestRotations = null;
         Physics.autoSimulation = _previousAutoSimulation;
     }
 

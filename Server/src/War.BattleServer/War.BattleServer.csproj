@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\..\THIRD_PARTY_NOTICES\PhysX.txt"
+          Link="THIRD_PARTY_NOTICES\PhysX.txt"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <EmbeddedResource Include="..\..\content\grenadier-corner-muzzle-unity-reference.json"
                       LogicalName="War.BattleServer.GrenadierCornerMuzzles" />

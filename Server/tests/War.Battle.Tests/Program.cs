@@ -1467,6 +1467,7 @@ if (args is ["--helicopter-rope-initialization-only"])
     }
     int count = HelicopterRopeInitializationTests.Run(Path.Combine(root.FullName, "content"));
     count += HelicopterRopeConstraintFrameTests.Run(Path.Combine(root.FullName, "content"));
+    count += HelicopterRopeSimulationTests.Run(Path.Combine(root.FullName, "content"));
     Console.WriteLine($"PASS: {count} rope initialization, extension and constraint frame checks");
     return;
 }

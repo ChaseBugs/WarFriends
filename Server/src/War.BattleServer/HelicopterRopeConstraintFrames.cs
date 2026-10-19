@@ -27,11 +27,12 @@ internal static class HelicopterRopeConstraintFrames
     private const float MaximumAngleDegrees = 180f;
 
     internal static HelicopterRopeConstraintSetup Create(
-        HelicopterRopeInitialState initial, HelicopterRopeBodyPose aircraft)
+        HelicopterRopeInitialState initial, HelicopterRopeBodyPose aircraft, Quaternion attachmentConnectedRestRotation)
     {
         ArgumentNullException.ThrowIfNull(initial);
         ArgumentNullException.ThrowIfNull(aircraft);
         ValidatePose(aircraft.Position, aircraft.Rotation);
+        ValidatePose(Vector3.Zero, attachmentConnectedRestRotation);
         initial = Snapshot(initial);
         ValidateInitialState(initial);
         var links = new HelicopterRopeConstraintFrame[initial.Joints.Count - 1];
@@ -42,6 +43,12 @@ internal static class HelicopterRopeConstraintFrames
         }
         HelicopterRopeConstraintFrame attachment = CreateFrame(
             0, AircraftBodyIndex, initial.Joints[0], aircraft);
+        // The aircraft joint is created before QuickRope2 rotates the root during activation.
+        HelicopterRopeLocalFrame connectedFrame = attachment.ConnectedFrame with
+        {
+            Rotation = Quaternion.Normalize(attachmentConnectedRestRotation)
+        };
+        attachment = attachment with { ConnectedFrame = connectedFrame };
         return new HelicopterRopeConstraintSetup(attachment, Array.AsReadOnly(links));
     }
 

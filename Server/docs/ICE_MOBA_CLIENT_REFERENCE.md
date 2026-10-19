@@ -45,6 +45,41 @@ Do not introduce RakNet native plugins, Lua, or Ice_Moba's TCP lobby protocol me
 
 ## WarFriends migration sequence
 
+### Rechecked client/server recovery boundary
+
+The follow-up review inspected both sides of battle recovery, not just the Unity socket wrapper:
+
+- `client/Assets/Lua/Net/ConnectTcp.lua` requests a gate and then passes the returned address to `GameTcp`.
+  This is endpoint discovery, not proof of battle admission. Retain WarFriends' authenticated admission grants.
+- `client/Assets/Lua/Net/BattleStateTcp.lua` opens a separate TCP state connection while `BattleTcp.lua`
+  opens RakNet UDP. The transport names are misleading; inspect calls rather than inferring TCP from a filename.
+- `server/src/room/room_message.cpp`, `RoomMessage::send_smsg_battle_link`, emits three `is_state` modes:
+  zero supplies minimal state, one supplies a replay start frame and operations, and two parses saved state
+  and appends operations. It also supplies battle identity, seeds, team/member counts, and the player's camp.
+- `client/Assets/Scripts/Battle/Battle.cs`, `SMSG_BATTLE_LINK`, consumes those modes. Mode two restores players,
+  monsters, bosses, effects, and items before enqueuing operations; mode one sets the frame and enqueues operations.
+  This shows why restoring an endpoint or a connection flag alone is insufficient to resume gameplay.
+- `server/src/room/room_pool.cpp` selects among submitted result payloads by frequency. That is not authoritative
+  combat validation and must not become WarFriends settlement logic.
+
+Borrow the explicit distinction between initial entry, recovery state, and subsequent operations. For WarFriends,
+use the existing authenticated host snapshot and event cursor, retain command identities across uncertain delivery,
+and rebuild presentation before applying subsequent events. Do not copy Ice_Moba's client simulation, seeds,
+operation replay protocol, or result voting into the authoritative host. Snapshot/replay structure alone does not
+establish that the saved state was trustworthy or that cross-platform simulation is deterministic.
+
+The active WarFriends `SelfHostedBattleClient`, `PhotonConnectionManager`, and `GameControllerOnline` already
+contain self-hosted branches. Extend and verify those paths rather than creating a second network manager.
+Remaining `PhotonNetwork` calls, including local `offlineMode` room behavior, mean SDK removal still requires
+behavior and serialized-reference audits. A local Photon branch can avoid Cloud access while retaining a Photon
+code dependency; those are separate acceptance conditions.
+
+See [the integration audit](ICE_MOBA_CLIENT_INTEGRATION.md) for the existing launcher changes, provider startup
+boundaries, and outstanding offline acceptance gates. This follow-up is a source review only; it did not run
+Ice_Moba, rerun the historical WarFriends boot proofs, or remove any SDK binaries.
+
+### Implementation order
+
 1. Use recovered WarFriends builders, parsers, and callback order as the behavioral specification. Inspect the
    current `SelfHostedBattleClient` and controller bridges before adding another abstraction; integration already exists.
 2. Audit each remaining Photon call by behavior: room lifecycle, actor ownership, object identity, RPC,

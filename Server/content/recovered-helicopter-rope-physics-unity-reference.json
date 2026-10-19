@@ -20,6 +20,12 @@
     {
       "requestedSpacing": 0.35,
       "initialDistance": 0.3500239,
+      "attachmentConnectedRestRotation": [
+        -0.4961792,
+        0.5037919,
+        0.4961792,
+        0.503791869
+      ],
       "attachment": {
         "anchor": [
           0.0,
@@ -299,6 +305,12 @@
     {
       "requestedSpacing": 0.35,
       "initialDistance": 0.350023776,
+      "attachmentConnectedRestRotation": [
+        -0.4961792,
+        0.5037919,
+        0.4961792,
+        0.503791869
+      ],
       "attachment": {
         "anchor": [
           0.0,
@@ -578,6 +590,12 @@
     {
       "requestedSpacing": 0.35,
       "initialDistance": 0.350023746,
+      "attachmentConnectedRestRotation": [
+        -0.496179253,
+        0.503792,
+        0.496179253,
+        0.5037919
+      ],
       "attachment": {
         "anchor": [
           0.0,
@@ -862,6 +880,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -1141,6 +1165,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -1420,6 +1450,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -1704,6 +1740,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -1983,6 +2025,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -2262,6 +2310,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -2546,6 +2600,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -2825,6 +2885,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -3104,6 +3170,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -3388,6 +3460,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -3667,6 +3745,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -3946,6 +4030,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -4230,6 +4320,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -4509,6 +4605,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -4788,6 +4890,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -5072,6 +5180,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -5351,6 +5465,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -5630,6 +5750,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -5914,6 +6040,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -6193,6 +6325,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -6472,6 +6610,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -6756,6 +6900,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -7035,6 +7185,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -7314,6 +7470,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -7598,6 +7760,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -7877,6 +8045,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -8156,6 +8330,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -8440,6 +8620,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.3500239,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -8719,6 +8905,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023776,
+          "attachmentConnectedRestRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.503791869
+          ],
           "attachment": {
             "anchor": [
               0.0,
@@ -8998,6 +9190,12 @@
         {
           "requestedSpacing": 0.35,
           "initialDistance": 0.350023746,
+          "attachmentConnectedRestRotation": [
+            -0.496179253,
+            0.503792,
+            0.496179253,
+            0.5037919
+          ],
           "attachment": {
             "anchor": [
               0.0,

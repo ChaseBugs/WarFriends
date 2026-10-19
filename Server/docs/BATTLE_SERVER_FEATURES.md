@@ -34,16 +34,25 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B22 now has a stationary-aircraft managed dynamics prototype and explicit creation-time
+aircraft attachment rest rotation. Focused tests pass 1,111 checks, including full
+ten-step identity/yaw trajectories; the tilted transient still diverges and remains
+diagnostic. A locally built Windows PhysX 3.4 probe reduces tilted position error to
+about 0.197 mm; the actual Linux probe builds/runs with about 0.664 mm maximum
+tilted position error. Neither establishes rotational parity or live gameplay. Neither
+solver is registered in the Worker. See [physics evidence](HELICOPTER_ROPE_PHYSICS.md).
+
 B22 now realizes unit-scale automatic anchors for nine source chain connections
 and three aircraft attachments, rather than copying zeros from inactive bodies.
-Prepared rest frames coincide in world space and retain source body ownership.
+Chain rest frames coincide in world space and retain source body ownership; the
+aircraft attachment preserves its earlier creation-time rotation instead.
 The native fixture activates stripped original ropes, waits for deferred joint
-destruction, and records ten diagnostic physical steps. Host tests verify the
-initial anchors/rest frames, not those trajectories. Windows combat-content tests
-exit zero with 27,573 assertions, as does the self-contained Linux run under
+destruction, and records ten diagnostic physical steps. That frame-only checkpoint
+verified initial anchors/rest frames; trajectory coverage is described above.
+Its Windows combat-content tests exited zero with 27,573 assertions, as did the self-contained Linux run under
 Ubuntu WSL; build and protocol checks pass. See
-[physical connection boundary](HELICOPTER_ROPE_PHYSICS.md). Actual constraint/force
-solving, flight/extension coupling, signed content and live crew/landing/Fire
+[physical connection boundary](HELICOPTER_ROPE_PHYSICS.md). Complete constraint/force
+solver parity, flight/extension coupling, signed content and live crew/landing/Fire
 integration remain pending.
 
 B22 now creates the original zero-control-point rope spline, generated joint

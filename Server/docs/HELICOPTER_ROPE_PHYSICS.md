@@ -1,8 +1,8 @@
 # Helicopter rope physical connection boundary
 
 The host now prepares the local frames needed to attach the source rope to its aircraft
-and connect its generated bodies. This is a constraint-preparation step, not an implemented
-rope solver or a completed co-op collision world. Source initialization and extension
+and connect its generated bodies. A managed stationary-aircraft solver prototype now exercises
+those constraints; it is not a completed co-op collision world. Source initialization and extension
 evidence remains in [HELICOPTER_ROPE_ALIGNMENT.md](HELICOPTER_ROPE_ALIGNMENT.md).
 
 ## Active anchors differ from inactive inspection
@@ -37,11 +37,13 @@ local position is the inverse connected-body rotation applied to the difference 
 the two world origins. The aircraft attachment uses the same calculation with a reserved
 external aircraft-body index. Returned chain indexes remain bound to their source order.
 
-The connected rest orientation is derived from both initial body rotations so that the
-two prepared world frames coincide. This orientation is a reconstructed rest-frame
-convention, checked for world coincidence; the capture does not expose internal PhysX
-joint-frame rotations. Motion/limit comparisons are still required before treating it
-as a verified physical adapter. Non-unit scale is outside this preparation contract.
+Chain connected rest orientations derive from the two initial body rotations, aligning
+their world frames. The aircraft attachment is different: its FixedJoint exists before
+QuickRope2 changes the root rotation. Capture records `attachmentConnectedRestRotation`
+at that creation boundary. `Create` requires this quaternion as its third argument.
+Deriving it from the post-initialization root silently erases the tilted fixture's initial
+angular error. The fixture records the creation-time relative rotation, not internal PhysX
+joint-frame fields. Non-unit scale is outside this preparation contract.
 
 ## Native diagnostic motion
 
@@ -50,7 +52,8 @@ and three aircraft FixedJoint attachments. It then calls real `Physics.Simulate`
 times at 0.02 seconds, recording body positions, rotations, velocities and physical
 settings. There are no extension commands, moving aircraft, gameplay updates or map
 collisions in this fixture. These 0.2-second motion samples are diagnostic evidence for
-the next solver work; host frame tests do **not** compare their trajectories.
+solver work. The managed trajectory tests compare the two non-tilted fixtures fully;
+the tilted transient remains diagnostic beyond its first position/velocity/rotation sample.
 
 Observed settings include gravity `(0, -9.81, 0)`, one solver iteration and one velocity
 iteration, automatic transform synchronization, zero body COM, unit inertia tensor,
@@ -61,18 +64,64 @@ original Unity 5.2 native physics equivalence.
 
 The prefab and QuickRope2 SHA-256 values are recorded in
 `recovered-helicopter-rope-physics-unity-reference.json`. Its normalized-LF digest is
-`067718b56d79cf8c021f4da1502df1cc78e1656156231c6aa6c627f2419c29bb`.
+`e87743347ee3fa3d7cb75ced89ab8e4d756e853b86e9751c77e3ec421ac4fc11`.
 The final Unity process exits zero with no logged exceptions at
-`.local/helicopter-rope-physics-unity-final.log`. The active Client was not modified.
+`.local/helicopter-rope-physics-rest-creation.log`. The active Client was not modified.
+
+## Managed dynamics prototype
+
+`HelicopterRopeSimulation` advances an isolated unit-mass/unit-inertia chain with gravity,
+linear/angular damping, locked linear constraints, fixed attachment, and twist/swing stops.
+It prepares rows, solves biased position constraints, integrates poses, and solves unbiased
+velocity constraints. Equalities use mass-weighted row preprocessing. Each step works on
+private body copies and publishes only after all states validate; older snapshots remain unchanged.
+The implementation is limited to the recovered circular cone, stationary kinematic aircraft,
+and the fixed 0.02-second timestep. It has no map collision or sleeping implementation.
+
+Jacobian and solver research uses the pinned NVIDIA PhysX 3.4 source, particularly
+`ExtConstraintHelper.h`, `ExtFixedJointSolverPrep.cpp`, and `DyConstraintSetup.cpp`.
+See [the official source](https://github.com/NVIDIAGameWorks/PhysX-3.4) and the distributed
+BSD attribution in `THIRD_PARTY_NOTICES/PhysX.txt`. This is not a claim that Unity uses
+the same unmodified SDK revision or that the translated solver is equivalent.
+
+Across eighty body-step records in the identity/yaw fixtures, position, velocity,
+sign-invariant quaternion-component distance, and angular velocity each differ by less
+than 0.00002 from the captured Unity samples. The tilted fixture approaches a 180-degree
+attachment correction; small numerical differences amplify. Its maximum managed position
+error is about 0.016876, quaternion-component distance 1.385353, and angular-velocity error
+41.102715. Finite diagnostic output is not trajectory acceptance. Angular-stop stress
+response also remains unverified. No tolerance was widened to declare the tilted case passing.
+
+## Native SDK research
+
+`tools/BuildPhysXReference.ps1` builds pinned revision
+`5e42a5f112351a223c19c17bb331e6c55037b8eb` locally and compiles
+`tools/NativeRopeProbe.cpp`. The Windows script completed successfully with VS 2022;
+its upstream build retains compiler warnings. No native SDK binaries are committed or
+loaded by the Worker. `tools/CompareNativeRopeProbe.py` rejects duplicate, missing,
+unknown, and non-finite rows before reporting all 120 body-step differences.
+
+The Windows native probe's tilted maximum position error is about 0.000197, velocity
+error 0.002409, quaternion-component distance 0.036355, and angular-velocity error
+3.444836. This improves the diagnostic but does not prove parity or live integration.
+Actual Ubuntu WSL SDK/probe builds and execution also pass. The Linux tilted maxima
+are position 0.000664, velocity 0.016601, quaternion-component distance 0.075185, and
+angular velocity 3.727501. The different Windows/Linux transients rule out a numerical
+parity claim even for this shared SDK. Evidence is `.local/physx-sdk-linux-build-const.log`,
+`.local/native-rope-probe-linux-build.log`, and `.local/rope-native-linux-comparison.json`.
+Linux compatibility changes correct a const return type and keep compiler warnings;
+the probe uses a non-constexpr SDK pi constant to satisfy both compilers. No physics
+equations were changed. No native runtime bridge or Worker registration exists yet.
 
 ## Verification and remaining work
 
-The focused `--helicopter-rope-initialization-only` runner now passes 625 checks,
-including 84 new constraint-frame checks. It compares the twelve active native anchors,
-local/world coincidence, body ownership and malformed setup rejection. Position tolerance
-is 0.000003 and quaternion tolerance is 0.00001. The solution builds with zero warnings
-or errors and protocol tests pass.
-The Windows combat-content group exits zero with 27,573 assertions at
+The focused `--helicopter-rope-initialization-only` runner now passes 1,111 checks:
+541 initialization/extension, 85 frame guards, and 485 dynamics checks. Frame tests
+compare twelve active anchors, chain world coincidence, creation-time attachment rest
+rotation, ownership, and malformed setup rejection. Frame position tolerance is 0.000003
+and quaternion tolerance 0.00001. The latest .NET solution build has zero warnings/errors;
+protocol tests pass 1,360 checks. The focused evidence is `.local/rope-simulation-focused.log`.
+The previous frame-only Windows combat-content group exited zero with 27,573 assertions at
 `.local/helicopter-rope-frames-host.log`. Existing native physics/navigation
 diagnostics retain their documented differences; this is not a normal match proof.
 The self-contained executable at `.local/linux-rope-frames` passes the same group
@@ -80,7 +129,17 @@ under Ubuntu WSL with 27,573 assertions, exiting zero at
 `.local/helicopter-rope-frames-linux.log`. No full Battle executable or Mongo
 smoke run is claimed for this geometry-only server change.
 
-Still required: apply bodies and constraints in a physical adapter; match force/damping,
+The newer dynamics checkpoint passes the complete combat-content group on both Windows
+and actual Ubuntu WSL with 28,059 assertions per run. Logs are
+`.local/rope-simulation-host.log` and `.local/rope-simulation-linux.log`; the latter runs
+the self-contained executable in `.local/linux-rope-simulation`. Existing navigation
+and native-physics diagnostic differences remain visible. These are bounded content/
+simulation checks, not full BattleServer, normal Unity match, or Mongo smoke acceptance.
+
+Native probe reproduction commands and prerequisites are documented in
+[NativeRopeProbe/README.md](../tools/NativeRopeProbe/README.md).
+
+Still required: select and integrate a validated physical adapter; match force/damping,
 angular limits and iterative solving against native motion; couple aircraft motion and
 extension with the physical timestep; bind signed content and current crew poses; then
 verify descent, NavMesh landing and live co-op combat through the normal Unity Client.

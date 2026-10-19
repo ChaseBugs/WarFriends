@@ -7,7 +7,7 @@ using War.BattleServer;
 /// <summary>Compares realized active Unity joint anchors with prepared local/world frames.</summary>
 internal static class HelicopterRopeConstraintFrameTests
 {
-    private const string ReferenceDigest = "067718b56d79cf8c021f4da1502df1cc78e1656156231c6aa6c627f2419c29bb";
+    private const string ReferenceDigest = "e87743347ee3fa3d7cb75ced89ab8e4d756e853b86e9751c77e3ec421ac4fc11";
     private const int ExpectedCases = 3;
     private const int ConstraintsPerCase = 4;
     private const float PositionTolerance = 0.000003f;
@@ -33,8 +33,8 @@ internal static class HelicopterRopeConstraintFrameTests
         }
         VerifyInvalidInputs();
         Console.WriteLine(
-            "PASS: 12 active native rope anchors, world-coincident rest frames and malformed setup guards");
-        return ExpectedCases * (1 + ConstraintsPerCase * 6) + 9;
+            "PASS: 12 active native rope anchors, activation rest frames and malformed setup guards");
+        return ExpectedCases * (1 + ConstraintsPerCase * 6) + 10;
     }
 
     private static void VerifyCase(JsonElement scenario)
@@ -43,7 +43,9 @@ internal static class HelicopterRopeConstraintFrameTests
         var initial = HelicopterRopeInitialization.Create(Vector(native[0].GetProperty("position")),
             Vector(native[^1].GetProperty("position")), scenario.GetProperty("requestedSpacing").GetSingle());
         JsonElement attachment = scenario.GetProperty("attachment");
-        HelicopterRopeConstraintSetup setup = HelicopterRopeConstraintFrames.Create(initial, ConnectedPose(attachment));
+        HelicopterRopeBodyPose aircraft = ConnectedPose(attachment);
+        Quaternion activationRest = Rotation(scenario.GetProperty("attachmentConnectedRestRotation"));
+        HelicopterRopeConstraintSetup setup = HelicopterRopeConstraintFrames.Create(initial, aircraft, activationRest);
         if (initial.Joints.Count != ConstraintsPerCase || setup.Links.Count != ConstraintsPerCase - 1 ||
             MathF.Abs(initial.InitialJointDistance - scenario.GetProperty("initialDistance").GetSingle()) >
                 PositionTolerance)
@@ -51,7 +53,8 @@ internal static class HelicopterRopeConstraintFrameTests
             throw new Exception("Active source rope topology or measured spacing differs from the prepared setup.");
         }
         VerifyIdentity(setup.Attachment, 0, HelicopterRopeConstraintFrames.AircraftBodyIndex);
-        VerifyFrame(setup.Attachment, attachment, Pose(native[0]));
+        VerifyFrame(setup.Attachment, attachment, Pose(native[0]),
+            Quaternion.Normalize(aircraft.Rotation * activationRest));
         for (int index = 0; index < setup.Links.Count; index++)
         {
             if (native[index].GetProperty("configurableJointCount").GetInt32() != 1)
@@ -59,7 +62,8 @@ internal static class HelicopterRopeConstraintFrameTests
                 throw new Exception("Deferred source joint destruction was not completed before capture.");
             }
             VerifyIdentity(setup.Links[index], index, index + 1);
-            VerifyFrame(setup.Links[index], native[index].GetProperty("connection"), Pose(native[index]));
+            VerifyFrame(setup.Links[index], native[index].GetProperty("connection"), Pose(native[index]),
+                Pose(native[index]).Rotation);
         }
     }
 
@@ -72,7 +76,7 @@ internal static class HelicopterRopeConstraintFrameTests
     }
 
     private static void VerifyFrame(HelicopterRopeConstraintFrame frame, JsonElement native,
-        HelicopterRopeBodyPose owner)
+        HelicopterRopeBodyPose owner, Quaternion expectedWorldRest)
     {
         HelicopterRopeBodyPose connected = ConnectedPose(native);
         RequirePosition(frame.BodyFrame.Position, Vector(native.GetProperty("anchor")));
@@ -81,10 +85,9 @@ internal static class HelicopterRopeConstraintFrameTests
         Vector3 connectedWorld = connected.Position +
             Vector3.Transform(frame.ConnectedFrame.Position, connected.Rotation);
         RequirePosition(bodyWorld, connectedWorld);
-        Quaternion bodyRotation = Quaternion.Normalize(owner.Rotation * frame.BodyFrame.Rotation);
         Quaternion connectedRotation = Quaternion.Normalize(connected.Rotation * frame.ConnectedFrame.Rotation);
-        float rotationError = MathF.Min((bodyRotation - connectedRotation).Length(),
-            (bodyRotation + connectedRotation).Length());
+        float rotationError = MathF.Min((expectedWorldRest - connectedRotation).Length(),
+            (expectedWorldRest + connectedRotation).Length());
         if (!float.IsFinite(rotationError) || rotationError > RotationTolerance ||
             !native.GetProperty("autoConfigureConnectedAnchor").GetBoolean())
         {
@@ -107,13 +110,16 @@ internal static class HelicopterRopeConstraintFrameTests
         HelicopterRopeInitialState initial = HelicopterRopeInitialization.Create(
             Vector3.Zero, -Vector3.UnitY, 0.35f);
         var aircraft = new HelicopterRopeBodyPose(Vector3.Zero, Quaternion.Identity);
-        RequireInvalid(() => HelicopterRopeConstraintFrames.Create(initial, aircraft with { Rotation = default }));
+        Quaternion rest = initial.Joints[0].Rotation;
+        RequireInvalid(() => HelicopterRopeConstraintFrames.Create(initial, aircraft, default));
         RequireInvalid(() => HelicopterRopeConstraintFrames.Create(
-            initial, aircraft with { Position = new Vector3(float.NaN) }));
+            initial, aircraft with { Rotation = default }, rest));
         RequireInvalid(() => HelicopterRopeConstraintFrames.Create(
-            initial with { InitialJointDistance = 0.35f }, aircraft));
+            initial, aircraft with { Position = new Vector3(float.NaN) }, rest));
         RequireInvalid(() => HelicopterRopeConstraintFrames.Create(
-            initial with { InitialJointDistance = float.NaN }, aircraft));
+            initial with { InitialJointDistance = 0.35f }, aircraft, rest));
+        RequireInvalid(() => HelicopterRopeConstraintFrames.Create(
+            initial with { InitialJointDistance = float.NaN }, aircraft, rest));
         HelicopterRopeInitialJoint first = initial.Joints[0];
         HelicopterRopeConnectionSetup connection = first.Connection ?? throw new Exception("Missing test source link.");
         RequireBadFirst(initial, first with { Rotation = default }, aircraft);
@@ -123,7 +129,7 @@ internal static class HelicopterRopeConstraintFrameTests
         {
             AngularLimits = connection.AngularLimits with { MaximumY = float.NaN }
         } }, aircraft);
-        HelicopterRopeConstraintSetup result = HelicopterRopeConstraintFrames.Create(initial, aircraft);
+        HelicopterRopeConstraintSetup result = HelicopterRopeConstraintFrames.Create(initial, aircraft, rest);
         if (result.Links is not IList<HelicopterRopeConstraintFrame> links || !links.IsReadOnly)
         {
             throw new Exception("Prepared rope link frames expose mutable sequence ownership.");
@@ -135,7 +141,8 @@ internal static class HelicopterRopeConstraintFrameTests
     {
         HelicopterRopeInitialJoint[] joints = initial.Joints.ToArray();
         joints[0] = replacement;
-        RequireInvalid(() => HelicopterRopeConstraintFrames.Create(initial with { Joints = joints }, aircraft));
+        RequireInvalid(() => HelicopterRopeConstraintFrames.Create(
+            initial with { Joints = joints }, aircraft, initial.Joints[0].Rotation));
     }
 
     private static void RequireInvalid(Action action)

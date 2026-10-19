@@ -7686,6 +7686,7 @@ internal static class CombatContentTests
         count += HelicopterRopeExtensionTests.Run(directory);
         count += HelicopterRopeInitializationTests.Run(directory);
         count += HelicopterRopeConstraintFrameTests.Run(directory);
+        count += HelicopterRopeSimulationTests.Run(directory);
         count += VerifyMissionCatalog(directory, content);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
         void Reject(Action action) { try { action(); } catch (InvalidDataException) { count++;return; } throw new Exception("Invalid combat allocation accepted."); }
