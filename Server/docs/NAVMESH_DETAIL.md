@@ -305,3 +305,32 @@ input calculation under Unity 2018.3, not original Unity 5.2 parity, native rope
 motion fidelity or the real Driving-to-Spawning callback order. Normal runtime
 registration, inferred animation phase, complete descent/landing and independent
 combat entity ownership remain open.
+
+## Descent replay using moving native joints
+
+The explicit test command `--export-native-crew-descent <output>` exports sixteen
+actual `NativeHelicopterPhysicsWorld` publications. It uses the source-bound rope
+definition at aircraft height ten, begins floor extension toward zero, and moves
+the aircraft by translation and yaw at 30 Hz. It captures joint positions in
+native/source order, render counters, physics counters and aircraft right.
+The committed LF input trace digest is
+`5f745b12d48f8ad51c976d34eaa84502f9a35fbd57987735e94cafb8582e4bf8`.
+
+With `WAR_HELICOPTER_DESCENT_NATIVE_INPUT` pointing to this trace, the disposable
+Unity helper replaces its supplied joints before each call to the original
+`HelicopterUpdate`. It grows/shrinks the joint list as the actual exported rope
+requires and updates aircraft facing. The source rig still evaluates its real
+idle-to-slide animation, including disabled/resumed component observations.
+The accepted Unity process exits zero; log:
+`.local/helicopter-descent-moving-unity.log`. The reference LF digest is
+`00dc26188444aecb20ebd825cec934fe7a374edf90a5c0c88f1695f77f330aed`.
+
+The native comparison now replays both stationary and moving-joint references:
+90 source descent updates across six rig/phase scenarios. Besides position,
+rotation and exact progress, it checks that every captured scenario consumed
+the exact pinned native joint positions and that the native root changes each
+frame. This closes the supplied-moving-joints calculation boundary, not the
+normal spawn/coroutine integration or solver equivalence. The Windows-generated
+trace is replay input on Linux; passing Linux descent replay does not mean Linux
+regenerated an identical native trajectory. Existing native physics tests remain
+separate. No independent landed entity or collision authority is added here.

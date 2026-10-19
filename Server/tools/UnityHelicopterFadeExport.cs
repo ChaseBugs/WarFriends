@@ -137,7 +137,7 @@ public static class UnityHelicopterFadeExport
                     componentEnabled = animation.enabled,
                     palm = Values(_palms[scenario].position),
                     descent = UnityHelicopterDescentObservation.Capture(
-                        animation.transform.root, _palms[scenario], scenario, Frames.Count > 0),
+                        animation.transform.root, _palms[scenario], scenario, Frames.Count),
                     states = animation.Cast<AnimationState>()
                         .Where(state => state.enabled || state.name == Idle || state.name == Slide)
                         .Select(state => new { name = state.name, time = state.time, weight = state.weight,
@@ -205,6 +205,7 @@ public static class UnityHelicopterFadeExport
             captureRate = CaptureRate, physicsFrozen = true,
             visibilityProbe = SessionState.GetBool(VisibilityKey, false),
             descentControllerSha256 = Hash("Assets/Scripts/Assembly-CSharp/EnemyController.cs"),
+            descentNativeInputSha256 = UnityHelicopterDescentObservation.NativeInputDigest,
             fixture = Environment.GetEnvironmentVariable("WAR_HELICOPTER_FADE_DESCENT") == "1"
                 ? "Animated rig plus inactive source HelicopterUpdate owner; supplied joints, no gameplay lifecycle."
                 : "Fully weighted canonical idle alias, then one-argument CrossFade; no gameplay scripts.",

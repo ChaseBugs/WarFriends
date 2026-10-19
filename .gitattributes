@@ -435,3 +435,5 @@ Server/content/recovered-helicopter-landing-holdout-unity-reference.json text eo
 Server/content/recovered-helicopter-rope-definition.json text eol=lf
 Server/content/recovered-helicopter-fade-visibility-unity-reference.json text eol=lf
 Server/content/recovered-helicopter-descent-unity-reference.json text eol=lf
+Server/content/recovered-helicopter-descent-native-input.json text eol=lf
+Server/content/recovered-helicopter-descent-moving-unity-reference.json text eol=lf

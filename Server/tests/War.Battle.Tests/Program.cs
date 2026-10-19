@@ -22,6 +22,22 @@ using War.Persistence;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
+if (args is ["--export-native-crew-descent", string output])
+{
+    var directory = new DirectoryInfo(AppContext.BaseDirectory);
+    while (directory != null && !File.Exists(Path.Combine(directory.FullName,
+        "content/recovered-helicopter-rope-definition.json")))
+    {
+        directory = directory.Parent;
+    }
+    if (directory == null)
+    {
+        throw new FileNotFoundException("Recovered helicopter rope definition was not found.");
+    }
+    NativeCrewDescentExport.Write(Path.Combine(directory.FullName, "content"), output);
+    return;
+}
+
 if (args is ["--army-perks-only"])
 {
     var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -9,14 +9,21 @@ internal static class HelicopterDescentReferenceTests
 {
     private const string ReferenceDigest = "5b34f17ec3bb4c85ccbd785e6957473a6d25bbfc0d5a0af991b34a6cd90dd0ca";
     private const string ControllerDigest = "175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0";
+    private const string MovingDigest = "00dc26188444aecb20ebd825cec934fe7a374edf90a5c0c88f1695f77f330aed";
+    private const string NativeDigest = "5f745b12d48f8ad51c976d34eaa84502f9a35fbd57987735e94cafb8582e4bf8";
     private const float PositionTolerance = 0.00001f;
     private const float RotationTolerance = 0.00001f;
 
     internal static int Run(string directory)
     {
-        string filename = Path.Combine(directory, "recovered-helicopter-descent-unity-reference.json");
-        string text = File.ReadAllText(filename).Replace("\r\n", "\n");
-        if (Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text))) != ReferenceDigest)
+        return VerifyCapture(directory, "recovered-helicopter-descent-unity-reference.json", ReferenceDigest) +
+            VerifyCapture(directory, "recovered-helicopter-descent-moving-unity-reference.json", MovingDigest);
+    }
+
+    private static int VerifyCapture(string directory, string filename, string digest)
+    {
+        string text = File.ReadAllText(Path.Combine(directory, filename)).Replace("\r\n", "\n");
+        if (Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text))) != digest)
         {
             throw new Exception("Source descent reference changed without review.");
         }
@@ -32,8 +39,47 @@ internal static class HelicopterDescentReferenceTests
         {
             VerifyScenario(frames, scenario);
         }
-        Console.WriteLine("PASS: 45 descent steps match the actual recovered Unity method with animated palms.");
+        if (root.TryGetProperty("descentNativeInputSha256", out JsonElement nativeDigest) &&
+            nativeDigest.ValueKind == JsonValueKind.String)
+        {
+            VerifyNativeInputs(directory, frames, nativeDigest.GetString());
+        }
+        Console.WriteLine($"PASS: 45 source descent steps with animated palms: {filename}.");
         return 45 * 3;
+    }
+
+    private static void VerifyNativeInputs(string directory, JsonElement observations, string? digest)
+    {
+        string text = File.ReadAllText(Path.Combine(directory,
+            "recovered-helicopter-descent-native-input.json")).Replace("\r\n", "\n");
+        if (digest != NativeDigest ||
+            Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text))) != NativeDigest)
+        {
+            throw new Exception("Moving descent lost its actual native input trace binding.");
+        }
+        using JsonDocument input = JsonDocument.Parse(text);
+        JsonElement frames = input.RootElement.GetProperty("frames");
+        Vector3 previousRoot = default;
+        for (int index = 0; index < frames.GetArrayLength(); index++)
+        {
+            JsonElement frame = frames[index];
+            Vector3[] expected = frame.GetProperty("joints").EnumerateArray().Select(ReadVector).ToArray();
+            if (frame.GetProperty("renderFrame").GetInt32() != index ||
+                (index > 0 && expected[0] == previousRoot))
+            {
+                throw new Exception("Native moving descent trace lost its ordered changing joint coverage.");
+            }
+            foreach (JsonElement scenario in observations[index].GetProperty("scenarios").EnumerateArray())
+            {
+                Vector3[] actual = scenario.GetProperty("descent").GetProperty("input")
+                    .GetProperty("joints").EnumerateArray().Select(ReadVector).ToArray();
+                if (!actual.SequenceEqual(expected))
+                {
+                    throw new Exception("Unity descent did not consume the exact exported native joint positions.");
+                }
+            }
+            previousRoot = expected[0];
+        }
     }
 
     private static void VerifyScenario(JsonElement frames, int scenario)

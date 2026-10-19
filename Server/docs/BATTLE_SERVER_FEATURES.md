@@ -36,6 +36,18 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+Descent replay now also uses sixteen actual native joint publications from a
+translating/yawing aircraft and extending source-bound rope. Unity consumes the
+exact exported positions before invoking its original descent method. Both
+references cover 90 updates; tests reject a lost native-input digest or unchanged
+root trace. This connects the moving-joint calculation evidence while leaving
+the real spawn/coroutine sequence and independent landing ownership pending.
+Linux replays the pinned Windows native trace; no cross-platform trajectory
+identity or original Unity solver parity is claimed by that replay.
+Windows and actual Ubuntu WSL each pass 7,526 native/query checks; logs are
+`.local/descent-moving-windows.log` and `.local/descent-moving-linux.log`.
+Build warnings/errors remain zero.
+
 Actual source-method replay now checks 45 consecutive descent updates across three
 animated rigs. Inactive isolated owners invoke the recovered `HelicopterUpdate`
 against supplied joint transforms; each row records the current palm, old root
