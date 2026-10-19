@@ -5509,6 +5509,7 @@ internal static class CombatContentTests
             gunnerRestored.GunnerRespawnTick != 0 ||
             transportRuntime.PlaceTransportGunner(transport.EntityId) == null)
             throw new Exception("Co-op gunner did not return at the source respawn tick.");
+        TransportCrewHostDamageTests.Verify(transportRuntime, transport.EntityId, gunnerDue);
         if (!transportRuntime.ApplyHostEnemyDamage(transport.EntityId,
                 transport.MaxHealth, gunnerDue) ||
             transportRuntime.ReservedAirPath(transport.EntityId) != null ||

@@ -2829,6 +2829,11 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             !float.IsFinite(damage) || damage <= 0 || damage > 10_000_000)
             return false;
 
+        if (_transportCrewActors.TryGetValue(entityId, out TransportCrewActorState? crewActor))
+        {
+            return ApplyHostCrewDamage(crewActor, damage, impactTick, credit);
+        }
+
         BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(
             spawned => spawned.EntityId == entityId);
         if (enemy == null || enemy.SpawnTick > impactTick ||

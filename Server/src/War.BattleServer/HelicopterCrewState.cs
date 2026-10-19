@@ -5,8 +5,8 @@ internal sealed record HelicopterCrewMemberSnapshot(int Slot,int PointComponentF
 internal sealed record HelicopterCrewDescentSnapshot(int Slot,ulong StartTick,float Progress,
     bool AnimationComplete);
 
-// Source crew begins attached to the Helicopter. No collision, death or
-// landing authority is inferred before runtime world poses are implemented.
+// Source crew begins attached to the Helicopter. The host actor ledger publishes
+// health here; animation progress alone does not establish collisions or landing.
 internal sealed class HelicopterCrewState
 {
     private readonly HelicopterCrewMemberSnapshot[] members;
@@ -24,6 +24,18 @@ internal sealed class HelicopterCrewState
     }
     internal IReadOnlyList<HelicopterCrewMemberSnapshot> Snapshot()
         =>Array.AsReadOnly(members.ToArray());
+
+    internal void PublishActorHealth(int slot, float health)
+    {
+        if (slot < 0 || slot >= members.Length || !float.IsFinite(health) ||
+            health < 0 || health > members[slot].Health)
+        {
+            throw new InvalidDataException("Crew health publication must preserve its source slot and decrease only.");
+        }
+
+        members[slot] = members[slot] with { Health = health };
+    }
+
     internal IReadOnlyList<HelicopterCrewDescentSnapshot> DescentSnapshot(ulong tick)
     {
         var result=new List<HelicopterCrewDescentSnapshot>(members.Length);

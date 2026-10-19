@@ -20,14 +20,36 @@ The actor lifecycle supports monotonic host damage, one-time death, actual seat
 detachment and parent destruction only while still attached. Independent tests
 cover malformed damage, stale time, foreign parent, duplicate death and detached
 survival. The normal co-op fixture checks that aircraft creation registers its
-source seat count. These operations are not yet connected to normal hitbox
-selection, SetFinalTarget callbacks or parent-death scoring/cascades. Initial
+source seat count. The host enemy-damage seam now resolves secondary actor IDs,
+confirms lethal mission credit before changing health, rejects duplicate deaths,
+releases destination reservations and mirrors health to the crew projection.
+Attributed hits reuse the existing Score-mission validation and credit path;
+the new integration test currently exercises uncredited damage only.
+
+`ConfirmTransportCrewSeatReleased` requires the current host tick and a destination
+already reserved for that actor in the shared scene-point state. A completed
+animation or fallback movement without a reserved point cannot detach a soldier.
+This is a host confirmation seam, not a normal SetFinalTarget callback yet.
+
+Parent-death integration must preserve `Helicopter.OnOnDeath`: ordered crew
+`DestroySoldier` calls occur before the aircraft's `OnKilled`, with the turret
+soldier afterwards. Defer match teardown across this host-owned cascade so a
+crew kill that reaches the objective cannot leave the lethally hit aircraft alive.
+
+These operations are not yet connected to normal hitbox selection,
+SetFinalTarget callbacks or parent-death scoring/cascades. Initial
 actor health registration does not establish colliders, landing, infantry AI,
 network projection, repeated cohorts or complete gameplay.
 
 Validation: zero-warning/error build, then native-enabled Windows and actual WSL
 Linux combat-content runs each passed 28,896 assertions. Logs:
 `.local/crew-actor-health-windows.log` and `.local/crew-actor-health-linux.log`.
+The subsequent host-damage integration also passed both native-enabled runs
+(`.local/crew-host-damage-windows.log`, `.local/crew-host-damage-linux.log`).
+Its additional real-match fixture checks malformed/stale impacts, rejection of
+unreserved seat release, partial damage, lethal damage, mirrored health and
+duplicate death. These fixture checks do not increment the executable's summary
+counter, which remains 28,896.
 
 ### Initial transport crew mission accounting
 

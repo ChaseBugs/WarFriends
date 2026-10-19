@@ -1,5 +1,8 @@
 namespace War.BattleServer;
 
+internal readonly record struct TransportCrewActorSnapshot(
+    ulong EntityId, float Health, bool IsAttached, ulong DeathTick);
+
 /// <summary>Tracks one confirmed secondary actor independently of its original aircraft.</summary>
 internal sealed class TransportCrewActorState
 {
@@ -12,6 +15,8 @@ internal sealed class TransportCrewActorState
 
     internal ulong AircraftId { get; }
 
+    internal int Slot { get; }
+
     internal int SeatComponentFileId { get; }
 
     internal float MaximumHealth { get; }
@@ -21,6 +26,11 @@ internal sealed class TransportCrewActorState
     internal bool IsAttached { get; private set; } = true;
 
     internal ulong DeathTick { get; private set; }
+
+    internal TransportCrewActorSnapshot Snapshot()
+    {
+        return new TransportCrewActorSnapshot(EntityId, Health, IsAttached, DeathTick);
+    }
 
     internal TransportCrewActorState(
         CoopMatchRuntime.TransportCrewIdentity identity,
@@ -42,6 +52,7 @@ internal sealed class TransportCrewActorState
 
         EntityId = identity.EntityId;
         AircraftId = aircraftId;
+        Slot = identity.Slot;
         SeatComponentFileId = member.PointComponentFileId;
         MaximumHealth = member.Maximum;
         Health = member.Health;
