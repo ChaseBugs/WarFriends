@@ -88,6 +88,43 @@ public sealed class CoopEnemyPointMaskCatalog
 /// </summary>
 public static class CoopEnemyPointSelection
 {
+    private const int SupportedPointMask = 0x3FFF;
+
+    /// <summary>
+    /// Selects an ordinary next point when the current seat belongs to another asset, not this scene point list.
+    /// </summary>
+    public static CoopEnemyPoint? SelectFromExternalPoint(CoopMapEnemyPoints map, int currentMask,
+        IReadOnlySet<int> occupiedComponentIds, Func<int, int> chooseIndex)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(occupiedComponentIds);
+        ArgumentNullException.ThrowIfNull(chooseIndex);
+        if (currentMask is <= 0 or > SupportedPointMask)
+        {
+            throw new ArgumentOutOfRangeException(nameof(currentMask));
+        }
+        var candidates = new List<CoopEnemyPoint>();
+        foreach (CoopEnemyPoint point in map.Points)
+        {
+            int pointType = PointType(point.ComponentType);
+            if ((currentMask & pointType) == pointType && !occupiedComponentIds.Contains(point.ComponentFileId))
+            {
+                candidates.Add(point);
+            }
+        }
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+        int selectedIndex = chooseIndex(candidates.Count);
+        if (selectedIndex < 0 || selectedIndex >= candidates.Count)
+        {
+            throw new InvalidDataException("Host external-point draw is outside the source candidate list.");
+        }
+        // Unity compares object references here. A prefab-local seat file ID must not exclude an unrelated scene ID.
+        return candidates[selectedIndex];
+    }
+
     /// <summary>
     /// GetNextFreeEnemyPoint and the Sniper/SciFi overrides choose a random
     /// eligible point in source list order. SciFi first prefers points more

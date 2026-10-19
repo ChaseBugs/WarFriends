@@ -36,6 +36,20 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The source completion callback has been traced beyond animation progress.
+`OnHeliSpawnFinished` returns for a dead soldier; an ordinary live soldier calls
+GetNextFreeEnemyPoint, which chooses randomly from free accepted points in source
+order rather than using initial placement's nearest-point rule. The new
+`SelectFromExternalPoint` implements that ordinary selection without treating a
+prefab-local seat ID as a scene-local current point. Tests cover source order,
+non-nearest selection, occupied/all-occupied lists and invalid host draws.
+No point reservation, infantry entity creation or completion callback is wired
+yet. The no-point branch still requires source normal-spawn fallback and the
+five-scaled-second GenerateInitPoint retry (`InvokeAfter` uses WaitForSeconds).
+Windows and actual Ubuntu WSL pass 28,610 focused combat-content assertions plus
+native helpers with zero build warnings/errors at `.local/crew-next-point-windows.log`
+and `.local/crew-next-point-linux.log`.
+
 Match-owned crew descents now retain immutable internal pose snapshots: seat,
 drop start tick, last accepted render/physics counters, root pose and progress.
 Start publishes the exact observed root at zero progress. Accepted updates

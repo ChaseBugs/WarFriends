@@ -999,3 +999,38 @@ NavMesh landing, infantry collision, damage eligibility or settlement authority.
 Windows and actual Ubuntu WSL pass 28,605 focused combat-content assertions plus
 native helpers with zero build warnings/errors. Evidence is
 `.local/crew-descent-snapshot-windows.log` and `.local/crew-descent-snapshot-linux.log`.
+
+### Post-descent destination source rules
+
+`EnemyController.OnHeliSpawnFinished` first checks isAlive. A live soldier calls
+SoldierBehaviour.GetNewEnemyPoint(currentSeat), which ordinarily delegates to
+SpawningManager.GetNextFreeEnemyPoint. That method iterates the source scene list,
+filters AcceptsPoint/isFree/current-object identity, then chooses a random index.
+Its calculated player-distance variable does not rank candidates. Reusing the
+nearest-point initial placement routine would therefore change this behavior.
+
+`SelectFromExternalPoint` covers the ordinary method when the current seat is
+outside the scene enemy-point list. It retains source order and accepted/free
+filtering, consumes a host draw only for a nonempty candidate list, and rejects
+out-of-range draws instead of clamping. It has no scene current-ID argument:
+Unity compares object references, so an equal numeric prefab file ID must not
+exclude an unrelated scene point. Caller-owned masks and occupied scene IDs remain
+required. This helper does not implement Sniper/SciFi acceptance overrides.
+The loaded co-op enemy-point catalog validates every point as fraction one; this
+helper does not select allied points. Callers must also supply the current mask
+after any tutorial exclusion of Corner points rather than assuming the initial mask.
+
+Five checks use source point shapes with explicit authored positions/IDs to show
+non-nearest source-order selection, occupancy, an empty list without a draw and
+two invalid draw boundaries. This is selection evidence, not an executed original
+completion callback, reservation transaction, NavMesh route or combat-ready entity.
+
+When a point exists, the source sets the final target, enables shadow and switches
+to Walk. Otherwise it schedules GenerateInitPoint after five seconds, calls Walk,
+chooses a same-fraction Normal spawn, resumes its agent toward that spawn and sets
+stoppingDistance to zero. Core_BaseScript.InvokeAfter uses WaitForSeconds, so this
+retry follows scaled time. Those fallback/ownership/lifecycle transitions remain
+pending; animation completion alone must not fabricate them or authorize rewards.
+Windows and actual Ubuntu WSL pass 28,610 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Evidence is
+`.local/crew-next-point-windows.log` and `.local/crew-next-point-linux.log`.
