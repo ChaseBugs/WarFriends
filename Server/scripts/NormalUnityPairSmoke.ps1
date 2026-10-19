@@ -36,7 +36,10 @@ function Start-OwnedUnity([string]$project, [string]$identity, [string]$label) {
     return Start-Process $UnityExecutable -ArgumentList $arguments -WindowStyle Hidden -PassThru
 }
 function Complete-OwnedUnity($process, [string]$project, [string]$label) {
-    if (!$process.WaitForExit(240000)) { throw "Owned Unity timed out: $label" }
+    if (!$process.WaitForExit(240000)) {
+        $stage = Get-LastStartupStage $label
+        throw "Owned Unity timed out: $label; last startup stage: $stage; inspect $RunRoot"
+    }
     $source = Join-Path $project 'normal-client-boot.json'
     if (Test-Path -LiteralPath $source) {
         Copy-Item -LiteralPath $source -Destination (Join-Path $RunRoot ($label + '.json'))
@@ -53,6 +56,14 @@ function Complete-OwnedUnity($process, [string]$project, [string]$label) {
         throw "Owned Unity logged $($exceptions.Count) exceptions, including teardown: $label; inspect $RunRoot"
     }
 
+}
+function Get-LastStartupStage([string]$label) {
+    $logPath = Join-Path $RunRoot ($label + '.log')
+    if (!(Test-Path -LiteralPath $logPath)) { return 'no-log' }
+    $stage = Select-String -LiteralPath $logPath -Pattern '^WAR_BOOT_STAGE: [a-z-]+$' |
+        Select-Object -Last 1
+    if ($null -eq $stage) { return 'not-observed' }
+    return $stage.Line
 }
 try {
     $editorFolder = Join-Path $secondPath 'Assets/Editor'

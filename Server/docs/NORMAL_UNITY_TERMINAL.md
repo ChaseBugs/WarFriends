@@ -76,3 +76,28 @@ represent distinct durable scoring/settlement authority. An authenticated result
 bind BattleId and the exact participant, wait/retry if host publication is not yet accepted,
 and replay one recorded settlement response without granting rewards twice. Client EndReason,
 score, currency, obtained cards and progression updates remain assertions.
+
+## Instrumented startup investigation on 2026-10-19
+
+The disposable audit now emits bounded `WAR_BOOT_STAGE` milestones for its execute method,
+Splash opening, observer attachment, requested Play Mode, first Editor update and first
+unpaused Play Mode update. These markers contain no player IDs, credentials or message bodies.
+The wrapper reports the last observed milestone on timeout without dumping unrelated log lines.
+No gameplay timing, readiness condition, scene or active Client source is changed.
+
+Run `.local/client-boot-f71dbfb70e60432890ab7203f2b1d1a9` uses the repository admission
+template without an override. Both ordinary account boots complete with zero exceptions,
+zero invalid bootstrap queries, 70 error-level diagnostics and complete player-data loading.
+Both subsequent rendered Editors emit `execute-method`, `splash-opened`, `observer-attached`,
+`play-requested`, `editor-update`, and `play-update`, including observer reattachment after
+the Play Mode domain reload. This narrows the previously unobserved startup interval:
+the audit is invoked and receives an unpaused Play Mode update. It does not establish
+continued frame progression, rendered loading completion, or a successful match.
+CEF login-page errors remain present and do not alone establish the cause of the stall.
+The wrapper exits nonzero at its 240-second boundary and cleans up the owned processes;
+neither lobby-ready markers nor rendered battle reports are produced. The updated stage
+extractor is separately executed against both completed logs and returns `play-update` for
+each; the in-flight wrapper still used its earlier timeout message. The Release build and
+both actual Unity account runs compile the new audit. Normal entry, results and rematch remain
+unverified. The next diagnostic must distinguish a stopped Editor callback loop from stalled
+game frame/coroutine progression after that first update, rather than increasing admission time.

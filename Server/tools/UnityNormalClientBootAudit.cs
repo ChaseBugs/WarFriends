@@ -28,6 +28,8 @@ public static class UnityNormalClientBootAudit
     private static int _errors;
     private static int _invalidBootstrapQueries;
     private static bool _normalQueueStarted;
+    private static bool _hasObservedEditorUpdate;
+    private static bool _hasObservedPlayMode;
 
     static UnityNormalClientBootAudit()
     {
@@ -44,12 +46,14 @@ public static class UnityNormalClientBootAudit
         {
             throw new InvalidOperationException("Use a disposable project under Server/.local for this audit.");
         }
+        Debug.Log("WAR_BOOT_STAGE: execute-method");
         PlayerSettings.companyName = "WarFriendsValidation";
         string fixtureIdentity = Environment.GetEnvironmentVariable("WAR_LOBBY_BOOT_IDENTITY");
         PlayerSettings.productName = string.IsNullOrEmpty(fixtureIdentity)
             ? "NormalBoot-" + Guid.NewGuid().ToString("N")
             : fixtureIdentity;
         EditorSceneManager.OpenScene("Assets/Scenes/SplashScene.unity");
+        Debug.Log("WAR_BOOT_STAGE: splash-opened");
         SessionState.SetBool(SessionKey, true);
         Attach();
         if (WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled)
@@ -57,6 +61,7 @@ public static class UnityNormalClientBootAudit
             RequireRenderedGameView();
         }
         EditorApplication.isPlaying = true;
+        Debug.Log("WAR_BOOT_STAGE: play-requested");
     }
 
     private static void RequireRenderedGameView()
@@ -74,6 +79,7 @@ public static class UnityNormalClientBootAudit
 
     private static void Attach()
     {
+        Debug.Log("WAR_BOOT_STAGE: observer-attached");
         _deadline = EditorApplication.timeSinceStartup +
             (WarFriends.Validation.UnityNormalBattleEntryAudit.IsEnabled
                 ? MaximumPairedStartupSeconds : MaximumStartupSeconds);
@@ -123,6 +129,16 @@ public static class UnityNormalClientBootAudit
 
     private static void Observe()
     {
+        if (!_hasObservedEditorUpdate)
+        {
+            _hasObservedEditorUpdate = true;
+            Debug.Log("WAR_BOOT_STAGE: editor-update");
+        }
+        if (!_hasObservedPlayMode && EditorApplication.isPlaying && !EditorApplication.isPaused)
+        {
+            _hasObservedPlayMode = true;
+            Debug.Log("WAR_BOOT_STAGE: play-update");
+        }
         if (!EditorApplication.isPlaying || EditorApplication.isPaused)
         {
             if (EditorApplication.timeSinceStartup > _deadline)

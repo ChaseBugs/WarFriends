@@ -34,6 +34,12 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B36's instrumented normal-Unity attempt now proves both rendered Editors execute the audit,
+reattach after the Play Mode domain reload, and receive one unpaused Play Mode update.
+Both preceding account boots pass with zero exceptions. The pair still reaches the wrapper's
+240-second timeout without lobby readiness or battle reports; this is not normal-entry success.
+See [startup investigation](NORMAL_UNITY_TERMINAL.md) for the run, milestone scope and next probe.
+
 B26 pending settlement discovery no longer filters on the unvalidated terminal-phase mirror.
 It reads at most 256 unsettled rows, validates each full row and protobuf, then returns completed
 battles and advances past valid aborts. A completed payload whose mirror is changed to Aborted
