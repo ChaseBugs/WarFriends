@@ -5414,6 +5414,7 @@ internal static class CombatContentTests
         int gunnerRespawnTicks = enemyCombat.TransportGunnerRespawnTicks();
         if (transport.SpawnTick != transportTick || transport.Level != 8 ||
             expectedTransportCrew.Seats != 2 ||
+            transportRuntime.TransportCrewActorCount != expectedTransportCrew.Seats ||
             gunnerRespawnTicks != 375 ||
             MathF.Abs(expectedTransportCrew.SoldierHealth - 1468.125f) > .001f ||
             transportBodies.Count != 11 ||
@@ -7694,6 +7695,7 @@ internal static class CombatContentTests
         count += HelicopterPalmRemainderTests.Run(directory, content.EnemyPoses);
         count += HelicopterCrewRetryClockTests.Run(directory);
         count += CoopEntityIdAllocatorTests.Run();
+        count += TransportCrewActorTests.Run();
         count += HelicopterSlideFadeTests.Run(directory);
         count += HelicopterRopeExtensionTests.Run(directory);
         count += HelicopterRopeInitializationTests.Run(directory);

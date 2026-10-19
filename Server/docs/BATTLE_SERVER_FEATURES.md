@@ -8,6 +8,27 @@ Status meanings: **partial** = implemented evidence exists but the feature is no
 
 ## External implementation references
 
+### Initial crew actor health registration
+
+The normal timed/automatic parent creation path now constructs match-owned
+`TransportCrewActorState` entries from reserved identities and the source-scaled
+crew maximum health, after the aircraft enters mission accounting. This explicitly
+creates the initial health cohort instead of treating identity reservation alone
+as creation. Match termination clears that registry.
+
+The actor lifecycle supports monotonic host damage, one-time death, actual seat
+detachment and parent destruction only while still attached. Independent tests
+cover malformed damage, stale time, foreign parent, duplicate death and detached
+survival. The normal co-op fixture checks that aircraft creation registers its
+source seat count. These operations are not yet connected to normal hitbox
+selection, SetFinalTarget callbacks or parent-death scoring/cascades. Initial
+actor health registration does not establish colliders, landing, infantry AI,
+network projection, repeated cohorts or complete gameplay.
+
+Validation: zero-warning/error build, then native-enabled Windows and actual WSL
+Linux combat-content runs each passed 28,896 assertions. Logs:
+`.local/crew-actor-health-windows.log` and `.local/crew-actor-health-linux.log`.
+
 ### Initial transport crew mission accounting
 
 `MissionAutomaticSpawnState.ConfirmInitialTransportCrew` accepts a host-confirmed
@@ -19,8 +40,8 @@ physical live-actor count. The existing mission death path credits each register
 identity at most once. Catalog-backed tests use a timed aircraft event in a real
 KillXEnemies mission rather than inventing an automatic aircraft wave.
 
-This is an accounting boundary, not a completed crew lifecycle. Reserved crew IDs
-do not automatically register actors. Normal Worker creation, health, colliders,
+This accounting boundary alone is not a completed crew lifecycle. Reserved crew IDs
+require the separate health-registration step described above. Normal colliders,
 landing, detached-seat behavior and parent-death cascades still need integration
 and gameplay proof.
 
@@ -28,8 +49,8 @@ Boundary coverage also checks a missing Assaulter wave family, empty and oversiz
 cohorts, a dead parent and a finished mission. A missing wave family retains
 one-time actor death confirmation without changing the wave balance.
 
-The next integration must preserve `Helicopter.SpawnAssaulter` health initialization
-from the parent's crew upgrade and co-op scale. Parent destruction must check the
+Further integration must retain `Helicopter.SpawnAssaulter` health initialization
+from the parent's crew upgrade and co-op scale, now used by the health cohort. Parent destruction must check the
 source seat/actor binding: `Vehicle.DestroySoldier` only kills a soldier whose
 current `enemyPoint` still equals that seat. A detached actor must not be killed
 merely because its original aircraft disappears. Current identity reservations

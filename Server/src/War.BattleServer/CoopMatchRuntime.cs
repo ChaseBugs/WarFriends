@@ -864,6 +864,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
             if (!mission.ConfirmTimedEventSpawn(eventIndex, enemy.EntityId, tick))
                 throw new InvalidDataException("A due co-op event rejected its host-created enemy.");
             enemySpawns.Add(enemy);
+            RegisterInitialTransportCrewActors(enemy.EntityId);
             stateRevision++;
         }
 
@@ -878,6 +879,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         if (!mission.ConfirmAutomaticSpawn(selectedIndex, automaticEnemy.EntityId, tick))
             throw new InvalidDataException("A due co-op spawn rejected its host-created enemy.");
         enemySpawns.Add(automaticEnemy);
+        RegisterInitialTransportCrewActors(automaticEnemy.EntityId);
         stateRevision++;
     }
 
@@ -3938,6 +3940,7 @@ internal sealed partial class CoopMatchRuntime : IMatchRuntime, IDisposable
         _transportCrewDescents.Clear();
         _transportCrewBirths.Clear();
         _transportCrewIdentities.Clear();
+        _transportCrewActors.Clear();
         enemyDestinations?.ReleaseAll();
         infantryPaths.Clear();
         infantryPointArrivals.Clear();
