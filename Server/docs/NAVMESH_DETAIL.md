@@ -1060,3 +1060,21 @@ infantry identity, NavMesh movement, five-second fallback or combat eligibility.
 Windows and actual Ubuntu WSL pass 28,610 focused combat-content assertions plus
 reservation helper checks with zero build warnings/errors. Evidence is
 `.local/crew-destination-windows.log` and `.local/crew-destination-linux.log`.
+
+### Normal spawn fallback selection
+
+`CoopAiSpawnSelector.SelectHelicopterCrewFallback` reuses ordinary Assaulter
+candidates to implement SoldierBehaviour.PickNormalSPawn for enemy co-op crew.
+The active SpawnPoint base Awake assigns Normal; the loaded ordinary collection
+distinguishes those anchors from parachute/special collections. Candidates are
+restricted to the enemy fraction by the existing spawn catalog/selector.
+The helper retains list order, uses a host-owned draw and rejects an empty list
+or an out-of-range draw rather than fabricating a fallback location.
+
+The test independently filters the source Desert ordinary Normal/enemy rows,
+selects every candidate index and rejects both draw boundaries. This checks target
+selection, not movement, source coroutine timing or a completed actor handoff.
+The five-scaled-second GenerateInitPoint retry and NavMesh path remain pending.
+Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Evidence is
+`.local/crew-fallback-windows.log` and `.local/crew-fallback-linux.log`.

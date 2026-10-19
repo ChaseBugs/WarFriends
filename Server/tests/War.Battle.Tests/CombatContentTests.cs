@@ -7603,7 +7603,7 @@ internal static class CombatContentTests
         {
             File.Delete(damagedPath);
         }
-        return 30 + CoopExternalPointSelectionTests.Run(desert, obstacle);
+        return 30 + CoopExternalPointSelectionTests.Run(desert, obstacle) + CoopCrewFallbackTests.Run(missions, spawns);
     }
 
     private static int PointBit(CoopEnemyPoint point) => point.ComponentType switch

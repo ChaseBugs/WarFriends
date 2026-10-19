@@ -49,6 +49,24 @@ public sealed class CoopAiSpawnSelector
             .ToArray();
     }
 
+    /// <summary>Selects the source enemy Normal spawn used when a descending Assaulter finds no free point.</summary>
+    internal CoopSpawnPoint SelectHelicopterCrewFallback(Func<int, int> chooseIndex)
+    {
+        ArgumentNullException.ThrowIfNull(chooseIndex);
+        // PickNormalSPawn filters the ordinary spawn collection by Normal and the soldier's fraction.
+        IReadOnlyList<CoopSpawnPoint> candidates = Candidates("Assaulter");
+        if (candidates.Count == 0)
+        {
+            throw new InvalidOperationException("Helicopter crew has no recovered enemy Normal fallback spawn.");
+        }
+        int index = chooseIndex(candidates.Count);
+        if (index < 0 || index >= candidates.Count)
+        {
+            throw new InvalidDataException("Helicopter crew fallback draw is outside the source spawn list.");
+        }
+        return candidates[index];
+    }
+
     private void RequireCandidates(string behaviour)
     {
         if (Candidates(behaviour).Count == 0)

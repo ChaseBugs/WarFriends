@@ -36,6 +36,17 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ### Native helicopter world checkpoint — 2026-10-19
 
+The no-free-point branch now has an explicit source Normal-spawn selector.
+`SelectHelicopterCrewFallback` reuses the co-op ordinary Assaulter candidates:
+enemy fraction, ordinary collection and Normal anchors only. Host choice retains
+source order; missing candidates and out-of-range draws fail instead of inventing
+a position. Tests exercise every eligible Desert spawn and invalid draw bounds.
+This is target selection only. Fallback movement, scaled five-second retry,
+normal completion callbacks and independent infantry creation remain pending.
+Windows and actual Ubuntu WSL pass 28,618 focused combat-content assertions plus
+native helpers with zero build warnings/errors. Logs: `.local/crew-fallback-windows.log`
+and `.local/crew-fallback-linux.log`.
+
 The destination state now supports the source-backed helicopter Assaulter branch
 with shared scene reservations. MainScene LevelBehaviourManager entry zero is
 SoldierBehaviourAssaulter (file ID 35664), matching SpawnAssaulter's indexed family.
