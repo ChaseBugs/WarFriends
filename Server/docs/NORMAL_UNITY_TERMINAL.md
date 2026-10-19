@@ -101,3 +101,53 @@ each; the in-flight wrapper still used its earlier timeout message. The Release 
 both actual Unity account runs compile the new audit. Normal entry, results and rematch remain
 unverified. The next diagnostic must distinguish a stopped Editor callback loop from stalled
 game frame/coroutine progression after that first update, rather than increasing admission time.
+
+## Bounded Editor progress probe
+
+The disposable audit now samples wall-clock UTC, Editor time, frame count, scene, play/pause/
+compilation state, time scale and focused Editor-window type every five Editor seconds.
+Each domain limits itself to 48 samples. The wrapper clears the previous run's file and copies
+both participants' JSONL progress on success or failure; a copy failure cannot prevent owned
+process cleanup. This uses the normal Editor update callback, with no background Unity calls,
+synthetic game frames, changed readiness gates or longer admission deadline.
+
+In `.local/client-boot-84dfdadc8ffb4e4ba1e7e98b0375b282`, the first headless account boot
+advances from Splash frame 438 to MainScene frame 571 and the second reaches MainScene frame
+583. Both subsequent rendered participants record Splash frame zero before Play Mode and frame
+two after domain reload, unpaused, with time scale one, compilation inactive and GameView
+focused. Neither record advances during the following wall-clock observation. This distinguishes
+the observed failure from a continuously sampled Editor with only a stuck loading coroutine:
+the audit's Editor update callback stops producing samples too. It does not identify which native
+or managed operation prevents further callbacks. Project UnityConnect services are already
+disabled in the disposable settings, so simply turning that setting off is not a new fix.
+
+The paired wrapper exits nonzero at 240 seconds with last stage `play-update`. Its progress
+artifacts are `Unity-first-battle-progress.jsonl`, `Unity-first-final-progress.jsonl`,
+`Unity-second-final-progress.jsonl` and `Unity-second-boot-progress.jsonl` in that run directory.
+Both account reports retain zero exceptions, 70 errors and complete loading. No normal battle
+report or lobby-ready marker is produced. Owned processes are stopped; no gameplay success is claimed.
+
+### Empty rendered Editor control
+
+`tools/UnityEditorProgressControl.cs` reproduces only the Editor launch, empty scene, GameView
+and Play Mode observation in `.local/editor-progress-control`. Its Assets folder contains only
+the Editor probe, with no WarFriends runtime, networking SDK, scenes or prefabs. Launch it with
+the same Unity 2018.3.0f2 executable and `-noUpm -projectPath <control-project> -executeMethod
+UnityEditorProgressControl.Run -logFile <log>`, without batch/nographics flags, hidden as in
+the paired harness. An external wrapper caps execution at 60 seconds and stops its own process.
+
+The baseline records frame one before Play Mode and frame two in Play Mode, then reaches that
+external timeout. Logs remain at `.local/editor-progress-control/progress-baseline.log` and
+`Editor.log`. The control is then changed to set `Application.runInBackground = true` both
+before Play Mode and in its callback, in addition to the existing PlayerSettings value. That
+second run also times out with frame two and `background=True`; its evidence is `progress.log`
+and `Editor-background.log`. Both runs compile and both owned processes are cleaned up.
+The control samples using wall-clock UTC, so a frozen Editor-time reading does not suppress
+its next observation. Unity login-page CEF errors also appear in the control's completed log.
+
+This reproduces the stalled rendered execution without game code and rejects the proposed
+runtime-background flag fix in this environment. It does not prove CEF is the blocking call,
+nor certify a normally visible Editor, standalone player, Android or every game startup path.
+Do not increase admission deadlines or modify gameplay to accommodate this control failure.
+Further normal-pair retries need an independently verified Editor execution path or new
+environment evidence; the separate server implementation backlog remains actionable.

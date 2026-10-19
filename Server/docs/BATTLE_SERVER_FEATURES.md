@@ -34,6 +34,13 @@ startup and normal rendered teardown acceptance remain pending; see the Unity in
 
 ## Dependency-ordered work
 
+B36's bounded progress probe now localizes the rendered stall to Splash frame two, with
+GameView focused, no pause/compilation, and time scale one. An empty Unity 2018.3 control
+without WarFriends code reproduces the stall, including when runtime background execution
+is explicitly enabled. Both ordinary account boots pass; normal entry is still unverified.
+See [the control experiment](NORMAL_UNITY_TERMINAL.md). This is environment isolation evidence,
+not a completed gameplay feature, and does not block independent server implementation work.
+
 B36's instrumented normal-Unity attempt now proves both rendered Editors execute the audit,
 reattach after the Play Mode domain reload, and receive one unpaused Play Mode update.
 Both preceding account boots pass with zero exceptions. The pair still reaches the wrapper's

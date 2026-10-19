@@ -18,6 +18,8 @@ public static class UnityNormalClientBootAudit
     private const int MainSceneObservationFrames = 12;
     private const int MaximumExceptionSamples = 12;
     private const int MaximumErrorSources = 32;
+    private const int ProgressIntervalSeconds = 5;
+    private const int MaximumProgressSamples = 48;
     private static readonly List<string> ExceptionSources = new List<string>();
     private static readonly Dictionary<string, int> ErrorSources = new Dictionary<string, int>();
     private static readonly FieldInfo CardDefinitionField = typeof(Card).GetField(
@@ -30,6 +32,8 @@ public static class UnityNormalClientBootAudit
     private static bool _normalQueueStarted;
     private static bool _hasObservedEditorUpdate;
     private static bool _hasObservedPlayMode;
+    private static double _nextProgressTime;
+    private static int _progressSamples;
 
     static UnityNormalClientBootAudit()
     {
@@ -129,6 +133,7 @@ public static class UnityNormalClientBootAudit
 
     private static void Observe()
     {
+        WriteProgressIfDue();
         if (!_hasObservedEditorUpdate)
         {
             _hasObservedEditorUpdate = true;
@@ -186,6 +191,33 @@ public static class UnityNormalClientBootAudit
         {
             Finish();
         }
+    }
+
+    private static void WriteProgressIfDue()
+    {
+        double editorTime = EditorApplication.timeSinceStartup;
+        if (editorTime < _nextProgressTime || _progressSamples >= MaximumProgressSamples)
+        {
+            return;
+        }
+
+        _nextProgressTime = editorTime + ProgressIntervalSeconds;
+        _progressSamples++;
+        EditorWindow focusedWindow = EditorWindow.focusedWindow;
+        string progressPath = Path.Combine(Application.dataPath, "../normal-client-progress.jsonl");
+        string sample = JsonConvert.SerializeObject(new
+        {
+            observedUtc = DateTime.UtcNow,
+            editorTime,
+            frame = Time.frameCount,
+            scene = Application.loadedLevelName,
+            isPlaying = EditorApplication.isPlaying,
+            isPaused = EditorApplication.isPaused,
+            isCompiling = EditorApplication.isCompiling,
+            timeScale = Time.timeScale,
+            focusedWindow = focusedWindow == null ? null : focusedWindow.GetType().FullName
+        });
+        File.AppendAllText(progressPath, sample + Environment.NewLine);
     }
 
     private static bool HasAccountAndUnits()

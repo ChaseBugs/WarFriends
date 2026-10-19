@@ -24,6 +24,8 @@ function Start-OwnedUnity([string]$project, [string]$identity, [string]$label) {
     $env:WAR_LOBBY_BOOT_IDENTITY = $identity
     $report = Join-Path $project 'normal-client-boot.json'
     if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report }
+    $progress = Join-Path $project 'normal-client-progress.jsonl'
+    if (Test-Path -LiteralPath $progress) { Remove-Item -LiteralPath $progress }
     $arguments = @(
         '-noUpm', '-projectPath', ('"' + $project + '"'),
         '-executeMethod', 'UnityNormalClientBootAudit.Run',
@@ -37,9 +39,11 @@ function Start-OwnedUnity([string]$project, [string]$identity, [string]$label) {
 }
 function Complete-OwnedUnity($process, [string]$project, [string]$label) {
     if (!$process.WaitForExit(240000)) {
+        Copy-OwnedUnityProgress $project $label
         $stage = Get-LastStartupStage $label
         throw "Owned Unity timed out: $label; last startup stage: $stage; inspect $RunRoot"
     }
+    Copy-OwnedUnityProgress $project $label
     $source = Join-Path $project 'normal-client-boot.json'
     if (Test-Path -LiteralPath $source) {
         Copy-Item -LiteralPath $source -Destination (Join-Path $RunRoot ($label + '.json'))
@@ -56,6 +60,18 @@ function Complete-OwnedUnity($process, [string]$project, [string]$label) {
         throw "Owned Unity logged $($exceptions.Count) exceptions, including teardown: $label; inspect $RunRoot"
     }
 
+}
+function Copy-OwnedUnityProgress([string]$project, [string]$label) {
+    $progress = Join-Path $project 'normal-client-progress.jsonl'
+    if (Test-Path -LiteralPath $progress) {
+        try {
+            Copy-Item -LiteralPath $progress -Destination (Join-Path $RunRoot ($label + '-progress.jsonl'))
+        }
+        catch {
+            # A diagnostic-copy failure must not prevent owned-process cleanup.
+            Write-Warning "Could not copy owned Unity progress: $label"
+        }
+    }
 }
 function Get-LastStartupStage([string]$label) {
     $logPath = Join-Path $RunRoot ($label + '.log')
@@ -162,6 +178,8 @@ try {
     Write-Output "PASS: two normal Unity controllers completed HUD selection and live reconnect; $RunRoot"
 }
 finally {
+    Copy-OwnedUnityProgress $FirstProject 'Unity-first-final'
+    Copy-OwnedUnityProgress $SecondProject 'Unity-second-final'
     [array]::Reverse($owned)
     foreach ($process in $owned) {
         if (!$process.HasExited) { Stop-Process -Id $process.Id }
